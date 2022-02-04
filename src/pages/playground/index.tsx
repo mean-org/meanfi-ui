@@ -17,7 +17,7 @@ import {
   getTransactionOperationDescription,
   getTransactionStatusForLogs
 } from "../../utils/ui";
-import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from "../../utils/utils";
+import { formatThousands, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from "../../utils/utils";
 import { IconCopy, IconExternalLink, IconTrash } from "../../Icons";
 
 const { Panel } = Collapse;
@@ -28,12 +28,12 @@ const SAMPLE_SIGNATURE = '43n6nSvWLULwu3Gdpkc3P2NtxzKdncvBMdmQxaf2wkWkSLtq2j7QD3
 
 const CRYPTO_VALUES: number[] = [
   0.0004,
-  0.0000003,
-  0.000000001,
+  0.000003,
   0.00000012345678,
   1200.5,
   1500.000009,
   100500.000009226,
+  7131060.641513,
 ];
 
 interface TxStatusConfig {
@@ -103,7 +103,7 @@ export const PlaygroundView = () => {
 
     useEffect(() => {
       if (!selectedMint) {
-        setSelectedMint(userTokens[0]);
+        setSelectedMint(userTokens.find(t => t.symbol === 'USDC'));
       }
     }, [selectedMint, userTokens]);
 
@@ -183,27 +183,30 @@ export const PlaygroundView = () => {
       return CRYPTO_VALUES.map((value: number, index: number) => {
         return (
           <div className="item-list-row" key={index}>
-            <div className="std-table-cell responsive-cell pr-2 text-right">
-              {selectedMint
-                ? `${value.toFixed(selectedMint.decimals)} ${selectedMint.symbol}`
-                : ""}
-            </div>
-            <div className="std-table-cell responsive-cell pr-2 text-right">
-              {selectedMint
-                ? getTokenAmountAndSymbolByTokenAddress(
-                    value,
-                    selectedMint.address
-                  )
-                : ""}
-            </div>
-            <div className="std-table-cell responsive-cell text-right">
+            <div className="std-table-cell responsive-cell text-monospace text-right pr-2">
               {selectedMint
                 ? getAmountWithTokenSymbol(
                     value,
                     selectedMint,
                     selectedMint.decimals
                   )
-                : ""}
+                : ""
+              }
+            </div>
+            <div className="std-table-cell responsive-cell text-monospace text-right pr-2">
+              {selectedMint
+                ? getTokenAmountAndSymbolByTokenAddress(
+                    value,
+                    selectedMint.address
+                  )
+                : ""
+              }
+            </div>
+            <div className="std-table-cell responsive-cell text-monospace text-right">
+              {selectedMint
+                ? `${formatThousands(value, selectedMint.decimals)} ${selectedMint.symbol}`
+                : ""
+              }
             </div>
           </div>
         );
@@ -255,24 +258,18 @@ export const PlaygroundView = () => {
       <>
         <div className="tabset-heading">Number formatting</div>
         <div className="item-list-header">
-            <div className="header-row">
-                <div className="std-table-cell responsive-cell pr-2 text-right">
-                    Format1
-                </div>
-                <div className="std-table-cell responsive-cell pr-2 text-right">
-                    Format2
-                </div>
-                <div className="std-table-cell responsive-cell text-right">
-                    Format3
-                </div>
-            </div>
+          <div className="header-row">
+            <div className="std-table-cell responsive-cell text-right pr-2">Format1</div>
+            <div className="std-table-cell responsive-cell text-right pr-2">Format2</div>
+            <div className="std-table-cell responsive-cell text-right">Format3</div>
+          </div>
         </div>
         <div className="item-list-body">{renderTable()}</div>
         <Divider />
         <div>
           Format1: <code>value.toFixed(decimals)</code><br />
-          Format2:{" "}<code>getTokenAmountAndSymbolByTokenAddress(value, mintAddress)</code><br />
-          Format3: <code>formatAmount(value, decimals)</code>
+          Format2: <code>getTokenAmountAndSymbolByTokenAddress(value, mintAddress)</code><br />
+          Format4: <code>formatThousands(value, decimals)</code>
         </div>
       </>
     );
@@ -513,7 +510,7 @@ export const PlaygroundView = () => {
     <>
       <section>
         <div className="container mt-4 flex-column flex-center">
-          <div className="boxed-area container-max-width-600">
+          <div className="boxed-area container-max-width-720">
             <div className="button-tabset-container">
               <div className={`tab-button ${currentTab === "first-tab" ? 'active' : ''}`} onClick={() => setCurrentTab("first-tab")}>
                 Demo 1

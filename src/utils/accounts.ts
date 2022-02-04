@@ -2,6 +2,11 @@ import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from "@solana/sp
 import { AccountInfo, Commitment, Connection, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js"
 import { AccountTokenParsedInfo } from "../models/token";
 
+export type ProgramAccounts = {
+  pubkey: PublicKey;
+  account: AccountInfo<Buffer>;
+}
+
 export type AccountsDictionary = {
   publicKey: PublicKey;
   account: AccountInfo<Buffer>;

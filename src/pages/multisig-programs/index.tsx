@@ -5,29 +5,27 @@ import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { useWallet } from '../../contexts/wallet';
 import { AppStateContext } from '../../contexts/appstate';
 import { Button, Col, Divider, Empty, Row, Space, Spin, Tooltip } from 'antd';
-import { ArrowLeftOutlined, CopyOutlined, LoadingOutlined, ReloadOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, LoadingOutlined, ReloadOutlined } from '@ant-design/icons';
 import { IconCodeBlock, IconExternalLink, IconShieldOutline } from '../../Icons';
 import { PreFooter } from '../../components/PreFooter';
-import { ConfirmOptions, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction, TransactionInstruction } from '@solana/web3.js';
+import { ConfirmOptions, Connection, LAMPORTS_PER_SOL, MemcmpFilter, PublicKey, Transaction } from '@solana/web3.js';
 import { Program, Provider } from '@project-serum/anchor';
 import MultisigIdl from "../../models/mean-multisig-idl";
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
-import { AccountLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { consoleOut, copyText, delay, getShortDate, getTransactionStatusForLogs, isLocal } from '../../utils/ui';
 import { Identicon } from '../../components/Identicon';
-import { getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, getTxIxResume, shortenAddress, toUiAmount } from '../../utils/utils';
-import { MultisigAccountInfo, MultisigTransactionInfo, MultisigTransactionStatus, MultisigVault } from '../../models/multisig';
+import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, toUiAmount } from '../../utils/utils';
+import { MultisigAccountInfo, MultisigTransactionInfo, MultisigTransactionStatus } from '../../models/multisig';
 import { TransactionFees } from '@mean-dao/msp';
-import { MultisigCreateVaultModal } from '../../components/MultisigCreateVaultModal';
 import { useNativeAccount } from '../../contexts/accounts';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { customLogger } from '../..';
-import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { BN } from 'bn.js';
 import { notify } from '../../utils/notifications';
-import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
+import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
 import { MultisigCreateProgramModal } from '../../components/MultisigCreateProgramModal';
+import { ProgramAccounts } from '../../utils/accounts';
 
 export const MultisigProgramsView = () => {
   const location = useLocation();
@@ -40,23 +38,23 @@ export const MultisigProgramsView = () => {
     isWhitelisted,
     detailsPanelOpen,
     transactionStatus,
-    setDtailsPanelOpen,
     refreshTokenBalance,
     setTransactionStatus,
     setHighLightableMultisigId,
   } = useContext(AppStateContext);
   const {
     fetchTxInfoStatus,
-    startFetchTxSignatureInfo,
     clearTransactionStatusContext,
   } = useContext(TransactionStatusContext);
   const { t } = useTranslation('common');
   const [nativeBalance, setNativeBalance] = useState(0);
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [multisigAddress, setMultisigAddress] = useState('');
-  const [multisigVaults, setMultisigVaults] = useState<MultisigVault[]>([]);
-  const [selectedVault, setSelectedVault] = useState<MultisigVault | undefined>(undefined);
-  const [loadingVaults, setLoadingVaults] = useState(false);
+
+  const [programs, setPrograms] = useState<ProgramAccounts[] | undefined>(undefined);
+  const [loadingPrograms, setLoadingPrograms] = useState(false);
+  const [selectedProgram, setSelectedProgram] = useState<ProgramAccounts | undefined>(undefined);
+
   const [loadingMultisigTxs, setLoadingMultisigTxs] = useState(true);
   const [isCreateProgramModalVisible, setCreateProgramModalVisible] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
@@ -208,74 +206,87 @@ export const MultisigProgramsView = () => {
     setHighLightableMultisigId
   ]);
 
-  // Get multisig vaults on demmand
-  const getMultisigVaults = useCallback(async (
-    connection: Connection,
-    multisig: PublicKey
-  ) => {
+  const getProgramsByUpgradeAuthority = useCallback(async (upgradeAuthority: PublicKey): Promise<ProgramAccounts[] | undefined> => {
 
-    // const [multisigSigner] = await PublicKey.findProgramAddress(
-    //   [multisig.toBuffer()],
-    //   MEAN_MULTISIG
-    // );
+    if (!connection || !upgradeAuthority) { return undefined; }
+    console.log(`Searching for programs with upgrade authority: ${upgradeAuthority}`);
 
-    // console.log('multisigSigner:', multisigSigner.toBase58());
+    // 1. Fetch executable data account having upgradeAuthority as upgrade authority
+    const BPFLoaderUpgradeab1e = new PublicKey("BPFLoaderUpgradeab1e11111111111111111111111");
+    const executableDataAccountsFilter: MemcmpFilter = { memcmp: { offset: 13, bytes: upgradeAuthority.toBase58() } }
+    const executableDataAccounts = await connection.getProgramAccounts(
+      BPFLoaderUpgradeab1e,
+      {
+        encoding: "base64",
+        dataSlice: {
+          offset: 0,
+          length: 0
+        },
+        filters: [
+          executableDataAccountsFilter
+        ]
+      });
 
-    // const accountInfos = await connection.getProgramAccounts(TOKEN_PROGRAM_ID, {
-    //   filters: [
-    //     {
-    //       memcmp: { offset: 32, bytes: multisigSigner.toBase58() },
-    //     }, 
-    //     {
-    //       dataSize: AccountLayout.span
-    //     }
-    //   ],
-    // });
+    // 2. For each executable data account found in the previous step, fetch the corresponding program
+    let programs: ProgramAccounts[] = [];
+    for (let i = 0; i < executableDataAccounts.length; i++) {
+      const executableData = executableDataAccounts[i].pubkey;
 
-    // console.log('accountInfos:', accountInfos);
+      const executableAccountsFilter: MemcmpFilter = { memcmp: { offset: 4, bytes: executableData.toBase58() } }
+      const executableAccounts = await connection.getProgramAccounts(
+        BPFLoaderUpgradeab1e,
+        {
+          encoding: "base64",
+          dataSlice: {
+            offset: 0,
+            length: 0
+          },
+          filters: [
+            executableAccountsFilter
+          ]
+        });
 
-    // const results = accountInfos.map((t: any) => {
-    //   let tokenAccount = ACCOUNT_LAYOUT.decode(t.account.data);
-    //   tokenAccount.address = t.pubkey;
-    //   return tokenAccount;
-    // });
+      if (executableAccounts.length === 0) {
+        continue;
+      }
 
-    return [];
+      if (executableAccounts.length > 1) {
+        throw new Error(`More than one program was found for program data account '${executableData}'`);
+      }
 
-  },[]);
+      const foundProgram = executableAccounts[0] as ProgramAccounts;
+      console.log(`Upgrade Authority: ${upgradeAuthority} --> Executable Data: ${executableData} --> Program: ${foundProgram}`);
 
-  // Get Multisig Vaults
+      programs.push(foundProgram);
+
+    }
+
+    console.log(`${programs.length} programs found!`);
+    return programs;
+  }, [connection]);
+
+  // Get Programs
   useEffect(() => {
 
-    if (!connection || !multisigClient || !publicKey || !multisigAddress) {
+    if (!connection || !publicKey || !selectedMultisig) {
       return;
     }
 
-    const timeout = setTimeout(() => {
-      setLoadingVaults(true);
-      getMultisigVaults(connection, new PublicKey(multisigAddress))
-      .then((result: MultisigVault[]) => {
-        consoleOut('multisig vaults:', result, 'blue');
-        setMultisigVaults(result);
-        if (result.length > 0) {
-          setSelectedVault(result[0]);
-          consoleOut('selectedVault:', result[0], 'blue');
+    getProgramsByUpgradeAuthority(selectedMultisig.id)
+      .then(programs => {
+        consoleOut('programs:', programs, 'blue');
+        if (programs && programs.length > 0) {
+          setPrograms(programs);
+        } else {
+          setPrograms([]);
         }
-      })
-      .catch(err => console.error(err))
-      .finally(() => setLoadingVaults(false));
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }
+      });
 
   },[
     publicKey,
     connection,
-    multisigClient,
-    multisigAddress,
-    getMultisigVaults
+    selectedMultisig,
+    getProgramsByUpgradeAuthority,
   ]);
 
   const getTransactionStatus = useCallback((account: any) => {
@@ -299,7 +310,7 @@ export const MultisigProgramsView = () => {
   // Update list of txs
   useEffect(() => {
 
-    if (!connection || !publicKey || !multisigAddress || !selectedVault || !selectedMultisig || !loadingMultisigTxs) {
+    if (!connection || !publicKey || !multisigAddress || !selectedProgram || !selectedMultisig || !loadingMultisigTxs) {
       return;
     }
 
@@ -324,7 +335,7 @@ export const MultisigProgramsView = () => {
               operation: parseInt(Object.keys(OperationType).filter(k => k === tx.account.operation.toString())[0]),
               accounts: tx.account.accounts
             } as MultisigTransactionInfo);
-            if (txInfo.accounts.some(a => a.pubkey.equals(selectedVault.address))) {
+            if (txInfo.accounts.some(a => a.pubkey.equals(selectedProgram.pubkey))) {
               transactions.push(txInfo);
             }
           }
@@ -344,7 +355,7 @@ export const MultisigProgramsView = () => {
   }, [
     publicKey,
     connection,
-    selectedVault,
+    selectedProgram,
     multisigAddress,
     selectedMultisig,
     loadingMultisigTxs,
@@ -352,23 +363,29 @@ export const MultisigProgramsView = () => {
     getTransactionStatus
   ]);
 
-  const onRefreshVaults = useCallback(() => {
-    setLoadingVaults(true);
-    getMultisigVaults(connection, new PublicKey(multisigAddress))
-    .then((result: MultisigVault[]) => {
-      consoleOut('multisig vaults:', result, 'blue');
-      setMultisigVaults(result);
-      if (result.length > 0 && !selectedVault) {
-        setSelectedVault(result[0]);
-      }
-    })
-    .catch(err => console.error(err))
-    .finally(() => setLoadingVaults(false));
+  const onRefreshPrograms = useCallback(() => {
+    if (!selectedMultisig) { return; }
+
+    setLoadingPrograms(true);
+    getProgramsByUpgradeAuthority(selectedMultisig.id)
+      .then(programs => {
+        consoleOut('programs:', programs, 'blue');
+        if (programs && programs.length > 0) {
+          setPrograms(programs);
+          if (!selectedProgram) {
+            setSelectedProgram(programs[0]);
+          }
+        } else {
+          setPrograms([]);
+        }
+      })
+      .catch(err => console.error(err))
+      .finally(() => setLoadingPrograms(false));
+
   }, [
-    connection,
-    selectedVault,
-    multisigAddress,
-    getMultisigVaults,
+    selectedProgram,
+    selectedMultisig,
+    getProgramsByUpgradeAuthority,
   ]);
 
   const getTransactionStatusClass = useCallback((mtx: MultisigTransactionInfo) => {
@@ -529,23 +546,23 @@ export const MultisigProgramsView = () => {
 
   const onTxApproved = useCallback(() => {
 
-    onRefreshVaults();
+    onRefreshPrograms();
     resetTransactionStatus();
     setLoadingMultisigTxs(true);
 
   },[
-    onRefreshVaults,
+    onRefreshPrograms,
     resetTransactionStatus
   ]);
 
   const onTxExecuted = useCallback(() => {
     
-    onRefreshVaults();
+    onRefreshPrograms();
     resetTransactionStatus();
     setLoadingMultisigTxs(true);
 
   },[
-    onRefreshVaults,
+    onRefreshPrograms,
     resetTransactionStatus
   ]);
 
@@ -1116,7 +1133,7 @@ export const MultisigProgramsView = () => {
             shape="round"
             size="small"
             className="thin-stroke"
-            disabled={isTxInProgress() || loadingVaults}
+            disabled={isTxInProgress() || loadingPrograms}
             onClick={() => {}}>
             {isTxInProgress() && (<LoadingOutlined />)}
             Action 1
@@ -1126,7 +1143,7 @@ export const MultisigProgramsView = () => {
             shape="round"
             size="small"
             className="thin-stroke"
-            disabled={isTxInProgress() || loadingVaults}
+            disabled={isTxInProgress() || loadingPrograms}
             onClick={() => {}}>
             {isTxInProgress() && (<LoadingOutlined />)}
             Action 2
@@ -1138,9 +1155,9 @@ export const MultisigProgramsView = () => {
 
   const renderTransactions = () => {
 
-    if (!selectedVault || !selectedMultisig) {
+    if (!selectedProgram || !selectedMultisig) {
       return null;
-    } else if (selectedVault && selectedMultisig && loadingMultisigTxs) {
+    } else if (selectedProgram && selectedMultisig && loadingMultisigTxs) {
       return (
         <div className="mb-2">{t('multisig.multisig-transactions.loading-transactions')}</div>
       );
@@ -1218,7 +1235,7 @@ export const MultisigProgramsView = () => {
   const renderVaultMeta = () => {
     return (
       <>
-      {selectedVault && (
+      {selectedProgram && (
         <div className="stream-fields-container">
 
           {/* Row 1 */}
@@ -1227,16 +1244,16 @@ export const MultisigProgramsView = () => {
               <Col span={12}>
                 <div className="transaction-detail-row">
                   <span className="info-label">
-                    Balance
+                    XXxxXXxxXX
                   </span>
                 </div>
                 <div className="transaction-detail-row">
-                  {
+                  {/* {
                     getTokenIconAndAmount(
-                      selectedVault.mint.toBase58(),
-                      selectedVault.amount
+                      selectedProgram.mint.toBase58(),
+                      selectedProgram.amount
                     )
-                  }
+                  } */}
                 </div>
               </Col>
               <Col span={12}>
@@ -1249,24 +1266,24 @@ export const MultisigProgramsView = () => {
                   <span className="info-icon">
                     <IconShieldOutline className="mean-svg-icons" />
                   </span>
-                  <Link to="/multisig" className="info-data flex-row wrap align-items-center simplelink underline-on-hover"
+                  {/* <Link to="/multisig" className="info-data flex-row wrap align-items-center simplelink underline-on-hover"
                     onClick={e => {
                       e.preventDefault();
                       e.stopPropagation();
-                      setHighLightableMultisigId(selectedVault.owner.toBase58());
+                      setHighLightableMultisigId(selectedProgram.owner.toBase58());
                       navigate('/multisig');
                     }}>
-                    {shortenAddress(selectedVault.owner.toBase58(), 6)}
+                    {shortenAddress(selectedProgram.owner.toBase58(), 6)}
                     <div className="icon-button-container">
                       <Button
                         type="default"
                         shape="circle"
                         size="middle"
                         icon={<CopyOutlined />}
-                        onClick={() => copyAddressToClipboard(selectedVault.owner.toBase58())}
+                        onClick={() => copyAddressToClipboard(selectedProgram.owner.toBase58())}
                       />
                     </div>
-                  </Link>
+                  </Link> */}
                 </div>
               </Col>
             </Row>
@@ -1278,64 +1295,67 @@ export const MultisigProgramsView = () => {
     );
   };
 
-  const renderMultisigVaults = (
+  const renderMultisigPrograms = (
     <>
-    {multisigVaults && multisigVaults.length ? (
-      multisigVaults.map((item, index) => {
-        const token = getTokenByMintAddress(item.mint.toBase58());
-        const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
-          event.currentTarget.src = FALLBACK_COIN_IMAGE;
-          event.currentTarget.className = "error";
-        };
-        const onVaultSelected = (ev: any) => {
-          setSelectedVault(item);
-          setDtailsPanelOpen(true);
-          const resume = `\naddress: ${item.address.toBase58()}\nmint: ${token ? token.address : item.mint.toBase58()}`;
-          consoleOut('resume:', resume, 'blue');
-          consoleOut('selected vault:', item, 'blue');
-          setLoadingMultisigTxs(true);
-        };
+    {programs && programs.length ? (
+      programs.map((item, index) => {
         return (
-          <div 
-            key={`${index + 50}`} 
-            onClick={onVaultSelected}
-            className={
-              `transaction-list-row ${
-                selectedVault && selectedVault.address && selectedVault.address.equals(item.address)
-                  ? 'selected' 
-                  : ''
-              }`
-            }>
-            <div className="icon-cell">
-              <div className="token-icon">
-                {token && token.logoURI ? (
-                  <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
-                ) : (
-                  <Identicon address={item.mint.toBase58()} style={{
-                    width: "28px",
-                    display: "inline-flex",
-                    height: "26px",
-                    overflow: "hidden",
-                    borderRadius: "50%"
-                  }} />
-                )}
-              </div>
-            </div>
-            <div className="description-cell">
-              <div className="title text-truncate">{token ? token.symbol : `Unknown token [${shortenAddress(item.mint.toBase58(), 6)}]`}</div>
-              <div className="subtitle text-truncate">{shortenAddress(item.address.toBase58(), 8)}</div>
-            </div>
-            <div className="rate-cell">
-              <div className="rate-amount text-uppercase">
-                {getTokenAmountAndSymbolByTokenAddress(
-                  toUiAmount(new BN(item.amount), token?.decimals || 6),
-                  token ? token.address as string : '',
-                  true
-                )}
-              </div>
-            </div>
-          </div>
+          <p>Programita {index + 1}: {shortenAddress(item.pubkey.toBase58(), 8)}</p>
         );
+        // const token = getTokenByMintAddress(item.mint.toBase58());
+        // const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+        //   event.currentTarget.src = FALLBACK_COIN_IMAGE;
+        //   event.currentTarget.className = "error";
+        // };
+        // const onVaultSelected = (ev: any) => {
+        //   setSelectedProgram(item);
+        //   setDtailsPanelOpen(true);
+        //   const resume = `\naddress: ${item.address.toBase58()}\nmint: ${token ? token.address : item.mint.toBase58()}`;
+        //   consoleOut('resume:', resume, 'blue');
+        //   consoleOut('selected vault:', item, 'blue');
+        //   setLoadingMultisigTxs(true);
+        // };
+        // return (
+        //   <div 
+        //     key={`${index + 50}`} 
+        //     onClick={onVaultSelected}
+        //     className={
+        //       `transaction-list-row ${
+        //         selectedProgram && selectedProgram.address && selectedProgram.address.equals(item.address)
+        //           ? 'selected' 
+        //           : ''
+        //       }`
+        //     }>
+        //     <div className="icon-cell">
+        //       <div className="token-icon">
+        //         {token && token.logoURI ? (
+        //           <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
+        //         ) : (
+        //           <Identicon address={item.mint.toBase58()} style={{
+        //             width: "28px",
+        //             display: "inline-flex",
+        //             height: "26px",
+        //             overflow: "hidden",
+        //             borderRadius: "50%"
+        //           }} />
+        //         )}
+        //       </div>
+        //     </div>
+        //     <div className="description-cell">
+        //       <div className="title text-truncate">{token ? token.symbol : `Unknown token [${shortenAddress(item.mint.toBase58(), 6)}]`}</div>
+        //       <div className="subtitle text-truncate">{shortenAddress(item.address.toBase58(), 8)}</div>
+        //     </div>
+        //     <div className="rate-cell">
+        //       <div className="rate-amount text-uppercase">
+        //         {getTokenAmountAndSymbolByTokenAddress(
+        //           toUiAmount(new BN(item.amount), token?.decimals || 6),
+        //           token ? token.address as string : '',
+        //           true
+        //         )}
+        //       </div>
+        //     </div>
+        //   </div>
+        // );
       })
     ) : (
       <>
@@ -1378,16 +1398,16 @@ export const MultisigProgramsView = () => {
                 </div>
                 <IconCodeBlock className="mean-svg-icons mr-1" />
                 <span className="title">
-                  {multisigVaults && selectedMultisig
+                  {programs && selectedMultisig
                     ? t('multisig.multisig-programs.screen-title', {
                         multisigName: selectedMultisig.label,
-                        programCount: multisigVaults ? multisigVaults.length : 0
+                        programCount: programs ? programs.length : 0
                       })
                     : t('multisig.multisig-programs.screen-title-no-programs')
                   }
                 </span>
                 <Tooltip placement="bottom" title={t('multisig.multisig-programs.refresh-tooltip')}>
-                  <div className={`transaction-stats ${loadingVaults ? 'click-disabled' : 'simplelink'}`} onClick={onRefreshVaults}>
+                  <div className={`transaction-stats ${loadingPrograms ? 'click-disabled' : 'simplelink'}`} onClick={onRefreshPrograms}>
                     <Spin size="small" />
                     <span className="transaction-legend">
                       <span className="icon-button-container">
@@ -1406,8 +1426,8 @@ export const MultisigProgramsView = () => {
 
               <div className="inner-container">
                 <div className="item-block vertical-scroll">
-                  <Spin spinning={loadingVaults}>
-                    {renderMultisigVaults}
+                  <Spin spinning={loadingPrograms}>
+                    {renderMultisigPrograms}
                   </Spin>
                 </div>
                 <div className="bottom-ctas">
@@ -1437,9 +1457,9 @@ export const MultisigProgramsView = () => {
               <div className="inner-container">
                 {publicKey ? (
                   <>
-                    <div className={`stream-details-data-wrapper vertical-scroll ${(loadingVaults || !selectedVault) ? 'h-100 flex-center' : ''}`}>
-                      <Spin spinning={loadingVaults}>
-                        {selectedVault && (
+                    <div className={`stream-details-data-wrapper vertical-scroll ${(loadingPrograms || !selectedProgram) ? 'h-100 flex-center' : ''}`}>
+                      <Spin spinning={loadingPrograms}>
+                        {selectedProgram && (
                           <>
                             {renderVaultMeta()}
                             <Divider className="activity-divider" plain></Divider>
@@ -1449,9 +1469,9 @@ export const MultisigProgramsView = () => {
                           </>
                         )}
                       </Spin>
-                      {!loadingVaults && (
+                      {!loadingPrograms && (
                         <>
-                        {(!multisigVaults || multisigVaults.length === 0) && !selectedVault && (
+                        {(!programs || programs.length === 0) && !selectedProgram && (
                           <div className="h-100 flex-center">
                             <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{t('multisig.multisig-programs.no-program-loaded')}</p>} />
                           </div>
@@ -1459,11 +1479,11 @@ export const MultisigProgramsView = () => {
                         </>
                       )}
                     </div>
-                    {selectedVault && (
+                    {selectedProgram && (
                       <div className="stream-share-ctas">
-                        <span className="copy-cta" onClick={() => copyAddressToClipboard(selectedVault.address.toBase58())}>VAULT ADDRESS: {selectedVault.address.toBase58()}</span>
+                        <span className="copy-cta" onClick={() => copyAddressToClipboard(selectedProgram.pubkey.toBase58())}>VAULT ADDRESS: {selectedProgram.pubkey.toBase58()}</span>
                         <a className="explorer-cta" target="_blank" rel="noopener noreferrer"
-                          href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${selectedVault.address.toBase58()}${getSolanaExplorerClusterParam()}`}>
+                          href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${selectedProgram.pubkey.toBase58()}${getSolanaExplorerClusterParam()}`}>
                           <IconExternalLink className="mean-svg-icons" />
                         </a>
                       </div>
