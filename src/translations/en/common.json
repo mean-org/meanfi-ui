@@ -264,7 +264,7 @@
 			"multisig-label-input-label": "Multisig name",
 			"multisig-label-placeholder": "Type a name for your multisig account",
 			"multisig-no-participants": "No participans added yet",
-			"multisig-participants": "Valid signers",
+			"multisig-participants": "Valid signers ({{numParticipants}} of {{maxParticipants}})",
 			"multisig-threshold-input-empty": "Enter a minimum required signatures value",
 			"multisig-threshold-input-label": "Minimum required signatures",
 			"multisig-threshold-input-max": "Max number of signatures is 10",
@@ -386,6 +386,13 @@
 			"program-address-label": "Program ID",
 			"program-address-placeholder": "Enter the address of the program",
 			"success-message": "Program upgraded successfully."
+		},
+		"set-program-authority": {
+			"main-cta": "Set Authority",
+			"main-cta-busy": "Setting Authority",
+			"modal-title": "New Upgrade Authority",
+			"new-authority-input-label": "New Upgrade Authority",
+			"new-authority-input-placeholder": "Address of new program upgrade authority"
 		}
 	},
 	"notifications": {

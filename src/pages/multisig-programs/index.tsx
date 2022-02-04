@@ -1232,7 +1232,7 @@ export const MultisigProgramsView = () => {
     );
   }
 
-  const renderVaultMeta = () => {
+  const renderProgramMeta = () => {
     return (
       <>
       {selectedProgram && (
@@ -1454,22 +1454,32 @@ export const MultisigProgramsView = () => {
                 <span className="title">{t('multisig.multisig-programs.program-detail-heading')}</span>
               </div>
 
+              {/**
+               * <div className={`stream-details-data-wrapper vertical-scroll ${(loadingPrograms || !selectedProgram) ? 'h-100 flex-center' : ''}`}>
+               */}
+
               <div className="inner-container">
                 {publicKey ? (
                   <>
-                    <div className={`stream-details-data-wrapper vertical-scroll ${(loadingPrograms || !selectedProgram) ? 'h-100 flex-center' : ''}`}>
+                    <div className={`stream-details-data-wrapper vertical-scroll`}>
                       <Spin spinning={loadingPrograms}>
-                        {selectedProgram && (
+
+                        {/* TODO: Use this for now until the refactor is finished */}
+                        {renderCtaRow()}
+                        {/* But remove it when finished so the CTAs are inside of the below condition */}
+
+                        {/* {selectedProgram && (
                           <>
-                            {renderVaultMeta()}
+                            {renderProgramMeta()}
                             <Divider className="activity-divider" plain></Divider>
                             {renderCtaRow()}
                             <Divider className="activity-divider" plain></Divider>
                             {renderTransactions()}
                           </>
-                        )}
+                        )} */}
                       </Spin>
-                      {!loadingPrograms && (
+
+                      {/* {!loadingPrograms && (
                         <>
                         {(!programs || programs.length === 0) && !selectedProgram && (
                           <div className="h-100 flex-center">
@@ -1477,7 +1487,8 @@ export const MultisigProgramsView = () => {
                           </div>
                         )}
                         </>
-                      )}
+                      )} */}
+
                     </div>
                     {selectedProgram && (
                       <div className="stream-share-ctas">
@@ -1490,9 +1501,12 @@ export const MultisigProgramsView = () => {
                     )}
                   </>
                 ) : (
-                  <div className="h-100 flex-center">
-                    <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{t('treasuries.treasury-list.not-connected')}</p>} />
-                  </div>
+                  <>
+                    <span>&nbsp;</span>
+                    {/* <div className="h-100 flex-center">
+                      <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{t('treasuries.treasury-list.not-connected')}</p>} />
+                    </div> */}
+                  </>
                 )}
               </div>
 

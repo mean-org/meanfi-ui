@@ -129,7 +129,7 @@ export const MultisigSetProgramAuthModal = (props: {
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={<div className="modal-title">{t('multisig.upgrade-program.modal-title')}</div>}
+      title={<div className="modal-title">{t('multisig.set-program-authority.modal-title')}</div>}
       footer={null}
       visible={props.isVisible}
       onOk={onAcceptModal}
@@ -161,7 +161,7 @@ export const MultisigSetProgramAuthModal = (props: {
               )}
             </div>
             {/* New authority address */}
-            <div className="form-label">New Upgrade Authority</div>
+            <div className="form-label">{t('multisig.set-program-authority.new-authority-input-label')}</div>
             <div className="well">
               <input id="mint-to-field"
                 className="general-text-input"
@@ -169,7 +169,7 @@ export const MultisigSetProgramAuthModal = (props: {
                 autoCorrect="off"
                 type="text"
                 onChange={onNewAuthChanged}
-                placeholder={"Type the new program upgrade authority address"}
+                placeholder={t('multisig.set-program-authority.new-authority-input-placeholder')}
                 required={true}
                 spellCheck="false"
                 value={newAuthAddress}/>
@@ -269,9 +269,9 @@ export const MultisigSetProgramAuthModal = (props: {
               }
             }}>
             {props.isBusy
-              ? t('multisig.upgrade-program.main-cta-busy')
+              ? t('multisig.set-program-authority.main-cta-busy')
               : transactionStatus.currentOperation === TransactionStatus.Iddle
-                ? "Setting Authority"
+                ? t('multisig.set-program-authority.main-cta')
                 : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
                   ? t('general.cta-finish')
                   : t('general.refresh')

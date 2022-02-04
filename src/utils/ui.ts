@@ -550,3 +550,10 @@ export const getTxFeeAmount = (fees: TransactionFees, amount?: any): number => {
     }
     return fee;
 };
+
+export function scrollToBottom(id: string) {
+    var div = document.getElementById(id);
+    if (div) {
+        div.scrollTop = div.scrollHeight - div.clientHeight;
+    }
+}

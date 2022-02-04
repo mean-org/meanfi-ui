@@ -13,6 +13,7 @@ import { getTokenAmountAndSymbolByTokenAddress, isValidNumber } from '../../util
 import { MultisigParticipants } from '../MultisigParticipants';
 import { MultisigParticipant } from '../../models/multisig';
 import { useWallet } from '../../contexts/wallet';
+import { MAX_MULTISIG_PARTICIPANTS } from '../../constants';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -89,10 +90,10 @@ export const MultisigCreateModal = (props: {
 
   const isFormValid = () => {
     return  multisigThreshold &&
-            multisigThreshold <= 10 &&
+            multisigThreshold <= MAX_MULTISIG_PARTICIPANTS &&
             multisigLabel &&
             multisigOwners.length >= multisigThreshold &&
-            multisigOwners.length <= 10 &&
+            multisigOwners.length <= MAX_MULTISIG_PARTICIPANTS &&
             isOwnersListValid()
       ? true
       : false;
@@ -122,7 +123,7 @@ export const MultisigCreateModal = (props: {
       afterClose={onAfterClose}
       width={props.isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}>
 
-      <div className={!props.isBusy ? "panel1 show vertical-scroll simple-modal-inner-max-height" : "panel1 hide"}>
+      <div className={!props.isBusy ? "panel1 show" : "panel1 hide"}>
 
         {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
           <>
@@ -172,7 +173,7 @@ export const MultisigCreateModal = (props: {
                   <span className="form-field-error">
                     {t('multisig.create-multisig.multisig-threshold-input-empty')}
                   </span>
-                ) : multisigThreshold > 10 ? (
+                ) : multisigThreshold > MAX_MULTISIG_PARTICIPANTS ? (
                   <span className="form-field-error">
                     {t('multisig.create-multisig.multisig-threshold-input-max')}
                   </span>
@@ -181,9 +182,14 @@ export const MultisigCreateModal = (props: {
             </div>
 
             {/* Multisig Owners selector */}
-            <div className="form-label">{t('multisig.create-multisig.multisig-participants')}</div>
             <MultisigParticipants
               participants={multisigOwners}
+              label={
+                t('multisig.create-multisig.multisig-participants', {
+                  numParticipants: multisigOwners.length,
+                  maxParticipants: MAX_MULTISIG_PARTICIPANTS
+                })
+              }
               onParticipantsChanged={(e: MultisigParticipant[]) => setMultisigOwners(e)}
             />
 

@@ -85,7 +85,6 @@ import {
   calculateActionFees as calculateActionFeesV2,
 } from "@mean-dao/msp";
 import { StreamTransferOpenModal } from "../../components/StreamTransferOpenModal";
-import { StreamTreasuryType } from "../../models/treasuries";
 import { StreamsSummary } from "../../models/streams";
 import { UserTokenAccount } from "../../models/transactions";
 

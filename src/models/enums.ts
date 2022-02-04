@@ -88,12 +88,6 @@ export enum OperationType {
     IdoCollectFunds = 104
 }
 
-export enum AllocationType {
-    All = 0,
-    Specific = 1,
-    None = 2
-}
-
 export enum WhitelistClaimType
 {
     Solanium = 0,

@@ -12,6 +12,7 @@ import { TransactionFees } from '@mean-dao/money-streaming';
 import { getTokenAmountAndSymbolByTokenAddress, isValidNumber } from '../../utils/utils';
 import { MultisigParticipants } from '../MultisigParticipants';
 import { MultisigParticipant } from '../../models/multisig';
+import { MAX_MULTISIG_PARTICIPANTS } from '../../constants';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -95,10 +96,10 @@ export const MultisigEditModal = (props: {
 
   const isFormValid = () => {
     return  multisigThreshold &&
-            multisigThreshold <= 10 &&
+            multisigThreshold <= MAX_MULTISIG_PARTICIPANTS &&
             multisigLabel &&
             multisigOwners.length >= multisigThreshold &&
-            multisigOwners.length <= 10 &&
+            multisigOwners.length <= MAX_MULTISIG_PARTICIPANTS &&
             isOwnersListValid()
       ? true
       : false;
@@ -178,7 +179,7 @@ export const MultisigEditModal = (props: {
                   <span className="form-field-error">
                     {t('multisig.create-multisig.multisig-threshold-input-empty')}
                   </span>
-                ) : multisigThreshold > 10 ? (
+                ) : multisigThreshold > MAX_MULTISIG_PARTICIPANTS ? (
                   <span className="form-field-error">
                     {t('multisig.create-multisig.multisig-threshold-input-max')}
                   </span>
@@ -187,9 +188,14 @@ export const MultisigEditModal = (props: {
             </div>
 
             {/* Multisig Owners selector */}
-            <div className="form-label">{t('multisig.create-multisig.multisig-participants')}</div>
             <MultisigParticipants
               participants={multisigOwners}
+              label={
+                t('multisig.create-multisig.multisig-participants', {
+                  numParticipants: multisigOwners.length,
+                  maxParticipants: MAX_MULTISIG_PARTICIPANTS
+                })
+              }
               onParticipantsChanged={(e: MultisigParticipant[]) => setMultisigOwners(e)}
             />
 
@@ -230,11 +236,7 @@ export const MultisigEditModal = (props: {
       </div>
 
       <div 
-        className={
-          props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle 
-            ? "panel2 show" 
-            : "panel2 hide"
-          }>          
+        className={props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? "panel2 show" : "panel2 hide"}>          
         {props.isBusy && transactionStatus !== TransactionStatus.Iddle && (
         <div className="transaction-progress">
           <Spin indicator={bigLoadingIcon} className="icon mt-0" />

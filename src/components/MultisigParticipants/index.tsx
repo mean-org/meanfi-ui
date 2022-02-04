@@ -2,12 +2,13 @@ import React, { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { PlusOutlined } from "@ant-design/icons";
 import { MultisigParticipant } from "../../models/multisig";
-import { isValidAddress } from "../../utils/ui";
+import { isValidAddress, scrollToBottom } from "../../utils/ui";
 import { TextInput } from "../TextInput";
 
 export const MultisigParticipants = (props: {
     participants: MultisigParticipant[];
     onParticipantsChanged: any;
+    label: string;
 }) => {
     const { t } = useTranslation('common');
 
@@ -37,6 +38,9 @@ export const MultisigParticipants = (props: {
         });
         if (!checkIfDuplicateExists(items)) {
             props.onParticipantsChanged(items);
+            setTimeout(() => {
+                scrollToBottom('multisig-participants-max-height');
+            }, 100);
         }
     }, [props]);
 
@@ -47,8 +51,21 @@ export const MultisigParticipants = (props: {
 
     return (
         <>
+        <div className="flex-fixed-right">
+            <div className="left">
+                {props.label ? (
+                    <div className="form-label">{props.label}</div>
+                ) : (<div className="form-label">&nbsp;</div>)}
+            </div>
+            <div className="right">
+                <span className={`flat-button change-button ${props.participants.length === 10 ? 'disabled' : ''}`} onClick={() => addParticipant()}>
+                    <PlusOutlined />
+                    <span className="ml-1">{t('multisig.add-participant-cta')}</span>
+                </span>
+            </div>
+        </div>
         {props.participants && props.participants.length > 0 ? (
-            <div className="mb-3">
+            <div id="multisig-participants-max-height" className={`mb-3 ${props.participants.length > 2 ? 'vertical-scroll pr-2' : ''}`}>
                 {props.participants.map((participant: MultisigParticipant, index: number) => {
                     return (
                         <div className="well-group" key={`${index}`}>
@@ -89,12 +106,6 @@ export const MultisigParticipants = (props: {
         ) : (
             <div className="inner-label pl-1">{t('multisig.create-multisig.multisig-no-participants')}</div>
         )}
-        <div className="text-right mt-3">
-            <span className={`flat-button change-button ${props.participants.length === 10 ? 'disabled' : ''}`} onClick={() => addParticipant()}>
-                <PlusOutlined />
-                <span className="ml-1">{t('multisig.add-participant-cta')}</span>
-            </span>
-        </div>
         </>
     );
 }

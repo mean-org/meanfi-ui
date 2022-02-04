@@ -13,12 +13,12 @@ import { consoleOut, getFormattedNumberToLocale, getIntervalFromSeconds, getShor
 import { TreasuryStreamsBreakdown } from '../../models/streams';
 import { StreamInfo, STREAM_STATE, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { SelectOption, TreasuryTopupParams } from '../../models/common-types';
-import { AllocationType, TransactionStatus } from '../../models/enums';
+import { TransactionStatus } from '../../models/enums';
 import { useWallet } from '../../contexts/wallet';
 import { notify } from '../../utils/notifications';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { isError } from '../../utils/transactions';
-import { Stream, STREAM_STATUS, Treasury, TreasuryType } from '@mean-dao/msp';
+import { AllocationType, Stream, STREAM_STATUS, Treasury, TreasuryType } from '@mean-dao/msp';
 import BN from 'bn.js';
 
 const { Option } = Select;
