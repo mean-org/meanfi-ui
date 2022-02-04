@@ -244,15 +244,12 @@ export const Streams = () => {
       if (updatedStreamsv1 && updatedStreamsv1.length) {
         let freshStream: StreamInfo;
         for (const stream of updatedStreamsv1) {
-          if (streamDetail && streamDetail.id === stream.id) {
-            freshStream = await ms.refreshStream(streamDetail);
-            if (freshStream) {
-              setStreamDetail(freshStream);
-            }
-          }
           freshStream = await ms.refreshStream(stream);
           if (freshStream) {
             newList.push(freshStream);
+            if (streamDetail && streamDetail.id === stream.id) {
+              setStreamDetail(freshStream);
+            }
           }
         }
       }
@@ -266,6 +263,14 @@ export const Streams = () => {
     const timeout = setTimeout(() => {
       if (!customStreamDocked) {
         refreshStreams();
+      } else if (msp && streamDetail && streamDetail.version === 2) {
+        msp.refreshStream(streamDetail as Stream).then(detail => {
+          setStreamDetail(detail as Stream);
+        });
+      } else if (ms && streamDetail && streamDetail.version < 2) {
+        ms.refreshStream(streamDetail as StreamInfo).then(detail => {
+          setStreamDetail(detail as StreamInfo);
+        });
       }
     }, 1000);
 
