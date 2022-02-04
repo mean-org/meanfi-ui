@@ -12,7 +12,9 @@ import common_en from "./translations/en/common.json";
 import common_fr from "./translations/fr/common.json";
 import common_pt from "./translations/pt/common.json";
 import { CustomLoggerService } from "./utils/logger";
+import GitInfo from 'react-git-info/macro';
 
+export const gitInfo = GitInfo();
 export const appConfig = new AppConfigService(process.env.REACT_APP_ENV);
 console.log(`%cApp version:`, 'color:brown', process.env.REACT_APP_VERSION);
 console.log(`%cEnvironment:`, 'color:brown', process.env.REACT_APP_ENV);

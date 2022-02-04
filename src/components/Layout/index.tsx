@@ -2,7 +2,7 @@ import React, { useCallback, useContext, useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import "./../../App.less";
 import "./style.less";
-import { appConfig } from "../..";
+import { appConfig, gitInfo } from "../..";
 import { Layout } from "antd";
 import { AppBar } from "../AppBar";
 import { FooterBar } from "../FooterBar";
@@ -53,6 +53,7 @@ export const AppLayout = React.memo((props: any) => {
   const [gaInitialized, setGaInitialized] = useState(false);
   const [referralAddress, setReferralAddress] = useLocalStorage('pendingReferral', '');
   const [avgTps, setAvgTps] = useState<number | undefined>(undefined);
+  const [layoutInitialized, setLayoutInitialized] = useState(false);
 
   // Clear cachedRpc on App destroy (window is being reloaded)
   useEffect(() => {
@@ -318,6 +319,21 @@ export const AppLayout = React.memo((props: any) => {
       setAddAccountPanelOpen(false);
     }
   }
+
+  useEffect(() => {
+    if (connectionConfig && connectionConfig.endpoint && !layoutInitialized) {
+      console.log('branch:', gitInfo.branch);
+      console.log('tags:', gitInfo.tags);
+      console.log('Commit date:', gitInfo.commit.date);
+      console.log('Commit hash:', gitInfo.commit.hash);
+      console.log('Commit message:', gitInfo.commit.message);
+      console.log('Commit shortHash:', gitInfo.commit.shortHash);
+      setLayoutInitialized(true);
+    }
+  }, [
+    connectionConfig,
+    layoutInitialized
+  ]);
 
   return (
     <>
