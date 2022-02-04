@@ -27,6 +27,7 @@ import { AppStateContext } from "../../contexts/appstate";
 import { useWallet } from "../../contexts/wallet";
 import {
   formatAmount,
+  formatThousands,
   getAmountWithSymbol,
   getTokenAmountAndSymbolByTokenAddress,
   getTokenByMintAddress,
@@ -2613,7 +2614,7 @@ export const Streams = () => {
               <span className="rate-amount">--</span>
             ) : (
               <>
-                <div className="rate-amount">${formatAmount(streamsSummary.totalNet, 5)}</div>
+                <div className="rate-amount">${formatThousands(streamsSummary.totalNet, 5)}</div>
                 <div className="interval">net-change</div>
               </>
             )}
