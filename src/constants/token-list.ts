@@ -22,6 +22,34 @@ export const COMMON_EXCHANGE_TOKENS = ['USDC', 'USDT', 'MEAN', 'wSOL'];
 export const MEAN_TOKEN_LIST: TokenInfo[] = [
     {
         chainId: 101,
+        address: 'MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD',
+        symbol: 'MEAN',
+        name: 'MEAN',
+        decimals: 6,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg',
+        extensions: {
+            discord: 'https://discord.meanfi.com/',
+            medium: 'https://meandao.medium.com',
+            twitter: 'https://twitter.com/meanfinance',
+            website: 'https://www.meanfi.com/',
+        },
+    },
+    {
+        chainId: 103,
+        address: '9S52DYSokWP7kGutbxMsWU5VuGx5by7QPP1u6H7fPuni',
+        symbol: 'MEAN',
+        name: 'MEAN',
+        decimals: 6,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg',
+        extensions: {
+            discord: 'https://discord.meanfi.com/',
+            medium: 'https://meandao.medium.com',
+            twitter: 'https://twitter.com/meanfinance',
+            website: 'https://www.meanfi.com/',
+        },
+    },
+    {
+        chainId: 101,
         address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
         symbol: 'USDC',
         name: 'USD Coin',
@@ -299,32 +327,4 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
             serumV3Usdc: "6oGsL2puUgySccKzn9XA9afqF217LfxP5ocq4B3LWsjy"
         }
     },
-    {
-      chainId: 101,
-      address: 'MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD',
-      symbol: 'MEAN',
-      name: 'MEAN',
-      decimals: 6,
-      logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg',
-      extensions: {
-        discord: 'https://discord.meanfi.com/',
-        medium: 'https://meandao.medium.com',
-        twitter: 'https://twitter.com/meanfinance',
-        website: 'https://www.meanfi.com/',
-      },
-    },
-    {
-      chainId: 103,
-      address: '9S52DYSokWP7kGutbxMsWU5VuGx5by7QPP1u6H7fPuni',
-      symbol: 'MEAN',
-      name: 'MEAN',
-      decimals: 6,
-      logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg',
-      extensions: {
-        discord: 'https://discord.meanfi.com/',
-        medium: 'https://meandao.medium.com',
-        twitter: 'https://twitter.com/meanfinance',
-        website: 'https://www.meanfi.com/',
-      },
-    }
 ];

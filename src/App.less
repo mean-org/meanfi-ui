@@ -1040,6 +1040,18 @@ footer.ant-layout-footer {
     margin: 0px;
   }
 }
+
+.warning-bar {
+  flex: 0 0 30px;
+  align-items: center;
+  justify-content: center;
+  display: flex;
+  font-weight: bold;
+  background-color: var(--color-primary);
+}
+.warning-bar ~ header.ant-layout-header.App-Bar {
+  top: 30px;
+}
 .App-Bar {
   align-self: center;
   justify-content: space-between;

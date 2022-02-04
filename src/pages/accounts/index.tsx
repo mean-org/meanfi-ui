@@ -25,6 +25,7 @@ import {
   fetchAccountTokens,
   findATokenAddress,
   formatAmount,
+  formatThousands,
   getAmountFromLamports,
   getFormattedRateAmount,
   getTokenAmountAndSymbolByTokenAddress,
@@ -961,7 +962,7 @@ export const AccountsView = () => {
                 <span className="rate-amount">--</span>
               ) : (
                 <>
-                  <div className="rate-amount">${formatAmount(streamsSummary.totalNet, 5)}</div>
+                  <div className="rate-amount">${formatThousands(streamsSummary.totalNet, 5)}</div>
                   <div className="interval">net-change</div>
                 </>
               )}

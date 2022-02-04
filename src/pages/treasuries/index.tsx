@@ -3918,7 +3918,8 @@ export const TreasuriesView = () => {
                 className="thin-stroke"
                 disabled={
                   isTxInProgress() ||
-                  isAnythingLoading() ||
+                  loadingTreasuries ||
+                  loadingTreasuryDetails ||
                   (!treasuryDetails || !isNewTreasury || v2.balance - v2.allocationAssigned <= 0)
                 }
                 onClick={showCreateStreamModal}>

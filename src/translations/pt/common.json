@@ -408,6 +408,7 @@
 		"network-connection-down": "No network connection. App is OFFLINE!",
 		"network-connection-good": "Network connection is good",
 		"network-connection-poor": "Network connection quality is very poor",
+		"network-performance-low": "Solana network is experiencing degraded performance. Transactions may fail to send or confirm.",
 		"referral-link-copied-message": "Friend referral link copied to clipboard",
 		"referral-link-not-copied-message": "Could not copy your Friend referral link",
 		"streamid-copied-message": "A conta de transferência foi copiada com sucesso para el clipboard",
@@ -419,7 +420,11 @@
 		"treasuryid-not-copied-message": "Could not copy treasury Address",
 		"wallet-connect-message": "Conectado à carteira {{address}}",
 		"wallet-connection-event-title": "Atualização da carteira",
-		"wallet-disconnect-message": "Desconectado da carteira"
+		"wallet-disconnect-message": "Desconectado da carteira",
+		"token-address-copied-message": "Endereço do token copiado com sucesso",
+		"token-address-not-copied-message": "Não foi possível copiar o endereço do token",
+		"token-authority-copied-message": "Token Authority copiado com sucesso",
+		"token-authority-not-copied-message": "Não foi possível copiar a Autoridade de Token"
 	},
 	"open-stream": {
 		"label-streamid-input": "Insira a id de transferência",
@@ -449,6 +454,43 @@
 		"refer-friend-hint": "Refer a friend and earn up to $25 in MEAN tokens when they exchange $100 worth of crypto",
 		"see-rules": "See rules for details",
 		"share-to": "Share to"
+	},
+	"stats": {
+		"title": "Estatísticas",
+		"subtitle": "Painel de análise",
+		"buy-btn": "Comprar",
+		"total-liquidity-btn": "Adicionar liquidez",
+		"summary": {
+			"summary-title": "Resumo do token MEAN",
+			"token-name": "Nome",
+			"token-address": "Endereço",
+			"token-authority": "Autoridade",
+			"token-decimals": "Decimais",
+			"token-address-copy": "Copiar endereço do token",
+			"token-authority-copy": "Copiar autoridade de token"
+		},
+		"price": {
+			"price-title": "Preço"
+		},
+		"market": {
+			"market-cap-title": "Capitalização de Mercado",
+			"holders-title": "Detentores",
+			"volume-title": "Volume (24H)",
+			"total-supply-title": "Fornecimento Máximo",
+			"circulating-supply-title": "Fornecimento Circulante",
+			"total-money-streams-title": "Total de fluxos de dinheiro",
+			"total-value-locked-title": "Valor total bloqueado",
+			"token-fully_dilluted_market_cap": "O valor total de mercado da oferta circulante de uma criptomoeda. É análogo à capitalização de flutuação livre no mercado de ações. Valor de mercado = Preço atual x oferta circulante",
+			"token-holders": "Entusiastas que denotam uma abordagem de longo prazo para investir em criptomoedas",
+			"token-total-volume": "Uma medida de quanto de uma criptomoeda foi negociada nas últimas 24 horas",
+			"token-total-supply": "A quantidade de moedas que já foram criadas, menos as moedas que foram queimadas. É análoga às ações em circulação no mercado de ações",
+			"token-circulating-suppply": "A quantidade de moedas que estão circulando no mercado e estão em mãos públicas. É análoga ao fluxo de ações no mercado de ações",
+			"token-total-money-streams": "Número total de pagamentos contínuos ao longo do tempo que foram criados pelo Money Streaming Program",
+			"token-total-value-locked": "O número de ativos que estão atualmente sendo apostados em um protocolo específico"
+		},
+		"pairs": {
+			"total-liquidity": "Liquidez Total"
+		}
 	},
 	"streams": {
 		"back-to-my-streams-cta": "Voltar para transferências",

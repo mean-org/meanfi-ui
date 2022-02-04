@@ -408,6 +408,7 @@
 		"network-connection-down": "No network connection. App is OFFLINE!",
 		"network-connection-good": "Network connection is good",
 		"network-connection-poor": "Network connection quality is very poor",
+		"network-performance-low": "Solana network is experiencing degraded performance. Transactions may fail to send or confirm.",
 		"referral-link-copied-message": "Friend referral link copied to clipboard",
 		"referral-link-not-copied-message": "Could not copy your Friend referral link",
 		"streamid-copied-message": "Stream address successfully copied to clipboard",
@@ -419,7 +420,11 @@
 		"treasuryid-not-copied-message": "Could not copy treasury Address",
 		"wallet-connect-message": "Connected to wallet {{address}}",
 		"wallet-connection-event-title": "Wallet update",
-		"wallet-disconnect-message": "Disconnected from wallet"
+		"wallet-disconnect-message": "Disconnected from wallet",
+		"token-address-copied-message": "Token Address successfully copied",
+		"token-address-not-copied-message": "Could not copy Token Address",
+		"token-authority-copied-message": "Token Authority successfully copied",
+		"token-authority-not-copied-message": "Could not copy Token Authority"
 	},
 	"open-stream": {
 		"label-streamid-input": "Stream id to open",
@@ -449,6 +454,43 @@
 		"refer-friend-hint": "Refer a friend and earn up to $25 in MEAN tokens when they exchange $100 worth of crypto",
 		"see-rules": "See rules for details",
 		"share-to": "Share to"
+	},
+	"stats": {
+		"title": "Stats",
+		"subtitle": "Analytics Dashboard",
+		"buy-btn": "Buy",
+		"total-liquidity-btn": "Add Liquidity",
+		"summary": {
+			"summary-title": "MEAN Token Summary",
+			"token-name": "Name",
+			"token-address": "Address",
+			"token-authority": "Authority",
+			"token-decimals": "Decimals",
+			"token-address-copy": "Copy token address",
+			"token-authority-copy": "Copy token authority"
+		},
+		"price": {
+			"price-title": "Price"
+		},
+		"market": {
+			"market-cap-title": "Market Cap",
+			"holders-title": "Holders",
+			"volume-title": "Volume (24H)",
+			"total-supply-title": "Total Supply",
+			"circulating-supply-title": "Circulating Supply",
+			"total-money-streams-title": "Total Money Streams",
+			"total-value-locked-title": "Total Value Locked",
+			"token-fully_dilluted_market_cap": "The total market value of a cryptocurrency's circulating supply. It is analogous to the free-float capitalization in the stock market. Market Cap = Current Price x Circulating Supply",
+			"token-holders": "Enthusiasts denoting a long-term approach to cryptocurrency investing",
+			"token-total-volume": "A measure of how much of a cryptocurrency was traded in the last 24 hours",
+			"token-total-supply": "The amount of coins that have been already created, minus any coins that have been burned. It is analogous to the outstanding shares in the stock market",
+			"token-circulating-suppply": "The amount of coins that are circulating in the market and are in public hands. It is analogous to the flowing shares in the stock market",
+			"token-total-money-streams": "Total number of continuous payments over time that have been created by the Money Streaming Program",
+			"token-total-value-locked": "The number of assets that are currently being staked in a specific protocol"
+		},
+		"pairs": {
+			"total-liquidity": "Total Liquidity"
+		}
 	},
 	"streams": {
 		"back-to-my-streams-cta": "Back to Money Streams",

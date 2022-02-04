@@ -166,9 +166,16 @@ export const formatPct = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 2,
 });
 
-export const formatThousands = (val: number) => {
-  const integerWithThousands = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
-  return integerWithThousands.format(val);
+export const formatThousands = (val: number, decimals?: number) => {
+  let convertedVlue: Intl.NumberFormat;
+
+  if (decimals) {
+    convertedVlue = new Intl.NumberFormat('en-US', { maximumFractionDigits: 6 });
+  } else {
+    convertedVlue = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
+  }
+
+  return convertedVlue.format(val);
 }
 
 export function convert(
