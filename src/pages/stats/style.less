@@ -3,6 +3,9 @@
   .promo-space div:nth-child(2) {
     display: none;
   }
+  .info-cards {
+    height: auto !important;
+  }
   .slide {
     margin-bottom: 4em;
   }
@@ -29,6 +32,9 @@
     .card-info {
       font-size: 1.65em;
     }
+  }
+  button {
+    white-space: normal;
   }
 }
 .ant-row {
@@ -106,6 +112,15 @@
     button {
       color: var(--color-secondary-alpha-85);
       border: none;
+      width: 48px;
+      padding: 0 !important;
+      span {
+        width: inherit;
+        height: inherit;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
     }
     .active {
       border: var(--custom-border-style);
@@ -127,6 +142,12 @@
     box-shadow: 0px 1px 2px 0px rgb(60 64 67 / 30%), 0px 2px 6px 2px rgb(60 64 67 / 15%);
     text-align: center;
   }
+}
+
+/*************** INFO CARDS ***************/
+.info-cards {
+  min-height: 102px;
+  height: 100%;
 }
 
 /*************** SLIDER CARDS ***************/

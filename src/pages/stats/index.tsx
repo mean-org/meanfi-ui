@@ -15,7 +15,6 @@ import { PublicKey } from '@solana/web3.js';
 import { AppStateContext } from '../../contexts/appstate';
 import { UserTokenAccount } from '../../models/transactions';
 import { TokenInfo } from '@solana/spl-token-registry';
-import { toUiAmount } from '../../utils/utils';
 
 export const StatsView = () => { 
   const { t } = useTranslation('common');
@@ -37,26 +36,19 @@ export const StatsView = () => {
     if (!connection) { return; }
 
     (async () => {
-    
       const token = userTokens.find(t => t.symbol === 'MEAN');
       if (!token) { return; }
-      console.log('MEAN token:', token);
+
       const mint = new PublicKey(token.address);
       setMeanToken(token);
 
-      // 1. use getParsedAccountInfo
+      // use getParsedAccountInfo
       let accountInfo = await connection.getParsedAccountInfo(mint);
-      if (accountInfo) {
-        console.log(`raw data: ${JSON.stringify((accountInfo as any).value.data["parsed"]["info"])}`);
-        const amount = (accountInfo as any).value.data["parsed"]["info"]["supply"];
-        setMeanTotalSupply(toUiAmount(amount, meanToken ? meanToken.decimals : 6));
+      if (accountInfo) {   
+        setMeanTotalSupply((accountInfo as any).value.data["parsed"]["info"]["supply"]);
         setMeanDecimals((accountInfo as any).value.data["parsed"]["info"]["decimals"]);
         setMeanMintAuth((accountInfo as any).value.data["parsed"]["info"]["mintAuthority"]);
-        // console.log(`supply: ${(accountInfo as any).value.data["parsed"]["info"]["supply"]}`);
-        // console.log(`decimals: ${(accountInfo as any).value.data["parsed"]["info"]["decimals"]}`);
-        // console.log(`mintAuthority: ${(accountInfo as any).value.data["parsed"]["info"]["mintAuthority"]}`);
       }
-
     })();
 
   }, [
@@ -64,8 +56,6 @@ export const StatsView = () => {
     userTokens,
     connection,
   ]);
-
-  // Rendering
 
   return (
     <>
@@ -81,9 +71,9 @@ export const StatsView = () => {
             </div>
           </div>
           <PromoSpace />
-          <FirstCardsLayout />
+          <FirstCardsLayout meanDecimals={meanDecimals} />
           <Divider />
-          <SecondCardsLayout />
+          <SecondCardsLayout meanTotalSupply={meanTotalSupply} />
           <Divider />
           <ThirdCardsLayout />
         </div>
@@ -92,14 +82,6 @@ export const StatsView = () => {
     </>
   );
 }
-
-/**
- * <CountUp
-    end={userAllocation.tokenAmount}
-    decimals={2}
-    separator=','
-    duration={2} />
- */
 
 /*********************** PROMO SPACE *************************/
 export const PromoSpace = () => {
@@ -162,7 +144,7 @@ export const PromoSpace = () => {
 }
 
 /*********************** FIRST TYPE OF CARDS *************************/
-export const FirstCardsLayout = () => {
+export const FirstCardsLayout = ({ meanDecimals }: any) => {
   const { t } = useTranslation('common');
 
   const summaries = [
@@ -182,7 +164,7 @@ export const FirstCardsLayout = () => {
     },
     {
       label: t('stats.summary.token-decimals'),
-      value: data.decimals
+      value: meanDecimals
     }
   ];
   
@@ -296,7 +278,7 @@ export const FirstCardsLayout = () => {
 }
 
 /*********************** SECOND TYPE OF CARDS *************************/
-export const SecondCardsLayout = () => {
+export const SecondCardsLayout = ({ meanTotalSupply }: any) => {
   const { t } = useTranslation('common');
 
   const cards = [
@@ -317,7 +299,7 @@ export const SecondCardsLayout = () => {
     },
     {
       label: t('stats.market.total-supply-title'),
-      value: `$ ${data.max_total_supply}`,
+      value: meanTotalSupply,
       description: "stats.market.token-total-supply"
     },
     {
@@ -341,7 +323,7 @@ export const SecondCardsLayout = () => {
     <Row gutter={[8, 8]}>
       {cards.map((card, index) => (
         <Col xs={24} sm={12} md={8} lg={6} key={index}>
-          <Card className="ant-card card">
+          <Card className="ant-card card info-cards">
             <div className="ant-card-body card-body">
               <div className="card-content">
                 <span className="info-label">{card.label}</span>
