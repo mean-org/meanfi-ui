@@ -17,7 +17,7 @@ import ReactGA from 'react-ga';
 import { InfluxDB, Point } from '@influxdata/influxdb-client';
 import { isMobile, isDesktop, isTablet, browserName, osName, osVersion, fullBrowserVersion, deviceType } from "react-device-detect";
 import { environment } from "../../environments/environment";
-import { GOOGLE_ANALYTICS_PROD_TAG_ID, PERFORMANCE_SAMPLE_INTERVAL, PERFORMANCE_THRESHOLD } from "../../constants";
+import { GOOGLE_ANALYTICS_PROD_TAG_ID, PERFORMANCE_SAMPLE_INTERVAL, PERFORMANCE_SAMPLE_INTERVAL_FAST, PERFORMANCE_THRESHOLD, SOLANA_STATUS_PAGE } from "../../constants";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import { reportConnectedAccount } from "../../utils/api";
 import { Connection } from "@solana/web3.js";
@@ -113,8 +113,8 @@ export const AppLayout = React.memo((props: any) => {
         tpsValues = round(tpsValues);
         // consoleOut('Last 60 TPS samples:', tpsValues, 'blue');
 
-        const avgTps = Math.round(tpsValues[0]);
-        setAvgTps(avgTps);
+        const averagegTps = Math.round(tpsValues[0]);
+        setAvgTps(averagegTps);
       } catch (error) {
         console.error(error);
       }
@@ -122,7 +122,7 @@ export const AppLayout = React.memo((props: any) => {
 
     const performanceInterval = setInterval(
       getPerformanceSamples,
-      PERFORMANCE_SAMPLE_INTERVAL
+      avgTps && avgTps < PERFORMANCE_THRESHOLD ? PERFORMANCE_SAMPLE_INTERVAL_FAST : PERFORMANCE_SAMPLE_INTERVAL
     );
 
     getPerformanceSamples();
@@ -130,7 +130,10 @@ export const AppLayout = React.memo((props: any) => {
     return () => {
       clearInterval(performanceInterval);
     };
-  }, [connectionConfig.endpoint]);
+  }, [
+    avgTps,
+    connectionConfig.endpoint
+  ]);
 
   const getPlatform = (): string => {
     return isDesktop ? 'Desktop' : isTablet ? 'Tablet' : isMobile ? 'Mobile' : 'Other';
@@ -204,12 +207,11 @@ export const AppLayout = React.memo((props: any) => {
 
   // Show Avg TPS on the console
   useEffect(() => {
-    if (avgTps !== undefined && isWhitelisted) {
+    if (avgTps !== undefined) {
       setNeedRefresh(true);
     }
   }, [
-    avgTps,
-    isWhitelisted
+    avgTps
   ]);
 
   // Hook on the wallet connect/disconnect
@@ -371,7 +373,11 @@ export const AppLayout = React.memo((props: any) => {
     <div className="App">
       <Layout>
         {(isProd() && avgTps !== undefined && avgTps < PERFORMANCE_THRESHOLD) && (
-          <div className="warning-bar">{t('notifications.network-performance-low')}</div>
+          <div className="warning-bar">
+            <a className="simplelink underline-on-hover" target="_blank" rel="noopener noreferrer" href={SOLANA_STATUS_PAGE}>
+              {t('notifications.network-performance-low')}
+            </a>
+          </div>
         )}
         <Header className="App-Bar">
           {(detailsPanelOpen || (addAccountPanelOpen && !canShowAccountDetails)) && (
