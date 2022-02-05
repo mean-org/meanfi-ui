@@ -3,6 +3,8 @@
 		"connect-button": "Conecte su billetera",
 		"copy-address": "Copiar dirección",
 		"diagnosis-info": "Información de diagnóstico",
+		"diagnosis-info-copied": "Información de diagnóstico copiada al portapapeles",
+		"diagnosis-info-not-copied": "No se pudo copiar la información de diagnóstico al portapapeles",
 		"disconnect": "Desconectar",
 		"explorer-link": "Ver en Solana Explorer",
 		"modal-title": "Cuenta",
@@ -218,6 +220,7 @@
 	"general": {
 		"cta-change": "Cambiar",
 		"cta-close": "Cerrar",
+		"cta-copy": "Copiar",
 		"cta-finish": "Terminar",
 		"cta-try-again": "Try again",
 		"day": "día",

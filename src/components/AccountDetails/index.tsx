@@ -56,6 +56,28 @@ export const AccountDetails = () => {
     }
   }
 
+  const onCopyDiagnosisInfo = () => {
+    if (!diagnosisInfo) {
+      notify({
+        description: t('account-area.diagnosis-info-not-copied'),
+        type: "error"
+      });
+      return;
+    }
+    const debugInfo = `${diagnosisInfo.dateTime}\n${diagnosisInfo.clientInfo}\n${diagnosisInfo.networkInfo}\n${diagnosisInfo.accountInfo}\n${diagnosisInfo.appBuildInfo}`;
+    if (copyText(debugInfo)) {
+      notify({
+        description: t('account-area.diagnosis-info-copied'),
+        type: "info"
+      });
+    } else {
+      notify({
+        description: t('account-area.diagnosis-info-not-copied'),
+        type: "error"
+      });
+    }
+  }
+
   if (!wallet?.publicKey) {
     return null;
   }
@@ -166,15 +188,26 @@ export const AccountDetails = () => {
             </Col>
           </Row>
           {diagnosisInfo && (
-            <Collapse
-              ghost
-              bordered={false}
-              defaultActiveKey={[]}
-              expandIcon={({ isActive }) => <IconDiagnosis className="mean-svg-icons" />}>
-              <Panel header={t('account-area.diagnosis-info')} key="1">
-                {renderDebugInfo}
-              </Panel>
-            </Collapse>
+            <div className="position-relative">
+              <Button
+                shape="round"
+                size="small"
+                type="ghost"
+                className="mean-icon-button thin-stroke extra-small position absolute right-top"
+                onClick={onCopyDiagnosisInfo}>
+                <IconCopy className="mean-svg-icons" />
+                <span className="icon-button-text">{t('general.cta-copy')}</span>
+              </Button>
+              <Collapse
+                ghost
+                bordered={false}
+                defaultActiveKey={[]}
+                expandIcon={({ isActive }) => <IconDiagnosis className="mean-svg-icons" />}>
+                <Panel header={t('account-area.diagnosis-info')} key="1">
+                  {renderDebugInfo}
+                </Panel>
+              </Collapse>
+            </div>
           )}
         </div>
       </Modal>

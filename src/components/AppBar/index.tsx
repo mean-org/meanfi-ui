@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, Tooltip } from 'antd';
 import { ThunderboltOutlined } from '@ant-design/icons';
 import { useWallet } from "../../contexts/wallet";
-import { AccountDetails } from "../CurrentUserBadge";
+import { AccountDetails } from "../AccountDetails";
 import { ConnectButton } from "../ConnectButton";
 import { AppContextMenu } from "../AppContextMenu";
 import { CurrentBalance } from "../CurrentBalance";

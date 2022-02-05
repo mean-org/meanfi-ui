@@ -3,6 +3,8 @@
 		"connect-button": "Connecter un portefeuille",
 		"copy-address": "Copier l'adresse",
 		"diagnosis-info": "Informations de diagnostic",
+		"diagnosis-info-copied": "Informations de diagnostic copiées dans le presse-papiers",
+		"diagnosis-info-not-copied": "Impossible de copier les informations de diagnostic dans le presse-papiers",
 		"disconnect": "Déconnecter",
 		"explorer-link": "Voir dans Solana Explorer",
 		"modal-title": "Compte",
@@ -218,6 +220,7 @@
 	"general": {
 		"cta-change": "Changement",
 		"cta-close": "Fermer",
+		"cta-copy": "Copier",
 		"cta-finish": "Terminer",
 		"cta-try-again": "Try again",
 		"day": "journée",

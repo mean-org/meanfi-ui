@@ -1,6 +1,6 @@
 import React from 'react';
 import { useWallet } from "../../contexts/wallet";
-import { AccountDetails } from "../CurrentUserBadge";
+import { AccountDetails } from "../AccountDetails";
 import { ConnectButton } from "../ConnectButton";
 import { AppContextMenu } from '../AppContextMenu';
 import { CurrentBalance } from '../CurrentBalance';

@@ -3,6 +3,8 @@
 		"connect-button": "Conecte sua carteira",
 		"copy-address": "Copiar endereço",
 		"diagnosis-info": "Informações de diagnóstico",
+		"diagnosis-info-copied": "Informações de diagnóstico copiadas para a área de transferência",
+		"diagnosis-info-not-copied": "Não foi possível copiar as informações de diagnóstico para a área de transferência",
 		"disconnect": "Desconectar",
 		"explorer-link": "Veja no Solana Explorer",
 		"modal-title": "Conta",
@@ -218,6 +220,7 @@
 	"general": {
 		"cta-change": "Mudança",
 		"cta-close": "Fechar",
+		"cta-copy": "Copiar",
 		"cta-finish": "Terminar",
 		"cta-try-again": "Try again",
 		"day": "dia",

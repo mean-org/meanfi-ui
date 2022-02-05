@@ -3,6 +3,8 @@
 		"connect-button": "Connect wallet account",
 		"copy-address": "Copy Address",
 		"diagnosis-info": "Diagnosis info",
+		"diagnosis-info-copied": "Diagnosis info copied to the clipboard",
+		"diagnosis-info-not-copied": "Could not copy Diagnosis info to the clipboard",
 		"disconnect": "Disconnect",
 		"explorer-link": "View on Solana Explorer",
 		"modal-title": "Account",
@@ -218,6 +220,7 @@
 	"general": {
 		"cta-change": "Change",
 		"cta-close": "Close",
+		"cta-copy": "Copy",
 		"cta-finish": "Finish",
 		"cta-try-again": "Try again",
 		"day": "day",
