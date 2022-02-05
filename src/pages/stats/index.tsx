@@ -1,20 +1,17 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { PreFooter } from "../../components/PreFooter";
 import "./style.less";
-import { data } from "./data";
-import { IconInfoCircle, IconStats } from '../../Icons';
-import { Button, Card, Col, Divider, Row, Tooltip } from 'antd';
-import { CopyOutlined } from '@ant-design/icons';
-import { notify } from '../../utils/notifications';
-import { copyText } from '../../utils/ui';
+import { IconStats } from '../../Icons';
+import { Col, Row } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
-import { PriceGraph } from './PriceGraph';
 import { useConnection } from '../../contexts/connection';
 import { PublicKey } from '@solana/web3.js';
 import { AppStateContext } from '../../contexts/appstate';
 import { UserTokenAccount } from '../../models/transactions';
 import { TokenInfo } from '@solana/spl-token-registry';
+import { TokenStats } from './TokenStats';
+
+const tabs = ["Mean Token", "MeanFi", "Mean DAO"];
 
 export const StatsView = () => { 
   const { t } = useTranslation('common');
@@ -26,6 +23,14 @@ export const StatsView = () => {
   const [meanDecimals, setMeanDecimals] = useState<number | undefined>(undefined);
   const [meanMintAuth, setMeanMintAuth] = useState<string>('');
   const [meanToken, setMeanToken] = useState<TokenInfo | UserTokenAccount | undefined>(undefined);
+
+  const [activeTab, setActiveTab] = useState(tabs[0]);
+
+  const onClickHandler = (event: any) => {
+    if (event.target.innerHTML !== activeTab) {
+      setActiveTab(event.target.innerHTML);
+    }
+  };
 
   // Getters
 
@@ -70,12 +75,28 @@ export const StatsView = () => {
               {t('stats.subtitle')}
             </div>
           </div>
+          <ul className="tabs ant-menu-overflow ant-menu-horizontal">
+            {tabs.map((tab, index) => (
+              <li 
+                key={index} 
+                className={`ant-menu-item ${activeTab === tab ? "active ant-menu-item-selected" : ""}`} 
+                tabIndex={0} 
+                onClick={onClickHandler}
+              >
+                <span className="ant-menu-title-content">{tab}</span>
+              </li>
+            ))}
+          </ul>
           <PromoSpace />
-          <FirstCardsLayout meanDecimals={meanDecimals} />
-          <Divider />
-          <SecondCardsLayout meanTotalSupply={meanTotalSupply} />
-          <Divider />
-          <ThirdCardsLayout />
+          {activeTab === "Mean Token" &&           
+            <TokenStats 
+              meanTotalSupply={meanTotalSupply} 
+              meanDecimals={meanDecimals} 
+              meanMintAuth={meanMintAuth} 
+            />
+          }
+          {activeTab === "MeanFi" && "MeanFi"}
+          {activeTab === "Mean DAO" && "Mean DAO"}
         </div>
       </div>
       <PreFooter />
@@ -140,258 +161,5 @@ export const PromoSpace = () => {
         </Row> 
       )}
     </>
-  )
-}
-
-/*********************** FIRST TYPE OF CARDS *************************/
-export const FirstCardsLayout = ({ meanDecimals }: any) => {
-  const { t } = useTranslation('common');
-
-  const summaries = [
-    {
-      label: t('stats.summary.token-name'),
-      value: data.token_name
-    },
-    {
-      label: t('stats.summary.token-address'),
-      value: data.token_address,
-      tooltip: "stats.summary.token-address-copy"
-    },
-    {
-      label: t('stats.summary.token-authority'),
-      value: data.authority,
-      tooltip: "stats.summary.token-authority-copy"
-    },
-    {
-      label: t('stats.summary.token-decimals'),
-      value: meanDecimals
-    }
-  ];
-  
-  // Returns an information or error notification each time the copy icon is clicked
-  const onCopyText = (event: any) => { 
-    if (event.currentTarget.name === "Address") {
-      if (data.token_address && copyText(data.token_address)) {
-        notify({
-          description: t('notifications.token-address-copied-message'),
-          type: "info"
-        });
-      } else {
-        notify({
-          description: t('notifications.token-address-not-copied-message'),
-          type: "error"
-        });
-      }
-    } else if (event.currentTarget.name === "Authority") {
-      if (data.authority && copyText(data.authority)) {
-        notify({
-          description: t('notifications.token-authority-copied-message'),
-          type: "info"
-        });
-      } else {
-        notify({
-          description: t('notifications.token-authority-not-copied-message'),
-          type: "error"
-        });
-      }
-    }
-  };
-
-  const renderHeadSummary = (
-    <div className="ant-card-head-title">
-      <span>{t("stats.summary.summary-title")}</span>
-      <button type="button" className="ant-btn ant-btn-primary ant-btn-round ant-btn-sm thin-stroke">
-        <Link to={"/exchange"}>
-          <span>{t('stats.buy-btn')}</span>
-        </Link>
-      </button>
-    </div>
-  );
-
-  const renderBodySummary = (    
-    <>
-      {summaries.map((summary, index) => (
-        <div className="summary-content" key={index}>
-          <span className="inner-label">{summary.label}</span>
-          <div className="summary-content_text">
-            <span className="ant-typography">{summary.value}</span>
-            {summary.tooltip && (
-              <span className="icon-button-container">
-                <Tooltip placement="bottom" title={t(summary.tooltip)}>
-                  <Button
-                    type="default"
-                    shape="circle"
-                    size="middle"
-                    icon={<CopyOutlined className="mean-svg-icons" />}
-                    onClick={onCopyText}
-                    name={summary.label}
-                  />
-                </Tooltip>
-              </span>
-            )}
-          </div>
-        </div>
-      ))}
-    </>
-  )
-
-  const renderHeadPrice = (
-    <div className="ant-card-head-title">
-      <span>{t("stats.price.price-title")}</span>
-      <span>$ {data.price}</span>
-    </div>
-  );
-
-  const renderBodyPrice = (
-    <PriceGraph />
-  );
-
-  const cards = [
-    {
-      head: renderHeadSummary,
-      body: renderBodySummary
-    },
-    {
-      head: renderHeadPrice,
-      body: renderBodyPrice
-    }
-  ];
-
-  return (
-    <Row gutter={[8, 8]}>
-      {cards.map((card, index) => (
-        <Col xs={24} sm={24} md={12} lg={12} key={index}>
-          <Card className="ant-card card summary-card">
-            <div className="ant-card-head">
-              <div className="ant-card-head-wrapper">
-                {card.head}
-              </div>
-            </div>
-            <div className="ant-card-body">
-              {card.body}
-            </div>
-          </Card>
-        </Col>
-      ))}
-    </Row>
-  )
-}
-
-/*********************** SECOND TYPE OF CARDS *************************/
-export const SecondCardsLayout = ({ meanTotalSupply }: any) => {
-  const { t } = useTranslation('common');
-
-  const cards = [
-    {
-      label: t('stats.market.market-cap-title'),
-      value: `$ ${data.fully_dilluted_market_cap}`,
-      description: "stats.market.token-fully_dilluted_market_cap"
-    },
-    {
-      label: t('stats.market.holders-title'),
-      value: data.holders,
-      description: "stats.market.token-holders"
-    },
-    {
-      label: t('stats.market.volume-title'),
-      value: `$ ${data.total_volume}`,
-      description: "stats.market.token-total-volume"
-    },
-    {
-      label: t('stats.market.total-supply-title'),
-      value: meanTotalSupply,
-      description: "stats.market.token-total-supply"
-    },
-    {
-      label: t('stats.market.circulating-supply-title'),
-      value: `$ ${data.circulating_supply}`,
-      description: "stats.market.token-circulating-suppply"
-    },
-    {
-      label: t('stats.market.total-money-streams-title'),
-      value: data.total_money_streams,
-      description: "stats.market.token-total-money-streams"
-    },
-    {
-      label: t('stats.market.total-value-locked-title'),
-      value: `$ ${data.total_value_locked}`,
-      description: "stats.market.token-total-value-locked"
-    },
-  ];
-
-  return (
-    <Row gutter={[8, 8]}>
-      {cards.map((card, index) => (
-        <Col xs={24} sm={12} md={8} lg={6} key={index}>
-          <Card className="ant-card card info-cards">
-            <div className="ant-card-body card-body">
-              <div className="card-content">
-                <span className="info-label">{card.label}</span>
-                <Tooltip placement="top" title={t(card.description)}>
-                  <span>
-                    <IconInfoCircle className="mean-svg-icons" />
-                  </span>
-                </Tooltip>
-              </div>
-              <span className="card-info">{card.value}</span>
-            </div>
-          </Card>
-        </Col>
-      ))}
-    </Row>
-  )
-}
-
-/*********************** THIRD TYPE OF CARDS *************************/
-export const ThirdCardsLayout = () => {
-  const { t } = useTranslation('common');
-
-  return (
-    <Row gutter={[8, 8]} className="slider-row">
-      <div className="row flex-nowrap slide">
-        {data.pairs.map((pair, index) => (
-          <Col xs={12} sm={8} md={6} lg={4} key={index}>
-            <Card className="ant-card card slide-card">
-              <div className="ant-card-body card-body slide-content">
-                  <div className="slide-content_avatar">
-                    <div className="avatar-coin">
-                      <div className="avatar-coin__content row">
-                        <img src={pair.img1} alt={`${pair.base}/${pair.target}`} />
-                      </div>
-                    </div>
-                    <div className="avatar-coin">
-                      <div className="avatar-coin__content row">
-                        <img src={pair.img2} alt={`${pair.base}/${pair.target}`} />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="slide-content_info">
-                    <span className="info-pair">{pair.base}/{pair.target}</span>
-                    <span className="info-name mb-2">{pair.name}</span>
-                    <div className="info-liquidity mb-3">
-                      <span>{t('stats.pairs.total-liquidity')}:</span>
-                      <span>${pair.total_liquidity}</span>
-                  </div>
-                </div>
-                <div className="slide-content_buttons">
-                  {pair.type === "DEX" && (
-                    <Button type="ghost"   shape="round" size="small" className="thin-stroke mb-1">
-                      <a href={pair.buy} target="_blank" rel="noreferrer">
-                        {t('stats.total-liquidity-btn')}
-                      </a>
-                    </Button>
-                  )}
-                  <Button type="primary" shape="round" size="small" className="thin-stroke">
-                    <a href={pair.buy} target="_blank" rel="noreferrer">
-                      {t('stats.buy-btn')}
-                    </a>
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          </Col>
-        ))}
-      </div>
-    </Row>
   )
 }

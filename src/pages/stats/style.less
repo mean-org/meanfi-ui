@@ -9,6 +9,12 @@
   .slide {
     margin-bottom: 4em;
   }
+  ul.tabs {
+    width: 100% !important;
+    li span {
+      align-items: center !important;
+    }
+  }
 }
 
 @media (max-width: 768px) {
@@ -20,7 +26,7 @@
   }
 }
 
-/*************** GENERAL CARDS ***************/
+/*************** GENERAL ***************/
 .card {
   padding: 0;
   .card-body {
@@ -61,6 +67,30 @@
     .ant-card-body,
     .ant-typography {
       color: var(--color-secondary-alpha-85);
+    }
+  }
+}
+ul.tabs {
+  width: 38em;
+  display: flex;
+  margin: 0.5em auto 1.5em;
+  border-bottom: none !important;
+  line-height: 18px;
+  padding: 0;
+  text-align: center;
+  li {
+    padding: 0 !important;
+    white-space: normal;
+    flex: 1;
+    height: 3em !important;
+    span {
+      height: inherit;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      font-size: 16px;
+      padding-bottom: 0.75em;
+      color: var(--color-secondary-alpha-70);
     }
   }
 }
