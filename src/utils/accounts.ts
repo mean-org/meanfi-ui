@@ -1,7 +1,6 @@
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { AccountInfo, Commitment, Connection, Keypair, PublicKey, sendAndConfirmTransaction, Transaction, TransactionInstruction } from "@solana/web3.js"
 import { AccountTokenParsedInfo } from "../models/token";
-import * as BufferLayout from 'buffer-layout';
 
 export type ProgramAccounts = {
   pubkey: PublicKey;
@@ -130,6 +129,8 @@ export async function createTokenMergeTx(
   return tx;
 }
 
+export type AuthorityType = "MintTokens" | "FreezeAccount" | "AccountOwner" | "CloseAccount";
+
 /**
    * Assign a new owner to the account
    *
@@ -137,6 +138,7 @@ export async function createTokenMergeTx(
    * @param account Public key of the mint/token account
    * @param newOwner New owner of the mint/token account
    * @param programId Token program ID
+   * @param authType Authority type
    */
 export async function setAccountOwner(
   connection: Connection,
@@ -144,17 +146,18 @@ export async function setAccountOwner(
   account: PublicKey,
   newOwner: PublicKey,
   programId: PublicKey,
+  authType: AuthorityType,
 ): Promise<boolean> {
   return await sendAndConfirmTransaction(
     connection,
     new Transaction().add(
       Token.createSetAuthorityInstruction(
-        programId, // always TOKEN_PROGRAM_ID
-        account, // mint account || token account
-        newOwner, // new auth (you can pass `null` to close it)
-        "MintTokens", // authority type, there are 4 types => 'MintTokens' | 'FreezeAccount' | 'AccountOwner' | 'CloseAccount'
-        owner.publicKey, // original auth
-        [] // for multisig
+        programId,        // always TOKEN_PROGRAM_ID
+        account,          // mint account || token account
+        newOwner,         // new auth (you can pass `null` to close it)
+        authType,         // authority type, there are 4 types => 'MintTokens' | 'FreezeAccount' | 'AccountOwner' | 'CloseAccount'
+        owner.publicKey,  // original auth
+        []                // for multisig
       )
     ),
     [owner]
@@ -165,8 +168,6 @@ export async function setAccountOwner(
     return false;
   });
 }
-
-
 
 /*
 import { clusterApiUrl, Connection, PublicKey, Keypair, Transaction } from "@solana/web3.js";
