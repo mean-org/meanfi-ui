@@ -505,9 +505,9 @@ export const Streams = () => {
   ]);
 
   const hideCloseStreamModal = useCallback(() => setIsCloseStreamModalVisibility(false), []);
-  const onAcceptCloseStream = () => {
+  const onAcceptCloseStream = (closeTreasury: boolean) => {
     hideCloseStreamModal();
-    onExecuteCloseStreamTransaction();
+    onExecuteCloseStreamTransaction(closeTreasury);
   };
 
   // Open stream modal
@@ -2063,7 +2063,7 @@ export const Streams = () => {
     resetTransactionStatus();
   }
 
-  const onExecuteCloseStreamTransaction = async () => {
+  const onExecuteCloseStreamTransaction = async (closeTreasury: boolean) => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
@@ -2085,6 +2085,7 @@ export const Streams = () => {
         const data = {
           stream: streamPublicKey.toBase58(),                     // stream
           initializer: wallet.publicKey.toBase58(),               // initializer
+          autoCloseTreasury: closeTreasury                        // closeTreasury
         }
         consoleOut('data:', data);
 
@@ -2125,7 +2126,7 @@ export const Streams = () => {
         return await ms.closeStream(
           publicKey as PublicKey,                           // Initializer public key
           streamPublicKey,                                  // Stream ID
-          true                                              // closeTreasury
+          closeTreasury                                     // closeTreasury
         )
         .then(value => {
           consoleOut('closeStream returned transaction:', value);
@@ -2174,6 +2175,7 @@ export const Streams = () => {
         const data = {
           stream: streamPublicKey.toBase58(),                     // stream
           initializer: publicKey.toBase58(),                      // initializer
+          autoCloseTreasury: closeTreasury                        // closeTreasury
         }
         consoleOut('data:', data);
 
@@ -2214,7 +2216,7 @@ export const Streams = () => {
         return await msp.closeStream(
           publicKey as PublicKey,                           // Initializer public key
           streamPublicKey,                                  // Stream ID
-          true                                              // closeTreasury
+          closeTreasury                                     // closeTreasury
         )
         .then(value => {
           consoleOut('closeStream returned transaction:', value);

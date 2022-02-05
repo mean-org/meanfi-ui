@@ -2613,8 +2613,8 @@ export const TreasuriesView = () => {
         // Create a transaction
         return await ms.closeStream(
           publicKey as PublicKey,                           // Initializer public key
-          streamPublicKey,                                  // Stream ID,
-          closeTreasury
+          streamPublicKey,                                  // Stream ID
+          closeTreasury                                     // closeTreasury
         )
         .then(value => {
           consoleOut('closeStream returned transaction:', value);
@@ -2704,7 +2704,7 @@ export const TreasuriesView = () => {
         return await msp.closeStream(
           publicKey as PublicKey,                           // Initializer public key
           streamPublicKey,                                  // Stream ID,
-          closeTreasury
+          closeTreasury                                     // closeTreasury
         )
         .then(value => {
           consoleOut('closeStream returned transaction:', value);

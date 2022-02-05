@@ -95,6 +95,7 @@ export const StreamCloseModal = (props: {
     props.streamDetail,
   ]);
 
+  // Set treasury type
   useEffect(() => {
     if (props.isVisible && localStreamDetail) {
       const v1 = localStreamDetail as StreamInfo;
@@ -111,6 +112,35 @@ export const StreamCloseModal = (props: {
     props.isVisible,
     localStreamDetail,
     getTreasuryTypeByTreasuryId
+  ]);
+
+  // Set closeTreasuryOption accordingly
+  useEffect(() => {
+    if (!props.canCloseTreasury && treasuryDetails) {
+      const v1 = treasuryDetails as TreasuryInfo;
+      const v2 = treasuryDetails as Treasury;
+      const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
+      if (isNewTreasury) {
+        if (v2.totalStreams > 1) {
+          setCloseTreasuryOption(false);
+        } else if (v2.totalStreams === 1 && v2.autoClose) {
+          setCloseTreasuryOption(true);
+        } else {
+          setCloseTreasuryOption(false);
+        }
+      } else {
+        if (v1.streamsAmount > 1) {
+          setCloseTreasuryOption(false);
+        } else if (v1.streamsAmount === 1 && v1.autoClose) {
+          setCloseTreasuryOption(true);
+        } else {
+          setCloseTreasuryOption(false);
+        }
+      }
+    }
+  }, [
+    treasuryDetails,
+    props.canCloseTreasury
   ]);
 
   const amITreasurer = useCallback((): boolean => {
@@ -217,6 +247,7 @@ export const StreamCloseModal = (props: {
     props.selectedToken?.decimals
   ]);
 
+  // Set fee amount
   useEffect(() => {
     if (!feeAmount && props.transactionFees) {
       setFeeAmount(getFeeAmount(props.transactionFees));
