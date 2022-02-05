@@ -2,6 +2,7 @@
 	"account-area": {
 		"connect-button": "Conecte sua carteira",
 		"copy-address": "Copiar endereço",
+		"diagnosis-info": "Informações de diagnóstico",
 		"disconnect": "Desconectar",
 		"explorer-link": "Veja no Solana Explorer",
 		"modal-title": "Conta",

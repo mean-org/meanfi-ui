@@ -4,11 +4,13 @@ import { useWallet } from "../../contexts/wallet";
 import { shortenAddress } from "../../utils/utils";
 import {
   IconCopy,
+  IconDiagnosis,
   IconExternalLink,
   IconLogout,
   IconWallet,
 } from "../../Icons";
-import { Button, Col, Modal, Row } from "antd";
+import "./style.less";
+import { Button, Col, Collapse, Modal, Row } from "antd";
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "../../constants";
 import { Identicon } from "../Identicon";
 import { notify } from "../../utils/notifications";
@@ -17,12 +19,15 @@ import { getSolanaExplorerClusterParam } from "../../contexts/connection";
 import { useTranslation } from "react-i18next";
 import { AppStateContext } from '../../contexts/appstate';
 
-export const CurrentUserBadge = () => {
+const { Panel } = Collapse;
+
+export const AccountDetails = () => {
 
   const { t } = useTranslation("common");
   const {
+    diagnosisInfo,
+    setStreamList,
     setSelectedStream,
-    setStreamList
   } = useContext(AppStateContext);
 
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -63,6 +68,30 @@ export const CurrentUserBadge = () => {
     // TODO: If we decide to turn OFF wallet autoConnect then next line will be needed
     // resetWalletProvider();
   }
+
+  const renderDebugInfo = (
+    <div>
+      {diagnosisInfo && (
+        <>
+          {diagnosisInfo.dateTime && (
+            <div className="diagnosis-info-item text-monospace">{diagnosisInfo.dateTime}</div>
+          )}
+          {diagnosisInfo.clientInfo && (
+            <div className="diagnosis-info-item text-monospace">{diagnosisInfo.clientInfo}</div>
+          )}
+          {diagnosisInfo.networkInfo && (
+            <div className="diagnosis-info-item text-monospace">{diagnosisInfo.networkInfo}</div>
+          )}
+          {diagnosisInfo.accountInfo && (
+            <div className="diagnosis-info-item text-monospace">{diagnosisInfo.accountInfo}</div>
+          )}
+          {diagnosisInfo.appBuildInfo && (
+            <div className="diagnosis-info-item text-monospace">{diagnosisInfo.appBuildInfo}</div>
+          )}
+        </>
+      )}
+    </div>
+  );
 
   return (
     <>
@@ -123,19 +152,30 @@ export const CurrentUserBadge = () => {
           {/* Account helpers */}
           <Row>
             <Col span={10}>
-              <span className="secondary-link" role="link" onClick={onCopyAddress}>
+              <span className="simplelink underline-on-hover" role="link" onClick={onCopyAddress}>
                 <IconCopy className="mean-svg-icons link" />
                 <span className="link-text">{t('account-area.copy-address')}</span>
               </span>
             </Col>
             <Col span={14}>
-              <a className="secondary-link" target="_blank" rel="noopener noreferrer"
+              <a className="simplelink underline-on-hover" target="_blank" rel="noopener noreferrer"
                  href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${wallet.publicKey}${getSolanaExplorerClusterParam()}`}>
                 <IconExternalLink className="mean-svg-icons link" />
                 <span className="link-text">{t('account-area.explorer-link')}</span>
               </a>
             </Col>
           </Row>
+          {diagnosisInfo && (
+            <Collapse
+              ghost
+              bordered={false}
+              defaultActiveKey={[]}
+              expandIcon={({ isActive }) => <IconDiagnosis className="mean-svg-icons link" />}>
+              <Panel header={t('account-area.diagnosis-info')} key="1">
+                {renderDebugInfo}
+              </Panel>
+            </Collapse>
+          )}
         </div>
       </Modal>
     </>

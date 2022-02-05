@@ -15,12 +15,14 @@ import { notify } from "../../utils/notifications";
 import { consoleOut, isLocal, isProd, isValidAddress } from "../../utils/ui";
 import ReactGA from 'react-ga';
 import { InfluxDB, Point } from '@influxdata/influxdb-client';
-import { isMobile, isDesktop, isTablet, browserName } from "react-device-detect";
+import { isMobile, isDesktop, isTablet, browserName, osName, osVersion, fullBrowserVersion, deviceType } from "react-device-detect";
 import { environment } from "../../environments/environment";
 import { GOOGLE_ANALYTICS_PROD_TAG_ID, PERFORMANCE_SAMPLE_INTERVAL, PERFORMANCE_THRESHOLD } from "../../constants";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import { reportConnectedAccount } from "../../utils/api";
 import { Connection } from "@solana/web3.js";
+import useOnlineStatus from "../../contexts/online-status";
+import { AccountDetails } from "../../models";
 
 const { Header, Content, Footer } = Layout;
 
@@ -37,23 +39,25 @@ export const AppLayout = React.memo((props: any) => {
     previousWalletConnectState,
     setStreamList,
     setSelectedAsset,
+    setDiagnosisInfo,
     setAccountAddress,
+    setDtailsPanelOpen,
     setShouldLoadTokens,
     refreshTokenBalance,
-    setDtailsPanelOpen,
     setAddAccountPanelOpen,
     setCanShowAccountDetails,
     setPreviousWalletConnectState
   } = useContext(AppStateContext);
 
   const { t } = useTranslation('common');
+  const { isOnline, responseTime } = useOnlineStatus();
   const connectionConfig = useConnectionConfig();
   const { provider, connected, publicKey } = useWallet();
   const [previousChain, setChain] = useState("");
   const [gaInitialized, setGaInitialized] = useState(false);
   const [referralAddress, setReferralAddress] = useLocalStorage('pendingReferral', '');
   const [avgTps, setAvgTps] = useState<number | undefined>(undefined);
-  const [layoutInitialized, setLayoutInitialized] = useState(false);
+  const [needRefresh, setNeedRefresh] = useState(true);
 
   // Clear cachedRpc on App destroy (window is being reloaded)
   useEffect(() => {
@@ -72,12 +76,16 @@ export const AppLayout = React.memo((props: any) => {
     // window.localStorage.removeItem('providerName');
   }
 
-  // Get network TPS only in prod
+  // Get network TPS
   useEffect(() => {
 
-    if (!isProd() || !isLocal()) { return; }
+    let connection: Connection;
 
-    const connection = new Connection("https://api.mainnet-beta.solana.com");
+    if (isProd()) {
+      connection = new Connection("https://api.mainnet-beta.solana.com");
+    } else {
+      connection = new Connection("https://api.devnet.solana.com/");
+    }
 
     if (!connection) { return; }
 
@@ -187,15 +195,18 @@ export const AppLayout = React.memo((props: any) => {
     if (previousChain !== connectionConfig.cluster) {
       setChain(connectionConfig.cluster);
       consoleOut('Cluster:', connectionConfig.cluster, 'brown');
+      setNeedRefresh(true);
     }
   }, [
     previousChain,
     connectionConfig
   ]);
 
+  // Show Avg TPS on the console
   useEffect(() => {
     if (avgTps !== undefined && isWhitelisted) {
       consoleOut('Avg TPS:', avgTps, 'blue');
+      setNeedRefresh(true);
     }
   }, [
     avgTps,
@@ -209,7 +220,10 @@ export const AppLayout = React.memo((props: any) => {
       if (!previousWalletConnectState && connected) {
         if (publicKey) {
           const walletAddress = publicKey.toBase58();
-          sendConnectionMetric(walletAddress);
+          if (!isLocal()) {
+            sendConnectionMetric(walletAddress);
+          }
+          setNeedRefresh(true);
 
           // Record pending referral, get referrals count and clear referralAddress from localStorage
           // Only record if referral address is valid and different from wallet address
@@ -232,6 +246,7 @@ export const AppLayout = React.memo((props: any) => {
         setPreviousWalletConnectState(true);
       } else if (previousWalletConnectState && !connected) {
         setPreviousWalletConnectState(false);
+        setNeedRefresh(true);
         setStreamList([]);
         refreshTokenBalance();
         notify({
@@ -320,26 +335,45 @@ export const AppLayout = React.memo((props: any) => {
     }
   }
 
+  // Update diagnosis info
   useEffect(() => {
-    if (connectionConfig && connectionConfig.endpoint && !layoutInitialized) {
-      console.log('branch:', gitInfo.branch);
-      console.log('tags:', gitInfo.tags);
-      console.log('Commit date:', gitInfo.commit.date);
-      console.log('Commit hash:', gitInfo.commit.hash);
-      console.log('Commit message:', gitInfo.commit.message);
-      console.log('Commit shortHash:', gitInfo.commit.shortHash);
-      setLayoutInitialized(true);
+    if (connectionConfig && connectionConfig.endpoint && avgTps && needRefresh) {
+      const now = new Date();
+      const device = isDesktop ? 'Desktop' : isTablet ? 'Tablet' : isMobile ? 'Mobile' : 'Other';
+      const dateTime = `Client time: ${now.toUTCString()}`;
+      const clientInfo = `${deviceType} ${browserName} ${fullBrowserVersion} on ${osName} ${osVersion} (${device})`;
+      clientInfo[0].toUpperCase();
+      const networkInfo = `Cluster: ${connectionConfig.cluster} (${connectionConfig.endpoint}) TPS: ${avgTps}, latency: ${responseTime}ms`;
+      const accountInfo = publicKey && provider ? `Address: ${publicKey.toBase58()} (${provider.name})` : '';
+      const appBuildInfo = `App package: ${process.env.REACT_APP_VERSION}, env: ${process.env.REACT_APP_ENV}, build: [${gitInfo.commit.shortHash}] on ${gitInfo.commit.date}`;
+      const debugInfo: AccountDetails = {
+        dateTime,
+        clientInfo,
+        networkInfo,
+        accountInfo,
+        appBuildInfo
+      };
+      setDiagnosisInfo(debugInfo);
+      consoleOut('debugInfo:', debugInfo, 'blue');
+      setNeedRefresh(false);
     }
   }, [
+    avgTps,
+    isOnline,
+    provider,
+    publicKey,
+    responseTime,
     connectionConfig,
-    layoutInitialized
+    needRefresh,
+    setDiagnosisInfo,
+    t
   ]);
 
   return (
     <>
     <div className="App">
       <Layout>
-        {(avgTps !== undefined && avgTps < PERFORMANCE_THRESHOLD) && (
+        {(isProd() && avgTps !== undefined && avgTps < PERFORMANCE_THRESHOLD) && (
           <div className="warning-bar">{t('notifications.network-performance-low')}</div>
         )}
         <Header className="App-Bar">

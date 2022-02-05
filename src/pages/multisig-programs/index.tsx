@@ -272,7 +272,7 @@ export const MultisigProgramsView = () => {
       return;
     }
 
-    getProgramsByUpgradeAuthority(selectedMultisig.id)
+    getProgramsByUpgradeAuthority(selectedMultisig.address)
       .then(programs => {
         consoleOut('programs:', programs, 'blue');
         if (programs && programs.length > 0) {

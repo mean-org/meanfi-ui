@@ -9,6 +9,7 @@ export { IconClock } from "./IconClock";
 export { IconCodeBlock } from "./IconCodeBlock";
 export { IconCoin } from "./IconCoin";
 export { IconCopy } from "./IconCopy";
+export { IconDiagnosis } from "./IconDiagnosis";
 export { IconDiscord } from "./IconDiscord";
 export { IconDocument } from "./IconDocument";
 export { IconDownload } from "./IconDownload";

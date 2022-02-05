@@ -36,6 +36,7 @@ import { TreasuryTypeOption } from "../models/treasuries";
 import { TREASURY_TYPE_OPTIONS } from "../constants/treasury-type-options";
 import { initialSummary, StreamsSummary } from "../models/streams";
 import { MSP, Stream } from "@mean-dao/msp";
+import { AccountDetails } from "../models";
 
 export interface TransactionStatusInfo {
   lastOperation?: TransactionStatus | undefined;
@@ -78,6 +79,7 @@ interface AppStateConfig {
   loadingStreamActivity: boolean;
   streamActivity: StreamActivity[];
   customStreamDocked: boolean;
+  diagnosisInfo: AccountDetails | undefined;
   // Accounts
   shouldLoadTokens: boolean;
   splTokenList: UserTokenAccount[];
@@ -130,6 +132,7 @@ interface AppStateConfig {
   openStreamById: (streamId: string, dock: boolean) => void;
   getStreamActivity: (streamId: string, version: number) => void;
   setCustomStreamDocked: (state: boolean) => void;
+  setDiagnosisInfo: (info: AccountDetails | undefined) => void;
   // Accounts
   setShouldLoadTokens: (state: boolean) => void;
   setTransactions: (map: MappedTransaction[] | undefined, addItems?: boolean) => void;
@@ -187,6 +190,7 @@ const contextDefaultValues: AppStateConfig = {
   loadingStreamActivity: false,
   streamActivity: [],
   customStreamDocked: false,
+  diagnosisInfo: undefined,
   // Accounts
   shouldLoadTokens: true,
   splTokenList: [],
@@ -239,6 +243,7 @@ const contextDefaultValues: AppStateConfig = {
   openStreamById: () => {},
   getStreamActivity: () => {},
   setCustomStreamDocked: () => { },
+  setDiagnosisInfo: () => { },
   // Accounts
   setShouldLoadTokens: () => {},
   setTransactions: () => {},
@@ -340,6 +345,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [loadingStreamActivity, setLoadingStreamActivity] = useState(contextDefaultValues.loadingStreamActivity);
   const [streamActivity, setStreamActivity] = useState<StreamActivity[]>([]);
   const [customStreamDocked, setCustomStreamDocked] = useState(contextDefaultValues.customStreamDocked);
+  const [diagnosisInfo, setDiagnosisInfo] = useState<AccountDetails | undefined>(contextDefaultValues.diagnosisInfo);
 
   const [streamListv1, setStreamListv1] = useState<StreamInfo[] | undefined>();
   const [streamListv2, setStreamListv2] = useState<Stream[] | undefined>();
@@ -1157,6 +1163,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         loadingStreamActivity,
         streamActivity,
         customStreamDocked,
+        diagnosisInfo,
         splTokenList,
         userTokens,
         selectedAsset,
@@ -1206,6 +1213,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         openStreamById,
         getStreamActivity,
         setCustomStreamDocked,
+        setDiagnosisInfo,
         setTransactions,
         setSelectedAsset,
         setAccountAddress,

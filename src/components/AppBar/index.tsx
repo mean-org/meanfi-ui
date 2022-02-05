@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, Tooltip } from 'antd';
 import { ThunderboltOutlined } from '@ant-design/icons';
 import { useWallet } from "../../contexts/wallet";
-import { CurrentUserBadge } from "../CurrentUserBadge";
+import { AccountDetails } from "../CurrentUserBadge";
 import { ConnectButton } from "../ConnectButton";
 import { AppContextMenu } from "../AppContextMenu";
 import { CurrentBalance } from "../CurrentBalance";
@@ -198,7 +198,7 @@ export const AppBar = (props: {
           {connected ? (
             <div className="connection-and-account-bar">
               <CurrentBalance />
-              <CurrentUserBadge />
+              <AccountDetails />
             </div>
           ) : (
             <>

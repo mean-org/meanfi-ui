@@ -1,6 +1,6 @@
 import React from 'react';
 import { useWallet } from "../../contexts/wallet";
-import { CurrentUserBadge } from "../CurrentUserBadge";
+import { AccountDetails } from "../CurrentUserBadge";
 import { ConnectButton } from "../ConnectButton";
 import { AppContextMenu } from '../AppContextMenu';
 import { CurrentBalance } from '../CurrentBalance';
@@ -19,7 +19,7 @@ export const FooterBar = () => {
         <div className="footer-bar">
           {connected ? (
             <div className="footer-account-bar">
-              <CurrentUserBadge />
+              <AccountDetails />
               <CurrentBalance />
             </div>
           ) : (
