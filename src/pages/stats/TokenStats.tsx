@@ -9,6 +9,7 @@ import { copyText } from '../../utils/ui';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { PriceGraph } from './PriceGraph';
+import CardStats from './components/CardStats';
 
 export const TokenStats = ({ meanDecimals, meanTotalSupply }: any) => {
   return (
@@ -127,11 +128,11 @@ export const FirstCardsLayout = ({ meanDecimals }: any) => {
 
   const cards = [
     {
-      head: renderHeadSummary,
+      header: renderHeadSummary,
       body: renderBodySummary
     },
     {
-      head: renderHeadPrice,
+      header: renderHeadPrice,
       body: renderBodyPrice
     }
   ];
@@ -139,18 +140,15 @@ export const FirstCardsLayout = ({ meanDecimals }: any) => {
   return (
     <Row gutter={[8, 8]}>
       {cards.map((card, index) => (
-        <Col xs={24} sm={24} md={12} lg={12} key={index}>
-          <Card className="ant-card card summary-card">
-            <div className="ant-card-head">
-              <div className="ant-card-head-wrapper">
-                {card.head}
-              </div>
-            </div>
-            <div className="ant-card-body">
-              {card.body}
-            </div>
-          </Card>
-        </Col>
+        <CardStats
+          key={index}
+          xs={24} 
+          sm={24} 
+          md={12} 
+          lg={12}
+          header={card.header}
+          body={card.body}
+        />
       ))}
     </Row>
   )
