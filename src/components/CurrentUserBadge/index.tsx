@@ -153,14 +153,14 @@ export const AccountDetails = () => {
           <Row>
             <Col span={10}>
               <span className="simplelink underline-on-hover" role="link" onClick={onCopyAddress}>
-                <IconCopy className="mean-svg-icons link" />
+                <IconCopy className="mean-svg-icons" />
                 <span className="link-text">{t('account-area.copy-address')}</span>
               </span>
             </Col>
             <Col span={14}>
               <a className="simplelink underline-on-hover" target="_blank" rel="noopener noreferrer"
                  href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${wallet.publicKey}${getSolanaExplorerClusterParam()}`}>
-                <IconExternalLink className="mean-svg-icons link" />
+                <IconExternalLink className="mean-svg-icons" />
                 <span className="link-text">{t('account-area.explorer-link')}</span>
               </a>
             </Col>
@@ -170,7 +170,7 @@ export const AccountDetails = () => {
               ghost
               bordered={false}
               defaultActiveKey={[]}
-              expandIcon={({ isActive }) => <IconDiagnosis className="mean-svg-icons link" />}>
+              expandIcon={({ isActive }) => <IconDiagnosis className="mean-svg-icons" />}>
               <Panel header={t('account-area.diagnosis-info')} key="1">
                 {renderDebugInfo}
               </Panel>

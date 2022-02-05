@@ -205,7 +205,6 @@ export const AppLayout = React.memo((props: any) => {
   // Show Avg TPS on the console
   useEffect(() => {
     if (avgTps !== undefined && isWhitelisted) {
-      consoleOut('Avg TPS:', avgTps, 'blue');
       setNeedRefresh(true);
     }
   }, [
@@ -354,7 +353,6 @@ export const AppLayout = React.memo((props: any) => {
         appBuildInfo
       };
       setDiagnosisInfo(debugInfo);
-      consoleOut('debugInfo:', debugInfo, 'blue');
       setNeedRefresh(false);
     }
   }, [

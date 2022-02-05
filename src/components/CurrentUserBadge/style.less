@@ -22,11 +22,16 @@
       &.ant-collapse-borderless {
         border: none;
         color: inherit;
+        font-size: inherit;
       }
       > .ant-collapse-item {
           .ant-collapse-header {
               padding: 0 2px;
               color: inherit !important;
+              font-size: inherit;
+              &:hover {
+                text-decoration: underline;
+              }
           }
           .ant-collapse-content {
               border: none;
@@ -36,5 +41,11 @@
               }
           }
       }
+  }
+  .mean-svg-icons {
+    width: 22px;
+    height: 22px;
+    vertical-align: -4px !important;
+    margin-right: 6px !important;
   }
 }

@@ -7,7 +7,7 @@ export const PRICE_REFRESH_TIMEOUT = 10 * 60 * 1000;
 export const STREAMS_REFRESH_TIMEOUT = 5 * 60 * 1000;
 export const TRANSACTION_STATUS_RETRY = 3 * 1000;            // Retry fetch transaction status every 3 seconds
 export const TRANSACTION_STATUS_RETRY_TIMEOUT = 30 * 1000;   // Max timeout for trying fetch
-export const PERFORMANCE_SAMPLE_INTERVAL = 20 * 1000;
+export const PERFORMANCE_SAMPLE_INTERVAL = 15 * 1000;
 export const PERFORMANCE_THRESHOLD = 1100;  // Min TPS to show the top bar (1100 but can be changed)
 
 export const MIN_SLIPPAGE_VALUE = 0.1;
