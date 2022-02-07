@@ -10,6 +10,7 @@ import { AppStateContext } from '../../contexts/appstate';
 import { UserTokenAccount } from '../../models/transactions';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { TokenStats } from './TokenStats';
+import MeanDaoStats from './MeanDaoStats';
 
 const tabs = ["Mean Token", "MeanFi", "Mean DAO"];
 
@@ -17,8 +18,9 @@ export const StatsView = () => {
   const { t } = useTranslation('common');
   const connection = useConnection();
   const {
-    userTokens,
+    userTokens
   } = useContext(AppStateContext);
+
   const [meanTotalSupply, setMeanTotalSupply] = useState<number | undefined>(undefined);
   const [meanDecimals, setMeanDecimals] = useState<number | undefined>(undefined);
   const [meanMintAuth, setMeanMintAuth] = useState<string>('');
@@ -96,7 +98,7 @@ export const StatsView = () => {
             />
           }
           {activeTab === "MeanFi" && "MeanFi"}
-          {activeTab === "Mean DAO" && "Mean DAO"}
+          {activeTab === "Mean DAO" && <MeanDaoStats />}
         </div>
       </div>
       <PreFooter />

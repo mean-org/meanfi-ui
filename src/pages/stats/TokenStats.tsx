@@ -1,4 +1,3 @@
-import React from 'react';
 import "./style.less";
 import { data } from "./data";
 import { IconInfoCircle } from '../../Icons';
@@ -11,12 +10,19 @@ import { Link } from 'react-router-dom';
 import { PriceGraph } from './PriceGraph';
 import CardStats from './components/CardStats';
 
-export const TokenStats = ({ meanDecimals, meanTotalSupply }: any) => {
+export const TokenStats = ({ 
+  meanDecimals, 
+  meanTotalSupply,
+}: any) => {
   return (
     <>
-      <FirstCardsLayout meanDecimals={meanDecimals} />
+      <FirstCardsLayout 
+        meanDecimals={meanDecimals}  
+      />
       <Divider />
-      <SecondCardsLayout meanTotalSupply={meanTotalSupply} />
+      <SecondCardsLayout 
+        meanTotalSupply={meanTotalSupply} 
+      />
       <Divider />
       <ThirdCardsLayout />
     </>
@@ -24,7 +30,9 @@ export const TokenStats = ({ meanDecimals, meanTotalSupply }: any) => {
 };
 
 /*********************** FIRST TYPE OF CARDS *************************/
-export const FirstCardsLayout = ({ meanDecimals }: any) => {
+export const FirstCardsLayout = ({ 
+  meanDecimals
+}: any) => {
   const { t } = useTranslation('common');
 
   const summaries = [
@@ -148,6 +156,7 @@ export const FirstCardsLayout = ({ meanDecimals }: any) => {
           lg={12}
           header={card.header}
           body={card.body}
+          className="summary-card"
         />
       ))}
     </Row>

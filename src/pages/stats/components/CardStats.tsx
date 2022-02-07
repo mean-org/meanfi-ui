@@ -7,12 +7,13 @@ const CardWithHeader = (props: {
   lg: number;
   header: JSX.Element;
   body: JSX.Element;
+  className: string;
 }) => {
-  const { xs, sm, md, lg, header, body } = props;
+  const { xs, sm, md, lg, header, body, className } = props;
 
   return (
     <Col xs={xs} sm={sm} md={md} lg={lg}>
-      <Card className="ant-card card summary-card">
+      <Card className={`ant-card card ${className}`}>
         <div className="ant-card-head">
           <div className="ant-card-head-wrapper">
             {header}
