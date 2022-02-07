@@ -2432,7 +2432,7 @@ export const MultisigVaultsView = () => {
         const onVaultSelected = (ev: any) => {
           setSelectedVault(item);
           setDtailsPanelOpen(true);
-          const resume = `\naddress: ${item.address.toBase58()}\nmint: ${token ? token.address : item.mint.toBase58()}`;
+          const resume = `\naddress: ${item.address.toBase58()}\nmint: ${token ? token.address : item.mint.toBase58()}\nauth: ${item.owner.toBase58()}`;
           consoleOut('resume:', resume, 'blue');
           consoleOut('selected vault:', item, 'blue');
           setLoadingMultisigTxs(true);

@@ -49,7 +49,7 @@ export const MultisigVaultTransferAuthorityModal = (props: {
   const isValidForm = (): boolean => {
     return selectedAuthority &&
             isValidAddress(selectedAuthority) &&
-            props.selectedMultisig && selectedAuthority !== props.selectedMultisig.id.toBase58()
+            props.selectedMultisig && selectedAuthority !== props.selectedMultisig.address.toBase58()
       ? true
       : false;
   }
@@ -65,10 +65,10 @@ export const MultisigVaultTransferAuthorityModal = (props: {
   }
 
   const renderMultisigSelectItem = (item: MultisigAccountInfo) => ({
-    key: item.id.toBase58(),
-    value: item.id.toBase58(),
+    key: item.address.toBase58(),
+    value: item.address.toBase58(),
     label: (
-      <div className={`transaction-list-row ${props.selectedMultisig && item.id.equals(props.selectedMultisig.id) ? 'disabled' : ''}`}>
+      <div className={`transaction-list-row`}>
         <div className="icon-cell">
           <Identicon address={item.id} style={{ width: "30", display: "inline-flex" }} />
         </div>
@@ -133,15 +133,15 @@ export const MultisigVaultTransferAuthorityModal = (props: {
                       placeholder={t('multisig.transfer-authority.multisig-selector-placeholder')}
                       filterOption={(inputValue, option) => {
                         const originalItem = props.multisigAccounts.find(i => {
-                          return i.id.toBase58() === option!.key ? true : false;
+                          return i.address.toBase58() === option!.key ? true : false;
                         });
-                        return option!.value.indexOf(inputValue) !== -1 || originalItem?.id.toBase58().indexOf(inputValue) !== -1
+                        return option!.value.indexOf(inputValue) !== -1 || originalItem?.address.toBase58().indexOf(inputValue) !== -1
                       }}
                       onSelect={onMultisigSelected}
                     />
                   </div>
                 </div>
-                {props.selectedMultisig && selectedAuthority === props.selectedMultisig.id.toBase58() && (
+                {props.selectedMultisig && selectedAuthority === props.selectedMultisig.address.toBase58() && (
                   <span className="form-field-error">
                     {t('multisig.transfer-authority.multisig-already-owns-the-vault')}
                   </span>
