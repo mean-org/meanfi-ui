@@ -1,0 +1,250 @@
+import React, { useContext, useState } from 'react';
+import { Modal, Button, Spin, AutoComplete } from 'antd';
+import { useTranslation } from 'react-i18next';
+import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
+import { AppStateContext } from '../../contexts/appstate';
+import { TransactionStatus } from '../../models/enums';
+import { consoleOut, getTransactionOperationDescription, isValidAddress } from '../../utils/ui';
+import { isError } from '../../utils/transactions';
+import { NATIVE_SOL_MINT } from '../../utils/ids';
+import { TransactionFees } from '@mean-dao/money-streaming';
+import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
+import { MultisigAccountInfo, MultisigVault } from '../../models/multisig';
+import { Identicon } from '../Identicon';
+
+const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
+
+export const MultisigVaultTransferAuthorityModal = (props: {
+  handleClose: any;
+  handleOk: any;
+  handleAfterClose: any;
+  isVisible: boolean;
+  isBusy: boolean;
+  nativeBalance: number;
+  transactionFees: TransactionFees;
+  selectedMultisig: MultisigAccountInfo | undefined;
+  multisigAccounts: MultisigAccountInfo[];
+  vaults: MultisigVault[]
+
+}) => {
+  const { t } = useTranslation('common');
+  const {
+    transactionStatus,
+  } = useContext(AppStateContext);
+
+  const [selectedAuthority, setSelectedAuthority] = useState('');
+
+  const onAcceptModal = () => {
+    props.handleOk(selectedAuthority);
+  }
+
+  const onCloseModal = () => {
+    props.handleClose();
+  }
+
+  const onAfterClose = () => {
+    props.handleAfterClose();
+  }
+
+  const isValidForm = (): boolean => {
+    return selectedAuthority &&
+            isValidAddress(selectedAuthority) &&
+            props.selectedMultisig && selectedAuthority !== props.selectedMultisig.id.toBase58()
+      ? true
+      : false;
+  }
+
+  const refreshPage = () => {
+    props.handleClose();
+    window.location.reload();
+  }
+
+  const onMultisigSelected = (e: any) => {
+    consoleOut('selectedAuthority:', e, 'blue');
+    setSelectedAuthority(e);
+  }
+
+  const renderMultisigSelectItem = (item: MultisigAccountInfo) => ({
+    key: item.id.toBase58(),
+    value: item.id.toBase58(),
+    label: (
+      <div className={`transaction-list-row ${props.selectedMultisig && item.id.equals(props.selectedMultisig.id) ? 'disabled' : ''}`}>
+        <div className="icon-cell">
+          <Identicon address={item.id} style={{ width: "30", display: "inline-flex" }} />
+        </div>
+        <div className="description-cell">
+          {item.label ? (
+            <div className="title text-truncate">
+              {item.label}
+            </div>
+          ) : (
+            <div className="title text-truncate">{shortenAddress(item.id.toBase58(), 8)}</div>
+          )}
+          {
+            <div className="subtitle text-truncate">{shortenAddress(item.address.toBase58(), 8)}</div>
+          }
+        </div>
+        <div className="description-cell text-right">
+          <div className="subtitle">
+          {
+            t('multisig.multisig-accounts.pending-transactions', {
+              txs: item.pendingTxsAmount
+            })
+          }
+          </div>
+        </div>
+      </div>
+    ),
+  });
+
+  const renderMultisigSelectOptions = () => {
+    const options = props.multisigAccounts.map((multisig: MultisigAccountInfo, index: number) => {
+      return renderMultisigSelectItem(multisig);
+    });
+    return options;
+  }
+
+  return (
+    <Modal
+      className="mean-modal simple-modal"
+      title={<div className="modal-title">{t('multisig.transfer-authority.modal-title')}</div>}
+      footer={null}
+      visible={props.isVisible}
+      onOk={onAcceptModal}
+      onCancel={onCloseModal}
+      afterClose={onAfterClose}
+      width={props.isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}>
+
+      <div className={!props.isBusy ? "panel1 show" : "panel1 hide"}>
+
+        {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
+          <>
+
+            <div className="mb-3">
+              <div className="form-label">{t('multisig.transfer-authority.multisig-selector-label')}</div>
+              <div className="well">
+                <div className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
+                  <div className="left mr-0">
+                    <AutoComplete
+                      bordered={false}
+                      style={{ width: '100%' }}
+                      dropdownClassName="stream-select-dropdown"
+                      options={renderMultisigSelectOptions()}
+                      placeholder={t('multisig.transfer-authority.multisig-selector-placeholder')}
+                      filterOption={(inputValue, option) => {
+                        const originalItem = props.multisigAccounts.find(i => {
+                          return i.id.toBase58() === option!.key ? true : false;
+                        });
+                        return option!.value.indexOf(inputValue) !== -1 || originalItem?.id.toBase58().indexOf(inputValue) !== -1
+                      }}
+                      onSelect={onMultisigSelected}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </>
+        ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
+          <>
+            <div className="transaction-progress">
+              <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+              <h4 className="font-bold">{t('multisig.transfer-authority.success-message')}</h4>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="transaction-progress">
+              <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+              {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
+                <h4 className="mb-4">
+                  {t('transactions.status.tx-start-failure', {
+                    accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                      props.nativeBalance,
+                      NATIVE_SOL_MINT.toBase58()
+                    ),
+                    feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                      props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee,
+                      NATIVE_SOL_MINT.toBase58()
+                    )})
+                  }
+                </h4>
+              ) : (
+                <h4 className="font-bold mb-3">
+                  {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
+                </h4>
+              )}
+            </div>
+          </>
+        )}
+
+      </div>
+
+      <div 
+        className={
+          props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle 
+            ? "panel2 show" 
+            : "panel2 hide"
+          }>          
+        {props.isBusy && transactionStatus !== TransactionStatus.Iddle && (
+        <div className="transaction-progress">
+          <Spin indicator={bigLoadingIcon} className="icon mt-0" />
+          <h4 className="font-bold mb-1">
+            {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
+          </h4>
+          {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
+            <div className="indication">{t('transactions.status.instructions')}</div>
+          )}
+        </div>
+        )}
+      </div>
+
+      <div className="row two-col-ctas mt-3 transaction-progress">
+        <div className="col-6">
+          <Button
+            block
+            type="text"
+            shape="round"
+            size="middle"
+            className={props.isBusy ? 'inactive' : ''}
+            onClick={() => isError(transactionStatus.currentOperation)
+              ? onAcceptModal()
+              : onCloseModal()}>
+            {isError(transactionStatus.currentOperation)
+              ? t('general.retry')
+              : t('general.cta-close')
+            }
+          </Button>
+        </div>
+        <div className="col-6">
+          <Button
+            className={props.isBusy ? 'inactive' : ''}
+            block
+            type="primary"
+            shape="round"
+            size="middle"
+            disabled={!isValidForm()}
+            onClick={() => {
+              if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+                onAcceptModal();
+              } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
+                onCloseModal();
+              } else {
+                refreshPage();
+              }
+            }}>
+            {props.isBusy
+              ? t('multisig.transfer-authority.main-cta-busy')
+              : transactionStatus.currentOperation === TransactionStatus.Iddle
+                ? t('multisig.transfer-authority.main-cta')
+                : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
+                  ? t('general.cta-finish')
+                  : t('general.refresh')
+            }
+          </Button>
+        </div>
+      </div>
+
+    </Modal>
+  );
+};

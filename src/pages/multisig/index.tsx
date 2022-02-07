@@ -10,10 +10,8 @@ import {
   Account,
   ConfirmOptions,
   Connection,
-  Keypair,
   LAMPORTS_PER_SOL,
   PublicKey,
-  SystemProgram,
   SYSVAR_CLOCK_PUBKEY,
   SYSVAR_RENT_PUBKEY,
   Transaction,
@@ -66,7 +64,7 @@ import dateFormat from 'dateformat';
 import { useNativeAccount } from '../../contexts/accounts';
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
 import { customLogger } from '../..';
-import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { AccountLayout, MintLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { useNavigate } from 'react-router-dom';
 import { MultisigAccountInfo, MultisigParticipant, MultisigTransactionInfo, MultisigTransactionStatus } from '../../models/multisig';
 import { MultisigCreateModal } from '../../components/MultisigCreateModal';
@@ -76,9 +74,7 @@ import './style.less';
 import { BN, Program, Provider } from "@project-serum/anchor";
 import MultisigIdl from "../../models/mean-multisig-idl";
 import { MultisigMintTokenModal } from '../../components/MultisigMintTokenModal';
-import { MultisigTransferTokensModal } from '../../components/MultisigTransferTokensModal';
 import { MultisigUpgradeProgramModal } from '../../components/MultisigUpgradeProgramModal';
-import { MultisigCreateVaultModal } from '../../components/MultisigCreateVaultModal';
 import { MultisigUpgradeIDLModal } from '../../components/MultisigUpgradeIDL';
 import { encodeInstruction } from '../../models/idl';
 import { MultisigSetProgramAuthModal } from '../../components/MultisigSetProgramAuthModal';
@@ -2347,7 +2343,7 @@ export const MultisigView = () => {
 
     clearTransactionStatusContext();
     setTransactionCancelled(false);
-    setOngoingOperation(OperationType.SetAuthority);
+    setOngoingOperation(OperationType.SetMultisigAuthority);
     setRetryOperationPayload(data);
     setIsBusy(true);
 
@@ -2376,7 +2372,7 @@ export const MultisigView = () => {
       const transaction = new Account();
       const tx = multisigClient.transaction.createTransaction(
         BPF_LOADER_UPGRADEABLE_PID,
-        OperationType.SetAuthority,
+        OperationType.SetMultisigAuthority,
         ixAccounts,
         dataBuffer,
         {
@@ -2617,7 +2613,7 @@ export const MultisigView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.SetAuthority);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.SetMultisigAuthority);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -2653,7 +2649,7 @@ export const MultisigView = () => {
 
     return ( 
       fetchTxInfoStatus === "fetching" && 
-      lastSentTxOperationType === OperationType.SetAuthority
+      lastSentTxOperationType === OperationType.SetMultisigAuthority
     );
 
   }, [
@@ -2679,7 +2675,7 @@ export const MultisigView = () => {
       return "Upgrade IDL";
     }
 
-    if (op === OperationType.SetAuthority) {
+    if (op === OperationType.SetMultisigAuthority) {
       return "Set Authority";
     }
 
@@ -2733,7 +2729,7 @@ export const MultisigView = () => {
 
     if (op === OperationType.MintTokens || op === OperationType.TransferTokens) {
       return "SPL Token";
-    } else if (op === OperationType.UpgradeProgram || op === OperationType.SetAuthority) {
+    } else if (op === OperationType.UpgradeProgram || op === OperationType.SetMultisigAuthority) {
       return "BPF Upgradable Loader";
     } else if (op === OperationType.UpgradeIDL) {
       return "Serum IDL";

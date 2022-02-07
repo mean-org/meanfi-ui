@@ -440,7 +440,7 @@ export const MultisigProgramsView = () => {
       return "Upgrade IDL";
     }
 
-    if (op === OperationType.SetAuthority) {
+    if (op === OperationType.SetMultisigAuthority) {
       return "Set Authority";
     }
 
@@ -450,7 +450,7 @@ export const MultisigProgramsView = () => {
 
     if (op === OperationType.MintTokens || op === OperationType.TransferTokens) {
       return "SPL Token";
-    } else if (op === OperationType.UpgradeProgram || op === OperationType.SetAuthority) {
+    } else if (op === OperationType.UpgradeProgram || op === OperationType.SetMultisigAuthority) {
       return "BPF Upgradable Loader";
     } else if (op === OperationType.UpgradeIDL) {
       return "Serum IDL";
