@@ -367,6 +367,7 @@
 			"main-cta": "Set authority",
 			"main-cta-busy": "Setting authority",
 			"modal-title": "Transfer Ownership",
+			"multisig-already-owns-the-vault": "Selected multisig is already authority for this vault",
 			"multisig-selector-label": "New authority (multisig)",
 			"multisig-selector-placeholder": "Select or enter a multisig address",
 			"success-message": "New vault authority set successfully."

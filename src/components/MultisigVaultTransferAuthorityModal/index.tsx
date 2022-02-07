@@ -141,6 +141,11 @@ export const MultisigVaultTransferAuthorityModal = (props: {
                     />
                   </div>
                 </div>
+                {props.selectedMultisig && selectedAuthority === props.selectedMultisig.id.toBase58() && (
+                  <span className="form-field-error">
+                    {t('multisig.transfer-authority.multisig-already-owns-the-vault')}
+                  </span>
+                )}
               </div>
             </div>
 
