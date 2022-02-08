@@ -183,10 +183,8 @@ export const MultisigVaultTransferAuthorityModal = (props: {
                       options={renderMultisigSelectOptions()}
                       placeholder={t('multisig.transfer-authority.multisig-selector-placeholder')}
                       onChange={(inputValue, option) => {
-                        if (isValidAddress(inputValue)) {
-                          consoleOut('onAutocompleteInputChabged:', inputValue, 'blue');
-                          setSelectedAuthority(inputValue);
-                        }
+                        consoleOut('onAutocompleteInputChabged:', inputValue, 'blue');
+                        setSelectedAuthority(inputValue);
                       }}
                       filterOption={(inputValue, option) => {
                         const originalItem = props.multisigAccounts.find(i => {
@@ -198,11 +196,15 @@ export const MultisigVaultTransferAuthorityModal = (props: {
                     />
                   </div>
                 </div>
-                {props.selectedMultisig && selectedAuthority === props.selectedMultisig.address.toBase58() && (
+                {props.selectedMultisig && selectedAuthority === props.selectedMultisig.address.toBase58() ? (
                   <span className="form-field-error">
                     {t('multisig.transfer-authority.multisig-already-owns-the-vault')}
                   </span>
-                )}
+                ) : selectedAuthority && !isValidAddress(selectedAuthority) ? (
+                  <span className="form-field-error">
+                    {t('transactions.validation.address-validation')}
+                  </span>
+                ) : null}
               </div>
             </div>
 
