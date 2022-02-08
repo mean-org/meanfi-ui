@@ -51,6 +51,7 @@ export { IconTimer } from "./IconTimer";
 export { IconTrash } from "./IconTrash";
 export { IconTwitter } from "./IconTwitter";
 export { IconUniversity } from "./IconUniversity";
+export { IconUpdate } from "./IconUpdate";
 export { IconUpload } from "./IconUpload";
 export { IconUserGroup } from "./IconUserGroup";
 export { IconUsers } from "./IconUsers";

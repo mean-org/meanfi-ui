@@ -407,6 +407,11 @@
 			"modal-title": "New Upgrade Authority",
 			"new-authority-input-label": "New Upgrade Authority",
 			"new-authority-input-placeholder": "Address of new program upgrade authority"
+		},
+		"crud-multisig": {
+			"edit-multisig": "Edit multisig",
+			"delete-multisig": "Delete multisig",
+			"update-multisig": "Migrate multisig"
 		}
 	},
 	"notifications": {

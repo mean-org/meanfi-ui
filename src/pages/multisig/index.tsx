@@ -60,7 +60,7 @@ import useWindowSize from '../../hooks/useWindowResize';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { notify } from '../../utils/notifications';
-import { IconCaretDown, IconClock, IconDocument, IconEdit, IconExternalLink, IconShieldOutline, IconTrash, IconUserGroup, IconUsers, IconWallet } from '../../Icons';
+import { IconCaretDown, IconClock, IconDocument, IconEdit, IconExternalLink, IconShieldOutline, IconTrash, IconUpdate, IconUserGroup, IconUsers, IconWallet } from '../../Icons';
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import dateFormat from 'dateformat';
 import { useNativeAccount } from '../../contexts/accounts';
@@ -4137,7 +4137,7 @@ export const MultisigView = () => {
                       <span className="icon-button-container secondary-button">
                         {isSelectedMultisigV2() && (
                           <>
-                            <Tooltip placement="bottom" title={"Edit"}>
+                            <Tooltip placement="bottom" title={t('multisig.crud-multisig.edit-multisig')}>
                               <Button
                                 type="default"
                                 shape="circle"
@@ -4147,7 +4147,7 @@ export const MultisigView = () => {
                                 disabled={isTxInProgress()}
                               />
                             </Tooltip>
-                            <Tooltip placement="bottom" title={"Delete multisig"}>
+                            <Tooltip placement="bottom" title={t('multisig.crud-multisig.delete-multisig')}>
                               <Button
                                 type="default"
                                 shape="circle"
@@ -4159,14 +4159,13 @@ export const MultisigView = () => {
                             </Tooltip>
                           </>
                         )}
-                        {/* TODO: Tania fájale al icon y el translation */}
                         {!isSelectedMultisigV2() && (
-                          <Tooltip placement="bottom" title={"Delete multisig"}>
+                          <Tooltip placement="bottom" title={t('multisig.crud-multisig.update-multisig')}>
                             <Button
                               type="default"
                               shape="circle"
                               size="middle"
-                              icon={<IconTrash className="mean-svg-icons" />}
+                              icon={<IconUpdate className="mean-svg-icons" />}
                               onClick={() => {}}
                               disabled={true}
                             />
