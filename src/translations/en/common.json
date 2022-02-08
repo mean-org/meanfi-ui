@@ -375,7 +375,7 @@
 		},
 		"transfer-tokens": {
 			"main-cta": "Start Request",
-			"main-cta-busy": "Starting Withdrawal Request",
+			"main-cta-busy": "Starting Request",
 			"modal-title": "Initiate Withdrawal Request",
 			"source-address-label": "Transfer from",
 			"source-address-placeholder": "Enter the address of the source account",
