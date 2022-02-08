@@ -3192,6 +3192,20 @@ export const MultisigView = () => {
       });
   };
 
+  const isSelectedMultisigV2 = useCallback((): boolean => {
+    if (selectedMultisig && selectedMultisig.version && selectedMultisig.version === 2) {
+      return true
+    }
+    return false;
+  }, [selectedMultisig]);
+
+  const isMultisigV2 = useCallback((myMultisig: MultisigV2 | Multisig): boolean => {
+    if (myMultisig.version && myMultisig.version === 2) {
+      return true
+    }
+    return false;
+  }, []);
+
   // Refresh the multisig accounts list
   useEffect(() => {
 
@@ -4121,26 +4135,43 @@ export const MultisigView = () => {
                     {/* Top action icons */}
                     <div className="float-top-right">
                       <span className="icon-button-container secondary-button">
-                        <Tooltip placement="bottom" title={"Edit"}>
-                          <Button
-                            type="default"
-                            shape="circle"
-                            size="middle"
-                            icon={<IconEdit className="mean-svg-icons" style={{padding: "2px 0 0"}} />}
-                            onClick={() => onEditMultisigClick()}
-                            disabled={isTxInProgress()}
-                          />
-                        </Tooltip>
-                        <Tooltip placement="bottom" title={"Delete multisig"}>
-                          <Button
-                            type="default"
-                            shape="circle"
-                            size="middle"
-                            icon={<IconTrash className="mean-svg-icons" />}
-                            onClick={() => {}}
-                            disabled={isTxInProgress()}
-                          />
-                        </Tooltip>
+                        {isSelectedMultisigV2() && (
+                          <>
+                            <Tooltip placement="bottom" title={"Edit"}>
+                              <Button
+                                type="default"
+                                shape="circle"
+                                size="middle"
+                                icon={<IconEdit className="mean-svg-icons" style={{padding: "2px 0 0"}} />}
+                                onClick={() => onEditMultisigClick()}
+                                disabled={isTxInProgress()}
+                              />
+                            </Tooltip>
+                            <Tooltip placement="bottom" title={"Delete multisig"}>
+                              <Button
+                                type="default"
+                                shape="circle"
+                                size="middle"
+                                icon={<IconTrash className="mean-svg-icons" />}
+                                onClick={() => {}}
+                                disabled={isTxInProgress()}
+                              />
+                            </Tooltip>
+                          </>
+                        )}
+                        {/* TODO: Tania fájale al icon y el translation */}
+                        {!isSelectedMultisigV2() && (
+                          <Tooltip placement="bottom" title={"Delete multisig"}>
+                            <Button
+                              type="default"
+                              shape="circle"
+                              size="middle"
+                              icon={<IconTrash className="mean-svg-icons" />}
+                              onClick={() => {}}
+                              disabled={true}
+                            />
+                          </Tooltip>
+                        )}
                       </span>
                     </div>
 
@@ -4152,8 +4183,10 @@ export const MultisigView = () => {
                           <>
                             {renderMultisigMeta()}
                             <Divider className="activity-divider" plain></Divider>
-                            {renderCtaRow()}
-                            <Divider className="activity-divider" plain></Divider>
+                            {isSelectedMultisigV2() && renderCtaRow()}
+                            {isSelectedMultisigV2() && (
+                              <Divider className="activity-divider" plain></Divider>
+                            )}
                             {renderMultisigPendingTxs()}
                           </>
                         )}
