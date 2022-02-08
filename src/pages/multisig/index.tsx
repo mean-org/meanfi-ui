@@ -3214,7 +3214,11 @@ export const MultisigView = () => {
             }
             if (parsePromise) {
               parsePromise(info)
-                .then((multisig: any) => multisigInfoArray.push(multisig))
+                .then((multisig: any) =>{
+                  if (multisig) {
+                    multisigInfoArray.push(multisig);
+                  }
+                })
                 .catch((err: any) => {
                   console.error(err);
                   setLoadingMultisigAccounts(false);
@@ -3224,6 +3228,7 @@ export const MultisigView = () => {
           setTimeout(() => {
             multisigInfoArray.sort((a: any, b: any) => b.createdOnUtc.getTime() - a.createdOnUtc.getTime());
             setMultisigAccounts(multisigInfoArray);
+            consoleOut('tralla:', multisigInfoArray, 'blue');
             if (highLightableMultisigId) {
               // Select a multisig that was instructed to highlight even before entering this feature
               const sig = multisigInfoArray.find(m => m.address.toBase58() === highLightableMultisigId);
