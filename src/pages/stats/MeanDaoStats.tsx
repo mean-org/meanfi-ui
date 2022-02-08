@@ -1,5 +1,6 @@
 import { CopyOutlined } from '@ant-design/icons';
 import { Button, Divider, Row } from 'antd';
+import { formatThousands } from '../../utils/utils';
 import CardStats from './components/CardStats';
 
 const items = [
@@ -7,7 +8,7 @@ const items = [
     name: "USD Coin",
     symbol: "https://www.orca.so/static/media/usdc.3b5972c1.svg",
     address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-    amount: "3,653,778.8",
+    amount: 3653778.8,
     token: "USDC",
     value: 365366553
   },
@@ -15,7 +16,7 @@ const items = [
     name: "MEAN",
     symbol: "https://www.gate.io/images/coin_icon/64/mean.png",
     address: "MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD",
-    amount: "190,000,000",
+    amount: 190000000,
     token: "MEAN",
     value: 14040430000
   }
@@ -23,32 +24,32 @@ const items = [
 
 const transactions = [
   {
-    slot: "115534798",
+    slot: 115534798,
     token: "MEAN",
     signature: "45n19mmfh1kkLfKY68ESM6TWqUV1TGu66HZVdbbTRMXSfoUD2MrLTd7Ka4Vm8KGUjHHNsrRKk3Z2W6Upeb3vuiMD"
   },
   {
-    slot: "115534529",
+    slot: 115534529,
     token: "MEAN",
     signature: "xSX65F5BAqk4SgYhcFCwwov3vuKi5vtBK3ec6gN6XvGB1Hop8Wvbc579UU8urYi86ikujzvjZMVYVobLKKUuRRo"
   },
   {
-    slot: "112757513",
+    slot: 112757513,
     token: "MEAN",
     signature: "4X7CwhbegXpH4SEZq1x97NVgzCaEyiQjFNR11nwnKtWCJFccJh5bc68qfFnyrvr9JAD82aW26FVxFvi8hkv9Cd99"
   },
   {
-    slot: "112757184",
+    slot: 112757184,
     token: "MEAN",
     signature: "okhvHtmaRwYzMpbTCGtsVdKL3DBhFsLEJtH5szJDRWYAcJQqYir9QMAGJz6xKN5mDNYmAitmsbTf9ktNCUGoTKF"
   },
   {
-    slot: "112707500",
+    slot: 112707500,
     token: "MEAN",
     signature: "4eb6FsYa41uLs76ufT6L99uLDpR3RQrM6nwagPoF3iGbFWrRr2A2NzqmBk1NmMfsEWai7gUP2yxVSKvtHU5nHqWY"
   },
   {
-    slot: "112705254",
+    slot: 112705254,
     token: "MEAN",
     signature: "3Nnoz6HsMtjq5iXnmrGapUsvtK4DTTc9sVPakJiD7yEEGgfiLFXLs6i9nYcCwzVvZewTygq6rSLU6vjNJ5y84EDU"
   },
@@ -62,7 +63,7 @@ const MeanDaoStats = () => {
   const renderHeaderTreasury = (
     <div className="ant-card-head-title">
       <span>Treasury Balance</span>
-      <span>$ {totalTreasuryValue}</span>
+      <span>$ {formatThousands(totalTreasuryValue)}</span>
     </div>
   );
 
@@ -75,8 +76,8 @@ const MeanDaoStats = () => {
             <h3>{item.name}</h3>
           </div>
           <div className="item-content">
-            <span>{item.amount} {item.token}</span>
-            <span>$ {item.value}</span>
+            <span>{formatThousands(item.amount)} {item.token}</span>
+            <span>$ {formatThousands(item.value)}</span>
           </div>
         </div>
       ))}
@@ -103,7 +104,7 @@ const MeanDaoStats = () => {
           {transactions.map((transaction, index) => (
             <tr key={index}>
               <td className="">
-                <span className="">{transaction.slot}</span>
+                <span className="">{formatThousands(transaction.slot)}</span>
               </td>
               <td className="">
                 <span className="">{transaction.token}</span>

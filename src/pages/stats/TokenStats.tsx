@@ -9,19 +9,29 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { PriceGraph } from './PriceGraph';
 import CardStats from './components/CardStats';
+import { AppStateContext } from "../../contexts/appstate";
+import { useContext } from "react";
+import { TokenInfo } from '@solana/spl-token-registry';
+import { formatThousands } from "../../utils/utils";
 
 export const TokenStats = ({ 
   meanDecimals, 
+  meanMintAuth,
   meanTotalSupply,
+  meanHolders,
+  meanToken
 }: any) => {
   return (
     <>
       <FirstCardsLayout 
-        meanDecimals={meanDecimals}  
+        meanDecimals={meanDecimals} 
+        meanMintAuth={meanMintAuth} 
+        meanToken={meanToken}
       />
       <Divider />
       <SecondCardsLayout 
         meanTotalSupply={meanTotalSupply} 
+        meanHolders={meanHolders}
       />
       <Divider />
       <ThirdCardsLayout />
@@ -31,7 +41,9 @@ export const TokenStats = ({
 
 /*********************** FIRST TYPE OF CARDS *************************/
 export const FirstCardsLayout = ({ 
-  meanDecimals
+  meanDecimals,
+  meanMintAuth,
+  meanToken
 }: any) => {
   const { t } = useTranslation('common');
 
@@ -47,7 +59,7 @@ export const FirstCardsLayout = ({
     },
     {
       label: t('stats.summary.token-authority'),
-      value: data.authority,
+      value: meanMintAuth,
       tooltip: "stats.summary.token-authority-copy"
     },
     {
@@ -55,6 +67,19 @@ export const FirstCardsLayout = ({
       value: meanDecimals
     }
   ];
+
+  const {
+    coinPrices,
+  } = useContext(AppStateContext);
+
+  const getPricePerToken = (token: TokenInfo): number => {
+    const tokenSymbol = token.symbol.toUpperCase();
+    const symbol = tokenSymbol[0] === 'W' ? tokenSymbol.slice(1) : tokenSymbol;
+
+    return coinPrices && coinPrices[symbol]
+      ? coinPrices[symbol]
+      : 0;
+  }
   
   // Returns an information or error notification each time the copy icon is clicked
   const onCopyText = (event: any) => { 
@@ -126,7 +151,13 @@ export const FirstCardsLayout = ({
   const renderHeadPrice = (
     <div className="ant-card-head-title">
       <span>{t("stats.price.price-title")}</span>
-      <span>$ {data.price}</span>
+      {
+        coinPrices && meanToken ? (
+          <span>$ {getPricePerToken(meanToken as TokenInfo)}</span>
+          ) : (
+          <span>0</span>
+        )
+      }
     </div>
   );
 
@@ -164,43 +195,46 @@ export const FirstCardsLayout = ({
 }
 
 /*********************** SECOND TYPE OF CARDS *************************/
-export const SecondCardsLayout = ({ meanTotalSupply }: any) => {
+export const SecondCardsLayout = ({ 
+  meanTotalSupply, 
+  meanHolders 
+}: any) => {
   const { t } = useTranslation('common');
 
   const cards = [
     {
       label: t('stats.market.market-cap-title'),
-      value: `$ ${data.fully_dilluted_market_cap}`,
+      value: `$ ${formatThousands(data.fully_dilluted_market_cap)}`,
       description: "stats.market.token-fully_dilluted_market_cap"
     },
     {
       label: t('stats.market.holders-title'),
-      value: data.holders,
+      value: formatThousands(meanHolders),
       description: "stats.market.token-holders"
     },
     {
       label: t('stats.market.volume-title'),
-      value: `$ ${data.total_volume}`,
+      value: `$ ${formatThousands(data.total_volume)}`,
       description: "stats.market.token-total-volume"
     },
     {
       label: t('stats.market.total-supply-title'),
-      value: meanTotalSupply,
+      value: formatThousands(meanTotalSupply),
       description: "stats.market.token-total-supply"
     },
     {
       label: t('stats.market.circulating-supply-title'),
-      value: `$ ${data.circulating_supply}`,
+      value: formatThousands(data.circulating_supply),
       description: "stats.market.token-circulating-suppply"
     },
     {
       label: t('stats.market.total-money-streams-title'),
-      value: data.total_money_streams,
+      value: formatThousands(data.total_money_streams),
       description: "stats.market.token-total-money-streams"
     },
     {
       label: t('stats.market.total-value-locked-title'),
-      value: `$ ${data.total_value_locked}`,
+      value: `$ ${formatThousands(data.total_value_locked)}`,
       description: "stats.market.token-total-value-locked"
     },
   ];
@@ -256,7 +290,7 @@ export const ThirdCardsLayout = () => {
                     <span className="info-name mb-2">{pair.name}</span>
                     <div className="info-liquidity mb-3">
                       <span>{t('stats.pairs.total-liquidity')}:</span>
-                      <span>${pair.total_liquidity}</span>
+                      <span>${formatThousands(pair.total_liquidity)}</span>
                   </div>
                 </div>
                 <div className="slide-content_buttons">

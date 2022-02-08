@@ -5,12 +5,15 @@ import { IconStats } from '../../Icons';
 import { Col, Row } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useConnection } from '../../contexts/connection';
-import { PublicKey } from '@solana/web3.js';
+import { Connection, ParsedAccountData, PublicKey } from '@solana/web3.js';
 import { AppStateContext } from '../../contexts/appstate';
 import { UserTokenAccount } from '../../models/transactions';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { TokenStats } from './TokenStats';
 import MeanDaoStats from './MeanDaoStats';
+import { AccountLayout, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { BN } from 'bn.js';
+import { toUiAmount } from '../../utils/utils';
 
 const tabs = ["Mean Token", "MeanFi", "Mean DAO"];
 
@@ -25,6 +28,7 @@ export const StatsView = () => {
   const [meanDecimals, setMeanDecimals] = useState<number | undefined>(undefined);
   const [meanMintAuth, setMeanMintAuth] = useState<string>('');
   const [meanToken, setMeanToken] = useState<TokenInfo | UserTokenAccount | undefined>(undefined);
+  const [meanHolders, setMeanHolders] = useState<number | undefined>(undefined);
 
   const [activeTab, setActiveTab] = useState(tabs[0]);
 
@@ -52,7 +56,9 @@ export const StatsView = () => {
       // use getParsedAccountInfo
       let accountInfo = await connection.getParsedAccountInfo(mint);
       if (accountInfo) {   
-        setMeanTotalSupply((accountInfo as any).value.data["parsed"]["info"]["supply"]);
+        let totalSupply = (accountInfo as any).value.data["parsed"]["info"]["supply"];
+        
+        setMeanTotalSupply(toUiAmount(new BN(totalSupply), totalSupply.decimals || 6));
         setMeanDecimals((accountInfo as any).value.data["parsed"]["info"]["decimals"]);
         setMeanMintAuth((accountInfo as any).value.data["parsed"]["info"]["mintAuthority"]);
       }
@@ -63,6 +69,38 @@ export const StatsView = () => {
     userTokens,
     connection,
   ]);
+
+  useEffect(() => {
+    const getAccounts = async (connection: Connection) => {
+      if (!meanToken) {
+        return [];
+      }
+  
+      const accountInfos = await connection.getParsedProgramAccounts(TOKEN_PROGRAM_ID, {
+        filters: [
+          {
+            memcmp: { offset: 0, bytes: meanToken.address },
+          }, 
+          {
+            dataSize: AccountLayout.span
+          }
+        ],
+      });
+  
+      const results = accountInfos
+        .filter(i => (i.account.data as ParsedAccountData).parsed.info.tokenAmount.uiAmount > 0);
+  
+      return results;
+    }
+  
+    if (connection) {
+      getAccounts(connection)
+        .then(values => {
+          setMeanHolders(values.length);
+        });
+    }
+  }, [connection, meanToken]);
+  
 
   return (
     <>
@@ -95,6 +133,8 @@ export const StatsView = () => {
               meanTotalSupply={meanTotalSupply} 
               meanDecimals={meanDecimals} 
               meanMintAuth={meanMintAuth} 
+              meanHolders={meanHolders}
+              meanToken={meanToken}
             />
           }
           {activeTab === "MeanFi" && "MeanFi"}
