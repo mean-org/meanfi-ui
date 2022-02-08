@@ -16,7 +16,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { consoleOut, copyText, delay, getShortDate, getTransactionStatusForLogs, isLocal } from '../../utils/ui';
 import { Identicon } from '../../components/Identicon';
 import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, toUiAmount } from '../../utils/utils';
-import { MultisigAccountInfo, MultisigTransactionInfo, MultisigTransactionStatus } from '../../models/multisig';
+import { MultisigV2, MultisigTransaction, MultisigTransactionStatus, MultisigParticipant } from '../../models/multisig';
 import { TransactionFees } from '@mean-dao/msp';
 import { useNativeAccount } from '../../contexts/accounts';
 import { OperationType, TransactionStatus } from '../../models/enums';
@@ -62,8 +62,8 @@ export const MultisigProgramsView = () => {
   const [transactionFees, setTransactionFees] = useState<TransactionFees>({
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
   });
-  const [selectedMultisig, setSelectedMultisig] = useState<MultisigAccountInfo | undefined>(undefined);
-  const [multisigPendingTxs, setMultisigPendingTxs] = useState<MultisigTransactionInfo[]>([]);
+  const [selectedMultisig, setSelectedMultisig] = useState<MultisigV2 | undefined>(undefined);
+  const [multisigPendingTxs, setMultisigPendingTxs] = useState<MultisigTransaction[]>([]);
 
   // TODO: Remove when releasing to the public
   useEffect(() => {
@@ -160,6 +160,24 @@ export const MultisigProgramsView = () => {
                 .alloc(info.account.label.length, info.account.label)
                 .filter(function (elem, index) { return elem !== 0; }
               );
+              
+              let owners: MultisigParticipant[] = [];
+
+              for (let i = 0; i < info.owners.length; i ++) {
+                owners.push({
+                  address: info.account.owners[i].address.toBase58(),
+                  name: info.account.owners[i].name.length > 0
+                    ? new TextDecoder().decode(
+                        Buffer.from(
+                          Uint8Array.of(
+                            ...info.account.owners[i].name.filter((b: any) => b !== 0)
+                          )
+                        )
+                      )
+                    : ""
+                } as MultisigParticipant);
+              }
+
               PublicKey
                 .findProgramAddress([info.publicKey.toBuffer()], MEAN_MULTISIG)
                 .then(k => {
@@ -168,6 +186,7 @@ export const MultisigProgramsView = () => {
   
                   let multisigInfo = {
                     id: info.publicKey,
+                    version: info.account.version,
                     label: new TextDecoder().decode(labelBuffer),
                     address,
                     nounce: info.account.nounce,
@@ -175,9 +194,9 @@ export const MultisigProgramsView = () => {
                     threshold: info.account.threshold.toNumber(),
                     pendingTxsAmount: info.account.pendingTxs.toNumber(),
                     createdOnUtc: new Date(info.account.createdOn.toNumber() * 1000),
-                    owners: info.account.owners
+                    owners: owners
   
-                  } as MultisigAccountInfo;
+                  } as MultisigV2;
   
                   consoleOut('selectedMultisig:', multisigInfo, 'blue');
                   setSelectedMultisig(multisigInfo);
@@ -316,7 +335,7 @@ export const MultisigProgramsView = () => {
 
     const timeout = setTimeout(() => {
 
-      let transactions: MultisigTransactionInfo[] = [];
+      let transactions: MultisigTransaction[] = [];
 
       multisigClient.account.transaction
         .all(selectedMultisig.id.toBuffer())
@@ -334,7 +353,7 @@ export const MultisigProgramsView = () => {
               status: getTransactionStatus(tx.account),
               operation: parseInt(Object.keys(OperationType).filter(k => k === tx.account.operation.toString())[0]),
               accounts: tx.account.accounts
-            } as MultisigTransactionInfo);
+            } as MultisigTransaction);
             if (txInfo.accounts.some(a => a.pubkey.equals(selectedProgram.pubkey))) {
               transactions.push(txInfo);
             }
@@ -388,7 +407,7 @@ export const MultisigProgramsView = () => {
     getProgramsByUpgradeAuthority,
   ]);
 
-  const getTransactionStatusClass = useCallback((mtx: MultisigTransactionInfo) => {
+  const getTransactionStatusClass = useCallback((mtx: MultisigTransaction) => {
 
     const approvals = mtx.signers.filter((s: boolean) => s === true).length;
 
@@ -408,7 +427,7 @@ export const MultisigProgramsView = () => {
 
   },[]);
 
-  const getTransactionStatusAction = useCallback((mtx: MultisigTransactionInfo) => {
+  const getTransactionStatusAction = useCallback((mtx: MultisigTransaction) => {
 
     if (mtx.status === MultisigTransactionStatus.Pending) {
       return "Approve";

@@ -66,7 +66,7 @@ import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
 import { customLogger } from '../..';
 import { AccountLayout, MintLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { useNavigate } from 'react-router-dom';
-import { MultisigAccountInfo, MultisigParticipant, MultisigTransactionInfo, MultisigTransactionStatus } from '../../models/multisig';
+import { Multisig, MultisigV2, MultisigParticipant, MultisigTransaction, MultisigTransactionStatus } from '../../models/multisig';
 import { MultisigCreateModal } from '../../components/MultisigCreateModal';
 import './style.less';
 
@@ -124,15 +124,15 @@ export const MultisigView = () => {
   });
 
   // MULTISIG
-  const [multisigAccounts, setMultisigAccounts] = useState<MultisigAccountInfo[]>([]);
+  const [multisigAccounts, setMultisigAccounts] = useState<any[]>([]);
   const [multisigTokens, setMultisigTokens] = useState<any[]>([]);
   const [multisigVaults, setMultisigVaults] = useState<any[]>([]);
-  const [multisigPendingTxs, setMultisigPendingTxs] = useState<MultisigTransactionInfo[]>([]);
+  const [multisigPendingTxs, setMultisigPendingTxs] = useState<MultisigTransaction[]>([]);
   const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(true);
   const [loadingMultisigAccountDetails, setLoadingMultisigAccountDetails] = useState(false);
   const [loadingMultisigTxs, setLoadingMultisigTxs] = useState(true);
-  const [selectedMultisig, setSelectedMultisig] = useState<MultisigAccountInfo | undefined>(undefined);
-  const [highlightedMultisigTx, sethHighlightedMultisigTx] = useState<MultisigTransactionInfo | undefined>();
+  const [selectedMultisig, setSelectedMultisig] = useState<any>(undefined);
+  const [highlightedMultisigTx, sethHighlightedMultisigTx] = useState<MultisigTransaction | undefined>();
   const [retryOperationPayload, setRetryOperationPayload] = useState<any>(undefined);
   const [isCreateMultisigModalVisible, setIsCreateMultisigModalVisible] = useState(false);
   const [isEditMultisigModalVisible, setIsEditMultisigModalVisible] = useState(false);
@@ -2681,7 +2681,7 @@ export const MultisigView = () => {
 
   },[]);
 
-  const getTransactionStatusAction = useCallback((mtx: MultisigTransactionInfo) => {
+  const getTransactionStatusAction = useCallback((mtx: MultisigTransaction) => {
 
     // if (
     //   mtx.status === MultisigTransactionStatus.Pending &&
@@ -2701,11 +2701,15 @@ export const MultisigView = () => {
       return "Execute";
     }
 
-    return "Executed";
+    if (mtx.status === MultisigTransactionStatus.Executed) {
+      return "Execute";
+    }
+
+    return "Rejected";
 
   },[]);
 
-  const getTransactionStatusClass = useCallback((mtx: MultisigTransactionInfo) => {
+  const getTransactionStatusClass = useCallback((mtx: MultisigTransaction) => {
 
     const approvals = mtx.signers.filter((s: boolean) => s === true).length;
 
@@ -2759,6 +2763,144 @@ export const MultisigView = () => {
 
   const onAfterEveryModalClose = useCallback(() => resetTransactionStatus(),[resetTransactionStatus]);
 
+  const readMultisigV2Accounts = useCallback((accs: any): MultisigV2[] => {
+
+    let accounts: MultisigV2[] = [];
+
+    if (!publicKey) { return accounts; }
+
+    let filteredAccs = accs.filter((a: any) => {
+      if (a.account.owners.filter((o: PublicKey) => o.equals(publicKey)).length) { return true; }
+      return false;
+    });
+
+    for (let info of filteredAccs) {
+
+      let address: any;
+
+      PublicKey
+        .findProgramAddress([info.publicKey.toBuffer()], MEAN_MULTISIG)
+        .then(k => { 
+
+          address = k[0];
+          let owners: MultisigParticipant[] = [];
+
+          for (let i = 0; i < info.account.owners.length; i ++) {
+            owners.push({
+              address: info.account.owners[i].address.toBase58(),
+              name: info.account.owners[i].name.length > 0
+                ? new TextDecoder().decode(
+                    Buffer.from(
+                      Uint8Array.of(
+                        ...info.account.owners[i].name.filter((b: any) => b !== 0)
+                      )
+                    )
+                  )
+                : ""
+            } as MultisigParticipant);
+          }
+
+          let multisigInfo = {
+            id: info.publicKey,
+            version: info.account.version,
+            address,
+            nounce: info.account.nonce,
+            ownerSeqNumber: info.account.ownerSetSeqno,
+            threshold: info.account.threshold.toNumber(),
+            pendingTxsAmount: info.account.pendingTxs.toNumber(),
+            createdOnUtc: new Date(info.account.createdOn.toNumber() * 1000),
+            owners: owners,
+            label: info.account.label.length > 0
+              ? new TextDecoder().decode(
+                  Buffer.from(
+                    Uint8Array.of(
+                      ...info.account.label.filter((b: any) => b !== 0)
+                    )
+                  )
+                )
+              : "",
+
+          } as MultisigV2;
+
+          accounts.push(multisigInfo);
+        });
+    }
+
+    return accounts;
+
+  },[
+    publicKey
+  ]);
+
+  const readMultisigAccounts = useCallback((accs: any): MultisigV2[] => {
+
+    let accounts: Multisig[] = [];
+
+    if (!publicKey) { return accounts; }
+
+    let filteredAccs = accs.filter((a: any) => {
+      if (a.account.owners.filter((o: PublicKey) => o.equals(publicKey)).length) { return true; }
+      return false;
+    });
+
+    for (let info of filteredAccs) {
+
+      let address: any;
+
+      PublicKey
+        .findProgramAddress([info.publicKey.toBuffer()], MEAN_MULTISIG)
+        .then(k => { 
+
+          address = k[0];
+          let owners: MultisigParticipant[] = [];
+
+          for (let i = 0; i < info.account.owners.length; i ++) {
+            owners.push({
+              address: info.account.owners[i].toBase58(),
+              name: info.account.ownersNames && info.account.ownersNames.length && info.account.ownersNames[i].length > 0 
+                ? new TextDecoder().decode(
+                    Buffer.from(
+                      Uint8Array.of(
+                        ...info.account.ownersNames[i].filter((b: any) => b !== 0)
+                      )
+                    )
+                  )
+                : ""
+            } as MultisigParticipant);
+          }
+
+          let multisigInfo = {
+            id: info.publicKey,
+            version: 1,
+            address,
+            nounce: info.account.nonce,
+            ownerSeqNumber: info.account.ownerSetSeqno,
+            threshold: info.account.threshold.toNumber(),
+            pendingTxsAmount: info.account.pendingTxs.toNumber(),
+            createdOnUtc: new Date(info.account.createdOn.toNumber() * 1000),
+            owners: owners,
+            label: info.account.label.length > 0
+              ? new TextDecoder().decode(
+                  Buffer.from(
+                    Uint8Array.of(
+                      ...info.account.label.filter((b: any) => b !== 0)
+                    )
+                  )
+                )
+              : "",
+
+          } as Multisig;
+
+          accounts.push(multisigInfo);
+        });
+    }
+
+    return accounts;
+
+  },[
+    publicKey
+  ]);
+
   // Refresh the multisig accounts list
   useEffect(() => {
 
@@ -2767,101 +2909,50 @@ export const MultisigView = () => {
       return;
     }
 
+    let multisigInfoArray: Array<MultisigV2 | Multisig> = [];
     const timeout = setTimeout(() => {
+
+      multisigClient.account.multisigV2
+        .all()
+        .then((accs: any) => { multisigInfoArray.push(...readMultisigV2Accounts(accs)); })
+        .catch(err => {
+          console.error(err);
+          setLoadingMultisigAccounts(false);
+        });
 
       multisigClient.account.multisig
         .all()
-        .then((accs: any) => {
+        .then((accs: any) => { multisigInfoArray.push(...readMultisigAccounts(accs)); })
+        .catch(err => {
+          console.error(err);
+          setLoadingMultisigAccounts(false);
+        });
 
-          let multisigInfoArray: MultisigAccountInfo[] = [];
-          let filteredAccs = accs.filter((a: any) => {
-            if (a.account.owners.filter((o: PublicKey) => o.equals(publicKey)).length) { return true; }
-            return false;
-          });
+    });
 
-          for (let info of filteredAccs) {
-
-            // console.log('info.account', info.account);
-            
-            let address: any;
-            let labelBuffer = Buffer
-              .alloc(info.account.label.length, info.account.label)
-              .filter(function (elem, index) { return elem !== 0; }
-            );
-
-            PublicKey
-              .findProgramAddress([info.publicKey.toBuffer()], MEAN_MULTISIG)
-              .then(k => { 
-
-                address = k[0];
-                let owners: MultisigParticipant[] = [];
-
-                for (let i = 0; i < info.account.owners.length; i ++) {
-                  owners.push({
-                    address: info.account.owners[i].toBase58(),
-                    name: info.account.ownersNames.length && info.account.ownersNames[i].length > 0 
-                      ? new TextDecoder().decode(
-                          Buffer.from(
-                            Uint8Array.of(
-                              ...info.account.ownersNames[i].filter((b: any) => b !== 0)
-                            )
-                          )
-                        )
-                      : ""
-                  } as MultisigParticipant);
-                }
-
-                let multisigInfo = {
-                  id: info.publicKey,
-                  label: new TextDecoder().decode(labelBuffer),
-                  address,
-                  nounce: info.account.nonce,
-                  ownerSeqNumber: info.account.ownerSetSeqno,
-                  threshold: info.account.threshold.toNumber(),
-                  pendingTxsAmount: info.account.pendingTxs.toNumber(),
-                  createdOnUtc: new Date(info.account.createdOn.toNumber() * 1000),
-                  owners: owners
-      
-                } as MultisigAccountInfo;
-
-                // console.log(multisigInfo);
-
-                multisigInfoArray.push(multisigInfo);
-
-              });
-          }
-
-          setTimeout(() => {
-            multisigInfoArray.sort((a: any, b: any) => b.createdOnUtc.getTime() - a.createdOnUtc.getTime());
-            setMultisigAccounts(multisigInfoArray);
-            if (highLightableMultisigId) {
-              // Select a multisig that was instructed to highlight even before entering this feature
-              const sig = multisigInfoArray.find(m => m.address.toBase58() === highLightableMultisigId);
-              if (sig) {
-                setSelectedMultisig(sig);
-              } else {
-                setSelectedMultisig(multisigInfoArray[0]);
-              }
-              setHighLightableMultisigId(undefined);
-            } else if (selectedMultisig) {
-              const sig = multisigInfoArray.find(m => m.id.equals(selectedMultisig.id));
-              if (sig) {
-                setSelectedMultisig(sig);
-              } else {
-                setSelectedMultisig(multisigInfoArray[0]);
-              }
-            } else {
-              setSelectedMultisig(multisigInfoArray[0]);
-            }
-            setLoadingMultisigAccounts(false);
-          });
+    setTimeout(() => {
+      multisigInfoArray.sort((a: any, b: any) => b.createdOnUtc.getTime() - a.createdOnUtc.getTime());
+      setMultisigAccounts(multisigInfoArray);
+      if (highLightableMultisigId) {
+        // Select a multisig that was instructed to highlight even before entering this feature
+        const sig = multisigInfoArray.find(m => m.address.toBase58() === highLightableMultisigId);
+        if (sig) {
+          setSelectedMultisig(sig);
+        } else {
+          setSelectedMultisig(multisigInfoArray[0]);
         }
-      )
-      .catch(err => {
-        console.error(err);
-        setLoadingMultisigAccounts(false);
-      });
-
+        setHighLightableMultisigId(undefined);
+      } else if (selectedMultisig) {
+        const sig = multisigInfoArray.find(m => m.id.equals(selectedMultisig.id));
+        if (sig) {
+          setSelectedMultisig(sig);
+        } else {
+          setSelectedMultisig(multisigInfoArray[0]);
+        }
+      } else {
+        setSelectedMultisig(multisigInfoArray[0]);
+      }
+      setLoadingMultisigAccounts(false);
     });
 
     return () => {
@@ -2869,14 +2960,16 @@ export const MultisigView = () => {
     }
 
   }, [
-    publicKey,
-    connected,
-    connection,
-    multisigClient,
-    selectedMultisig,
-    loadingMultisigAccounts,
-    highLightableMultisigId,
-    setHighLightableMultisigId
+    publicKey, 
+    connected, 
+    connection, 
+    multisigClient, 
+    selectedMultisig, 
+    loadingMultisigAccounts, 
+    highLightableMultisigId, 
+    setHighLightableMultisigId, 
+    readMultisigV2Accounts, 
+    readMultisigAccounts
   ]);
 
   // Subscribe to multisig account changes
@@ -2887,14 +2980,32 @@ export const MultisigView = () => {
     }
 
     const timeout = setTimeout(() => {
-      multisigClient.account.multisig
+      multisigClient.account.multisigV2
         .subscribe(selectedMultisig.id)
         .on("change", (account) => {
+
           let address: any;
           let labelBuffer = Buffer
             .alloc(account.label.length, account.label)
             .filter(function (elem, index) { return elem !== 0; }
           );
+
+          let owners: MultisigParticipant[] = [];
+
+          for (let i = 0; i < account.owners.length; i ++) {
+            owners.push({
+              address: account.owners[i].address.toBase58(),
+              name: account.owners[i].name.length > 0
+                ? new TextDecoder().decode(
+                    Buffer.from(
+                      Uint8Array.of(
+                        ...account.owners[i].name.filter((b: any) => b !== 0)
+                      )
+                    )
+                  )
+                : ""
+            } as MultisigParticipant);
+          }
 
           PublicKey
             .findProgramAddress([selectedMultisig.id.toBuffer()], MEAN_MULTISIG)
@@ -2902,6 +3013,7 @@ export const MultisigView = () => {
               address = k[0];
               let multisigInfo = {
                 id: account.publicKey,
+                version: account.version,
                 label: new TextDecoder().decode(labelBuffer),
                 address,
                 nounce: account.nounce,
@@ -2909,8 +3021,10 @@ export const MultisigView = () => {
                 threshold: account.threshold.toNumber(),
                 pendingTxsAmount: new BN(account.pendingTxs).toNumber(),
                 createdOnUtc: new Date(account.createdOn.toNumber() * 1000),
-                owners: account.owners  
-              } as MultisigAccountInfo;
+                owners: account.owners
+
+              } as MultisigV2;
+
               setSelectedMultisig(multisigInfo);
             });
           }
@@ -2937,7 +3051,7 @@ export const MultisigView = () => {
 
     const timeout = setTimeout(() => {
 
-      let transactions: MultisigTransactionInfo[] = [];
+      let transactions: MultisigTransaction[] = [];
       
       multisigClient.account.transaction
         .all(selectedMultisig.id.toBuffer())
@@ -2955,7 +3069,7 @@ export const MultisigView = () => {
               status: getTransactionStatus(tx.account),
               operation: parseInt(Object.keys(OperationType).filter(k => k === tx.account.operation.toString())[0]),
               accounts: tx.account.accounts
-            } as MultisigTransactionInfo);
+            } as MultisigTransaction);
             transactions.push(txInfo);
           }  
           setMultisigPendingTxs(transactions.sort((a, b) => b.createdOn.getTime() - a.createdOn.getTime()));

@@ -7,10 +7,12 @@ export enum MultisigTransactionStatus {
   // Approved by the required amount of signers
   Approved = 1,
   // Successfully executed (didExecute = true)
-  Executed = 2
+  Executed = 2,
+  // Rejected by any owner
+  Rejected = 3
 };
 
-export type MultisigAccountInfo = {
+export type Multisig = {
   id: PublicKey;
   label: string;
   address: PublicKey;
@@ -20,9 +22,23 @@ export type MultisigAccountInfo = {
   ownerSeqNumber: number;
   createdOnUtc: Date;
   pendingTxsAmount: number;
+  version: number;
 };
 
-export type MultisigTransactionInfo = {
+export type MultisigV2 = {
+  id: PublicKey;
+  label: string;
+  address: PublicKey;
+  owners: MultisigParticipant[];
+  threshold: number;
+  nounce: number;
+  ownerSeqNumber: number;
+  createdOnUtc: Date;
+  pendingTxsAmount: number;
+  version: number
+};
+
+export type MultisigTransaction = {
   id: PublicKey;
   operation: OperationType;
   multisig: PublicKey;
@@ -56,6 +72,6 @@ export type MultisigVault = {
 }
 
 export type MultisigParticipant = {
-  name: string;
   address: string;
+  name: string;
 }
