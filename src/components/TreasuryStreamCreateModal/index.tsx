@@ -238,8 +238,8 @@ export const TreasuryStreamCreateModal = (props: {
     return fee;
   }
 
-  const getMaxAmount = useCallback(() => {
-    if (isFeePaidByTreasurer && props.withdrawTransactionFees) {
+  const getMaxAmount = useCallback((preSetting = false) => {
+    if ((isFeePaidByTreasurer || preSetting) && props.withdrawTransactionFees) {
       const fee = getFeeAmount(props.withdrawTransactionFees, unallocatedBalance);
       return unallocatedBalance - fee;
     }
@@ -380,6 +380,17 @@ export const TreasuryStreamCreateModal = (props: {
   }
 
   const onFeePayedByTreasurerChange = (e: any) => {
+
+    consoleOut('onFeePayedByTreasurerChange:', e.target.checked, 'blue');
+
+    if (e.target.checked) {
+      const amount = fromCoinAmount ? parseFloat(fromCoinAmount) : 0;
+      const maxAmount = getMaxAmount(true);
+      if (amount > maxAmount) {
+        setFromCoinAmount(cutNumber(maxAmount, selectedToken ? selectedToken.decimals : 6));
+      }
+    }
+
     setIsFeePaidByTreasurer(e.target.checked);
   }
 
