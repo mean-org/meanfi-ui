@@ -591,6 +591,7 @@ export const MultisigVaultsView = () => {
 
   const resetTransactionStatus = useCallback(() => {
 
+    setIsBusy(false);
     setTransactionStatus({
       lastOperation: TransactionStatus.Iddle,
       currentOperation: TransactionStatus.Iddle
@@ -600,7 +601,10 @@ export const MultisigVaultsView = () => {
     setTransactionStatus
   ]);
 
-  const onAfterEveryModalClose = useCallback(() => resetTransactionStatus(),[resetTransactionStatus]);
+  const onAfterEveryModalClose = useCallback(() => {
+    consoleOut('onAfterEveryModalClose called!', '', 'crimson');
+    resetTransactionStatus();
+  },[resetTransactionStatus]);
 
 
   // Create vault modal
@@ -734,7 +738,7 @@ export const MultisigVaultsView = () => {
         return await createVault(data)
           .then(value => {
             if (!value) { return false; }
-            consoleOut('createTreasury returned transaction:', value);
+            consoleOut('createVault returned transaction:', value);
             setTransactionStatus({
               lastOperation: TransactionStatus.InitTransactionSuccess,
               currentOperation: TransactionStatus.SignTransaction
@@ -747,7 +751,7 @@ export const MultisigVaultsView = () => {
             return true;
           })
           .catch(error => {
-            console.error('createTreasury error:', error);
+            console.error('createVault error:', error);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.InitTransactionFailure
@@ -1142,7 +1146,7 @@ export const MultisigVaultsView = () => {
 
         return await transferTokens(data)
           .then(value => {
-            consoleOut('createTreasury returned transaction:', value);
+            consoleOut('transferTokens returned transaction:', value);
             setTransactionStatus({
               lastOperation: TransactionStatus.InitTransactionSuccess,
               currentOperation: TransactionStatus.SignTransaction
@@ -1155,7 +1159,7 @@ export const MultisigVaultsView = () => {
             return true;
           })
           .catch(error => {
-            console.error('createTreasury error:', error);
+            console.error('transferTokens error:', error);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.InitTransactionFailure
@@ -2494,6 +2498,22 @@ export const MultisigVaultsView = () => {
 
   return (
     <>
+      {isLocal() && (
+        <div className="debug-bar">
+          <span className="ml-1">isBusy:</span><span className="ml-1 font-bold fg-dark-active">{isBusy ? 'true' : 'false'}</span>
+          {(transactionStatus.lastOperation !== undefined) && (
+            <>
+            <span className="ml-1">lastOperation:</span><span className="ml-1 font-bold fg-dark-active">{TransactionStatus[transactionStatus.lastOperation]}</span>
+            </>
+          )}
+          {(transactionStatus.currentOperation !== undefined) && (
+            <>
+            <span className="ml-1">currentOperation:</span><span className="ml-1 font-bold fg-dark-active">{TransactionStatus[transactionStatus.currentOperation]}</span>
+            </>
+          )}
+        </div>
+      )}
+
       <div className="container main-container">
 
         <div className="interaction-area">
@@ -2589,7 +2609,7 @@ export const MultisigVaultsView = () => {
                               size="middle"
                               icon={<IconTrash className="mean-svg-icons" />}
                               onClick={() => {}}
-                              disabled={isTxInProgress()}
+                              disabled={isTxInProgress() || selectedVault.amount.toNumber() === 0}
                             />
                           </Tooltip>
                         </span>
@@ -2657,8 +2677,11 @@ export const MultisigVaultsView = () => {
           nativeBalance={nativeBalance}
           transactionFees={transactionFees}
           handleOk={onAcceptTransferToken}
-          handleAfterClose={onAfterEveryModalClose}
-          handleClose={() => setIsTransferTokenModalVisible(false)}
+          handleClose={() => {
+            onAfterEveryModalClose();
+            setIsTransferTokenModalVisible(false);
+          }}
+          selectedVault={selectedVault}
           isBusy={isBusy}
           vaults={multisigVaults}
         />
