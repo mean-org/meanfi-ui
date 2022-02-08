@@ -11,8 +11,8 @@ import {
 } from "recharts";
 import "./style.less";
 import moment from "moment";
-import { Button } from "antd";
 import { array, bool, str } from "@project-serum/borsh";
+import { Button } from "antd";
 
 const buttons = ["24H", "7D", "30D"];
 
@@ -104,7 +104,7 @@ export const PriceGraph = () => {
               onClick={onClickHandler}
               className={`thin-stroke ${activeBtn === btn ? "active" : ""}`}
             >
-              {btn}
+                {btn}
             </Button>
           ))}
         </div>
