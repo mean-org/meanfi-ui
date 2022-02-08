@@ -370,6 +370,7 @@
 			"multisig-already-owns-the-vault": "Selected multisig is already authority for this vault",
 			"multisig-selector-label": "New authority (multisig)",
 			"multisig-selector-placeholder": "Select or enter a multisig address",
+			"selected-vault-label": "Selected vault",
 			"success-message": "New vault authority set successfully."
 		},
 		"transfer-tokens": {

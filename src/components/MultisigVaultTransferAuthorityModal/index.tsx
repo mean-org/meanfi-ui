@@ -8,9 +8,10 @@ import { consoleOut, getTransactionOperationDescription, isValidAddress } from '
 import { isError } from '../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TransactionFees } from '@mean-dao/money-streaming';
-import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
+import { getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, makeDecimal, shortenAddress } from '../../utils/utils';
 import { MultisigAccountInfo, MultisigVault } from '../../models/multisig';
 import { Identicon } from '../Identicon';
+import { FALLBACK_COIN_IMAGE } from '../../constants';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -24,8 +25,8 @@ export const MultisigVaultTransferAuthorityModal = (props: {
   transactionFees: TransactionFees;
   selectedMultisig: MultisigAccountInfo | undefined;
   multisigAccounts: MultisigAccountInfo[];
+  selectedVault: MultisigVault | undefined;
   vaults: MultisigVault[]
-
 }) => {
   const { t } = useTranslation('common');
   const {
@@ -49,7 +50,7 @@ export const MultisigVaultTransferAuthorityModal = (props: {
   const isValidForm = (): boolean => {
     return selectedAuthority &&
             isValidAddress(selectedAuthority) &&
-            props.selectedMultisig && selectedAuthority !== props.selectedMultisig.address.toBase58()
+            (!props.selectedMultisig || (props.selectedMultisig && selectedAuthority !== props.selectedMultisig.address.toBase58()))
       ? true
       : false;
   }
@@ -62,6 +63,47 @@ export const MultisigVaultTransferAuthorityModal = (props: {
   const onMultisigSelected = (e: any) => {
     consoleOut('selectedAuthority:', e, 'blue');
     setSelectedAuthority(e);
+  }
+
+  const renderVault = (item: MultisigVault) => {
+    const token = getTokenByMintAddress(item.mint.toBase58());
+    const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+      event.currentTarget.src = FALLBACK_COIN_IMAGE;
+      event.currentTarget.className = "error";
+    };
+
+    return (
+      <div className="transaction-list-row no-pointer">
+        <div className="icon-cell">
+          <div className="token-icon">
+            {token && token.logoURI ? (
+              <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
+            ) : (
+              <Identicon address={item.mint.toBase58()} style={{
+                width: "28px",
+                display: "inline-flex",
+                height: "26px",
+                overflow: "hidden",
+                borderRadius: "50%"
+              }} />
+            )}
+          </div>
+        </div>
+        <div className="description-cell">
+          <div className="title text-truncate">{token ? token.symbol : `Unknown token [${shortenAddress(item.mint.toBase58(), 6)}]`}</div>
+          <div className="subtitle text-truncate">{shortenAddress(item.address.toBase58(), 8)}</div>
+        </div>
+        <div className="rate-cell">
+          <div className="rate-amount text-uppercase">
+            {getTokenAmountAndSymbolByTokenAddress(
+              makeDecimal(item.amount, token?.decimals || 6),
+              token ? token.address as string : '',
+              true
+            )}
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const renderMultisigSelectItem = (item: MultisigAccountInfo) => ({
@@ -120,6 +162,15 @@ export const MultisigVaultTransferAuthorityModal = (props: {
         {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
           <>
 
+            {props.selectedVault && (
+              <div className="mb-3">
+                <div className="form-label">{t('multisig.transfer-authority.selected-vault-label')}</div>
+                <div className="well">
+                  {renderVault(props.selectedVault)}
+                </div>
+              </div>
+            )}
+
             <div className="mb-3">
               <div className="form-label">{t('multisig.transfer-authority.multisig-selector-label')}</div>
               <div className="well">
@@ -131,6 +182,12 @@ export const MultisigVaultTransferAuthorityModal = (props: {
                       dropdownClassName="stream-select-dropdown"
                       options={renderMultisigSelectOptions()}
                       placeholder={t('multisig.transfer-authority.multisig-selector-placeholder')}
+                      onChange={(inputValue, option) => {
+                        if (isValidAddress(inputValue)) {
+                          consoleOut('onAutocompleteInputChabged:', inputValue, 'blue');
+                          setSelectedAuthority(inputValue);
+                        }
+                      }}
                       filterOption={(inputValue, option) => {
                         const originalItem = props.multisigAccounts.find(i => {
                           return i.address.toBase58() === option!.key ? true : false;

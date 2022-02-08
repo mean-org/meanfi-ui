@@ -1348,11 +1348,16 @@ export const MultisigVaultsView = () => {
 
   const onAcceptTransferVaultAuthority = (selectedAuthority: string) => {
     consoleOut('selectedAuthority', selectedAuthority, 'blue');
-    notify({
-      message: 'Param verification',
-      description: `Received parameter: ${selectedAuthority}\nThe transfer Tx is under development!`,
-      type: 'info'
-    });
+
+    // TODO: Remove this block when createTransferVaultAuthorityTx is completed
+      notify({
+        message: 'Param verification',
+        description: `Received parameter: ${selectedAuthority}\nThe transfer Tx is under development!`,
+        type: 'info'
+      });
+      setIsTransferVaultAuthorityModalVisible(false);
+
+    // TODO: Uncomment this when createTransferVaultAuthorityTx completed
     // onExecuteTransferVaultAuthorityTx(selectedAuthority);
   };
 
@@ -1601,7 +1606,7 @@ export const MultisigVaultsView = () => {
             });
             await delay(1000);
             onVaultAuthorityTransfered();
-            setIsTransferTokenModalVisible(false);
+            setIsTransferVaultAuthorityModalVisible(false);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -2698,6 +2703,7 @@ export const MultisigVaultsView = () => {
           isBusy={isBusy}
           selectedMultisig={selectedMultisig}
           multisigAccounts={multisigAccounts}
+          selectedVault={selectedVault}
           vaults={multisigVaults}
         />
       )}
