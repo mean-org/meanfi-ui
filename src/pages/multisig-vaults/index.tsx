@@ -17,7 +17,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { consoleOut, copyText, delay, getShortDate, getTransactionStatusForLogs, isLocal } from '../../utils/ui';
 import { Identicon } from '../../components/Identicon';
 import { getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, getTxIxResume, shortenAddress, toUiAmount } from '../../utils/utils';
-import { MultisigV2, MultisigParticipant, MultisigTransaction, MultisigTransactionStatus, MultisigVault } from '../../models/multisig';
+import { MultisigV2, MultisigParticipant, MultisigTransaction, MultisigTransactionStatus, MultisigVault, Multisig } from '../../models/multisig';
 import { TransactionFees } from '@mean-dao/msp';
 import { MultisigCreateVaultModal } from '../../components/MultisigCreateVaultModal';
 import { useNativeAccount } from '../../contexts/accounts';
@@ -35,7 +35,7 @@ export const MultisigVaultsView = () => {
   const navigate = useNavigate();
   const { account } = useNativeAccount();
   const connectionConfig = useConnectionConfig();
-  const { publicKey, wallet } = useWallet();
+  const { publicKey, wallet, connected } = useWallet();
   const {
     tokenList,
     isWhitelisted,
@@ -45,6 +45,7 @@ export const MultisigVaultsView = () => {
     refreshTokenBalance,
     setTransactionStatus,
     setHighLightableMultisigId,
+    previousWalletConnectState,
   } = useContext(AppStateContext);
   const {
     fetchTxInfoStatus,
@@ -57,17 +58,18 @@ export const MultisigVaultsView = () => {
   const [nativeBalance, setNativeBalance] = useState(0);
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [multisigAddress, setMultisigAddress] = useState('');
-  const [multisigAccounts, setMultisigAccounts] = useState<MultisigV2[]>([]);
+  const [multisigAccounts, setMultisigAccounts] = useState<(MultisigV2 | Multisig)[]>([]);
   const [multisigVaults, setMultisigVaults] = useState<MultisigVault[]>([]);
   const [selectedVault, setSelectedVault] = useState<MultisigVault | undefined>(undefined);
-  const [loadingVaults, setLoadingVaults] = useState(false);
+  const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(true);
   const [loadingMultisigTxs, setLoadingMultisigTxs] = useState(true);
+  const [loadingVaults, setLoadingVaults] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [transactionFees, setTransactionFees] = useState<TransactionFees>({
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
   });
-  const [selectedMultisig, setSelectedMultisig] = useState<MultisigV2 | undefined>(undefined);
+  const [selectedMultisig, setSelectedMultisig] = useState<MultisigV2 | Multisig | undefined>(undefined);
   const [multisigPendingTxs, setMultisigPendingTxs] = useState<MultisigTransaction[]>([]);
 
   // TODO: Remove when releasing to the public
@@ -138,173 +140,172 @@ export const MultisigVaultsView = () => {
     }
   }, [location]);
 
-  // Set selectedMultisig based on the passed-in multisigAddress in query params
+
+  const readAllMultisigAccounts = useCallback(async (wallet: PublicKey) => {
+
+    let accounts: any[] = [];
+    let multisigV2Accs = await multisigClient.account.multisigV2.all();
+    let filteredAccs = multisigV2Accs.filter((a: any) => {
+      if (a.account.owners.filter((o: any) => o.address.equals(wallet)).length) { return true; }
+      return false;
+    });
+
+    accounts.push(...filteredAccs);
+    let multisigAccs = await multisigClient.account.multisig.all();
+    filteredAccs = multisigAccs.filter((a: any) => {
+      if (a.account.owners.filter((o: PublicKey) => o.equals(wallet)).length) { return true; }
+      return false;
+    });
+
+    accounts.push(...filteredAccs);
+
+    return accounts;
+    
+  }, [
+    multisigClient.account.multisig, 
+    multisigClient.account.multisigV2
+  ]);
+
+  const parseMultisigV2Account = (info: any) => {
+    return PublicKey
+      .findProgramAddress([info.publicKey.toBuffer()], MEAN_MULTISIG)
+      .then(k => {
+
+        let address = k[0];
+        let owners: MultisigParticipant[] = [];
+        let labelBuffer = Buffer
+          .alloc(info.account.label.length, info.account.label)
+          .filter(function (elem, index) { return elem !== 0; }
+        );
+
+        let filteredOwners = info.account.owners.filter((o: any) => !o.address.equals(PublicKey.default));
+
+        for (let i = 0; i < filteredOwners.length; i ++) {
+          owners.push({
+            address: filteredOwners[i].address.toBase58(),
+            name: filteredOwners[i].name.length > 0 
+              ? new TextDecoder().decode(
+                  Buffer.from(
+                    Uint8Array.of(
+                      ...filteredOwners[i].name.filter((b: any) => b !== 0)
+                    )
+                  )
+                )
+              : ""
+          } as MultisigParticipant);
+        }
+
+        return {
+          id: info.publicKey,
+          version: info.account.version,
+          label: new TextDecoder().decode(labelBuffer),
+          address,
+          nounce: info.account.nonce,
+          ownerSeqNumber: info.account.ownerSetSeqno,
+          threshold: info.account.threshold.toNumber(),
+          pendingTxsAmount: info.account.pendingTxs.toNumber(),
+          createdOnUtc: new Date(info.account.createdOn.toNumber() * 1000),
+          owners: owners
+
+        } as MultisigV2;
+      })
+      .catch(err => { 
+        consoleOut('error', err, 'red');
+        return undefined;
+      });
+  };
+
+  const parseMultisiAccount = (info: any) => {
+    return PublicKey
+      .findProgramAddress([info.publicKey.toBuffer()], MEAN_MULTISIG)
+      .then(k => {
+
+        let address = k[0];
+        let owners: MultisigParticipant[] = [];
+        let labelBuffer = Buffer
+          .alloc(info.account.label.length, info.account.label)
+          .filter(function (elem, index) { return elem !== 0; }
+        );
+
+        for (let i = 0; i < info.account.owners.length; i ++) {
+          owners.push({
+            address: info.account.owners[i].toBase58(),
+            name: info.account.ownersNames && info.account.ownersNames.length && info.account.ownersNames[i].length > 0 
+              ? new TextDecoder().decode(
+                  Buffer.from(
+                    Uint8Array.of(
+                      ...info.account.ownersNames[i].filter((b: any) => b !== 0)
+                    )
+                  )
+                )
+              : ""
+          } as MultisigParticipant);
+        }
+
+        return {
+          id: info.publicKey,
+          version: 1,
+          label: new TextDecoder().decode(labelBuffer),
+          address,
+          nounce: info.account.nonce,
+          ownerSeqNumber: info.account.ownerSetSeqno,
+          threshold: info.account.threshold.toNumber(),
+          pendingTxsAmount: info.account.pendingTxs.toNumber(),
+          createdOnUtc: new Date(info.account.createdOn.toNumber() * 1000),
+          owners: owners
+
+        } as Multisig;
+      })
+      .catch(err => { 
+        consoleOut('error', err, 'red');
+        return undefined;
+      });
+  };
+
+  // Refresh the multisig accounts list
   useEffect(() => {
 
-    if (!connection || !publicKey || !multisigClient || !multisigAddress) {
+    if (!connection || !publicKey || !multisigClient || !loadingMultisigAccounts) {
+      setLoadingMultisigAccounts(false);
       return;
     }
 
     const timeout = setTimeout(() => {
 
-      if (!selectedMultisig || selectedMultisig.id.toBase58() !== multisigAddress) {
-        multisigClient.account.multisig
-          .all()
-          .then((accs: any) => {
-  
-            let filteredAccs = accs.filter((a: any) => {
-              if (a.account.owners.filter((o: PublicKey) => o.equals(publicKey)).length && a.publicKey.toBase58() === multisigAddress) { return true; }
-              return false;
-            });
-  
-            if (filteredAccs && filteredAccs.length) {
-              const info = filteredAccs[0];
-  
-              let address: any;
-              let labelBuffer = Buffer
-                .alloc(info.account.label.length, info.account.label)
-                .filter(function (elem, index) { return elem !== 0; }
-              );
-
-              let owners: MultisigParticipant[] = [];
-
-              for (let i = 0; i < info.owners.length; i ++) {
-                owners.push({
-                  address: info.account.owners[i].address.toBase58(),
-                  name: info.account.owners[i].name.length > 0
-                    ? new TextDecoder().decode(
-                        Buffer.from(
-                          Uint8Array.of(
-                            ...info.account.owners[i].name.filter((b: any) => b !== 0)
-                          )
-                        )
-                      )
-                    : ""
-                } as MultisigParticipant);
-              }
-
-              PublicKey
-                .findProgramAddress([info.publicKey.toBuffer()], MEAN_MULTISIG)
-                .then(k => {
-  
-                  address = k[0];
-  
-                  let multisigInfo = {
-                    id: info.publicKey,
-                    label: new TextDecoder().decode(labelBuffer),
-                    address,
-                    nounce: info.account.nounce,
-                    ownerSeqNumber: info.account.ownerSetSeqno,
-                    threshold: info.account.threshold.toNumber(),
-                    pendingTxsAmount: info.account.pendingTxs.toNumber(),
-                    createdOnUtc: new Date(info.account.createdOn.toNumber() * 1000),
-                    owners: owners
-  
-                  } as MultisigV2;
-  
-                  consoleOut('selectedMultisig:', multisigInfo, 'blue');
-                  setSelectedMultisig(multisigInfo);
-  
+      readAllMultisigAccounts(publicKey)
+        .then((allInfo: any) => {
+          let multisigInfoArray: (MultisigV2 | Multisig)[] = [];
+          for (let info of allInfo) {
+            let parsePromise: any;
+            if (info.account.version && info.account.version === 2) {
+              parsePromise = parseMultisigV2Account;
+            } else {
+              parsePromise = parseMultisiAccount;
+            }
+            if (parsePromise) {
+              parsePromise(info)
+                .then((multisig: any) =>{
+                  if (multisig) {
+                    multisigInfoArray.push(multisig);
+                  }
+                })
+                .catch((err: any) => {
+                  console.error(err);
+                  setLoadingMultisigAccounts(false);
                 });
             }
           }
-        )
-        .catch(err => {
-          console.error(err);
-        });
-      }
-
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }
-
-  }, [
-    publicKey,
-    connection,
-    multisigClient,
-    multisigAddress,
-    selectedMultisig,
-    setHighLightableMultisigId
-  ]);
-
-  // Get the multisig accounts
-  useEffect(() => {
-
-    if (!connection || !publicKey || !multisigClient) { return; }
-
-    const timeout = setTimeout(() => {
-
-      multisigClient.account.multisigV2
-        .all()
-        .then((accs: any) => {
-
-          let multisigInfoArray: MultisigV2[] = [];
-          let filteredAccs = accs.filter((a: any) => {
-            if (a.account.owners.filter((o: any) => o.address.equals(publicKey)).length) { return true; }
-            return false;
-          });
-
-          for (let info of filteredAccs) {
-            
-            let address: any;
-            let labelBuffer = Buffer
-              .alloc(info.account.label.length, info.account.label)
-              .filter(function (elem, index) { return elem !== 0; }
-            );
-
-            PublicKey
-              .findProgramAddress([info.publicKey.toBuffer()], MEAN_MULTISIG)
-              .then(k => { 
-
-                address = k[0];
-                let owners: MultisigParticipant[] = [];
-                let filteredOwners = info.account.owners.filter((o: any) => !o.address.equals(PublicKey.default));
-
-                for (let i = 0; i < filteredOwners.length; i ++) {
-                  owners.push({
-                    address: filteredOwners[i].address.toBase58(),
-                    name: filteredOwners[i].name.length > 0 
-                      ? new TextDecoder().decode(
-                          Buffer.from(
-                            Uint8Array.of(
-                              ...filteredOwners[i].name.filter((b: any) => b !== 0)
-                            )
-                          )
-                        )
-                      : ""
-                  } as MultisigParticipant);
-                }
-
-                let multisigInfo = {
-                  id: info.publicKey,
-                  label: new TextDecoder().decode(labelBuffer),
-                  address,
-                  nounce: info.account.nonce,
-                  ownerSeqNumber: info.account.ownerSetSeqno,
-                  threshold: info.account.threshold.toNumber(),
-                  pendingTxsAmount: info.account.pendingTxs.toNumber(),
-                  createdOnUtc: new Date(info.account.createdOn.toNumber() * 1000),
-                  owners: owners
-      
-                } as MultisigV2;
-
-                multisigInfoArray.push(multisigInfo);
-
-              });
-          }
-
           setTimeout(() => {
             multisigInfoArray.sort((a: any, b: any) => b.createdOnUtc.getTime() - a.createdOnUtc.getTime());
             setMultisigAccounts(multisigInfoArray);
+            consoleOut('multisigs:', multisigInfoArray, 'blue');
+            setLoadingMultisigAccounts(false);
           });
-        }
-      )
-      .catch(err => {
-        console.error(err);
-      });
-
+        })
+        .catch(err => {
+          console.error(err);
+          setLoadingMultisigAccounts(false);
+        });
     });
 
     return () => {
@@ -312,11 +313,30 @@ export const MultisigVaultsView = () => {
     }
 
   }, [
-    publicKey,
     connection,
+    loadingMultisigAccounts,
     multisigClient,
+    publicKey,
+    readAllMultisigAccounts,
+  ]);
+
+  // Set selectedMultisig based on the passed-in multisigAddress in query params
+  useEffect(() => {
+
+    if (publicKey && multisigAddress && multisigAccounts && multisigAccounts.length > 0) {
+      consoleOut(`try to select multisig ${multisigAddress} from list`, multisigAccounts, 'blue');
+      const selected = multisigAccounts.find(m => m.id.toBase58() === multisigAddress);
+      if (selected) {
+        consoleOut('selectedMultisig:', selected, 'blue');
+        setSelectedMultisig(selected);
+      }
+    }
+
+  }, [
+    publicKey,
+    multisigAddress,
     selectedMultisig,
-    setHighLightableMultisigId
+    multisigAccounts,
   ]);
 
   // Get multisig vaults on demmand
@@ -405,6 +425,25 @@ export const MultisigVaultsView = () => {
     selectedMultisig
   ]);
 
+  const onRefreshVaults = useCallback(() => {
+    setLoadingVaults(true);
+    getMultisigVaults(connection, new PublicKey(multisigAddress))
+    .then((result: MultisigVault[]) => {
+      consoleOut('multisig vaults:', result, 'blue');
+      setMultisigVaults(result);
+      if (result.length > 0 && !selectedVault) {
+        setSelectedVault(result[0]);
+      }
+    })
+    .catch(err => console.error(err))
+    .finally(() => setLoadingVaults(false));
+  }, [
+    connection,
+    selectedVault,
+    multisigAddress,
+    getMultisigVaults,
+  ]);
+
   // Update list of txs
   useEffect(() => {
 
@@ -461,23 +500,38 @@ export const MultisigVaultsView = () => {
     getTransactionStatus
   ]);
 
-  const onRefreshVaults = useCallback(() => {
-    setLoadingVaults(true);
-    getMultisigVaults(connection, new PublicKey(multisigAddress))
-    .then((result: MultisigVault[]) => {
-      consoleOut('multisig vaults:', result, 'blue');
-      setMultisigVaults(result);
-      if (result.length > 0 && !selectedVault) {
-        setSelectedVault(result[0]);
+  // Load/Unload multisig on wallet connect/disconnect
+  useEffect(() => {
+    if (previousWalletConnectState !== connected) {
+      if (!previousWalletConnectState && connected && publicKey) {
+        consoleOut('User is connecting...', publicKey.toBase58(), 'green');
+        setLoadingMultisigAccounts(true);
+      } else if (previousWalletConnectState && !connected) {
+        consoleOut('User is disconnecting...', '', 'green');
+        setMultisigAccounts([]);
+        setSelectedMultisig(undefined);
+        setLoadingMultisigAccounts(false);
       }
-    })
-    .catch(err => console.error(err))
-    .finally(() => setLoadingVaults(false));
+    }
   }, [
-    connection,
-    selectedVault,
-    multisigAddress,
-    getMultisigVaults,
+    connected,
+    previousWalletConnectState,
+    publicKey
+  ]);
+
+  // Handle what to do when pending Tx confirmation reaches finality or on error
+  useEffect(() => {
+    if (!publicKey) { return; }
+
+    if (lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
+      onRefreshVaults();
+    }
+  }, [
+    publicKey,
+    fetchTxInfoStatus,
+    lastSentTxSignature,
+    lastSentTxOperationType,
+    onRefreshVaults
   ]);
 
   const getTransactionStatusClass = useCallback((mtx: MultisigTransaction) => {
@@ -593,6 +647,18 @@ export const MultisigVaultsView = () => {
     return ( 
       fetchTxInfoStatus === "fetching" && 
       lastSentTxOperationType === OperationType.TransferTokens
+    );
+
+  }, [
+    fetchTxInfoStatus,
+    lastSentTxOperationType,
+  ]);
+
+  const isSettingVaultAuthority = useCallback((): boolean => {
+
+    return ( 
+      fetchTxInfoStatus === "fetching" && 
+      lastSentTxOperationType === OperationType.SetVaultAuthority
     );
 
   }, [
@@ -2267,7 +2333,6 @@ export const MultisigVaultsView = () => {
             className="thin-stroke"
             disabled={isTxInProgress() || loadingVaults}
             onClick={showTransferTokenModal}>
-            {isTxInProgress() && (<LoadingOutlined />)}
             {t('multisig.multisig-vaults.cta-transfer')}
           </Button>
           <Button
@@ -2277,20 +2342,24 @@ export const MultisigVaultsView = () => {
             className="thin-stroke"
             disabled={isTxInProgress() || loadingVaults}
             onClick={showTransferVaultAuthorityModal}>
-            {isTxInProgress() && (<LoadingOutlined />)}
-            {t('multisig.multisig-vaults.cta-change-multisig')}
+            {t('multisig.multisig-vaults.cta-change-multisig-authority')}
           </Button>
 
           {/* Operation indication */}
           {isCreatingVault() ? (
             <div className="flex-row flex-center">
               <LoadingOutlined />
-              <span className="ml-1">{t('multisig.multisig-account-detail.cta-create-vault-busy')}</span>
+              <span className="ml-1">{t('multisig.multisig-vaults.cta-create-vault-busy')}</span>
             </div>
           ) : isSendingTokens() ? (
             <div className="flex-row flex-center">
               <LoadingOutlined />
-              <span className="ml-1">{t('multisig.multisig-account-detail.cta-transfer-busy')}</span>
+              <span className="ml-1">{t('multisig.multisig-vaults.cta-transfer-busy')}</span>
+            </div>
+          ) : isSettingVaultAuthority() ? (
+            <div className="flex-row flex-center">
+              <LoadingOutlined />
+              <span className="ml-1">{t('multisig.multisig-vaults.cta-change-multisig-authority-busy')}</span>
             </div>
           ) : null}
         </Space>
@@ -2594,7 +2663,7 @@ export const MultisigVaultsView = () => {
                       block
                       type="primary"
                       shape="round"
-                      disabled={!publicKey || selectedMultisig === undefined}
+                      disabled={!publicKey || !selectedMultisig}
                       onClick={onShowCreateVaultModal}>
                       {publicKey
                         ? t('multisig.multisig-account-detail.cta-create-vault')
