@@ -236,13 +236,13 @@ export const MultisigVaultsView = () => {
 
     const timeout = setTimeout(() => {
 
-      multisigClient.account.multisig
+      multisigClient.account.multisigV2
         .all()
         .then((accs: any) => {
 
           let multisigInfoArray: MultisigV2[] = [];
           let filteredAccs = accs.filter((a: any) => {
-            if (a.account.owners.filter((o: PublicKey) => o.equals(publicKey)).length) { return true; }
+            if (a.account.owners.filter((o: any) => o.address.equals(publicKey)).length) { return true; }
             return false;
           });
 
@@ -260,15 +260,16 @@ export const MultisigVaultsView = () => {
 
                 address = k[0];
                 let owners: MultisigParticipant[] = [];
+                let filteredOwners = info.account.owners.filter((o: any) => !o.address.equals(PublicKey.default));
 
-                for (let i = 0; i < info.account.owners.length; i ++) {
+                for (let i = 0; i < filteredOwners.length; i ++) {
                   owners.push({
-                    address: info.account.owners[i].address.toBase58(),
-                    name: info.account.owners[i].name.length > 0 
+                    address: filteredOwners[i].address.toBase58(),
+                    name: filteredOwners[i].name.length > 0 
                       ? new TextDecoder().decode(
                           Buffer.from(
                             Uint8Array.of(
-                              ...info.account.owners[i].name.filter((b: any) => b !== 0)
+                              ...filteredOwners[i].name.filter((b: any) => b !== 0)
                             )
                           )
                         )
@@ -329,8 +330,6 @@ export const MultisigVaultsView = () => {
       MEAN_MULTISIG
     );
 
-    console.log('multisigSigner:', multisigSigner.toBase58());
-
     const accountInfos = await connection.getProgramAccounts(TOKEN_PROGRAM_ID, {
       filters: [
         {
@@ -342,11 +341,9 @@ export const MultisigVaultsView = () => {
       ],
     });
 
-    console.log('accountInfos:', accountInfos);
+    if (!accountInfos || !accountInfos.length) { return []; }
 
     const results = accountInfos.map((t: any) => {
-
-      // let tokenAccount = AccountLayout.decode(t.account.data);
       let tokenAccount = ACCOUNT_LAYOUT.decode(t.account.data);
       tokenAccount.address = t.pubkey;
       return tokenAccount;

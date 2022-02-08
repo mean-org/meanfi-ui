@@ -148,7 +148,7 @@ export const MultisigProgramsView = () => {
           .then((accs: any) => {
   
             let filteredAccs = accs.filter((a: any) => {
-              if (a.account.owners.filter((o: PublicKey) => o.equals(publicKey)).length && a.publicKey.toBase58() === multisigAddress) { return true; }
+              if (a.account.owners.filter((o: any) => o.address.equals(publicKey)).length && a.publicKey.toBase58() === multisigAddress) { return true; }
               return false;
             });
   
@@ -162,15 +162,16 @@ export const MultisigProgramsView = () => {
               );
               
               let owners: MultisigParticipant[] = [];
+              let filteredOwners = info.account.owners.filter((o: any) => !o.address.equals(PublicKey.default));
 
-              for (let i = 0; i < info.owners.length; i ++) {
+              for (let i = 0; i < filteredOwners.length; i ++) {
                 owners.push({
-                  address: info.account.owners[i].address.toBase58(),
-                  name: info.account.owners[i].name.length > 0
+                  address: filteredOwners[i].address.toBase58(),
+                  name: filteredOwners[i].name.length > 0 
                     ? new TextDecoder().decode(
                         Buffer.from(
                           Uint8Array.of(
-                            ...info.account.owners[i].name.filter((b: any) => b !== 0)
+                            ...filteredOwners[i].name.filter((b: any) => b !== 0)
                           )
                         )
                       )
