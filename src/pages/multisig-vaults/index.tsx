@@ -2594,7 +2594,7 @@ export const MultisigVaultsView = () => {
                       block
                       type="primary"
                       shape="round"
-                      disabled={!publicKey || !selectedMultisig}
+                      disabled={!publicKey || selectedMultisig === undefined}
                       onClick={onShowCreateVaultModal}>
                       {publicKey
                         ? t('multisig.multisig-account-detail.cta-create-vault')
