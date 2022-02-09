@@ -426,6 +426,7 @@ export const MultisigVaultsView = () => {
   ]);
 
   const onRefreshVaults = useCallback(() => {
+
     setLoadingVaults(true);
     getMultisigVaults(connection, new PublicKey(multisigAddress))
     .then((result: MultisigVault[]) => {
@@ -437,6 +438,7 @@ export const MultisigVaultsView = () => {
     })
     .catch(err => console.error(err))
     .finally(() => setLoadingVaults(false));
+
   }, [
     connection,
     selectedVault,
@@ -523,11 +525,12 @@ export const MultisigVaultsView = () => {
   useEffect(() => {
     if (!publicKey) { return; }
 
-    if (lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
+    if (multisigAddress && lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
       onRefreshVaults();
     }
   }, [
     publicKey,
+    multisigAddress,
     fetchTxInfoStatus,
     lastSentTxSignature,
     lastSentTxOperationType,
@@ -557,14 +560,18 @@ export const MultisigVaultsView = () => {
   const getTransactionStatusAction = useCallback((mtx: MultisigTransaction) => {
 
     if (mtx.status === MultisigTransactionStatus.Pending) {
-      return "Approve";
+      return "Pending Approval";
     } 
     
     if (mtx.status === MultisigTransactionStatus.Approved) {
-      return "Execute";
+      return "Pending for Execution";
     }
 
-    return "Executed";
+    if (mtx.status === MultisigTransactionStatus.Executed) {
+      return "Completed";
+    }
+
+    return "Rejected";
 
   },[]);
 
@@ -588,6 +595,10 @@ export const MultisigVaultsView = () => {
 
     if (op === OperationType.SetMultisigAuthority) {
       return "Set Authority";
+    }
+
+    if (op === OperationType.EditMultisig) {
+      return "Edit Multisig";
     }
 
   },[]);
@@ -1703,8 +1714,6 @@ export const MultisigVaultsView = () => {
     clearTransactionStatusContext,
     onVaultAuthorityTransfered
   ]);
-
-
 
   const getTokenIconAndAmount = (tokenAddress: string, amount: any) => {
     const token = tokenList.find(t => t.address === tokenAddress);

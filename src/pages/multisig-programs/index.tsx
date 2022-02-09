@@ -431,14 +431,18 @@ export const MultisigProgramsView = () => {
   const getTransactionStatusAction = useCallback((mtx: MultisigTransaction) => {
 
     if (mtx.status === MultisigTransactionStatus.Pending) {
-      return "Approve";
+      return "Pending Approval";
     } 
     
     if (mtx.status === MultisigTransactionStatus.Approved) {
-      return "Execute";
+      return "Pending for Execution";
     }
 
-    return "Executed";
+    if (mtx.status === MultisigTransactionStatus.Executed) {
+      return "Completed";
+    }
+
+    return "Rejected";
 
   },[]);
 
@@ -462,6 +466,10 @@ export const MultisigProgramsView = () => {
 
     if (op === OperationType.SetMultisigAuthority) {
       return "Set Authority";
+    }
+
+    if (op === OperationType.EditMultisig) {
+      return "Edit Multisig";
     }
 
   },[]);
