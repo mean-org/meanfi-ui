@@ -2992,16 +2992,6 @@ export const MultisigView = () => {
 
   const getTransactionStatusAction = useCallback((mtx: MultisigTransaction) => {
 
-    // if (
-    //   mtx.status === MultisigTransactionStatus.Pending &&
-    //   selectedMultisig && 
-    //   publicKey && 
-    //   selectedMultisig.owners[0].equals(publicKey) && 
-    //   mtx.signers[0] === true
-    // ) {
-    //   return "Approved";
-    // }
-
     if (mtx.status === MultisigTransactionStatus.Pending) {
       return "Pending Approval";
     } 
@@ -3015,6 +3005,18 @@ export const MultisigView = () => {
     }
 
     return "Rejected";
+
+  },[]);
+
+  const getTransactionUserStatusAction = useCallback((mtx: MultisigTransaction) => {
+
+    if (mtx.didSigned === undefined) {
+      return "Rejected";
+    } else if (mtx.didSigned === false) {
+      return "Not Signed";
+    } else {
+      return "Signed"
+    }
 
   },[]);
 
@@ -3362,7 +3364,7 @@ export const MultisigView = () => {
   // Get Txs for the selected multisig
   useEffect(() => {
 
-    if (!connection || !connected || !selectedMultisig || !selectedMultisig.id || !loadingMultisigTxs) { 
+    if (!connection || !connected || !publicKey || !selectedMultisig || !selectedMultisig.id || !loadingMultisigTxs) { 
       return;
     }
 
@@ -3372,8 +3374,11 @@ export const MultisigView = () => {
       
       multisigClient.account.transaction
         .all(selectedMultisig.id.toBuffer())
-        .then((txs) => {  
+        .then((txs) => {
           for (let tx of txs) {
+            let currentOwnerIndex = selectedMultisig.owners
+              .findIndex((o: MultisigParticipant) => o.address === publicKey.toBase58());
+
             let txInfo = Object.assign({}, {
               id: tx.publicKey,
               multisig: tx.account.multisig,
@@ -3385,10 +3390,14 @@ export const MultisigView = () => {
                 : undefined,
               status: getTransactionStatus(tx.account),
               operation: parseInt(Object.keys(OperationType).filter(k => k === tx.account.operation.toString())[0]),
-              accounts: tx.account.accounts
+              accounts: tx.account.accounts,
+              didSigned: tx.account.signers[currentOwnerIndex]
+
             } as MultisigTransaction);
+            
             transactions.push(txInfo);
-          }  
+          }
+          // consoleOut('selected multisig txs', transactions, 'blue');
           setMultisigPendingTxs(transactions.sort((a, b) => b.createdOn.getTime() - a.createdOn.getTime()));
           setLoadingMultisigTxs(false);
         })
@@ -3403,6 +3412,7 @@ export const MultisigView = () => {
     }
 
   }, [
+    publicKey,
     connection, 
     connected, 
     selectedMultisig, 
