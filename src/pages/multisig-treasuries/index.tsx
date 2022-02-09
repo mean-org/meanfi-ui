@@ -97,8 +97,8 @@ export const MultisigTreasuriesView = () => {
   const multisigClient = useMemo(() => {
 
     const opts: ConfirmOptions = {
-      preflightCommitment: "recent",
-      commitment: "recent",
+      preflightCommitment: "finalized",
+      commitment: "finalized",
     };
 
     const provider = new Provider(connection, wallet as any, opts);
@@ -1280,7 +1280,7 @@ export const MultisigTreasuriesView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.CreateVault);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.CreateVault);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -1688,7 +1688,7 @@ export const MultisigTreasuriesView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.TransferTokens);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.TransferTokens);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -1985,7 +1985,7 @@ export const MultisigTreasuriesView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.SetVaultAuthority);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.SetVaultAuthority);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,

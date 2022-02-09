@@ -165,8 +165,8 @@ export const MultisigView = () => {
   const multisigClient = useMemo(() => {
 
     const opts: ConfirmOptions = {
-      preflightCommitment: "recent",
-      commitment: "recent",
+      preflightCommitment: "finalized",
+      commitment: "finalized",
     };
 
     const provider = new Provider(connection, wallet as any, opts);
@@ -594,7 +594,7 @@ export const MultisigView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.CreateMultisig);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.CreateMultisig);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -971,7 +971,7 @@ export const MultisigView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.EditMultisig);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.EditMultisig);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -1325,7 +1325,7 @@ export const MultisigView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.MintTokens);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.MintTokens);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -2235,7 +2235,7 @@ export const MultisigView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.UpgradeProgram);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.UpgradeProgram);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -2568,7 +2568,7 @@ export const MultisigView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.UpgradeIDL);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.UpgradeIDL);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -2918,7 +2918,7 @@ export const MultisigView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.SetMultisigAuthority);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.SetMultisigAuthority);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -3431,7 +3431,6 @@ export const MultisigView = () => {
         consoleOut('User is disconnecting...', '', 'green');
         setMultisigAccounts([]);
         setSelectedMultisig(undefined);
-        setLoadingMultisigAccounts(false);
       }
     }
   }, [
@@ -3457,9 +3456,7 @@ export const MultisigView = () => {
     if (!publicKey) { return; }
 
     if (lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
-      if (lastSentTxOperationType === OperationType.CreateMultisig) {
-        setLoadingMultisigAccounts(false);
-      }
+      setLoadingMultisigAccounts(true);
     }
   }, [
     publicKey,

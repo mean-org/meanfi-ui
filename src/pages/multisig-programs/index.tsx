@@ -4,7 +4,7 @@ import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contex
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { useWallet } from '../../contexts/wallet';
 import { AppStateContext } from '../../contexts/appstate';
-import { Button, Col, Divider, Empty, Row, Space, Spin, Tooltip } from 'antd';
+import { Button, Col, Empty, Row, Space, Spin, Tooltip } from 'antd';
 import { ArrowLeftOutlined, LoadingOutlined, ReloadOutlined } from '@ant-design/icons';
 import { IconCodeBlock, IconExternalLink, IconShieldOutline } from '../../Icons';
 import { PreFooter } from '../../components/PreFooter';
@@ -85,8 +85,8 @@ export const MultisigProgramsView = () => {
   const multisigClient = useMemo(() => {
 
     const opts: ConfirmOptions = {
-      preflightCommitment: "recent",
-      commitment: "recent",
+      preflightCommitment: "finalized",
+      commitment: "finalized",
     };
 
     const provider = new Provider(connection, wallet as any, opts);
