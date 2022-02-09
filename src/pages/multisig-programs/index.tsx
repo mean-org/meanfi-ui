@@ -136,80 +136,69 @@ export const MultisigProgramsView = () => {
   // Set selectedMultisig based on the passed-in multisigAddress in query params
   useEffect(() => {
 
-    if (!connection || !publicKey || !multisigClient || !multisigAddress) {
+    if (!connection || !publicKey || !multisigClient || !multisigAddress || selectedMultisig) {
       return;
     }
 
     const timeout = setTimeout(() => {
 
-      if (!selectedMultisig || selectedMultisig.id.toBase58() !== multisigAddress) {
-        multisigClient.account.multisig
-          .all()
-          .then((accs: any) => {
-  
-            let filteredAccs = accs.filter((a: any) => {
-              if (a.account.owners.filter((o: any) => o.address.equals(publicKey)).length && a.publicKey.toBase58() === multisigAddress) { return true; }
-              return false;
-            });
-  
-            if (filteredAccs && filteredAccs.length) {
-              const info = filteredAccs[0];
-  
-              let address: any;
-              let labelBuffer = Buffer
-                .alloc(info.account.label.length, info.account.label)
-                .filter(function (elem, index) { return elem !== 0; }
-              );
-              
-              let owners: MultisigParticipant[] = [];
-              let filteredOwners = info.account.owners.filter((o: any) => !o.address.equals(PublicKey.default));
+      multisigClient.account.multisigV2
+        .fetch(new PublicKey(multisigAddress), 'finalized')
+        .then((info: any) => {
 
-              for (let i = 0; i < filteredOwners.length; i ++) {
-                owners.push({
-                  address: filteredOwners[i].address.toBase58(),
-                  name: filteredOwners[i].name.length > 0 
-                    ? new TextDecoder().decode(
-                        Buffer.from(
-                          Uint8Array.of(
-                            ...filteredOwners[i].name.filter((b: any) => b !== 0)
-                          )
-                        )
+          let address: any;
+          let labelBuffer = Buffer
+            .alloc(info.label.length, info.label)
+            .filter(function (elem, index) { return elem !== 0; }
+          );
+          
+          let owners: MultisigParticipant[] = [];
+          let filteredOwners = info.owners.filter((o: any) => !o.address.equals(PublicKey.default));
+
+          for (let i = 0; i < filteredOwners.length; i ++) {
+            owners.push({
+              address: filteredOwners[i].address.toBase58(),
+              name: filteredOwners[i].name.length > 0 
+                ? new TextDecoder().decode(
+                    Buffer.from(
+                      Uint8Array.of(
+                        ...filteredOwners[i].name.filter((b: any) => b !== 0)
                       )
-                    : ""
-                } as MultisigParticipant);
-              }
-
-              PublicKey
-                .findProgramAddress([info.publicKey.toBuffer()], MEAN_MULTISIG)
-                .then(k => {
-  
-                  address = k[0];
-  
-                  let multisigInfo = {
-                    id: info.publicKey,
-                    version: info.account.version,
-                    label: new TextDecoder().decode(labelBuffer),
-                    address,
-                    nounce: info.account.nounce,
-                    ownerSeqNumber: info.account.ownerSetSeqno,
-                    threshold: info.account.threshold.toNumber(),
-                    pendingTxsAmount: info.account.pendingTxs.toNumber(),
-                    createdOnUtc: new Date(info.account.createdOn.toNumber() * 1000),
-                    owners: owners
-  
-                  } as MultisigV2;
-  
-                  consoleOut('selectedMultisig:', multisigInfo, 'blue');
-                  setSelectedMultisig(multisigInfo);
-  
-                });
-            }
+                    )
+                  )
+                : ""
+            } as MultisigParticipant);
           }
-        )
+
+          PublicKey
+            .findProgramAddress([new PublicKey(multisigAddress).toBuffer()], MEAN_MULTISIG)
+            .then(k => {
+
+              address = k[0];
+              console.log('address', address.toBase58());
+
+              let multisigInfo = {
+                id: new PublicKey(multisigAddress),
+                version: info.version,
+                label: new TextDecoder().decode(labelBuffer),
+                address,
+                nounce: info.nonce,
+                ownerSeqNumber: info.ownerSetSeqno,
+                threshold: info.threshold.toNumber(),
+                pendingTxsAmount: info.pendingTxs.toNumber(),
+                createdOnUtc: new Date(info.createdOn.toNumber() * 1000),
+                owners: owners
+
+              } as MultisigV2;
+
+              consoleOut('selectedMultisig:', multisigInfo, 'blue');
+              setSelectedMultisig(multisigInfo);
+
+            });
+        })
         .catch(err => {
           console.error(err);
         });
-      }
 
     });
 
@@ -229,6 +218,7 @@ export const MultisigProgramsView = () => {
   const getProgramsByUpgradeAuthority = useCallback(async (upgradeAuthority: PublicKey): Promise<ProgramAccounts[] | undefined> => {
 
     if (!connection || !upgradeAuthority) { return undefined; }
+
     console.log(`Searching for programs with upgrade authority: ${upgradeAuthority}`);
 
     // 1. Fetch executable data account having upgradeAuthority as upgrade authority
@@ -282,31 +272,40 @@ export const MultisigProgramsView = () => {
     }
 
     console.log(`${programs.length} programs found!`);
+
     return programs;
+
   }, [connection]);
 
   // Get Programs
   useEffect(() => {
 
-    if (!connection || !publicKey || !selectedMultisig) {
+    if (!connection || !publicKey || !selectedMultisig || !selectedMultisig.address) {
       return;
     }
 
-    getProgramsByUpgradeAuthority(selectedMultisig.address)
-      .then(programs => {
-        consoleOut('programs:', programs, 'blue');
-        if (programs && programs.length > 0) {
-          setPrograms(programs);
-        } else {
-          setPrograms([]);
-        }
-      });
+    const timeout = setTimeout(() => {
+
+      getProgramsByUpgradeAuthority(selectedMultisig.address)
+        .then(programs => {
+          consoleOut('programs:', programs, 'blue');
+          if (programs && programs.length > 0) {
+            setPrograms(programs);
+          } else {
+            setPrograms([]);
+          }
+        });
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
 
   },[
-    publicKey,
-    connection,
-    selectedMultisig,
-    getProgramsByUpgradeAuthority,
+    connection, 
+    getProgramsByUpgradeAuthority, 
+    publicKey, 
+    selectedMultisig
   ]);
 
   const getTransactionStatus = useCallback((account: any) => {
