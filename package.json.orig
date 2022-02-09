@@ -51,7 +51,11 @@
     "@mean-dao/ddca": "1.2.32",
     "@mean-dao/hybrid-liquidity-ag": "1.1.32",
     "@mean-dao/money-streaming": "1.7.8",
+<<<<<<< .merge_file_LVLK6s
+    "@mean-dao/msp": "0.2.29",
+=======
     "@mean-dao/msp": "0.2.31",
+>>>>>>> .merge_file_c1wokm
     "@project-serum/anchor": "^0.20.1",
     "@project-serum/borsh": "^0.2.3",
     "@project-serum/serum": "^0.13.60",

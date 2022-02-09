@@ -962,7 +962,7 @@ export const AccountsView = () => {
                 <span className="rate-amount">--</span>
               ) : (
                 <>
-                  <div className="rate-amount">${formatThousands(streamsSummary.totalNet, 5)}</div>
+                  <div className="rate-amount">${formatThousands(Math.abs(streamsSummary.totalNet), 5)}</div>
                   <div className="interval">net-change</div>
                 </>
               )}
