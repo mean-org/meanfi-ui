@@ -3835,10 +3835,42 @@ export const MultisigView = () => {
               }
             }}>
             {multisigVaults && multisigVaults.length > 0 ? (
-              <div>Vaults ({multisigVaults.length})</div>
+              <span>
+                {t('multisig.multisig-account-detail.cta-vaults', {
+                  itemCount: multisigVaults.length
+                })}
+              </span>
               ) : (
-              <div>Vaults</div>
+              <span>
+                {t('multisig.multisig-account-detail.cta-no-vaults')}
+              </span>
             )}
+          </Button>
+
+          <Button
+            type="default"
+            shape="round"
+            size="small"
+            className="thin-stroke"
+            disabled={isTxInProgress() || loadingMultisigAccounts}
+            onClick={() => {
+              if (selectedMultisig) {
+                const url = `/multisig-treasuries?ms=${selectedMultisig.id.toBase58()}`;
+                navigate(url);
+              }
+            }}>
+            {t('multisig.multisig-account-detail.cta-no-treasuries')}
+            {/* {multisigVaults && multisigVaults.length > 0 ? (
+              <span>
+                {t('multisig.multisig-account-detail.cta-treasuries', {
+                  itemCount: multisigVaults.length
+                })}
+              </span>
+            ) : (
+              <span>
+                {t('multisig.multisig-account-detail.cta-no-treasuries')}
+              </span>
+            )} */}
           </Button>
 
           {/* Available to local dev or whitelisted addresses in dev */}

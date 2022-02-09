@@ -18,7 +18,7 @@ import { consoleOut, copyText, delay, getShortDate, getTransactionStatusForLogs,
 import { Identicon } from '../../components/Identicon';
 import { getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, getTxIxResume, shortenAddress, toUiAmount } from '../../utils/utils';
 import { MultisigV2, MultisigParticipant, MultisigTransaction, MultisigTransactionStatus, MultisigVault, Multisig } from '../../models/multisig';
-import { TransactionFees } from '@mean-dao/msp';
+import { calculateActionFees, MSP, MSP_ACTIONS, TransactionFees, TreasuryType } from '@mean-dao/msp';
 import { MultisigCreateVaultModal } from '../../components/MultisigCreateVaultModal';
 import { useNativeAccount } from '../../contexts/accounts';
 import { OperationType, TransactionStatus } from '../../models/enums';
@@ -29,6 +29,7 @@ import { notify } from '../../utils/notifications';
 import { MultisigTransferTokensModal } from '../../components/MultisigTransferTokensModal';
 import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
 import { MultisigVaultTransferAuthorityModal } from '../../components/MultisigVaultTransferAuthorityModal';
+import { TreasuryCreateModal } from '../../components/TreasuryCreateModal';
 
 export const MultisigTreasuriesView = () => {
   const location = useLocation();
@@ -39,8 +40,10 @@ export const MultisigTreasuriesView = () => {
   const {
     tokenList,
     isWhitelisted,
+    treasuryOption,
     detailsPanelOpen,
     transactionStatus,
+    streamV2ProgramAddress,
     setDtailsPanelOpen,
     refreshTokenBalance,
     setTransactionStatus,
@@ -59,16 +62,18 @@ export const MultisigTreasuriesView = () => {
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [multisigAddress, setMultisigAddress] = useState('');
   const [multisigAccounts, setMultisigAccounts] = useState<(MultisigV2 | Multisig)[]>([]);
-  const [multisigVaults, setMultisigVaults] = useState<MultisigVault[]>([]);
-  const [selectedVault, setSelectedVault] = useState<MultisigVault | undefined>(undefined);
+  const [multisigTreasuries, setMultisigTreasuries] = useState<MultisigVault[]>([]);
+  const [selectedTreasury, setSelectedTreasury] = useState<MultisigVault | undefined>(undefined);
   const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(true);
   const [loadingMultisigTxs, setLoadingMultisigTxs] = useState(true);
-  const [loadingVaults, setLoadingVaults] = useState(false);
+  const [loadingTreasuries, setLoadingTreasuries] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [transactionFees, setTransactionFees] = useState<TransactionFees>({
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
   });
+  const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
+  const [retryOperationPayload, setRetryOperationPayload] = useState<any>(undefined);
   const [selectedMultisig, setSelectedMultisig] = useState<MultisigV2 | Multisig | undefined>(undefined);
   const [multisigPendingTxs, setMultisigPendingTxs] = useState<MultisigTransaction[]>([]);
 
@@ -107,6 +112,21 @@ export const MultisigTreasuriesView = () => {
   }, [
     connection, 
     wallet
+  ]);
+
+  const msp = useMemo(() => {
+    if (publicKey) {
+      console.log('New MSP from Multisig Treasuries');
+      return new MSP(
+        connectionConfig.endpoint,
+        streamV2ProgramAddress,
+        "finalized"
+      );
+    }
+  }, [
+    connectionConfig.endpoint,
+    publicKey,
+    streamV2ProgramAddress
   ]);
 
   // Keep account balance updated
@@ -339,6 +359,7 @@ export const MultisigTreasuriesView = () => {
     multisigAccounts,
   ]);
 
+  // TODO: Change to: Get the list of treasuries for selected multisig on demmand
   // Get multisig vaults on demmand
   const getMultisigVaults = useCallback(async (
     connection: Connection,
@@ -373,6 +394,7 @@ export const MultisigTreasuriesView = () => {
 
   },[]);
 
+  // TODO: Change to: Get Multisig Treasuries
   // Get Multisig Vaults
   useEffect(() => {
 
@@ -381,18 +403,18 @@ export const MultisigTreasuriesView = () => {
     }
 
     const timeout = setTimeout(() => {
-      setLoadingVaults(true);
+      setLoadingTreasuries(true);
       getMultisigVaults(connection, new PublicKey(multisigAddress))
       .then((result: MultisigVault[]) => {
         consoleOut('multisig vaults:', result, 'blue');
-        setMultisigVaults(result);
+        setMultisigTreasuries(result);
         if (result.length > 0) {
-          setSelectedVault(result[0]);
+          setSelectedTreasury(result[0]);
           consoleOut('selectedVault:', result[0], 'blue');
         }
       })
       .catch(err => console.error(err))
-      .finally(() => setLoadingVaults(false));
+      .finally(() => setLoadingTreasuries(false));
     });
 
     return () => {
@@ -426,28 +448,31 @@ export const MultisigTreasuriesView = () => {
   ]);
 
   const onRefreshVaults = useCallback(() => {
-    setLoadingVaults(true);
+    if (!connection || !multisigAddress) { return; }
+
+    setLoadingTreasuries(true);
+
     getMultisigVaults(connection, new PublicKey(multisigAddress))
     .then((result: MultisigVault[]) => {
       consoleOut('multisig vaults:', result, 'blue');
-      setMultisigVaults(result);
-      if (result.length > 0 && !selectedVault) {
-        setSelectedVault(result[0]);
+      setMultisigTreasuries(result);
+      if (result.length > 0 && !selectedTreasury) {
+        setSelectedTreasury(result[0]);
       }
     })
     .catch(err => console.error(err))
-    .finally(() => setLoadingVaults(false));
+    .finally(() => setLoadingTreasuries(false));
   }, [
     connection,
-    selectedVault,
+    selectedTreasury,
     multisigAddress,
     getMultisigVaults,
   ]);
 
-  // Update list of txs
+  // Get the list of txs
   useEffect(() => {
 
-    if (!connection || !publicKey || !multisigAddress || !selectedVault || !selectedMultisig || !loadingMultisigTxs) {
+    if (!connection || !publicKey || !multisigAddress || !selectedTreasury || !selectedMultisig || !loadingMultisigTxs) {
       return;
     }
 
@@ -472,7 +497,7 @@ export const MultisigTreasuriesView = () => {
               operation: parseInt(Object.keys(OperationType).filter(k => k === tx.account.operation.toString())[0]),
               accounts: tx.account.accounts
             } as MultisigTransaction);
-            if (txInfo.accounts.some(a => a.pubkey.equals(selectedVault.address))) {
+            if (txInfo.accounts.some(a => a.pubkey.equals(selectedTreasury.address))) {
               transactions.push(txInfo);
             }
           }
@@ -492,7 +517,7 @@ export const MultisigTreasuriesView = () => {
   }, [
     publicKey,
     connection,
-    selectedVault,
+    selectedTreasury,
     multisigAddress,
     selectedMultisig,
     loadingMultisigTxs,
@@ -533,6 +558,10 @@ export const MultisigTreasuriesView = () => {
     lastSentTxOperationType,
     onRefreshVaults
   ]);
+
+  const getTransactionFees = useCallback(async (action: MSP_ACTIONS): Promise<TransactionFees> => {
+    return await calculateActionFees(connection, action);
+  }, [connection]);
 
   const getTransactionStatusClass = useCallback((mtx: MultisigTransaction) => {
 
@@ -630,11 +659,11 @@ export const MultisigTreasuriesView = () => {
     fetchTxInfoStatus,
   ]);
 
-  const isCreatingVault = useCallback((): boolean => {
+  const isCreatingTreasury = useCallback((): boolean => {
 
     return ( 
       fetchTxInfoStatus === "fetching" && 
-      lastSentTxOperationType === OperationType.CreateVault
+      lastSentTxOperationType === OperationType.TreasuryCreate
     );
 
   }, [
@@ -642,7 +671,7 @@ export const MultisigTreasuriesView = () => {
     lastSentTxOperationType,
   ]);
 
-  const isSendingTokens = useCallback((): boolean => {
+  const isWithdrawingFromTreasury = useCallback((): boolean => {
 
     return ( 
       fetchTxInfoStatus === "fetching" && 
@@ -682,6 +711,277 @@ export const MultisigTreasuriesView = () => {
     consoleOut('onAfterEveryModalClose called!', '', 'crimson');
     resetTransactionStatus();
   },[resetTransactionStatus]);
+
+
+  // Create treasury modal
+  const [isCreateTreasuryModalVisible, setIsCreateTreasuryModalVisibility] = useState(false);
+  const showCreateTreasuryModal = useCallback(() => {
+    resetTransactionStatus();
+    setIsCreateTreasuryModalVisibility(true);
+    getTransactionFees(MSP_ACTIONS.createTreasury).then(value => {
+      setTransactionFees(value);
+      consoleOut('transactionFees:', value, 'orange');
+    });
+  }, [
+    getTransactionFees,
+    resetTransactionStatus
+  ]);
+  const closeCreateTreasuryModal = useCallback(() => setIsCreateTreasuryModalVisibility(false), []);
+
+  const onAcceptCreateTreasury = (e: any) => {
+    consoleOut('treasury name:', e, 'blue');
+    onExecuteCreateTreasuryTx(e);
+  };
+
+  const onTreasuryCreated = () => {
+    closeCreateTreasuryModal();
+    refreshTokenBalance();
+    setTransactionStatus({
+      lastOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
+    });
+    notify({
+      description: t('treasuries.create-treasury.success-message'),
+      type: "success"
+    });
+  }
+
+  const onExecuteCreateTreasuryTx = async (treasuryName: string) => {
+    let transaction: Transaction;
+    let signedTransaction: Transaction;
+    let signature: any;
+    let encodedTx: string;
+    const transactionLog: any[] = [];
+
+    clearTransactionStatusContext();
+    setTransactionCancelled(false);
+    setOngoingOperation(OperationType.TreasuryCreate);
+    setRetryOperationPayload(treasuryName);
+    setIsBusy(true);
+
+    const createTx = async (): Promise<boolean> => {
+      if (publicKey && treasuryName && treasuryOption && msp) {
+        consoleOut("Start transaction for create treasury", '', 'blue');
+        consoleOut('Wallet address:', publicKey.toBase58());
+
+        setTransactionStatus({
+          lastOperation: TransactionStatus.TransactionStart,
+          currentOperation: TransactionStatus.InitTransaction
+        });
+
+        // Create a transaction
+        const data = {
+          wallet: publicKey.toBase58(),                               // wallet
+          label: treasuryName,                                        // treasury
+          type: `${treasuryOption.type} = ${treasuryOption.type === TreasuryType.Open ? 'Open' : 'Locked'}`
+        };
+        consoleOut('data:', data);
+
+        // Log input data
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+          inputs: data
+        });
+
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+          result: ''
+        });
+
+        // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
+        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+        consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
+        consoleOut('nativeBalance:', nativeBalance, 'blue');
+        if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.TransactionStartFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+            result: `Not enough balance (${
+              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            }) to pay for network fees (${
+              getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+            })`
+          });
+          customLogger.logWarning('Create Multisig Treasury transaction failed', { transcript: transactionLog });
+          return false;
+        }
+
+        consoleOut('Starting Create Treasury using MSP V2...', '', 'blue');
+        return await msp.createTreasury(
+          publicKey,                                                  // wallet
+          treasuryName,                                               // label
+          treasuryOption.type                                         // type
+        )
+        .then(value => {
+          consoleOut('createTreasury returned transaction:', value);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.InitTransactionSuccess,
+            currentOperation: TransactionStatus.SignTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+            result: getTxIxResume(value)
+          });
+          transaction = value;
+          return true;
+        })
+        .catch(error => {
+          console.error('createTreasury error:', error);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.InitTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+            result: `${error}`
+          });
+          customLogger.logError('Create Multisig Treasury transaction failed', { transcript: transactionLog });
+          return false;
+        });
+      } else {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot start transaction! Wallet not found!'
+        });
+        customLogger.logError('Create Multisig Treasury transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const signTx = async (): Promise<boolean> => {
+      if (wallet) {
+        consoleOut('Signing transaction...');
+        return await wallet.signTransaction(transaction)
+        .then((signed: Transaction) => {
+          consoleOut('signTransaction returned a signed transaction:', signed);
+          signedTransaction = signed;
+          // Try signature verification by serializing the transaction
+          try {
+            encodedTx = signedTransaction.serialize().toString('base64');
+            consoleOut('encodedTx:', encodedTx, 'orange');
+          } catch (error) {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransaction,
+              currentOperation: TransactionStatus.SignTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            });
+            customLogger.logError('Create Multisig Treasury transaction failed', { transcript: transactionLog });
+            return false;
+          }
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransactionSuccess,
+            currentOperation: TransactionStatus.SendTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
+            result: {signer: wallet.publicKey.toBase58()}
+          });
+          return true;
+        })
+        .catch(error => {
+          console.error(error);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransaction,
+            currentOperation: TransactionStatus.SignTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+          });
+          customLogger.logError('Create Multisig Treasury transaction failed', { transcript: transactionLog });
+          return false;
+        });
+      } else {
+        console.error('Cannot sign transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot sign transaction! Wallet not found!'
+        });
+        customLogger.logError('Create Multisig Treasury transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const sendTx = async (): Promise<boolean> => {
+      if (wallet) {
+        return await connection
+          .sendEncodedTransaction(encodedTx)
+          .then(sig => {
+            consoleOut('sendEncodedTransaction returned a signature:', sig);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.ConfirmTransaction
+            });
+            signature = sig;
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
+              result: `signature: ${signature}`
+            });
+            return true;
+          })
+          .catch(error => {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransaction,
+              currentOperation: TransactionStatus.SendTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+              result: { error, encodedTx }
+            });
+            customLogger.logError('Create Multisig Treasury transaction failed', { transcript: transactionLog });
+            return false;
+          });
+      } else {
+        console.error('Cannot send transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SendTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot send transaction! Wallet not found!'
+        });
+        customLogger.logError('Create Multisig Treasury transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    if (wallet) {
+      const create = await createTx();
+      consoleOut('created:', create);
+      if (create && !transactionCancelled) {
+        const sign = await signTx();
+        consoleOut('signed:', sign);
+        if (sign && !transactionCancelled) {
+          const sent = await sendTx();
+          consoleOut('sent:', sent);
+          if (sent && !transactionCancelled) {
+            consoleOut('Send Tx to confirmation queue:', signature);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.TreasuryCreate);
+            setIsBusy(false);
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.TransactionFinished
+            });
+            onTreasuryCreated();
+            setOngoingOperation(undefined);
+          } else { setIsBusy(false); }
+        } else { setIsBusy(false); }
+      } else { setIsBusy(false); }
+    }
+  };
 
 
   // Create vault modal
@@ -2215,7 +2515,7 @@ export const MultisigTreasuriesView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+          customLogger.logError('Create Multisig Treasury transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -2228,7 +2528,7 @@ export const MultisigTreasuriesView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot sign transaction! Wallet not found!'
         });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Create Multisig Treasury transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -2260,7 +2560,7 @@ export const MultisigTreasuriesView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
               result: { error, encodedTx }
             });
-            customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+            customLogger.logError('Create Multisig Treasury transaction failed', { transcript: transactionLog });
             return false;
           });
       } else {
@@ -2273,7 +2573,7 @@ export const MultisigTreasuriesView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot send transaction! Wallet not found!'
         });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Create Multisig Treasury transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -2331,35 +2631,36 @@ export const MultisigTreasuriesView = () => {
             shape="round"
             size="small"
             className="thin-stroke"
-            disabled={isTxInProgress() || loadingVaults}
+            disabled={isTxInProgress() || loadingTreasuries}
             onClick={showTransferTokenModal}>
-            {t('multisig.multisig-vaults.cta-transfer')}
+            {t('multisig.multisig-treasuries.cta-transfer')}
           </Button>
+
           <Button
             type="default"
             shape="round"
             size="small"
             className="thin-stroke"
-            disabled={isTxInProgress() || loadingVaults}
+            disabled={isTxInProgress() || loadingTreasuries}
             onClick={showTransferVaultAuthorityModal}>
-            {t('multisig.multisig-vaults.cta-change-multisig-authority')}
+            {t('multisig.multisig-treasuries.cta-change-multisig-authority')}
           </Button>
 
           {/* Operation indication */}
-          {isCreatingVault() ? (
+          {isCreatingTreasury() ? (
             <div className="flex-row flex-center">
               <LoadingOutlined />
-              <span className="ml-1">{t('multisig.multisig-vaults.cta-create-vault-busy')}</span>
+              <span className="ml-1">{t('multisig.multisig-treasuries.cta-create-treasury-busy')}</span>
             </div>
-          ) : isSendingTokens() ? (
+          ) : isWithdrawingFromTreasury() ? (
             <div className="flex-row flex-center">
               <LoadingOutlined />
-              <span className="ml-1">{t('multisig.multisig-vaults.cta-transfer-busy')}</span>
+              <span className="ml-1">{t('multisig.multisig-treasuries.cta-transfer-busy')}</span>
             </div>
           ) : isSettingVaultAuthority() ? (
             <div className="flex-row flex-center">
               <LoadingOutlined />
-              <span className="ml-1">{t('multisig.multisig-vaults.cta-change-multisig-authority-busy')}</span>
+              <span className="ml-1">{t('multisig.multisig-treasuries.cta-change-multisig-authority-busy')}</span>
             </div>
           ) : null}
         </Space>
@@ -2369,15 +2670,15 @@ export const MultisigTreasuriesView = () => {
 
   const renderTransactions = () => {
 
-    if (!selectedVault || !selectedMultisig) {
+    if (!selectedTreasury || !selectedMultisig) {
       return null;
-    } else if (selectedVault && selectedMultisig && loadingMultisigTxs) {
+    } else if (selectedTreasury && selectedMultisig && loadingMultisigTxs) {
       return (
         <div className="mb-2">{t('multisig.multisig-transactions.loading-transactions')}</div>
       );
     } else if (selectedMultisig && !loadingMultisigTxs && multisigPendingTxs.length === 0) {
       return (
-        <div className="mb-2">{t('multisig.multisig-vaults.no-transactions')}</div>
+        <div className="mb-2">{t('multisig.multisig-treasuries.no-transactions')}</div>
       );
     }
 
@@ -2449,7 +2750,7 @@ export const MultisigTreasuriesView = () => {
   const renderVaultMeta = () => {
     return (
       <>
-      {selectedVault && (
+      {selectedTreasury && (
         <div className="stream-fields-container">
 
           {/* Row 1 */}
@@ -2464,8 +2765,8 @@ export const MultisigTreasuriesView = () => {
                 <div className="transaction-detail-row">
                   {
                     getTokenIconAndAmount(
-                      selectedVault.mint.toBase58(),
-                      selectedVault.amount
+                      selectedTreasury.mint.toBase58(),
+                      selectedTreasury.amount
                     )
                   }
                 </div>
@@ -2484,10 +2785,10 @@ export const MultisigTreasuriesView = () => {
                     onClick={e => {
                       e.preventDefault();
                       e.stopPropagation();
-                      setHighLightableMultisigId(selectedVault.owner.toBase58());
+                      setHighLightableMultisigId(selectedTreasury.owner.toBase58());
                       navigate('/multisig');
                     }}>
-                    {shortenAddress(selectedVault.owner.toBase58(), 6)}
+                    {shortenAddress(selectedTreasury.owner.toBase58(), 6)}
                   </Link>
                   <div className="icon-button-container">
                     <Button
@@ -2495,7 +2796,7 @@ export const MultisigTreasuriesView = () => {
                       shape="circle"
                       size="middle"
                       icon={<CopyOutlined />}
-                      onClick={() => copyAddressToClipboard(selectedVault.owner.toBase58())}
+                      onClick={() => copyAddressToClipboard(selectedTreasury.owner.toBase58())}
                     />
                   </div>
                 </div>
@@ -2511,15 +2812,15 @@ export const MultisigTreasuriesView = () => {
 
   const renderMultisigVaults = (
     <>
-    {multisigVaults && multisigVaults.length ? (
-      multisigVaults.map((item, index) => {
+    {multisigTreasuries && multisigTreasuries.length ? (
+      multisigTreasuries.map((item, index) => {
         const token = getTokenByMintAddress(item.mint.toBase58());
         const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
           event.currentTarget.src = FALLBACK_COIN_IMAGE;
           event.currentTarget.className = "error";
         };
         const onVaultSelected = (ev: any) => {
-          setSelectedVault(item);
+          setSelectedTreasury(item);
           setDtailsPanelOpen(true);
           const resume = `\naddress: ${item.address.toBase58()}\nmint: ${token ? token.address : item.mint.toBase58()}\nauth: ${item.owner.toBase58()}`;
           consoleOut('resume:', resume, 'blue');
@@ -2532,7 +2833,7 @@ export const MultisigTreasuriesView = () => {
             onClick={onVaultSelected}
             className={
               `transaction-list-row ${
-                selectedVault && selectedVault.address && selectedVault.address.equals(item.address)
+                selectedTreasury && selectedTreasury.address && selectedTreasury.address.equals(item.address)
                   ? 'selected' 
                   : ''
               }`
@@ -2572,8 +2873,8 @@ export const MultisigTreasuriesView = () => {
       <>
         <div className="h-100 flex-center">
           <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{publicKey
-            ? t('multisig.multisig-vaults.no-vaults')
-            : t('multisig.multisig-vaults.not-connected')}</p>} />
+            ? t('multisig.multisig-treasuries.no-vaults')
+            : t('multisig.multisig-treasuries.not-connected')}</p>} />
         </div>
       </>
     )}
@@ -2610,7 +2911,7 @@ export const MultisigTreasuriesView = () => {
               <div className="meanfi-panel-heading">
                 <div className="back-button">
                   <span className="icon-button-container">
-                    <Tooltip placement="bottom" title={t('multisig.multisig-vaults.back-to-multisig-accounts-cta')}>
+                    <Tooltip placement="bottom" title={t('multisig.multisig-treasuries.back-to-multisig-accounts-cta')}>
                       <Button
                         type="default"
                         shape="circle"
@@ -2625,16 +2926,16 @@ export const MultisigTreasuriesView = () => {
                 </div>
                 <IconSafe className="mean-svg-icons mr-1" />
                 <span className="title">
-                  {multisigVaults && selectedMultisig
-                    ? t('multisig.multisig-vaults.screen-title', {
+                  {multisigTreasuries && selectedMultisig
+                    ? t('multisig.multisig-treasuries.screen-title', {
                         multisigName: selectedMultisig.label,
-                        vaultCount: multisigVaults ? multisigVaults.length : 0
+                        itemCount: multisigTreasuries ? multisigTreasuries.length : 0
                       })
-                    : t('multisig.multisig-vaults.screen-title-no-vaults')
+                    : t('multisig.multisig-treasuries.screen-title-no-vaults')
                   }
                 </span>
-                <Tooltip placement="bottom" title={t('multisig.multisig-vaults.refresh-tooltip')}>
-                  <div className={`transaction-stats ${loadingVaults ? 'click-disabled' : 'simplelink'}`} onClick={onRefreshVaults}>
+                <Tooltip placement="bottom" title={t('multisig.multisig-treasuries.refresh-tooltip')}>
+                  <div className={`transaction-stats ${loadingTreasuries ? 'click-disabled' : 'simplelink'}`} onClick={onRefreshVaults}>
                     <Spin size="small" />
                     <span className="transaction-legend">
                       <span className="icon-button-container">
@@ -2653,7 +2954,7 @@ export const MultisigTreasuriesView = () => {
 
               <div className="inner-container">
                 <div className="item-block vertical-scroll">
-                  <Spin spinning={loadingVaults}>
+                  <Spin spinning={loadingTreasuries}>
                     {renderMultisigVaults}
                   </Spin>
                 </div>
@@ -2664,9 +2965,9 @@ export const MultisigTreasuriesView = () => {
                       type="primary"
                       shape="round"
                       disabled={!publicKey || !selectedMultisig}
-                      onClick={onShowCreateVaultModal}>
+                      onClick={showCreateTreasuryModal}>
                       {publicKey
-                        ? t('multisig.multisig-account-detail.cta-create-vault')
+                        ? t('multisig.multisig-treasuries.cta-create-treasury')
                         : t('transactions.validation.not-connected')
                       }
                     </Button>
@@ -2678,31 +2979,31 @@ export const MultisigTreasuriesView = () => {
 
             <div className="meanfi-two-panel-right">
               <div className="meanfi-panel-heading">
-                <span className="title">{t('multisig.multisig-vaults.vault-detail-heading')}</span>
+                <span className="title">{t('multisig.multisig-treasuries.vault-detail-heading')}</span>
               </div>
 
               <div className="inner-container">
                 {publicKey ? (
                   <>
-                    {selectedVault && (
+                    {selectedTreasury && (
                       <div className="float-top-right">
                         <span className="icon-button-container secondary-button">
-                          <Tooltip placement="bottom" title={t('multisig.multisig-vaults.cta-close')}>
+                          <Tooltip placement="bottom" title={t('multisig.multisig-treasuries.cta-close')}>
                             <Button
                               type="default"
                               shape="circle"
                               size="middle"
                               icon={<IconTrash className="mean-svg-icons" />}
                               onClick={() => {}}
-                              disabled={isTxInProgress() || selectedVault.amount.toNumber() === 0}
+                              disabled={isTxInProgress() || selectedTreasury.amount.toNumber() === 0}
                             />
                           </Tooltip>
                         </span>
                       </div>
                     )}
-                    <div className={`stream-details-data-wrapper vertical-scroll ${(loadingVaults || !selectedVault) ? 'h-100 flex-center' : ''}`}>
-                      <Spin spinning={loadingVaults}>
-                        {selectedVault && (
+                    <div className={`stream-details-data-wrapper vertical-scroll ${(loadingTreasuries || !selectedTreasury) ? 'h-100 flex-center' : ''}`}>
+                      <Spin spinning={loadingTreasuries}>
+                        {selectedTreasury && (
                           <>
                             {renderVaultMeta()}
                             <Divider className="activity-divider" plain></Divider>
@@ -2712,21 +3013,21 @@ export const MultisigTreasuriesView = () => {
                           </>
                         )}
                       </Spin>
-                      {!loadingVaults && (
+                      {!loadingTreasuries && (
                         <>
-                        {(!multisigVaults || multisigVaults.length === 0) && !selectedVault && (
+                        {(!multisigTreasuries || multisigTreasuries.length === 0) && !selectedTreasury && (
                           <div className="h-100 flex-center">
-                            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{t('multisig.multisig-vaults.no-vault-loaded')}</p>} />
+                            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{t('multisig.multisig-treasuries.no-vault-loaded')}</p>} />
                           </div>
                         )}
                         </>
                       )}
                     </div>
-                    {selectedVault && (
+                    {selectedTreasury && (
                       <div className="stream-share-ctas">
-                        <span className="copy-cta" onClick={() => copyAddressToClipboard(selectedVault.address.toBase58())}>VAULT ADDRESS: {selectedVault.address.toBase58()}</span>
+                        <span className="copy-cta" onClick={() => copyAddressToClipboard(selectedTreasury.address.toBase58())}>VAULT ADDRESS: {selectedTreasury.address.toBase58()}</span>
                         <a className="explorer-cta" target="_blank" rel="noopener noreferrer"
-                          href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${selectedVault.address.toBase58()}${getSolanaExplorerClusterParam()}`}>
+                          href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${selectedTreasury.address.toBase58()}${getSolanaExplorerClusterParam()}`}>
                           <IconExternalLink className="mean-svg-icons" />
                         </a>
                       </div>
@@ -2747,6 +3048,15 @@ export const MultisigTreasuriesView = () => {
 
       </div>
 
+      <TreasuryCreateModal
+        isVisible={isCreateTreasuryModalVisible}
+        nativeBalance={nativeBalance}
+        transactionFees={transactionFees}
+        handleOk={onAcceptCreateTreasury}
+        handleClose={closeCreateTreasuryModal}
+        isBusy={isBusy}
+      />
+
       <MultisigCreateVaultModal
         handleOk={onAcceptCreateVault}
         handleClose={() => setIsCreateVaultModalVisible(false)}
@@ -2766,9 +3076,9 @@ export const MultisigTreasuriesView = () => {
             onAfterEveryModalClose();
             setIsTransferTokenModalVisible(false);
           }}
-          selectedVault={selectedVault}
+          selectedVault={selectedTreasury}
           isBusy={isBusy}
-          vaults={multisigVaults}
+          vaults={multisigTreasuries}
         />
       )}
 
@@ -2783,8 +3093,8 @@ export const MultisigTreasuriesView = () => {
           isBusy={isBusy}
           selectedMultisig={selectedMultisig}
           multisigAccounts={multisigAccounts}
-          selectedVault={selectedVault}
-          vaults={multisigVaults}
+          selectedVault={selectedTreasury}
+          vaults={multisigTreasuries}
         />
       )}
 
