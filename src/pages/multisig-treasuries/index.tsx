@@ -18,7 +18,7 @@ import { consoleOut, copyText, delay, getShortDate, getTransactionStatusForLogs,
 import { Identicon } from '../../components/Identicon';
 import { getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, getTxIxResume, shortenAddress, toUiAmount } from '../../utils/utils';
 import { MultisigV2, MultisigParticipant, MultisigTransaction, MultisigTransactionStatus, MultisigVault, Multisig } from '../../models/multisig';
-import { calculateActionFees, MSP, MSP_ACTIONS, TransactionFees, TreasuryType } from '@mean-dao/msp';
+import { calculateActionFees, MSP, MSP_ACTIONS, TransactionFees, TreasuryType, Constants } from '@mean-dao/msp';
 import { MultisigCreateVaultModal } from '../../components/MultisigCreateVaultModal';
 import { useNativeAccount } from '../../contexts/accounts';
 import { OperationType, TransactionStatus } from '../../models/enums';
@@ -62,8 +62,8 @@ export const MultisigTreasuriesView = () => {
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [multisigAddress, setMultisigAddress] = useState('');
   const [multisigAccounts, setMultisigAccounts] = useState<(MultisigV2 | Multisig)[]>([]);
-  const [multisigTreasuries, setMultisigTreasuries] = useState<MultisigVault[]>([]);
-  const [selectedTreasury, setSelectedTreasury] = useState<MultisigVault | undefined>(undefined);
+  const [multisigTreasuries, setMultisigTreasuries] = useState<any[]>([]);
+  const [selectedTreasury, setSelectedTreasury] = useState<any>(undefined);
   const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(true);
   const [loadingMultisigTxs, setLoadingMultisigTxs] = useState(true);
   const [loadingTreasuries, setLoadingTreasuries] = useState(false);
@@ -359,62 +359,27 @@ export const MultisigTreasuriesView = () => {
     multisigAccounts,
   ]);
 
-  // TODO: Change to: Get the list of treasuries for selected multisig on demmand
-  // Get multisig vaults on demmand
-  const getMultisigVaults = useCallback(async (
-    connection: Connection,
-    multisig: PublicKey
-  ) => {
-
-    const [multisigSigner] = await PublicKey.findProgramAddress(
-      [multisig.toBuffer()],
-      MEAN_MULTISIG
-    );
-
-    const accountInfos = await connection.getProgramAccounts(TOKEN_PROGRAM_ID, {
-      filters: [
-        {
-          memcmp: { offset: 32, bytes: multisigSigner.toBase58() },
-        }, 
-        {
-          dataSize: AccountLayout.span
-        }
-      ],
-    });
-
-    if (!accountInfos || !accountInfos.length) { return []; }
-
-    const results = accountInfos.map((t: any) => {
-      let tokenAccount = ACCOUNT_LAYOUT.decode(t.account.data);
-      tokenAccount.address = t.pubkey;
-      return tokenAccount;
-    });
-
-    return results;
-
-  },[]);
-
   // TODO: Change to: Get Multisig Treasuries
-  // Get Multisig Vaults
+  // Get Multisig Treasuries
   useEffect(() => {
 
-    if (!connection || !multisigClient || !publicKey || !multisigAddress) {
+    if (!connection || !multisigClient || !publicKey || !multisigAddress || !msp) {
       return;
     }
 
     const timeout = setTimeout(() => {
       setLoadingTreasuries(true);
-      getMultisigVaults(connection, new PublicKey(multisigAddress))
-      .then((result: MultisigVault[]) => {
-        consoleOut('multisig vaults:', result, 'blue');
-        setMultisigTreasuries(result);
-        if (result.length > 0) {
-          setSelectedTreasury(result[0]);
-          consoleOut('selectedVault:', result[0], 'blue');
-        }
-      })
-      .catch(err => console.error(err))
-      .finally(() => setLoadingTreasuries(false));
+      msp.listTreasuries(new PublicKey(multisigAddress))
+        .then((result: any[]) => {
+          consoleOut('multisig treasuries:', result, 'blue');
+          setMultisigTreasuries(result);
+          if (result.length > 0) {
+            setSelectedTreasury(result[0]);
+            consoleOut('selectedTreasury:', result[0], 'blue');
+          }
+        })
+        .catch(err => console.error(err))
+        .finally(() => setLoadingTreasuries(false));
     });
 
     return () => {
@@ -422,11 +387,11 @@ export const MultisigTreasuriesView = () => {
     }
 
   },[
+    msp,
     publicKey,
     connection,
     multisigClient,
-    multisigAddress,
-    getMultisigVaults
+    multisigAddress
   ]);
 
   const getTransactionStatus = useCallback((account: any) => {
@@ -447,26 +412,28 @@ export const MultisigTreasuriesView = () => {
     selectedMultisig
   ]);
 
-  const onRefreshVaults = useCallback(() => {
-    if (!connection || !multisigAddress) { return; }
+  const onRefreshTreasuries = useCallback(async () => {
+    
+    if (!connection || !multisigAddress || !msp) { return; }
 
     setLoadingTreasuries(true);
 
-    getMultisigVaults(connection, new PublicKey(multisigAddress))
-    .then((result: MultisigVault[]) => {
-      consoleOut('multisig vaults:', result, 'blue');
-      setMultisigTreasuries(result);
-      if (result.length > 0 && !selectedTreasury) {
-        setSelectedTreasury(result[0]);
-      }
-    })
-    .catch(err => console.error(err))
-    .finally(() => setLoadingTreasuries(false));
+    msp.listTreasuries(new PublicKey(multisigAddress))
+      .then((result: any[]) => {
+        consoleOut('multisig treasuries:', result, 'blue');
+        setMultisigTreasuries(result);
+        if (result.length > 0 && !selectedTreasury) {
+          setSelectedTreasury(result[0]);
+        }
+      })
+      .catch(err => console.error(err))
+      .finally(() => setLoadingTreasuries(false));
+
   }, [
-    connection,
-    selectedTreasury,
-    multisigAddress,
-    getMultisigVaults,
+    msp, 
+    connection, 
+    selectedTreasury, 
+    multisigAddress
   ]);
 
   // Get the list of txs
@@ -484,6 +451,9 @@ export const MultisigTreasuriesView = () => {
         .all(selectedMultisig.id.toBuffer())
         .then((txs) => {
           for (let tx of txs) {
+            let currentOwnerIndex = selectedMultisig.owners
+              .findIndex((o: MultisigParticipant) => o.address === publicKey.toBase58());
+
             let txInfo = Object.assign({}, {
               id: tx.publicKey,
               multisig: tx.account.multisig,
@@ -495,12 +465,16 @@ export const MultisigTreasuriesView = () => {
                 : undefined,
               status: getTransactionStatus(tx.account),
               operation: parseInt(Object.keys(OperationType).filter(k => k === tx.account.operation.toString())[0]),
-              accounts: tx.account.accounts
+              accounts: tx.account.accounts,
+              didSigned: tx.account.signers[currentOwnerIndex]
+
             } as MultisigTransaction);
+
             if (txInfo.accounts.some(a => a.pubkey.equals(selectedTreasury.address))) {
               transactions.push(txInfo);
             }
           }
+
           setMultisigPendingTxs(transactions.sort((a, b) => b.createdOn.getTime() - a.createdOn.getTime()));
         })
         .catch(err => {
@@ -548,15 +522,16 @@ export const MultisigTreasuriesView = () => {
   useEffect(() => {
     if (!publicKey) { return; }
 
-    if (lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
-      onRefreshVaults();
+    if (selectedMultisig && lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
+      onRefreshTreasuries();
     }
   }, [
     publicKey,
+    selectedMultisig,
     fetchTxInfoStatus,
     lastSentTxSignature,
     lastSentTxOperationType,
-    onRefreshVaults
+    onRefreshTreasuries
   ]);
 
   const getTransactionFees = useCallback(async (action: MSP_ACTIONS): Promise<TransactionFees> => {
@@ -586,14 +561,30 @@ export const MultisigTreasuriesView = () => {
   const getTransactionStatusAction = useCallback((mtx: MultisigTransaction) => {
 
     if (mtx.status === MultisigTransactionStatus.Pending) {
-      return "Approve";
+      return "Pending Approval";
     } 
     
     if (mtx.status === MultisigTransactionStatus.Approved) {
-      return "Execute";
+      return "Pending for Execution";
     }
 
-    return "Executed";
+    if (mtx.status === MultisigTransactionStatus.Executed) {
+      return "Completed";
+    }
+
+    return "Rejected";
+
+  },[]);
+
+  const getTransactionUserStatusAction = useCallback((mtx: MultisigTransaction) => {
+
+    if (mtx.didSigned === undefined) {
+      return "Rejected";
+    } else if (mtx.didSigned === false) {
+      return "Not Signed";
+    } else {
+      return "Signed"
+    }
 
   },[]);
 
@@ -617,6 +608,10 @@ export const MultisigTreasuriesView = () => {
 
     if (op === OperationType.SetMultisigAuthority) {
       return "Set Authority";
+    }
+
+    if (op === OperationType.EditMultisig) {
+      return "Edit Multisig";
     }
 
   },[]);
@@ -747,6 +742,7 @@ export const MultisigTreasuriesView = () => {
   }
 
   const onExecuteCreateTreasuryTx = async (treasuryName: string) => {
+
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
@@ -759,8 +755,26 @@ export const MultisigTreasuriesView = () => {
     setRetryOperationPayload(treasuryName);
     setIsBusy(true);
 
+    const createTreasury = async (data: any) => {
+
+      if (!publicKey || !selectedMultisig || !msp || !data) { return null; }
+
+      let tx = await msp.createTreasury(
+        selectedMultisig.id,
+        data.label as string,
+        data.type as TreasuryType
+      );
+
+      tx.feePayer = publicKey;
+      const { blockhash } = await multisigClient.provider.connection.getRecentBlockhash("finalized");
+      tx.recentBlockhash = blockhash;
+
+      return tx;
+    };
+
     const createTx = async (): Promise<boolean> => {
-      if (publicKey && treasuryName && treasuryOption && msp) {
+      
+      if (publicKey && treasuryName && treasuryOption) {
         consoleOut("Start transaction for create treasury", '', 'blue');
         consoleOut('Wallet address:', publicKey.toBase58());
 
@@ -775,8 +789,8 @@ export const MultisigTreasuriesView = () => {
           label: treasuryName,                                        // treasury
           type: `${treasuryOption.type} = ${treasuryOption.type === TreasuryType.Open ? 'Open' : 'Locked'}`
         };
-        consoleOut('data:', data);
 
+        consoleOut('data:', data);
         // Log input data
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
@@ -810,12 +824,9 @@ export const MultisigTreasuriesView = () => {
         }
 
         consoleOut('Starting Create Treasury using MSP V2...', '', 'blue');
-        return await msp.createTreasury(
-          publicKey,                                                  // wallet
-          treasuryName,                                               // label
-          treasuryOption.type                                         // type
-        )
+        return await createTreasury(data)
         .then(value => {
+          if (!value) { return false; }
           consoleOut('createTreasury returned transaction:', value);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
@@ -983,9 +994,9 @@ export const MultisigTreasuriesView = () => {
     }
   };
 
-
   // Create vault modal
   const [isCreateVaultModalVisible, setIsCreateVaultModalVisible] = useState(false);
+  
   const onShowCreateVaultModal = useCallback(() => {
     setIsCreateVaultModalVisible(true);
     const fees = {
@@ -998,16 +1009,16 @@ export const MultisigTreasuriesView = () => {
 
   const onVaultCreated = useCallback(() => {
 
-    onRefreshVaults();
+    onRefreshTreasuries();
     resetTransactionStatus();
     notify({
-      description: t('multisig.create-vault.success-message'),
+      description: t('multisig.create-treasury.success-message'),
       type: "success"
     });
 
   },[
     t,
-    onRefreshVaults,
+    onRefreshTreasuries,
     resetTransactionStatus
   ]);
 
@@ -1326,11 +1337,11 @@ export const MultisigTreasuriesView = () => {
 
   const onTokensTransfered = useCallback(() => {
 
-    onRefreshVaults();
+    onRefreshTreasuries();
     resetTransactionStatus();
 
   },[
-    onRefreshVaults,
+    onRefreshTreasuries,
     resetTransactionStatus
   ]);
 
@@ -1710,7 +1721,6 @@ export const MultisigTreasuriesView = () => {
     clearTransactionStatusContext,
   ]);
 
-
   // Transfer vault authority modal
   const [isTransferVaultAuthorityModalVisible, setIsTransferVaultAuthorityModalVisible] = useState(false);
   const showTransferVaultAuthorityModal = useCallback(() => {
@@ -1740,11 +1750,11 @@ export const MultisigTreasuriesView = () => {
 
   const onVaultAuthorityTransfered = useCallback(() => {
 
-    onRefreshVaults();
+    onRefreshTreasuries();
     resetTransactionStatus();
 
   },[
-    onRefreshVaults,
+    onRefreshTreasuries,
     resetTransactionStatus
   ]);
 
@@ -2004,8 +2014,6 @@ export const MultisigTreasuriesView = () => {
     onVaultAuthorityTransfered
   ]);
 
-
-
   const getTokenIconAndAmount = (tokenAddress: string, amount: any) => {
     const token = tokenList.find(t => t.address === tokenAddress);
     if (!token) {
@@ -2044,23 +2052,23 @@ export const MultisigTreasuriesView = () => {
 
   const onTxApproved = useCallback(() => {
 
-    onRefreshVaults();
+    onRefreshTreasuries();
     resetTransactionStatus();
     setLoadingMultisigTxs(true);
 
   },[
-    onRefreshVaults,
+    onRefreshTreasuries,
     resetTransactionStatus
   ]);
 
   const onTxExecuted = useCallback(() => {
     
-    onRefreshVaults();
+    onRefreshTreasuries();
     resetTransactionStatus();
     setLoadingMultisigTxs(true);
 
   },[
-    onRefreshVaults,
+    onRefreshTreasuries,
     resetTransactionStatus
   ]);
 
@@ -2935,7 +2943,7 @@ export const MultisigTreasuriesView = () => {
                   }
                 </span>
                 <Tooltip placement="bottom" title={t('multisig.multisig-treasuries.refresh-tooltip')}>
-                  <div className={`transaction-stats ${loadingTreasuries ? 'click-disabled' : 'simplelink'}`} onClick={onRefreshVaults}>
+                  <div className={`transaction-stats ${loadingTreasuries ? 'click-disabled' : 'simplelink'}`} onClick={onRefreshTreasuries}>
                     <Spin size="small" />
                     <span className="transaction-legend">
                       <span className="icon-button-container">
