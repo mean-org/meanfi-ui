@@ -9,6 +9,7 @@ export const MultisigParticipants = (props: {
     participants: MultisigParticipant[];
     onParticipantsChanged: any;
     label: string;
+    disabled?: boolean;
 }) => {
     const { t } = useTranslation('common');
 
@@ -51,7 +52,7 @@ export const MultisigParticipants = (props: {
 
     return (
         <>
-        <div className="flex-fixed-right">
+        <div className={`flex-fixed-right ${props.disabled ? 'click-disabled' : ''}`}>
             <div className="left">
                 {props.label ? (
                     <div className="form-label">{props.label}</div>
@@ -68,7 +69,7 @@ export const MultisigParticipants = (props: {
             <div id="multisig-participants-max-height" className={`mb-3 ${props.participants.length > 2 ? 'vertical-scroll pr-2' : ''}`}>
                 {props.participants.map((participant: MultisigParticipant, index: number) => {
                     return (
-                        <div className="well-group" key={`${index}`}>
+                        <div className={`well-group ${props.disabled ? 'disabled' : ''}`} key={`${index}`}>
                             <TextInput
                                 placeholder="Enter participant name or description"
                                 extraClass="mb-1 small"

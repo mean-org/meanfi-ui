@@ -25,7 +25,8 @@ export const MultisigEditModal = (props: {
   transactionFees: TransactionFees;
   multisigName?: string;
   multisigThreshold?: number;
-  participants?: MultisigParticipant[];
+  multisigParticipants?: MultisigParticipant[];
+  multisigPendingTxsAmount: number;
 }) => {
   const { t } = useTranslation('common');
   const {
@@ -47,14 +48,14 @@ export const MultisigEditModal = (props: {
       if (props.multisigThreshold) {
         setMultisigThreshold(props.multisigThreshold);
       }
-      if (props.participants && props.participants.length > 0) {
-        setMultisigOwners(props.participants);
+      if (props.multisigParticipants && props.multisigParticipants.length > 0) {
+        setMultisigOwners(props.multisigParticipants);
       }
     }
   }, [
     props.isVisible,
     props.multisigName,
-    props.participants,
+    props.multisigParticipants,
     props.multisigThreshold
   ]);
 
@@ -136,7 +137,7 @@ export const MultisigEditModal = (props: {
             {/* Multisig label */}
             <div className="mb-3">
               <div className="form-label">{t('multisig.create-multisig.multisig-label-input-label')}</div>
-              <div className={`well ${props.isBusy ? 'disabled' : ''}`}>
+              <div className={`well ${props.isBusy || props.multisigPendingTxsAmount > 0 ? 'disabled' : ''}`}>
                 <div className="flex-fixed-right">
                   <div className="left">
                     <input
@@ -159,7 +160,7 @@ export const MultisigEditModal = (props: {
             {/* Multisig threshold */}
             <div className="mb-3">
               <div className="form-label">{t('multisig.create-multisig.multisig-threshold-input-label')}</div>
-              <div className={`well ${props.isBusy ? 'disabled' : ''}`}>
+              <div className={`well ${props.isBusy || props.multisigPendingTxsAmount > 0 ? 'disabled' : ''}`}>
                 <div className="flex-fixed-right">
                   <div className="left">
                     <input
@@ -196,8 +197,13 @@ export const MultisigEditModal = (props: {
                   maxParticipants: MAX_MULTISIG_PARTICIPANTS
                 })
               }
+              disabled={props.isBusy || props.multisigPendingTxsAmount > 0}
               onParticipantsChanged={(e: MultisigParticipant[]) => setMultisigOwners(e)}
             />
+
+            {props.multisigPendingTxsAmount > 0 && (
+              <div className="font-size-100 fg-orange-red pl-1">{t('multisig.update-multisig.edit-not-allowed-message')}</div>
+            )}
 
           </>
         ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
@@ -274,7 +280,7 @@ export const MultisigEditModal = (props: {
             type="primary"
             shape="round"
             size="middle"
-            disabled={!isFormValid()}
+            disabled={!isFormValid() || props.multisigPendingTxsAmount > 0}
             onClick={() => {
               if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
                 onAcceptModal();

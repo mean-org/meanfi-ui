@@ -2506,6 +2506,11 @@ main section {
   border-radius: var(--custom-border-radius);
   background-color: var(--color-wells);
   padding: 6px;
+  &.disabled {
+    pointer-events: none;
+    opacity: 0.6;
+    background-color: var(--color-secondary-alpha-02);
+  }
 }
 
 // Fields go inside wells
@@ -2535,7 +2540,7 @@ main section {
     opacity: 0.6;
     background-color: var(--color-secondary-alpha-02);
   }
-  &:hover {
+  &:not(.disabled):hover {
     background-color: var(--darken);
   }
   .add-on {

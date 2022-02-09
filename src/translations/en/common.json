@@ -387,6 +387,7 @@
 			"transfer-to-placeholder": "Enter the address of the destination account"
 		},
 		"update-multisig": {
+			"edit-not-allowed-message": "You can not edit the Multisig without first completing or cancelling all pending transactions.",
 			"main-cta": "Save changes",
 			"main-cta-busy": "Saving changes",
 			"modal-title": "Edit multisig",

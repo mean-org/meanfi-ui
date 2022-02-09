@@ -143,6 +143,7 @@ export const MultisigView = () => {
   const [isUpgradeProgramModalVisible, setIsUpgradeProgramModalVisible] = useState(false);
   const [isUpgradeIDLModalVisible, setIsUpgradeIDLModalVisible] = useState(false);
   const [isSetProgramAuthModalVisible, setIsSetProgramAuthModalVisible] = useState(false);
+  const [hasPendingActions, setHasPendingActions] = useState(false);
 
   // TODO: Remove when releasing to the public
   useEffect(() => {
@@ -3358,7 +3359,7 @@ export const MultisigView = () => {
     selectedMultisig
   ]);
 
-  // Update selected multisig txs
+  // Get Txs for the selected multisig
   useEffect(() => {
 
     if (!connection || !connected || !selectedMultisig || !selectedMultisig.id || !loadingMultisigTxs) { 
@@ -3603,15 +3604,15 @@ export const MultisigView = () => {
                           onExecuteApproveTx({ transaction: item });
                         } if (item.status === MultisigTransactionStatus.Approved) {
                           onExecuteFinishTx({ transaction: item })
-                        }                      
+                        }
                       }}
-                      aria-disabled={item.status === MultisigTransactionStatus.Executed} 
-                      className={`badge small ${getTransactionStatusClass(item)}`} 
+                      aria-disabled={item.status === MultisigTransactionStatus.Executed}
+                      className={`badge small ${getTransactionStatusClass(item)}`}
                       style={{
                         padding: '3px 5px',
-                        cursor: 
-                          item.status === MultisigTransactionStatus.Executed 
-                            ? 'not-allowed' 
+                        cursor:
+                          item.status === MultisigTransactionStatus.Executed
+                            ? 'not-allowed'
                             : 'pointer'
                       }}>
                       {
@@ -4181,7 +4182,8 @@ export const MultisigView = () => {
           handleOk={onAcceptEditMultisig}
           multisigName={selectedMultisig.label}
           multisigThreshold={selectedMultisig.threshold}
-          participants={selectedMultisig.owners}
+          multisigParticipants={selectedMultisig.owners}
+          multisigPendingTxsAmount={selectedMultisig.pendingTxsAmount || 0}
           handleClose={() => setIsEditMultisigModalVisible(false)}
           isBusy={isBusy}
         />

@@ -183,7 +183,6 @@ export const MultisigVaultTransferAuthorityModal = (props: {
                       options={renderMultisigSelectOptions()}
                       placeholder={t('multisig.transfer-authority.multisig-selector-placeholder')}
                       onChange={(inputValue, option) => {
-                        consoleOut('onAutocompleteInputChabged:', inputValue, 'blue');
                         setSelectedAuthority(inputValue);
                       }}
                       filterOption={(inputValue, option) => {
