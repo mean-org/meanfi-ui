@@ -48,6 +48,7 @@ export type MultisigTransaction = {
   executedOn: Date | undefined;
   status: MultisigTransactionStatus;
   accounts: any[];
+  didSigned: boolean; // this should be a number needs to be changed in the program (0 = not signed, 1 = signed, 2 = rejected)
 }
 
 export type MintTokensInfo = {

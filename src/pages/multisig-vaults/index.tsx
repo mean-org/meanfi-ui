@@ -426,6 +426,7 @@ export const MultisigVaultsView = () => {
   ]);
 
   const onRefreshVaults = useCallback(() => {
+
     setLoadingVaults(true);
     getMultisigVaults(connection, new PublicKey(multisigAddress))
     .then((result: MultisigVault[]) => {
@@ -437,6 +438,7 @@ export const MultisigVaultsView = () => {
     })
     .catch(err => console.error(err))
     .finally(() => setLoadingVaults(false));
+
   }, [
     connection,
     selectedVault,
@@ -459,6 +461,9 @@ export const MultisigVaultsView = () => {
         .all(selectedMultisig.id.toBuffer())
         .then((txs) => {
           for (let tx of txs) {
+            let currentOwnerIndex = selectedMultisig.owners
+              .findIndex((o: MultisigParticipant) => o.address === publicKey.toBase58());
+              
             let txInfo = Object.assign({}, {
               id: tx.publicKey,
               multisig: tx.account.multisig,
@@ -470,8 +475,11 @@ export const MultisigVaultsView = () => {
                 : undefined,
               status: getTransactionStatus(tx.account),
               operation: parseInt(Object.keys(OperationType).filter(k => k === tx.account.operation.toString())[0]),
-              accounts: tx.account.accounts
+              accounts: tx.account.accounts,
+              didSigned: tx.account.signers[currentOwnerIndex]
+
             } as MultisigTransaction);
+
             if (txInfo.accounts.some(a => a.pubkey.equals(selectedVault.address))) {
               transactions.push(txInfo);
             }
@@ -523,11 +531,12 @@ export const MultisigVaultsView = () => {
   useEffect(() => {
     if (!publicKey) { return; }
 
-    if (lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
+    if (multisigAddress && lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
       onRefreshVaults();
     }
   }, [
     publicKey,
+    multisigAddress,
     fetchTxInfoStatus,
     lastSentTxSignature,
     lastSentTxOperationType,
@@ -557,14 +566,30 @@ export const MultisigVaultsView = () => {
   const getTransactionStatusAction = useCallback((mtx: MultisigTransaction) => {
 
     if (mtx.status === MultisigTransactionStatus.Pending) {
-      return "Approve";
+      return "Pending Approval";
     } 
     
     if (mtx.status === MultisigTransactionStatus.Approved) {
-      return "Execute";
+      return "Pending for Execution";
     }
 
-    return "Executed";
+    if (mtx.status === MultisigTransactionStatus.Executed) {
+      return "Completed";
+    }
+
+    return "Rejected";
+
+  },[]);
+
+  const getTransactionUserStatusAction = useCallback((mtx: MultisigTransaction) => {
+
+    if (mtx.didSigned === undefined) {
+      return "Rejected";
+    } else if (mtx.didSigned === false) {
+      return "Not Signed";
+    } else {
+      return "Signed"
+    }
 
   },[]);
 
@@ -588,6 +613,10 @@ export const MultisigVaultsView = () => {
 
     if (op === OperationType.SetMultisigAuthority) {
       return "Set Authority";
+    }
+
+    if (op === OperationType.EditMultisig) {
+      return "Edit Multisig";
     }
 
   },[]);
@@ -1703,8 +1732,6 @@ export const MultisigVaultsView = () => {
     clearTransactionStatusContext,
     onVaultAuthorityTransfered
   ]);
-
-
 
   const getTokenIconAndAmount = (tokenAddress: string, amount: any) => {
     const token = tokenList.find(t => t.address === tokenAddress);
