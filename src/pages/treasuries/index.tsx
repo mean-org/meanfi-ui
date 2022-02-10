@@ -52,7 +52,7 @@ import useWindowSize from '../../hooks/useWindowResize';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { notify } from '../../utils/notifications';
-import { IconBank, IconClock, IconExternalLink, IconRefresh, IconSort, IconTrash } from '../../Icons';
+import { IconBank, IconClock, IconExternalLink, IconRefresh, IconShowAll, IconSort, IconTrash } from '../../Icons';
 import { TreasuryOpenModal } from '../../components/TreasuryOpenModal';
 import { MSP_ACTIONS, StreamInfo, STREAM_STATE, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { TreasuryCreateModal } from '../../components/TreasuryCreateModal';
@@ -4256,7 +4256,13 @@ export const TreasuriesView = () => {
 
   const renderTreasuryList = (
     <>
-    {treasuryList && treasuryList.length ? (
+    {(isMultisigAvailable() && selectedMultisig) && (
+      <div className="left-panel-inner-heading">
+        <div className="font-bold">Multsig Treasuries - [{selectedMultisig.label}]</div>
+        <div>Below is a list of all the treasuries that are connected to this Multsig</div>
+      </div>
+    )}
+    {treasuryList && treasuryList.length > 0 ? (
       treasuryList.map((item, index) => {
         const v1 = item as TreasuryInfo;
         const v2 = item as Treasury;
@@ -4344,6 +4350,12 @@ export const TreasuriesView = () => {
         </div>
       )}
       </>
+    )}
+    {(isMultisigAvailable() && treasuryList && treasuryList.length > 0) && (
+      <div className="py-3 px-3 simplelink">
+        <IconShowAll className="mean-svg-icons align-middle" />
+        <span className="ml-1 align-middle">Show All Treasuries</span>
+      </div>
     )}
     </>
   );
