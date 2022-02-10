@@ -12,7 +12,7 @@ import CardStats from './components/CardStats';
 import { AppStateContext } from "../../contexts/appstate";
 import { useContext } from "react";
 import { TokenInfo } from '@solana/spl-token-registry';
-import { formatThousands } from "../../utils/utils";
+import { formatThousands, getFormattedRateAmount } from "../../utils/utils";
 
 export const TokenStats = ({ 
   meanDecimals, 
@@ -290,7 +290,7 @@ export const ThirdCardsLayout = () => {
                     <span className="info-name mb-2">{pair.name}</span>
                     <div className="info-liquidity mb-3">
                       <span>{t('stats.pairs.total-liquidity')}:</span>
-                      <span>${formatThousands(pair.total_liquidity)}</span>
+                      <span>${getFormattedRateAmount(pair.total_liquidity)}</span>
                   </div>
                 </div>
                 <div className="slide-content_buttons">
