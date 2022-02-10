@@ -258,7 +258,7 @@ export const StreamCloseModal = (props: {
     getFeeAmount
   ]);
 
-  const onAllocationReservedChanged = (e: any) => {
+  const onCloseTreasuryOptionChanged = (e: any) => {
     setCloseTreasuryOption(e.target.value);
   }
 
@@ -349,7 +349,7 @@ export const StreamCloseModal = (props: {
                 {t('treasuries.treasury-streams.close-stream-also-closes-treasury-label')}
               </div>
               <div className="right">
-                <Radio.Group onChange={onAllocationReservedChanged} value={closeTreasuryOption}>
+                <Radio.Group onChange={onCloseTreasuryOptionChanged} value={closeTreasuryOption}>
                   <Radio value={true}>{t('general.yes')}</Radio>
                   <Radio value={false}>{t('general.no')}</Radio>
                 </Radio.Group>

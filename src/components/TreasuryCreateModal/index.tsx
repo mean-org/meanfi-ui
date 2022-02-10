@@ -1,18 +1,21 @@
-import React, { useContext } from 'react';
+import React, { useCallback, useContext, useEffect } from 'react';
 import { useState } from 'react';
-import { Modal, Button, Spin } from 'antd';
+import { Modal, Button, Spin, Radio, Select } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { TREASURY_TYPE_OPTIONS } from '../../constants/treasury-type-options';
 import { AppStateContext } from '../../contexts/appstate';
-import { TreasuryTypeOption } from '../../models/treasuries';
+import { TreasuryCreateOptions, TreasuryTypeOption } from '../../models/treasuries';
 import { TransactionStatus } from '../../models/enums';
-import { getTransactionOperationDescription } from '../../utils/ui';
+import { consoleOut, getTransactionOperationDescription } from '../../utils/ui';
 import { isError } from '../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
-import { TransactionFees } from '@mean-dao/money-streaming';
-import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
+import { TransactionFees, TreasuryType } from '@mean-dao/money-streaming';
+import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
+import { MultisigV2 } from '../../models/multisig';
+import { Identicon } from '../Identicon';
 
+const { Option } = Select;
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const TreasuryCreateModal = (props: {
@@ -22,6 +25,8 @@ export const TreasuryCreateModal = (props: {
   isBusy: boolean;
   nativeBalance: number;
   transactionFees: TransactionFees;
+  selectedMultisig: MultisigV2 | undefined;
+  multisigAccounts: MultisigV2[];
 }) => {
   const { t } = useTranslation('common');
   const {
@@ -30,9 +35,31 @@ export const TreasuryCreateModal = (props: {
   } = useContext(AppStateContext);
   const [treasuryName, setTreasuryName] = useState('');
   const { treasuryOption, setTreasuryOption } = useContext(AppStateContext);
+  const [localSelectedMultisig, setLocalSelectedMultisig] = useState<MultisigV2 | undefined>(undefined);
+  const [enableMultisigTreasuryOption, setEnableMultisigTreasuryOption] = useState(true);
+
+  // When modal goes visible, preset the appropriate value for multisig treasury switch
+  useEffect(() => {
+    if (props.isVisible && props.selectedMultisig) {
+      setEnableMultisigTreasuryOption(true);
+      setLocalSelectedMultisig(props.selectedMultisig);
+    } else {
+      setEnableMultisigTreasuryOption(false);
+      setLocalSelectedMultisig(props.multisigAccounts[0]);
+    }
+  }, [
+    props.isVisible,
+    props.selectedMultisig,
+    props.multisigAccounts,
+  ]);
 
   const onAcceptModal = () => {
-    props.handleOk(treasuryName);
+    const options: TreasuryCreateOptions = {
+      treasuryName,
+      treasuryType: treasuryOption ? treasuryOption.type : TreasuryType.Open,
+      multisigId: enableMultisigTreasuryOption && localSelectedMultisig ? localSelectedMultisig.id.toBase58() : ''
+    };
+    props.handleOk(options);
   }
 
   const onCloseModal = () => {
@@ -60,6 +87,67 @@ export const TreasuryCreateModal = (props: {
 
   const handleSelection = (option: TreasuryTypeOption) => {
     setTreasuryOption(option);
+  }
+
+  const onCloseTreasuryOptionChanged = (e: any) => {
+    setEnableMultisigTreasuryOption(e.target.value);
+  }
+
+  const onMultisigChanged = useCallback((e: any) => {
+    
+    if (props.multisigAccounts && props.multisigAccounts.length > 0) {
+      consoleOut("multisig selected:", e, 'blue');
+      const ms = props.multisigAccounts.filter(v => v.id.toBase58() === e)[0];
+      setLocalSelectedMultisig(ms);
+    }
+
+  },[
+    props.multisigAccounts
+  ]);
+
+  const renderMultisigSelectItems = () => {
+    return (
+      <div className="flex-fixed-left">
+        <div className="left">
+          <span className="add-on">
+            {(props.multisigAccounts && props.multisigAccounts.length > 0) && (
+              <Select className={`token-selector-dropdown auto-height`} value={localSelectedMultisig ? localSelectedMultisig.id.toBase58() : undefined}
+                  style={{width:400, maxWidth:'none'}}
+                  onChange={onMultisigChanged} bordered={false} showArrow={false}>
+                {props.multisigAccounts.map((option: MultisigV2) => {
+                  return (
+                    <Option key={option.id.toBase58()} value={option.id.toBase58()}>
+                      <div className="option-container">
+                        <div className={`transaction-list-row w-100`}>
+                          <div className="icon-cell">
+                            <Identicon address={option.id} style={{ width: "30", display: "inline-flex" }} />
+                          </div>
+                          <div className="description-cell">
+                            <div className="title text-truncate">
+                              {option.label}
+                            </div>
+                            <div className="subtitle text-truncate">{shortenAddress(option.address.toBase58(), 8)}</div>
+                          </div>
+                          <div className="description-cell text-right">
+                            <div className="subtitle">
+                            {
+                              t('multisig.multisig-accounts.pending-transactions', {
+                                txs: option.pendingTxsAmount
+                              })
+                            }
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </Option>
+                  );
+                })}
+              </Select>
+            )}
+          </span>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -124,6 +212,37 @@ export const TreasuryCreateModal = (props: {
                 );
               })}
             </div>
+
+            {/* Multisig Treasury checkbox */}
+            {props.multisigAccounts.length > 0 && (
+              <div className="mb-2 flex-row align-items-center">
+                <span className="form-label w-auto mb-0">{t('treasuries.create-treasury.multisig-treasury-switch-label')}</span>
+                {/* <a className="simplelink" href="https://docs.meanfi.com/" target="_blank" rel="noopener noreferrer">
+                  <Button
+                    className="info-icon-button"
+                    type="default"
+                    shape="circle">
+                    <InfoCircleOutlined />
+                  </Button>
+                </a> */}
+                <Radio.Group className="ml-2" onChange={onCloseTreasuryOptionChanged} value={enableMultisigTreasuryOption}>
+                  <Radio value={true}>{t('general.yes')}</Radio>
+                  <Radio value={false}>{t('general.no')}</Radio>
+                </Radio.Group>
+              </div>
+            )}
+
+            {(enableMultisigTreasuryOption && props.multisigAccounts.length > 0) && (
+              <>
+                <div className="mb-3">
+                  <div className="form-label">{t('treasuries.create-treasury.multisig-selector-label')}</div>
+                  <div className="well">
+                    {renderMultisigSelectItems()}
+                  </div>
+                </div>
+              </>
+            )}
+
           </>
         ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
           <>
@@ -221,10 +340,10 @@ export const TreasuryCreateModal = (props: {
               {props.isBusy
                 ? t('treasuries.create-treasury.main-cta-busy')
                 : transactionStatus.currentOperation === TransactionStatus.Iddle
-                ? t('treasuries.create-treasury.main-cta')
-                // : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
-                // ? t('general.cta-finish')
-                : t('general.refresh')
+                  ? enableMultisigTreasuryOption && props.multisigAccounts.length > 0
+                    ? t('treasuries.create-treasury.create-multisig-cta')
+                    : t('treasuries.create-treasury.main-cta')
+                  : t('general.refresh')
               }
             </Button>
           </div>

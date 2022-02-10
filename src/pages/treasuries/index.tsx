@@ -84,6 +84,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import MultisigIdl from "../../models/mean-multisig-idl";
 import { MultisigParticipant, MultisigV2 } from '../../models/multisig';
 import { Program, Provider } from '@project-serum/anchor';
+import { TreasuryCreateOptions } from '../../models/treasuries';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const treasuryStreamsPerfCounter = new PerformanceCounter();
@@ -166,19 +167,26 @@ export const TreasuriesView = () => {
   // Enable deep-linking - Parse and save query params as needed
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    // Preset multisig address if passed-in
-    if (params.has('multisig')) {
-      const multisig = params.get('multisig');
+    let multisig: string | null = null;
+    let treasury: string | null = null;
+
+    if (params.has('multisig')) {             // Preset multisig address if passed-in
+      multisig = params.get('multisig');
       setMultisigAddress(multisig || '');
       consoleOut('multisigAddress:', multisig, 'blue');
-    }
-    // Preset treasury address if passed-in
-    if (params.has('treasury')) {
-      const treasury = params.get('treasury');
+    } else if (params.has('treasury')) {      // Preset treasury address if passed-in
+      treasury = params.get('treasury');
       setTresuryAddress(treasury || '');
       consoleOut('tresuryAddress:', treasury, 'blue');
+    } else if (selectedMultisig) {            // Clean any data we may have data relative to a previous multisig
+      setSelectedMultisig(undefined);
+    } else {
+      consoleOut('location.search:', location.search, 'blue');
     }
-  }, [location]);
+  }, [
+    location,
+    selectedMultisig,
+  ]);
 
   // Create and cache the connection
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
@@ -731,7 +739,7 @@ export const TreasuriesView = () => {
   // Set selectedMultisig based on the passed-in multisigAddress in query params
   useEffect(() => {
 
-    if (publicKey && multisigAddress && multisigAccounts && multisigAccounts.length > 0) {
+    if (publicKey && location.search && multisigAddress && multisigAccounts && multisigAccounts.length > 0) {
       consoleOut(`try to select multisig ${multisigAddress} from list`, multisigAccounts, 'blue');
       const selected = multisigAccounts.find(m => m.id.toBase58() === multisigAddress);
       if (selected) {
@@ -744,6 +752,7 @@ export const TreasuriesView = () => {
 
   }, [
     publicKey,
+    location.search,
     multisigAddress,
     selectedMultisig,
     multisigAccounts,
@@ -781,6 +790,7 @@ export const TreasuriesView = () => {
       if (!previousWalletConnectState && connected && publicKey) {
         consoleOut('User is connecting...', publicKey.toBase58(), 'green');
         setLoadingMultisigAccounts(true);
+        setTreasuriesLoaded(false);
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'green');
         setTreasuryList([]);
@@ -905,6 +915,14 @@ export const TreasuriesView = () => {
     if (lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
       switch (lastSentTxOperationType) {
         case OperationType.TreasuryCreate:
+          const usedOptions = retryOperationPayload as TreasuryCreateOptions;
+          if (usedOptions.multisigId) {
+            navigate('/multisig');
+          } else {
+            refreshTreasuries(true);
+          }
+          setOngoingOperation(undefined);
+          break;
         case OperationType.TreasuryClose:
           refreshTreasuries(true);
           break;
@@ -917,8 +935,10 @@ export const TreasuriesView = () => {
     publicKey,
     fetchTxInfoStatus,
     lastSentTxSignature,
+    retryOperationPayload,
     lastSentTxOperationType,
     refreshTreasuries,
+    navigate,
   ]);
 
   /////////////////
@@ -1311,7 +1331,7 @@ export const TreasuriesView = () => {
   const resetTreasuriesContext = () => {
     setSelectedMultisig(undefined);
     setMultisigAddress('');
-    navigate('/treasuries')
+    navigate('/treasuries');
   }
 
   const resetTransactionStatus = useCallback(() => {
@@ -1390,9 +1410,9 @@ export const TreasuriesView = () => {
   ]);
   const closeCreateTreasuryModal = useCallback(() => setIsCreateTreasuryModalVisibility(false), []);
 
-  const onAcceptCreateTreasury = (e: any) => {
-    consoleOut('treasury name:', e, 'blue');
-    onExecuteCreateTreasuryTx(e);
+  const onAcceptCreateTreasury = (data: TreasuryCreateOptions) => {
+    consoleOut('treasury create options:', data, 'blue');
+    onExecuteCreateTreasuryTx(data);
   };
 
   const onTreasuryCreated = () => {
@@ -1402,10 +1422,18 @@ export const TreasuriesView = () => {
       lastOperation: TransactionStatus.Iddle,
       currentOperation: TransactionStatus.Iddle
     });
-    notify({
-      description: t('treasuries.create-treasury.success-message'),
-      type: "success"
-    });
+    const usedOptions = retryOperationPayload as TreasuryCreateOptions;
+    if (usedOptions.multisigId) {
+      notify({
+        description: t('treasuries.create-treasury.create-multisig-treasury-success'),
+        type: "success"
+      });
+    } else {
+      notify({
+        description: t('treasuries.create-treasury.success-message'),
+        type: "success"
+      });
+    }
   }
 
   const onRefreshTreasuryBalanceTransactionFinished = useCallback(() => {
@@ -1716,7 +1744,7 @@ export const TreasuriesView = () => {
     setTransactionStatus,
   ]);
 
-  const onExecuteCreateTreasuryTx = async (treasuryName: string) => {
+  const onExecuteCreateTreasuryTx = async (createOptions: TreasuryCreateOptions) => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
@@ -1726,12 +1754,14 @@ export const TreasuriesView = () => {
     clearTransactionStatusContext();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.TreasuryCreate);
-    setRetryOperationPayload(treasuryName);
+    setRetryOperationPayload(createOptions);
     setIsBusy(true);
 
     const createTreasury = async (data: any) => {
 
       if (!connection) { return null; }
+
+      // TODO: data has this additional property multisig (multisig address or '')
 
       if (!selectedMultisig) {
         if (!msp || !publicKey) { return null; }
@@ -1788,7 +1818,7 @@ export const TreasuriesView = () => {
 
     const createTx = async () => {
 
-      if (!connection || !wallet || !publicKey || !msp || !treasuryName || !treasuryOption) {
+      if (!connection || !wallet || !publicKey || !msp || !treasuryOption) {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
@@ -1806,17 +1836,20 @@ export const TreasuriesView = () => {
       });
 
       // Create a transaction
-      const data = {
-        treasurer: selectedMultisig ? selectedMultisig.id.toBase58() : publicKey.toBase58(), // treasurer
-        label: treasuryName,                                                                  // treasury
-        type: `${treasuryOption.type} = ${treasuryOption.type === TreasuryType.Open ? 'Open' : 'Locked'}`
+      const payload = {
+        treasurer: selectedMultisig ? selectedMultisig.id.toBase58() : publicKey.toBase58(),              // treasurer
+        label: createOptions.treasuryName,                                                                // label
+        type: `${createOptions.treasuryType} = ${createOptions.treasuryType === TreasuryType.Open         // type
+          ? 'Open'
+          : 'Locked'}`,
+        multisig: createOptions.multisigId                                                                // multisig
       };
 
-      consoleOut('data:', data);
+      consoleOut('payload:', payload);
       // Log input data
       transactionLog.push({
         action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
-        inputs: data
+        inputs: payload
       });
 
       transactionLog.push({
@@ -1847,7 +1880,7 @@ export const TreasuriesView = () => {
       }
 
       consoleOut('Starting Create Treasury using MSP V2...', '', 'blue');
-      let result = createTreasury(data)
+      let result = createTreasury(payload)
         .then(value => {
           if (!value) { return false; }
           consoleOut('createTreasury returned transaction:', value);
@@ -2004,7 +2037,6 @@ export const TreasuriesView = () => {
               currentOperation: TransactionStatus.TransactionFinished
             });
             onTreasuryCreated();
-            setOngoingOperation(undefined);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -4566,14 +4598,18 @@ export const TreasuriesView = () => {
         handleClose={closeOpenTreasuryModal}
       />
 
-      <TreasuryCreateModal
-        isVisible={isCreateTreasuryModalVisible}
-        nativeBalance={nativeBalance}
-        transactionFees={transactionFees}
-        handleOk={onAcceptCreateTreasury}
-        handleClose={closeCreateTreasuryModal}
-        isBusy={isBusy}
-      />
+      {isCreateTreasuryModalVisible && (
+        <TreasuryCreateModal
+          isVisible={isCreateTreasuryModalVisible}
+          nativeBalance={nativeBalance}
+          transactionFees={transactionFees}
+          handleOk={onAcceptCreateTreasury}
+          handleClose={closeCreateTreasuryModal}
+          isBusy={isBusy}
+          selectedMultisig={selectedMultisig}
+          multisigAccounts={multisigAccounts}
+        />
+      )}
 
       <TreasuryCloseModal
         isVisible={isCloseTreasuryModalVisible}
