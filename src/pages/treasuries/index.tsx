@@ -822,6 +822,7 @@ export const TreasuriesView = () => {
     if (previousWalletConnectState !== connected) {
       if (!previousWalletConnectState && connected && publicKey) {
         consoleOut('User is connecting...', publicKey.toBase58(), 'green');
+        setLoadingMultisigAccounts(true);
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'green');
         setTreasuryList([]);
@@ -1064,6 +1065,15 @@ export const TreasuriesView = () => {
   }, [
     isBusy,
     fetchTxInfoStatus,
+  ]);
+
+  const isMultisigAvailable = useCallback((): boolean => {
+    return multisigAddress && selectedMultisig && selectedMultisig.id.toBase58() === multisigAddress
+            ? true
+            : false;
+  }, [
+    multisigAddress,
+    selectedMultisig,
   ]);
 
   const isTreasurer = useCallback((): boolean => {
@@ -4174,6 +4184,19 @@ export const TreasuriesView = () => {
                   ? t('treasuries.treasury-detail.cta-add-funds-busy')
                   : t('treasuries.treasury-detail.cta-add-funds')}
               </Button>
+
+              {isMultisigAvailable() && (
+                <Button
+                  type="default"
+                  shape="round"
+                  size="small"
+                  className="thin-stroke"
+                  disabled={isTxInProgress() || loadingMultisigAccounts || isAnythingLoading()}
+                  onClick={() => {}}>
+                  {t('treasuries.treasury-detail.cta-withdraw-multisig-treasury')}
+                </Button>
+              )}
+
               <Button
                 type="default"
                 shape="round"

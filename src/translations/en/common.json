@@ -854,6 +854,7 @@
 			"created-on": "Created on",
 			"cta-add-funds": "Add funds",
 			"cta-add-funds-busy": "Adding funds",
+			"cta-withdraw-multisig-treasury": "Withdraw funds",
 			"cta-close": "Close treasury",
 			"cta-close-busy": "Closing treasury",
 			"funds-added-to-treasury": "Funds added to the treasury",
