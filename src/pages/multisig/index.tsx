@@ -212,6 +212,7 @@ export const MultisigView = () => {
       return tokenAccount;
     });
 
+    consoleOut('multisig vaults:', results, 'blue');
     return results;
 
   },[]);
