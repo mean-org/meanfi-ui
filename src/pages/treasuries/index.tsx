@@ -1350,6 +1350,12 @@ export const TreasuriesView = () => {
     window.location.reload();
   }
 
+  const resetTreasuriesContext = () => {
+    setSelectedMultisig(undefined);
+    setMultisigAddress('');
+    navigate('/treasuries')
+  }
+
   const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({
       lastOperation: TransactionStatus.Iddle,
@@ -4352,7 +4358,7 @@ export const TreasuriesView = () => {
       </>
     )}
     {(isMultisigAvailable() && treasuryList && treasuryList.length > 0) && (
-      <div className="py-3 px-3 simplelink">
+      <div className="py-3 px-3 simplelink" onClick={resetTreasuriesContext}>
         <IconShowAll className="mean-svg-icons align-middle" />
         <span className="ml-1 align-middle">Show All Treasuries</span>
       </div>
