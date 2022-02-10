@@ -1782,8 +1782,6 @@ export const TreasuriesView = () => {
 
       if (!connection) { return null; }
 
-      // TODO: data has this additional property multisig (multisig address or '')
-
       if (!selectedMultisig) {
         if (!msp || !publicKey) { return null; }
         return await msp.createTreasury(
@@ -1796,6 +1794,14 @@ export const TreasuriesView = () => {
       if (!multisigClient || !msp || !wallet || !publicKey) { return null; }
 
       let multisigSigner = selectedMultisig.address;
+      
+      if (data.multisig !== selectedMultisig.id.toBase58()) {
+        multisigSigner = (await PublicKey.findProgramAddress(
+          [new PublicKey(data.multisig).toBuffer()], 
+          MEAN_MULTISIG
+        ))[0];
+      }
+
       // Edit Multisig
       const createTreasuryTx = await msp.createTreasury(
         multisigSigner,                                   // treasurer
@@ -1858,7 +1864,7 @@ export const TreasuriesView = () => {
 
       // Create a transaction
       const payload = {
-        treasurer: selectedMultisig ? selectedMultisig.id.toBase58() : publicKey.toBase58(),              // treasurer
+        treasurer: publicKey.toBase58(),                                                                  // treasurer
         label: createOptions.treasuryName,                                                                // label
         type: `${createOptions.treasuryType} = ${createOptions.treasuryType === TreasuryType.Open         // type
           ? 'Open'
@@ -2253,68 +2259,77 @@ export const TreasuriesView = () => {
     } 
 
     const createTxV2 = async (): Promise<boolean> => {
-      if (publicKey && treasuryDetails && selectedToken && msp) {
-        consoleOut("Start transaction for treasury addFunds", '', 'blue');
-        consoleOut('Wallet address:', publicKey.toBase58());
 
+      if (!publicKey || !treasuryDetails || !selectedToken || !msp) {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot start transaction! Wallet not found!'
+        });
+        customLogger.logError('Treasury Add funds transaction failed', { transcript: transactionLog });
+        return false;
+      }
+
+      consoleOut("Start transaction for treasury addFunds", '', 'blue');
+      consoleOut('Wallet address:', publicKey.toBase58());
+
+      setTransactionStatus({
+        lastOperation: TransactionStatus.TransactionStart,
+        currentOperation: TransactionStatus.InitTransaction
+      });
+
+      const treasury = new PublicKey(treasuryDetails.id);
+      const associatedToken = new PublicKey(selectedToken.address);
+      const stream = params.streamId ? new PublicKey(params.streamId) : undefined;
+      const amount = toTokenAmount(parseFloat(params.amount as string), selectedToken.decimals);
+
+      console.log('params.streamId', params.streamId);
+
+      const data = {
+        contributor: publicKey.toBase58(),                        // contributor
+        treasury: treasury.toBase58(),                            // treasury
+        associatedToken: associatedToken.toBase58(),              // associatedToken
+        stream: stream?.toBase58(),                               // stream
+        amount,                                                   // amount
+        allocationType: params.allocationType                     // allocationType
+      }
+
+      consoleOut('data:', data);
+
+      // Log input data
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+        inputs: data
+      });
+
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+        result: ''
+      });
+
+      // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
+      // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+      consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
+      consoleOut('nativeBalance:', nativeBalance, 'blue');
+      if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
         setTransactionStatus({
-          lastOperation: TransactionStatus.TransactionStart,
-          currentOperation: TransactionStatus.InitTransaction
+          lastOperation: transactionStatus.currentOperation,
+          currentOperation: TransactionStatus.TransactionStartFailure
         });
-
-        const treasury = new PublicKey(treasuryDetails.id);
-        const associatedToken = new PublicKey(selectedToken.address);
-        const stream = params.streamId ? new PublicKey(params.streamId) : undefined;
-        const amount = toTokenAmount(parseFloat(params.amount as string), selectedToken.decimals);
-
-        console.log('params.streamId', params.streamId);
-
-        const data = {
-          contributor: publicKey.toBase58(),                        // contributor
-          treasury: treasury.toBase58(),                            // treasury
-          associatedToken: associatedToken.toBase58(),              // associatedToken
-          stream: stream?.toBase58(),                               // stream
-          amount,                                                   // amount
-          allocationType: params.allocationType                     // allocationType
-        }
-
-        consoleOut('data:', data);
-
-        // Log input data
         transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
-          inputs: data
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+          result: `Not enough balance (${
+            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+          }) to pay for network fees (${
+            getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+          })`
         });
+        customLogger.logWarning('Treasury Add funds transaction failed', { transcript: transactionLog });
+        return false;
+      }
 
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
-          result: ''
-        });
-
-        // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
-        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
-        consoleOut('nativeBalance:', nativeBalance, 'blue');
-        if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.TransactionStartFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-            result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
-            }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
-            })`
-          });
-          customLogger.logWarning('Treasury Add funds transaction failed', { transcript: transactionLog });
-          return false;
-        }
-
-        consoleOut('Starting Add Funds using MSP V2...', '', 'blue');
-        // Create a transaction
-        addFunds(data);
+      consoleOut('Starting Add Funds using MSP V2...', '', 'blue');
+      // Create a transaction
+      let result = addFunds(data)
         .then((value: Transaction | null) => {
           if (!value) { return false; }
           consoleOut('addFunds returned transaction:', value);
@@ -2342,14 +2357,8 @@ export const TreasuriesView = () => {
           customLogger.logError('Treasury Add funds transaction failed', { transcript: transactionLog });
           return false;
         });
-      } else {
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot start transaction! Wallet not found!'
-        });
-        customLogger.logError('Treasury Add funds transaction failed', { transcript: transactionLog });
-        return false;
-      }
+
+      return result;
     }
 
     const signTx = async (): Promise<boolean> => {
