@@ -125,6 +125,16 @@ export const AppBar = (props: {
       <Menu.Item key="deposits" onClick={showDepositOptionsModal} id="deposits-menu-item">
         <span className="menu-item-text">{t('ui-menus.main-menu.deposits')}</span>
       </Menu.Item>
+      {(isWhitelisted || isLocal()) && (
+        <SubMenu key="invest" title={t('ui-menus.main-menu.invest.submenu-title')}>
+          <Menu.Item key="/staking">
+            <Link to="/staking">{t('ui-menus.main-menu.invest.staking')}</Link>
+          </Menu.Item>
+          <Menu.Item key="/pol-bonds">
+            <Link to="/pol-bonds">{t('ui-menus.main-menu.invest.pol-bonds')}</Link>
+          </Menu.Item>
+        </SubMenu>
+      )}
       <SubMenu key="services" title={t('ui-menus.main-menu.services.submenu-title')}>
         <Menu.Item key="/treasuries">
           <Link to="/treasuries">{t('ui-menus.main-menu.services.treasuries')}</Link>
@@ -235,6 +245,16 @@ export const AppBar = (props: {
               <li key="deposits" className="mobile-menu-item" onClick={showDepositOptionsModal} style={{'--animation-order': 4} as CustomCSSProps}>
                 <span className="menu-item-text">{t('ui-menus.main-menu.deposits')}</span>
               </li>
+              {(isWhitelisted || isLocal()) && (
+                <li key="staking" className={location.pathname === '/staking' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 4} as CustomCSSProps}>
+                  <Link to="/staking">{t('ui-menus.main-menu.invest.staking')}</Link>
+                </li>
+              )}
+              {(isWhitelisted || isLocal()) && (
+                <li key="pol-bonds" className={location.pathname === '/pol-bonds' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 4} as CustomCSSProps}>
+                  <Link to="/pol-bonds">{t('ui-menus.main-menu.invest.pol-bonds')}</Link>
+                </li>
+              )}
               <li key="/treasuries" className={location.pathname === '/treasuries' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 5} as CustomCSSProps}>
                 <Link to="/treasuries">{t('ui-menus.main-menu.services.treasuries')}</Link>
               </li>
