@@ -929,6 +929,11 @@
 			"accounts": "Accounts",
 			"charts": "Charts",
 			"deposits": "Deposits",
+			"invest": {
+				"pol-bonds": "POL Bonds",
+				"submenu-title": "Invest",
+				"staking": "Staking"
+			},
 			"services": {
 				"custody": "Custody",
 				"faucet": "Faucet",
