@@ -7,7 +7,7 @@ import {
   InfoCircleOutlined,
   LoadingOutlined, ReloadOutlined, SearchOutlined,
 } from '@ant-design/icons';
-import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
+import { ConfirmOptions, Connection, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
 import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
@@ -61,7 +61,7 @@ import dateFormat from 'dateformat';
 import { PerformanceCounter } from '../../utils/perf-counter';
 import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import { useAccountsContext, useNativeAccount } from '../../contexts/accounts';
-import { NATIVE_SOL_MINT } from '../../utils/ids';
+import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
 import { customLogger } from '../..';
 import { TreasuryAddFundsModal } from '../../components/TreasuryAddFundsModal';
 import { AccountLayout, TOKEN_PROGRAM_ID } from '@solana/spl-token';
@@ -81,6 +81,9 @@ import { TransactionFees, MSP_ACTIONS as MSP_ACTIONS_V2, calculateActionFees as 
 import BN from 'bn.js';
 import { InfoIcon } from '../../components/InfoIcon';
 import { useLocation, useNavigate } from 'react-router-dom';
+import MultisigIdl from "../../models/mean-multisig-idl";
+import { Multisig, MultisigParticipant, MultisigV2 } from '../../models/multisig';
+import { Program, Provider } from '@project-serum/anchor';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const treasuryStreamsPerfCounter = new PerformanceCounter();
@@ -139,8 +142,13 @@ export const TreasuriesView = () => {
   const [loadingTreasuryDetails, setLoadingTreasuryDetails] = useState(false);
   const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
   const [retryOperationPayload, setRetryOperationPayload] = useState<any>(undefined);
+
+  // Multisig related
   const [multisigAddress, setMultisigAddress] = useState('');
+  const [selectedMultisig, setSelectedMultisig] = useState<MultisigV2 | undefined>(undefined);
   const [tresuryAddress, setTresuryAddress] = useState('');
+  const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(true);
+  const [multisigAccounts, setMultisigAccounts] = useState<(MultisigV2 | Multisig)[]>([]);
 
   // Transactions
   const [nativeBalance, setNativeBalance] = useState(0);
@@ -154,13 +162,6 @@ export const TreasuriesView = () => {
   const [withdrawTransactionFees, setWithdrawTransactionFees] = useState<TransactionFees>({
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
   });
-
-  const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
-    commitment: "confirmed",
-    disableRetryOnRateLimit: true
-  }), [
-    connectionConfig.endpoint
-  ]);
 
   // Enable deep-linking - Parse and save query params as needed
   useEffect(() => {
@@ -179,7 +180,36 @@ export const TreasuriesView = () => {
     }
   }, [location]);
 
-  // Create and cache Money Streaming Program instance
+  // Create and cache the connection
+  const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
+    commitment: "confirmed",
+    disableRetryOnRateLimit: true
+  }), [
+    connectionConfig.endpoint
+  ]);
+
+  // Create and cache Multisig client instance
+  const multisigClient = useMemo(() => {
+
+    const opts: ConfirmOptions = {
+      preflightCommitment: "finalized",
+      commitment: "finalized",
+    };
+
+    const provider = new Provider(connection, wallet as any, opts);
+
+    return new Program(
+      MultisigIdl,
+      MEAN_MULTISIG,
+      provider
+    );
+
+  }, [
+    connection, 
+    wallet
+  ]);
+
+  // Create and cache Money Streaming Program V1 instance
   const ms = useMemo(() => new MoneyStreaming(
     connectionConfig.endpoint,
     streamProgramAddress,
@@ -189,6 +219,7 @@ export const TreasuriesView = () => {
     streamProgramAddress
   ]);
 
+  // Create and cache Money Streaming Program V2 instance
   const msp = useMemo(() => {
     if (publicKey) {
       console.log('New MSP from treasuries');
@@ -202,79 +233,6 @@ export const TreasuriesView = () => {
     connectionConfig.endpoint,
     publicKey,
     streamV2ProgramAddress
-  ]);
-
-  // Keep account balance updated
-  useEffect(() => {
-
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
-    if (account?.lamports !== previousBalance || !nativeBalance) {
-      // Refresh token balance
-      refreshTokenBalance();
-      setNativeBalance(getAccountBalance());
-      // Update previous balance
-      setPreviousBalance(account?.lamports);
-    }
-  }, [
-    account,
-    nativeBalance,
-    previousBalance,
-    refreshTokenBalance
-  ]);
-
-  // Automatically update all token balances (in token list)
-  useEffect(() => {
-
-    if (!connection) {
-      console.error('No connection');
-      return;
-    }
-
-    if (!publicKey || !tokenList || !accounts || !accounts.tokenAccounts) {
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-
-      const balancesMap: any = {};
-      connection.getTokenAccountsByOwner(
-        publicKey, 
-        { programId: TOKEN_PROGRAM_ID }, 
-        connection.commitment
-      )
-      .then(response => {
-        for (let acc of response.value) {
-          const decoded = ACCOUNT_LAYOUT.decode(acc.account.data);
-          const address = decoded.mint.toBase58();
-          const itemIndex = tokenList.findIndex(t => t.address === address);
-          if (itemIndex !== -1) {
-            balancesMap[address] = decoded.amount.toNumber() / (10 ** tokenList[itemIndex].decimals);
-          } else {
-            balancesMap[address] = 0;
-          }
-        }
-      })
-      .catch(error => {
-        console.error(error);
-        for (let t of tokenList) {
-          balancesMap[t.address] = 0;
-        }
-      })
-      .finally(() => setUserBalances(balancesMap));
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }
-
-  }, [
-    connection,
-    tokenList,
-    accounts,
-    publicKey
   ]);
 
   const getTransactionFees = useCallback(async (action: MSP_ACTIONS): Promise<TransactionFees> => {
@@ -547,6 +505,291 @@ export const TreasuriesView = () => {
   const numTreasuryStreams = useCallback(() => {
     return treasuryStreams ? treasuryStreams.length : 0;
   }, [treasuryStreams]);
+
+  // Keep account balance updated
+  useEffect(() => {
+
+    const getAccountBalance = (): number => {
+      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
+    }
+
+    if (account?.lamports !== previousBalance || !nativeBalance) {
+      // Refresh token balance
+      refreshTokenBalance();
+      setNativeBalance(getAccountBalance());
+      // Update previous balance
+      setPreviousBalance(account?.lamports);
+    }
+  }, [
+    account,
+    nativeBalance,
+    previousBalance,
+    refreshTokenBalance
+  ]);
+
+  // Automatically update all token balances (in token list)
+  useEffect(() => {
+
+    if (!connection) {
+      console.error('No connection');
+      return;
+    }
+
+    if (!publicKey || !tokenList || !accounts || !accounts.tokenAccounts) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+
+      const balancesMap: any = {};
+      connection.getTokenAccountsByOwner(
+        publicKey, 
+        { programId: TOKEN_PROGRAM_ID }, 
+        connection.commitment
+      )
+      .then(response => {
+        for (let acc of response.value) {
+          const decoded = ACCOUNT_LAYOUT.decode(acc.account.data);
+          const address = decoded.mint.toBase58();
+          const itemIndex = tokenList.findIndex(t => t.address === address);
+          if (itemIndex !== -1) {
+            balancesMap[address] = decoded.amount.toNumber() / (10 ** tokenList[itemIndex].decimals);
+          } else {
+            balancesMap[address] = 0;
+          }
+        }
+      })
+      .catch(error => {
+        console.error(error);
+        for (let t of tokenList) {
+          balancesMap[t.address] = 0;
+        }
+      })
+      .finally(() => setUserBalances(balancesMap));
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [
+    connection,
+    tokenList,
+    accounts,
+    publicKey
+  ]);
+
+
+
+  /**
+   * Block of code from multisig
+   * - Gets the list of multisigs for the user
+   * - Parse account for all items in the list
+   * - Select the matching item in the list by the supplied multisigAddress
+   */
+
+  const readAllMultisigAccounts = useCallback(async (wallet: PublicKey) => {
+
+    let accounts: any[] = [];
+    let multisigV2Accs = await multisigClient.account.multisigV2.all();
+    let filteredAccs = multisigV2Accs.filter((a: any) => {
+      if (a.account.owners.filter((o: any) => o.address.equals(wallet)).length) { return true; }
+      return false;
+    });
+
+    accounts.push(...filteredAccs);
+    let multisigAccs = await multisigClient.account.multisig.all();
+    filteredAccs = multisigAccs.filter((a: any) => {
+      if (a.account.owners.filter((o: PublicKey) => o.equals(wallet)).length) { return true; }
+      return false;
+    });
+
+    accounts.push(...filteredAccs);
+
+    return accounts;
+    
+  }, [
+    multisigClient.account.multisig, 
+    multisigClient.account.multisigV2
+  ]);
+
+  const parseMultisigV2Account = (info: any) => {
+    return PublicKey
+      .findProgramAddress([info.publicKey.toBuffer()], MEAN_MULTISIG)
+      .then(k => {
+
+        let address = k[0];
+        let owners: MultisigParticipant[] = [];
+        let labelBuffer = Buffer
+          .alloc(info.account.label.length, info.account.label)
+          .filter(function (elem, index) { return elem !== 0; }
+        );
+
+        let filteredOwners = info.account.owners.filter((o: any) => !o.address.equals(PublicKey.default));
+
+        for (let i = 0; i < filteredOwners.length; i ++) {
+          owners.push({
+            address: filteredOwners[i].address.toBase58(),
+            name: filteredOwners[i].name.length > 0 
+              ? new TextDecoder().decode(
+                  Buffer.from(
+                    Uint8Array.of(
+                      ...filteredOwners[i].name.filter((b: any) => b !== 0)
+                    )
+                  )
+                )
+              : ""
+          } as MultisigParticipant);
+        }
+
+        return {
+          id: info.publicKey,
+          version: info.account.version,
+          label: new TextDecoder().decode(labelBuffer),
+          address,
+          nounce: info.account.nonce,
+          ownerSeqNumber: info.account.ownerSetSeqno,
+          threshold: info.account.threshold.toNumber(),
+          pendingTxsAmount: info.account.pendingTxs.toNumber(),
+          createdOnUtc: new Date(info.account.createdOn.toNumber() * 1000),
+          owners: owners
+
+        } as MultisigV2;
+      })
+      .catch(err => { 
+        consoleOut('error', err, 'red');
+        return undefined;
+      });
+  };
+
+  const parseMultisiAccount = (info: any) => {
+    return PublicKey
+      .findProgramAddress([info.publicKey.toBuffer()], MEAN_MULTISIG)
+      .then(k => {
+
+        let address = k[0];
+        let owners: MultisigParticipant[] = [];
+        let labelBuffer = Buffer
+          .alloc(info.account.label.length, info.account.label)
+          .filter(function (elem, index) { return elem !== 0; }
+        );
+
+        for (let i = 0; i < info.account.owners.length; i ++) {
+          owners.push({
+            address: info.account.owners[i].toBase58(),
+            name: info.account.ownersNames && info.account.ownersNames.length && info.account.ownersNames[i].length > 0 
+              ? new TextDecoder().decode(
+                  Buffer.from(
+                    Uint8Array.of(
+                      ...info.account.ownersNames[i].filter((b: any) => b !== 0)
+                    )
+                  )
+                )
+              : ""
+          } as MultisigParticipant);
+        }
+
+        return {
+          id: info.publicKey,
+          version: 1,
+          label: new TextDecoder().decode(labelBuffer),
+          address,
+          nounce: info.account.nonce,
+          ownerSeqNumber: info.account.ownerSetSeqno,
+          threshold: info.account.threshold.toNumber(),
+          pendingTxsAmount: info.account.pendingTxs.toNumber(),
+          createdOnUtc: new Date(info.account.createdOn.toNumber() * 1000),
+          owners: owners
+
+        } as Multisig;
+      })
+      .catch(err => { 
+        consoleOut('error', err, 'red');
+        return undefined;
+      });
+  };
+
+  // Get the multisig accounts' list
+  useEffect(() => {
+
+    if (!connection || !publicKey || !multisigClient || !loadingMultisigAccounts) {
+      setLoadingMultisigAccounts(false);
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+
+      readAllMultisigAccounts(publicKey)
+        .then((allInfo: any) => {
+          let multisigInfoArray: (MultisigV2 | Multisig)[] = [];
+          for (let info of allInfo) {
+            let parsePromise: any;
+            if (info.account.version && info.account.version === 2) {
+              parsePromise = parseMultisigV2Account;
+            } else {
+              parsePromise = parseMultisiAccount;
+            }
+            if (parsePromise) {
+              parsePromise(info)
+                .then((multisig: any) =>{
+                  if (multisig) {
+                    multisigInfoArray.push(multisig);
+                  }
+                })
+                .catch((err: any) => {
+                  console.error(err);
+                  setLoadingMultisigAccounts(false);
+                });
+            }
+          }
+          setTimeout(() => {
+            multisigInfoArray.sort((a: any, b: any) => b.createdOnUtc.getTime() - a.createdOnUtc.getTime());
+            setMultisigAccounts(multisigInfoArray);
+            consoleOut('multisigs:', multisigInfoArray, 'blue');
+            setLoadingMultisigAccounts(false);
+          });
+        })
+        .catch(err => {
+          console.error(err);
+          setLoadingMultisigAccounts(false);
+        });
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [
+    connection,
+    loadingMultisigAccounts,
+    multisigClient,
+    publicKey,
+    readAllMultisigAccounts,
+  ]);
+
+  // Set selectedMultisig based on the passed-in multisigAddress in query params
+  useEffect(() => {
+
+    if (publicKey && multisigAddress && multisigAccounts && multisigAccounts.length > 0) {
+      consoleOut(`try to select multisig ${multisigAddress} from list`, multisigAccounts, 'blue');
+      const selected = multisigAccounts.find(m => m.id.toBase58() === multisigAddress);
+      if (selected) {
+        consoleOut('selectedMultisig:', selected, 'blue');
+        setSelectedMultisig(selected);
+      } else {
+        consoleOut('multisigAccounts does not contain the requested multisigAddress:', multisigAddress, 'orange');
+      }
+    }
+
+  }, [
+    publicKey,
+    multisigAddress,
+    selectedMultisig,
+    multisigAccounts,
+  ]);
+
+
+
 
   // Load treasuries once per page access
   useEffect(() => {

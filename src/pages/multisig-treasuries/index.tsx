@@ -18,12 +18,11 @@ import { consoleOut, copyText, delay, getShortDate, getTransactionStatusForLogs,
 import { Identicon } from '../../components/Identicon';
 import { getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, getTxIxResume, shortenAddress, toUiAmount } from '../../utils/utils';
 import { MultisigV2, MultisigParticipant, MultisigTransaction, MultisigTransactionStatus, MultisigVault, Multisig } from '../../models/multisig';
-import { calculateActionFees, MSP, MSP_ACTIONS, TransactionFees, TreasuryType, Constants } from '@mean-dao/msp';
+import { calculateActionFees, MSP, MSP_ACTIONS, TransactionFees, TreasuryType } from '@mean-dao/msp';
 import { MultisigCreateVaultModal } from '../../components/MultisigCreateVaultModal';
 import { useNativeAccount } from '../../contexts/accounts';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { customLogger } from '../..';
-import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { BN } from 'bn.js';
 import { notify } from '../../utils/notifications';
 import { MultisigTransferTokensModal } from '../../components/MultisigTransferTokensModal';
