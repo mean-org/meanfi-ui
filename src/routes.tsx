@@ -30,6 +30,8 @@ import TransactionStatusProvider from "./contexts/transaction-status";
 import { isLocal, isProd } from "./utils/ui";
 import { OnlineStatusProvider } from "./contexts/online-status";
 import { IdoLpView } from "./pages/ido-lp";
+import { StakingView } from "./pages/staking";
+import { PolBondsView } from "./pages/pol-bonds";
 
 export function AppRoutes() {
 
@@ -63,6 +65,8 @@ export function AppRoutes() {
                       <Route path="/ido-live" element={<IdoLiveView />} />
                       <Route path="/ido-blocked" element={<IdoBlockedView />} />
                       <Route path="/ido-lp" element={<IdoLpView />} />
+                      <Route path="/pol-bonds" element={<PolBondsView />} />
+                      <Route path="/staking" element={<StakingView />} />
                       <Route path="/stats" element={<StatsView />} />
                       <Route path="/custody" element={<CustodyView />} />
                       <Route path="/multisig" element={<MultisigView />} />

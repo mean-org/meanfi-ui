@@ -212,6 +212,7 @@ export const MultisigView = () => {
       return tokenAccount;
     });
 
+    consoleOut('multisig vaults:', results, 'blue');
     return results;
 
   },[]);
@@ -3479,7 +3480,6 @@ export const MultisigView = () => {
     const timeout = setTimeout(() => {
       getMultisigVaults(multisigClient.provider.connection, selectedMultisig.id)
       .then(result => {
-        consoleOut('multisig vaults:', result, 'blue');
         setMultisigVaults(result);
       })
       .catch(err => console.error(err));
