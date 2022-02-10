@@ -21,7 +21,6 @@ import {
   WrapView,
   MultisigView,
   StatsView,
-  MultisigTreasuriesView,
   MultisigVaultsView,
   MultisigProgramsView
 } from "./pages";
@@ -69,7 +68,6 @@ export function AppRoutes() {
                       <Route path="/multisig" element={<MultisigView />} />
                       <Route path="/multisig-vaults" element={<MultisigVaultsView />} />
                       <Route path="/multisig-programs" element={<MultisigProgramsView />} />
-                      <Route path="/multisig-treasuries" element={<MultisigTreasuriesView />} />
                       <Route path="/service-unavailable" element={<ServiceUnavailableView />} />
                       <Route path='*' element={<NotFoundView />} />
                     </Routes>

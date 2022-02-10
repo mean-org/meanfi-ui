@@ -7,7 +7,6 @@ export { IdoBlockedView } from './ido-blocked';
 export { IdoLiveView } from './ido-live';
 export { IdoView } from './ido';
 export { MultisigProgramsView } from './multisig-programs';
-export { MultisigTreasuriesView } from './multisig-treasuries';
 export { MultisigVaultsView } from './multisig-vaults';
 export { MultisigView } from './multisig';
 export { NotFoundView } from './404';
