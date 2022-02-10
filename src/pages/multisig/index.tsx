@@ -2988,6 +2988,10 @@ export const MultisigView = () => {
       return "Edit Multisig";
     }
 
+    if (op === OperationType.TreasuryCreate) {
+      return "Create Treasury";
+    }
+
   },[]);
 
   const getTransactionStatusAction = useCallback((mtx: MultisigTransaction) => {
@@ -3468,7 +3472,7 @@ export const MultisigView = () => {
   // Get Multisig Vaults
   useEffect(() => {
 
-    if (!multisigClient || !selectedMultisig) {
+    if (!multisigClient || !selectedMultisig || !selectedMultisig.id) {
       return;
     }
 
