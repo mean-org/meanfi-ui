@@ -678,6 +678,27 @@ export const TreasuriesView = () => {
       });
   };
 
+  const isMultisigTreasury = useCallback(() => {
+
+    if (!treasuryDetails || !connected || !publicKey || !(treasuryDetails as any).version) {
+      return; 
+    }
+
+    let treasurer = new PublicKey((treasuryDetails as Treasury).treasurer as string);
+
+    if (!treasurer.equals(publicKey) && multisigAccounts.findIndex(m => m.address.equals(treasurer)) !== -1) {
+      return true;
+    }
+
+    return false;
+
+  },[
+    connected, 
+    multisigAccounts, 
+    publicKey, 
+    treasuryDetails
+  ])
+
   // Get the user multisig accounts' list
   useEffect(() => {
 
@@ -2181,6 +2202,24 @@ export const TreasuriesView = () => {
       }
     }
 
+    const addFunds = async (data: any) => {
+      
+      if (!isMultisigTreasury()) {
+        if (!msp || !publicKey) { return null; }
+        return await msp.addFunds(
+          new PublicKey(data.contributor),
+          new PublicKey(data.treasury),
+          new PublicKey(data.associatedToken),
+          data.stream ? new PublicKey(data.stream) : undefined,
+          data.amount,
+          data.allocationType
+        )
+      }
+
+      // TODO: Implement for multisig
+      return null;
+    } 
+
     const createTxV2 = async (): Promise<boolean> => {
       if (publicKey && treasuryDetails && selectedToken && msp) {
         consoleOut("Start transaction for treasury addFunds", '', 'blue');
@@ -2206,6 +2245,7 @@ export const TreasuriesView = () => {
           amount,                                                   // amount
           allocationType: params.allocationType                     // allocationType
         }
+
         consoleOut('data:', data);
 
         // Log input data
@@ -2242,15 +2282,9 @@ export const TreasuriesView = () => {
 
         consoleOut('Starting Add Funds using MSP V2...', '', 'blue');
         // Create a transaction
-        return await msp.addFunds(
-          publicKey,
-          treasury,
-          associatedToken,
-          stream,
-          amount,
-          params.allocationType
-        )
-        .then(value => {
+        addFunds(data);
+        .then((value: Transaction | null) => {
+          if (!value) { return false; }
           consoleOut('addFunds returned transaction:', value);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
