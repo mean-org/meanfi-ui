@@ -139,6 +139,8 @@ export const TreasuriesView = () => {
   const [loadingTreasuryDetails, setLoadingTreasuryDetails] = useState(false);
   const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
   const [retryOperationPayload, setRetryOperationPayload] = useState<any>(undefined);
+  const [multisigAddress, setMultisigAddress] = useState('');
+  const [tresuryAddress, setTresuryAddress] = useState('');
 
   // Transactions
   const [nativeBalance, setNativeBalance] = useState(0);
@@ -159,6 +161,23 @@ export const TreasuriesView = () => {
   }), [
     connectionConfig.endpoint
   ]);
+
+  // Enable deep-linking - Parse and save query params as needed
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    // Preset multisig address if passed-in
+    if (params.has('multisig')) {
+      const multisig = params.get('multisig');
+      setMultisigAddress(multisig || '');
+      consoleOut('multisigAddress:', multisig, 'blue');
+    }
+    // Preset treasury address if passed-in
+    if (params.has('treasury')) {
+      const treasury = params.get('treasury');
+      setTresuryAddress(treasury || '');
+      consoleOut('tresuryAddress:', treasury, 'blue');
+    }
+  }, [location]);
 
   // Create and cache Money Streaming Program instance
   const ms = useMemo(() => new MoneyStreaming(
@@ -437,14 +456,6 @@ export const TreasuriesView = () => {
 
       treasuryListPerfCounter.start();
 
-      // Get query param
-      let tresuryAddress: string | null = null;
-      const params = new URLSearchParams(location.search);
-      if (params.has('treasury')) {
-        tresuryAddress = params.get('treasury');
-        consoleOut('tresuryAddress:', tresuryAddress, 'blue');
-      }
-
       if (msp && ms) {
         let treasuryAccumulator: (Treasury | TreasuryInfo)[] = [];
         msp.listTreasuries(publicKey)
@@ -525,7 +536,7 @@ export const TreasuriesView = () => {
     msp,
     publicKey,
     connection,
-    location.search,
+    tresuryAddress,
     selectedTreasury,
     loadingTreasuries,
     fetchTxInfoStatus,
@@ -543,12 +554,21 @@ export const TreasuriesView = () => {
       return;
     }
 
+    // Verify query param
+    const params = new URLSearchParams(location.search);
+    if (params.has('treasury') && !tresuryAddress) {
+      consoleOut('Wait for tresuryAddress on next render...', '', 'blue');
+      return;
+    }
+
     setTreasuriesLoaded(true);
     consoleOut('Loading treasuries with wallet connection...', '', 'blue');
     refreshTreasuries(true);
   }, [
     publicKey,
     connection,
+    tresuryAddress,
+    location.search,
     treasuriesLoaded,
     loadingTreasuries,
     refreshTreasuries

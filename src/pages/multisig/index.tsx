@@ -3759,7 +3759,7 @@ export const MultisigView = () => {
           key="29"
           onClick={() => {
             if (selectedMultisig) {
-              const url = `/multisig-programs?ms=${selectedMultisig.id.toBase58()}`;
+              const url = `/multisig-programs?multisig=${selectedMultisig.id.toBase58()}`;
               navigate(url);
             }
           }}>
@@ -3837,7 +3837,7 @@ export const MultisigView = () => {
             disabled={isTxInProgress() || loadingMultisigAccounts}
             onClick={() => {
               if (selectedMultisig) {
-                const url = `/multisig-vaults?ms=${selectedMultisig.id.toBase58()}`;
+                const url = `/multisig-vaults?multisig=${selectedMultisig.id.toBase58()}`;
                 navigate(url);
               }
             }}>
@@ -3862,7 +3862,7 @@ export const MultisigView = () => {
             disabled={isTxInProgress() || loadingMultisigAccounts}
             onClick={() => {
               if (selectedMultisig) {
-                const url = `/multisig-treasuries?ms=${selectedMultisig.id.toBase58()}`;
+                const url = `/multisig-treasuries?multisig=${selectedMultisig.id.toBase58()}`;
                 navigate(url);
               }
             }}>

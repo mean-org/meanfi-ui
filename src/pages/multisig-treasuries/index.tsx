@@ -150,13 +150,14 @@ export const MultisigTreasuriesView = () => {
     refreshTokenBalance
   ]);
 
-  // Parse query params
+  // Enable deep-linking - Parse and save query params as needed
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    if (params.has('ms')) {
-      const msAddress = params.get('ms');
-      setMultisigAddress(msAddress || '');
-      consoleOut('multisigAddress:', msAddress, 'blue');
+    // Preset multisig address if passed-in
+    if (params.has('multisig')) {
+      const multisig = params.get('multisig');
+      setMultisigAddress(multisig || '');
+      consoleOut('multisigAddress:', multisig, 'blue');
     }
   }, [location]);
 

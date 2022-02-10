@@ -133,8 +133,8 @@ export const MultisigVaultsView = () => {
   // Parse query params
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    if (params.has('ms')) {
-      const msAddress = params.get('ms');
+    if (params.has('multisig')) {
+      const msAddress = params.get('multisig');
       setMultisigAddress(msAddress || '');
       consoleOut('multisigAddress:', msAddress, 'blue');
     }

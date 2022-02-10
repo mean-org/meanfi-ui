@@ -75,6 +75,17 @@ export const MultisigProgramsView = () => {
     navigate
   ]);
 
+  // Enable deep-linking - Parse and save query params as needed
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    // Preset multisig address if passed-in
+    if (params.has('multisig')) {
+      const multisig = params.get('multisig');
+      setMultisigAddress(multisig || '');
+      consoleOut('multisigAddress:', multisig, 'blue');
+    }
+  }, [location]);
+
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
     commitment: "confirmed",
     disableRetryOnRateLimit: true
@@ -122,16 +133,6 @@ export const MultisigProgramsView = () => {
     previousBalance,
     refreshTokenBalance
   ]);
-
-  // Parse query params
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    if (params.has('ms')) {
-      const msAddress = params.get('ms');
-      setMultisigAddress(msAddress || '');
-      consoleOut('multisigAddress:', msAddress, 'blue');
-    }
-  }, [location]);
 
   // Set selectedMultisig based on the passed-in multisigAddress in query params
   useEffect(() => {
