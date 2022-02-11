@@ -2249,11 +2249,52 @@ export const TreasuriesView = () => {
           data.stream ? new PublicKey(data.stream) : undefined,
           data.amount,
           data.allocationType
-        )
+        );
       }
 
-      // TODO: Implement for multisig
-      return null;
+      if (!multisigClient || !selectedMultisig || !msp || !wallet || !publicKey) { return null; }
+
+      let addFundsTx = await msp.addFunds(
+        new PublicKey(data.contributor),
+        new PublicKey(data.treasury),
+        new PublicKey(data.associatedToken),
+        data.stream ? new PublicKey(data.stream) : undefined,
+        data.amount,
+        data.allocationType
+      );
+
+      const ixData = Buffer.from(addFundsTx.instructions[0].data);
+      const ixAccounts = addFundsTx.instructions[0].keys;
+      const transaction = Keypair.generate();
+      const txSize = 1000;
+      const txSigners = [transaction];
+      const createIx = await multisigClient.account.transaction.createInstruction(
+        transaction,
+        txSize
+      );
+      
+      let tx = multisigClient.transaction.createTransaction(
+        MSPV2Constants.MSP, 
+        OperationType.TreasuryCreate,
+        ixAccounts as any,
+        ixData as any,
+        {
+          accounts: {
+            multisig: selectedMultisig.id,
+            transaction: transaction.publicKey,
+            proposer: publicKey as PublicKey,
+          },
+          preInstructions: [createIx],
+          signers: txSigners,
+        }
+      );
+
+      tx.feePayer = publicKey;
+      let { blockhash } = await connection.getRecentBlockhash("finalized");
+      tx.recentBlockhash = blockhash;
+      tx.partialSign(...txSigners);
+
+      return tx;
     } 
 
     const createTxV2 = async (): Promise<boolean> => {
@@ -2643,59 +2684,117 @@ export const TreasuriesView = () => {
       }
     }
 
-    const createTxV2 = async (): Promise<boolean> => {
-      if (publicKey && treasuryDetails && msp) {
-        setTransactionStatus({
-          lastOperation: TransactionStatus.TransactionStart,
-          currentOperation: TransactionStatus.InitTransaction
-        });
+    const closeTreasury = async (data: any) => {
 
-        const treasury = new PublicKey(treasuryDetails.id as string);
-        const data = {
-          treasurer: publicKey.toBase58(),                      // treasurer
-          treasury: treasury.toBase58()                         // treasury
-        }
-        consoleOut('data:', data);
-
-        // Log input data
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
-          inputs: data
-        });
-
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
-          result: ''
-        });
-
-        // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
-        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
-        consoleOut('nativeBalance:', nativeBalance, 'blue');
-        if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.TransactionStartFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-            result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
-            }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
-            })`
-          });
-          customLogger.logWarning('Close Treasury transaction failed', { transcript: transactionLog });
-          return false;
-        }
-
-        consoleOut('Starting Close Treasury using MSP V2...', '', 'blue');
-        // Create a transaction
+      if (!isMultisigTreasury()) {
+        if (!msp) { return null; }
         return await msp.closeTreasury(
-          publicKey,                                  // treasurer
-          treasury,                                   // treasury
-        )
+          new PublicKey(data.treasurer),              // treasurer
+          new PublicKey(data.treasury),               // treasury
+        );
+      }
+
+      if (!multisigClient || !selectedMultisig || !msp || !wallet || !publicKey) { return null; }
+
+      let closeTreasury = await msp.closeTreasury(
+        new PublicKey(data.treasurer),              // treasurer
+        new PublicKey(data.treasury),               // treasury
+      );
+
+      const ixData = Buffer.from(closeTreasury.instructions[0].data);
+      const ixAccounts = closeTreasury.instructions[0].keys;
+      const transaction = Keypair.generate();
+      const txSize = 1000;
+      const txSigners = [transaction];
+      const createIx = await multisigClient.account.transaction.createInstruction(
+        transaction,
+        txSize
+      );
+      
+      let tx = multisigClient.transaction.createTransaction(
+        MSPV2Constants.MSP, 
+        OperationType.TreasuryCreate,
+        ixAccounts as any,
+        ixData as any,
+        {
+          accounts: {
+            multisig: selectedMultisig.id,
+            transaction: transaction.publicKey,
+            proposer: publicKey as PublicKey,
+          },
+          preInstructions: [createIx],
+          signers: txSigners,
+        }
+      );
+
+      tx.feePayer = publicKey;
+      let { blockhash } = await connection.getRecentBlockhash("finalized");
+      tx.recentBlockhash = blockhash;
+      tx.partialSign(...txSigners);
+
+      return tx;
+    }
+
+    const createTxV2 = async (): Promise<boolean> => {
+      if (!publicKey || !treasuryDetails || !msp) {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot start transaction! Wallet not found!'
+        });
+        customLogger.logError('Close Treasury transaction failed', { transcript: transactionLog });
+        return false;
+      }
+
+      setTransactionStatus({
+        lastOperation: TransactionStatus.TransactionStart,
+        currentOperation: TransactionStatus.InitTransaction
+      });
+
+      const treasury = new PublicKey(treasuryDetails.id as string);
+      const data = {
+        treasurer: publicKey.toBase58(),                      // treasurer
+        treasury: treasury.toBase58()                         // treasury
+      }
+
+      consoleOut('data:', data);
+
+      // Log input data
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+        inputs: data
+      });
+
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+        result: ''
+      });
+
+      // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
+      // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+      consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
+      consoleOut('nativeBalance:', nativeBalance, 'blue');
+      if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
+        setTransactionStatus({
+          lastOperation: transactionStatus.currentOperation,
+          currentOperation: TransactionStatus.TransactionStartFailure
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+          result: `Not enough balance (${
+            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+          }) to pay for network fees (${
+            getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+          })`
+        });
+        customLogger.logWarning('Close Treasury transaction failed', { transcript: transactionLog });
+        return false;
+      }
+
+      consoleOut('Starting Close Treasury using MSP V2...', '', 'blue');
+      // Create a transaction
+      let result = closeTreasury(data)
         .then(value => {
+          if (!value) { return false; }
           consoleOut('closeTreasury returned transaction:', value);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
@@ -2721,14 +2820,8 @@ export const TreasuriesView = () => {
           customLogger.logError('Close Treasury transaction failed', { transcript: transactionLog });
           return false;
         });
-      } else {
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot start transaction! Wallet not found!'
-        });
-        customLogger.logError('Close Treasury transaction failed', { transcript: transactionLog });
-        return false;
-      }
+
+      return result;
     }
 
     const signTx = async (): Promise<boolean> => {
@@ -3020,61 +3113,120 @@ export const TreasuriesView = () => {
       }
     }
 
-    const createTxV2 = async (): Promise<boolean> => {
-      if (publicKey && highlightedStream && msp) {
-        setTransactionStatus({
-          lastOperation: TransactionStatus.TransactionStart,
-          currentOperation: TransactionStatus.InitTransaction
-        });
-        const streamPublicKey = new PublicKey(highlightedStream.id as string);
+    const closeStream = async (data: any) => {
 
-        const data = {
-          stream: streamPublicKey.toBase58(),                     // stream
-          initializer: publicKey.toBase58(),                      // initializer
-          closeTreasury                                           // closeTreasury
-        }
-        consoleOut('data:', data);
-
-        // Log input data
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
-          inputs: data
-        });
-
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
-          result: ''
-        });
-
-        // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
-        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
-        consoleOut('nativeBalance:', nativeBalance, 'blue');
-        if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.TransactionStartFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-            result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
-            }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
-            })`
-          });
-          customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
-          return false;
-        }
-
-        consoleOut('Starting Close Stream using MSP V2...', '', 'blue');
-        // Create a transaction
+      if (!isMultisigTreasury()) {
+        if (!msp) { return null; }
         return await msp.closeStream(
-          publicKey as PublicKey,                           // Initializer public key
-          streamPublicKey,                                  // Stream ID,
-          closeTreasury                                     // closeTreasury
-        )
+          new PublicKey(data.initializer),             // Initializer public key
+          new PublicKey(data.stream),                  // Stream ID,
+          data.closeTreasury                           // closeTreasury
+        );
+      }
+
+      if (!multisigClient || !selectedMultisig || !msp || !wallet || !publicKey) { return null; }
+
+      let closeStream = await msp.closeStream(
+        new PublicKey(data.initializer),             // Initializer public key
+        new PublicKey(data.stream),                  // Stream ID,
+        data.closeTreasury                           // closeTreasury
+      );
+
+      const ixData = Buffer.from(closeStream.instructions[0].data);
+      const ixAccounts = closeStream.instructions[0].keys;
+      const transaction = Keypair.generate();
+      const txSize = 1000;
+      const txSigners = [transaction];
+      const createIx = await multisigClient.account.transaction.createInstruction(
+        transaction,
+        txSize
+      );
+      
+      let tx = multisigClient.transaction.createTransaction(
+        MSPV2Constants.MSP, 
+        OperationType.TreasuryCreate,
+        ixAccounts as any,
+        ixData as any,
+        {
+          accounts: {
+            multisig: selectedMultisig.id,
+            transaction: transaction.publicKey,
+            proposer: publicKey as PublicKey,
+          },
+          preInstructions: [createIx],
+          signers: txSigners,
+        }
+      );
+
+      tx.feePayer = publicKey;
+      let { blockhash } = await connection.getRecentBlockhash("finalized");
+      tx.recentBlockhash = blockhash;
+      tx.partialSign(...txSigners);
+
+      return tx;
+    }
+
+    const createTxV2 = async (): Promise<boolean> => {
+      if (!publicKey || !highlightedStream || !msp) {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot start transaction! Wallet not found!'
+        });
+        customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
+        return false;
+      }
+
+      setTransactionStatus({
+        lastOperation: TransactionStatus.TransactionStart,
+        currentOperation: TransactionStatus.InitTransaction
+      });
+      const streamPublicKey = new PublicKey(highlightedStream.id as string);
+
+      const data = {
+        stream: streamPublicKey.toBase58(),                     // stream
+        initializer: publicKey.toBase58(),                      // initializer
+        closeTreasury                                           // closeTreasury
+      }
+
+      consoleOut('data:', data);
+
+      // Log input data
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+        inputs: data
+      });
+
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+        result: ''
+      });
+
+      // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
+      // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+      consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
+      consoleOut('nativeBalance:', nativeBalance, 'blue');
+      if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
+        setTransactionStatus({
+          lastOperation: transactionStatus.currentOperation,
+          currentOperation: TransactionStatus.TransactionStartFailure
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+          result: `Not enough balance (${
+            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+          }) to pay for network fees (${
+            getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+          })`
+        });
+        customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
+        return false;
+      }
+
+      consoleOut('Starting Close Stream using MSP V2...', '', 'blue');
+      // Create a transaction
+      let result = closeStream(data)
         .then(value => {
+          if (!value) { return false; }
           consoleOut('closeStream returned transaction:', value);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
@@ -3100,14 +3252,8 @@ export const TreasuriesView = () => {
           customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
           return false;
         });
-      } else {
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot start transaction! Wallet not found!'
-        });
-        customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
-        return false;
-      }
+
+      return result;
     }
 
     const signTx = async (): Promise<boolean> => {
