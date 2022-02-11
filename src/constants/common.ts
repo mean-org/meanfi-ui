@@ -88,6 +88,12 @@ export const LANGUAGES: Language[] = [
         flag: '/assets/flags/br.svg',
         locale: 'pt-BR'
     },
+    {
+        code: 'tr',
+        name: 'Türkçe',
+        flag: '/assets/flags/tr.svg',
+        locale: 'tr-TR'
+    },
 ];
 
 export const ALLOWED_ADDRESSES_LIST = [

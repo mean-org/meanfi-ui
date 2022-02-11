@@ -902,7 +902,8 @@
 		"en": "Inglés",
 		"es": "Español",
 		"fr": "Francés",
-		"pt": "Português"
+		"pt": "Português",
+		"tr": "Türkçe"
 	},
 	"ui-menus": {
 		"app-context-menu": {
@@ -926,7 +927,7 @@
 			"deposits": "Depósitos",
 			"invest": {
 				"pol-bonds": "POL Bonds",
-				"submenu-title": "Invest",
+				"submenu-title": "Invertir",
 				"staking": "Staking"
 			},
 			"services": {
@@ -938,6 +939,7 @@
 				"wallet-guide": "Guía de Billeteras",
 				"wrap": "Wrap"
 			},
+			"stats": "Estadísticas",
 			"swap": "Intercambiar",
 			"transfers": "Transferencias"
 		}

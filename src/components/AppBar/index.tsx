@@ -168,7 +168,7 @@ export const AppBar = (props: {
       </Menu.Item>
       {(isLocal() || isWhitelisted) && (
         <Menu.Item key="/stats">
-          <Link to="/stats">Stats</Link>
+          <Link to="/stats">{t('ui-menus.main-menu.stats')}</Link>
         </Menu.Item>
       )}
     </Menu>
@@ -287,7 +287,7 @@ export const AppBar = (props: {
               </li>
               {(isLocal() || isWhitelisted) && (
                 <li key="/stats" className="mobile-menu-item" style={{'--animation-order': 12} as CustomCSSProps}>
-                  <Link to="/stats">Stats</Link>
+                  <Link to="/stats">{t('ui-menus.main-menu.stats')}</Link>
                 </li>
               )}
             </ul>

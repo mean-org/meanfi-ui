@@ -902,7 +902,8 @@
 		"en": "Anglais",
 		"es": "Espanol",
 		"fr": "Français",
-		"pt": "Português"
+		"pt": "Português",
+		"tr": "Türkçe"
 	},
 	"ui-menus": {
 		"app-context-menu": {
@@ -938,6 +939,7 @@
 				"wallet-guide": "Guide du Portefeuille",
 				"wrap": "Wrap"
 			},
+			"stats": "Stats",
 			"swap": "Échanger",
 			"transfers": "Transferts"
 		}
