@@ -4410,7 +4410,7 @@ export const TreasuriesView = () => {
 
   // TODO: Bind the amount of pending Txs for this treasury
   const renderMultisigTxReminder = () => {
-    return isMultisigTreasury() && (
+    return (
       <div key="streams" className="transaction-list-row no-pointer mb-2">
         <div className="icon-cell">
           <div className="token-icon">
@@ -4422,7 +4422,7 @@ export const TreasuriesView = () => {
           </div>
         </div>
         <div className="description-cell">
-          <div className="font-bold simplelink underline-on-hover">{t('treasuries.treasury-detail.multisig-tx-headsup')}</div>
+          <div className="font-bold simplelink underline-on-hover" onClick={() => navigate('/multisig')}>{t('treasuries.treasury-detail.multisig-tx-headsup')}</div>
         </div>
       </div>
     );
@@ -4704,8 +4704,8 @@ export const TreasuriesView = () => {
               ) : (
                 <div className="title text-truncate">{shortenAddress(item.id as string, 8)}</div>
               )}
-              {item.createdOnUtc && (
-                <div className="subtitle text-truncate">{dateFormat(item.createdOnUtc, SIMPLE_DATE_TIME_FORMAT)}</div>
+              {isMultisigTreasury(item) && (
+                <div className="subtitle text-truncate">{t('treasuries.treasury-list.multisig-treasury-label')}</div>
               )}
             </div>
             <div className="rate-cell text-center">
@@ -4878,7 +4878,7 @@ export const TreasuriesView = () => {
                       <Spin spinning={loadingTreasuries || loadingTreasuryDetails}>
                         {treasuryDetails && (
                           <>
-                            {(isMultisigAvailable() && selectedMultisig) && renderMultisigTxReminder()}
+                            {(isMultisigAvailable() && selectedMultisig && isMultisigTreasury()) && renderMultisigTxReminder()}
                             {renderTreasuryMeta()}
                             <Divider className="activity-divider" plain></Divider>
                             {(!treasuryDetails.autoClose || (treasuryDetails.autoClose && getTreasuryTotalStreams(treasuryDetails) > 0 )) && (
