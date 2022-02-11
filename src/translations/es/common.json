@@ -377,6 +377,8 @@
 		"multisig-detail-heading": "Multisig account details",
 		"multisig-transactions": {
 			"column-created-on": "Created on",
+			"column-current-signatures": "Sig",
+			"column-my-status": "My Status",
 			"column-operation": "Operation",
 			"column-pending-signatures": "Signatures",
 			"column-program-id": "Program",

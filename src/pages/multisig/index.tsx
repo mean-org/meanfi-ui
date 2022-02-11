@@ -5,7 +5,6 @@ import {
   LoadingOutlined,
   ReloadOutlined,
 } from '@ant-design/icons';
-
 import {
   Account,
   ConfirmOptions,
@@ -31,7 +30,6 @@ import {
   getTokenAmountAndSymbolByTokenAddress,
   getTxIxResume,
   shortenAddress
-
 } from '../../utils/utils';
 
 import { Button, Col, Divider, Dropdown, Empty, Menu, Modal, Row, Space, Spin, Tooltip } from 'antd';
@@ -44,7 +42,6 @@ import {
   delay,
   isLocal,
   isDev
-
 } from '../../utils/ui';
 
 import {
@@ -52,7 +49,6 @@ import {
   SIMPLE_DATE_TIME_FORMAT,
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
   VERBOSE_DATE_TIME_FORMAT
-
 } from '../../constants';
 
 import { isDesktop } from "react-device-detect";
@@ -65,7 +61,6 @@ import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import dateFormat from 'dateformat';
 import { useNativeAccount } from '../../contexts/accounts';
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
-import { customLogger } from '../..';
 import { AccountLayout, MintLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { useNavigate } from 'react-router-dom';
 import { Multisig, MultisigV2, MultisigParticipant, MultisigTransaction, MultisigTransactionStatus } from '../../models/multisig';
@@ -83,6 +78,7 @@ import { MultisigSetProgramAuthModal } from '../../components/MultisigSetProgram
 import { MultisigOwnersView } from '../../components/MultisigOwnersView';
 import { MultisigEditModal } from '../../components/MultisigEditModal';
 import { MSP, Treasury } from '@mean-dao/msp';
+import { customLogger } from '../..';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -3034,12 +3030,28 @@ export const MultisigView = () => {
 
   const getTransactionUserStatusAction = useCallback((mtx: MultisigTransaction) => {
 
-    if (mtx.didSigned === undefined) {
+    if (mtx.executedOn) {
+      return "";
+    } else if (mtx.didSigned === undefined) {
       return "Rejected";
     } else if (mtx.didSigned === false) {
       return "Not Signed";
     } else {
       return "Signed"
+    }
+
+  },[]);
+
+  const getTransactionUserStatusActionClass = useCallback((mtx: MultisigTransaction) => {
+
+    if (mtx.executedOn) {
+      return "";
+    } else if (mtx.didSigned === undefined) {
+      return "fg-red";
+    } else if (mtx.didSigned === false) {
+      return "fg-yellow font-bold";
+    } else {
+      return "fg-green"
     }
 
   },[]);
@@ -3440,8 +3452,9 @@ export const MultisigView = () => {
             
             transactions.push(txInfo);
           }
-          // consoleOut('selected multisig txs', transactions, 'blue');
-          setMultisigPendingTxs(transactions.sort((a, b) => b.createdOn.getTime() - a.createdOn.getTime()));
+          const sortedTxs = transactions.sort((a, b) => b.createdOn.getTime() - a.createdOn.getTime());
+          consoleOut('selected multisig txs', sortedTxs, 'blue');
+          setMultisigPendingTxs(sortedTxs);
           setLoadingMultisigTxs(false);
         })
         .catch(err => {
@@ -3643,12 +3656,10 @@ export const MultisigView = () => {
           <div className="header-row" style={{ paddingBottom: 5 }}>
             <div className="std-table-cell responsive-cell">{t('multisig.multisig-transactions.column-operation')}</div>
             <div className="std-table-cell responsive-cell">{t('multisig.multisig-transactions.column-program-id')}</div>
-            <div className="std-table-cell responsive-cell">{t('multisig.multisig-transactions.column-created-on')}</div>
-            <div className="std-table-cell text-center fixed-width-120">
-              {
-                t('multisig.multisig-transactions.column-pending-signatures')
-              }
-            </div>
+            <div className="std-table-cell fixed-width-110">{t('multisig.multisig-transactions.column-created-on')}</div>
+            <div className="std-table-cell fixed-width-90">{t('multisig.multisig-transactions.column-my-status')}</div>
+            <div className="std-table-cell fixed-width-40">{t('multisig.multisig-transactions.column-current-signatures')}</div>
+            <div className="std-table-cell text-center fixed-width-120">{t('multisig.multisig-transactions.column-pending-signatures')}</div>
           </div>
         </div>
         {multisigPendingTxs && multisigPendingTxs.length && (
@@ -3662,19 +3673,22 @@ export const MultisigView = () => {
                   <div className="std-table-cell responsive-cell">
                     <span className="align-middle">{getOperationProgram(item.operation)}</span>
                   </div>
-                  <div className="std-table-cell responsive-cell">
+                  <div className="std-table-cell fixed-width-110">
                     <span className="align-middle">{getShortDate(item.createdOn.toString(), true)}</span>
                   </div>
-                  <div className="std-table-cell text-center fixed-width-120">
-                    { 
-                      item.status === MultisigTransactionStatus.Pending && (
-                        <span className="align-middle" style={{ marginRight:5 }} >
-                        {
-                          `${item.signers.filter(s => s === true).length}/${selectedMultisig.threshold}`
-                        }
-                        </span>
+                  <div className="std-table-cell fixed-width-90">
+                    <span className={`align-middle ${getTransactionUserStatusActionClass(item)}`}>{getTransactionUserStatusAction(item)}</span>
+                  </div>
+                  <div className="std-table-cell fixed-width-40">
+                    {
+                      item.status !== MultisigTransactionStatus.Executed ? (
+                        <span className="align-middle">{`${item.signers.filter(s => s === true).length}/${selectedMultisig.threshold}`}</span>
+                      ) : (
+                        <span className="align-middle">&nbsp;</span>
                       )
                     }
+                  </div>
+                  <div className="std-table-cell text-center fixed-width-120">
                     <span 
                       onClick={() => {
                         if (item.status === MultisigTransactionStatus.Pending) {
