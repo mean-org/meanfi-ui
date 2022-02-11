@@ -180,8 +180,6 @@ export const TreasuriesView = () => {
       consoleOut('tresuryAddress:', treasury, 'blue');
     } else if (selectedMultisig) {            // Clean any data we may have data relative to a previous multisig
       setSelectedMultisig(undefined);
-    } else {
-      consoleOut('location.search:', location.search, 'blue');
     }
   }, [
     location,

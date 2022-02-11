@@ -82,6 +82,7 @@ import { encodeInstruction } from '../../models/idl';
 import { MultisigSetProgramAuthModal } from '../../components/MultisigSetProgramAuthModal';
 import { MultisigOwnersView } from '../../components/MultisigOwnersView';
 import { MultisigEditModal } from '../../components/MultisigEditModal';
+import { MSP, Treasury } from '@mean-dao/msp';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -93,12 +94,13 @@ export const MultisigView = () => {
     isWhitelisted,
     detailsPanelOpen,
     transactionStatus,
+    streamV2ProgramAddress,
     highLightableMultisigId,
     previousWalletConnectState,
-    setDtailsPanelOpen,
-    refreshTokenBalance,
-    setTransactionStatus,
     setHighLightableMultisigId,
+    setTransactionStatus,
+    refreshTokenBalance,
+    setDtailsPanelOpen,
   } = useContext(AppStateContext);
 
   const {
@@ -130,6 +132,7 @@ export const MultisigView = () => {
   const [multisigTokens, setMultisigTokens] = useState<any[]>([]);
   const [multisigVaults, setMultisigVaults] = useState<any[]>([]);
   const [multisigPendingTxs, setMultisigPendingTxs] = useState<MultisigTransaction[]>([]);
+  const [multisigTreasuries, setMultisigTreasuries] = useState<Treasury[]>([]);
   const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(true);
   const [loadingMultisigAccountDetails, setLoadingMultisigAccountDetails] = useState(false);
   const [loadingMultisigTxs, setLoadingMultisigTxs] = useState(true);
@@ -180,6 +183,22 @@ export const MultisigView = () => {
   }, [
     connection, 
     wallet
+  ]);
+
+  // Create and cache Money Streaming Program V2 instance
+  const msp = useMemo(() => {
+    if (publicKey) {
+      console.log('New MSP from treasuries');
+      return new MSP(
+        connectionConfig.endpoint,
+        streamV2ProgramAddress,
+        "finalized"
+      );
+    }
+  }, [
+    connectionConfig.endpoint,
+    publicKey,
+    streamV2ProgramAddress
   ]);
 
   const getMultisigVaults = useCallback(async (
@@ -3214,6 +3233,25 @@ export const MultisigView = () => {
     return false;
   }, []);
 
+  const getMultisigTreasuries = useCallback(async () => {
+
+    if (!connection || !publicKey || !msp || !selectedMultisig) { return []; }
+
+    try {
+      const treasuries = await msp.listTreasuries(selectedMultisig.address);
+      return treasuries;
+    } catch (error) {
+      console.error(error);
+      return [];
+    }
+
+  }, [
+    msp,
+    publicKey,
+    connection,
+    selectedMultisig,
+  ]);
+
   // Refresh the multisig accounts list
   useEffect(() => {
 
@@ -3424,6 +3462,34 @@ export const MultisigView = () => {
     multisigClient.account.transaction, 
     loadingMultisigTxs,
     getTransactionStatus
+  ]);
+
+  // Get multisig treasuries for the selected multisig
+  useEffect(() => {
+
+    if (!connection || !publicKey || !selectedMultisig) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      getMultisigTreasuries()
+        .then(values => {
+          consoleOut('multisigTreasuries:', values, 'blue');
+          if (values && values.length > 0) {
+            setMultisigTreasuries(values);
+          }
+        })
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [
+    publicKey,
+    connection,
+    selectedMultisig,
+    getMultisigTreasuries
   ]);
 
   // Load/Unload multisig on wallet connect/disconnect
@@ -3872,7 +3938,17 @@ export const MultisigView = () => {
                 navigate(url);
               }
             }}>
-            {t('multisig.multisig-account-detail.cta-no-treasuries')}
+            {multisigTreasuries && multisigTreasuries.length > 0 ? (
+              <span>
+                {t('multisig.multisig-account-detail.cta-treasuries', {
+                  itemCount: multisigTreasuries.length
+                })}
+              </span>
+              ) : (
+              <span>
+                {t('multisig.multisig-account-detail.cta-no-treasuries')}
+              </span>
+            )}
           </Button>
 
           {/* Available to local dev or whitelisted addresses in dev */}
