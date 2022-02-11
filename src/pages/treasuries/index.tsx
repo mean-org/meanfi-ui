@@ -82,7 +82,7 @@ import BN from 'bn.js';
 import { InfoIcon } from '../../components/InfoIcon';
 import { useLocation, useNavigate } from 'react-router-dom';
 import MultisigIdl from "../../models/mean-multisig-idl";
-import { MultisigParticipant, MultisigV2 } from '../../models/multisig';
+import { MultisigParticipant, MultisigTransactionStatus, MultisigV2 } from '../../models/multisig';
 import { Program, Provider } from '@project-serum/anchor';
 import { TreasuryCreateOptions } from '../../models/treasuries';
 
@@ -684,13 +684,15 @@ export const TreasuriesView = () => {
       });
   };
 
-  const isMultisigTreasury = useCallback(() => {
+  const isMultisigTreasury = useCallback((treasury?: any) => {
 
-    if (!treasuryDetails || !connected || !publicKey || !(treasuryDetails as any).version) {
-      return; 
+    let treasuryInfo: any = treasury ?? treasuryDetails;
+
+    if (!treasuryInfo || !connected || !publicKey || !treasuryInfo.version) {
+      return false;
     }
 
-    let treasurer = new PublicKey((treasuryDetails as Treasury).treasurer as string);
+    let treasurer = new PublicKey(treasuryInfo.treasurer as string);
 
     if (!treasurer.equals(publicKey) && multisigAccounts.findIndex(m => m.address.equals(treasurer)) !== -1) {
       return true;
@@ -704,6 +706,28 @@ export const TreasuriesView = () => {
     publicKey, 
     treasuryDetails
   ])
+
+  const getTreasuryPendingTxsAmount = useCallback(async () => {
+
+    if (!isMultisigTreasury()) { return 0; }
+
+    if (!treasuryDetails || !connected || !publicKey || !selectedMultisig || !selectedMultisig.id) {
+      return 0; 
+    }
+
+    let multisigTxs = await multisigClient.account.transaction.all(selectedMultisig.id.toBuffer());
+    let multisigPendingTxsAmount = multisigTxs.filter(tx => tx.account.executedOn === 0).length;
+
+    return multisigPendingTxsAmount;
+
+  },[
+    connected, 
+    isMultisigTreasury, 
+    multisigClient.account.transaction, 
+    publicKey, 
+    selectedMultisig, 
+    treasuryDetails
+  ]);
 
   // Get the user multisig accounts' list
   useEffect(() => {
@@ -4284,12 +4308,14 @@ export const TreasuriesView = () => {
 
   // TODO: Bind the amount of pending Txs for this treasury
   const renderMultisigTxReminder = () => {
-    return (
+    return isMultisigTreasury() && (
       <div key="streams" className="transaction-list-row no-pointer mb-2">
         <div className="icon-cell">
           <div className="token-icon">
             <div className="streams-count">
-              <span className="font-bold text-shadow">6</span>
+              <span className="font-bold text-shadow">
+                { getTreasuryPendingTxsAmount() }
+              </span>
             </div>
           </div>
         </div>
