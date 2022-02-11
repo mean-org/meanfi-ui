@@ -4136,6 +4136,24 @@ export const TreasuriesView = () => {
     );
   }
 
+  // TODO: Bind the amount of pending Txs for this treasury
+  const renderMultisigTxReminder = () => {
+    return (
+      <div key="streams" className="transaction-list-row no-pointer mb-2">
+        <div className="icon-cell">
+          <div className="token-icon">
+            <div className="streams-count">
+              <span className="font-bold text-shadow">6</span>
+            </div>
+          </div>
+        </div>
+        <div className="description-cell">
+          <div className="font-bold simplelink underline-on-hover">{t('treasuries.treasury-detail.multisig-tx-headsup')}</div>
+        </div>
+      </div>
+    );
+  };
+
   const renderTreasuryMeta = () => {
     const v1 = treasuryDetails as TreasuryInfo;
     const v2 = treasuryDetails as Treasury;
@@ -4347,7 +4365,7 @@ export const TreasuriesView = () => {
         </Space>
       </>
     );
-  }
+  };
 
   const renderTreasuryList = (
     <>
@@ -4586,6 +4604,7 @@ export const TreasuriesView = () => {
                       <Spin spinning={loadingTreasuries || loadingTreasuryDetails}>
                         {treasuryDetails && (
                           <>
+                            {(isMultisigAvailable() && selectedMultisig) && renderMultisigTxReminder()}
                             {renderTreasuryMeta()}
                             <Divider className="activity-divider" plain></Divider>
                             {(!treasuryDetails.autoClose || (treasuryDetails.autoClose && getTreasuryTotalStreams(treasuryDetails) > 0 )) && (

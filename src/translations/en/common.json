@@ -866,6 +866,7 @@
 			"no-treasury-loaded": "Create or lookup a treasury to view details",
 			"no-treasury-selected": "Please select or lookup a treasury to view details",
 			"number-of-streams": "Number of streams",
+			"multisig-tx-headsup": "Transactions Pending Approval or Execution for this Treasury",
 			"treasury-address-label": "Address",
 			"treasury-name-label": "Treasury name"
 		},
