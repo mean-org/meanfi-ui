@@ -82,6 +82,7 @@ import { encodeInstruction } from '../../models/idl';
 import { MultisigSetProgramAuthModal } from '../../components/MultisigSetProgramAuthModal';
 import { MultisigOwnersView } from '../../components/MultisigOwnersView';
 import { MultisigEditModal } from '../../components/MultisigEditModal';
+import { MSP, Treasury } from '@mean-dao/msp';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -93,12 +94,13 @@ export const MultisigView = () => {
     isWhitelisted,
     detailsPanelOpen,
     transactionStatus,
+    streamV2ProgramAddress,
     highLightableMultisigId,
     previousWalletConnectState,
-    setDtailsPanelOpen,
-    refreshTokenBalance,
-    setTransactionStatus,
     setHighLightableMultisigId,
+    setTransactionStatus,
+    refreshTokenBalance,
+    setDtailsPanelOpen,
   } = useContext(AppStateContext);
 
   const {
@@ -130,6 +132,7 @@ export const MultisigView = () => {
   const [multisigTokens, setMultisigTokens] = useState<any[]>([]);
   const [multisigVaults, setMultisigVaults] = useState<any[]>([]);
   const [multisigPendingTxs, setMultisigPendingTxs] = useState<MultisigTransaction[]>([]);
+  const [multisigTreasuries, setMultisigTreasuries] = useState<Treasury[]>([]);
   const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(true);
   const [loadingMultisigAccountDetails, setLoadingMultisigAccountDetails] = useState(false);
   const [loadingMultisigTxs, setLoadingMultisigTxs] = useState(true);
@@ -165,8 +168,8 @@ export const MultisigView = () => {
   const multisigClient = useMemo(() => {
 
     const opts: ConfirmOptions = {
-      preflightCommitment: "recent",
-      commitment: "recent",
+      preflightCommitment: "finalized",
+      commitment: "finalized",
     };
 
     const provider = new Provider(connection, wallet as any, opts);
@@ -180,6 +183,22 @@ export const MultisigView = () => {
   }, [
     connection, 
     wallet
+  ]);
+
+  // Create and cache Money Streaming Program V2 instance
+  const msp = useMemo(() => {
+    if (publicKey) {
+      console.log('New MSP from treasuries');
+      return new MSP(
+        connectionConfig.endpoint,
+        streamV2ProgramAddress,
+        "finalized"
+      );
+    }
+  }, [
+    connectionConfig.endpoint,
+    publicKey,
+    streamV2ProgramAddress
   ]);
 
   const getMultisigVaults = useCallback(async (
@@ -212,6 +231,7 @@ export const MultisigView = () => {
       return tokenAccount;
     });
 
+    consoleOut('multisig vaults:', results, 'blue');
     return results;
 
   },[]);
@@ -594,7 +614,7 @@ export const MultisigView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.CreateMultisig);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.CreateMultisig);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -971,7 +991,7 @@ export const MultisigView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.EditMultisig);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.EditMultisig);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -1325,7 +1345,7 @@ export const MultisigView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.MintTokens);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.MintTokens);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -2235,7 +2255,7 @@ export const MultisigView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.UpgradeProgram);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.UpgradeProgram);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -2568,7 +2588,7 @@ export const MultisigView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.UpgradeIDL);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.UpgradeIDL);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -2918,7 +2938,7 @@ export const MultisigView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.SetMultisigAuthority);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.SetMultisigAuthority);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -2986,6 +3006,10 @@ export const MultisigView = () => {
 
     if (op === OperationType.EditMultisig) {
       return "Edit Multisig";
+    }
+
+    if (op === OperationType.TreasuryCreate) {
+      return "Create Treasury";
     }
 
   },[]);
@@ -3209,6 +3233,25 @@ export const MultisigView = () => {
     return false;
   }, []);
 
+  const getMultisigTreasuries = useCallback(async () => {
+
+    if (!connection || !publicKey || !msp || !selectedMultisig) { return []; }
+
+    try {
+      const treasuries = await msp.listTreasuries(selectedMultisig.address);
+      return treasuries;
+    } catch (error) {
+      console.error(error);
+      return [];
+    }
+
+  }, [
+    msp,
+    publicKey,
+    connection,
+    selectedMultisig,
+  ]);
+
   // Refresh the multisig accounts list
   useEffect(() => {
 
@@ -3421,6 +3464,34 @@ export const MultisigView = () => {
     getTransactionStatus
   ]);
 
+  // Get multisig treasuries for the selected multisig
+  useEffect(() => {
+
+    if (!connection || !publicKey || !selectedMultisig) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      getMultisigTreasuries()
+        .then(values => {
+          consoleOut('multisigTreasuries:', values, 'blue');
+          if (values && values.length > 0) {
+            setMultisigTreasuries(values);
+          }
+        })
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [
+    publicKey,
+    connection,
+    selectedMultisig,
+    getMultisigTreasuries
+  ]);
+
   // Load/Unload multisig on wallet connect/disconnect
   useEffect(() => {
     if (previousWalletConnectState !== connected) {
@@ -3431,7 +3502,6 @@ export const MultisigView = () => {
         consoleOut('User is disconnecting...', '', 'green');
         setMultisigAccounts([]);
         setSelectedMultisig(undefined);
-        setLoadingMultisigAccounts(false);
       }
     }
   }, [
@@ -3457,9 +3527,7 @@ export const MultisigView = () => {
     if (!publicKey) { return; }
 
     if (lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
-      if (lastSentTxOperationType === OperationType.CreateMultisig) {
-        setLoadingMultisigAccounts(false);
-      }
+      setLoadingMultisigAccounts(true);
     }
   }, [
     publicKey,
@@ -3471,14 +3539,13 @@ export const MultisigView = () => {
   // Get Multisig Vaults
   useEffect(() => {
 
-    if (!multisigClient || !selectedMultisig) {
+    if (!multisigClient || !selectedMultisig || !selectedMultisig.id) {
       return;
     }
 
     const timeout = setTimeout(() => {
       getMultisigVaults(multisigClient.provider.connection, selectedMultisig.id)
       .then(result => {
-        consoleOut('multisig vaults:', result, 'blue');
         setMultisigVaults(result);
       })
       .catch(err => console.error(err));
@@ -3762,7 +3829,7 @@ export const MultisigView = () => {
           key="29"
           onClick={() => {
             if (selectedMultisig) {
-              const url = `/multisig-programs?ms=${selectedMultisig.id.toBase58()}`;
+              const url = `/multisig-programs?multisig=${selectedMultisig.id.toBase58()}`;
               navigate(url);
             }
           }}>
@@ -3832,6 +3899,7 @@ export const MultisigView = () => {
       <>
         <Space size="middle">
 
+          {/* Go to vaults */}
           <Button
             type="default"
             shape="round"
@@ -3840,7 +3908,7 @@ export const MultisigView = () => {
             disabled={isTxInProgress() || loadingMultisigAccounts}
             onClick={() => {
               if (selectedMultisig) {
-                const url = `/multisig-vaults?ms=${selectedMultisig.id.toBase58()}`;
+                const url = `/multisig-vaults?multisig=${selectedMultisig.id.toBase58()}`;
                 navigate(url);
               }
             }}>
@@ -3857,6 +3925,7 @@ export const MultisigView = () => {
             )}
           </Button>
 
+          {/* Go to treasuries */}
           <Button
             type="default"
             shape="round"
@@ -3865,22 +3934,21 @@ export const MultisigView = () => {
             disabled={isTxInProgress() || loadingMultisigAccounts}
             onClick={() => {
               if (selectedMultisig) {
-                const url = `/multisig-treasuries?ms=${selectedMultisig.id.toBase58()}`;
+                const url = `/treasuries?multisig=${selectedMultisig.id.toBase58()}`;
                 navigate(url);
               }
             }}>
-            {t('multisig.multisig-account-detail.cta-no-treasuries')}
-            {/* {multisigVaults && multisigVaults.length > 0 ? (
+            {multisigTreasuries && multisigTreasuries.length > 0 ? (
               <span>
                 {t('multisig.multisig-account-detail.cta-treasuries', {
-                  itemCount: multisigVaults.length
+                  itemCount: multisigTreasuries.length
                 })}
               </span>
-            ) : (
+              ) : (
               <span>
                 {t('multisig.multisig-account-detail.cta-no-treasuries')}
               </span>
-            )} */}
+            )}
           </Button>
 
           {/* Available to local dev or whitelisted addresses in dev */}

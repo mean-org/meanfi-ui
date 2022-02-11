@@ -88,6 +88,12 @@ export const LANGUAGES: Language[] = [
         flag: '/assets/flags/br.svg',
         locale: 'pt-BR'
     },
+    {
+        code: 'tr',
+        name: 'Türkçe',
+        flag: '/assets/flags/tr.svg',
+        locale: 'tr-TR'
+    },
 ];
 
 export const ALLOWED_ADDRESSES_LIST = [
@@ -95,6 +101,7 @@ export const ALLOWED_ADDRESSES_LIST = [
     '7kjcW2QHa9pN5e9Fx7LBM3kVwxCi3KteBtM7BMVzrMX4', // MRP
     'JAMR7AvQSbU3v6tfNidEZE3odxoRCahGFgiA4ksvdDkJ', // MRP
     '8XkcFZsRcQCtVxRCsqAbtKTsm4mj9CW9vbNPBtjqYWXw', // MRP
+    'ETo8bzsqfqS1ZcNK7W49vNe5pHh2qgE6jKaC2JTPyJDE', // MRP
     'GFefRR6EASXvnphnJApp2PRH1wF1B5pJijKBZGFzq1x1', // YAF
     'FkRtTexEwLtYerHRKUku7ZZJx1VuTqxwGF636nAuer3B', // YAF
     'FfdFf3EqcCuytTdeLvoELBh29WrAGVRjrm4595A2bRAR', // YGF

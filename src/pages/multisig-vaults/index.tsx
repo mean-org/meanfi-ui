@@ -12,7 +12,7 @@ import { Account, ConfirmOptions, Connection, Keypair, LAMPORTS_PER_SOL, PublicK
 import { Program, Provider } from '@project-serum/anchor';
 import MultisigIdl from "../../models/mean-multisig-idl";
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
-import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, AuthorityType, MintLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { consoleOut, copyText, delay, getShortDate, getTransactionStatusForLogs, isLocal } from '../../utils/ui';
 import { Identicon } from '../../components/Identicon';
@@ -92,8 +92,8 @@ export const MultisigVaultsView = () => {
   const multisigClient = useMemo(() => {
 
     const opts: ConfirmOptions = {
-      preflightCommitment: "recent",
-      commitment: "recent",
+      preflightCommitment: "finalized",
+      commitment: "finalized",
     };
 
     const provider = new Provider(connection, wallet as any, opts);
@@ -133,8 +133,8 @@ export const MultisigVaultsView = () => {
   // Parse query params
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    if (params.has('ms')) {
-      const msAddress = params.get('ms');
+    if (params.has('multisig')) {
+      const msAddress = params.get('multisig');
       setMultisigAddress(msAddress || '');
       consoleOut('multisigAddress:', msAddress, 'blue');
     }
@@ -343,6 +343,7 @@ export const MultisigVaultsView = () => {
   const getMultisigVaults = useCallback(async (
     connection: Connection,
     multisig: PublicKey
+
   ) => {
 
     const [multisigSigner] = await PublicKey.findProgramAddress(
@@ -365,10 +366,12 @@ export const MultisigVaultsView = () => {
 
     const results = accountInfos.map((t: any) => {
       let tokenAccount = ACCOUNT_LAYOUT.decode(t.account.data);
+      // let tokenAccount = AccountLayout.decode(t.account.data);
       tokenAccount.address = t.pubkey;
       return tokenAccount;
     });
 
+    consoleOut('multisig vaults:', results, 'blue');
     return results;
 
   },[]);
@@ -376,7 +379,14 @@ export const MultisigVaultsView = () => {
   // Get Multisig Vaults
   useEffect(() => {
 
-    if (!connection || !multisigClient || !publicKey || !multisigAddress) {
+    if (!connection || !multisigClient || !publicKey) {
+      return;
+    }
+
+    // Verify query param
+    const params = new URLSearchParams(location.search);
+    if (params.has('multisig') && !multisigAddress) {
+      consoleOut('Wait for multisigAddress on next render...', '', 'blue');
       return;
     }
 
@@ -384,7 +394,6 @@ export const MultisigVaultsView = () => {
       setLoadingVaults(true);
       getMultisigVaults(connection, new PublicKey(multisigAddress))
       .then((result: MultisigVault[]) => {
-        consoleOut('multisig vaults:', result, 'blue');
         setMultisigVaults(result);
         if (result.length > 0) {
           setSelectedVault(result[0]);
@@ -404,6 +413,7 @@ export const MultisigVaultsView = () => {
     connection,
     multisigClient,
     multisigAddress,
+    location.search,
     getMultisigVaults
   ]);
 
@@ -430,7 +440,6 @@ export const MultisigVaultsView = () => {
     setLoadingVaults(true);
     getMultisigVaults(connection, new PublicKey(multisigAddress))
     .then((result: MultisigVault[]) => {
-      consoleOut('multisig vaults:', result, 'blue');
       setMultisigVaults(result);
       if (result.length > 0 && !selectedVault) {
         setSelectedVault(result[0]);
@@ -998,7 +1007,7 @@ export const MultisigVaultsView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.CreateVault);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.CreateVault);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -1406,7 +1415,7 @@ export const MultisigVaultsView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.TransferTokens);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.TransferTokens);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -1704,7 +1713,7 @@ export const MultisigVaultsView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.SetVaultAuthority);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.SetVaultAuthority);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,

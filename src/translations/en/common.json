@@ -827,6 +827,11 @@
 			"main-cta": "Create",
 			"main-cta-busy": "Creating treasury",
 			"modal-title": "Create treasury",
+			"multisig-treasury-switch-label": "Is this treasury for a Multisig account?",
+			"multisig-selector-label": "Multisig account",
+			"create-multisig-cta": "Initiate treasury",
+			"create-multisig-cta-busy": "Initiating treasury",
+			"create-multisig-treasury-success": "Initiate treasury request submitted for Multisig approval.",
 			"success-message": "Your new treasury was created successfully.",
 			"treasury-name-input-empty": "Enter Treasury name",
 			"treasury-name-input-label": "Treasury name",
@@ -854,12 +859,14 @@
 			"created-on": "Created on",
 			"cta-add-funds": "Add funds",
 			"cta-add-funds-busy": "Adding funds",
+			"cta-withdraw-multisig-treasury": "Withdraw funds",
 			"cta-close": "Close treasury",
 			"cta-close-busy": "Closing treasury",
 			"funds-added-to-treasury": "Funds added to the treasury",
 			"no-treasury-loaded": "Create or lookup a treasury to view details",
 			"no-treasury-selected": "Please select or lookup a treasury to view details",
 			"number-of-streams": "Number of streams",
+			"multisig-tx-headsup": "Transactions Pending Approval or Execution for this Treasury",
 			"treasury-address-label": "Address",
 			"treasury-name-label": "Treasury name"
 		},
@@ -867,7 +874,8 @@
 		"treasury-list": {
 			"no-treasuries": "No treasuries available",
 			"not-connected": "Please connect your wallet to see your treasuries",
-			"total-streams-label": "streams"
+			"total-streams-label": "streams",
+			"multisig-treasury-label": "Multisig Treasury"
 		},
 		"treasury-streams": {
 			"add-stream-modal-title": "Add stream to the treasury",
@@ -901,7 +909,8 @@
 		"en": "English",
 		"es": "Spanish",
 		"fr": "French",
-		"pt": "Português"
+		"pt": "Português",
+		"tr": "Türkçe"
 	},
 	"ui-menus": {
 		"app-context-menu": {
@@ -923,6 +932,11 @@
 			"accounts": "Accounts",
 			"charts": "Charts",
 			"deposits": "Deposits",
+			"invest": {
+				"pol-bonds": "POL Bonds",
+				"submenu-title": "Invest",
+				"staking": "Staking"
+			},
 			"services": {
 				"custody": "Custody",
 				"faucet": "Faucet",
@@ -932,6 +946,7 @@
 				"wallet-guide": "Wallet Guide",
 				"wrap": "Wrap"
 			},
+			"stats": "Stats",
 			"swap": "Exchange",
 			"transfers": "Transfers"
 		}
