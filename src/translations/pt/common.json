@@ -874,7 +874,8 @@
 		"treasury-list": {
 			"no-treasuries": "No treasuries available",
 			"not-connected": "Please connect your wallet to see your treasuries",
-			"total-streams-label": "streams"
+			"total-streams-label": "streams",
+			"multisig-treasury-label": "Multisig Treasury"
 		},
 		"treasury-streams": {
 			"add-stream-modal-title": "Add stream to the treasury",
