@@ -65,7 +65,6 @@ import { TokenInfo } from "@solana/spl-token-registry";
 import { StreamCloseModal } from "../../components/StreamCloseModal";
 import { useNativeAccount } from "../../contexts/accounts";
 import { useTranslation } from "react-i18next";
-import { customLogger } from '../..';
 import { useLocation, useNavigate } from "react-router-dom";
 import { NATIVE_SOL_MINT } from "../../utils/ids";
 import { TransactionStatusContext } from "../../contexts/transaction-status";
@@ -87,6 +86,7 @@ import {
 import { StreamTransferOpenModal } from "../../components/StreamTransferOpenModal";
 import { StreamsSummary } from "../../models/streams";
 import { UserTokenAccount } from "../../models/transactions";
+import { customLogger } from "../..";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -2642,7 +2642,6 @@ export const Streams = () => {
     </>
   );
 
-  // YAF
   const menu = (
     <Menu>
       {isTreasurer() && (
