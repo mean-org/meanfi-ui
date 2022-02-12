@@ -434,7 +434,7 @@ export const TreasuriesView = () => {
   ]);
 
   const refreshTreasuries = useCallback((reset = false) => {
-    if (!connection || !publicKey || !multisigAccounts.length || loadingTreasuries) { return; }
+    if (!connection || !publicKey || loadingTreasuries) { return; }
 
     if (fetchTxInfoStatus !== "fetching") {
 
@@ -529,7 +529,6 @@ export const TreasuriesView = () => {
     selectedTreasury,
     loadingTreasuries,
     fetchTxInfoStatus,
-    multisigAccounts,
     clearTransactionStatusContext,
     openTreasuryById,
     getAllUserV2Treasuries
