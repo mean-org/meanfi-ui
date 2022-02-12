@@ -3048,6 +3048,10 @@ export const MultisigView = () => {
         return '';
     }
 
+    if (op === OperationType.TreasuryAddFunds) {
+      return "Add Funds to Treasury";
+    }
+
   },[]);
 
   const getTransactionStatusAction = useCallback((mtx: MultisigTransaction) => {

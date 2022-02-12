@@ -1504,6 +1504,7 @@ export const Streams = () => {
         // Create a transaction
         return await msp.addFunds(
           publicKey,                                          // contributor
+          publicKey,                                          // contributor
           treasury,                                           // treasury
           associatedToken,                                    // associatedToken
           stream,                                             // stream
