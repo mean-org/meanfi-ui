@@ -22,13 +22,13 @@ import { TransactionFees } from '@mean-dao/msp';
 import { MultisigCreateVaultModal } from '../../components/MultisigCreateVaultModal';
 import { useNativeAccount } from '../../contexts/accounts';
 import { OperationType, TransactionStatus } from '../../models/enums';
-import { customLogger } from '../..';
 import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { BN } from 'bn.js';
 import { notify } from '../../utils/notifications';
 import { MultisigTransferTokensModal } from '../../components/MultisigTransferTokensModal';
 import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
 import { MultisigVaultTransferAuthorityModal } from '../../components/MultisigVaultTransferAuthorityModal';
+import { customLogger } from '../..';
 
 export const MultisigVaultsView = () => {
   const location = useLocation();

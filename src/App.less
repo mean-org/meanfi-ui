@@ -14,7 +14,7 @@
   --color-outgoing-transaction: #e02020;
   --color-pending-transaction: #e64d11;
   --color-paused-transaction: #1698e4;
-  --color-devnet-indicator: #F7B500;
+  --color-light-orange: #F7B500;
   --color-yellow: #fefe42;
   --color-golden: #FFF2C0;
   --color-notify-info: #177ddc;
@@ -110,7 +110,7 @@
   --color-outgoing-transaction: #e02020;
   --color-pending-transaction: #e64d11;
   --color-paused-transaction: #1698e4;
-  --color-devnet-indicator: #F7B500;
+  --color-light-orange: #F7B500;
   --color-yellow: #fefe42;
   --color-notify-info: #177ddc;
   --color-notify-success: #49aa19;
@@ -368,6 +368,9 @@ h1, h2, h3, h4, h5, h6 {
 .fg-orange {
   color: var(--color-orange) !important;
 }
+.fg-light-orange {
+  color: var(--color-light-orange) !important;
+}
 .fg-orange-red {
   color: var(--color-orange-red) !important;
 }
@@ -389,6 +392,12 @@ h1, h2, h3, h4, h5, h6 {
 }
 .bg-black {
   background-color: var(--color-black);
+}
+.bg-orange {
+  background-color: var(--color-orange) !important;
+}
+.bg-light-orange {
+  background-color: var(--color-light-orange) !important;
 }
 .bg-orange-red {
   background-color: var(--color-orange-red) !important;
@@ -1474,7 +1483,7 @@ footer.ant-layout-footer {
 
 // Account / Connection info
 .cluster-indicator {
-  color: var(--color-devnet-indicator);
+  color: var(--color-light-orange);
   margin-right: 7px;
   padding: 8px;
   .network-name {
