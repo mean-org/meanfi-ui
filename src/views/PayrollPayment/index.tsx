@@ -689,8 +689,8 @@ export const PayrollPayment = () => {
         console.log('PayrollPayment -> wallet.publicKey', wallet.publicKey.toBase58());
         const moneyStream = new MSP(endpoint, streamV2ProgramAddress, "finalized");
 
-        return await moneyStream.createStream(
-          publicKey,                                                  // initializer
+        return await moneyStream.streamingPayment(
+          publicKey,                                                  // payer
           publicKey,                                                  // wallet
           undefined,                                                  // treasury
           beneficiary,                                                // beneficiary
