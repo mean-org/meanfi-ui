@@ -149,7 +149,7 @@ export const TreasuriesView = () => {
   const [selectedMultisig, setSelectedMultisig] = useState<MultisigV2 | undefined>(undefined);
   const [tresuryAddress, setTresuryAddress] = useState('');
   const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(true);
-  const [multisigAccounts, setMultisigAccounts] = useState<MultisigV2[]>([]);
+  const [multisigAccounts, setMultisigAccounts] = useState<MultisigV2[] | undefined>(undefined);
 
   // Transactions
   const [nativeBalance, setNativeBalance] = useState(0);
@@ -414,13 +414,17 @@ export const TreasuriesView = () => {
 
     let treasuries: Treasury[] = await msp.listTreasuries(publicKey);
     let filterMultisigAccounts = selectedMultisig 
-      ? [selectedMultisig.address] : multisigAccounts.map(m => m.address);
+      ? [selectedMultisig.address]
+      : multisigAccounts
+        ? multisigAccounts.map(m => m.address)
+        : undefined;
 
-    
-    for (let key of filterMultisigAccounts) {
-      let multisigTreasuries = await msp.listTreasuries(key);
-      treasuries.push(...multisigTreasuries);
-    }
+    if (filterMultisigAccounts) {
+      for (let key of filterMultisigAccounts) {
+        let multisigTreasuries = await msp.listTreasuries(key);
+        treasuries.push(...multisigTreasuries);
+      }
+    }    
 
     return treasuries;
 
@@ -694,7 +698,7 @@ export const TreasuriesView = () => {
 
     let treasurer = new PublicKey(treasuryInfo.treasurer as string);
 
-    if (!treasurer.equals(publicKey) && multisigAccounts.findIndex(m => m.address.equals(treasurer)) !== -1) {
+    if (!treasurer.equals(publicKey) && multisigAccounts && multisigAccounts.findIndex(m => m.address.equals(treasurer)) !== -1) {
       return true;
     }
 
@@ -802,7 +806,7 @@ export const TreasuriesView = () => {
 
   // Load treasuries once per page access
   useEffect(() => {
-    if (!publicKey || !connection || treasuriesLoaded || loadingTreasuries) {
+    if (!publicKey || !connection || treasuriesLoaded || loadingTreasuries || !multisigAccounts) {
       return;
     }
 
@@ -821,6 +825,7 @@ export const TreasuriesView = () => {
     connection,
     tresuryAddress,
     location.search,
+    multisigAccounts,
     treasuriesLoaded,
     loadingTreasuries,
     refreshTreasuries
@@ -5061,7 +5066,7 @@ export const TreasuriesView = () => {
           handleClose={closeCreateTreasuryModal}
           isBusy={isBusy}
           selectedMultisig={selectedMultisig}
-          multisigAccounts={multisigAccounts}
+          multisigAccounts={multisigAccounts || []}
         />
       )}
 
