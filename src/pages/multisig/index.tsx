@@ -1059,7 +1059,6 @@ export const MultisigView = () => {
   };
 
   const onCloseMultisigActionModal = () => {
-    consoleOut('onCloseMultisigActionModal called!', '', 'blue');
     setMultisigActionTransactionModalVisible(false);
     sethHighlightedMultisigTx(undefined);
     resetTransactionStatus();
@@ -3079,7 +3078,11 @@ export const MultisigView = () => {
     } else if (mtx.didSigned === undefined) {
       return longStatus ? "You have rejected this transaction" : "Rejected";
     } else if (mtx.didSigned === false) {
-      return longStatus ? "You have NOT signed this transaction" : "Not Signed";
+      return !longStatus
+        ? "Not Signed"
+        : mtx.status === MultisigTransactionStatus.Approved
+          ? "You did NOT sign this transaction"
+          : "You have NOT signed this transaction";
     } else {
       return longStatus ? "You have signed this transaction" : "Signed";
     }
@@ -3668,7 +3671,7 @@ export const MultisigView = () => {
     return 0;
   }, []);
 
-  const isPendingApproval = useCallback(() => {
+  const isTxPendingApproval = useCallback(() => {
     if (highlightedMultisigTx) {
       if (highlightedMultisigTx.status === MultisigTransactionStatus.Pending) {
         return true;
@@ -3677,9 +3680,18 @@ export const MultisigView = () => {
     return false;
   }, [highlightedMultisigTx]);
 
-  const isPendingExecution = useCallback(() => {
+  const isTxPendingExecution = useCallback(() => {
     if (highlightedMultisigTx) {
       if (highlightedMultisigTx.status === MultisigTransactionStatus.Approved) {
+        return true;
+      }
+    }
+    return false;
+  }, [highlightedMultisigTx]);
+
+  const isTxRejected = useCallback(() => {
+    if (highlightedMultisigTx) {
+      if (highlightedMultisigTx.status === MultisigTransactionStatus.Rejected) {
         return true;
       }
     }
@@ -3695,6 +3707,27 @@ export const MultisigView = () => {
     }
     return false;
   }, [highlightedMultisigTx]);
+
+  const isUserInputNeeded = useCallback(() => {
+    if (highlightedMultisigTx) {
+      if (highlightedMultisigTx.executedOn) { // Executed
+        return false;
+      } else if (highlightedMultisigTx.didSigned === undefined) { // Rejected
+        return false;
+      } else if (highlightedMultisigTx.didSigned === false) { // Not yet signed
+        return true;
+      } else {
+        return isTxPendingExecution() // Signed but
+          ? true    // Tx still needs signing or execution
+          : false;  // Tx completed, nothing to do
+      }
+    }
+
+    return false;
+  }, [
+    highlightedMultisigTx,
+    isTxPendingExecution
+  ]);
 
   const getTxUserStatusClass = useCallback((mtx: MultisigTransaction) => {
 
@@ -3712,15 +3745,15 @@ export const MultisigView = () => {
 
   const getTxApproveMainCtaLabel = useCallback(() => {
 
-    const busyLabel = isPendingExecution()
+    const busyLabel = isTxPendingExecution()
       ? 'Executing transaction'
-      : isPendingApproval()
+      : isTxPendingApproval()
         ? 'Approving transaction'
         : '';
 
-    const iddleLabel = isPendingExecution()
+    const iddleLabel = isTxPendingExecution()
       ? 'Execute transaction'
-      : isPendingApproval()
+      : isTxPendingApproval()
         ? 'Approve transaction'
         : '';
 
@@ -3734,8 +3767,8 @@ export const MultisigView = () => {
   }, [
     isBusy,
     transactionStatus.currentOperation,
-    isPendingExecution,
-    isPendingApproval,
+    isTxPendingExecution,
+    isTxPendingApproval,
     t,
   ]);
 
@@ -3762,6 +3795,34 @@ export const MultisigView = () => {
   ///////////////
   // Rendering //
   ///////////////
+
+  const txPendingSigners = (mtx: MultisigTransaction) => {
+    if (!selectedMultisig.owners || selectedMultisig.owners.length === 0) {
+      return null;
+    }
+
+    const participants = selectedMultisig.owners as MultisigParticipant[]
+    return (
+      <>
+        {participants.map((item, index) => {
+          if (mtx.signers[index]) { return null; }
+          return (
+            <div key={`${index}`} className="well-group mb-1">
+              <div className="flex-fixed-right align-items-center">
+                <div className="left text-truncate m-0">
+                  <div><span>{item.name || `Owner ${index + 1}`}</span></div>
+                  <div className="font-size-75 text-monospace">{item.address}</div>
+                </div>
+                <div className="right pl-2">
+                  <div><span className={theme === 'light' ? "fg-light-orange font-bold" : "fg-yellow font-bold"}>Not Signed</span></div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </>
+    );
+  };
 
   const renderMultisigPendingTxs = () => {
 
@@ -4505,27 +4566,45 @@ export const MultisigView = () => {
             {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
               <>
                 {/* Normal stuff - YOUR USER INPUTS / INFO AND ACTIONS */}
-                {isPendingExecution() ? (
+                {isTxPendingExecution() ? (
                   <>
-                    <p>Pre Execution Info here</p>
-                    {getOperationName(highlightedMultisigTx.operation)}
-                  </>
-                ) : isPendingApproval() ? (
-                  <>
-                    <h3 className="text-center">A Transaction on this Multisig is awaiting your approval.</h3>
+                    <h3 className="text-center">A Transaction on this Multisig is ready for execution.</h3>
+                    <Divider className="mt-2" />
                     <div className="mb-2">Proposed Action: {getOperationName(highlightedMultisigTx.operation)}</div>
                     <div className="mb-2">Submitted on: {getReadableDate(highlightedMultisigTx.createdOn.toString(), true)}</div>
-                    <div className="mb-2">Initiator: This transaction was submitted by {getTxInitiator()?.name}<br/>Address: {getTxInitiator()?.address}</div>
-                    <div className="mb-2">This transaction requires {selectedMultisig.threshold}/{selectedMultisig.owners.length} signers to approve it in order to be executed. {getTxSignedCount(highlightedMultisigTx)} Signed so far.</div>
+                    <div className="mb-2">Initiator: This transaction was submitted by {getTxInitiator()?.name}<br/>Address: <code>{getTxInitiator()?.address}</code></div>
+                    <div className="mb-2">This transaction required {selectedMultisig.threshold}/{selectedMultisig.owners.length} signers to approve it in order to be executed. {getTxSignedCount(highlightedMultisigTx)} Signed.</div>
                     <div className="mb-2">
                       <span className="mr-1">Your Status:</span>
                       <span className={`font-bold ${getTxUserStatusClass(highlightedMultisigTx)}`}>{getTransactionUserStatusAction(highlightedMultisigTx, true)}</span>
                     </div>
                   </>
+                ) : isTxPendingApproval() ? (
+                  <>
+                    <h3 className="text-center">A Transaction on this Multisig is awaiting {getTransactionUserStatusAction(highlightedMultisigTx) === "Signed" ? 'for' : 'your'} approval.</h3>
+                    <Divider className="mt-2" />
+                    <div className="mb-2">Proposed Action: {getOperationName(highlightedMultisigTx.operation)}</div>
+                    <div className="mb-2">Submitted on: {getReadableDate(highlightedMultisigTx.createdOn.toString(), true)}</div>
+                    <div className="mb-2">Initiator: This transaction was submitted by {getTxInitiator()?.name}<br/>Address: <code>{getTxInitiator()?.address}</code></div>
+                    <div className="mb-2">This transaction requires {selectedMultisig.threshold}/{selectedMultisig.owners.length} signers to approve it in order to be executed. {getTxSignedCount(highlightedMultisigTx)} Signed so far.</div>
+                    <div className="mb-2">
+                      <span className="mr-1">Your Status:</span>
+                      <span className={`font-bold ${getTxUserStatusClass(highlightedMultisigTx)}`}>{getTransactionUserStatusAction(highlightedMultisigTx, true)}</span>
+                    </div>
+                    {getTransactionUserStatusAction(highlightedMultisigTx) === "Signed" && (
+                      <div className="mb1">
+                        {txPendingSigners(highlightedMultisigTx)}
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <>
-                    <p>Tx completed or rejected</p>
-                    {getOperationName(highlightedMultisigTx.operation)}
+                    <h3 className="text-center">This transaction has {isTxRejected() ? 'been rejected' : 'already been executed'}.</h3>
+                    <Divider className="mt-2" />
+                    <div className="mb-2">Proposed Action: {getOperationName(highlightedMultisigTx.operation)}</div>
+                    <div className="mb-2">Submitted on: {getReadableDate(highlightedMultisigTx.createdOn.toString(), true)}</div>
+                    <div className="mb-2">Initiator: This transaction was submitted by {getTxInitiator()?.name}<br/>Address: <code>{getTxInitiator()?.address}</code></div>
+                    <div className="mb-2">This transaction required {selectedMultisig.threshold}/{selectedMultisig.owners.length} signers to approve it in order to be executed. {getTxSignedCount(highlightedMultisigTx)} Signed.</div>
                   </>
                 )}
               </>
@@ -4592,7 +4671,7 @@ export const MultisigView = () => {
                 }
               </Button>
 
-              {isTxPendingApprovalOrExecution() && (
+              {isUserInputNeeded() && (
                 <Button
                   className={isBusy ? 'inactive' : ''}
                   type="primary"
