@@ -713,7 +713,11 @@ export const TreasuriesView = () => {
       
       multisigClient.account.transaction
         .all(multisig.id.toBuffer())
-        .then((value) => { setTreasuryPendingTxs(value ? value.length : 0); });
+        .then((value) => { 
+          setTreasuryPendingTxs(
+            value ? value.filter(t => t.account.executedOn.toNumber() === 0).length : 0
+          ); 
+        });
     });
 
     return () => {
