@@ -4608,7 +4608,9 @@ export const MultisigView = () => {
                 {/* When succeeded - BEWARE OF THE SUCCESS MESSAGE */}
                 <div className="transaction-progress">
                   <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-                  <h4 className="font-bold">{t('multisig.multisig-transactions.tx-operation-success')}</h4>
+                  <h4 className="font-bold">{t('multisig.multisig-transactions.tx-operation-success', {
+                    operation: getOperationName(highlightedMultisigTx.operation)
+                  })}</h4>
                 </div>
               </>
             ) : (
@@ -4624,7 +4626,9 @@ export const MultisigView = () => {
                   ) : (
                     <>
                       {/* All other error conditions then - A getter could offer a basic explanation of what happened */}
-                      <h4 className="font-bold mb-3">{t('multisig.multisig-transactions.tx-operation-failure')}</h4>
+                      <h4 className="font-bold mb-3">{t('multisig.multisig-transactions.tx-operation-failure', {
+                        operation: getOperationName(highlightedMultisigTx.operation)
+                      })}</h4>
                       <h4 className="mb-3">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
                     </>
                   )}
