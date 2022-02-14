@@ -122,7 +122,11 @@ export const AppLayout = React.memo((props: any) => {
 
     const performanceInterval = setInterval(
       getPerformanceSamples,
-      avgTps && avgTps < PERFORMANCE_THRESHOLD ? PERFORMANCE_SAMPLE_INTERVAL_FAST : PERFORMANCE_SAMPLE_INTERVAL
+      avgTps && avgTps < PERFORMANCE_THRESHOLD
+        ? isProd()
+          ? PERFORMANCE_SAMPLE_INTERVAL_FAST
+          : PERFORMANCE_SAMPLE_INTERVAL
+        : PERFORMANCE_SAMPLE_INTERVAL
     );
 
     getPerformanceSamples();

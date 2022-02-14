@@ -1431,7 +1431,7 @@ export const MultisigView = () => {
       );
   
       tx.feePayer = publicKey;
-      const { blockhash } = await connection.getRecentBlockhash("recent");
+      const { blockhash } = await connection.getRecentBlockhash("finalized");
       tx.recentBlockhash = blockhash;
   
       return tx;
@@ -1691,20 +1691,22 @@ export const MultisigView = () => {
 
       if (!selectedMultisig || !publicKey) { return null; }
 
-      const [multisigAuthority] = await PublicKey.findProgramAddress(
+      const [multisigSigner] = await PublicKey.findProgramAddress(
         [selectedMultisig.id.toBuffer()],
         multisigClient.programId
       );
+
+      console.log('data.transaction.accounts', data.transaction.accounts.map((a: any) => a.pubkey.toBase58()));
   
       let tx = multisigClient.transaction.executeTransaction({
         accounts: {
           multisig: selectedMultisig.id,
-          multisigSigner: multisigAuthority,
+          multisigSigner: multisigSigner,
           transaction: data.transaction.id,
         },
         remainingAccounts: data.transaction.accounts
           .map((t: any) => {
-            if (t.pubkey.equals(multisigAuthority)) {
+            if (t.pubkey.equals(multisigSigner)) {
               return { ...t, isSigner: false };
             }
             return t;
@@ -3039,6 +3041,10 @@ export const MultisigView = () => {
         return "Edit Multisig";
       case OperationType.TreasuryCreate:
         return "Create Treasury";
+      case OperationType.TreasuryClose:
+        return "Close Treasury";
+      case OperationType.TreasuryRefreshBalance:
+        return "Refresh Treasury Data";
       case OperationType.CreateVault:
         return "Create Vault";
       case OperationType.SetVaultAuthority:
@@ -3047,9 +3053,9 @@ export const MultisigView = () => {
         return '';
     }
 
-    if (op === OperationType.TreasuryAddFunds) {
-      return "Add Funds to Treasury";
-    }
+    // if (op === OperationType.TreasuryAddFunds) {
+    //   return "Add Funds to Treasury";
+    // }
 
   },[]);
 
