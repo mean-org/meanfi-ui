@@ -915,7 +915,8 @@
 		"es": "Espanhol",
 		"fr": "Francês",
 		"pt": "Português",
-		"tr": "Türkçe"
+		"tr": "Türkçe",
+		"zh": "Chinese"
 	},
 	"ui-menus": {
 		"app-context-menu": {

@@ -908,7 +908,8 @@
 		"es": "Spanish",
 		"fr": "French",
 		"pt": "Português",
-		"tr": "Türkçe"
+		"tr": "Türkçe",
+		"zh": "Chinese"
 	},
 	"ui-menus": {
 		"app-context-menu": {

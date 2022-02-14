@@ -94,6 +94,12 @@ export const LANGUAGES: Language[] = [
         flag: '/assets/flags/tr.svg',
         locale: 'tr-TR'
     },
+    {
+        code: 'zh',
+        name: '中國人',
+        flag: '/assets/flags/cn.svg',
+        locale: 'zh-CN'
+    },
 ];
 
 export const ALLOWED_ADDRESSES_LIST = [
