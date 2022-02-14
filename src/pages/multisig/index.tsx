@@ -62,7 +62,7 @@ import dateFormat from 'dateformat';
 import { useNativeAccount } from '../../contexts/accounts';
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
 import { AccountLayout, MintLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Multisig, MultisigV2, MultisigParticipant, MultisigTransaction, MultisigTransactionStatus } from '../../models/multisig';
 import { MultisigCreateModal } from '../../components/MultisigCreateModal';
 import './style.less';
@@ -85,6 +85,7 @@ const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const MultisigView = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const connectionConfig = useConnectionConfig();
   const { publicKey, connected, wallet } = useWallet();
   const {
@@ -100,14 +101,12 @@ export const MultisigView = () => {
     refreshTokenBalance,
     setDtailsPanelOpen,
   } = useContext(AppStateContext);
-
   const {
     fetchTxInfoStatus,
     lastSentTxSignature,
     lastSentTxOperationType,
     startFetchTxSignatureInfo,
     clearTransactionStatusContext
-    
   } = useContext(TransactionStatusContext);
 
   const { t } = useTranslation('common');
@@ -127,12 +126,10 @@ export const MultisigView = () => {
 
   // MULTISIG
   const [multisigAccounts, setMultisigAccounts] = useState<(MultisigV2 | Multisig)[]>([]);
-  const [multisigTokens, setMultisigTokens] = useState<any[]>([]);
   const [multisigVaults, setMultisigVaults] = useState<any[]>([]);
   const [multisigPendingTxs, setMultisigPendingTxs] = useState<MultisigTransaction[]>([]);
   const [multisigTreasuries, setMultisigTreasuries] = useState<Treasury[]>([]);
   const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(true);
-  const [loadingMultisigAccountDetails, setLoadingMultisigAccountDetails] = useState(false);
   const [loadingMultisigTxs, setLoadingMultisigTxs] = useState(true);
   const [selectedMultisig, setSelectedMultisig] = useState<any>(undefined);
   const [highlightedMultisigTx, sethHighlightedMultisigTx] = useState<MultisigTransaction | undefined>();
@@ -4300,14 +4297,6 @@ export const MultisigView = () => {
 
     </>
   );
-
-  /**
-   * TODO: Place icons for sub-screens as follows
-   * tokens screen icon -> coin
-   * programs screen icon -> code "like in the app-context menu"
-   * data screen icon -> database
-   * Element: container main-container -> interaction-area -> meanfi-two-panel-layout -> meanfi-two-panel-left -> meanfi-panel-heading
-   */
 
   return (
     <>

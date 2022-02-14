@@ -111,6 +111,7 @@ export const TreasuriesView = () => {
     refreshTokenBalance,
     setTransactionStatus,
     setHighLightableStreamId,
+    setHighLightableMultisigId,
   } = useContext(AppStateContext);
   const {
     fetchTxInfoStatus,
@@ -960,6 +961,7 @@ export const TreasuriesView = () => {
         case OperationType.TreasuryCreate:
           const usedOptions = retryOperationPayload as TreasuryCreateOptions;
           if (usedOptions.multisigId) {
+            setHighLightableMultisigId(usedOptions.multisigId);
             navigate('/multisig');
           } else {
             refreshTreasuries(true);
@@ -976,10 +978,12 @@ export const TreasuriesView = () => {
     }
   }, [
     publicKey,
+    selectedMultisig,
     fetchTxInfoStatus,
     lastSentTxSignature,
     retryOperationPayload,
     lastSentTxOperationType,
+    setHighLightableMultisigId,
     refreshTreasuries,
     navigate,
   ]);
@@ -4499,7 +4503,12 @@ export const TreasuriesView = () => {
           </div>
         </div>
         <div className="description-cell">
-          <div className="font-bold simplelink underline-on-hover" onClick={() => navigate('/multisig')}>{t('treasuries.treasury-detail.multisig-tx-headsup')}</div>
+          <div className="font-bold simplelink underline-on-hover" onClick={() => {
+            if (selectedMultisig) {
+              setHighLightableMultisigId(selectedMultisig.address.toBase58());
+              navigate('/multisig');
+            }
+          }}>{t('treasuries.treasury-detail.multisig-tx-headsup')}</div>
         </div>
       </div>
     );
