@@ -10,10 +10,12 @@
   --color-selection: #f0f0f0;
   --color-item-selector-selected: #73c700;
   --color-incoming-transaction: #4e9800;
+  --color-green: #006820;
   --color-outgoing-transaction: #e02020;
   --color-pending-transaction: #e64d11;
   --color-paused-transaction: #1698e4;
-  --color-devnet-indicator: #F7B500;
+  --color-light-orange: #F7B500;
+  --color-yellow: #fefe42;
   --color-golden: #FFF2C0;
   --color-notify-info: #177ddc;
   --color-notify-success: #49aa19;
@@ -104,11 +106,12 @@
   --color-selection: #1a1a1a;
   --color-item-selector-selected: #73c700;
   --color-incoming-transaction: #4e9800;
+  --color-green: #006820;
   --color-outgoing-transaction: #e02020;
   --color-pending-transaction: #e64d11;
   --color-paused-transaction: #1698e4;
-  --color-devnet-indicator: #F7B500;
-
+  --color-light-orange: #F7B500;
+  --color-yellow: #fefe42;
   --color-notify-info: #177ddc;
   --color-notify-success: #49aa19;
   --color-notify-warning: #d89614;
@@ -365,8 +368,17 @@ h1, h2, h3, h4, h5, h6 {
 .fg-orange {
   color: var(--color-orange) !important;
 }
+.fg-light-orange {
+  color: var(--color-light-orange) !important;
+}
 .fg-orange-red {
   color: var(--color-orange-red) !important;
+}
+.fg-yellow {
+  color: var(--color-yellow) !important;
+}
+.fg-green {
+  color: var(--color-green) !important;
 }
 // Background color classes
 .solid-bg {
@@ -381,8 +393,20 @@ h1, h2, h3, h4, h5, h6 {
 .bg-black {
   background-color: var(--color-black);
 }
+.bg-orange {
+  background-color: var(--color-orange) !important;
+}
+.bg-light-orange {
+  background-color: var(--color-light-orange) !important;
+}
 .bg-orange-red {
   background-color: var(--color-orange-red) !important;
+}
+.bg-yellow {
+  background-color: var(--color-yellow) !important;
+}
+.bg-green {
+  background-color: var(--color-green) !important;
 }
 
 // Layout
@@ -1459,7 +1483,7 @@ footer.ant-layout-footer {
 
 // Account / Connection info
 .cluster-indicator {
-  color: var(--color-devnet-indicator);
+  color: var(--color-light-orange);
   margin-right: 7px;
   padding: 8px;
   .network-name {

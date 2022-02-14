@@ -5,7 +5,6 @@ import {
   LoadingOutlined,
   ReloadOutlined,
 } from '@ant-design/icons';
-
 import {
   Account,
   ConfirmOptions,
@@ -31,20 +30,18 @@ import {
   getTokenAmountAndSymbolByTokenAddress,
   getTxIxResume,
   shortenAddress
-
 } from '../../utils/utils';
 
 import { Button, Col, Divider, Dropdown, Empty, Menu, Modal, Row, Space, Spin, Tooltip } from 'antd';
 import {
   copyText,
   consoleOut,
-  getTransactionModalTitle,
   getTransactionStatusForLogs,
   getTransactionOperationDescription,
   delay,
   isLocal,
-  isDev
-
+  isDev,
+  getReadableDate
 } from '../../utils/ui';
 
 import {
@@ -52,7 +49,6 @@ import {
   SIMPLE_DATE_TIME_FORMAT,
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
   VERBOSE_DATE_TIME_FORMAT
-
 } from '../../constants';
 
 import { isDesktop } from "react-device-detect";
@@ -65,7 +61,6 @@ import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import dateFormat from 'dateformat';
 import { useNativeAccount } from '../../contexts/accounts';
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
-import { customLogger } from '../..';
 import { AccountLayout, MintLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { useNavigate } from 'react-router-dom';
 import { Multisig, MultisigV2, MultisigParticipant, MultisigTransaction, MultisigTransactionStatus } from '../../models/multisig';
@@ -83,6 +78,8 @@ import { MultisigSetProgramAuthModal } from '../../components/MultisigSetProgram
 import { MultisigOwnersView } from '../../components/MultisigOwnersView';
 import { MultisigEditModal } from '../../components/MultisigEditModal';
 import { MSP, Treasury } from '@mean-dao/msp';
+import { customLogger } from '../..';
+import { isError } from '../../utils/transactions';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -91,6 +88,7 @@ export const MultisigView = () => {
   const connectionConfig = useConnectionConfig();
   const { publicKey, connected, wallet } = useWallet();
   const {
+    theme,
     isWhitelisted,
     detailsPanelOpen,
     transactionStatus,
@@ -142,11 +140,9 @@ export const MultisigView = () => {
   const [isCreateMultisigModalVisible, setIsCreateMultisigModalVisible] = useState(false);
   const [isEditMultisigModalVisible, setIsEditMultisigModalVisible] = useState(false);
   const [isMintTokenModalVisible, setIsMintTokenModalVisible] = useState(false);
-  const [isTransactionModalVisible, setTransactionModalVisible] = useState(false);
   const [isUpgradeProgramModalVisible, setIsUpgradeProgramModalVisible] = useState(false);
   const [isUpgradeIDLModalVisible, setIsUpgradeIDLModalVisible] = useState(false);
   const [isSetProgramAuthModalVisible, setIsSetProgramAuthModalVisible] = useState(false);
-  const [hasPendingActions, setHasPendingActions] = useState(false);
 
   // TODO: Remove when releasing to the public
   useEffect(() => {
@@ -1040,13 +1036,42 @@ export const MultisigView = () => {
     resetTransactionStatus
   ])
 
+  // Transaction confirm and execution modal launched from each Tx row
+  const [isMultisigActionTransactionModalVisible, setMultisigActionTransactionModalVisible] = useState(false);
+  const showMultisigActionTransactionModal = useCallback((tx: MultisigTransaction) => {
+    const fees = {
+      blockchainFee: 0.000005,
+      mspFlatFee: 0.000010,
+      mspPercentFee: 0
+    };
+    setTransactionFees(fees);
+    sethHighlightedMultisigTx(tx);
+    setMultisigActionTransactionModalVisible(true);
+  }, []);
+
+  const onAcceptMultisigActionModal = (item: MultisigTransaction) => {
+    consoleOut('onAcceptMultisigActionModal:', item, 'blue');
+    if (item.status === MultisigTransactionStatus.Pending) {
+      onExecuteApproveTx({ transaction: item });
+    } if (item.status === MultisigTransactionStatus.Approved) {
+      onExecuteFinishTx({ transaction: item })
+    }
+  };
+
+  const onCloseMultisigActionModal = () => {
+    setMultisigActionTransactionModalVisible(false);
+    sethHighlightedMultisigTx(undefined);
+    resetTransactionStatus();
+  };
+
   const onTransactionModalClosed = () => {
     if (isBusy) {
       setTransactionCancelled(true);
     }
     if (isSuccess()) {
-      setTransactionModalVisible(false);
+      setMultisigActionTransactionModalVisible(false);
     }
+    sethHighlightedMultisigTx(undefined);
     resetTransactionStatus();
   }
 
@@ -2970,6 +2995,21 @@ export const MultisigView = () => {
     wallet
   ]);
 
+
+  const isSelectedMultisigV2 = useCallback((): boolean => {
+    if (selectedMultisig && selectedMultisig.version && selectedMultisig.version === 2) {
+      return true
+    }
+    return false;
+  }, [selectedMultisig]);
+
+  const isMultisigV2 = useCallback((myMultisig: MultisigV2 | Multisig): boolean => {
+    if (myMultisig.version && myMultisig.version === 2) {
+      return true
+    }
+    return false;
+  }, []);
+
   const isSettingAuthority = useCallback((): boolean => {
 
     return ( 
@@ -2984,32 +3024,31 @@ export const MultisigView = () => {
 
   const getOperationName = useCallback((op: OperationType) => {
 
-    if (op === OperationType.MintTokens) {
-      return "Mint token";
-    }
-    
-    if (op === OperationType.TransferTokens) {
-      return "Transfer tokens";
-    } 
-    
-    if (op === OperationType.UpgradeProgram) {
-      return "Upgrade program";
+    switch (op) {
+      case OperationType.MintTokens:
+        return "Mint token";
+      case OperationType.TransferTokens:
+        return "Transfer tokens";
+      case OperationType.UpgradeProgram:
+        return "Upgrade program";
+      case OperationType.UpgradeIDL:
+        return "Upgrade IDL";
+      case OperationType.SetMultisigAuthority:
+        return "Set Multisig Authority";
+      case OperationType.EditMultisig:
+        return "Edit Multisig";
+      case OperationType.TreasuryCreate:
+        return "Create Treasury";
+      case OperationType.CreateVault:
+        return "Create Vault";
+      case OperationType.SetVaultAuthority:
+        return "Change Vault Authority";
+      default:
+        return '';
     }
 
-    if (op === OperationType.UpgradeIDL) {
-      return "Upgrade IDL";
-    }
-
-    if (op === OperationType.SetMultisigAuthority) {
-      return "Set Authority";
-    }
-
-    if (op === OperationType.EditMultisig) {
-      return "Edit Multisig";
-    }
-
-    if (op === OperationType.TreasuryCreate) {
-      return "Create Treasury";
+    if (op === OperationType.TreasuryAddFunds) {
+      return "Add Funds to Treasury";
     }
 
   },[]);
@@ -3032,17 +3071,37 @@ export const MultisigView = () => {
 
   },[]);
 
-  const getTransactionUserStatusAction = useCallback((mtx: MultisigTransaction) => {
+  const getTransactionUserStatusAction = useCallback((mtx: MultisigTransaction, longStatus = false) => {
 
-    if (mtx.didSigned === undefined) {
-      return "Rejected";
+    if (mtx.executedOn) {
+      return "";
+    } else if (mtx.didSigned === undefined) {
+      return longStatus ? "You have rejected this transaction" : "Rejected";
     } else if (mtx.didSigned === false) {
-      return "Not Signed";
+      return !longStatus
+        ? "Not Signed"
+        : mtx.status === MultisigTransactionStatus.Approved
+          ? "You did NOT sign this transaction"
+          : "You have NOT signed this transaction";
     } else {
-      return "Signed"
+      return longStatus ? "You have signed this transaction" : "Signed";
     }
 
   },[]);
+
+  const getTransactionUserStatusActionClass = useCallback((mtx: MultisigTransaction) => {
+
+    if (mtx.executedOn) {
+      return "";
+    } else if (mtx.didSigned === undefined) {
+      return "fg-red";
+    } else if (mtx.didSigned === false) {
+      return theme === 'light' ? "fg-light-orange font-bold" : "fg-yellow font-bold";
+    } else {
+      return theme === 'light' ? "fg-green" : "fg-success"
+    }
+
+  },[theme]);
 
   const getTransactionStatusClass = useCallback((mtx: MultisigTransaction) => {
 
@@ -3218,20 +3277,6 @@ export const MultisigView = () => {
         return undefined;
       });
   };
-
-  const isSelectedMultisigV2 = useCallback((): boolean => {
-    if (selectedMultisig && selectedMultisig.version && selectedMultisig.version === 2) {
-      return true
-    }
-    return false;
-  }, [selectedMultisig]);
-
-  const isMultisigV2 = useCallback((myMultisig: MultisigV2 | Multisig): boolean => {
-    if (myMultisig.version && myMultisig.version === 2) {
-      return true
-    }
-    return false;
-  }, []);
 
   const getMultisigTreasuries = useCallback(async () => {
 
@@ -3440,8 +3485,9 @@ export const MultisigView = () => {
             
             transactions.push(txInfo);
           }
-          // consoleOut('selected multisig txs', transactions, 'blue');
-          setMultisigPendingTxs(transactions.sort((a, b) => b.createdOn.getTime() - a.createdOn.getTime()));
+          const sortedTxs = transactions.sort((a, b) => b.createdOn.getTime() - a.createdOn.getTime());
+          consoleOut('selected multisig txs', sortedTxs, 'blue');
+          setMultisigPendingTxs(sortedTxs);
           setLoadingMultisigTxs(false);
         })
         .catch(err => {
@@ -3589,6 +3635,143 @@ export const MultisigView = () => {
   //   Getters   //
   /////////////////
 
+  const isCanvasTight = useCallback(() => {
+    return width < 576 || (width >= 768 && width < 960);
+  }, [width]);
+
+  const getTxInitiator = useCallback((): MultisigParticipant | undefined => {
+    if (!selectedMultisig) { return undefined; }
+
+    const owners: MultisigParticipant[] = selectedMultisig.owners || [] ;
+
+    return owners.length > 0 ? owners[0] : undefined;
+  }, [selectedMultisig]);
+
+  const isUserTxInitiator = useCallback((): boolean => {
+    if (!selectedMultisig || !publicKey) { return false; }
+
+    const initiator = getTxInitiator();
+
+    if (initiator && initiator.address === publicKey.toBase58()) {
+      return true;
+    }
+
+    return false;
+
+  }, [
+    publicKey,
+    selectedMultisig,
+    getTxInitiator
+  ]);
+
+  const getTxSignedCount = useCallback((mtx: MultisigTransaction) => {
+    if (mtx && mtx.signers) {
+      return mtx.signers.filter((s: boolean) => s === true).length;
+    }
+    return 0;
+  }, []);
+
+  const isTxPendingApproval = useCallback(() => {
+    if (highlightedMultisigTx) {
+      if (highlightedMultisigTx.status === MultisigTransactionStatus.Pending) {
+        return true;
+      }
+    }
+    return false;
+  }, [highlightedMultisigTx]);
+
+  const isTxPendingExecution = useCallback(() => {
+    if (highlightedMultisigTx) {
+      if (highlightedMultisigTx.status === MultisigTransactionStatus.Approved) {
+        return true;
+      }
+    }
+    return false;
+  }, [highlightedMultisigTx]);
+
+  const isTxRejected = useCallback(() => {
+    if (highlightedMultisigTx) {
+      if (highlightedMultisigTx.status === MultisigTransactionStatus.Rejected) {
+        return true;
+      }
+    }
+    return false;
+  }, [highlightedMultisigTx]);
+
+  const isTxPendingApprovalOrExecution = useCallback(() => {
+    if (highlightedMultisigTx) {
+      if (highlightedMultisigTx.status === MultisigTransactionStatus.Pending ||
+          highlightedMultisigTx.status === MultisigTransactionStatus.Approved) {
+        return true;
+      }
+    }
+    return false;
+  }, [highlightedMultisigTx]);
+
+  const isUserInputNeeded = useCallback(() => {
+    if (highlightedMultisigTx) {
+      if (highlightedMultisigTx.executedOn) { // Executed
+        return false;
+      } else if (highlightedMultisigTx.didSigned === undefined) { // Rejected
+        return false;
+      } else if (highlightedMultisigTx.didSigned === false) { // Not yet signed
+        return true;
+      } else {
+        return isTxPendingExecution() // Signed but
+          ? true    // Tx still needs signing or execution
+          : false;  // Tx completed, nothing to do
+      }
+    }
+
+    return false;
+  }, [
+    highlightedMultisigTx,
+    isTxPendingExecution
+  ]);
+
+  const getTxUserStatusClass = useCallback((mtx: MultisigTransaction) => {
+
+    if (mtx.executedOn) {
+      return "";
+    } else if (mtx.didSigned === undefined) {
+      return "fg-red";
+    } else if (mtx.didSigned === false) {
+      return theme === 'light' ? "fg-light-orange" : "fg-yellow";
+    } else {
+      return theme === 'light' ? "fg-green" : "fg-success"
+    }
+
+  },[theme]);
+
+  const getTxApproveMainCtaLabel = useCallback(() => {
+
+    const busyLabel = isTxPendingExecution()
+      ? 'Executing transaction'
+      : isTxPendingApproval()
+        ? 'Approving transaction'
+        : '';
+
+    const iddleLabel = isTxPendingExecution()
+      ? 'Execute transaction'
+      : isTxPendingApproval()
+        ? 'Approve transaction'
+        : '';
+
+    return isBusy
+      ? busyLabel
+      : transactionStatus.currentOperation === TransactionStatus.Iddle
+        ? iddleLabel
+        : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
+          ? t('general.cta-finish')
+          : t('general.refresh');
+  }, [
+    isBusy,
+    transactionStatus.currentOperation,
+    isTxPendingExecution,
+    isTxPendingApproval,
+    t,
+  ]);
+
   const getShortDate = (date: string, includeTime = false): string => {
     if (!date) { return ''; }
     const localDate = new Date(date);
@@ -3609,19 +3792,37 @@ export const MultisigView = () => {
     return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
   }
 
-  const isError = (): boolean => {
-    return  transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ||
-            transactionStatus.currentOperation === TransactionStatus.InitTransactionFailure ||
-            transactionStatus.currentOperation === TransactionStatus.SignTransactionFailure ||
-            transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ||
-            transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure
-            ? true
-            : false;
-  }
-
   ///////////////
   // Rendering //
   ///////////////
+
+  const txPendingSigners = (mtx: MultisigTransaction) => {
+    if (!selectedMultisig.owners || selectedMultisig.owners.length === 0) {
+      return null;
+    }
+
+    const participants = selectedMultisig.owners as MultisigParticipant[]
+    return (
+      <>
+        {participants.map((item, index) => {
+          if (mtx.signers[index]) { return null; }
+          return (
+            <div key={`${index}`} className="well-group mb-1">
+              <div className="flex-fixed-right align-items-center">
+                <div className="left text-truncate m-0">
+                  <div><span>{item.name || `Owner ${index + 1}`}</span></div>
+                  <div className="font-size-75 text-monospace">{item.address}</div>
+                </div>
+                <div className="right pl-2">
+                  <div><span className={theme === 'light' ? "fg-light-orange font-bold" : "fg-yellow font-bold"}>Not Signed</span></div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </>
+    );
+  };
 
   const renderMultisigPendingTxs = () => {
 
@@ -3643,39 +3844,45 @@ export const MultisigView = () => {
           <div className="header-row" style={{ paddingBottom: 5 }}>
             <div className="std-table-cell responsive-cell">{t('multisig.multisig-transactions.column-operation')}</div>
             <div className="std-table-cell responsive-cell">{t('multisig.multisig-transactions.column-program-id')}</div>
-            <div className="std-table-cell responsive-cell">{t('multisig.multisig-transactions.column-created-on')}</div>
-            <div className="std-table-cell text-center fixed-width-120">
-              {
-                t('multisig.multisig-transactions.column-pending-signatures')
-              }
-            </div>
+            <div className="std-table-cell fixed-width-110">{t('multisig.multisig-transactions.column-created-on')}</div>
+            <div className="std-table-cell fixed-width-90">{t('multisig.multisig-transactions.column-my-status')}</div>
+            <div className="std-table-cell fixed-width-34">{t('multisig.multisig-transactions.column-current-signatures')}</div>
+            <div className="std-table-cell text-center fixed-width-120">{t('multisig.multisig-transactions.column-pending-signatures')}</div>
           </div>
         </div>
         {multisigPendingTxs && multisigPendingTxs.length && (
           <div className="item-list-body compact">
             {multisigPendingTxs.map(item => {
               return (
-                <div style={{padding: '3px 0px'}} className="item-list-row" key={item.id.toBase58()}>
+                <div
+                  key={item.id.toBase58()}
+                  style={{padding: '3px 0px'}}
+                  className={`item-list-row ${highlightedMultisigTx && highlightedMultisigTx.id.equals(item.id) ? 'selected' : 'simplelink'}`}
+                  onClick={() => showMultisigActionTransactionModal(item)}>
                   <div className="std-table-cell responsive-cell">
                     <span className="align-middle">{getOperationName(item.operation)}</span>
                   </div>
                   <div className="std-table-cell responsive-cell">
                     <span className="align-middle">{getOperationProgram(item.operation)}</span>
                   </div>
-                  <div className="std-table-cell responsive-cell">
-                    <span className="align-middle">{getShortDate(item.createdOn.toString(), true)}</span>
+                  <div className="std-table-cell fixed-width-110">
+                    <span className="align-middle">{getShortDate(item.createdOn.toString(), isCanvasTight() ? false : true)}</span>
                   </div>
-                  <div className="std-table-cell text-center fixed-width-120">
-                    { 
-                      item.status === MultisigTransactionStatus.Pending && (
-                        <span className="align-middle" style={{ marginRight:5 }} >
-                        {
-                          `${item.signers.filter(s => s === true).length}/${selectedMultisig.threshold}`
-                        }
-                        </span>
+                  <div className="std-table-cell fixed-width-90">
+                    <span className={`align-middle ${getTransactionUserStatusActionClass(item)}`}>{getTransactionUserStatusAction(item)}</span>
+                  </div>
+                  <div className="std-table-cell fixed-width-34">
+                    {
+                      item.status !== MultisigTransactionStatus.Executed ? (
+                        <span className="align-middle">{`${item.signers.filter(s => s === true).length}/${selectedMultisig.threshold}`}</span>
+                      ) : (
+                        <span className="align-middle">&nbsp;</span>
                       )
                     }
-                    <span 
+                  </div>
+                  <div className="std-table-cell text-center fixed-width-120">
+                    <span className={`badge small ${getTransactionStatusClass(item)}`} style={{padding: '3px 5px'}}>{getTransactionStatusAction(item)}</span>
+                    {/* <span
                       onClick={() => {
                         if (item.status === MultisigTransactionStatus.Pending) {
                           onExecuteApproveTx({ transaction: item });
@@ -3695,7 +3902,7 @@ export const MultisigView = () => {
                       {
                         ` ${getTransactionStatusAction(item)} `
                       }
-                    </span>
+                    </span> */}
                   </div>
                 </div>
               );
@@ -3897,7 +4104,7 @@ export const MultisigView = () => {
   const renderCtaRow = () => {
     return (
       <>
-        <Space size="middle">
+        <Space size="middle" wrap>
 
           {/* Go to vaults */}
           <Button
@@ -4342,106 +4549,151 @@ export const MultisigView = () => {
         />
       )}
 
-      {/* Transaction execution modal */}
-      <Modal
-        className="mean-modal no-full-screen"
-        maskClosable={false}
-        visible={isTransactionModalVisible}
-        afterClose={onTransactionModalClosed}
-        title={getTransactionModalTitle(transactionStatus, isBusy, t)}
-        onCancel={() => { setTransactionModalVisible(false); }}
-        width={360}
-        footer={null}>
-        <div className="transaction-progress">
-          {isBusy ? (
-            <>
-              <Spin indicator={bigLoadingIcon} className="icon" />
-              <h4 className="font-bold mb-1">
-                {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
-              </h4>
-              {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
-                <div className="indication">{t('transactions.status.instructions')}</div>
-              )}
-            </>
-          ) : isSuccess() ? (
-            <>
-              <CheckOutlined style={{ fontSize: 48 }} className="icon" />
-              <h4 className="font-bold mb-1 text-uppercase">
-                {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
-              </h4>
-              <p className="operation">{t('transactions.status.tx-generic-operation-success')}</p>
-              <Button
-                block
-                type="primary"
-                shape="round"
-                size="middle"
-                onClick={() => {}}>
-                {t('general.cta-finish')}
-              </Button>
-            </>
-          ) : isError() ? (
-            <>
-              <InfoCircleOutlined style={{ fontSize: 48 }} className="icon" />
-              {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
-                <h4 className="mb-4">
-                  {t('transactions.status.tx-start-failure', {
-                    accountBalance: getTokenAmountAndSymbolByTokenAddress(
-                      nativeBalance,
-                      NATIVE_SOL_MINT.toBase58()
-                    ),
-                    feeAmount: getTokenAmountAndSymbolByTokenAddress(
-                      transactionFees.blockchainFee + transactionFees.mspFlatFee,
-                      NATIVE_SOL_MINT.toBase58()
-                    )})
-                  }
-                </h4>
-              ) : (
-                <h4 className="font-bold mb-3">
+      {/* Transaction confirm and execution modal launched from each Tx row */}
+      {(isMultisigActionTransactionModalVisible && highlightedMultisigTx && selectedMultisig) && (
+        <Modal
+          className="mean-modal simple-modal"
+          title={<div className="modal-title">{t('multisig.multisig-transactions.modal-title')}</div>}
+          maskClosable={false}
+          visible={isMultisigActionTransactionModalVisible}
+          onCancel={onTransactionModalClosed}
+          width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 360 : 480}
+          footer={null}>
+
+          {/* A Crross-fading panel shown when NOT busy */}
+          <div className={!isBusy ? "panel1 show" : "panel1 hide"}>
+
+            {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
+              <>
+                {/* Normal stuff - YOUR USER INPUTS / INFO AND ACTIONS */}
+                {isTxPendingExecution() ? (
+                  <>
+                    <h3 className="text-center">A Transaction on this Multisig is ready for execution.</h3>
+                    <Divider className="mt-2" />
+                    <div className="mb-2">Proposed Action: {getOperationName(highlightedMultisigTx.operation)}</div>
+                    <div className="mb-2">Submitted on: {getReadableDate(highlightedMultisigTx.createdOn.toString(), true)}</div>
+                    <div className="mb-2">Initiator: This transaction was submitted by {getTxInitiator()?.name}<br/>Address: <code>{getTxInitiator()?.address}</code></div>
+                    <div className="mb-2">This transaction required {selectedMultisig.threshold}/{selectedMultisig.owners.length} signers to approve it in order to be executed. {getTxSignedCount(highlightedMultisigTx)} Signed.</div>
+                    <div className="mb-2">
+                      <span className="mr-1">Your Status:</span>
+                      <span className={`font-bold ${getTxUserStatusClass(highlightedMultisigTx)}`}>{getTransactionUserStatusAction(highlightedMultisigTx, true)}</span>
+                    </div>
+                  </>
+                ) : isTxPendingApproval() ? (
+                  <>
+                    <h3 className="text-center">A Transaction on this Multisig is awaiting {getTransactionUserStatusAction(highlightedMultisigTx) === "Signed" ? 'for' : 'your'} approval.</h3>
+                    <Divider className="mt-2" />
+                    <div className="mb-2">Proposed Action: {getOperationName(highlightedMultisigTx.operation)}</div>
+                    <div className="mb-2">Submitted on: {getReadableDate(highlightedMultisigTx.createdOn.toString(), true)}</div>
+                    <div className="mb-2">Initiator: This transaction was submitted by {getTxInitiator()?.name}<br/>Address: <code>{getTxInitiator()?.address}</code></div>
+                    <div className="mb-2">This transaction requires {selectedMultisig.threshold}/{selectedMultisig.owners.length} signers to approve it in order to be executed. {getTxSignedCount(highlightedMultisigTx)} Signed so far.</div>
+                    <div className="mb-2">
+                      <span className="mr-1">Your Status:</span>
+                      <span className={`font-bold ${getTxUserStatusClass(highlightedMultisigTx)}`}>{getTransactionUserStatusAction(highlightedMultisigTx, true)}</span>
+                    </div>
+                    {getTransactionUserStatusAction(highlightedMultisigTx) === "Signed" && (
+                      <div className="mb1">
+                        {txPendingSigners(highlightedMultisigTx)}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <h3 className="text-center">This transaction has {isTxRejected() ? 'been rejected' : 'already been executed'}.</h3>
+                    <Divider className="mt-2" />
+                    <div className="mb-2">Proposed Action: {getOperationName(highlightedMultisigTx.operation)}</div>
+                    <div className="mb-2">Submitted on: {getReadableDate(highlightedMultisigTx.createdOn.toString(), true)}</div>
+                    <div className="mb-2">Initiator: This transaction was submitted by {getTxInitiator()?.name}<br/>Address: <code>{getTxInitiator()?.address}</code></div>
+                    <div className="mb-2">This transaction required {selectedMultisig.threshold}/{selectedMultisig.owners.length} signers to approve it in order to be executed. {getTxSignedCount(highlightedMultisigTx)} Signed.</div>
+                  </>
+                )}
+              </>
+            ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
+              <>
+                {/* When succeeded - BEWARE OF THE SUCCESS MESSAGE */}
+                <div className="transaction-progress">
+                  <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+                  <h4 className="font-bold">{t('multisig.multisig-transactions.tx-operation-success')}</h4>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="transaction-progress">
+                  <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+                  {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
+                    <>
+                      {/* Pre Tx execution failures here */}
+                      <h4 className="font-bold mb-3">{t('multisig.multisig-transactions.tx-operation-failure')}</h4>
+                      <h4 className="mb-3">Explain failure condition if specific</h4>
+                    </>
+                  ) : (
+                    <>
+                      {/* All other error conditions then - A getter could offer a basic explanation of what happened */}
+                      <h4 className="font-bold mb-3">{t('multisig.multisig-transactions.tx-operation-failure')}</h4>
+                      <h4 className="mb-3">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
+                    </>
+                  )}
+                </div>
+              </>
+            )}
+
+          </div>
+
+          {/* A Crross-fading panel shown when busy */}
+          <div className={isBusy ? "panel2 show"  : "panel2 hide"}>          
+            {transactionStatus.currentOperation !== TransactionStatus.Iddle && (
+              <div className="transaction-progress">
+                <Spin indicator={bigLoadingIcon} className="icon mt-0" />
+                <h4 className="font-bold mb-1">
                   {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
                 </h4>
-              )}
-              {transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ? (
-                <div className="row two-col-ctas mt-3">
-                  <div className="col-6">
-                    <Button
-                      block
-                      type="text"
-                      shape="round"
-                      size="middle"
-                      onClick={() => { }}>
-                      {t('general.retry')}
-                    </Button>
-                  </div>
-                  <div className="col-6">
-                    <Button
-                      block
-                      type="primary"
-                      shape="round"
-                      size="middle"
-                      onClick={() => refreshPage()}>
-                      {t('general.refresh')}
-                    </Button>
-                  </div>
-                </div>
-              ) : (
+                {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
+                  <div className="indication">{t('transactions.status.instructions')}</div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* CTAs shown always - IF DIFFERENT CTAS ARE BEST FOR EACH STAGE, MOVE THEM INSIDE THE PANELS */}
+          <div className="transaction-progress mt-3">
+            <Space size="middle">
+              <Button
+                type="text"
+                shape="round"
+                size="middle"
+                className={isBusy ? 'inactive' : ''}
+                onClick={() => isError(transactionStatus.currentOperation)
+                  ? onAcceptMultisigActionModal(highlightedMultisigTx)
+                  : onCloseMultisigActionModal()}>
+                {isError(transactionStatus.currentOperation)
+                  ? t('general.retry')
+                  : t('general.cta-close')
+                }
+              </Button>
+
+              {isUserInputNeeded() && (
                 <Button
-                  block
+                  className={isBusy ? 'inactive' : ''}
                   type="primary"
                   shape="round"
                   size="middle"
-                  onClick={() => { setTransactionModalVisible(false); }}>
-                  {t('general.cta-close')}
+                  onClick={() => {
+                    if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+                      onAcceptMultisigActionModal(highlightedMultisigTx);
+                    } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
+                      onCloseMultisigActionModal();
+                    } else {
+                      refreshPage();
+                    }
+                  }}>
+                  {getTxApproveMainCtaLabel()}
                 </Button>
               )}
-            </>
-          ) : (
-            <>
-              <Spin indicator={bigLoadingIcon} className="icon" />
-              <h4 className="font-bold mb-4 text-uppercase">{t('transactions.status.tx-wait')}...</h4>
-            </>
-          )}
-        </div>
-      </Modal>
+            </Space>
+          </div>
+
+        </Modal>
+      )}
 
       <PreFooter />
     </>

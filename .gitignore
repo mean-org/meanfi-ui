@@ -108,3 +108,7 @@ build
 # TernJS port file
 .tern-port
 .vscode/
+
+#lock files
+*.lock
+./package-lock.json
