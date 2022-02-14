@@ -106,6 +106,12 @@ export const LANGUAGES: Language[] = [
         flag: '/assets/flags/vn.svg',
         locale: 'vi-VN'
     },
+    {
+        code: 'ko',
+        name: 'T한국인',
+        flag: '/assets/flags/kr.svg',
+        locale: 'ko-KR'
+    },
 ];
 
 export const ALLOWED_ADDRESSES_LIST = [

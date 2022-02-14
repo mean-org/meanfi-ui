@@ -832,6 +832,11 @@
 			"main-cta": "Create",
 			"main-cta-busy": "Creating treasury",
 			"modal-title": "Create treasury",
+			"multisig-treasury-switch-label": "Is this treasury for a Multisig account?",
+			"multisig-selector-label": "Multisig account",
+			"create-multisig-cta": "Initiate treasury",
+			"create-multisig-cta-busy": "Initiating treasury",
+			"create-multisig-treasury-success": "Initiate treasury request submitted for Multisig approval.",
 			"success-message": "Your new treasury was created successfully.",
 			"treasury-name-input-empty": "Enter Treasury name",
 			"treasury-name-input-label": "Treasury name",
@@ -866,6 +871,7 @@
 			"no-treasury-loaded": "Create or lookup a treasury to view details",
 			"no-treasury-selected": "Please select or lookup a treasury to view details",
 			"number-of-streams": "Number of streams",
+			"multisig-tx-headsup": "Transactions Pending Approval or Execution for this Treasury",
 			"treasury-address-label": "Address",
 			"treasury-name-label": "Treasury name"
 		},
@@ -873,7 +879,8 @@
 		"treasury-list": {
 			"no-treasuries": "No treasuries available",
 			"not-connected": "Please connect your wallet to see your treasuries",
-			"total-streams-label": "streams"
+			"total-streams-label": "streams",
+			"multisig-treasury-label": "Multisig Treasury"
 		},
 		"treasury-streams": {
 			"add-stream-modal-title": "Add stream to the treasury",
@@ -911,7 +918,7 @@
 		"tr": "Türkçe",
 		"zh": "Chinese",
 		"vi": "Vietnamese",
-		"ko": "Korean"
+    "ko": "Korean"
 	},
 	"ui-menus": {
 		"app-context-menu": {

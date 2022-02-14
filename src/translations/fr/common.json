@@ -917,7 +917,8 @@
 		"pt": "Português",
 		"tr": "Türkçe",
 		"zh": "Chinese",
-		"vi": "Vietnamese"
+		"vi": "Vietnamese",
+		"ko": "Korean"
 	},
 	"ui-menus": {
 		"app-context-menu": {
