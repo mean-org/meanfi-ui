@@ -100,6 +100,12 @@ export const LANGUAGES: Language[] = [
         flag: '/assets/flags/cn.svg',
         locale: 'zh-CN'
     },
+    {
+        code: 'vi',
+        name: 'Tiếng Việt',
+        flag: '/assets/flags/vn.svg',
+        locale: 'vi-VN'
+    },
 ];
 
 export const ALLOWED_ADDRESSES_LIST = [
