@@ -58,7 +58,6 @@ import { MSP_ACTIONS, StreamInfo, STREAM_STATE, TreasuryInfo } from '@mean-dao/m
 import { TreasuryCreateModal } from '../../components/TreasuryCreateModal';
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
 import dateFormat from 'dateformat';
-import { PerformanceCounter } from '../../utils/perf-counter';
 import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import { useAccountsContext, useNativeAccount } from '../../contexts/accounts';
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
@@ -87,9 +86,6 @@ import { TreasuryCreateOptions } from '../../models/treasuries';
 import { customLogger } from '../..';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
-const treasuryStreamsPerfCounter = new PerformanceCounter();
-const treasuryDetailPerfCounter = new PerformanceCounter();
-const treasuryListPerfCounter = new PerformanceCounter();
 
 export const TreasuriesView = () => {
   const location = useLocation();
@@ -258,7 +254,6 @@ export const TreasuriesView = () => {
 
     consoleOut('Executing getTreasuryStreams...', '', 'blue');
 
-    treasuryStreamsPerfCounter.start();
     if (isNewTreasury) {
       if (msp) {
         msp.listStreams({treasury: treasuryPk })
@@ -272,8 +267,6 @@ export const TreasuriesView = () => {
           })
           .finally(() => {
             setLoadingTreasuryStreams(false);
-            treasuryStreamsPerfCounter.stop();
-            consoleOut(`getTreasuryStreams took ${(treasuryStreamsPerfCounter.elapsedTime).toLocaleString()}ms`, '', 'crimson');
           });
       }
     } else {
@@ -289,8 +282,6 @@ export const TreasuriesView = () => {
           })
           .finally(() => {
             setLoadingTreasuryStreams(false);
-            treasuryStreamsPerfCounter.stop();
-            consoleOut(`getTreasuryStreams took ${(treasuryStreamsPerfCounter.elapsedTime).toLocaleString()}ms`, '', 'crimson');
           });
       }
     }
@@ -327,7 +318,6 @@ export const TreasuriesView = () => {
     setLoadingTreasuryDetails(true);
     const mspInstance: any = isNew || dock ? msp : ms;
     const treasuryPk = new PublicKey(treasuryId);
-    treasuryDetailPerfCounter.start();
 
     mspInstance.getTreasury(treasuryPk)
       .then((details: Treasury | TreasuryInfo | undefined) => {
@@ -387,8 +377,6 @@ export const TreasuriesView = () => {
       })
       .finally(() => {
         setLoadingTreasuryDetails(false);
-        treasuryDetailPerfCounter.stop();
-        consoleOut(`getTreasury took ${(treasuryDetailPerfCounter.elapsedTime).toLocaleString()}ms`, '', 'crimson');
       });
 
   }, [
@@ -445,8 +433,6 @@ export const TreasuriesView = () => {
         setLoadingTreasuries(true);
         clearTransactionStatusContext();
       });
-
-      treasuryListPerfCounter.start();
 
       if (msp && ms) {
         let treasuryAccumulator: (Treasury | TreasuryInfo)[] = [];
@@ -517,8 +503,6 @@ export const TreasuriesView = () => {
           })
           .catch(error => {
             console.error(error);
-            treasuryListPerfCounter.stop();
-            consoleOut(`listTreasuries took ${(treasuryListPerfCounter.elapsedTime).toLocaleString()}ms`, '', 'crimson');
           });
       }
     }
@@ -4845,6 +4829,7 @@ export const TreasuriesView = () => {
 
   return (
     <>
+
       <div className="container main-container">
 
         <div className="interaction-area">
