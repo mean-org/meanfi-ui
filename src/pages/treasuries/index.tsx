@@ -130,7 +130,6 @@ export const TreasuriesView = () => {
   const navigate = useNavigate();
   const [isSmallUpScreen, setIsSmallUpScreen] = useState(isDesktop);
   const [treasuryList, setTreasuryList] = useState<(Treasury | TreasuryInfo)[]>([]);
-  const [selectedTreasury, setSelectedTreasury] = useState<Treasury | TreasuryInfo | undefined>(undefined);
   const [loadingTreasuries, setLoadingTreasuries] = useState(false);
   const [treasuriesLoaded, setTreasuriesLoaded] = useState(false);
   const [customStreamDocked, setCustomStreamDocked] = useState(false);
@@ -147,7 +146,7 @@ export const TreasuriesView = () => {
   // Multisig related
   const [multisigAddress, setMultisigAddress] = useState('');
   const [selectedMultisig, setSelectedMultisig] = useState<MultisigV2 | undefined>(undefined);
-  const [tresuryAddress, setTresuryAddress] = useState('');
+  const [treasuryAddress, setTreasuryAddress] = useState('');
   const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(true);
   const [multisigAccounts, setMultisigAccounts] = useState<MultisigV2[] | undefined>(undefined);
 
@@ -176,8 +175,8 @@ export const TreasuriesView = () => {
       consoleOut('multisigAddress:', multisig, 'blue');
     } else if (params.has('treasury')) {      // Preset treasury address if passed-in
       treasury = params.get('treasury');
-      setTresuryAddress(treasury || '');
-      consoleOut('tresuryAddress:', treasury, 'blue');
+      setTreasuryAddress(treasury || '');
+      consoleOut('treasuryAddress:', treasury, 'blue');
     } else if (selectedMultisig) {            // Clean any data we may have data relative to a previous multisig
       setSelectedMultisig(undefined);
     }
@@ -329,14 +328,13 @@ export const TreasuriesView = () => {
     });
 
     const mspInstance: any = isNew || dock ? msp : ms;
-    const treasueyPk = new PublicKey(treasuryId);
+    const treasuryPk = new PublicKey(treasuryId);
 
     treasuryDetailPerfCounter.start();
-    mspInstance.getTreasury(treasueyPk)
+    mspInstance.getTreasury(treasuryPk)
       .then((details: Treasury | TreasuryInfo | undefined) => {
         if (details) {
           consoleOut('treasuryDetails:', details, 'blue');
-          setSelectedTreasury(details);
           setTreasuryDetails(details);
           setSignalRefreshTreasuryStreams(true);
           const v1 = details as TreasuryInfo;
@@ -370,7 +368,7 @@ export const TreasuriesView = () => {
           }
         } else {
           setTreasuryDetails(undefined);
-          setSelectedTreasury(undefined);
+          setTreasuryDetails(undefined);
           if (dock) {
             notify({
               message: t('notifications.error-title'),
@@ -464,24 +462,24 @@ export const TreasuriesView = () => {
                 let item: Treasury | TreasuryInfo | undefined = undefined;
                 if (treasuryAccumulator.length) {
                   if (reset) {
-                    console.log('tresuryAddress under reset:', tresuryAddress);
-                    if (tresuryAddress) {
-                      // tresuryAddress was passed in as query param?
-                      const itemFromServer = treasuryAccumulator.find(i => i.id === tresuryAddress);
+                    console.log('treasuryAddress under reset:', treasuryAddress);
+                    if (treasuryAddress) {
+                      // treasuryAddress was passed in as query param?
+                      const itemFromServer = treasuryAccumulator.find(i => i.id === treasuryAddress);
                       item = itemFromServer || treasuryAccumulator[0];
                     } else {
                       item = treasuryAccumulator[0];
                     }
                   } else {
-                    console.log('tresuryAddress under no reset:', tresuryAddress);
+                    console.log('treasuryAddress under no reset:', treasuryAddress);
                     // Try to get current item by its id
-                    if (tresuryAddress) {
-                      // tresuryAddress was passed in as query param?
-                      const itemFromServer = treasuryAccumulator.find(i => i.id === tresuryAddress);
+                    if (treasuryAddress) {
+                      // treasuryAddress was passed in as query param?
+                      const itemFromServer = treasuryAccumulator.find(i => i.id === treasuryAddress);
                       item = itemFromServer || treasuryAccumulator[0];
-                    } else if (selectedTreasury) {
+                    } else if (treasuryDetails) {
                       // there was an item already selected
-                      const itemFromServer = treasuryAccumulator.find(i => i.id === selectedTreasury.id);
+                      const itemFromServer = treasuryAccumulator.find(i => i.id === treasuryDetails.id);
                       item = itemFromServer || treasuryAccumulator[0];
                     } else {
                       // then choose the first one
@@ -492,12 +490,12 @@ export const TreasuriesView = () => {
                     item = Object.assign({}, treasuryAccumulator[0]);
                   }
                   if (item) {
-                    setSelectedTreasury(item);
+                    setTreasuryDetails(item);
                     const isNewTreasury = (item as Treasury).version && (item as Treasury).version >= 2 ? true : false;
                     openTreasuryById(item.id as string, isNewTreasury);
                   }
                 } else {
-                  setSelectedTreasury(undefined);
+                  setTreasuryDetails(undefined);
                   setTreasuryDetails(undefined);
                   setTreasuryStreams([]);
                 }
@@ -529,8 +527,8 @@ export const TreasuriesView = () => {
     msp,
     publicKey,
     connection,
-    tresuryAddress,
-    selectedTreasury,
+    treasuryAddress,
+    treasuryDetails,
     loadingTreasuries,
     fetchTxInfoStatus,
     clearTransactionStatusContext,
@@ -690,7 +688,7 @@ export const TreasuriesView = () => {
 
   const isMultisigTreasury = useCallback((treasury?: any) => {
 
-    let treasuryInfo: any = treasury ?? selectedTreasury;
+    let treasuryInfo: any = treasury ?? treasuryDetails;
 
     if (!treasuryInfo || treasuryInfo.version < 2 || !treasuryInfo.treasurer || !publicKey) {
       return false;
@@ -707,7 +705,7 @@ export const TreasuriesView = () => {
   }, [
     multisigAccounts, 
     publicKey, 
-    selectedTreasury
+    treasuryDetails
   ])
 
   const getTreasuryPendingTxsAmount = useCallback(async () => {
@@ -812,8 +810,8 @@ export const TreasuriesView = () => {
 
     // Verify query param
     const params = new URLSearchParams(location.search);
-    if (params.has('treasury') && !tresuryAddress) {
-      consoleOut('Wait for tresuryAddress on next render...', '', 'blue');
+    if (params.has('treasury') && !treasuryAddress) {
+      consoleOut('Wait for treasuryAddress on next render...', '', 'blue');
       return;
     }
 
@@ -823,7 +821,7 @@ export const TreasuriesView = () => {
   }, [
     publicKey,
     connection,
-    tresuryAddress,
+    treasuryAddress,
     location.search,
     multisigAccounts,
     treasuriesLoaded,
@@ -843,7 +841,7 @@ export const TreasuriesView = () => {
         setTreasuryList([]);
         setTreasuryStreams([]);
         setCustomStreamDocked(false);
-        setSelectedTreasury(undefined);
+        setTreasuryDetails(undefined);
         setTreasuryDetails(undefined);
       }
     }
@@ -1553,9 +1551,9 @@ export const TreasuriesView = () => {
 
     const refreshTreasuryData = async (data: any) => {
 
-      if (!selectedTreasury || !msp) { return null; }
+      if (!treasuryDetails || !msp) { return null; }
 
-      const v2 = selectedTreasury as Treasury;
+      const v2 = treasuryDetails as Treasury;
       const isNewTreasury = v2.version >= 2 ? true : false;
 
       if (!isNewTreasury) {
@@ -1572,7 +1570,7 @@ export const TreasuriesView = () => {
 
       if (!multisigClient || !wallet || !publicKey || !selectedMultisig) { return null; }
 
-      let treasury = selectedTreasury as Treasury;
+      let treasury = treasuryDetails as Treasury;
       let multisigSigner = selectedMultisig.address;
       
       if (treasury.treasurer !== multisigSigner.toBase58()) {
@@ -1849,8 +1847,7 @@ export const TreasuriesView = () => {
     connected, 
     publicKey, 
     msp, 
-    treasuryDetails, 
-    selectedTreasury,
+    treasuryDetails,
     isMultisigTreasury, 
     setTransactionStatus, 
     transactionFees.blockchainFee, 
@@ -2342,9 +2339,9 @@ export const TreasuriesView = () => {
 
     const addFunds = async (data: any) => {
 
-      // if (!selectedTreasury || !publicKey) { return null; }
+      // if (!treasuryDetails || !publicKey) { return null; }
       
-      // if (!isMultisigTreasury(selectedTreasury)) {
+      // if (!isMultisigTreasury(treasuryDetails)) {
         if (!msp) { return null; }
         // console.log('ERRORRR');
         return await msp.addFunds(
@@ -2360,7 +2357,7 @@ export const TreasuriesView = () => {
 
       // if (!multisigClient || !msp || !publicKey) { return null; }
 
-      // let multisig = multisigAccounts.filter(m => m.address.toBase58() === (selectedTreasury as Treasury).treasurer)[0];
+      // let multisig = multisigAccounts.filter(m => m.address.toBase58() === (treasuryDetails as Treasury).treasurer)[0];
 
       // if (!multisig) { return null; }
 
@@ -4792,14 +4789,14 @@ export const TreasuriesView = () => {
         };
         const onTreasuryClick = (item: any) => {
           consoleOut('selected treasury:', item, 'blue');
-          setSelectedTreasury(item);
+          setTreasuryDetails(item);
           setTreasuryStreams([]);
           openTreasuryById(item.id as string, isNewTreasury);
           setDtailsPanelOpen(true);
         };
         return (
           <div key={`${index + 50}`} onClick={() => { onTreasuryClick(item) }}
-            className={`transaction-list-row ${selectedTreasury && selectedTreasury.id === item.id ? 'selected' : ''}`}>
+            className={`transaction-list-row ${treasuryDetails && treasuryDetails.id === item.id ? 'selected' : ''}`}>
             <div className="icon-cell">
               <div className="token-icon">
                 {(isNewTreasury ? v2.associatedToken : v1.associatedTokenAddress) ? (
