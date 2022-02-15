@@ -8,14 +8,14 @@ import { consoleOut, getRateIntervalInSeconds, getTransactionStatusForLogs } fro
 import { useWallet } from '../../contexts/wallet';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
-import { OperationType, PaymentRateType, TransactionStatus, WhitelistClaimType } from '../../models/enums';
+import { PaymentRateType, TransactionStatus, WhitelistClaimType } from '../../models/enums';
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
 import { appConfig, customLogger } from '../..';
 import { LoadingOutlined } from '@ant-design/icons';
 import { getWhitelistAllocation, sendRecordClaimTxRequest, sendSignClaimTxRequest } from '../../utils/api';
 import { Allocation } from '../../models/common-types';
 import CountUp from 'react-countup';
-import { isError, updateCreateStream2Tx } from '../../utils/transactions';
+import { isError } from '../../utils/transactions';
 import { calculateActionFees, MSP, MSP_ACTIONS, TransactionFees } from '@mean-dao/msp';
 import { useConnectionConfig } from '../../contexts/connection';
 import { useNavigate } from 'react-router-dom';
@@ -238,7 +238,6 @@ export const AirdropRedeem = (props: {
           associatedToken,                                                  // associatedToken
           streamName,                                                       // streamName
           allocation,                                                       // allocationAssigned
-          allocation,                                                       // allocationReserved
           rateAmount,                                                       // rateAmount
           getRateIntervalInSeconds(PaymentRateType.PerMonth),               // rateIntervalInSeconds
           now,                                                              // startUtc

@@ -475,99 +475,126 @@ export const OneTimePayment = () => {
     setTransactionCancelled(false);
     setIsBusy(true);
 
-    const createTx = async (): Promise<boolean> => {
-      if (wallet && publicKey && selectedToken) {
-        consoleOut("Start transaction for contract type:", contract?.name);
-        consoleOut('Wallet address:', wallet?.publicKey?.toBase58());
+    const otpTx = async (data: any) => {
 
-        setTransactionStatus({
-          lastOperation: TransactionStatus.TransactionStart,
-          currentOperation: TransactionStatus.InitTransaction
-        });
+      if (!endpoint || !streamV2ProgramAddress) { return null; }
+      
+      // Init a streaming operation
+      const msp = new MSP(endpoint, streamV2ProgramAddress, "finalized");
 
-        consoleOut('Beneficiary address:', recipientAddress);
-        const beneficiary = new PublicKey(recipientAddress as string);
-        consoleOut('associatedToken:', selectedToken.address);
-        const associatedToken = new PublicKey(selectedToken.address as string);
-        const amount = toTokenAmount(parseFloat(fromCoinAmount as string), selectedToken.decimals);
-        const now = new Date();
-        const parsedDate = Date.parse(paymentStartDate as string);
-        let startUtc = new Date(parsedDate);
-        startUtc.setHours(now.getHours());
-        startUtc.setMinutes(now.getMinutes());
-        startUtc.setSeconds(now.getSeconds());
-        startUtc.setMilliseconds(now.getMilliseconds());
-
-        // If current user is in the whitelist and we have an amount of minutes to add
-        // to the current date selection, calculate it!
-        if (isWhitelisted && fixedScheduleValue > 0) {
-          startUtc = addMinutes(startUtc, fixedScheduleValue);
-        }
-
-        consoleOut('fromParsedDate.toString()', startUtc.toString(), 'crimson');
-        consoleOut('fromParsedDate.toLocaleString()', startUtc.toLocaleString(), 'crimson');
-        consoleOut('fromParsedDate.toISOString()', startUtc.toISOString(), 'crimson');
-        consoleOut('fromParsedDate.toUTCString()', startUtc.toUTCString(), 'crimson');
-
-        // Create a transaction
-        const data = {
-          wallet: wallet.publicKey.toBase58(),
-          beneficiary: beneficiary.toBase58(),                                        // beneficiary
-          associatedToken: associatedToken.toBase58(),                                // beneficiaryMint
-          amount: amount,                                                             // fundingAmount
-          startUtc: startUtc,                                                         // startUtc
-          recipientNote: recipientNote
-            ? recipientNote.trim()
-            : undefined                                                               // streamName
-        };
-        consoleOut('data:', data, 'blue');
-
-        // Log input data
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
-          inputs: data
-        });
-
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
-          result: ''
-        });
-
-        // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
-        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        consoleOut('blockchainFee:', getFeeAmount(), 'blue');
-        consoleOut('nativeBalance:', nativeBalance, 'blue');
-        if (nativeBalance < getFeeAmount()) {
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.TransactionStartFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-            result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
-            }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(getFeeAmount(), NATIVE_SOL_MINT.toBase58())
-            })`
-          });
-          customLogger.logWarning('One-Time Payment transaction failed', { transcript: transactionLog });
-          return false;
-        }
-
-        // Init a streaming operation
-        const moneyStream = new MSP(endpoint, streamV2ProgramAddress, "finalized");
-
-        return await moneyStream.oneTimePayment(
-          publicKey,
-          beneficiary,                                                // beneficiary
-          associatedToken,                                            // beneficiaryMint
-          amount,                                                     // fundingAmount
-          startUtc,                                                   // startUtc
-          recipientNote
-            ? recipientNote.trim()
-            : undefined                                               // streamName
+      if (!isScheduledPayment()) {
+        return await msp.transfer(
+          new PublicKey(data.wallet),                                      // sender
+          new PublicKey(data.beneficiary),                                 // beneficiary
+          new PublicKey(data.associatedToken),                             // beneficiaryMint
+          data.amount                                                      // amount
         )
+      }
+
+      return msp.scheduledTransfer(
+        new PublicKey(data.wallet),                                      // sender
+        new PublicKey(data.beneficiary),                                 // beneficiary
+        new PublicKey(data.associatedToken),                             // beneficiaryMint
+        data.amount,                                                     // amount
+        data.startUtc,                                                   // startUtc
+        data.recipientNote,
+        false // TODO: (feePayedByTreasurer) This should come from the UI
+      );
+    }
+
+    const createTx = async (): Promise<boolean> => {
+
+      if (!wallet || !publicKey || !selectedToken) {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot start transaction! Wallet not found!'
+        });
+        customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
+        return false;
+      }
+
+      consoleOut("Start transaction for contract type:", contract?.name);
+      consoleOut('Wallet address:', wallet?.publicKey?.toBase58());
+
+      setTransactionStatus({
+        lastOperation: TransactionStatus.TransactionStart,
+        currentOperation: TransactionStatus.InitTransaction
+      });
+
+      consoleOut('Beneficiary address:', recipientAddress);
+      const beneficiary = new PublicKey(recipientAddress as string);
+      consoleOut('associatedToken:', selectedToken.address);
+      const associatedToken = new PublicKey(selectedToken.address as string);
+      const amount = toTokenAmount(parseFloat(fromCoinAmount as string), selectedToken.decimals);
+      const now = new Date();
+      const parsedDate = Date.parse(paymentStartDate as string);
+      let startUtc = new Date(parsedDate);
+      startUtc.setHours(now.getHours());
+      startUtc.setMinutes(now.getMinutes());
+      startUtc.setSeconds(now.getSeconds());
+      startUtc.setMilliseconds(now.getMilliseconds());
+
+      // If current user is in the whitelist and we have an amount of minutes to add
+      // to the current date selection, calculate it!
+      if (isWhitelisted && fixedScheduleValue > 0) {
+        startUtc = addMinutes(startUtc, fixedScheduleValue);
+      }
+
+      consoleOut('fromParsedDate.toString()', startUtc.toString(), 'crimson');
+      consoleOut('fromParsedDate.toLocaleString()', startUtc.toLocaleString(), 'crimson');
+      consoleOut('fromParsedDate.toISOString()', startUtc.toISOString(), 'crimson');
+      consoleOut('fromParsedDate.toUTCString()', startUtc.toUTCString(), 'crimson');
+
+      // Create a transaction
+      const data = {
+        wallet: wallet.publicKey.toBase58(),
+        beneficiary: beneficiary.toBase58(),                                        // beneficiary
+        associatedToken: associatedToken.toBase58(),                                // beneficiaryMint
+        amount: amount,                                                             // fundingAmount
+        startUtc: startUtc,                                                         // startUtc
+        recipientNote: recipientNote
+          ? recipientNote.trim()
+          : undefined                                                               // streamName
+      };
+      
+      consoleOut('data:', data, 'blue');
+
+      // Log input data
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+        inputs: data
+      });
+
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+        result: ''
+      });
+
+      // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
+      // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+      consoleOut('blockchainFee:', getFeeAmount(), 'blue');
+      consoleOut('nativeBalance:', nativeBalance, 'blue');
+
+      if (nativeBalance < getFeeAmount()) {
+        setTransactionStatus({
+          lastOperation: transactionStatus.currentOperation,
+          currentOperation: TransactionStatus.TransactionStartFailure
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+          result: `Not enough balance (${
+            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+          }) to pay for network fees (${
+            getTokenAmountAndSymbolByTokenAddress(getFeeAmount(), NATIVE_SOL_MINT.toBase58())
+          })`
+        });
+        customLogger.logWarning('One-Time Payment transaction failed', { transcript: transactionLog });
+        return false;
+      }
+
+      let result = await otpTx(data)
         .then(value => {
+          if (!value) { return false; }
           consoleOut('oneTimePayment returned transaction:', value);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
@@ -593,14 +620,8 @@ export const OneTimePayment = () => {
           customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
           return false;
         });
-      } else {
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot start transaction! Wallet not found!'
-        });
-        customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
-        return false;
-      }
+
+      return result;
     }
 
     const signTx = async (): Promise<boolean> => {
