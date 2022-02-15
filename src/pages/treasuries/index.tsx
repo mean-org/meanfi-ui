@@ -1904,7 +1904,7 @@ export const TreasuriesView = () => {
           new PublicKey(data.treasurer),                    // treasurer
           new PublicKey(data.treasurer),                    // treasurer
           data.label,                                       // label
-          data.type                                         // type
+          data.type === 'Open' ? TreasuryType.Open : TreasuryType.Lock // type
         );
       }
 
@@ -1980,9 +1980,9 @@ export const TreasuriesView = () => {
       const payload = {
         treasurer: publicKey.toBase58(),                                                                  // treasurer
         label: createOptions.treasuryName,                                                                // label
-        type: `${createOptions.treasuryType} = ${createOptions.treasuryType === TreasuryType.Open         // type
+        type: createOptions.treasuryType === TreasuryType.Open         // type
           ? 'Open'
-          : 'Locked'}`,
+          : 'Locked',
         multisig: createOptions.multisigId                                                                // multisig
       };
 
