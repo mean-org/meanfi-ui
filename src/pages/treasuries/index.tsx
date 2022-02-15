@@ -2322,6 +2322,29 @@ export const TreasuriesView = () => {
       }
     }
 
+    const addFunds = async (data: any) => {
+
+      if (!msp) { return null; }
+
+      if (data.stream === '') {
+        return await msp.addFunds(
+          new PublicKey(data.payer),                              // payer
+          new PublicKey(data.contributor),                              // contributor
+          new PublicKey(data.treasury),                               // treasury
+          new PublicKey(data.associatedToken),                        // associatedToken
+          data.amount,                                 // amount
+        );
+      }
+
+      return await msp.fundStream(
+        new PublicKey(data.payer),                              // payer
+        new PublicKey(data.contributor),                              // contributor
+        new PublicKey(data.treasury),                               // treasury
+        new PublicKey(data.stream),                        // stream
+        data.amount,                                 // amount
+      )
+    }
+
     const createTxV2 = async (): Promise<boolean> => {
 
       if (!publicKey || !treasuryDetails || !selectedToken || !msp) {
@@ -2352,6 +2375,7 @@ export const TreasuriesView = () => {
         contributor: publicKey.toBase58(),                        // contributor
         treasury: treasury.toBase58(),                            // treasury
         associatedToken: associatedToken.toBase58(),              // associatedToken
+        stream: params.streamId ? params.streamId : '',
         amount,                                                   // amount
       }
 
@@ -2391,40 +2415,36 @@ export const TreasuriesView = () => {
 
       consoleOut('Starting Add Funds using MSP V2...', '', 'blue');
       // Create a transaction
-      return await msp.addFunds(
-        publicKey,                              // payer
-        publicKey,                              // contributor
-        treasury,                               // treasury
-        associatedToken,                        // associatedToken
-        amount,                                 // amount
-      )
-      .then((value: Transaction | null) => {
-        if (!value) { return false; }
-        consoleOut('addFunds returned transaction:', value);
-        setTransactionStatus({
-          lastOperation: TransactionStatus.InitTransactionSuccess,
-          currentOperation: TransactionStatus.SignTransaction
+      let result = await addFunds(data)
+        .then((value: Transaction | null) => {
+          if (!value) { return false; }
+          consoleOut('addFunds returned transaction:', value);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.InitTransactionSuccess,
+            currentOperation: TransactionStatus.SignTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+            result: getTxIxResume(value)
+          });
+          transaction = value;
+          return true;
+        })
+        .catch(error => {
+          console.error('addFunds error:', error);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.InitTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+            result: `${error}`
+          });
+          customLogger.logError('Treasury Add funds transaction failed', { transcript: transactionLog });
+          return false;
         });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-          result: getTxIxResume(value)
-        });
-        transaction = value;
-        return true;
-      })
-      .catch(error => {
-        console.error('addFunds error:', error);
-        setTransactionStatus({
-          lastOperation: transactionStatus.currentOperation,
-          currentOperation: TransactionStatus.InitTransactionFailure
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
-          result: `${error}`
-        });
-        customLogger.logError('Treasury Add funds transaction failed', { transcript: transactionLog });
-        return false;
-      });
+
+      return result;
     }
 
     const signTx = async (): Promise<boolean> => {

@@ -480,11 +480,11 @@ const AppStateProvider: React.FC = ({ children }) => {
   }
 
   const openStreamById = async (streamId: string, dock = false) => {
-    let streamPublicKey: PublicKey;
     try {
-      streamPublicKey = new PublicKey(streamId);
+      let streamPublicKey = new PublicKey(streamId);
       try {
         if (msp && publicKey) {
+          console.log('streamPublicKey', streamPublicKey.toBase58());
           const detail = await msp.getStream(streamPublicKey);
           consoleOut('customStream', detail);
           if (detail) {
