@@ -3227,7 +3227,7 @@ export const TreasuriesView = () => {
 
       const data = {
         stream: streamPublicKey.toBase58(),                     // stream
-        initializer: publicKey.toBase58(),                      // initializer
+        payer: publicKey.toBase58(),                      // initializer
         closeTreasury                                           // closeTreasury
       }
 
@@ -3580,7 +3580,7 @@ export const TreasuriesView = () => {
       if (!isMultisigTreasury()) {
         return await msp.pauseStream(
           new PublicKey(data.payer),             // payer,
-          new PublicKey(data.treasurer),         // treasurer,
+          new PublicKey(data.payer),             // treasurer,
           new PublicKey(data.stream),            // stream,
         );
       }
@@ -4003,7 +4003,7 @@ export const TreasuriesView = () => {
       if (!isMultisigTreasury()) {
         return await msp.resumeStream(
           new PublicKey(data.payer),             // payer,
-          new PublicKey(data.treasurer),         // treasurer,
+          new PublicKey(data.payer),             // treasurer,
           new PublicKey(data.stream),            // stream,
         );
       }
@@ -4337,7 +4337,7 @@ export const TreasuriesView = () => {
                     </Menu.Item>
                   )}
                 </>
-              ) : streamV2.status === STREAM_STATUS.Running && streamV2.withdrawableAmount >= streamV2.allocationAssigned ? (
+              ) : streamV2.status === STREAM_STATUS.Running ? (
                 <Menu.Item key="2" onClick={showPauseStreamModal}>
                   <span className="menu-item-text">{t('treasuries.treasury-streams.option-pause-stream')}</span>
                 </Menu.Item>
