@@ -491,8 +491,8 @@ export const OneTimePayment = () => {
         )
       }
 
-      return msp.scheduledTransfer(
-        new PublicKey(data.wallet),                                      // sender
+      return await msp.scheduledTransfer(
+        new PublicKey(data.wallet),                                      // treasurer
         new PublicKey(data.beneficiary),                                 // beneficiary
         new PublicKey(data.associatedToken),                             // beneficiaryMint
         data.amount,                                                     // amount
@@ -547,7 +547,7 @@ export const OneTimePayment = () => {
 
       // Create a transaction
       const data = {
-        wallet: wallet.publicKey.toBase58(),
+        wallet: publicKey.toBase58(),
         beneficiary: beneficiary.toBase58(),                                        // beneficiary
         associatedToken: associatedToken.toBase58(),                                // beneficiaryMint
         amount: amount,                                                             // fundingAmount

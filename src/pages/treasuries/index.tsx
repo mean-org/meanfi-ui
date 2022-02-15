@@ -1262,7 +1262,7 @@ export const TreasuriesView = () => {
   const getDepositAmountDisplay = (item: Stream | StreamInfo): string => {
     let value = '';
 
-    if (item && item.rateAmount === 0 && item.allocationReserved > 0) {
+    if (item && item.rateAmount === 0 && item.allocationAssigned > 0) {
       const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
       if (item.version < 2) {
         value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
@@ -1603,6 +1603,7 @@ export const TreasuriesView = () => {
 
       if (!multisig) { return null; }
 
+      // TODO: Not working needs to be signed by the program
       return await msp.refreshTreasuryData(
         new PublicKey(publicKey),
         multisig.address,
@@ -1987,7 +1988,7 @@ export const TreasuriesView = () => {
       }
 
       consoleOut('Starting Create Treasury using MSP V2...', '', 'blue');
-      
+
       let result = await createTreasury(payload)
         .then(value => {
           if (!value) { return false; }
@@ -2341,6 +2342,7 @@ export const TreasuriesView = () => {
       });
 
       const treasury = new PublicKey(treasuryDetails.id);
+      const associatedToken = new PublicKey(selectedToken.address);
       const amount = toTokenAmount(parseFloat(params.amount as string), selectedToken.decimals);
 
       console.log('params.streamId', params.streamId);
@@ -2349,6 +2351,7 @@ export const TreasuriesView = () => {
         payer: publicKey.toBase58(),                              // payer
         contributor: publicKey.toBase58(),                        // contributor
         treasury: treasury.toBase58(),                            // treasury
+        associatedToken: associatedToken.toBase58(),              // associatedToken
         amount,                                                   // amount
       }
 
@@ -2391,7 +2394,8 @@ export const TreasuriesView = () => {
       return await msp.addFunds(
         publicKey,                              // payer
         publicKey,                              // contributor
-        treasury,                               // treasury  
+        treasury,                               // treasury
+        associatedToken,                        // associatedToken
         amount,                                 // amount
       )
       .then((value: Transaction | null) => {
@@ -4333,7 +4337,7 @@ export const TreasuriesView = () => {
                     </Menu.Item>
                   )}
                 </>
-              ) : streamV2.status === STREAM_STATUS.Running && streamV2.withdrawableAmount >= streamV2.allocationReserved ? (
+              ) : streamV2.status === STREAM_STATUS.Running && streamV2.withdrawableAmount >= streamV2.allocationAssigned ? (
                 <Menu.Item key="2" onClick={showPauseStreamModal}>
                   <span className="menu-item-text">{t('treasuries.treasury-streams.option-pause-stream')}</span>
                 </Menu.Item>

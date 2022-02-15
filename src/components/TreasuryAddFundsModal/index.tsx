@@ -349,7 +349,7 @@ export const TreasuryAddFundsModal = (props: {
   const getTransferAmountDisplay = (item: Stream | StreamInfo): string => {
     let value = '';
 
-    if (item && item.rateAmount === 0 && item.allocationReserved > 0) {
+    if (item && item.rateAmount === 0 && item.allocationAssigned > 0) {
       const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
       if (item.version < 2) {
         value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));

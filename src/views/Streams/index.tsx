@@ -1446,96 +1446,8 @@ export const Streams = () => {
     }
 
     const createTxV2 = async (): Promise<boolean> => {
-      if (publicKey && streamDetail && selectedToken && msp) {
-        setTransactionStatus({
-          lastOperation: TransactionStatus.TransactionStart,
-          currentOperation: TransactionStatus.InitTransaction
-        });
 
-        const stream = new PublicKey(streamDetail.id as string);
-        const treasury = new PublicKey((streamDetail as Stream).treasury as string);
-        const associatedToken = new PublicKey(streamDetail.associatedToken as string);
-        const amount = toTokenAmount(parseFloat(addFundsData.amount as string), selectedToken.decimals);
-        setAddFundsAmount(parseFloat(addFundsData.amount));
-
-        const data = {
-          contributor: publicKey.toBase58(),                              // contributor
-          treasury: treasury.toBase58(),                                  // treasury
-          associatedToken: associatedToken.toBase58(),                    // associatedToken
-          stream: stream.toBase58(),                                      // stream
-          amount,                                                         // amount
-          allocationType: AllocationType.Specific                         // allocationType
-        }
-        consoleOut('add funds data:', data);
-
-        // Log input data
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
-          inputs: data
-        });
-
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
-          result: ''
-        });
-
-        // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
-        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
-        consoleOut('nativeBalance:', nativeBalance, 'blue');
-        if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.TransactionStartFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-            result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
-            }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
-            })`
-          });
-          customLogger.logWarning('Add funds transaction failed', { transcript: transactionLog });
-          return false;
-        }
-
-        consoleOut('Starting addFunds using MSP V2...', '', 'blue');
-        // Create a transaction
-        return await msp.fundStream(
-          publicKey,                                          // contributor
-          publicKey,                                          // contributor
-          treasury,                                           // treasury
-          stream,                                             // stream
-          amount,                                             // amount
-        )
-        .then(value => {
-          consoleOut('addFunds returned transaction:', value);
-          setTransactionStatus({
-            lastOperation: TransactionStatus.InitTransactionSuccess,
-            currentOperation: TransactionStatus.SignTransaction
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-            result: getTxIxResume(value)
-          });
-          transaction = value;
-          return true;
-        })
-        .catch(error => {
-          console.error('addFunds error:', error);
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.InitTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
-            result: `${error}`
-          });
-          customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
-          return false;
-        });
-      } else {
+      if (!publicKey || !streamDetail || !selectedToken || !msp) {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
@@ -1543,6 +1455,98 @@ export const Streams = () => {
         customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
         return false;
       }
+
+      setTransactionStatus({
+        lastOperation: TransactionStatus.TransactionStart,
+        currentOperation: TransactionStatus.InitTransaction
+      });
+
+      const stream = new PublicKey(streamDetail.id as string);
+      const treasury = new PublicKey((streamDetail as Stream).treasury as string);
+      // const associatedToken = new PublicKey(streamDetail.associatedToken as string);
+      const amount = toTokenAmount(parseFloat(addFundsData.amount as string), selectedToken.decimals);
+      setAddFundsAmount(parseFloat(addFundsData.amount));
+
+      const data = {
+        contributor: publicKey.toBase58(),                              // contributor
+        treasury: treasury.toBase58(),                                  // treasury
+        // associatedToken: associatedToken.toBase58(),                    // associatedToken
+        stream: stream.toBase58(),                                      // stream
+        amount,                                                         // amount
+      }
+
+      consoleOut('add funds data:', data);
+
+      // Log input data
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+        inputs: data
+      });
+
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+        result: ''
+      });
+
+      // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
+      // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+      consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
+      consoleOut('nativeBalance:', nativeBalance, 'blue');
+
+      if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
+        setTransactionStatus({
+          lastOperation: transactionStatus.currentOperation,
+          currentOperation: TransactionStatus.TransactionStartFailure
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+          result: `Not enough balance (${
+            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+          }) to pay for network fees (${
+            getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+          })`
+        });
+        customLogger.logWarning('Add funds transaction failed', { transcript: transactionLog });
+        return false;
+      }
+
+      consoleOut('Starting addFunds using MSP V2...', '', 'blue');
+      // Create a transaction
+      let result = await msp.fundStream(
+        publicKey,                                          // payer
+        publicKey,                                          // contributor
+        treasury,                                           // treasury
+        stream,                                             // stream
+        amount,                                             // amount
+      )
+      .then(value => {
+        consoleOut('addFunds returned transaction:', value);
+        setTransactionStatus({
+          lastOperation: TransactionStatus.InitTransactionSuccess,
+          currentOperation: TransactionStatus.SignTransaction
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+          result: getTxIxResume(value)
+        });
+        transaction = value;
+        return true;
+      })
+      .catch(error => {
+        console.error('addFunds error:', error);
+        setTransactionStatus({
+          lastOperation: transactionStatus.currentOperation,
+          currentOperation: TransactionStatus.InitTransactionFailure
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+          result: `${error}`
+        });
+        customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+        return false;
+      });
+
+      return result;
     }
 
     const signTx = async (): Promise<boolean> => {
@@ -2458,7 +2462,7 @@ export const Streams = () => {
   const getDepositAmountDisplay = (item: Stream | StreamInfo): string => {
     let value = '';
 
-    if (item && item.rateAmount === 0 && item.allocationReserved > 0) {
+    if (item && item.rateAmount === 0 && item.allocationAssigned > 0) {
       const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
       if (item.version < 2) {
         value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
@@ -2570,7 +2574,7 @@ export const Streams = () => {
       const v1 = streamDetail as StreamInfo;
       const v2 = streamDetail as Stream;
       if (v1.version < 2) {
-        return v1.allocationReserved || v1.allocationLeft ? true : false;
+        return v1.allocationAssigned || v1.allocationLeft ? true : false;
       } else {
         return v2.remainingAllocationAmount ? true : false;
       }
@@ -2774,7 +2778,7 @@ export const Streams = () => {
                           (
                             <span className="info-data">
                             {stream
-                              ? getAmountWithSymbol(stream.allocationReserved, stream.associatedToken as string)
+                              ? getAmountWithSymbol(stream.allocationAssigned, stream.associatedToken as string)
                               : '--'}
                             </span>
                           ) : (
@@ -2853,7 +2857,7 @@ export const Streams = () => {
                     <Row className="mb-3">
                       <Col span={24}>
                         <div className="info-label">
-                          {stream.allocationReserved
+                          {stream.allocationAssigned
                             ? t('streams.stream-detail.label-reserved-allocation')
                             : t('streams.stream-detail.label-your-allocation')
                           }
@@ -2864,7 +2868,7 @@ export const Streams = () => {
                           </span>
                           <span className="info-data">
                             {getAmountWithSymbol(
-                              stream.allocationReserved || stream.allocationLeft,
+                              stream.allocationAssigned || stream.allocationLeft,
                               stream.associatedToken as string
                             )}
                           </span>
@@ -3042,7 +3046,7 @@ export const Streams = () => {
                           (
                             <span className="info-data">
                             {stream
-                              ? getAmountWithSymbol(stream.allocationReserved, stream.associatedToken as string)
+                              ? getAmountWithSymbol(stream.allocationAssigned, stream.associatedToken as string)
                               : '--'}
                             </span>
                           ) : (
@@ -3123,7 +3127,7 @@ export const Streams = () => {
                       <Col span={24}>
                         <div className="info-label">
                           {/* TODO: Check this condition */}
-                          {stream.allocationReserved
+                          {stream.allocationAssigned
                             ? t('streams.stream-detail.label-reserved-allocation')
                             : t('streams.stream-detail.label-your-allocation')
                           }
@@ -3370,7 +3374,7 @@ export const Streams = () => {
                     <Row className="mb-3">
                       <Col span={24}>
                         <div className="info-label">
-                          {stream.allocationReserved
+                          {stream.allocationAssigned
                             ? t('streams.stream-detail.label-reserved-allocation')
                             : t('streams.stream-detail.label-their-allocation')
                           }
@@ -3381,7 +3385,7 @@ export const Streams = () => {
                           </span>
                           <span className="info-data">
                             {getAmountWithSymbol(
-                              stream.allocationReserved || stream.allocationLeft,
+                              stream.allocationAssigned || stream.allocationLeft,
                               stream.associatedToken as string
                             )}
                           </span>
@@ -3672,7 +3676,7 @@ export const Streams = () => {
                     <Row className="mb-3">
                       <Col span={24}>
                         <div className="info-label">
-                          {stream.allocationReserved
+                          {stream.allocationAssigned
                             ? t('streams.stream-detail.label-reserved-allocation')
                             : t('streams.stream-detail.label-their-allocation')
                           }
