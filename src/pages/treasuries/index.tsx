@@ -38,6 +38,7 @@ import {
   getTransactionOperationDescription,
   isProd,
   getIntervalFromSeconds,
+  delay,
 } from '../../utils/ui';
 import {
   FALLBACK_COIN_IMAGE,
@@ -51,7 +52,7 @@ import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
-import { notify } from '../../utils/notifications';
+import { notify, openNotification } from '../../utils/notifications';
 import { IconBank, IconClock, IconExternalLink, IconRefresh, IconShowAll, IconSort, IconTrash } from '../../Icons';
 import { TreasuryOpenModal } from '../../components/TreasuryOpenModal';
 import { MSP_ACTIONS, StreamInfo, STREAM_STATE, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
@@ -960,13 +961,28 @@ export const TreasuriesView = () => {
   useEffect(() => {
     if (!publicKey) { return; }
 
+    const stackedMessagesAndNavigate = async (multisigId: string) => {
+      openNotification({
+        type: "info",
+        description: t('treasuries.create-treasury.multisig-treasury-created-info'),
+        duration: 10
+      });
+      await delay(1500);
+      openNotification({
+        type: "info",
+        description: t('treasuries.create-treasury.multisig-treasury-created-instructions'),
+        duration: null,
+      });
+      setHighLightableMultisigId(multisigId);
+      navigate('/multisig');
+    }
+
     if (lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
       switch (lastSentTxOperationType) {
         case OperationType.TreasuryCreate:
           const usedOptions = retryOperationPayload as TreasuryCreateOptions;
           if (usedOptions.multisigId) {
-            setHighLightableMultisigId(usedOptions.multisigId);
-            navigate('/multisig');
+            stackedMessagesAndNavigate(usedOptions.multisigId);
           } else {
             refreshTreasuries(true);
           }
@@ -990,6 +1006,7 @@ export const TreasuriesView = () => {
     setHighLightableMultisigId,
     refreshTreasuries,
     navigate,
+    t
   ]);
 
   /////////////////

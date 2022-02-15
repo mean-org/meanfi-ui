@@ -19,6 +19,8 @@ import {
 } from "../../utils/ui";
 import { formatThousands, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from "../../utils/utils";
 import { IconCopy, IconExternalLink, IconTrash } from "../../Icons";
+import { useNavigate } from "react-router-dom";
+import { openNotification } from "../../utils/notifications";
 
 const { Panel } = Collapse;
 const { Option } = Select;
@@ -84,6 +86,7 @@ const TX_TEST_RUN_VALUES: TxStatusConfig[] = [
 
 export const PlaygroundView = () => {
     const { t } = useTranslation("common");
+    const navigate = useNavigate();
     const {
       userTokens,
       transactionStatus,
@@ -506,6 +509,39 @@ export const PlaygroundView = () => {
       }
   }
 
+  const notificationTwo = () => {
+    consoleOut('Notification is closing...');
+    openNotification({
+      type: "info",
+      description: t('treasuries.create-treasury.multisig-treasury-created-instructions'),
+      duration: null,
+    });
+    navigate('/custody');
+  }
+
+  const sequentialMessagesAndNavigate = () => {
+    openNotification({
+      type: "info",
+      description: t('treasuries.create-treasury.multisig-treasury-created-info'),
+      handleClose: notificationTwo
+    });
+  }
+
+  const stackedMessagesAndNavigate = async () => {
+    openNotification({
+      type: "info",
+      description: t('treasuries.create-treasury.multisig-treasury-created-info'),
+      duration: 10
+    });
+    await delay(1500);
+    openNotification({
+      type: "info",
+      description: t('treasuries.create-treasury.multisig-treasury-created-instructions'),
+      duration: null,
+    });
+    navigate('/custody');
+  }
+
   return (
     <>
       <section>
@@ -523,6 +559,16 @@ export const PlaygroundView = () => {
               </div>
             </div>
             {renderTab()}
+            <div className="mt-3">
+              <Space>
+                <span className="flat-button stroked" onClick={() => sequentialMessagesAndNavigate()}>
+                  <span>Sequential messages and Navigate</span>
+                </span>
+                <span className="flat-button stroked" onClick={() => stackedMessagesAndNavigate()}>
+                  <span>Stacked messages and Navigate</span>
+                </span>
+              </Space>
+            </div>
           </div>
         </div>
       </section>
