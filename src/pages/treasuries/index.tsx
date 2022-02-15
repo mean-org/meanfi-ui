@@ -1596,19 +1596,51 @@ export const TreasuriesView = () => {
         );
       }
 
-      if (!multisigAccounts) { return null; }
+      if (!treasuryDetails || !multisigClient || !multisigAccounts || !publicKey) { return null; }
 
       let treasury = treasuryDetails as Treasury;
-      let multisig = multisigAccounts.find(m => m.address.toBase58() === treasury.treasurer);
+      let multisig = multisigAccounts.filter(m => m.address.toBase58() === treasury.treasurer)[0];
 
       if (!multisig) { return null; }
 
-      // TODO: Not working needs to be signed by the program
-      return await msp.refreshTreasuryData(
+      let refreshTreasury = await msp.refreshTreasuryData(
         new PublicKey(publicKey),
         multisig.address,
         new PublicKey(data.treasury)
       );
+
+      const ixData = Buffer.from(refreshTreasury.instructions[0].data);
+      const ixAccounts = refreshTreasury.instructions[0].keys;
+      const transaction = Keypair.generate();
+      const txSize = 1000;
+      const txSigners = [transaction];
+      const createIx = await multisigClient.account.transaction.createInstruction(
+        transaction,
+        txSize
+      );
+      
+      let tx = multisigClient.transaction.createTransaction(
+        MSPV2Constants.MSP, 
+        OperationType.TreasuryRefreshBalance,
+        ixAccounts as any,
+        ixData as any,
+        {
+          accounts: {
+            multisig: multisig.id,
+            transaction: transaction.publicKey,
+            proposer: publicKey as PublicKey,
+          },
+          preInstructions: [createIx],
+          signers: txSigners,
+        }
+      );
+
+      tx.feePayer = publicKey;
+      let { blockhash } = await connection.getRecentBlockhash("finalized");
+      tx.recentBlockhash = blockhash;
+      tx.partialSign(...txSigners);
+
+      return tx;
     }
 
     const createTx = async (): Promise<boolean> => {
@@ -1829,7 +1861,6 @@ export const TreasuriesView = () => {
     }
 
   },[
-    multisigAccounts, 
     resetTransactionStatus, 
     clearTransactionStatusContext, 
     wallet, 
@@ -1839,6 +1870,8 @@ export const TreasuriesView = () => {
     msp, 
     treasuryDetails, 
     isMultisigTreasury, 
+    multisigClient, 
+    multisigAccounts, 
     setTransactionStatus, 
     transactionFees.blockchainFee, 
     transactionFees.mspFlatFee, 
