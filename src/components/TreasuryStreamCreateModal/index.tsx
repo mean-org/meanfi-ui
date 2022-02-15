@@ -31,12 +31,11 @@ import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { Connection, Keypair, PublicKey, Transaction } from '@solana/web3.js';
 import { customLogger } from '../..';
-import { Constants, MSP, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
+import { Constants, MSP, TransactionFees, Treasury } from '@mean-dao/msp';
 import { TreasuryInfo } from '@mean-dao/money-streaming';
 import { useConnectionConfig } from '../../contexts/connection';
 import { BN } from 'bn.js';
 import { Idl, Program } from '@project-serum/anchor';
-import transaction from '@project-serum/anchor/dist/cjs/program/namespace/transaction';
 
 const { Option } = Select;
 
@@ -83,7 +82,6 @@ export const TreasuryStreamCreateModal = (props: {
     setPaymentRateAmount,
     setTransactionStatus,
     setIsVerifiedRecipient,
-    setIsAllocationReserved,
     setPaymentRateFrequency,
   } = useContext(AppStateContext);
   const {
