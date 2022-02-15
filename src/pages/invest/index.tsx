@@ -8,6 +8,23 @@ import './style.less';
 export const InvestView = () => {
   const { t } = useTranslation('common');
 
+  const renderInvestOptions = (
+    <div className="transaction-list-row money-streams-summary">
+      <div className="icon-cell">
+        <div className="token-icon">
+          <img alt="MEAN" width="30" height="30" src="https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg" />
+        </div>
+      </div>
+      <div className="description-cell">
+        <div className="title">Stake MEAN</div>
+      </div>
+      <div className="rate-cell">
+        <div className="rate-amount">52.09%</div>
+        <div className="interval">APR</div>
+      </div>
+    </div>
+  );
+
   return (
     <>
       <div className="container main-container">
@@ -43,7 +60,9 @@ export const InvestView = () => {
                 </Tooltip>
               </div>
               <div className="inner-container">
-
+                <div className="item-block vertical-scroll">
+                  {renderInvestOptions}
+                </div>
               </div>
             </div>
 
