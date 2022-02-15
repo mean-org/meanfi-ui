@@ -609,126 +609,7 @@ export const PayrollPayment = () => {
     setIsBusy(true);
 
     const createTx = async (): Promise<boolean> => {
-      if (wallet && publicKey) {
-        consoleOut("Start transaction for contract type:", contract?.name);
-        consoleOut('Wallet address:', wallet?.publicKey?.toBase58());
-
-        setTransactionStatus({
-          lastOperation: TransactionStatus.TransactionStart,
-          currentOperation: TransactionStatus.InitTransaction
-        });
-
-        consoleOut('Beneficiary address:', recipientAddress);
-        const beneficiary = new PublicKey(recipientAddress as string);
-
-        consoleOut('beneficiaryMint:', selectedToken?.address);
-        const beneficiaryMint = new PublicKey(selectedToken?.address as string);
-
-        const amount = parseFloat(fromCoinAmount as string);
-        const rateAmount = parseFloat(paymentRateAmount as string);
-        const now = new Date();
-        const parsedDate = Date.parse(paymentStartDate as string);
-        consoleOut('Parsed paymentStartDate:', parsedDate);
-        const fromParsedDate = new Date(parsedDate);
-        fromParsedDate.setHours(now.getHours());
-        fromParsedDate.setMinutes(now.getMinutes());
-        consoleOut('Local time added to parsed date!');
-        consoleOut('fromParsedDate.toString()', fromParsedDate.toString());
-        consoleOut('fromParsedDate.toUTCString()', fromParsedDate.toUTCString());
-
-        // Create a transaction
-        const data = {
-          wallet: wallet.publicKey.toBase58(),                        // wallet
-          treasury: 'undefined',                                      // treasury
-          beneficiary: beneficiary.toBase58(),                        // beneficiary
-          beneficiaryMint: beneficiaryMint.toBase58(),                // beneficiaryMint
-          rateAmount: rateAmount,                                     // rateAmount
-          rateIntervalInSeconds:
-            getRateIntervalInSeconds(paymentRateFrequency),           // rateIntervalInSeconds
-          startUtc: fromParsedDate,                                   // startUtc
-          streamName: recipientNote
-            ? recipientNote.trim()
-            : undefined,                                              // streamName
-          fundingAmount: amount                                       // fundingAmount
-        };
-        consoleOut('data:', data, 'blue');
-
-        // Log input data
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
-          inputs: data
-        });
-
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
-          result: ''
-        });
-
-        // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
-        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        consoleOut('blockchainFee:', payrollFees.blockchainFee + payrollFees.mspFlatFee, 'blue');
-        consoleOut('nativeBalance:', nativeBalance, 'blue');
-        if (nativeBalance < payrollFees.blockchainFee + payrollFees.mspFlatFee) {
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.TransactionStartFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-            result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
-            }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(payrollFees.blockchainFee + payrollFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
-            })`
-          });
-          customLogger.logWarning('Payroll Payment transaction failed', { transcript: transactionLog });
-          return false;
-        }
-
-        // Init a streaming operation
-        console.log('PayrollPayment -> wallet.publicKey', wallet.publicKey.toBase58());
-        const moneyStream = new MSP(endpoint, streamV2ProgramAddress, "finalized");
-
-        return await moneyStream.streamingPayment(
-          publicKey,                                                  // payer
-          publicKey,                                                  // wallet
-          undefined,                                                  // treasury
-          beneficiary,                                                // beneficiary
-          beneficiaryMint,                                            // beneficiaryMint
-          recipientNote,                                              // streamName
-          amount,                                                     // allocationAssigned
-          0,                                                          // allocationReserved
-          rateAmount,                                                 // rateAmount
-          getRateIntervalInSeconds(paymentRateFrequency),             // rateIntervalInSeconds
-          fromParsedDate                                              // startUtc
-        )
-        .then(value => {
-          consoleOut('createStream returned transaction:', value);
-          setTransactionStatus({
-            lastOperation: TransactionStatus.InitTransactionSuccess,
-            currentOperation: TransactionStatus.SignTransaction
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-            result: getTxIxResume(value)
-          });
-          transaction = value;
-          return true;
-        })
-        .catch(error => {
-          console.error('createStream error:', error);
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.InitTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
-            result: `${error}`
-          });
-          customLogger.logError('Payroll Payment transaction failed', { transcript: transactionLog });
-          return false;
-        });
-      } else {
+      if (!wallet || !publicKey) {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
@@ -736,6 +617,126 @@ export const PayrollPayment = () => {
         customLogger.logError('Payroll Payment transaction failed', { transcript: transactionLog });
         return false;
       }
+
+      consoleOut("Start transaction for contract type:", contract?.name);
+      consoleOut('Wallet address:', wallet?.publicKey?.toBase58());
+
+      setTransactionStatus({
+        lastOperation: TransactionStatus.TransactionStart,
+        currentOperation: TransactionStatus.InitTransaction
+      });
+
+      consoleOut('Beneficiary address:', recipientAddress);
+      const beneficiary = new PublicKey(recipientAddress as string);
+
+      consoleOut('beneficiaryMint:', selectedToken?.address);
+      const beneficiaryMint = new PublicKey(selectedToken?.address as string);
+
+      const amount = parseFloat(fromCoinAmount as string);
+      const rateAmount = parseFloat(paymentRateAmount as string);
+      const now = new Date();
+      const parsedDate = Date.parse(paymentStartDate as string);
+      consoleOut('Parsed paymentStartDate:', parsedDate);
+      const fromParsedDate = new Date(parsedDate);
+      fromParsedDate.setHours(now.getHours());
+      fromParsedDate.setMinutes(now.getMinutes());
+      consoleOut('Local time added to parsed date!');
+      consoleOut('fromParsedDate.toString()', fromParsedDate.toString());
+      consoleOut('fromParsedDate.toUTCString()', fromParsedDate.toUTCString());
+
+      // Create a transaction
+      const data = {
+        wallet: wallet.publicKey.toBase58(),                        // wallet
+        treasury: 'undefined',                                      // treasury
+        beneficiary: beneficiary.toBase58(),                        // beneficiary
+        beneficiaryMint: beneficiaryMint.toBase58(),                // beneficiaryMint
+        rateAmount: rateAmount,                                     // rateAmount
+        rateIntervalInSeconds:
+          getRateIntervalInSeconds(paymentRateFrequency),           // rateIntervalInSeconds
+        startUtc: fromParsedDate,                                   // startUtc
+        streamName: recipientNote
+          ? recipientNote.trim()
+          : undefined,                                              // streamName
+        fundingAmount: amount,                                      // fundingAmount,
+        feePayedByTreasurer: false // TODO: Should come from the UI
+      };
+      consoleOut('data:', data, 'blue');
+
+      // Log input data
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+        inputs: data
+      });
+
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+        result: ''
+      });
+
+      // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
+      // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+      consoleOut('blockchainFee:', payrollFees.blockchainFee + payrollFees.mspFlatFee, 'blue');
+      consoleOut('nativeBalance:', nativeBalance, 'blue');
+      if (nativeBalance < payrollFees.blockchainFee + payrollFees.mspFlatFee) {
+        setTransactionStatus({
+          lastOperation: transactionStatus.currentOperation,
+          currentOperation: TransactionStatus.TransactionStartFailure
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+          result: `Not enough balance (${
+            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+          }) to pay for network fees (${
+            getTokenAmountAndSymbolByTokenAddress(payrollFees.blockchainFee + payrollFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+          })`
+        });
+        customLogger.logWarning('Payroll Payment transaction failed', { transcript: transactionLog });
+        return false;
+      }
+
+      // Init a streaming operation
+      console.log('PayrollPayment -> wallet.publicKey', wallet.publicKey.toBase58());
+      const msp = new MSP(endpoint, streamV2ProgramAddress, "finalized");
+
+      return await msp.streamPayment(
+        publicKey,                                                  // wallet
+        beneficiary,                                                // beneficiary
+        beneficiaryMint,                                            // beneficiaryMint
+        recipientNote,                                              // streamName
+        amount,                                                     // allocationAssigned
+        rateAmount,                                                 // rateAmount
+        getRateIntervalInSeconds(paymentRateFrequency),             // rateIntervalInSeconds
+        fromParsedDate,                                             // startUtc
+        0,                                                          // cliffVestAmount
+        0,                                                          // cliffVestPercent
+        false // TODO: (feePayedByTreasurer)
+      )
+      .then(value => {
+        consoleOut('createStream returned transaction:', value);
+        setTransactionStatus({
+          lastOperation: TransactionStatus.InitTransactionSuccess,
+          currentOperation: TransactionStatus.SignTransaction
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+          result: getTxIxResume(value)
+        });
+        transaction = value;
+        return true;
+      })
+      .catch(error => {
+        console.error('createStream error:', error);
+        setTransactionStatus({
+          lastOperation: transactionStatus.currentOperation,
+          currentOperation: TransactionStatus.InitTransactionFailure
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+          result: `${error}`
+        });
+        customLogger.logError('Payroll Payment transaction failed', { transcript: transactionLog });
+        return false;
+      });
     }
 
     const signTx = async (): Promise<boolean> => {

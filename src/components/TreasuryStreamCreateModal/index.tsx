@@ -432,7 +432,6 @@ export const TreasuryStreamCreateModal = (props: {
           new PublicKey(data.associatedToken),                                // associatedToken
           data.streamName,                                                // streamName
           data.allocationAssigned,                                                 // allocationAssigned
-          data.allocationReserved,                                  // allocationReserved
           data.rateAmount,                                                     // rateAmount
           data.rateIntervalInSeconds,      // rateIntervalInSeconds
           data.startUtc,                                                         // startUtc
@@ -457,7 +456,6 @@ export const TreasuryStreamCreateModal = (props: {
         new PublicKey(data.associatedToken),                                // associatedToken
         data.streamName,                                                // streamName
         data.allocationAssigned,                                                 // allocationAssigned
-        data.allocationReserved,                                  // allocationReserved
         data.rateAmount,                                                     // rateAmount
         data.rateIntervalInSeconds,      // rateIntervalInSeconds
         data.startUtc,                                                         // startUtc
@@ -501,6 +499,7 @@ export const TreasuryStreamCreateModal = (props: {
     }
 
     const createTx = async (): Promise<boolean> => {
+
       if (!publicKey || !props.treasuryDetails || !selectedToken) {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
@@ -524,7 +523,6 @@ export const TreasuryStreamCreateModal = (props: {
         ? toTokenAmount(parseFloat(fromCoinAmount as string), selectedToken.decimals)
         : 0;
       const rateAmount = toTokenAmount(parseFloat(paymentRateAmount as string), selectedToken.decimals);
-      const reserved = (props.treasuryDetails as Treasury).treasuryType === TreasuryType.Lock ? true : false;
       const now = new Date();
       const parsedDate = Date.parse(paymentStartDate as string);
       const startUtc = new Date(parsedDate);
@@ -547,7 +545,6 @@ export const TreasuryStreamCreateModal = (props: {
         associatedToken: associatedToken.toBase58(),                                // associatedToken
         streamName: recipientNote ? recipientNote.trim() : undefined,               // streamName
         allocationAssigned: amount,                                                 // allocationAssigned
-        allocationReserved: reserved ? amount : 0,                                  // allocationReserved
         rateAmount: rateAmount,                                                     // rateAmount
         rateIntervalInSeconds: getRateIntervalInSeconds(paymentRateFrequency),      // rateIntervalInSeconds
         startUtc: startUtc,                                                         // startUtc
@@ -555,6 +552,7 @@ export const TreasuryStreamCreateModal = (props: {
         cliffVestPercent: undefined,                                                // cliffVestPercent
         feePayedByTreasurer: isFeePaidByTreasurer                                   // feePayedByTreasurer
       };
+
       consoleOut('data:', data);
 
       /**
@@ -565,7 +563,6 @@ export const TreasuryStreamCreateModal = (props: {
        * associatedToken: PublicKey,
        * streamName: string,
        * allocationAssigned: number,
-       * allocationReserved?: number | undefined,
        * rateAmount?: number | undefined,
        * rateIntervalInSeconds?: number | undefined,
        * startUtc?: Date | undefined,
@@ -589,6 +586,7 @@ export const TreasuryStreamCreateModal = (props: {
       // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
       consoleOut('blockchainFee:', props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee, 'blue');
       consoleOut('nativeBalance:', props.nativeBalance, 'blue');
+
       if (props.nativeBalance < props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee) {
         setTransactionStatus({
           lastOperation: transactionStatus.currentOperation,
@@ -606,8 +604,7 @@ export const TreasuryStreamCreateModal = (props: {
         return false;
       }
 
-      
-      let result = createStream(data)
+      let result = await createStream(data)
         .then(value => {
           if (!value) { return false; }
           consoleOut('createStream returned transaction:', value);

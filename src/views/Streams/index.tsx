@@ -1502,14 +1502,12 @@ export const Streams = () => {
 
         consoleOut('Starting addFunds using MSP V2...', '', 'blue');
         // Create a transaction
-        return await msp.addFunds(
+        return await msp.fundStream(
           publicKey,                                          // contributor
           publicKey,                                          // contributor
           treasury,                                           // treasury
-          associatedToken,                                    // associatedToken
           stream,                                             // stream
           amount,                                             // amount
-          AllocationType.Specific                             // allocationType
         )
         .then(value => {
           consoleOut('addFunds returned transaction:', value);
@@ -2215,8 +2213,9 @@ export const Streams = () => {
         consoleOut('Starting closeStream using MSP V2...', '', 'blue');
         // Create a transaction
         return await msp.closeStream(
-          publicKey as PublicKey,                           // Initializer public key
-          streamPublicKey,                                  // Stream ID
+          publicKey as PublicKey,                           // payer
+          publicKey as PublicKey,                           // destination
+          streamPublicKey,                                  // stream
           closeTreasury                                     // closeTreasury
         )
         .then(value => {

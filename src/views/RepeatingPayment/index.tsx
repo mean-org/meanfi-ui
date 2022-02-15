@@ -765,7 +765,7 @@ export const RepeatingPayment = () => {
         consoleOut('Beneficiary address:', recipientAddress);
         const beneficiary = new PublicKey(recipientAddress as string);
         consoleOut('beneficiaryMint:', selectedToken.address);
-        const beneficiaryMint = new PublicKey(selectedToken.address as string);
+        const associatedToken = new PublicKey(selectedToken.address as string);
         const amount = toTokenAmount(parseFloat(fromCoinAmount as string), selectedToken.decimals);
         const rateAmount = toTokenAmount(parseFloat(paymentRateAmount as string), selectedToken.decimals);
         const now = new Date();
@@ -786,7 +786,7 @@ export const RepeatingPayment = () => {
           wallet: wallet.publicKey.toBase58(),                        // wallet
           treasury: 'undefined',                                      // treasury
           beneficiary: beneficiary.toBase58(),                        // beneficiary
-          beneficiaryMint: beneficiaryMint.toBase58(),                // beneficiaryMint
+          associatedToken: associatedToken.toBase58(),                // mint
           rateAmount: rateAmount,                                     // rateAmount
           rateIntervalInSeconds:
             getRateIntervalInSeconds(paymentRateFrequency),           // rateIntervalInSeconds
@@ -794,8 +794,10 @@ export const RepeatingPayment = () => {
           streamName: recipientNote
             ? recipientNote.trim()
             : undefined,                                              // streamName
-          allocation: amount                                          // allocation
+          allocation: amount,                                         // allocation
+          feePayedByTreasurer: false // TODO: Should come from the UI
         };
+
         consoleOut('data:', data);
 
         // Log input data
@@ -831,20 +833,20 @@ export const RepeatingPayment = () => {
         }
 
         // Init a streaming operation
-        const moneyStream = new MSP(endpoint, streamV2ProgramAddress, "finalized");
+        const msp = new MSP(endpoint, streamV2ProgramAddress, "finalized");
 
-        return await moneyStream.streamingPayment(
-          publicKey,                                                  // payer
+        return await msp.streamPayment(
           publicKey,                                                  // treasurer
-          undefined,                                                  // treasury
           beneficiary,                                                // beneficiary
-          beneficiaryMint,                                            // beneficiaryMint
+          associatedToken,                                            // mint
           recipientNote,                                              // streamName
           amount,                                                     // allocationAssigned
-          0,                                                          // allocationReserved
           rateAmount,                                                 // rateAmount
           getRateIntervalInSeconds(paymentRateFrequency),             // rateIntervalInSeconds
           startUtc,                                                   // startUtc
+          0,                                                          // cliffVestAmount
+          0,                                                          // cliffVestPercent
+          false // TODO: (feePayedByTreasurer)
         )
         .then(value => {
           consoleOut('createStream returned transaction:', value);
