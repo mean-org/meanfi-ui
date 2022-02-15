@@ -251,6 +251,12 @@
 		"yes": "Yes",
 		"you": "usted"
 	},
+	"invest": {
+		"title": "Invest",
+		"subtitle": "The easiest way to grow your money stash",
+		"screen-title": "Invest Options",
+		"refresh-tooltip": "Refresh invest data"
+	},
 	"language-selector": {
 		"modal-title": "Selector de idioma",
 		"primary-action": "Seleccionar",
