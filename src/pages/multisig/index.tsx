@@ -4556,7 +4556,7 @@ export const MultisigView = () => {
           width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 360 : 480}
           footer={null}>
 
-          {/* A Crross-fading panel shown when NOT busy */}
+          {/* A Cross-fading panel shown when NOT busy */}
           <div className={!isBusy ? "panel1 show" : "panel1 hide"}>
 
             {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
@@ -4671,24 +4671,30 @@ export const MultisigView = () => {
                 }
               </Button>
 
-              {isUserInputNeeded() && (
-                <Button
-                  className={isBusy ? 'inactive' : ''}
-                  type="primary"
-                  shape="round"
-                  size="middle"
-                  onClick={() => {
-                    if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
-                      onAcceptMultisigActionModal(highlightedMultisigTx);
-                    } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
-                      onCloseMultisigActionModal();
-                    } else {
-                      refreshPage();
-                    }
-                  }}>
-                  {getTxApproveMainCtaLabel()}
-                </Button>
-              )}
+              {
+                isUserInputNeeded() && 
+                publicKey && 
+                selectedMultisig && 
+                selectedMultisig.owners[0].address === publicKey.toBase58() && 
+                (
+                  <Button
+                    className={isBusy ? 'inactive' : ''}
+                    type="primary"
+                    shape="round"
+                    size="middle"
+                    onClick={() => {
+                      if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+                        onAcceptMultisigActionModal(highlightedMultisigTx);
+                      } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
+                        onCloseMultisigActionModal();
+                      } else {
+                        refreshPage();
+                      }
+                    }}>
+                    {getTxApproveMainCtaLabel()}
+                  </Button>
+                )
+              }
             </Space>
           </div>
 
