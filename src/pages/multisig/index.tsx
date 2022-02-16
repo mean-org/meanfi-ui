@@ -1686,38 +1686,38 @@ export const MultisigView = () => {
 
     const finishTx = async (data: any) => {
 
-      if (!selectedMultisig || !publicKey) { return null; }
+      if (!data.transaction || !publicKey) { return null; }
 
       const [multisigSigner] = await PublicKey.findProgramAddress(
-        [selectedMultisig.id.toBuffer()],
+        [data.transaction.multisig.toBuffer()],
         multisigClient.programId
       );
 
-      console.log('data.transaction.accounts', data.transaction.accounts.map((a: any) => a.pubkey.toBase58()));
+      let remainingAccounts = data.transaction.accounts
+        // Change the signer status on the vendor signer since it's signed by the program, not the client.
+        .map((meta: any) =>
+          meta.pubkey.equals(multisigSigner)
+            ? { ...meta, isSigner: false }
+            : meta
+        )
+        .concat({
+          pubkey: data.transaction.programId,
+          isWritable: false,
+          isSigner: false,
+        });
   
       let tx = multisigClient.transaction.executeTransaction({
-        accounts: {
-          multisig: selectedMultisig.id,
-          multisigSigner: multisigSigner,
-          transaction: data.transaction.id,
-        },
-        remainingAccounts: data.transaction.accounts
-          .map((t: any) => {
-            if (t.pubkey.equals(multisigSigner)) {
-              return { ...t, isSigner: false };
-            }
-            return t;
-          })
-          .concat({
-            pubkey: data.transaction.programId,
-            isWritable: false,
-            isSigner: false,
-          }),
+          accounts: {
+            multisig: data.transaction.multisig,
+            multisigSigner: multisigSigner,
+            transaction: data.transaction.id,
+          },
+          remainingAccounts: remainingAccounts,
         }
       );
   
       tx.feePayer = publicKey;
-      const { blockhash } = await connection.getRecentBlockhash("finalized");
+      const { blockhash } = await multisigClient.provider.connection.getRecentBlockhash("finalized");
       tx.recentBlockhash = blockhash;
   
       return tx;
@@ -1777,7 +1777,8 @@ export const MultisigView = () => {
         return await finishTx(payload)
           .then(value => {
             if (!value) { return false; }
-            consoleOut('mint tokens returned transaction:', value);
+            console.log('ix signatures', value.signatures.map(a => a.publicKey.toBase58()));
+            consoleOut('multisig returned transaction:', value);
             setTransactionStatus({
               lastOperation: TransactionStatus.InitTransactionSuccess,
               currentOperation: TransactionStatus.SignTransaction
@@ -1945,19 +1946,19 @@ export const MultisigView = () => {
     }
 
   }, [
-    onTxExecuted,
+    onTxExecuted, 
     clearTransactionStatusContext, 
     connection, 
     multisigClient.programId, 
     multisigClient.transaction, 
+    multisigClient.provider.connection, 
     nativeBalance, 
     publicKey, 
-    selectedMultisig, 
     setTransactionStatus, 
     transactionCancelled, 
     transactionFees.blockchainFee, 
     transactionFees.mspFlatFee, 
-    transactionStatus.currentOperation, 
+    transactionStatus.currentOperation,
     wallet
   ]);
 
@@ -4555,7 +4556,7 @@ export const MultisigView = () => {
           width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 360 : 480}
           footer={null}>
 
-          {/* A Crross-fading panel shown when NOT busy */}
+          {/* A Cross-fading panel shown when NOT busy */}
           <div className={!isBusy ? "panel1 show" : "panel1 hide"}>
 
             {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
@@ -4670,24 +4671,30 @@ export const MultisigView = () => {
                 }
               </Button>
 
-              {isUserInputNeeded() && (
-                <Button
-                  className={isBusy ? 'inactive' : ''}
-                  type="primary"
-                  shape="round"
-                  size="middle"
-                  onClick={() => {
-                    if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
-                      onAcceptMultisigActionModal(highlightedMultisigTx);
-                    } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
-                      onCloseMultisigActionModal();
-                    } else {
-                      refreshPage();
-                    }
-                  }}>
-                  {getTxApproveMainCtaLabel()}
-                </Button>
-              )}
+              {
+                isUserInputNeeded() && 
+                publicKey && 
+                selectedMultisig && 
+                selectedMultisig.owners[0].address === publicKey.toBase58() && 
+                (
+                  <Button
+                    className={isBusy ? 'inactive' : ''}
+                    type="primary"
+                    shape="round"
+                    size="middle"
+                    onClick={() => {
+                      if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+                        onAcceptMultisigActionModal(highlightedMultisigTx);
+                      } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
+                        onCloseMultisigActionModal();
+                      } else {
+                        refreshPage();
+                      }
+                    }}>
+                    {getTxApproveMainCtaLabel()}
+                  </Button>
+                )
+              }
             </Space>
           </div>
 
