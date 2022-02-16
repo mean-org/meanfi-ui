@@ -628,7 +628,7 @@ export const DdcaAddFundsModal = (props: {
           <li>
             {
               t('ddca-setup-modal.help.help-item-02', {
-                lockedSliderValue: getRecurrencePeriod(),
+                recurrencePeriod: getRecurrencePeriod(),
               })
             }
           </li>
