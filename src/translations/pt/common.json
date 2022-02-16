@@ -255,7 +255,11 @@
 		"title": "Invest",
 		"subtitle": "The easiest way to grow your money stash",
 		"screen-title": "Invest Options",
-		"refresh-tooltip": "Refresh invest data"
+		"refresh-tooltip": "Refresh invest data",
+		"tabset": {
+			"stake": "Stake",
+			"unstake": "Unstake"
+		}
 	},
 	"language-selector": {
 		"modal-title": "Seletor de idioma",

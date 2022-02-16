@@ -1,5 +1,5 @@
 import { ReloadOutlined } from "@ant-design/icons";
-import { Button, Tooltip } from "antd";
+import { Button, Tooltip, Row, Col } from "antd";
 import { PreFooter } from "../../components/PreFooter";
 import { IconStats } from "../../Icons";
 import { useTranslation } from 'react-i18next';
@@ -68,7 +68,33 @@ export const InvestView = () => {
 
             <div className="meanfi-two-panel-right">
               <div className="inner-container">
-
+                <p>MEAN staking rewards include emission incentives plus 30% of the protocol revenues (calculated weekly), and can be boosted using locking periods.</p>
+                <p>Your staking rewards will be streamed over time and they can be withdrawn at any time. </p>
+                <div className="pinned-token-separator"></div>
+                <div className="stream-fields-container">
+                  <div className="mb-3">
+                    <Row>
+                      <Col span={8}>
+                        <div className="info-label">
+                          {"Staking APR"}
+                        </div>
+                        <div className="transaction-detail-row">52.09%</div>
+                      </Col>
+                      <Col span={8}>
+                        <div className="info-label">
+                          {"Total Value Locked"}
+                        </div>
+                        <div className="transaction-detail-row">$7.64M</div>
+                      </Col>
+                      <Col span={8}>
+                        <div className="info-label">
+                          {"Next Week Payout"}
+                        </div>
+                        <div className="transaction-detail-row">$108,730</div>
+                      </Col>
+                    </Row>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
