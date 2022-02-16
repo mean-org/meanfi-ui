@@ -861,7 +861,6 @@ export const TreasuriesView = () => {
         setTreasuryStreams([]);
         setCustomStreamDocked(false);
         setTreasuryDetails(undefined);
-        setTreasuryDetails(undefined);
       }
     }
   }, [

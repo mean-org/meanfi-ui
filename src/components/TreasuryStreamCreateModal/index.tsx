@@ -520,6 +520,7 @@ export const TreasuryStreamCreateModal = (props: {
       const amount = fromCoinAmount
         ? toTokenAmount(parseFloat(fromCoinAmount as string), selectedToken.decimals)
         : 0;
+      // const maxAmount = cutNumber(getMaxAmount(), selectedToken.decimals);
       const rateAmount = toTokenAmount(parseFloat(paymentRateAmount as string), selectedToken.decimals);
       const now = new Date();
       const parsedDate = Date.parse(paymentStartDate as string);
