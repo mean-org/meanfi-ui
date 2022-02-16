@@ -4694,7 +4694,6 @@ export const TreasuriesView = () => {
           {isNewTreasury ? (
             <>
               {
-                !isMultisigTreasury() && (
                 <Button
                   type="default"
                   shape="round"
@@ -4707,7 +4706,7 @@ export const TreasuriesView = () => {
                     ? t('treasuries.treasury-detail.cta-add-funds-busy')
                     : t('treasuries.treasury-detail.cta-add-funds')}
                 </Button>
-              )}
+              }
 
               {isMultisigAvailable() && (
                 <Button

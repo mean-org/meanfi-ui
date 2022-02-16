@@ -3728,10 +3728,8 @@ export const MultisigView = () => {
     }
 
     return false;
-  }, [
-    highlightedMultisigTx,
-    isTxPendingExecution
-  ]);
+
+  }, [highlightedMultisigTx, isTxPendingExecution]);
 
   const getTxUserStatusClass = useCallback((mtx: MultisigTransaction) => {
 
@@ -4672,10 +4670,19 @@ export const MultisigView = () => {
               </Button>
 
               {
-                isUserInputNeeded() && 
-                publicKey && 
-                selectedMultisig && 
-                selectedMultisig.owners[0].address === publicKey.toBase58() && 
+                (
+                  (
+                    highlightedMultisigTx.status === MultisigTransactionStatus.Pending &&
+                    !highlightedMultisigTx.didSigned
+                  ) 
+                  || 
+                  (
+                    highlightedMultisigTx.status === MultisigTransactionStatus.Approved &&
+                    selectedMultisig.owners[0].address === publicKey?.toBase58() &&
+                    !highlightedMultisigTx.executedOn
+                  )
+                )
+                &&
                 (
                   <Button
                     className={isBusy ? 'inactive' : ''}
