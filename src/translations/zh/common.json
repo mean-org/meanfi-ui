@@ -183,7 +183,7 @@
 			"secondary-cta": "Back"
 		},
 		"screen-title": "Recurring buys",
-		"setup-close-warning": "Closing without clicking. Start will skip your first purchase. Close anyways?",
+		"setup-close-warning": "Closing without clicking Start will skip your first purchase. Close anyways?",
 		"streams-ddcas": "Click to refresh recurring buys"
 	},
 	"deposits": {
@@ -267,7 +267,7 @@
 			"multisig-label-input-empty": "Enter a multisig name",
 			"multisig-label-input-label": "Multisig name",
 			"multisig-label-placeholder": "Type a name for your multisig account",
-			"multisig-no-participants": "No participants added yet",
+			"multisig-no-participants": "No participans added yet",
 			"multisig-participants": "Valid signers ({{numParticipants}} of {{maxParticipants}})",
 			"multisig-threshold-input-empty": "Enter a minimum required signatures value",
 			"multisig-threshold-input-label": "Minimum required signatures",
@@ -285,11 +285,6 @@
 			"success-message": "Your multisig vault was created successfully",
 			"token-label": "From Account",
 			"token-placeholder": "Enter the address of the token mint"
-		},
-		"crud-multisig": {
-			"delete-multisig": "Delete multisig",
-			"edit-multisig": "Edit multisig",
-			"update-multisig": "Migrate multisig"
 		},
 		"lookup-multisig-account-cta-tooltip": "Lookup a multisig account",
 		"mint-tokens": {
@@ -311,11 +306,11 @@
 			"created-on": "Created on",
 			"cta-create-vault": "Create vault",
 			"cta-mint": "Mint",
-			"cta-no-treasuries": "Treasuries",
-			"cta-no-vaults": "Vaults",
 			"cta-transfer": "Transfer Tokens",
-			"cta-treasuries": "Treasuries ({{itemCount}})",
 			"cta-upgrade-program": "Upgrade Program",
+			"cta-no-treasuries": "Treasuries",
+			"cta-treasuries": "Treasuries ({{itemCount}})",
+			"cta-no-vaults": "Vaults",
 			"cta-vaults": "Vaults ({{itemCount}})",
 			"multisig-address-label": "Address",
 			"multisig-label-label": "Multisig name",
@@ -331,6 +326,19 @@
 			"pending-transactions": "{{txs}} pending transactions"
 		},
 		"multisig-detail-heading": "Multisig account details",
+		"multisig-transactions": {
+			"column-created-on": "Created on",
+			"column-current-signatures": "Sig",
+			"column-my-status": "My Status",
+			"column-operation": "Operation",
+			"column-pending-signatures": "Signatures",
+			"column-program-id": "Program",
+			"loading-transactions": "Loading transactions",
+			"modal-title": "Transaction summary",
+			"tx-operation-success": "Operation {{operation}} succeeded",
+			"tx-operation-failure": "Operation {{operation}} failed",
+			"no-transactions": "This multisig account has no transactions"
+		},
 		"multisig-programs": {
 			"cta-create-program": "Create program",
 			"modal-title": "Create program",
@@ -342,37 +350,24 @@
 			"screen-title": "Programs - {{multisigName}} ({{programCount}})",
 			"screen-title-no-programs": "Programs"
 		},
-		"multisig-transactions": {
-			"column-created-on": "Created on",
-			"column-current-signatures": "Sig",
-			"column-my-status": "My Status",
-			"column-operation": "Operation",
-			"column-pending-signatures": "Signatures",
-			"column-program-id": "Program",
-			"loading-transactions": "Loading transactions",
-			"modal-title": "Transaction summary",
-			"no-transactions": "This multisig account has no transactions",
-			"tx-operation-failure": "Operation {{operation}} failed",
-			"tx-operation-success": "Operation {{operation}} succeeded"
-		},
 		"multisig-treasuries": {
 			"back-to-multisig-accounts-cta": "Back to Multisig accounts",
 			"cta-change-multisig-authority": "Transfer Ownership",
 			"cta-change-multisig-authority-busy": "Changing Multisig",
 			"cta-close": "Close treasury",
 			"cta-close-busy": "Closing treasury",
-			"cta-create-treasury": "Create treasury",
-			"cta-create-treasury-busy": "Creating treasury",
 			"cta-transfer": "Initiate Withdrawal",
 			"cta-transfer-busy": "Initiating Withdrawal Request",
-			"multisig-treasury-detail-heading": "Treasury details",
+			"cta-create-treasury": "Create treasury",
+			"cta-create-treasury-busy": "Creating treasury",
 			"no-transactions": "No transactions for this treasury",
 			"no-vault-loaded": "No treasury loaded",
 			"no-vaults": "No multisig treasuries available",
 			"not-connected": "Please connect your wallet to see treasuries",
 			"refresh-tooltip": "Click to refresh the list of treasuries",
 			"screen-title": "Treasuries - {{multisigName}} ({{itemCount}})",
-			"screen-title-no-vaults": "Treasuries"
+			"screen-title-no-vaults": "Treasuries",
+			"multisig-treasury-detail-heading": "Treasury details"
 		},
 		"multisig-vaults": {
 			"back-to-multisig-accounts-cta": "Back to Multisig accounts",
@@ -380,9 +375,9 @@
 			"cta-change-multisig-authority-busy": "Changing Multisig",
 			"cta-close": "Close vault",
 			"cta-close-busy": "Closing vault",
-			"cta-create-vault-busy": "Creating vault",
 			"cta-transfer": "Initiate Withdrawal",
 			"cta-transfer-busy": "Initiating Withdrawal Request",
+			"cta-create-vault-busy": "Creating vault",
 			"no-transactions": "No transactions for this vault",
 			"no-vault-loaded": "No vault loaded",
 			"no-vaults": "No vaults available",
@@ -396,13 +391,6 @@
 		"pending-transactions": "pending transactions",
 		"refresh-tooltip": "Click to refresh the list of multisig accounts",
 		"screen-title": "Multisig accounts",
-		"set-program-authority": {
-			"main-cta": "Set Authority",
-			"main-cta-busy": "Setting Authority",
-			"modal-title": "New Upgrade Authority",
-			"new-authority-input-label": "New Upgrade Authority",
-			"new-authority-input-placeholder": "Address of new program upgrade authority"
-		},
 		"transfer-authority": {
 			"main-cta": "Set authority",
 			"main-cta-busy": "Setting authority",
@@ -426,7 +414,7 @@
 			"transfer-to-placeholder": "Enter the address of the destination account"
 		},
 		"update-multisig": {
-			"edit-not-allowed-message": "You can not edit the Multisig without first completing or canceling all pending transactions.",
+			"edit-not-allowed-message": "You can not edit the Multisig without first completing or cancelling all pending transactions.",
 			"main-cta": "Save changes",
 			"main-cta-busy": "Saving changes",
 			"modal-title": "Edit multisig",
@@ -441,6 +429,18 @@
 			"program-address-label": "Program ID",
 			"program-address-placeholder": "Enter the address of the program",
 			"success-message": "Program upgraded successfully."
+		},
+		"set-program-authority": {
+			"main-cta": "Set Authority",
+			"main-cta-busy": "Setting Authority",
+			"modal-title": "New Upgrade Authority",
+			"new-authority-input-label": "New Upgrade Authority",
+			"new-authority-input-placeholder": "Address of new program upgrade authority"
+		},
+		"crud-multisig": {
+			"edit-multisig": "Edit multisig",
+			"delete-multisig": "Delete multisig",
+			"update-multisig": "Migrate multisig"
 		}
 	},
 	"notifications": {
@@ -471,15 +471,15 @@
 		"success-account-funded-message": "Account funded",
 		"success-loading-stream-message": "The stream with ID {{streamId}} has been loaded",
 		"success-loading-treasury-message": "The treasury with ID {{treasuryId}} has been loaded",
-		"token-address-copied-message": "Token Address successfully copied",
-		"token-address-not-copied-message": "Could not copy Token Address",
-		"token-authority-copied-message": "Token Authority successfully copied",
-		"token-authority-not-copied-message": "Could not copy Token Authority",
 		"treasuryid-copied-message": "Treasury address successfully copied to clipboard",
 		"treasuryid-not-copied-message": "Could not copy treasury Address",
 		"wallet-connect-message": "Connected to wallet {{address}}",
 		"wallet-connection-event-title": "Wallet update",
-		"wallet-disconnect-message": "Disconnected from wallet"
+		"wallet-disconnect-message": "Disconnected from wallet",
+		"token-address-copied-message": "Token Address successfully copied",
+		"token-address-not-copied-message": "Could not copy Token Address",
+		"token-authority-copied-message": "Token Authority successfully copied",
+		"token-authority-not-copied-message": "Could not copy Token Authority"
 	},
 	"open-stream": {
 		"label-streamid-input": "Stream id to open",
@@ -487,6 +487,15 @@
 		"streamid-empty": "Missing stream id",
 		"streamid-open-cta": "Open stream",
 		"streamid-placeholder": "Stream ID created by Mean Finance"
+	},
+	"transfer-stream": {
+		"destination-address-is-sender": "The new address cannot be the sender",
+		"destination-is-own-account": "Transfer stream to yourself is not allowed",
+		"label-streamid-input": "New stream owner",
+		"modal-title": "Transfer stream",
+		"streamid-empty": "Missing address",
+		"streamid-open-cta": "Transfer",
+		"streamid-placeholder": "New beneficiary wallet address"
 	},
 	"payroll": {
 		"screen-subtitle": "Setup payroll for your employees",
@@ -502,41 +511,41 @@
 		"share-to": "Share to"
 	},
 	"stats": {
+		"title": "Stats",
+		"subtitle": "Analytics Dashboard",
 		"buy-btn": "Buy",
-		"market": {
-			"circulating-supply-title": "Circulating Supply",
-			"holders-title": "Holders",
-			"market-cap-title": "Market Cap",
-			"token-circulating-suppply": "The amount of coins that are circulating in the market and are in public hands. It is analogous to the flowing shares in the stock market",
-			"token-fully_dilluted_market_cap": "The total market value of a cryptocurrency's circulating supply. It is analogous to the free-float capitalization in the stock market. Market Cap = Current Price x Circulating Supply",
-			"token-holders": "Enthusiasts denoting a long-term approach to cryptocurrency investing",
-			"token-total-money-streams": "Total number of continuous payments over time that have been created by the Money Streaming Program",
-			"token-total-supply": "The amount of coins that have been already created, minus any coins that have been burned. It is analogous to the outstanding shares in the stock market",
-			"token-total-value-locked": "The number of assets that are currently being staked in a specific protocol",
-			"token-total-volume": "A measure of how much of a cryptocurrency was traded in the last 24 hours",
-			"total-money-streams-title": "Total Money Streams",
-			"total-supply-title": "Total Supply",
-			"total-value-locked-title": "Total Value Locked",
-			"volume-title": "Volume (24H)"
-		},
-		"pairs": {
-			"total-liquidity": "Total Liquidity"
+		"total-liquidity-btn": "Add Liquidity",
+		"summary": {
+			"summary-title": "MEAN Token Summary",
+			"token-name": "Name",
+			"token-address": "Address",
+			"token-authority": "Authority",
+			"token-decimals": "Decimals",
+			"token-address-copy": "Copy token address",
+			"token-authority-copy": "Copy token authority"
 		},
 		"price": {
 			"price-title": "Price"
 		},
-		"subtitle": "Analytical Dashboard",
-		"summary": {
-			"summary-title": "MEAN Token Summary",
-			"token-address": "Address",
-			"token-address-copy": "Copy token address",
-			"token-authority": "Authority",
-			"token-authority-copy": "Copy token authority",
-			"token-decimals": "Decimals",
-			"token-name": "Name"
+		"market": {
+			"market-cap-title": "Market Cap",
+			"holders-title": "Holders",
+			"volume-title": "Volume (24H)",
+			"total-supply-title": "Total Supply",
+			"circulating-supply-title": "Circulating Supply",
+			"total-money-streams-title": "Total Money Streams",
+			"total-value-locked-title": "Total Value Locked",
+			"token-fully_dilluted_market_cap": "The total market value of a cryptocurrency's circulating supply. It is analogous to the free-float capitalization in the stock market. Market Cap = Current Price x Circulating Supply",
+			"token-holders": "Enthusiasts denoting a long-term approach to cryptocurrency investing",
+			"token-total-volume": "A measure of how much of a cryptocurrency was traded in the last 24 hours",
+			"token-total-supply": "The amount of coins that have been already created, minus any coins that have been burned. It is analogous to the outstanding shares in the stock market",
+			"token-circulating-suppply": "The amount of coins that are circulating in the market and are in public hands. It is analogous to the flowing shares in the stock market",
+			"token-total-money-streams": "Total number of continuous payments over time that have been created by the Money Streaming Program",
+			"token-total-value-locked": "The number of assets that are currently being staked in a specific protocol"
 		},
-		"title": "Stats",
-		"total-liquidity-btn": "Add Liquidity"
+		"pairs": {
+			"total-liquidity": "Total Liquidity"
+		}
 	},
 	"streams": {
 		"back-to-my-streams-cta": "Back to Money Streams",
@@ -572,6 +581,7 @@
 			"amount-funded-date": "funded on",
 			"cancel-scheduled-transfer": "Cancel transfer",
 			"close-money-stream-menu-item": "Close money stream",
+			"transfer-money-stream-menu-item": "Transfer ownership",
 			"cta-disabled-closing": "Closing money stream...",
 			"cta-disabled-creating": "Create stream in progress...",
 			"cta-disabled-funding": "Add funds in progress...",
@@ -598,7 +608,6 @@
 			"label-total-withdrawals": "Total amount you have withdrawn since stream started",
 			"label-your-allocation": "Your remaining allocation",
 			"no-stream": "Please select or lookup a stream to view details",
-			"transfer-money-stream-menu-item": "Transfer ownership",
 			"withdraw-funds-cta": "Withdraw funds"
 		},
 		"stream-list": {
@@ -702,11 +711,13 @@
 			"instructions": "Confirm this transaction in your wallet",
 			"modal-title-executing-transaction": "Executing transaction",
 			"modal-title-transaction-completed": "Transaction completed",
-			"modal-title-transaction-disabled": "Transaction canceled",
+			"modal-title-transaction-disabled": "Transaction cancelled",
 			"stream-started-post": "was started successfully",
 			"stream-started-pre": "Your money stream for",
 			"tx-add-funds-operation": "Funding stream with",
 			"tx-add-funds-operation-success": "Funds added successfully",
+			"tx-transfer-stream": "Transfer stream beneficiary to address {{newAddress}}",
+			"tx-transfer-stream-success": "Stream transferred successfully",
 			"tx-close-operation": "Close stream operation",
 			"tx-close-operation-success": "Stream successfully closed",
 			"tx-close-vault-operation": "Close vault operation",
@@ -733,8 +744,6 @@
 			"tx-start-failure": "Your account balance {{accountBalance}} is lower than the fee amount {{feeAmount}} required to pay for network fees",
 			"tx-swap-operation": "Exchanging {{fromAmount}} to {{toAmount}}",
 			"tx-swap-operation-success": "Exchange operation completed successfully",
-			"tx-transfer-stream": "Transfer stream beneficiary to address {{newAddress}}",
-			"tx-transfer-stream-success": "Stream transferred successfully",
 			"tx-wait": "Working, please wait",
 			"tx-withdraw-operation": "Withdraw",
 			"tx-withdraw-operation-success": "Funds withdrawn successfully",
@@ -797,15 +806,6 @@
 		},
 		"verified-recipient-label": "I'm sure the recipient address doesn't belong to an exchange."
 	},
-	"transfer-stream": {
-		"destination-address-is-sender": "The new address cannot be the sender",
-		"destination-is-own-account": "Transfer stream to yourself is not allowed",
-		"label-streamid-input": "New stream owner",
-		"modal-title": "Transfer stream",
-		"streamid-empty": "Missing address",
-		"streamid-open-cta": "Transfer",
-		"streamid-placeholder": "New beneficiary wallet address"
-	},
 	"transfers": {
 		"screen-subtitle": "Send money to anyone in the world faster",
 		"screen-title": "Transfers"
@@ -829,16 +829,14 @@
 		"close-treasury-confirmation": "Are you sure you want to close the treasury?",
 		"create-new-treasury-cta": "Create treasury",
 		"create-treasury": {
-			"create-multisig-cta": "Initiate treasury",
-			"create-multisig-cta-busy": "Initiating treasury",
-			"create-multisig-treasury-success": "You have successfully signed the Initiate treasury request.",
 			"main-cta": "Create",
 			"main-cta-busy": "Creating treasury",
 			"modal-title": "Create treasury",
-			"multisig-selector-label": "Multisig account",
-			"multisig-treasury-created-info": "To complete the treasury setup, the other Multisig signers need to approve it.",
-			"multisig-treasury-created-instructions": "Please ask the other users to sign this treasury creation transaction.",
 			"multisig-treasury-switch-label": "Is this treasury for a Multisig account?",
+			"multisig-selector-label": "Multisig account",
+			"create-multisig-cta": "Initiate treasury",
+			"create-multisig-cta-busy": "Initiating treasury",
+			"create-multisig-treasury-success": "Initiate treasury request submitted for Multisig approval.",
 			"success-message": "Your new treasury was created successfully.",
 			"treasury-name-input-empty": "Enter Treasury name",
 			"treasury-name-input-label": "Treasury name",
@@ -866,23 +864,23 @@
 			"created-on": "Created on",
 			"cta-add-funds": "Add funds",
 			"cta-add-funds-busy": "Adding funds",
+			"cta-withdraw-multisig-treasury": "Withdraw funds",
 			"cta-close": "Close treasury",
 			"cta-close-busy": "Closing treasury",
-			"cta-withdraw-multisig-treasury": "Withdraw funds",
 			"funds-added-to-treasury": "Funds added to the treasury",
-			"multisig-tx-headsup": "Transactions Pending Approval or Execution for this Treasury",
 			"no-treasury-loaded": "Create or lookup a treasury to view details",
 			"no-treasury-selected": "Please select or lookup a treasury to view details",
 			"number-of-streams": "Number of streams",
+			"multisig-tx-headsup": "Transactions Pending Approval or Execution for this Treasury",
 			"treasury-address-label": "Address",
 			"treasury-name-label": "Treasury name"
 		},
 		"treasury-detail-heading": "Treasury details",
 		"treasury-list": {
-			"multisig-treasury-label": "Multisig Treasury",
 			"no-treasuries": "No treasuries available",
 			"not-connected": "Please connect your wallet to see your treasuries",
-			"total-streams-label": "streams"
+			"total-streams-label": "streams",
+			"multisig-treasury-label": "Multisig Treasury"
 		},
 		"treasury-streams": {
 			"add-stream-modal-title": "Add stream to the treasury",
@@ -899,7 +897,6 @@
 			"column-started": "Started",
 			"create-stream-main-cta": "Create stream",
 			"create-stream-main-cta-busy": "Creating stream",
-			"fee-payed-by-treasurer": "I want to pay fees for this stream instead of the beneficiary",
 			"loading-streams": "Loading streams",
 			"minimum-allocation-advice": "You must set a minimum allocation for this Money Stream up to the unallocated balance available in the Treasury.",
 			"no-streams": "This treasury has no active streams",
@@ -909,18 +906,19 @@
 			"option-resume-stream": "Resume",
 			"status-running": "Running",
 			"status-scheduled": "Scheduled",
-			"status-stopped": "Stopped"
+			"status-stopped": "Stopped",
+			"fee-payed-by-treasurer": "I want to pay fees for this stream instead of the beneficiary"
 		}
 	},
 	"ui-language": {
 		"en": "English",
 		"es": "Spanish",
 		"fr": "French",
-		"ko": "Korean",
 		"pt": "Português",
 		"tr": "Türkçe",
+		"zh": "Chinese",
 		"vi": "Vietnamese",
-		"zh": "Chinese"
+		"ko": "Korean"
 	},
 	"ui-menus": {
 		"app-context-menu": {
@@ -944,8 +942,8 @@
 			"deposits": "Deposits",
 			"invest": {
 				"pol-bonds": "POL Bonds",
-				"staking": "Staking",
-				"submenu-title": "Invest"
+				"submenu-title": "Invest",
+				"staking": "Staking"
 			},
 			"services": {
 				"custody": "Custody",
