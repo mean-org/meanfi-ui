@@ -923,7 +923,10 @@
 		"es": "Español",
 		"fr": "Francés",
 		"pt": "Português",
-		"tr": "Türkçe"
+		"tr": "Türkçe",
+		"zh": "Chinese",
+		"vi": "Vietnamese",
+		"ko": "Korean"
 	},
 	"ui-menus": {
 		"app-context-menu": {
