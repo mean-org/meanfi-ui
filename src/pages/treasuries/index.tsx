@@ -4521,7 +4521,12 @@ export const TreasuriesView = () => {
   }
 
   // TODO: Bind the amount of pending Txs for this treasury
-  const renderMultisigTxReminder = () => {
+  const renderMultisigTxReminder = useCallback(() => {
+    const v2 = treasuryDetails as Treasury;
+    const isNewTreasury = v2.version >= 2 ? true : false;
+    const multisig = v2 && isNewTreasury && multisigAccounts
+      ? multisigAccounts.find(m => m.address.toBase58() === v2.treasurer)
+      : undefined;
     return (
       <div key="streams" className="transaction-list-row no-pointer mb-2">
         <div className="icon-cell">
@@ -4536,14 +4541,26 @@ export const TreasuriesView = () => {
         <div className="description-cell">
           <div className="font-bold simplelink underline-on-hover" onClick={() => {
             if (selectedMultisig) {
+              consoleOut('Navigating to multisig:', selectedMultisig.address.toBase58(), 'blue');
               setHighLightableMultisigId(selectedMultisig.address.toBase58());
-              navigate('/multisig');
+            } else if (multisig) {
+              consoleOut('Navigating to multisig:', multisig.address.toBase58(), 'blue');
+              setHighLightableMultisigId(multisig.address.toBase58());
             }
+            navigate('/multisig');
           }}>{t('treasuries.treasury-detail.multisig-tx-headsup')}</div>
         </div>
       </div>
     );
-  };
+  }, [
+    treasuryDetails,
+    multisigAccounts,
+    selectedMultisig,
+    treasuryPendingTxs,
+    setHighLightableMultisigId,
+    navigate,
+    t,
+  ]);
 
   const renderTreasuryMeta = () => {
     const v1 = treasuryDetails as TreasuryInfo;
