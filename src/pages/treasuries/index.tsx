@@ -1496,7 +1496,7 @@ export const TreasuriesView = () => {
       currentOperation: TransactionStatus.Iddle
     });
     const usedOptions = retryOperationPayload as TreasuryCreateOptions;
-    if (usedOptions.multisigId) {
+    if (usedOptions && usedOptions.multisigId) {
       notify({
         description: t('treasuries.create-treasury.create-multisig-treasury-success'),
         type: "success"
@@ -1899,7 +1899,7 @@ export const TreasuriesView = () => {
 
       if (!connection || !msp || !publicKey) { return null; }
 
-      if (!data.multisigid) {
+      if (!data.multisig) {
         return await msp.createTreasury(
           new PublicKey(data.treasurer),                    // treasurer
           new PublicKey(data.treasurer),                    // treasurer
@@ -1910,7 +1910,7 @@ export const TreasuriesView = () => {
 
       if (!multisigClient || !multisigAccounts) { return null; }
 
-      const multisig = multisigAccounts.filter(m => m.id.toBase58() === data.multisigid)[0];
+      const multisig = multisigAccounts.filter(m => m.id.toBase58() === data.multisig)[0];
 
       if (!multisig) { return null; }
 
