@@ -427,7 +427,7 @@ export const TreasuriesView = () => {
   ]);
 
   const refreshTreasuries = useCallback((reset = false) => {
-    if (!connection || !publicKey || loadingTreasuries) { return; }
+    if (!connection || !publicKey) { return; }
 
     if (fetchTxInfoStatus !== "fetching") {
 
@@ -438,20 +438,20 @@ export const TreasuriesView = () => {
 
       if (msp && ms) {
         let treasuryAccumulator: (Treasury | TreasuryInfo)[] = [];
+        let treasuriesv1: TreasuryInfo[] = [];
         getAllUserV2Treasuries()
-          .then((treasuriesv2) => {
+          .then(async (treasuriesv2) => {
             treasuryAccumulator.push(...treasuriesv2);
             consoleOut('v2 treasuries:', treasuriesv2, 'blue');
 
             if (!selectedMultisig) {
-              ms.listTreasuries(publicKey)
-              .then(treasuriesv1 => {
-                treasuryAccumulator.push(...treasuriesv1);
-                consoleOut('v1 treasuries:', treasuriesv1, 'blue');
-              })
-              .catch(error => {
+              try {
+                treasuriesv1 = await ms.listTreasuries(publicKey);
+              } catch (error) {
                 console.error(error);
-              });
+              }
+              consoleOut('v1 treasuries:', treasuriesv1, 'blue');
+              treasuryAccumulator.push(...treasuriesv1);
             }
 
             setTreasuryList(treasuryAccumulator);
@@ -516,7 +516,6 @@ export const TreasuriesView = () => {
     connection,
     treasuryAddress,
     treasuryDetails,
-    loadingTreasuries,
     fetchTxInfoStatus,
     selectedMultisig,
     clearTransactionStatusContext,
@@ -549,6 +548,45 @@ export const TreasuriesView = () => {
     refreshTokenBalance
   ]);
 
+  const refreshUserBalances = useCallback(() => {
+
+    if (!connection || !publicKey || !tokenList || !accounts || !accounts.tokenAccounts) {
+      return;
+    }
+
+    const balancesMap: any = {};
+    connection.getTokenAccountsByOwner(
+      publicKey, 
+      { programId: TOKEN_PROGRAM_ID }, 
+      connection.commitment
+    )
+    .then(response => {
+      for (let acc of response.value) {
+        const decoded = ACCOUNT_LAYOUT.decode(acc.account.data);
+        const address = decoded.mint.toBase58();
+        const itemIndex = tokenList.findIndex(t => t.address === address);
+        if (itemIndex !== -1) {
+          balancesMap[address] = decoded.amount.toNumber() / (10 ** tokenList[itemIndex].decimals);
+        } else {
+          balancesMap[address] = 0;
+        }
+      }
+    })
+    .catch(error => {
+      console.error(error);
+      for (let t of tokenList) {
+        balancesMap[t.address] = 0;
+      }
+    })
+    .finally(() => setUserBalances(balancesMap));
+
+  }, [
+    accounts,
+    publicKey,
+    tokenList,
+    connection,
+  ]);
+
   // Automatically update all token balances (in token list)
   useEffect(() => {
 
@@ -563,31 +601,33 @@ export const TreasuriesView = () => {
 
     const timeout = setTimeout(() => {
 
-      const balancesMap: any = {};
-      connection.getTokenAccountsByOwner(
-        publicKey, 
-        { programId: TOKEN_PROGRAM_ID }, 
-        connection.commitment
-      )
-      .then(response => {
-        for (let acc of response.value) {
-          const decoded = ACCOUNT_LAYOUT.decode(acc.account.data);
-          const address = decoded.mint.toBase58();
-          const itemIndex = tokenList.findIndex(t => t.address === address);
-          if (itemIndex !== -1) {
-            balancesMap[address] = decoded.amount.toNumber() / (10 ** tokenList[itemIndex].decimals);
-          } else {
-            balancesMap[address] = 0;
-          }
-        }
-      })
-      .catch(error => {
-        console.error(error);
-        for (let t of tokenList) {
-          balancesMap[t.address] = 0;
-        }
-      })
-      .finally(() => setUserBalances(balancesMap));
+      // const balancesMap: any = {};
+      // connection.getTokenAccountsByOwner(
+      //   publicKey, 
+      //   { programId: TOKEN_PROGRAM_ID }, 
+      //   connection.commitment
+      // )
+      // .then(response => {
+      //   for (let acc of response.value) {
+      //     const decoded = ACCOUNT_LAYOUT.decode(acc.account.data);
+      //     const address = decoded.mint.toBase58();
+      //     const itemIndex = tokenList.findIndex(t => t.address === address);
+      //     if (itemIndex !== -1) {
+      //       balancesMap[address] = decoded.amount.toNumber() / (10 ** tokenList[itemIndex].decimals);
+      //     } else {
+      //       balancesMap[address] = 0;
+      //     }
+      //   }
+      // })
+      // .catch(error => {
+      //   console.error(error);
+      //   for (let t of tokenList) {
+      //     balancesMap[t.address] = 0;
+      //   }
+      // })
+      // .finally(() => setUserBalances(balancesMap));
+
+      refreshUserBalances();
     });
 
     return () => {
@@ -595,10 +635,11 @@ export const TreasuriesView = () => {
     }
 
   }, [
-    connection,
-    tokenList,
     accounts,
-    publicKey
+    tokenList,
+    publicKey,
+    connection,
+    refreshUserBalances
   ]);
 
   /**
@@ -855,7 +896,6 @@ export const TreasuriesView = () => {
     treasuriesLoaded,
     loadingTreasuries,
     previousWalletConnectState,
-    refreshTreasuries
   ]);
 
   // Reload Treasury streams whenever the selected treasury changes
@@ -2156,6 +2196,7 @@ export const TreasuriesView = () => {
   const [isAddFundsModalVisible, setIsAddFundsModalVisibility] = useState(false);
   const showAddFundsModal = useCallback(() => {
     resetTransactionStatus();
+    refreshUserBalances();
     if (treasuryDetails) {
       const v2 = treasuryDetails as Treasury;
       if (v2.version && v2.version >= 2) {
@@ -2178,8 +2219,9 @@ export const TreasuriesView = () => {
   }, [
     treasuryDetails,
     getTransactionFees,
+    refreshUserBalances,
     getTransactionFeesV2,
-    resetTransactionStatus
+    resetTransactionStatus,
   ]);
 
   const closeAddFundsModal = useCallback(() => {
@@ -4303,6 +4345,7 @@ export const TreasuriesView = () => {
   const [isCreateStreamModalVisible, setIsCreateStreamModalVisibility] = useState(false);
   const showCreateStreamModal = useCallback(() => {
     resetTransactionStatus();
+    refreshUserBalances();
     setIsCreateStreamModalVisibility(true);
     getTransactionFeesV2(MSP_ACTIONS_V2.createStream).then(value => {
       setTransactionFees(value);
@@ -4313,8 +4356,9 @@ export const TreasuriesView = () => {
       consoleOut('withdrawTransactionFees:', value, 'orange');
     });
   }, [
+    refreshUserBalances,
     getTransactionFeesV2,
-    resetTransactionStatus
+    resetTransactionStatus,
   ]);
 
   const closeCreateStreamModal = useCallback(() => {
