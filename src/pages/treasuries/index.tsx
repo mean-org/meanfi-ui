@@ -600,33 +600,6 @@ export const TreasuriesView = () => {
     }
 
     const timeout = setTimeout(() => {
-
-      // const balancesMap: any = {};
-      // connection.getTokenAccountsByOwner(
-      //   publicKey, 
-      //   { programId: TOKEN_PROGRAM_ID }, 
-      //   connection.commitment
-      // )
-      // .then(response => {
-      //   for (let acc of response.value) {
-      //     const decoded = ACCOUNT_LAYOUT.decode(acc.account.data);
-      //     const address = decoded.mint.toBase58();
-      //     const itemIndex = tokenList.findIndex(t => t.address === address);
-      //     if (itemIndex !== -1) {
-      //       balancesMap[address] = decoded.amount.toNumber() / (10 ** tokenList[itemIndex].decimals);
-      //     } else {
-      //       balancesMap[address] = 0;
-      //     }
-      //   }
-      // })
-      // .catch(error => {
-      //   console.error(error);
-      //   for (let t of tokenList) {
-      //     balancesMap[t.address] = 0;
-      //   }
-      // })
-      // .finally(() => setUserBalances(balancesMap));
-
       refreshUserBalances();
     });
 
@@ -883,6 +856,7 @@ export const TreasuriesView = () => {
         setTreasuriesLoaded(false);
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'green');
+        setUserBalances(undefined);
         setTreasuryList([]);
         setTreasuryStreams([]);
         setCustomStreamDocked(false);
@@ -2230,6 +2204,7 @@ export const TreasuriesView = () => {
   const showAddFundsModal = useCallback(() => {
     resetTransactionStatus();
     refreshUserBalances();
+    refreshTokenBalance();
     if (treasuryDetails) {
       const v2 = treasuryDetails as Treasury;
       if (v2.version && v2.version >= 2) {
@@ -2252,6 +2227,7 @@ export const TreasuriesView = () => {
   }, [
     treasuryDetails,
     getTransactionFees,
+    refreshTokenBalance,
     refreshUserBalances,
     getTransactionFeesV2,
     resetTransactionStatus,
@@ -4379,6 +4355,7 @@ export const TreasuriesView = () => {
   const showCreateStreamModal = useCallback(() => {
     resetTransactionStatus();
     refreshUserBalances();
+    refreshTokenBalance();
     setIsCreateStreamModalVisibility(true);
     getTransactionFeesV2(MSP_ACTIONS_V2.createStream).then(value => {
       setTransactionFees(value);
@@ -4390,6 +4367,7 @@ export const TreasuriesView = () => {
     });
   }, [
     refreshUserBalances,
+    refreshTokenBalance,
     getTransactionFeesV2,
     resetTransactionStatus,
   ]);
