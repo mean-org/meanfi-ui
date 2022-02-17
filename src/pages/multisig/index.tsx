@@ -12,6 +12,7 @@ import {
   Keypair,
   LAMPORTS_PER_SOL,
   PublicKey,
+  Signer,
   SystemProgram,
   SYSVAR_CLOCK_PUBKEY,
   SYSVAR_RENT_PUBKEY,
@@ -368,8 +369,6 @@ export const MultisigView = () => {
           name: p.name
         }
       });
-
-      consoleOut('multisig owners', owners, 'blue');
 
       let tx = multisigClient.transaction.createMultisig(
         owners as any,
@@ -1705,7 +1704,10 @@ export const MultisigView = () => {
           isWritable: false,
           isSigner: false,
         });
-  
+
+      const txSigners = data.transaction.signatures
+        .map((s: any) => Keypair.fromSecretKey(Uint8Array.from(Buffer.from(s.secretKey))));
+        
       let tx = multisigClient.transaction.executeTransaction({
           accounts: {
             multisig: data.transaction.multisig,
@@ -1713,12 +1715,17 @@ export const MultisigView = () => {
             transaction: data.transaction.id,
           },
           remainingAccounts: remainingAccounts,
+          signers: txSigners
         }
       );
   
       tx.feePayer = publicKey;
       const { blockhash } = await multisigClient.provider.connection.getRecentBlockhash("finalized");
       tx.recentBlockhash = blockhash;
+      
+      if (txSigners.length) {
+        tx.partialSign(...txSigners);
+      }
   
       return tx;
     };
@@ -1726,7 +1733,7 @@ export const MultisigView = () => {
     const createTx = async (): Promise<boolean> => {
 
       if (publicKey && data) {
-        consoleOut("Start transaction for create multisig", '', 'blue');
+        consoleOut("Start transaction for create stream", '', 'blue');
         consoleOut('Wallet address:', publicKey.toBase58());
 
         setTransactionStatus({
@@ -1777,7 +1784,6 @@ export const MultisigView = () => {
         return await finishTx(payload)
           .then(value => {
             if (!value) { return false; }
-            console.log('ix signatures', value.signatures.map(a => a.publicKey.toBase58()));
             consoleOut('multisig returned transaction:', value);
             setTransactionStatus({
               lastOperation: TransactionStatus.InitTransactionSuccess,
@@ -1791,7 +1797,7 @@ export const MultisigView = () => {
             return true;
           })
           .catch(error => {
-            console.error('mint tokens error:', error);
+            console.error('create stream error:', error);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.InitTransactionFailure
@@ -3047,6 +3053,8 @@ export const MultisigView = () => {
         return "Create Vault";
       case OperationType.SetVaultAuthority:
         return "Change Vault Authority";
+      case OperationType.StreamCreate:
+        return "Create Stream";
       default:
         return '';
     }
@@ -3468,6 +3476,9 @@ export const MultisigView = () => {
         .all(selectedMultisig.id.toBuffer())
         .then((txs) => {
           for (let tx of txs) {
+
+            // console.log('tx account', tx.account);
+
             let currentOwnerIndex = selectedMultisig.owners
               .findIndex((o: MultisigParticipant) => o.address === publicKey.toBase58());
 
@@ -3483,7 +3494,8 @@ export const MultisigView = () => {
               status: getTransactionStatus(tx.account),
               operation: parseInt(Object.keys(OperationType).filter(k => k === tx.account.operation.toString())[0]),
               accounts: tx.account.accounts,
-              didSigned: tx.account.signers[currentOwnerIndex]
+              didSigned: tx.account.signers[currentOwnerIndex],
+              signatures: tx.account.signatures
 
             } as MultisigTransaction);
             
@@ -3497,7 +3509,7 @@ export const MultisigView = () => {
         .catch(err => {
           console.error(err);
           setLoadingMultisigTxs(false);
-        });   
+        });
     });
 
     return () => {
