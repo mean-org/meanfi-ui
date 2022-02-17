@@ -537,7 +537,7 @@ export const TreasuryStreamCreateModal = (props: {
         data.feePayedByTreasurer                                              // feePayedByTreasurer
       );
 
-      const ixRequiredSigners = [streamAccount];
+      const ixKeypairs = [streamAccount.secretKey];
       const ixData = Buffer.from(createStream.instructions[0].data);
       const ixAccounts = createStream.instructions[0].keys;
       const transaction = Keypair.generate();
@@ -550,7 +550,7 @@ export const TreasuryStreamCreateModal = (props: {
       let tx = props.multisigClient.transaction.createTransaction(
         MSPV2Constants.MSP,
         OperationType.StreamCreate,
-        ixRequiredSigners,
+        ixKeypairs,
         ixAccounts as any,
         ixData as any,
         {

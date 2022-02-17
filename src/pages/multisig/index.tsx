@@ -1668,8 +1668,7 @@ export const MultisigView = () => {
           isSigner: false,
         });
 
-      const txSigners = data.transaction.signatures
-        .map((s: any) => Keypair.fromSecretKey(Uint8Array.from(Buffer.from(s.secretKey))));
+      const txSigners = data.transaction.keypairs;
         
       let tx = multisigClient.transaction.executeTransaction({
           accounts: {
@@ -3458,7 +3457,15 @@ export const MultisigView = () => {
               operation: parseInt(Object.keys(OperationType).filter(k => k === tx.account.operation.toString())[0]),
               accounts: tx.account.accounts,
               didSigned: tx.account.signers[currentOwnerIndex],
-              signatures: tx.account.signatures
+              keypairs: tx.account.keypairs
+                .map((k: any) => {
+                  try {
+                    return Keypair.fromSecretKey(Uint8Array.from(Buffer.from(k)));
+                  } catch {
+                    return undefined;
+                  }
+                })
+                .filter((k: any) => k !== undefined)
 
             } as MultisigTransaction);
             
