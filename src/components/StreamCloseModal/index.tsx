@@ -324,23 +324,26 @@ export const StreamCloseModal = (props: {
 
           {/* Info */}
           {localStreamDetail && localStreamDetail.associatedToken && (
-            <div className="p-2 mb-2">
-              {infoRow(
-                t('close-stream.return-vested-amount') + ':',
-                getTokenAmountAndSymbolByTokenAddress(getWithdrawableAmount(), localStreamDetail.associatedToken as string)
-              )}
-              {amITreasurer() && infoRow(
-                t('close-stream.return-unvested-amount') + ':',
-                getTokenAmountAndSymbolByTokenAddress(getUnvested(), localStreamDetail.associatedToken as string)
-              )}
-              {amIBeneficiary() && getWithdrawableAmount() > 0 && infoRow(
-                t('transactions.transaction-info.transaction-fee') + ':',
-                `${feeAmount
-                  ? '~' + getTokenAmountAndSymbolByTokenAddress((feeAmount as number), localStreamDetail.associatedToken as string)
-                  : '0'
-                }`
-              )}
-            </div>
+            <>
+              <div className="p-2 mb-2">
+                {infoRow(
+                  t('close-stream.return-vested-amount') + ':',
+                  getTokenAmountAndSymbolByTokenAddress(getWithdrawableAmount(), localStreamDetail.associatedToken as string)
+                )}
+                {amITreasurer() && infoRow(
+                  t('close-stream.return-unvested-amount') + ':',
+                  getTokenAmountAndSymbolByTokenAddress(getUnvested(), localStreamDetail.associatedToken as string)
+                )}
+                {amIBeneficiary() && getWithdrawableAmount() > 0 && infoRow(
+                  t('transactions.transaction-info.transaction-fee') + ':',
+                  `${feeAmount
+                    ? '~' + getTokenAmountAndSymbolByTokenAddress((feeAmount as number), localStreamDetail.associatedToken as string)
+                    : '0'
+                  }`
+                )}
+              </div>
+              <div className="operation">{t("close-stream.context-treasurer-aditional-message")}.</div>
+            </>
           )}
 
           {props.canCloseTreasury && treasuryDetails && !treasuryDetails.autoClose && (

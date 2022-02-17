@@ -64,6 +64,7 @@
 		"context-beneficiary": "Bir aktarımı kapatırsanız şu ana kadar aktarılmış olan para ({{beneficiary}}) hesabına gönderilecek ve para aktarımı hemen duracak.",
 		"context-treasurer-multiple-beneficiaries": "Bir aktarımı kapatırsanız para aktarımı duracak, aktarılmış olan miktar alıcıya ({{beneficiary}}) gönderilecek ve aktarılmamış olan miktar hazine hesabına ({{treasury}}) geri dönecek.",
 		"context-treasurer-single-beneficiary": "Bir aktarımı kapatırsanız para aktarımı duracak, aktarılmış olan miktar alıcıya ({{beneficiary}}) gönderilecek ve aktarılmamış miktar yüklenicinin hesabına geri dönecek.",
+		"context-treasurer-aditional-message": "The above amounts are only accurate for paused and ended streams. For live steams, the amounts will be determined the moment the stream is closed.",
 		"loading-treasury-message": "Akışı incele",
 		"modal-title": "Aktarımı kapat",
 		"primary-cta": "Aktarımı kapat",

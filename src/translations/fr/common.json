@@ -64,6 +64,7 @@
 		"context-beneficiary": "La fermeture d'un flux enverra le montant acquis sur votre compte ({{beneficiary}}) et arrêtera immédiatement le flux d'argent.",
 		"context-treasurer-multiple-beneficiaries": "La fermeture d'un flux arrêtera le flux d'argent, enverra le montant acquis au bénéficiaire ({{beneficiary}}) et restituera les montants non acquis à la trésorerie d'origine ({{treasury}}).",
 		"context-treasurer-single-beneficiary": "La fermeture d'un flux arrêtera le flux d'argent, enverra le montant acquis au bénéficiaire ({{beneficiary}}) et restituera le montant non acquis au contributeur.",
+		"context-treasurer-aditional-message": "The above amounts are only accurate for paused and ended streams. For live steams, the amounts will be determined the moment the stream is closed.",
 		"loading-treasury-message": "Analyse du flux",
 		"modal-title": "Fermer le flux",
 		"primary-cta": "Fermer le flux",
