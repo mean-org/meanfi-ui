@@ -23,6 +23,7 @@ import {
   getTokenByMintAddress,
   getTokenSymbol,
   getTxIxResume,
+  makeDecimal,
   shortenAddress,
   toTokenAmount,
   toUiAmount
@@ -2236,11 +2237,6 @@ export const TreasuriesView = () => {
     setIsAddFundsModalVisibility(false);
   }, []);
 
-  const onAcceptAddFunds = (params: TreasuryTopupParams) => {
-    consoleOut('AddFunds params:', params, 'blue');
-    onExecuteAddFundsTransaction(params);
-  };
-
   const onAddFundsTransactionFinished = () => {
     closeAddFundsModal();
     refreshTokenBalance();
@@ -2252,6 +2248,11 @@ export const TreasuriesView = () => {
       description: t('treasuries.add-funds.success-message'),
       type: "success"
     });
+  };
+
+  const onAcceptAddFunds = (params: TreasuryTopupParams) => {
+    consoleOut('AddFunds params:', params, 'blue');
+    onExecuteAddFundsTransaction(params);
   };
 
   const onExecuteAddFundsTransaction = async (params: TreasuryTopupParams) => {
@@ -2280,17 +2281,19 @@ export const TreasuriesView = () => {
         const treasury = new PublicKey(treasuryDetails.id);
         const associatedToken = new PublicKey(selectedToken.address);
         const amount = parseFloat(params.amount);
+        // const amount = params.amount;
         const stream = params.streamId ? new PublicKey(params.streamId) : undefined;
 
         console.log('params.streamId', params.streamId);
 
         const data = {
-          contributor: publicKey.toBase58(),                       // contributor
-          treasury: treasury.toBase58(),                           // treasury
+          contributor: publicKey.toBase58(),                        // contributor
+          treasury: treasury.toBase58(),                            // treasury
           stream: stream?.toBase58(),                               // stream
-          associatedToken: associatedToken.toBase58(),             // associatedToken
-          amount,                                                 // amount
-          allocationType: params.allocationType                   // allocationType
+          associatedToken: associatedToken.toBase58(),              // associatedToken
+          amount: amount,                                           // amount
+          // amount: amount.toNumber(),                                // amount
+          allocationType: params.allocationType                     // allocationType
         }
         consoleOut('data:', data);
 

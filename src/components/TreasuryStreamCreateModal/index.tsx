@@ -254,9 +254,9 @@ export const TreasuryStreamCreateModal = (props: {
       ? t('transactions.validation.not-connected')
       : !recipientAddress || isAddressOwnAccount()
       ? t('transactions.validation.select-recipient')
-      : !selectedToken || unallocatedBalance === 0
+      : !selectedToken || unallocatedBalance.isZero()
       ? t('transactions.validation.no-balance')
-      : tokenAmount === 0
+      : !tokenAmount || tokenAmount.isZero()
       ? t('transactions.validation.no-amount')
       : (isFeePaidByTreasurer && tokenAmount.gt(maxAllocatableAmount)) ||
         (!isFeePaidByTreasurer && tokenAmount.gt(unallocatedBalance))
@@ -849,7 +849,7 @@ export const TreasuryStreamCreateModal = (props: {
   const isSendAmountValid = (): boolean => {
     return publicKey &&
            selectedToken &&
-           tokenAmount > 0 &&
+           tokenAmount && tokenAmount.toNumber() > 0 &&
            ((isFeePaidByTreasurer && tokenAmount.lte(maxAllocatableAmount)) ||
             (!isFeePaidByTreasurer && tokenAmount.lte(unallocatedBalance)))
     ? true
