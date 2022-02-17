@@ -40,14 +40,15 @@ export const JupiterExchange = (props: {
 }) => {
 
     const { t } = useTranslation("common");
-    const { publicKey, wallet } = useWallet();
+    const { publicKey, wallet, connected } = useWallet();
     const { account } = useNativeAccount();
     const [userBalances, setUserBalances] = useState<any>();
     const {
         coinPrices,
         transactionStatus,
-        refreshPrices,
+        previousWalletConnectState,
         setTransactionStatus,
+        refreshPrices,
     } = useContext(AppStateContext);
     const [transactionCancelled, setTransactionCancelled] = useState(false);
     const [isBusy, setIsBusy] = useState(false);
@@ -701,6 +702,22 @@ export const JupiterExchange = (props: {
         outputToken,
         inputAmount,
         refreshRoutes
+    ]);
+
+    // Hook on wallet connect/disconnect
+    useEffect(() => {
+        if (previousWalletConnectState !== connected) {
+            if (!previousWalletConnectState && connected && publicKey) {
+                consoleOut('User is connecting...', publicKey.toBase58(), 'green');
+            } else if (previousWalletConnectState && !connected) {
+                consoleOut('User is disconnecting...', '', 'green');
+                setUserBalances(undefined);
+            }
+        }
+    }, [
+        connected,
+        publicKey,
+        previousWalletConnectState,
     ]);
 
     const isInAmountTooLow = useCallback(() => {

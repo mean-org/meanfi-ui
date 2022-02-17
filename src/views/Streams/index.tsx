@@ -438,7 +438,6 @@ export const Streams = () => {
     }
   }, []);
 
-  // Highlight a stream in the list with scrolling into view if needed
   useEffect(() => {
     if (loadingStreams || !streamList || streamList.length === 0 || !highLightableStreamId) {
       return;

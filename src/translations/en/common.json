@@ -64,6 +64,7 @@
 		"context-beneficiary": "Closing a stream will send the vested amount to your account ({{beneficiary}}) and stop the flow of money immediately.",
 		"context-treasurer-multiple-beneficiaries": "Closing a stream will stop the money flow, send the vested amount to the beneficiary ({{beneficiary}}), and return the unvested amounts back to the original treasury ({{treasury}}).",
 		"context-treasurer-single-beneficiary": "Closing a stream will stop the money flow, send the vested amount to the beneficiary ({{beneficiary}}), and return the unvested amount back to the contributor.",
+		"context-treasurer-aditional-message": "The above amounts are only accurate for paused and ended streams. For live steams, the amounts will be determined the moment the stream is closed.",
 		"loading-treasury-message": "Analyzing stream",
 		"modal-title": "Close stream",
 		"primary-cta": "Close stream",
@@ -114,6 +115,27 @@
 		"subscription": {
 			"description": "Setup a SaaS subscription contract for regular membership payments. Think Netflix, or your monthly Gym Club Membership.",
 			"name": "Subscription"
+		}
+	},
+	"custody": {
+		"heading": "Crypto Asset Custody",
+		"subheading": "The most advanced digital asset platform, for secure crypto custody, trading, staking, governance, and more.",
+		"custody-button": "Apply to MeanFi Custody",
+		"first-container": {
+			"title-one": "Safeguard your investments",
+			"text-one": "We provide secure custody solutions for institutions and individuals alike so they can safely invest in crypto assets.",
+			"title-two": "Trade, borrow, and earn rewards",
+			"text-two": "With MeanFi Trading, access multiple venues through one onboarding. Borrow crypto or USD against crypto collateral, or lend and earn returns on assets under custody.",
+			"title-three": "Onboarding and Support",
+			"text-three": "Dedicated Support Team that guides you during the onboard process and help you resolve any challenge."
+		},
+		"second-container": {
+			"title": "WHY MEANFI CUSTODY",
+			"text": "We're a team of engineers, designers, and crypto experts who believe that the future is digital assets. However, with no way to securely store them right now we feel like our hands are tied behind our back. So we decided to build MeanFi Custody so that you can finally make your money work for you!"
+		},
+		"third-container": {
+			"title": "Supported Assets",
+			"text": "MeanFi supports assets that meet our standards of quality and safety. Our list includes USDC, USDT, SOL, DAI, and more. We are always looking to grow our portfolio with new Assets. To learn more about our roadmap, please get in touch."
 		}
 	},
 	"ddca-selector": {
@@ -841,7 +863,7 @@
 		"create-treasury": {
 			"create-multisig-cta": "Initiate treasury",
 			"create-multisig-cta-busy": "Initiating treasury",
-			"create-multisig-treasury-success": "Initiate treasury request submitted for Multisig approval.",
+			"create-multisig-treasury-success": "You have successfully signed the Initiate treasury request.",
 			"main-cta": "Create",
 			"main-cta-busy": "Creating treasury",
 			"modal-title": "Create treasury",

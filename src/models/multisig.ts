@@ -1,4 +1,4 @@
-import { PublicKey } from "@solana/web3.js";
+import { Keypair, PublicKey, SignaturePubkeyPair } from "@solana/web3.js";
 import { OperationType } from "./enums";
 
 export enum MultisigTransactionStatus {
@@ -48,6 +48,8 @@ export type MultisigTransaction = {
   executedOn: Date | undefined;
   status: MultisigTransactionStatus;
   accounts: any[];
+  data: Buffer;
+  keypairs: Keypair[];
   didSigned: boolean; // this should be a number needs to be changed in the program (0 = not signed, 1 = signed, 2 = rejected)
 }
 

@@ -349,14 +349,17 @@ export const OneTimePayment = () => {
     updateTokenListByFilter
   ]);
 
-  // Effect auto-select token on wallet connect and clear balance on disconnect
+  // Hook on wallet connect/disconnect
   useEffect(() => {
+
     if (previousWalletConnectState !== connected) {
-      // User is connecting
-      if (!previousWalletConnectState && connected) {
+      if (!previousWalletConnectState && connected && publicKey) {
+        consoleOut('User is connecting...', publicKey.toBase58(), 'green');
         setSelectedTokenBalance(0);
+      } else if (previousWalletConnectState && !connected) {
+        consoleOut('User is disconnecting...', '', 'green');
+        setUserBalances(undefined);
       }
-      setPreviousWalletConnectState(connected);
     } else if (!connected) {
       setSelectedTokenBalance(0);
     }
@@ -364,13 +367,12 @@ export const OneTimePayment = () => {
     return () => {
       clearTimeout();
     };
+
   }, [
     connected,
+    publicKey,
     previousWalletConnectState,
-    tokenList,
-    setSelectedToken,
-    setSelectedTokenBalance,
-    setPreviousWalletConnectState,
+    setSelectedTokenBalance
   ]);
 
   // Reset results when the filter is cleared
