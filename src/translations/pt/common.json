@@ -917,7 +917,10 @@
 		"es": "Espanhol",
 		"fr": "Francês",
 		"pt": "Português",
-		"tr": "Türkçe"
+		"tr": "Türkçe",
+		"zh": "Chinese",
+		"vi": "Vietnamese",
+		"ko": "Korean"
 	},
 	"ui-menus": {
 		"app-context-menu": {
