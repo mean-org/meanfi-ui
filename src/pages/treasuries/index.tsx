@@ -710,6 +710,27 @@ export const TreasuriesView = () => {
     treasuryDetails
   ])
 
+  const getSelectedTreasuryMultisig = useCallback((treasury?: any) => {
+
+    let treasuryInfo: any = treasury ?? treasuryDetails;
+
+    if (!treasuryInfo || treasuryInfo.version < 2 || !treasuryInfo.treasurer || !publicKey) {
+      return PublicKey.default;
+    }
+
+    let treasurer = new PublicKey(treasuryInfo.treasurer as string);
+
+    if (!multisigAccounts || !treasuryDetails) { return PublicKey.default; }
+    const multisig = multisigAccounts.filter(a => a.address.equals(treasurer))[0];
+    if (!multisig) { return PublicKey.default; }
+    return multisig.id;
+
+  }, [
+    multisigAccounts, 
+    publicKey, 
+    treasuryDetails
+  ])
+
   useEffect(() => {
 
     if (!isMultisigTreasury() || !treasuryDetails || !connected || !publicKey || !multisigAccounts) {
@@ -2802,7 +2823,7 @@ export const TreasuriesView = () => {
 
       let closeTreasury = await msp.closeTreasury(
         publicKey,                                                // payer
-        multisig.address, // TODO: This should come from the UI             
+        new PublicKey(multisig.owners[0].address),             // TODO: This should come from the UI             
         new PublicKey(data.treasury),                             // treasury
       );
 
@@ -5181,9 +5202,7 @@ export const TreasuriesView = () => {
           treasuryDetails={treasuryDetails}
           isMultisigTreasury={isMultisigTreasury()}
           multisigClient={multisigClient}
-          multisigAddress={treasuryDetails
-              ? new PublicKey((treasuryDetails as Treasury).treasurer as string) 
-              : (selectedMultisig !== undefined ? selectedMultisig.id : new PublicKey(multisigAddress))}
+          multisigAddress={getSelectedTreasuryMultisig()}
           userBalances={userBalances}
         />
       )}

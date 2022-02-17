@@ -1705,7 +1705,7 @@ export const MultisigView = () => {
           isWritable: false,
           isSigner: false,
         });
-  
+        
       let tx = multisigClient.transaction.executeTransaction({
           accounts: {
             multisig: data.transaction.multisig,
@@ -3047,6 +3047,8 @@ export const MultisigView = () => {
         return "Create Vault";
       case OperationType.SetVaultAuthority:
         return "Change Vault Authority";
+      case OperationType.StreamCreate:
+        return "Create Stream";
       default:
         return '';
     }

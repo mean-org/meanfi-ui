@@ -38,11 +38,11 @@ import { useWallet } from '../../contexts/wallet';
 import { StepSelector } from '../StepSelector';
 import { DATEPICKER_FORMAT } from '../../constants';
 import { Identicon } from '../Identicon';
-import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
+import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { Connection, Keypair, PublicKey, Transaction } from '@solana/web3.js';
 import { customLogger } from '../..';
-import { Constants, MSP, TransactionFees, Treasury } from '@mean-dao/msp';
+import { Constants as MSPV2Constants, MSP, TransactionFees, Treasury } from '@mean-dao/msp';
 import { TreasuryInfo } from '@mean-dao/money-streaming';
 import { useConnectionConfig } from '../../contexts/connection';
 import { Idl, Program } from '@project-serum/anchor';
@@ -444,7 +444,7 @@ export const TreasuryStreamCreateModal = (props: {
 
     const createStream = async (data: any) => {
 
-      consoleOut('Starting withdraw using MSP V2...', '', 'blue');
+      consoleOut('Starting create stream using MSP V2...', '', 'blue');
       const msp = new MSP(endpoint, streamV2ProgramAddress, "finalized");
 
       if (!props.isMultisigTreasury) {
@@ -467,10 +467,10 @@ export const TreasuryStreamCreateModal = (props: {
 
       if (!props.treasuryDetails || !props.multisigClient || !props.multisigAddress || !publicKey) { return null; }
 
-      let multisigSigner = (await PublicKey.findProgramAddress(
+      let [multisigSigner] = await PublicKey.findProgramAddress(
         [props.multisigAddress.toBuffer()],
-        MEAN_MULTISIG
-      ))[0];
+        props.multisigClient.programId
+      );
 
       let createStream = await msp.createStream(
         publicKey,                                                            // payer
@@ -499,7 +499,7 @@ export const TreasuryStreamCreateModal = (props: {
       );
 
       let tx = props.multisigClient.transaction.createTransaction(
-        Constants.MSP, 
+        MSPV2Constants.MSP,
         OperationType.StreamCreate,
         ixAccounts as any,
         ixData as any,
@@ -507,7 +507,7 @@ export const TreasuryStreamCreateModal = (props: {
           accounts: {
             multisig: props.multisigAddress,
             transaction: transaction.publicKey,
-            proposer: publicKey as PublicKey,
+            proposer: publicKey,
           },
           preInstructions: [createIx],
           signers: txSigners,
