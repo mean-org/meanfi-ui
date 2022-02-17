@@ -1,12 +1,60 @@
-.meanfi-two-panel-layout {
+.invest-layout {
   margin-bottom: 1.5em;
+  max-height: fit-content !important;
   .meanfi-two-panel-left .inner-container .item-block .transaction-list-row.money-streams-summary .rate-cell .rate-amount {
     font-size: 12px !important;
   }
 }
-.meanfi-two-panel-layout .meanfi-two-panel-right .inner-container .stream-fields-container .info-label {
+.invest-layout .meanfi-two-panel-right .inner-container .stream-fields-container .info-label {
   text-align: center;
 }
-.meanfi-two-panel-layout .meanfi-two-panel-right .inner-container .stream-fields-container .transaction-detail-row {
+.invest-layout .meanfi-two-panel-right .inner-container .stream-fields-container .transaction-detail-row {
   justify-content: center;
+}
+
+.flexible-left {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  .left {
+    flex: 1 1 auto;
+  }
+}
+
+.token-group {
+  display: flex;
+  align-items: center;
+  flex-flow: wrap;
+  .token-max {
+    margin-right: 8px;
+    min-width: 30px;
+    padding: 3px 6px;
+    color: #ffffff;
+    color: var(--color-white);
+    font-weight: 800;
+    font-size: 10px;
+    line-height: 11px;
+    white-space: nowrap;
+    text-align: center;
+    background: #b7001c;
+    background: var(--color-primary);
+    border-radius: 7px;
+    border-radius: var(--custom-border-radius);
+  }
+}
+
+.simplelink {
+  color: inherit;
+  text-decoration: none;
+}
+
+.info-label {
+  width: 100%;
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: rgba(0, 0, 0, 0.5);
+  color: var(--color-secondary-alpha-50);
+  margin-bottom: 4px;
 }
