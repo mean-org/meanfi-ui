@@ -342,7 +342,7 @@ export const StreamCloseModal = (props: {
                   }`
                 )}
               </div>
-              <div className="operation">{t("close-stream.context-treasurer-aditional-message")}.</div>
+              <div className="operation">{t("close-stream.context-treasurer-aditional-message")}</div>
             </>
           )}
 
