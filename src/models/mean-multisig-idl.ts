@@ -108,10 +108,13 @@ const idl: Idl = {
           "type": "u8"
         },
         {
-          "name": "signatures",
+          "name": "keypairs",
           "type": {
             "vec": {
-              "defined": "Keypair"
+              "array": [
+                "u8",
+                64
+              ]
             }
           }
         },
@@ -311,10 +314,13 @@ const idl: Idl = {
             "type": "u8"
           },
           {
-            "name": "signatures",
+            "name": "keypairs",
             "type": {
               "vec": {
-                "defined": "Keypair"
+                "array": [
+                  "u8",
+                  64
+                ]
               }
             }
           }
