@@ -492,6 +492,7 @@ export const TreasuryStreamCreateModal = (props: {
 
       consoleOut('Starting create stream using MSP V2...', '', 'blue');
       const msp = new MSP(endpoint, streamV2ProgramAddress, "finalized");
+      const streamAccount = Keypair.generate();
 
       if (!props.isMultisigTreasury) {
         return await msp.createStream(
@@ -500,6 +501,7 @@ export const TreasuryStreamCreateModal = (props: {
           new PublicKey(data.treasury),                                       // treasury
           new PublicKey(data.beneficiary),                                    // beneficiary
           new PublicKey(data.associatedToken),                                // associatedToken
+          streamAccount,
           data.streamName,                                                    // streamName
           data.allocationAssigned,                                            // allocationAssigned
           data.rateAmount,                                                    // rateAmount
@@ -524,6 +526,7 @@ export const TreasuryStreamCreateModal = (props: {
         new PublicKey(data.treasury),                                         // treasury
         new PublicKey(data.beneficiary),                                      // beneficiary
         new PublicKey(data.associatedToken),                                  // associatedToken
+        streamAccount,
         data.streamName,                                                      // streamName
         data.allocationAssigned,                                              // allocationAssigned
         data.rateAmount,                                                      // rateAmount
@@ -534,11 +537,11 @@ export const TreasuryStreamCreateModal = (props: {
         data.feePayedByTreasurer                                              // feePayedByTreasurer
       );
 
+      const ixRequiredSigners = [streamAccount];
       const ixData = Buffer.from(createStream.instructions[0].data);
       const ixAccounts = createStream.instructions[0].keys;
       const transaction = Keypair.generate();
-      const txSize = 1000;
-      const txSigners = [transaction];
+      const txSize = 1200;
       const createIx = await props.multisigClient.account.transaction.createInstruction(
         transaction,
         txSize
@@ -547,6 +550,7 @@ export const TreasuryStreamCreateModal = (props: {
       let tx = props.multisigClient.transaction.createTransaction(
         MSPV2Constants.MSP,
         OperationType.StreamCreate,
+        ixRequiredSigners,
         ixAccounts as any,
         ixData as any,
         {
@@ -556,14 +560,14 @@ export const TreasuryStreamCreateModal = (props: {
             proposer: publicKey,
           },
           preInstructions: [createIx],
-          signers: txSigners,
+          signers: [transaction],
         }
       );
 
       tx.feePayer = publicKey;
       let { blockhash } = await props.multisigClient.provider.connection.getRecentBlockhash("finalized");
       tx.recentBlockhash = blockhash;
-      tx.partialSign(...txSigners);
+      tx.partialSign(transaction);
 
       return tx;
     }

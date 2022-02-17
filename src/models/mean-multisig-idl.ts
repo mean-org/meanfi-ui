@@ -108,6 +108,14 @@ const idl: Idl = {
           "type": "u8"
         },
         {
+          "name": "signatures",
+          "type": {
+            "vec": {
+              "defined": "Keypair"
+            }
+          }
+        },
+        {
           "name": "accs",
           "type": {
             "vec": {
@@ -301,6 +309,14 @@ const idl: Idl = {
           {
             "name": "operation",
             "type": "u8"
+          },
+          {
+            "name": "signatures",
+            "type": {
+              "vec": {
+                "defined": "Keypair"
+              }
+            }
           }
         ]
       }
@@ -338,6 +354,27 @@ const idl: Idl = {
               "array": [
                 "u8",
                 32
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Keypair",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "publicKey",
+            "type": "publicKey"
+          },
+          {
+            "name": "secretKey",
+            "type": {
+              "array": [
+                "u8",
+                64
               ]
             }
           }
