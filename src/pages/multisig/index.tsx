@@ -4562,7 +4562,12 @@ export const MultisigView = () => {
                 {/* Normal stuff - YOUR USER INPUTS / INFO AND ACTIONS */}
                 {isTxPendingExecution() ? (
                   <>
-                    <h3 className="text-center">A Transaction on this Multisig is ready for execution.</h3>
+                    {/* Am I the Tx initiator */}
+                    {getTxInitiator()?.address === publicKey?.toBase58() ? (
+                      <h3 className="text-center">A Transaction on this Multisig is ready for your execution.</h3>
+                    ) : (
+                      <h3 className="text-center">A transaction on this Multisig is now ready for execution. Please tell the person who initiated this transaction to execute it.</h3>
+                    )}
                     <Divider className="mt-2" />
                     <div className="mb-2">Proposed Action: {getOperationName(highlightedMultisigTx.operation)}</div>
                     <div className="mb-2">Submitted on: {getReadableDate(highlightedMultisigTx.createdOn.toString(), true)}</div>
