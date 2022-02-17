@@ -6,13 +6,11 @@ import {
   ReloadOutlined,
 } from '@ant-design/icons';
 import {
-  Account,
   ConfirmOptions,
   Connection,
   Keypair,
   LAMPORTS_PER_SOL,
   PublicKey,
-  Signer,
   SystemProgram,
   SYSVAR_CLOCK_PUBKEY,
   SYSVAR_RENT_PUBKEY,
@@ -750,6 +748,7 @@ export const MultisigView = () => {
         pid, 
         operation,
         ixAccounts as any,
+        [],
         ixData as any,
         {
           accounts: {
@@ -1119,7 +1118,7 @@ export const MultisigView = () => {
         new BN(data.amount * 10 ** mint.decimals).toNumber()
       );
 
-      const transaction = new Account();
+      const transaction = Keypair.generate();
       const txSize = 1000; // todo
       ixs.push(
         await multisigClient.account.transaction.createInstruction(
@@ -1131,6 +1130,7 @@ export const MultisigView = () => {
       let tx = multisigClient.transaction.createTransaction(
         TOKEN_PROGRAM_ID,
         OperationType.MintTokens,
+        [],
         mintIx.keys,
         Buffer.from(mintIx.data),
         {
@@ -2041,10 +2041,11 @@ export const MultisigView = () => {
 
       const BPF_LOADER_UPGRADEABLE_PID = new PublicKey("BPFLoaderUpgradeab1e11111111111111111111111");
       const txSize = 1000; // TODO: tighter bound.
-      const transaction = new Account();
+      const transaction = Keypair.generate();
       const tx = multisigClient.transaction.createTransaction(
         BPF_LOADER_UPGRADEABLE_PID,
         OperationType.UpgradeProgram,
+        [],
         ixAccounts,
         dataBuffer,
         {
@@ -2374,10 +2375,11 @@ export const MultisigView = () => {
       ];
 
       const txSize = 1000; // TODO: tighter bound.
-      const transaction = new Account();
+      const transaction = Keypair.generate();
       const tx = multisigClient.transaction.createTransaction(
         programAddr,
         OperationType.UpgradeIDL,
+        [],
         ixAccounts,
         dataBuffer,
         {
@@ -2724,10 +2726,11 @@ export const MultisigView = () => {
 
       const BPF_LOADER_UPGRADEABLE_PID = new PublicKey("BPFLoaderUpgradeab1e11111111111111111111111");
       const txSize = 1000; // TODO: tighter bound.
-      const transaction = new Account();
+      const transaction = Keypair.generate();
       const tx = multisigClient.transaction.createTransaction(
         BPF_LOADER_UPGRADEABLE_PID,
         OperationType.SetMultisigAuthority,
+        [],
         ixAccounts,
         dataBuffer,
         {
@@ -3142,6 +3145,14 @@ export const MultisigView = () => {
       return "BPF Upgradable Loader";
     } else if (op === OperationType.UpgradeIDL) {
       return "Serum IDL";
+    } else if (
+      op === OperationType.TreasuryCreate || 
+      op === OperationType.TreasuryClose || 
+      op === OperationType.TreasuryAddFunds || 
+      op === OperationType.TreasuryRefreshBalance || 
+      op === OperationType.StreamCreate
+    ) {
+      return "Mean MSP";
     } else {
       return "Mean Multisig";
     }
@@ -4695,15 +4706,41 @@ export const MultisigView = () => {
 
               {
                 (
+                  // (
+                  //   (
+                  //     highlightedMultisigTx.operation !== OperationType.TreasuryCreate
+                  //   )
+                  //   &&
+                  //   (
+                  //     (
+                  //       highlightedMultisigTx.status === MultisigTransactionStatus.Pending &&
+                  //       !highlightedMultisigTx.didSigned
+                  //     )
+                  //     ||
+                  //     (
+                  //       highlightedMultisigTx.status === MultisigTransactionStatus.Approved &&
+                  //       !highlightedMultisigTx.executedOn
+                  //     )
+                  //   )
+                  // )
+                  // ||
                   (
-                    highlightedMultisigTx.status === MultisigTransactionStatus.Pending &&
-                    !highlightedMultisigTx.didSigned
-                  ) 
-                  || 
-                  (
-                    highlightedMultisigTx.status === MultisigTransactionStatus.Approved &&
-                    selectedMultisig.owners[0].address === publicKey?.toBase58() &&
-                    !highlightedMultisigTx.executedOn
+                    // (
+                    //   highlightedMultisigTx.operation === OperationType.TreasuryCreate
+                    // )
+                    // &&
+                    (
+                      (
+                        highlightedMultisigTx.status === MultisigTransactionStatus.Pending &&
+                        !highlightedMultisigTx.didSigned
+                      ) 
+                      || 
+                      (
+                        highlightedMultisigTx.status === MultisigTransactionStatus.Approved &&
+                        selectedMultisig.owners[0].address === publicKey?.toBase58() &&
+                        !highlightedMultisigTx.executedOn
+                      )
+                    )
                   )
                 )
                 &&

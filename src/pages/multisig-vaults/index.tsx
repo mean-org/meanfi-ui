@@ -604,40 +604,53 @@ export const MultisigVaultsView = () => {
 
   const getOperationName = useCallback((op: OperationType) => {
 
-    if (op === OperationType.MintTokens) {
-      return "Mint token";
-    }
-    
-    if (op === OperationType.TransferTokens) {
-      return "Transfer tokens";
-    } 
-    
-    if (op === OperationType.UpgradeProgram) {
-      return "Upgrade program";
-    }
-
-    if (op === OperationType.UpgradeIDL) {
-      return "Upgrade IDL";
-    }
-
-    if (op === OperationType.SetMultisigAuthority) {
-      return "Set Authority";
-    }
-
-    if (op === OperationType.EditMultisig) {
-      return "Edit Multisig";
+    switch (op) {
+      case OperationType.MintTokens:
+        return "Mint token";
+      case OperationType.TransferTokens:
+        return "Transfer tokens";
+      case OperationType.UpgradeProgram:
+        return "Upgrade program";
+      case OperationType.UpgradeIDL:
+        return "Upgrade IDL";
+      case OperationType.SetMultisigAuthority:
+        return "Set Multisig Authority";
+      case OperationType.EditMultisig:
+        return "Edit Multisig";
+      case OperationType.TreasuryCreate:
+        return "Create Treasury";
+      case OperationType.TreasuryClose:
+        return "Close Treasury";
+      case OperationType.TreasuryRefreshBalance:
+        return "Refresh Treasury Data";
+      case OperationType.CreateVault:
+        return "Create Vault";
+      case OperationType.SetVaultAuthority:
+        return "Change Vault Authority";
+      case OperationType.StreamCreate:
+        return "Create Stream";
+      default:
+        return '';
     }
 
   },[]);
 
   const getOperationProgram = useCallback((op: OperationType) => {
 
-    if (op === OperationType.MintTokens || op === OperationType.TransferTokens) {
+    if (op === OperationType.MintTokens || op === OperationType.TransferTokens || op === OperationType.SetVaultAuthority) {
       return "SPL Token";
     } else if (op === OperationType.UpgradeProgram || op === OperationType.SetMultisigAuthority) {
       return "BPF Upgradable Loader";
     } else if (op === OperationType.UpgradeIDL) {
       return "Serum IDL";
+    } else if (
+      op === OperationType.TreasuryCreate || 
+      op === OperationType.TreasuryClose || 
+      op === OperationType.TreasuryAddFunds ||
+      op === OperationType.TreasuryRefreshBalance || 
+      op === OperationType.StreamCreate
+    ) {
+      return "Mean MSP";
     } else {
       return "Mean Multisig";
     }
@@ -1159,7 +1172,7 @@ export const MultisigVaultsView = () => {
         }
       }
 
-      const transaction = new Account();
+      const transaction = Keypair.generate();
       const txSize = 1000;
 
       ixs.push(
@@ -1181,6 +1194,7 @@ export const MultisigVaultsView = () => {
       let tx = multisigClient.transaction.createTransaction(
         TOKEN_PROGRAM_ID,
         OperationType.TransferTokens,
+        [],
         transferIx.keys,
         Buffer.from(transferIx.data),
         {
