@@ -21,7 +21,6 @@ import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { formatAmount, getAmountWithSymbol, isValidNumber } from "../../utils/utils";
 import { consoleOut, isValidAddress } from "../../utils/ui";
 
-
 type SwapOption = "stake" | "unstake";
 
 export const InvestView = () => {
@@ -47,6 +46,7 @@ export const InvestView = () => {
   const [userBalances, setUserBalances] = useState<any>();
   const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
   const [tokenFilter, setTokenFilter] = useState("");
+  const [termValue, setTermValue] = useState(7);
 
   // Token selection modal
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
@@ -187,6 +187,10 @@ export const InvestView = () => {
     return coinPrices && coinPrices[symbol]
       ? coinPrices[symbol]
       : 0;
+  }
+
+  const onChangeValue = (value: number) => {
+    setTermValue(value);
   }
 
   const renderInvestOptions = (
@@ -371,12 +375,26 @@ export const InvestView = () => {
                             <span className="info-label">{t("invest.panel-right.tabset.stake.term-label")}</span>
                             <div className="flexible-left mb-1 mt-2">
                               <div className="left token-group">
-                                <div className="token-max simplelink mb-1">7 days
-                                </div> 
-                                <div className="token-max simplelink mb-1">30 days</div> 
-                                <div className="token-max simplelink mb-1">90 days</div> 
-                                <div className="token-max simplelink mb-1">1 year</div> 
-                                <div className="token-max simplelink mb-1">4 years</div> 
+                                <div className="mb-1 d-flex flex-column align-items-center">
+                                  <div className={`token-max simplelink ${termValue === 7 ? "active" : "disabled"}`} onClick={() => onChangeValue(7)}>7 days</div>
+                                  <span>1x</span>
+                                </div>
+                                <div className="mb-1 d-flex flex-column align-items-center">
+                                  <div className={`token-max simplelink ${termValue === 30 ? "active" : "disabled"}`} onClick={() => onChangeValue(30)}>30 days</div>
+                                  <span>1.1x</span>
+                                </div>
+                                <div className="mb-1 d-flex flex-column align-items-center">
+                                  <div className={`token-max simplelink ${termValue === 90 ? "active" : "disabled"}`} onClick={() => onChangeValue(90)}>90 days</div>
+                                  <span>1.2x</span>
+                                </div>
+                                <div className="mb-1 d-flex flex-column align-items-center">
+                                  <div className={`token-max simplelink ${termValue === 1 ? "active" : "disabled"}`} onClick={() => onChangeValue(1)}>1 year</div>
+                                  <span>2.0x</span>
+                                </div>
+                                <div className="mb-1 d-flex flex-column align-items-center">
+                                  <div className={`token-max simplelink ${termValue === 4 ? "active" : "disabled"}`} onClick={() => onChangeValue(4)}>4 year</div>
+                                  <span>4.0x</span>
+                                </div>
                               </div>
                             </div>
                             <span className="info-label">{t("invest.panel-right.tabset.stake.notification-label")}</span>
