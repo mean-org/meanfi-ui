@@ -23,7 +23,6 @@ import {
   getTokenByMintAddress,
   getTokenSymbol,
   getTxIxResume,
-  makeDecimal,
   shortenAddress,
   toTokenAmount,
   toUiAmount
@@ -41,11 +40,10 @@ import {
   getIntervalFromSeconds,
   delay,
   getShortDate,
+  isLocal,
 } from '../../utils/ui';
 import {
   FALLBACK_COIN_IMAGE,
-  SIMPLE_DATE_FORMAT,
-  SIMPLE_DATE_TIME_FORMAT,
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
   STREAMS_REFRESH_TIMEOUT,
   VERBOSE_DATE_TIME_FORMAT
@@ -179,10 +177,11 @@ export const TreasuriesView = () => {
       setTreasuryAddress(treasury || '');
       consoleOut('treasuryAddress:', treasury, 'blue');
     } else if (selectedMultisig) {            // Clean any data we may have data relative to a previous multisig
+      setMultisigAddress('');
       setSelectedMultisig(undefined);
     }
   }, [
-    location,
+    location.search,
     selectedMultisig,
   ]);
 
@@ -431,84 +430,83 @@ export const TreasuriesView = () => {
   const refreshTreasuries = useCallback((reset = false) => {
     if (!connection || !publicKey) { return; }
 
-    if (fetchTxInfoStatus !== "fetching") {
+    if (msp && ms && fetchTxInfoStatus !== "fetching") {
 
       setTimeout(() => {
         setLoadingTreasuries(true);
         clearTransactionStatusContext();
       });
 
-      if (msp && ms) {
-        let treasuryAccumulator: (Treasury | TreasuryInfo)[] = [];
-        let treasuriesv1: TreasuryInfo[] = [];
-        getAllUserV2Treasuries()
-          .then(async (treasuriesv2) => {
-            treasuryAccumulator.push(...treasuriesv2);
-            consoleOut('v2 treasuries:', treasuriesv2, 'blue');
+      let treasuryAccumulator: (Treasury | TreasuryInfo)[] = [];
+      let treasuriesv1: TreasuryInfo[] = [];
+      getAllUserV2Treasuries()
+        .then(async (treasuriesv2) => {
+          treasuryAccumulator.push(...treasuriesv2);
+          consoleOut('v2 treasuries:', treasuriesv2, 'blue');
 
-            if (!selectedMultisig) {
-              try {
-                treasuriesv1 = await ms.listTreasuries(publicKey);
-              } catch (error) {
-                console.error(error);
-              }
-              consoleOut('v1 treasuries:', treasuriesv1, 'blue');
-              treasuryAccumulator.push(...treasuriesv1);
+          if (!selectedMultisig) {
+            try {
+              treasuriesv1 = await ms.listTreasuries(publicKey);
+            } catch (error) {
+              console.error(error);
             }
+            consoleOut('v1 treasuries:', treasuriesv1, 'blue');
+            treasuryAccumulator.push(...treasuriesv1);
+          }
 
-            setTreasuryList(treasuryAccumulator);
-            consoleOut('Combined treasury list:', treasuryAccumulator, 'blue');
-            let item: Treasury | TreasuryInfo | undefined = undefined;
-                
-            if (treasuryAccumulator.length) {
-              if (reset) {
-                console.log('treasuryAddress under reset:', treasuryAddress);
-                if (treasuryAddress) {
-                  // treasuryAddress was passed in as query param?
-                  const itemFromServer = treasuryAccumulator.find(i => i.id === treasuryAddress);
-                  item = itemFromServer || treasuryAccumulator[0];
-                } else {
-                  item = treasuryAccumulator[0];
-                }
+          setTreasuryList(treasuryAccumulator);
+          consoleOut('Combined treasury list:', treasuryAccumulator, 'blue');
+          let item: Treasury | TreasuryInfo | undefined = undefined;
+              
+          if (treasuryAccumulator.length) {
+            if (reset) {
+              console.log('treasuryAddress under reset:', treasuryAddress);
+              if (treasuryAddress) {
+                // treasuryAddress was passed in as query param?
+                const itemFromServer = treasuryAccumulator.find(i => i.id === treasuryAddress);
+                item = itemFromServer || treasuryAccumulator[0];
               } else {
-                console.log('treasuryAddress under no reset:', treasuryAddress);
-                // Try to get current item by its id
-                if (treasuryAddress) {
-                  // treasuryAddress was passed in as query param?
-                  const itemFromServer = treasuryAccumulator.find(i => i.id === treasuryAddress);
-                  item = itemFromServer || treasuryAccumulator[0];
-                } else if (treasuryDetails) {
-                  // there was an item already selected
-                  const itemFromServer = treasuryAccumulator.find(i => i.id === treasuryDetails.id);
-                  item = itemFromServer || treasuryAccumulator[0];
-                } else {
-                  // then choose the first one
-                  item = treasuryAccumulator[0];
-                }
+                item = treasuryAccumulator[0];
               }
-
-              if (!item) {
-                item = Object.assign({}, treasuryAccumulator[0]);
-              }
-
-              if (item) {
-                // setTreasuryDetails(item);
-                const isNewTreasury = (item as Treasury).version && (item as Treasury).version >= 2 ? true : false;
-                openTreasuryById(item.id as string, isNewTreasury);
-              }
-
-              setLoadingTreasuries(false);
-
             } else {
-              setTreasuryDetails(undefined);
-              setTreasuryDetails(undefined);
-              setTreasuryStreams([]);
+              console.log('treasuryAddress under no reset:', treasuryAddress);
+              // Try to get current item by its id
+              if (treasuryAddress) {
+                // treasuryAddress was passed in as query param?
+                const itemFromServer = treasuryAccumulator.find(i => i.id === treasuryAddress);
+                item = itemFromServer || treasuryAccumulator[0];
+              } else if (treasuryDetails) {
+                // there was an item already selected
+                const itemFromServer = treasuryAccumulator.find(i => i.id === treasuryDetails.id);
+                item = itemFromServer || treasuryAccumulator[0];
+              } else {
+                // then choose the first one
+                item = treasuryAccumulator[0];
+              }
             }
-          })
-          .catch(error => {
-            console.error(error);
-          });
-      }
+
+            if (!item) {
+              item = Object.assign({}, treasuryAccumulator[0]);
+            }
+
+            if (item) {
+              // setTreasuryDetails(item);
+              const isNewTreasury = (item as Treasury).version && (item as Treasury).version >= 2 ? true : false;
+              openTreasuryById(item.id as string, isNewTreasury);
+            }
+
+            // setLoadingTreasuries(false);
+
+          } else {
+            setTreasuryDetails(undefined);
+            setTreasuryDetails(undefined);
+            setTreasuryStreams([]);
+          }
+        })
+        .catch(error => {
+          console.error(error);
+        })
+        .finally(() => setLoadingTreasuries(false));
     }
 
   }, [
@@ -1430,11 +1428,14 @@ export const TreasuriesView = () => {
     window.location.reload();
   }
 
-  const resetTreasuriesContext = () => {
+  const resetTreasuriesContext = useCallback(() => {
+    setTreasuriesLoaded(false);
     setSelectedMultisig(undefined);
     setMultisigAddress('');
     navigate('/treasuries');
-  }
+  }, [
+    navigate,
+  ]);
 
   const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({
@@ -4899,7 +4900,7 @@ export const TreasuriesView = () => {
       </>
     )}
     {(isMultisigAvailable() && treasuryList && treasuryList.length > 0) && (
-      <div className="py-3 px-3 simplelink" onClick={resetTreasuriesContext}>
+      <div className="py-3 px-3 simplelink" onClick={() => resetTreasuriesContext()}>
         <IconShowAll className="mean-svg-icons align-middle" />
         <span className="ml-1 align-middle">Show All Treasuries</span>
       </div>
@@ -4909,6 +4910,22 @@ export const TreasuriesView = () => {
 
   return (
     <>
+      {isLocal() && (
+        <div className="debug-bar">
+          <span className="ml-1">loadingTreasuries:</span><span className="ml-1 font-bold fg-dark-active">{loadingTreasuries ? 'true' : 'false'}</span>
+          <span className="ml-1">isBusy:</span><span className="ml-1 font-bold fg-dark-active">{isBusy ? 'true' : 'false'}</span>
+          {(transactionStatus.lastOperation !== undefined) && (
+            <>
+            <span className="ml-1">lastOperation:</span><span className="ml-1 font-bold fg-dark-active">{TransactionStatus[transactionStatus.lastOperation]}</span>
+            </>
+          )}
+          {(transactionStatus.currentOperation !== undefined) && (
+            <>
+            <span className="ml-1">currentOperation:</span><span className="ml-1 font-bold fg-dark-active">{TransactionStatus[transactionStatus.currentOperation]}</span>
+            </>
+          )}
+        </div>
+      )}
 
       <div className="container main-container">
 
