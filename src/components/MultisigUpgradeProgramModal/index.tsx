@@ -30,7 +30,6 @@ export const MultisigUpgradeProgramModal = (props: {
   const {
     transactionStatus,
     setTransactionStatus
-
   } = useContext(AppStateContext);
 
   const [programId, setProgramId] = useState('');

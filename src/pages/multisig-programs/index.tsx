@@ -3139,6 +3139,7 @@ export const MultisigProgramsView = () => {
           transactionFees={transactionFees}
           handleOk={onAcceptUpgradeProgram}
           handleClose={() => setIsUpgradeProgramModalVisible(false)}
+          programId={selectedProgram?.pubkey.toBase58()}
           isBusy={isBusy}
         />
       )}
@@ -3150,6 +3151,7 @@ export const MultisigProgramsView = () => {
           transactionFees={transactionFees}
           handleOk={onAcceptUpgradeIDL}
           handleClose={() => setIsUpgradeIDLModalVisible(false)}
+          programId={selectedProgram?.pubkey.toBase58()}
           isBusy={isBusy}
         />
       )}
