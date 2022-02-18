@@ -635,7 +635,16 @@ export const MultisigProgramsView = () => {
         throw new Error(`More than one program was found for program data account '${executableData}'`);
       }
 
-      const foundProgram = executableAccounts[0] as ProgramAccounts;
+      const executableDataAccountInfo = await connection.getAccountInfo(executableDataAccounts[0].pubkey);
+      const foundProgram = {
+        pubkey: executableAccounts[0].pubkey,
+        owner: executableAccounts[0].account.owner,
+        executable: executableData,
+        upgradeAuthority: upgradeAuthority,
+        size: executableDataAccountInfo ? executableDataAccountInfo.data.byteLength : 0
+
+      } as ProgramAccounts;
+
       console.log(`Upgrade Authority: ${upgradeAuthority} --> Executable Data: ${executableData} --> Program: ${foundProgram}`);
 
       programs.push(foundProgram);
@@ -1809,10 +1818,10 @@ export const MultisigProgramsView = () => {
                     onClick={e => {
                       e.preventDefault();
                       e.stopPropagation();
-                      setHighLightableMultisigId(selectedProgram.account.owner.toBase58());
+                      setHighLightableMultisigId(selectedProgram.upgradeAuthority.toBase58());
                       navigate('/multisig');
                     }}>
-                    {shortenAddress(selectedProgram.account.owner.toBase58(), 8)}
+                    {shortenAddress(selectedProgram.upgradeAuthority.toBase58(), 8)}
                   </Link>
                   <div className="icon-button-container">
                     <Button
@@ -1820,7 +1829,7 @@ export const MultisigProgramsView = () => {
                       shape="circle"
                       size="middle"
                       icon={<CopyOutlined />}
-                      onClick={() => copyAddressToClipboard(selectedProgram.account.owner.toBase58())}
+                      onClick={() => copyAddressToClipboard(selectedProgram.upgradeAuthority.toBase58())}
                     />
                   </div>
                 </div>
@@ -1860,7 +1869,7 @@ export const MultisigProgramsView = () => {
             </div>
             <div className="rate-cell">
               <div className="rate-amount">
-                {formatThousands(item.account.data.byteLength)}
+                {formatThousands(item.size)}
               </div>
               <div className="interval">bytes</div>
             </div>

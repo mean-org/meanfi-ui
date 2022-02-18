@@ -4,7 +4,10 @@ import { AccountTokenParsedInfo } from "../models/token";
 
 export type ProgramAccounts = {
   pubkey: PublicKey;
-  account: AccountInfo<Buffer>;
+  owner: PublicKey;
+  executable: PublicKey;
+  upgradeAuthority: PublicKey;
+  size: number;
 }
 
 export type AccountsDictionary = {
