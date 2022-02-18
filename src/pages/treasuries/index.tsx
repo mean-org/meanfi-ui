@@ -5059,7 +5059,7 @@ export const TreasuriesView = () => {
                     {treasuryDetails && (
                       <div className="float-top-right">
                         <span className="icon-button-container secondary-button">
-                          <Tooltip placement="bottom" title={"Refresh treasury data"}>
+                          <Tooltip placement="bottom" title={t("treasuries.treasury-refresh-tooltip")}>
                             <Button
                               type="default"
                               shape="circle"

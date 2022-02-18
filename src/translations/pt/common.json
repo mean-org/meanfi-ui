@@ -516,6 +516,10 @@
 		"screen-subtitle": "Configure a folha de pagamento para seus funcionários",
 		"screen-title": "Folha de pagamento"
 	},
+	"pre-footer": {
+		"made-with": "Made with ",
+		"on-solana": " on Solana"
+	},
 	"referrals": {
 		"address-invalid": "O endereço de referência não é um endereço solana válido",
 		"address-processed": "Por favor, conecte sua carteira para registrar esta referência.",
@@ -648,7 +652,8 @@
 			"title-sending-to": "Enviando para"
 		},
 		"stream-stats-incoming": "Entrada",
-		"stream-stats-outgoing": "Extrovertido"
+		"stream-stats-outgoing": "Extrovertido",
+		"stream-interval": "net-change"
 	},
 	"swap": {
 		"exchange-warning": "Mean Exchange só está disponível em",
@@ -902,6 +907,7 @@
 			"treasury-name-label": "Nome do Tesouro"
 		},
 		"treasury-detail-heading": "Detalhes do Tesouro",
+		"treasury-refresh-tooltip": "Refresh treasury data",
 		"treasury-list": {
 			"multisig-treasury-label": "Tesouraria Multisig",
 			"no-treasuries": "Nenhum tesouro disponível",

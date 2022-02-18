@@ -504,6 +504,10 @@
 		"screen-subtitle": "Setup payroll for your employees",
 		"screen-title": "Payroll"
 	},
+	"pre-footer": {
+		"made-with": "Made with ",
+		"on-solana": " on Solana"
+	},
 	"referrals": {
 		"address-invalid": "The referral address is not a valid solana address",
 		"address-processed": "Please connect your wallet to record this referral.",
@@ -636,7 +640,8 @@
 			"title-sending-to": "Sending to"
 		},
 		"stream-stats-incoming": "Incoming",
-		"stream-stats-outgoing": "Outgoing"
+		"stream-stats-outgoing": "Outgoing",
+		"stream-interval": "net-change"
 	},
 	"swap": {
 		"exchange-warning": "Mean Exchange is only available on",
@@ -879,6 +884,7 @@
 			"treasury-name-label": "Treasury name"
 		},
 		"treasury-detail-heading": "Treasury details",
+		"treasury-refresh-tooltip": "Refresh treasury data",
 		"treasury-list": {
 			"no-treasuries": "No treasuries available",
 			"not-connected": "Please connect your wallet to see your treasuries",

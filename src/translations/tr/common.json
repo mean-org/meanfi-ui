@@ -516,6 +516,10 @@
 		"screen-subtitle": "Çalışanlarınız için ödeme planı ayarlayın",
 		"screen-title": "Ödeme planı"
 	},
+	"pre-footer": {
+		"made-with": "Made with ",
+		"on-solana": " on Solana"
+	},
 	"referrals": {
 		"address-invalid": "Referans adresi geçerli bir solana adresi değil",
 		"address-processed": "Bu referansı kaydetmek için lütfen cüzdanınızı bağlayın",
@@ -648,7 +652,8 @@
 			"title-sending-to": "Gönderiliyor"
 		},
 		"stream-stats-incoming": "Gelen",
-		"stream-stats-outgoing": "Giden"
+		"stream-stats-outgoing": "Giden",
+		"stream-interval": "net-change"
 	},
 	"swap": {
 		"exchange-warning": "Mean Exchange yalnızca şurada kullanılabilir:",
@@ -900,6 +905,7 @@
 			"treasury-name-label": "Hazine adı"
 		},
 		"treasury-detail-heading": "Hazine ayrıntıları",
+		"treasury-refresh-tooltip": "Refresh treasury data",
 		"treasury-list": {
 			"multisig-treasury-label": "Çoklu-imza hazinesi",
 			"no-treasuries": "Hazine yok",

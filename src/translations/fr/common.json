@@ -516,6 +516,10 @@
 		"screen-subtitle": "Configurer la paie de vos employés",
 		"screen-title": "Paie"
 	},
+	"pre-footer": {
+		"made-with": "Made with ",
+		"on-solana": " on Solana"
+	},
 	"referrals": {
 		"address-invalid": "L'adresse de référence n'est pas une adresse solana valide",
 		"address-processed": "Veuillez connecter votre portefeuille pour enregistrer cette recommandation.",
@@ -648,7 +652,8 @@
 			"title-sending-to": "Envoi à"
 		},
 		"stream-stats-incoming": "Entrant",
-		"stream-stats-outgoing": "Sortant"
+		"stream-stats-outgoing": "Sortant",
+		"stream-interval": "net-change"
 	},
 	"swap": {
 		"exchange-warning": "Mean Exchange n'est disponible que sur",
@@ -900,6 +905,7 @@
 			"treasury-name-label": "Nom du Trésor"
 		},
 		"treasury-detail-heading": "Détails du Trésor",
+		"treasury-refresh-tooltip": "Refresh treasury data",
 		"treasury-list": {
 			"multisig-treasury-label": "Trésorerie multisig",
 			"no-treasuries": "Aucune trésorerie disponible",
