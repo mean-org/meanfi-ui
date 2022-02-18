@@ -830,11 +830,14 @@ export const MultisigVaultsView = () => {
               transactions.push(txInfo);
             }
           }
-          setMultisigPendingTxs(transactions.sort((a, b) => b.createdOn.getTime() - a.createdOn.getTime()));
+          transactions.sort((a, b) => b.createdOn.getTime() - a.createdOn.getTime());
+          consoleOut('multisigPendingTxs:', transactions, 'blue');
+          setMultisigPendingTxs(transactions);
         })
         .catch(err => {
           console.error(err);
           setMultisigPendingTxs([]);
+          consoleOut('multisigPendingTxs:', [], 'blue');
         })
         .finally(() => setLoadingMultisigTxs(false));
     });
@@ -1280,6 +1283,7 @@ export const MultisigVaultsView = () => {
 
     refreshVaults();
     resetTransactionStatus();
+    setLoadingMultisigTxs(true);
 
   },[
     refreshVaults,
@@ -2016,8 +2020,13 @@ export const MultisigVaultsView = () => {
   const onTxApproved = useCallback(() => {
 
     refreshVaults();
-    resetTransactionStatus();
     setLoadingMultisigTxs(true);
+    resetTransactionStatus();
+    // TODO: Translate
+    notify({
+      description: 'Your signature for the Multisig transaction was successfully recorded.',
+      type: "success"
+    });
 
   },[
     refreshVaults,

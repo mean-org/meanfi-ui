@@ -1517,17 +1517,19 @@ export const TreasuriesView = () => {
   const onAcceptCreateTreasury = (data: TreasuryCreateOptions) => {
     consoleOut('treasury create options:', data, 'blue');
     onExecuteCreateTreasuryTx(data);
+    setRetryOperationPayload(data);
   };
 
-  const onTreasuryCreated = () => {
+  const onTreasuryCreated = useCallback((createOptions: TreasuryCreateOptions) => {
     closeCreateTreasuryModal();
     refreshTokenBalance();
-    setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle
-    });
+
     const usedOptions = retryOperationPayload as TreasuryCreateOptions;
-    if (usedOptions && usedOptions.multisigId) {
+    consoleOut('retryOperationPayload:', retryOperationPayload, 'crimson');
+    consoleOut('usedOptions:', usedOptions, 'crimson');
+    consoleOut('createOptions:', createOptions, 'crimson');
+
+    if (createOptions && createOptions.multisigId) {
       notify({
         description: t('treasuries.create-treasury.create-multisig-treasury-success'),
         type: "success"
@@ -1538,7 +1540,15 @@ export const TreasuriesView = () => {
         type: "success"
       });
     }
-  }
+
+    resetTransactionStatus();
+  }, [
+    retryOperationPayload,
+    closeCreateTreasuryModal,
+    resetTransactionStatus,
+    refreshTokenBalance,
+    t,
+  ]);
 
   const onRefreshTreasuryBalanceTransactionFinished = useCallback(() => {
     refreshTokenBalance();
@@ -2211,7 +2221,7 @@ export const TreasuriesView = () => {
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.TransactionFinished
             });
-            onTreasuryCreated();
+            onTreasuryCreated(createOptions);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -4915,6 +4925,7 @@ export const TreasuriesView = () => {
         <div className="debug-bar">
           <span className="ml-1">loadingTreasuries:</span><span className="ml-1 font-bold fg-dark-active">{loadingTreasuries ? 'true' : 'false'}</span>
           <span className="ml-1">isBusy:</span><span className="ml-1 font-bold fg-dark-active">{isBusy ? 'true' : 'false'}</span>
+          <span className="ml-1">retryOperationPayload:</span><span className="ml-1 font-bold fg-dark-active">{retryOperationPayload ? 'true' : 'false'}</span>
           {(transactionStatus.lastOperation !== undefined) && (
             <>
             <span className="ml-1">lastOperation:</span><span className="ml-1 font-bold fg-dark-active">{TransactionStatus[transactionStatus.lastOperation]}</span>
