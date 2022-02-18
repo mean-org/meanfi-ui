@@ -273,8 +273,16 @@ export const MultisigView = () => {
 
     setLoadingMultisigAccounts(true);
     setLoadingMultisigTxs(true);
+    resetTransactionStatus();
+    // TODO: Translate
+    notify({
+      description: 'Your signature for the Multisig transaction was successfully recorded.',
+      type: "success"
+    });
 
-  },[]);
+  },[
+    resetTransactionStatus,
+  ]);
 
   const onTxExecuted = useCallback(() => {
     

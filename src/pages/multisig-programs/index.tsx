@@ -970,8 +970,13 @@ export const MultisigProgramsView = () => {
   const onTxApproved = useCallback(() => {
 
     refreshPrograms();
-    resetTransactionStatus();
     setLoadingMultisigTxs(true);
+    resetTransactionStatus();
+    // TODO: Translate
+    notify({
+      description: 'Your signature for the Multisig transaction was successfully recorded.',
+      type: "success"
+    });
 
   },[
     refreshPrograms,

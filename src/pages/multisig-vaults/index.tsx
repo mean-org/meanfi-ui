@@ -1955,8 +1955,13 @@ export const MultisigVaultsView = () => {
   const onTxApproved = useCallback(() => {
 
     refreshVaults();
-    resetTransactionStatus();
     setLoadingMultisigTxs(true);
+    resetTransactionStatus();
+    // TODO: Translate
+    notify({
+      description: 'Your signature for the Multisig transaction was successfully recorded.',
+      type: "success"
+    });
 
   },[
     refreshVaults,
