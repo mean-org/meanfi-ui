@@ -137,7 +137,7 @@ export const MultisigView = () => {
   const [isUpgradeIDLModalVisible, setIsUpgradeIDLModalVisible] = useState(false);
   const [isSetProgramAuthModalVisible, setIsSetProgramAuthModalVisible] = useState(false);
   const [programs, setPrograms] = useState<ProgramAccounts[] | undefined>(undefined);
-  const [loadingPrograms, setLoadingPrograms] = useState(false);
+  const [loadingPrograms, setLoadingPrograms] = useState(true);
 
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
     commitment: "confirmed",
@@ -3578,7 +3578,7 @@ export const MultisigView = () => {
   // Get Programs
   useEffect(() => {
 
-    if (!connection || !publicKey || !selectedMultisig || !selectedMultisig.address) {
+    if (!connection || !publicKey || !selectedMultisig || !selectedMultisig.address || !loadingPrograms) {
       return;
     }
 
@@ -3587,6 +3587,8 @@ export const MultisigView = () => {
     });
 
     const timeout = setTimeout(() => {
+
+      consoleOut('Calling getProgramsByUpgradeAuthority from useEffect...', '', 'blue');
 
       getProgramsByUpgradeAuthority(selectedMultisig.address)
         .then(programs => {
@@ -3604,6 +3606,7 @@ export const MultisigView = () => {
   },[
     publicKey,
     connection,
+    loadingPrograms,
     selectedMultisig,
     getProgramsByUpgradeAuthority,
   ]);
@@ -3614,6 +3617,7 @@ export const MultisigView = () => {
       if (!previousWalletConnectState && connected && publicKey) {
         consoleOut('User is connecting...', publicKey.toBase58(), 'green');
         setLoadingMultisigAccounts(true);
+        setLoadingPrograms(true);
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'green');
         setMultisigAccounts([]);
@@ -4246,6 +4250,7 @@ export const MultisigView = () => {
         const onMultisigClick = (ev: any) => {
           consoleOut('selected multisig:', item, 'blue');
           setSelectedMultisig(item);
+          setLoadingPrograms(true);
           setLoadingMultisigTxs(true);
         };
         return (

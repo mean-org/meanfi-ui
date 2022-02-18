@@ -653,6 +653,8 @@ export const MultisigProgramsView = () => {
   const refreshPrograms = useCallback(() => {
     if (!selectedMultisig) { return; }
 
+    consoleOut('Calling getProgramsByUpgradeAuthority from refreshPrograms...', '', 'blue');
+
     getProgramsByUpgradeAuthority(selectedMultisig.id)
       .then(programs => {
         consoleOut('programs:', programs, 'blue');
@@ -757,19 +759,26 @@ export const MultisigProgramsView = () => {
   // Set selectedMultisig based on the passed-in multisigAddress in query params
   useEffect(() => {
 
-    if (publicKey && multisigAddress && multisigAccounts && multisigAccounts.length > 0) {
+    if (!publicKey || !multisigAddress || !multisigAccounts || multisigAccounts.length === 0) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
       consoleOut(`try to select multisig ${multisigAddress} from list`, multisigAccounts, 'blue');
       const selected = multisigAccounts.find(m => m.id.toBase58() === multisigAddress);
       if (selected) {
         consoleOut('selectedMultisig:', selected, 'blue');
         setSelectedMultisig(selected);
       }
+    });
+
+    return () => {
+      clearTimeout(timeout);
     }
 
   }, [
     publicKey,
     multisigAddress,
-    selectedMultisig,
     multisigAccounts,
   ]);
 
@@ -781,6 +790,8 @@ export const MultisigProgramsView = () => {
     }
 
     const timeout = setTimeout(() => {
+
+      consoleOut('Calling getProgramsByUpgradeAuthority from useEffect...', '', 'blue');
 
       getProgramsByUpgradeAuthority(selectedMultisig.address)
         .then(programs => {
@@ -890,6 +901,7 @@ export const MultisigProgramsView = () => {
       if (!previousWalletConnectState && connected && publicKey) {
         consoleOut('User is connecting...', publicKey.toBase58(), 'green');
         setLoadingMultisigAccounts(true);
+        setLoadingPrograms(true);
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'green');
         setMultisigAccounts([]);

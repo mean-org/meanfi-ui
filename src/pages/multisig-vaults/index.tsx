@@ -718,19 +718,26 @@ export const MultisigVaultsView = () => {
   // Set selectedMultisig based on the passed-in multisigAddress in query params
   useEffect(() => {
 
-    if (publicKey && multisigAddress && multisigAccounts && multisigAccounts.length > 0) {
+    if (!publicKey || !multisigAddress || !multisigAccounts || multisigAccounts.length === 0) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
       consoleOut(`try to select multisig ${multisigAddress} from list`, multisigAccounts, 'blue');
       const selected = multisigAccounts.find(m => m.id.toBase58() === multisigAddress);
       if (selected) {
         consoleOut('selectedMultisig:', selected, 'blue');
         setSelectedMultisig(selected);
       }
+    });
+
+    return () => {
+      clearTimeout(timeout);
     }
 
   }, [
     publicKey,
     multisigAddress,
-    selectedMultisig,
     multisigAccounts,
   ]);
 
