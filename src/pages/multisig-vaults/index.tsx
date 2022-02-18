@@ -85,16 +85,6 @@ export const MultisigVaultsView = () => {
   //  Init code  //
   /////////////////
 
-  // TODO: Remove when releasing to the public
-  useEffect(() => {
-    if (!isWhitelisted && !isLocal()) {
-      navigate('/');
-    }
-  }, [
-    isWhitelisted,
-    navigate
-  ]);
-
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
     commitment: "confirmed",
     disableRetryOnRateLimit: true
@@ -1680,18 +1670,7 @@ export const MultisigVaultsView = () => {
   }, []);
 
   const onAcceptTransferVaultAuthority = (selectedAuthority: string) => {
-
     consoleOut('selectedAuthority', selectedAuthority, 'blue');
-
-    // TODO: Remove this block when createTransferVaultAuthorityTx is completed
-      // notify({
-      //   message: 'Param verification',
-      //   description: `Received parameter: ${selectedAuthority}\nThe transfer Tx is under development!`,
-      //   type: 'info'
-      // });
-      // setIsTransferVaultAuthorityModalVisible(false);
-
-    // TODO: Uncomment this when createTransferVaultAuthorityTx completed
     onExecuteTransferVaultAuthorityTx(selectedAuthority);
   };
 

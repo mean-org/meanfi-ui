@@ -90,16 +90,6 @@ export const MultisigProgramsView = () => {
   //  Init code  //
   /////////////////
 
-  // TODO: Remove when releasing to the public
-  useEffect(() => {
-    if (!isWhitelisted && !isLocal()) {
-      navigate('/');
-    }
-  }, [
-    isWhitelisted,
-    navigate
-  ]);
-
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
     commitment: "confirmed",
     disableRetryOnRateLimit: true
@@ -375,11 +365,11 @@ export const MultisigProgramsView = () => {
     return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
   }
 
-  const isCreatingVault = useCallback((): boolean => {
+  const isUpgradingProgram = useCallback((): boolean => {
 
     return ( 
       fetchTxInfoStatus === "fetching" && 
-      lastSentTxOperationType === OperationType.CreateVault
+      lastSentTxOperationType === OperationType.UpgradeProgram
     );
 
   }, [
@@ -387,11 +377,11 @@ export const MultisigProgramsView = () => {
     lastSentTxOperationType,
   ]);
 
-  const isSendingTokens = useCallback((): boolean => {
+  const isUpgradingIDL = useCallback((): boolean => {
 
     return ( 
       fetchTxInfoStatus === "fetching" && 
-      lastSentTxOperationType === OperationType.TransferTokens
+      lastSentTxOperationType === OperationType.UpgradeIDL
     );
 
   }, [
@@ -399,11 +389,11 @@ export const MultisigProgramsView = () => {
     lastSentTxOperationType,
   ]);
 
-  const isSettingVaultAuthority = useCallback((): boolean => {
+  const isSettingAuthority = useCallback((): boolean => {
 
     return ( 
       fetchTxInfoStatus === "fetching" && 
-      lastSentTxOperationType === OperationType.SetVaultAuthority
+      lastSentTxOperationType === OperationType.SetMultisigAuthority
     );
 
   }, [
@@ -1332,18 +1322,6 @@ export const MultisigProgramsView = () => {
     wallet
   ]);
 
-  const isUpgradingProgram = useCallback((): boolean => {
-
-    return ( 
-      fetchTxInfoStatus === "fetching" && 
-      lastSentTxOperationType === OperationType.UpgradeProgram
-    );
-
-  }, [
-    fetchTxInfoStatus,
-    lastSentTxOperationType,
-  ]);
-
   // Showw upgrade IDL modal
   const [isUpgradeIDLModalVisible, setIsUpgradeIDLModalVisible] = useState(false);
   const showUpgradeIDLModal = useCallback(() => {
@@ -1681,18 +1659,6 @@ export const MultisigProgramsView = () => {
     transactionFees.mspFlatFee, 
     transactionStatus.currentOperation, 
     wallet
-  ]);
-
-  const isUpgradingIDL = useCallback((): boolean => {
-
-    return ( 
-      fetchTxInfoStatus === "fetching" && 
-      lastSentTxOperationType === OperationType.UpgradeIDL
-    );
-
-  }, [
-    fetchTxInfoStatus,
-    lastSentTxOperationType,
   ]);
 
   // Set program authority modal
@@ -2669,42 +2635,6 @@ export const MultisigProgramsView = () => {
   // Rendering //
   ///////////////
 
-  const getTokenIconAndAmount = (tokenAddress: string, amount: any) => {
-    const token = tokenList.find(t => t.address === tokenAddress);
-    if (!token) {
-      return (
-        <>
-          <span className="info-icon token-icon">
-            <Identicon address={tokenAddress} style={{ width: "30", display: "inline-flex" }} />
-          </span>
-          <span className="info-data">
-          {
-            getTokenAmountAndSymbolByTokenAddress(
-              toUiAmount(new BN(amount), 6),
-              tokenAddress
-            )
-          }
-          </span>
-        </>
-      );
-    }
-    return (
-      <>
-        <span className="info-icon token-icon">
-          <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} />
-        </span>
-        <span className="info-data">
-          {
-            getTokenAmountAndSymbolByTokenAddress(
-              toUiAmount(new BN(amount), token.decimals || 6),
-              token.address
-            )
-          }
-        </span>
-      </>
-    );
-  }
-
   const renderCtaRow = () => {
     return (
       <>
@@ -2717,7 +2647,6 @@ export const MultisigProgramsView = () => {
             className="thin-stroke"
             disabled={isTxInProgress() || loadingPrograms}
             onClick={showUpgradeProgramModal}>
-            {isTxInProgress() && (<LoadingOutlined />)}
             {t('multisig.multisig-account-detail.cta-upgrade-program')}
           </Button>
           {/* Upgrade IDL */}
@@ -2728,7 +2657,6 @@ export const MultisigProgramsView = () => {
             className="thin-stroke"
             disabled={isTxInProgress() || loadingPrograms}
             onClick={showUpgradeIDLModal}>
-            {isTxInProgress() && (<LoadingOutlined />)}
             Upgrade IDL
           </Button>
           {/* Kill Switch */}
@@ -2753,6 +2681,23 @@ export const MultisigProgramsView = () => {
             onClick={showSetProgramAuthModal}>
             Set Program Auth
           </Button>
+          {/* Operation indication */}
+          {isUpgradingProgram() ? (
+            <div className="flex-row flex-center">
+              <LoadingOutlined />
+              <span className="ml-1">{t('multisig.multisig-account-detail.cta-upgrade-program-busy')}</span>
+            </div>
+          ) : isUpgradingIDL() ? (
+            <div className="flex-row flex-center">
+              <LoadingOutlined />
+              <span className="ml-1">Upgrading IDL</span>
+            </div>
+          ) : isSettingAuthority() ? (
+            <div className="flex-row flex-center">
+              <LoadingOutlined />
+              <span className="ml-1">Setting Authority</span>
+            </div>
+          ) : null}
         </Space>
       </>
     );
@@ -3163,6 +3108,7 @@ export const MultisigProgramsView = () => {
           transactionFees={transactionFees}
           handleOk={onAcceptSetProgramAuth}
           handleClose={() => setIsSetProgramAuthModalVisible(false)}
+          programId={selectedProgram?.pubkey.toBase58()}
           isBusy={isBusy}
         />
       )}

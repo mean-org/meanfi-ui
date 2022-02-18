@@ -139,16 +139,6 @@ export const MultisigView = () => {
   const [programs, setPrograms] = useState<ProgramAccounts[] | undefined>(undefined);
   const [loadingPrograms, setLoadingPrograms] = useState(false);
 
-  // TODO: Remove when releasing to the public
-  useEffect(() => {
-    if (!isWhitelisted && !isLocal()) {
-      navigate('/');
-    }
-  }, [
-    isWhitelisted,
-    navigate
-  ]);
-
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
     commitment: "confirmed",
     disableRetryOnRateLimit: true
@@ -2986,18 +2976,6 @@ export const MultisigView = () => {
     return false;
   }, []);
 
-  const isSettingAuthority = useCallback((): boolean => {
-
-    return ( 
-      fetchTxInfoStatus === "fetching" && 
-      lastSentTxOperationType === OperationType.SetMultisigAuthority
-    );
-
-  }, [
-    fetchTxInfoStatus,
-    lastSentTxOperationType,
-  ]);
-
   const getOperationName = useCallback((op: OperationType) => {
 
     switch (op) {
@@ -4126,51 +4104,6 @@ export const MultisigView = () => {
     </Menu>
   );
 
-  const programsOptionsMenu = (
-    <Menu>
-      {isUnderDevelopment() && (
-        <Menu.Item
-          key="29"
-          onClick={() => {
-            if (selectedMultisig) {
-              const url = `/multisig-programs?multisig=${selectedMultisig.id.toBase58()}`;
-              navigate(url);
-            }
-          }}>
-          <span className="menu-item-text">See programs</span>
-        </Menu.Item>
-      )}
-      {/* Upgrade program */}
-      <Menu.Item
-        key="30"
-        onClick={showUpgradeProgramModal}>
-        <span className="menu-item-text">{t('multisig.multisig-account-detail.cta-upgrade-program')}</span>
-      </Menu.Item>
-      {/* Upgrade IDL */}
-      <Menu.Item
-        key="31"
-        onClick={showUpgradeIDLModal}>
-        <span className="menu-item-text">Upgrade IDL</span>
-      </Menu.Item>
-      {/* Kill Switch */}
-      {isUnderDevelopment() && (
-        <Menu.Item
-          key="32"
-          disabled={true}
-          onClick={() => {}}>
-          <span className="menu-item-text">Kill Switch</span>
-        </Menu.Item>
-      )}
-      <Menu.Divider key="33" />
-      {/* Set Program Auth */}
-      <Menu.Item
-        key="34"
-        onClick={showSetProgramAuthModal}>
-        <span className="menu-item-text">Set Program Auth</span>
-      </Menu.Item>
-    </Menu>
-  );
-
   const dataOptionsMenu = (
     <Menu>
       {/* Create Account */}
@@ -4203,7 +4136,7 @@ export const MultisigView = () => {
       <>
         <Space size="middle" wrap>
 
-          {/* Go to Vaults */}
+          {/* Vaults */}
           <Button
             type="default"
             shape="round"
@@ -4229,33 +4162,35 @@ export const MultisigView = () => {
             )}
           </Button>
 
-          {/* Go to Treasuries */}
-          <Button
-            type="default"
-            shape="round"
-            size="small"
-            className="thin-stroke"
-            disabled={isTxInProgress() || loadingMultisigAccounts}
-            onClick={() => {
-              if (selectedMultisig) {
-                const url = `/treasuries?multisig=${selectedMultisig.id.toBase58()}`;
-                navigate(url);
-              }
-            }}>
-            {multisigTreasuries && multisigTreasuries.length > 0 ? (
-              <span>
-                {t('multisig.multisig-account-detail.cta-treasuries', {
-                  itemCount: multisigTreasuries.length
-                })}
-              </span>
-              ) : (
-              <span>
-                {t('multisig.multisig-account-detail.cta-no-treasuries')}
-              </span>
-            )}
-          </Button>
+          {/* Treasuries */}
+          {isUnderDevelopment() && (
+            <Button
+              type="default"
+              shape="round"
+              size="small"
+              className="thin-stroke"
+              disabled={isTxInProgress() || loadingMultisigAccounts}
+              onClick={() => {
+                if (selectedMultisig) {
+                  const url = `/treasuries?multisig=${selectedMultisig.id.toBase58()}`;
+                  navigate(url);
+                }
+              }}>
+              {multisigTreasuries && multisigTreasuries.length > 0 ? (
+                <span>
+                  {t('multisig.multisig-account-detail.cta-treasuries', {
+                    itemCount: multisigTreasuries.length
+                  })}
+                </span>
+                ) : (
+                <span>
+                  {t('multisig.multisig-account-detail.cta-no-treasuries')}
+                </span>
+              )}
+            </Button>
+          )}
 
-          {/* Go to Programs */}
+          {/* Programs */}
           <Button
             type="default"
             shape="round"
@@ -4281,7 +4216,7 @@ export const MultisigView = () => {
             )}
           </Button>
 
-          {/* Available to local dev or whitelisted addresses in dev */}
+          {/* Mints */}
           {isUnderDevelopment() && (
             <Dropdown overlay={mintOptionsMenu} trigger={["click"]}>
               <Button
@@ -4296,20 +4231,7 @@ export const MultisigView = () => {
             </Dropdown>
           )}
 
-          {isUnderDevelopment() && (
-            <Dropdown overlay={programsOptionsMenu} trigger={["click"]}>
-              <Button
-                type="default"
-                size="middle"
-                className="dropdown-like-button"
-                disabled={isTxInProgress() || loadingMultisigAccounts}
-                onClick={() => {}}>
-                <span className="mr-2">Programs</span>
-                <IconCaretDown className="mean-svg-icons" />
-              </Button>
-            </Dropdown>
-          )}
-
+          {/* Data */}
           {isUnderDevelopment() && (
             <Dropdown overlay={dataOptionsMenu} trigger={["click"]}>
               <Button
@@ -4339,11 +4261,6 @@ export const MultisigView = () => {
             <div className="flex-row flex-center">
               <LoadingOutlined />
               <span className="ml-1">Upgrading IDL</span>
-            </div>
-          ) : isSettingAuthority() ? (
-            <div className="flex-row flex-center">
-              <LoadingOutlined />
-              <span className="ml-1">Setting Authority</span>
             </div>
           ) : null}
         </Space>
