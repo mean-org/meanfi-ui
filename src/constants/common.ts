@@ -94,24 +94,24 @@ export const LANGUAGES: Language[] = [
         flag: '/assets/flags/tr.svg',
         locale: 'tr-TR'
     },
-    {
-        code: 'zh',
-        name: '中國人',
-        flag: '/assets/flags/cn.svg',
-        locale: 'zh-CN'
-    },
-    {
-        code: 'vi',
-        name: 'Tiếng Việt',
-        flag: '/assets/flags/vn.svg',
-        locale: 'vi-VN'
-    },
-    {
-        code: 'ko',
-        name: 'T한국인',
-        flag: '/assets/flags/kr.svg',
-        locale: 'ko-KR'
-    },
+    // {
+    //     code: 'zh',
+    //     name: '中國人',
+    //     flag: '/assets/flags/cn.svg',
+    //     locale: 'zh-CN'
+    // },
+    // {
+    //     code: 'vi',
+    //     name: 'Tiếng Việt',
+    //     flag: '/assets/flags/vn.svg',
+    //     locale: 'vi-VN'
+    // },
+    // {
+    //     code: 'ko',
+    //     name: 'T한국인',
+    //     flag: '/assets/flags/kr.svg',
+    //     locale: 'ko-KR'
+    // },
 ];
 
 export const ALLOWED_ADDRESSES_LIST = [
