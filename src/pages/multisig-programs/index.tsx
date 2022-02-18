@@ -153,18 +153,21 @@ export const MultisigProgramsView = () => {
     selectedMultisig
   ]);
 
-  const getTxInitiator = useCallback((): MultisigParticipant | undefined => {
+  const getTxInitiator = useCallback((mtx: MultisigTransaction): MultisigParticipant | undefined => {
     if (!selectedMultisig) { return undefined; }
 
-    const owners: MultisigParticipant[] = selectedMultisig.owners || [] ;
+    const owners: MultisigParticipant[] = (selectedMultisig as MultisigV2).owners;
+    const initiator = owners && owners.length > 0
+      ? owners.find(o => o.address === mtx.proposer?.toBase58())
+      : undefined;
 
-    return owners.length > 0 ? owners[0] : undefined;
+    return initiator;
   }, [selectedMultisig]);
 
-  const isUserTxInitiator = useCallback((): boolean => {
+  const isUserTxInitiator = useCallback((mtx: MultisigTransaction): boolean => {
     if (!selectedMultisig || !publicKey) { return false; }
 
-    const initiator = getTxInitiator();
+    const initiator = getTxInitiator(mtx);
 
     if (initiator && initiator.address === publicKey.toBase58()) {
       return true;
@@ -892,12 +895,14 @@ export const MultisigProgramsView = () => {
         setMultisigAccounts([]);
         setSelectedMultisig(undefined);
         setLoadingMultisigAccounts(false);
+        navigate('/multisig');
       }
     }
   }, [
     connected,
+    publicKey,
     previousWalletConnectState,
-    publicKey
+    navigate,
   ]);
 
   // Handle what to do when pending Tx confirmation reaches finality or on error
@@ -2000,19 +2005,6 @@ export const MultisigProgramsView = () => {
 
   // Common Multisig Approve / Execute logic
 
-  const onTxApproved = useCallback(() => {
-
-    setLoadingPrograms(true);
-    refreshPrograms();
-    setLoadingMultisigTxs(true);
-    // TODO: Translate
-    notify({
-      description: 'Your signature for the Multisig transaction was successfully recorded.',
-      type: "success"
-    });
-
-  },[refreshPrograms]);
-
   const onTxExecuted = useCallback(() => {
 
     setLoadingPrograms(true);
@@ -2259,14 +2251,16 @@ export const MultisigProgramsView = () => {
           const sent = await sendTx();
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
-            consoleOut('Send Tx to confirmation queue:', signature);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.TransactionFinished
             });
-            await delay(1000);
-            onTxApproved();
+            // TODO: Translate
+            notify({
+              description: 'Your signature for the Multisig transaction was successfully recorded.',
+              type: "success"
+            });
             setOngoingOperation(undefined);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
@@ -2274,19 +2268,18 @@ export const MultisigProgramsView = () => {
     }
 
   }, [
-    onTxApproved, 
-    clearTransactionStatusContext, 
-    connection, 
-    multisigClient.transaction, 
-    nativeBalance, 
-    publicKey, 
-    selectedMultisig, 
-    setTransactionStatus, 
-    transactionCancelled, 
-    transactionFees.blockchainFee, 
-    transactionFees.mspFlatFee, 
-    transactionStatus.currentOperation, 
-    wallet
+    wallet,
+    publicKey,
+    connection,
+    nativeBalance,
+    selectedMultisig,
+    transactionCancelled,
+    multisigClient.transaction,
+    transactionFees.mspFlatFee,
+    transactionFees.blockchainFee,
+    transactionStatus.currentOperation,
+    clearTransactionStatusContext,
+    setTransactionStatus,
   ]);
 
   const onExecuteFinishTx = useCallback(async (data: any) => {
@@ -2610,6 +2603,9 @@ export const MultisigProgramsView = () => {
     setMultisigActionTransactionModalVisible(false);
     sethHighlightedMultisigTx(undefined);
     resetTransactionStatus();
+    setLoadingPrograms(true);
+    refreshPrograms();
+    setLoadingMultisigTxs(true);
   };
 
   const onTransactionModalClosed = () => {
@@ -3125,7 +3121,7 @@ export const MultisigProgramsView = () => {
                 {isTxPendingExecution() ? (
                   <>
                     {/* Am I the Tx initiator */}
-                    {getTxInitiator()?.address === publicKey?.toBase58() ? (
+                    {getTxInitiator(highlightedMultisigTx)?.address === publicKey?.toBase58() ? (
                       <h3 className="text-center">A Transaction on this Multisig is ready for your execution.</h3>
                     ) : (
                       <h3 className="text-center">A transaction on this Multisig is now ready for execution. Please tell the person who initiated this transaction to execute it.</h3>
@@ -3133,7 +3129,7 @@ export const MultisigProgramsView = () => {
                     <Divider className="mt-2" />
                     <div className="mb-2">Proposed Action: {getOperationName(highlightedMultisigTx.operation)}</div>
                     <div className="mb-2">Submitted on: {getReadableDate(highlightedMultisigTx.createdOn.toString(), true)}</div>
-                    <div className="mb-2">Initiator: This transaction was submitted by {getTxInitiator()?.name}<br/>Address: <code>{getTxInitiator()?.address}</code></div>
+                    <div className="mb-2">Initiator: This transaction was submitted by {getTxInitiator(highlightedMultisigTx)?.name}<br/>Address: <code>{getTxInitiator(highlightedMultisigTx)?.address}</code></div>
                     <div className="mb-2">This transaction required {selectedMultisig.threshold}/{selectedMultisig.owners.length} signers to approve it in order to be executed. {getTxSignedCount(highlightedMultisigTx)} Signed.</div>
                     <div className="mb-2">
                       <span className="mr-1">Your Status:</span>
@@ -3146,7 +3142,7 @@ export const MultisigProgramsView = () => {
                     <Divider className="mt-2" />
                     <div className="mb-2">Proposed Action: {getOperationName(highlightedMultisigTx.operation)}</div>
                     <div className="mb-2">Submitted on: {getReadableDate(highlightedMultisigTx.createdOn.toString(), true)}</div>
-                    <div className="mb-2">Initiator: This transaction was submitted by {getTxInitiator()?.name}<br/>Address: <code>{getTxInitiator()?.address}</code></div>
+                    <div className="mb-2">Initiator: This transaction was submitted by {getTxInitiator(highlightedMultisigTx)?.name}<br/>Address: <code>{getTxInitiator(highlightedMultisigTx)?.address}</code></div>
                     <div className="mb-2">This transaction requires {selectedMultisig.threshold}/{selectedMultisig.owners.length} signers to approve it in order to be executed. {getTxSignedCount(highlightedMultisigTx)} Signed so far.</div>
                     <div className="mb-2">
                       <span className="mr-1">Your Status:</span>
@@ -3164,7 +3160,7 @@ export const MultisigProgramsView = () => {
                     <Divider className="mt-2" />
                     <div className="mb-2">Proposed Action: {getOperationName(highlightedMultisigTx.operation)}</div>
                     <div className="mb-2">Submitted on: {getReadableDate(highlightedMultisigTx.createdOn.toString(), true)}</div>
-                    <div className="mb-2">Initiator: This transaction was submitted by {getTxInitiator()?.name}<br/>Address: <code>{getTxInitiator()?.address}</code></div>
+                    <div className="mb-2">Initiator: This transaction was submitted by {getTxInitiator(highlightedMultisigTx)?.name}<br/>Address: <code>{getTxInitiator(highlightedMultisigTx)?.address}</code></div>
                     <div className="mb-2">This transaction required {selectedMultisig.threshold}/{selectedMultisig.owners.length} signers to approve it in order to be executed. {getTxSignedCount(highlightedMultisigTx)} Signed.</div>
                   </>
                 )}
@@ -3187,7 +3183,7 @@ export const MultisigProgramsView = () => {
                   <>
                     <h3 className="text-center mt-3">This transaction is now ready for execution. Please tell the person who initiated this transaction to execute it.</h3>
                     <Divider className="mt-2" />
-                    <div className="mb-2">Initiator: {getTxInitiator()?.name}<br/>Address: <code>{getTxInitiator()?.address}</code></div>
+                    <div className="mb-2">Initiator: {getTxInitiator(highlightedMultisigTx)?.name}<br/>Address: <code>{getTxInitiator(highlightedMultisigTx)?.address}</code></div>
                   </>
               )}
               </>
