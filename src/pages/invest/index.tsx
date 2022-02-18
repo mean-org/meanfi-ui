@@ -4,7 +4,7 @@ import './style.less';
 import { TokenInfo } from "@solana/spl-token-registry";
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { ReloadOutlined } from "@ant-design/icons";
-import { Button, Tooltip, Row, Col } from "antd";
+import { Button, Tooltip, Row, Col, Space } from "antd";
 import Modal from "antd/lib/modal/Modal";
 import Checkbox from "antd/lib/checkbox/Checkbox";
 import { useTranslation } from 'react-i18next';
@@ -301,34 +301,40 @@ export const InvestView = () => {
 
             <div className="meanfi-two-panel-right">
               <div className="inner-container">
+
+                {/* Staking paragraphs */}
                 <p>{t("invest.panel-right.first-text")}</p>
                 <p>{t("invest.panel-right.second-text")}</p>
                 <div className="pinned-token-separator"></div>
+
+                {/* Staking Stats */}
                 <div className="stream-fields-container">
                   <div className="mb-3">
                     <Row>
                       <Col span={8}>
                         <div className="info-label">
-                          {"Staking APR"}
+                          {t("invest.panel-right.stats.staking-apr")}
                         </div>
                         <div className="transaction-detail-row">52.09%</div>
                       </Col>
                       <Col span={8}>
                         <div className="info-label">
-                          {"Total Value Locked"}
+                          {t("invest.panel-right.stats.total-value-locked")}
                         </div>
                         <div className="transaction-detail-row">$7.64M</div>
                       </Col>
                       <Col span={8}>
                         <div className="info-label">
-                          {"Next Week Payout"}
+                          {t("invest.panel-right.stats.next-week-payout")}
                         </div>
                         <div className="transaction-detail-row">$108,730</div>
                       </Col>
                     </Row>
                   </div>
                 </div>
-                <Row>
+
+                <Row gutter={[8, 8]} className="d-flex justify-content-center">
+                  {/* Tabset */}
                   <Col span={12}>
                     <div className="place-transaction-box mb-3">
                       <div className="button-tabset-container">
@@ -340,169 +346,219 @@ export const InvestView = () => {
                         </div>
                       </div>
 
-                      {/* STAKE */}
+                      {/* Tab Stake */}
                       {currentTab === "stake" && (
-                          <>
-                            <div className="form-label">{t("invest.panel-right.tabset.stake.amount-label")}</div>
-                            <div className="well">
-                              <div className="flex-fixed-left">
-                                <div className="left">
-                                  <span className="add-on simplelink">
-                                    {selectedToken && (
-                                      <TokenDisplay onClick={() => showTokenSelector()}
-                                        mintAddress={selectedToken.address}
-                                        name={selectedToken.name}
-                                        showCaretDown={true}
-                                      />
-                                    )}
-                                  </span>
-                                </div>
-                                <div className="right">
-                                  <input
-                                    className="general-text-input text-right"
-                                    inputMode="decimal"
-                                    autoComplete="off"
-                                    autoCorrect="off"
-                                    type="text"
-                                    onChange={handleFromCoinAmountChange}
-                                    pattern="^[0-9]*[.,]?[0-9]*$"
-                                    placeholder="0.0"
-                                    minLength={1}
-                                    maxLength={79}
-                                    spellCheck="false"
-                                    value={fromCoinAmount}
-                                  />
-                                </div>
+                        <>
+                          <div className="form-label">{t("invest.panel-right.tabset.stake.amount-label")}</div>
+                          <div className="well">
+                            <div className="flex-fixed-left">
+                              <div className="left">
+                                <span className="add-on simplelink">
+                                  {selectedToken && (
+                                    <TokenDisplay onClick={() => showTokenSelector()}
+                                      mintAddress={selectedToken.address}
+                                      name={selectedToken.name}
+                                      showCaretDown={true}
+                                    />
+                                  )}
+                                </span>
                               </div>
-                              <div className="flex-fixed-right">
-                                <div className="left inner-label">
-                                  <span>{t('transactions.send-amount.label-right')}:</span>
-                                  <span>
-                                    {`${tokenBalance && selectedToken
-                                        ? getAmountWithSymbol(tokenBalance, selectedToken?.address, true)
-                                        : "0"
-                                    }`}
-                                  </span>
-                                </div>
-                                <div className="right inner-label">
-                                  <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
-                                    ~${fromCoinAmount && effectiveRate
-                                      ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
-                                      : "0.00"}
-                                  </span>
-                                </div>
+                              <div className="right">
+                                <input
+                                  className="general-text-input text-right"
+                                  inputMode="decimal"
+                                  autoComplete="off"
+                                  autoCorrect="off"
+                                  type="text"
+                                  onChange={handleFromCoinAmountChange}
+                                  pattern="^[0-9]*[.,]?[0-9]*$"
+                                  placeholder="0.0"
+                                  minLength={1}
+                                  maxLength={79}
+                                  spellCheck="false"
+                                  value={fromCoinAmount}
+                                />
                               </div>
                             </div>
-                          
-                            <span className="info-label">{t("invest.panel-right.tabset.stake.term-label")}</span>
-                            <div className="flexible-left mb-1 mt-2">
-                              <div className="left token-group">
-                                <div className="mb-1 d-flex flex-column align-items-center">
-                                  <div className={`token-max simplelink ${termValue === 7 ? "active" : "disabled"}`} onClick={() => onChangeValue(7)}>7 days</div>
-                                  <span>1x</span>
-                                </div>
-                                <div className="mb-1 d-flex flex-column align-items-center">
-                                  <div className={`token-max simplelink ${termValue === 30 ? "active" : "disabled"}`} onClick={() => onChangeValue(30)}>30 days</div>
-                                  <span>1.1x</span>
-                                </div>
-                                <div className="mb-1 d-flex flex-column align-items-center">
-                                  <div className={`token-max simplelink ${termValue === 90 ? "active" : "disabled"}`} onClick={() => onChangeValue(90)}>90 days</div>
-                                  <span>1.2x</span>
-                                </div>
-                                <div className="mb-1 d-flex flex-column align-items-center">
-                                  <div className={`token-max simplelink ${termValue === 1 ? "active" : "disabled"}`} onClick={() => onChangeValue(1)}>1 year</div>
-                                  <span>2.0x</span>
-                                </div>
-                                <div className="mb-1 d-flex flex-column align-items-center">
-                                  <div className={`token-max simplelink ${termValue === 4 ? "active" : "disabled"}`} onClick={() => onChangeValue(4)}>4 year</div>
-                                  <span>4.0x</span>
-                                </div>
+                            <div className="flex-fixed-right">
+                              <div className="left inner-label">
+                                <span>{t('transactions.send-amount.label-right')}:</span>
+                                <span>
+                                  {`${tokenBalance && selectedToken
+                                      ? getAmountWithSymbol(tokenBalance, selectedToken?.address, true)
+                                      : "0"
+                                  }`}
+                                </span>
+                              </div>
+                              <div className="right inner-label">
+                                <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
+                                  ~${fromCoinAmount && effectiveRate
+                                    ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
+                                    : "0.00"}
+                                </span>
                               </div>
                             </div>
-                            <span className="info-label">{t("invest.panel-right.tabset.stake.notification-label")}</span>
-
-                            {/* Confirm that have read the terms and conditions */}
-                            <div className="mb-2 mt-2">
-                              <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>{t("invest.panel-right.tabset.stake.verified-label")}</Checkbox>
+                          </div>
+                        
+                          <span className="info-label">{t("invest.panel-right.tabset.stake.term-label")}</span>
+                          <div className="flexible-left mb-1 mt-2">
+                            <div className="left token-group">
+                              <div className="mb-1 d-flex flex-column align-items-center">
+                                <div className={`token-max simplelink ${termValue === 7 ? "active" : "disabled"}`} onClick={() => onChangeValue(7)}>7 days</div>
+                                <span>1x</span>
+                              </div>
+                              <div className="mb-1 d-flex flex-column align-items-center">
+                                <div className={`token-max simplelink ${termValue === 30 ? "active" : "disabled"}`} onClick={() => onChangeValue(30)}>30 days</div>
+                                <span>1.1x</span>
+                              </div>
+                              <div className="mb-1 d-flex flex-column align-items-center">
+                                <div className={`token-max simplelink ${termValue === 90 ? "active" : "disabled"}`} onClick={() => onChangeValue(90)}>90 days</div>
+                                <span>1.2x</span>
+                              </div>
+                              <div className="mb-1 d-flex flex-column align-items-center">
+                                <div className={`token-max simplelink ${termValue === 1 ? "active" : "disabled"}`} onClick={() => onChangeValue(1)}>1 year</div>
+                                <span>2.0x</span>
+                              </div>
+                              <div className="mb-1 d-flex flex-column align-items-center">
+                                <div className={`token-max simplelink ${termValue === 4 ? "active" : "disabled"}`} onClick={() => onChangeValue(4)}>4 year</div>
+                                <span>4.0x</span>
+                              </div>
                             </div>
+                          </div>
+                          <span className="info-label">{t("invest.panel-right.tabset.stake.notification-label")}</span>
 
-                            {/* Action button */}
-                            <Button
-                              className="main-cta"
-                              block
-                              type="primary"
-                              shape="round"
-                              size="large"
-                              disabled={
-                                !areSendAmountSettingsValid() ||
-                                !isVerifiedRecipient}
-                            >
-                              Stake {selectedToken && selectedToken.name}
-                            </Button>
+                          {/* Confirm that have read the terms and conditions */}
+                          <div className="mb-2 mt-2">
+                            <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>{t("invest.panel-right.tabset.stake.verified-label")}</Checkbox>
+                          </div>
 
-                            {/* Token selection modal */}
-                            {isTokenSelectorModalVisible && (
-                              <Modal
-                                className="mean-modal unpadded-content"
-                                visible={isTokenSelectorModalVisible}
-                                title={<div className="modal-title">{t('token-selector.modal-title')}</div>}
-                                onCancel={onCloseTokenSelector}
-                                width={450}
-                                footer={null}>
-                                <div className="token-selector-wrapper">
-                                  <div className="token-search-wrapper">
-                                    <TextInput
-                                      id="token-search-otp"
-                                      value={tokenFilter}
-                                      allowClear={true}
-                                      extraClass="mb-2"
-                                      onInputClear={onInputCleared}
-                                      placeholder={t('token-selector.search-input-placeholder')}
-                                      onInputChange={onTokenSearchInputChange} />
-                                  </div>
-                                  <div className="flex-row align-items-center fg-secondary-60 mb-2 px-1">
-                                    <span>{t('token-selector.looking-for-sol')}</span>&nbsp;
-                                    <span className="simplelink underline" onClick={onGotoExchange}>{t('token-selector.wrap-sol-first')}</span>
-                                  </div>
-                                  <div className="token-list vertical-scroll">
-                                    {filteredTokenList.length > 0 && renderTokenList}
-                                    {(tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0) && (
-                                      <TokenListItem
-                                        key={tokenFilter}
-                                        name="Unknown"
-                                        mintAddress={tokenFilter}
-                                        className={selectedToken && selectedToken.address === tokenFilter ? "selected" : "simplelink"}
-                                        onClick={() => {
-                                          const uknwnToken: TokenInfo = {
-                                            address: tokenFilter,
-                                            name: 'Unknown',
-                                            chainId: 101,
-                                            decimals: 6,
-                                            symbol: '',
-                                          };
-                                          setSelectedToken(uknwnToken);
-                                          consoleOut("token selected:", uknwnToken, 'blue');
-                                          setEffectiveRate(0);
-                                          onCloseTokenSelector();
-                                        }}
-                                        balance={connected && userBalances && userBalances[tokenFilter] > 0 ? userBalances[tokenFilter] : 0}
-                                      />
-                                    )}
-                                  </div>
+                          {/* Action button */}
+                          <Button
+                            className="main-cta"
+                            block
+                            type="primary"
+                            shape="round"
+                            size="large"
+                            disabled={
+                              !areSendAmountSettingsValid() ||
+                              !isVerifiedRecipient}
+                          >
+                            Stake {selectedToken && selectedToken.name}
+                          </Button>
+
+                          {/* Token selection modal */}
+                          {isTokenSelectorModalVisible && (
+                            <Modal
+                              className="mean-modal unpadded-content"
+                              visible={isTokenSelectorModalVisible}
+                              title={<div className="modal-title">{t('token-selector.modal-title')}</div>}
+                              onCancel={onCloseTokenSelector}
+                              width={450}
+                              footer={null}>
+                              <div className="token-selector-wrapper">
+                                <div className="token-search-wrapper">
+                                  <TextInput
+                                    id="token-search-otp"
+                                    value={tokenFilter}
+                                    allowClear={true}
+                                    extraClass="mb-2"
+                                    onInputClear={onInputCleared}
+                                    placeholder={t('token-selector.search-input-placeholder')}
+                                    onInputChange={onTokenSearchInputChange} />
                                 </div>
-                              </Modal>
-                            )}
-                          </>
+                                <div className="flex-row align-items-center fg-secondary-60 mb-2 px-1">
+                                  <span>{t('token-selector.looking-for-sol')}</span>&nbsp;
+                                  <span className="simplelink underline" onClick={onGotoExchange}>{t('token-selector.wrap-sol-first')}</span>
+                                </div>
+                                <div className="token-list vertical-scroll">
+                                  {filteredTokenList.length > 0 && renderTokenList}
+                                  {(tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0) && (
+                                    <TokenListItem
+                                      key={tokenFilter}
+                                      name="Unknown"
+                                      mintAddress={tokenFilter}
+                                      className={selectedToken && selectedToken.address === tokenFilter ? "selected" : "simplelink"}
+                                      onClick={() => {
+                                        const uknwnToken: TokenInfo = {
+                                          address: tokenFilter,
+                                          name: 'Unknown',
+                                          chainId: 101,
+                                          decimals: 6,
+                                          symbol: '',
+                                        };
+                                        setSelectedToken(uknwnToken);
+                                        consoleOut("token selected:", uknwnToken, 'blue');
+                                        setEffectiveRate(0);
+                                        onCloseTokenSelector();
+                                      }}
+                                      balance={connected && userBalances && userBalances[tokenFilter] > 0 ? userBalances[tokenFilter] : 0}
+                                    />
+                                  )}
+                                </div>
+                              </div>
+                            </Modal>
+                          )}
+                        </>
                       )}
 
-                      {/* UNSTAKE */}
+                      {/* Tab unstake */}
                       {currentTab === "unstake" && (
                           <div>Unstake</div>
                       )}
                     </div>
                   </Col>
+
+                  {/* Staking data */}
                   <Col span={12}>
-                    
+                    <div className="staking-data">
+                      <Row>
+                        <Col span={12}>
+                          <span>{"Your Current Stake:"}</span>
+                        </Col>
+                        <Col span={12}>
+                          <span className="staking-number">3.78x boost</span>
+                        </Col>
+                        <Col span={12}>
+                          <span>{"My Staked MEAN"}</span>
+                        </Col>
+                        <Col span={12}>
+                          <span className="staking-number">5,000.0000</span>
+                        </Col>
+                        <Col span={12}>
+                          <span>{"Avg. Locked Yield"}</span>
+                        </Col>
+                        <Col span={12}>
+                          <span className="staking-number">114.98%</span>
+                        </Col>
+                        <Col span={12}>
+                          <span>{"My Locked eMEAN"}</span>
+                        </Col>
+                        <Col span={12}>
+                          <span className="staking-number">1,000</span>
+                        </Col>
+                        <Col span={12}>
+                          <span>{"My xMEAN Balance"}</span>
+                        </Col>
+                        <Col span={12}>
+                          <span className="staking-number">20,805.1232</span>
+                        </Col>
+                        <span className="info-label mt-1">{t("invest.panel-right.staking-data.text-one")}</span>
+                        <span className="info-label">{t("invest.panel-right.staking-data.text-two")}</span>
+                        <Col span={24} className="d-flex flex-column justify-content-end align-items-end">
+                          <div className="staking-value mb-2 mt-1">5.229181 MEAN</div>
+                          <Space size="middle">
+                            <Button
+                              type="default"
+                              shape="round"
+                              size="small"
+                              className="thin-stroke"
+                            >
+                              {t("invest.panel-right.staking-data.withdraw-button")}
+                            </Button>
+                          </Space>
+                        </Col>
+                      </Row>
+                    </div>
                   </Col>
                 </Row>
               </div>
