@@ -122,12 +122,12 @@ export const TreasuryStreamCreateModal = (props: {
       const feeNumerator = props.withdrawTransactionFees.mspPercentFee * BASE_100_TO_BASE_1_MULTIPLIER;
       const feeDenaminator = 1000000;
       const badStreamMaxAllocation = unallocatedBalance
-        .muln(feeDenaminator)
-        .divn(feeNumerator + feeDenaminator);
+        .mul(new BN(feeDenaminator))
+        .div(new BN(feeNumerator + feeDenaminator));
 
       const feeAmount = badStreamMaxAllocation
-        .muln(feeNumerator)
-        .divn(feeDenaminator);
+        .mul(new BN(feeNumerator))
+        .div(new BN(feeDenaminator));
 
       const badTotal = badStreamMaxAllocation.add(feeAmount);
       const badRemaining = unallocatedBalance.sub(badTotal);

@@ -129,12 +129,12 @@ export const TreasuryAddFundsModal = (props: {
         const feeNumerator = props.withdrawTransactionFees.mspPercentFee * BASE_100_TO_BASE_1_MULTIPLIER;
         const feeDenaminator = 1000000;
         const badStreamMaxAllocation = availableBalance
-          .muln(feeDenaminator)
-          .divn(feeNumerator + feeDenaminator);
+          .mul(new BN(feeDenaminator))
+          .div(new BN(feeNumerator + feeDenaminator));
 
         const feeAmount = badStreamMaxAllocation
-          .muln(feeNumerator)
-          .divn(feeDenaminator);
+          .mul(new BN(feeNumerator))
+          .div(new BN(feeDenaminator));
 
         const goodStreamMaxAllocation = availableBalance.sub(feeAmount);
         const maxAmount = goodStreamMaxAllocation;
