@@ -450,7 +450,7 @@
 			"transfer-to-placeholder": "Hedef hesabın adresini girin"
 		},
 		"update-multisig": {
-			"edit-not-allowed-message": "Süren işlemlerin tamamını bitirmeden ya da iptal etmeden, Çoklu-İmza'yı düzenleyemezsiniz",
+			"edit-not-allowed-message": "Bir Multisig'de imzalayanları değiştirdiğinizde, bekleyen tüm işlemler GEÇERSİZ olacaktır. Devam etmeden önce, tamamlanması gereken önemli bir işlem olmadığından emin olun.",
 			"main-cta": "Değişiklikleri kaydet",
 			"main-cta-busy": "Değişiklikler kaydediliyor",
 			"modal-title": "Çoklu-İmza'yı düzenle",
