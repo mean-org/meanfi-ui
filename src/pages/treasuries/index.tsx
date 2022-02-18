@@ -40,6 +40,7 @@ import {
   isProd,
   getIntervalFromSeconds,
   delay,
+  getShortDate,
 } from '../../utils/ui';
 import {
   FALLBACK_COIN_IMAGE,
@@ -1017,6 +1018,7 @@ export const TreasuriesView = () => {
         case OperationType.TreasuryCreate:
           const usedOptions = retryOperationPayload as TreasuryCreateOptions;
           if (usedOptions.multisigId) {
+            clearTransactionStatusContext();
             stackedMessagesAndNavigate(usedOptions.multisigId);
           } else {
             refreshTreasuries(true);
@@ -1038,6 +1040,7 @@ export const TreasuriesView = () => {
     lastSentTxSignature,
     retryOperationPayload,
     lastSentTxOperationType,
+    clearTransactionStatusContext,
     setHighLightableMultisigId,
     refreshTreasuries,
     navigate,
@@ -1047,15 +1050,6 @@ export const TreasuriesView = () => {
   /////////////////
   //   Getters   //
   /////////////////
-
-  const getShortDate = (date: string, includeTime = false): string => {
-    if (!date) { return ''; }
-    const localDate = new Date(date);
-    return dateFormat(
-      localDate,
-      includeTime ? SIMPLE_DATE_TIME_FORMAT : SIMPLE_DATE_FORMAT
-    );
-  }
 
   const isAnythingLoading = useCallback((): boolean => {
     return loadingTreasuries || loadingTreasuryDetails || loadingTreasuryStreams

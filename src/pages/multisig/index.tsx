@@ -40,15 +40,11 @@ import {
   delay,
   isLocal,
   isDev,
-  getReadableDate
+  getReadableDate,
+  getShortDate
 } from '../../utils/ui';
 
-import {
-  SIMPLE_DATE_FORMAT,
-  SIMPLE_DATE_TIME_FORMAT,
-  SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
-  VERBOSE_DATE_TIME_FORMAT
-} from '../../constants';
+import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS, VERBOSE_DATE_TIME_FORMAT } from '../../constants';
 
 import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
@@ -3553,7 +3549,7 @@ export const MultisigView = () => {
     previousWalletConnectState,
     publicKey
   ]);
-  
+
   // Detect when entering small screen mode
   useEffect(() => {
     if (isSmallUpScreen && width < 576) {
@@ -3571,13 +3567,15 @@ export const MultisigView = () => {
     if (!publicKey) { return; }
 
     if (lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
+      clearTransactionStatusContext();
       setLoadingMultisigAccounts(true);
     }
   }, [
     publicKey,
     fetchTxInfoStatus,
     lastSentTxSignature,
-    lastSentTxOperationType
+    lastSentTxOperationType,
+    clearTransactionStatusContext,
   ]);
 
   // Get Multisig Vaults
@@ -3767,15 +3765,6 @@ export const MultisigView = () => {
     isTxPendingApproval,
     t,
   ]);
-
-  const getShortDate = (date: string, includeTime = false): string => {
-    if (!date) { return ''; }
-    const localDate = new Date(date);
-    return dateFormat(
-      localDate,
-      includeTime ? SIMPLE_DATE_TIME_FORMAT : SIMPLE_DATE_FORMAT
-    );
-  }
 
   const isTxInProgress = useCallback((): boolean => {
     return isBusy || fetchTxInfoStatus === "fetching" ? true : false;
@@ -4617,16 +4606,9 @@ export const MultisigView = () => {
                 {/* If I am the last approval needed to reach threshold show instructions for exec */}
                 {getTxSignedCount(highlightedMultisigTx) === selectedMultisig.threshold - 1 && (
                   <>
-                    {/* Am I the Tx initiator */}
-                    {isUserTxInitiator() ? (
-                      <h3 className="text-center mt-3">Your transaction is ready for execution.</h3>
-                    ) : (
-                      <>
-                        <h3 className="text-center mt-3">This transaction is now ready for execution. Please tell the person who initiated this transaction to execute it.</h3>
-                        <Divider className="mt-2" />
-                        <div className="mb-2">Initiator: {getTxInitiator()?.name}<br/>Address: <code>{getTxInitiator()?.address}</code></div>
-                      </>
-                    )}
+                    <h3 className="text-center mt-3">This transaction is now ready for execution. Please tell the person who initiated this transaction to execute it.</h3>
+                    <Divider className="mt-2" />
+                    <div className="mb-2">Initiator: {getTxInitiator()?.name}<br/>Address: <code>{getTxInitiator()?.address}</code></div>
                   </>
                 )}
               </>
