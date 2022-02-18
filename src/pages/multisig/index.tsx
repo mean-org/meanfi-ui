@@ -241,9 +241,26 @@ export const MultisigView = () => {
 
     setIsCreateMultisigModalVisible(false);
     setLoadingMultisigAccounts(true);
+    setLoadingMultisigTxs(true);
     resetTransactionStatus();
     notify({
       description: t('multisig.create-multisig.success-message'),
+      type: "success"
+    });
+
+  },[
+    t,
+    resetTransactionStatus
+  ])
+
+  const onMultisigModified = useCallback(() => {
+
+    setIsEditMultisigModalVisible(false);
+    setLoadingMultisigAccounts(true);
+    setLoadingMultisigTxs(true);
+    resetTransactionStatus();
+    notify({
+      description: t('multisig.update-multisig.success-message'),
       type: "success"
     });
 
@@ -939,7 +956,7 @@ export const MultisigView = () => {
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.TransactionFinished
             });
-            onMultisigCreated();
+            onMultisigModified();
             setOngoingOperation(undefined);
             setIsEditMultisigModalVisible(false);
           } else { setIsBusy(false); }
@@ -949,21 +966,21 @@ export const MultisigView = () => {
 
   }, [
     selectedMultisig,
-    clearTransactionStatusContext, 
-    connection, 
-    multisigClient.account.transaction, 
-    multisigClient.coder.instruction, 
-    multisigClient.programId, 
-    multisigClient.transaction, 
-    nativeBalance, 
-    onMultisigCreated, 
-    publicKey, 
-    setTransactionStatus, 
-    startFetchTxSignatureInfo, 
-    transactionCancelled, 
-    transactionFees.blockchainFee, 
-    transactionFees.mspFlatFee, 
-    transactionStatus.currentOperation, 
+    clearTransactionStatusContext,
+    connection,
+    multisigClient.account.transaction,
+    multisigClient.coder.instruction,
+    multisigClient.programId,
+    multisigClient.transaction,
+    nativeBalance,
+    onMultisigModified,
+    publicKey,
+    setTransactionStatus,
+    startFetchTxSignatureInfo,
+    transactionCancelled,
+    transactionFees.blockchainFee,
+    transactionFees.mspFlatFee,
+    transactionStatus.currentOperation,
     wallet
   ]);
 
@@ -971,13 +988,6 @@ export const MultisigView = () => {
     consoleOut('multisig:', data, 'blue');
     onExecuteEditMultisigTx(data);
   };
-
-  const onMultisigSaved = useCallback(() => {
-
-    setIsEditMultisigModalVisible(false);
-    setLoadingMultisigAccounts(true);
-
-  },[])
 
   // Transaction confirm and execution modal launched from each Tx row
   const [isMultisigActionTransactionModalVisible, setMultisigActionTransactionModalVisible] = useState(false);
