@@ -4804,7 +4804,7 @@ export const TreasuriesView = () => {
 
   const renderTreasuryList = (
     <>
-    {isMultisigTreasury() && selectedMultisig && (
+    {isMultisigAvailable() && selectedMultisig && (
       <div className="left-panel-inner-heading">
         <div className="font-bold">Multsig Treasuries - [{selectedMultisig.label}]</div>
         <div>Below is a list of all the treasuries that are connected to this Multsig</div>
@@ -4891,7 +4891,7 @@ export const TreasuriesView = () => {
           <Spin indicator={bigLoadingIcon} />
         </div>
       ) : (
-        <div className="h-100 flex-center">
+        <div className={`flex-center ${isMultisigAvailable() ? 'h-50' : 'h-100'}`}>
           <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{connected
           ? t('treasuries.treasury-list.no-treasuries')
           : t('treasuries.treasury-list.not-connected')}</p>} />
@@ -4899,7 +4899,7 @@ export const TreasuriesView = () => {
       )}
       </>
     )}
-    {(isMultisigAvailable() && treasuryList && treasuryList.length > 0) && (
+    {isMultisigAvailable() && (
       <div className="py-3 px-3 simplelink" onClick={() => resetTreasuriesContext()}>
         <IconShowAll className="mean-svg-icons align-middle" />
         <span className="ml-1 align-middle">Show All Treasuries</span>
