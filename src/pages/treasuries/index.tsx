@@ -1,6 +1,7 @@
 import React, { useCallback, useContext, useMemo } from 'react';
 import {
   ArrowDownOutlined,
+  ArrowLeftOutlined,
   ArrowUpOutlined,
   CheckOutlined,
   EllipsisOutlined,
@@ -4936,6 +4937,26 @@ export const TreasuriesView = () => {
             <div className="meanfi-two-panel-left">
 
               <div className="meanfi-panel-heading">
+                {isMultisigAvailable() && (
+                  <div className="back-button">
+                    <span className="icon-button-container">
+                      <Tooltip placement="bottom" title={t('multisig.multisig-vaults.back-to-multisig-accounts-cta')}>
+                        <Button
+                          type="default"
+                          shape="circle"
+                          size="middle"
+                          icon={<ArrowLeftOutlined />}
+                          onClick={() => {
+                            if (selectedMultisig) {
+                              setHighLightableMultisigId(selectedMultisig.address.toBase58());
+                            }
+                            navigate('/multisig');
+                          }}
+                        />
+                      </Tooltip>
+                    </span>
+                  </div>
+                )}
                 <span className="title">{t('treasuries.screen-title')}</span>
                 <Tooltip placement="bottom" title={t('treasuries.refresh-tooltip')}>
                   <div className={`transaction-stats user-address ${loadingTreasuries ? 'click-disabled' : 'simplelink'}`} onClick={onRefreshTreasuriesClick}>
