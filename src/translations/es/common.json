@@ -438,7 +438,7 @@
 			"transfer-to-placeholder": "Enter the address of the destination account"
 		},
 		"update-multisig": {
-			"edit-not-allowed-message": "You can not edit the Multisig without first completing or cancelling all pending transactions.",
+			"edit-not-allowed-message": "Cuando cambie los firmantes en un Multisig, todas las transacciones pendientes serán ANULADAS. Antes de continuar, asegúrese de que no haya transacciones importantes que deban completarse primero.",
 			"main-cta": "Save changes",
 			"main-cta-busy": "Saving changes",
 			"modal-title": "Edit multisig",
@@ -524,6 +524,10 @@
 	"payroll": {
 		"screen-subtitle": "Setup payroll for your employees",
 		"screen-title": "Payroll"
+	},
+	"pre-footer": {
+		"made-with": "Made with ",
+		"on-solana": " on Solana"
 	},
 	"referrals": {
 		"address-invalid": "The referral address is not a valid solana address",
@@ -657,7 +661,8 @@
 			"title-sending-to": "Enviando a"
 		},
 		"stream-stats-incoming": "Incoming",
-		"stream-stats-outgoing": "Outgoing"
+		"stream-stats-outgoing": "Outgoing",
+		"stream-interval": "net-change"
 	},
 	"swap": {
 		"exchange-warning": "Mean Exchange solo está disponible en",
@@ -902,6 +907,7 @@
 			"treasury-name-label": "Treasury name"
 		},
 		"treasury-detail-heading": "Treasury details",
+		"treasury-refresh-tooltip": "Refresh treasury data",
 		"treasury-list": {
 			"no-treasuries": "No treasuries available",
 			"not-connected": "Please connect your wallet to see your treasuries",

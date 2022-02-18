@@ -450,7 +450,7 @@
 			"transfer-to-placeholder": "Entrez l'adresse du compte de destination"
 		},
 		"update-multisig": {
-			"edit-not-allowed-message": "Vous ne pouvez pas modifier le Multisig sans avoir d'abord terminé ou annuler toutes les transactions en attente.",
+			"edit-not-allowed-message": "Lorsque vous modifiez les signataires sur un Multisig, toutes les transactions en attente seront ANNULÉES. Avant de continuer, assurez-vous qu'aucune transaction importante ne doit être effectuée en premier.",
 			"main-cta": "Sauvegarder les modifications",
 			"main-cta-busy": "Enregistrer les modifications",
 			"modal-title": "Modifier la signature multiple",
@@ -515,6 +515,10 @@
 	"payroll": {
 		"screen-subtitle": "Configurer la paie de vos employés",
 		"screen-title": "Paie"
+	},
+	"pre-footer": {
+		"made-with": "Made with ",
+		"on-solana": " on Solana"
 	},
 	"referrals": {
 		"address-invalid": "L'adresse de référence n'est pas une adresse solana valide",
@@ -648,7 +652,8 @@
 			"title-sending-to": "Envoi à"
 		},
 		"stream-stats-incoming": "Entrant",
-		"stream-stats-outgoing": "Sortant"
+		"stream-stats-outgoing": "Sortant",
+		"stream-interval": "net-change"
 	},
 	"swap": {
 		"exchange-warning": "Mean Exchange n'est disponible que sur",
@@ -900,6 +905,7 @@
 			"treasury-name-label": "Nom du Trésor"
 		},
 		"treasury-detail-heading": "Détails du Trésor",
+		"treasury-refresh-tooltip": "Refresh treasury data",
 		"treasury-list": {
 			"multisig-treasury-label": "Trésorerie multisig",
 			"no-treasuries": "Aucune trésorerie disponible",

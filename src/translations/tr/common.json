@@ -450,7 +450,7 @@
 			"transfer-to-placeholder": "Hedef hesabın adresini girin"
 		},
 		"update-multisig": {
-			"edit-not-allowed-message": "Süren işlemlerin tamamını bitirmeden ya da iptal etmeden, Çoklu-İmza'yı düzenleyemezsiniz",
+			"edit-not-allowed-message": "Bir Multisig'de imzalayanları değiştirdiğinizde, bekleyen tüm işlemler GEÇERSİZ olacaktır. Devam etmeden önce, tamamlanması gereken önemli bir işlem olmadığından emin olun.",
 			"main-cta": "Değişiklikleri kaydet",
 			"main-cta-busy": "Değişiklikler kaydediliyor",
 			"modal-title": "Çoklu-İmza'yı düzenle",
@@ -515,6 +515,10 @@
 	"payroll": {
 		"screen-subtitle": "Çalışanlarınız için ödeme planı ayarlayın",
 		"screen-title": "Ödeme planı"
+	},
+	"pre-footer": {
+		"made-with": "Made with ",
+		"on-solana": " on Solana"
 	},
 	"referrals": {
 		"address-invalid": "Referans adresi geçerli bir solana adresi değil",
@@ -648,7 +652,8 @@
 			"title-sending-to": "Gönderiliyor"
 		},
 		"stream-stats-incoming": "Gelen",
-		"stream-stats-outgoing": "Giden"
+		"stream-stats-outgoing": "Giden",
+		"stream-interval": "net-change"
 	},
 	"swap": {
 		"exchange-warning": "Mean Exchange yalnızca şurada kullanılabilir:",
@@ -900,6 +905,7 @@
 			"treasury-name-label": "Hazine adı"
 		},
 		"treasury-detail-heading": "Hazine ayrıntıları",
+		"treasury-refresh-tooltip": "Refresh treasury data",
 		"treasury-list": {
 			"multisig-treasury-label": "Çoklu-imza hazinesi",
 			"no-treasuries": "Hazine yok",
