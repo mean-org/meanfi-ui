@@ -14,7 +14,7 @@ import MultisigIdl from "../../models/mean-multisig-idl";
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { consoleOut, copyText, delay, getReadableDate, getShortDate, getTransactionOperationDescription, getTransactionStatusForLogs, isLocal } from '../../utils/ui';
+import { consoleOut, copyText, delay, getReadableDate, getShortDate, getTransactionOperationDescription, getTransactionStatusForLogs, isDev, isLocal } from '../../utils/ui';
 import { Identicon } from '../../components/Identicon';
 import { getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, getTxIxResume, shortenAddress, toUiAmount } from '../../utils/utils';
 import { MultisigV2, MultisigParticipant, MultisigTransaction, MultisigTransactionStatus, MultisigVault, Multisig } from '../../models/multisig';
@@ -916,6 +916,10 @@ export const MultisigVaultsView = () => {
     }
 
   },[t])
+
+  const isUnderDevelopment = () => {
+    return isLocal() || (isDev() && isWhitelisted) ? true : false;
+  }
 
   const refreshPage = useCallback(() => {
     window.location.reload();
@@ -3044,7 +3048,7 @@ export const MultisigVaultsView = () => {
               <div className="inner-container">
                 {publicKey ? (
                   <>
-                    {selectedVault && (
+                    {(isUnderDevelopment() && selectedVault) && (
                       <div className="float-top-right">
                         <span className="icon-button-container secondary-button">
                           <Tooltip placement="bottom" title={t('multisig.multisig-vaults.cta-close')}>

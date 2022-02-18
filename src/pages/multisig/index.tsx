@@ -4400,16 +4400,18 @@ export const MultisigView = () => {
                                 disabled={isTxInProgress()}
                               />
                             </Tooltip>
-                            <Tooltip placement="bottom" title={t('multisig.crud-multisig.delete-multisig')}>
-                              <Button
-                                type="default"
-                                shape="circle"
-                                size="middle"
-                                icon={<IconTrash className="mean-svg-icons" />}
-                                onClick={() => {}}
-                                disabled={isTxInProgress()}
-                              />
-                            </Tooltip>
+                            {isUnderDevelopment() && (
+                              <Tooltip placement="bottom" title={t('multisig.crud-multisig.delete-multisig')}>
+                                <Button
+                                  type="default"
+                                  shape="circle"
+                                  size="middle"
+                                  icon={<IconTrash className="mean-svg-icons" />}
+                                  onClick={() => {}}
+                                  disabled={isTxInProgress()}
+                                />
+                              </Tooltip>
+                            )}
                           </>
                         )}
                         {!isSelectedMultisigV2() && (
