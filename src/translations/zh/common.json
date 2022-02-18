@@ -257,9 +257,26 @@
 		"subtitle": "The easiest way to grow your money stash",
 		"screen-title": "Invest Options",
 		"refresh-tooltip": "Refresh invest data",
-		"tabset": {
-			"stake": "Stake",
-			"unstake": "Unstake"
+		"panel-right": {
+			"first-text": "MEAN staking rewards include emission incentives plus 30% of the protocol revenues (calculated weekly), and can be boosted using locking periods.",
+			"second-text": "Your staking rewards will be streamed over time and they can be withdrawn at any time.",
+			"stats": {
+				"staking-apr": "Staking APR",
+				"total-value-locked": "Total Value Locked",
+				"next-week-payout": "Next Week Payout"
+			},
+			"tabset": {
+				"stake": {
+					"name": "Stake",
+					"amount-label": "Amount to stake",
+					"term-label": "How long do you want to stake for?",
+					"notification-label": "Staking period of 7 days will lock your Tokens until February 21, 2022 with estimated rewards of up to 100 MEAN",
+					"verified-label": "I agree to the Terms & Conditions"
+				},
+				"unstake": {
+					"name": "Unstake"
+				}
+			}
 		}
 	},
 	"language-selector": {

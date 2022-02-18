@@ -1,20 +1,192 @@
-import { useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import './style.less';
+import { TokenInfo } from "@solana/spl-token-registry";
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { ReloadOutlined } from "@ant-design/icons";
 import { Button, Tooltip, Row, Col } from "antd";
-import { PreFooter } from "../../components/PreFooter";
-import { IconStats } from "../../Icons";
-import { useTranslation } from 'react-i18next';
+import Modal from "antd/lib/modal/Modal";
 import Checkbox from "antd/lib/checkbox/Checkbox";
+import { useTranslation } from 'react-i18next';
+import { IconStats } from "../../Icons";
+import { TokenDisplay } from "../../components/TokenDisplay";
+import { TextInput } from "../../components/TextInput";
+import { TokenListItem } from "../../components/TokenListItem";
+import { PreFooter } from "../../components/PreFooter";
+import { useWallet } from "../../contexts/wallet";
+import { useAccountsContext } from "../../contexts/accounts";
+import { useConnection } from "../../contexts/connection";
+import { AppStateContext } from "../../contexts/appstate";
+import { ACCOUNT_LAYOUT } from '../../utils/layouts';
+import { formatAmount, getAmountWithSymbol, isValidNumber } from "../../utils/utils";
+import { consoleOut, isValidAddress } from "../../utils/ui";
+
 
 type SwapOption = "stake" | "unstake";
 
 export const InvestView = () => {
+  const {
+    tokenList,
+    selectedToken,
+    tokenBalance,
+    effectiveRate,
+    coinPrices,
+    loadingPrices,
+    fromCoinAmount,
+    refreshPrices,
+    setSelectedToken,
+    setEffectiveRate,
+    setFromCoinAmount,
+  } = useContext(AppStateContext);
+  const navigate = useNavigate();
+  const connection = useConnection();
+  const accounts = useAccountsContext();
+  const { connected, publicKey } = useWallet();
   const { t } = useTranslation('common');
   const [currentTab, setCurrentTab] = useState<SwapOption>("stake");
+  const [userBalances, setUserBalances] = useState<any>();
+  const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
+  const [tokenFilter, setTokenFilter] = useState("");
+
+  // Token selection modal
+  const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
+  const showTokenSelector = useCallback(() => setTokenSelectorModalVisibility(true), []);
+
+  // Automatically update all token balances
+  useEffect(() => {
+
+    if (!connection) {
+      console.error('No connection');
+      return;
+    }
+
+    if (!publicKey || !tokenList || !accounts || !accounts.tokenAccounts) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+
+      const balancesMap: any = {};
+      connection.getTokenAccountsByOwner(
+        publicKey, 
+        { programId: TOKEN_PROGRAM_ID }, 
+        connection.commitment
+      )
+      .then(response => {
+        for (let acc of response.value) {
+          const decoded = ACCOUNT_LAYOUT.decode(acc.account.data);
+          const address = decoded.mint.toBase58();
+          const itemIndex = tokenList.findIndex(t => t.address === address);
+          if (itemIndex !== -1) {
+            balancesMap[address] = decoded.amount.toNumber() / (10 ** tokenList[itemIndex].decimals);
+          } else {
+            balancesMap[address] = 0;
+          }
+        }
+      })
+      .catch(error => {
+        console.error(error);
+        for (let t of tokenList) {
+          balancesMap[t.address] = 0;
+        }
+      })
+      .finally(() => setUserBalances(balancesMap));
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [
+    connection,
+    tokenList,
+    accounts,
+    publicKey
+  ]);
+
+  const onCloseTokenSelector = useCallback(() => {
+    setTokenSelectorModalVisibility(false);
+    if (tokenFilter && !isValidAddress(tokenFilter)) {
+      setTokenFilter('');
+    }
+  }, [tokenFilter]);
 
   const onTabChange = (option: SwapOption) => {
     setCurrentTab(option);
+  }
+
+  const handleFromCoinAmountChange = (e: any) => {
+    const newValue = e.target.value;
+    if (newValue === null || newValue === undefined || newValue === "") {
+      setFromCoinAmount("");
+    } else if (newValue === '.') {
+      setFromCoinAmount(".");
+    } else if (isValidNumber(newValue)) {
+      setFromCoinAmount(newValue);
+    }
+  };
+
+  // Updates the token list everytime is filtered
+  const updateTokenListByFilter = useCallback((searchString: string) => {
+
+    if (!tokenList) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+
+      const filter = (t: any) => {
+        return (
+          t.symbol.toLowerCase().includes(searchString.toLowerCase()) ||
+          t.name.toLowerCase().includes(searchString.toLowerCase()) ||
+          t.address.toLowerCase().includes(searchString.toLowerCase())
+        );
+      };
+
+      let showFromList = !searchString 
+        ? tokenList
+        : tokenList.filter((t: any) => filter(t));
+
+      setFilteredTokenList(showFromList);
+
+    });
+
+    return () => { 
+      clearTimeout(timeout);
+    }
+    
+  }, [
+    tokenList,
+  ]);
+
+  const onInputCleared = useCallback(() => {
+    setTokenFilter('');
+    updateTokenListByFilter('');
+  },[
+    updateTokenListByFilter
+  ]);
+
+  const onTokenSearchInputChange = useCallback((e: any) => {
+    const newValue = e.target.value;
+    setTokenFilter(newValue);
+    updateTokenListByFilter(newValue);
+
+  },[
+    updateTokenListByFilter
+  ]);
+
+  const onGotoExchange = () => {
+    onCloseTokenSelector();
+    navigate('/exchange?from=SOL&to=wSOL');
+  }
+
+  const getPricePerToken = (token: TokenInfo): number => {
+    const tokenSymbol = token.symbol.toUpperCase();
+    const symbol = tokenSymbol[0] === 'W' ? tokenSymbol.slice(1) : tokenSymbol;
+
+    return coinPrices && coinPrices[symbol]
+      ? coinPrices[symbol]
+      : 0;
   }
 
   const renderInvestOptions = (
@@ -32,6 +204,32 @@ export const InvestView = () => {
         <div className="interval">APR</div>
       </div>
     </div>
+  );
+
+  const renderTokenList = (
+    <>
+      {(filteredTokenList && filteredTokenList.length > 0) && (
+        filteredTokenList.map((token, index) => {
+          const onClick = function () {
+            setSelectedToken(token);
+            consoleOut("token selected:", token.symbol, 'blue');
+            setEffectiveRate(getPricePerToken(token));
+            onCloseTokenSelector();
+          };
+
+          return (
+            <TokenListItem
+              key={token.address}
+              name={token.name || 'Unknown'}
+              mintAddress={token.address}
+              className={selectedToken && selectedToken.address === token.address ? "selected" : "simplelink"}
+              onClick={onClick}
+              balance={connected && userBalances && userBalances[token.address] > 0 ? userBalances[token.address] : 0}
+            />
+          );
+        })
+      )}
+    </>
   );
 
   return (
@@ -77,8 +275,8 @@ export const InvestView = () => {
 
             <div className="meanfi-two-panel-right">
               <div className="inner-container">
-                <p>MEAN staking rewards include emission incentives plus 30% of the protocol revenues (calculated weekly), and can be boosted using locking periods.</p>
-                <p>Your staking rewards will be streamed over time and they can be withdrawn at any time. </p>
+                <p>{t("invest.panel-right.first-text")}</p>
+                <p>{t("invest.panel-right.second-text")}</p>
                 <div className="pinned-token-separator"></div>
                 <div className="stream-fields-container">
                   <div className="mb-3">
@@ -109,64 +307,84 @@ export const InvestView = () => {
                     <div className="place-transaction-box mb-3">
                       <div className="button-tabset-container">
                         <div className={`tab-button ${currentTab === "stake" ? 'active' : ''}`} onClick={() => onTabChange("stake")}>
-                          {t('invest.tabset.stake')}
+                          {t('invest.panel-right.tabset.stake.name')}
                         </div>
                         <div className={`tab-button ${currentTab === "unstake" ? 'active' : ''}`} onClick={() => onTabChange("unstake")}>
-                          {t('invest.tabset.unstake')}
+                          {t('invest.panel-right.tabset.unstake.name')}
                         </div>
                       </div>
+
                       {/* STAKE */}
-                      {
-                        currentTab === "stake" && (
+                      {currentTab === "stake" && (
                           <>
-                          <div className="form-label">Amount to stake</div>
-                          <div className="well">
-                            <div className="flex-fixed-left">
-                              <div className="left">
-                                <span className="add-on simplelink">
-                                </span>
+                            <div className="form-label">{t("invest.panel-right.tabset.stake.amount-label")}</div>
+                            <div className="well">
+                              <div className="flex-fixed-left">
+                                <div className="left">
+                                  <span className="add-on simplelink">
+                                    {selectedToken && (
+                                      <TokenDisplay onClick={() => showTokenSelector()}
+                                        mintAddress={selectedToken.address}
+                                        name={selectedToken.name}
+                                        showCaretDown={true}
+                                      />
+                                    )}
+                                  </span>
+                                </div>
+                                <div className="right">
+                                  <input
+                                    className="general-text-input text-right"
+                                    inputMode="decimal"
+                                    autoComplete="off"
+                                    autoCorrect="off"
+                                    type="text"
+                                    onChange={handleFromCoinAmountChange}
+                                    pattern="^[0-9]*[.,]?[0-9]*$"
+                                    placeholder="0.0"
+                                    minLength={1}
+                                    maxLength={79}
+                                    spellCheck="false"
+                                    value={fromCoinAmount}
+                                  />
+                                </div>
                               </div>
-                              <div className="right">
-                                <input
-                                  className="general-text-input text-right"
-                                  inputMode="decimal"
-                                  autoComplete="off"
-                                  autoCorrect="off"
-                                  type="text"
-                                  pattern="^[0-9]*[.,]?[0-9]*$"
-                                  placeholder="0.0"
-                                  minLength={1}
-                                  maxLength={79}
-                                  spellCheck="false"
-                                />
+                              <div className="flex-fixed-right">
+                                <div className="left inner-label">
+                                  <span>{t('transactions.send-amount.label-right')}:</span>
+                                  <span>
+                                    {`${tokenBalance && selectedToken
+                                        ? getAmountWithSymbol(tokenBalance, selectedToken?.address, true)
+                                        : "0"
+                                    }`}
+                                  </span>
+                                </div>
+                                <div className="right inner-label">
+                                  <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
+                                    ~${fromCoinAmount && effectiveRate
+                                      ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
+                                      : "0.00"}
+                                  </span>
+                                </div>
                               </div>
                             </div>
-                            <div className="flex-fixed-right">
-                              <div className="left inner-label">
-
-                              </div>
-                              <div className="right inner-label">
-
+                          
+                            <span className="info-label">{t("invest.panel-right.tabset.stake.term-label")}</span>
+                            <div className="flexible-left mb-1 mt-2">
+                              <div className="left token-group">
+                                <div className="token-max simplelink mb-1">7 days
+                                </div> 
+                                <div className="token-max simplelink mb-1">30 days</div> 
+                                <div className="token-max simplelink mb-1">90 days</div> 
+                                <div className="token-max simplelink mb-1">1 year</div> 
+                                <div className="token-max simplelink mb-1">4 years</div> 
                               </div>
                             </div>
-                          </div>
-                          <span className="info-label">How long do you want to stake for?</span>
-                          <div className="flexible-left mb-1 mt-2">
-                            <div className="left token-group">
-                              <div className="token-max simplelink mb-1">7 days
-                              </div> 
-                              <div className="token-max simplelink mb-1">30 days</div> 
-                              <div className="token-max simplelink mb-1">90 days</div> 
-                              <div className="token-max simplelink mb-1">1 year</div> 
-                              <div className="token-max simplelink mb-1">4 years</div> 
-                            </div>
-                          </div>
-                          <span className="info-label">Staking period of 7 days will lock your Tokens until February 21, 2022 with estimated rewards of up to 100 MEAN</span>
+                            <span className="info-label">{t("invest.panel-right.tabset.stake.notification-label")}</span>
 
-                          {/* Confirm that have read the terms and conditions */}
-                          <div className="mb-2 mt-2">
-                            <Checkbox>{"I agree to the Terms & Conditions"}</Checkbox>
-                          </div>
+                            {/* Confirm that have read the terms and conditions */}
+                            <div className="mb-2 mt-2">
+                              <Checkbox>{t("invest.panel-right.tabset.stake.verified-label")}</Checkbox>
+                            </div>
 
                             {/* Action button */}
                             <Button
@@ -178,15 +396,66 @@ export const InvestView = () => {
                             >
                               Stake MEAN
                             </Button>
+
+                            {/* Token selection modal */}
+                            {isTokenSelectorModalVisible && (
+                              <Modal
+                                className="mean-modal unpadded-content"
+                                visible={isTokenSelectorModalVisible}
+                                title={<div className="modal-title">{t('token-selector.modal-title')}</div>}
+                                onCancel={onCloseTokenSelector}
+                                width={450}
+                                footer={null}>
+                                <div className="token-selector-wrapper">
+                                  <div className="token-search-wrapper">
+                                    <TextInput
+                                      id="token-search-otp"
+                                      value={tokenFilter}
+                                      allowClear={true}
+                                      extraClass="mb-2"
+                                      onInputClear={onInputCleared}
+                                      placeholder={t('token-selector.search-input-placeholder')}
+                                      onInputChange={onTokenSearchInputChange} />
+                                  </div>
+                                  <div className="flex-row align-items-center fg-secondary-60 mb-2 px-1">
+                                    <span>{t('token-selector.looking-for-sol')}</span>&nbsp;
+                                    <span className="simplelink underline" onClick={onGotoExchange}>{t('token-selector.wrap-sol-first')}</span>
+                                  </div>
+                                  <div className="token-list vertical-scroll">
+                                    {filteredTokenList.length > 0 && renderTokenList}
+                                    {(tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0) && (
+                                      <TokenListItem
+                                        key={tokenFilter}
+                                        name="Unknown"
+                                        mintAddress={tokenFilter}
+                                        className={selectedToken && selectedToken.address === tokenFilter ? "selected" : "simplelink"}
+                                        onClick={() => {
+                                          const uknwnToken: TokenInfo = {
+                                            address: tokenFilter,
+                                            name: 'Unknown',
+                                            chainId: 101,
+                                            decimals: 6,
+                                            symbol: '',
+                                          };
+                                          setSelectedToken(uknwnToken);
+                                          consoleOut("token selected:", uknwnToken, 'blue');
+                                          setEffectiveRate(0);
+                                          onCloseTokenSelector();
+                                        }}
+                                        balance={connected && userBalances && userBalances[tokenFilter] > 0 ? userBalances[tokenFilter] : 0}
+                                      />
+                                    )}
+                                  </div>
+                                </div>
+                              </Modal>
+                            )}
                           </>
-                        )
-                      }
+                      )}
+
                       {/* UNSTAKE */}
-                      {
-                        currentTab === "unstake" && (
+                      {currentTab === "unstake" && (
                           <div>Unstake</div>
-                        )
-                      }
+                      )}
                     </div>
                   </Col>
                   <Col span={12}>
