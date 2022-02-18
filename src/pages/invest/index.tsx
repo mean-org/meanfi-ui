@@ -32,10 +32,13 @@ export const InvestView = () => {
     coinPrices,
     loadingPrices,
     fromCoinAmount,
+    isVerifiedRecipient,
+    paymentStartDate,
     refreshPrices,
     setSelectedToken,
     setEffectiveRate,
     setFromCoinAmount,
+    setIsVerifiedRecipient,
   } = useContext(AppStateContext);
   const navigate = useNavigate();
   const connection = useConnection();
@@ -191,6 +194,25 @@ export const InvestView = () => {
 
   const onChangeValue = (value: number) => {
     setTermValue(value);
+  }
+
+  const onIsVerifiedRecipientChange = (e: any) => {
+    setIsVerifiedRecipient(e.target.checked);
+  }
+
+  const isSendAmountValid = (): boolean => {
+    return  connected &&
+            selectedToken &&
+            tokenBalance &&
+            fromCoinAmount &&
+            parseFloat(fromCoinAmount) > 0 &&
+            parseFloat(fromCoinAmount) <= tokenBalance
+      ? true
+      : false;
+  }
+
+  const areSendAmountSettingsValid = (): boolean => {
+    return paymentStartDate && isSendAmountValid() ? true : false;
   }
 
   const renderInvestOptions = (
@@ -401,7 +423,7 @@ export const InvestView = () => {
 
                             {/* Confirm that have read the terms and conditions */}
                             <div className="mb-2 mt-2">
-                              <Checkbox>{t("invest.panel-right.tabset.stake.verified-label")}</Checkbox>
+                              <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>{t("invest.panel-right.tabset.stake.verified-label")}</Checkbox>
                             </div>
 
                             {/* Action button */}
@@ -411,8 +433,11 @@ export const InvestView = () => {
                               type="primary"
                               shape="round"
                               size="large"
+                              disabled={
+                                !areSendAmountSettingsValid() ||
+                                !isVerifiedRecipient}
                             >
-                              Stake MEAN
+                              Stake {selectedToken && selectedToken.name}
                             </Button>
 
                             {/* Token selection modal */}
