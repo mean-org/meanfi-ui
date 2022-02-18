@@ -8,12 +8,12 @@ import { Button, Col, Divider, Empty, Modal, Row, Space, Spin, Tooltip } from 'a
 import { ArrowLeftOutlined, CheckOutlined, CopyOutlined, InfoCircleOutlined, LoadingOutlined, ReloadOutlined } from '@ant-design/icons';
 import { IconCodeBlock, IconExternalLink, IconShieldOutline } from '../../Icons';
 import { PreFooter } from '../../components/PreFooter';
-import { ConfirmOptions, Connection, Keypair, LAMPORTS_PER_SOL, MemcmpFilter, PublicKey, Transaction } from '@solana/web3.js';
+import { ConfirmOptions, Connection, Keypair, LAMPORTS_PER_SOL, MemcmpFilter, PublicKey, SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY, Transaction } from '@solana/web3.js';
 import { Program, Provider } from '@project-serum/anchor';
 import MultisigIdl from "../../models/mean-multisig-idl";
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { consoleOut, copyText, delay, getReadableDate, getShortDate, getTransactionOperationDescription, getTransactionStatusForLogs, isLocal } from '../../utils/ui';
+import { consoleOut, copyText, delay, getReadableDate, getShortDate, getTransactionOperationDescription, getTransactionStatusForLogs, isDev, isLocal } from '../../utils/ui';
 import { Identicon } from '../../components/Identicon';
 import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, toUiAmount } from '../../utils/utils';
 import { MultisigV2, MultisigTransaction, MultisigTransactionStatus, MultisigParticipant, Multisig } from '../../models/multisig';
@@ -28,6 +28,10 @@ import { MultisigCreateProgramModal } from '../../components/MultisigCreateProgr
 import { ProgramAccounts } from '../../utils/accounts';
 import useWindowSize from '../../hooks/useWindowResize';
 import { isError } from '../../utils/transactions';
+import { encodeInstruction } from '../../models/idl';
+import { MultisigUpgradeProgramModal } from '../../components/MultisigUpgradeProgramModal';
+import { MultisigUpgradeIDLModal } from '../../components/MultisigUpgradeIDL';
+import { MultisigSetProgramAuthModal } from '../../components/MultisigSetProgramAuthModal';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -53,6 +57,7 @@ export const MultisigProgramsView = () => {
     fetchTxInfoStatus,
     lastSentTxSignature,
     lastSentTxOperationType,
+    startFetchTxSignatureInfo,
     clearTransactionStatusContext,
   } = useContext(TransactionStatusContext);
   const { t } = useTranslation('common');
@@ -63,7 +68,7 @@ export const MultisigProgramsView = () => {
 
   const [programs, setPrograms] = useState<ProgramAccounts[] | undefined>(undefined);
   const [selectedProgram, setSelectedProgram] = useState<ProgramAccounts | undefined>(undefined);
-  const [loadingPrograms, setLoadingPrograms] = useState(false);
+  const [loadingPrograms, setLoadingPrograms] = useState(true);
 
   const [multisigAccounts, setMultisigAccounts] = useState<(MultisigV2 | Multisig)[]>([]);
   const [selectedMultisig, setSelectedMultisig] = useState<MultisigV2 | undefined>(undefined);
@@ -599,10 +604,6 @@ export const MultisigProgramsView = () => {
       BPFLoaderUpgradeab1e,
       {
         encoding: "base64",
-        dataSlice: {
-          offset: 0,
-          length: 0
-        },
         filters: [
           executableDataAccountsFilter
         ]
@@ -635,13 +636,12 @@ export const MultisigProgramsView = () => {
         throw new Error(`More than one program was found for program data account '${executableData}'`);
       }
 
-      const executableDataAccountInfo = await connection.getAccountInfo(executableDataAccounts[0].pubkey);
       const foundProgram = {
         pubkey: executableAccounts[0].pubkey,
         owner: executableAccounts[0].account.owner,
         executable: executableData,
         upgradeAuthority: upgradeAuthority,
-        size: executableDataAccountInfo ? executableDataAccountInfo.data.byteLength : 0
+        size: executableDataAccounts[i].account.data.byteLength
 
       } as ProgramAccounts;
 
@@ -783,13 +783,9 @@ export const MultisigProgramsView = () => {
   // Get Programs
   useEffect(() => {
 
-    if (!connection || !publicKey || !selectedMultisig || !selectedMultisig.address) {
+    if (!connection || !publicKey || !selectedMultisig || !selectedMultisig.address || !loadingPrograms) {
       return;
     }
-
-    setTimeout(() => {
-      setLoadingPrograms(true);
-    });
 
     const timeout = setTimeout(() => {
 
@@ -817,6 +813,7 @@ export const MultisigProgramsView = () => {
   },[
     publicKey,
     connection,
+    loadingPrograms,
     selectedProgram,
     selectedMultisig,
     getProgramsByUpgradeAuthority,
@@ -936,6 +933,10 @@ export const MultisigProgramsView = () => {
   //   Operations and Actions   //
   ////////////////////////////////
 
+  const isUnderDevelopment = () => {
+    return isLocal() || (isDev() && isWhitelisted) ? true : false;
+  }
+
   // Copy address to clipboard
   const copyAddressToClipboard = useCallback((address: any) => {
 
@@ -989,6 +990,1047 @@ export const MultisigProgramsView = () => {
     setTransactionFees(fees);
     setCreateProgramModalVisible(true);
   },[]);
+
+  // Upgrade program modal
+  const [isUpgradeProgramModalVisible, setIsUpgradeProgramModalVisible] = useState(false);
+  const showUpgradeProgramModal = useCallback(() => {
+    setIsUpgradeProgramModalVisible(true);
+    const fees = {
+      blockchainFee: 0.000005,
+      mspFlatFee: 0.000010,
+      mspPercentFee: 0
+    };
+    setTransactionFees(fees);
+  }, []);
+
+  const onAcceptUpgradeProgram = (params: any) => {
+    consoleOut('params', params, 'blue');
+    onExecuteUpgradeProgramsTx(params);
+  };
+
+  const onProgramUpgraded = useCallback(() => {
+
+    setLoadingMultisigAccounts(true);
+    setLoadingMultisigTxs(true);
+
+  },[]);
+
+  const onExecuteUpgradeProgramsTx = useCallback(async (data: any) => {
+
+    let transaction: Transaction;
+    let signedTransaction: Transaction;
+    let signature: any;
+    let encodedTx: string;
+    const transactionLog: any[] = [];
+
+    clearTransactionStatusContext();
+    setTransactionCancelled(false);
+    setOngoingOperation(OperationType.UpgradeProgram);
+    setRetryOperationPayload(data);
+    setIsBusy(true);
+
+    const upgradeProgram = async (data: any) => {
+
+      if (!multisigClient || !selectedMultisig || !publicKey) { return null; }
+
+      const [multisigSigner] = await PublicKey.findProgramAddress(
+        [selectedMultisig.id.toBuffer()],
+        multisigClient.programId
+      );
+
+      const dataBuffer = Buffer.from([3, 0, 0, 0]);
+      const spill = multisigClient.provider.wallet.publicKey;
+      const ixAccounts = [
+        {
+          pubkey: new PublicKey(data.programDataAddress),
+          isWritable: true,
+          isSigner: false,
+        },
+        { pubkey: new PublicKey(data.programAddress), isWritable: true, isSigner: false },
+        { pubkey: new PublicKey(data.bufferAddress), isWritable: true, isSigner: false },
+        { pubkey: spill, isWritable: true, isSigner: false },
+        { pubkey: SYSVAR_RENT_PUBKEY, isWritable: false, isSigner: false },
+        { pubkey: SYSVAR_CLOCK_PUBKEY, isWritable: false, isSigner: false },
+        { pubkey: multisigSigner, isWritable: false, isSigner: false },
+      ];
+
+      const BPF_LOADER_UPGRADEABLE_PID = new PublicKey("BPFLoaderUpgradeab1e11111111111111111111111");
+      const txSize = 1000; // TODO: tighter bound.
+      const transaction = Keypair.generate();
+      const createIx = await multisigClient.account.transaction.createInstruction(
+        transaction,
+        txSize
+      );
+
+      const tx = multisigClient.transaction.createTransaction(
+        BPF_LOADER_UPGRADEABLE_PID,
+        OperationType.UpgradeProgram,
+        [],
+        ixAccounts,
+        dataBuffer,
+        {
+          accounts: {
+            multisig: selectedMultisig.id,
+            transaction: transaction.publicKey,
+            proposer: publicKey
+          },
+          preInstructions: [createIx],
+          signers: [transaction],
+        }
+      );
+
+      tx.feePayer = publicKey;
+      const { blockhash } = await connection.getRecentBlockhash("recent");
+      tx.recentBlockhash = blockhash;
+      tx.partialSign(...[transaction]);
+
+      return tx;
+    };
+
+    const createTx = async (): Promise<boolean> => {
+
+      if (publicKey && data) {
+        consoleOut("Start transaction for create multisig", '', 'blue');
+        consoleOut('Wallet address:', publicKey.toBase58());
+
+        setTransactionStatus({
+          lastOperation: TransactionStatus.TransactionStart,
+          currentOperation: TransactionStatus.InitTransaction
+        });
+
+        // Create a transaction
+        const payload = {
+          programAddress: data.programAddress,
+          programDataAddress: data.programDataAddress,
+          bufferAddress: data.bufferAddress
+        };
+        
+        consoleOut('data:', payload);
+
+        // Log input data
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+          inputs: payload
+        });
+
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+          result: ''
+        });
+
+        // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
+        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+        consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
+        consoleOut('nativeBalance:', nativeBalance, 'blue');
+
+        if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.TransactionStartFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+            result: `Not enough balance (${
+              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            }) to pay for network fees (${
+              getTokenAmountAndSymbolByTokenAddress(
+                transactionFees.blockchainFee + transactionFees.mspFlatFee, 
+                NATIVE_SOL_MINT.toBase58()
+              )
+            })`
+          });
+          customLogger.logWarning('Upgrade Program transaction failed', { transcript: transactionLog });
+          return false;
+        }
+
+        return await upgradeProgram(data)
+          .then(value => {
+            if (!value) { return false; }
+            consoleOut('createTreasury returned transaction:', value);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.InitTransactionSuccess,
+              currentOperation: TransactionStatus.SignTransaction
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+              result: getTxIxResume(value)
+            });
+            transaction = value;
+            return true;
+          })
+          .catch(error => {
+            console.error('createTreasury error:', error);
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.InitTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+              result: `${error}`
+            });
+            customLogger.logError('Upgrade Program transaction failed', { transcript: transactionLog });
+            return false;
+          });
+
+      } else {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot start transaction! Wallet not found!'
+        });
+        customLogger.logError('Upgrade Program transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const signTx = async (): Promise<boolean> => {
+      if (wallet) {
+        consoleOut('Signing transaction...');
+        return await wallet.signTransaction(transaction)
+        .then((signed: Transaction) => {
+          consoleOut('signTransaction returned a signed transaction:', signed);
+          signedTransaction = signed;
+          // Try signature verification by serializing the transaction
+          try {
+            encodedTx = signedTransaction.serialize().toString('base64');
+            consoleOut('encodedTx:', encodedTx, 'orange');
+          } catch (error) {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransaction,
+              currentOperation: TransactionStatus.SignTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            });
+            customLogger.logError('Upgrade Program transaction failed', { transcript: transactionLog });
+            return false;
+          }
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransactionSuccess,
+            currentOperation: TransactionStatus.SendTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
+            result: {signer: wallet.publicKey.toBase58()}
+          });
+          return true;
+        })
+        .catch(error => {
+          console.error(error);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransaction,
+            currentOperation: TransactionStatus.SignTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+          });
+          customLogger.logError('Upgrade Program transaction failed', { transcript: transactionLog });
+          return false;
+        });
+      } else {
+        console.error('Cannot sign transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot sign transaction! Wallet not found!'
+        });
+        customLogger.logError('Upgrade Program transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const sendTx = async (): Promise<boolean> => {
+      if (wallet) {
+        return await connection
+          .sendEncodedTransaction(encodedTx)
+          .then(sig => {
+            consoleOut('sendEncodedTransaction returned a signature:', sig);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.ConfirmTransaction
+            });
+            signature = sig;
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
+              result: `signature: ${signature}`
+            });
+            return true;
+          })
+          .catch(error => {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransaction,
+              currentOperation: TransactionStatus.SendTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+              result: { error, encodedTx }
+            });
+            customLogger.logError('Upgrade Program transaction failed', { transcript: transactionLog });
+            return false;
+          });
+      } else {
+        console.error('Cannot send transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SendTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot send transaction! Wallet not found!'
+        });
+        customLogger.logError('Upgrade Program transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    if (wallet) {
+      const create = await createTx();
+      consoleOut('created:', create);
+      if (create && !transactionCancelled) {
+        const sign = await signTx();
+        consoleOut('signed:', sign);
+        if (sign && !transactionCancelled) {
+          const sent = await sendTx();
+          consoleOut('sent:', sent);
+          if (sent && !transactionCancelled) {
+            consoleOut('Send Tx to confirmation queue:', signature);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.UpgradeProgram);
+            setIsBusy(false);
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.TransactionFinished
+            });
+            await delay(1000);
+            onProgramUpgraded();
+            setOngoingOperation(undefined);
+            setIsUpgradeProgramModalVisible(false);
+          } else { setIsBusy(false); }
+        } else { setIsBusy(false); }
+      } else { setIsBusy(false); }
+    }
+
+  }, [
+    clearTransactionStatusContext, 
+    connection, 
+    multisigClient, 
+    nativeBalance, 
+    onProgramUpgraded, 
+    publicKey, 
+    selectedMultisig, 
+    setTransactionStatus, 
+    startFetchTxSignatureInfo, 
+    transactionCancelled, 
+    transactionFees.blockchainFee, 
+    transactionFees.mspFlatFee, 
+    transactionStatus.currentOperation, 
+    wallet
+  ]);
+
+  const isUpgradingProgram = useCallback((): boolean => {
+
+    return ( 
+      fetchTxInfoStatus === "fetching" && 
+      lastSentTxOperationType === OperationType.UpgradeProgram
+    );
+
+  }, [
+    fetchTxInfoStatus,
+    lastSentTxOperationType,
+  ]);
+
+  // Showw upgrade IDL modal
+  const [isUpgradeIDLModalVisible, setIsUpgradeIDLModalVisible] = useState(false);
+  const showUpgradeIDLModal = useCallback(() => {
+    setIsUpgradeIDLModalVisible(true);
+    const fees = {
+      blockchainFee: 0.000005,
+      mspFlatFee: 0.000010,
+      mspPercentFee: 0
+    };
+    setTransactionFees(fees);
+  }, []);
+
+  const onAcceptUpgradeIDL = (params: any) => {
+    consoleOut('params', params, 'blue');
+    onExecuteUpgradeIDLTx(params);
+  };
+
+  const onIDLUpgraded = useCallback(() => {
+
+    setLoadingMultisigAccounts(true);
+    setLoadingMultisigTxs(true);
+
+  },[]);
+
+  const onExecuteUpgradeIDLTx = useCallback(async (data: any) => {
+
+    let transaction: Transaction;
+    let signedTransaction: Transaction;
+    let signature: any;
+    let encodedTx: string;
+    const transactionLog: any[] = [];
+
+    clearTransactionStatusContext();
+    setTransactionCancelled(false);
+    setOngoingOperation(OperationType.UpgradeIDL);
+    setRetryOperationPayload(data);
+    setIsBusy(true);
+
+    const upgradeIDL = async (data: any) => {
+
+      if (!multisigClient || !selectedMultisig || !publicKey) { return null; }
+
+      const [multisigSigner] = await PublicKey.findProgramAddress(
+        [selectedMultisig.id.toBuffer()],
+        multisigClient.programId
+      );
+
+      const programAddr = new PublicKey(data.programAddress);
+      const bufferAddr = new PublicKey(data.idlBufferAddress);
+      const idlAddr = new PublicKey(data.programIDLAddress);
+      const dataBuffer = encodeInstruction({ setBuffer: {} })
+
+      const ixAccounts = [
+        {
+          pubkey: bufferAddr,
+          isWritable: true,
+          isSigner: false,
+        },
+        { pubkey: idlAddr, isWritable: true, isSigner: false },
+        { pubkey: multisigSigner, isWritable: true, isSigner: false },
+      ];
+
+      const txSize = 1000; // TODO: tighter bound.
+      const transaction = Keypair.generate();
+      const upgradeIdlTx = await multisigClient.account.transaction.createInstruction(
+        transaction,
+        txSize
+      );
+
+      const tx = multisigClient.transaction.createTransaction(
+        programAddr,
+        OperationType.UpgradeIDL,
+        [],
+        ixAccounts,
+        dataBuffer,
+        {
+          accounts: {
+            multisig: selectedMultisig.id,
+            transaction: transaction.publicKey,
+            proposer: publicKey
+          },          
+          preInstructions: [upgradeIdlTx],
+          signers: [transaction],
+        }
+      );
+
+      tx.feePayer = publicKey;
+      const { blockhash } = await connection.getRecentBlockhash("finalized");
+      tx.recentBlockhash = blockhash;
+      tx.partialSign(...[transaction]);
+
+      return tx;
+    };
+
+    const createTx = async (): Promise<boolean> => {
+
+      if (publicKey && data) {
+        consoleOut("Start transaction for create multisig", '', 'blue');
+        consoleOut('Wallet address:', publicKey.toBase58());
+
+        setTransactionStatus({
+          lastOperation: TransactionStatus.TransactionStart,
+          currentOperation: TransactionStatus.InitTransaction
+        });
+
+        // Create a transaction
+        const payload = {
+          programAddress: data.programAddress,
+          programDataAddress: data.programDataAddress,
+          idlBufferAddress: data.idlBufferAddress
+        };
+        
+        consoleOut('data:', payload);
+
+        // Log input data
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+          inputs: payload
+        });
+
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+          result: ''
+        });
+
+        // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
+        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+        consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
+        consoleOut('nativeBalance:', nativeBalance, 'blue');
+
+        if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.TransactionStartFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+            result: `Not enough balance (${
+              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            }) to pay for network fees (${
+              getTokenAmountAndSymbolByTokenAddress(
+                transactionFees.blockchainFee + transactionFees.mspFlatFee, 
+                NATIVE_SOL_MINT.toBase58()
+              )
+            })`
+          });
+          customLogger.logWarning('Upgrade IDL transaction failed', { transcript: transactionLog });
+          return false;
+        }
+
+        return await upgradeIDL(data)
+          .then(value => {
+            if (!value) { return false; }
+            consoleOut('createTreasury returned transaction:', value);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.InitTransactionSuccess,
+              currentOperation: TransactionStatus.SignTransaction
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+              result: getTxIxResume(value)
+            });
+            transaction = value;
+            return true;
+          })
+          .catch(error => {
+            console.error('createTreasury error:', error);
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.InitTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+              result: `${error}`
+            });
+            customLogger.logError('Upgrade IDL transaction failed', { transcript: transactionLog });
+            return false;
+          });
+
+      } else {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot start transaction! Wallet not found!'
+        });
+        customLogger.logError('Upgrade IDL transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const signTx = async (): Promise<boolean> => {
+      if (wallet) {
+        consoleOut('Signing transaction...');
+        return await wallet.signTransaction(transaction)
+        .then((signed: Transaction) => {
+          consoleOut('signTransaction returned a signed transaction:', signed);
+          signedTransaction = signed;
+          // Try signature verification by serializing the transaction
+          try {
+            encodedTx = signedTransaction.serialize().toString('base64');
+            consoleOut('encodedTx:', encodedTx, 'orange');
+          } catch (error) {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransaction,
+              currentOperation: TransactionStatus.SignTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            });
+            customLogger.logError('Upgrade IDL transaction failed', { transcript: transactionLog });
+            return false;
+          }
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransactionSuccess,
+            currentOperation: TransactionStatus.SendTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
+            result: {signer: wallet.publicKey.toBase58()}
+          });
+          return true;
+        })
+        .catch(error => {
+          console.error(error);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransaction,
+            currentOperation: TransactionStatus.SignTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+          });
+          customLogger.logError('Upgrade IDL transaction failed', { transcript: transactionLog });
+          return false;
+        });
+      } else {
+        console.error('Cannot sign transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot sign transaction! Wallet not found!'
+        });
+        customLogger.logError('Upgrade IDL transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const sendTx = async (): Promise<boolean> => {
+      if (wallet) {
+        return await connection
+          .sendEncodedTransaction(encodedTx)
+          .then(sig => {
+            consoleOut('sendEncodedTransaction returned a signature:', sig);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.ConfirmTransaction
+            });
+            signature = sig;
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
+              result: `signature: ${signature}`
+            });
+            return true;
+          })
+          .catch(error => {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransaction,
+              currentOperation: TransactionStatus.SendTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+              result: { error, encodedTx }
+            });
+            customLogger.logError('Upgrade IDL transaction failed', { transcript: transactionLog });
+            return false;
+          });
+      } else {
+        console.error('Cannot send transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SendTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot send transaction! Wallet not found!'
+        });
+        customLogger.logError('Upgrade IDL transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    if (wallet) {
+      const create = await createTx();
+      consoleOut('created:', create);
+      if (create && !transactionCancelled) {
+        const sign = await signTx();
+        consoleOut('signed:', sign);
+        if (sign && !transactionCancelled) {
+          const sent = await sendTx();
+          consoleOut('sent:', sent);
+          if (sent && !transactionCancelled) {
+            consoleOut('Send Tx to confirmation queue:', signature);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.UpgradeIDL);
+            setIsBusy(false);
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.TransactionFinished
+            });
+            await delay(1000);
+            onIDLUpgraded();
+            setOngoingOperation(undefined);
+            setIsUpgradeProgramModalVisible(false);
+          } else { setIsBusy(false); }
+        } else { setIsBusy(false); }
+      } else { setIsBusy(false); }
+    }
+
+  }, [
+    clearTransactionStatusContext, 
+    connection, 
+    multisigClient, 
+    nativeBalance, 
+    onIDLUpgraded, 
+    publicKey, 
+    selectedMultisig, 
+    setTransactionStatus, 
+    startFetchTxSignatureInfo, 
+    transactionCancelled, 
+    transactionFees.blockchainFee, 
+    transactionFees.mspFlatFee, 
+    transactionStatus.currentOperation, 
+    wallet
+  ]);
+
+  const isUpgradingIDL = useCallback((): boolean => {
+
+    return ( 
+      fetchTxInfoStatus === "fetching" && 
+      lastSentTxOperationType === OperationType.UpgradeIDL
+    );
+
+  }, [
+    fetchTxInfoStatus,
+    lastSentTxOperationType,
+  ]);
+
+  // Set program authority modal
+  const [isSetProgramAuthModalVisible, setIsSetProgramAuthModalVisible] = useState(false);
+  const showSetProgramAuthModal = useCallback(() => {
+    setIsSetProgramAuthModalVisible(true);
+    const fees = {
+      blockchainFee: 0.000005,
+      mspFlatFee: 0.000010,
+      mspPercentFee: 0
+    };
+    setTransactionFees(fees);
+  }, []);
+
+  const onAcceptSetProgramAuth = (params: any) => {
+    consoleOut('params', params, 'blue');
+    onExecuteSetProgramAuthTx(params);
+  };
+
+  const onProgramAuthSet = useCallback(() => {
+
+    setLoadingMultisigAccounts(true);
+    setLoadingMultisigTxs(true);
+
+  },[]);
+
+  const onExecuteSetProgramAuthTx = useCallback(async (data: any) => {
+
+    let transaction: Transaction;
+    let signedTransaction: Transaction;
+    let signature: any;
+    let encodedTx: string;
+    const transactionLog: any[] = [];
+
+    clearTransactionStatusContext();
+    setTransactionCancelled(false);
+    setOngoingOperation(OperationType.SetMultisigAuthority);
+    setRetryOperationPayload(data);
+    setIsBusy(true);
+
+    const setProgramAuth = async (data: any) => {
+
+      if (!multisigClient || !selectedMultisig || !publicKey) { return null; }
+
+      const [multisigSigner] = await PublicKey.findProgramAddress(
+        [selectedMultisig.id.toBuffer()],
+        multisigClient.programId
+      );
+
+      const ixData = Buffer.from([4, 0, 0, 0]);
+      const ixAccounts = [
+        {
+          pubkey: new PublicKey(data.programDataAddress),
+          isWritable: true,
+          isSigner: false,
+        },
+        { pubkey: multisigSigner, isWritable: false, isSigner: true },
+        { pubkey: new PublicKey(data.newAuthAddress), isWritable: false, isSigner: false },
+      ];
+
+      const BPF_LOADER_UPGRADEABLE_PID = new PublicKey("BPFLoaderUpgradeab1e11111111111111111111111");
+      const txSize = 1000;
+      const transaction = Keypair.generate();
+      const createIx = await multisigClient.account.transaction.createInstruction(
+        transaction,
+        txSize
+      );
+
+      const tx = multisigClient.transaction.createTransaction(
+        BPF_LOADER_UPGRADEABLE_PID,
+        OperationType.SetMultisigAuthority,
+        [],
+        ixAccounts,
+        ixData,
+        {
+          accounts: {
+            multisig: selectedMultisig.id,
+            transaction: transaction.publicKey,
+            proposer: publicKey
+          },
+          preInstructions: [createIx],
+          signers: [transaction]
+        }
+      );
+
+      tx.feePayer = publicKey;
+      const { blockhash } = await connection.getRecentBlockhash("finalized");
+      tx.recentBlockhash = blockhash;
+      tx.partialSign(...[transaction]);
+
+      return tx;
+    };
+
+    const createTx = async (): Promise<boolean> => {
+
+      if (publicKey && data) {
+        consoleOut("Start transaction for create multisig", '', 'blue');
+        consoleOut('Wallet address:', publicKey.toBase58());
+
+        setTransactionStatus({
+          lastOperation: TransactionStatus.TransactionStart,
+          currentOperation: TransactionStatus.InitTransaction
+        });
+
+        // Create a transaction
+        const payload = {
+          programAddress: data.programAddress,
+          programDataAddress: data.programDataAddress,
+          newAuthAddress: data.newAuthAddress
+        };
+        
+        consoleOut('data:', payload);
+
+        // Log input data
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+          inputs: payload
+        });
+
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+          result: ''
+        });
+
+        // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
+        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+        consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
+        consoleOut('nativeBalance:', nativeBalance, 'blue');
+
+        if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.TransactionStartFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+            result: `Not enough balance (${
+              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            }) to pay for network fees (${
+              getTokenAmountAndSymbolByTokenAddress(
+                transactionFees.blockchainFee + transactionFees.mspFlatFee, 
+                NATIVE_SOL_MINT.toBase58()
+              )
+            })`
+          });
+          customLogger.logWarning('Set program authority transaction failed', { transcript: transactionLog });
+          return false;
+        }
+
+        return await setProgramAuth(data)
+          .then(value => {
+            if (!value) { return false; }
+            consoleOut('createTreasury returned transaction:', value);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.InitTransactionSuccess,
+              currentOperation: TransactionStatus.SignTransaction
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+              result: getTxIxResume(value)
+            });
+            transaction = value;
+            return true;
+          })
+          .catch(error => {
+            console.error('createTreasury error:', error);
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.InitTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+              result: `${error}`
+            });
+            customLogger.logError('Set program authority transaction failed', { transcript: transactionLog });
+            return false;
+          });
+
+      } else {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot start transaction! Wallet not found!'
+        });
+        customLogger.logError('Set program authority transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const signTx = async (): Promise<boolean> => {
+      if (wallet) {
+        consoleOut('Signing transaction...');
+        return await wallet.signTransaction(transaction)
+        .then((signed: Transaction) => {
+          consoleOut('signTransaction returned a signed transaction:', signed);
+          signedTransaction = signed;
+          // Try signature verification by serializing the transaction
+          try {
+            encodedTx = signedTransaction.serialize().toString('base64');
+            consoleOut('encodedTx:', encodedTx, 'orange');
+          } catch (error) {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransaction,
+              currentOperation: TransactionStatus.SignTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            });
+            customLogger.logError('Set program authority transaction failed', { transcript: transactionLog });
+            return false;
+          }
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransactionSuccess,
+            currentOperation: TransactionStatus.SendTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
+            result: {signer: wallet.publicKey.toBase58()}
+          });
+          return true;
+        })
+        .catch(error => {
+          console.error(error);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransaction,
+            currentOperation: TransactionStatus.SignTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+          });
+          customLogger.logError('Set program authority transaction failed', { transcript: transactionLog });
+          return false;
+        });
+      } else {
+        console.error('Cannot sign transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot sign transaction! Wallet not found!'
+        });
+        customLogger.logError('Set program authority transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const sendTx = async (): Promise<boolean> => {
+      if (wallet) {
+        return await connection
+          .sendEncodedTransaction(encodedTx)
+          .then(sig => {
+            consoleOut('sendEncodedTransaction returned a signature:', sig);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.ConfirmTransaction
+            });
+            signature = sig;
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
+              result: `signature: ${signature}`
+            });
+            return true;
+          })
+          .catch(error => {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransaction,
+              currentOperation: TransactionStatus.SendTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+              result: { error, encodedTx }
+            });
+            customLogger.logError('Set program authority transaction failed', { transcript: transactionLog });
+            return false;
+          });
+      } else {
+        console.error('Cannot send transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SendTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot send transaction! Wallet not found!'
+        });
+        customLogger.logError('Set program authority transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    if (wallet) {
+      const create = await createTx();
+      consoleOut('created:', create);
+      if (create && !transactionCancelled) {
+        const sign = await signTx();
+        consoleOut('signed:', sign);
+        if (sign && !transactionCancelled) {
+          const sent = await sendTx();
+          consoleOut('sent:', sent);
+          if (sent && !transactionCancelled) {
+            consoleOut('Send Tx to confirmation queue:', signature);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.SetMultisigAuthority);
+            setIsBusy(false);
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.TransactionFinished
+            });
+            await delay(1000);
+            onProgramAuthSet();
+            setOngoingOperation(undefined);
+            setIsSetProgramAuthModalVisible(false);
+          } else { setIsBusy(false); }
+        } else { setIsBusy(false); }
+      } else { setIsBusy(false); }
+    }
+
+  }, [
+    clearTransactionStatusContext, 
+    connection, 
+    multisigClient, 
+    nativeBalance, 
+    onProgramAuthSet, 
+    publicKey, 
+    selectedMultisig, 
+    setTransactionStatus, 
+    startFetchTxSignatureInfo, 
+    transactionCancelled, 
+    transactionFees.blockchainFee, 
+    transactionFees.mspFlatFee, 
+    transactionStatus.currentOperation, 
+    wallet
+  ]);
+
 
   // Common Multisig Approve / Execute logic
 
@@ -1667,25 +2709,49 @@ export const MultisigProgramsView = () => {
     return (
       <>
         <Space size="middle">
+          {/* Upgrade program */}
           <Button
             type="default"
             shape="round"
             size="small"
             className="thin-stroke"
             disabled={isTxInProgress() || loadingPrograms}
-            onClick={() => {}}>
+            onClick={showUpgradeProgramModal}>
             {isTxInProgress() && (<LoadingOutlined />)}
-            Action 1
+            {t('multisig.multisig-account-detail.cta-upgrade-program')}
           </Button>
+          {/* Upgrade IDL */}
           <Button
             type="default"
             shape="round"
             size="small"
             className="thin-stroke"
             disabled={isTxInProgress() || loadingPrograms}
-            onClick={() => {}}>
+            onClick={showUpgradeIDLModal}>
             {isTxInProgress() && (<LoadingOutlined />)}
-            Action 2
+            Upgrade IDL
+          </Button>
+          {/* Kill Switch */}
+          {isUnderDevelopment() && (
+            <Button
+              type="default"
+              shape="round"
+              size="small"
+              className="thin-stroke"
+              disabled={true}
+              onClick={() => {}}>
+              Kill Switch
+            </Button>
+          )}
+          {/* Set Program Auth */}
+          <Button
+            type="default"
+            shape="round"
+            size="small"
+            className="thin-stroke"
+            disabled={isTxInProgress() || loadingPrograms}
+            onClick={showSetProgramAuthModal}>
+            Set Program Auth
           </Button>
         </Space>
       </>
@@ -2063,6 +3129,39 @@ export const MultisigProgramsView = () => {
           handleClose={() => setCreateProgramModalVisible(false)}
           handleAfterClose={() => onAfterEveryModalClose()}
           selectedMultisig={selectedMultisig}
+        />
+      )}
+
+      {isUpgradeProgramModalVisible && (
+        <MultisigUpgradeProgramModal
+          isVisible={isUpgradeProgramModalVisible}
+          nativeBalance={nativeBalance}
+          transactionFees={transactionFees}
+          handleOk={onAcceptUpgradeProgram}
+          handleClose={() => setIsUpgradeProgramModalVisible(false)}
+          isBusy={isBusy}
+        />
+      )}
+
+      {isUpgradeIDLModalVisible && (
+        <MultisigUpgradeIDLModal
+          isVisible={isUpgradeIDLModalVisible}
+          nativeBalance={nativeBalance}
+          transactionFees={transactionFees}
+          handleOk={onAcceptUpgradeIDL}
+          handleClose={() => setIsUpgradeIDLModalVisible(false)}
+          isBusy={isBusy}
+        />
+      )}
+
+      {isSetProgramAuthModalVisible && (
+        <MultisigSetProgramAuthModal
+          isVisible={isSetProgramAuthModalVisible}
+          nativeBalance={nativeBalance}
+          transactionFees={transactionFees}
+          handleOk={onAcceptSetProgramAuth}
+          handleClose={() => setIsSetProgramAuthModalVisible(false)}
+          isBusy={isBusy}
         />
       )}
 
