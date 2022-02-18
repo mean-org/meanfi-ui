@@ -4096,7 +4096,7 @@ export const MultisigView = () => {
       <>
         <Space size="middle" wrap>
 
-          {/* Go to vaults */}
+          {/* Go to Vaults */}
           <Button
             type="default"
             shape="round"
@@ -4122,7 +4122,7 @@ export const MultisigView = () => {
             )}
           </Button>
 
-          {/* Go to treasuries */}
+          {/* Go to Treasuries */}
           <Button
             type="default"
             shape="round"
@@ -4146,6 +4146,33 @@ export const MultisigView = () => {
                 {t('multisig.multisig-account-detail.cta-no-treasuries')}
               </span>
             )}
+          </Button>
+
+          {/* Go to Programs */}
+          <Button
+            type="default"
+            shape="round"
+            size="small"
+            className="thin-stroke"
+            disabled={isTxInProgress() || loadingMultisigAccounts}
+            onClick={() => {
+              if (selectedMultisig) {
+                const url = `/multisig-programs?multisig=${selectedMultisig.id.toBase58()}`;
+                navigate(url);
+              }
+            }}>
+            <span>{t('multisig.multisig-account-detail.cta-no-programs')}</span>
+            {/* {programs && programs.length > 0 ? (
+              <span>
+                {t('multisig.multisig-account-detail.cta-programs', {
+                  itemCount: programs.length
+                })}
+              </span>
+              ) : (
+              <span>
+                {t('multisig.multisig-account-detail.cta-no-programs')}
+              </span>
+            )} */}
           </Button>
 
           {/* Available to local dev or whitelisted addresses in dev */}

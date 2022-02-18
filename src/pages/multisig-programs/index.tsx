@@ -660,7 +660,6 @@ export const MultisigProgramsView = () => {
   const refreshPrograms = useCallback(() => {
     if (!selectedMultisig) { return; }
 
-    setLoadingPrograms(true);
     getProgramsByUpgradeAuthority(selectedMultisig.id)
       .then(programs => {
         consoleOut('programs:', programs, 'blue');
@@ -788,6 +787,10 @@ export const MultisigProgramsView = () => {
       return;
     }
 
+    setTimeout(() => {
+      setLoadingPrograms(true);
+    });
+
     const timeout = setTimeout(() => {
 
       getProgramsByUpgradeAuthority(selectedMultisig.address)
@@ -802,7 +805,9 @@ export const MultisigProgramsView = () => {
             setPrograms([]);
             setSelectedProgram(undefined);
           }
-        });
+        })
+        .catch(err => console.error(err))
+        .finally(() => setLoadingPrograms(false));
     });
 
     return () => {
@@ -914,6 +919,7 @@ export const MultisigProgramsView = () => {
 
     if (multisigAddress && lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
       clearTransactionStatusContext();
+      setLoadingPrograms(true);
       refreshPrograms();
     }
   }, [
@@ -988,6 +994,7 @@ export const MultisigProgramsView = () => {
 
   const onTxApproved = useCallback(() => {
 
+    setLoadingPrograms(true);
     refreshPrograms();
     setLoadingMultisigTxs(true);
     resetTransactionStatus();
@@ -1003,7 +1010,8 @@ export const MultisigProgramsView = () => {
   ]);
 
   const onTxExecuted = useCallback(() => {
-    
+
+    setLoadingPrograms(true);
     refreshPrograms();
     resetTransactionStatus();
     setLoadingMultisigTxs(true);
@@ -1894,6 +1902,7 @@ export const MultisigProgramsView = () => {
       {isLocal() && (
         <div className="debug-bar">
           <span className="ml-1">isBusy:</span><span className="ml-1 font-bold fg-dark-active">{isBusy ? 'true' : 'false'}</span>
+          <span className="ml-1">loadingPrograms:</span><span className="ml-1 font-bold fg-dark-active">{loadingPrograms ? 'true' : 'false'}</span>
           {(transactionStatus.lastOperation !== undefined) && (
             <>
             <span className="ml-1">lastOperation:</span><span className="ml-1 font-bold fg-dark-active">{TransactionStatus[transactionStatus.lastOperation]}</span>
@@ -1945,7 +1954,10 @@ export const MultisigProgramsView = () => {
                   }
                 </span>
                 <Tooltip placement="bottom" title={t('multisig.multisig-programs.refresh-tooltip')}>
-                  <div className={`transaction-stats ${loadingPrograms ? 'click-disabled' : 'simplelink'}`} onClick={refreshPrograms}>
+                  <div className={`transaction-stats ${loadingPrograms ? 'click-disabled' : 'simplelink'}`} onClick={() => {
+                      setLoadingPrograms(true);
+                      refreshPrograms();
+                    }}>
                     <Spin size="small" />
                     <span className="transaction-legend">
                       <span className="icon-button-container">
