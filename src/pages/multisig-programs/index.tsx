@@ -838,7 +838,17 @@ export const MultisigProgramsView = () => {
               status: getTransactionStatus(tx.account),
               operation: parseInt(Object.keys(OperationType).filter(k => k === tx.account.operation.toString())[0]),
               accounts: tx.account.accounts,
-              didSigned: tx.account.signers[currentOwnerIndex]
+              proposer: tx.account.proposer,
+              didSigned: tx.account.signers[currentOwnerIndex],
+              keypairs: tx.account.keypairs
+                .map((k: any) => {
+                  try {
+                    return Keypair.fromSecretKey(Uint8Array.from(Buffer.from(k)));
+                  } catch {
+                    return undefined;
+                  }
+                })
+                .filter((k: any) => k !== undefined)
 
             } as MultisigTransaction);
             
@@ -1292,8 +1302,7 @@ export const MultisigProgramsView = () => {
           isSigner: false,
         });
 
-      const txSigners = data.transaction.signatures
-        .map((s: any) => Keypair.fromSecretKey(Uint8Array.from(Buffer.from(s.secretKey))));
+      const txSigners = data.transaction.keypairs;
         
       let tx = multisigClient.transaction.executeTransaction({
           accounts: {
@@ -2180,10 +2189,9 @@ export const MultisigProgramsView = () => {
                     highlightedMultisigTx.status === MultisigTransactionStatus.Pending &&
                     !highlightedMultisigTx.didSigned
                   ) 
-                  || 
+                  ||
                   (
                     highlightedMultisigTx.status === MultisigTransactionStatus.Approved &&
-                    selectedMultisig.owners[0].address === publicKey?.toBase58() &&
                     !highlightedMultisigTx.executedOn
                   )
                 )

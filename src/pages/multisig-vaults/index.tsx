@@ -812,7 +812,17 @@ export const MultisigVaultsView = () => {
               status: getTransactionStatus(tx.account),
               operation: parseInt(Object.keys(OperationType).filter(k => k === tx.account.operation.toString())[0]),
               accounts: tx.account.accounts,
-              didSigned: tx.account.signers[currentOwnerIndex]
+              proposer: tx.account.proposer,
+              didSigned: tx.account.signers[currentOwnerIndex],
+              keypairs: tx.account.keypairs
+                .map((k: any) => {
+                  try {
+                    return Keypair.fromSecretKey(Uint8Array.from(Buffer.from(k)));
+                  } catch {
+                    return undefined;
+                  }
+                })
+                .filter((k: any) => k !== undefined)
 
             } as MultisigTransaction);
 
@@ -1666,18 +1676,19 @@ export const MultisigVaultsView = () => {
   }, []);
 
   const onAcceptTransferVaultAuthority = (selectedAuthority: string) => {
+
     consoleOut('selectedAuthority', selectedAuthority, 'blue');
 
     // TODO: Remove this block when createTransferVaultAuthorityTx is completed
-      notify({
-        message: 'Param verification',
-        description: `Received parameter: ${selectedAuthority}\nThe transfer Tx is under development!`,
-        type: 'info'
-      });
-      setIsTransferVaultAuthorityModalVisible(false);
+      // notify({
+      //   message: 'Param verification',
+      //   description: `Received parameter: ${selectedAuthority}\nThe transfer Tx is under development!`,
+      //   type: 'info'
+      // });
+      // setIsTransferVaultAuthorityModalVisible(false);
 
     // TODO: Uncomment this when createTransferVaultAuthorityTx completed
-    // onExecuteTransferVaultAuthorityTx(selectedAuthority);
+    onExecuteTransferVaultAuthorityTx(selectedAuthority);
   };
 
   const onVaultAuthorityTransfered = useCallback(() => {
@@ -1702,67 +1713,122 @@ export const MultisigVaultsView = () => {
     setTransactionCancelled(false);
     setIsBusy(true);
 
-    // TODO: Complete
-    const createTransferVaultAuthorityTx = async (newAuthority: string): Promise<Transaction> => {
-      return new Transaction();
+    const createTransferVaultAuthorityTx = async (selectedAuthority: string) => {
+
+      if (!publicKey || !selectedVault || !selectedMultisig) { 
+        return null;
+      }
+
+      const [multisigSigner] = await PublicKey.findProgramAddress(
+        [selectedMultisig.id.toBuffer()],
+        multisigClient.programId
+      );
+
+      const setAuthIx = Token.createSetAuthorityInstruction(
+        TOKEN_PROGRAM_ID,
+        selectedVault.address,
+        new PublicKey(selectedAuthority),
+        'AccountOwner',
+        multisigSigner,
+        []
+      );
+
+      const ixAccounts = setAuthIx.keys;
+      const ixData = Buffer.from(setAuthIx.data);
+      const transaction = Keypair.generate();
+      const txSize = 1000;
+      const createIx = await multisigClient.account.transaction.createInstruction(
+        transaction,
+        txSize
+      );
+
+      let tx = multisigClient.transaction.createTransaction(
+        TOKEN_PROGRAM_ID,
+        OperationType.SetVaultAuthority,
+        [],
+        ixAccounts,
+        ixData,
+        {
+          accounts: {
+            multisig: selectedMultisig.id,
+            transaction: transaction.publicKey,
+            proposer: publicKey
+          },
+          preInstructions: [createIx],
+          signers: [transaction]
+        }
+      );
+
+      tx.feePayer = publicKey;
+      const { blockhash } = await connection.getRecentBlockhash("finalized");
+      tx.recentBlockhash = blockhash;
+      tx.partialSign(...[transaction]);
+
+      return tx;
     }
 
     const createTx = async (): Promise<boolean> => {
 
-      if (publicKey && selectedAuthority) {
+      if (!publicKey || !selectedAuthority) {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot start transaction! Wallet not found!'
+        });
+        customLogger.logError('Transfer Vault Authority transaction failed', { transcript: transactionLog });
+        return false;
+      }
 
+      setTransactionStatus({
+        lastOperation: TransactionStatus.TransactionStart,
+        currentOperation: TransactionStatus.InitTransaction
+      });
+
+      // Create transaction payload for debugging
+      const payload = {
+        selectedAuthority: selectedAuthority,
+      };
+
+      consoleOut('data:', payload);
+
+      // Log input data
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+        inputs: payload
+      });
+
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+        result: ''
+      });
+
+      // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
+      // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+      consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
+      consoleOut('nativeBalance:', nativeBalance, 'blue');
+
+      if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
         setTransactionStatus({
-          lastOperation: TransactionStatus.TransactionStart,
-          currentOperation: TransactionStatus.InitTransaction
+          lastOperation: transactionStatus.currentOperation,
+          currentOperation: TransactionStatus.TransactionStartFailure
         });
-
-        // Create transaction payload for debugging
-        const payload = {
-          selectedAuthority: selectedAuthority,
-        };
-
-        consoleOut('data:', payload);
-
-        // Log input data
         transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
-          inputs: payload
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+          result: `Not enough balance (${
+            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+          }) to pay for network fees (${
+            getTokenAmountAndSymbolByTokenAddress(
+              transactionFees.blockchainFee + transactionFees.mspFlatFee, 
+              NATIVE_SOL_MINT.toBase58()
+            )
+          })`
         });
+        customLogger.logWarning('Transfer tokens transaction failed', { transcript: transactionLog });
+        return false;
+      }
 
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
-          result: ''
-        });
-
-        // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
-        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
-        consoleOut('nativeBalance:', nativeBalance, 'blue');
-
-        if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.TransactionStartFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-            result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
-            }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(
-                transactionFees.blockchainFee + transactionFees.mspFlatFee, 
-                NATIVE_SOL_MINT.toBase58()
-              )
-            })`
-          });
-          customLogger.logWarning('Transfer tokens transaction failed', { transcript: transactionLog });
-          return false;
-        }
-
-        return await createTransferVaultAuthorityTx(
-          selectedAuthority
-        )
+      let result =  await createTransferVaultAuthorityTx(selectedAuthority)
         .then(value => {
+          if (!value) { return false; }
           consoleOut('createTransferVaultAuthorityTx returned transaction:', value);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
@@ -1788,15 +1854,8 @@ export const MultisigVaultsView = () => {
           customLogger.logError('Transfer Vault Authority transaction failed', { transcript: transactionLog });
           return false;
         });
-          
-      } else {
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot start transaction! Wallet not found!'
-        });
-        customLogger.logError('Transfer Vault Authority transaction failed', { transcript: transactionLog });
-        return false;
-      }
+
+      return result;
     }
 
     const signTx = async (): Promise<boolean> => {
@@ -1932,19 +1991,25 @@ export const MultisigVaultsView = () => {
     }
 
   }, [
-    wallet,
-    publicKey,
-    connection,
-    nativeBalance,
-    transactionCancelled,
-    transactionFees.mspFlatFee,
-    transactionFees.blockchainFee,
-    transactionStatus.currentOperation,
-    setTransactionStatus,
-    startFetchTxSignatureInfo,
-    clearTransactionStatusContext,
+    clearTransactionStatusContext, 
+    wallet, 
+    publicKey, 
+    selectedVault, 
+    selectedMultisig, 
+    multisigClient.programId, 
+    multisigClient.account.transaction, 
+    multisigClient.transaction, 
+    connection, 
+    setTransactionStatus, 
+    transactionFees.blockchainFee, 
+    transactionFees.mspFlatFee, 
+    nativeBalance, 
+    transactionStatus.currentOperation, 
+    transactionCancelled, 
+    startFetchTxSignatureInfo, 
     onVaultAuthorityTransfered
   ]);
+
 
   // Common Multisig Approve / Execute logic
 
@@ -2273,8 +2338,7 @@ export const MultisigVaultsView = () => {
           isSigner: false,
         });
 
-      const txSigners = data.transaction.signatures
-        .map((s: any) => Keypair.fromSecretKey(Uint8Array.from(Buffer.from(s.secretKey))));
+      const txSigners = data.transaction.keypairs;
         
       let tx = multisigClient.transaction.executeTransaction({
           accounts: {
@@ -3092,7 +3156,10 @@ export const MultisigVaultsView = () => {
           transactionFees={transactionFees}
           handleOk={onAcceptTransferVaultAuthority}
           handleAfterClose={onAfterEveryModalClose}
-          handleClose={() => setIsTransferVaultAuthorityModalVisible(false)}
+          handleClose={() => {
+            onAfterEveryModalClose();
+            setIsTransferVaultAuthorityModalVisible(false);
+          }}
           isBusy={isBusy}
           selectedMultisig={selectedMultisig}
           multisigAccounts={multisigAccounts}
@@ -3250,10 +3317,9 @@ export const MultisigVaultsView = () => {
                     highlightedMultisigTx.status === MultisigTransactionStatus.Pending &&
                     !highlightedMultisigTx.didSigned
                   ) 
-                  || 
+                  ||
                   (
                     highlightedMultisigTx.status === MultisigTransactionStatus.Approved &&
-                    selectedMultisig.owners[0].address === publicKey?.toBase58() &&
                     !highlightedMultisigTx.executedOn
                   )
                 )

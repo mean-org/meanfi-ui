@@ -50,6 +50,7 @@ export type MultisigTransaction = {
   accounts: any[];
   data: Buffer;
   keypairs: Keypair[];
+  proposer: PublicKey | undefined;
   didSigned: boolean; // this should be a number needs to be changed in the program (0 = not signed, 1 = signed, 2 = rejected)
 }
 

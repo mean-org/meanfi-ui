@@ -323,6 +323,10 @@ const idl: Idl = {
                 ]
               }
             }
+          },
+          {
+            "name": "proposer",
+            "type": "publicKey"
           }
         ]
       }

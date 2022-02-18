@@ -679,7 +679,6 @@ export const MultisigView = () => {
         }
       });
 
-      consoleOut('multisig owners', owners, 'blue');
       const pid = multisigClient.programId;
       const operation = OperationType.EditMultisig;
       // Edit Multisig
@@ -1080,6 +1079,8 @@ export const MultisigView = () => {
         new BN(data.amount * 10 ** mint.decimals).toNumber()
       );
 
+      const ixAccounts = mintIx.keys;
+      const ixData = Buffer.from(mintIx.data);
       const transaction = Keypair.generate();
       const txSize = 1000; // todo
       ixs.push(
@@ -1093,22 +1094,21 @@ export const MultisigView = () => {
         TOKEN_PROGRAM_ID,
         OperationType.MintTokens,
         [],
-        mintIx.keys,
-        Buffer.from(mintIx.data),
+        ixAccounts,
+        ixData,
         {
           accounts: {
             multisig: selectedMultisig.id,
             transaction: transaction.publicKey,
-            proposer: publicKey,
-            rent: SYSVAR_RENT_PUBKEY
+            proposer: publicKey
           },
-          signers: [transaction],
           instructions: ixs,
+          signers: [transaction]
         }
       );
   
       tx.feePayer = publicKey;
-      const { blockhash } = await connection.getRecentBlockhash("recent");
+      const { blockhash } = await connection.getRecentBlockhash("finalized");
       tx.recentBlockhash = blockhash;
       tx.partialSign(...[transaction]);
   
@@ -2002,6 +2002,11 @@ export const MultisigView = () => {
       const BPF_LOADER_UPGRADEABLE_PID = new PublicKey("BPFLoaderUpgradeab1e11111111111111111111111");
       const txSize = 1000; // TODO: tighter bound.
       const transaction = Keypair.generate();
+      const createIx = await multisigClient.account.transaction.createInstruction(
+        transaction,
+        txSize
+      );
+
       const tx = multisigClient.transaction.createTransaction(
         BPF_LOADER_UPGRADEABLE_PID,
         OperationType.UpgradeProgram,
@@ -2012,16 +2017,10 @@ export const MultisigView = () => {
           accounts: {
             multisig: selectedMultisig.id,
             transaction: transaction.publicKey,
-            proposer: publicKey,
-            rent: SYSVAR_RENT_PUBKEY,
+            proposer: publicKey
           },
+          preInstructions: [createIx],
           signers: [transaction],
-          instructions: [
-            await multisigClient.account.transaction.createInstruction(
-              transaction,
-              txSize
-            ),
-          ],
         }
       );
 
@@ -2336,6 +2335,11 @@ export const MultisigView = () => {
 
       const txSize = 1000; // TODO: tighter bound.
       const transaction = Keypair.generate();
+      const upgradeIdlTx = await multisigClient.account.transaction.createInstruction(
+        transaction,
+        txSize
+      );
+
       const tx = multisigClient.transaction.createTransaction(
         programAddr,
         OperationType.UpgradeIDL,
@@ -2346,21 +2350,15 @@ export const MultisigView = () => {
           accounts: {
             multisig: selectedMultisig.id,
             transaction: transaction.publicKey,
-            proposer: publicKey,
-            rent: SYSVAR_RENT_PUBKEY,
-          },
+            proposer: publicKey
+          },          
+          preInstructions: [upgradeIdlTx],
           signers: [transaction],
-          instructions: [
-            await multisigClient.account.transaction.createInstruction(
-              transaction,
-              txSize
-            ),
-          ],
         }
       );
 
       tx.feePayer = publicKey;
-      const { blockhash } = await connection.getRecentBlockhash("recent");
+      const { blockhash } = await connection.getRecentBlockhash("finalized");
       tx.recentBlockhash = blockhash;
       tx.partialSign(...[transaction]);
 
@@ -2673,7 +2671,7 @@ export const MultisigView = () => {
         multisigClient.programId
       );
 
-      const dataBuffer = Buffer.from([4, 0, 0, 0]);
+      const ixData = Buffer.from([4, 0, 0, 0]);
       const ixAccounts = [
         {
           pubkey: new PublicKey(data.programDataAddress),
@@ -2685,33 +2683,32 @@ export const MultisigView = () => {
       ];
 
       const BPF_LOADER_UPGRADEABLE_PID = new PublicKey("BPFLoaderUpgradeab1e11111111111111111111111");
-      const txSize = 1000; // TODO: tighter bound.
+      const txSize = 1000;
       const transaction = Keypair.generate();
+      const createIx = await multisigClient.account.transaction.createInstruction(
+        transaction,
+        txSize
+      );
+
       const tx = multisigClient.transaction.createTransaction(
         BPF_LOADER_UPGRADEABLE_PID,
         OperationType.SetMultisigAuthority,
         [],
         ixAccounts,
-        dataBuffer,
+        ixData,
         {
           accounts: {
             multisig: selectedMultisig.id,
             transaction: transaction.publicKey,
-            proposer: publicKey,
-            rent: SYSVAR_RENT_PUBKEY,
+            proposer: publicKey
           },
-          signers: [transaction],
-          instructions: [
-            await multisigClient.account.transaction.createInstruction(
-              transaction,
-              txSize
-            ),
-          ],
+          preInstructions: [createIx],
+          signers: [transaction]
         }
       );
 
       tx.feePayer = publicKey;
-      const { blockhash } = await connection.getRecentBlockhash("recent");
+      const { blockhash } = await connection.getRecentBlockhash("finalized");
       tx.recentBlockhash = blockhash;
       tx.partialSign(...[transaction]);
 
@@ -2962,7 +2959,6 @@ export const MultisigView = () => {
     transactionStatus.currentOperation, 
     wallet
   ]);
-
 
   const isSelectedMultisigV2 = useCallback((): boolean => {
     if (selectedMultisig && selectedMultisig.version && selectedMultisig.version === 2) {
@@ -3465,6 +3461,7 @@ export const MultisigView = () => {
               operation: parseInt(Object.keys(OperationType).filter(k => k === tx.account.operation.toString())[0]),
               accounts: tx.account.accounts,
               didSigned: tx.account.signers[currentOwnerIndex],
+              proposer: tx.account.proposer,
               keypairs: tx.account.keypairs
                 .map((k: any) => {
                   try {
@@ -4671,40 +4668,39 @@ export const MultisigView = () => {
 
               {
                 (
-                  // (
-                  //   (
-                  //     highlightedMultisigTx.operation !== OperationType.TreasuryCreate
-                  //   )
-                  //   &&
-                  //   (
-                  //     (
-                  //       highlightedMultisigTx.status === MultisigTransactionStatus.Pending &&
-                  //       !highlightedMultisigTx.didSigned
-                  //     )
-                  //     ||
-                  //     (
-                  //       highlightedMultisigTx.status === MultisigTransactionStatus.Approved &&
-                  //       !highlightedMultisigTx.executedOn
-                  //     )
-                  //   )
-                  // )
-                  // ||
                   (
-                    // (
-                    //   highlightedMultisigTx.operation === OperationType.TreasuryCreate
-                    // )
-                    // &&
+                    (
+                      highlightedMultisigTx.operation === OperationType.TreasuryCreate ||
+                      highlightedMultisigTx.operation === OperationType.TreasuryClose ||
+                      highlightedMultisigTx.operation === OperationType.TreasuryAddFunds ||
+                      highlightedMultisigTx.operation === OperationType.TreasuryStreamCreate
+                    )
+                    &&
                     (
                       (
                         highlightedMultisigTx.status === MultisigTransactionStatus.Pending &&
                         !highlightedMultisigTx.didSigned
                       ) 
-                      || 
+                      ||
                       (
+                        publicKey &&
+                        highlightedMultisigTx.proposer &&
+                        publicKey.equals(highlightedMultisigTx.proposer) &&
                         highlightedMultisigTx.status === MultisigTransactionStatus.Approved &&
-                        selectedMultisig.owners[0].address === publicKey?.toBase58() &&
                         !highlightedMultisigTx.executedOn
                       )
+                    )
+                  )
+                  ||
+                  (
+                    (
+                      highlightedMultisigTx.status === MultisigTransactionStatus.Pending &&
+                      !highlightedMultisigTx.didSigned
+                    ) 
+                    ||
+                    (
+                      highlightedMultisigTx.status === MultisigTransactionStatus.Approved &&
+                      !highlightedMultisigTx.executedOn
                     )
                   )
                 )
