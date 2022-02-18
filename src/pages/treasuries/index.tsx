@@ -822,22 +822,31 @@ export const TreasuriesView = () => {
   // Set selectedMultisig based on the passed-in multisigAddress in query params
   useEffect(() => {
 
-    if (publicKey && location.search && multisigAddress && multisigAccounts && multisigAccounts.length > 0) {
-      consoleOut(`try to select multisig ${multisigAddress} from list`, multisigAccounts, 'blue');
-      const selected = multisigAccounts.find(m => m.id.toBase58() === multisigAddress);
-      if (selected) {
-        consoleOut('selectedMultisig:', selected, 'blue');
-        setSelectedMultisig(selected);
-      } else {
-        consoleOut('multisigAccounts does not contain the requested multisigAddress:', multisigAddress, 'orange');
+    if (!publicKey || !multisigAddress || !multisigAccounts || multisigAccounts.length === 0) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      if (location.search) {
+        consoleOut(`try to select multisig ${multisigAddress} from list`, multisigAccounts, 'blue');
+        const selected = multisigAccounts.find(m => m.id.toBase58() === multisigAddress);
+        if (selected) {
+          consoleOut('selectedMultisig:', selected, 'blue');
+          setSelectedMultisig(selected);
+        } else {
+          consoleOut('multisigAccounts does not contain the requested multisigAddress:', multisigAddress, 'orange');
+        }
       }
+    });
+
+    return () => {
+      clearTimeout(timeout);
     }
 
   }, [
     publicKey,
     location.search,
     multisigAddress,
-    selectedMultisig,
     multisigAccounts,
   ]);
 
