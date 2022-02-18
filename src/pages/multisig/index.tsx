@@ -10,6 +10,7 @@ import {
   Connection,
   Keypair,
   LAMPORTS_PER_SOL,
+  MemcmpFilter,
   PublicKey,
   SystemProgram,
   SYSVAR_CLOCK_PUBKEY,
@@ -75,6 +76,7 @@ import { MultisigEditModal } from '../../components/MultisigEditModal';
 import { MSP, Treasury } from '@mean-dao/msp';
 import { customLogger } from '../..';
 import { isError } from '../../utils/transactions';
+import { ProgramAccounts } from '../../utils/accounts';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -134,6 +136,8 @@ export const MultisigView = () => {
   const [isUpgradeProgramModalVisible, setIsUpgradeProgramModalVisible] = useState(false);
   const [isUpgradeIDLModalVisible, setIsUpgradeIDLModalVisible] = useState(false);
   const [isSetProgramAuthModalVisible, setIsSetProgramAuthModalVisible] = useState(false);
+  const [programs, setPrograms] = useState<ProgramAccounts[] | undefined>(undefined);
+  const [loadingPrograms, setLoadingPrograms] = useState(false);
 
   // TODO: Remove when releasing to the public
   useEffect(() => {
@@ -3283,6 +3287,76 @@ export const MultisigView = () => {
     selectedMultisig,
   ]);
 
+  const getProgramsByUpgradeAuthority = useCallback(async (upgradeAuthority: PublicKey): Promise<ProgramAccounts[] | undefined> => {
+
+    if (!connection || !upgradeAuthority) { return undefined; }
+
+    console.log(`Searching for programs with upgrade authority: ${upgradeAuthority}`);
+
+    // 1. Fetch executable data account having upgradeAuthority as upgrade authority
+    const BPFLoaderUpgradeab1e = new PublicKey("BPFLoaderUpgradeab1e11111111111111111111111");
+    const executableDataAccountsFilter: MemcmpFilter = { memcmp: { offset: 13, bytes: upgradeAuthority.toBase58() } }
+    const executableDataAccounts = await connection.getProgramAccounts(
+      BPFLoaderUpgradeab1e,
+      {
+        encoding: "base64",
+        dataSlice: {
+          offset: 0,
+          length: 0
+        },
+        filters: [
+          executableDataAccountsFilter
+        ]
+      });
+
+    // 2. For each executable data account found in the previous step, fetch the corresponding program
+    let programs: ProgramAccounts[] = [];
+    for (let i = 0; i < executableDataAccounts.length; i++) {
+      const executableData = executableDataAccounts[i].pubkey;
+
+      const executableAccountsFilter: MemcmpFilter = { memcmp: { offset: 4, bytes: executableData.toBase58() } }
+      const executableAccounts = await connection.getProgramAccounts(
+        BPFLoaderUpgradeab1e,
+        {
+          encoding: "base64",
+          dataSlice: {
+            offset: 0,
+            length: 0
+          },
+          filters: [
+            executableAccountsFilter
+          ]
+        });
+
+      if (executableAccounts.length === 0) {
+        continue;
+      }
+
+      if (executableAccounts.length > 1) {
+        throw new Error(`More than one program was found for program data account '${executableData}'`);
+      }
+
+      const foundProgram = {
+        pubkey: executableAccounts[0].pubkey,
+        owner: executableAccounts[0].account.owner,
+        executable: executableData,
+        upgradeAuthority: upgradeAuthority,
+        size: executableDataAccounts[i].account.data.byteLength
+
+      } as ProgramAccounts;
+
+      console.log(`Upgrade Authority: ${upgradeAuthority} --> Executable Data: ${executableData} --> Program: ${foundProgram}`);
+
+      programs.push(foundProgram);
+
+    }
+
+    console.log(`${programs.length} programs found!`);
+
+    return programs;
+
+  }, [connection]);
+
   // Refresh the multisig accounts list
   useEffect(() => {
 
@@ -3533,6 +3607,39 @@ export const MultisigView = () => {
     connection,
     selectedMultisig,
     getMultisigTreasuries
+  ]);
+
+  // Get Programs
+  useEffect(() => {
+
+    if (!connection || !publicKey || !selectedMultisig || !selectedMultisig.address) {
+      return;
+    }
+
+    setTimeout(() => {
+      setLoadingPrograms(true);
+    });
+
+    const timeout = setTimeout(() => {
+
+      getProgramsByUpgradeAuthority(selectedMultisig.address)
+        .then(programs => {
+          consoleOut('programs:', programs, 'blue');
+          setPrograms(programs);
+        })
+        .catch(err => console.error(err))
+        .finally(() => setLoadingPrograms(false));
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  },[
+    publicKey,
+    connection,
+    selectedMultisig,
+    getProgramsByUpgradeAuthority,
   ]);
 
   // Load/Unload multisig on wallet connect/disconnect
@@ -4161,8 +4268,7 @@ export const MultisigView = () => {
                 navigate(url);
               }
             }}>
-            <span>{t('multisig.multisig-account-detail.cta-no-programs')}</span>
-            {/* {programs && programs.length > 0 ? (
+            {programs && programs.length > 0 ? (
               <span>
                 {t('multisig.multisig-account-detail.cta-programs', {
                   itemCount: programs.length
@@ -4172,7 +4278,7 @@ export const MultisigView = () => {
               <span>
                 {t('multisig.multisig-account-detail.cta-no-programs')}
               </span>
-            )} */}
+            )}
           </Button>
 
           {/* Available to local dev or whitelisted addresses in dev */}
