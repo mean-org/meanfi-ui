@@ -2183,7 +2183,6 @@ export const MultisigProgramsView = () => {
                   || 
                   (
                     highlightedMultisigTx.status === MultisigTransactionStatus.Approved &&
-                    selectedMultisig.owners[0].address === publicKey?.toBase58() &&
                     !highlightedMultisigTx.executedOn
                   )
                 )

@@ -820,11 +820,14 @@ export const MultisigVaultsView = () => {
               transactions.push(txInfo);
             }
           }
-          setMultisigPendingTxs(transactions.sort((a, b) => b.createdOn.getTime() - a.createdOn.getTime()));
+          transactions.sort((a, b) => b.createdOn.getTime() - a.createdOn.getTime());
+          consoleOut('multisigPendingTxs:', transactions, 'blue');
+          setMultisigPendingTxs(transactions);
         })
         .catch(err => {
           console.error(err);
           setMultisigPendingTxs([]);
+          consoleOut('multisigPendingTxs:', [], 'blue');
         })
         .finally(() => setLoadingMultisigTxs(false));
     });
@@ -1270,6 +1273,7 @@ export const MultisigVaultsView = () => {
 
     refreshVaults();
     resetTransactionStatus();
+    setLoadingMultisigTxs(true);
 
   },[
     refreshVaults,
@@ -3253,7 +3257,6 @@ export const MultisigVaultsView = () => {
                   || 
                   (
                     highlightedMultisigTx.status === MultisigTransactionStatus.Approved &&
-                    selectedMultisig.owners[0].address === publicKey?.toBase58() &&
                     !highlightedMultisigTx.executedOn
                   )
                 )
