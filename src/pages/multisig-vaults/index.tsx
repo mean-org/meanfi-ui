@@ -2000,28 +2000,20 @@ export const MultisigVaultsView = () => {
 
     refreshVaults();
     setLoadingMultisigTxs(true);
-    resetTransactionStatus();
     // TODO: Translate
     notify({
       description: 'Your signature for the Multisig transaction was successfully recorded.',
       type: "success"
     });
 
-  },[
-    refreshVaults,
-    resetTransactionStatus
-  ]);
+  },[refreshVaults]);
 
   const onTxExecuted = useCallback(() => {
     
     refreshVaults();
-    resetTransactionStatus();
     setLoadingMultisigTxs(true);
 
-  },[
-    refreshVaults,
-    resetTransactionStatus
-  ]);
+  },[refreshVaults]);
 
   const onExecuteApproveTx = useCallback(async (data: any) => {
 
@@ -3298,17 +3290,42 @@ export const MultisigVaultsView = () => {
                   : t('general.cta-close')
                 }
               </Button>
-
               {
                 (
                   (
-                    highlightedMultisigTx.status === MultisigTransactionStatus.Pending &&
-                    !highlightedMultisigTx.didSigned
-                  ) 
+                    (
+                      highlightedMultisigTx.operation === OperationType.TreasuryCreate ||
+                      highlightedMultisigTx.operation === OperationType.TreasuryClose ||
+                      highlightedMultisigTx.operation === OperationType.TreasuryAddFunds ||
+                      highlightedMultisigTx.operation === OperationType.TreasuryStreamCreate
+                    )
+                    &&
+                    (
+                      (
+                        highlightedMultisigTx.status === MultisigTransactionStatus.Pending &&
+                        !highlightedMultisigTx.didSigned
+                      ) 
+                      ||
+                      (
+                        publicKey &&
+                        highlightedMultisigTx.proposer &&
+                        publicKey.equals(highlightedMultisigTx.proposer) &&
+                        highlightedMultisigTx.status === MultisigTransactionStatus.Approved &&
+                        !highlightedMultisigTx.executedOn
+                      )
+                    )
+                  )
                   ||
                   (
-                    highlightedMultisigTx.status === MultisigTransactionStatus.Approved &&
-                    !highlightedMultisigTx.executedOn
+                    (
+                      highlightedMultisigTx.status === MultisigTransactionStatus.Pending &&
+                      !highlightedMultisigTx.didSigned
+                    ) 
+                    ||
+                    (
+                      highlightedMultisigTx.status === MultisigTransactionStatus.Approved &&
+                      !highlightedMultisigTx.executedOn
+                    )
                   )
                 )
                 &&
