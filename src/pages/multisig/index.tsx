@@ -710,8 +710,8 @@ export const MultisigView = () => {
       let tx = multisigClient.transaction.createTransaction(
         pid, 
         operation,
-        ixAccounts as any,
         [],
+        ixAccounts as any,
         ixData as any,
         {
           accounts: {
