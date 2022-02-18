@@ -4510,7 +4510,6 @@ export const MultisigView = () => {
           multisigName={selectedMultisig.label}
           multisigThreshold={selectedMultisig.threshold}
           multisigParticipants={selectedMultisig.owners}
-          multisigPendingTxsAmount={selectedMultisig.pendingTxsAmount || 0}
           handleClose={() => setIsEditMultisigModalVisible(false)}
           isBusy={isBusy}
         />
@@ -4567,7 +4566,7 @@ export const MultisigView = () => {
           maskClosable={false}
           visible={isMultisigActionTransactionModalVisible}
           onCancel={onTransactionModalClosed}
-          width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 360 : 480}
+          width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 400 : 480}
           footer={null}>
 
           {/* A Cross-fading panel shown when NOT busy */}

@@ -438,7 +438,7 @@
 			"transfer-to-placeholder": "Enter the address of the destination account"
 		},
 		"update-multisig": {
-			"edit-not-allowed-message": "You can not edit the Multisig without first completing or cancelling all pending transactions.",
+			"edit-not-allowed-message": "Quando você altera os signatários em um Multisig, todas as transações pendentes serão ANULADAS. Antes de prosseguir, certifique-se de que não há transações importantes que precisem ser concluídas primeiro.",
 			"main-cta": "Save changes",
 			"main-cta-busy": "Saving changes",
 			"modal-title": "Edit multisig",

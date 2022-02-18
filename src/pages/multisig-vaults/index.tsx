@@ -3163,7 +3163,7 @@ export const MultisigVaultsView = () => {
           maskClosable={false}
           visible={isMultisigActionTransactionModalVisible}
           onCancel={onTransactionModalClosed}
-          width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 360 : 480}
+          width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 400 : 480}
           footer={null}>
 
           {/* A Cross-fading panel shown when NOT busy */}
