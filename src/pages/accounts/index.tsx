@@ -815,19 +815,20 @@ export const AccountsView = () => {
       if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
 
       const asset = getTokenByMintAddress(freshStream.associatedToken as string);
-      const rate = asset ? getPricePerToken(asset as UserTokenAccount) : 0;
+      const pricePerToken = getPricePerToken(asset as UserTokenAccount);
+      const rate = asset ? (pricePerToken ? pricePerToken : 1) : 1;
+      const decimals = asset ? asset.decimals : 9;
+      const amount = isIncoming ? freshStream.escrowVestedAmount : freshStream.escrowUnvestedAmount;
+      const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * rate;
+
       if (isIncoming) {
-        resume['totalNet'] = resume['totalNet'] + ((freshStream.escrowVestedAmount || 0) * rate);
+        resume['totalNet'] += amountChange;
       } else {
-        resume['totalNet'] = resume['totalNet'] + ((freshStream.escrowUnvestedAmount || 0) * rate);
+        resume['totalNet'] -= amountChange;
       }
     }
 
     resume['totalAmount'] = updatedStreamsv1.length;
-
-    // consoleOut('totalNet v1:', resume['totalNet'], 'blue');
-
-    let streamsUsdNetChange = 0;
 
     for (let stream of updatedStreamsv2) {
 
@@ -846,22 +847,20 @@ export const AccountsView = () => {
       if (!freshStream || freshStream.status !== STREAM_STATUS.Running) { continue; }
 
       const asset = getTokenByMintAddress(freshStream.associatedToken as string);
-      const rate = asset ? getPricePerToken(asset as UserTokenAccount) : 0;
-      const streamUnitsUsdPerSecond = parseFloat(freshStream.streamUnitsPerSecond.toFixed(asset?.decimals || 9)) * rate;
-      // consoleOut(`rate for 1 ${asset ? asset.symbol : '[' + shortenAddress(freshStream.associatedToken as string, 6) + ']'}`, rate, 'blue');
-      // consoleOut(`streamUnitsPerSecond: ${isIncoming ? '↑' : '↓'}`, freshStream.streamUnitsPerSecond.toFixed(asset?.decimals || 9), 'blue');
-      // consoleOut(`streamUnitsUsdPerSecond: ${isIncoming ? '↑' : '↓'}`, streamUnitsUsdPerSecond, 'blue');
+      const pricePerToken = getPricePerToken(asset as UserTokenAccount);
+      const rate = asset ? (pricePerToken ? pricePerToken : 1) : 1;
+      const decimals = asset ? asset.decimals : 9;
+      const amount = isIncoming ? freshStream.fundsSentToBeneficiary : freshStream.fundsLeftInStream;
+      const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * rate;
+
       if (isIncoming) {
-        streamsUsdNetChange += streamUnitsUsdPerSecond;
+        resume['totalNet'] += amountChange;
       } else {
-        streamsUsdNetChange -= streamUnitsUsdPerSecond;
+        resume['totalNet'] -= amountChange;
       }
     }
 
     resume['totalAmount'] += updatedStreamsv2.length;
-    resume['totalNet'] += streamsUsdNetChange;
-
-    // consoleOut('totalNet:', resume['totalNet'], 'blue');
     // consoleOut('=========== Block ends ===========', '', 'orange');
 
     // Update state
