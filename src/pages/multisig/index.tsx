@@ -4454,18 +4454,22 @@ export const MultisigView = () => {
 
                     {/* Copy address CTA */}
                     <div className="stream-share-ctas">
-                      <span 
-                        className="copy-cta" 
-                        onClick={() => copyMultisigAddress(selectedMultisig.id.toBase58())}>
-                          {`${t('multisig.multisig-account-detail.copy-id-title')}: ${selectedMultisig.id.toBase58()}`}
-                      </span>
-                      <a 
-                        className="explorer-cta" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${selectedMultisig.id}${getSolanaExplorerClusterParam()}`}>
-                        <IconExternalLink className="mean-svg-icons" />
-                      </a>
+                      {selectedMultisig && (
+                        <>
+                          <span
+                            className="copy-cta"
+                            onClick={() => copyMultisigAddress(selectedMultisig.id)}>
+                              {`${t('multisig.multisig-account-detail.copy-id-title')}: ${selectedMultisig.id}`}
+                          </span>
+                          <a
+                            className="explorer-cta"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${selectedMultisig.id}${getSolanaExplorerClusterParam()}`}>
+                            <IconExternalLink className="mean-svg-icons" />
+                          </a>
+                        </>
+                      )}
                     </div>
                   </>
                 ) : (
