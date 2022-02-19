@@ -82,6 +82,8 @@ export enum OperationType {
     SetMultisigAuthority = 36,
     SetVaultAuthority = 37,
     EditMultisig = 39,
+    ApproveTransaction = 40,
+    ExecuteTransaction = 41,
     // IDO
     IdoDeposit = 100,
     IdoWithdraw = 101,

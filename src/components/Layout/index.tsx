@@ -342,12 +342,12 @@ export const AppLayout = React.memo((props: any) => {
 
   // Update diagnosis info
   useEffect(() => {
-    if (connectionConfig && connectionConfig.endpoint && avgTps && needRefresh) {
+    if (connectionConfig && connectionConfig.endpoint && needRefresh) {
       const now = new Date();
       const device = isDesktop ? 'Desktop' : isTablet ? 'Tablet' : isMobile ? 'Mobile' : 'Other';
       const dateTime = `Client time: ${now.toUTCString()}`;
       const clientInfo = `Client software: ${deviceType} ${browserName} ${fullBrowserVersion} on ${osName} ${osVersion} (${device})`;
-      const networkInfo = `Cluster: ${connectionConfig.cluster} (${connectionConfig.endpoint}) TPS: ${avgTps}, latency: ${responseTime}ms`;
+      const networkInfo = `Cluster: ${connectionConfig.cluster} (${connectionConfig.endpoint}) TPS: ${avgTps || '-'}, latency: ${responseTime}ms`;
       const accountInfo = publicKey && provider ? `Address: ${publicKey.toBase58()} (${provider.name})` : '';
       const appBuildInfo = `App package: ${process.env.REACT_APP_VERSION}, env: ${process.env.REACT_APP_ENV}, build: [${gitInfo.commit.shortHash}] on ${gitInfo.commit.date}`;
       const debugInfo: AccountDetails = {

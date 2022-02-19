@@ -240,8 +240,6 @@ export const MultisigView = () => {
   const onMultisigCreated = useCallback(() => {
 
     setIsCreateMultisigModalVisible(false);
-    setLoadingMultisigAccounts(true);
-    setLoadingMultisigTxs(true);
     resetTransactionStatus();
     notify({
       description: t('multisig.create-multisig.success-message'),
@@ -256,8 +254,6 @@ export const MultisigView = () => {
   const onMultisigModified = useCallback(() => {
 
     setIsEditMultisigModalVisible(false);
-    setLoadingMultisigAccounts(true);
-    setLoadingMultisigTxs(true);
     resetTransactionStatus();
     notify({
       description: t('multisig.update-multisig.success-message'),
@@ -272,8 +268,6 @@ export const MultisigView = () => {
   const onTokensMinted = useCallback(() => {
 
     setIsMintTokenModalVisible(false);
-    setLoadingMultisigAccounts(true);
-    setLoadingMultisigTxs(true);
     resetTransactionStatus();
 
   },[
@@ -282,29 +276,17 @@ export const MultisigView = () => {
 
   const onTxExecuted = useCallback(() => {
   
-    setLoadingMultisigAccounts(true);
-    setLoadingMultisigTxs(true);
-
   },[]);
 
   const onProgramUpgraded = useCallback(() => {
-
-    setLoadingMultisigAccounts(true);
-    setLoadingMultisigTxs(true);
 
   },[]);
 
   const onIDLUpgraded = useCallback(() => {
 
-    setLoadingMultisigAccounts(true);
-    setLoadingMultisigTxs(true);
-
   },[]);
 
   const onProgramAuthSet = useCallback(() => {
-
-    setLoadingMultisigAccounts(true);
-    setLoadingMultisigTxs(true);
 
   },[]);
 
@@ -1015,8 +997,6 @@ export const MultisigView = () => {
     setMultisigActionTransactionModalVisible(false);
     sethHighlightedMultisigTx(undefined);
     resetTransactionStatus();
-    setLoadingMultisigAccounts(true);
-    setLoadingMultisigTxs(true);
   };
 
   const onTransactionModalClosed = () => {
@@ -1599,6 +1579,8 @@ export const MultisigView = () => {
           const sent = await sendTx();
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
+            consoleOut('Send Tx to confirmation queue:', signature);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.ApproveTransaction);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -1627,6 +1609,7 @@ export const MultisigView = () => {
     transactionFees.blockchainFee,
     transactionStatus.currentOperation,
     clearTransactionStatusContext,
+    startFetchTxSignatureInfo,
     setTransactionStatus,
   ]);
 
@@ -1897,12 +1880,12 @@ export const MultisigView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.ExecuteTransaction);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.TransactionFinished
             });
-            await delay(1000);
             onTxExecuted();
             setOngoingOperation(undefined);
           } else { setIsBusy(false); }
@@ -1911,20 +1894,21 @@ export const MultisigView = () => {
     }
 
   }, [
-    onTxExecuted, 
-    clearTransactionStatusContext, 
-    connection, 
-    multisigClient.programId, 
-    multisigClient.transaction, 
-    multisigClient.provider.connection, 
-    nativeBalance, 
-    publicKey, 
-    setTransactionStatus, 
-    transactionCancelled, 
-    transactionFees.blockchainFee, 
-    transactionFees.mspFlatFee, 
+    wallet,
+    publicKey,
+    connection,
+    nativeBalance,
+    multisigClient.programId,
+    multisigClient.transaction,
+    multisigClient.provider.connection,
+    transactionCancelled,
+    transactionFees.blockchainFee,
+    transactionFees.mspFlatFee,
     transactionStatus.currentOperation,
-    wallet
+    startFetchTxSignatureInfo,
+    clearTransactionStatusContext,
+    setTransactionStatus,
+    onTxExecuted,
   ]);
 
   const onAcceptMintToken = (params: any) => {
@@ -3660,6 +3644,7 @@ export const MultisigView = () => {
     if (lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
       clearTransactionStatusContext();
       setLoadingMultisigAccounts(true);
+      setLoadingMultisigTxs(true);
     }
   }, [
     publicKey,
@@ -4471,8 +4456,8 @@ export const MultisigView = () => {
                     <div className="stream-share-ctas">
                       <span 
                         className="copy-cta" 
-                        onClick={() => copyMultisigAddress(selectedMultisig.id)}>
-                          {`${t('multisig.multisig-account-detail.copy-id-title')}: ${selectedMultisig.id}`}
+                        onClick={() => copyMultisigAddress(selectedMultisig.id.toBase58())}>
+                          {`${t('multisig.multisig-account-detail.copy-id-title')}: ${selectedMultisig.id.toBase58()}`}
                       </span>
                       <a 
                         className="explorer-cta" 

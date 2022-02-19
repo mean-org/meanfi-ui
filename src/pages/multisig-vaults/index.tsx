@@ -885,6 +885,7 @@ export const MultisigVaultsView = () => {
     if (multisigAddress && lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
       clearTransactionStatusContext();
       refreshVaults();
+      setLoadingMultisigTxs(true);
     }
   }, [
     publicKey,
@@ -960,7 +961,7 @@ export const MultisigVaultsView = () => {
 
   const onVaultCreated = useCallback(() => {
 
-    refreshVaults();
+    // refreshVaults();
     resetTransactionStatus();
     notify({
       description: t('multisig.create-vault.success-message'),
@@ -969,7 +970,6 @@ export const MultisigVaultsView = () => {
 
   },[
     t,
-    refreshVaults,
     resetTransactionStatus
   ]);
 
@@ -1287,12 +1287,9 @@ export const MultisigVaultsView = () => {
 
   const onTokensTransfered = useCallback(() => {
 
-    refreshVaults();
     resetTransactionStatus();
-    setLoadingMultisigTxs(true);
 
   },[
-    refreshVaults,
     resetTransactionStatus
   ]);
 
@@ -1692,11 +1689,10 @@ export const MultisigVaultsView = () => {
 
   const onVaultAuthorityTransfered = useCallback(() => {
 
-    refreshVaults();
+    // refreshVaults();
     resetTransactionStatus();
 
   },[
-    refreshVaults,
     resetTransactionStatus
   ]);
 
@@ -2013,11 +2009,8 @@ export const MultisigVaultsView = () => {
   // Common Multisig Approve / Execute logic
 
   const onTxExecuted = useCallback(() => {
-    
-    refreshVaults();
-    setLoadingMultisigTxs(true);
 
-  },[refreshVaults]);
+  },[]);
 
   const onExecuteApproveTx = useCallback(async (data: any) => {
 
@@ -2257,6 +2250,8 @@ export const MultisigVaultsView = () => {
           const sent = await sendTx();
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
+            consoleOut('Send Tx to confirmation queue:', signature);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.ApproveTransaction);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -2285,6 +2280,7 @@ export const MultisigVaultsView = () => {
     transactionFees.blockchainFee,
     transactionStatus.currentOperation,
     clearTransactionStatusContext,
+    startFetchTxSignatureInfo,
     setTransactionStatus,
   ]);
 
@@ -2555,6 +2551,7 @@ export const MultisigVaultsView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.ExecuteTransaction);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -2569,20 +2566,21 @@ export const MultisigVaultsView = () => {
     }
 
   }, [
-    onTxExecuted, 
-    clearTransactionStatusContext, 
-    connection, 
-    multisigClient.programId, 
-    multisigClient.transaction, 
-    multisigClient.provider.connection, 
-    nativeBalance, 
-    publicKey, 
-    setTransactionStatus, 
-    transactionCancelled, 
-    transactionFees.blockchainFee, 
-    transactionFees.mspFlatFee, 
+    wallet,
+    publicKey,
+    connection,
+    nativeBalance,
+    transactionCancelled,
+    multisigClient.programId,
+    multisigClient.transaction,
+    transactionFees.mspFlatFee,
+    transactionFees.blockchainFee,
+    multisigClient.provider.connection,
     transactionStatus.currentOperation,
-    wallet
+    clearTransactionStatusContext,
+    startFetchTxSignatureInfo,
+    setTransactionStatus,
+    onTxExecuted,
   ]);
 
   // Transaction confirm and execution modal launched from each Tx row
@@ -2611,8 +2609,6 @@ export const MultisigVaultsView = () => {
     setMultisigActionTransactionModalVisible(false);
     sethHighlightedMultisigTx(undefined);
     resetTransactionStatus();
-    refreshVaults();
-    setLoadingMultisigTxs(true);
   };
 
   const onTransactionModalClosed = () => {
