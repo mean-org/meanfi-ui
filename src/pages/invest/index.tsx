@@ -1,118 +1,35 @@
-import { useCallback, useContext, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useContext, useState } from "react";
 import './style.less';
-import { TokenInfo } from "@solana/spl-token-registry";
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { ReloadOutlined } from "@ant-design/icons";
 import { Button, Tooltip, Row, Col, Space } from "antd";
-import Modal from "antd/lib/modal/Modal";
 import Checkbox from "antd/lib/checkbox/Checkbox";
 import { useTranslation } from 'react-i18next';
 import { IconStats } from "../../Icons";
 import { TokenDisplay } from "../../components/TokenDisplay";
-import { TextInput } from "../../components/TextInput";
-import { TokenListItem } from "../../components/TokenListItem";
 import { PreFooter } from "../../components/PreFooter";
 import { useWallet } from "../../contexts/wallet";
-import { useAccountsContext } from "../../contexts/accounts";
-import { useConnection } from "../../contexts/connection";
 import { AppStateContext } from "../../contexts/appstate";
-import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { formatAmount, getAmountWithSymbol, isValidNumber } from "../../utils/utils";
-import { consoleOut, isValidAddress } from "../../utils/ui";
 
 type SwapOption = "stake" | "unstake";
 
 export const InvestView = () => {
   const {
-    tokenList,
     selectedToken,
     tokenBalance,
     effectiveRate,
-    coinPrices,
     loadingPrices,
     fromCoinAmount,
     isVerifiedRecipient,
     paymentStartDate,
     refreshPrices,
-    setSelectedToken,
-    setEffectiveRate,
     setFromCoinAmount,
     setIsVerifiedRecipient,
   } = useContext(AppStateContext);
-  const navigate = useNavigate();
-  const connection = useConnection();
-  const accounts = useAccountsContext();
-  const { connected, publicKey } = useWallet();
+  const { connected } = useWallet();
   const { t } = useTranslation('common');
   const [currentTab, setCurrentTab] = useState<SwapOption>("stake");
-  const [userBalances, setUserBalances] = useState<any>();
-  const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
-  const [tokenFilter, setTokenFilter] = useState("");
   const [termValue, setTermValue] = useState(7);
-
-  // Token selection modal
-  const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
-  const showTokenSelector = useCallback(() => setTokenSelectorModalVisibility(true), []);
-
-  // Automatically update all token balances
-  useEffect(() => {
-
-    if (!connection) {
-      console.error('No connection');
-      return;
-    }
-
-    if (!publicKey || !tokenList || !accounts || !accounts.tokenAccounts) {
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-
-      const balancesMap: any = {};
-      connection.getTokenAccountsByOwner(
-        publicKey, 
-        { programId: TOKEN_PROGRAM_ID }, 
-        connection.commitment
-      )
-      .then(response => {
-        for (let acc of response.value) {
-          const decoded = ACCOUNT_LAYOUT.decode(acc.account.data);
-          const address = decoded.mint.toBase58();
-          const itemIndex = tokenList.findIndex(t => t.address === address);
-          if (itemIndex !== -1) {
-            balancesMap[address] = decoded.amount.toNumber() / (10 ** tokenList[itemIndex].decimals);
-          } else {
-            balancesMap[address] = 0;
-          }
-        }
-      })
-      .catch(error => {
-        console.error(error);
-        for (let t of tokenList) {
-          balancesMap[t.address] = 0;
-        }
-      })
-      .finally(() => setUserBalances(balancesMap));
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }
-
-  }, [
-    connection,
-    tokenList,
-    accounts,
-    publicKey
-  ]);
-
-  const onCloseTokenSelector = useCallback(() => {
-    setTokenSelectorModalVisibility(false);
-    if (tokenFilter && !isValidAddress(tokenFilter)) {
-      setTokenFilter('');
-    }
-  }, [tokenFilter]);
 
   const onTabChange = (option: SwapOption) => {
     setCurrentTab(option);
@@ -128,69 +45,6 @@ export const InvestView = () => {
       setFromCoinAmount(newValue);
     }
   };
-
-  // Updates the token list everytime is filtered
-  const updateTokenListByFilter = useCallback((searchString: string) => {
-
-    if (!tokenList) {
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-
-      const filter = (t: any) => {
-        return (
-          t.symbol.toLowerCase().includes(searchString.toLowerCase()) ||
-          t.name.toLowerCase().includes(searchString.toLowerCase()) ||
-          t.address.toLowerCase().includes(searchString.toLowerCase())
-        );
-      };
-
-      let showFromList = !searchString 
-        ? tokenList
-        : tokenList.filter((t: any) => filter(t));
-
-      setFilteredTokenList(showFromList);
-
-    });
-
-    return () => { 
-      clearTimeout(timeout);
-    }
-    
-  }, [
-    tokenList,
-  ]);
-
-  const onInputCleared = useCallback(() => {
-    setTokenFilter('');
-    updateTokenListByFilter('');
-  },[
-    updateTokenListByFilter
-  ]);
-
-  const onTokenSearchInputChange = useCallback((e: any) => {
-    const newValue = e.target.value;
-    setTokenFilter(newValue);
-    updateTokenListByFilter(newValue);
-
-  },[
-    updateTokenListByFilter
-  ]);
-
-  const onGotoExchange = () => {
-    onCloseTokenSelector();
-    navigate('/exchange?from=SOL&to=wSOL');
-  }
-
-  const getPricePerToken = (token: TokenInfo): number => {
-    const tokenSymbol = token.symbol.toUpperCase();
-    const symbol = tokenSymbol[0] === 'W' ? tokenSymbol.slice(1) : tokenSymbol;
-
-    return coinPrices && coinPrices[symbol]
-      ? coinPrices[symbol]
-      : 0;
-  }
 
   const onChangeValue = (value: number) => {
     setTermValue(value);
@@ -230,32 +84,6 @@ export const InvestView = () => {
         <div className="interval">APR</div>
       </div>
     </div>
-  );
-
-  const renderTokenList = (
-    <>
-      {(filteredTokenList && filteredTokenList.length > 0) && (
-        filteredTokenList.map((token, index) => {
-          const onClick = function () {
-            setSelectedToken(token);
-            consoleOut("token selected:", token.symbol, 'blue');
-            setEffectiveRate(getPricePerToken(token));
-            onCloseTokenSelector();
-          };
-
-          return (
-            <TokenListItem
-              key={token.address}
-              name={token.name || 'Unknown'}
-              mintAddress={token.address}
-              className={selectedToken && selectedToken.address === token.address ? "selected" : "simplelink"}
-              onClick={onClick}
-              balance={connected && userBalances && userBalances[token.address] > 0 ? userBalances[token.address] : 0}
-            />
-          );
-        })
-      )}
-    </>
   );
 
   return (
@@ -355,10 +183,9 @@ export const InvestView = () => {
                               <div className="left">
                                 <span className="add-on simplelink">
                                   {selectedToken && (
-                                    <TokenDisplay onClick={() => showTokenSelector()}
+                                    <TokenDisplay onClick={() => {}}
                                       mintAddress={selectedToken.address}
                                       name={selectedToken.name}
-                                      showCaretDown={true}
                                     />
                                   )}
                                 </span>
@@ -445,59 +272,6 @@ export const InvestView = () => {
                           >
                             Stake {selectedToken && selectedToken.name}
                           </Button>
-
-                          {/* Token selection modal */}
-                          {isTokenSelectorModalVisible && (
-                            <Modal
-                              className="mean-modal unpadded-content"
-                              visible={isTokenSelectorModalVisible}
-                              title={<div className="modal-title">{t('token-selector.modal-title')}</div>}
-                              onCancel={onCloseTokenSelector}
-                              width={450}
-                              footer={null}>
-                              <div className="token-selector-wrapper">
-                                <div className="token-search-wrapper">
-                                  <TextInput
-                                    id="token-search-otp"
-                                    value={tokenFilter}
-                                    allowClear={true}
-                                    extraClass="mb-2"
-                                    onInputClear={onInputCleared}
-                                    placeholder={t('token-selector.search-input-placeholder')}
-                                    onInputChange={onTokenSearchInputChange} />
-                                </div>
-                                <div className="flex-row align-items-center fg-secondary-60 mb-2 px-1">
-                                  <span>{t('token-selector.looking-for-sol')}</span>&nbsp;
-                                  <span className="simplelink underline" onClick={onGotoExchange}>{t('token-selector.wrap-sol-first')}</span>
-                                </div>
-                                <div className="token-list vertical-scroll">
-                                  {filteredTokenList.length > 0 && renderTokenList}
-                                  {(tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0) && (
-                                    <TokenListItem
-                                      key={tokenFilter}
-                                      name="Unknown"
-                                      mintAddress={tokenFilter}
-                                      className={selectedToken && selectedToken.address === tokenFilter ? "selected" : "simplelink"}
-                                      onClick={() => {
-                                        const uknwnToken: TokenInfo = {
-                                          address: tokenFilter,
-                                          name: 'Unknown',
-                                          chainId: 101,
-                                          decimals: 6,
-                                          symbol: '',
-                                        };
-                                        setSelectedToken(uknwnToken);
-                                        consoleOut("token selected:", uknwnToken, 'blue');
-                                        setEffectiveRate(0);
-                                        onCloseTokenSelector();
-                                      }}
-                                      balance={connected && userBalances && userBalances[tokenFilter] > 0 ? userBalances[tokenFilter] : 0}
-                                    />
-                                  )}
-                                </div>
-                              </div>
-                            </Modal>
-                          )}
                         </>
                       )}
 
