@@ -290,9 +290,13 @@
 				"stake": {
 					"name": "Stake",
 					"amount-label": "Amount to stake",
-					"term-label": "How long do you want to stake for?",
-					"notification-label": "Staking period of 7 days will lock your Tokens until February 21, 2022 with estimated rewards of up to 100 MEAN",
-					"verified-label": "I agree to the Terms & Conditions"
+					"period-label": "How long do you want to stake for?",
+					"days": "days",
+					"year": "year",
+					"years": "years",
+					"notification-label": "Staking period of {{periodValue}} {{periodTime}} will lock your Tokens until February 21, 2022 with estimated rewards of up to 100 MEAN",
+					"verified-label": "I agree to the Terms & Conditions",
+					"stake-button": "Stake"
 				},
 				"unstake": {
 					"name": "Unstake"

@@ -28,8 +28,38 @@ export const InvestView = () => {
   } = useContext(AppStateContext);
   const { connected } = useWallet();
   const { t } = useTranslation('common');
+
+  const periods = [
+    {
+      value: 7,
+      time: t("invest.panel-right.tabset.stake.days"),
+      multiplier: "1x"
+    },
+    {
+      value: 30,
+      time: t("invest.panel-right.tabset.stake.days"),
+      multiplier: "1.1x"
+    },
+    {
+      value: 90,
+      time: t("invest.panel-right.tabset.stake.days"),
+      multiplier: "1.2x"
+    },
+    {
+      value: 1,
+      time: t("invest.panel-right.tabset.stake.year"),
+      multiplier: "2.0x"
+    },
+    {
+      value: 4,
+      time: t("invest.panel-right.tabset.stake.years"),
+      multiplier: "4.0x"
+    },
+  ];
+
   const [currentTab, setCurrentTab] = useState<SwapOption>("stake");
-  const [termValue, setTermValue] = useState(7);
+  const [periodValue, setPeriodValue] = useState(periods[0].value);
+  const [periodTime, setPeriodTime] = useState(periods[0].time);
 
   const onTabChange = (option: SwapOption) => {
     setCurrentTab(option);
@@ -46,8 +76,9 @@ export const InvestView = () => {
     }
   };
 
-  const onChangeValue = (value: number) => {
-    setTermValue(value);
+  const onChangeValue = (value: number, time: string) => {
+    setPeriodValue(value);
+    setPeriodTime(time);
   }
 
   const onIsVerifiedRecipientChange = (e: any) => {
@@ -67,7 +98,7 @@ export const InvestView = () => {
 
   const areSendAmountSettingsValid = (): boolean => {
     return paymentStartDate && isSendAmountValid() ? true : false;
-  }
+  }  
 
   const renderInvestOptions = (
     <div className="transaction-list-row money-streams-summary">
@@ -227,32 +258,19 @@ export const InvestView = () => {
                             </div>
                           </div>
                         
-                          <span className="info-label">{t("invest.panel-right.tabset.stake.term-label")}</span>
+                          {/* Periods */}
+                          <span className="info-label">{t("invest.panel-right.tabset.stake.period-label")}</span>
                           <div className="flexible-left mb-1 mt-2">
                             <div className="left token-group">
-                              <div className="mb-1 d-flex flex-column align-items-center">
-                                <div className={`token-max simplelink ${termValue === 7 ? "active" : "disabled"}`} onClick={() => onChangeValue(7)}>7 days</div>
-                                <span>1x</span>
-                              </div>
-                              <div className="mb-1 d-flex flex-column align-items-center">
-                                <div className={`token-max simplelink ${termValue === 30 ? "active" : "disabled"}`} onClick={() => onChangeValue(30)}>30 days</div>
-                                <span>1.1x</span>
-                              </div>
-                              <div className="mb-1 d-flex flex-column align-items-center">
-                                <div className={`token-max simplelink ${termValue === 90 ? "active" : "disabled"}`} onClick={() => onChangeValue(90)}>90 days</div>
-                                <span>1.2x</span>
-                              </div>
-                              <div className="mb-1 d-flex flex-column align-items-center">
-                                <div className={`token-max simplelink ${termValue === 1 ? "active" : "disabled"}`} onClick={() => onChangeValue(1)}>1 year</div>
-                                <span>2.0x</span>
-                              </div>
-                              <div className="mb-1 d-flex flex-column align-items-center">
-                                <div className={`token-max simplelink ${termValue === 4 ? "active" : "disabled"}`} onClick={() => onChangeValue(4)}>4 year</div>
-                                <span>4.0x</span>
-                              </div>
+                              {periods.map((period, index) => (
+                                <div key={index} className="mb-1 d-flex flex-column align-items-center">
+                                  <div className={`token-max simplelink ${period.value === 7 ? "active" : "disabled"}`} onClick={() => onChangeValue(period.value, period.time)}>{period.value} {period.time}</div>
+                                  <span>{period.multiplier}</span>
+                                </div>
+                              ))}
                             </div>
                           </div>
-                          <span className="info-label">{t("invest.panel-right.tabset.stake.notification-label")}</span>
+                          <span className="info-label">{t("invest.panel-right.tabset.stake.notification-label", { periodValue: periodValue, periodTime: periodTime })}</span>
 
                           {/* Confirm that have read the terms and conditions */}
                           <div className="mb-2 mt-2">
@@ -270,7 +288,7 @@ export const InvestView = () => {
                               !areSendAmountSettingsValid() ||
                               !isVerifiedRecipient}
                           >
-                            Stake {selectedToken && selectedToken.name}
+                            {t("invest.panel-right.tabset.stake.stake-button")} {selectedToken && selectedToken.name}
                           </Button>
                         </>
                       )}
