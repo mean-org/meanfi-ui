@@ -1,6 +1,6 @@
 import { useContext, useState } from "react";
 import './style.less';
-import { ReloadOutlined } from "@ant-design/icons";
+import { ArrowDownOutlined, ReloadOutlined } from "@ant-design/icons";
 import { Button, Tooltip, Row, Col, Space } from "antd";
 import Checkbox from "antd/lib/checkbox/Checkbox";
 import { useTranslation } from 'react-i18next';
@@ -14,6 +14,9 @@ import { formatAmount, getAmountWithSymbol, isValidNumber } from "../../utils/ut
 type SwapOption = "stake" | "unstake";
 
 export const InvestView = () => {
+  const {
+    selectedToken
+  } = useContext(AppStateContext);
   const { t } = useTranslation('common');
 
   const [currentTab, setCurrentTab] = useState<SwapOption>("stake");
@@ -58,7 +61,7 @@ export const InvestView = () => {
                 <span className="title">{t('invest.screen-title')}</span>
                 <Tooltip placement="bottom" title={t('invest.refresh-tooltip')}>
                   <div className="transaction-stats user-address">
-                    <span className="incoming-transactions-amout">(7)</span>
+                    <span className="incoming-transactions-amout">(1)</span>
                     <span className="transaction-legend">
                       <span className="icon-button-container">
                         <Button
@@ -175,8 +178,17 @@ export const InvestView = () => {
                         </Col>
                         <span className="info-label mt-1">{t("invest.panel-right.staking-data.text-one")}</span>
                         <span className="info-label">{t("invest.panel-right.staking-data.text-two")}</span>
-                        <Col span={24} className="d-flex flex-column justify-content-end align-items-end">
-                          <div className="staking-value mb-2 mt-1">5.229181 MEAN</div>
+                        <Col span={24} className="d-flex flex-column justify-content-end align-items-end mt-1">
+                          <div className="transaction-detail-row">
+                            <span className="info-icon">
+                              <span role="img" aria-label="arrow-down" className="anticon anticon-arrow-down mean-svg-icons success bounce">
+                              <ArrowDownOutlined className="mean-svg-icons" />
+                              </span>
+                              <span className="staking-value mb-2 mt-1">5.229181 {selectedToken && selectedToken.name}</span>
+                            </span>
+                          </div>
+                        </Col>
+                        <Col span={24} className="d-flex flex-column justify-content-end align-items-end mt-1">
                           <Space size="middle">
                             <Button
                               type="default"
