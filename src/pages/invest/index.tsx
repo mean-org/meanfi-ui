@@ -14,91 +14,13 @@ import { formatAmount, getAmountWithSymbol, isValidNumber } from "../../utils/ut
 type SwapOption = "stake" | "unstake";
 
 export const InvestView = () => {
-  const {
-    selectedToken,
-    tokenBalance,
-    effectiveRate,
-    loadingPrices,
-    fromCoinAmount,
-    isVerifiedRecipient,
-    paymentStartDate,
-    refreshPrices,
-    setFromCoinAmount,
-    setIsVerifiedRecipient,
-  } = useContext(AppStateContext);
-  const { connected } = useWallet();
   const { t } = useTranslation('common');
 
-  const periods = [
-    {
-      value: 7,
-      time: t("invest.panel-right.tabset.stake.days"),
-      multiplier: "1x"
-    },
-    {
-      value: 30,
-      time: t("invest.panel-right.tabset.stake.days"),
-      multiplier: "1.1x"
-    },
-    {
-      value: 90,
-      time: t("invest.panel-right.tabset.stake.days"),
-      multiplier: "1.2x"
-    },
-    {
-      value: 1,
-      time: t("invest.panel-right.tabset.stake.year"),
-      multiplier: "2.0x"
-    },
-    {
-      value: 4,
-      time: t("invest.panel-right.tabset.stake.years"),
-      multiplier: "4.0x"
-    },
-  ];
-
   const [currentTab, setCurrentTab] = useState<SwapOption>("stake");
-  const [periodValue, setPeriodValue] = useState(periods[0].value);
-  const [periodTime, setPeriodTime] = useState(periods[0].time);
 
   const onTabChange = (option: SwapOption) => {
     setCurrentTab(option);
   }
-
-  const handleFromCoinAmountChange = (e: any) => {
-    const newValue = e.target.value;
-    if (newValue === null || newValue === undefined || newValue === "") {
-      setFromCoinAmount("");
-    } else if (newValue === '.') {
-      setFromCoinAmount(".");
-    } else if (isValidNumber(newValue)) {
-      setFromCoinAmount(newValue);
-    }
-  };
-
-  const onChangeValue = (value: number, time: string) => {
-    setPeriodValue(value);
-    setPeriodTime(time);
-  }
-
-  const onIsVerifiedRecipientChange = (e: any) => {
-    setIsVerifiedRecipient(e.target.checked);
-  }
-
-  const isSendAmountValid = (): boolean => {
-    return  connected &&
-            selectedToken &&
-            tokenBalance &&
-            fromCoinAmount &&
-            parseFloat(fromCoinAmount) > 0 &&
-            parseFloat(fromCoinAmount) <= tokenBalance
-      ? true
-      : false;
-  }
-
-  const areSendAmountSettingsValid = (): boolean => {
-    return paymentStartDate && isSendAmountValid() ? true : false;
-  }  
 
   const renderInvestOptions = (
     <div className="transaction-list-row money-streams-summary">
@@ -207,95 +129,12 @@ export const InvestView = () => {
 
                       {/* Tab Stake */}
                       {currentTab === "stake" && (
-                        <>
-                          <div className="form-label">{t("invest.panel-right.tabset.stake.amount-label")}</div>
-                          <div className="well">
-                            <div className="flex-fixed-left">
-                              <div className="left">
-                                <span className="add-on simplelink">
-                                  {selectedToken && (
-                                    <TokenDisplay onClick={() => {}}
-                                      mintAddress={selectedToken.address}
-                                      name={selectedToken.name}
-                                    />
-                                  )}
-                                </span>
-                              </div>
-                              <div className="right">
-                                <input
-                                  className="general-text-input text-right"
-                                  inputMode="decimal"
-                                  autoComplete="off"
-                                  autoCorrect="off"
-                                  type="text"
-                                  onChange={handleFromCoinAmountChange}
-                                  pattern="^[0-9]*[.,]?[0-9]*$"
-                                  placeholder="0.0"
-                                  minLength={1}
-                                  maxLength={79}
-                                  spellCheck="false"
-                                  value={fromCoinAmount}
-                                />
-                              </div>
-                            </div>
-                            <div className="flex-fixed-right">
-                              <div className="left inner-label">
-                                <span>{t('transactions.send-amount.label-right')}:</span>
-                                <span>
-                                  {`${tokenBalance && selectedToken
-                                      ? getAmountWithSymbol(tokenBalance, selectedToken?.address, true)
-                                      : "0"
-                                  }`}
-                                </span>
-                              </div>
-                              <div className="right inner-label">
-                                <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
-                                  ~${fromCoinAmount && effectiveRate
-                                    ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
-                                    : "0.00"}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        
-                          {/* Periods */}
-                          <span className="info-label">{t("invest.panel-right.tabset.stake.period-label")}</span>
-                          <div className="flexible-left mb-1 mt-2">
-                            <div className="left token-group">
-                              {periods.map((period, index) => (
-                                <div key={index} className="mb-1 d-flex flex-column align-items-center">
-                                  <div className={`token-max simplelink ${period.value === 7 ? "active" : "disabled"}`} onClick={() => onChangeValue(period.value, period.time)}>{period.value} {period.time}</div>
-                                  <span>{period.multiplier}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                          <span className="info-label">{t("invest.panel-right.tabset.stake.notification-label", { periodValue: periodValue, periodTime: periodTime })}</span>
-
-                          {/* Confirm that have read the terms and conditions */}
-                          <div className="mb-2 mt-2">
-                            <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>{t("invest.panel-right.tabset.stake.verified-label")}</Checkbox>
-                          </div>
-
-                          {/* Action button */}
-                          <Button
-                            className="main-cta"
-                            block
-                            type="primary"
-                            shape="round"
-                            size="large"
-                            disabled={
-                              !areSendAmountSettingsValid() ||
-                              !isVerifiedRecipient}
-                          >
-                            {t("invest.panel-right.tabset.stake.stake-button")} {selectedToken && selectedToken.name}
-                          </Button>
-                        </>
+                        <StakeTabView />
                       )}
 
                       {/* Tab unstake */}
                       {currentTab === "unstake" && (
-                          <div>Unstake</div>
+                        <UnstakeTabView />
                       )}
                     </div>
                   </Col>
@@ -362,3 +201,309 @@ export const InvestView = () => {
     </>
   );
 };
+
+export const StakeTabView = () => {
+  const {
+    selectedToken,
+    tokenBalance,
+    effectiveRate,
+    loadingPrices,
+    fromCoinAmount,
+    isVerifiedRecipient,
+    paymentStartDate,
+    refreshPrices,
+    setFromCoinAmount,
+    setIsVerifiedRecipient,
+  } = useContext(AppStateContext);
+  const { connected } = useWallet();
+  const { t } = useTranslation('common');
+  const periods = [
+    {
+      value: 7,
+      time: t("invest.panel-right.tabset.stake.days"),
+      multiplier: "1x"
+    },
+    {
+      value: 30,
+      time: t("invest.panel-right.tabset.stake.days"),
+      multiplier: "1.1x"
+    },
+    {
+      value: 90,
+      time: t("invest.panel-right.tabset.stake.days"),
+      multiplier: "1.2x"
+    },
+    {
+      value: 1,
+      time: t("invest.panel-right.tabset.stake.year"),
+      multiplier: "2.0x"
+    },
+    {
+      value: 4,
+      time: t("invest.panel-right.tabset.stake.years"),
+      multiplier: "4.0x"
+    },
+  ];
+
+  const [periodValue, setPeriodValue] = useState(periods[0].value);
+  const [periodTime, setPeriodTime] = useState(periods[0].time);
+
+  const onChangeValue = (value: number, time: string) => {
+    setPeriodValue(value);
+    setPeriodTime(time);
+  }
+
+  const handleFromCoinAmountChange = (e: any) => {
+    const newValue = e.target.value;
+    if (newValue === null || newValue === undefined || newValue === "") {
+      setFromCoinAmount("");
+    } else if (newValue === '.') {
+      setFromCoinAmount(".");
+    } else if (isValidNumber(newValue)) {
+      setFromCoinAmount(newValue);
+    }
+  };
+
+  const isSendAmountValid = (): boolean => {
+    return  connected &&
+            selectedToken &&
+            tokenBalance &&
+            fromCoinAmount &&
+            parseFloat(fromCoinAmount) > 0 &&
+            parseFloat(fromCoinAmount) <= tokenBalance
+      ? true
+      : false;
+  }
+
+  const areSendAmountSettingsValid = (): boolean => {
+    return paymentStartDate && isSendAmountValid() ? true : false;
+  }  
+
+  const onIsVerifiedRecipientChange = (e: any) => {
+    setIsVerifiedRecipient(e.target.checked);
+  }
+
+  return (
+    <>
+    <div className="form-label">{t("invest.panel-right.tabset.stake.amount-label")}</div>
+    <div className="well">
+      <div className="flex-fixed-left">
+        <div className="left">
+          <span className="add-on simplelink">
+            {selectedToken && (
+              <TokenDisplay onClick={() => {}}
+                mintAddress={selectedToken.address}
+                name={selectedToken.name}
+              />
+            )}
+          </span>
+        </div>
+        <div className="right">
+          <input
+            className="general-text-input text-right"
+            inputMode="decimal"
+            autoComplete="off"
+            autoCorrect="off"
+            type="text"
+            onChange={handleFromCoinAmountChange}
+            pattern="^[0-9]*[.,]?[0-9]*$"
+            placeholder="0.0"
+            minLength={1}
+            maxLength={79}
+            spellCheck="false"
+            value={fromCoinAmount}
+          />
+        </div>
+      </div>
+      <div className="flex-fixed-right">
+        <div className="left inner-label">
+          <span>{t('transactions.send-amount.label-right')}:</span>
+          <span>
+            {`${tokenBalance && selectedToken
+                ? getAmountWithSymbol(tokenBalance, selectedToken?.address, true)
+                : "0"
+            }`}
+          </span>
+        </div>
+        <div className="right inner-label">
+          <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
+            ~${fromCoinAmount && effectiveRate
+              ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
+              : "0.00"}
+          </span>
+        </div>
+      </div>
+    </div>
+  
+    {/* Periods */}
+    <span className="info-label">{t("invest.panel-right.tabset.stake.period-label")}</span>
+    <div className="flexible-left mb-1 mt-2">
+      <div className="left token-group">
+        {periods.map((period, index) => (
+          <div key={index} className="mb-1 d-flex flex-column align-items-center">
+            <div className={`token-max simplelink ${period.value === 7 ? "active" : "disabled"}`} onClick={() => onChangeValue(period.value, period.time)}>{period.value} {period.time}</div>
+            <span>{period.multiplier}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+    <span className="info-label">{t("invest.panel-right.tabset.stake.notification-label", { periodValue: periodValue, periodTime: periodTime })}</span>
+
+    {/* Confirm that have read the terms and conditions */}
+    <div className="mb-2 mt-2">
+      <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>{t("invest.panel-right.tabset.stake.verified-label")}</Checkbox>
+    </div>
+
+    {/* Action button */}
+    <Button
+      className="main-cta"
+      block
+      type="primary"
+      shape="round"
+      size="large"
+      disabled={
+        !areSendAmountSettingsValid() ||
+        !isVerifiedRecipient}
+    >
+      {t("invest.panel-right.tabset.stake.stake-button")} {selectedToken && selectedToken.name}
+    </Button>
+    </>
+  )
+}
+
+export const UnstakeTabView = () => {
+  const {
+    selectedToken,
+    tokenBalance,
+    effectiveRate,
+    loadingPrices,
+    fromCoinAmount,
+    isVerifiedRecipient,
+    paymentStartDate,
+    refreshPrices,
+    setFromCoinAmount,
+    setIsVerifiedRecipient,
+  } = useContext(AppStateContext);
+  const { connected } = useWallet();
+  const { t } = useTranslation('common');
+  const percentages = [25, 50, 75, 100];
+  const [percentageValue, setPercentageValue] = useState(percentages[0]);
+
+  const onChangeValue = (value: number) => {
+    setPercentageValue(value);
+  }
+
+  const handleFromCoinAmountChange = (e: any) => {
+    const newValue = e.target.value;
+    if (newValue === null || newValue === undefined || newValue === "") {
+      setFromCoinAmount("");
+    } else if (newValue === '.') {
+      setFromCoinAmount(".");
+    } else if (isValidNumber(newValue)) {
+      setFromCoinAmount(newValue);
+    }
+  };
+
+  const isSendAmountValid = (): boolean => {
+    return  connected &&
+            selectedToken &&
+            tokenBalance &&
+            fromCoinAmount &&
+            parseFloat(fromCoinAmount) > 0 &&
+            parseFloat(fromCoinAmount) <= tokenBalance
+      ? true
+      : false;
+  }
+
+  const areSendAmountSettingsValid = (): boolean => {
+    return paymentStartDate && isSendAmountValid() ? true : false;
+  }  
+
+  const onIsVerifiedRecipientChange = (e: any) => {
+    setIsVerifiedRecipient(e.target.checked);
+  }
+  return (
+    <>
+      <span className="info-label">{t("invest.panel-right.tabset.unstake.notification-label-one")}</span>
+      <div className="form-label mt-2">{t("invest.panel-right.tabset.unstake.amount-label")}</div>
+        <div className="well">
+
+          <div className="flexible-right mb-1">
+            <div className="token-group">
+              {percentages.map((percentage, index) => (
+                <div key={index} className="mb-1 d-flex flex-column align-items-center">
+                  <div className="token-max simplelink" onClick={() => onChangeValue(percentage)}>{percentage}%</div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="flex-fixed-left">
+            <div className="left">
+              <span className="add-on simplelink">
+                {selectedToken && (
+                  <TokenDisplay onClick={() => {}}
+                    mintAddress={selectedToken.address}
+                    name={selectedToken.name}
+                  />
+                )}
+              </span>
+            </div>
+            <div className="right">
+              <input
+                className="general-text-input text-right"
+                inputMode="decimal"
+                autoComplete="off"
+                autoCorrect="off"
+                type="text"
+                onChange={handleFromCoinAmountChange}
+                pattern="^[0-9]*[.,]?[0-9]*$"
+                placeholder="0.0"
+                minLength={1}
+                maxLength={79}
+                spellCheck="false"
+                value={fromCoinAmount}
+              />
+            </div>
+          </div>
+          <div className="flex-fixed-right">
+            <div className="left inner-label">
+              <span>{t('transactions.send-amount.label-right')}:</span>
+              <span>
+                {`${tokenBalance && selectedToken
+                    ? getAmountWithSymbol(tokenBalance, selectedToken?.address, true)
+                    : "0"
+                }`}
+              </span>
+            </div>
+            <div className="right inner-label">
+              <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
+                ~${fromCoinAmount && effectiveRate
+                  ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
+                  : "0.00"}
+              </span>
+            </div>
+          </div>
+        </div>
+        <span className="info-label">{t("invest.panel-right.tabset.unstake.notification-label-two")}</span>
+        
+        {/* Confirm that have read the terms and conditions */}
+        <div className="mb-2 mt-2">
+          <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>{t("invest.panel-right.tabset.unstake.verified-label")}</Checkbox>
+        </div>
+
+        {/* Action button */}
+        <Button
+          className="main-cta"
+          block
+          type="primary"
+          shape="round"
+          size="large"
+          disabled={
+            !areSendAmountSettingsValid() ||
+            !isVerifiedRecipient}
+        >
+          {t("invest.panel-right.tabset.unstake.unstake-button")} {selectedToken && selectedToken.name}
+        </Button>
+      </>
+  )
+}

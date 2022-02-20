@@ -299,7 +299,12 @@
 					"stake-button": "Stake"
 				},
 				"unstake": {
-					"name": "Unstake"
+					"name": "Unstake",
+					"notification-label-one": "Your currently have 1000 MEAN staked which is currently locked until Feb 15, 2022 12:34 UTC",
+					"amount-label": "Amount to unstake",
+					"notification-label-two": "Unstaking will withdraw the specified amount of unlocked MEAN tokens to your wallet",
+					"verified-label": "I agree to the Terms & Conditions",
+					"unstake-button": "Unstake"
 				}
 			},
 			"staking-data": {
