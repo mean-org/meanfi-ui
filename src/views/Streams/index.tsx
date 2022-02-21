@@ -73,7 +73,7 @@ import BN from "bn.js";
 import { InfoIcon } from "../../components/InfoIcon";
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
 import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
-import { MSP_ACTIONS, StreamActivity, StreamInfo, STREAM_STATE } from '@mean-dao/money-streaming/lib/types';
+import { MSP_ACTIONS, StreamActivity, StreamInfo, STREAM_STATE, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import {
   AllocationType,
   MSP,
@@ -82,11 +82,14 @@ import {
   MSP_ACTIONS as MSP_ACTIONS_V2,
   TransactionFees,
   calculateActionFees as calculateActionFeesV2,
+  Treasury,
+  TreasuryType,
 } from "@mean-dao/msp";
 import { StreamTransferOpenModal } from "../../components/StreamTransferOpenModal";
 import { StreamsSummary } from "../../models/streams";
 import { UserTokenAccount } from "../../models/transactions";
 import { customLogger } from "../..";
+import { StreamTreasuryType } from "../../models/treasuries";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -102,6 +105,7 @@ export const Streams = () => {
     streamListv1,
     streamListv2,
     streamDetail,
+    activeStream,
     selectedToken,
     loadingStreams,
     streamsSummary,
@@ -145,6 +149,15 @@ export const Streams = () => {
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
   const [lastStreamTransferAddress, setLastStreamTransferAddress] = useState('');
+  const [oldSelectedToken, setOldSelectedToken] = useState<TokenInfo>();
+  const [transactionFees, setTransactionFees] = useState<TransactionFees>({
+    blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
+  });
+
+  // Treasury related
+  const [streamTreasuryType, setStreamTreasuryType] = useState<StreamTreasuryType | undefined>(undefined);
+  const [loadingTreasuryDetails, setLoadingTreasuryDetails] = useState(true);
+  const [treasuryDetails, setTreasuryDetails] = useState<Treasury | TreasuryInfo | undefined>(undefined);
 
   // Create and cache Money Streaming Program instance
   const ms = useMemo(() => new MoneyStreaming(
@@ -171,6 +184,159 @@ export const Streams = () => {
     streamV2ProgramAddress
   ]);
 
+  /////////////////
+  //  CALLBACKS  //
+  /////////////////
+
+  const getTransactionFees = useCallback(async (action: MSP_ACTIONS): Promise<TransactionFees> => {
+    return await calculateActionFees(connection, action);
+  }, [connection]);
+
+  const getTransactionFeesV2 = useCallback(async (action: MSP_ACTIONS_V2): Promise<TransactionFees> => {
+    return await calculateActionFeesV2(connection, action);
+  }, [connection]);
+
+  const getPricePerToken = useCallback((token: UserTokenAccount): number => {
+    if (!token || !token.symbol) { return 0; }
+    const tokenSymbol = token.symbol.toUpperCase();
+    const symbol = tokenSymbol[0] === 'W' ? tokenSymbol.slice(1) : tokenSymbol;
+
+    return coinPrices && coinPrices[symbol]
+      ? coinPrices[symbol]
+      : 0;
+  }, [coinPrices])
+
+  const getTreasuryName = useCallback(() => {
+    if (treasuryDetails) {
+      const v1 = treasuryDetails as TreasuryInfo;
+      const v2 = treasuryDetails as Treasury;
+      const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
+      return isNewTreasury ? v2.name : v1.label;
+    }
+    return '-';
+  }, [treasuryDetails]);
+
+  const getTreasuryType = useCallback((): StreamTreasuryType | undefined => {
+    if (treasuryDetails) {
+      const v1 = treasuryDetails as TreasuryInfo;
+      const v2 = treasuryDetails as Treasury;
+      const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
+      const type = isNewTreasury ? v2.treasuryType : v1.type;
+      if (type === TreasuryType.Lock) {
+        return "locked";
+      } else {
+        return "open";
+      }
+    }
+
+    return "unknown";
+  }, [treasuryDetails]);
+
+  const getTreasuryByTreasuryId = useCallback(async (treasuryId: string, streamVersion: number): Promise<StreamTreasuryType | undefined> => {
+    if (!connection || !publicKey || !ms || !msp) { return undefined; }
+
+    const mspInstance = streamVersion < 2 ? ms : msp;
+    const treasueyPk = new PublicKey(treasuryId);
+
+    setTimeout(() => {
+      setLoadingTreasuryDetails(true);
+    });
+
+    try {
+      const details = await mspInstance.getTreasury(treasueyPk);
+      if (details) {
+        setTreasuryDetails(details);
+        consoleOut('treasuryDetails:', details, 'blue');
+      } else {
+        setTreasuryDetails(undefined);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoadingTreasuryDetails(false);
+    }
+
+  }, [
+    ms,
+    msp,
+    publicKey,
+    connection,
+  ]);
+
+  const resetTransactionStatus = useCallback(() => {
+    setTransactionStatus({
+      lastOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
+    });
+  }, [setTransactionStatus]);
+
+  const setCustomToken = useCallback((address: string) => {
+
+    if (address && isValidAddress(address)) {
+      const unkToken: TokenInfo = {
+        address: address,
+        name: 'Unknown',
+        chainId: 101,
+        decimals: 6,
+        symbol: shortenAddress(address),
+      };
+      setSelectedToken(unkToken);
+      consoleOut("stream token:", unkToken, 'blue');
+      setEffectiveRate(0);
+    } else {
+      notify({
+        message: t('notifications.error-title'),
+        description: t('transactions.validation.invalid-solana-address'),
+        type: "error"
+      });
+    }
+  }, [
+    setEffectiveRate,
+    setSelectedToken,
+    t,
+  ]);
+
+  const isInboundStream = useCallback((item: Stream | StreamInfo): boolean => {
+    if (item && publicKey) {
+      const v1 = item as StreamInfo;
+      const v2 = item as Stream;
+      if (v1.version < 2) {
+        return v1.beneficiaryAddress === publicKey.toBase58() ? true : false;
+      } else {
+        return v2.beneficiary === publicKey.toBase58() ? true : false;
+      }
+    }
+    return false;
+  }, [publicKey]);
+
+  const isAuthority = (): boolean => {
+    if (streamDetail && publicKey) {
+      const v1 = streamDetail as StreamInfo;
+      const v2 = streamDetail as Stream;
+      if (v1.version < 2 && (v1.treasurerAddress === publicKey.toBase58() || v1.beneficiaryAddress === publicKey.toBase58())) {
+        return true;
+      } else if (v2.version >= 2 && (v2.treasurer === publicKey.toBase58() || v2.beneficiary === publicKey.toBase58())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  const isTreasurer = (): boolean => {
+    if (streamDetail && publicKey) {
+      const v1 = streamDetail as StreamInfo;
+      const v2 = streamDetail as Stream;
+      if ((v1.version < 2 && v1.treasurerAddress === publicKey.toBase58()) || (v2.version >= 2 && v2.treasurer === publicKey.toBase58())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /////////////////
+  //   EFFECTS   //
+  /////////////////
+
   // Keep account balance updated
   useEffect(() => {
 
@@ -191,29 +357,6 @@ export const Streams = () => {
     previousBalance,
     refreshTokenBalance
   ]);
-
-  const [oldSelectedToken, setOldSelectedToken] = useState<TokenInfo>();
-  const [transactionFees, setTransactionFees] = useState<TransactionFees>({
-    blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
-  });
-
-  const getTransactionFees = useCallback(async (action: MSP_ACTIONS): Promise<TransactionFees> => {
-    return await calculateActionFees(connection, action);
-  }, [connection]);
-
-  const getTransactionFeesV2 = useCallback(async (action: MSP_ACTIONS_V2): Promise<TransactionFees> => {
-    return await calculateActionFeesV2(connection, action);
-  }, [connection]);
-
-  const getPricePerToken = useCallback((token: UserTokenAccount): number => {
-    if (!token || !token.symbol) { return 0; }
-    const tokenSymbol = token.symbol.toUpperCase();
-    const symbol = tokenSymbol[0] === 'W' ? tokenSymbol.slice(1) : tokenSymbol;
-
-    return coinPrices && coinPrices[symbol]
-      ? coinPrices[symbol]
-      : 0;
-  }, [coinPrices])
 
   // Live data calculation - Streams list
   useEffect(() => {
@@ -412,6 +555,31 @@ export const Streams = () => {
     getPricePerToken,
   ]);
 
+  useEffect(() => {
+    if (!publicKey || !ms || !msp || !activeStream) { return; }
+
+    const timeout = setTimeout(() => {
+      const v1 = activeStream as StreamInfo;
+      const v2 = activeStream as Stream;
+      consoleOut('Reading treasury data...', '', 'blue');
+      getTreasuryByTreasuryId(
+        activeStream.version < 2 ? v1.treasuryAddress as string : v2.treasury as string,
+          activeStream.version
+      );
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [
+    ms,
+    msp,
+    publicKey,
+    activeStream,
+    getTreasuryByTreasuryId
+  ]);
+
   // Handle overflow-ellipsis-middle elements of resize
   useEffect(() => {
     const resizeListener = () => {
@@ -438,6 +606,7 @@ export const Streams = () => {
     }
   }, []);
 
+  // Scroll to a given stream is specified as highLightableStreamId
   useEffect(() => {
     if (loadingStreams || !streamList || streamList.length === 0 || !highLightableStreamId) {
       return;
@@ -471,12 +640,31 @@ export const Streams = () => {
     setSelectedStream,
   ]);
 
-  const resetTransactionStatus = useCallback(() => {
-    setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle
-    });
-  }, [setTransactionStatus]);
+  // Watch for stream's associated token changes then load the token to the state as selectedToken
+  useEffect(() => {
+    if (streamDetail && selectedToken?.address !== streamDetail.associatedToken) {
+      const token = getTokenByMintAddress(streamDetail.associatedToken as string);
+      if (token) {
+        consoleOut("stream token:", token, 'blue');
+        if (!selectedToken || selectedToken.address !== token.address) {
+          setOldSelectedToken(selectedToken);
+          setSelectedToken(token);
+        }
+      } else if (!token && (!selectedToken || selectedToken.address !== streamDetail.associatedToken)) {
+        setCustomToken(streamDetail.associatedToken as string);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[
+    selectedToken,
+    setCustomToken,
+    setSelectedToken,
+    streamDetail?.associatedToken
+  ]);
+
+  ///////////////////////
+  //  EVENTS & MODALS  //
+  ///////////////////////
 
   // Close stream modal
   const [isCloseStreamModalVisible, setIsCloseStreamModalVisibility] = useState(false);
@@ -523,54 +711,6 @@ export const Streams = () => {
     setCustomStreamDocked(false);
     refreshStreamList(true);
   }
-
-  const setCustomToken = useCallback((address: string) => {
-
-    if (address && isValidAddress(address)) {
-      const unkToken: TokenInfo = {
-        address: address,
-        name: 'Unknown',
-        chainId: 101,
-        decimals: 6,
-        symbol: shortenAddress(address),
-      };
-      setSelectedToken(unkToken);
-      consoleOut("stream token:", unkToken, 'blue');
-      setEffectiveRate(0);
-    } else {
-      notify({
-        message: t('notifications.error-title'),
-        description: t('transactions.validation.invalid-solana-address'),
-        type: "error"
-      });
-    }
-  }, [
-    setEffectiveRate,
-    setSelectedToken,
-    t,
-  ]);
-
-  // Watch for stream's associated token changes then load the token to the state as selectedToken
-  useEffect(() => {
-    if (streamDetail && selectedToken?.address !== streamDetail.associatedToken) {
-      const token = getTokenByMintAddress(streamDetail.associatedToken as string);
-      if (token) {
-        consoleOut("stream token:", token, 'blue');
-        if (!selectedToken || selectedToken.address !== token.address) {
-          setOldSelectedToken(selectedToken);
-          setSelectedToken(token);
-        }
-      } else if (!token && (!selectedToken || selectedToken.address !== streamDetail.associatedToken)) {
-        setCustomToken(streamDetail.associatedToken as string);
-      }
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[
-    selectedToken,
-    setCustomToken,
-    setSelectedToken,
-    streamDetail?.associatedToken
-  ]);
 
   // Transfer stream modal
   const [isTransferStreamModalVisible, setIsTransferStreamModalVisibility] = useState(false);
@@ -938,43 +1078,6 @@ export const Streams = () => {
     setCustomStreamDocked(false);
     navigate("/transfers");
   };
-
-  const isInboundStream = useCallback((item: Stream | StreamInfo): boolean => {
-    if (item && publicKey) {
-      const v1 = item as StreamInfo;
-      const v2 = item as Stream;
-      if (v1.version < 2) {
-        return v1.beneficiaryAddress === publicKey.toBase58() ? true : false;
-      } else {
-        return v2.beneficiary === publicKey.toBase58() ? true : false;
-      }
-    }
-    return false;
-  }, [publicKey]);
-
-  const isAuthority = (): boolean => {
-    if (streamDetail && publicKey) {
-      const v1 = streamDetail as StreamInfo;
-      const v2 = streamDetail as Stream;
-      if (v1.version < 2 && (v1.treasurerAddress === publicKey.toBase58() || v1.beneficiaryAddress === publicKey.toBase58())) {
-        return true;
-      } else if (v2.version >= 2 && (v2.treasurer === publicKey.toBase58() || v2.beneficiary === publicKey.toBase58())) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  const isTreasurer = (): boolean => {
-    if (streamDetail && publicKey) {
-      const v1 = streamDetail as StreamInfo;
-      const v2 = streamDetail as Stream;
-      if ((v1.version < 2 && v1.treasurerAddress === publicKey.toBase58()) || (v2.version >= 2 && v2.treasurer === publicKey.toBase58())) {
-        return true;
-      }
-    }
-    return false;
-  }
 
   const getEscrowEstimatedDepletionUtcLabel = (date: Date): string => {
     const today = new Date();
@@ -4043,6 +4146,7 @@ export const Streams = () => {
                   : msp
                 : undefined
             }
+            treasuryDetails={treasuryDetails}
             handleOk={onAcceptAddFunds}
             handleClose={closeAddFundsModal}
           />

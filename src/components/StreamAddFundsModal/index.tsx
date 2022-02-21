@@ -22,6 +22,7 @@ export const StreamAddFundsModal = (props: {
   isVisible: boolean;
   mspClient: MoneyStreaming | MSP | undefined;
   streamDetail: Stream | StreamInfo | undefined;
+  treasuryDetails?: Treasury | TreasuryInfo | undefined;
   transactionFees: TransactionFees;
 }) => {
   const {
@@ -43,6 +44,32 @@ export const StreamAddFundsModal = (props: {
   const [loadingTreasuryDetails, setLoadingTreasuryDetails] = useState(true);
   const [localStreamDetail, setLocalStreamDetail] = useState<Stream | StreamInfo | undefined>(undefined);
   const [treasuryDetails, setTreasuryDetails] = useState<Treasury | TreasuryInfo | undefined>(undefined);
+
+  const getTreasuryType = useCallback((details?: Treasury | TreasuryInfo | undefined): StreamTreasuryType | undefined => {
+    if (details) {
+      const v1 = details as TreasuryInfo;
+      const v2 = details as Treasury;
+      const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
+      const type = isNewTreasury ? v2.treasuryType : v1.type;
+      if (type === TreasuryType.Lock) {
+        return "locked";
+      } else {
+        return "open";
+      }
+    } else if (treasuryDetails) {
+      const v1 = treasuryDetails as TreasuryInfo;
+      const v2 = treasuryDetails as Treasury;
+      const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
+      const type = isNewTreasury ? v2.treasuryType : v1.type;
+      if (type === TreasuryType.Lock) {
+        return "locked";
+      } else {
+        return "open";
+      }
+    }
+
+    return "unknown";
+  }, [treasuryDetails]);
 
   const getTreasuryTypeByTreasuryId = useCallback(async (treasuryId: string, streamVersion: number): Promise<StreamTreasuryType | undefined> => {
     if (!connection || !publicKey || !props.mspClient) { return undefined; }
@@ -104,22 +131,30 @@ export const StreamAddFundsModal = (props: {
 
   useEffect(() => {
     if (props.isVisible && localStreamDetail) {
-      const v1 = localStreamDetail as StreamInfo;
-      const v2 = localStreamDetail as Stream;
-      consoleOut('fetching treasury details...', '', 'blue');
-      getTreasuryTypeByTreasuryId(
-        localStreamDetail.version < 2 ? v1.treasuryAddress as string : v2.treasury as string,
-        localStreamDetail.version
-      ).then(value => {
+      if (props.treasuryDetails) {
+        const value = getTreasuryType(props.treasuryDetails);
         consoleOut('streamTreasuryType:', value, 'crimson');
-        setStreamTreasuryType(value)});
+        setStreamTreasuryType(value);
+      } else {
+        const v1 = localStreamDetail as StreamInfo;
+        const v2 = localStreamDetail as Stream;
+        consoleOut('fetching treasury details...', '', 'blue');
+        getTreasuryTypeByTreasuryId(
+          localStreamDetail.version < 2 ? v1.treasuryAddress as string : v2.treasury as string,
+          localStreamDetail.version
+        ).then(value => {
+          consoleOut('streamTreasuryType:', value, 'crimson');
+          setStreamTreasuryType(value)
+        });
+      }
     }
   }, [
     props.isVisible,
+    props.treasuryDetails,
     localStreamDetail,
-    getTreasuryTypeByTreasuryId
+    getTreasuryTypeByTreasuryId,
+    getTreasuryType,
   ]);
-
 
   const onAcceptTopup = () => {
     props.handleOk({
