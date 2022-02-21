@@ -34,7 +34,7 @@ export const InvestView = () => {
         </div>
       </div>
       <div className="description-cell">
-        <div className="title">Stake MEAN</div>
+        <div className="title">Stake {selectedToken && selectedToken.name}</div>
       </div>
       <div className="rate-cell">
         <div className="rate-amount">52.09%</div>
@@ -125,7 +125,7 @@ export const InvestView = () => {
 
                 <Row gutter={[8, 8]} className="d-flex justify-content-center">
                   {/* Tabset */}
-                  <Col span={12}>
+                  <Col span={12} className="column-width">
                     <div className="place-transaction-box mb-3">
                       <div className="button-tabset-container">
                         <div className={`tab-button ${currentTab === "stake" ? 'active' : ''}`} onClick={() => onTabChange("stake")}>
@@ -149,7 +149,7 @@ export const InvestView = () => {
                   </Col>
 
                   {/* Staking data */}
-                  <Col span={12}>
+                  <Col span={12} className="column-width">
                     <div className="staking-data">
                       <Row>
                         <Col span={12}>
@@ -194,6 +194,8 @@ export const InvestView = () => {
                             </span>
                           </div>
                         </Col>
+
+                        {/* Withdraw button */}
                         <Col span={24} className="d-flex flex-column justify-content-end align-items-end mt-1">
                           <Space size="middle">
                             <Button
@@ -307,6 +309,14 @@ export const StakeTabView = () => {
     setIsVerifiedRecipient(e.target.checked);
   }
 
+  // Add Stake
+  const formSubmitHandler = (e: any) => {
+    e.preventDefault();
+
+    console.log("Send Stake");
+    
+  }
+
   return (
     <>
     <div className="form-label">{t("invest.panel-right.tabset.stake.amount-label")}</div>
@@ -388,6 +398,7 @@ export const StakeTabView = () => {
       disabled={
         !areSendAmountSettingsValid() ||
         !isVerifiedRecipient}
+      onClick={formSubmitHandler}
     >
       {t("invest.panel-right.tabset.stake.stake-button")} {selectedToken && selectedToken.name}
     </Button>
