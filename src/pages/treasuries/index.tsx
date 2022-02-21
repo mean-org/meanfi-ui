@@ -1,6 +1,7 @@
 import React, { useCallback, useContext, useMemo } from 'react';
 import {
   ArrowDownOutlined,
+  ArrowLeftOutlined,
   ArrowUpOutlined,
   CheckOutlined,
   EllipsisOutlined,
@@ -23,7 +24,6 @@ import {
   getTokenByMintAddress,
   getTokenSymbol,
   getTxIxResume,
-  makeDecimal,
   shortenAddress,
   toTokenAmount,
   toUiAmount
@@ -40,11 +40,11 @@ import {
   isProd,
   getIntervalFromSeconds,
   delay,
+  getShortDate,
+  isLocal,
 } from '../../utils/ui';
 import {
   FALLBACK_COIN_IMAGE,
-  SIMPLE_DATE_FORMAT,
-  SIMPLE_DATE_TIME_FORMAT,
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
   STREAMS_REFRESH_TIMEOUT,
   VERBOSE_DATE_TIME_FORMAT
@@ -178,10 +178,11 @@ export const TreasuriesView = () => {
       setTreasuryAddress(treasury || '');
       consoleOut('treasuryAddress:', treasury, 'blue');
     } else if (selectedMultisig) {            // Clean any data we may have data relative to a previous multisig
+      setMultisigAddress('');
       setSelectedMultisig(undefined);
     }
   }, [
-    location,
+    location.search,
     selectedMultisig,
   ]);
 
@@ -430,84 +431,83 @@ export const TreasuriesView = () => {
   const refreshTreasuries = useCallback((reset = false) => {
     if (!connection || !publicKey) { return; }
 
-    if (fetchTxInfoStatus !== "fetching") {
+    if (msp && ms && fetchTxInfoStatus !== "fetching") {
 
       setTimeout(() => {
         setLoadingTreasuries(true);
         clearTransactionStatusContext();
       });
 
-      if (msp && ms) {
-        let treasuryAccumulator: (Treasury | TreasuryInfo)[] = [];
-        let treasuriesv1: TreasuryInfo[] = [];
-        getAllUserV2Treasuries()
-          .then(async (treasuriesv2) => {
-            treasuryAccumulator.push(...treasuriesv2);
-            consoleOut('v2 treasuries:', treasuriesv2, 'blue');
+      let treasuryAccumulator: (Treasury | TreasuryInfo)[] = [];
+      let treasuriesv1: TreasuryInfo[] = [];
+      getAllUserV2Treasuries()
+        .then(async (treasuriesv2) => {
+          treasuryAccumulator.push(...treasuriesv2);
+          consoleOut('v2 treasuries:', treasuriesv2, 'blue');
 
-            if (!selectedMultisig) {
-              try {
-                treasuriesv1 = await ms.listTreasuries(publicKey);
-              } catch (error) {
-                console.error(error);
-              }
-              consoleOut('v1 treasuries:', treasuriesv1, 'blue');
-              treasuryAccumulator.push(...treasuriesv1);
+          if (!selectedMultisig) {
+            try {
+              treasuriesv1 = await ms.listTreasuries(publicKey);
+            } catch (error) {
+              console.error(error);
             }
+            consoleOut('v1 treasuries:', treasuriesv1, 'blue');
+            treasuryAccumulator.push(...treasuriesv1);
+          }
 
-            setTreasuryList(treasuryAccumulator);
-            consoleOut('Combined treasury list:', treasuryAccumulator, 'blue');
-            let item: Treasury | TreasuryInfo | undefined = undefined;
-                
-            if (treasuryAccumulator.length) {
-              if (reset) {
-                console.log('treasuryAddress under reset:', treasuryAddress);
-                if (treasuryAddress) {
-                  // treasuryAddress was passed in as query param?
-                  const itemFromServer = treasuryAccumulator.find(i => i.id === treasuryAddress);
-                  item = itemFromServer || treasuryAccumulator[0];
-                } else {
-                  item = treasuryAccumulator[0];
-                }
+          setTreasuryList(treasuryAccumulator);
+          consoleOut('Combined treasury list:', treasuryAccumulator, 'blue');
+          let item: Treasury | TreasuryInfo | undefined = undefined;
+              
+          if (treasuryAccumulator.length) {
+            if (reset) {
+              console.log('treasuryAddress under reset:', treasuryAddress);
+              if (treasuryAddress) {
+                // treasuryAddress was passed in as query param?
+                const itemFromServer = treasuryAccumulator.find(i => i.id === treasuryAddress);
+                item = itemFromServer || treasuryAccumulator[0];
               } else {
-                console.log('treasuryAddress under no reset:', treasuryAddress);
-                // Try to get current item by its id
-                if (treasuryAddress) {
-                  // treasuryAddress was passed in as query param?
-                  const itemFromServer = treasuryAccumulator.find(i => i.id === treasuryAddress);
-                  item = itemFromServer || treasuryAccumulator[0];
-                } else if (treasuryDetails) {
-                  // there was an item already selected
-                  const itemFromServer = treasuryAccumulator.find(i => i.id === treasuryDetails.id);
-                  item = itemFromServer || treasuryAccumulator[0];
-                } else {
-                  // then choose the first one
-                  item = treasuryAccumulator[0];
-                }
+                item = treasuryAccumulator[0];
               }
-
-              if (!item) {
-                item = Object.assign({}, treasuryAccumulator[0]);
-              }
-
-              if (item) {
-                // setTreasuryDetails(item);
-                const isNewTreasury = (item as Treasury).version && (item as Treasury).version >= 2 ? true : false;
-                openTreasuryById(item.id as string, isNewTreasury);
-              }
-
-              setLoadingTreasuries(false);
-
             } else {
-              setTreasuryDetails(undefined);
-              setTreasuryDetails(undefined);
-              setTreasuryStreams([]);
+              console.log('treasuryAddress under no reset:', treasuryAddress);
+              // Try to get current item by its id
+              if (treasuryAddress) {
+                // treasuryAddress was passed in as query param?
+                const itemFromServer = treasuryAccumulator.find(i => i.id === treasuryAddress);
+                item = itemFromServer || treasuryAccumulator[0];
+              } else if (treasuryDetails) {
+                // there was an item already selected
+                const itemFromServer = treasuryAccumulator.find(i => i.id === treasuryDetails.id);
+                item = itemFromServer || treasuryAccumulator[0];
+              } else {
+                // then choose the first one
+                item = treasuryAccumulator[0];
+              }
             }
-          })
-          .catch(error => {
-            console.error(error);
-          });
-      }
+
+            if (!item) {
+              item = Object.assign({}, treasuryAccumulator[0]);
+            }
+
+            if (item) {
+              // setTreasuryDetails(item);
+              const isNewTreasury = (item as Treasury).version && (item as Treasury).version >= 2 ? true : false;
+              openTreasuryById(item.id as string, isNewTreasury);
+            }
+
+            // setLoadingTreasuries(false);
+
+          } else {
+            setTreasuryDetails(undefined);
+            setTreasuryDetails(undefined);
+            setTreasuryStreams([]);
+          }
+        })
+        .catch(error => {
+          console.error(error);
+        })
+        .finally(() => setLoadingTreasuries(false));
     }
 
   }, [
@@ -822,22 +822,31 @@ export const TreasuriesView = () => {
   // Set selectedMultisig based on the passed-in multisigAddress in query params
   useEffect(() => {
 
-    if (publicKey && location.search && multisigAddress && multisigAccounts && multisigAccounts.length > 0) {
-      consoleOut(`try to select multisig ${multisigAddress} from list`, multisigAccounts, 'blue');
-      const selected = multisigAccounts.find(m => m.id.toBase58() === multisigAddress);
-      if (selected) {
-        consoleOut('selectedMultisig:', selected, 'blue');
-        setSelectedMultisig(selected);
-      } else {
-        consoleOut('multisigAccounts does not contain the requested multisigAddress:', multisigAddress, 'orange');
+    if (!publicKey || !multisigAddress || !multisigAccounts || multisigAccounts.length === 0) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      if (location.search) {
+        consoleOut(`try to select multisig ${multisigAddress} from list`, multisigAccounts, 'blue');
+        const selected = multisigAccounts.find(m => m.id.toBase58() === multisigAddress);
+        if (selected) {
+          consoleOut('selectedMultisig:', selected, 'blue');
+          setSelectedMultisig(selected);
+        } else {
+          consoleOut('multisigAccounts does not contain the requested multisigAddress:', multisigAddress, 'orange');
+        }
       }
+    });
+
+    return () => {
+      clearTimeout(timeout);
     }
 
   }, [
     publicKey,
     location.search,
     multisigAddress,
-    selectedMultisig,
     multisigAccounts,
   ]);
 
@@ -1017,6 +1026,7 @@ export const TreasuriesView = () => {
         case OperationType.TreasuryCreate:
           const usedOptions = retryOperationPayload as TreasuryCreateOptions;
           if (usedOptions.multisigId) {
+            clearTransactionStatusContext();
             stackedMessagesAndNavigate(usedOptions.multisigId);
           } else {
             refreshTreasuries(true);
@@ -1038,6 +1048,7 @@ export const TreasuriesView = () => {
     lastSentTxSignature,
     retryOperationPayload,
     lastSentTxOperationType,
+    clearTransactionStatusContext,
     setHighLightableMultisigId,
     refreshTreasuries,
     navigate,
@@ -1047,15 +1058,6 @@ export const TreasuriesView = () => {
   /////////////////
   //   Getters   //
   /////////////////
-
-  const getShortDate = (date: string, includeTime = false): string => {
-    if (!date) { return ''; }
-    const localDate = new Date(date);
-    return dateFormat(
-      localDate,
-      includeTime ? SIMPLE_DATE_TIME_FORMAT : SIMPLE_DATE_FORMAT
-    );
-  }
 
   const isAnythingLoading = useCallback((): boolean => {
     return loadingTreasuries || loadingTreasuryDetails || loadingTreasuryStreams
@@ -1436,11 +1438,14 @@ export const TreasuriesView = () => {
     window.location.reload();
   }
 
-  const resetTreasuriesContext = () => {
+  const resetTreasuriesContext = useCallback(() => {
+    setTreasuriesLoaded(false);
     setSelectedMultisig(undefined);
     setMultisigAddress('');
     navigate('/treasuries');
-  }
+  }, [
+    navigate,
+  ]);
 
   const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({
@@ -1521,17 +1526,19 @@ export const TreasuriesView = () => {
   const onAcceptCreateTreasury = (data: TreasuryCreateOptions) => {
     consoleOut('treasury create options:', data, 'blue');
     onExecuteCreateTreasuryTx(data);
+    setRetryOperationPayload(data);
   };
 
-  const onTreasuryCreated = () => {
+  const onTreasuryCreated = useCallback((createOptions: TreasuryCreateOptions) => {
     closeCreateTreasuryModal();
     refreshTokenBalance();
-    setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle
-    });
+
     const usedOptions = retryOperationPayload as TreasuryCreateOptions;
-    if (usedOptions && usedOptions.multisigId) {
+    consoleOut('retryOperationPayload:', retryOperationPayload, 'crimson');
+    consoleOut('usedOptions:', usedOptions, 'crimson');
+    consoleOut('createOptions:', createOptions, 'crimson');
+
+    if (createOptions && createOptions.multisigId) {
       notify({
         description: t('treasuries.create-treasury.create-multisig-treasury-success'),
         type: "success"
@@ -1542,7 +1549,15 @@ export const TreasuriesView = () => {
         type: "success"
       });
     }
-  }
+
+    resetTransactionStatus();
+  }, [
+    retryOperationPayload,
+    closeCreateTreasuryModal,
+    resetTransactionStatus,
+    refreshTokenBalance,
+    t,
+  ]);
 
   const onRefreshTreasuryBalanceTransactionFinished = useCallback(() => {
     refreshTokenBalance();
@@ -1657,6 +1672,7 @@ export const TreasuriesView = () => {
       let tx = multisigClient.transaction.createTransaction(
         MSPV2Constants.MSP, 
         OperationType.TreasuryRefreshBalance,
+        [],
         ixAccounts as any,
         ixData as any,
         {
@@ -1971,6 +1987,7 @@ export const TreasuriesView = () => {
       let tx = multisigClient.transaction.createTransaction(
         MSPV2Constants.MSP, 
         OperationType.TreasuryCreate,
+        [],
         ixAccounts as any,
         ixData as any,
         {
@@ -2213,7 +2230,7 @@ export const TreasuriesView = () => {
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.TransactionFinished
             });
-            onTreasuryCreated();
+            onTreasuryCreated(createOptions);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -2843,6 +2860,7 @@ export const TreasuriesView = () => {
       let tx = multisigClient.transaction.createTransaction(
         MSPV2Constants.MSP, 
         OperationType.TreasuryClose,
+        [],
         ixAccounts as any,
         ixData as any,
         {
@@ -3282,6 +3300,7 @@ export const TreasuriesView = () => {
       let tx = multisigClient.transaction.createTransaction(
         MSPV2Constants.MSP, 
         OperationType.TreasuryCreate,
+        [],
         ixAccounts as any,
         ixData as any,
         {
@@ -3705,6 +3724,7 @@ export const TreasuriesView = () => {
       let tx = multisigClient.transaction.createTransaction(
         MSPV2Constants.MSP, 
         OperationType.StreamPause,
+        [],
         ixAccounts as any,
         ixData as any,
         {
@@ -4128,6 +4148,7 @@ export const TreasuriesView = () => {
       let tx = multisigClient.transaction.createTransaction(
         MSPV2Constants.MSP, 
         OperationType.StreamResume,
+        [],
         ixAccounts as any,
         ixData as any,
         {
@@ -4803,7 +4824,7 @@ export const TreasuriesView = () => {
 
   const renderTreasuryList = (
     <>
-    {isMultisigTreasury() && selectedMultisig && (
+    {isMultisigAvailable() && selectedMultisig && (
       <div className="left-panel-inner-heading">
         <div className="font-bold">Multsig Treasuries - [{selectedMultisig.label}]</div>
         <div>Below is a list of all the treasuries that are connected to this Multsig</div>
@@ -4890,7 +4911,7 @@ export const TreasuriesView = () => {
           <Spin indicator={bigLoadingIcon} />
         </div>
       ) : (
-        <div className="h-100 flex-center">
+        <div className={`flex-center ${isMultisigAvailable() ? 'h-50' : 'h-100'}`}>
           <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{connected
           ? t('treasuries.treasury-list.no-treasuries')
           : t('treasuries.treasury-list.not-connected')}</p>} />
@@ -4898,8 +4919,8 @@ export const TreasuriesView = () => {
       )}
       </>
     )}
-    {(isMultisigAvailable() && treasuryList && treasuryList.length > 0) && (
-      <div className="py-3 px-3 simplelink" onClick={resetTreasuriesContext}>
+    {isMultisigAvailable() && (
+      <div className="py-3 px-3 simplelink" onClick={() => resetTreasuriesContext()}>
         <IconShowAll className="mean-svg-icons align-middle" />
         <span className="ml-1 align-middle">Show All Treasuries</span>
       </div>
@@ -4909,6 +4930,23 @@ export const TreasuriesView = () => {
 
   return (
     <>
+      {isLocal() && (
+        <div className="debug-bar">
+          <span className="ml-1">loadingTreasuries:</span><span className="ml-1 font-bold fg-dark-active">{loadingTreasuries ? 'true' : 'false'}</span>
+          <span className="ml-1">isBusy:</span><span className="ml-1 font-bold fg-dark-active">{isBusy ? 'true' : 'false'}</span>
+          <span className="ml-1">retryOperationPayload:</span><span className="ml-1 font-bold fg-dark-active">{retryOperationPayload ? 'true' : 'false'}</span>
+          {(transactionStatus.lastOperation !== undefined) && (
+            <>
+            <span className="ml-1">lastOperation:</span><span className="ml-1 font-bold fg-dark-active">{TransactionStatus[transactionStatus.lastOperation]}</span>
+            </>
+          )}
+          {(transactionStatus.currentOperation !== undefined) && (
+            <>
+            <span className="ml-1">currentOperation:</span><span className="ml-1 font-bold fg-dark-active">{TransactionStatus[transactionStatus.currentOperation]}</span>
+            </>
+          )}
+        </div>
+      )}
 
       <div className="container main-container">
 
@@ -4919,6 +4957,26 @@ export const TreasuriesView = () => {
             <div className="meanfi-two-panel-left">
 
               <div className="meanfi-panel-heading">
+                {isMultisigAvailable() && (
+                  <div className="back-button">
+                    <span className="icon-button-container">
+                      <Tooltip placement="bottom" title={t('multisig.multisig-vaults.back-to-multisig-accounts-cta')}>
+                        <Button
+                          type="default"
+                          shape="circle"
+                          size="middle"
+                          icon={<ArrowLeftOutlined />}
+                          onClick={() => {
+                            if (selectedMultisig) {
+                              setHighLightableMultisigId(selectedMultisig.address.toBase58());
+                            }
+                            navigate('/multisig');
+                          }}
+                        />
+                      </Tooltip>
+                    </span>
+                  </div>
+                )}
                 <span className="title">{t('treasuries.screen-title')}</span>
                 <Tooltip placement="bottom" title={t('treasuries.refresh-tooltip')}>
                   <div className={`transaction-stats user-address ${loadingTreasuries ? 'click-disabled' : 'simplelink'}`} onClick={onRefreshTreasuriesClick}>
@@ -5001,7 +5059,7 @@ export const TreasuriesView = () => {
                     {treasuryDetails && (
                       <div className="float-top-right">
                         <span className="icon-button-container secondary-button">
-                          <Tooltip placement="bottom" title={"Refresh treasury data"}>
+                          <Tooltip placement="bottom" title={t("treasuries.treasury-refresh-tooltip")}>
                             <Button
                               type="default"
                               shape="circle"

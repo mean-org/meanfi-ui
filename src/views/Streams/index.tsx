@@ -901,24 +901,6 @@ export const Streams = () => {
 
   const showWithdrawModal = useCallback(async () => {
     const lastDetail = Object.assign({}, streamDetail);
-
-    // Abort transaction under the status "FeatureTemporarilyDisabled" if there is no vested cliff
-    // since we are allowing withdrawals only for any cliff amount but only for < v2 streams
-    // TODO: Remove when withdraw feature goes back to normal
-
-    // if (lastDetail && lastDetail.version < 2) {
-    //   if (!lastDetail.cliffVestAmount && (!lastDetail.cliffVestPercent || lastDetail.cliffVestPercent === 100)) {
-    //     setTransactionStatus({
-    //       lastOperation: transactionStatus.currentOperation,
-    //       currentOperation: TransactionStatus.FeatureTemporarilyDisabled
-    //     });
-    //     setWithdrawFundsTransactionModalVisibility(true);
-    //     return;
-    //   }
-    // } else {
-    //   resetTransactionStatus();
-    // }
-
     resetTransactionStatus();
     setLastStreamDetail(lastDetail);
     setIsWithdrawModalVisibility(true);

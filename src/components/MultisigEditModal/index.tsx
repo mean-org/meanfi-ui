@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from 'react';
+import React, { useCallback, useContext, useEffect } from 'react';
 import { useState } from 'react';
 import { Modal, Button, Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
@@ -26,7 +26,6 @@ export const MultisigEditModal = (props: {
   multisigName?: string;
   multisigThreshold?: number;
   multisigParticipants?: MultisigParticipant[];
-  multisigPendingTxsAmount: number;
 }) => {
   const { t } = useTranslation('common');
   const {
@@ -36,6 +35,7 @@ export const MultisigEditModal = (props: {
 
   const [multisigLabel, setMultisigLabel] = useState('');
   const [multisigThreshold, setMultisigThreshold] = useState(0);
+  const [inputOwners, setInputOwners] = useState<MultisigParticipant[] | undefined>(undefined);
   const [multisigOwners, setMultisigOwners] = useState<MultisigParticipant[]>([]);
 
   // When modal goes visible, get passed-in owners to populate participants component
@@ -51,12 +51,29 @@ export const MultisigEditModal = (props: {
       if (props.multisigParticipants && props.multisigParticipants.length > 0) {
         setMultisigOwners(props.multisigParticipants);
       }
+      if (inputOwners === undefined) {
+        setInputOwners(props.multisigParticipants);
+      }
     }
   }, [
+    inputOwners,
     props.isVisible,
     props.multisigName,
     props.multisigParticipants,
     props.multisigThreshold
+  ]);
+
+  const hasOwnersChanges = useCallback(() => {
+    if (inputOwners && multisigOwners) {
+      if (JSON.stringify(inputOwners) != JSON.stringify(multisigOwners)) {
+        return true;
+      }
+    }
+
+    return false;
+  }, [
+    inputOwners,
+    multisigOwners
   ]);
 
   const onAcceptModal = () => {
@@ -137,7 +154,7 @@ export const MultisigEditModal = (props: {
             {/* Multisig label */}
             <div className="mb-3">
               <div className="form-label">{t('multisig.create-multisig.multisig-label-input-label')}</div>
-              <div className={`well ${props.isBusy || props.multisigPendingTxsAmount > 0 ? 'disabled' : ''}`}>
+              <div className={`well ${props.isBusy ? 'disabled' : ''}`}>
                 <div className="flex-fixed-right">
                   <div className="left">
                     <input
@@ -160,7 +177,7 @@ export const MultisigEditModal = (props: {
             {/* Multisig threshold */}
             <div className="mb-3">
               <div className="form-label">{t('multisig.create-multisig.multisig-threshold-input-label')}</div>
-              <div className={`well ${props.isBusy || props.multisigPendingTxsAmount > 0 ? 'disabled' : ''}`}>
+              <div className={`well ${props.isBusy ? 'disabled' : ''}`}>
                 <div className="flex-fixed-right">
                   <div className="left">
                     <input
@@ -197,11 +214,11 @@ export const MultisigEditModal = (props: {
                   maxParticipants: MAX_MULTISIG_PARTICIPANTS
                 })
               }
-              disabled={props.isBusy || props.multisigPendingTxsAmount > 0}
+              disabled={props.isBusy}
               onParticipantsChanged={(e: MultisigParticipant[]) => setMultisigOwners(e)}
             />
 
-            {props.multisigPendingTxsAmount > 0 && (
+            {hasOwnersChanges() && (
               <div className="font-size-100 fg-orange-red pl-1">{t('multisig.update-multisig.edit-not-allowed-message')}</div>
             )}
 
@@ -280,7 +297,7 @@ export const MultisigEditModal = (props: {
             type="primary"
             shape="round"
             size="middle"
-            disabled={!isFormValid() || props.multisigPendingTxsAmount > 0}
+            disabled={!isFormValid()}
             onClick={() => {
               if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
                 onAcceptModal();

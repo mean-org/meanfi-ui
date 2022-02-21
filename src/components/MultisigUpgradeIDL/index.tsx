@@ -22,7 +22,7 @@ export const MultisigUpgradeIDLModal = (props: {
   isBusy: boolean;
   nativeBalance: number;
   transactionFees: TransactionFees;
-
+  programId?: string;
 }) => {
   const { t } = useTranslation('common');
   const connection = useConnection();
@@ -30,12 +30,23 @@ export const MultisigUpgradeIDLModal = (props: {
   const {
     transactionStatus,
     setTransactionStatus
-
   } = useContext(AppStateContext);
 
   const [programId, setProgramId] = useState('');
   const [programIDLAddress, setProgramIDLAddress] = useState('');
   const [idlBufferAddress, setIDLBufferAddress] = useState('');
+
+  // Get propgram ID from inpus
+  useEffect(() => {
+    if (props.isVisible && props.programId) {
+      if (isValidAddress(props.programId)) {
+        setProgramId(props.programId);
+      }
+    }
+  }, [
+    props.programId,
+    props.isVisible
+  ]);
 
   const idlAddress = useCallback(async (programId: PublicKey) => {
     const base = (await PublicKey.findProgramAddress([], programId))[0];
@@ -142,7 +153,7 @@ export const MultisigUpgradeIDLModal = (props: {
           <>
             {/* Program address */}
             <div className="form-label">{t('multisig.upgrade-program.program-address-label')}</div>
-            <div className="well">
+            <div className={`well ${props.programId ? 'disabled' : ''}`}>
               <input id="token-address-field"
                 className="general-text-input"
                 autoComplete="on"

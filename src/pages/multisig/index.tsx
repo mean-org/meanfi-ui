@@ -6,11 +6,11 @@ import {
   ReloadOutlined,
 } from '@ant-design/icons';
 import {
-  Account,
   ConfirmOptions,
   Connection,
   Keypair,
   LAMPORTS_PER_SOL,
+  MemcmpFilter,
   PublicKey,
   SystemProgram,
   SYSVAR_CLOCK_PUBKEY,
@@ -41,15 +41,11 @@ import {
   delay,
   isLocal,
   isDev,
-  getReadableDate
+  getReadableDate,
+  getShortDate
 } from '../../utils/ui';
 
-import {
-  SIMPLE_DATE_FORMAT,
-  SIMPLE_DATE_TIME_FORMAT,
-  SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
-  VERBOSE_DATE_TIME_FORMAT
-} from '../../constants';
+import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS, VERBOSE_DATE_TIME_FORMAT } from '../../constants';
 
 import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
@@ -80,6 +76,7 @@ import { MultisigEditModal } from '../../components/MultisigEditModal';
 import { MSP, Treasury } from '@mean-dao/msp';
 import { customLogger } from '../..';
 import { isError } from '../../utils/transactions';
+import { ProgramAccounts } from '../../utils/accounts';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -139,16 +136,8 @@ export const MultisigView = () => {
   const [isUpgradeProgramModalVisible, setIsUpgradeProgramModalVisible] = useState(false);
   const [isUpgradeIDLModalVisible, setIsUpgradeIDLModalVisible] = useState(false);
   const [isSetProgramAuthModalVisible, setIsSetProgramAuthModalVisible] = useState(false);
-
-  // TODO: Remove when releasing to the public
-  useEffect(() => {
-    if (!isWhitelisted && !isLocal()) {
-      navigate('/');
-    }
-  }, [
-    isWhitelisted,
-    navigate
-  ]);
+  const [programs, setPrograms] = useState<ProgramAccounts[] | undefined>(undefined);
+  const [loadingPrograms, setLoadingPrograms] = useState(true);
 
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
     commitment: "confirmed",
@@ -252,9 +241,26 @@ export const MultisigView = () => {
 
     setIsCreateMultisigModalVisible(false);
     setLoadingMultisigAccounts(true);
+    setLoadingMultisigTxs(true);
     resetTransactionStatus();
     notify({
       description: t('multisig.create-multisig.success-message'),
+      type: "success"
+    });
+
+  },[
+    t,
+    resetTransactionStatus
+  ])
+
+  const onMultisigModified = useCallback(() => {
+
+    setIsEditMultisigModalVisible(false);
+    setLoadingMultisigAccounts(true);
+    setLoadingMultisigTxs(true);
+    resetTransactionStatus();
+    notify({
+      description: t('multisig.update-multisig.success-message'),
       type: "success"
     });
 
@@ -274,15 +280,8 @@ export const MultisigView = () => {
     resetTransactionStatus
   ]);
 
-  const onTxApproved = useCallback(() => {
-
-    setLoadingMultisigAccounts(true);
-    setLoadingMultisigTxs(true);
-
-  },[]);
-
   const onTxExecuted = useCallback(() => {
-    
+  
     setLoadingMultisigAccounts(true);
     setLoadingMultisigTxs(true);
 
@@ -684,7 +683,6 @@ export const MultisigView = () => {
         }
       });
 
-      consoleOut('multisig owners', owners, 'blue');
       const pid = multisigClient.programId;
       const operation = OperationType.EditMultisig;
       // Edit Multisig
@@ -717,6 +715,7 @@ export const MultisigView = () => {
       let tx = multisigClient.transaction.createTransaction(
         pid, 
         operation,
+        [],
         ixAccounts as any,
         ixData as any,
         {
@@ -957,7 +956,7 @@ export const MultisigView = () => {
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.TransactionFinished
             });
-            onMultisigCreated();
+            onMultisigModified();
             setOngoingOperation(undefined);
             setIsEditMultisigModalVisible(false);
           } else { setIsBusy(false); }
@@ -967,21 +966,21 @@ export const MultisigView = () => {
 
   }, [
     selectedMultisig,
-    clearTransactionStatusContext, 
-    connection, 
-    multisigClient.account.transaction, 
-    multisigClient.coder.instruction, 
-    multisigClient.programId, 
-    multisigClient.transaction, 
-    nativeBalance, 
-    onMultisigCreated, 
-    publicKey, 
-    setTransactionStatus, 
-    startFetchTxSignatureInfo, 
-    transactionCancelled, 
-    transactionFees.blockchainFee, 
-    transactionFees.mspFlatFee, 
-    transactionStatus.currentOperation, 
+    clearTransactionStatusContext,
+    connection,
+    multisigClient.account.transaction,
+    multisigClient.coder.instruction,
+    multisigClient.programId,
+    multisigClient.transaction,
+    nativeBalance,
+    onMultisigModified,
+    publicKey,
+    setTransactionStatus,
+    startFetchTxSignatureInfo,
+    transactionCancelled,
+    transactionFees.blockchainFee,
+    transactionFees.mspFlatFee,
+    transactionStatus.currentOperation,
     wallet
   ]);
 
@@ -989,13 +988,6 @@ export const MultisigView = () => {
     consoleOut('multisig:', data, 'blue');
     onExecuteEditMultisigTx(data);
   };
-
-  const onMultisigSaved = useCallback(() => {
-
-    setIsEditMultisigModalVisible(false);
-    setLoadingMultisigAccounts(true);
-
-  },[])
 
   // Transaction confirm and execution modal launched from each Tx row
   const [isMultisigActionTransactionModalVisible, setMultisigActionTransactionModalVisible] = useState(false);
@@ -1023,6 +1015,8 @@ export const MultisigView = () => {
     setMultisigActionTransactionModalVisible(false);
     sethHighlightedMultisigTx(undefined);
     resetTransactionStatus();
+    setLoadingMultisigAccounts(true);
+    setLoadingMultisigTxs(true);
   };
 
   const onTransactionModalClosed = () => {
@@ -1084,7 +1078,9 @@ export const MultisigView = () => {
         new BN(data.amount * 10 ** mint.decimals).toNumber()
       );
 
-      const transaction = new Account();
+      const ixAccounts = mintIx.keys;
+      const ixData = Buffer.from(mintIx.data);
+      const transaction = Keypair.generate();
       const txSize = 1000; // todo
       ixs.push(
         await multisigClient.account.transaction.createInstruction(
@@ -1096,22 +1092,22 @@ export const MultisigView = () => {
       let tx = multisigClient.transaction.createTransaction(
         TOKEN_PROGRAM_ID,
         OperationType.MintTokens,
-        mintIx.keys,
-        Buffer.from(mintIx.data),
+        [],
+        ixAccounts,
+        ixData,
         {
           accounts: {
             multisig: selectedMultisig.id,
             transaction: transaction.publicKey,
-            proposer: publicKey,
-            rent: SYSVAR_RENT_PUBKEY
+            proposer: publicKey
           },
-          signers: [transaction],
           instructions: ixs,
+          signers: [transaction]
         }
       );
   
       tx.feePayer = publicKey;
-      const { blockhash } = await connection.getRecentBlockhash("recent");
+      const { blockhash } = await connection.getRecentBlockhash("finalized");
       tx.recentBlockhash = blockhash;
       tx.partialSign(...[transaction]);
   
@@ -1603,14 +1599,16 @@ export const MultisigView = () => {
           const sent = await sendTx();
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
-            consoleOut('Send Tx to confirmation queue:', signature);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.TransactionFinished
             });
-            await delay(1000);
-            onTxApproved();
+            // TODO: Translate
+            notify({
+              description: 'Your signature for the Multisig transaction was successfully recorded.',
+              type: "success"
+            });
             setOngoingOperation(undefined);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
@@ -1618,19 +1616,18 @@ export const MultisigView = () => {
     }
 
   }, [
-    onTxApproved, 
-    clearTransactionStatusContext, 
-    connection, 
-    multisigClient.transaction, 
-    nativeBalance, 
-    publicKey, 
-    selectedMultisig, 
-    setTransactionStatus, 
-    transactionCancelled, 
-    transactionFees.blockchainFee, 
-    transactionFees.mspFlatFee, 
-    transactionStatus.currentOperation, 
-    wallet
+    wallet,
+    publicKey,
+    connection,
+    nativeBalance,
+    selectedMultisig,
+    transactionCancelled,
+    multisigClient.transaction,
+    transactionFees.mspFlatFee,
+    transactionFees.blockchainFee,
+    transactionStatus.currentOperation,
+    clearTransactionStatusContext,
+    setTransactionStatus,
   ]);
 
   const onExecuteFinishTx = useCallback(async (data: any) => {
@@ -2004,26 +2001,26 @@ export const MultisigView = () => {
 
       const BPF_LOADER_UPGRADEABLE_PID = new PublicKey("BPFLoaderUpgradeab1e11111111111111111111111");
       const txSize = 1000; // TODO: tighter bound.
-      const transaction = new Account();
+      const transaction = Keypair.generate();
+      const createIx = await multisigClient.account.transaction.createInstruction(
+        transaction,
+        txSize
+      );
+
       const tx = multisigClient.transaction.createTransaction(
         BPF_LOADER_UPGRADEABLE_PID,
         OperationType.UpgradeProgram,
+        [],
         ixAccounts,
         dataBuffer,
         {
           accounts: {
             multisig: selectedMultisig.id,
             transaction: transaction.publicKey,
-            proposer: publicKey,
-            rent: SYSVAR_RENT_PUBKEY,
+            proposer: publicKey
           },
+          preInstructions: [createIx],
           signers: [transaction],
-          instructions: [
-            await multisigClient.account.transaction.createInstruction(
-              transaction,
-              txSize
-            ),
-          ],
         }
       );
 
@@ -2337,31 +2334,31 @@ export const MultisigView = () => {
       ];
 
       const txSize = 1000; // TODO: tighter bound.
-      const transaction = new Account();
+      const transaction = Keypair.generate();
+      const upgradeIdlTx = await multisigClient.account.transaction.createInstruction(
+        transaction,
+        txSize
+      );
+
       const tx = multisigClient.transaction.createTransaction(
         programAddr,
         OperationType.UpgradeIDL,
+        [],
         ixAccounts,
         dataBuffer,
         {
           accounts: {
             multisig: selectedMultisig.id,
             transaction: transaction.publicKey,
-            proposer: publicKey,
-            rent: SYSVAR_RENT_PUBKEY,
-          },
+            proposer: publicKey
+          },          
+          preInstructions: [upgradeIdlTx],
           signers: [transaction],
-          instructions: [
-            await multisigClient.account.transaction.createInstruction(
-              transaction,
-              txSize
-            ),
-          ],
         }
       );
 
       tx.feePayer = publicKey;
-      const { blockhash } = await connection.getRecentBlockhash("recent");
+      const { blockhash } = await connection.getRecentBlockhash("finalized");
       tx.recentBlockhash = blockhash;
       tx.partialSign(...[transaction]);
 
@@ -2674,7 +2671,7 @@ export const MultisigView = () => {
         multisigClient.programId
       );
 
-      const dataBuffer = Buffer.from([4, 0, 0, 0]);
+      const ixData = Buffer.from([4, 0, 0, 0]);
       const ixAccounts = [
         {
           pubkey: new PublicKey(data.programDataAddress),
@@ -2686,32 +2683,32 @@ export const MultisigView = () => {
       ];
 
       const BPF_LOADER_UPGRADEABLE_PID = new PublicKey("BPFLoaderUpgradeab1e11111111111111111111111");
-      const txSize = 1000; // TODO: tighter bound.
-      const transaction = new Account();
+      const txSize = 1000;
+      const transaction = Keypair.generate();
+      const createIx = await multisigClient.account.transaction.createInstruction(
+        transaction,
+        txSize
+      );
+
       const tx = multisigClient.transaction.createTransaction(
         BPF_LOADER_UPGRADEABLE_PID,
         OperationType.SetMultisigAuthority,
+        [],
         ixAccounts,
-        dataBuffer,
+        ixData,
         {
           accounts: {
             multisig: selectedMultisig.id,
             transaction: transaction.publicKey,
-            proposer: publicKey,
-            rent: SYSVAR_RENT_PUBKEY,
+            proposer: publicKey
           },
-          signers: [transaction],
-          instructions: [
-            await multisigClient.account.transaction.createInstruction(
-              transaction,
-              txSize
-            ),
-          ],
+          preInstructions: [createIx],
+          signers: [transaction]
         }
       );
 
       tx.feePayer = publicKey;
-      const { blockhash } = await connection.getRecentBlockhash("recent");
+      const { blockhash } = await connection.getRecentBlockhash("finalized");
       tx.recentBlockhash = blockhash;
       tx.partialSign(...[transaction]);
 
@@ -2963,7 +2960,6 @@ export const MultisigView = () => {
     wallet
   ]);
 
-
   const isSelectedMultisigV2 = useCallback((): boolean => {
     if (selectedMultisig && selectedMultisig.version && selectedMultisig.version === 2) {
       return true
@@ -2977,18 +2973,6 @@ export const MultisigView = () => {
     }
     return false;
   }, []);
-
-  const isSettingAuthority = useCallback((): boolean => {
-
-    return ( 
-      fetchTxInfoStatus === "fetching" && 
-      lastSentTxOperationType === OperationType.SetMultisigAuthority
-    );
-
-  }, [
-    fetchTxInfoStatus,
-    lastSentTxOperationType,
-  ]);
 
   const getOperationName = useCallback((op: OperationType) => {
 
@@ -3105,6 +3089,14 @@ export const MultisigView = () => {
       return "BPF Upgradable Loader";
     } else if (op === OperationType.UpgradeIDL) {
       return "Serum IDL";
+    } else if (
+      op === OperationType.TreasuryCreate || 
+      op === OperationType.TreasuryClose || 
+      op === OperationType.TreasuryAddFunds || 
+      op === OperationType.TreasuryRefreshBalance || 
+      op === OperationType.StreamCreate
+    ) {
+      return "Mean MSP";
     } else {
       return "Mean Multisig";
     }
@@ -3270,6 +3262,76 @@ export const MultisigView = () => {
     connection,
     selectedMultisig,
   ]);
+
+  const getProgramsByUpgradeAuthority = useCallback(async (upgradeAuthority: PublicKey): Promise<ProgramAccounts[] | undefined> => {
+
+    if (!connection || !upgradeAuthority) { return undefined; }
+
+    console.log(`Searching for programs with upgrade authority: ${upgradeAuthority}`);
+
+    // 1. Fetch executable data account having upgradeAuthority as upgrade authority
+    const BPFLoaderUpgradeab1e = new PublicKey("BPFLoaderUpgradeab1e11111111111111111111111");
+    const executableDataAccountsFilter: MemcmpFilter = { memcmp: { offset: 13, bytes: upgradeAuthority.toBase58() } }
+    const executableDataAccounts = await connection.getProgramAccounts(
+      BPFLoaderUpgradeab1e,
+      {
+        encoding: "base64",
+        dataSlice: {
+          offset: 0,
+          length: 0
+        },
+        filters: [
+          executableDataAccountsFilter
+        ]
+      });
+
+    // 2. For each executable data account found in the previous step, fetch the corresponding program
+    let programs: ProgramAccounts[] = [];
+    for (let i = 0; i < executableDataAccounts.length; i++) {
+      const executableData = executableDataAccounts[i].pubkey;
+
+      const executableAccountsFilter: MemcmpFilter = { memcmp: { offset: 4, bytes: executableData.toBase58() } }
+      const executableAccounts = await connection.getProgramAccounts(
+        BPFLoaderUpgradeab1e,
+        {
+          encoding: "base64",
+          dataSlice: {
+            offset: 0,
+            length: 0
+          },
+          filters: [
+            executableAccountsFilter
+          ]
+        });
+
+      if (executableAccounts.length === 0) {
+        continue;
+      }
+
+      if (executableAccounts.length > 1) {
+        throw new Error(`More than one program was found for program data account '${executableData}'`);
+      }
+
+      const foundProgram = {
+        pubkey: executableAccounts[0].pubkey,
+        owner: executableAccounts[0].account.owner,
+        executable: executableData,
+        upgradeAuthority: upgradeAuthority,
+        size: executableDataAccounts[i].account.data.byteLength
+
+      } as ProgramAccounts;
+
+      console.log(`Upgrade Authority: ${upgradeAuthority} --> Executable Data: ${executableData} --> Program: ${foundProgram}`);
+
+      programs.push(foundProgram);
+
+    }
+
+    console.log(`${programs.length} programs found!`);
+
+    return programs;
+
+  }, [connection]);
 
   // Refresh the multisig accounts list
   useEffect(() => {
@@ -3457,6 +3519,7 @@ export const MultisigView = () => {
               operation: parseInt(Object.keys(OperationType).filter(k => k === tx.account.operation.toString())[0]),
               accounts: tx.account.accounts,
               didSigned: tx.account.signers[currentOwnerIndex],
+              proposer: tx.account.proposer,
               keypairs: tx.account.keypairs
                 .map((k: any) => {
                   try {
@@ -3507,9 +3570,7 @@ export const MultisigView = () => {
       getMultisigTreasuries()
         .then(values => {
           consoleOut('multisigTreasuries:', values, 'blue');
-          if (values && values.length > 0) {
-            setMultisigTreasuries(values);
-          }
+          setMultisigTreasuries(values);
         })
     });
 
@@ -3524,16 +3585,54 @@ export const MultisigView = () => {
     getMultisigTreasuries
   ]);
 
+  // Get Programs
+  useEffect(() => {
+
+    if (!connection || !publicKey || !selectedMultisig || !selectedMultisig.address || !loadingPrograms) {
+      return;
+    }
+
+    setTimeout(() => {
+      setLoadingPrograms(true);
+    });
+
+    const timeout = setTimeout(() => {
+
+      consoleOut('Calling getProgramsByUpgradeAuthority from useEffect...', '', 'blue');
+
+      getProgramsByUpgradeAuthority(selectedMultisig.address)
+        .then(programs => {
+          consoleOut('programs:', programs, 'blue');
+          setPrograms(programs);
+        })
+        .catch(err => console.error(err))
+        .finally(() => setLoadingPrograms(false));
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  },[
+    publicKey,
+    connection,
+    loadingPrograms,
+    selectedMultisig,
+    getProgramsByUpgradeAuthority,
+  ]);
+
   // Load/Unload multisig on wallet connect/disconnect
   useEffect(() => {
     if (previousWalletConnectState !== connected) {
       if (!previousWalletConnectState && connected && publicKey) {
         consoleOut('User is connecting...', publicKey.toBase58(), 'green');
         setLoadingMultisigAccounts(true);
+        setLoadingPrograms(true);
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'green');
         setMultisigAccounts([]);
         setSelectedMultisig(undefined);
+        setLoadingMultisigAccounts(false);
       }
     }
   }, [
@@ -3541,7 +3640,7 @@ export const MultisigView = () => {
     previousWalletConnectState,
     publicKey
   ]);
-  
+
   // Detect when entering small screen mode
   useEffect(() => {
     if (isSmallUpScreen && width < 576) {
@@ -3559,13 +3658,15 @@ export const MultisigView = () => {
     if (!publicKey) { return; }
 
     if (lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
+      clearTransactionStatusContext();
       setLoadingMultisigAccounts(true);
     }
   }, [
     publicKey,
     fetchTxInfoStatus,
     lastSentTxSignature,
-    lastSentTxOperationType
+    lastSentTxOperationType,
+    clearTransactionStatusContext,
   ]);
 
   // Get Multisig Vaults
@@ -3625,18 +3726,21 @@ export const MultisigView = () => {
     return width < 576 || (width >= 768 && width < 960);
   }, [width]);
 
-  const getTxInitiator = useCallback((): MultisigParticipant | undefined => {
+  const getTxInitiator = useCallback((mtx: MultisigTransaction): MultisigParticipant | undefined => {
     if (!selectedMultisig) { return undefined; }
 
-    const owners: MultisigParticipant[] = selectedMultisig.owners || [] ;
+    const owners: MultisigParticipant[] = (selectedMultisig as MultisigV2).owners;
+    const initiator = owners && owners.length > 0
+      ? owners.find(o => o.address === mtx.proposer?.toBase58())
+      : undefined;
 
-    return owners.length > 0 ? owners[0] : undefined;
+    return initiator;
   }, [selectedMultisig]);
 
-  const isUserTxInitiator = useCallback((): boolean => {
+  const isUserTxInitiator = useCallback((mtx: MultisigTransaction): boolean => {
     if (!selectedMultisig || !publicKey) { return false; }
 
-    const initiator = getTxInitiator();
+    const initiator = getTxInitiator(mtx);
 
     if (initiator && initiator.address === publicKey.toBase58()) {
       return true;
@@ -3756,15 +3860,6 @@ export const MultisigView = () => {
     t,
   ]);
 
-  const getShortDate = (date: string, includeTime = false): string => {
-    if (!date) { return ''; }
-    const localDate = new Date(date);
-    return dateFormat(
-      localDate,
-      includeTime ? SIMPLE_DATE_TIME_FORMAT : SIMPLE_DATE_FORMAT
-    );
-  }
-
   const isTxInProgress = useCallback((): boolean => {
     return isBusy || fetchTxInfoStatus === "fetching" ? true : false;
   }, [
@@ -3866,27 +3961,6 @@ export const MultisigView = () => {
                   </div>
                   <div className="std-table-cell text-center fixed-width-120">
                     <span className={`badge small ${getTransactionStatusClass(item)}`} style={{padding: '3px 5px'}}>{getTransactionStatusAction(item)}</span>
-                    {/* <span
-                      onClick={() => {
-                        if (item.status === MultisigTransactionStatus.Pending) {
-                          onExecuteApproveTx({ transaction: item });
-                        } if (item.status === MultisigTransactionStatus.Approved) {
-                          onExecuteFinishTx({ transaction: item })
-                        }
-                      }}
-                      aria-disabled={item.status === MultisigTransactionStatus.Executed}
-                      className={`badge small ${getTransactionStatusClass(item)}`}
-                      style={{
-                        padding: '3px 5px',
-                        cursor:
-                          item.status === MultisigTransactionStatus.Executed
-                            ? 'not-allowed'
-                            : 'pointer'
-                      }}>
-                      {
-                        ` ${getTransactionStatusAction(item)} `
-                      }
-                    </span> */}
                   </div>
                 </div>
               );
@@ -3939,6 +4013,8 @@ export const MultisigView = () => {
                 </div>
               </Col>
             </Row>
+          </div>
+          <div className="mb-3">
             <Row>
               <Col span={12}>
                 <div className="transaction-detail-row">
@@ -3973,7 +4049,7 @@ export const MultisigView = () => {
                 </div>
               </Col>
             </Row>
-          </div>      
+          </div>
         </div>
       )}
       </>
@@ -4013,51 +4089,6 @@ export const MultisigView = () => {
     </Menu>
   );
 
-  const programsOptionsMenu = (
-    <Menu>
-      {isUnderDevelopment() && (
-        <Menu.Item
-          key="29"
-          onClick={() => {
-            if (selectedMultisig) {
-              const url = `/multisig-programs?multisig=${selectedMultisig.id.toBase58()}`;
-              navigate(url);
-            }
-          }}>
-          <span className="menu-item-text">See programs</span>
-        </Menu.Item>
-      )}
-      {/* Upgrade program */}
-      <Menu.Item
-        key="30"
-        onClick={showUpgradeProgramModal}>
-        <span className="menu-item-text">{t('multisig.multisig-account-detail.cta-upgrade-program')}</span>
-      </Menu.Item>
-      {/* Upgrade IDL */}
-      <Menu.Item
-        key="31"
-        onClick={showUpgradeIDLModal}>
-        <span className="menu-item-text">Upgrade IDL</span>
-      </Menu.Item>
-      {/* Kill Switch */}
-      {isUnderDevelopment() && (
-        <Menu.Item
-          key="32"
-          disabled={true}
-          onClick={() => {}}>
-          <span className="menu-item-text">Kill Switch</span>
-        </Menu.Item>
-      )}
-      <Menu.Divider key="33" />
-      {/* Set Program Auth */}
-      <Menu.Item
-        key="34"
-        onClick={showSetProgramAuthModal}>
-        <span className="menu-item-text">Set Program Auth</span>
-      </Menu.Item>
-    </Menu>
-  );
-
   const dataOptionsMenu = (
     <Menu>
       {/* Create Account */}
@@ -4090,7 +4121,7 @@ export const MultisigView = () => {
       <>
         <Space size="middle" wrap>
 
-          {/* Go to vaults */}
+          {/* Vaults */}
           <Button
             type="default"
             shape="round"
@@ -4116,7 +4147,35 @@ export const MultisigView = () => {
             )}
           </Button>
 
-          {/* Go to treasuries */}
+          {/* Treasuries */}
+          {isUnderDevelopment() && (
+            <Button
+              type="default"
+              shape="round"
+              size="small"
+              className="thin-stroke"
+              disabled={isTxInProgress() || loadingMultisigAccounts}
+              onClick={() => {
+                if (selectedMultisig) {
+                  const url = `/treasuries?multisig=${selectedMultisig.id.toBase58()}`;
+                  navigate(url);
+                }
+              }}>
+              {multisigTreasuries && multisigTreasuries.length > 0 ? (
+                <span>
+                  {t('multisig.multisig-account-detail.cta-treasuries', {
+                    itemCount: multisigTreasuries.length
+                  })}
+                </span>
+                ) : (
+                <span>
+                  {t('multisig.multisig-account-detail.cta-no-treasuries')}
+                </span>
+              )}
+            </Button>
+          )}
+
+          {/* Programs */}
           <Button
             type="default"
             shape="round"
@@ -4125,24 +4184,24 @@ export const MultisigView = () => {
             disabled={isTxInProgress() || loadingMultisigAccounts}
             onClick={() => {
               if (selectedMultisig) {
-                const url = `/treasuries?multisig=${selectedMultisig.id.toBase58()}`;
+                const url = `/multisig-programs?multisig=${selectedMultisig.id.toBase58()}`;
                 navigate(url);
               }
             }}>
-            {multisigTreasuries && multisigTreasuries.length > 0 ? (
+            {programs && programs.length > 0 ? (
               <span>
-                {t('multisig.multisig-account-detail.cta-treasuries', {
-                  itemCount: multisigTreasuries.length
+                {t('multisig.multisig-account-detail.cta-programs', {
+                  itemCount: programs.length
                 })}
               </span>
               ) : (
               <span>
-                {t('multisig.multisig-account-detail.cta-no-treasuries')}
+                {t('multisig.multisig-account-detail.cta-no-programs')}
               </span>
             )}
           </Button>
 
-          {/* Available to local dev or whitelisted addresses in dev */}
+          {/* Mints */}
           {isUnderDevelopment() && (
             <Dropdown overlay={mintOptionsMenu} trigger={["click"]}>
               <Button
@@ -4157,20 +4216,7 @@ export const MultisigView = () => {
             </Dropdown>
           )}
 
-          {isUnderDevelopment() && (
-            <Dropdown overlay={programsOptionsMenu} trigger={["click"]}>
-              <Button
-                type="default"
-                size="middle"
-                className="dropdown-like-button"
-                disabled={isTxInProgress() || loadingMultisigAccounts}
-                onClick={() => {}}>
-                <span className="mr-2">Programs</span>
-                <IconCaretDown className="mean-svg-icons" />
-              </Button>
-            </Dropdown>
-          )}
-
+          {/* Data */}
           {isUnderDevelopment() && (
             <Dropdown overlay={dataOptionsMenu} trigger={["click"]}>
               <Button
@@ -4201,11 +4247,6 @@ export const MultisigView = () => {
               <LoadingOutlined />
               <span className="ml-1">Upgrading IDL</span>
             </div>
-          ) : isSettingAuthority() ? (
-            <div className="flex-row flex-center">
-              <LoadingOutlined />
-              <span className="ml-1">Setting Authority</span>
-            </div>
           ) : null}
         </Space>
       </>
@@ -4219,6 +4260,7 @@ export const MultisigView = () => {
         const onMultisigClick = (ev: any) => {
           consoleOut('selected multisig:', item, 'blue');
           setSelectedMultisig(item);
+          setLoadingPrograms(true);
           setLoadingMultisigTxs(true);
         };
         return (
@@ -4368,16 +4410,18 @@ export const MultisigView = () => {
                                 disabled={isTxInProgress()}
                               />
                             </Tooltip>
-                            <Tooltip placement="bottom" title={t('multisig.crud-multisig.delete-multisig')}>
-                              <Button
-                                type="default"
-                                shape="circle"
-                                size="middle"
-                                icon={<IconTrash className="mean-svg-icons" />}
-                                onClick={() => {}}
-                                disabled={isTxInProgress()}
-                              />
-                            </Tooltip>
+                            {isUnderDevelopment() && (
+                              <Tooltip placement="bottom" title={t('multisig.crud-multisig.delete-multisig')}>
+                                <Button
+                                  type="default"
+                                  shape="circle"
+                                  size="middle"
+                                  icon={<IconTrash className="mean-svg-icons" />}
+                                  onClick={() => {}}
+                                  disabled={isTxInProgress()}
+                                />
+                              </Tooltip>
+                            )}
                           </>
                         )}
                         {!isSelectedMultisigV2() && (
@@ -4476,7 +4520,6 @@ export const MultisigView = () => {
           multisigName={selectedMultisig.label}
           multisigThreshold={selectedMultisig.threshold}
           multisigParticipants={selectedMultisig.owners}
-          multisigPendingTxsAmount={selectedMultisig.pendingTxsAmount || 0}
           handleClose={() => setIsEditMultisigModalVisible(false)}
           isBusy={isBusy}
         />
@@ -4533,7 +4576,7 @@ export const MultisigView = () => {
           maskClosable={false}
           visible={isMultisigActionTransactionModalVisible}
           onCancel={onTransactionModalClosed}
-          width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 360 : 480}
+          width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 400 : 480}
           footer={null}>
 
           {/* A Cross-fading panel shown when NOT busy */}
@@ -4545,7 +4588,7 @@ export const MultisigView = () => {
                 {isTxPendingExecution() ? (
                   <>
                     {/* Am I the Tx initiator */}
-                    {getTxInitiator()?.address === publicKey?.toBase58() ? (
+                    {getTxInitiator(highlightedMultisigTx)?.address === publicKey?.toBase58() ? (
                       <h3 className="text-center">A Transaction on this Multisig is ready for your execution.</h3>
                     ) : (
                       <h3 className="text-center">A transaction on this Multisig is now ready for execution. Please tell the person who initiated this transaction to execute it.</h3>
@@ -4553,7 +4596,7 @@ export const MultisigView = () => {
                     <Divider className="mt-2" />
                     <div className="mb-2">Proposed Action: {getOperationName(highlightedMultisigTx.operation)}</div>
                     <div className="mb-2">Submitted on: {getReadableDate(highlightedMultisigTx.createdOn.toString(), true)}</div>
-                    <div className="mb-2">Initiator: This transaction was submitted by {getTxInitiator()?.name}<br/>Address: <code>{getTxInitiator()?.address}</code></div>
+                    <div className="mb-2">Initiator: This transaction was submitted by {getTxInitiator(highlightedMultisigTx)?.name}<br/>Address: <code>{getTxInitiator(highlightedMultisigTx)?.address}</code></div>
                     <div className="mb-2">This transaction required {selectedMultisig.threshold}/{selectedMultisig.owners.length} signers to approve it in order to be executed. {getTxSignedCount(highlightedMultisigTx)} Signed.</div>
                     <div className="mb-2">
                       <span className="mr-1">Your Status:</span>
@@ -4566,7 +4609,7 @@ export const MultisigView = () => {
                     <Divider className="mt-2" />
                     <div className="mb-2">Proposed Action: {getOperationName(highlightedMultisigTx.operation)}</div>
                     <div className="mb-2">Submitted on: {getReadableDate(highlightedMultisigTx.createdOn.toString(), true)}</div>
-                    <div className="mb-2">Initiator: This transaction was submitted by {getTxInitiator()?.name}<br/>Address: <code>{getTxInitiator()?.address}</code></div>
+                    <div className="mb-2">Initiator: This transaction was submitted by {getTxInitiator(highlightedMultisigTx)?.name}<br/>Address: <code>{getTxInitiator(highlightedMultisigTx)?.address}</code></div>
                     <div className="mb-2">This transaction requires {selectedMultisig.threshold}/{selectedMultisig.owners.length} signers to approve it in order to be executed. {getTxSignedCount(highlightedMultisigTx)} Signed so far.</div>
                     <div className="mb-2">
                       <span className="mr-1">Your Status:</span>
@@ -4584,7 +4627,7 @@ export const MultisigView = () => {
                     <Divider className="mt-2" />
                     <div className="mb-2">Proposed Action: {getOperationName(highlightedMultisigTx.operation)}</div>
                     <div className="mb-2">Submitted on: {getReadableDate(highlightedMultisigTx.createdOn.toString(), true)}</div>
-                    <div className="mb-2">Initiator: This transaction was submitted by {getTxInitiator()?.name}<br/>Address: <code>{getTxInitiator()?.address}</code></div>
+                    <div className="mb-2">Initiator: This transaction was submitted by {getTxInitiator(highlightedMultisigTx)?.name}<br/>Address: <code>{getTxInitiator(highlightedMultisigTx)?.address}</code></div>
                     <div className="mb-2">This transaction required {selectedMultisig.threshold}/{selectedMultisig.owners.length} signers to approve it in order to be executed. {getTxSignedCount(highlightedMultisigTx)} Signed.</div>
                   </>
                 )}
@@ -4605,16 +4648,9 @@ export const MultisigView = () => {
                 {/* If I am the last approval needed to reach threshold show instructions for exec */}
                 {getTxSignedCount(highlightedMultisigTx) === selectedMultisig.threshold - 1 && (
                   <>
-                    {/* Am I the Tx initiator */}
-                    {isUserTxInitiator() ? (
-                      <h3 className="text-center mt-3">Your transaction is ready for execution.</h3>
-                    ) : (
-                      <>
-                        <h3 className="text-center mt-3">This transaction is now ready for execution. Please tell the person who initiated this transaction to execute it.</h3>
-                        <Divider className="mt-2" />
-                        <div className="mb-2">Initiator: {getTxInitiator()?.name}<br/>Address: <code>{getTxInitiator()?.address}</code></div>
-                      </>
-                    )}
+                    <h3 className="text-center mt-3">This transaction is now ready for execution. Please tell the person who initiated this transaction to execute it.</h3>
+                    <Divider className="mt-2" />
+                    <div className="mb-2">Initiator: {getTxInitiator(highlightedMultisigTx)?.name}<br/>Address: <code>{getTxInitiator(highlightedMultisigTx)?.address}</code></div>
                   </>
                 )}
               </>
@@ -4674,18 +4710,42 @@ export const MultisigView = () => {
                   : t('general.cta-close')
                 }
               </Button>
-
               {
                 (
                   (
-                    highlightedMultisigTx.status === MultisigTransactionStatus.Pending &&
-                    !highlightedMultisigTx.didSigned
-                  ) 
-                  || 
+                    (
+                      highlightedMultisigTx.operation === OperationType.TreasuryCreate ||
+                      highlightedMultisigTx.operation === OperationType.TreasuryClose ||
+                      highlightedMultisigTx.operation === OperationType.TreasuryAddFunds ||
+                      highlightedMultisigTx.operation === OperationType.TreasuryStreamCreate
+                    )
+                    &&
+                    (
+                      (
+                        highlightedMultisigTx.status === MultisigTransactionStatus.Pending &&
+                        !highlightedMultisigTx.didSigned
+                      ) 
+                      ||
+                      (
+                        publicKey &&
+                        highlightedMultisigTx.proposer &&
+                        publicKey.equals(highlightedMultisigTx.proposer) &&
+                        highlightedMultisigTx.status === MultisigTransactionStatus.Approved &&
+                        !highlightedMultisigTx.executedOn
+                      )
+                    )
+                  )
+                  ||
                   (
-                    highlightedMultisigTx.status === MultisigTransactionStatus.Approved &&
-                    selectedMultisig.owners[0].address === publicKey?.toBase58() &&
-                    !highlightedMultisigTx.executedOn
+                    (
+                      highlightedMultisigTx.status === MultisigTransactionStatus.Pending &&
+                      !highlightedMultisigTx.didSigned
+                    ) 
+                    ||
+                    (
+                      highlightedMultisigTx.status === MultisigTransactionStatus.Approved &&
+                      !highlightedMultisigTx.executedOn
+                    )
                   )
                 )
                 &&

@@ -22,7 +22,7 @@ export const MultisigSetProgramAuthModal = (props: {
   isBusy: boolean;
   nativeBalance: number;
   transactionFees: TransactionFees;
-
+  programId?: string;
 }) => {
   const { t } = useTranslation('common');
   const connection = useConnection();
@@ -30,12 +30,23 @@ export const MultisigSetProgramAuthModal = (props: {
   const {
     transactionStatus,
     setTransactionStatus
-
   } = useContext(AppStateContext);
 
   const [programId, setProgramId] = useState('');
   const [programDataAddress, setProgramDataAddress] = useState('');
   const [newAuthAddress, setNewAuthAddress] = useState('');
+
+  // Get propgram ID from inpus
+  useEffect(() => {
+    if (props.isVisible && props.programId) {
+      if (isValidAddress(props.programId)) {
+        setProgramId(props.programId);
+      }
+    }
+  }, [
+    props.programId,
+    props.isVisible
+  ]);
 
   // Resolves programDataAddress
   useEffect(() => {
@@ -143,7 +154,7 @@ export const MultisigSetProgramAuthModal = (props: {
           <>
             {/* Program address */}
             <div className="form-label">{t('multisig.upgrade-program.program-address-label')}</div>
-            <div className="well">
+            <div className={`well ${props.programId ? 'disabled' : ''}`}>
               <input id="token-address-field"
                 className="general-text-input"
                 autoComplete="on"

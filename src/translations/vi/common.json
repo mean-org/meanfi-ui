@@ -355,11 +355,13 @@
 			"created-on": "Created on",
 			"cta-create-vault": "Create vault",
 			"cta-mint": "Mint",
-			"cta-transfer": "Transfer Tokens",
-			"cta-upgrade-program": "Upgrade Program",
+			"cta-no-programs": "Programs",
 			"cta-no-treasuries": "Treasuries",
-			"cta-treasuries": "Treasuries ({{itemCount}})",
 			"cta-no-vaults": "Vaults",
+			"cta-programs": "Programs ({{itemCount}})",
+			"cta-transfer": "Transfer Tokens",
+			"cta-treasuries": "Treasuries ({{itemCount}})",
+			"cta-upgrade-program": "Upgrade Program",
 			"cta-vaults": "Vaults ({{itemCount}})",
 			"multisig-address-label": "Address",
 			"multisig-label-label": "Multisig name",
@@ -463,7 +465,7 @@
 			"transfer-to-placeholder": "Enter the address of the destination account"
 		},
 		"update-multisig": {
-			"edit-not-allowed-message": "You can not edit the Multisig without first completing or cancelling all pending transactions.",
+			"edit-not-allowed-message": "When you change the signers on a Multisig, all pending transactions will be VOIDED. Before you proceed, make sure there are no important transactions needing to be completed first.",
 			"main-cta": "Save changes",
 			"main-cta-busy": "Saving changes",
 			"modal-title": "Edit multisig",
@@ -549,6 +551,10 @@
 	"payroll": {
 		"screen-subtitle": "Setup payroll for your employees",
 		"screen-title": "Payroll"
+	},
+	"pre-footer": {
+		"made-with": "Made with ",
+		"on-solana": " on Solana"
 	},
 	"referrals": {
 		"address-invalid": "The referral address is not a valid solana address",
@@ -682,7 +688,8 @@
 			"title-sending-to": "Sending to"
 		},
 		"stream-stats-incoming": "Incoming",
-		"stream-stats-outgoing": "Outgoing"
+		"stream-stats-outgoing": "Outgoing",
+		"stream-interval": "net-change"
 	},
 	"swap": {
 		"exchange-warning": "Mean Exchange is only available on",
@@ -925,6 +932,7 @@
 			"treasury-name-label": "Treasury name"
 		},
 		"treasury-detail-heading": "Treasury details",
+		"treasury-refresh-tooltip": "Refresh treasury data",
 		"treasury-list": {
 			"no-treasuries": "No treasuries available",
 			"not-connected": "Please connect your wallet to see your treasuries",

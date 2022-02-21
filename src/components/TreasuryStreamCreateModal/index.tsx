@@ -102,9 +102,9 @@ export const TreasuryStreamCreateModal = (props: {
   const [currentStep, setCurrentStep] = useState(0);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
-  const [unallocatedBalance, setUnallocatedBalance] = useState<any>(0);
+  const [unallocatedBalance, setUnallocatedBalance] = useState(new BN(0));
   const [isFeePaidByTreasurer, setIsFeePaidByTreasurer] = useState(false);
-  const [tokenAmount, setTokenAmount] = useState<any>(0);
+  const [tokenAmount, setTokenAmount] = useState(new BN(0));
   const [maxAllocatableAmount, setMaxAllocatableAmount] = useState<any>(undefined);
 
   const isNewTreasury = useCallback(() => {
@@ -122,21 +122,18 @@ export const TreasuryStreamCreateModal = (props: {
       const feeNumerator = props.withdrawTransactionFees.mspPercentFee * BASE_100_TO_BASE_1_MULTIPLIER;
       const feeDenaminator = 1000000;
       const badStreamMaxAllocation = unallocatedBalance
-        .muln(feeDenaminator)
-        .divn(feeNumerator + feeDenaminator);
+        .mul(new BN(feeDenaminator))
+        .div(new BN(feeNumerator + feeDenaminator));
 
       const feeAmount = badStreamMaxAllocation
-        .muln(feeNumerator)
-        .divn(feeDenaminator);
+        .mul(new BN(feeNumerator))
+        .div(new BN(feeDenaminator));
 
       const badTotal = badStreamMaxAllocation.add(feeAmount);
       const badRemaining = unallocatedBalance.sub(badTotal);
-
       const goodStreamMaxAllocation = unallocatedBalance.sub(feeAmount);
-
       const goodTotal = goodStreamMaxAllocation.add(feeAmount);
       const goodRemaining = unallocatedBalance.sub(goodTotal);
-
       const maxAmount = goodStreamMaxAllocation;
 
       if (isWhitelisted) {
@@ -153,7 +150,7 @@ export const TreasuryStreamCreateModal = (props: {
           goodTotal: goodTotal.toNumber(),
           goodRemaining: goodRemaining.toNumber(),
         });
-        console.table(debugTable);
+        consoleOut('debug table', debugTable, 'blue');
       }
 
       if (!preSetting) {
@@ -238,7 +235,7 @@ export const TreasuryStreamCreateModal = (props: {
       ? t('transactions.validation.not-connected')
       : !recipientAddress || isAddressOwnAccount()
         ? t('transactions.validation.select-recipient')
-        : !selectedToken || unallocatedBalance === 0
+        : !selectedToken || unallocatedBalance.toNumber() === 0
           ? t('transactions.validation.no-balance')
           : !paymentStartDate
             ? t('transactions.validation.no-valid-date')
@@ -438,7 +435,7 @@ export const TreasuryStreamCreateModal = (props: {
     const newValue = e.target.value;
     if (newValue === null || newValue === undefined || newValue === "") {
       setFromCoinAmount("");
-      setTokenAmount(0);
+      setTokenAmount(new BN(0));
     } else if (newValue === '.') {
       setFromCoinAmount(".");
     } else if (isValidNumber(newValue)) {

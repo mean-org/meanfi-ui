@@ -62,9 +62,9 @@
 		"cant-close-message": "You cannot close a stream from a locked treasury",
 		"cant-topup-message": "You cannot top up a stream from a locked treasury",
 		"context-beneficiary": "Closing a stream will send the vested amount to your account ({{beneficiary}}) and stop the flow of money immediately.",
+		"context-treasurer-aditional-message": "The above amounts are only accurate for paused and ended streams. For live steams, the amounts will be determined the moment the stream is closed.",
 		"context-treasurer-multiple-beneficiaries": "Closing a stream will stop the money flow, send the vested amount to the beneficiary ({{beneficiary}}), and return the unvested amounts back to the original treasury ({{treasury}}).",
 		"context-treasurer-single-beneficiary": "Closing a stream will stop the money flow, send the vested amount to the beneficiary ({{beneficiary}}), and return the unvested amount back to the contributor.",
-		"context-treasurer-aditional-message": "The above amounts are only accurate for paused and ended streams. For live steams, the amounts will be determined the moment the stream is closed.",
 		"loading-treasury-message": "Analyzing stream",
 		"modal-title": "Close stream",
 		"primary-cta": "Close stream",
@@ -118,24 +118,24 @@
 		}
 	},
 	"custody": {
-		"heading": "Crypto Asset Custody",
-		"subheading": "The most advanced digital asset platform, for secure crypto custody, trading, staking, governance, and more.",
 		"custody-button": "Apply to MeanFi Custody",
 		"first-container": {
-			"title-one": "Safeguard your investments",
 			"text-one": "We provide secure custody solutions for institutions and individuals alike so they can safely invest in crypto assets.",
-			"title-two": "Trade, borrow, and earn rewards",
+			"text-three": "Dedicated Support Team that guides you during the onboard process and help you resolve any challenge.",
 			"text-two": "With MeanFi Trading, access multiple venues through one onboarding. Borrow crypto or USD against crypto collateral, or lend and earn returns on assets under custody.",
+			"title-one": "Safeguard your investments",
 			"title-three": "Onboarding and Support",
-			"text-three": "Dedicated Support Team that guides you during the onboard process and help you resolve any challenge."
+			"title-two": "Trade, borrow, and earn rewards"
 		},
+		"heading": "Crypto Asset Custody",
 		"second-container": {
-			"title": "WHY MEANFI CUSTODY",
-			"text": "We're a team of engineers, designers, and crypto experts who believe that the future is digital assets. However, with no way to securely store them right now we feel like our hands are tied behind our back. So we decided to build MeanFi Custody so that you can finally make your money work for you!"
+			"text": "We're a team of engineers, designers, and crypto experts who believe that the future is digital assets. However, with no way to securely store them right now we feel like our hands are tied behind our back. So we decided to build MeanFi Custody so that you can finally make your money work for you!",
+			"title": "WHY MEANFI CUSTODY"
 		},
+		"subheading": "The most advanced digital asset platform, for secure crypto custody, trading, staking, governance, and more.",
 		"third-container": {
-			"title": "Supported Assets",
-			"text": "MeanFi supports assets that meet our standards of quality and safety. Our list includes USDC, USDT, SOL, DAI, and more. We are always looking to grow our portfolio with new Assets. To learn more about our roadmap, please get in touch."
+			"text": "MeanFi supports assets that meet our standards of quality and safety. Our list includes USDC, USDT, SOL, DAI, and more. We are always looking to grow our portfolio with new Assets. To learn more about our roadmap, please get in touch.",
+			"title": "Supported Assets"
 		}
 	},
 	"ddca-selector": {
@@ -374,8 +374,10 @@
 			"created-on": "Created on",
 			"cta-create-vault": "Create vault",
 			"cta-mint": "Mint",
+			"cta-no-programs": "Programs",
 			"cta-no-treasuries": "Treasuries",
 			"cta-no-vaults": "Vaults",
+			"cta-programs": "Programs ({{itemCount}})",
 			"cta-transfer": "Transfer Tokens",
 			"cta-treasuries": "Treasuries ({{itemCount}})",
 			"cta-upgrade-program": "Upgrade Program",
@@ -489,7 +491,7 @@
 			"transfer-to-placeholder": "Enter the address of the destination account"
 		},
 		"update-multisig": {
-			"edit-not-allowed-message": "You can not edit the Multisig without first completing or canceling all pending transactions.",
+			"edit-not-allowed-message": "When you change the signers on a Multisig, all pending transactions will be VOIDED. Before you proceed, make sure there are no important transactions needing to be completed first.",
 			"main-cta": "Save changes",
 			"main-cta-busy": "Saving changes",
 			"modal-title": "Edit multisig",
@@ -554,6 +556,10 @@
 	"payroll": {
 		"screen-subtitle": "Setup payroll for your employees",
 		"screen-title": "Payroll"
+	},
+	"pre-footer": {
+		"made-with": "Made with ",
+		"on-solana": " on Solana"
 	},
 	"referrals": {
 		"address-invalid": "The referral address is not a valid solana address",
@@ -687,7 +693,8 @@
 			"title-sending-to": "Sending to"
 		},
 		"stream-stats-incoming": "Incoming",
-		"stream-stats-outgoing": "Outgoing"
+		"stream-stats-outgoing": "Outgoing",
+		"stream-interval": "net-change"
 	},
 	"swap": {
 		"exchange-warning": "Mean Exchange is only available on",
@@ -941,6 +948,7 @@
 			"treasury-name-label": "Treasury name"
 		},
 		"treasury-detail-heading": "Treasury details",
+		"treasury-refresh-tooltip": "Refresh treasury data",
 		"treasury-list": {
 			"multisig-treasury-label": "Multisig Treasury",
 			"no-treasuries": "No treasuries available",
