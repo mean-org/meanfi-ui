@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import './style.less';
 import { ArrowDownOutlined, ReloadOutlined } from "@ant-design/icons";
 import { Button, Tooltip, Row, Col, Space } from "antd";
@@ -10,6 +10,7 @@ import { PreFooter } from "../../components/PreFooter";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
 import { formatAmount, getAmountWithSymbol, isValidNumber } from "../../utils/utils";
+import moment from 'moment';
 
 type SwapOption = "stake" | "unstake";
 
@@ -257,13 +258,19 @@ export const StakeTabView = () => {
     },
   ];
 
-  const [periodValue, setPeriodValue] = useState(periods[0].value);
-  const [periodTime, setPeriodTime] = useState(periods[0].time);
+  const currentDate = moment().format("LL");
+  const [periodValue, setPeriodValue] = useState<number>(periods[0].value);
+  const [periodTime, setPeriodTime] = useState<string>(periods[0].time);
+  const [lockedDate, setLockedDate] = useState<string>("");
 
   const onChangeValue = (value: number, time: string) => {
     setPeriodValue(value);
     setPeriodTime(time);
-  }
+  }  
+
+  useEffect(() => {
+    setLockedDate(moment(currentDate).add(periodValue, periodValue === 1 ? "year" : periodValue === 4 ? "years" : "days").format("LL"));
+  }, [currentDate, periodTime, periodValue]);
 
   const handleFromCoinAmountChange = (e: any) => {
     const newValue = e.target.value;
@@ -359,7 +366,7 @@ export const StakeTabView = () => {
         ))}
       </div>
     </div>
-    <span className="info-label">{t("invest.panel-right.tabset.stake.notification-label", { periodValue: periodValue, periodTime: periodTime })}</span>
+    <span className="info-label">{t("invest.panel-right.tabset.stake.notification-label", { periodValue: periodValue, periodTime: periodTime, lockedDate: lockedDate })}</span>
 
     {/* Confirm that have read the terms and conditions */}
     <div className="mb-2 mt-2">
