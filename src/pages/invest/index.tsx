@@ -87,6 +87,11 @@ export const InvestView = () => {
             <div className="meanfi-two-panel-right">
               <div className="inner-container">
 
+                {/* Background animation */}
+                <div className="staking-background">
+                  <img className="inbound" src="/assets/incoming-crypto.svg" alt="" />
+                </div>
+
                 {/* Staking paragraphs */}
                 <p>{t("invest.panel-right.first-text")}</p>
                 <p>{t("invest.panel-right.second-text")}</p>
