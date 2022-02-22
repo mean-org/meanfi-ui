@@ -300,7 +300,8 @@
 				},
 				"unstake": {
 					"name": "Unstake",
-					"notification-label-one": "Your currently have 1000 MEAN staked which is currently locked until {{unstakeStartDate}}",
+					"notification-label-one": "Your currently have {{unstakeAmount}} MEAN staked which is currently locked until {{unstakeStartDate}}",
+					"notification-label-one-error": "You don't have any MEAN staked",
 					"amount-label": "Amount to unstake",
 					"notification-label-two": "Unstaking will withdraw the specified amount of unlocked MEAN tokens to your wallet",
 					"verified-label": "I agree to the Terms & Conditions",

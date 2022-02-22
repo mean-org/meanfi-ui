@@ -100,6 +100,7 @@ interface AppStateConfig {
   // Multisig
   highLightableMultisigId: string | undefined;
   // Staking
+  unstakeAmount: string;
   unstakeStartDate: string | undefined;
   setTheme: (name: string) => void;
   setDtailsPanelOpen: (state: boolean) => void;
@@ -152,6 +153,7 @@ interface AppStateConfig {
   // Multisig
   setHighLightableMultisigId: (id: string | undefined) => void,
   // Staking
+  setUnstakeAmount: (data: string) => void;
   setUnstakeStartDate: (date: string) => void;
 }
 
@@ -215,6 +217,7 @@ const contextDefaultValues: AppStateConfig = {
   // Multisig
   highLightableMultisigId: undefined,
   // Staking
+  unstakeAmount: '',
   unstakeStartDate: 'undefined',
   setTheme: () => {},
   setDtailsPanelOpen: () => {},
@@ -267,6 +270,7 @@ const contextDefaultValues: AppStateConfig = {
   // Multisig
   setHighLightableMultisigId: () => {},
   // Staking
+  setUnstakeAmount: () => {},
   setUnstakeStartDate: () => {}
 };
 
@@ -363,6 +367,8 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [streamDetail, updateStreamDetail] = useState<Stream | StreamInfo | undefined>();
   const [highLightableStreamId, setHighLightableStreamId] = useState<string | undefined>(contextDefaultValues.highLightableStreamId);
   const [highLightableMultisigId, setHighLightableMultisigId] = useState<string | undefined>(contextDefaultValues.highLightableMultisigId);
+
+  const [unstakeAmount, updateUnstakeAmount] = useState<string>(contextDefaultValues.unstakeAmount);
   const [unstakeStartDate, updateUnstakeStartDate] = useState<string | undefined>(today);
 
   const setTheme = (name: string) => {
@@ -465,6 +471,10 @@ const AppStateProvider: React.FC = ({ children }) => {
     updateTransactionStatus(status);
   }
 
+  const setUnstakeAmount = (data: string) => {
+    updateUnstakeAmount(data);
+  }
+
   const setUnstakeStartDate = (date: string) => {
     updateUnstakeStartDate(date);
   }
@@ -474,7 +484,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     setRecipientAddress('');
     setRecipientNote('');
     setPaymentStartDate(today);
-    setUnstakeStartDate(today);
     setPaymentRateAmount('');
     setPaymentRateFrequency(PaymentRateType.PerMonth);
     setIsVerifiedRecipient(false);
@@ -1274,6 +1283,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         recurringBuys,
         loadingRecurringBuys,
         highLightableMultisigId,
+        unstakeAmount,
         unstakeStartDate,
         setTheme,
         setDtailsPanelOpen,
@@ -1322,6 +1332,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         setRecurringBuys,
         setLoadingRecurringBuys,
         setHighLightableMultisigId,
+        setUnstakeAmount,
         setUnstakeStartDate
       }}>
       {children}
