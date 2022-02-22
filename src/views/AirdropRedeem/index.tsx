@@ -338,7 +338,7 @@ export const AirdropRedeem = (props: {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logError('Create Airdrop Claim transaction failed', { transcript: transactionLog });
+            customLogger.logWarning('Create Airdrop Claim transaction failed', { transcript: transactionLog });
             return false;
           });
       } else {

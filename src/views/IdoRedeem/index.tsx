@@ -252,7 +252,7 @@ export const IdoRedeem = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('Create IDO Redeem transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Create IDO Redeem transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {

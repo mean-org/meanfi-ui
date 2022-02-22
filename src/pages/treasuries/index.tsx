@@ -1828,7 +1828,7 @@ export const TreasuriesView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('Refresh Treasury data transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Refresh Treasury data transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -2582,7 +2582,7 @@ export const TreasuriesView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('Treasury Add funds transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Treasury Add funds transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -3015,7 +3015,7 @@ export const TreasuriesView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('Close Treasury transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Close Treasury transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -3879,7 +3879,7 @@ export const TreasuriesView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('Pause stream transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Pause stream transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -4303,7 +4303,7 @@ export const TreasuriesView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('Resume stream transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Resume stream transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
