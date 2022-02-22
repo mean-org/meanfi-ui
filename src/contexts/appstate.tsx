@@ -99,6 +99,8 @@ interface AppStateConfig {
   loadingRecurringBuys: boolean;
   // Multisig
   highLightableMultisigId: string | undefined;
+  // Staking
+  unstakeStartDate: string | undefined;
   setTheme: (name: string) => void;
   setDtailsPanelOpen: (state: boolean) => void;
   showDepositOptionsModal: () => void;
@@ -149,6 +151,8 @@ interface AppStateConfig {
   setLoadingRecurringBuys: (state: boolean) => void;
   // Multisig
   setHighLightableMultisigId: (id: string | undefined) => void,
+  // Staking
+  setUnstakeStartDate: (date: string) => void;
 }
 
 const contextDefaultValues: AppStateConfig = {
@@ -210,6 +214,8 @@ const contextDefaultValues: AppStateConfig = {
   loadingRecurringBuys: false,
   // Multisig
   highLightableMultisigId: undefined,
+  // Staking
+  unstakeStartDate: 'undefined',
   setTheme: () => {},
   setDtailsPanelOpen: () => {},
   showDepositOptionsModal: () => {},
@@ -260,6 +266,8 @@ const contextDefaultValues: AppStateConfig = {
   setLoadingRecurringBuys: () => {},
   // Multisig
   setHighLightableMultisigId: () => {},
+  // Staking
+  setUnstakeStartDate: () => {}
 };
 
 export const AppStateContext = React.createContext<AppStateConfig>(contextDefaultValues);
@@ -355,6 +363,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [streamDetail, updateStreamDetail] = useState<Stream | StreamInfo | undefined>();
   const [highLightableStreamId, setHighLightableStreamId] = useState<string | undefined>(contextDefaultValues.highLightableStreamId);
   const [highLightableMultisigId, setHighLightableMultisigId] = useState<string | undefined>(contextDefaultValues.highLightableMultisigId);
+  const [unstakeStartDate, updateUnstakeStartDate] = useState<string | undefined>(today);
 
   const setTheme = (name: string) => {
     updateTheme(name);
@@ -456,11 +465,16 @@ const AppStateProvider: React.FC = ({ children }) => {
     updateTransactionStatus(status);
   }
 
+  const setUnstakeStartDate = (date: string) => {
+    updateUnstakeStartDate(date);
+  }
+
   const resetContractValues = () => {
     setFromCoinAmount('');
     setRecipientAddress('');
     setRecipientNote('');
     setPaymentStartDate(today);
+    setUnstakeStartDate(today);
     setPaymentRateAmount('');
     setPaymentRateFrequency(PaymentRateType.PerMonth);
     setIsVerifiedRecipient(false);
@@ -1260,6 +1274,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         recurringBuys,
         loadingRecurringBuys,
         highLightableMultisigId,
+        unstakeStartDate,
         setTheme,
         setDtailsPanelOpen,
         setShouldLoadTokens,
@@ -1306,7 +1321,8 @@ const AppStateProvider: React.FC = ({ children }) => {
         setLoadingStreamsSummary,
         setRecurringBuys,
         setLoadingRecurringBuys,
-        setHighLightableMultisigId
+        setHighLightableMultisigId,
+        setUnstakeStartDate
       }}>
       {children}
     </AppStateContext.Provider>

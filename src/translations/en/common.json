@@ -294,17 +294,21 @@
 					"days": "days",
 					"year": "year",
 					"years": "years",
-					"notification-label": "Staking period of {{periodValue}} {{periodTime}} will lock your Tokens until {{lockedDate}} with estimated rewards of up to 100 MEAN",
+					"notification-label": "Staking period of {{periodValue}} {{periodTime}} will lock your Tokens until {{unstakeStartDate}} with estimated rewards of up to 100 MEAN",
 					"verified-label": "I agree to the Terms & Conditions",
 					"stake-button": "Stake"
 				},
 				"unstake": {
 					"name": "Unstake",
-					"notification-label-one": "Your currently have 1000 MEAN staked which is currently locked until Feb 15, 2022 12:34 UTC",
+					"notification-label-one": "Your currently have 1000 MEAN staked which is currently locked until {{unstakeStartDate}}",
 					"amount-label": "Amount to unstake",
 					"notification-label-two": "Unstaking will withdraw the specified amount of unlocked MEAN tokens to your wallet",
 					"verified-label": "I agree to the Terms & Conditions",
-					"unstake-button": "Unstake"
+					"unstake-button-available": "Unstake",
+					"unstake-button-unavailable": "No available",
+					"send-amount": {
+						"label-right": "Available to unstake"
+					}
 				}
 			},
 			"staking-data": {

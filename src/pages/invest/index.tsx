@@ -232,9 +232,11 @@ export const StakeTabView = () => {
     fromCoinAmount,
     isVerifiedRecipient,
     paymentStartDate,
+    unstakeStartDate,
     refreshPrices,
     setFromCoinAmount,
-    setIsVerifiedRecipient
+    setIsVerifiedRecipient,
+    setUnstakeStartDate
   } = useContext(AppStateContext);
   const { connected } = useWallet();
   const { t } = useTranslation('common');
@@ -266,10 +268,8 @@ export const StakeTabView = () => {
     },
   ];
 
-  const currentDate = moment().format("LL");
   const [periodValue, setPeriodValue] = useState<number>(periods[0].value);
   const [periodTime, setPeriodTime] = useState<string>(periods[0].time);
-  const [lockedDate, setLockedDate] = useState<string>("");
 
   // Transaction execution modal
   const [isTransactionModalVisible, setTransactionModalVisibility] = useState(false);
@@ -321,12 +321,12 @@ export const StakeTabView = () => {
   const onChangeValue = (value: number, time: string) => {
     setPeriodValue(value);
     setPeriodTime(time);
-  }  
+  }   
 
   useEffect(() => {
-    setLockedDate(moment(currentDate).add(periodValue, periodValue === 1 ? "year" : periodValue === 4 ? "years" : "days").format("LL"));
-  }, [currentDate, periodTime, periodValue]);
-
+    setUnstakeStartDate(moment().add(periodValue, periodValue === 1 ? "year" : periodValue === 4 ? "years" : "days").format("LL"));
+  }, [periodTime, periodValue, setUnstakeStartDate]);
+  
   return (
     <>
       <div className="form-label">{t("invest.panel-right.tabset.stake.amount-label")}</div>
@@ -391,7 +391,7 @@ export const StakeTabView = () => {
           ))}
         </div>
       </div>
-      <span className="info-label">{t("invest.panel-right.tabset.stake.notification-label", { periodValue: periodValue, periodTime: periodTime, lockedDate: lockedDate })}</span>
+      <span className="info-label">{t("invest.panel-right.tabset.stake.notification-label", { periodValue: periodValue, periodTime: periodTime, unstakeStartDate: unstakeStartDate })}</span>
 
       {/* Confirm that have read the terms and conditions */}
       <div className="mb-2 mt-2">
@@ -447,58 +447,44 @@ export const StakeTabView = () => {
 export const UnstakeTabView = () => {
   const {
     selectedToken,
-    tokenBalance,
     effectiveRate,
     loadingPrices,
     fromCoinAmount,
     isVerifiedRecipient,
-    paymentStartDate,
+    unstakeStartDate,
     refreshPrices,
     setFromCoinAmount,
-    setIsVerifiedRecipient,
+    setIsVerifiedRecipient
   } = useContext(AppStateContext);
-  const { connected } = useWallet();
   const { t } = useTranslation('common');
   const percentages = [25, 50, 75, 100];
-  const [percentageValue, setPercentageValue] = useState(percentages[0]);
+  const [percentageValue, setPercentageValue] = useState(0);
+
+  const currentDate = moment().format("LL");
 
   const onChangeValue = (value: number) => {
     setPercentageValue(value);
-  }
-
-  const handleFromCoinAmountChange = (e: any) => {
-    const newValue = e.target.value;
-    if (newValue === null || newValue === undefined || newValue === "") {
-      setFromCoinAmount("");
-    } else if (newValue === '.') {
-      setFromCoinAmount(".");
-    } else if (isValidNumber(newValue)) {
-      setFromCoinAmount(newValue);
-    }
   };
-
-  const isSendAmountValid = (): boolean => {
-    return  connected &&
-            selectedToken &&
-            tokenBalance &&
-            fromCoinAmount &&
-            parseFloat(fromCoinAmount) > 0 &&
-            parseFloat(fromCoinAmount) <= tokenBalance
-      ? true
-      : false;
-  }
-
-  const areSendAmountSettingsValid = (): boolean => {
-    return paymentStartDate && isSendAmountValid() ? true : false;
-  }  
+  
+    const handleFromCoinAmountChange = (e: any) => {
+      const newValue = e.target.value;
+      if (newValue === null || newValue === undefined || newValue === "") {
+        setFromCoinAmount("");
+      } else if (newValue === '.') {
+        setFromCoinAmount(".");
+      } else if (isValidNumber(newValue)) {
+        setFromCoinAmount(newValue);
+      }
+    };
 
   const onIsVerifiedRecipientChange = (e: any) => {
     setIsVerifiedRecipient(e.target.checked);
   }
+
   return (
     <>
-      <span className="info-label">{t("invest.panel-right.tabset.unstake.notification-label-one")}</span>
-      <div className="form-label mt-2">{t("invest.panel-right.tabset.unstake.amount-label")}</div>
+      <span className="info-label">{t("invest.panel-right.tabset.unstake.notification-label-one", {unstakeStartDate: unstakeStartDate})}</span>
+        <div className="form-label mt-2">{t("invest.panel-right.tabset.unstake.amount-label")}</div>
         <div className="well">
 
           <div className="flexible-right mb-1">
@@ -540,12 +526,9 @@ export const UnstakeTabView = () => {
           </div>
           <div className="flex-fixed-right">
             <div className="left inner-label">
-              <span>{t('transactions.send-amount.label-right')}:</span>
+              <span>{t('invest.panel-right.tabset.unstake.send-amount.label-right')}:</span>
               <span>
-                {`${tokenBalance && selectedToken
-                    ? getAmountWithSymbol(tokenBalance, selectedToken?.address, true)
-                    : "0"
-                }`}
+                {currentDate === unstakeStartDate ? 1000 : 0}
               </span>
             </div>
             <div className="right inner-label">
@@ -572,10 +555,11 @@ export const UnstakeTabView = () => {
           shape="round"
           size="large"
           disabled={
-            !areSendAmountSettingsValid() ||
-            !isVerifiedRecipient}
+            !isVerifiedRecipient ||
+            currentDate !== unstakeStartDate
+          }
         >
-          {t("invest.panel-right.tabset.unstake.unstake-button")} {selectedToken && selectedToken.name}
+          {currentDate !== unstakeStartDate ? t("invest.panel-right.tabset.unstake.unstake-button-unavailable") : t("invest.panel-right.tabset.unstake.unstake-button-available")} {selectedToken && selectedToken.name}
         </Button>
       </>
   )
