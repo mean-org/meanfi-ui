@@ -1307,7 +1307,7 @@ export const MultisigView = () => {
     wallet
   ]);
 
-  // Create Mint Tx
+  // Set Mint Auth Tx
   const onExecuteSetMintAuthTx = useCallback(async (data: any) => {
 
     let transaction: Transaction;
