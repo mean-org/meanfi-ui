@@ -4316,7 +4316,7 @@ export const Streams = () => {
                 <Spin indicator={bigLoadingIcon} className="icon" />
                 <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
                 <h5 className="operation">{t('transactions.status.tx-add-funds-operation')} {getAmountWithSymbol(
-                    parseFloat(addFundsPayload.amount),
+                    parseFloat(addFundsPayload ? addFundsPayload.amount : 0),
                     streamDetail?.associatedToken as string
                   )}
                 </h5>
