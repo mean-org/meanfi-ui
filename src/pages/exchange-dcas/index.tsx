@@ -361,7 +361,7 @@ export const ExchangeDcasView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('Close DDCA transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Close DDCA transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -641,7 +641,7 @@ export const ExchangeDcasView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('DDCA withdraw transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('DDCA withdraw transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {

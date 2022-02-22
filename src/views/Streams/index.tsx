@@ -906,7 +906,7 @@ export const Streams = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('Transfer stream transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Transfer stream transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -1386,7 +1386,7 @@ export const Streams = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Add funds transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -2121,7 +2121,7 @@ export const Streams = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('Withdraw transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Withdraw transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
