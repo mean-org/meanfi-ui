@@ -23,7 +23,6 @@ export const StreamAddFundsModal = (props: {
   isVisible: boolean;
   mspClient: MoneyStreaming | MSP | undefined;
   streamDetail: Stream | StreamInfo | undefined;
-  // treasuryDetails: Treasury | TreasuryInfo | undefined;
   transactionFees: TransactionFees;
   withdrawTransactionFees: TransactionFees;
 }) => {
@@ -123,16 +122,6 @@ export const StreamAddFundsModal = (props: {
     props.mspClient,
   ]);
 
-  const getTreasuryName = useCallback(() => {
-    if (treasuryDetails) {
-      const v1 = treasuryDetails as TreasuryInfo;
-      const v2 = treasuryDetails as Treasury;
-      const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
-      return isNewTreasury ? v2.name : v1.label;
-    }
-    return '-';
-  }, [treasuryDetails]);
-
   const getMaxAmount = useCallback((preSetting = false) => {
     if (((localStreamDetail && localStreamDetail.version >= 2 && (localStreamDetail as Stream).feePayedByTreasurer) || preSetting) && props.withdrawTransactionFees) {
       const BASE_100_TO_BASE_1_MULTIPLIER = 10_000;
@@ -186,10 +175,29 @@ export const StreamAddFundsModal = (props: {
     props.withdrawTransactionFees,
   ]);
 
-  const isFeePaidByTreasurer = useCallback(() => {
-    if (localStreamDetail && (localStreamDetail as any).feePayedByTreasurer) {
+  const getTreasuryName = useCallback(() => {
+    if (treasuryDetails) {
+      const v1 = treasuryDetails as TreasuryInfo;
+      const v2 = treasuryDetails as Treasury;
+      const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
+      return isNewTreasury ? v2.name : v1.label;
+    }
+    return '-';
+  }, [treasuryDetails]);
+
+  const shouldFundFromTreasury = useCallback(() => {
+    if (!treasuryDetails || (treasuryDetails && treasuryDetails.autoClose)) {
+      return false;
+    }
+
+    return true;
+  }, [treasuryDetails]);
+
+  const isfeePayedByTreasurerOn = useCallback(() => {
+    if (localStreamDetail && localStreamDetail.version >= 2 && (localStreamDetail as Stream).feePayedByTreasurer) {
       return true;
     }
+
     return false;
   }, [localStreamDetail]);
 
@@ -285,20 +293,30 @@ export const StreamAddFundsModal = (props: {
   // Validation
 
   const isValidInput = (): boolean => {
-    return selectedToken &&
-           tokenBalance &&
-           topupAmount && parseFloat(topupAmount) > 0 &&
-           parseFloat(topupAmount) <= tokenBalance
-            ? true
-            : false;
+    const userBalance = makeInteger(tokenBalance, selectedToken?.decimals || 6);
+    return  publicKey &&
+            selectedToken &&
+            ((shouldFundFromTreasury() && unallocatedBalance.toNumber() > 0) ||
+            (!shouldFundFromTreasury() && userBalance.toNumber() > 0)) &&
+            tokenAmount && tokenAmount.toNumber() > 0 &&
+            ((!shouldFundFromTreasury() && tokenAmount.lte(userBalance)) ||
+            (shouldFundFromTreasury() && ((isfeePayedByTreasurerOn() && tokenAmount.lte(maxAllocatableAmount)) ||
+                                          (!isfeePayedByTreasurerOn() && tokenAmount.lte(unallocatedBalance)))))
+      ? true
+      : false;
   }
 
   const getTransactionStartButtonLabel = (): string => {
-    return !selectedToken || !tokenBalance
+    const userBalance = makeInteger(tokenBalance, selectedToken?.decimals || 6);
+    return !selectedToken ||
+           (shouldFundFromTreasury() && unallocatedBalance.isZero()) ||
+           (!shouldFundFromTreasury() && userBalance.isZero())
       ? t('transactions.validation.no-balance')
-      : !topupAmount || !isValidNumber(topupAmount) || !parseFloat(topupAmount)
+      : !tokenAmount || tokenAmount.isZero()
       ? t('transactions.validation.no-amount')
-      : parseFloat(topupAmount) > tokenBalance
+      : (!shouldFundFromTreasury() && tokenAmount.gt(userBalance)) ||
+        (shouldFundFromTreasury() && ((isfeePayedByTreasurerOn() && tokenAmount.gt(maxAllocatableAmount)) ||
+                                      (!isfeePayedByTreasurerOn() && tokenAmount.gt(unallocatedBalance))))
       ? t('transactions.validation.amount-high')
       : t('transactions.validation.valid-approve');
   }
@@ -392,7 +410,7 @@ export const StreamAddFundsModal = (props: {
                           className="token-max simplelink"
                           onClick={() => {
                             const decimals = selectedToken ? selectedToken.decimals : 6;
-                            if (isFeePaidByTreasurer()) {
+                            if (isfeePayedByTreasurerOn()) {
                               const maxAmount = getMaxAmount(true);
                               consoleOut('tokenAmount:', tokenAmount.toNumber(), 'blue');
                               consoleOut('maxAmount:', maxAmount.toNumber(), 'blue');
@@ -431,17 +449,47 @@ export const StreamAddFundsModal = (props: {
             </div>
             <div className="flex-fixed-right">
               <div className="left inner-label">
-                <span>{t('add-funds.label-right')}:</span>
-                <span>
-                  {`${tokenBalance && selectedToken
-                      ? getTokenAmountAndSymbolByTokenAddress(
-                          tokenBalance,
-                          selectedToken?.address,
-                          true
-                        )
-                      : "0"
-                  }`}
-                </span>
+                {!treasuryDetails || (treasuryDetails && treasuryDetails.autoClose) ? (
+                  <span>{t('add-funds.label-right')}:</span>
+                ) : (
+                  <span>{t('treasuries.treasury-streams.available-unallocated-balance-label')}:</span>
+                )}
+                {treasuryDetails && treasuryDetails.autoClose ? (
+                  <span>
+                    {`${tokenBalance && selectedToken
+                        ? getTokenAmountAndSymbolByTokenAddress(
+                            tokenBalance,
+                            selectedToken?.address,
+                            true
+                          )
+                        : "0"
+                    }`}
+                  </span>
+                ) : (
+                  <>
+                    {selectedToken && unallocatedBalance ? (
+                      <span>
+                        {
+                          getTokenAmountAndSymbolByTokenAddress(
+                            makeDecimal(unallocatedBalance, selectedToken.decimals),
+                            selectedToken.address,
+                            true
+                          )
+                        }
+                      </span>
+                    ) : tokenBalance && selectedToken ? (
+                      <span>
+                        {
+                          getTokenAmountAndSymbolByTokenAddress(
+                            tokenBalance,
+                            selectedToken.address,
+                            true
+                          )
+                        }
+                      </span>
+                    ) : null}
+                  </>
+                )}
               </div>
               <div className="right inner-label">
                 <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>

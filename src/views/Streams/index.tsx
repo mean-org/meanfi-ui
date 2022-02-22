@@ -3,6 +3,7 @@ import { Divider, Row, Col, Button, Modal, Spin, Dropdown, Menu, Tooltip, Empty 
 import {
   ArrowDownOutlined,
   ArrowLeftOutlined,
+  ArrowRightOutlined,
   ArrowUpOutlined,
   CheckOutlined,
   EllipsisOutlined,
@@ -299,6 +300,13 @@ export const Streams = () => {
     setSelectedToken,
     t,
   ]);
+
+  const isV2Stream = useCallback((): boolean => {
+    if (streamDetail) {
+      return streamDetail.version >= 2 ? true : false;
+    }
+    return false;
+  }, [streamDetail]);
 
   const isInboundStream = useCallback((item: Stream | StreamInfo): boolean => {
     if (item && publicKey) {
@@ -1035,7 +1043,7 @@ export const Streams = () => {
     setIsAddFundsModalVisibility(false);
   }, [oldSelectedToken, setSelectedToken]);
 
-  const [addFundsAmount, setAddFundsAmount] = useState<number>(0);
+  const [addFundsPayload, setAddFundsPayload] = useState<any>();
   const onAcceptAddFunds = (data: any) => {
     closeAddFundsModal();
     consoleOut('AddFunds input:', data, 'blue');
@@ -1449,7 +1457,7 @@ export const Streams = () => {
         const treasury = new PublicKey((streamDetail as StreamInfo).treasuryAddress as string);
         const contributorMint = new PublicKey(streamDetail.associatedToken as string);
         const amount = parseFloat(addFundsData.amount);
-        setAddFundsAmount(amount);
+        setAddFundsPayload(addFundsData);
 
         const data = {
           contributor: wallet.publicKey.toBase58(),               // contributor
@@ -1556,16 +1564,15 @@ export const Streams = () => {
 
       const stream = new PublicKey(streamDetail.id as string);
       const treasury = new PublicKey((streamDetail as Stream).treasury as string);
-      // const associatedToken = new PublicKey(streamDetail.associatedToken as string);
-      const amount = toTokenAmount(parseFloat(addFundsData.amount as string), selectedToken.decimals);
-      setAddFundsAmount(parseFloat(addFundsData.amount));
+      // const amount = toTokenAmount(parseFloat(addFundsData.amount as string), selectedToken.decimals);
+      const amount = addFundsData.tokenAmount;
+      setAddFundsPayload(addFundsData);
 
       const data = {
         contributor: publicKey.toBase58(),                              // contributor
         treasury: treasury.toBase58(),                                  // treasury
-        // associatedToken: associatedToken.toBase58(),                    // associatedToken
         stream: stream.toBase58(),                                      // stream
-        amount,                                                         // amount
+        amount: `${amount.toNumber()} (${addFundsData.amount})`,        // amount
       }
 
       consoleOut('add funds data:', data);
@@ -3351,10 +3358,24 @@ export const Streams = () => {
 
                   {treasuryDetails && !(treasuryDetails as any).autoClose && treasuryDetails.id === stream.treasuryAddress && (
                     <div className="mb-3">
-                      <div className="font-bold">
-                        <span>Treasury - {getTreasuryName()}</span>
+                      <div className="flex-row align-items-center">
+                        <span className="font-bold">Treasury - {getTreasuryName()}</span>
                         <span className={`badge small ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
                           {getTreasuryType() === "locked" ? 'Locked' : 'Open'}
+                        </span>
+                        <span className="icon-button-container ml-1">
+                          <Tooltip placement="bottom" title="Go to treasury">
+                            <Button
+                              type="default"
+                              shape="circle"
+                              size="middle"
+                              icon={<ArrowRightOutlined />}
+                              onClick={() => {
+                                const url = `/treasuries?treasury=${treasuryDetails.id}`;
+                                navigate(url);
+                              }}
+                            />
+                          </Tooltip>
                         </span>
                       </div>
                       <div>Stream - {getStreamDescription(stream)}</div>
@@ -3668,10 +3689,24 @@ export const Streams = () => {
 
                   {treasuryDetails && !(treasuryDetails as any).autoClose && treasuryDetails.id === stream.treasury && (
                     <div className="mb-3">
-                      <div className="font-bold">
-                        <span>Treasury - {getTreasuryName()}</span>
+                      <div className="flex-row align-items-center">
+                        <span className="font-bold">Treasury - {getTreasuryName()}</span>
                         <span className={`badge small ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
                           {getTreasuryType() === "locked" ? 'Locked' : 'Open'}
+                        </span>
+                        <span className="icon-button-container ml-1">
+                          <Tooltip placement="bottom" title="Go to treasury">
+                            <Button
+                              type="default"
+                              shape="circle"
+                              size="middle"
+                              icon={<ArrowRightOutlined />}
+                              onClick={() => {
+                                const url = `/treasuries?treasury=${treasuryDetails.id}`;
+                                navigate(url);
+                              }}
+                            />
+                          </Tooltip>
                         </span>
                       </div>
                       <div>Stream - {getStreamDescription(stream)}</div>
@@ -4210,7 +4245,11 @@ export const Streams = () => {
               <>
                 <Spin indicator={bigLoadingIcon} className="icon" />
                 <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
-                <h5 className="operation">{t('transactions.status.tx-add-funds-operation')} {getAmountWithSymbol(addFundsAmount, streamDetail?.associatedToken as string)}</h5>
+                <h5 className="operation">{t('transactions.status.tx-add-funds-operation')} {getAmountWithSymbol(
+                    parseFloat(addFundsPayload.amount),
+                    streamDetail?.associatedToken as string
+                  )}
+                </h5>
                 {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
                   <div className="indication">{t('transactions.status.instructions')}</div>
                 )}
