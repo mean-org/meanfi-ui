@@ -273,7 +273,8 @@ export const StreamAddFundsModal = (props: {
     props.handleOk({
       amount: topupAmount,
       tokenAmount: tokenAmount,
-      treasuryType: streamTreasuryType
+      treasuryType: streamTreasuryType,
+      fundFromTreasury: shouldFundFromTreasury()
     });
   }
 
