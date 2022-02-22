@@ -2,7 +2,7 @@ import React, { useCallback, useEffect } from 'react';
 import { useContext, useState } from 'react';
 import { Modal, Button } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
-import { formatAmount, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from '../../utils/utils';
+import { cutNumber, formatAmount, getTokenAmountAndSymbolByTokenAddress, isValidNumber, makeDecimal, makeInteger } from '../../utils/utils';
 import { useTranslation } from 'react-i18next';
 import { StreamInfo, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { TokenDisplay } from '../TokenDisplay';
@@ -15,6 +15,7 @@ import { PublicKey } from '@solana/web3.js';
 import { consoleOut } from '../../utils/ui';
 import { ExclamationCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { useLocation, useNavigate } from 'react-router-dom';
+import BN from 'bn.js';
 
 export const StreamAddFundsModal = (props: {
   handleClose: any;
@@ -22,14 +23,16 @@ export const StreamAddFundsModal = (props: {
   isVisible: boolean;
   mspClient: MoneyStreaming | MSP | undefined;
   streamDetail: Stream | StreamInfo | undefined;
-  treasuryDetails?: Treasury | TreasuryInfo | undefined;
+  // treasuryDetails: Treasury | TreasuryInfo | undefined;
   transactionFees: TransactionFees;
+  withdrawTransactionFees: TransactionFees;
 }) => {
   const {
+    tokenBalance,
     loadingPrices,
     selectedToken,
-    tokenBalance,
     effectiveRate,
+    isWhitelisted,
     refreshPrices,
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
@@ -44,6 +47,18 @@ export const StreamAddFundsModal = (props: {
   const [loadingTreasuryDetails, setLoadingTreasuryDetails] = useState(true);
   const [localStreamDetail, setLocalStreamDetail] = useState<Stream | StreamInfo | undefined>(undefined);
   const [treasuryDetails, setTreasuryDetails] = useState<Treasury | TreasuryInfo | undefined>(undefined);
+  const [unallocatedBalance, setUnallocatedBalance] = useState(new BN(0));
+  const [maxAllocatableAmount, setMaxAllocatableAmount] = useState<any>(undefined);
+  const [tokenAmount, setTokenAmount] = useState(new BN(0));
+
+  const isNewTreasury = useCallback(() => {
+    if (treasuryDetails) {
+      const v2 = treasuryDetails as Treasury;
+      return v2.version >= 2 ? true : false;
+    }
+
+    return false;
+  }, [treasuryDetails]);
 
   const getTreasuryType = useCallback((details?: Treasury | TreasuryInfo | undefined): StreamTreasuryType | undefined => {
     if (details) {
@@ -118,6 +133,66 @@ export const StreamAddFundsModal = (props: {
     return '-';
   }, [treasuryDetails]);
 
+  const getMaxAmount = useCallback((preSetting = false) => {
+    if (((localStreamDetail && localStreamDetail.version >= 2 && (localStreamDetail as Stream).feePayedByTreasurer) || preSetting) && props.withdrawTransactionFees) {
+      const BASE_100_TO_BASE_1_MULTIPLIER = 10_000;
+      const feeNumerator = props.withdrawTransactionFees.mspPercentFee * BASE_100_TO_BASE_1_MULTIPLIER;
+      const feeDenaminator = 1000000;
+      const badStreamMaxAllocation = unallocatedBalance
+        .mul(new BN(feeDenaminator))
+        .div(new BN(feeNumerator + feeDenaminator));
+
+      const feeAmount = badStreamMaxAllocation
+        .mul(new BN(feeNumerator))
+        .div(new BN(feeDenaminator));
+
+      const badTotal = badStreamMaxAllocation.add(feeAmount);
+      const badRemaining = unallocatedBalance.sub(badTotal);
+      const goodStreamMaxAllocation = unallocatedBalance.sub(feeAmount);
+      const goodTotal = goodStreamMaxAllocation.add(feeAmount);
+      const goodRemaining = unallocatedBalance.sub(goodTotal);
+      const maxAmount = goodStreamMaxAllocation;
+
+      if (isWhitelisted) {
+        const debugTable: any[] = [];
+        debugTable.push({
+          unallocatedBalance: unallocatedBalance.toNumber(),
+          feeNumerator: feeNumerator,
+          feePercentage01: feeNumerator/feeDenaminator,
+          badStreamMaxAllocation: badStreamMaxAllocation.toNumber(),
+          feeAmount: feeAmount.toNumber(),
+          badTotal: badTotal.toNumber(),
+          badRemaining: badRemaining.toNumber(),
+          goodStreamMaxAllocation: goodStreamMaxAllocation.toNumber(),
+          goodTotal: goodTotal.toNumber(),
+          goodRemaining: goodRemaining.toNumber(),
+        });
+        consoleOut('debug table', debugTable, 'blue');
+      }
+
+      if (!preSetting) {
+        setMaxAllocatableAmount(maxAmount);
+      }
+      return maxAmount;
+    }
+    if (!preSetting) {
+      setMaxAllocatableAmount(unallocatedBalance);
+    }
+    return unallocatedBalance;
+  },[
+    isWhitelisted,
+    localStreamDetail,
+    unallocatedBalance,
+    props.withdrawTransactionFees,
+  ]);
+
+  const isFeePaidByTreasurer = useCallback(() => {
+    if (localStreamDetail && (localStreamDetail as any).feePayedByTreasurer) {
+      return true;
+    }
+    return false;
+  }, [localStreamDetail]);
+
   // Read and keep the input copy of the stream
   useEffect(() => {
     if (props.isVisible && !localStreamDetail && props.streamDetail) {
@@ -129,10 +204,11 @@ export const StreamAddFundsModal = (props: {
     props.streamDetail,
   ]);
 
+  // Read treasury and store treasuryType
   useEffect(() => {
     if (props.isVisible && localStreamDetail) {
-      if (props.treasuryDetails) {
-        const value = getTreasuryType(props.treasuryDetails);
+      if (treasuryDetails) {
+        const value = getTreasuryType(treasuryDetails);
         consoleOut('streamTreasuryType:', value, 'crimson');
         setStreamTreasuryType(value);
       } else {
@@ -150,31 +226,59 @@ export const StreamAddFundsModal = (props: {
     }
   }, [
     props.isVisible,
-    props.treasuryDetails,
+    treasuryDetails,
     localStreamDetail,
     getTreasuryTypeByTreasuryId,
     getTreasuryType,
   ]);
 
+  // Set treasury unalocated balance in BN
+  useEffect(() => {
+    if (props.isVisible && treasuryDetails) {
+      const unallocated = treasuryDetails.balance - treasuryDetails.allocationAssigned;
+      const ub = isNewTreasury()
+        ? new BN(unallocated)
+        : makeInteger(unallocated, selectedToken?.decimals || 6);
+      consoleOut('unallocatedBalance:', ub.toNumber(), 'blue');
+      setUnallocatedBalance(ub);
+    }
+  }, [
+    props.isVisible,
+    treasuryDetails,
+    selectedToken?.decimals,
+    isNewTreasury,
+  ]);
+
+  // Set max amount allocatable to a stream in BN the first time
+  useEffect(() => {
+    if (props.isVisible && treasuryDetails && props.withdrawTransactionFees) {
+      getMaxAmount();
+    }
+  }, [
+    props.isVisible,
+    treasuryDetails,
+    props.withdrawTransactionFees,
+    getMaxAmount
+  ]);
+
   const onAcceptTopup = () => {
     props.handleOk({
       amount: topupAmount,
+      tokenAmount: tokenAmount,
       treasuryType: streamTreasuryType
     });
-  }
-
-  const setValue = (value: string) => {
-    setTopupAmount(value);
   }
 
   const handleAmountChange = (e: any) => {
     const newValue = e.target.value;
     if (newValue === null || newValue === undefined || newValue === "") {
-      setValue("");
+      setTopupAmount("");
+      setTokenAmount(new BN(0));
     } else if (newValue === '.') {
-      setValue(".");
+      setTopupAmount(".");
     } else if (isValidNumber(newValue)) {
-      setValue(newValue);
+      setTopupAmount(newValue);
+      setTokenAmount(makeInteger(newValue, selectedToken?.decimals || 6));
     }
   };
 
@@ -207,7 +311,10 @@ export const StreamAddFundsModal = (props: {
       visible={props.isVisible}
       onOk={onAcceptTopup}
       onCancel={props.handleClose}
-      afterClose={() => setValue('')}
+      afterClose={() => {
+        setTopupAmount("");
+        setTokenAmount(new BN(0));
+      }}
       width={480}>
       {loadingTreasuryDetails ? (
         // The loading part
@@ -246,6 +353,12 @@ export const StreamAddFundsModal = (props: {
         </div>
       ) : (
         <>
+          {treasuryDetails && !treasuryDetails.autoClose && (
+            <>
+              <h3>Treasury Funded Money Stream</h3>
+              <p>As this stream was funded from a treasury, the funds being added will be allocated from the Treasury's available balance.</p>
+            </>
+          )}
           {/* Top up amount */}
           <div className="form-label">{t('add-funds.label')}</div>
           <div className="well">
@@ -259,13 +372,43 @@ export const StreamAddFundsModal = (props: {
                       showCaretDown={false}
                     />
                   )}
-                  {selectedToken && tokenBalance ? (
-                    <div
-                      className="token-max simplelink"
-                      onClick={() => setValue(tokenBalance.toFixed(selectedToken.decimals))}>
-                      MAX
-                    </div>
-                  ) : null}
+                  {treasuryDetails && treasuryDetails.autoClose ? (
+                    <>
+                      {selectedToken && tokenBalance ? (
+                        <div
+                          className="token-max simplelink"
+                          onClick={() => {
+                            setTopupAmount(tokenBalance.toFixed(selectedToken.decimals));
+                            setTokenAmount(makeInteger(tokenBalance, selectedToken?.decimals || 6));
+                          }}>
+                          MAX
+                        </div>
+                      ) : null}
+                    </>
+                  ) : (
+                    <>
+                      {selectedToken && unallocatedBalance ? (
+                        <div
+                          className="token-max simplelink"
+                          onClick={() => {
+                            const decimals = selectedToken ? selectedToken.decimals : 6;
+                            if (isFeePaidByTreasurer()) {
+                              const maxAmount = getMaxAmount(true);
+                              consoleOut('tokenAmount:', tokenAmount.toNumber(), 'blue');
+                              consoleOut('maxAmount:', maxAmount.toNumber(), 'blue');
+                              setTopupAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
+                              setTokenAmount(new BN(maxAmount));
+                            } else {
+                              const maxAmount = getMaxAmount();
+                              setTopupAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
+                              setTokenAmount(new BN(maxAmount));
+                            }
+                          }}>
+                          MAX
+                        </div>
+                      ) : null}
+                    </>
+                  )}
                 </span>
               </div>
               <div className="right">

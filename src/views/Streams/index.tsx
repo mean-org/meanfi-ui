@@ -100,6 +100,7 @@ export const Streams = () => {
   const { endpoint } = useConnectionConfig();
   const { connected, wallet, publicKey } = useWallet();
   const {
+    theme,
     streamList,
     coinPrices,
     streamListv1,
@@ -151,6 +152,9 @@ export const Streams = () => {
   const [lastStreamTransferAddress, setLastStreamTransferAddress] = useState('');
   const [oldSelectedToken, setOldSelectedToken] = useState<TokenInfo>();
   const [transactionFees, setTransactionFees] = useState<TransactionFees>({
+    blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
+  });
+  const [withdrawTransactionFees, setWithdrawTransactionFees] = useState<TransactionFees>({
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
   });
 
@@ -1003,6 +1007,10 @@ export const Streams = () => {
         getTransactionFeesV2(MSP_ACTIONS_V2.addFunds).then(value => {
           setTransactionFees(value);
           consoleOut('transactionFees:', value, 'orange');
+        });
+        getTransactionFeesV2(MSP_ACTIONS_V2.withdraw).then(value => {
+          setWithdrawTransactionFees(value);
+          consoleOut('withdrawTransactionFees:', value, 'orange');
         });
       }
       setIsAddFundsModalVisibility(true);
@@ -3341,6 +3349,18 @@ export const Streams = () => {
                     ) : null
                   }
 
+                  {treasuryDetails && !(treasuryDetails as any).autoClose && treasuryDetails.id === stream.treasuryAddress && (
+                    <div className="mb-3">
+                      <div className="font-bold">
+                        <span>Treasury - {getTreasuryName()}</span>
+                        <span className={`badge small ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
+                          {getTreasuryType() === "locked" ? 'Locked' : 'Open'}
+                        </span>
+                      </div>
+                      <div>Stream - {getStreamDescription(stream)}</div>
+                    </div>
+                  )}
+
                   {/* Beneficiary */}
                   <Row className="mb-3">
                     <Col span={12}>
@@ -3645,6 +3665,18 @@ export const Streams = () => {
                     </div>
                     ) : null
                   }
+
+                  {treasuryDetails && !(treasuryDetails as any).autoClose && treasuryDetails.id === stream.treasury && (
+                    <div className="mb-3">
+                      <div className="font-bold">
+                        <span>Treasury - {getTreasuryName()}</span>
+                        <span className={`badge small ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
+                          {getTreasuryType() === "locked" ? 'Locked' : 'Open'}
+                        </span>
+                      </div>
+                      <div>Stream - {getStreamDescription(stream)}</div>
+                    </div>
+                  )}
 
                   {/* Beneficiary */}
                   <Row className="mb-3">
@@ -4138,6 +4170,7 @@ export const Streams = () => {
           <StreamAddFundsModal
             isVisible={isAddFundsModalVisible}
             transactionFees={transactionFees}
+            withdrawTransactionFees={withdrawTransactionFees}
             streamDetail={streamDetail}
             mspClient={
               streamDetail
@@ -4146,7 +4179,6 @@ export const Streams = () => {
                   : msp
                 : undefined
             }
-            treasuryDetails={treasuryDetails}
             handleOk={onAcceptAddFunds}
             handleClose={closeAddFundsModal}
           />
