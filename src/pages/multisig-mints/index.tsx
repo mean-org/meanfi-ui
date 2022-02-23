@@ -643,8 +643,8 @@ export const MultisigMintsView = () => {
       return {
         address: mintAccount.address,
         isInitialized: mintAccount.isInitialized === 1 ? true : false,
-        decimals: mintAccount.decimals.toNumber(),
-        supply: mintAccount.supply.toNumber(),
+        decimals: mintAccount.decimals,
+        supply: new BN(mintAccount.supply).toNumber(),
         mintAuthority: mintAccount.freezeAuthority ? new PublicKey(mintAccount.freezeAuthority) : null,
         freezeAuthority: mintAccount.freezeAuthority ? new PublicKey(mintAccount.freezeAuthority) : null
         
