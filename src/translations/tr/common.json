@@ -313,7 +313,7 @@
 				}
 			},
 			"staking-data": {
-				"text-one": "MEAN tokens locked till February 21, 2022",
+				"text-one": "MEAN tokens locked till {{unstakeStartDate}}",
 				"text-two": "Staking rewards available to withdraw:",
 				"withdraw-button": "Withdraw Funds"
 			}

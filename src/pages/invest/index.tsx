@@ -18,6 +18,8 @@ type SwapOption = "stake" | "unstake";
 export const InvestView = () => {
   const {
     selectedToken,
+    unstakeAmount,
+    unstakeStartDate,
     setFromCoinAmount,
     setIsVerifiedRecipient
   } = useContext(AppStateContext);
@@ -167,7 +169,7 @@ export const InvestView = () => {
                           <span>{"My Staked MEAN"}</span>
                         </Col>
                         <Col span={12}>
-                          <span className="staking-number">5,000.0000</span>
+                          <span className="staking-number">{unstakeAmount ? unstakeAmount : 0}</span>
                         </Col>
                         <Col span={12}>
                           <span>{"Avg. Locked Yield"}</span>
@@ -175,19 +177,19 @@ export const InvestView = () => {
                         <Col span={12}>
                           <span className="staking-number">114.98%</span>
                         </Col>
-                        <Col span={12}>
+                        {/* <Col span={12}>
                           <span>{"My Locked eMEAN"}</span>
                         </Col>
                         <Col span={12}>
                           <span className="staking-number">1,000</span>
-                        </Col>
-                        <Col span={12}>
+                        </Col> */}
+                        {/* <Col span={12}>
                           <span>{"My xMEAN Balance"}</span>
                         </Col>
                         <Col span={12}>
                           <span className="staking-number">20,805.1232</span>
-                        </Col>
-                        <span className="info-label mt-1">{t("invest.panel-right.staking-data.text-one")}</span>
+                        </Col> */}
+                        <span className="info-label mt-1">{t("invest.panel-right.staking-data.text-one", {unstakeStartDate: unstakeStartDate})}</span>
                         <span className="info-label">{t("invest.panel-right.staking-data.text-two")}</span>
                         <Col span={24} className="d-flex flex-column justify-content-end align-items-end mt-1">
                           <div className="transaction-detail-row">
