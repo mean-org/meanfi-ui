@@ -12,7 +12,7 @@ import { ConfirmOptions, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Syste
 import { Program, Provider } from '@project-serum/anchor';
 import MultisigIdl from "../../models/mean-multisig-idl";
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
-import { AccountLayout, MintLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { AccountLayout, MintInfo, MintLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { consoleOut, copyText, delay, getReadableDate, getShortDate, getTransactionOperationDescription, getTransactionStatusForLogs, isDev, isLocal } from '../../utils/ui';
 import { Identicon } from '../../components/Identicon';
@@ -71,7 +71,7 @@ export const MultisigMintsView = () => {
   const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(true);
   const [multisigAccounts, setMultisigAccounts] = useState<(MultisigV2 | Multisig)[]>([]);
   // Mints
-  const [loadingMints, setLoadingMints] = useState(false);
+  const [loadingMints, setLoadingMints] = useState(true);
   const [multisigMints, setMultisigMints] = useState<any[]>([]);
   const [selectedMint, setSelectedMint] = useState<any>(undefined);
   // Active/Selected multisig
@@ -604,6 +604,10 @@ export const MultisigMintsView = () => {
       });
   };
 
+  const parseMintAccount = (info: any) => {
+
+  }
+
   // TODO: Yansel aquí es la jugada. Yo luego paso este código
   // hacia /multisig ya que allá hay que obtenerlo igual para tener
   // el count the mints por multisig. Por ahora el type es any[]
@@ -620,24 +624,31 @@ export const MultisigMintsView = () => {
       MEAN_MULTISIG
     );
 
-    const accountInfos = await connection.getProgramAccounts(TOKEN_PROGRAM_ID, {
+    const mintInfos = await connection.getProgramAccounts(TOKEN_PROGRAM_ID, {
       filters: [
         {
-          memcmp: { offset: 32, bytes: multisigSigner.toBase58() },
+          memcmp: { offset: 4, bytes: multisigSigner.toBase58() },
         }, 
         {
-          dataSize: AccountLayout.span
+          dataSize: MintLayout.span
         }
       ],
     });
 
-    if (!accountInfos || !accountInfos.length) { return []; }
+    if (!mintInfos || !mintInfos.length) { return []; }
 
-    const results = accountInfos.map((t: any) => {
-      let tokenAccount = ACCOUNT_LAYOUT.decode(t.account.data);
-      // let tokenAccount = AccountLayout.decode(t.account.data);
-      tokenAccount.address = t.pubkey;
-      return tokenAccount;
+    const results = mintInfos.map((t: any) => {
+      let mintAccount = MintLayout.decode(t.account.data);
+      mintAccount.address = t.pubkey;
+      return {
+        address: mintAccount.address,
+        isInitialized: mintAccount.isInitialized === 1 ? true : false,
+        decimals: mintAccount.decimals.toNumber(),
+        supply: mintAccount.supply.toNumber(),
+        mintAuthority: mintAccount.freezeAuthority ? new PublicKey(mintAccount.freezeAuthority) : null,
+        freezeAuthority: mintAccount.freezeAuthority ? new PublicKey(mintAccount.freezeAuthority) : null
+        
+      } as any;
     });
 
     consoleOut('multisig mints:', results, 'blue');
@@ -773,18 +784,19 @@ export const MultisigMintsView = () => {
   // Get Multisig Mint accounts
   useEffect(() => {
 
-    if (!connection || !multisigClient || !publicKey) {
+    if (!connection || !multisigClient || !publicKey || !loadingMints) {
       return;
     }
 
     const params = new URLSearchParams(location.search);
+
     if (params.has('multisig') && !multisigAddress) {
       consoleOut('Wait for multisigAddress on next render...', '', 'blue');
       return;
     }
 
     const timeout = setTimeout(() => {
-      setLoadingMints(true);
+      // setLoadingMints(true);
       getMultisigMints(connection, new PublicKey(multisigAddress))
       .then((result: any[]) => {
         setMultisigMints(result);
@@ -804,6 +816,7 @@ export const MultisigMintsView = () => {
   },[
     publicKey,
     connection,
+    loadingMints,
     multisigClient,
     multisigAddress,
     location.search,
