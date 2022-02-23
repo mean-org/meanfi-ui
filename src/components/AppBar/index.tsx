@@ -166,9 +166,6 @@ export const AppBar = (props: {
           </Menu.Item>
         )}
       </SubMenu>
-      <Menu.Item key="/ido">
-        <Link to="/ido">IDO</Link>
-      </Menu.Item>
       {(isLocal() || isWhitelisted) && (
         <Menu.Item key="/stats">
           <Link to="/stats">{t('ui-menus.main-menu.stats')}</Link>
@@ -287,9 +284,6 @@ export const AppBar = (props: {
                   <span className="menu-item-text">{t('ui-menus.main-menu.services.wallet-guide')}</span>
                   &nbsp;<IconExternalLink className="mean-svg-icons link" />
                 </a>
-              </li>
-              <li key="/ido" className="mobile-menu-item" style={{'--animation-order': isProd() ? 9 : 11} as CustomCSSProps}>
-                <Link to="/ido">IDO</Link>
               </li>
               {(isLocal() || isWhitelisted) && (
                 <li key="/stats" className="mobile-menu-item" style={{'--animation-order': 12} as CustomCSSProps}>

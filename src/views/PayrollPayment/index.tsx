@@ -785,7 +785,7 @@ export const PayrollPayment = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('Payroll Payment transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Payroll Payment transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {

@@ -151,7 +151,8 @@ const TransactionStatusProvider: React.FC = ({ children }) => {
         message.success({ content: t('transactions.status.tx-confirmation-status-confirmed'), key, duration: 3, className: 'custom-message' });
       } else {
         setFetchingTxStatus("error");
-        message.warning({ content: warningMessage, key, duration: 5, className: 'custom-message' });
+        // message.warning({ content: warningMessage, key, duration: 5, className: 'custom-message' });
+        message.destroy();
       }
       consoleOut('Total confirmation time (s):', ((new Date().getTime()) - txTimestampAdded) / 1000,'blue');
     })();

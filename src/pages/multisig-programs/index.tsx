@@ -15,13 +15,12 @@ import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { consoleOut, copyText, delay, getReadableDate, getShortDate, getTransactionOperationDescription, getTransactionStatusForLogs, isDev, isLocal } from '../../utils/ui';
 import { Identicon } from '../../components/Identicon';
-import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, toUiAmount } from '../../utils/utils';
+import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress } from '../../utils/utils';
 import { MultisigV2, MultisigTransaction, MultisigTransactionStatus, MultisigParticipant, Multisig } from '../../models/multisig';
 import { TransactionFees } from '@mean-dao/msp';
 import { useNativeAccount } from '../../contexts/accounts';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { customLogger } from '../..';
-import { BN } from 'bn.js';
 import { notify } from '../../utils/notifications';
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
 import { MultisigCreateProgramModal } from '../../components/MultisigCreateProgramModal';
@@ -43,7 +42,6 @@ export const MultisigProgramsView = () => {
   const { publicKey, wallet, connected } = useWallet();
   const {
     theme,
-    tokenList,
     isWhitelisted,
     detailsPanelOpen,
     transactionStatus,
@@ -902,6 +900,7 @@ export const MultisigProgramsView = () => {
         consoleOut('User is connecting...', publicKey.toBase58(), 'green');
         setLoadingMultisigAccounts(true);
         setLoadingPrograms(true);
+        setLoadingMultisigTxs(true);
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'green');
         setMultisigAccounts([]);
@@ -923,6 +922,8 @@ export const MultisigProgramsView = () => {
 
     if (multisigAddress && lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
       clearTransactionStatusContext();
+      setLoadingMultisigAccounts(true);
+      setLoadingMultisigTxs(true);
       setLoadingPrograms(true);
       refreshPrograms();
     }
@@ -1017,8 +1018,7 @@ export const MultisigProgramsView = () => {
 
   const onProgramUpgraded = useCallback(() => {
 
-    setLoadingMultisigAccounts(true);
-    setLoadingMultisigTxs(true);
+    setIsUpgradeProgramModalVisible(false);
 
   },[]);
 
@@ -1316,7 +1316,6 @@ export const MultisigProgramsView = () => {
             await delay(1000);
             onProgramUpgraded();
             setOngoingOperation(undefined);
-            setIsUpgradeProgramModalVisible(false);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -1358,8 +1357,7 @@ export const MultisigProgramsView = () => {
 
   const onIDLUpgraded = useCallback(() => {
 
-    setLoadingMultisigAccounts(true);
-    setLoadingMultisigTxs(true);
+    setIsUpgradeProgramModalVisible(false);
 
   },[]);
 
@@ -1655,7 +1653,6 @@ export const MultisigProgramsView = () => {
             await delay(1000);
             onIDLUpgraded();
             setOngoingOperation(undefined);
-            setIsUpgradeProgramModalVisible(false);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -1697,8 +1694,7 @@ export const MultisigProgramsView = () => {
 
   const onProgramAuthSet = useCallback(() => {
 
-    setLoadingMultisigAccounts(true);
-    setLoadingMultisigTxs(true);
+    setIsSetProgramAuthModalVisible(false);
 
   },[]);
 
@@ -1991,7 +1987,6 @@ export const MultisigProgramsView = () => {
             await delay(1000);
             onProgramAuthSet();
             setOngoingOperation(undefined);
-            setIsSetProgramAuthModalVisible(false);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -2019,11 +2014,7 @@ export const MultisigProgramsView = () => {
 
   const onTxExecuted = useCallback(() => {
 
-    setLoadingPrograms(true);
-    refreshPrograms();
-    setLoadingMultisigTxs(true);
-
-  },[refreshPrograms]);
+  },[]);
 
   const onExecuteApproveTx = useCallback(async (data: any) => {
 
@@ -2263,6 +2254,8 @@ export const MultisigProgramsView = () => {
           const sent = await sendTx();
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
+            consoleOut('Send Tx to confirmation queue:', signature);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.ApproveTransaction);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -2291,6 +2284,7 @@ export const MultisigProgramsView = () => {
     transactionFees.blockchainFee,
     transactionStatus.currentOperation,
     clearTransactionStatusContext,
+    startFetchTxSignatureInfo,
     setTransactionStatus,
   ]);
 
@@ -2559,6 +2553,7 @@ export const MultisigProgramsView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.ExecuteTransaction);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -2573,20 +2568,21 @@ export const MultisigProgramsView = () => {
     }
 
   }, [
-    onTxExecuted, 
-    clearTransactionStatusContext, 
-    connection, 
-    multisigClient.programId, 
-    multisigClient.transaction, 
-    multisigClient.provider.connection, 
-    nativeBalance, 
-    publicKey, 
-    setTransactionStatus, 
-    transactionCancelled, 
-    transactionFees.blockchainFee, 
-    transactionFees.mspFlatFee, 
+    wallet,
+    publicKey,
+    connection,
+    nativeBalance,
+    transactionCancelled,
+    multisigClient.programId,
+    multisigClient.transaction,
+    transactionFees.mspFlatFee,
+    transactionFees.blockchainFee,
+    multisigClient.provider.connection,
     transactionStatus.currentOperation,
-    wallet
+    clearTransactionStatusContext,
+    startFetchTxSignatureInfo,
+    setTransactionStatus,
+    onTxExecuted,
   ]);
 
   // Transaction confirm and execution modal launched from each Tx row
@@ -2615,9 +2611,6 @@ export const MultisigProgramsView = () => {
     setMultisigActionTransactionModalVisible(false);
     sethHighlightedMultisigTx(undefined);
     resetTransactionStatus();
-    setLoadingPrograms(true);
-    refreshPrograms();
-    setLoadingMultisigTxs(true);
   };
 
   const onTransactionModalClosed = () => {

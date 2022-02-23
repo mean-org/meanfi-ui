@@ -1,87 +1,49 @@
 import React, { useContext, useState } from 'react';
-import { Modal, Button, Spin } from 'antd';
+import { Modal, Button, Spin, AutoComplete } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { AppStateContext } from '../../contexts/appstate';
 import { TransactionStatus } from '../../models/enums';
-import { getTransactionOperationDescription, isValidAddress } from '../../utils/ui';
+import { consoleOut, getTransactionOperationDescription, isValidAddress } from '../../utils/ui';
 import { isError } from '../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TransactionFees } from '@mean-dao/money-streaming';
-import { formatThousands, getTokenAmountAndSymbolByTokenAddress, isValidNumber, shortenAddress } from '../../utils/utils';
-import { MintTokensInfo, MultisigMint } from '../../models/multisig';
+import { formatThousands, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
+import { MultisigMint, MultisigV2 } from '../../models/multisig';
 import { Identicon } from '../Identicon';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
-export const MultisigMintTokenModal = (props: {
+export const MultisigTransferMintAuthorityModal = (props: {
   handleClose: any;
   handleOk: any;
-  handleAfterClose: any;
   isVisible: boolean;
   isBusy: boolean;
   nativeBalance: number;
   transactionFees: TransactionFees;
+  selectedMultisig: MultisigV2 | undefined;
+  multisigAccounts: MultisigV2[];
   selectedMint: MultisigMint | undefined;
 }) => {
   const { t } = useTranslation('common');
   const {
     transactionStatus,
   } = useContext(AppStateContext);
-  const [tokenAddress, setTokenAddress] = useState('');
-  const [mintToAddress, setMintToAddress] = useState('');
-  const [mintAmount, setMintAmount] = useState('');
+
+  const [selectedAuthority, setSelectedAuthority] = useState('');
 
   const onAcceptModal = () => {
-    props.handleOk({
-      tokenAddress: tokenAddress,
-      amount: +mintAmount,
-      mintTo: mintToAddress
-    } as MintTokensInfo);
+    props.handleOk(selectedAuthority);
   }
 
   const onCloseModal = () => {
     props.handleClose();
   }
 
-  const onAfterClose = () => {
-
-    setTimeout(() => {
-      setTokenAddress('');
-      setMintToAddress('');
-      setMintAmount('');
-    }, 50);
-    props.handleAfterClose();
-  }
-
-  const onTokenAddressChange = (e: any) => {
-    const inputValue = e.target.value as string;
-    const trimmedValue = inputValue.trim();
-    setTokenAddress(trimmedValue);
-  }
-
-  const onMintToAddressChange = (e: any) => {
-    const inputValue = e.target.value as string;
-    const trimmedValue = inputValue.trim();
-    setMintToAddress(trimmedValue);
-  }
-
-  const onMintAmountChange = (e: any) => {
-    const newValue = e.target.value;
-    if (newValue === null || newValue === undefined || newValue === "") {
-      setMintAmount('');
-    } else if (isValidNumber(newValue)) {
-      setMintAmount(newValue);
-    }
-  };
-
   const isValidForm = (): boolean => {
-    return tokenAddress &&
-            mintToAddress &&
-            isValidAddress(tokenAddress) &&
-            isValidAddress(mintToAddress) &&
-            mintAmount &&
-            +mintAmount > 0
+    return selectedAuthority &&
+            isValidAddress(selectedAuthority) &&
+            (!props.selectedMultisig || (props.selectedMultisig && selectedAuthority !== props.selectedMultisig.address.toBase58()))
       ? true
       : false;
   }
@@ -89,6 +51,11 @@ export const MultisigMintTokenModal = (props: {
   const refreshPage = () => {
     props.handleClose();
     window.location.reload();
+  }
+
+  const onMultisigSelected = (e: any) => {
+    consoleOut('selectedAuthority:', e, 'blue');
+    setSelectedAuthority(e);
   }
 
   const renderMint = (item: MultisigMint) => {
@@ -117,40 +84,60 @@ export const MultisigMintTokenModal = (props: {
     );
   }
 
+  const renderMultisigSelectItem = (item: MultisigV2) => ({
+    key: item.address.toBase58(),
+    value: item.address.toBase58(),
+    label: (
+      <div className={`transaction-list-row`}>
+        <div className="icon-cell">
+          <Identicon address={item.id} style={{ width: "30", display: "inline-flex" }} />
+        </div>
+        <div className="description-cell">
+          {item.label ? (
+            <div className="title text-truncate">
+              {item.label}
+            </div>
+          ) : (
+            <div className="title text-truncate">{shortenAddress(item.id.toBase58(), 8)}</div>
+          )}
+          {
+            <div className="subtitle text-truncate">{shortenAddress(item.address.toBase58(), 8)}</div>
+          }
+        </div>
+        <div className="description-cell text-right">
+          <div className="subtitle">
+          {
+            t('multisig.multisig-accounts.pending-transactions', {
+              txs: item.pendingTxsAmount
+            })
+          }
+          </div>
+        </div>
+      </div>
+    ),
+  });
+
+  const renderMultisigSelectOptions = () => {
+    const options = props.multisigAccounts.map((multisig: MultisigV2, index: number) => {
+      return renderMultisigSelectItem(multisig);
+    });
+    return options;
+  }
+
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={<div className="modal-title">{t('multisig.mint-tokens.modal-title')}</div>}
+      title={<div className="modal-title">{t('multisig.multisig-mints.change-mint-authority-modal-title')}</div>}
       footer={null}
       visible={props.isVisible}
       onOk={onAcceptModal}
       onCancel={onCloseModal}
-      afterClose={onAfterClose}
       width={props.isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}>
 
       <div className={!props.isBusy ? "panel1 show" : "panel1 hide"}>
 
         {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
           <>
-            {/* Token address */}
-            {/* <div className="form-label">{t('multisig.mint-tokens.token-address-label')}</div>
-            <div className="well">
-              <input id="token-address-field"
-                className="general-text-input"
-                autoComplete="on"
-                autoCorrect="off"
-                type="text"
-                onChange={onTokenAddressChange}
-                placeholder={t('multisig.mint-tokens.token-address-placeholder')}
-                required={true}
-                spellCheck="false"
-                value={tokenAddress}/>
-              {tokenAddress && !isValidAddress(tokenAddress) && (
-                <span className="form-field-error">
-                  {t('transactions.validation.address-validation')}
-                </span>
-              )}
-            </div> */}
 
             {props.selectedMint && (
               <div className="mb-3">
@@ -161,48 +148,48 @@ export const MultisigMintTokenModal = (props: {
               </div>
             )}
 
-            {/* Mint To Address */}
-            <div className="form-label">{t('multisig.mint-tokens.mint-to-label')}</div>
-            <div className="well">
-              <input id="mint-to-field"
-                className="general-text-input"
-                autoComplete="on"
-                autoCorrect="off"
-                type="text"
-                onChange={onMintToAddressChange}
-                placeholder={t('multisig.mint-tokens.mint-to-placeholder')}
-                required={true}
-                spellCheck="false"
-                value={mintToAddress}/>
-              {mintToAddress && !isValidAddress(mintToAddress) && (
-                <span className="form-field-error">
-                  {t('transactions.validation.address-validation')}
-                </span>
-              )}
+            <div className="mb-3">
+              <div className="form-label">{t('multisig.transfer-authority.multisig-selector-label')}</div>
+              <div className="well">
+                <div className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
+                  <div className="left mr-0">
+                    <AutoComplete
+                      bordered={false}
+                      style={{ width: '100%' }}
+                      dropdownClassName="stream-select-dropdown"
+                      options={renderMultisigSelectOptions()}
+                      placeholder={t('multisig.transfer-authority.multisig-selector-placeholder')}
+                      onChange={(inputValue, option) => {
+                        setSelectedAuthority(inputValue);
+                      }}
+                      filterOption={(inputValue, option) => {
+                        const originalItem = props.multisigAccounts.find(i => {
+                          return i.address.toBase58() === option!.key ? true : false;
+                        });
+                        return option!.value.indexOf(inputValue) !== -1 || originalItem?.address.toBase58().indexOf(inputValue) !== -1
+                      }}
+                      onSelect={onMultisigSelected}
+                    />
+                  </div>
+                </div>
+                {props.selectedMultisig && selectedAuthority === props.selectedMultisig.address.toBase58() ? (
+                  <span className="form-field-error">
+                    {t('multisig.multisig-mints.multisig-already-owns-the-mint')}
+                  </span>
+                ) : selectedAuthority && !isValidAddress(selectedAuthority) ? (
+                  <span className="form-field-error">
+                    {t('transactions.validation.address-validation')}
+                  </span>
+                ) : null}
+              </div>
             </div>
-            {/* Mint amount */}
-            <div className="form-label">{t('multisig.mint-tokens.mint-amount-label')}</div>
-            <div className="well">
-              <input
-                className="general-text-input"
-                inputMode="decimal"
-                autoComplete="off"
-                autoCorrect="off"
-                type="text"
-                onChange={onMintAmountChange}
-                pattern="^[0-9]*$"
-                placeholder={t('multisig.mint-tokens.mint-amount-placeholder')}
-                minLength={1}
-                spellCheck="false"
-                value={mintAmount}
-              />
-            </div>
+
           </>
         ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
           <>
             <div className="transaction-progress">
               <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-              <h4 className="font-bold">{t('multisig.mint-tokens.success-message')}</h4>
+              <h4 className="font-bold">{t('multisig.multisig-mints.success-message')}</h4>
             </div>
           </>
         ) : (
@@ -287,9 +274,9 @@ export const MultisigMintTokenModal = (props: {
               }
             }}>
             {props.isBusy
-              ? t('multisig.mint-tokens.main-cta-busy')
+              ? t('multisig.multisig-mints.cta-change-mint-authority-busy')
               : transactionStatus.currentOperation === TransactionStatus.Iddle
-                ? t('multisig.mint-tokens.main-cta')
+                ? t('multisig.multisig-mints.cta-change-mint-authority')
                 : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
                   ? t('general.cta-finish')
                   : t('general.refresh')
