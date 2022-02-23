@@ -6,6 +6,7 @@ export { HomeView } from "./home";
 export { IdoBlockedView } from './ido-blocked';
 export { IdoLiveView } from './ido-live';
 export { IdoView } from './ido';
+export { MultisigMintsView } from './multisig-mints';
 export { MultisigProgramsView } from './multisig-programs';
 export { MultisigVaultsView } from './multisig-vaults';
 export { MultisigView } from './multisig';

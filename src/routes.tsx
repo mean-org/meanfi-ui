@@ -22,7 +22,8 @@ import {
   MultisigView,
   StatsView,
   MultisigVaultsView,
-  MultisigProgramsView
+  MultisigProgramsView,
+  MultisigMintsView
 } from "./pages";
 
 import { ServiceUnavailableView } from "./pages/service-unavailable";
@@ -72,6 +73,7 @@ export function AppRoutes() {
                       <Route path="/stats" element={<StatsView />} />
                       <Route path="/custody" element={<CustodyView />} />
                       <Route path="/multisig" element={<MultisigView />} />
+                      <Route path="/multisig-mints" element={<MultisigMintsView />} />
                       <Route path="/multisig-vaults" element={<MultisigVaultsView />} />
                       <Route path="/multisig-programs" element={<MultisigProgramsView />} />
                       <Route path="/service-unavailable" element={<ServiceUnavailableView />} />

@@ -12,9 +12,9 @@ import common_en from "./translations/en/common.json";
 import common_fr from "./translations/fr/common.json";
 import common_pt from "./translations/pt/common.json";
 import common_tr from "./translations/tr/common.json";
-import common_zh from "./translations/zh/common.json";
-import common_vi from "./translations/vi/common.json";
-import common_ko from "./translations/ko/common.json";
+// import common_zh from "./translations/zh/common.json";
+// import common_vi from "./translations/vi/common.json";
+// import common_ko from "./translations/ko/common.json";
 import { CustomLoggerService } from "./utils/logger";
 import GitInfo from 'react-git-info/macro';
 
@@ -44,15 +44,15 @@ i18next.use(LanguageDetector).init({
     tr: {
       common: common_tr
     },
-    zh: {
-      common: common_zh
-    },
-    vi: {
-      common: common_vi
-    },
-    ko: {
-      common: common_ko
-    },
+    // zh: {
+    //   common: common_zh
+    // },
+    // vi: {
+    //   common: common_vi
+    // },
+    // ko: {
+    //   common: common_ko
+    // },
   },
 });
 

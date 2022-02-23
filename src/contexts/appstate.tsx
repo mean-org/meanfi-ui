@@ -73,6 +73,7 @@ interface AppStateConfig {
   streamList: Array<Stream | StreamInfo> | undefined;
   selectedStream: Stream | StreamInfo | undefined;
   streamDetail: Stream | StreamInfo | undefined;
+  activeStream: StreamInfo | Stream | undefined;
   highLightableStreamId: string | undefined;
   streamProgramAddress: string;
   streamV2ProgramAddress: string;
@@ -190,6 +191,7 @@ const contextDefaultValues: AppStateConfig = {
   streamList: undefined,
   selectedStream: undefined,
   streamDetail: undefined,
+  activeStream: undefined,
   highLightableStreamId: undefined,
   streamProgramAddress: '',
   streamV2ProgramAddress: '',
@@ -365,6 +367,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [streamList, setStreamList] = useState<Array<StreamInfo | Stream> | undefined>();
   const [selectedStream, updateSelectedStream] = useState<Stream | StreamInfo | undefined>();
   const [streamDetail, updateStreamDetail] = useState<Stream | StreamInfo | undefined>();
+  const [activeStream, setActiveStream] = useState<Stream | StreamInfo | undefined>();
   const [highLightableStreamId, setHighLightableStreamId] = useState<string | undefined>(contextDefaultValues.highLightableStreamId);
   const [highLightableMultisigId, setHighLightableMultisigId] = useState<string | undefined>(contextDefaultValues.highLightableMultisigId);
 
@@ -512,6 +515,7 @@ const AppStateProvider: React.FC = ({ children }) => {
           consoleOut('customStream', detail);
           if (detail) {
             setStreamDetail(detail);
+            setActiveStream(detail);
             if (dock) {
               setStreamList([detail]);
               getStreamActivity(streamId, detail.version);
@@ -609,6 +613,7 @@ const AppStateProvider: React.FC = ({ children }) => {
           consoleOut('detail:', detail, 'blue');
           if (detail) {
             updateStreamDetail(detail);
+            setActiveStream(detail);
             const token = getTokenByMintAddress(detail.associatedToken as string);
             setSelectedToken(token);
             if (!loadingStreamActivity) {
@@ -875,6 +880,7 @@ const AppStateProvider: React.FC = ({ children }) => {
                     .then((detail: Stream | StreamInfo) => {
                       if (detail) {
                         updateStreamDetail(detail);
+                        setActiveStream(detail);
                         const token = getTokenByMintAddress(detail.associatedToken as string);
                         setSelectedToken(token);
                         if (!loadingStreamActivity) {
@@ -897,6 +903,7 @@ const AppStateProvider: React.FC = ({ children }) => {
                 } else {
                   if (item) {
                     updateStreamDetail(item);
+                    setActiveStream(item);
                     getStreamActivity(item.id as string, item.version);
                   }
                 }
@@ -904,6 +911,7 @@ const AppStateProvider: React.FC = ({ children }) => {
                 setStreamActivity([]);
                 updateSelectedStream(undefined);
                 updateStreamDetail(undefined);
+                setActiveStream(undefined);
               }
               updateLoadingStreams(false);
             }).catch(err => {
@@ -1262,6 +1270,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         streamList,
         selectedStream,
         streamDetail,
+        activeStream,
         highLightableStreamId,
         streamProgramAddress,
         streamV2ProgramAddress,
