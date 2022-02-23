@@ -130,9 +130,9 @@ export const MultisigView = () => {
   // Treasuries
   const [multisigTreasuries, setMultisigTreasuries] = useState<Treasury[]>([]);
   // Mints
-  const [loadingMints, setLoadingMints] = useState(true);
-  const [multisigMints, setMultisigMints] = useState<MultisigMint[]>([]);
-  const [selectedMint, setSelectedMint] = useState<MultisigMint | undefined>(undefined);
+  // const [loadingMints, setLoadingMints] = useState(true);
+  // const [multisigMints, setMultisigMints] = useState<MultisigMint[]>([]);
+  // const [selectedMint, setSelectedMint] = useState<MultisigMint | undefined>(undefined);
   // Tx control
   const [isBusy, setIsBusy] = useState(false);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
@@ -2987,48 +2987,48 @@ export const MultisigView = () => {
   }, [connection]);
 
   // Get multisig mint accounts on demmand
-  const getMultisigMints = useCallback(async (
-    connection: Connection,
-    multisig: PublicKey
+  // const getMultisigMints = useCallback(async (
+  //   connection: Connection,
+  //   multisig: PublicKey
 
-  ) => {
+  // ) => {
 
-    const [multisigSigner] = await PublicKey.findProgramAddress(
-      [multisig.toBuffer()],
-      MEAN_MULTISIG
-    );
+  //   const [multisigSigner] = await PublicKey.findProgramAddress(
+  //     [multisig.toBuffer()],
+  //     MEAN_MULTISIG
+  //   );
 
-    const mintInfos = await connection.getProgramAccounts(TOKEN_PROGRAM_ID, {
-      filters: [
-        {
-          memcmp: { offset: 4, bytes: multisigSigner.toBase58() },
-        }, 
-        {
-          dataSize: MintLayout.span
-        }
-      ],
-    });
+  //   const mintInfos = await connection.getProgramAccounts(TOKEN_PROGRAM_ID, {
+  //     filters: [
+  //       {
+  //         memcmp: { offset: 4, bytes: multisigSigner.toBase58() },
+  //       }, 
+  //       {
+  //         dataSize: MintLayout.span
+  //       }
+  //     ],
+  //   });
 
-    if (!mintInfos || !mintInfos.length) { return []; }
+  //   if (!mintInfos || !mintInfos.length) { return []; }
 
-    const results = mintInfos.map((t: any) => {
-      let mintAccount = MintLayout.decode(t.account.data);
-      mintAccount.address = t.pubkey;
-      return {
-        address: mintAccount.address,
-        isInitialized: mintAccount.isInitialized === 1 ? true : false,
-        decimals: mintAccount.decimals,
-        supply: new BN(mintAccount.supply).toNumber(),
-        mintAuthority: mintAccount.freezeAuthority ? new PublicKey(mintAccount.freezeAuthority) : null,
-        freezeAuthority: mintAccount.freezeAuthority ? new PublicKey(mintAccount.freezeAuthority) : null
+  //   const results = mintInfos.map((t: any) => {
+  //     let mintAccount = MintLayout.decode(t.account.data);
+  //     mintAccount.address = t.pubkey;
+  //     return {
+  //       address: mintAccount.address,
+  //       isInitialized: mintAccount.isInitialized === 1 ? true : false,
+  //       decimals: mintAccount.decimals,
+  //       supply: new BN(mintAccount.supply).toNumber(),
+  //       mintAuthority: mintAccount.freezeAuthority ? new PublicKey(mintAccount.freezeAuthority) : null,
+  //       freezeAuthority: mintAccount.freezeAuthority ? new PublicKey(mintAccount.freezeAuthority) : null
         
-      } as MultisigMint;
-    });
+  //     } as MultisigMint;
+  //   });
 
-    consoleOut('multisig mints:', results, 'blue');
-    return results;
+  //   consoleOut('multisig mints:', results, 'blue');
+  //   return results;
 
-  },[]);
+  // },[]);
 
   // Refresh the multisig accounts list
   useEffect(() => {
@@ -3319,34 +3319,34 @@ export const MultisigView = () => {
   ]);
 
   // Get Multisig Mint accounts
-  useEffect(() => {
+  // useEffect(() => {
 
-    if (!connection || !publicKey || !multisigClient || !selectedMultisig || !loadingMints) {
-      return;
-    }
+  //   if (!connection || !publicKey || !multisigClient || !selectedMultisig || !loadingMints) {
+  //     return;
+  //   }
 
-    const timeout = setTimeout(() => {
-      getMultisigMints(connection, selectedMultisig.address)
-      .then((result: MultisigMint[]) => {
-        setMultisigMints(result);
-        consoleOut('Mints:', result, 'blue');
-      })
-      .catch(err => console.error(err))
-      .finally(() => setLoadingMints(false));
-    });
+  //   const timeout = setTimeout(() => {
+  //     getMultisigMints(connection, selectedMultisig.address)
+  //     .then((result: MultisigMint[]) => {
+  //       setMultisigMints(result);
+  //       consoleOut('Mints:', result, 'blue');
+  //     })
+  //     .catch(err => console.error(err))
+  //     .finally(() => setLoadingMints(false));
+  //   });
 
-    return () => {
-      clearTimeout(timeout);
-    }
+  //   return () => {
+  //     clearTimeout(timeout);
+  //   }
 
-  },[
-    publicKey,
-    connection,
-    loadingMints,
-    multisigClient,
-    selectedMultisig,
-    getMultisigMints,
-  ]);
+  // },[
+  //   publicKey,
+  //   connection,
+  //   loadingMints,
+  //   multisigClient,
+  //   selectedMultisig,
+  //   getMultisigMints,
+  // ]);
 
   // Load/Unload multisig on wallet connect/disconnect
   useEffect(() => {
@@ -3953,7 +3953,10 @@ export const MultisigView = () => {
                 navigate(url);
               }
             }}>
-            {multisigMints && multisigMints.length > 0 ? (
+            <span>
+              {t('multisig.multisig-account-detail.cta-no-mints')}
+            </span>
+            {/* {multisigMints && multisigMints.length > 0 ? (
               <span>
                 {t('multisig.multisig-account-detail.cta-mints', {
                   itemCount: multisigMints.length
@@ -3963,22 +3966,8 @@ export const MultisigView = () => {
               <span>
                 {t('multisig.multisig-account-detail.cta-no-mints')}
               </span>
-            )}
+            )} */}
           </Button>
-
-          {/* {isUnderDevelopment() && (
-            <Dropdown overlay={mintOptionsMenu} trigger={["click"]}>
-              <Button
-                type="default"
-                size="middle"
-                className="dropdown-like-button"
-                disabled={isTxInProgress() || loadingMultisigAccounts}
-                onClick={() => {}}>
-                <span className="mr-2">Mint</span>
-                <IconCaretDown className="mean-svg-icons" />
-              </Button>
-            </Dropdown>
-          )} */}
 
           {/* Data */}
           {isUnderDevelopment() && (
