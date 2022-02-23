@@ -75,6 +75,15 @@ export type MultisigVault = {
   state: number;
 }
 
+export type MultisigMint = {
+  address: PublicKey;
+  isInitialized: boolean;
+  decimals: number;
+  supply: any;
+  mintAuthority: PublicKey;
+  freezeAuthority: PublicKey;
+}
+
 export type MultisigParticipant = {
   address: string;
   name: string;

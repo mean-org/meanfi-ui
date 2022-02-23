@@ -8,10 +8,9 @@ import { consoleOut, getTransactionOperationDescription, isValidAddress } from '
 import { isError } from '../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TransactionFees } from '@mean-dao/money-streaming';
-import { getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, makeDecimal, shortenAddress } from '../../utils/utils';
-import { MultisigV2, MultisigVault } from '../../models/multisig';
+import { formatThousands, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
+import { MultisigMint, MultisigV2 } from '../../models/multisig';
 import { Identicon } from '../Identicon';
-import { FALLBACK_COIN_IMAGE } from '../../constants';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -24,7 +23,7 @@ export const MultisigTransferMintAuthorityModal = (props: {
   transactionFees: TransactionFees;
   selectedMultisig: MultisigV2 | undefined;
   multisigAccounts: MultisigV2[];
-  // selectedMint: any;
+  selectedMint: MultisigMint | undefined;
 }) => {
   const { t } = useTranslation('common');
   const {
@@ -59,48 +58,31 @@ export const MultisigTransferMintAuthorityModal = (props: {
     setSelectedAuthority(e);
   }
 
-  /*
-  const renderMint = (item: MultisigVault) => {
-    const token = getTokenByMintAddress(item.mint.toBase58());
-    const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
-      event.currentTarget.src = FALLBACK_COIN_IMAGE;
-      event.currentTarget.className = "error";
-    };
-
+  const renderMint = (item: MultisigMint) => {
     return (
       <div className="transaction-list-row no-pointer">
         <div className="icon-cell">
           <div className="token-icon">
-            {token && token.logoURI ? (
-              <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
-            ) : (
-              <Identicon address={item.mint.toBase58()} style={{
-                width: "28px",
-                display: "inline-flex",
-                height: "26px",
-                overflow: "hidden",
-                borderRadius: "50%"
-              }} />
-            )}
+            <Identicon address={item.address} style={{
+              width: "28px",
+              display: "inline-flex",
+              height: "26px",
+              overflow: "hidden",
+              borderRadius: "50%"
+            }} />
           </div>
         </div>
         <div className="description-cell">
-          <div className="title text-truncate">{token ? token.symbol : `Unknown token [${shortenAddress(item.mint.toBase58(), 6)}]`}</div>
-          <div className="subtitle text-truncate">{shortenAddress(item.address.toBase58(), 8)}</div>
+          <div className="title text-truncate">{shortenAddress(item.address.toBase58(), 8)}</div>
+          <div className="subtitle text-truncate">decimals: {item.decimals}</div>
         </div>
         <div className="rate-cell">
-          <div className="rate-amount text-uppercase">
-            {getTokenAmountAndSymbolByTokenAddress(
-              makeDecimal(item.amount, token?.decimals || 6),
-              token ? token.address as string : '',
-              true
-            )}
-          </div>
+          <div className="rate-amount text-uppercase">{formatThousands(item.supply, item.decimals)}</div>
+          <div className="interval">supply</div>
         </div>
       </div>
     );
   }
-  */
 
   const renderMultisigSelectItem = (item: MultisigV2) => ({
     key: item.address.toBase58(),
@@ -145,7 +127,7 @@ export const MultisigTransferMintAuthorityModal = (props: {
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={<div className="modal-title">{t('multisig.transfer-authority.modal-title')}</div>}
+      title={<div className="modal-title">{t('multisig.multisig-mints.change-mint-authority-modal-title')}</div>}
       footer={null}
       visible={props.isVisible}
       onOk={onAcceptModal}
@@ -157,21 +139,14 @@ export const MultisigTransferMintAuthorityModal = (props: {
         {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
           <>
 
-            {/* {props.selectedMint && (
+            {props.selectedMint && (
               <div className="mb-3">
-                <div className="form-label">{t('multisig.transfer-authority.selected-vault-label')}</div>
+                <div className="form-label">{t('multisig.multisig-mints.selected-mint-label')}</div>
                 <div className="well">
                   {renderMint(props.selectedMint)}
                 </div>
               </div>
-            )} */}
-
-            <div className="mb-3">
-              <div className="form-label">{t('multisig.transfer-authority.selected-vault-label')}</div>
-              <div className="well">
-                render mint here
-              </div>
-            </div>
+            )}
 
             <div className="mb-3">
               <div className="form-label">{t('multisig.transfer-authority.multisig-selector-label')}</div>
@@ -199,7 +174,7 @@ export const MultisigTransferMintAuthorityModal = (props: {
                 </div>
                 {props.selectedMultisig && selectedAuthority === props.selectedMultisig.address.toBase58() ? (
                   <span className="form-field-error">
-                    {t('multisig.transfer-authority.multisig-already-owns-the-vault')}
+                    {t('multisig.multisig-mints.multisig-already-owns-the-mint')}
                   </span>
                 ) : selectedAuthority && !isValidAddress(selectedAuthority) ? (
                   <span className="form-field-error">
@@ -214,7 +189,7 @@ export const MultisigTransferMintAuthorityModal = (props: {
           <>
             <div className="transaction-progress">
               <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-              <h4 className="font-bold">{t('multisig.transfer-authority.success-message')}</h4>
+              <h4 className="font-bold">{t('multisig.multisig-mints.success-message')}</h4>
             </div>
           </>
         ) : (
@@ -299,9 +274,9 @@ export const MultisigTransferMintAuthorityModal = (props: {
               }
             }}>
             {props.isBusy
-              ? t('multisig.transfer-authority.main-cta-busy')
+              ? t('multisig.multisig-mints.cta-change-mint-authority-busy')
               : transactionStatus.currentOperation === TransactionStatus.Iddle
-                ? t('multisig.transfer-authority.main-cta')
+                ? t('multisig.multisig-mints.cta-change-mint-authority')
                 : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
                   ? t('general.cta-finish')
                   : t('general.refresh')

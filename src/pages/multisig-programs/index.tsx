@@ -15,13 +15,12 @@ import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { consoleOut, copyText, delay, getReadableDate, getShortDate, getTransactionOperationDescription, getTransactionStatusForLogs, isDev, isLocal } from '../../utils/ui';
 import { Identicon } from '../../components/Identicon';
-import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, toUiAmount } from '../../utils/utils';
+import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress } from '../../utils/utils';
 import { MultisigV2, MultisigTransaction, MultisigTransactionStatus, MultisigParticipant, Multisig } from '../../models/multisig';
 import { TransactionFees } from '@mean-dao/msp';
 import { useNativeAccount } from '../../contexts/accounts';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { customLogger } from '../..';
-import { BN } from 'bn.js';
 import { notify } from '../../utils/notifications';
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
 import { MultisigCreateProgramModal } from '../../components/MultisigCreateProgramModal';
@@ -43,7 +42,6 @@ export const MultisigProgramsView = () => {
   const { publicKey, wallet, connected } = useWallet();
   const {
     theme,
-    tokenList,
     isWhitelisted,
     detailsPanelOpen,
     transactionStatus,

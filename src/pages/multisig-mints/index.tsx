@@ -5,7 +5,7 @@ import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { useWallet } from '../../contexts/wallet';
 import { AppStateContext } from '../../contexts/appstate';
 import { Button, Col, Divider, Empty, Modal, Row, Space, Spin, Tooltip } from 'antd';
-import { ArrowLeftOutlined, CheckOutlined, InfoCircleOutlined, LoadingOutlined, ReloadOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, CheckOutlined, CopyOutlined, InfoCircleOutlined, LoadingOutlined, ReloadOutlined } from '@ant-design/icons';
 import { IconCoin, IconExternalLink, IconShieldOutline } from '../../Icons';
 import { PreFooter } from '../../components/PreFooter';
 import { ConfirmOptions, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction, TransactionInstruction } from '@solana/web3.js';
@@ -13,11 +13,11 @@ import { Program, Provider } from '@project-serum/anchor';
 import MultisigIdl from "../../models/mean-multisig-idl";
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
 import { AccountLayout, MintInfo, MintLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { consoleOut, copyText, delay, getReadableDate, getShortDate, getTransactionOperationDescription, getTransactionStatusForLogs, isDev, isLocal } from '../../utils/ui';
 import { Identicon } from '../../components/Identicon';
-import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume, toUiAmount } from '../../utils/utils';
-import { MultisigV2, MultisigParticipant, MultisigTransaction, MultisigTransactionStatus, Multisig, CreateMintPayload } from '../../models/multisig';
+import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress, toUiAmount } from '../../utils/utils';
+import { MultisigV2, MultisigParticipant, MultisigTransaction, MultisigTransactionStatus, Multisig, CreateMintPayload, MultisigMint } from '../../models/multisig';
 import { TransactionFees } from '@mean-dao/msp';
 import { useNativeAccount } from '../../contexts/accounts';
 import { OperationType, TransactionStatus } from '../../models/enums';
@@ -72,8 +72,8 @@ export const MultisigMintsView = () => {
   const [multisigAccounts, setMultisigAccounts] = useState<(MultisigV2 | Multisig)[]>([]);
   // Mints
   const [loadingMints, setLoadingMints] = useState(true);
-  const [multisigMints, setMultisigMints] = useState<any[]>([]);
-  const [selectedMint, setSelectedMint] = useState<any>(undefined);
+  const [multisigMints, setMultisigMints] = useState<MultisigMint[]>([]);
+  const [selectedMint, setSelectedMint] = useState<MultisigMint | undefined>(undefined);
   // Active/Selected multisig
   const [multisigAddress, setMultisigAddress] = useState('');
   const [selectedMultisig, setSelectedMultisig] = useState<MultisigV2 | Multisig | undefined>(undefined);
@@ -604,14 +604,6 @@ export const MultisigMintsView = () => {
       });
   };
 
-  const parseMintAccount = (info: any) => {
-
-  }
-
-  // TODO: Yansel aquí es la jugada. Yo luego paso este código
-  // hacia /multisig ya que allá hay que obtenerlo igual para tener
-  // el count the mints por multisig. Por ahora el type es any[]
-
   // Get multisig mint accounts on demmand
   const getMultisigMints = useCallback(async (
     connection: Connection,
@@ -648,7 +640,7 @@ export const MultisigMintsView = () => {
         mintAuthority: mintAccount.freezeAuthority ? new PublicKey(mintAccount.freezeAuthority) : null,
         freezeAuthority: mintAccount.freezeAuthority ? new PublicKey(mintAccount.freezeAuthority) : null
         
-      } as any;
+      } as MultisigMint;
     });
 
     consoleOut('multisig mints:', results, 'blue');
@@ -660,7 +652,7 @@ export const MultisigMintsView = () => {
 
     setLoadingMints(true);
     getMultisigMints(connection, new PublicKey(multisigAddress))
-    .then((result: any[]) => {
+    .then((result: MultisigMint[]) => {
       setMultisigMints(result);
       if (result.length > 0 && !selectedMint) {
         setSelectedMint(result[0]);
@@ -796,9 +788,8 @@ export const MultisigMintsView = () => {
     }
 
     const timeout = setTimeout(() => {
-      // setLoadingMints(true);
       getMultisigMints(connection, new PublicKey(multisigAddress))
-      .then((result: any[]) => {
+      .then((result: MultisigMint[]) => {
         setMultisigMints(result);
         if (result.length > 0) {
           setSelectedMint(result[0]);
@@ -2812,13 +2803,12 @@ export const MultisigMintsView = () => {
                   </span>
                 </div>
                 <div className="transaction-detail-row">
-                  value here
-                  {/* {
-                    getTokenIconAndAmount(
-                      selectedMint.mint.toBase58(),
-                      selectedMint.amount
-                    )
-                  } */}
+                  <span className="info-icon token-icon">
+                    <Identicon address={selectedMint.address} style={{ width: "30", display: "inline-flex" }} />
+                  </span>
+                  <span className="info-data">
+                    {shortenAddress(selectedMint.address.toBase58(), 8)}
+                  </span>
                 </div>
               </Col>
               <Col span={12}>
@@ -2831,15 +2821,14 @@ export const MultisigMintsView = () => {
                   <span className="info-icon">
                     <IconShieldOutline className="mean-svg-icons" />
                   </span>
-                  value here
-                  {/* <Link to="/multisig" className="info-data flex-row wrap align-items-center simplelink underline-on-hover"
+                  <Link to="/multisig" className="info-data flex-row wrap align-items-center simplelink underline-on-hover"
                     onClick={e => {
                       e.preventDefault();
                       e.stopPropagation();
-                      setHighLightableMultisigId(selectedMint.owner.toBase58());
+                      setHighLightableMultisigId(selectedMint.mintAuthority.toBase58());
                       navigate('/multisig');
                     }}>
-                    {shortenAddress(selectedMint.owner.toBase58(), 6)}
+                    {shortenAddress(selectedMint.mintAuthority.toBase58(), 6)}
                   </Link>
                   <div className="icon-button-container">
                     <Button
@@ -2847,9 +2836,9 @@ export const MultisigMintsView = () => {
                       shape="circle"
                       size="middle"
                       icon={<CopyOutlined />}
-                      onClick={() => copyAddressToClipboard(selectedMint.owner.toBase58())}
+                      onClick={() => copyAddressToClipboard(selectedMint.mintAuthority.toBase58())}
                     />
-                  </div> */}
+                  </div>
                 </div>
               </Col>
             </Row>
@@ -2865,11 +2854,6 @@ export const MultisigMintsView = () => {
     <>
     {multisigMints && multisigMints.length ? (
       multisigMints.map((item, index) => {
-        // const token = getTokenByMintAddress(item.mint.toBase58());
-        // const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
-        //   event.currentTarget.src = FALLBACK_COIN_IMAGE;
-        //   event.currentTarget.className = "error";
-        // };
         const onMintSelected = (ev: any) => {
           setSelectedMint(item);
           setDtailsPanelOpen(true);
@@ -2880,46 +2864,32 @@ export const MultisigMintsView = () => {
           <div
             key={`${index + 50}`}
             onClick={onMintSelected}
-            className="transaction-list-row"
-            // className={
-            //   `transaction-list-row ${
-            //     selectedMint && selectedMint.address && selectedMint.address.equals(item.address)
-            //       ? 'selected'
-            //       : ''
-            //   }`
-            // }
-            >
-
-            <div className="description-cell">Item {index + 1} here</div>
-
-            {/* <div className="icon-cell">
+            className={
+              `transaction-list-row ${
+                selectedMint && selectedMint.address && selectedMint.address.equals(item.address)
+                  ? 'selected'
+                  : ''
+              }`
+            }>
+            <div className="icon-cell">
               <div className="token-icon">
-                {token && token.logoURI ? (
-                  <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
-                ) : (
-                  <Identicon address={item.mint.toBase58()} style={{
-                    width: "28px",
-                    display: "inline-flex",
-                    height: "26px",
-                    overflow: "hidden",
-                    borderRadius: "50%"
-                  }} />
-                )}
+                <Identicon address={item.address.toBase58()} style={{
+                  width: "28px",
+                  display: "inline-flex",
+                  height: "26px",
+                  overflow: "hidden",
+                  borderRadius: "50%"
+                }} />
               </div>
             </div>
             <div className="description-cell">
-              <div className="title text-truncate">{token ? token.symbol : `Unknown token [${shortenAddress(item.mint.toBase58(), 6)}]`}</div>
-              <div className="subtitle text-truncate">{shortenAddress(item.address.toBase58(), 8)}</div>
+              <div className="title text-truncate">{shortenAddress(item.address.toBase58(), 8)}</div>
+              <div className="subtitle text-truncate">decimals: {item.decimals}</div>
             </div>
             <div className="rate-cell">
-              <div className="rate-amount text-uppercase">
-                {getTokenAmountAndSymbolByTokenAddress(
-                  toUiAmount(new BN(item.amount), token?.decimals || 6),
-                  token ? token.address as string : '',
-                  true
-                )}
-              </div>
-            </div> */}
+              <div className="rate-amount text-uppercase">{formatThousands(item.supply, item.decimals)}</div>
+              <div className="interval">supply</div>
+            </div>
           </div>
         );
       })
@@ -3111,7 +3081,7 @@ export const MultisigMintsView = () => {
           isBusy={isBusy}
           selectedMultisig={selectedMultisig}
           multisigAccounts={multisigAccounts}
-          // selectedVault={selectedMint}
+          selectedMint={selectedMint}
         />
       )}
 
@@ -3123,6 +3093,7 @@ export const MultisigMintsView = () => {
         handleAfterClose={onAfterEveryModalClose}
         handleClose={() => setIsMintTokenModalVisible(false)}
         isBusy={isBusy}
+        selectedMint={selectedMint}
       />
 
       {/* Transaction confirm and execution modal launched from each Tx row */}
