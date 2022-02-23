@@ -28,6 +28,8 @@ export const InvestView = () => {
   const { t } = useTranslation('common');
 
   const [currentTab, setCurrentTab] = useState<SwapOption>("stake");
+  const [stakingRewards, setStakingRewards] = useState<number>(0);
+  const annualPercentageYield = 5;
 
   const investItems = [
     {
@@ -61,6 +63,26 @@ export const InvestView = () => {
       setActiveTab(e.target.innerHTML);
     }
   };
+
+  // Withdraw funds modal
+  const [isWithdrawModalVisible, setIsWithdrawModalVisibility] = useState(false);
+  const showWithdrawModal = useCallback(() => setIsWithdrawModalVisibility(true), []);
+  const closeWithdrawModal = useCallback(() => setIsWithdrawModalVisibility(false), []);
+
+  const onWithdrawModalStart = useCallback(async () => {
+    showWithdrawModal();
+  }, [
+    showWithdrawModal
+  ]);
+
+  const onAfterWithdrawModalClosed = () => {
+    setStakingRewards(0);
+    closeWithdrawModal();
+  }
+
+  useEffect(() => {
+    setStakingRewards(parseFloat(unstakeAmount) * annualPercentageYield / 100);
+  }, [unstakeAmount]);  
 
   const renderInvestOptions = (
     <>
@@ -142,9 +164,11 @@ export const InvestView = () => {
                 {activeTab === "Stake MEAN" && (
                   <>
                     {/* Background animation */}
-                    <div className="staking-background">
-                      <img className="inbound" src="/assets/incoming-crypto.svg" alt="" />
-                    </div>
+                    {stakingRewards > 0 && (
+                      <div className="staking-background">
+                        <img className="inbound" src="/assets/incoming-crypto.svg" alt="" />
+                      </div>
+                    )}
 
                     {/* Staking paragraphs */}
                     <p>{t("invest.panel-right.first-text")}</p>
@@ -222,7 +246,7 @@ export const InvestView = () => {
                               <span>{"Avg. Locked Yield"}</span>
                             </Col>
                             <Col span={12}>
-                              <span className="staking-number">114.98%</span>
+                              <span className="staking-number">{annualPercentageYield}%</span>
                             </Col>
                             {/* <Col span={12}>
                               <span>{"My Locked eMEAN"}</span>
@@ -241,10 +265,12 @@ export const InvestView = () => {
                             <Col span={24} className="d-flex flex-column justify-content-end align-items-end mt-1">
                               <div className="transaction-detail-row">
                                 <span className="info-icon">
-                                  <span role="img" aria-label="arrow-down" className="anticon anticon-arrow-down mean-svg-icons success bounce">
-                                  <ArrowDownOutlined className="mean-svg-icons" />
-                                  </span>
-                                  <span className="staking-value mb-2 mt-1">5.229181 {selectedToken && selectedToken.name}</span>
+                                  {stakingRewards > 0 && (
+                                    <span role="img" aria-label="arrow-down" className="anticon anticon-arrow-down mean-svg-icons success bounce">
+                                    <ArrowDownOutlined className="mean-svg-icons" />
+                                    </span>
+                                  )}
+                                  <span className="staking-value mb-2 mt-1">{!stakingRewards ? 0 : stakingRewards} {selectedToken && selectedToken.name}</span>
                                 </span>
                               </div>
                             </Col>
@@ -257,11 +283,37 @@ export const InvestView = () => {
                                   shape="round"
                                   size="small"
                                   className="thin-stroke"
+                                  onClick={onWithdrawModalStart}
+                                  disabled={!stakingRewards || stakingRewards === 0}
                                 >
                                   {t("invest.panel-right.staking-data.withdraw-button")}
                                 </Button>
                               </Space>
                             </Col>
+
+                            {/* Withdraw funds transaction execution modal */}
+                            <Modal
+                              className="mean-modal no-full-screen"
+                              maskClosable={false}
+                              visible={isWithdrawModalVisible}
+                              onCancel={closeWithdrawModal}
+                              afterClose={onAfterWithdrawModalClosed}
+                              width={330}
+                              footer={null}>
+                              <div className="transaction-progress">
+                                <CheckOutlined style={{ fontSize: 48 }} className="icon" />
+                                <h4 className="font-bold mb-1 text-uppercase">Withdraw Funds</h4>
+                                <p className="operation">{t('transactions.status.tx-withdraw-operation-success')}</p>
+                                <Button
+                                  block
+                                  type="primary"
+                                  shape="round"
+                                  size="middle"
+                                  onClick={closeWithdrawModal}>
+                                  {t('general.cta-close')}
+                                </Button>
+                              </div>
+                            </Modal>
                           </Row>
                         </div>
                       </Col>
@@ -567,7 +619,7 @@ export const UnstakeTabView = () => {
 
   const areSendAmountSettingsValid = (): boolean => {
     return paymentStartDate && isSendAmountValid() ? true : false;
-  }  
+  }
 
   useEffect(() => {
     setFromCoinAmount(parseFloat(unstakeAmount) > 0 ? `${parseFloat(unstakeAmount)*percentageValue/100}` : '');
