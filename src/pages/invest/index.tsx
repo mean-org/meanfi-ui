@@ -17,7 +17,9 @@ type SwapOption = "stake" | "unstake";
 
 export const InvestView = () => {
   const {
-    selectedToken
+    selectedToken,
+    setFromCoinAmount,
+    setIsVerifiedRecipient
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
 
@@ -25,6 +27,8 @@ export const InvestView = () => {
 
   const onTabChange = (option: SwapOption) => {
     setCurrentTab(option);
+    setFromCoinAmount('');
+    setIsVerifiedRecipient(false);
   }
 
   const renderInvestOptions = (
@@ -454,15 +458,16 @@ export const UnstakeTabView = () => {
     loadingPrices,
     fromCoinAmount,
     isVerifiedRecipient,
+    paymentStartDate,
     unstakeStartDate,
-    refreshPrices,
     unstakeAmount,
+    refreshPrices,
     setFromCoinAmount,
     setIsVerifiedRecipient
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
   const percentages = [25, 50, 75, 100];
-  const [percentageValue, setPercentageValue] = useState(0);
+  const [percentageValue, setPercentageValue] = useState<number>(0);
 
   const currentDate = moment().format("LL");
 
@@ -484,6 +489,25 @@ export const UnstakeTabView = () => {
   const onIsVerifiedRecipientChange = (e: any) => {
     setIsVerifiedRecipient(e.target.checked);
   }
+
+  const isSendAmountValid = (): boolean => {
+    return  fromCoinAmount &&
+            parseFloat(fromCoinAmount) > 0 &&
+            parseFloat(fromCoinAmount) <= parseFloat(unstakeAmount)
+      ? true
+      : false;
+  }
+
+  const areSendAmountSettingsValid = (): boolean => {
+    return paymentStartDate && isSendAmountValid() ? true : false;
+  }  
+
+  useEffect(() => {
+    setFromCoinAmount(parseFloat(unstakeAmount) > 0 ? `${parseFloat(unstakeAmount)*percentageValue/100}` : '');
+  }, [percentageValue]);
+
+  console.log(fromCoinAmount);
+  
 
   return (
     <>
@@ -531,7 +555,7 @@ export const UnstakeTabView = () => {
           <div className="left inner-label">
             <span>{t('invest.panel-right.tabset.unstake.send-amount.label-right')}:</span>
             <span>
-              {currentDate === unstakeStartDate ? 1000 : 0}
+              {currentDate === unstakeStartDate ? unstakeAmount : "0"}
             </span>
           </div>
           <div className="right inner-label">
@@ -558,6 +582,7 @@ export const UnstakeTabView = () => {
         shape="round"
         size="large"
         disabled={
+          !areSendAmountSettingsValid() ||
           !isVerifiedRecipient ||
           currentDate !== unstakeStartDate
         }
