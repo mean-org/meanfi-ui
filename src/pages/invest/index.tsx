@@ -132,7 +132,7 @@ export const InvestView = () => {
 
                 <Row gutter={[8, 8]} className="d-flex justify-content-center">
                   {/* Tabset */}
-                  <Col span={12} className="column-width">
+                  <Col xs={24} sm={12} md={24} lg={12} className="column-width">
                     <div className="place-transaction-box mb-3">
                       <div className="button-tabset-container">
                         <div className={`tab-button ${currentTab === "stake" ? 'active' : ''}`} onClick={() => onTabChange("stake")}>
@@ -156,7 +156,7 @@ export const InvestView = () => {
                   </Col>
 
                   {/* Staking data */}
-                  <Col span={12} className="column-width">
+                  <Col xs={24} sm={12} md={24} lg={12} className="column-width">
                     <div className="staking-data">
                       <Row>
                         <Col span={12}>
