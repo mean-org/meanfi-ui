@@ -102,6 +102,7 @@ export const TreasuriesView = () => {
     detailsPanelOpen,
     transactionStatus,
     streamProgramAddress,
+    highLightableStreamId,
     streamV2ProgramAddress,
     previousWalletConnectState,
     setSelectedToken,
@@ -2273,7 +2274,9 @@ export const TreasuriesView = () => {
 
   const closeAddFundsModal = useCallback(() => {
     setIsAddFundsModalVisibility(false);
-  }, []);
+    setHighLightableStreamId(undefined);
+    sethHighlightedStream(undefined);
+  }, [setHighLightableStreamId]);
 
   const onAddFundsTransactionFinished = () => {
     closeAddFundsModal();
@@ -2319,7 +2322,6 @@ export const TreasuriesView = () => {
         const treasury = new PublicKey(treasuryDetails.id);
         const associatedToken = new PublicKey(selectedToken.address);
         const amount = parseFloat(params.amount);
-        // const amount = params.amount;
         const stream = params.streamId ? new PublicKey(params.streamId) : undefined;
 
         console.log('params.streamId', params.streamId);
@@ -2330,7 +2332,6 @@ export const TreasuriesView = () => {
           stream: stream?.toBase58(),                               // stream
           associatedToken: associatedToken.toBase58(),              // associatedToken
           amount: amount,                                           // amount
-          // amount: amount.toNumber(),                                // amount
           allocationType: params.allocationType                     // allocationType
         }
         consoleOut('data:', data);
@@ -2457,7 +2458,7 @@ export const TreasuriesView = () => {
 
       const treasury = new PublicKey(treasuryDetails.id);
       const associatedToken = new PublicKey(selectedToken.address);
-      const amount = toTokenAmount(parseFloat(params.amount as string), selectedToken.decimals);
+      const amount = params.tokenAmount.toNumber();
 
       console.log('params.streamId', params.streamId);
 
@@ -4462,26 +4463,29 @@ export const TreasuriesView = () => {
                 </Menu.Item>
               ) : null
             }
+            <Menu.Item key="3" onClick={showAddFundsModal}>
+              <span className="menu-item-text">{t('streams.stream-detail.add-funds-cta')}</span>
+            </Menu.Item>
           </>
         )}
         {(!isNewTreasury ||
           (isNewTreasury && treasuryV2.treasuryType === TreasuryType.Open) ||
           (isNewTreasury && treasuryV2.treasuryType === TreasuryType.Lock && streamV2.status === STREAM_STATUS.Paused)) && (
-          <Menu.Item key="3" onClick={showCloseStreamModal}>
+          <Menu.Item key="4" onClick={showCloseStreamModal}>
             <span className="menu-item-text">{t('treasuries.treasury-streams.option-close-stream')}</span>
           </Menu.Item>
         )}
-        <Menu.Item key="4" onClick={() => onCopyStreamAddress(item.id)}>
+        <Menu.Item key="5" onClick={() => onCopyStreamAddress(item.id)}>
           <span className="menu-item-text">Copy Stream ID</span>
         </Menu.Item>
-        <Menu.Item key="5" onClick={() => {
+        <Menu.Item key="6" onClick={() => {
             setHighLightableStreamId(item.id as string);
             refreshStreamList();
             navigate('/accounts/streams');
           }}>
           <span className="menu-item-text">Show stream</span>
         </Menu.Item>
-        <Menu.Item key="6" onClick={() => {}}>
+        <Menu.Item key="7" onClick={() => {}}>
           <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${item.id}${getSolanaExplorerClusterParam()}`}
               target="_blank" rel="noopener noreferrer">
             <span className="menu-item-text">{t('treasuries.treasury-streams.option-explorer-link')}</span>
@@ -4494,6 +4498,7 @@ export const TreasuriesView = () => {
       <Dropdown overlay={menu} trigger={["click"]} onVisibleChange={(visibleChange) => {
         if (visibleChange) {
           sethHighlightedStream(item);
+          setHighLightableStreamId(item.id as string);
         } else {
           sethHighlightedStream(undefined);
         }
@@ -4745,7 +4750,11 @@ export const TreasuriesView = () => {
                   size="small"
                   className="thin-stroke"
                   disabled={isTxInProgress() || loadingTreasuries}
-                  onClick={showAddFundsModal}>
+                  onClick={() => {
+                    setHighLightableStreamId(undefined);
+                    sethHighlightedStream(undefined);
+                    showAddFundsModal();
+                  }}>
                   {isAddingFunds() && (<LoadingOutlined />)}
                   {isAddingFunds()
                     ? t('treasuries.treasury-detail.cta-add-funds-busy')
@@ -4935,6 +4944,7 @@ export const TreasuriesView = () => {
           <span className="ml-1">loadingTreasuries:</span><span className="ml-1 font-bold fg-dark-active">{loadingTreasuries ? 'true' : 'false'}</span>
           <span className="ml-1">isBusy:</span><span className="ml-1 font-bold fg-dark-active">{isBusy ? 'true' : 'false'}</span>
           <span className="ml-1">retryOperationPayload:</span><span className="ml-1 font-bold fg-dark-active">{retryOperationPayload ? 'true' : 'false'}</span>
+          <span className="ml-1">highLightableStreamId:</span><span className="ml-1 font-bold fg-dark-active">{highLightableStreamId || '-'}</span>
           {(transactionStatus.lastOperation !== undefined) && (
             <>
             <span className="ml-1">lastOperation:</span><span className="ml-1 font-bold fg-dark-active">{TransactionStatus[transactionStatus.lastOperation]}</span>

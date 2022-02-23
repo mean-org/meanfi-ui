@@ -63,6 +63,7 @@ export const TreasuryAddFundsModal = (props: {
     effectiveRate,
     loadingPrices,
     transactionStatus,
+    highLightableStreamId,
     setTransactionStatus,
     setSelectedToken,
     setEffectiveRate,
@@ -73,7 +74,7 @@ export const TreasuryAddFundsModal = (props: {
   const [topupAmount, setTopupAmount] = useState<string>('');
   const [allocationOption, setAllocationOption] = useState<AllocationType>(AllocationType.None);
   const [customTokenInput, setCustomTokenInput] = useState("");
-  const [selectedStreamForAllocation, setSelectedStreamForAllocation] = useState('');
+  // const [selectedStreamForAllocation, setSelectedStreamForAllocation] = useState('');
   const [treasuryType, setTreasuryType] = useState<TreasuryType>(TreasuryType.Open);
   const [availableBalance, setAvailableBalance] = useState<any>();
   const [tokenAmount, setTokenAmount] = useState<any>(0);
@@ -110,18 +111,41 @@ export const TreasuryAddFundsModal = (props: {
   /////////////////
 
   const getSelectedStream = useCallback((id?: string) => {
-    if (!props.treasuryStreams || props.treasuryStreams.length === 0 || (!id && !selectedStreamForAllocation)) {
+    if (!props.treasuryStreams || props.treasuryStreams.length === 0 || (!id && !highLightableStreamId)) {
       return undefined;
     }
 
-    return props.treasuryStreams.find(ts => ts.id === id || selectedStreamForAllocation);
+    if (id) {
+      return props.treasuryStreams.find(ts => ts.id === id);
+    } else if (highLightableStreamId) {
+      return props.treasuryStreams.find(ts => ts.id ===highLightableStreamId);
+    }
+
+    return undefined;
   }, [
     props.treasuryStreams,
-    selectedStreamForAllocation
+    highLightableStreamId
+  ]);
+
+  const isfeePayedByTreasurerOn = useCallback(() => {
+    if (highLightableStreamId) {
+      consoleOut('highLightableStreamId:', highLightableStreamId, 'orange');
+      consoleOut('Getting stream data...', '', 'orange');
+      const stream = getSelectedStream(highLightableStreamId);
+      consoleOut('stream:', stream, 'orange');
+      if (stream && stream.version >= 2 && (stream as Stream).feePayedByTreasurer) {
+        return true;
+      }
+    }
+
+    return false;
+  }, [
+    highLightableStreamId,
+    getSelectedStream,
   ]);
 
   const getMaxAmount = useCallback((preSetting = false) => {
-    if (props.withdrawTransactionFees && allocationOption === AllocationType.Specific && selectedStreamForAllocation) {
+    if (props.withdrawTransactionFees && allocationOption === AllocationType.Specific && highLightableStreamId) {
       const stream = getSelectedStream();
       if (stream && ((stream as any).feePayedByTreasurer || preSetting)) {
 
@@ -147,7 +171,7 @@ export const TreasuryAddFundsModal = (props: {
     selectedToken,
     availableBalance,
     allocationOption,
-    selectedStreamForAllocation,
+    highLightableStreamId,
     props.withdrawTransactionFees,
     getSelectedStream
   ]);
@@ -181,7 +205,7 @@ export const TreasuryAddFundsModal = (props: {
       ? t('transactions.validation.no-amount')
       : tokenAmount.gt(getMaxAmount())
       ? t('transactions.validation.amount-high')
-      : allocationOption === AllocationType.Specific && !selectedStreamForAllocation
+      : allocationOption === AllocationType.Specific && !highLightableStreamId
       ? t('transactions.validation.select-stream')
       : t('treasuries.add-funds.main-cta');
   }
@@ -450,14 +474,24 @@ export const TreasuryAddFundsModal = (props: {
   // Data management //
   /////////////////////
 
-  // Set available user balance in BN
+  // Set available balance in BN either from user's wallet or from treasury is a streams is being funded
   useEffect(() => {
-    if (props.isVisible && props.treasuryDetails && selectedToken) {
+    if (props.isVisible && props.treasuryDetails && props.treasuryDetails && selectedToken) {
       const decimals = selectedToken ? selectedToken.decimals : 6;
-      // const balance = new BN(tokenBalance || 0);
-      const balance = makeInteger(tokenBalance, decimals);
-      consoleOut('availableBalance:', balance.toNumber(), 'blue');
-      setAvailableBalance(balance);
+      if (highLightableStreamId) {
+        // Take source balance from the treasury
+        const unallocated = props.treasuryDetails.balance - props.treasuryDetails.allocationAssigned;
+        const ub = new BN(unallocated);
+        consoleOut('Treasury unallocated balance:', ub.toNumber(), 'blue');
+        setAvailableBalance(ub);
+        // setSelectedStreamForAllocation(highLightableStreamId);
+      } else {
+        // Take source balance from the user's wallet
+        const balance = makeInteger(tokenBalance, decimals);
+        consoleOut('User\'s balance:', balance.toNumber(), 'blue');
+        setAvailableBalance(balance);
+        // setSelectedStreamForAllocation('');
+      }
     } else {
       setAvailableBalance(new BN(0));
     }
@@ -466,6 +500,7 @@ export const TreasuryAddFundsModal = (props: {
     selectedToken,
     props.isVisible,
     props.treasuryDetails,
+    highLightableStreamId,
   ]);
 
   // When modal goes visible, use the treasury associated token or use the default from the appState
@@ -500,18 +535,15 @@ export const TreasuryAddFundsModal = (props: {
       ? (props.treasuryDetails as Treasury).treasuryType
       : (props.treasuryDetails as TreasuryInfo).type as TreasuryType;
     setTreasuryType(tt);
-    if (props.treasuryStreams && props.treasuryStreams.length > 0) {
-      if (props.treasuryStreams.length === 1 && tt === TreasuryType.Open) {
-        setAllocationOption(AllocationType.Specific);
-      } else {
-        setAllocationOption(AllocationType.None);
-      }
+    if (highLightableStreamId) {
+      setAllocationOption(AllocationType.Specific);
     } else {
       setAllocationOption(AllocationType.None);
     }
   }, [
     props.treasuryDetails,
     props.treasuryStreams,
+    highLightableStreamId,
   ]);
 
   // Window resize listener
@@ -550,11 +582,11 @@ export const TreasuryAddFundsModal = (props: {
 
   const onAcceptModal = () => {
     props.handleOk({
-      // amount: tokenAmount,
       amount: topupAmount,
+      tokenAmount: tokenAmount,
       allocationType: allocationOption,
       streamId: allocationOption === AllocationType.Specific
-                ? selectedStreamForAllocation : ''
+                ? highLightableStreamId : ''
     } as TreasuryTopupParams);
   }
 
@@ -578,21 +610,21 @@ export const TreasuryAddFundsModal = (props: {
     window.location.reload();
   }
 
-  const onStreamSelected = (e: any) => {
-    consoleOut('selectedStreamForAllocation:', e, 'blue');
-    setSelectedStreamForAllocation(e);
-    const stream = getSelectedStream(e);
-    if (stream && (stream as any).feePayedByTreasurer) {
-      if (availableBalance && tokenAmount && tokenAmount.eq(availableBalance)) {
-        setTimeout(() => {
-          const maxButton = document.getElementById("treasury-add-funds-max");
-          if (maxButton) {
-            maxButton.click();
-          }
-        }, 100);
-      }
-    }
-  }
+  // const onStreamSelected = (e: any) => {
+  //   consoleOut('selectedStreamForAllocation:', e, 'blue');
+  //   setSelectedStreamForAllocation(e);
+  //   const stream = getSelectedStream(e);
+  //   if (stream && (stream as any).feePayedByTreasurer) {
+  //     if (availableBalance && tokenAmount && tokenAmount.eq(availableBalance)) {
+  //       setTimeout(() => {
+  //         const maxButton = document.getElementById("treasury-add-funds-max");
+  //         if (maxButton) {
+  //           maxButton.click();
+  //         }
+  //       }, 100);
+  //     }
+  //   }
+  // }
 
   const handleAmountChange = (e: any) => {
     const newValue = e.target.value;
@@ -607,9 +639,9 @@ export const TreasuryAddFundsModal = (props: {
     }
   };
 
-  const handleAllocationOptionChange = (val: SelectOption) => {
-    setAllocationOption(val.value);
-  }
+  // const handleAllocationOptionChange = (val: SelectOption) => {
+  //   setAllocationOption(val.value);
+  // }
 
   const onTokenChange = (e: any) => {
     consoleOut("token selected:", e, 'blue');
@@ -643,7 +675,7 @@ export const TreasuryAddFundsModal = (props: {
     return publicKey &&
            isValidInput() &&
            ((allocationOption !== AllocationType.Specific) ||
-            (allocationOption === AllocationType.Specific && selectedStreamForAllocation))
+            (allocationOption === AllocationType.Specific && highLightableStreamId))
           ? true
           : false;
   }
@@ -652,59 +684,66 @@ export const TreasuryAddFundsModal = (props: {
   // Rendering //
   ///////////////
 
-  const renderStreamSelectItem = (item: Stream | StreamInfo) => ({
-    key: getStreamName(item) as string,
-    value: item.id as string,
-    label: (
-      <div className={`transaction-list-row`}>
-        <div className="icon-cell">
-          {getStreamIcon(item)}
-        </div>
-        <div className="description-cell">
-          <div className="title text-truncate">{getStreamDescription(item)}</div>
-          <div className="subtitle text-truncate">{getStreamSubTitle(item)}</div>
-        </div>
-        <div className="rate-cell">
-          <div className="rate-amount">
-            {item && item.rateAmount > 0 ? getRateAmountDisplay(item) : getTransferAmountDisplay(item)}
-          </div>
-          {item && item.rateAmount > 0 && (
-            <div className="interval">{getIntervalFromSeconds(item.rateIntervalInSeconds, false, t)}</div>
-          )}
-        </div>
-      </div>
-    ),
-  });
+  // const renderStreamSelectItem = (item: Stream | StreamInfo) => ({
+  //   key: getStreamName(item) as string,
+  //   value: item.id as string,
+  //   label: (
+  //     <div className={`transaction-list-row`}>
+  //       <div className="icon-cell">
+  //         {getStreamIcon(item)}
+  //       </div>
+  //       <div className="description-cell">
+  //         <div className="title text-truncate">{getStreamDescription(item)}</div>
+  //         <div className="subtitle text-truncate">{getStreamSubTitle(item)}</div>
+  //       </div>
+  //       <div className="rate-cell">
+  //         <div className="rate-amount">
+  //           {item && item.rateAmount > 0 ? getRateAmountDisplay(item) : getTransferAmountDisplay(item)}
+  //         </div>
+  //         {item && item.rateAmount > 0 && (
+  //           <div className="interval">{getIntervalFromSeconds(item.rateIntervalInSeconds, false, t)}</div>
+  //         )}
+  //       </div>
+  //     </div>
+  //   ),
+  // });
 
-  const renderStreamSelectOptions = () => {
-    const options = props.treasuryStreams.map((stream: Stream | StreamInfo, index: number) => {
-      return renderStreamSelectItem(stream);
-    });
-    return options;
-  }
+  // const renderStreamSelectOptions = () => {
+  //   const options = props.treasuryStreams.map((stream: Stream | StreamInfo, index: number) => {
+  //     return renderStreamSelectItem(stream);
+  //   });
+  //   return options;
+  // }
 
-  const allocationOptionsMenu = (
-    <Menu activeKey={allocationOption.toString()}>
-      {allocationOptions.map((item) => {
-        if (item.key === AllocationType.Specific && treasuryType === TreasuryType.Lock) {
-          return null;
-        }
-        return (
-          <Menu.Item
-            className={item.visible ? 'active' : 'hidden'}
-            key={`${item.key}`}
-            onClick={() => handleAllocationOptionChange(item)}>
-            {item.label}
-          </Menu.Item>
-        );
-      })}
-    </Menu>
-  );
+  // const allocationOptionsMenu = (
+  //   <Menu activeKey={allocationOption.toString()}>
+  //     {allocationOptions.map((item) => {
+  //       if (item.key === AllocationType.Specific && treasuryType === TreasuryType.Lock) {
+  //         return null;
+  //       }
+  //       return (
+  //         <Menu.Item
+  //           className={item.visible ? 'active' : 'hidden'}
+  //           key={`${item.key}`}
+  //           onClick={() => handleAllocationOptionChange(item)}>
+  //           {item.label}
+  //         </Menu.Item>
+  //       );
+  //     })}
+  //   </Menu>
+  // );
 
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={<div className="modal-title">{t('treasuries.add-funds.modal-title')}</div>}
+      title={
+        <div className="modal-title">
+          {highLightableStreamId
+            ? t('treasuries.add-funds.modal-title-fund-stream')
+            : t('treasuries.add-funds.modal-title')
+          }
+        </div>
+      }
       footer={null}
       visible={props.isVisible}
       onOk={onAcceptModal}
@@ -758,16 +797,24 @@ export const TreasuryAddFundsModal = (props: {
                           })}
                         </Select>
                       )}
-                      {selectedToken && tokenBalance ? (
+                      {selectedToken && availableBalance ? (
                         <div
                           id="treasury-add-funds-max"
                           className="token-max simplelink"
                           onClick={() => {
                             const decimals = selectedToken ? selectedToken.decimals : 6;
-                            const maxAmount = getMaxAmount();
-                            consoleOut('maxAmount:', maxAmount.toNumber(), 'blue');
-                            setTopupAmount(cutNumber(makeDecimal(maxAmount, decimals), decimals));
-                            setTokenAmount(maxAmount);
+                            if (isfeePayedByTreasurerOn()) {
+                              const maxAmount = getMaxAmount(true);
+                              consoleOut('Treasury pays for fees...', '', 'blue');
+                              consoleOut('Settings maxAmount to:', maxAmount, 'blue');
+                              setTopupAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
+                              setTokenAmount(new BN(maxAmount));
+                            } else {
+                              const maxAmount = getMaxAmount();
+                              consoleOut('Settings maxAmount to:', maxAmount.toNumber(), 'blue');
+                              setTopupAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
+                              setTokenAmount(new BN(maxAmount));
+                            }
                           }}>
                           MAX
                         </div>
@@ -794,10 +841,18 @@ export const TreasuryAddFundsModal = (props: {
                 </div>
                 <div className="flex-fixed-right">
                   <div className="left inner-label">
-                    <span>{t('treasuries.add-funds.balance')}:</span>
+                    {!highLightableStreamId ? (
+                      <span>{t('add-funds.label-right')}:</span>
+                    ) : (
+                      <span>{t('treasuries.treasury-streams.available-unallocated-balance-label')}:</span>
+                    )}
                     <span>
-                      {`${tokenBalance && selectedToken
-                          ? getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken?.address, true)
+                      {`${availableBalance && selectedToken
+                          ? getTokenAmountAndSymbolByTokenAddress(
+                              makeDecimal(availableBalance, selectedToken.decimals),
+                              selectedToken?.address,
+                              true
+                            )
                           : "0"
                       }`}
                     </span>
@@ -814,7 +869,7 @@ export const TreasuryAddFundsModal = (props: {
             </div>
 
             {/* Funds Allocation options */}
-            {(numTreasuryStreams() > 0 && treasuryType === TreasuryType.Open) && (
+            {/* {(numTreasuryStreams() > 0 && treasuryType === TreasuryType.Open) && (
               <div className="mb-3">
                 <div className="form-label">{t('treasuries.add-funds.allocation-label')}</div>
                 <div className="well">
@@ -830,9 +885,9 @@ export const TreasuryAddFundsModal = (props: {
                   </Dropdown>
                 </div>
               </div>
-            )}
+            )} */}
 
-            {allocationOption === AllocationType.Specific && props.streamStats && props.streamStats.total > 0 && (
+            {/* {allocationOption === AllocationType.Specific && props.streamStats && props.streamStats.total > 0 && (
               <div className="mb-3">
                 <div className="form-label">{t('treasuries.add-funds.allocation-select-stream-label')}</div>
                 <div className="well">
@@ -862,7 +917,8 @@ export const TreasuryAddFundsModal = (props: {
                   </div>
                 </div>
               </div>
-            )}
+            )} */}
+
           </>
         ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
           <>
