@@ -922,6 +922,7 @@
 			"main-cta": "Fon hazinesi",
 			"main-cta-busy": "Fonlama hazinesi",
 			"modal-title": "Hazineye fon ekleyin",
+			"modal-title-fund-stream": "Add funds to a Money Stream",
 			"search-streams-placeholder": "İsimle ve ya adresle aktarım arayın",
 			"success-message": "Hazineniz başarıyla fonlandı."
 		},

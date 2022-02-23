@@ -922,6 +922,7 @@
 			"main-cta": "Fund treasury",
 			"main-cta-busy": "Funding treasury",
 			"modal-title": "Add funds to the Treasury",
+			"modal-title-fund-stream": "Add funds to a Money Stream",
 			"search-streams-placeholder": "Search stream by name or address",
 			"success-message": "Your treasury was funded successfully."
 		},

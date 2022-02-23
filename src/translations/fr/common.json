@@ -922,6 +922,7 @@
 			"main-cta": "Trésorerie du fonds",
 			"main-cta-busy": "Trésorerie de financement",
 			"modal-title": "Ajouter des fonds au Trésor",
+			"modal-title-fund-stream": "Add funds to a Money Stream",
 			"search-streams-placeholder": "Rechercher un flux par nom ou adresse",
 			"success-message": "Votre trésorerie a été financée avec succès."
 		},

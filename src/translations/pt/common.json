@@ -922,6 +922,7 @@
 			"main-cta": "Tesouro do fundo",
 			"main-cta-busy": "Tesouraria de financiamento",
 			"modal-title": "Adicionar fundos ao Tesouro",
+			"modal-title-fund-stream": "Add funds to a Money Stream",
 			"search-streams-placeholder": "Pesquisar stream por nome ou endereço",
 			"success-message": "Seu tesouro foi financiado com sucesso."
 		},
