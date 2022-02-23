@@ -506,9 +506,6 @@ export const UnstakeTabView = () => {
     setFromCoinAmount(parseFloat(unstakeAmount) > 0 ? `${parseFloat(unstakeAmount)*percentageValue/100}` : '');
   }, [percentageValue]);
 
-  console.log(fromCoinAmount);
-  
-
   return (
     <>
       <span className="info-label">{unstakeAmount ? t("invest.panel-right.tabset.unstake.notification-label-one", {unstakeAmount: unstakeAmount, unstakeStartDate: unstakeStartDate}) : t("invest.panel-right.tabset.unstake.notification-label-one-error")}</span>

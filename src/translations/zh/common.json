@@ -269,13 +269,32 @@
 				"stake": {
 					"name": "Stake",
 					"amount-label": "Amount to stake",
-					"term-label": "How long do you want to stake for?",
-					"notification-label": "Staking period of 7 days will lock your Tokens until February 21, 2022 with estimated rewards of up to 100 MEAN",
-					"verified-label": "I agree to the Terms & Conditions"
+					"period-label": "How long do you want to stake for?",
+					"days": "days",
+					"year": "year",
+					"years": "years",
+					"notification-label": "Staking period of {{periodValue}} {{periodTime}} will lock your Tokens until {{unstakeStartDate}} with estimated rewards of up to 100 MEAN",
+					"verified-label": "I agree to the Terms & Conditions",
+					"stake-button": "Stake"
 				},
 				"unstake": {
-					"name": "Unstake"
+					"name": "Unstake",
+					"notification-label-one": "Your currently have {{unstakeAmount}} MEAN staked which is currently locked until {{unstakeStartDate}}",
+					"notification-label-one-error": "You don't have any MEAN staked",
+					"amount-label": "Amount to unstake",
+					"notification-label-two": "Unstaking will withdraw the specified amount of unlocked MEAN tokens to your wallet",
+					"verified-label": "I agree to the Terms & Conditions",
+					"unstake-button-available": "Unstake",
+					"unstake-button-unavailable": "No available",
+					"send-amount": {
+						"label-right": "Available to unstake"
+					}
 				}
+			},
+			"staking-data": {
+				"text-one": "MEAN tokens locked till February 21, 2022",
+				"text-two": "Staking rewards available to withdraw:",
+				"withdraw-button": "Withdraw Funds"
 			}
 		}
 	},
