@@ -355,6 +355,25 @@
 			"pending-transactions": "{{txs}} transações pendentes"
 		},
 		"multisig-detail-heading": "Detalhes da conta multisig",
+		"multisig-mints": {
+			"back-to-multisig-accounts-cta": "Back to Multisig accounts",
+			"cta-change-mint-authority": "Transfer Ownership",
+			"cta-change-mint-authority-busy": "Changing Multisig",
+			"cta-create-mint": "Create mint",
+			"cta-create-mint-busy": "Creating mint",
+			"create-mint-modal-title": "Create mint",
+			"cta-mint-token": "Mint Tokens",
+			"cta-mint-token-busy": "Minting Tokens",
+			"mint-amount-label": "Select mint decimals",
+			"no-transactions": "No transactions for this mint",
+			"no-mint": "No mint loaded",
+			"no-mints": "No mints available",
+			"not-connected": "Please connect your wallet to see mints",
+			"refresh-tooltip": "Click to refresh the list of mints",
+			"screen-title": "Mints - {{multisigName}} ({{itemCount}})",
+			"screen-title-no-mints": "Mints",
+			"mint-detail-heading": "Mint details"
+		},
 		"multisig-programs": {
 			"cta-create-program": "Criar programa",
 			"modal-title": "Criar programa",

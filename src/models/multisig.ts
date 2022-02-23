@@ -79,3 +79,7 @@ export type MultisigParticipant = {
   address: string;
   name: string;
 }
+
+export type CreateMintPayload = {
+  decimals: number;
+}
