@@ -1,7 +1,7 @@
 import { useCallback, useContext, useEffect, useState } from "react";
 import './style.less';
 import { ArrowDownOutlined, CheckOutlined, ReloadOutlined } from "@ant-design/icons";
-import { Button, Tooltip, Row, Col, Space } from "antd";
+import { Button, Tooltip, Row, Col, Space, Empty, Spin } from "antd";
 import Checkbox from "antd/lib/checkbox/Checkbox";
 import { useTranslation } from 'react-i18next';
 import { IconStats } from "../../Icons";
@@ -9,7 +9,7 @@ import { TokenDisplay } from "../../components/TokenDisplay";
 import { PreFooter } from "../../components/PreFooter";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
-import { formatAmount, getAmountWithSymbol, isValidNumber } from "../../utils/utils";
+import { formatAmount, formatThousands, getAmountWithSymbol, isValidNumber } from "../../utils/utils";
 import moment from 'moment';
 import Modal from "antd/lib/modal/Modal";
 import { IconHelpCircle } from "../../Icons/IconHelpCircle";
@@ -24,9 +24,29 @@ export const InvestView = () => {
     setFromCoinAmount,
     setIsVerifiedRecipient
   } = useContext(AppStateContext);
+  const { connected } = useWallet();
   const { t } = useTranslation('common');
 
   const [currentTab, setCurrentTab] = useState<SwapOption>("stake");
+
+  const investItems = [
+    {
+      id: "0",
+      name: "MEAN",
+      mintAddress: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg",
+      title: `Stake MEAN`,
+      rateAmount: "52.09",
+      interval: "APR"
+    },
+    {
+      id: "1",
+      name: "Test",
+      mintAddress: "https://www.orca.so/static/media/usdc.3b5972c1.svg",
+      title: `Test`,
+      rateAmount: "10",
+      interval: "ROI"
+    }
+  ];
 
   const onTabChange = (option: SwapOption) => {
     setCurrentTab(option);
@@ -34,21 +54,44 @@ export const InvestView = () => {
     setIsVerifiedRecipient(false);
   }
 
+  const [activeTab, setActiveTab] = useState(investItems[0].title);
+
+  const onInvestClick = (e: any) => {
+    if (e.target.innerHTML !== activeTab) {
+      setActiveTab(e.target.innerHTML);
+    }
+  };
+
   const renderInvestOptions = (
-    <div className="transaction-list-row money-streams-summary">
-      <div className="icon-cell">
-        <div className="token-icon">
-          <img alt="MEAN" width="30" height="30" src="https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg" />
+    <>
+      {investItems && investItems.length ? (
+        investItems.map((item, index) => {
+
+          return (
+            <div key={index} onClick={onInvestClick} className={`transaction-list-row ${activeTab === item.title ? "selected" : ''}`}>
+              <div className="icon-cell">
+                <div className="token-icon">
+                  <img alt={item.name} width="30" height="30" src={item.mintAddress} />
+                </div>
+              </div>
+              <div className="description-cell">
+                <div className="title">{item.title}</div>
+              </div>
+              <div className="rate-cell">
+                <div className="rate-amount">{item.rateAmount}%</div>
+                <div className="interval">{item.interval}</div>
+              </div>
+            </div>
+          )
+        })
+      ) : (
+        <div className="h-100 flex-center">
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{!connected
+          ? t('invest.panel-left.no-invest-options')
+          : t('invest.panel-left.not-connected')}</p>} />
         </div>
-      </div>
-      <div className="description-cell">
-        <div className="title">Stake {selectedToken && selectedToken.name}</div>
-      </div>
-      <div className="rate-cell">
-        <div className="rate-amount">52.09%</div>
-        <div className="interval">APR</div>
-      </div>
-    </div>
+      )}
+    </>
   );
 
   return (
@@ -69,8 +112,9 @@ export const InvestView = () => {
               <div className="meanfi-panel-heading">
                 <span className="title">{t('invest.screen-title')}</span>
                 <Tooltip placement="bottom" title={t('invest.refresh-tooltip')}>
-                  <div className="transaction-stats user-address">
-                    <span className="incoming-transactions-amout">(1)</span>
+                  <div className="transaction-stats">
+                    <Spin size="small" />
+                    <span className="incoming-transactions-amout">({formatThousands(investItems.length)})</span>
                     <span className="transaction-legend">
                       <span className="icon-button-container">
                         <Button
@@ -95,131 +139,145 @@ export const InvestView = () => {
             <div className="meanfi-two-panel-right">
               <div className="inner-container">
 
-                {/* Background animation */}
-                <div className="staking-background">
-                  <img className="inbound" src="/assets/incoming-crypto.svg" alt="" />
-                </div>
+                {activeTab === "Stake MEAN" && (
+                  <>
+                    {/* Background animation */}
+                    <div className="staking-background">
+                      <img className="inbound" src="/assets/incoming-crypto.svg" alt="" />
+                    </div>
 
-                {/* Staking paragraphs */}
-                <p>{t("invest.panel-right.first-text")}</p>
-                <p>{t("invest.panel-right.second-text")}</p>
-                <div className="pinned-token-separator"></div>
+                    {/* Staking paragraphs */}
+                    <p>{t("invest.panel-right.first-text")}</p>
+                    <p>{t("invest.panel-right.second-text")}</p>
+                    <div className="pinned-token-separator"></div>
 
-                {/* Staking Stats */}
-                <div className="stream-fields-container">
-                  <div className="mb-3">
-                    <Row>
-                      <Col span={8}>
-                        <div className="info-label">
-                          {t("invest.panel-right.stats.staking-apr")}
+                    {/* Staking Stats */}
+                    <div className="stream-fields-container">
+                      <div className="mb-3">
+                        <Row>
+                          <Col span={8}>
+                            <div className="info-label">
+                              {t("invest.panel-right.stats.staking-apr")}
+                            </div>
+                            <div className="transaction-detail-row">52.09%</div>
+                          </Col>
+                          <Col span={8}>
+                            <div className="info-label">
+                              {t("invest.panel-right.stats.total-value-locked")}
+                            </div>
+                            <div className="transaction-detail-row">$7.64M</div>
+                          </Col>
+                          <Col span={8}>
+                            <div className="info-label">
+                              {t("invest.panel-right.stats.next-week-payout")}
+                            </div>
+                            <div className="transaction-detail-row">$108,730</div>
+                          </Col>
+                        </Row>
+                      </div>
+                    </div>
+
+                    <Row gutter={[8, 8]} className="d-flex justify-content-center">
+                      {/* Tabset */}
+                      <Col xs={24} sm={12} md={24} lg={12} className="column-width">
+                        <div className="place-transaction-box mb-3">
+                          <div className="button-tabset-container">
+                            <div className={`tab-button ${currentTab === "stake" ? 'active' : ''}`} onClick={() => onTabChange("stake")}>
+                              {t('invest.panel-right.tabset.stake.name')}
+                            </div>
+                            <div className={`tab-button ${currentTab === "unstake" ? 'active' : ''}`} onClick={() => onTabChange("unstake")}>
+                              {t('invest.panel-right.tabset.unstake.name')}
+                            </div>
+                          </div>
+
+                          {/* Tab Stake */}
+                          {currentTab === "stake" && (
+                            <StakeTabView />
+                          )}
+
+                          {/* Tab unstake */}
+                          {currentTab === "unstake" && (
+                            <UnstakeTabView />
+                          )}
                         </div>
-                        <div className="transaction-detail-row">52.09%</div>
                       </Col>
-                      <Col span={8}>
-                        <div className="info-label">
-                          {t("invest.panel-right.stats.total-value-locked")}
+
+                      {/* Staking data */}
+                      <Col xs={24} sm={12} md={24} lg={12} className="column-width">
+                        <div className="staking-data">
+                          <Row>
+                            <Col span={12}>
+                              <span>{"Your Current Stake:"}</span>
+                            </Col>
+                            <Col span={12}>
+                              <span className="staking-number">3.78x boost</span>
+                            </Col>
+                            <Col span={12}>
+                              <span>{"My Staked MEAN"}</span>
+                            </Col>
+                            <Col span={12}>
+                              <span className="staking-number">{unstakeAmount ? unstakeAmount : 0}</span>
+                            </Col>
+                            <Col span={12}>
+                              <span>{"Avg. Locked Yield"}</span>
+                            </Col>
+                            <Col span={12}>
+                              <span className="staking-number">114.98%</span>
+                            </Col>
+                            {/* <Col span={12}>
+                              <span>{"My Locked eMEAN"}</span>
+                            </Col>
+                            <Col span={12}>
+                              <span className="staking-number">1,000</span>
+                            </Col> */}
+                            {/* <Col span={12}>
+                              <span>{"My xMEAN Balance"}</span>
+                            </Col>
+                            <Col span={12}>
+                              <span className="staking-number">20,805.1232</span>
+                            </Col> */}
+                            <span className="info-label mt-1">{t("invest.panel-right.staking-data.text-one", {unstakeStartDate: unstakeStartDate})}</span>
+                            <span className="info-label">{t("invest.panel-right.staking-data.text-two")}</span>
+                            <Col span={24} className="d-flex flex-column justify-content-end align-items-end mt-1">
+                              <div className="transaction-detail-row">
+                                <span className="info-icon">
+                                  <span role="img" aria-label="arrow-down" className="anticon anticon-arrow-down mean-svg-icons success bounce">
+                                  <ArrowDownOutlined className="mean-svg-icons" />
+                                  </span>
+                                  <span className="staking-value mb-2 mt-1">5.229181 {selectedToken && selectedToken.name}</span>
+                                </span>
+                              </div>
+                            </Col>
+
+                            {/* Withdraw button */}
+                            <Col span={24} className="d-flex flex-column justify-content-end align-items-end mt-1">
+                              <Space size="middle">
+                                <Button
+                                  type="default"
+                                  shape="round"
+                                  size="small"
+                                  className="thin-stroke"
+                                >
+                                  {t("invest.panel-right.staking-data.withdraw-button")}
+                                </Button>
+                              </Space>
+                            </Col>
+                          </Row>
                         </div>
-                        <div className="transaction-detail-row">$7.64M</div>
-                      </Col>
-                      <Col span={8}>
-                        <div className="info-label">
-                          {t("invest.panel-right.stats.next-week-payout")}
-                        </div>
-                        <div className="transaction-detail-row">$108,730</div>
                       </Col>
                     </Row>
+                  </>
+                )}
+
+                {activeTab === "Test" && (
+                  <h2>Test</h2>
+                )}
+
+                {activeTab === undefined && (
+                  <div className="h-100 flex-center">
+                    <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
                   </div>
-                </div>
-
-                <Row gutter={[8, 8]} className="d-flex justify-content-center">
-                  {/* Tabset */}
-                  <Col xs={24} sm={12} md={24} lg={12} className="column-width">
-                    <div className="place-transaction-box mb-3">
-                      <div className="button-tabset-container">
-                        <div className={`tab-button ${currentTab === "stake" ? 'active' : ''}`} onClick={() => onTabChange("stake")}>
-                          {t('invest.panel-right.tabset.stake.name')}
-                        </div>
-                        <div className={`tab-button ${currentTab === "unstake" ? 'active' : ''}`} onClick={() => onTabChange("unstake")}>
-                          {t('invest.panel-right.tabset.unstake.name')}
-                        </div>
-                      </div>
-
-                      {/* Tab Stake */}
-                      {currentTab === "stake" && (
-                        <StakeTabView />
-                      )}
-
-                      {/* Tab unstake */}
-                      {currentTab === "unstake" && (
-                        <UnstakeTabView />
-                      )}
-                    </div>
-                  </Col>
-
-                  {/* Staking data */}
-                  <Col xs={24} sm={12} md={24} lg={12} className="column-width">
-                    <div className="staking-data">
-                      <Row>
-                        <Col span={12}>
-                          <span>{"Your Current Stake:"}</span>
-                        </Col>
-                        <Col span={12}>
-                          <span className="staking-number">3.78x boost</span>
-                        </Col>
-                        <Col span={12}>
-                          <span>{"My Staked MEAN"}</span>
-                        </Col>
-                        <Col span={12}>
-                          <span className="staking-number">{unstakeAmount ? unstakeAmount : 0}</span>
-                        </Col>
-                        <Col span={12}>
-                          <span>{"Avg. Locked Yield"}</span>
-                        </Col>
-                        <Col span={12}>
-                          <span className="staking-number">114.98%</span>
-                        </Col>
-                        {/* <Col span={12}>
-                          <span>{"My Locked eMEAN"}</span>
-                        </Col>
-                        <Col span={12}>
-                          <span className="staking-number">1,000</span>
-                        </Col> */}
-                        {/* <Col span={12}>
-                          <span>{"My xMEAN Balance"}</span>
-                        </Col>
-                        <Col span={12}>
-                          <span className="staking-number">20,805.1232</span>
-                        </Col> */}
-                        <span className="info-label mt-1">{t("invest.panel-right.staking-data.text-one", {unstakeStartDate: unstakeStartDate})}</span>
-                        <span className="info-label">{t("invest.panel-right.staking-data.text-two")}</span>
-                        <Col span={24} className="d-flex flex-column justify-content-end align-items-end mt-1">
-                          <div className="transaction-detail-row">
-                            <span className="info-icon">
-                              <span role="img" aria-label="arrow-down" className="anticon anticon-arrow-down mean-svg-icons success bounce">
-                              <ArrowDownOutlined className="mean-svg-icons" />
-                              </span>
-                              <span className="staking-value mb-2 mt-1">5.229181 {selectedToken && selectedToken.name}</span>
-                            </span>
-                          </div>
-                        </Col>
-
-                        {/* Withdraw button */}
-                        <Col span={24} className="d-flex flex-column justify-content-end align-items-end mt-1">
-                          <Space size="middle">
-                            <Button
-                              type="default"
-                              shape="round"
-                              size="small"
-                              className="thin-stroke"
-                            >
-                              {t("invest.panel-right.staking-data.withdraw-button")}
-                            </Button>
-                          </Space>
-                        </Col>
-                      </Row>
-                    </div>
-                  </Col>
-                </Row>
+                )}
               </div>
             </div>
           </div>
@@ -471,7 +529,7 @@ export const UnstakeTabView = () => {
     unstakeAmount,
     refreshPrices,
     setFromCoinAmount,
-    setIsVerifiedRecipient
+    // setIsVerifiedRecipient
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
   const percentages = [25, 50, 75, 100];
@@ -495,9 +553,9 @@ export const UnstakeTabView = () => {
     }
   };
 
-  const onIsVerifiedRecipientChange = (e: any) => {
-    setIsVerifiedRecipient(e.target.checked);
-  }
+  // const onIsVerifiedRecipientChange = (e: any) => {
+  //   setIsVerifiedRecipient(e.target.checked);
+  // }
 
   const isSendAmountValid = (): boolean => {
     return  fromCoinAmount &&

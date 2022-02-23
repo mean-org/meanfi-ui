@@ -278,6 +278,10 @@
 		"subtitle": "The easiest way to grow your money stash",
 		"screen-title": "Invest Options",
 		"refresh-tooltip": "Refresh invest data",
+		"panel-left": {
+			"no-invest-options": "No invest options available",
+			"not-connected": "Please connect your wallet to see your invest options"
+		},
 		"panel-right": {
 			"first-text": "MEAN staking rewards include emission incentives plus 30% of the protocol revenues (calculated weekly), and can be boosted using locking periods.",
 			"second-text": "Your staking rewards will be streamed over time and they can be withdrawn at any time.",
