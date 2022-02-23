@@ -417,7 +417,7 @@ export const TreasuriesView = () => {
       }
     }    
 
-    return treasuries;
+    return treasuries.filter(t => !t.autoClose);
 
   }, [
     connection, 

@@ -2979,6 +2979,46 @@ export const MultisigView = () => {
 
   }, [connection]);
 
+  const canShowApproveButton = useCallback(() => {
+
+    if (!highlightedMultisigTx) { return false; }
+
+    let result = (
+      highlightedMultisigTx.status === MultisigTransactionStatus.Pending &&
+      !highlightedMultisigTx.didSigned
+    );
+
+    console.log('show approve result', result);
+
+    return result;
+
+  },[highlightedMultisigTx])
+
+  const canShowExecuteButton = useCallback(() => {
+
+    if (!highlightedMultisigTx) { return false; }
+
+    return ((
+      highlightedMultisigTx.operation === OperationType.TreasuryCreate ||
+      highlightedMultisigTx.operation === OperationType.TreasuryClose ||
+      highlightedMultisigTx.operation === OperationType.TreasuryAddFunds ||
+      highlightedMultisigTx.operation === OperationType.TreasuryStreamCreate ||
+      highlightedMultisigTx.operation === OperationType.StreamCreate ||
+      highlightedMultisigTx.operation === OperationType.StreamClose
+    ) && (
+      publicKey &&
+      highlightedMultisigTx.proposer &&
+      publicKey.equals(highlightedMultisigTx.proposer)
+    ) && (
+      highlightedMultisigTx.status === MultisigTransactionStatus.Approved &&
+      !highlightedMultisigTx.executedOn
+    ));
+
+  },[
+    highlightedMultisigTx, 
+    publicKey
+  ])
+
   // Refresh the multisig accounts list
   useEffect(() => {
 
@@ -4363,43 +4403,7 @@ export const MultisigView = () => {
                 }
               </Button>
               {
-                (
-                  (
-                    (
-                      highlightedMultisigTx.operation === OperationType.TreasuryCreate ||
-                      highlightedMultisigTx.operation === OperationType.TreasuryClose ||
-                      highlightedMultisigTx.operation === OperationType.TreasuryAddFunds ||
-                      highlightedMultisigTx.operation === OperationType.TreasuryStreamCreate
-                    )
-                    &&
-                    (
-                      (
-                        highlightedMultisigTx.status === MultisigTransactionStatus.Pending &&
-                        !highlightedMultisigTx.didSigned
-                      ) 
-                      ||
-                      (
-                        publicKey &&
-                        highlightedMultisigTx.proposer &&
-                        publicKey.equals(highlightedMultisigTx.proposer) &&
-                        highlightedMultisigTx.status === MultisigTransactionStatus.Approved &&
-                        !highlightedMultisigTx.executedOn
-                      )
-                    )
-                  )
-                  ||
-                  (
-                    (
-                      highlightedMultisigTx.status === MultisigTransactionStatus.Pending &&
-                      !highlightedMultisigTx.didSigned
-                    ) 
-                    ||
-                    (
-                      highlightedMultisigTx.status === MultisigTransactionStatus.Approved &&
-                      !highlightedMultisigTx.executedOn
-                    )
-                  )
-                )
+                (canShowExecuteButton() || canShowApproveButton())
                 &&
                 (
                   <Button
