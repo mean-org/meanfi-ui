@@ -15,8 +15,7 @@ import {
   SystemProgram,
   SYSVAR_CLOCK_PUBKEY,
   SYSVAR_RENT_PUBKEY,
-  Transaction,
-  TransactionInstruction
+  Transaction
 } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
@@ -57,16 +56,15 @@ import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import dateFormat from 'dateformat';
 import { useNativeAccount } from '../../contexts/accounts';
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
-import { AccountLayout, MintLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { AccountLayout, MintLayout, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { useNavigate } from 'react-router-dom';
-import { Multisig, MultisigV2, MultisigParticipant, MultisigTransaction, MultisigTransactionStatus } from '../../models/multisig';
+import { Multisig, MultisigV2, MultisigParticipant, MultisigTransaction, MultisigTransactionStatus, MultisigMint } from '../../models/multisig';
 import { MultisigCreateModal } from '../../components/MultisigCreateModal';
 import './style.less';
 
 // MULTISIG
 import { BN, Program, Provider } from "@project-serum/anchor";
 import MultisigIdl from "../../models/mean-multisig-idl";
-import { MultisigMintTokenModal } from '../../components/MultisigMintTokenModal';
 import { MultisigUpgradeProgramModal } from '../../components/MultisigUpgradeProgramModal';
 import { MultisigUpgradeIDLModal } from '../../components/MultisigUpgradeIDL';
 import { encodeInstruction } from '../../models/idl';
@@ -106,37 +104,46 @@ export const MultisigView = () => {
   } = useContext(TransactionStatusContext);
 
   const { t } = useTranslation('common');
-  const { width } = useWindowSize();
   const { account } = useNativeAccount();
+  // Misc hooks
+  const { width } = useWindowSize();
   const [isSmallUpScreen, setIsSmallUpScreen] = useState(isDesktop);
-  const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
-
-  // Transactions
+  // Balance and fees
   const [nativeBalance, setNativeBalance] = useState(0);
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
-  const [transactionCancelled, setTransactionCancelled] = useState(false);
-  const [isBusy, setIsBusy] = useState(false);
   const [transactionFees, setTransactionFees] = useState<TransactionFees>({
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
   });
-
-  // MULTISIG
-  const [multisigAccounts, setMultisigAccounts] = useState<(MultisigV2 | Multisig)[]>([]);
-  const [multisigVaults, setMultisigVaults] = useState<any[]>([]);
-  const [multisigPendingTxs, setMultisigPendingTxs] = useState<MultisigTransaction[]>([]);
-  const [multisigTreasuries, setMultisigTreasuries] = useState<Treasury[]>([]);
+  // Multisig accounts
   const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(true);
-  const [loadingMultisigTxs, setLoadingMultisigTxs] = useState(true);
+  const [multisigAccounts, setMultisigAccounts] = useState<(MultisigV2 | Multisig)[]>([]);
   const [selectedMultisig, setSelectedMultisig] = useState<any>(undefined);
+  // Pending Txs
+  const [loadingMultisigTxs, setLoadingMultisigTxs] = useState(true);
+  const [multisigPendingTxs, setMultisigPendingTxs] = useState<MultisigTransaction[]>([]);
   const [highlightedMultisigTx, sethHighlightedMultisigTx] = useState<MultisigTransaction | undefined>();
+  // Vaults
+  const [multisigVaults, setMultisigVaults] = useState<any[]>([]);
+  // Programs
+  const [loadingPrograms, setLoadingPrograms] = useState(true);
+  const [programs, setPrograms] = useState<ProgramAccounts[] | undefined>(undefined);
+  // Treasuries
+  const [multisigTreasuries, setMultisigTreasuries] = useState<Treasury[]>([]);
+  // Mints
+  const [loadingMints, setLoadingMints] = useState(true);
+  const [multisigMints, setMultisigMints] = useState<MultisigMint[]>([]);
+  const [selectedMint, setSelectedMint] = useState<MultisigMint | undefined>(undefined);
+  // Tx control
+  const [isBusy, setIsBusy] = useState(false);
+  const [transactionCancelled, setTransactionCancelled] = useState(false);
+  const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
   const [retryOperationPayload, setRetryOperationPayload] = useState<any>(undefined);
+  // Modal visibility flags
   const [isCreateMultisigModalVisible, setIsCreateMultisigModalVisible] = useState(false);
   const [isEditMultisigModalVisible, setIsEditMultisigModalVisible] = useState(false);
   const [isUpgradeProgramModalVisible, setIsUpgradeProgramModalVisible] = useState(false);
   const [isUpgradeIDLModalVisible, setIsUpgradeIDLModalVisible] = useState(false);
   const [isSetProgramAuthModalVisible, setIsSetProgramAuthModalVisible] = useState(false);
-  const [programs, setPrograms] = useState<ProgramAccounts[] | undefined>(undefined);
-  const [loadingPrograms, setLoadingPrograms] = useState(true);
 
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
     commitment: "confirmed",
@@ -2979,6 +2986,50 @@ export const MultisigView = () => {
 
   }, [connection]);
 
+  // Get multisig mint accounts on demmand
+  const getMultisigMints = useCallback(async (
+    connection: Connection,
+    multisig: PublicKey
+
+  ) => {
+
+    const [multisigSigner] = await PublicKey.findProgramAddress(
+      [multisig.toBuffer()],
+      MEAN_MULTISIG
+    );
+
+    const mintInfos = await connection.getProgramAccounts(TOKEN_PROGRAM_ID, {
+      filters: [
+        {
+          memcmp: { offset: 4, bytes: multisigSigner.toBase58() },
+        }, 
+        {
+          dataSize: MintLayout.span
+        }
+      ],
+    });
+
+    if (!mintInfos || !mintInfos.length) { return []; }
+
+    const results = mintInfos.map((t: any) => {
+      let mintAccount = MintLayout.decode(t.account.data);
+      mintAccount.address = t.pubkey;
+      return {
+        address: mintAccount.address,
+        isInitialized: mintAccount.isInitialized === 1 ? true : false,
+        decimals: mintAccount.decimals,
+        supply: new BN(mintAccount.supply).toNumber(),
+        mintAuthority: mintAccount.freezeAuthority ? new PublicKey(mintAccount.freezeAuthority) : null,
+        freezeAuthority: mintAccount.freezeAuthority ? new PublicKey(mintAccount.freezeAuthority) : null
+        
+      } as MultisigMint;
+    });
+
+    consoleOut('multisig mints:', results, 'blue');
+    return results;
+
+  },[]);
+
   // Refresh the multisig accounts list
   useEffect(() => {
 
@@ -3265,6 +3316,36 @@ export const MultisigView = () => {
     loadingPrograms,
     selectedMultisig,
     getProgramsByUpgradeAuthority,
+  ]);
+
+  // Get Multisig Mint accounts
+  useEffect(() => {
+
+    if (!connection || !publicKey || !multisigClient || !selectedMultisig || !loadingMints) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      getMultisigMints(connection, selectedMultisig.address)
+      .then((result: MultisigMint[]) => {
+        setMultisigMints(result);
+        consoleOut('Mints:', result, 'blue');
+      })
+      .catch(err => console.error(err))
+      .finally(() => setLoadingMints(false));
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  },[
+    publicKey,
+    connection,
+    loadingMints,
+    multisigClient,
+    selectedMultisig,
+    getMultisigMints,
   ]);
 
   // Load/Unload multisig on wallet connect/disconnect
@@ -3860,7 +3941,32 @@ export const MultisigView = () => {
           </Button>
 
           {/* Mints */}
-          {isUnderDevelopment() && (
+          <Button
+            type="default"
+            shape="round"
+            size="small"
+            className="thin-stroke"
+            disabled={isTxInProgress() || loadingMultisigAccounts}
+            onClick={() => {
+              if (selectedMultisig) {
+                const url = `/multisig-mints?multisig=${selectedMultisig.id.toBase58()}`;
+                navigate(url);
+              }
+            }}>
+            {multisigMints && multisigMints.length > 0 ? (
+              <span>
+                {t('multisig.multisig-account-detail.cta-mints', {
+                  itemCount: multisigMints.length
+                })}
+              </span>
+              ) : (
+              <span>
+                {t('multisig.multisig-account-detail.cta-no-mints')}
+              </span>
+            )}
+          </Button>
+
+          {/* {isUnderDevelopment() && (
             <Dropdown overlay={mintOptionsMenu} trigger={["click"]}>
               <Button
                 type="default"
@@ -3872,7 +3978,7 @@ export const MultisigView = () => {
                 <IconCaretDown className="mean-svg-icons" />
               </Button>
             </Dropdown>
-          )}
+          )} */}
 
           {/* Data */}
           {isUnderDevelopment() && (

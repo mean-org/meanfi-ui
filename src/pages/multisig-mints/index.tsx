@@ -12,16 +12,15 @@ import { ConfirmOptions, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Syste
 import { Program, Provider } from '@project-serum/anchor';
 import MultisigIdl from "../../models/mean-multisig-idl";
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
-import { AccountLayout, MintInfo, MintLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { MintLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { consoleOut, copyText, delay, getReadableDate, getShortDate, getTransactionOperationDescription, getTransactionStatusForLogs, isDev, isLocal } from '../../utils/ui';
 import { Identicon } from '../../components/Identicon';
-import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress, toUiAmount } from '../../utils/utils';
-import { MultisigV2, MultisigParticipant, MultisigTransaction, MultisigTransactionStatus, Multisig, CreateMintPayload, MultisigMint } from '../../models/multisig';
+import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, toUiAmount } from '../../utils/utils';
+import { MultisigV2, MultisigParticipant, MultisigTransaction, MultisigTransactionStatus, Multisig, CreateMintPayload, MultisigMint, SetMintAuthPayload } from '../../models/multisig';
 import { TransactionFees } from '@mean-dao/msp';
 import { useNativeAccount } from '../../contexts/accounts';
 import { OperationType, TransactionStatus } from '../../models/enums';
-import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { BN } from 'bn.js';
 import { notify } from '../../utils/notifications';
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
@@ -60,6 +59,7 @@ export const MultisigMintsView = () => {
     clearTransactionStatusContext,
   } = useContext(TransactionStatusContext);
   const { t } = useTranslation('common');
+  // Misc hooks
   const { width } = useWindowSize();
   // Balance and fees
   const [nativeBalance, setNativeBalance] = useState(0);
@@ -1005,7 +1005,7 @@ export const MultisigMintsView = () => {
     resetTransactionStatus
   ]);
 
-  const onExecuteSetMintAuthTx = useCallback(async (data: any) => {
+  const onExecuteSetMintAuthTx = useCallback(async (authority: any) => {
 
     let transaction: Transaction;
     let signedTransaction: Transaction;
@@ -1016,10 +1016,10 @@ export const MultisigMintsView = () => {
     clearTransactionStatusContext();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.SetMintAuthority);
-    setRetryOperationPayload(data);
+    setRetryOperationPayload(authority);
     setIsBusy(true);
 
-    const setMintAuth = async (data: any) => {
+    const setMintAuth = async (data: SetMintAuthPayload) => {
 
       if (!selectedMultisig || !publicKey) { return null; }
   
@@ -1072,7 +1072,7 @@ export const MultisigMintsView = () => {
 
     const createTx = async (): Promise<boolean> => {
 
-      if (!publicKey || !data) {
+      if (!publicKey || !authority || !selectedMultisig || !selectedMint) {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
@@ -1090,13 +1090,12 @@ export const MultisigMintsView = () => {
       });
 
       // Create a transaction
-      // TODO: Types here YAF
       const payload = {
-        multisig: '',
-        mint: '',
-        newAuthority: ''
-      };
-      
+        multisig: selectedMultisig.address.toBase58(),
+        mint: selectedMint.address.toBase58(),
+        newAuthority: authority
+      } as SetMintAuthPayload;
+
       consoleOut('DATA:', payload);
 
       // Log input data

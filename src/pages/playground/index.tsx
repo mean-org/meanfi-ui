@@ -364,6 +364,18 @@ export const PlaygroundView = () => {
             );
           })}
         </Collapse>
+
+        <div className="tabset-heading">Notifications and navigation</div>
+        <div className="text-left mb-3">
+          <Space>
+            <span className="flat-button stroked" onClick={() => sequentialMessagesAndNavigate()}>
+              <span>Sequential messages on Navigate</span>
+            </span>
+            <span className="flat-button stroked" onClick={() => stackedMessagesAndNavigate()}>
+              <span>Stacked messages on Navigate</span>
+            </span>
+          </Space>
+        </div>
       </>
     );
 
@@ -559,16 +571,6 @@ export const PlaygroundView = () => {
               </div>
             </div>
             {renderTab()}
-            <div className="mt-3">
-              <Space>
-                <span className="flat-button stroked" onClick={() => sequentialMessagesAndNavigate()}>
-                  <span>Sequential messages and Navigate</span>
-                </span>
-                <span className="flat-button stroked" onClick={() => stackedMessagesAndNavigate()}>
-                  <span>Stacked messages and Navigate</span>
-                </span>
-              </Space>
-            </div>
           </div>
         </div>
       </section>
