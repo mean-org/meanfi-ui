@@ -12,6 +12,7 @@ import { AppStateContext } from "../../contexts/appstate";
 import { formatAmount, getAmountWithSymbol, isValidNumber } from "../../utils/utils";
 import moment from 'moment';
 import Modal from "antd/lib/modal/Modal";
+import { IconHelpCircle } from "../../Icons/IconHelpCircle";
 
 type SwapOption = "stake" | "unstake";
 
@@ -403,13 +404,18 @@ export const StakeTabView = () => {
       <span className="info-label">{t("invest.panel-right.tabset.stake.notification-label", { periodValue: periodValue, periodTime: periodTime, unstakeStartDate: unstakeStartDate })}</span>
 
       {/* Confirm that have read the terms and conditions */}
-      <div className="mb-2 mt-2">
+      <div className="mt-2 d-flex confirm-terms">
         <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>{t("invest.panel-right.tabset.stake.verified-label")}</Checkbox>
+        <Tooltip placement="top" title={t("invest.panel-right.tabset.stake.terms-and-conditions-tooltip")}>
+          <span>
+            <IconHelpCircle className="mean-svg-icons" />
+          </span>
+        </Tooltip>
       </div>
 
       {/* Action button */}
       <Button
-        className="main-cta"
+        className="main-cta mt-2"
         block
         type="primary"
         shape="round"
@@ -575,13 +581,18 @@ export const UnstakeTabView = () => {
       <span className="info-label">{t("invest.panel-right.tabset.unstake.notification-label-two")}</span>
       
       {/* Confirm that have read the terms and conditions */}
-      <div className="mb-2 mt-2">
+      {/* <div className="mt-2 confirm-terms">
         <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>{t("invest.panel-right.tabset.unstake.verified-label")}</Checkbox>
-      </div>
+        <Tooltip placement="top" title={t("invest.panel-right.tabset.unstake.terms-and-conditions-tooltip")}>
+          <span>
+            <IconHelpCircle className="mean-svg-icons" />
+          </span>
+        </Tooltip>
+      </div> */}
 
       {/* Action button */}
       <Button
-        className="main-cta"
+        className="main-cta mt-2"
         block
         type="primary"
         shape="round"

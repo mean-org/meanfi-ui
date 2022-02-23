@@ -275,6 +275,7 @@
 					"years": "years",
 					"notification-label": "Staking period of {{periodValue}} {{periodTime}} will lock your Tokens until {{unstakeStartDate}} with estimated rewards of up to 100 MEAN",
 					"verified-label": "I agree to the Terms & Conditions",
+					"terms-and-conditions-tooltip": "Your tokens will be locked for the period of time selected and you will not be able to unstake them before the staking period ends. When you stake additional tokens to an existing contract, the staking period will be extended to the new end date for ALL of the tokens locked.",
 					"stake-button": "Stake"
 				},
 				"unstake": {

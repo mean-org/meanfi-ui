@@ -21,6 +21,7 @@ export { IconExit } from "./IconExit";
 export { IconExternalLink } from "./IconExternalLink";
 export { IconFacebook } from "./IconFacebook";
 export { IconGasStation } from "./IconGasStation";
+export { IconHelpCircle } from "./IconHelpCircle";
 export { IconIncomingPaused } from "./IconIncomingPaused";
 export { IconInfoCircle } from "./IconInfoCircle";
 export { IconInfoTriangle } from "./IconInfoTriangle";
