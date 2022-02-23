@@ -470,6 +470,7 @@ export const UnstakeTabView = () => {
   const { t } = useTranslation('common');
   const percentages = [25, 50, 75, 100];
   const [percentageValue, setPercentageValue] = useState<number>(0);
+  const [availableUnstake, setAvailableUnstake] = useState<number>(0);
 
   const currentDate = moment().format("LL");
 
@@ -508,6 +509,13 @@ export const UnstakeTabView = () => {
     setFromCoinAmount(parseFloat(unstakeAmount) > 0 ? `${parseFloat(unstakeAmount)*percentageValue/100}` : '');
   }, [percentageValue]);
 
+  useEffect(() => {
+    parseFloat(unstakeAmount) > 0 && currentDate === unstakeStartDate ?
+      setAvailableUnstake(parseFloat(unstakeAmount))
+    :
+      setAvailableUnstake(0)
+  }, [currentDate, unstakeAmount, unstakeStartDate]);
+
   return (
     <>
       <span className="info-label">{unstakeAmount ? t("invest.panel-right.tabset.unstake.notification-label-one", {unstakeAmount: unstakeAmount, unstakeStartDate: unstakeStartDate}) : t("invest.panel-right.tabset.unstake.notification-label-one-error")}</span>
@@ -517,7 +525,7 @@ export const UnstakeTabView = () => {
           <div className="token-group">
             {percentages.map((percentage, index) => (
               <div key={index} className="mb-1 d-flex flex-column align-items-center">
-                <div className="token-max simplelink" onClick={() => onChangeValue(percentage)}>{percentage}%</div>
+                <div className={`token-max simplelink ${availableUnstake !== 0 ? "active" : "disabled"}`} onClick={() => onChangeValue(percentage)}>{percentage}%</div>
               </div>
             ))}
           </div>
@@ -553,9 +561,7 @@ export const UnstakeTabView = () => {
         <div className="flex-fixed-right">
           <div className="left inner-label">
             <span>{t('invest.panel-right.tabset.unstake.send-amount.label-right')}:</span>
-            <span>
-              {currentDate === unstakeStartDate ? unstakeAmount : "0"}
-            </span>
+            <span>{availableUnstake}</span>
           </div>
           <div className="right inner-label">
             <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
@@ -583,10 +589,10 @@ export const UnstakeTabView = () => {
         disabled={
           !areSendAmountSettingsValid() ||
           !isVerifiedRecipient ||
-          currentDate !== unstakeStartDate
+          availableUnstake <= 0
         }
       >
-        {currentDate !== unstakeStartDate ? t("invest.panel-right.tabset.unstake.unstake-button-unavailable") : t("invest.panel-right.tabset.unstake.unstake-button-available")} {selectedToken && selectedToken.name}
+        {availableUnstake <= 0 ? t("invest.panel-right.tabset.unstake.unstake-button-unavailable") : t("invest.panel-right.tabset.unstake.unstake-button-available")} {selectedToken && selectedToken.name}
       </Button>
     </>
   )
