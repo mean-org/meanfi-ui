@@ -325,7 +325,7 @@ export const StreamAddFundsModal = (props: {
   return (
     <Modal
       className="mean-modal"
-      title={<div className="modal-title">{t('add-funds.modal-title')}</div>}
+      title={<div className="modal-title">{t('streams.add-funds.modal-title')}</div>}
       footer={null}
       visible={props.isVisible}
       onOk={onAcceptTopup}
@@ -374,12 +374,12 @@ export const StreamAddFundsModal = (props: {
         <>
           {treasuryDetails && !treasuryDetails.autoClose && (
             <>
-              <h3>Treasury Funded Money Stream</h3>
-              <p>As this stream was funded from a treasury, the funds being added will be allocated from the Treasury's available balance.</p>
+              <h3>{t('streams.add-funds.treasury-money-stream-title')}</h3>
+              <p>{t('streams.add-funds.treasury-money-stream-description')}</p>
             </>
           )}
           {/* Top up amount */}
-          <div className="form-label">{t('add-funds.label')}</div>
+          <div className="form-label">{t('streams.add-funds.amount-label')}</div>
           <div className="well">
             <div className="flex-fixed-left">
               <div className="left">

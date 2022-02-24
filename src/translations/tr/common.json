@@ -638,6 +638,12 @@
 		"total-liquidity-btn": "Likidite Ekle"
 	},
 	"streams": {
+		"add-funds": {
+			"amount-label": "Amount",
+			"treasury-money-stream-title": "Treasury Funded Money Stream",
+			"treasury-money-stream-description": "As this stream was funded from a treasury, the funds being added will be allocated from the Treasury's available balance.",
+			"modal-title": "Add funds"
+		},
 		"back-to-my-streams-cta": "Para Akışlarına Geri Dön",
 		"create-new-stream-cta": "Yeni Transfer",
 		"lookup-stream-cta-tooltip": "Akış Arama",
@@ -912,6 +918,8 @@
 	},
 	"treasuries": {
 		"add-funds": {
+			"allocation-amount-label": "How Much Do You Want to Allocate?",
+			"allocation-heading": "To top up an existing stream, the funds being added will be allocated from the Treasury's available balance.",
 			"allocation-label": "Bu fonları nasıl tahsis etmek istiyorsunuz?",
 			"allocation-option-evenly": "Tüm Para Aktarımlarına eşit olarak tahsis edin",
 			"allocation-option-none": "Tahsis etmeyin (Yedeklerde bırakın)",
@@ -923,6 +931,7 @@
 			"main-cta-busy": "Fonlama hazinesi",
 			"modal-title": "Hazineye fon ekleyin",
 			"modal-title-fund-stream": "Add funds to a Money Stream",
+			"money-stream-to-topup-label": "Money Stream to top up",
 			"search-streams-placeholder": "İsimle ve ya adresle aktarım arayın",
 			"success-message": "Hazineniz başarıyla fonlandı."
 		},
@@ -996,7 +1005,7 @@
 			"column-description": "Açıklama",
 			"column-destination": "Hedef",
 			"column-rate": "Oran",
-			"column-started": "Başlatıldı",
+			"column-funds-left": "Kalan para",
 			"create-stream-main-cta": "Akım oluştur",
 			"create-stream-main-cta-busy": "Aktarım oluşturuluyor",
 			"fee-payed-by-treasurer": "Bu aktarım için yararlanıcı yerine ücretleri ben ödemek istiyorum",

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { useContext, useState } from 'react';
-import { Modal, Button, Select, Dropdown, Menu, AutoComplete, Divider, Input, Spin } from 'antd';
+import { Modal, Button, Select, Divider, Input, Spin } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
 import { TokenInfo } from '@solana/spl-token-registry';
@@ -18,7 +18,7 @@ import {
   shortenAddress,
   toUiAmount
 } from '../../utils/utils';
-import { IconCaretDown, IconCheckedBox, IconDownload, IconIncomingPaused, IconOutgoingPaused, IconTimer, IconUpload } from '../../Icons';
+import { IconCheckedBox, IconDownload, IconIncomingPaused, IconOutgoingPaused, IconTimer, IconUpload } from '../../Icons';
 import {
   consoleOut,
   getShortDate,
@@ -684,6 +684,30 @@ export const TreasuryAddFundsModal = (props: {
   // Rendering //
   ///////////////
 
+  const renderStream = () => {
+
+    const item = getSelectedStream(highLightableStreamId);
+    if (!item) { return null; }
+
+    return (
+      <div className={`transaction-list-row no-pointer`}>
+        <div className="icon-cell">{getStreamIcon(item)}</div>
+        <div className="description-cell">
+          <div className="title text-truncate">{getStreamDescription(item)}</div>
+          <div className="subtitle text-truncate">{getStreamSubTitle(item)}</div>
+        </div>
+        <div className="rate-cell">
+          <div className="rate-amount">
+            {item && item.rateAmount > 0 ? getRateAmountDisplay(item) : getTransferAmountDisplay(item)}
+          </div>
+          {item && item.rateAmount > 0 && (
+            <div className="interval">{getIntervalFromSeconds(item.rateIntervalInSeconds, false, t)}</div>
+          )}
+        </div>
+      </div>
+    )
+  };
+
   // const renderStreamSelectItem = (item: Stream | StreamInfo) => ({
   //   key: getStreamName(item) as string,
   //   value: item.id as string,
@@ -757,7 +781,14 @@ export const TreasuryAddFundsModal = (props: {
           <>
             {/* Top up amount */}
             <div className="mb-3">
-              <div className="form-label">{t('treasuries.add-funds.label')}</div>
+              {highLightableStreamId ? (
+                <>
+                  <p>{t('treasuries.add-funds.allocation-heading')}</p>
+                  <div className="form-label">{t('treasuries.add-funds.allocation-amount-label')}</div>
+                </>
+              ) : (
+                <div className="form-label">{t('treasuries.add-funds.label')}</div>
+              )}
               <div className={`well ${props.isBusy ? 'disabled' : ''}`}>
                 <div className="flex-fixed-left">
                   <div className="left">
@@ -918,6 +949,15 @@ export const TreasuryAddFundsModal = (props: {
                 </div>
               </div>
             )} */}
+
+            {allocationOption === AllocationType.Specific && (
+              <div className="mb-3">
+                <div className="form-label">{t('treasuries.add-funds.money-stream-to-topup-label')}</div>
+                <div className="well">
+                  {renderStream()}
+                </div>
+              </div>
+            )}
 
           </>
         ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
