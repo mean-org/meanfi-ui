@@ -1049,7 +1049,6 @@ export const MultisigMintsView = () => {
       const tx = multisigClient.transaction.createTransaction(
         TOKEN_PROGRAM_ID,
         OperationType.SetMultisigAuthority,
-        [],
         ixAccounts,
         ixData,
         {
@@ -1719,7 +1718,6 @@ export const MultisigMintsView = () => {
       let tx = multisigClient.transaction.createTransaction(
         TOKEN_PROGRAM_ID,
         OperationType.MintTokens,
-        [],
         ixAccounts,
         ixData,
         {

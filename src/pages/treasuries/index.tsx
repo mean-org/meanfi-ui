@@ -1711,7 +1711,6 @@ export const TreasuriesView = () => {
       let tx = multisigClient.transaction.createTransaction(
         MSPV2Constants.MSP, 
         OperationType.TreasuryRefreshBalance,
-        [],
         ixAccounts as any,
         ixData as any,
         {
@@ -2028,7 +2027,6 @@ export const TreasuriesView = () => {
       let tx = multisigClient.transaction.createTransaction(
         MSPV2Constants.MSP, 
         OperationType.TreasuryCreate,
-        [],
         ixAccounts as any,
         ixData as any,
         {
@@ -2506,7 +2504,6 @@ export const TreasuriesView = () => {
       let tx = multisigClient.transaction.createTransaction(
         MSPV2Constants.MSP, 
         OperationType.StreamAddFunds,
-        [],
         ixAccounts as any,
         ixData as any,
         {
@@ -2952,7 +2949,6 @@ export const TreasuriesView = () => {
       let tx = multisigClient.transaction.createTransaction(
         MSPV2Constants.MSP, 
         OperationType.TreasuryClose,
-        [],
         ixAccounts as any,
         ixData as any,
         {
@@ -3392,7 +3388,6 @@ export const TreasuriesView = () => {
       let tx = multisigClient.transaction.createTransaction(
         MSPV2Constants.MSP, 
         OperationType.StreamClose,
-        [],
         ixAccounts as any,
         ixData as any,
         {
@@ -3816,7 +3811,6 @@ export const TreasuriesView = () => {
       let tx = multisigClient.transaction.createTransaction(
         MSPV2Constants.MSP, 
         OperationType.StreamPause,
-        [],
         ixAccounts as any,
         ixData as any,
         {
@@ -4240,7 +4234,6 @@ export const TreasuriesView = () => {
       let tx = multisigClient.transaction.createTransaction(
         MSPV2Constants.MSP, 
         OperationType.StreamResume,
-        [],
         ixAccounts as any,
         ixData as any,
         {

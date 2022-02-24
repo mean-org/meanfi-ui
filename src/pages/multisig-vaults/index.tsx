@@ -1402,7 +1402,6 @@ export const MultisigVaultsView = () => {
       let tx = multisigClient.transaction.createTransaction(
         TOKEN_PROGRAM_ID,
         OperationType.TransferTokens,
-        [],
         transferIx.keys,
         Buffer.from(transferIx.data),
         {
@@ -1740,7 +1739,6 @@ export const MultisigVaultsView = () => {
       let tx = multisigClient.transaction.createTransaction(
         TOKEN_PROGRAM_ID,
         OperationType.SetVaultAuthority,
-        [],
         ixAccounts,
         ixData,
         {

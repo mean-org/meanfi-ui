@@ -46,6 +46,7 @@ import { TreasuryInfo } from '@mean-dao/money-streaming';
 import { useConnectionConfig } from '../../contexts/connection';
 import { Idl, Program } from '@project-serum/anchor';
 import { BN } from 'bn.js';
+import { u64 } from '@solana/spl-token';
 
 const { Option } = Select;
 
@@ -517,13 +518,20 @@ export const TreasuryStreamCreateModal = (props: {
         props.multisigClient.programId
       );
 
-      let createStream = await msp.createStream(
+      const timeStamp = new u64(Date.now() / 1000);
+
+      let [stream, streamBump] = await PublicKey.findProgramAddress(
+        [props.multisigAddress.toBuffer(), timeStamp.toBuffer()],
+        props.multisigClient.programId
+      );
+
+      let createStream = await msp.createStreamFromPda(
         publicKey,                                                            // payer
         multisigSigner,                                                       // treasurer
         new PublicKey(data.treasury),                                         // treasury
         new PublicKey(data.beneficiary),                                      // beneficiary
         new PublicKey(data.associatedToken),                                  // associatedToken
-        streamAccount,
+        stream,                                                               // stream PDA
         data.streamName,                                                      // streamName
         data.allocationAssigned,                                              // allocationAssigned
         data.rateAmount,                                                      // rateAmount
@@ -534,7 +542,6 @@ export const TreasuryStreamCreateModal = (props: {
         data.feePayedByTreasurer                                              // feePayedByTreasurer
       );
 
-      const ixKeypairs = [streamAccount.secretKey];
       const ixData = Buffer.from(createStream.instructions[0].data);
       const ixAccounts = createStream.instructions[0].keys;
       const transaction = Keypair.generate();
@@ -547,9 +554,10 @@ export const TreasuryStreamCreateModal = (props: {
       let tx = props.multisigClient.transaction.createTransaction(
         MSPV2Constants.MSP,
         OperationType.StreamCreate,
-        ixKeypairs,
         ixAccounts as any,
         ixData as any,
+        timeStamp,
+        new BN(streamBump),
         {
           accounts: {
             multisig: props.multisigAddress,

@@ -702,7 +702,6 @@ export const MultisigView = () => {
       let tx = multisigClient.transaction.createTransaction(
         pid, 
         operation,
-        [],
         ixAccounts as any,
         ixData as any,
         {
@@ -1321,8 +1320,6 @@ export const MultisigView = () => {
           isWritable: false,
           isSigner: false,
         });
-
-      const txSigners = data.transaction.keypairs;
         
       let tx = multisigClient.transaction.executeTransaction({
           accounts: {
@@ -1330,18 +1327,52 @@ export const MultisigView = () => {
             multisigSigner: multisigSigner,
             transaction: data.transaction.id,
           },
-          remainingAccounts: remainingAccounts,
-          signers: txSigners
+          remainingAccounts: remainingAccounts
         }
       );
+
+      if (data.transaction.operation === OperationType.StreamCreate || 
+        data.transaction.operation === OperationType.TreasuryStreamCreate) {
+
+        // const accounts = data.transaction.accounts.map((a: any) => {
+        //   return { ...a, pubkey: a.pubkey.toBase58() }
+        // });
+  
+        // console.log('accounts', accounts);
+
+        remainingAccounts = data.transaction.accounts
+          // Change the signer status on the vendor signer since it's signed by the program, not the client.
+          .map((meta: any) =>
+            !meta.pubkey.equals(publicKey)
+              ? { ...meta, isSigner: false }
+              : meta
+          )
+          .concat({
+            pubkey: data.transaction.programId,
+            isWritable: false,
+            isSigner: false,
+          });
+
+        const streamPda = remainingAccounts[7].pubkey;
+          
+        tx = multisigClient.transaction.executeTransactionPda(
+          new BN(data.transaction.pdaTimespam),
+          new BN(data.transaction.pdaBump),
+          {
+            accounts: {
+              multisig: data.transaction.multisig,
+              multisigSigner: multisigSigner,
+              pdaAccount: streamPda,
+              transaction: data.transaction.id,
+            },
+            remainingAccounts: remainingAccounts
+          }
+        );    
+      }
   
       tx.feePayer = publicKey;
       const { blockhash } = await multisigClient.provider.connection.getRecentBlockhash("finalized");
       tx.recentBlockhash = blockhash;
-      
-      if (txSigners.length) {
-        tx.partialSign(...txSigners);
-      }
   
       return tx;
     };
@@ -1663,7 +1694,6 @@ export const MultisigView = () => {
       const tx = multisigClient.transaction.createTransaction(
         BPF_LOADER_UPGRADEABLE_PID,
         OperationType.UpgradeProgram,
-        [],
         ixAccounts,
         dataBuffer,
         {
@@ -1996,7 +2026,6 @@ export const MultisigView = () => {
       const tx = multisigClient.transaction.createTransaction(
         programAddr,
         OperationType.UpgradeIDL,
-        [],
         ixAccounts,
         dataBuffer,
         {
@@ -2346,7 +2375,6 @@ export const MultisigView = () => {
       const tx = multisigClient.transaction.createTransaction(
         BPF_LOADER_UPGRADEABLE_PID,
         OperationType.SetMultisigAuthority,
-        [],
         ixAccounts,
         ixData,
         {
@@ -3271,6 +3299,8 @@ export const MultisigView = () => {
               accounts: tx.account.accounts,
               didSigned: tx.account.signers[currentOwnerIndex],
               proposer: tx.account.proposer,
+              pdaTimestamp: tx.account.pdaTimestamp ? tx.account.pdaTimestamp.toNumber() : undefined,
+              pdaBump: tx.account.pdaBump ? tx.account.pdaBump : undefined,
               keypairs: tx.account.keypairs
                 .map((k: any) => {
                   try {

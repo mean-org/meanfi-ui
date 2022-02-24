@@ -1072,7 +1072,6 @@ export const MultisigProgramsView = () => {
       const tx = multisigClient.transaction.createTransaction(
         BPF_LOADER_UPGRADEABLE_PID,
         OperationType.UpgradeProgram,
-        [],
         ixAccounts,
         dataBuffer,
         {
@@ -1409,7 +1408,6 @@ export const MultisigProgramsView = () => {
       const tx = multisigClient.transaction.createTransaction(
         programAddr,
         OperationType.UpgradeIDL,
-        [],
         ixAccounts,
         dataBuffer,
         {
@@ -1743,7 +1741,6 @@ export const MultisigProgramsView = () => {
       const tx = multisigClient.transaction.createTransaction(
         BPF_LOADER_UPGRADEABLE_PID,
         OperationType.SetMultisigAuthority,
-        [],
         ixAccounts,
         ixData,
         {
