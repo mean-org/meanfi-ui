@@ -2468,13 +2468,13 @@ export const TreasuriesView = () => {
         );
       }
 
-      return await msp.fundStream(
+      return await msp.allocate(
         new PublicKey(data.payer),                              // payer
         new PublicKey(data.contributor),                              // contributor
         new PublicKey(data.treasury),                               // treasury
         new PublicKey(data.stream),                        // stream
         data.amount,                                 // amount
-      )
+      );
     }
 
     const createTxV2 = async (): Promise<boolean> => {
