@@ -3166,7 +3166,7 @@ export const MultisigView = () => {
             setMultisigAccounts(multisigInfoArray);
             consoleOut('tralla:', multisigInfoArray, 'blue');
             if (highLightableMultisigId) {
-              // Select a multisig that was instructed to highlight even before entering this feature
+              // Select a multisig that was instructed to highlight when entering this feature
               const sig = multisigInfoArray.find(m => m.address.toBase58() === highLightableMultisigId);
               if (sig) {
                 setSelectedMultisig(sig);

@@ -463,7 +463,6 @@ export const TreasuriesView = () => {
               
           if (treasuryAccumulator.length) {
             if (reset) {
-              console.log('treasuryAddress under reset:', treasuryAddress);
               if (treasuryAddress) {
                 // treasuryAddress was passed in as query param?
                 const itemFromServer = treasuryAccumulator.find(i => i.id === treasuryAddress);
@@ -1049,6 +1048,7 @@ export const TreasuriesView = () => {
     }
   }, [
     publicKey,
+    multisigAccounts,
     selectedMultisig,
     fetchTxInfoStatus,
     lastSentTxSignature,
@@ -1564,7 +1564,10 @@ export const TreasuriesView = () => {
     getTransactionFeesV2,
     resetTransactionStatus
   ]);
-  const closeCreateTreasuryModal = useCallback(() => setIsCreateTreasuryModalVisibility(false), []);
+  const closeCreateTreasuryModal = useCallback(() => {
+    setIsCreateTreasuryModalVisibility(false);
+    resetTransactionStatus();
+  }, [resetTransactionStatus]);
 
   const onAcceptCreateTreasury = (data: TreasuryCreateOptions) => {
     consoleOut('treasury create options:', data, 'blue');
@@ -1593,11 +1596,9 @@ export const TreasuriesView = () => {
       });
     }
 
-    resetTransactionStatus();
   }, [
     retryOperationPayload,
     closeCreateTreasuryModal,
-    resetTransactionStatus,
     refreshTokenBalance,
     t,
   ]);
