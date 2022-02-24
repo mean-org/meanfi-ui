@@ -1989,12 +1989,14 @@ export const TreasuriesView = () => {
 
       if (!connection || !msp || !publicKey) { return null; }
 
+      const treasuryType = data.type === 'Open' ? TreasuryType.Open : TreasuryType.Lock;
+
       if (!data.multisig) {
         return await msp.createTreasury(
           new PublicKey(data.treasurer),                    // treasurer
           new PublicKey(data.treasurer),                    // treasurer
           data.label,                                       // label
-          data.type === 'Open' ? TreasuryType.Open : TreasuryType.Lock // type
+          treasuryType                                      // type
         );
       }
 
@@ -2009,7 +2011,7 @@ export const TreasuriesView = () => {
         publicKey,                                        // payer
         multisig.address,                                 // treasurer
         data.label,                                       // label
-        data.type,                                        // type
+        treasuryType,                                     // type
         true,                                             // solFeePayedByTreasury = true
       );
 
@@ -2073,7 +2075,7 @@ export const TreasuriesView = () => {
         label: createOptions.treasuryName,                                                                // label
         type: createOptions.treasuryType === TreasuryType.Open         // type
           ? 'Open'
-          : 'Locked',
+          : 'Lock',
         multisig: createOptions.multisigId                                                                // multisig
       };
 
@@ -3321,7 +3323,7 @@ export const TreasuriesView = () => {
 
       let closeStream = await msp.closeStream(
         new PublicKey(data.payer),             // payer
-        multisig.address, // TODO: This should come from the UI 
+        new PublicKey(data.payer),             // TODO: This should come from the UI 
         new PublicKey(data.stream),            // stream,
         data.closeTreasury                     // closeTreasury
       );
@@ -3338,7 +3340,7 @@ export const TreasuriesView = () => {
       
       let tx = multisigClient.transaction.createTransaction(
         MSPV2Constants.MSP, 
-        OperationType.TreasuryCreate,
+        OperationType.StreamClose,
         [],
         ixAccounts as any,
         ixData as any,

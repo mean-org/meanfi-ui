@@ -2654,6 +2654,8 @@ export const MultisigView = () => {
         return "Change Vault Authority";
       case OperationType.StreamCreate:
         return "Create Stream";
+      case OperationType.StreamClose:
+        return "Close Stream";
       default:
         return '';
     }
