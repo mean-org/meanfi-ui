@@ -2656,6 +2656,8 @@ export const MultisigView = () => {
         return "Create Stream";
       case OperationType.StreamClose:
         return "Close Stream";
+      case OperationType.StreamAddFunds:
+        return "Top Up Stream";
       default:
         return '';
     }
@@ -3041,8 +3043,6 @@ export const MultisigView = () => {
       !highlightedMultisigTx.didSigned
     );
 
-    console.log('show approve result', result);
-
     return result;
 
   },[highlightedMultisigTx])
@@ -3051,13 +3051,14 @@ export const MultisigView = () => {
 
     if (!highlightedMultisigTx) { return false; }
 
-    return ((
+    return (((
       highlightedMultisigTx.operation === OperationType.TreasuryCreate ||
       highlightedMultisigTx.operation === OperationType.TreasuryClose ||
       highlightedMultisigTx.operation === OperationType.TreasuryAddFunds ||
       highlightedMultisigTx.operation === OperationType.TreasuryStreamCreate ||
       highlightedMultisigTx.operation === OperationType.StreamCreate ||
-      highlightedMultisigTx.operation === OperationType.StreamClose
+      highlightedMultisigTx.operation === OperationType.StreamClose ||
+      highlightedMultisigTx.operation === OperationType.StreamAddFunds
     ) && (
       publicKey &&
       highlightedMultisigTx.proposer &&
@@ -3065,7 +3066,18 @@ export const MultisigView = () => {
     ) && (
       highlightedMultisigTx.status === MultisigTransactionStatus.Approved &&
       !highlightedMultisigTx.executedOn
-    ));
+    )) || ((
+      highlightedMultisigTx.operation !== OperationType.TreasuryCreate &&
+      highlightedMultisigTx.operation !== OperationType.TreasuryClose &&
+      highlightedMultisigTx.operation !== OperationType.TreasuryAddFunds &&
+      highlightedMultisigTx.operation !== OperationType.TreasuryStreamCreate &&
+      highlightedMultisigTx.operation !== OperationType.StreamCreate &&
+      highlightedMultisigTx.operation !== OperationType.StreamClose &&
+      highlightedMultisigTx.operation !== OperationType.StreamAddFunds
+    ) && (
+      highlightedMultisigTx.status === MultisigTransactionStatus.Approved &&
+      !highlightedMultisigTx.executedOn
+    )));
 
   },[
     highlightedMultisigTx, 

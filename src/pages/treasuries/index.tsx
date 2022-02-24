@@ -2460,21 +2460,72 @@ export const TreasuriesView = () => {
 
       if (data.stream === '') {
         return await msp.addFunds(
-          new PublicKey(data.payer),                              // payer
-          new PublicKey(data.contributor),                              // contributor
-          new PublicKey(data.treasury),                               // treasury
-          new PublicKey(data.associatedToken),                        // associatedToken
+          new PublicKey(data.payer),                   // payer
+          new PublicKey(data.contributor),             // contributor
+          new PublicKey(data.treasury),                // treasury
+          new PublicKey(data.associatedToken),         // associatedToken
           data.amount,                                 // amount
         );
       }
 
-      return await msp.allocate(
-        new PublicKey(data.payer),                              // payer
-        new PublicKey(data.contributor),                              // contributor
-        new PublicKey(data.treasury),                               // treasury
-        new PublicKey(data.stream),                        // stream
+      if (!isMultisigTreasury()) {
+        return await msp.allocate(
+          new PublicKey(data.payer),                   // payer
+          new PublicKey(data.contributor),             // treasurer
+          new PublicKey(data.treasury),                // treasury
+          new PublicKey(data.stream),                  // stream
+          data.amount,                                 // amount
+        );
+      }
+
+      if (!treasuryDetails || !multisigClient || !multisigAccounts || !publicKey) { return null; }
+
+      let treasury = treasuryDetails as Treasury;
+      let multisig = multisigAccounts.filter(m => m.address.toBase58() === treasury.treasurer)[0];
+
+      if (!multisig) { return null; }
+
+      let allocateTx = await msp.allocate(
+        new PublicKey(data.payer),                   // payer
+        new PublicKey(multisig.address),             // treasurer
+        new PublicKey(data.treasury),                // treasury
+        new PublicKey(data.stream),                  // stream
         data.amount,                                 // amount
       );
+
+      const ixData = Buffer.from(allocateTx.instructions[0].data);
+      const ixAccounts = allocateTx.instructions[0].keys;
+      const transaction = Keypair.generate();
+      const txSize = 1000;
+      const txSigners = [transaction];
+      const createIx = await multisigClient.account.transaction.createInstruction(
+        transaction,
+        txSize
+      );
+      
+      let tx = multisigClient.transaction.createTransaction(
+        MSPV2Constants.MSP, 
+        OperationType.StreamAddFunds,
+        [],
+        ixAccounts as any,
+        ixData as any,
+        {
+          accounts: {
+            multisig: multisig.id,
+            transaction: transaction.publicKey,
+            proposer: publicKey as PublicKey,
+          },
+          preInstructions: [createIx],
+          signers: txSigners,
+        }
+      );
+
+      tx.feePayer = publicKey;
+      let { blockhash } = await connection.getRecentBlockhash("finalized");
+      tx.recentBlockhash = blockhash;
+      tx.partialSign(...txSigners);
+
+      return tx;
     }
 
     const createTxV2 = async (): Promise<boolean> => {
