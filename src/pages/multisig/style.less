@@ -31,3 +31,27 @@
     background: var(--bg-color) !important;
   }
 }
+@media (max-width: 575px) {
+  .ant-select-dropdown {
+    .transaction-list-row {
+      flex-wrap: wrap;
+      height: fit-content;
+      align-items: flex-start;
+      .icon-cell {
+        padding-top: 0.5em;
+      }
+      .description-cell {
+        padding-top: 0.25em;
+      }
+    }   
+  }
+}
+.ant-select-dropdown,
+.ant-spin-container {
+  .transaction-list-row {
+    .description-cell {
+      min-width: fit-content !important;
+      padding-left: 0.5em;
+    }
+  }
+}

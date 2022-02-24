@@ -42,6 +42,7 @@ import {
   delay,
   getShortDate,
   isLocal,
+  isDev
 } from '../../utils/ui';
 import {
   FALLBACK_COIN_IMAGE,
@@ -104,6 +105,7 @@ export const TreasuriesView = () => {
     streamProgramAddress,
     streamV2ProgramAddress,
     previousWalletConnectState,
+    isWhitelisted,
     setSelectedToken,
     setEffectiveRate,
     refreshStreamList,
@@ -709,7 +711,7 @@ export const TreasuriesView = () => {
     multisigAccounts, 
     publicKey, 
     treasuryDetails
-  ])
+  ]);
 
   const getSelectedTreasuryMultisig = useCallback((treasury?: any) => {
 
@@ -1192,6 +1194,10 @@ export const TreasuriesView = () => {
     }
     return false;
   }, [publicKey]);
+
+  const isUnderDevelopment = () => {
+    return isLocal() || (isDev() && isWhitelisted) ? true : false;
+  };
 
   const getStreamIcon = useCallback((item: Stream | StreamInfo) => {
     const isInbound = isInboundStream(item);
@@ -4753,16 +4759,18 @@ export const TreasuriesView = () => {
                 </Button>
               }
 
-              {isMultisigAvailable() && (
-                <Button
-                  type="default"
-                  shape="round"
-                  size="small"
-                  className="thin-stroke"
-                  disabled={isTxInProgress() || loadingMultisigAccounts || isAnythingLoading()}
-                  onClick={() => {}}>
-                  {t('treasuries.treasury-detail.cta-withdraw-multisig-treasury')}
-                </Button>
+              {isUnderDevelopment() && (
+                isMultisigAvailable() && (
+                  <Button
+                    type="default"
+                    shape="round"
+                    size="small"
+                    className="thin-stroke"
+                    disabled={isTxInProgress() || loadingMultisigAccounts || isAnythingLoading()}
+                    onClick={() => {}}>
+                    {t('treasuries.treasury-detail.cta-withdraw-multisig-treasury')}
+                  </Button>
+                )
               )}
 
               <Button
