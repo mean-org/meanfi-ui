@@ -705,6 +705,8 @@ export const MultisigView = () => {
         operation,
         ixAccounts as any,
         ixData as any,
+        new BN(0),
+        new BN(0),
         {
           accounts: {
             multisig: selectedMultisig.id,
@@ -1335,12 +1337,6 @@ export const MultisigView = () => {
       if (data.transaction.operation === OperationType.StreamCreate || 
         data.transaction.operation === OperationType.TreasuryStreamCreate) {
 
-        // const accounts = data.transaction.accounts.map((a: any) => {
-        //   return { ...a, pubkey: a.pubkey.toBase58() }
-        // });
-  
-        // console.log('accounts', accounts);
-
         remainingAccounts = data.transaction.accounts
           // Change the signer status on the vendor signer since it's signed by the program, not the client.
           .map((meta: any) =>
@@ -1355,10 +1351,6 @@ export const MultisigView = () => {
           });
 
         const streamPda = remainingAccounts[7].pubkey;
-
-        console.log('stream PDA', remainingAccounts[7].pubkey.toBase58());
-        console.log('PDA timespam', data.transaction.pdaTimestamp);
-        console.log('PDA bump', data.transaction.pdaBump);
           
         tx = multisigClient.transaction.executeTransactionPda(
           new BN(data.transaction.pdaTimestamp),
@@ -1701,6 +1693,8 @@ export const MultisigView = () => {
         OperationType.UpgradeProgram,
         ixAccounts,
         dataBuffer,
+        new BN(0),
+        new BN(0),
         {
           accounts: {
             multisig: selectedMultisig.id,
@@ -2033,6 +2027,8 @@ export const MultisigView = () => {
         OperationType.UpgradeIDL,
         ixAccounts,
         dataBuffer,
+        new BN(0),
+        new BN(0),
         {
           accounts: {
             multisig: selectedMultisig.id,
@@ -2382,6 +2378,8 @@ export const MultisigView = () => {
         OperationType.SetMultisigAuthority,
         ixAccounts,
         ixData,
+        new BN(0),
+        new BN(0),
         {
           accounts: {
             multisig: selectedMultisig.id,

@@ -1018,11 +1018,7 @@ export const TreasuriesView = () => {
         description: t('treasuries.create-treasury.multisig-treasury-created-instructions'),
         duration: null,
       });
-      const destMultisig = multisigAccounts ? multisigAccounts.find(m => m.id.toBase58() === multisigId) : undefined;
-      consoleOut('destMultisig:', destMultisig, 'crimson');
-      if (destMultisig) {
-        setHighLightableMultisigId(destMultisig.address.toBase58());
-      }
+      setHighLightableMultisigId(multisigId);
       navigate('/multisig');
     }
 
@@ -1718,6 +1714,8 @@ export const TreasuriesView = () => {
         OperationType.TreasuryRefreshBalance,
         ixAccounts as any,
         ixData as any,
+        new BN(0),
+        new BN(0),
         {
           accounts: {
             multisig: multisig.id,
@@ -1996,6 +1994,7 @@ export const TreasuriesView = () => {
       const treasuryType = data.type === 'Open' ? TreasuryType.Open : TreasuryType.Lock;
 
       if (!data.multisig) {
+        console.log('data multisig', data.multisig);
         return await msp.createTreasury(
           new PublicKey(data.treasurer),                    // treasurer
           new PublicKey(data.treasurer),                    // treasurer
@@ -2034,6 +2033,8 @@ export const TreasuriesView = () => {
         OperationType.TreasuryCreate,
         ixAccounts as any,
         ixData as any,
+        new BN(0),
+        new BN(0),
         {
           accounts: {
             multisig: multisig.id,
@@ -2511,6 +2512,8 @@ export const TreasuriesView = () => {
         OperationType.StreamAddFunds,
         ixAccounts as any,
         ixData as any,
+        new BN(0),
+        new BN(0),
         {
           accounts: {
             multisig: multisig.id,
@@ -2956,6 +2959,8 @@ export const TreasuriesView = () => {
         OperationType.TreasuryClose,
         ixAccounts as any,
         ixData as any,
+        new BN(0),
+        new BN(0),
         {
           accounts: {
             multisig: multisig.id,
@@ -3395,6 +3400,8 @@ export const TreasuriesView = () => {
         OperationType.StreamClose,
         ixAccounts as any,
         ixData as any,
+        new BN(0),
+        new BN(0),
         {
           accounts: {
             multisig: multisig.id,
@@ -3818,6 +3825,8 @@ export const TreasuriesView = () => {
         OperationType.StreamPause,
         ixAccounts as any,
         ixData as any,
+        new BN(0),
+        new BN(0),
         {
           accounts: {
             multisig: multisig.id,
@@ -4241,6 +4250,8 @@ export const TreasuriesView = () => {
         OperationType.StreamResume,
         ixAccounts as any,
         ixData as any,
+        new BN(0),
+        new BN(0),
         {
           accounts: {
             multisig: multisig.id,

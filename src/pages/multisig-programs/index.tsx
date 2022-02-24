@@ -9,7 +9,7 @@ import { ArrowLeftOutlined, CheckOutlined, CopyOutlined, InfoCircleOutlined, Loa
 import { IconCodeBlock, IconExternalLink, IconShieldOutline } from '../../Icons';
 import { PreFooter } from '../../components/PreFooter';
 import { ConfirmOptions, Connection, Keypair, LAMPORTS_PER_SOL, MemcmpFilter, PublicKey, SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY, Transaction } from '@solana/web3.js';
-import { Program, Provider } from '@project-serum/anchor';
+import { BN, Program, Provider } from '@project-serum/anchor';
 import MultisigIdl from "../../models/mean-multisig-idl";
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
@@ -1136,6 +1136,8 @@ export const MultisigProgramsView = () => {
         OperationType.UpgradeProgram,
         ixAccounts,
         dataBuffer,
+        new BN(0),
+        new BN(0),
         {
           accounts: {
             multisig: selectedMultisig.id,
@@ -1472,6 +1474,8 @@ export const MultisigProgramsView = () => {
         OperationType.UpgradeIDL,
         ixAccounts,
         dataBuffer,
+        new BN(0),
+        new BN(0),
         {
           accounts: {
             multisig: selectedMultisig.id,
@@ -1805,6 +1809,8 @@ export const MultisigProgramsView = () => {
         OperationType.SetMultisigAuthority,
         ixAccounts,
         ixData,
+        new BN(0),
+        new BN(0),
         {
           accounts: {
             multisig: selectedMultisig.id,
