@@ -1019,7 +1019,11 @@ export const TreasuriesView = () => {
         description: t('treasuries.create-treasury.multisig-treasury-created-instructions'),
         duration: null,
       });
-      setHighLightableMultisigId(multisigId);
+      const destMultisig = multisigAccounts ? multisigAccounts.find(m => m.id.toBase58() === multisigId) : undefined;
+      consoleOut('destMultisig:', destMultisig, 'crimson');
+      if (destMultisig) {
+        setHighLightableMultisigId(destMultisig.address.toBase58());
+      }
       navigate('/multisig');
     }
 
