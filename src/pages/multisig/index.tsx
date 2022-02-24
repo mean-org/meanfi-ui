@@ -1354,9 +1354,13 @@ export const MultisigView = () => {
           });
 
         const streamPda = remainingAccounts[7].pubkey;
+
+        console.log('stream PDA', remainingAccounts[7].pubkey.toBase58());
+        console.log('PDA timespam', data.transaction.pdaTimestamp);
+        console.log('PDA bump', data.transaction.pdaBump);
           
         tx = multisigClient.transaction.executeTransactionPda(
-          new BN(data.transaction.pdaTimespam),
+          new BN(data.transaction.pdaTimestamp),
           new BN(data.transaction.pdaBump),
           {
             accounts: {
