@@ -1465,6 +1465,8 @@ export const MultisigVaultsView = () => {
         OperationType.TransferTokens,
         transferIx.keys,
         Buffer.from(transferIx.data),
+        new BN(0),
+        new BN(0),
         {
           accounts: {
             multisig: selectedMultisig,
@@ -1802,6 +1804,8 @@ export const MultisigVaultsView = () => {
         OperationType.SetVaultAuthority,
         ixAccounts,
         ixData,
+        new BN(0),
+        new BN(0),
         {
           accounts: {
             multisig: selectedMultisig.id,
