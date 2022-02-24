@@ -41,7 +41,8 @@ import {
   isLocal,
   isDev,
   getReadableDate,
-  getShortDate
+  getShortDate,
+  isProd
 } from '../../utils/ui';
 
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS, VERBOSE_DATE_TIME_FORMAT } from '../../constants';
@@ -2806,6 +2807,67 @@ export const MultisigView = () => {
     selectedMultisig
   ]);
 
+  const canShowApproveButton = useCallback(() => {
+
+    if (!highlightedMultisigTx) { return false; }
+
+    let result = (
+      highlightedMultisigTx.status === MultisigTransactionStatus.Pending &&
+      !highlightedMultisigTx.didSigned
+    );
+
+    console.log('show approve result', result);
+
+    return result;
+
+  },[highlightedMultisigTx])
+
+  const canShowExecuteButton = useCallback(() => {
+
+    if (!highlightedMultisigTx) { return false; }
+
+    const isUserTheProposer = () => {
+      return  publicKey &&
+              highlightedMultisigTx.proposer &&
+              publicKey.equals(highlightedMultisigTx.proposer)
+        ? true
+        : false;
+    }
+
+    const isTreasuryOperation = () => {
+      return  highlightedMultisigTx.operation === OperationType.TreasuryCreate ||
+              highlightedMultisigTx.operation === OperationType.TreasuryClose ||
+              highlightedMultisigTx.operation === OperationType.TreasuryAddFunds ||
+              highlightedMultisigTx.operation === OperationType.TreasuryStreamCreate ||
+              highlightedMultisigTx.operation === OperationType.StreamCreate ||
+              highlightedMultisigTx.operation === OperationType.StreamClose ||
+              highlightedMultisigTx.operation === OperationType.StreamAddFunds
+        ? true
+        : false;
+    }
+
+    const isPendingForExecution = () => {
+      return  highlightedMultisigTx.status === MultisigTransactionStatus.Approved &&
+              !highlightedMultisigTx.executedOn
+        ? true
+        : false;
+    }
+
+    if (isPendingForExecution()) {
+      if (!isTreasuryOperation() || (isUserTheProposer() && isTreasuryOperation)) {
+        return true;
+      } else {
+        return false;
+      }
+    } else {
+      return false;
+    }
+
+  },[
+    highlightedMultisigTx, 
+    publicKey
+  ])
+
   const onAfterEveryModalClose = useCallback(() => resetTransactionStatus(),[resetTransactionStatus]);
 
   const readAllMultisigAccounts = useCallback(async (wallet: PublicKey) => {
@@ -3062,56 +3124,6 @@ export const MultisigView = () => {
 
   // },[]);
 
-  const canShowApproveButton = useCallback(() => {
-
-    if (!highlightedMultisigTx) { return false; }
-
-    let result = (
-      highlightedMultisigTx.status === MultisigTransactionStatus.Pending &&
-      !highlightedMultisigTx.didSigned
-    );
-
-    return result;
-
-  },[highlightedMultisigTx])
-
-  const canShowExecuteButton = useCallback(() => {
-
-    if (!highlightedMultisigTx) { return false; }
-
-    return (((
-      highlightedMultisigTx.operation === OperationType.TreasuryCreate ||
-      highlightedMultisigTx.operation === OperationType.TreasuryClose ||
-      highlightedMultisigTx.operation === OperationType.TreasuryAddFunds ||
-      highlightedMultisigTx.operation === OperationType.TreasuryStreamCreate ||
-      highlightedMultisigTx.operation === OperationType.StreamCreate ||
-      highlightedMultisigTx.operation === OperationType.StreamClose ||
-      highlightedMultisigTx.operation === OperationType.StreamAddFunds
-    ) && (
-      publicKey &&
-      highlightedMultisigTx.proposer &&
-      publicKey.equals(highlightedMultisigTx.proposer)
-    ) && (
-      highlightedMultisigTx.status === MultisigTransactionStatus.Approved &&
-      !highlightedMultisigTx.executedOn
-    )) || ((
-      highlightedMultisigTx.operation !== OperationType.TreasuryCreate &&
-      highlightedMultisigTx.operation !== OperationType.TreasuryClose &&
-      highlightedMultisigTx.operation !== OperationType.TreasuryAddFunds &&
-      highlightedMultisigTx.operation !== OperationType.TreasuryStreamCreate &&
-      highlightedMultisigTx.operation !== OperationType.StreamCreate &&
-      highlightedMultisigTx.operation !== OperationType.StreamClose &&
-      highlightedMultisigTx.operation !== OperationType.StreamAddFunds
-    ) && (
-      highlightedMultisigTx.status === MultisigTransactionStatus.Approved &&
-      !highlightedMultisigTx.executedOn
-    )));
-
-  },[
-    highlightedMultisigTx, 
-    publicKey
-  ])
-
   // Refresh the multisig accounts list
   useEffect(() => {
 
@@ -3317,6 +3329,17 @@ export const MultisigView = () => {
           }
           const sortedTxs = transactions.sort((a, b) => b.createdOn.getTime() - a.createdOn.getTime());
           consoleOut('selected multisig txs', sortedTxs, 'blue');
+          if (!isProd()) {
+            const debugTable: any[] = [];
+            sortedTxs.forEach(item => debugTable.push({
+              operation: OperationType[item.operation],
+              approved: item.didSigned,
+              executed: item.executedOn ? true : false,
+              proposer: item.proposer ? shortenAddress(item.proposer.toBase58(), 6) : '-',
+              status: MultisigTransactionStatus[item.status]
+            }));
+            console.table(debugTable);
+          }
           setMultisigPendingTxs(sortedTxs);
           setLoadingMultisigTxs(false);
         })

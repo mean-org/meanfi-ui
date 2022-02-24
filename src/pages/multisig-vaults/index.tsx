@@ -454,6 +454,67 @@ export const MultisigVaultsView = () => {
 
   },[]);
 
+  const canShowApproveButton = useCallback(() => {
+
+    if (!highlightedMultisigTx) { return false; }
+
+    let result = (
+      highlightedMultisigTx.status === MultisigTransactionStatus.Pending &&
+      !highlightedMultisigTx.didSigned
+    );
+
+    console.log('show approve result', result);
+
+    return result;
+
+  },[highlightedMultisigTx])
+
+  const canShowExecuteButton = useCallback(() => {
+
+    if (!highlightedMultisigTx) { return false; }
+
+    const isUserTheProposer = () => {
+      return  publicKey &&
+              highlightedMultisigTx.proposer &&
+              publicKey.equals(highlightedMultisigTx.proposer)
+        ? true
+        : false;
+    }
+
+    const isTreasuryOperation = () => {
+      return  highlightedMultisigTx.operation === OperationType.TreasuryCreate ||
+              highlightedMultisigTx.operation === OperationType.TreasuryClose ||
+              highlightedMultisigTx.operation === OperationType.TreasuryAddFunds ||
+              highlightedMultisigTx.operation === OperationType.TreasuryStreamCreate ||
+              highlightedMultisigTx.operation === OperationType.StreamCreate ||
+              highlightedMultisigTx.operation === OperationType.StreamClose ||
+              highlightedMultisigTx.operation === OperationType.StreamAddFunds
+        ? true
+        : false;
+    }
+
+    const isPendingForExecution = () => {
+      return  highlightedMultisigTx.status === MultisigTransactionStatus.Approved &&
+              !highlightedMultisigTx.executedOn
+        ? true
+        : false;
+    }
+
+    if (isPendingForExecution()) {
+      if (!isTreasuryOperation() || (isUserTheProposer() && isTreasuryOperation)) {
+        return true;
+      } else {
+        return false;
+      }
+    } else {
+      return false;
+    }
+
+  },[
+    highlightedMultisigTx, 
+    publicKey
+  ])
+
   ////////////////////////////////////////
   // Business logic & Data management   //
   ////////////////////////////////////////
@@ -3292,43 +3353,7 @@ export const MultisigVaultsView = () => {
                 }
               </Button>
               {
-                (
-                  (
-                    (
-                      highlightedMultisigTx.operation === OperationType.TreasuryCreate ||
-                      highlightedMultisigTx.operation === OperationType.TreasuryClose ||
-                      highlightedMultisigTx.operation === OperationType.TreasuryAddFunds ||
-                      highlightedMultisigTx.operation === OperationType.TreasuryStreamCreate
-                    )
-                    &&
-                    (
-                      (
-                        highlightedMultisigTx.status === MultisigTransactionStatus.Pending &&
-                        !highlightedMultisigTx.didSigned
-                      ) 
-                      ||
-                      (
-                        publicKey &&
-                        highlightedMultisigTx.proposer &&
-                        publicKey.equals(highlightedMultisigTx.proposer) &&
-                        highlightedMultisigTx.status === MultisigTransactionStatus.Approved &&
-                        !highlightedMultisigTx.executedOn
-                      )
-                    )
-                  )
-                  ||
-                  (
-                    (
-                      highlightedMultisigTx.status === MultisigTransactionStatus.Pending &&
-                      !highlightedMultisigTx.didSigned
-                    ) 
-                    ||
-                    (
-                      highlightedMultisigTx.status === MultisigTransactionStatus.Approved &&
-                      !highlightedMultisigTx.executedOn
-                    )
-                  )
-                )
+                (canShowExecuteButton() || canShowApproveButton())
                 &&
                 (
                   <Button
