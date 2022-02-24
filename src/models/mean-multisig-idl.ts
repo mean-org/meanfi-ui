@@ -197,7 +197,7 @@ const idl: Idl = {
       ],
       "args": [
         {
-          "name": "pdaSlot",
+          "name": "pdaTimestamp",
           "type": "u64"
         },
         {
@@ -362,15 +362,11 @@ const idl: Idl = {
           },
           {
             "name": "pdaTimestamp",
-            "type": {
-              "option": "u64"
-            }
+            "type": "u64"
           },
           {
             "name": "pdaBump",
-            "type": {
-              "option": "u8"
-            }
+            "type": "u8"
           }
         ]
       }
