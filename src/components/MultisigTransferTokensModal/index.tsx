@@ -280,6 +280,8 @@ export const MultisigTransferTokensModal = (props: {
                 </>
               )}
             </div>
+            {/* explanatory paragraph */}
+            <p>{t("multisig.multisig-vaults.explanatory-paragraph")}</p>
           </>
         ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
           <>
@@ -354,7 +356,7 @@ export const MultisigTransferTokensModal = (props: {
         </div>
         <div className="col-6">
           <Button
-            className={props.isBusy ? 'inactive' : ''}
+            className={`extra-height ${props.isBusy ? 'inactive' : ''}`}
             block
             type="primary"
             shape="round"
@@ -372,7 +374,7 @@ export const MultisigTransferTokensModal = (props: {
             {props.isBusy
               ? t('multisig.transfer-tokens.main-cta-busy')
               : transactionStatus.currentOperation === TransactionStatus.Iddle
-                ? t('multisig.transfer-tokens.main-cta')
+                ? t('multisig.multisig-vaults.main-cta')
                 : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
                   ? t('general.cta-finish')
                   : t('general.refresh')

@@ -485,7 +485,9 @@
 			"screen-title": "Kasalar - {{multisigName}} ({{vaultCount}})",
 			"screen-title-no-vaults": "Kasalar",
 			"validation-amount-high": "Miktar kasa bakiyesinden fazla",
-			"vault-detail-heading": "Kasa detayları"
+			"vault-detail-heading": "Kasa detayları",
+			"explanatory-paragraph": "By submitting this request, you will sign the transaction and approve it as one of the Multisig signers. Before the funds can be sent, the other Multisig members need to approve it.",
+			"main-cta": "Sign Funds Transfer Request"
 		},
 		"pending-transactions": "süren işlem",
 		"refresh-tooltip": "Çoklu-İmza hesaplarını güncellemek için tıklayın",

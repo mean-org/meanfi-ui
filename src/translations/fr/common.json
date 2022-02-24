@@ -485,7 +485,9 @@
 			"screen-title": "Coffres - {{multisigName}} ({{vaultCount}})",
 			"screen-title-no-vaults": "coffres",
 			"validation-amount-high": "Le montant dépasse le solde du coffre",
-			"vault-detail-heading": "Détails du coffre-fort"
+			"vault-detail-heading": "Détails du coffre-fort",
+			"explanatory-paragraph": "By submitting this request, you will sign the transaction and approve it as one of the Multisig signers. Before the funds can be sent, the other Multisig members need to approve it.",
+			"main-cta": "Sign Funds Transfer Request"
 		},
 		"pending-transactions": "opérations en attente",
 		"refresh-tooltip": "Cliquez pour actualiser la liste des comptes multisig",

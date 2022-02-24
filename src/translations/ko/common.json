@@ -465,13 +465,13 @@
 		},
 		"multisig-vaults": {
 			"back-to-multisig-accounts-cta": "Back to Multisig accounts",
-			"cta-change-multisig-authority": "Transfer Ownership",
+			"cta-change-multisig-authority": "Change Vault Ownership",
 			"cta-change-multisig-authority-busy": "Changing Multisig",
 			"cta-close": "Close vault",
 			"cta-close-busy": "Closing vault",
-			"cta-transfer": "Initiate Withdrawal",
-			"cta-transfer-busy": "Initiating Withdrawal Request",
 			"cta-create-vault-busy": "Creating vault",
+			"cta-transfer": "Request Funds Transfer",
+			"cta-transfer-busy": "Initiating Withdrawal Request",
 			"no-transactions": "No transactions for this vault",
 			"no-vault-loaded": "No vault loaded",
 			"no-vaults": "No vaults available",
@@ -480,7 +480,9 @@
 			"screen-title": "Vaults - {{multisigName}} ({{vaultCount}})",
 			"screen-title-no-vaults": "Vaults",
 			"validation-amount-high": "Amount exceeds the vault balance",
-			"vault-detail-heading": "Vault details"
+			"vault-detail-heading": "Vault details",
+			"explanatory-paragraph": "By submitting this request, you will sign the transaction and approve it as one of the Multisig signers. Before the funds can be sent, the other Multisig members need to approve it.",
+			"main-cta": "Sign Funds Transfer Request"
 		},
 		"pending-transactions": "pending transactions",
 		"refresh-tooltip": "Click to refresh the list of multisig accounts",

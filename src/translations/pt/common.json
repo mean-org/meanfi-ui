@@ -485,7 +485,9 @@
 			"screen-title": "Cofres - {{multisigName}} ({{vaultCount}})",
 			"screen-title-no-vaults": "Cofres",
 			"validation-amount-high": "O valor excede o saldo do cofre",
-			"vault-detail-heading": "Detalhes do cofre"
+			"vault-detail-heading": "Detalhes do cofre",
+			"explanatory-paragraph": "By submitting this request, you will sign the transaction and approve it as one of the Multisig signers. Before the funds can be sent, the other Multisig members need to approve it.",
+			"main-cta": "Sign Funds Transfer Request"
 		},
 		"pending-transactions": "transações pendentes",
 		"refresh-tooltip": "Clique para atualizar a lista de contas multisig",
