@@ -2655,17 +2655,6 @@ export const MultisigMintsView = () => {
     resetTransactionStatus();
   };
 
-  const onTransactionModalClosed = () => {
-    if (isBusy) {
-      setTransactionCancelled(true);
-    }
-    if (isSuccess()) {
-      setMultisigActionTransactionModalVisible(false);
-    }
-    sethHighlightedMultisigTx(undefined);
-    resetTransactionStatus();
-  }
-
   ///////////////
   // Rendering //
   ///////////////
@@ -3163,7 +3152,9 @@ export const MultisigMintsView = () => {
           title={<div className="modal-title">{t('multisig.multisig-transactions.modal-title')}</div>}
           maskClosable={false}
           visible={isMultisigActionTransactionModalVisible}
-          onCancel={onTransactionModalClosed}
+          closable={true}
+          onOk={onCloseMultisigActionModal}
+          onCancel={onCloseMultisigActionModal}
           width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 400 : 480}
           footer={null}>
 

@@ -129,7 +129,7 @@ export const MultisigView = () => {
   const [loadingPrograms, setLoadingPrograms] = useState(true);
   const [programs, setPrograms] = useState<ProgramAccounts[] | undefined>(undefined);
   // Treasuries
-  const [multisigTreasuries, setMultisigTreasuries] = useState<Treasury[]>([]);
+  const [multisigTreasuries, setMultisigTreasuries] = useState<Treasury[] | undefined>(undefined);
   // Mints
   // const [loadingMints, setLoadingMints] = useState(true);
   // const [multisigMints, setMultisigMints] = useState<MultisigMint[]>([]);
@@ -1004,16 +1004,6 @@ export const MultisigView = () => {
     setMultisigActionTransactionModalVisible(false);
     resetTransactionStatus();
   };
-
-  const onTransactionModalClosed = () => {
-    if (isBusy) {
-      setTransactionCancelled(true);
-    }
-    if (isSuccess()) {
-      setMultisigActionTransactionModalVisible(false);
-    }
-    resetTransactionStatus();
-  }
 
   const onExecuteApproveTx = useCallback(async (data: any) => {
 
@@ -3169,7 +3159,6 @@ export const MultisigView = () => {
               } else {
                 setSelectedMultisig(multisigInfoArray[0]);
               }
-              setHighLightableMultisigId(undefined);
             } else if (selectedMultisig) {
               const sig = selectedMultisig.id ? multisigInfoArray.find(m => m.id.equals(selectedMultisig.id)) : undefined;
               if (sig) {
@@ -3194,15 +3183,14 @@ export const MultisigView = () => {
     }
 
   }, [
-    connected, 
-    connection, 
-    highLightableMultisigId, 
-    loadingMultisigAccounts, 
-    multisigClient, 
-    publicKey, 
-    readAllMultisigAccounts, 
-    selectedMultisig, 
-    setHighLightableMultisigId
+    connected,
+    publicKey,
+    connection,
+    multisigClient,
+    selectedMultisig,
+    highLightableMultisigId,
+    loadingMultisigAccounts,
+    readAllMultisigAccounts,
   ]);
 
   // Subscribe to multisig account changes
@@ -3366,7 +3354,7 @@ export const MultisigView = () => {
   // Get multisig treasuries for the selected multisig
   useEffect(() => {
 
-    if (!connection || !publicKey || !selectedMultisig) {
+    if (!connection || !publicKey || !selectedMultisig || multisigTreasuries) {
       return;
     }
 
@@ -3386,6 +3374,7 @@ export const MultisigView = () => {
     publicKey,
     connection,
     selectedMultisig,
+    multisigTreasuries,
     getMultisigTreasuries
   ]);
 
@@ -3465,14 +3454,17 @@ export const MultisigView = () => {
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'green');
         setMultisigAccounts([]);
+        setHighLightableMultisigId(undefined);
+        sethHighlightedMultisigTx(undefined);
         setSelectedMultisig(undefined);
         setLoadingMultisigAccounts(false);
       }
     }
   }, [
     connected,
+    publicKey,
     previousWalletConnectState,
-    publicKey
+    setHighLightableMultisigId,
   ]);
 
   // Detect when entering small screen mode
@@ -3493,9 +3485,9 @@ export const MultisigView = () => {
 
     if (lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
       clearTransactionStatusContext();
-      sethHighlightedMultisigTx(undefined);
       setLoadingMultisigAccounts(true);
       setLoadingMultisigTxs(true);
+      sethHighlightedMultisigTx(undefined);
     }
   }, [
     publicKey,
@@ -4430,7 +4422,9 @@ export const MultisigView = () => {
           title={<div className="modal-title">{t('multisig.multisig-transactions.modal-title')}</div>}
           maskClosable={false}
           visible={isMultisigActionTransactionModalVisible}
-          onCancel={onTransactionModalClosed}
+          closable={true}
+          onOk={onCloseMultisigActionModal}
+          onCancel={onCloseMultisigActionModal}
           width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 400 : 480}
           footer={null}>
 
