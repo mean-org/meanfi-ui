@@ -862,6 +862,9 @@ export const TreasuriesView = () => {
     if (params.has('treasury') && !treasuryAddress) {
       consoleOut('Wait for treasuryAddress on next render...', '', 'blue');
       return;
+    } else if (params.has('multisig') && !(multisigAddress && selectedMultisig)) {
+      consoleOut('Wait for multisigAddress on next render...', '', 'blue');
+      return;
     }
 
     setTreasuriesLoaded(true);
@@ -871,7 +874,9 @@ export const TreasuriesView = () => {
     publicKey,
     connection,
     treasuryAddress,
+    multisigAddress,
     location.search,
+    selectedMultisig,
     multisigAccounts,
     treasuriesLoaded,
     loadingTreasuries,
