@@ -4935,8 +4935,8 @@ export const TreasuriesView = () => {
     <>
     {isMultisigAvailable() && selectedMultisig && (
       <div className="left-panel-inner-heading">
-        <div className="font-bold">Multsig Treasuries - [{selectedMultisig.label}]</div>
-        <div>Below is a list of all the treasuries that are connected to this Multsig</div>
+        <div className="font-bold">{t('treasuries.treasury-list.multisig-treasury-heading', { treasuryName: selectedMultisig.label })}</div>
+        <div>{t('treasuries.treasury-list.multisig-treasury-help')}</div>
       </div>
     )}
     {treasuryList && treasuryList.length > 0 ? (
@@ -5031,7 +5031,7 @@ export const TreasuriesView = () => {
     {isMultisigAvailable() && (
       <div className="py-3 px-3 simplelink" onClick={() => resetTreasuriesContext()}>
         <IconShowAll className="mean-svg-icons align-middle" />
-        <span className="ml-1 align-middle">Show All Treasuries</span>
+        <span className="ml-1 align-middle">{t('treasuries.treasury-list.multisig-treasuries-view-all-cta')}</span>
       </div>
     )}
     </>

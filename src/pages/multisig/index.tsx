@@ -3374,7 +3374,6 @@ export const MultisigView = () => {
     publicKey,
     connection,
     selectedMultisig,
-    multisigTreasuries,
     getMultisigTreasuries
   ]);
 

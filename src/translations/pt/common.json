@@ -990,6 +990,9 @@
 		"treasury-detail-heading": "Detalhes do Tesouro",
 		"treasury-refresh-tooltip": "Refresh treasury data",
 		"treasury-list": {
+			"multisig-treasury-heading": "Multisig Treasuries - {{treasuryName}}",
+			"multisig-treasury-help": "Below is a list of all the treasuries that are connected to this Multsig",
+			"multisig-treasuries-view-all-cta": "Show All Treasuries",
 			"multisig-treasury-label": "Tesouraria Multisig",
 			"no-treasuries": "Nenhum tesouro disponível",
 			"not-connected": "Por favor, conecte sua carteira para ver seus tesouros",
