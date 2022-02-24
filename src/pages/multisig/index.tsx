@@ -129,7 +129,7 @@ export const MultisigView = () => {
   const [loadingPrograms, setLoadingPrograms] = useState(true);
   const [programs, setPrograms] = useState<ProgramAccounts[] | undefined>(undefined);
   // Treasuries
-  const [multisigTreasuries, setMultisigTreasuries] = useState<Treasury[] | undefined>(undefined);
+  const [multisigTreasuries, setMultisigTreasuries] = useState<Treasury[]>([]);
   // Mints
   // const [loadingMints, setLoadingMints] = useState(true);
   // const [multisigMints, setMultisigMints] = useState<MultisigMint[]>([]);
@@ -3354,7 +3354,7 @@ export const MultisigView = () => {
   // Get multisig treasuries for the selected multisig
   useEffect(() => {
 
-    if (!connection || !publicKey || !selectedMultisig || multisigTreasuries) {
+    if (!connection || !publicKey || !selectedMultisig) {
       return;
     }
 
