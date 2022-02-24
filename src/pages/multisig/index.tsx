@@ -1002,7 +1002,6 @@ export const MultisigView = () => {
 
   const onCloseMultisigActionModal = () => {
     setMultisigActionTransactionModalVisible(false);
-    sethHighlightedMultisigTx(undefined);
     resetTransactionStatus();
   };
 
@@ -1013,7 +1012,6 @@ export const MultisigView = () => {
     if (isSuccess()) {
       setMultisigActionTransactionModalVisible(false);
     }
-    sethHighlightedMultisigTx(undefined);
     resetTransactionStatus();
   }
 
@@ -3495,6 +3493,7 @@ export const MultisigView = () => {
 
     if (lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
       clearTransactionStatusContext();
+      sethHighlightedMultisigTx(undefined);
       setLoadingMultisigAccounts(true);
       setLoadingMultisigTxs(true);
     }
