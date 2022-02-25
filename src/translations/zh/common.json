@@ -357,11 +357,13 @@
 			"cta-no-programs": "Programs",
 			"cta-no-treasuries": "Treasuries",
 			"cta-no-vaults": "Vaults",
+			"cta-no-mints": "Mints",
 			"cta-programs": "Programs ({{itemCount}})",
 			"cta-transfer": "Transfer Tokens",
 			"cta-treasuries": "Treasuries ({{itemCount}})",
 			"cta-upgrade-program": "Upgrade Program",
 			"cta-vaults": "Vaults ({{itemCount}})",
+			"cta-mints": "Mints ({{itemCount}})",
 			"multisig-address-label": "Address",
 			"multisig-label-label": "Multisig name",
 			"multisig-owners": "Owners",
@@ -627,6 +629,12 @@
 		}
 	},
 	"streams": {
+		"add-funds": {
+			"amount-label": "Amount",
+			"treasury-money-stream-title": "Treasury Funded Money Stream",
+			"treasury-money-stream-description": "As this stream was funded from a treasury, the funds being added will be allocated from the Treasury's available balance.",
+			"modal-title": "Add funds"
+		},
 		"back-to-my-streams-cta": "Back to Money Streams",
 		"create-new-stream-cta": "New transfer",
 		"lookup-stream-cta-tooltip": "Lookup a stream",
@@ -892,6 +900,8 @@
 	},
 	"treasuries": {
 		"add-funds": {
+			"allocation-amount-label": "How Much Do You Want to Allocate?",
+			"allocation-heading": "To top up an existing stream, the funds being added will be allocated from the Treasury's available balance.",
 			"allocation-label": "How do you want to allocate these funds?",
 			"allocation-option-evenly": "Allocate evenly across all Money Streams",
 			"allocation-option-none": "Do not allocate (leave in Reserves)",
@@ -902,6 +912,8 @@
 			"main-cta": "Fund treasury",
 			"main-cta-busy": "Funding treasury",
 			"modal-title": "Add funds to the Treasury",
+			"modal-title-fund-stream": "Add funds to a Money Stream",
+			"money-stream-to-topup-label": "Money Stream to top up",
 			"search-streams-placeholder": "Search stream by name or address",
 			"success-message": "Your treasury was funded successfully."
 		},
@@ -975,7 +987,7 @@
 			"column-description": "Description",
 			"column-destination": "Destination",
 			"column-rate": "Rate",
-			"column-started": "Started",
+			"column-funds-left": "Funds left",
 			"create-stream-main-cta": "Create stream",
 			"create-stream-main-cta-busy": "Creating stream",
 			"loading-streams": "Loading streams",

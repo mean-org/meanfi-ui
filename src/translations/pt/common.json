@@ -383,11 +383,13 @@
 			"cta-no-programs": "Programas",
 			"cta-no-treasuries": "Tesouros",
 			"cta-no-vaults": "Cofres",
+			"cta-no-mints": "Mints",
 			"cta-programs": "Programas ({{itemCount}})",
 			"cta-transfer": "Transferir tokens",
 			"cta-treasuries": "Tesouros ({{itemCount}})",
 			"cta-upgrade-program": "Programa de atualização",
 			"cta-vaults": "Cofres ({{itemCount}})",
+			"cta-mints": "Mints ({{itemCount}})",
 			"multisig-address-label": "Endereço",
 			"multisig-label-label": "Nome multisig",
 			"multisig-owners": "Os Proprietários",
@@ -639,6 +641,12 @@
 		"total-liquidity-btn": "Adicionar liquidez"
 	},
 	"streams": {
+		"add-funds": {
+			"amount-label": "Amount",
+			"treasury-money-stream-title": "Treasury Funded Money Stream",
+			"treasury-money-stream-description": "As this stream was funded from a treasury, the funds being added will be allocated from the Treasury's available balance.",
+			"modal-title": "Add funds"
+		},
 		"back-to-my-streams-cta": "Voltar para Fluxos de dinheiro",
 		"create-new-stream-cta": "Nova transferência",
 		"lookup-stream-cta-tooltip": "Pesquisar um fluxo",
@@ -913,6 +921,8 @@
 	},
 	"treasuries": {
 		"add-funds": {
+			"allocation-amount-label": "How Much Do You Want to Allocate?",
+			"allocation-heading": "To top up an existing stream, the funds being added will be allocated from the Treasury's available balance.",
 			"allocation-label": "Como você deseja alocar esses fundos?",
 			"allocation-option-evenly": "Alocar uniformemente em todos os fluxos de dinheiro",
 			"allocation-option-none": "Não alocar (deixar em Reservas)",
@@ -923,6 +933,8 @@
 			"main-cta": "Tesouro do fundo",
 			"main-cta-busy": "Tesouraria de financiamento",
 			"modal-title": "Adicionar fundos ao Tesouro",
+			"modal-title-fund-stream": "Add funds to a Money Stream",
+			"money-stream-to-topup-label": "Money Stream to top up",
 			"search-streams-placeholder": "Pesquisar stream por nome ou endereço",
 			"success-message": "Seu tesouro foi financiado com sucesso."
 		},
@@ -998,7 +1010,7 @@
 			"column-description": "Descrição",
 			"column-destination": "Destino",
 			"column-rate": "Avaliar",
-			"column-started": "Iniciado",
+			"column-funds-left": "Fundos restantes",
 			"create-stream-main-cta": "Criar fluxo",
 			"create-stream-main-cta-busy": "Criando stream",
 			"fee-payed-by-treasurer": "Quero pagar taxas por este fluxo em vez do beneficiário",
