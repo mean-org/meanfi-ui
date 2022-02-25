@@ -4042,32 +4042,30 @@ export const MultisigView = () => {
           </Button>
 
           {/* Treasuries */}
-          {isUnderDevelopment() && (
-            <Button
-              type="default"
-              shape="round"
-              size="small"
-              className="thin-stroke"
-              disabled={isTxInProgress() || loadingMultisigAccounts}
-              onClick={() => {
-                if (selectedMultisig) {
-                  const url = `/treasuries?multisig=${selectedMultisig.id.toBase58()}`;
-                  navigate(url);
-                }
-              }}>
-              {multisigTreasuries && multisigTreasuries.length > 0 ? (
-                <span>
-                  {t('multisig.multisig-account-detail.cta-treasuries', {
-                    itemCount: multisigTreasuries.length
-                  })}
-                </span>
-                ) : (
-                <span>
-                  {t('multisig.multisig-account-detail.cta-no-treasuries')}
-                </span>
-              )}
-            </Button>
-          )}
+          <Button
+            type="default"
+            shape="round"
+            size="small"
+            className="thin-stroke"
+            disabled={isTxInProgress() || loadingMultisigAccounts}
+            onClick={() => {
+              if (selectedMultisig) {
+                const url = `/treasuries?multisig=${selectedMultisig.id.toBase58()}`;
+                navigate(url);
+              }
+            }}>
+            {multisigTreasuries && multisigTreasuries.length > 0 ? (
+              <span>
+                {t('multisig.multisig-account-detail.cta-treasuries', {
+                  itemCount: multisigTreasuries.length
+                })}
+              </span>
+              ) : (
+              <span>
+                {t('multisig.multisig-account-detail.cta-no-treasuries')}
+              </span>
+            )}
+          </Button>
 
           {/* Programs */}
           <Button
