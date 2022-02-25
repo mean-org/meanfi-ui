@@ -4897,12 +4897,36 @@ export const TreasuriesView = () => {
                   loadingTreasuryDetails ||
                   (!treasuryDetails || !isNewTreasury || v2.balance - v2.allocationAssigned <= 0)
                 }
-                onClick={showCreateStreamModal}>
+                onClick={(showCreateStreamModal)}>
                 {isCreatingStream() && (<LoadingOutlined />)}
                 {isCreatingStream()
                   ? t('treasuries.treasury-streams.create-stream-main-cta-busy')
                   : t('treasuries.treasury-streams.create-stream-main-cta')}
               </Button>
+
+              {treasuryDetails && isMultisigTreasury() && (
+                <Button
+                  type="default"
+                  shape="round"
+                  size="small"
+                  className="thin-stroke"
+                  disabled={
+                    isTxInProgress() ||
+                    loadingTreasuries ||
+                    loadingTreasuryDetails ||
+                    loadingTreasuryStreams
+                  }
+                  onClick={() => {
+                    const urlBase = '/treasuries/';
+                    if (selectedMultisig) {
+                      const url = `${urlBase}${selectedMultisig.id.toBase58()}/streams`;
+                      consoleOut('Heading to:', url, 'blue');
+                      navigate(url);
+                    }
+                  }}>
+                  View streams
+                </Button>
+              )}
             </>
           ) : (
             <div className="flex-row align-items">

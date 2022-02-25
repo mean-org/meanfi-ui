@@ -931,6 +931,7 @@
 			"label": "Ajouter des fonds",
 			"main-cta": "Trésorerie du fonds",
 			"main-cta-busy": "Trésorerie de financement",
+			"main-cta-fund-stream": "Fund Money Stream",
 			"modal-title": "Ajouter des fonds au Trésor",
 			"modal-title-fund-stream": "Add funds to a Money Stream",
 			"money-stream-to-topup-label": "Money Stream to top up",
