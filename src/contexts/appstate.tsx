@@ -32,10 +32,10 @@ import { appConfig } from "..";
 import { DdcaAccount } from "@mean-dao/ddca";
 import { TransactionStatusContext } from "./transaction-status";
 import { MoneyStreaming } from "@mean-dao/money-streaming/lib/money-streaming";
-import { StreamTreasuryInfo, streamTreasuryInfoCache, TreasuryTypeOption } from "../models/treasuries";
+import { TreasuryTypeOption } from "../models/treasuries";
 import { TREASURY_TYPE_OPTIONS } from "../constants/treasury-type-options";
 import { initialSummary, StreamsSummary } from "../models/streams";
-import { MSP, Stream, Treasury } from "@mean-dao/msp";
+import { MSP, Stream } from "@mean-dao/msp";
 import { AccountDetails } from "../models";
 
 export interface TransactionStatusInfo {
@@ -289,7 +289,6 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [isWhitelisted, setIsWhitelisted] = useState(contextDefaultValues.isWhitelisted);
   const [streamProgramAddress, setStreamProgramAddress] = useState('');
   const [streamV2ProgramAddress, setStreamV2ProgramAddress] = useState('');
-  const [needTreasuryCacheRefresh, setNeedTreasuryCacheRefresh] = useState(false);
   const {
     lastSentTxStatus,
     fetchTxInfoStatus,
@@ -519,7 +518,6 @@ const AppStateProvider: React.FC = ({ children }) => {
             if (dock) {
               setStreamList([detail]);
               getStreamActivity(streamId, detail.version);
-              setNeedTreasuryCacheRefresh(true);
               setCustomStreamDocked(true);
               notify({
                 description: t('notifications.success-loading-stream-message', {streamId: shortenAddress(streamId, 10)}),
@@ -846,7 +844,6 @@ const AppStateProvider: React.FC = ({ children }) => {
               setStreamListv2(rawStreamsv2);
               setStreamListv1(rawStreamsv1);
               consoleOut('Streams:', streamAccumulator, 'blue');
-              setNeedTreasuryCacheRefresh(true);
               if (streamAccumulator.length) {
                 let item: Stream | StreamInfo | undefined;
                 if (reset) {
@@ -956,85 +953,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     streamList,
     customStreamDocked,
     refreshStreamList
-  ]);
-
-  const getV2TreasuryById = useCallback(async (treasuryId: string) => {
-    if (!publicKey || !msp) { return undefined; }
-
-    const treasuryPk = new PublicKey(treasuryId);
-    try {
-      const treasury = await msp.getTreasury(treasuryPk);
-      return treasury;
-    } catch (error) {
-      return undefined;
-    }
-  }, [
-    msp,
-    publicKey,
-  ]);
-
-  /*
-  const isMultisigTreasury = useCallback((treasury?: any) => {
-
-    let treasuryInfo: any = treasury ?? treasuryDetails;
-
-    if (!treasuryInfo || treasuryInfo.version < 2 || !treasuryInfo.treasurer || !publicKey) {
-      return false;
-    }
-
-    let treasurer = new PublicKey(treasuryInfo.treasurer as string);
-
-    if (!treasurer.equals(publicKey) && multisigAccounts && multisigAccounts.findIndex(m => m.address.equals(treasurer)) !== -1) {
-      return true;
-    }
-
-    return false;
-
-  }, [
-    multisigAccounts, 
-    publicKey, 
-    treasuryDetails
-  ]);
-  */
-
-  // When the list of streams change but only when setStreamList was called update streamTreasuryInfoCache
-  useEffect(() => {
-    if (!publicKey || !msp || !streamList || !needTreasuryCacheRefresh) {
-      return;
-    }
-
-    setTimeout(() => {
-      setNeedTreasuryCacheRefresh(false);
-    });
-
-    if (streamList.length > 0) {
-      streamList.forEach(async item => {
-        if (location.pathname === '/accounts/streams') {
-          if (item.version >= 2) {
-            const v2 = item as Stream;
-            // const treasury = await getV2TreasuryById(v2.treasury as string);
-            const newItem: StreamTreasuryInfo = {
-              id: v2.treasury as string,
-              isMultisigTreasury: false
-            };
-            streamTreasuryInfoCache.add(item.id as string, newItem);
-          } else {
-            const v1 = item as StreamInfo;
-            const newItem: StreamTreasuryInfo = {
-              id: v1.treasuryAddress as string,
-              isMultisigTreasury: false
-            };
-            streamTreasuryInfoCache.add(item.id as string, newItem);
-          }
-        }
-      });
-    }
-  }, [
-    msp,
-    publicKey,
-    streamList,
-    location.pathname,
-    needTreasuryCacheRefresh
   ]);
 
   // Auto select a token

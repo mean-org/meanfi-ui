@@ -4599,8 +4599,15 @@ export const TreasuriesView = () => {
         </Menu.Item>
         <Menu.Item key="6" onClick={() => {
             setHighLightableStreamId(item.id as string);
-            refreshStreamList();
-            navigate('/accounts/streams');
+            if (isMultisigTreasury(treasuryDetails)) {
+              const urlBase = '/treasuries/';
+              const url = `${urlBase}${(treasuryDetails as Treasury).id}/streams`;
+              consoleOut('Heading to:', url, 'blue');
+              navigate(url);
+            } else {
+              refreshStreamList();
+              navigate('/accounts/streams');
+            }
           }}>
           <span className="menu-item-text">Show stream</span>
         </Menu.Item>
@@ -4913,11 +4920,9 @@ export const TreasuriesView = () => {
                   }
                   onClick={() => {
                     const urlBase = '/treasuries/';
-                    if (selectedMultisig) {
-                      const url = `${urlBase}${selectedMultisig.id.toBase58()}/streams`;
-                      consoleOut('Heading to:', url, 'blue');
-                      navigate(url);
-                    }
+                    const url = `${urlBase}${(treasuryDetails as Treasury).id}/streams`;
+                    consoleOut('Heading to:', url, 'blue');
+                    navigate(url);
                   }}>
                   View streams
                 </Button>

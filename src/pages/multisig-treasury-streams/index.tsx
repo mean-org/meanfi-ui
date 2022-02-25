@@ -67,13 +67,14 @@ import {
     FALLBACK_COIN_IMAGE,
     SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
     SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
+    STREAMS_REFRESH_TIMEOUT,
 } from "../../constants";
 import {
     getSolanaExplorerClusterParam,
     useConnection,
     useConnectionConfig,
 } from "../../contexts/connection";
-import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
+import { ConfirmOptions, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { OperationType, TransactionStatus } from "../../models/enums";
 import { notify } from "../../utils/notifications";
 import { StreamAddFundsModal } from "../../components/StreamAddFundsModal";
@@ -81,8 +82,8 @@ import { TokenInfo } from "@solana/spl-token-registry";
 import { StreamCloseModal } from "../../components/StreamCloseModal";
 import { useNativeAccount } from "../../contexts/accounts";
 import { useTranslation } from "react-i18next";
-import { useLocation, useNavigate } from "react-router-dom";
-import { NATIVE_SOL_MINT } from "../../utils/ids";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { MEAN_MULTISIG, NATIVE_SOL_MINT } from "../../utils/ids";
 import { TransactionStatusContext } from "../../contexts/transaction-status";
 import { Identicon } from "../../components/Identicon";
 import BN from "bn.js";
@@ -113,6 +114,9 @@ import { UserTokenAccount } from "../../models/transactions";
 import { customLogger } from "../..";
 import { StreamTreasuryType } from "../../models/treasuries";
 import { PreFooter } from "../../components/PreFooter";
+import { Program, Provider } from "@project-serum/anchor";
+import MultisigIdl from "../../models/mean-multisig-idl";
+import { MultisigParticipant, MultisigV2 } from "../../models/multisig";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -129,7 +133,6 @@ export const MultisigTreasuryStreams = () => {
         streamListv1,
         streamListv2,
         streamDetail,
-        activeStream,
         selectedToken,
         loadingStreams,
         streamsSummary,
@@ -169,6 +172,7 @@ export const MultisigTreasuryStreams = () => {
 
     const { t } = useTranslation("common");
     const { account } = useNativeAccount();
+    let { id } = useParams(); // Unpacking and retrieve id
     const [previousBalance, setPreviousBalance] = useState(account?.lamports);
     const [nativeBalance, setNativeBalance] = useState(0);
     const [lastStreamTransferAddress, setLastStreamTransferAddress] = useState("");
@@ -183,15 +187,37 @@ export const MultisigTreasuryStreams = () => {
         mspFlatFee: 0,
         mspPercentFee: 0,
     });
+    const [loadingTreasuryStreams, setLoadingTreasuryStreams] = useState(false);
+    const [signalRefreshTreasuryStreams, setSignalRefreshTreasuryStreams] = useState(false);
 
     // Treasury related
-    const [streamTreasuryType, setStreamTreasuryType] = useState<StreamTreasuryType | undefined>(undefined);
     const [loadingTreasuryDetails, setLoadingTreasuryDetails] = useState(true);
     const [treasuryDetails, setTreasuryDetails] = useState<Treasury | TreasuryInfo | undefined>(undefined);
 
     // Transaction execution (Applies to all transactions)
     const [transactionCancelled, setTransactionCancelled] = useState(false);
     const [isBusy, setIsBusy] = useState(false);
+
+    // Create and cache Multisig client instance
+    const multisigClient = useMemo(() => {
+
+        const opts: ConfirmOptions = {
+            preflightCommitment: "finalized",
+            commitment: "finalized",
+        };
+
+        const provider = new Provider(connection, wallet as any, opts);
+
+        return new Program(
+            MultisigIdl,
+            MEAN_MULTISIG,
+            provider
+        );
+
+    }, [
+        connection,
+        wallet
+    ]);
 
     // Create and cache Money Streaming Program instance
     const ms = useMemo(
@@ -238,6 +264,55 @@ export const MultisigTreasuryStreams = () => {
         [coinPrices]
     );
 
+    const getTreasuryStreams = useCallback((treasuryPk: PublicKey, isNewTreasury: boolean) => {
+        if (!publicKey || !ms || loadingTreasuryStreams) { return; }
+
+        setTimeout(() => {
+            setLoadingTreasuryStreams(true);
+        });
+
+        consoleOut('Executing getTreasuryStreams...', '', 'blue');
+
+        if (isNewTreasury) {
+            if (msp) {
+                msp.listStreams({ treasury: treasuryPk })
+                    .then((streams) => {
+                        consoleOut('streamList:', streams, 'blue');
+                        setStreamList(streams);
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        setStreamList([]);
+                    })
+                    .finally(() => {
+                        setLoadingTreasuryStreams(false);
+                    });
+            }
+        } else {
+            if (ms) {
+                ms.listStreams({ treasury: treasuryPk })
+                    .then((streams) => {
+                        consoleOut('streamList:', streams, 'blue');
+                        setStreamList(streams);
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        setStreamList([]);
+                    })
+                    .finally(() => {
+                        setLoadingTreasuryStreams(false);
+                    });
+            }
+        }
+
+    }, [
+        ms,
+        msp,
+        publicKey,
+        loadingTreasuryStreams,
+        setStreamList
+    ]);
+
     const getTreasuryName = useCallback(() => {
         if (treasuryDetails) {
             const v1 = treasuryDetails as TreasuryInfo;
@@ -267,13 +342,13 @@ export const MultisigTreasuryStreams = () => {
     const getTreasuryByTreasuryId = useCallback(
         async (
             treasuryId: string,
-            streamVersion: number
+            version: number
         ): Promise<StreamTreasuryType | undefined> => {
             if (!connection || !publicKey || !ms || !msp) {
                 return undefined;
             }
 
-            const mspInstance = streamVersion < 2 ? ms : msp;
+            const mspInstance = version < 2 ? ms : msp;
             const treasueyPk = new PublicKey(treasuryId);
 
             setTimeout(() => {
@@ -296,6 +371,72 @@ export const MultisigTreasuryStreams = () => {
         },
         [ms, msp, publicKey, connection]
     );
+
+    const readAllMultisigV2Accounts = useCallback(async (wallet: PublicKey) => { // V2
+
+        let accounts: any[] = [];
+        let multisigV2Accs = await multisigClient.account.multisigV2.all();
+        let filteredAccs = multisigV2Accs.filter((a: any) => {
+            if (a.account.owners.filter((o: any) => o.address.equals(wallet)).length) { return true; }
+            return false;
+        });
+
+        accounts.push(...filteredAccs);
+
+        return accounts;
+
+    }, [
+        multisigClient.account.multisigV2
+    ]);
+
+    const parseMultisigV2Account = (info: any) => {
+        return PublicKey
+            .findProgramAddress([info.publicKey.toBuffer()], MEAN_MULTISIG)
+            .then(k => {
+
+                let address = k[0];
+                let owners: MultisigParticipant[] = [];
+                let labelBuffer = Buffer
+                    .alloc(info.account.label.length, info.account.label)
+                    .filter(function (elem, index) { return elem !== 0; }
+                    );
+
+                let filteredOwners = info.account.owners.filter((o: any) => !o.address.equals(PublicKey.default));
+
+                for (let i = 0; i < filteredOwners.length; i++) {
+                    owners.push({
+                        address: filteredOwners[i].address.toBase58(),
+                        name: filteredOwners[i].name.length > 0
+                            ? new TextDecoder().decode(
+                                Buffer.from(
+                                    Uint8Array.of(
+                                        ...filteredOwners[i].name.filter((b: any) => b !== 0)
+                                    )
+                                )
+                            )
+                            : ""
+                    } as MultisigParticipant);
+                }
+
+                return {
+                    id: info.publicKey,
+                    version: info.account.version,
+                    label: new TextDecoder().decode(labelBuffer),
+                    address,
+                    nounce: info.account.nonce,
+                    ownerSeqNumber: info.account.ownerSetSeqno,
+                    threshold: info.account.threshold.toNumber(),
+                    pendingTxsAmount: info.account.pendingTxs.toNumber(),
+                    createdOnUtc: new Date(info.account.createdOn.toNumber() * 1000),
+                    owners: owners
+
+                } as MultisigV2;
+            })
+            .catch(err => {
+                consoleOut('error', err, 'red');
+                return undefined;
+            });
+    };
 
     const resetTransactionStatus = useCallback(() => {
         setTransactionStatus({
@@ -404,6 +545,77 @@ export const MultisigTreasuryStreams = () => {
             setPreviousBalance(account?.lamports);
         }
     }, [account, nativeBalance, previousBalance, refreshTokenBalance]);
+
+    // Get treasury details from path param
+    useEffect(() => {
+        if (!publicKey || !ms || !msp || !id) { return; }
+
+        consoleOut("Reading treasury data...", "", "blue");
+        getTreasuryByTreasuryId(id, 2)
+            .then((value) => {
+                setSignalRefreshTreasuryStreams(true);
+            });
+
+    }, [
+        id,
+        ms,
+        msp,
+        publicKey,
+        getTreasuryByTreasuryId
+    ]);
+
+    // Reload Treasury streams whenever the selected treasury changes
+    useEffect(() => {
+        if (!publicKey) { return; }
+
+        if (treasuryDetails && !loadingTreasuryStreams && signalRefreshTreasuryStreams) {
+            setSignalRefreshTreasuryStreams(false);
+            consoleOut('calling getTreasuryStreams...', '', 'blue');
+            const treasuryPk = new PublicKey(treasuryDetails.id as string);
+            const isNewTreasury = (treasuryDetails as Treasury).version && (treasuryDetails as Treasury).version >= 2
+                ? true
+                : false;
+            getTreasuryStreams(treasuryPk, isNewTreasury);
+        }
+    }, [
+        ms,
+        publicKey,
+        treasuryDetails,
+        loadingTreasuryStreams,
+        signalRefreshTreasuryStreams,
+        getTreasuryStreams,
+    ]);
+
+    // Streams refresh timeout
+    useEffect(() => {
+        let timer: any;
+
+        if (location.pathname.startsWith('/treasuries') && location.pathname.endsWith('/streams')) {
+            timer = setInterval(() => {
+                consoleOut(`Refreshing treasury streams past ${STREAMS_REFRESH_TIMEOUT / 60 / 1000}min...`);
+                if (treasuryDetails && !loadingTreasuryStreams && signalRefreshTreasuryStreams) {
+                    setSignalRefreshTreasuryStreams(false);
+                    consoleOut('calling getTreasuryStreams...', '', 'blue');
+                    const treasuryPk = new PublicKey(treasuryDetails.id as string);
+                    const isNewTreasury = (treasuryDetails as Treasury).version && (treasuryDetails as Treasury).version >= 2
+                        ? true
+                        : false;
+                    getTreasuryStreams(treasuryPk, isNewTreasury);
+                }
+            }, STREAMS_REFRESH_TIMEOUT);
+        }
+
+        return () => clearInterval(timer);
+    }, [
+        location,
+        streamList,
+        treasuryDetails,
+        customStreamDocked,
+        loadingTreasuryStreams,
+        signalRefreshTreasuryStreams,
+        getTreasuryStreams,
+        refreshStreamList,
+    ]);
 
     // Live data calculation - Streams list
     useEffect(() => {
@@ -634,28 +846,6 @@ export const MultisigTreasuryStreams = () => {
         setStreamsSummary,
         getPricePerToken,
     ]);
-
-    useEffect(() => {
-        if (!publicKey || !ms || !msp || !activeStream) {
-            return;
-        }
-
-        const timeout = setTimeout(() => {
-            const v1 = activeStream as StreamInfo;
-            const v2 = activeStream as Stream;
-            consoleOut("Reading treasury data...", "", "blue");
-            getTreasuryByTreasuryId(
-                activeStream.version < 2
-                    ? (v1.treasuryAddress as string)
-                    : (v2.treasury as string),
-                activeStream.version
-            );
-        });
-
-        return () => {
-            clearTimeout(timeout);
-        };
-    }, [ms, msp, publicKey, activeStream, getTreasuryByTreasuryId]);
 
     // Handle overflow-ellipsis-middle elements of resize
     useEffect(() => {
@@ -5560,8 +5750,7 @@ export const MultisigTreasuryStreams = () => {
                 title={getTransactionModalTitle(transactionStatus, isBusy, t)}
                 onCancel={hideTransferStreamTransactionModal}
                 width={330}
-                footer={null}
-            >
+                footer={null}>
                 <div className="transaction-progress">
                     {isBusy ? (
                         <>
