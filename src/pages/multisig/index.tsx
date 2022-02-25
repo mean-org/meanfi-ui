@@ -120,7 +120,8 @@ export const MultisigView = () => {
   const [multisigAccounts, setMultisigAccounts] = useState<(MultisigV2 | Multisig)[]>([]);
   const [selectedMultisig, setSelectedMultisig] = useState<any>(undefined);
   // Pending Txs
-  const [loadingMultisigTxs, setLoadingMultisigTxs] = useState(true);
+  const [needRefreshTxs, setNeedRefreshTxs] = useState(true);
+  const [loadingMultisigTxs, setLoadingMultisigTxs] = useState(false);
   const [multisigPendingTxs, setMultisigPendingTxs] = useState<MultisigTransaction[]>([]);
   const [highlightedMultisigTx, sethHighlightedMultisigTx] = useState<MultisigTransaction | undefined>();
   // Vaults
@@ -139,6 +140,7 @@ export const MultisigView = () => {
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
   const [retryOperationPayload, setRetryOperationPayload] = useState<any>(undefined);
+
   // Modal visibility flags
   const [isCreateMultisigModalVisible, setIsCreateMultisigModalVisible] = useState(false);
   const [isEditMultisigModalVisible, setIsEditMultisigModalVisible] = useState(false);
@@ -599,6 +601,30 @@ export const MultisigView = () => {
 
   },[
     resetTransactionStatus
+  ]);
+
+  const isApprovingMultisigTx = useCallback((): boolean => {
+
+    return (
+      fetchTxInfoStatus === "fetching" && 
+      lastSentTxOperationType === OperationType.ApproveTransaction
+    );
+
+  }, [
+    fetchTxInfoStatus,
+    lastSentTxOperationType,
+  ]);
+
+  const isExecutingMultisigTx = useCallback((): boolean => {
+
+    return (
+      fetchTxInfoStatus === "fetching" && 
+      lastSentTxOperationType === OperationType.ExecuteTransaction
+    );
+
+  }, [
+    fetchTxInfoStatus,
+    lastSentTxOperationType,
   ]);
 
   const isCreatingMultisig = useCallback((): boolean => {
@@ -2646,6 +2672,17 @@ export const MultisigView = () => {
     return false;
   }, []);
 
+  const isUiBusy = useCallback((): boolean => {
+    return isBusy || fetchTxInfoStatus === "fetching" || loadingMultisigAccounts || loadingMultisigTxs
+            ? true
+            : false;
+  }, [
+    isBusy,
+    fetchTxInfoStatus,
+    loadingMultisigTxs,
+    loadingMultisigAccounts,
+  ]);
+
   const getOperationName = useCallback((op: OperationType) => {
 
     switch (op) {
@@ -2806,7 +2843,7 @@ export const MultisigView = () => {
       !highlightedMultisigTx.didSigned
     );
 
-    console.log('show approve result', result);
+    // console.log('show approve result', result);
 
     return result;
 
@@ -3070,6 +3107,84 @@ export const MultisigView = () => {
 
   }, [connection]);
 
+  const loadMultisigPendingTxs = useCallback(() => {
+    if (!connection || !publicKey || !selectedMultisig || loadingMultisigTxs) { 
+      return;
+    }
+
+    setTimeout(() => {
+      setLoadingMultisigTxs(true);
+    },);
+
+    let transactions: MultisigTransaction[] = [];
+
+    multisigClient.account.transaction
+      .all(selectedMultisig.id.toBuffer())
+      .then((txs) => {
+        for (let tx of txs) {
+
+          // console.log('tx account', tx.account);
+
+          let currentOwnerIndex = selectedMultisig.owners
+            .findIndex((o: MultisigParticipant) => o.address === publicKey.toBase58());
+
+          let txInfo = Object.assign({}, {
+            id: tx.publicKey,
+            multisig: tx.account.multisig,
+            programId: tx.account.programId,
+            signers: tx.account.signers,
+            createdOn: new Date(tx.account.createdOn.toNumber() * 1000),
+            executedOn: tx.account.executedOn > 0
+              ? new Date(tx.account.executedOn.toNumber() * 1000) 
+              : undefined,
+            status: getTransactionStatus(tx.account),
+            operation: parseInt(Object.keys(OperationType).filter(k => k === tx.account.operation.toString())[0]),
+            accounts: tx.account.accounts,
+            didSigned: tx.account.signers[currentOwnerIndex],
+            proposer: tx.account.proposer,
+            pdaTimestamp: tx.account.pdaTimestamp ? tx.account.pdaTimestamp.toNumber() : undefined,
+            pdaBump: tx.account.pdaBump ? tx.account.pdaBump : undefined,
+            keypairs: tx.account.keypairs
+              .map((k: any) => {
+                try {
+                  return Keypair.fromSecretKey(Uint8Array.from(Buffer.from(k)));
+                } catch {
+                  return undefined;
+                }
+              })
+              .filter((k: any) => k !== undefined)
+
+          } as MultisigTransaction);
+          
+          transactions.push(txInfo);
+        }
+        const sortedTxs = transactions.sort((a, b) => b.createdOn.getTime() - a.createdOn.getTime());
+        consoleOut('selected multisig txs', sortedTxs, 'blue');
+        if (!isProd()) {
+          const debugTable: any[] = [];
+          sortedTxs.forEach(item => debugTable.push({
+            operation: OperationType[item.operation],
+            approved: item.didSigned,
+            executed: item.executedOn ? true : false,
+            proposer: item.proposer ? shortenAddress(item.proposer.toBase58(), 6) : '-',
+            status: MultisigTransactionStatus[item.status]
+          }));
+          console.table(debugTable);
+        }
+        setMultisigPendingTxs(sortedTxs);
+      })
+      .catch(err => console.error(err))
+      .finally(() => setLoadingMultisigTxs(false));
+
+  }, [
+    publicKey,
+    connection,
+    selectedMultisig,
+    loadingMultisigTxs,
+    multisigClient.account.transaction,
+    getTransactionStatus
+  ]);
+
   // Get multisig mint accounts on demmand
   // const getMultisigMints = useCallback(async (
   //   connection: Connection,
@@ -3147,35 +3262,35 @@ export const MultisigView = () => {
                 });
             }
           }
+
           setTimeout(() => {
             multisigInfoArray.sort((a: any, b: any) => b.createdOnUtc.getTime() - a.createdOnUtc.getTime());
             setMultisigAccounts(multisigInfoArray);
             consoleOut('tralla:', multisigInfoArray, 'blue');
-            if (highLightableMultisigId) {
-              // Select a multisig that was instructed to highlight when entering this feature
-              const sig = multisigInfoArray.find(m => m.address.toBase58() === highLightableMultisigId);
-              if (sig) {
-                setSelectedMultisig(sig);
-              } else {
-                setSelectedMultisig(multisigInfoArray[0]);
+            let item: MultisigV2 | Multisig | undefined = undefined;
+            if (multisigInfoArray.length > 0) {
+              if (highLightableMultisigId) {
+                // Select a multisig that was instructed to highlight when entering this feature
+                item = multisigInfoArray.find(m => m.address.toBase58() === highLightableMultisigId);
+              } else if (selectedMultisig) {
+                // Or re-select the one active
+                item = selectedMultisig.id ? multisigInfoArray.find(m => m.id.equals(selectedMultisig.id)) : undefined;
               }
-            } else if (selectedMultisig) {
-              const sig = selectedMultisig.id ? multisigInfoArray.find(m => m.id.equals(selectedMultisig.id)) : undefined;
-              if (sig) {
-                setSelectedMultisig(sig);
+              // Now make item active
+              if (item) {
+                setSelectedMultisig(item);
               } else {
                 setSelectedMultisig(multisigInfoArray[0]);
               }
             } else {
-              setSelectedMultisig(multisigInfoArray[0]);
+              setSelectedMultisig(undefined);
+              setMultisigPendingTxs([]);
             }
-            setLoadingMultisigAccounts(false);
           });
+
         })
-        .catch(err => {
-          console.error(err);
-          setLoadingMultisigAccounts(false);
-        });
+        .catch(err => console.error(err))
+        .finally(() => setLoadingMultisigAccounts(false));
     });
 
     return () => {
@@ -3191,6 +3306,7 @@ export const MultisigView = () => {
     highLightableMultisigId,
     loadingMultisigAccounts,
     readAllMultisigAccounts,
+    // loadMultisigPendingTxs,
   ]);
 
   // Subscribe to multisig account changes
@@ -3234,11 +3350,13 @@ export const MultisigView = () => {
             .then(k => {
               address = k[0];
               let multisigInfo = {
-                id: account.publicKey,
+                // id: account.publicKey,
+                id: selectedMultisig.id,
                 version: account.version,
                 label: new TextDecoder().decode(labelBuffer),
                 address,
-                nounce: account.nounce,
+                // nounce: account.nounce,
+                nounce: selectedMultisig.nounce,
                 ownerSeqNumber: account.ownerSetSeqno,
                 threshold: account.threshold.toNumber(),
                 pendingTxsAmount: new BN(account.pendingTxs).toNumber(),
@@ -3246,6 +3364,8 @@ export const MultisigView = () => {
                 owners: owners
 
               } as MultisigV2;
+
+              consoleOut('multisigInfo:', multisigInfo, 'blue');
 
               setSelectedMultisig(multisigInfo);
             });
@@ -3267,88 +3387,18 @@ export const MultisigView = () => {
   // Get Txs for the selected multisig
   useEffect(() => {
 
-    if (!connection || !connected || !publicKey || !selectedMultisig || !selectedMultisig.id || !loadingMultisigTxs) { 
+    if (!publicKey || !selectedMultisig || !needRefreshTxs) { 
       return;
     }
 
-    const timeout = setTimeout(() => {
-
-      let transactions: MultisigTransaction[] = [];
-      
-      multisigClient.account.transaction
-        .all(selectedMultisig.id.toBuffer())
-        .then((txs) => {
-          for (let tx of txs) {
-
-            // console.log('tx account', tx.account);
-
-            let currentOwnerIndex = selectedMultisig.owners
-              .findIndex((o: MultisigParticipant) => o.address === publicKey.toBase58());
-
-            let txInfo = Object.assign({}, {
-              id: tx.publicKey,
-              multisig: tx.account.multisig,
-              programId: tx.account.programId,
-              signers: tx.account.signers,
-              createdOn: new Date(tx.account.createdOn.toNumber() * 1000),
-              executedOn: tx.account.executedOn > 0
-                ? new Date(tx.account.executedOn.toNumber() * 1000) 
-                : undefined,
-              status: getTransactionStatus(tx.account),
-              operation: parseInt(Object.keys(OperationType).filter(k => k === tx.account.operation.toString())[0]),
-              accounts: tx.account.accounts,
-              didSigned: tx.account.signers[currentOwnerIndex],
-              proposer: tx.account.proposer,
-              pdaTimestamp: tx.account.pdaTimestamp ? tx.account.pdaTimestamp.toNumber() : undefined,
-              pdaBump: tx.account.pdaBump ? tx.account.pdaBump : undefined,
-              keypairs: tx.account.keypairs
-                .map((k: any) => {
-                  try {
-                    return Keypair.fromSecretKey(Uint8Array.from(Buffer.from(k)));
-                  } catch {
-                    return undefined;
-                  }
-                })
-                .filter((k: any) => k !== undefined)
-
-            } as MultisigTransaction);
-            
-            transactions.push(txInfo);
-          }
-          const sortedTxs = transactions.sort((a, b) => b.createdOn.getTime() - a.createdOn.getTime());
-          consoleOut('selected multisig txs', sortedTxs, 'blue');
-          if (!isProd()) {
-            const debugTable: any[] = [];
-            sortedTxs.forEach(item => debugTable.push({
-              operation: OperationType[item.operation],
-              approved: item.didSigned,
-              executed: item.executedOn ? true : false,
-              proposer: item.proposer ? shortenAddress(item.proposer.toBase58(), 6) : '-',
-              status: MultisigTransactionStatus[item.status]
-            }));
-            console.table(debugTable);
-          }
-          setMultisigPendingTxs(sortedTxs);
-          setLoadingMultisigTxs(false);
-        })
-        .catch(err => {
-          console.error(err);
-          setLoadingMultisigTxs(false);
-        });
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }
+    setNeedRefreshTxs(false);
+    loadMultisigPendingTxs();
 
   }, [
     publicKey,
-    connection, 
-    connected, 
-    selectedMultisig, 
-    multisigClient.account.transaction, 
-    loadingMultisigTxs,
-    getTransactionStatus
+    selectedMultisig,
+    needRefreshTxs,
+    loadMultisigPendingTxs
   ]);
 
   // Get multisig treasuries for the selected multisig
@@ -3450,6 +3500,7 @@ export const MultisigView = () => {
         consoleOut('User is connecting...', publicKey.toBase58(), 'green');
         setLoadingMultisigAccounts(true);
         setLoadingPrograms(true);
+        setNeedRefreshTxs(true);
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'green');
         setMultisigAccounts([]);
@@ -3485,8 +3536,8 @@ export const MultisigView = () => {
     if (lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
       clearTransactionStatusContext();
       setLoadingMultisigAccounts(true);
-      setLoadingMultisigTxs(true);
       sethHighlightedMultisigTx(undefined);
+      loadMultisigPendingTxs();
     }
   }, [
     publicKey,
@@ -3494,6 +3545,7 @@ export const MultisigView = () => {
     lastSentTxSignature,
     lastSentTxOperationType,
     clearTransactionStatusContext,
+    loadMultisigPendingTxs
   ]);
 
   // Get Multisig Vaults
@@ -3763,7 +3815,11 @@ export const MultisigView = () => {
                 <div
                   key={item.id.toBase58()}
                   style={{padding: '3px 0px'}}
-                  className={`item-list-row ${highlightedMultisigTx && highlightedMultisigTx.id.equals(item.id) ? 'selected' : 'simplelink'}`}
+                  className={`item-list-row ${
+                    highlightedMultisigTx && highlightedMultisigTx.id.equals(item.id)
+                      ? isUiBusy() ? 'selected no-pointer click-disabled' : 'selected'
+                      : isUiBusy() ? 'no-pointer click-disabled' : 'simplelink'}`
+                  }
                   onClick={() => showMultisigActionTransactionModal(item)}>
                   <div className="std-table-cell responsive-cell">
                     <span className="align-middle">{getOperationName(item.operation)}</span>
@@ -4084,7 +4140,17 @@ export const MultisigView = () => {
           )}
 
           {/* Operation indication */}
-          {isMintingToken() ? (
+          {isApprovingMultisigTx() ? (
+            <div className="flex-row flex-center">
+              <LoadingOutlined />
+              <span className="ml-1">{t('multisig.multisig-account-detail.multisig-tx-approve-busy')}</span>
+            </div>
+          ) : isExecutingMultisigTx() ? (
+            <div className="flex-row flex-center">
+              <LoadingOutlined />
+              <span className="ml-1">{t('multisig.multisig-account-detail.multisig-tx-execute-busy')}</span>
+            </div>
+          ) : isMintingToken() ? (
             <div className="flex-row flex-center">
               <LoadingOutlined />
               <span className="ml-1">{t('multisig.multisig-account-detail.cta-mint-busy')}</span>
@@ -4112,8 +4178,8 @@ export const MultisigView = () => {
         const onMultisigClick = (ev: any) => {
           consoleOut('selected multisig:', item, 'blue');
           setSelectedMultisig(item);
+          setNeedRefreshTxs(true);
           setLoadingPrograms(true);
-          setLoadingMultisigTxs(true);
         };
         return (
           <div 
@@ -4175,6 +4241,14 @@ export const MultisigView = () => {
 
   return (
     <>
+      {isLocal() && (
+        <div className="debug-bar">
+          <span className="ml-1">isBusy:</span><span className="ml-1 font-bold fg-dark-active">{isBusy ? 'true' : 'false'}</span>
+          <span className="ml-1">haveMultisig:</span><span className="ml-1 font-bold fg-dark-active">{selectedMultisig ? 'true' : 'false'}</span>
+          <span className="ml-1">multisigId:</span><span className="ml-1 font-bold fg-dark-active">{selectedMultisig ? `${selectedMultisig.id}` : '-'}</span>
+        </div>
+      )}
+
       <div className="container main-container">
 
         <div className="interaction-area">

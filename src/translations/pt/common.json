@@ -395,7 +395,9 @@
 			"multisig-participants": "Proprietários atuais do Multisig",
 			"no-multisig-loaded": "Crie ou selecione uma conta multisig para ver os detalhes",
 			"no-multisig-selected": "Selecione uma conta multisig para ver os detalhes",
-			"required-signatures": "Assinaturas obrigatórias"
+			"required-signatures": "Assinaturas obrigatórias",
+			"multisig-tx-approve-busy": "Approving transaction",
+			"multisig-tx-execute-busy": "Executing transaction"
 		},
 		"multisig-accounts": {
 			"no-accounts": "Nenhuma conta multisig disponível",

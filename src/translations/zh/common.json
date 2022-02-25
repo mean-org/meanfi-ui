@@ -369,7 +369,9 @@
 			"multisig-participants": "Current Multisig Owners",
 			"no-multisig-loaded": "Create or select a multisig account to view details",
 			"no-multisig-selected": "Please select a multisig account to view details",
-			"required-signatures": "Required signatures"
+			"required-signatures": "Required signatures",
+			"multisig-tx-approve-busy": "Approving transaction",
+			"multisig-tx-execute-busy": "Executing transaction"
 		},
 		"multisig-accounts": {
 			"no-accounts": "No multisig accounts available",

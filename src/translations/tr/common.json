@@ -395,7 +395,9 @@
 			"multisig-participants": "Şuanki Çoklu-İmza sahipleri",
 			"no-multisig-loaded": "Detaylara bakmak için bir Çoklu-İmza hesabı seçin ya da oluşturun",
 			"no-multisig-selected": "Detaylara bakmak için bir Çoklu-İmza hesabı seçin lütfen",
-			"required-signatures": "Gereken imzalar"
+			"required-signatures": "Gereken imzalar",
+			"multisig-tx-approve-busy": "Approving transaction",
+			"multisig-tx-execute-busy": "Executing transaction"
 		},
 		"multisig-accounts": {
 			"no-accounts": "Çoklu-İmza hesabı mevcut değil",

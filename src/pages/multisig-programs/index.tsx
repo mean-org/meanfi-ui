@@ -402,6 +402,17 @@ export const MultisigProgramsView = () => {
     lastSentTxOperationType,
   ]);
 
+  const isUiBusy = useCallback((): boolean => {
+    return isBusy || fetchTxInfoStatus === "fetching" || loadingMultisigAccounts || loadingMultisigTxs
+            ? true
+            : false;
+  }, [
+    isBusy,
+    fetchTxInfoStatus,
+    loadingMultisigTxs,
+    loadingMultisigAccounts,
+  ]);
+
   const getOperationName = useCallback((op: OperationType) => {
 
     switch (op) {
@@ -466,7 +477,7 @@ export const MultisigProgramsView = () => {
       !highlightedMultisigTx.didSigned
     );
 
-    console.log('show approve result', result);
+    // console.log('show approve result', result);
 
     return result;
 
@@ -2812,7 +2823,11 @@ export const MultisigProgramsView = () => {
                 <div
                   key={item.id.toBase58()}
                   style={{padding: '3px 0px'}}
-                  className={`item-list-row ${highlightedMultisigTx && highlightedMultisigTx.id.equals(item.id) ? 'selected' : 'simplelink'}`}
+                  className={`item-list-row ${
+                    highlightedMultisigTx && highlightedMultisigTx.id.equals(item.id)
+                      ? isUiBusy() ? 'selected no-pointer click-disabled' : 'selected'
+                      : isUiBusy() ? 'no-pointer click-disabled' : 'simplelink'}`
+                  }
                   onClick={() => showMultisigActionTransactionModal(item)}>
                   <div className="std-table-cell responsive-cell">
                     <span className="align-middle">{getOperationName(item.operation)}</span>
