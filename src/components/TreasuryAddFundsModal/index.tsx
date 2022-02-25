@@ -202,12 +202,14 @@ export const TreasuryAddFundsModal = (props: {
     return !selectedToken || !availableBalance || availableBalance.isZero()
       ? t('transactions.validation.no-balance')
       : !tokenAmount || tokenAmount.isZero()
-      ? t('transactions.validation.no-amount')
-      : tokenAmount.gt(getMaxAmount())
-      ? t('transactions.validation.amount-high')
-      : allocationOption === AllocationType.Specific && !highLightableStreamId
-      ? t('transactions.validation.select-stream')
-      : t('treasuries.add-funds.main-cta');
+        ? t('transactions.validation.no-amount')
+        : tokenAmount.gt(getMaxAmount())
+          ? t('transactions.validation.amount-high')
+          : allocationOption === AllocationType.Specific && !highLightableStreamId
+            ? t('transactions.validation.select-stream')
+            : allocationOption === AllocationType.Specific && highLightableStreamId
+            ? t('treasuries.add-funds.main-cta-fund-stream')
+            : t('treasuries.add-funds.main-cta');
   }
 
   const getStreamIcon = useCallback((item: Stream | StreamInfo) => {
@@ -1051,8 +1053,8 @@ export const TreasuryAddFundsModal = (props: {
               {props.isBusy
                 ? t('treasuries.add-funds.main-cta-busy')
                 : transactionStatus.currentOperation === TransactionStatus.Iddle
-                ? getTransactionStartButtonLabel()
-                : t('general.refresh')
+                  ? getTransactionStartButtonLabel()
+                  : t('general.refresh')
               }
             </Button>
           </div>
