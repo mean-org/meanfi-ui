@@ -455,6 +455,7 @@
 		},
 		"multisig-treasuries": {
 			"back-to-multisig-accounts-cta": "Çoklu-İmza hesaplarına geri dön",
+			"back-to-treasuries": "Back to treasuries",
 			"cta-change-multisig-authority": "Sahipliği transfer et",
 			"cta-change-multisig-authority-busy": "Çoklu-İmza'yı değiştir",
 			"cta-close": "Hazineyi kapat",

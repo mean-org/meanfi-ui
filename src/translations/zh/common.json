@@ -429,6 +429,7 @@
 		},
 		"multisig-treasuries": {
 			"back-to-multisig-accounts-cta": "Back to Multisig accounts",
+			"back-to-treasuries": "Back to treasuries",
 			"cta-change-multisig-authority": "Transfer Ownership",
 			"cta-change-multisig-authority-busy": "Changing Multisig",
 			"cta-close": "Close treasury",
