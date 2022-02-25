@@ -4918,10 +4918,15 @@ export const TreasuriesView = () => {
                   }
                   onClick={() => {
                     const urlBase = '/treasuries/';
-                    if (selectedMultisig) {
-                      const url = `${urlBase}${selectedMultisig.id.toBase58()}/streams`;
-                      consoleOut('Heading to:', url, 'blue');
-                      navigate(url);
+                    if (multisigAccounts) {
+                      const treasurer = (treasuryDetails as Treasury).treasurer as string;
+                      const treasurerPk = new PublicKey(treasurer);
+                      consoleOut('treasurer:', treasurer, 'blue');
+                      if (multisigAccounts.some(m => m.address.equals(treasurerPk))) {
+                        const url = `${urlBase}${treasurer}/streams`;
+                        consoleOut('Heading to:', url, 'blue');
+                        navigate(url);
+                      }
                     }
                   }}>
                   View streams
