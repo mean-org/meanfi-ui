@@ -396,7 +396,9 @@
 			"multisig-participants": "Proprietários atuais do Multisig",
 			"no-multisig-loaded": "Crie ou selecione uma conta multisig para ver os detalhes",
 			"no-multisig-selected": "Selecione uma conta multisig para ver os detalhes",
-			"required-signatures": "Assinaturas obrigatórias"
+			"required-signatures": "Assinaturas obrigatórias",
+			"multisig-tx-approve-busy": "Approving transaction",
+			"multisig-tx-execute-busy": "Executing transaction"
 		},
 		"multisig-accounts": {
 			"no-accounts": "Nenhuma conta multisig disponível",
@@ -993,6 +995,9 @@
 		"treasury-detail-heading": "Detalhes do Tesouro",
 		"treasury-refresh-tooltip": "Refresh treasury data",
 		"treasury-list": {
+			"multisig-treasury-heading": "Multisig Treasuries - {{treasuryName}}",
+			"multisig-treasury-help": "Below is a list of all the treasuries that are connected to this Multsig",
+			"multisig-treasuries-view-all-cta": "Show All Treasuries",
 			"multisig-treasury-label": "Tesouraria Multisig",
 			"no-treasuries": "Nenhum tesouro disponível",
 			"not-connected": "Por favor, conecte sua carteira para ver seus tesouros",

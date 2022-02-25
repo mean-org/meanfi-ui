@@ -417,6 +417,17 @@ export const MultisigMintsView = () => {
     lastSentTxOperationType,
   ]);
 
+  const isUiBusy = useCallback((): boolean => {
+    return isBusy || fetchTxInfoStatus === "fetching" || loadingMultisigAccounts || loadingMultisigTxs
+            ? true
+            : false;
+  }, [
+    isBusy,
+    fetchTxInfoStatus,
+    loadingMultisigTxs,
+    loadingMultisigAccounts,
+  ]);
+
   const getOperationName = useCallback((op: OperationType) => {
 
     switch (op) {
@@ -478,6 +489,68 @@ export const MultisigMintsView = () => {
     }
 
   },[]);
+
+  const canShowApproveButton = useCallback(() => {
+
+    if (!highlightedMultisigTx) { return false; }
+
+    let result = (
+      highlightedMultisigTx.status === MultisigTransactionStatus.Pending &&
+      !highlightedMultisigTx.didSigned
+    );
+
+    // console.log('show approve result', result);
+
+    return result;
+
+  },[highlightedMultisigTx])
+
+  const canShowExecuteButton = useCallback(() => {
+
+    if (!highlightedMultisigTx) { return false; }
+
+    const isUserTheProposer = () => {
+      return  publicKey &&
+              highlightedMultisigTx.proposer &&
+              publicKey.equals(highlightedMultisigTx.proposer)
+        ? true
+        : false;
+    }
+
+    const isTreasuryOperation = () => {
+      return  highlightedMultisigTx.operation === OperationType.TreasuryCreate ||
+              highlightedMultisigTx.operation === OperationType.TreasuryClose ||
+              highlightedMultisigTx.operation === OperationType.TreasuryAddFunds ||
+              highlightedMultisigTx.operation === OperationType.TreasuryStreamCreate ||
+              highlightedMultisigTx.operation === OperationType.StreamCreate ||
+              highlightedMultisigTx.operation === OperationType.StreamClose ||
+              highlightedMultisigTx.operation === OperationType.StreamAddFunds
+        ? true
+        : false;
+    }
+
+    const isPendingForExecution = () => {
+      return  highlightedMultisigTx.status === MultisigTransactionStatus.Approved &&
+              !highlightedMultisigTx.executedOn
+        ? true
+        : false;
+    }
+
+    if (isPendingForExecution()) {
+      if (!isTreasuryOperation() || (isUserTheProposer() && isTreasuryOperation)) {
+        return true;
+      } else {
+        return false;
+      }
+    } else {
+      return false;
+    }
+
+  },[
+    highlightedMultisigTx, 
+    publicKey
+  ])
+
 
   ////////////////////////////////////////
   // Business logic & Data management   //
@@ -1049,7 +1122,6 @@ export const MultisigMintsView = () => {
       const tx = multisigClient.transaction.createTransaction(
         TOKEN_PROGRAM_ID,
         OperationType.SetMultisigAuthority,
-        [],
         ixAccounts,
         ixData,
         {
@@ -1303,6 +1375,7 @@ export const MultisigMintsView = () => {
     wallet,
     publicKey,
     connection, 
+    selectedMint,
     nativeBalance,
     selectedMultisig,
     transactionCancelled,
@@ -1719,7 +1792,6 @@ export const MultisigMintsView = () => {
       let tx = multisigClient.transaction.createTransaction(
         TOKEN_PROGRAM_ID,
         OperationType.MintTokens,
-        [],
         ixAccounts,
         ixData,
         {
@@ -2594,17 +2666,6 @@ export const MultisigMintsView = () => {
     resetTransactionStatus();
   };
 
-  const onTransactionModalClosed = () => {
-    if (isBusy) {
-      setTransactionCancelled(true);
-    }
-    if (isSuccess()) {
-      setMultisigActionTransactionModalVisible(false);
-    }
-    sethHighlightedMultisigTx(undefined);
-    resetTransactionStatus();
-  }
-
   ///////////////
   // Rendering //
   ///////////////
@@ -2751,7 +2812,11 @@ export const MultisigMintsView = () => {
                 <div
                   key={item.id.toBase58()}
                   style={{padding: '3px 0px'}}
-                  className={`item-list-row ${highlightedMultisigTx && highlightedMultisigTx.id.equals(item.id) ? 'selected' : 'simplelink'}`}
+                  className={`item-list-row ${
+                    highlightedMultisigTx && highlightedMultisigTx.id.equals(item.id)
+                      ? isUiBusy() ? 'selected no-pointer click-disabled' : 'selected'
+                      : isUiBusy() ? 'no-pointer click-disabled' : 'simplelink'}`
+                  }
                   onClick={() => showMultisigActionTransactionModal(item)}>
                   <div className="std-table-cell responsive-cell">
                     <span className="align-middle">{getOperationName(item.operation)}</span>
@@ -3102,7 +3167,9 @@ export const MultisigMintsView = () => {
           title={<div className="modal-title">{t('multisig.multisig-transactions.modal-title')}</div>}
           maskClosable={false}
           visible={isMultisigActionTransactionModalVisible}
-          onCancel={onTransactionModalClosed}
+          closable={true}
+          onOk={onCloseMultisigActionModal}
+          onCancel={onCloseMultisigActionModal}
           width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 400 : 480}
           footer={null}>
 
@@ -3238,43 +3305,7 @@ export const MultisigMintsView = () => {
                 }
               </Button>
               {
-                (
-                  (
-                    (
-                      highlightedMultisigTx.operation === OperationType.TreasuryCreate ||
-                      highlightedMultisigTx.operation === OperationType.TreasuryClose ||
-                      highlightedMultisigTx.operation === OperationType.TreasuryAddFunds ||
-                      highlightedMultisigTx.operation === OperationType.TreasuryStreamCreate
-                    )
-                    &&
-                    (
-                      (
-                        highlightedMultisigTx.status === MultisigTransactionStatus.Pending &&
-                        !highlightedMultisigTx.didSigned
-                      ) 
-                      ||
-                      (
-                        publicKey &&
-                        highlightedMultisigTx.proposer &&
-                        publicKey.equals(highlightedMultisigTx.proposer) &&
-                        highlightedMultisigTx.status === MultisigTransactionStatus.Approved &&
-                        !highlightedMultisigTx.executedOn
-                      )
-                    )
-                  )
-                  ||
-                  (
-                    (
-                      highlightedMultisigTx.status === MultisigTransactionStatus.Pending &&
-                      !highlightedMultisigTx.didSigned
-                    ) 
-                    ||
-                    (
-                      highlightedMultisigTx.status === MultisigTransactionStatus.Approved &&
-                      !highlightedMultisigTx.executedOn
-                    )
-                  )
-                )
+                (canShowExecuteButton() || canShowApproveButton())
                 &&
                 (
                   <Button

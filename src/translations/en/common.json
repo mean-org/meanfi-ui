@@ -400,7 +400,9 @@
 			"multisig-participants": "Current Multisig Owners",
 			"no-multisig-loaded": "Create or select a multisig account to view details",
 			"no-multisig-selected": "Please select a multisig account to view details",
-			"required-signatures": "Required signatures"
+			"required-signatures": "Required signatures",
+			"multisig-tx-approve-busy": "Approving transaction",
+			"multisig-tx-execute-busy": "Executing transaction"
 		},
 		"multisig-accounts": {
 			"no-accounts": "No multisig accounts available",
@@ -997,6 +999,9 @@
 		"treasury-detail-heading": "Treasury details",
 		"treasury-refresh-tooltip": "Refresh treasury data",
 		"treasury-list": {
+			"multisig-treasury-heading": "Multisig Treasuries - {{treasuryName}}",
+			"multisig-treasury-help": "Below is a list of all the treasuries that are connected to this Multsig",
+			"multisig-treasuries-view-all-cta": "Show All Treasuries",
 			"multisig-treasury-label": "Multisig Treasury",
 			"no-treasuries": "No treasuries available",
 			"not-connected": "Please connect your wallet to see your treasuries",
