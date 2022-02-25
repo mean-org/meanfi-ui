@@ -9,7 +9,7 @@ import { TokenDisplay } from "../../components/TokenDisplay";
 import { PreFooter } from "../../components/PreFooter";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
-import { formatAmount, formatThousands, getAmountWithSymbol, isValidNumber } from "../../utils/utils";
+import { cutNumber, formatAmount, formatThousands, getAmountWithSymbol, isValidNumber } from "../../utils/utils";
 import moment from 'moment';
 import Modal from "antd/lib/modal/Modal";
 import { IconHelpCircle } from "../../Icons/IconHelpCircle";
@@ -65,9 +65,9 @@ export const InvestView = () => {
   };
 
   // Withdraw funds modal
-  const [isWithdrawModalVisible, setIsWithdrawModalVisibility] = useState(false);
-  const showWithdrawModal = useCallback(() => setIsWithdrawModalVisibility(true), []);
-  const closeWithdrawModal = useCallback(() => setIsWithdrawModalVisibility(false), []);
+  const [isWithdrawModalVisible, setIsWithdrawModalVisible] = useState(false);
+  const showWithdrawModal = useCallback(() => setIsWithdrawModalVisible(true), []);
+  const closeWithdrawModal = useCallback(() => setIsWithdrawModalVisible(false), []);
 
   const onWithdrawModalStart = useCallback(async () => {
     showWithdrawModal();
@@ -240,7 +240,7 @@ export const InvestView = () => {
                               <span>{"My Staked MEAN"}</span>
                             </Col>
                             <Col span={12}>
-                              <span className="staking-number">{unstakeAmount ? unstakeAmount : 0}</span>
+                              <span className="staking-number">{unstakeAmount ? cutNumber(parseFloat(unstakeAmount), 6) : 0}</span>
                             </Col>
                             <Col span={12}>
                               <span>{"Avg. Locked Yield"}</span>
@@ -270,7 +270,7 @@ export const InvestView = () => {
                                     <ArrowDownOutlined className="mean-svg-icons" />
                                     </span>
                                   )}
-                                  <span className="staking-value mb-2 mt-1">{!stakingRewards ? 0 : stakingRewards} {selectedToken && selectedToken.name}</span>
+                                  <span className="staking-value mb-2 mt-1">{!stakingRewards ? 0 : cutNumber(stakingRewards, 6)} {selectedToken && selectedToken.name}</span>
                                 </span>
                               </div>
                             </Col>
@@ -361,7 +361,7 @@ export const StakeTabView = () => {
   const { t } = useTranslation('common');
   const periods = [
     {
-      value: 7,
+      value: 0,
       time: t("invest.panel-right.tabset.stake.days"),
       multiplier: "1x"
     },
@@ -391,9 +391,9 @@ export const StakeTabView = () => {
   const [periodTime, setPeriodTime] = useState<string>(periods[0].time);
 
   // Transaction execution modal
-  const [isTransactionModalVisible, setTransactionModalVisibility] = useState(false);
-  const showTransactionModal = useCallback(() => setTransactionModalVisibility(true), []);
-  const closeTransactionModal = useCallback(() => setTransactionModalVisibility(false), []);
+  const [isTransactionModalVisible, setTransactionModalVisible] = useState(false);
+  const showTransactionModal = useCallback(() => setTransactionModalVisible(true), []);
+  const closeTransactionModal = useCallback(() => setTransactionModalVisible(false), []);
 
   const handleFromCoinAmountChange = (e: any) => {
     const newValue = e.target.value;
@@ -426,7 +426,9 @@ export const StakeTabView = () => {
   }
 
   const onAfterTransactionModalClosed = () => {
-    setUnstakeAmount(!unstakeAmount ? fromCoinAmount : `${parseFloat(unstakeAmount) + parseFloat(fromCoinAmount)}`);
+    const unstakeAmountAfterTransaction = !unstakeAmount ? fromCoinAmount : `${parseFloat(unstakeAmount) + parseFloat(fromCoinAmount)}`;
+
+    setUnstakeAmount(unstakeAmountAfterTransaction);
     setFromCoinAmount("");
     setIsVerifiedRecipient(false);
     closeTransactionModal();
@@ -444,7 +446,9 @@ export const StakeTabView = () => {
   }
 
   useEffect(() => {
-    setUnstakeStartDate(moment().add(periodValue, periodValue === 1 ? "year" : periodValue === 4 ? "years" : "days").format("LL"));
+    const unstakeStartDateUpdate = moment().add(periodValue, periodValue === 1 ? "year" : periodValue === 4 ? "years" : "days").format("LL")
+
+    setUnstakeStartDate(unstakeStartDateUpdate);
   }, [periodTime, periodValue, setUnstakeStartDate]);
   
   return (
@@ -505,7 +509,7 @@ export const StakeTabView = () => {
         <div className="left token-group">
           {periods.map((period, index) => (
             <div key={index} className="mb-1 d-flex flex-column align-items-center">
-              <div className={`token-max simplelink ${period.value === 7 ? "active" : "disabled"}`} onClick={() => onChangeValue(period.value, period.time)}>{period.value} {period.time}</div>
+              <div className="token-max simplelink" onClick={() => onChangeValue(period.value, period.time)}>{period.value} {period.time}</div>
               <span>{period.multiplier}</span>
             </div>
           ))}
@@ -575,12 +579,13 @@ export const UnstakeTabView = () => {
     effectiveRate,
     loadingPrices,
     fromCoinAmount,
-    isVerifiedRecipient,
+    // isVerifiedRecipient,
     paymentStartDate,
     unstakeStartDate,
     unstakeAmount,
     refreshPrices,
     setFromCoinAmount,
+    setUnstakeAmount
     // setIsVerifiedRecipient
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
@@ -621,9 +626,20 @@ export const UnstakeTabView = () => {
     return paymentStartDate && isSendAmountValid() ? true : false;
   }
 
+  const handleUnstake = () => {
+    const newUnstakeAmount = (parseFloat(unstakeAmount) - parseFloat(fromCoinAmount)).toString();
+
+    setUnstakeAmount(newUnstakeAmount);
+    setFromCoinAmount('');
+  }
+
   useEffect(() => {
-    setFromCoinAmount(parseFloat(unstakeAmount) > 0 ? `${parseFloat(unstakeAmount)*percentageValue/100}` : '');
+    const percentageFromCoinAmount = parseFloat(unstakeAmount) > 0 ? `${(parseFloat(unstakeAmount)*percentageValue/100)}` : '';
+
+    setFromCoinAmount(percentageFromCoinAmount);
+    // setFromCoinAmount(formatAmount(parseFloat(percentageFromCoinAmount), 6).toString());
   }, [percentageValue]);
+
 
   useEffect(() => {
     parseFloat(unstakeAmount) > 0 && currentDate === unstakeStartDate ?
@@ -634,7 +650,7 @@ export const UnstakeTabView = () => {
 
   return (
     <>
-      <span className="info-label">{unstakeAmount ? t("invest.panel-right.tabset.unstake.notification-label-one", {unstakeAmount: unstakeAmount, unstakeStartDate: unstakeStartDate}) : t("invest.panel-right.tabset.unstake.notification-label-one-error")}</span>
+      <span className="info-label">{unstakeAmount ? t("invest.panel-right.tabset.unstake.notification-label-one", {unstakeAmount: cutNumber(parseFloat(unstakeAmount), 6), unstakeStartDate: unstakeStartDate}) : t("invest.panel-right.tabset.unstake.notification-label-one-error")}</span>
       <div className="form-label mt-2">{t("invest.panel-right.tabset.unstake.amount-label")}</div>
       <div className="well">
         <div className="flexible-right mb-1">
@@ -677,7 +693,7 @@ export const UnstakeTabView = () => {
         <div className="flex-fixed-right">
           <div className="left inner-label">
             <span>{t('invest.panel-right.tabset.unstake.send-amount.label-right')}:</span>
-            <span>{availableUnstake}</span>
+            <span>{formatAmount(availableUnstake, 6)}</span>
           </div>
           <div className="right inner-label">
             <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
@@ -707,9 +723,10 @@ export const UnstakeTabView = () => {
         type="primary"
         shape="round"
         size="large"
+        onClick={handleUnstake}
         disabled={
           !areSendAmountSettingsValid() ||
-          !isVerifiedRecipient ||
+          // !isVerifiedRecipient ||
           availableUnstake <= 0
         }
       >
