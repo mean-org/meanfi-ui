@@ -857,13 +857,20 @@ export const TreasuriesView = () => {
       return;
     }
 
+    const isMultisigInAccountList = (id: string) => {
+      return multisigAccounts.some(m => m.id.toBase58() === id);
+    }
+
     // Verify query param
     const params = new URLSearchParams(location.search);
     if (params.has('treasury') && !treasuryAddress) {
       consoleOut('Wait for treasuryAddress on next render...', '', 'blue');
       return;
-    } else if (params.has('multisig') && !(multisigAddress && selectedMultisig)) {
+    } else if (params.has('multisig') && !multisigAddress) {
       consoleOut('Wait for multisigAddress on next render...', '', 'blue');
+      return;
+    } else if (params.has('multisig') && multisigAddress && isMultisigInAccountList(multisigAddress) && !selectedMultisig ) {
+      consoleOut('Wait for selectedMultisig on next render...', '', 'blue');
       return;
     }
 
