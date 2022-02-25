@@ -4592,8 +4592,22 @@ export const TreasuriesView = () => {
         </Menu.Item>
         <Menu.Item key="6" onClick={() => {
             setHighLightableStreamId(item.id as string);
-            refreshStreamList();
-            navigate('/accounts/streams');
+            if (isMultisigTreasury(treasuryDetails)) {
+              const urlBase = '/treasuries/';
+              if (multisigAccounts) {
+                const treasurer = (treasuryDetails as Treasury).treasurer as string;
+                const treasurerPk = new PublicKey(treasurer);
+                consoleOut('treasurer:', treasurer, 'blue');
+                if (multisigAccounts.some(m => m.address.equals(treasurerPk))) {
+                  const url = `${urlBase}${treasurer}/streams`;
+                  consoleOut('Heading to:', url, 'blue');
+                  navigate(url);
+                }
+              }
+            } else {
+              refreshStreamList();
+              navigate('/accounts/streams');
+            }
           }}>
           <span className="menu-item-text">Show stream</span>
         </Menu.Item>
