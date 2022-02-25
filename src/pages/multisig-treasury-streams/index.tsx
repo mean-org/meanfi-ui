@@ -133,16 +133,15 @@ export const MultisigTreasuryStreams = () => {
         streamListv1,
         streamListv2,
         streamDetail,
+        activeStream,
+        selectedStream,
         selectedToken,
         loadingStreams,
         streamsSummary,
-        streamActivity,
         detailsPanelOpen,
         transactionStatus,
-        customStreamDocked,
         streamProgramAddress,
         loadingStreamsSummary,
-        loadingStreamActivity,
         highLightableStreamId,
         streamV2ProgramAddress,
         setStreamList,
@@ -150,14 +149,12 @@ export const MultisigTreasuryStreams = () => {
         setStreamDetail,
         setSelectedToken,
         setEffectiveRate,
+        getStreamActivity,
         setSelectedStream,
-        refreshStreamList,
         setStreamsSummary,
         setDtailsPanelOpen,
-        setShouldLoadTokens,
         refreshTokenBalance,
         setTransactionStatus,
-        setCustomStreamDocked,
         setLastStreamsSummary,
         setLoadingStreamsSummary,
         setHighLightableStreamId,
@@ -189,6 +186,8 @@ export const MultisigTreasuryStreams = () => {
     });
     const [loadingTreasuryStreams, setLoadingTreasuryStreams] = useState(false);
     const [signalRefreshTreasuryStreams, setSignalRefreshTreasuryStreams] = useState(false);
+    const [loadingStreamActivity, setLoadingStreamActivity] = useState(false);
+    const [streamActivity, setStreamActivity] = useState<StreamActivity[]>([]);
 
     // Treasury related
     const [loadingTreasuryDetails, setLoadingTreasuryDetails] = useState(true);
@@ -273,44 +272,78 @@ export const MultisigTreasuryStreams = () => {
 
         consoleOut('Executing getTreasuryStreams...', '', 'blue');
 
-        if (isNewTreasury) {
-            if (msp) {
-                msp.listStreams({ treasury: treasuryPk })
-                    .then((streams) => {
-                        consoleOut('streamList:', streams, 'blue');
-                        setStreamList(streams);
-                    })
-                    .catch(err => {
-                        console.error(err);
-                        setStreamList([]);
-                    })
-                    .finally(() => {
-                        setLoadingTreasuryStreams(false);
-                    });
-            }
-        } else {
-            if (ms) {
-                ms.listStreams({ treasury: treasuryPk })
-                    .then((streams) => {
-                        consoleOut('streamList:', streams, 'blue');
-                        setStreamList(streams);
-                    })
-                    .catch(err => {
-                        console.error(err);
-                        setStreamList([]);
-                    })
-                    .finally(() => {
-                        setLoadingTreasuryStreams(false);
-                    });
-            }
+        if (msp) {
+            msp.listStreams({ treasury: treasuryPk })
+                .then((streams) => {
+                    consoleOut('streamList:', streams, 'blue');
+                    setStreamList(streams);
+                    let item: Stream | undefined;
+                    if (highLightableStreamId) {
+                        const highLightableItem = streams.find(i => i.id === highLightableStreamId);
+                        item = highLightableItem || streams[0];
+                    } else if (selectedStream) {
+                        const itemFromServer = streams.find(i => i.id === selectedStream.id);
+                        item = itemFromServer || streams[0];
+                    } else {
+                        item = streams[0];
+                    }
+                    if (!item) {
+                        item = Object.assign({}, streams[0]);
+                    }
+                    consoleOut('selectedStream:', item, 'blue');
+                    if (item && selectedStream && item.id !== selectedStream.id) {
+                        setStreamDetail(item);
+                        msp.getStream(new PublicKey(item.id as string))
+                            .then((detail: Stream | StreamInfo) => {
+                                if (detail) {
+                                    setStreamDetail(detail);
+                                    const token = getTokenByMintAddress(detail.associatedToken as string);
+                                    setSelectedToken(token);
+                                    if (!loadingStreamActivity) {
+                                        setLoadingStreamActivity(true);
+                                        const streamPublicKey = new PublicKey(detail.id as string);
+                                        msp.listStreamActivity(streamPublicKey)
+                                            .then((value: any) => {
+                                                consoleOut('activity:', value, 'blue');
+                                                setStreamActivity(value);
+                                                setLoadingStreamActivity(false);
+                                            })
+                                            .catch((err: any) => {
+                                                console.error(err);
+                                                setStreamActivity([]);
+                                                setLoadingStreamActivity(false);
+                                            });
+                                    }
+                                }
+                            })
+                    } else {
+                        if (item) {
+                            setStreamDetail(item);
+                            getStreamActivity(item.id as string, item.version);
+                        }
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    setStreamList([]);
+                })
+                .finally(() => {
+                    setLoadingTreasuryStreams(false);
+                });
         }
 
     }, [
         ms,
         msp,
         publicKey,
+        setStreamList,
+        selectedStream,
+        setStreamDetail,
+        setSelectedToken,
+        getStreamActivity,
+        highLightableStreamId,
+        loadingStreamActivity,
         loadingTreasuryStreams,
-        setStreamList
     ]);
 
     const getTreasuryName = useCallback(() => {
@@ -572,10 +605,7 @@ export const MultisigTreasuryStreams = () => {
             setSignalRefreshTreasuryStreams(false);
             consoleOut('calling getTreasuryStreams...', '', 'blue');
             const treasuryPk = new PublicKey(treasuryDetails.id as string);
-            const isNewTreasury = (treasuryDetails as Treasury).version && (treasuryDetails as Treasury).version >= 2
-                ? true
-                : false;
-            getTreasuryStreams(treasuryPk, isNewTreasury);
+            getTreasuryStreams(treasuryPk, true);
         }
     }, [
         ms,
@@ -610,11 +640,9 @@ export const MultisigTreasuryStreams = () => {
         location,
         streamList,
         treasuryDetails,
-        customStreamDocked,
         loadingTreasuryStreams,
         signalRefreshTreasuryStreams,
         getTreasuryStreams,
-        refreshStreamList,
     ]);
 
     // Live data calculation - Streams list
@@ -625,11 +653,7 @@ export const MultisigTreasuryStreams = () => {
             }
 
             const updatedStreamsv2 = await msp.refreshStreams(
-                streamListv2 || [],
-                publicKey
-            );
-            const updatedStreamsv1 = await ms.refreshStreams(
-                streamListv1 || [],
+                (streamList as Stream[]) || [],
                 publicKey
             );
 
@@ -639,20 +663,6 @@ export const MultisigTreasuryStreams = () => {
                 let freshStream: Stream;
                 for (const stream of updatedStreamsv2) {
                     freshStream = await msp.refreshStream(stream);
-                    if (freshStream) {
-                        newList.push(freshStream);
-                        if (streamDetail && streamDetail.id === stream.id) {
-                            setStreamDetail(freshStream);
-                        }
-                    }
-                }
-            }
-
-            // Get an updated version for each v1 stream in the list
-            if (updatedStreamsv1 && updatedStreamsv1.length) {
-                let freshStream: StreamInfo;
-                for (const stream of updatedStreamsv1) {
-                    freshStream = await ms.refreshStream(stream);
                     if (freshStream) {
                         newList.push(freshStream);
                         if (streamDetail && streamDetail.id === stream.id) {
@@ -673,34 +683,18 @@ export const MultisigTreasuryStreams = () => {
         };
 
         const timeout = setTimeout(() => {
-            if (!customStreamDocked) {
-                refreshStreams();
-            } else if (msp && streamDetail && streamDetail.version === 2) {
-                msp.refreshStream(streamDetail as Stream).then((detail) => {
-                    setStreamDetail(detail as Stream);
-                });
-            } else if (ms && streamDetail && streamDetail.version < 2) {
-                ms.refreshStream(streamDetail as StreamInfo).then((detail) => {
-                    setStreamDetail(detail as StreamInfo);
-                });
-            }
+            refreshStreams();
         }, 1000);
 
         return () => {
             clearTimeout(timeout);
         };
     }, [
-        ms,
         msp,
-        wallet,
-        endpoint,
         publicKey,
         streamList,
-        streamListv1,
-        streamListv2,
         streamDetail,
         loadingStreams,
-        customStreamDocked,
         setStreamDetail,
         setStreamList,
     ]);
@@ -996,11 +990,6 @@ export const MultisigTreasuryStreams = () => {
     const onAcceptOpenStream = (e: any) => {
         openStreamById(e, true);
         closeOpenStreamModal();
-    };
-
-    const handleCancelCustomStreamClick = () => {
-        setCustomStreamDocked(false);
-        refreshStreamList(true);
     };
 
     // Transfer stream modal
@@ -1977,11 +1966,6 @@ export const MultisigTreasuryStreams = () => {
         onExecuteWithdrawFundsTransaction(amount);
     };
 
-    const onActivateContractScreen = () => {
-        setCustomStreamDocked(false);
-        navigate("/transfers");
-    };
-
     const getEscrowEstimatedDepletionUtcLabel = (date: Date): string => {
         const today = new Date();
         let miniDate = "";
@@ -2280,53 +2264,6 @@ export const MultisigTreasuryStreams = () => {
         }
         return label;
     };
-
-    // Handle what to do when pending Tx confirmation reaches finality or on error
-    useEffect(() => {
-        if (!streamDetail) {
-            return;
-        }
-
-        if (
-            lastSentTxSignature &&
-            (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")
-        ) {
-            switch (lastSentTxOperationType) {
-                case OperationType.StreamClose:
-                case OperationType.StreamCreate:
-                    if (streamList && streamList.length > 1) {
-                        const filteredStreams = streamList.filter(
-                            (s) => s.id !== streamDetail.id
-                        );
-                        setStreamList(filteredStreams);
-                    }
-                    refreshStreamList(true);
-                    break;
-                case OperationType.StreamAddFunds:
-                    clearTransactionStatusContext();
-                    if (customStreamDocked) {
-                        openStreamById(streamDetail?.id as string, false);
-                    } else {
-                        refreshStreamList(false);
-                    }
-                    break;
-                default:
-                    refreshStreamList(false);
-                    break;
-            }
-        }
-    }, [
-        streamList,
-        streamDetail,
-        fetchTxInfoStatus,
-        lastSentTxSignature,
-        lastSentTxOperationType,
-        customStreamDocked,
-        setStreamList,
-        refreshStreamList,
-        openStreamById,
-        clearTransactionStatusContext,
-    ]);
 
     const isSuccess = (): boolean => {
         return (
@@ -3335,8 +3272,11 @@ export const MultisigTreasuryStreams = () => {
     };
 
     const onRefreshStreamsClick = () => {
-        refreshStreamList(true);
-        setCustomStreamDocked(false);
+        if (treasuryDetails) {
+            consoleOut('Refreshing treasury streams...', '', 'blue');
+            const treasuryPk = new PublicKey(treasuryDetails.id as string);
+            getTreasuryStreams(treasuryPk, true);
+        }
     };
 
     const getRateAmountDisplay = (item: Stream | StreamInfo): string => {
@@ -3539,7 +3479,7 @@ export const MultisigTreasuryStreams = () => {
                                 >
                                     <div
                                         className="streams-count simplelink"
-                                        onClick={(e) => refreshStreamList()}
+                                        onClick={onRefreshStreamsClick}
                                     >
                                         <span className="font-bold text-shadow">
                                             {streamsSummary.totalAmount || 0}
@@ -3589,27 +3529,6 @@ export const MultisigTreasuryStreams = () => {
                 </>
             )}
         </>
-    );
-
-    const menu = (
-        <Menu>
-            {isTreasurer() && (
-                <Menu.Item key="1" onClick={showCloseStreamModal}>
-                    <span className="menu-item-text">
-                        {t("streams.stream-detail.close-money-stream-menu-item")}
-                    </span>
-                </Menu.Item>
-            )}
-            {streamDetail &&
-                isInboundStream(streamDetail) &&
-                streamDetail.version >= 2 && (
-                    <Menu.Item key="2" onClick={showTransferStreamModal}>
-                        <span className="menu-item-text">
-                            {t("streams.stream-detail.transfer-money-stream-menu-item")}
-                        </span>
-                    </Menu.Item>
-                )}
-        </Menu>
     );
 
     const renderActivities = (streamVersion: number) => {
@@ -3933,62 +3852,6 @@ export const MultisigTreasuryStreams = () => {
                                         </>
                                     )}
 
-                                    {/* Withdraw button */}
-                                    <div className="mt-3 mb-1 withdraw-container">
-                                        <Button
-                                            block
-                                            className="withdraw-cta"
-                                            type="text"
-                                            shape="round"
-                                            size="small"
-                                            disabled={
-                                                isScheduledOtp() ||
-                                                !stream?.escrowVestedAmount ||
-                                                publicKey?.toBase58() !== stream?.beneficiaryAddress ||
-                                                fetchTxInfoStatus === "fetching"
-                                            }
-                                            onClick={showWithdrawModal}
-                                        >
-                                            {fetchTxInfoStatus === "fetching" && <LoadingOutlined />}
-                                            {isClosing()
-                                                ? t("streams.stream-detail.cta-disabled-closing")
-                                                : isCreating()
-                                                    ? t("streams.stream-detail.cta-disabled-creating")
-                                                    : isAddingFunds()
-                                                        ? t("streams.stream-detail.cta-disabled-funding")
-                                                        : isWithdrawing()
-                                                            ? t("streams.stream-detail.cta-disabled-withdrawing")
-                                                            : t("streams.stream-detail.withdraw-funds-cta")}
-                                        </Button>
-                                        {fetchTxInfoStatus !== "fetching" && (
-                                            <Dropdown overlay={menu} trigger={["click"]}>
-                                                <Button
-                                                    shape="round"
-                                                    type="text"
-                                                    size="small"
-                                                    className="ant-btn-shaded"
-                                                    onClick={(e) => e.preventDefault()}
-                                                    icon={<EllipsisOutlined />}
-                                                ></Button>
-                                            </Dropdown>
-                                        )}
-                                    </div>
-                                    <div className="mt-1 mb-2 flex-row flex-center">
-                                        <span className="simplelink underline-on-hover">V1</span>
-                                        <InfoIcon
-                                            content={
-                                                <p>
-                                                    There is a new and improved version of the streams
-                                                    feature.
-                                                    <br />
-                                                    You'll be able to upgrade soon to enjoy new features.
-                                                </p>
-                                            }
-                                            placement="leftBottom"
-                                        >
-                                            <InfoCircleOutlined />
-                                        </InfoIcon>
-                                    </div>
                                 </div>
                             </Spin>
 
@@ -4095,32 +3958,6 @@ export const MultisigTreasuryStreams = () => {
                                             )}
                                         </Col>
                                     </Row>
-
-                                    {/* Amount for OTPs */}
-                                    {/* {isOtp() ? (
-                    <div className="mb-3">
-                      <div className="info-label">
-                        {t('streams.stream-detail.label-amount')}&nbsp;({t('streams.stream-detail.amount-funded-date')} {getReadableDate(stream?.fundedOnUtc as string)})
-                      </div>
-                      <div className="transaction-detail-row">
-                        <span className="info-icon">
-                          <IconDownload className="mean-svg-icons" />
-                        </span>
-                        {stream ?
-                          (
-                            <span className="info-data">
-                            {stream
-                              ? getAmountWithSymbol(stream.allocationAssigned, stream.associatedToken as string)
-                              : '--'}
-                            </span>
-                          ) : (
-                            <span className="info-data">&nbsp;</span>
-                          )}
-                      </div>
-                    </div>
-                  ) : (
-                    null
-                  )} */}
 
                                     {/* Started date */}
                                     <Row className="mb-3">
@@ -4270,46 +4107,6 @@ export const MultisigTreasuryStreams = () => {
                                         </>
                                     )}
 
-                                    {/* Withdraw button */}
-                                    <div className="mt-3 mb-3 withdraw-container">
-                                        <Button
-                                            block
-                                            className="withdraw-cta"
-                                            type="text"
-                                            shape="round"
-                                            size="small"
-                                            disabled={
-                                                isScheduledOtp() ||
-                                                !stream.withdrawableAmount ||
-                                                publicKey?.toBase58() !== stream.beneficiary ||
-                                                fetchTxInfoStatus === "fetching"
-                                            }
-                                            onClick={showWithdrawModal}
-                                        >
-                                            {fetchTxInfoStatus === "fetching" && <LoadingOutlined />}
-                                            {isClosing()
-                                                ? t("streams.stream-detail.cta-disabled-closing")
-                                                : isCreating()
-                                                    ? t("streams.stream-detail.cta-disabled-creating")
-                                                    : isAddingFunds()
-                                                        ? t("streams.stream-detail.cta-disabled-funding")
-                                                        : isWithdrawing()
-                                                            ? t("streams.stream-detail.cta-disabled-withdrawing")
-                                                            : t("streams.stream-detail.withdraw-funds-cta")}
-                                        </Button>
-                                        {fetchTxInfoStatus !== "fetching" && (
-                                            <Dropdown overlay={menu} trigger={["click"]}>
-                                                <Button
-                                                    shape="round"
-                                                    type="text"
-                                                    size="small"
-                                                    className="ant-btn-shaded"
-                                                    onClick={(e) => e.preventDefault()}
-                                                    icon={<EllipsisOutlined />}
-                                                ></Button>
-                                            </Dropdown>
-                                        )}
-                                    </div>
                                 </div>
                             </Spin>
 
@@ -4378,20 +4175,6 @@ export const MultisigTreasuryStreams = () => {
                                                             }`}
                                                     >
                                                         {getTreasuryType() === "locked" ? "Locked" : "Open"}
-                                                    </span>
-                                                    <span className="icon-button-container ml-1">
-                                                        <Tooltip placement="bottom" title="Go to treasury">
-                                                            <Button
-                                                                type="default"
-                                                                shape="circle"
-                                                                size="middle"
-                                                                icon={<ArrowRightOutlined />}
-                                                                onClick={() => {
-                                                                    const url = `/treasuries?treasury=${treasuryDetails.id}`;
-                                                                    navigate(url);
-                                                                }}
-                                                            />
-                                                        </Tooltip>
                                                     </span>
                                                 </div>
                                                 <div>Stream - {getStreamDescription(stream)}</div>
@@ -4623,95 +4406,6 @@ export const MultisigTreasuryStreams = () => {
                                         </div>
                                     )}
 
-                                    {/* Top up (add funds) button */}
-                                    {/* Withdraw */}
-                                    <div className="mt-3 mb-1 withdraw-container">
-                                        {isOtp() ? (
-                                            <>
-                                                <Button
-                                                    block
-                                                    className="withdraw-cta"
-                                                    type="text"
-                                                    shape="round"
-                                                    size="small"
-                                                    disabled={fetchTxInfoStatus === "fetching"}
-                                                    onClick={showCloseStreamModal}
-                                                >
-                                                    {fetchTxInfoStatus === "fetching" && (
-                                                        <LoadingOutlined />
-                                                    )}
-                                                    {isClosing()
-                                                        ? t("streams.stream-detail.cta-disabled-closing")
-                                                        : isCreating()
-                                                            ? t("streams.stream-detail.cta-disabled-creating")
-                                                            : isAddingFunds()
-                                                                ? t("streams.stream-detail.cta-disabled-funding")
-                                                                : isWithdrawing()
-                                                                    ? t(
-                                                                        "streams.stream-detail.cta-disabled-withdrawing"
-                                                                    )
-                                                                    : t(
-                                                                        "streams.stream-detail.cancel-scheduled-transfer"
-                                                                    )}
-                                                </Button>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Button
-                                                    block
-                                                    className="withdraw-cta"
-                                                    type="text"
-                                                    shape="round"
-                                                    size="small"
-                                                    disabled={isOtp() || fetchTxInfoStatus === "fetching"}
-                                                    onClick={showAddFundsModal}
-                                                >
-                                                    {fetchTxInfoStatus === "fetching" && (
-                                                        <LoadingOutlined />
-                                                    )}
-                                                    {isClosing()
-                                                        ? t("streams.stream-detail.cta-disabled-closing")
-                                                        : isCreating()
-                                                            ? t("streams.stream-detail.cta-disabled-creating")
-                                                            : isAddingFunds()
-                                                                ? t("streams.stream-detail.cta-disabled-funding")
-                                                                : isWithdrawing()
-                                                                    ? t(
-                                                                        "streams.stream-detail.cta-disabled-withdrawing"
-                                                                    )
-                                                                    : t("streams.stream-detail.add-funds-cta")}
-                                                </Button>
-                                                {fetchTxInfoStatus !== "fetching" && (
-                                                    <Dropdown overlay={menu} trigger={["click"]}>
-                                                        <Button
-                                                            shape="round"
-                                                            type="text"
-                                                            size="small"
-                                                            className="ant-btn-shaded"
-                                                            onClick={(e) => e.preventDefault()}
-                                                            icon={<EllipsisOutlined />}
-                                                        ></Button>
-                                                    </Dropdown>
-                                                )}
-                                            </>
-                                        )}
-                                    </div>
-                                    <div className="mt-1 mb-2 flex-row flex-center">
-                                        <span className="simplelink underline-on-hover">V1</span>
-                                        <InfoIcon
-                                            content={
-                                                <p>
-                                                    There is a new and improved version of the streams
-                                                    feature.
-                                                    <br />
-                                                    You'll be able to upgrade soon to enjoy new features.
-                                                </p>
-                                            }
-                                            placement="leftBottom"
-                                        >
-                                            <InfoCircleOutlined />
-                                        </InfoIcon>
-                                    </div>
                                 </div>
                             </Spin>
 
@@ -4781,20 +4475,6 @@ export const MultisigTreasuryStreams = () => {
                                                     >
                                                         {getTreasuryType() === "locked" ? "Locked" : "Open"}
                                                     </span>
-                                                    <span className="icon-button-container ml-1">
-                                                        <Tooltip placement="bottom" title="Go to treasury">
-                                                            <Button
-                                                                type="default"
-                                                                shape="circle"
-                                                                size="middle"
-                                                                icon={<ArrowRightOutlined />}
-                                                                onClick={() => {
-                                                                    const url = `/treasuries?treasury=${treasuryDetails.id}`;
-                                                                    navigate(url);
-                                                                }}
-                                                            />
-                                                        </Tooltip>
-                                                    </span>
                                                 </div>
                                                 <div>Stream - {getStreamDescription(stream)}</div>
                                             </div>
@@ -4855,32 +4535,6 @@ export const MultisigTreasuryStreams = () => {
                                             )}
                                         </Col>
                                     </Row>
-
-                                    {/* Amount for OTPs */}
-                                    {/* {isOtp() ? (
-                    <div className="mb-3">
-                      <div className="info-label">
-                        {t('streams.stream-detail.label-amount')}&nbsp;({t('streams.stream-detail.amount-funded-date')} {getReadableDate(stream?.fundedOnUtc as string)})
-                      </div>
-                      <div className="transaction-detail-row">
-                        <span className="info-icon">
-                          <IconUpload className="mean-svg-icons" />
-                        </span>
-                        {stream ?
-                          (
-                            <span className="info-data">
-                            {stream
-                              ? getAmountWithSymbol(stream.allocationAssigned, stream.associatedToken as string)
-                              : '--'}
-                            </span>
-                          ) : (
-                            <span className="info-data">&nbsp;</span>
-                          )}
-                      </div>
-                    </div>
-                  ) : (
-                    null
-                  )} */}
 
                                     {/* Started date */}
                                     <Row className="mb-3">
@@ -5025,41 +4679,6 @@ export const MultisigTreasuryStreams = () => {
                                         </div>
                                     )}
 
-                                    {/* Top up (add funds) button */}
-                                    <div className="mt-3 mb-3 withdraw-container">
-                                        <Button
-                                            block
-                                            className="withdraw-cta"
-                                            type="text"
-                                            shape="round"
-                                            size="small"
-                                            disabled={isOtp() || fetchTxInfoStatus === "fetching"}
-                                            onClick={showAddFundsModal}
-                                        >
-                                            {fetchTxInfoStatus === "fetching" && <LoadingOutlined />}
-                                            {isClosing()
-                                                ? t("streams.stream-detail.cta-disabled-closing")
-                                                : isCreating()
-                                                    ? t("streams.stream-detail.cta-disabled-creating")
-                                                    : isAddingFunds()
-                                                        ? t("streams.stream-detail.cta-disabled-funding")
-                                                        : isWithdrawing()
-                                                            ? t("streams.stream-detail.cta-disabled-withdrawing")
-                                                            : t("streams.stream-detail.add-funds-cta")}
-                                        </Button>
-                                        {fetchTxInfoStatus !== "fetching" && (
-                                            <Dropdown overlay={menu} trigger={["click"]}>
-                                                <Button
-                                                    shape="round"
-                                                    type="text"
-                                                    size="small"
-                                                    className="ant-btn-shaded"
-                                                    onClick={(e) => e.preventDefault()}
-                                                    icon={<EllipsisOutlined />}
-                                                ></Button>
-                                            </Dropdown>
-                                        )}
-                                    </div>
                                 </div>
                             </Spin>
 
@@ -5206,60 +4825,43 @@ export const MultisigTreasuryStreams = () => {
                         {/* Left / top panel*/}
                         <div className="meanfi-two-panel-left">
                             <div className="meanfi-panel-heading">
-                                {location.pathname === "/accounts/streams" && (
-                                    <div className="back-button">
-                                        <span className="icon-button-container">
-                                            <Tooltip
-                                                placement="bottom"
-                                                title={t("assets.back-to-assets-cta")}
-                                            >
-                                                <Button
-                                                    type="default"
-                                                    shape="circle"
-                                                    size="middle"
-                                                    icon={<ArrowLeftOutlined />}
-                                                    onClick={() => {
-                                                        setShouldLoadTokens(true);
-                                                        refreshStreamList(true);
-                                                        setTimeout(() => {
-                                                            navigate("/accounts");
-                                                        }, 200);
-                                                    }}
-                                                />
-                                            </Tooltip>
-                                        </span>
-                                    </div>
-                                )}
+                                <div className="back-button">
+                                    <span className="icon-button-container">
+                                        <Tooltip
+                                            placement="bottom"
+                                            title={t("multisig.multisig-treasuries.back-to-treasuries")}>
+                                            <Button
+                                                type="default"
+                                                shape="circle"
+                                                size="middle"
+                                                icon={<ArrowLeftOutlined />}
+                                                onClick={() => {
+                                                    navigate('/treasuries');
+                                                }}
+                                            />
+                                        </Tooltip>
+                                    </span>
+                                </div>
                                 <span className="title">{t("streams.screen-title")}</span>
                                 <Tooltip
                                     placement="bottom"
                                     title={t("streams.refresh-tooltip")}
                                 >
                                     <div
-                                        className={`transaction-stats ${loadingStreams ? "click-disabled" : "simplelink"
-                                            }`}
-                                        onClick={onRefreshStreamsClick}
-                                    >
+                                        className={`transaction-stats ${loadingStreams ? "click-disabled" : "simplelink"}`}
+                                        onClick={onRefreshStreamsClick}>
                                         <Spin size="small" />
-                                        {customStreamDocked ? (
-                                            <span className="transaction-legend neutral">
-                                                <IconRefresh className="mean-svg-icons" />
+                                        <span className="transaction-legend">
+                                            <span className="icon-button-container">
+                                                <Button
+                                                    type="default"
+                                                    shape="circle"
+                                                    size="small"
+                                                    icon={<ReloadOutlined />}
+                                                    onClick={() => { }}
+                                                />
                                             </span>
-                                        ) : (
-                                            <>
-                                                <span className="transaction-legend">
-                                                    <span className="icon-button-container">
-                                                        <Button
-                                                            type="default"
-                                                            shape="circle"
-                                                            size="small"
-                                                            icon={<ReloadOutlined />}
-                                                            onClick={() => { }}
-                                                        />
-                                                    </span>
-                                                </span>
-                                            </>
-                                        )}
+                                        </span>
                                     </div>
                                 </Tooltip>
                             </div>
@@ -5274,45 +4876,8 @@ export const MultisigTreasuryStreams = () => {
                                     </Spin>
                                 </div>
                                 {/* Bottom CTA */}
-                                <div className="bottom-ctas">
-                                    {customStreamDocked ? (
-                                        <div className="create-stream">
-                                            <Button
-                                                block
-                                                type="primary"
-                                                shape="round"
-                                                onClick={handleCancelCustomStreamClick}
-                                            >
-                                                {t("streams.back-to-my-streams-cta")}
-                                            </Button>
-                                        </div>
-                                    ) : (
-                                        <div className="create-stream">
-                                            <Button
-                                                block
-                                                type="primary"
-                                                shape="round"
-                                                onClick={onActivateContractScreen}
-                                            >
-                                                {t("streams.create-new-stream-cta")}
-                                            </Button>
-                                        </div>
-                                    )}
-                                    {!customStreamDocked && (
-                                        <div className="open-stream">
-                                            <Tooltip title={t("streams.lookup-stream-cta-tooltip")}>
-                                                <Button
-                                                    shape="round"
-                                                    type="text"
-                                                    size="small"
-                                                    className="ant-btn-shaded"
-                                                    onClick={showOpenStreamModal}
-                                                    icon={<SearchOutlined />}
-                                                ></Button>
-                                            </Tooltip>
-                                        </div>
-                                    )}
-                                </div>
+                                {/* <div className="bottom-ctas">
+                                </div> */}
                             </div>
                         </div>
 

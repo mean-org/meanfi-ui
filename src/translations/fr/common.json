@@ -455,6 +455,7 @@
 		},
 		"multisig-treasuries": {
 			"back-to-multisig-accounts-cta": "Retour aux comptes Multisig",
+			"back-to-treasuries": "Back to treasuries",
 			"cta-change-multisig-authority": "Transfert de propriété",
 			"cta-change-multisig-authority-busy": "Modification de la multisignature",
 			"cta-close": "Fermer la trésorerie",
