@@ -2959,7 +2959,7 @@ export const TreasuriesView = () => {
 
       let closeTreasury = await msp.closeTreasury(
         publicKey,                                                // payer
-        new PublicKey(multisig.owners[0].address),             // TODO: This should come from the UI             
+        publicKey,                          // TODO: This should come from the UI         
         new PublicKey(data.treasury),                             // treasury
       );
 
