@@ -234,7 +234,7 @@ export const TreasuryStreamCreateModal = (props: {
   const getStepOneContinueButtonLabel = (): string => {
     return !publicKey
       ? t('transactions.validation.not-connected')
-      : !recipientAddress || isAddressOwnAccount()
+      : !recipientAddress
         ? t('transactions.validation.select-recipient')
         : !selectedToken || unallocatedBalance.toNumber() === 0
           ? t('transactions.validation.no-balance')
@@ -250,7 +250,7 @@ export const TreasuryStreamCreateModal = (props: {
   const getTransactionStartButtonLabel = (): string => {
     return !publicKey
       ? t('transactions.validation.not-connected')
-      : !recipientAddress || isAddressOwnAccount()
+      : !recipientAddress
       ? t('transactions.validation.select-recipient')
       : !selectedToken || unallocatedBalance.isZero()
       ? t('transactions.validation.no-balance')
@@ -850,11 +850,6 @@ export const TreasuryStreamCreateModal = (props: {
       : false;
   }
 
-  const isAddressOwnAccount = (): boolean => {
-    return recipientAddress && publicKey && recipientAddress === publicKey.toBase58()
-           ? true : false;
-  }
-
   const isSendAmountValid = (): boolean => {
     return publicKey &&
            selectedToken &&
@@ -940,15 +935,11 @@ export const TreasuryStreamCreateModal = (props: {
               </div>
             </div>
             {
-              recipientAddress && !isValidAddress(recipientAddress) ? (
+              recipientAddress && !isValidAddress(recipientAddress) && (
                 <span className="form-field-error">
                   {t('transactions.validation.address-validation')}
                 </span>
-              ) : isAddressOwnAccount() ? (
-                <span className="form-field-error">
-                  {t('transactions.recipient.recipient-is-own-account')}
-                </span>
-              ) : (null)
+              )
             }
           </div>
 
@@ -1282,7 +1273,6 @@ export const TreasuryStreamCreateModal = (props: {
             disabled={!publicKey ||
               !isMemoValid() ||
               !isValidAddress(recipientAddress) ||
-              isAddressOwnAccount() ||
               !arePaymentSettingsValid()}>
             {getStepOneContinueButtonLabel()}
           </Button>
@@ -1298,7 +1288,6 @@ export const TreasuryStreamCreateModal = (props: {
           disabled={!publicKey ||
             !isMemoValid() ||
             !isValidAddress(recipientAddress) ||
-            isAddressOwnAccount() ||
             !arePaymentSettingsValid() ||
             !areSendAmountSettingsValid() ||
             !isVerifiedRecipient}>
