@@ -4881,20 +4881,6 @@ export const TreasuriesView = () => {
                 </Button>
               }
 
-              {isUnderDevelopment() && (
-                isMultisigAvailable() && (
-                  <Button
-                    type="default"
-                    shape="round"
-                    size="small"
-                    className="thin-stroke"
-                    disabled={isTxInProgress() || loadingMultisigAccounts || isAnythingLoading()}
-                    onClick={() => {}}>
-                    {t('treasuries.treasury-detail.cta-withdraw-multisig-treasury')}
-                  </Button>
-                )
-              )}
-
               <Button
                 type="default"
                 shape="round"
