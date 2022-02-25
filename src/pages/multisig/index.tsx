@@ -1541,36 +1541,8 @@ export const MultisigView = () => {
     }
 
     const sendTx = async (): Promise<boolean> => {
-      if (wallet) {
-        return await connection
-          .sendEncodedTransaction(encodedTx)
-          .then(sig => {
-            consoleOut('sendEncodedTransaction returned a signature:', sig);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.ConfirmTransaction
-            });
-            signature = sig;
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
-              result: `signature: ${signature}`
-            });
-            return true;
-          })
-          .catch(error => {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransaction,
-              currentOperation: TransactionStatus.SendTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
-              result: { error, encodedTx }
-            });
-            customLogger.logError('Finish Approoved transaction failed', { transcript: transactionLog });
-            return false;
-          });
-      } else {
+
+      if (!wallet) {
         console.error('Cannot send transaction! Wallet not found!');
         setTransactionStatus({
           lastOperation: TransactionStatus.SendTransaction,
@@ -1583,6 +1555,42 @@ export const MultisigView = () => {
         customLogger.logError('Finish Approoved transaction failed', { transcript: transactionLog });
         return false;
       }
+
+      let result = await connection
+        .sendEncodedTransaction(encodedTx)
+        .then(sig => {
+          consoleOut('sendEncodedTransaction returned a signature:', sig);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SendTransactionSuccess,
+            currentOperation: TransactionStatus.ConfirmTransaction
+          });
+          signature = sig;
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
+            result: `signature: ${signature}`
+          });
+          return true;
+        })
+        .catch((error: any) => {
+          console.error(error);
+          const txStatus = {
+            customError: '',
+            lastOperation: TransactionStatus.SendTransaction,
+            currentOperation: TransactionStatus.SendTransactionFailure
+          };
+          if (error.toString().indexOf('0x1794') !== -1) {
+            txStatus.customError = `Your transaction failed to submit due to there not being enough SOL to cover the fees. Please fund the treasury with at least 0.00002 SOL and then retry this operation.\n\nTreasury ID: ${data.transaction.accounts[5].pubkey.toBase58()}`;
+          }
+          setTransactionStatus(txStatus);
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+            result: { error, encodedTx }
+          });
+          customLogger.logError('Finish Approoved transaction failed', { transcript: transactionLog });
+          return false;
+        });
+
+      return result;
     }
 
     if (wallet) {
@@ -4528,6 +4536,13 @@ export const MultisigView = () => {
                     <h3 className="text-center">A Transaction on this Multisig is awaiting {getTransactionUserStatusAction(highlightedMultisigTx) === "Signed" ? 'for' : 'your'} approval.</h3>
                     <Divider className="mt-2" />
                     <div className="mb-2">Proposed Action: {getOperationName(highlightedMultisigTx.operation)}</div>
+                    {
+                      highlightedMultisigTx.operation === OperationType.TreasuryClose && (
+                        <div className="mb-2 fg-yellow">
+                          When a treasury is closed, all funds left over will be deposited to the initiator's wallet. Please confirm this is acceptable before you sign.
+                        </div>
+                      )
+                    }
                     <div className="mb-2">Submitted on: {getReadableDate(highlightedMultisigTx.createdOn.toString(), true)}</div>
                     <div className="mb-2">Initiator: This transaction was submitted by {getTxInitiator(highlightedMultisigTx)?.name}<br/>Address: <code>{getTxInitiator(highlightedMultisigTx)?.address}</code></div>
                     <div className="mb-2">This transaction requires {selectedMultisig.threshold}/{selectedMultisig.owners.length} signers to approve it in order to be executed. {getTxSignedCount(highlightedMultisigTx)} Signed so far.</div>
@@ -4590,7 +4605,13 @@ export const MultisigView = () => {
                       <h4 className="font-bold mb-3">{t('multisig.multisig-transactions.tx-operation-failure', {
                         operation: getOperationName(highlightedMultisigTx.operation)
                       })}</h4>
-                      <h4 className="mb-3">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
+                      <h4 className="mb-3">
+                      {
+                        !transactionStatus.customError 
+                          ? getTransactionOperationDescription(transactionStatus.currentOperation, t)
+                          : transactionStatus.customError
+                      }
+                      </h4>
                     </>
                   )}
                 </div>

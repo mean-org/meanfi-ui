@@ -39,6 +39,7 @@ import { MSP, Stream } from "@mean-dao/msp";
 import { AccountDetails } from "../models";
 
 export interface TransactionStatusInfo {
+  customError?: any;
   lastOperation?: TransactionStatus | undefined;
   currentOperation?: TransactionStatus | undefined;
 }
