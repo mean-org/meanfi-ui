@@ -17,6 +17,7 @@ import { AppStateContext } from '../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
 import { Identicon } from '../../components/Identicon';
 import {
+  cutNumber,
   formatAmount,
   formatThousands,
   getAmountWithSymbol,
@@ -24,6 +25,8 @@ import {
   getTokenByMintAddress,
   getTokenSymbol,
   getTxIxResume,
+  makeDecimal,
+  makeInteger,
   shortenAddress,
   toUiAmount
 } from '../../utils/utils';
@@ -1102,6 +1105,22 @@ export const TreasuriesView = () => {
   }, [
     fetchTxInfoStatus,
     lastSentTxOperationType,
+  ]);
+
+  const getTreasuryUnallocatedBalance = useCallback(() => {
+    if (treasuryDetails) {
+      const decimals = selectedToken ? selectedToken.decimals : 6;
+      const unallocated = treasuryDetails.balance - treasuryDetails.allocationAssigned;
+      const isNewTreasury = (treasuryDetails as Treasury).version && (treasuryDetails as Treasury).version >= 2 ? true : false;
+      const ub = isNewTreasury
+        ? makeDecimal(new BN(unallocated), decimals)
+        : unallocated;
+      return ub;
+    }
+    return 0;
+  }, [
+    selectedToken,
+    treasuryDetails,
   ]);
 
   const isClosingTreasury = useCallback((): boolean => {
@@ -4803,12 +4822,8 @@ export const TreasuriesView = () => {
                   <span className="info-data">
                     {
                       getAmountWithSymbol(
-                        isNewTreasury
-                          ? toUiAmount(new BN(v2.balance), token ? token.decimals : 6)
-                          : v1.balance,
-                        token ? token.address : isNewTreasury
-                          ? v2.associatedToken  as string
-                          : v1.associatedTokenAddress as string
+                        getTreasuryUnallocatedBalance(),
+                        token ? token.address : ''
                       )
                     }
                   </span>
