@@ -24,9 +24,7 @@ import {
   getTokenByMintAddress,
   getTokenSymbol,
   getTxIxResume,
-  makeDecimal,
   shortenAddress,
-  toTokenAmount,
   toUiAmount
 } from '../../utils/utils';
 import { Button, Col, Divider, Dropdown, Empty, Menu, Modal, Row, Space, Spin, Tooltip } from 'antd';
@@ -41,7 +39,6 @@ import {
   isProd,
   getIntervalFromSeconds,
   delay,
-  getShortDate,
   isLocal,
   isDev
 } from '../../utils/ui';
@@ -56,7 +53,7 @@ import useWindowSize from '../../hooks/useWindowResize';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { notify, openNotification } from '../../utils/notifications';
-import { IconBank, IconClock, IconExternalLink, IconRefresh, IconShowAll, IconSort, IconTrash } from '../../Icons';
+import { IconBank, IconClock, IconExternalLink, IconRefresh, IconSort, IconTrash } from '../../Icons';
 import { TreasuryOpenModal } from '../../components/TreasuryOpenModal';
 import { MSP_ACTIONS, StreamInfo, STREAM_STATE, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { TreasuryCreateModal } from '../../components/TreasuryCreateModal';
@@ -79,7 +76,17 @@ import { TreasuryTopupParams } from '../../models/common-types';
 import { TokenInfo } from '@solana/spl-token-registry';
 import './style.less';
 import { Constants, refreshTreasuryBalanceInstruction } from '@mean-dao/money-streaming';
-import { TransactionFees, MSP_ACTIONS as MSP_ACTIONS_V2, calculateActionFees as calculateActionFeesV2, Treasury, Stream, STREAM_STATUS, MSP, TreasuryType, Constants as MSPV2Constants } from '@mean-dao/msp';
+import {
+  TransactionFees,
+  MSP_ACTIONS as MSP_ACTIONS_V2,
+  calculateActionFees as calculateActionFeesV2,
+  Treasury,
+  Stream,
+  STREAM_STATUS,
+  MSP,
+  TreasuryType,
+  Constants as MSPV2Constants
+} from '@mean-dao/msp';
 import BN from 'bn.js';
 import { InfoIcon } from '../../components/InfoIcon';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -619,13 +626,6 @@ export const TreasuriesView = () => {
     refreshUserBalances
   ]);
 
-  /**
-   * Block of code from multisig
-   * - Gets the list of multisigs for the user
-   * - Parse account for all items in the list
-   * - Select the matching item in the list by the supplied multisigAddress
-   */
-
   const readAllMultisigV2Accounts = useCallback(async (wallet: PublicKey) => { // V2
 
     let accounts: any[] = [];
@@ -832,7 +832,7 @@ export const TreasuriesView = () => {
     const timeout = setTimeout(() => {
       if (location.search) {
         consoleOut(`try to select multisig ${multisigAddress} from list`, multisigAccounts, 'blue');
-        const selected = multisigAccounts.find(m => m.id.toBase58() === multisigAddress);
+        const selected = multisigAccounts.find(m => m.address.toBase58() === multisigAddress);
         if (selected) {
           consoleOut('selectedMultisig:', selected, 'blue');
           setSelectedMultisig(selected);
@@ -861,7 +861,7 @@ export const TreasuriesView = () => {
     }
 
     const isMultisigInAccountList = (id: string) => {
-      return multisigAccounts.some(m => m.id.toBase58() === id);
+      return multisigAccounts.some(m => m.address.toBase58() === id);
     }
 
     // Verify query param
@@ -1168,7 +1168,7 @@ export const TreasuriesView = () => {
   ]);
 
   const isMultisigAvailable = useCallback((): boolean => {
-    return multisigAddress && selectedMultisig && selectedMultisig.id.toBase58() === multisigAddress
+    return multisigAddress && selectedMultisig && selectedMultisig.address.toBase58() === multisigAddress
             ? true
             : false;
   }, [
