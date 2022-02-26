@@ -2725,6 +2725,10 @@ export const MultisigView = () => {
         return "Close Stream";
       case OperationType.StreamAddFunds:
         return "Top Up Stream";
+      case OperationType.StreamPause:
+        return "Pause Stream";
+      case OperationType.StreamResume:
+        return "Resume Stream";
       default:
         return '';
     }
@@ -2816,9 +2820,13 @@ export const MultisigView = () => {
     } else if (
       op === OperationType.TreasuryCreate || 
       op === OperationType.TreasuryClose || 
-      op === OperationType.TreasuryAddFunds || 
+      op === OperationType.TreasuryAddFunds ||
       op === OperationType.TreasuryRefreshBalance || 
-      op === OperationType.StreamCreate
+      op === OperationType.StreamCreate ||
+      op === OperationType.StreamPause ||
+      op === OperationType.StreamResume ||
+      op === OperationType.StreamClose ||
+      op === OperationType.StreamAddFunds
     ) {
       return "Mean MSP";
     } else {

@@ -440,6 +440,14 @@ export const MultisigProgramsView = () => {
         return "Change Vault Authority";
       case OperationType.StreamCreate:
         return "Create Stream";
+      case OperationType.StreamClose:
+        return "Close Stream";
+      case OperationType.StreamAddFunds:
+        return "Top Up Stream";
+      case OperationType.StreamPause:
+        return "Pause Stream";
+      case OperationType.StreamResume:
+        return "Resume Stream";
       default:
         return '';
     }
@@ -459,7 +467,11 @@ export const MultisigProgramsView = () => {
       op === OperationType.TreasuryClose || 
       op === OperationType.TreasuryAddFunds ||
       op === OperationType.TreasuryRefreshBalance || 
-      op === OperationType.StreamCreate
+      op === OperationType.StreamCreate ||
+      op === OperationType.StreamPause ||
+      op === OperationType.StreamResume ||
+      op === OperationType.StreamClose ||
+      op === OperationType.StreamAddFunds
     ) {
       return "Mean MSP";
     } else {
