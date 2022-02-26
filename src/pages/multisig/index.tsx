@@ -1579,7 +1579,10 @@ export const MultisigView = () => {
             currentOperation: TransactionStatus.SendTransactionFailure
           };
           if (error.toString().indexOf('0x1794') !== -1) {
-            txStatus.customError = `Your transaction failed to submit due to there not being enough SOL to cover the fees. Please fund the treasury with at least 0.00002 SOL and then retry this operation.\n\nTreasury ID: ${data.transaction.accounts[5].pubkey.toBase58()}`;
+            let treasury = data.transaction.operation === OperationType.StreamClose
+              ? data.transaction.accounts[5].pubkey.toBase58()
+              : data.transaction.accounts[3].pubkey.toBase58();
+            txStatus.customError = `Your transaction failed to submit due to there not being enough SOL to cover the fees. Please fund the treasury with at least 0.00002 SOL and then retry this operation.\n\nTreasury ID: ${treasury}`;
           }
           setTransactionStatus(txStatus);
           transactionLog.push({
