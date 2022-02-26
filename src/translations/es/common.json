@@ -936,6 +936,7 @@
 			"main-cta": "Fund treasury",
 			"main-cta-busy": "Funding treasury",
 			"main-cta-fund-stream": "Fund Money Stream",
+			"main-cta-fund-stream-busy": "Funding Stream",
 			"modal-title": "Add funds to the Treasury",
 			"modal-title-fund-stream": "Add funds to a Money Stream",
 			"money-stream-to-topup-label": "Money Stream to top up",
