@@ -990,13 +990,13 @@
 			"cta-close": "Close treasury",
 			"cta-close-busy": "Closing treasury",
 			"cta-withdraw-multisig-treasury": "Withdraw funds",
-			"funds-added-to-treasury": "Funds added to the treasury",
 			"multisig-tx-headsup": "Transactions Pending Approval or Execution for this Treasury",
 			"no-treasury-loaded": "Create or lookup a treasury to view details",
 			"no-treasury-selected": "Please select or lookup a treasury to view details",
 			"number-of-streams": "Number of streams",
 			"treasury-address-label": "Address",
-			"treasury-name-label": "Treasury name"
+			"treasury-name-label": "Treasury name",
+			"unallocated-treasury-balance": "Unallocated Treasury Balance"
 		},
 		"treasury-detail-heading": "Treasury details",
 		"treasury-refresh-tooltip": "Refresh treasury data",

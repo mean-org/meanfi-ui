@@ -4794,7 +4794,7 @@ export const TreasuriesView = () => {
               </Col>
               <Col span={12}>
                 <div className="info-label text-truncate">
-                  {t('treasuries.treasury-detail.funds-added-to-treasury')}
+                  {t('treasuries.treasury-detail.unallocated-treasury-balance')}
                 </div>
                 <div className="transaction-detail-row">
                   <span className="info-icon">

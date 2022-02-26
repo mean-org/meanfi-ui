@@ -963,7 +963,7 @@
 			"cta-withdraw-multisig-treasury": "Withdraw funds",
 			"cta-close": "Close treasury",
 			"cta-close-busy": "Closing treasury",
-			"funds-added-to-treasury": "Funds added to the treasury",
+			"unallocated-treasury-balance": "Unallocated Treasury Balance",
 			"no-treasury-loaded": "Create or lookup a treasury to view details",
 			"no-treasury-selected": "Please select or lookup a treasury to view details",
 			"number-of-streams": "Number of streams",

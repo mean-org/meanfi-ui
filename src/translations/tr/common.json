@@ -984,7 +984,7 @@
 			"cta-close": "Hazineyi kapat",
 			"cta-close-busy": "Kapanış hazinesi",
 			"cta-withdraw-multisig-treasury": "Fonları çek",
-			"funds-added-to-treasury": "Hazineye eklenen fonlar",
+			"unallocated-treasury-balance": "Unallocated Treasury Balance",
 			"multisig-tx-headsup": "Bu Hazine İçin Onay Bekleyen ya da Devam Eden İşlemler",
 			"no-treasury-loaded": "Detaylarını görmek için bir aktarım oluşturun ya da arayın",
 			"no-treasury-selected": "Ayrıntıları görüntülemek için lütfen bir hazine seçin veya arayın",

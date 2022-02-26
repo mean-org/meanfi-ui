@@ -986,7 +986,7 @@
 			"cta-close": "Fechar tesouraria",
 			"cta-close-busy": "Tesouraria de fechamento",
 			"cta-withdraw-multisig-treasury": "Retirar fundos",
-			"funds-added-to-treasury": "Fundos adicionados ao tesouro",
+			"unallocated-treasury-balance": "Unallocated Treasury Balance",
 			"multisig-tx-headsup": "Transações Pendentes de Aprovação ou Execução para esta Tesouraria",
 			"no-treasury-loaded": "Crie ou pesquise uma tesouraria para visualizar detalhes",
 			"no-treasury-selected": "Por favor, selecione ou procure uma tesouraria para ver os detalhes",
