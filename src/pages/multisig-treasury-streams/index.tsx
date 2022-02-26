@@ -144,6 +144,7 @@ export const MultisigTreasuryStreams = () => {
         loadingStreamsSummary,
         highLightableStreamId,
         streamV2ProgramAddress,
+        highLightableMultisigId,
         setStreamList,
         openStreamById,
         setStreamDetail,
@@ -263,7 +264,7 @@ export const MultisigTreasuryStreams = () => {
         [coinPrices]
     );
 
-    const getTreasuryStreams = useCallback((treasuryPk: PublicKey, isNewTreasury: boolean) => {
+    const getTreasuryStreams = useCallback((treasuryPk: PublicKey) => {
         if (!publicKey || !ms || loadingTreasuryStreams) { return; }
 
         setTimeout(() => {
@@ -605,7 +606,7 @@ export const MultisigTreasuryStreams = () => {
             setSignalRefreshTreasuryStreams(false);
             consoleOut('calling getTreasuryStreams...', '', 'blue');
             const treasuryPk = new PublicKey(treasuryDetails.id as string);
-            getTreasuryStreams(treasuryPk, true);
+            getTreasuryStreams(treasuryPk);
         }
     }, [
         ms,
@@ -627,10 +628,7 @@ export const MultisigTreasuryStreams = () => {
                     setSignalRefreshTreasuryStreams(false);
                     consoleOut('calling getTreasuryStreams...', '', 'blue');
                     const treasuryPk = new PublicKey(treasuryDetails.id as string);
-                    const isNewTreasury = (treasuryDetails as Treasury).version && (treasuryDetails as Treasury).version >= 2
-                        ? true
-                        : false;
-                    getTreasuryStreams(treasuryPk, isNewTreasury);
+                    getTreasuryStreams(treasuryPk);
                 }
             }, STREAMS_REFRESH_TIMEOUT);
         }
@@ -3275,7 +3273,7 @@ export const MultisigTreasuryStreams = () => {
         if (treasuryDetails) {
             consoleOut('Refreshing treasury streams...', '', 'blue');
             const treasuryPk = new PublicKey(treasuryDetails.id as string);
-            getTreasuryStreams(treasuryPk, true);
+            getTreasuryStreams(treasuryPk);
         }
     };
 
@@ -4836,7 +4834,10 @@ export const MultisigTreasuryStreams = () => {
                                                 size="middle"
                                                 icon={<ArrowLeftOutlined />}
                                                 onClick={() => {
-                                                    navigate('/treasuries');
+                                                    const url = highLightableMultisigId
+                                                        ? `/treasuries?multisig=${highLightableMultisigId}`
+                                                        : '/treasuries';
+                                                    navigate(url);
                                                 }}
                                             />
                                         </Tooltip>

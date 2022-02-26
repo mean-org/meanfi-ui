@@ -4602,6 +4602,8 @@ export const TreasuriesView = () => {
             if (isMultisigTreasury(treasuryDetails)) {
               const urlBase = '/treasuries/';
               const url = `${urlBase}${(treasuryDetails as Treasury).id}/streams`;
+              consoleOut('With treasurer:', (treasuryDetails as Treasury).treasurer, 'blue');
+              setHighLightableMultisigId((treasuryDetails as Treasury).treasurer as string);
               consoleOut('Heading to:', url, 'blue');
               navigate(url);
             } else {
@@ -4922,6 +4924,8 @@ export const TreasuriesView = () => {
                     const urlBase = '/treasuries/';
                     const url = `${urlBase}${(treasuryDetails as Treasury).id}/streams`;
                     consoleOut('Heading to:', url, 'blue');
+                    consoleOut('With treasurer:', (treasuryDetails as Treasury).treasurer, 'blue');
+                    setHighLightableMultisigId((treasuryDetails as Treasury).treasurer as string);
                     navigate(url);
                   }}>
                   View streams
