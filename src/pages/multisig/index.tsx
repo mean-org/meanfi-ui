@@ -2697,6 +2697,8 @@ export const MultisigView = () => {
   const getOperationName = useCallback((op: OperationType) => {
 
     switch (op) {
+      case OperationType.CreateMint:
+        return "Create Mint";
       case OperationType.MintTokens:
         return "Mint token";
       case OperationType.TransferTokens:
@@ -2811,7 +2813,12 @@ export const MultisigView = () => {
 
   const getOperationProgram = useCallback((op: OperationType) => {
 
-    if (op === OperationType.MintTokens || op === OperationType.TransferTokens) {
+    if (
+      op === OperationType.CreateMint ||
+      op === OperationType.MintTokens || 
+      op === OperationType.TransferTokens || 
+      op === OperationType.SetVaultAuthority
+    ) {
       return "SPL Token";
     } else if (op === OperationType.UpgradeProgram || op === OperationType.SetMultisigAuthority) {
       return "BPF Upgradable Loader";
