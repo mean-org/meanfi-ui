@@ -705,7 +705,7 @@
 			"label-total-deposits": "Valor total que você depositou desde o início da transmissão",
 			"label-total-withdrawals": "Valor total que você retirou desde o início da transmissão",
 			"label-your-allocation": "Sua alocação restante",
-			"no-stream": "Selecione ou pesquise um fluxo para ver os detalhes",
+			"no-stream": "No momento, não há fluxos de dinheiro configurados para este tesouro",
 			"transfer-money-stream-menu-item": "Transferir propriedade",
 			"withdraw-funds-cta": "Retirar fundos"
 		},

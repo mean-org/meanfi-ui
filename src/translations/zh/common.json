@@ -694,7 +694,7 @@
 			"label-total-deposits": "Total amount you have deposited since stream started",
 			"label-total-withdrawals": "Total amount you have withdrawn since stream started",
 			"label-your-allocation": "Your remaining allocation",
-			"no-stream": "Please select or lookup a stream to view details",
+			"no-stream": "There are currently no money streams set up for this treasury",
 			"withdraw-funds-cta": "Withdraw funds"
 		},
 		"stream-list": {

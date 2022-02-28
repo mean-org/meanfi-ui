@@ -705,7 +705,7 @@
 			"label-total-deposits": "Montant total que vous avez déposé depuis le début du stream",
 			"label-total-withdrawals": "Montant total que vous avez retiré depuis le début du stream",
 			"label-your-allocation": "Votre allocation restante",
-			"no-stream": "Veuillez sélectionner ou rechercher un flux pour afficher les détails",
+			"no-stream": "Il n'y a actuellement aucun flux d'argent mis en place pour cette trésorerie",
 			"transfer-money-stream-menu-item": "Transfert de propriété",
 			"withdraw-funds-cta": "Retirer des fonds"
 		},

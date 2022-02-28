@@ -715,7 +715,7 @@
 			"label-total-deposits": "Cantidad total que ha depositado desde que comenzó la transferencia",
 			"label-total-withdrawals": "Cantidad total que ha retirado desde que comenzó la transferencia",
 			"label-your-allocation": "Your remaining allocation",
-			"no-stream": "Seleccione o busque una transferencia para ver los detalles",
+			"no-stream": "There are currently no money streams set up for this treasury",
 			"withdraw-funds-cta": "Retirar Fondos"
 		},
 		"stream-list": {
