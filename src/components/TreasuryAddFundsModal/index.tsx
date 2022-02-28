@@ -1051,7 +1051,9 @@ export const TreasuryAddFundsModal = (props: {
                 }
               }}>
               {props.isBusy
-                ? t('treasuries.add-funds.main-cta-busy')
+                ? allocationOption === AllocationType.Specific && highLightableStreamId
+                  ? t('treasuries.add-funds.main-cta-fund-stream-busy')
+                  : t('treasuries.add-funds.main-cta-busy')
                 : transactionStatus.currentOperation === TransactionStatus.Iddle
                   ? getTransactionStartButtonLabel()
                   : t('general.refresh')
