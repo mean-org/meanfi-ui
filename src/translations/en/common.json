@@ -274,10 +274,6 @@
 		"you": "you"
 	},
 	"invest": {
-		"title": "Invest",
-		"subtitle": "The easiest way to grow your money stash",
-		"screen-title": "Invest Options",
-		"refresh-tooltip": "Refresh invest data",
 		"panel-left": {
 			"no-invest-options": "No invest options available",
 			"not-connected": "Please connect your wallet to see your invest options"
@@ -285,44 +281,48 @@
 		"panel-right": {
 			"first-text": "MEAN staking rewards include emission incentives plus 30% of the protocol revenues (calculated weekly), and can be boosted using locking periods.",
 			"second-text": "Your staking rewards will be streamed over time and they can be withdrawn at any time.",
-			"stats": {
-				"staking-apr": "Staking APR",
-				"total-value-locked": "Total Value Locked",
-				"next-week-payout": "Next Week Payout"
-			},
-			"tabset": {
-				"stake": {
-					"name": "Stake",
-					"amount-label": "Amount to stake",
-					"period-label": "How long do you want to stake for?",
-					"days": "days",
-					"year": "year",
-					"years": "years",
-					"notification-label": "Staking period of {{periodValue}} {{periodTime}} will lock your Tokens until {{unstakeStartDate}} with estimated rewards of up to 100 MEAN",
-					"verified-label": "I agree to the Terms & Conditions",
-					"terms-and-conditions-tooltip": "Your tokens will be locked for the period of time selected and you will not be able to unstake them before the staking period ends. When you stake additional tokens to an existing contract, the staking period will be extended to the new end date for ALL of the tokens locked.",
-					"stake-button": "Stake"
-				},
-				"unstake": {
-					"name": "Unstake",
-					"notification-label-one": "Your currently have {{unstakeAmount}} MEAN staked which is currently locked until {{unstakeStartDate}}",
-					"notification-label-one-error": "You don't have any MEAN staked",
-					"amount-label": "Amount to unstake",
-					"notification-label-two": "Unstaking will withdraw the specified amount of unlocked MEAN tokens to your wallet",
-					"verified-label": "I agree to the Terms & Conditions",
-					"unstake-button-available": "Unstake",
-					"unstake-button-unavailable": "No available",
-					"send-amount": {
-						"label-right": "Available to unstake"
-					}
-				}
-			},
 			"staking-data": {
 				"text-one": "MEAN tokens locked till {{unstakeStartDate}}",
 				"text-two": "Staking rewards available to withdraw:",
 				"withdraw-button": "Withdraw Funds"
+			},
+			"stats": {
+				"next-week-payout": "Next Week Payout",
+				"staking-apr": "Staking APR",
+				"total-value-locked": "Total Value Locked"
+			},
+			"tabset": {
+				"stake": {
+					"amount-label": "Amount to stake",
+					"days": "days",
+					"name": "Stake",
+					"notification-label": "Staking period of {{periodValue}} {{periodTime}} will lock your Tokens until {{unstakeStartDate}} with estimated rewards of up to 100 MEAN",
+					"period-label": "How long do you want to stake for?",
+					"stake-button": "Stake",
+					"terms-and-conditions-tooltip": "Your tokens will be locked for the period of time selected and you will not be able to unstake them before the staking period ends. When you stake additional tokens to an existing contract, the staking period will be extended to the new end date for ALL of the tokens locked.",
+					"verified-label": "I agree to the Terms & Conditions",
+					"year": "year",
+					"years": "years"
+				},
+				"unstake": {
+					"amount-label": "Amount to unstake",
+					"name": "Unstake",
+					"notification-label-one": "Your currently have {{unstakeAmount}} MEAN staked which is currently locked until {{unstakeStartDate}}",
+					"notification-label-one-error": "You don't have any MEAN staked",
+					"notification-label-two": "Unstaking will withdraw the specified amount of unlocked MEAN tokens to your wallet",
+					"send-amount": {
+						"label-right": "Available to unstake"
+					},
+					"unstake-button-available": "Unstake",
+					"unstake-button-unavailable": "No available",
+					"verified-label": "I agree to the Terms & Conditions"
+				}
 			}
-		}
+		},
+		"refresh-tooltip": "Refresh invest data",
+		"screen-title": "Invest Options",
+		"subtitle": "The easiest way to grow your money stash",
+		"title": "Invest"
 	},
 	"language-selector": {
 		"modal-title": "Language selector",
@@ -386,25 +386,25 @@
 			"created-on": "Created on",
 			"cta-create-vault": "Create vault",
 			"cta-mint": "Mint",
+			"cta-mints": "Mints ({{itemCount}})",
+			"cta-no-mints": "Mints",
 			"cta-no-programs": "Programs",
 			"cta-no-treasuries": "Treasuries",
 			"cta-no-vaults": "Vaults",
-			"cta-no-mints": "Mints",
 			"cta-programs": "Programs ({{itemCount}})",
 			"cta-transfer": "Transfer Tokens",
 			"cta-treasuries": "Treasuries ({{itemCount}})",
 			"cta-upgrade-program": "Upgrade Program",
 			"cta-vaults": "Vaults ({{itemCount}})",
-			"cta-mints": "Mints ({{itemCount}})",
 			"multisig-address-label": "Address",
 			"multisig-label-label": "Multisig name",
 			"multisig-owners": "Owners",
 			"multisig-participants": "Current Multisig Owners",
+			"multisig-tx-approve-busy": "Approving transaction",
+			"multisig-tx-execute-busy": "Executing transaction",
 			"no-multisig-loaded": "Create or select a multisig account to view details",
 			"no-multisig-selected": "Please select a multisig account to view details",
-			"required-signatures": "Required signatures",
-			"multisig-tx-approve-busy": "Approving transaction",
-			"multisig-tx-execute-busy": "Executing transaction"
+			"required-signatures": "Required signatures"
 		},
 		"multisig-accounts": {
 			"no-accounts": "No multisig accounts available",
@@ -488,6 +488,8 @@
 			"cta-create-vault-busy": "Creating vault",
 			"cta-transfer": "Request Funds Transfer",
 			"cta-transfer-busy": "Initiating Withdrawal Request",
+			"explanatory-paragraph": "By submitting this request, you will sign the transaction and approve it as one of the Multisig signers. Before the funds can be sent, the other Multisig members need to approve it.",
+			"main-cta": "Sign Funds Transfer Request",
 			"no-transactions": "No transactions for this vault",
 			"no-vault-loaded": "No vault loaded",
 			"no-vaults": "No vaults available",
@@ -496,9 +498,7 @@
 			"screen-title": "Vaults - {{multisigName}} ({{vaultCount}})",
 			"screen-title-no-vaults": "Vaults",
 			"validation-amount-high": "Amount exceeds the vault balance",
-			"vault-detail-heading": "Vault details",
-			"explanatory-paragraph": "By submitting this request, you will sign the transaction and approve it as one of the Multisig signers. Before the funds can be sent, the other Multisig members need to approve it.",
-			"main-cta": "Sign Funds Transfer Request"
+			"vault-detail-heading": "Vault details"
 		},
 		"pending-transactions": "pending transactions",
 		"refresh-tooltip": "Click to refresh the list of multisig accounts",
@@ -652,9 +652,9 @@
 	"streams": {
 		"add-funds": {
 			"amount-label": "Amount",
-			"treasury-money-stream-title": "Treasury Funded Money Stream",
+			"modal-title": "Add funds",
 			"treasury-money-stream-description": "As this stream was funded from a treasury, the funds being added will be allocated from the Treasury's available balance.",
-			"modal-title": "Add funds"
+			"treasury-money-stream-title": "Treasury Funded Money Stream"
 		},
 		"back-to-my-streams-cta": "Back to Money Streams",
 		"create-new-stream-cta": "New transfer",
@@ -718,6 +718,7 @@
 			"transfer-money-stream-menu-item": "Transfer ownership",
 			"withdraw-funds-cta": "Withdraw funds"
 		},
+		"stream-interval": "net-change",
 		"stream-list": {
 			"no-streams": "No streams available",
 			"not-connected": "Please connect your wallet to see your money streams",
@@ -741,8 +742,7 @@
 			"title-sending-to": "Sending to"
 		},
 		"stream-stats-incoming": "Incoming",
-		"stream-stats-outgoing": "Outgoing",
-		"stream-interval": "net-change"
+		"stream-stats-outgoing": "Outgoing"
 	},
 	"swap": {
 		"exchange-warning": "Mean Exchange is only available on",
@@ -1002,16 +1002,16 @@
 			"unallocated-treasury-balance": "Unallocated Treasury Balance"
 		},
 		"treasury-detail-heading": "Treasury details",
-		"treasury-refresh-tooltip": "Refresh treasury data",
 		"treasury-list": {
+			"multisig-treasuries-view-all-cta": "Show All Treasuries",
 			"multisig-treasury-heading": "Multisig Treasuries - {{treasuryName}}",
 			"multisig-treasury-help": "Below is a list of all the treasuries that are connected to this Multsig",
-			"multisig-treasuries-view-all-cta": "Show All Treasuries",
 			"multisig-treasury-label": "Multisig Treasury",
 			"no-treasuries": "No treasuries available",
 			"not-connected": "Please connect your wallet to see your treasuries",
 			"total-streams-label": "streams"
 		},
+		"treasury-refresh-tooltip": "Refresh treasury data",
 		"treasury-streams": {
 			"add-stream-modal-title": "Add stream to the treasury",
 			"allocate-funds-label": "Allocate funds",
@@ -1023,8 +1023,8 @@
 			"column-activity": "Money streams",
 			"column-description": "Description",
 			"column-destination": "Destination",
-			"column-rate": "Rate",
 			"column-funds-left": "Funds left",
+			"column-rate": "Rate",
 			"create-stream-main-cta": "Create stream",
 			"create-stream-main-cta-busy": "Creating stream",
 			"fee-payed-by-treasurer": "I want to pay fees for this stream instead of the beneficiary",
