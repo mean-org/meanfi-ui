@@ -338,11 +338,13 @@
 			"multisig-label-placeholder": "Tapez un nom pour votre compte multisig",
 			"multisig-no-participants": "Aucun participant ajouté pour le moment",
 			"multisig-participants": "Signataires valides ({{numParticipants}} sur {{maxParticipants}})",
+			"multisig-participants-warning message": "Il n'est pas recommandé de créer un Multisig avec le même nombre de participants que de signatures requises",
 			"multisig-threshold-input-empty": "Saisissez une valeur minimale requise pour les signatures",
 			"multisig-threshold-input-label": "Signatures minimales requises",
 			"multisig-threshold-input-max": "Le nombre maximum de signatures est de 10",
 			"multisig-threshold-input-max-warn": "Nombre maximum de signatures atteint (10)",
 			"multisig-threshold-placeholder": "Tapez un minimum de signatures requises pour votre compte multisig",
+			"multisig-threshold-question-mark-tooltip": "As best practice, always have more multisig signers than the minimum required signers. A 2-of-3 multisig is the most basic setup where 2 of the 3 participants are required to execute a transaction.",
 			"success-message": "Votre nouveau compte multisig a été créé avec succès."
 		},
 		"create-new-multisig-account-cta": "Créer plusieurs signatures",
@@ -708,7 +710,7 @@
 			"label-total-deposits": "Montant total que vous avez déposé depuis le début du stream",
 			"label-total-withdrawals": "Montant total que vous avez retiré depuis le début du stream",
 			"label-your-allocation": "Votre allocation restante",
-			"no-stream": "Veuillez sélectionner ou rechercher un flux pour afficher les détails",
+			"no-stream": "Il n'y a actuellement aucun flux d'argent mis en place pour cette trésorerie",
 			"transfer-money-stream-menu-item": "Transfert de propriété",
 			"withdraw-funds-cta": "Retirer des fonds"
 		},

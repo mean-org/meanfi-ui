@@ -59,4 +59,5 @@ export { IconUpload } from "./IconUpload";
 export { IconUserGroup } from "./IconUserGroup";
 export { IconUsers } from "./IconUsers";
 export { IconWallet } from "./IconWallet";
+export { IconWarning } from "./IconWarning";
 export { IconWhatsapp } from "./IconWhatsapp";

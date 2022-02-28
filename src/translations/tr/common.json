@@ -338,11 +338,13 @@
 			"multisig-label-placeholder": "Çoklu-İmza hesabınız için bir ad yazın",
 			"multisig-no-participants": "Şuana kadar katılımcı eklenmedi",
 			"multisig-participants": "({{maxParticipants}} katılımcıdan , {{numParticipants}} tanesi imzaladı)",
+			"multisig-participants-warning message": "It is not recommended to create a Multisig with the same number of participants as required signatures",
 			"multisig-threshold-input-empty": "Minimum yeterli imza sayısını girin",
 			"multisig-threshold-input-label": "Minimum yeterli imza",
 			"multisig-threshold-input-max": "Maksimum 10 imzalayan",
 			"multisig-threshold-input-max-warn": "Maksimum imzalayan sayısına (10) ulaşıldı",
 			"multisig-threshold-placeholder": "Çoklu-İmza hesabınız için minimum gerekli imzaları yazın",
+			"multisig-threshold-question-mark-tooltip": "As best practice, always have more multisig signers than the minimum required signers. A 2-of-3 multisig is the most basic setup where 2 of the 3 participants are required to execute a transaction.",
 			"success-message": "Yeni Çoklu-İmza hesabınız başarıyla oluşturuldu."
 		},
 		"create-new-multisig-account-cta": "Çoklu-İmza oluştur",
@@ -708,7 +710,7 @@
 			"label-total-deposits": "Aktarım başladığından beri yatırdığınız toplam tutar",
 			"label-total-withdrawals": "Aktarım başladığından beri çektiğiniz toplam tutar",
 			"label-your-allocation": "Kalan tahsisiniz",
-			"no-stream": "Ayrıntıları görüntülemek için lütfen bir aktarım seçin veya arayın",
+			"no-stream": "There are currently no money streams set up for this treasury",
 			"transfer-money-stream-menu-item": "Sahipliği aktar",
 			"withdraw-funds-cta": "Para çekme"
 		},

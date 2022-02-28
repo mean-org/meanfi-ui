@@ -4,15 +4,17 @@ import { ArrowDownOutlined, CheckOutlined, ReloadOutlined } from "@ant-design/ic
 import { Button, Tooltip, Row, Col, Space, Empty, Spin } from "antd";
 import Checkbox from "antd/lib/checkbox/Checkbox";
 import { useTranslation } from 'react-i18next';
+import { isDesktop } from "react-device-detect";
 import { IconStats } from "../../Icons";
 import { TokenDisplay } from "../../components/TokenDisplay";
 import { PreFooter } from "../../components/PreFooter";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
-import { formatAmount, formatThousands, getAmountWithSymbol, isValidNumber } from "../../utils/utils";
+import { cutNumber, formatAmount, formatThousands, getAmountWithSymbol, isValidNumber } from "../../utils/utils";
 import moment from 'moment';
 import Modal from "antd/lib/modal/Modal";
 import { IconHelpCircle } from "../../Icons/IconHelpCircle";
+import useWindowSize from '../../hooks/useWindowResize';
 
 type SwapOption = "stake" | "unstake";
 
@@ -21,11 +23,15 @@ export const InvestView = () => {
     selectedToken,
     unstakeAmount,
     unstakeStartDate,
+    detailsPanelOpen,
     setFromCoinAmount,
-    setIsVerifiedRecipient
+    setIsVerifiedRecipient,
+    setDtailsPanelOpen
   } = useContext(AppStateContext);
   const { connected } = useWallet();
   const { t } = useTranslation('common');
+  const { width } = useWindowSize();
+  const [isSmallUpScreen, setIsSmallUpScreen] = useState(isDesktop);
 
   const [currentTab, setCurrentTab] = useState<SwapOption>("stake");
   const [stakingRewards, setStakingRewards] = useState<number>(0);
@@ -36,7 +42,7 @@ export const InvestView = () => {
       id: "0",
       name: "MEAN",
       mintAddress: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg",
-      title: `Stake MEAN`,
+      title: "Stake MEAN",
       rateAmount: "52.09",
       interval: "APR"
     },
@@ -44,10 +50,48 @@ export const InvestView = () => {
       id: "1",
       name: "Test",
       mintAddress: "https://www.orca.so/static/media/usdc.3b5972c1.svg",
-      title: `Test`,
+      title: "Test",
       rateAmount: "10",
       interval: "ROI"
     }
+  ];
+
+  const stakingStats = [
+    {
+      label: t("invest.panel-right.stats.staking-apr"),
+      value: "52.09%"
+    },
+    {
+      label: t("invest.panel-right.stats.total-value-locked"),
+      value: "$7.64M"
+    },
+    {
+      label: t("invest.panel-right.stats.next-week-payout"),
+      value: "$108,730"
+    }
+  ];
+
+  const stakingData = [
+    {
+      label: "Your Current Stake:",
+      value: "3.78x boost"
+    },
+    {
+      label: "My Staked MEAN",
+      value: unstakeAmount ? cutNumber(parseFloat(unstakeAmount), 6) : 0
+    },
+    {
+      label: "Avg. Locked Yield",
+      value: `${annualPercentageYield}%`
+    },
+    // {
+    //   label: "My Locked eMEAN",
+    //   value: "1,000"
+    // },
+    // {
+    //   label: "My xMEAN Balance",
+    //   value: "20,805.1232"
+    // },
   ];
 
   const onTabChange = (option: SwapOption) => {
@@ -58,16 +102,21 @@ export const InvestView = () => {
 
   const [activeTab, setActiveTab] = useState(investItems[0].title);
 
-  const onInvestClick = (e: any) => {
+  const onInvestClick = useCallback((e: any, openDetailsPanel: boolean = false) => {
+
     if (e.target.innerHTML !== activeTab) {
       setActiveTab(e.target.innerHTML);
     }
-  };
+
+    if (isSmallUpScreen || openDetailsPanel) {
+      setDtailsPanelOpen(true);
+    }
+  }, [activeTab, isSmallUpScreen, setDtailsPanelOpen]);  
 
   // Withdraw funds modal
-  const [isWithdrawModalVisible, setIsWithdrawModalVisibility] = useState(false);
-  const showWithdrawModal = useCallback(() => setIsWithdrawModalVisibility(true), []);
-  const closeWithdrawModal = useCallback(() => setIsWithdrawModalVisibility(false), []);
+  const [isWithdrawModalVisible, setIsWithdrawModalVisible] = useState(false);
+  const showWithdrawModal = useCallback(() => setIsWithdrawModalVisible(true), []);
+  const closeWithdrawModal = useCallback(() => setIsWithdrawModalVisible(false), []);
 
   const onWithdrawModalStart = useCallback(async () => {
     showWithdrawModal();
@@ -84,28 +133,37 @@ export const InvestView = () => {
     setStakingRewards(parseFloat(unstakeAmount) * annualPercentageYield / 100);
   }, [unstakeAmount]);  
 
+  // Detect when entering small screen mode
+  useEffect(() => {
+    if (isSmallUpScreen && width < 576) {
+      setIsSmallUpScreen(false);
+    }
+  }, [
+    width,
+    isSmallUpScreen,
+    detailsPanelOpen,
+    setDtailsPanelOpen
+  ]);  
+
   const renderInvestOptions = (
     <>
       {investItems && investItems.length ? (
-        investItems.map((item, index) => {
-
-          return (
-            <div key={index} onClick={onInvestClick} className={`transaction-list-row ${activeTab === item.title ? "selected" : ''}`}>
-              <div className="icon-cell">
-                <div className="token-icon">
-                  <img alt={item.name} width="30" height="30" src={item.mintAddress} />
-                </div>
-              </div>
-              <div className="description-cell">
-                <div className="title">{item.title}</div>
-              </div>
-              <div className="rate-cell">
-                <div className="rate-amount">{item.rateAmount}%</div>
-                <div className="interval">{item.interval}</div>
+        investItems.map((item, index) => (
+          <div key={index} onClick={onInvestClick} className={`transaction-list-row ${activeTab === item.title  ? "selected" : ''}`}>
+            <div className="icon-cell">
+              <div className="token-icon">
+                <img alt={item.name} width="30" height="30" src={item.mintAddress} />
               </div>
             </div>
-          )
-        })
+            <div className="description-cell">
+              <div className="title">{item.title}</div>
+            </div>
+            <div className="rate-cell">
+              <div className="rate-amount">{item.rateAmount}%</div>
+              <div className="interval">{item.interval}</div>
+            </div>
+          </div>
+        ))
       ) : (
         <div className="h-100 flex-center">
           <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{!connected
@@ -129,7 +187,7 @@ export const InvestView = () => {
             {t('invest.subtitle')}
             </div>
           </div>
-          <div className="meanfi-two-panel-layout invest-layout">
+          <div className={`meanfi-two-panel-layout invest-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
             <div className="meanfi-two-panel-left">
               <div className="meanfi-panel-heading">
                 <span className="title">{t('invest.screen-title')}</span>
@@ -160,7 +218,6 @@ export const InvestView = () => {
 
             <div className="meanfi-two-panel-right">
               <div className="inner-container">
-
                 {activeTab === "Stake MEAN" && (
                   <>
                     {/* Background animation */}
@@ -179,24 +236,14 @@ export const InvestView = () => {
                     <div className="stream-fields-container">
                       <div className="mb-3">
                         <Row>
-                          <Col span={8}>
-                            <div className="info-label">
-                              {t("invest.panel-right.stats.staking-apr")}
-                            </div>
-                            <div className="transaction-detail-row">52.09%</div>
-                          </Col>
-                          <Col span={8}>
-                            <div className="info-label">
-                              {t("invest.panel-right.stats.total-value-locked")}
-                            </div>
-                            <div className="transaction-detail-row">$7.64M</div>
-                          </Col>
-                          <Col span={8}>
-                            <div className="info-label">
-                              {t("invest.panel-right.stats.next-week-payout")}
-                            </div>
-                            <div className="transaction-detail-row">$108,730</div>
-                          </Col>
+                          {stakingStats.map((stat, index) => (
+                            <Col key={index} span={8}>
+                              <div className="info-label">
+                                {stat.label}
+                              </div>
+                              <div className="transaction-detail-row">{stat.value}</div>
+                            </Col>
+                          ))}
                         </Row>
                       </div>
                     </div>
@@ -230,36 +277,16 @@ export const InvestView = () => {
                       <Col xs={24} sm={12} md={24} lg={12} className="column-width">
                         <div className="staking-data">
                           <Row>
-                            <Col span={12}>
-                              <span>{"Your Current Stake:"}</span>
-                            </Col>
-                            <Col span={12}>
-                              <span className="staking-number">3.78x boost</span>
-                            </Col>
-                            <Col span={12}>
-                              <span>{"My Staked MEAN"}</span>
-                            </Col>
-                            <Col span={12}>
-                              <span className="staking-number">{unstakeAmount ? unstakeAmount : 0}</span>
-                            </Col>
-                            <Col span={12}>
-                              <span>{"Avg. Locked Yield"}</span>
-                            </Col>
-                            <Col span={12}>
-                              <span className="staking-number">{annualPercentageYield}%</span>
-                            </Col>
-                            {/* <Col span={12}>
-                              <span>{"My Locked eMEAN"}</span>
-                            </Col>
-                            <Col span={12}>
-                              <span className="staking-number">1,000</span>
-                            </Col> */}
-                            {/* <Col span={12}>
-                              <span>{"My xMEAN Balance"}</span>
-                            </Col>
-                            <Col span={12}>
-                              <span className="staking-number">20,805.1232</span>
-                            </Col> */}
+                            {stakingData.map((data, index) => (
+                              <>
+                                <Col key={index} span={12}>
+                                  <span>{data.label}</span>
+                                </Col>
+                                <Col span={12}>
+                                  <span className="staking-number">{data.value}</span>
+                                </Col>
+                              </>
+                            ))}
                             <span className="info-label mt-1">{t("invest.panel-right.staking-data.text-one", {unstakeStartDate: unstakeStartDate})}</span>
                             <span className="info-label">{t("invest.panel-right.staking-data.text-two")}</span>
                             <Col span={24} className="d-flex flex-column justify-content-end align-items-end mt-1">
@@ -270,7 +297,7 @@ export const InvestView = () => {
                                     <ArrowDownOutlined className="mean-svg-icons" />
                                     </span>
                                   )}
-                                  <span className="staking-value mb-2 mt-1">{!stakingRewards ? 0 : stakingRewards} {selectedToken && selectedToken.name}</span>
+                                  <span className="staking-value mb-2 mt-1">{!stakingRewards ? 0 : cutNumber(stakingRewards, 6)} {selectedToken && selectedToken.name}</span>
                                 </span>
                               </div>
                             </Col>
@@ -361,7 +388,7 @@ export const StakeTabView = () => {
   const { t } = useTranslation('common');
   const periods = [
     {
-      value: 7,
+      value: 0,
       time: t("invest.panel-right.tabset.stake.days"),
       multiplier: "1x"
     },
@@ -391,9 +418,9 @@ export const StakeTabView = () => {
   const [periodTime, setPeriodTime] = useState<string>(periods[0].time);
 
   // Transaction execution modal
-  const [isTransactionModalVisible, setTransactionModalVisibility] = useState(false);
-  const showTransactionModal = useCallback(() => setTransactionModalVisibility(true), []);
-  const closeTransactionModal = useCallback(() => setTransactionModalVisibility(false), []);
+  const [isTransactionModalVisible, setTransactionModalVisible] = useState(false);
+  const showTransactionModal = useCallback(() => setTransactionModalVisible(true), []);
+  const closeTransactionModal = useCallback(() => setTransactionModalVisible(false), []);
 
   const handleFromCoinAmountChange = (e: any) => {
     const newValue = e.target.value;
@@ -426,7 +453,9 @@ export const StakeTabView = () => {
   }
 
   const onAfterTransactionModalClosed = () => {
-    setUnstakeAmount(!unstakeAmount ? fromCoinAmount : `${parseFloat(unstakeAmount) + parseFloat(fromCoinAmount)}`);
+    const unstakeAmountAfterTransaction = !unstakeAmount ? fromCoinAmount : `${parseFloat(unstakeAmount) + parseFloat(fromCoinAmount)}`;
+
+    setUnstakeAmount(unstakeAmountAfterTransaction);
     setFromCoinAmount("");
     setIsVerifiedRecipient(false);
     closeTransactionModal();
@@ -444,7 +473,9 @@ export const StakeTabView = () => {
   }
 
   useEffect(() => {
-    setUnstakeStartDate(moment().add(periodValue, periodValue === 1 ? "year" : periodValue === 4 ? "years" : "days").format("LL"));
+    const unstakeStartDateUpdate = moment().add(periodValue, periodValue === 1 ? "year" : periodValue === 4 ? "years" : "days").format("LL")
+
+    setUnstakeStartDate(unstakeStartDateUpdate);
   }, [periodTime, periodValue, setUnstakeStartDate]);
   
   return (
@@ -505,7 +536,7 @@ export const StakeTabView = () => {
         <div className="left token-group">
           {periods.map((period, index) => (
             <div key={index} className="mb-1 d-flex flex-column align-items-center">
-              <div className={`token-max simplelink ${period.value === 7 ? "active" : "disabled"}`} onClick={() => onChangeValue(period.value, period.time)}>{period.value} {period.time}</div>
+              <div className="token-max simplelink" onClick={() => onChangeValue(period.value, period.time)}>{period.value} {period.time}</div>
               <span>{period.multiplier}</span>
             </div>
           ))}
@@ -575,12 +606,13 @@ export const UnstakeTabView = () => {
     effectiveRate,
     loadingPrices,
     fromCoinAmount,
-    isVerifiedRecipient,
+    // isVerifiedRecipient,
     paymentStartDate,
     unstakeStartDate,
     unstakeAmount,
     refreshPrices,
     setFromCoinAmount,
+    setUnstakeAmount
     // setIsVerifiedRecipient
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
@@ -621,9 +653,20 @@ export const UnstakeTabView = () => {
     return paymentStartDate && isSendAmountValid() ? true : false;
   }
 
+  const handleUnstake = () => {
+    const newUnstakeAmount = (parseFloat(unstakeAmount) - parseFloat(fromCoinAmount)).toString();
+
+    setUnstakeAmount(newUnstakeAmount);
+    setFromCoinAmount('');
+  }
+
   useEffect(() => {
-    setFromCoinAmount(parseFloat(unstakeAmount) > 0 ? `${parseFloat(unstakeAmount)*percentageValue/100}` : '');
+    const percentageFromCoinAmount = parseFloat(unstakeAmount) > 0 ? `${(parseFloat(unstakeAmount)*percentageValue/100)}` : '';
+
+    setFromCoinAmount(percentageFromCoinAmount);
+    // setFromCoinAmount(formatAmount(parseFloat(percentageFromCoinAmount), 6).toString());
   }, [percentageValue]);
+
 
   useEffect(() => {
     parseFloat(unstakeAmount) > 0 && currentDate === unstakeStartDate ?
@@ -634,7 +677,7 @@ export const UnstakeTabView = () => {
 
   return (
     <>
-      <span className="info-label">{unstakeAmount ? t("invest.panel-right.tabset.unstake.notification-label-one", {unstakeAmount: unstakeAmount, unstakeStartDate: unstakeStartDate}) : t("invest.panel-right.tabset.unstake.notification-label-one-error")}</span>
+      <span className="info-label">{unstakeAmount ? t("invest.panel-right.tabset.unstake.notification-label-one", {unstakeAmount: cutNumber(parseFloat(unstakeAmount), 6), unstakeStartDate: unstakeStartDate}) : t("invest.panel-right.tabset.unstake.notification-label-one-error")}</span>
       <div className="form-label mt-2">{t("invest.panel-right.tabset.unstake.amount-label")}</div>
       <div className="well">
         <div className="flexible-right mb-1">
@@ -677,7 +720,7 @@ export const UnstakeTabView = () => {
         <div className="flex-fixed-right">
           <div className="left inner-label">
             <span>{t('invest.panel-right.tabset.unstake.send-amount.label-right')}:</span>
-            <span>{availableUnstake}</span>
+            <span>{formatAmount(availableUnstake, 6)}</span>
           </div>
           <div className="right inner-label">
             <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
@@ -707,9 +750,10 @@ export const UnstakeTabView = () => {
         type="primary"
         shape="round"
         size="large"
+        onClick={handleUnstake}
         disabled={
           !areSendAmountSettingsValid() ||
-          !isVerifiedRecipient ||
+          // !isVerifiedRecipient ||
           availableUnstake <= 0
         }
       >

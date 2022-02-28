@@ -317,11 +317,13 @@
 			"multisig-label-placeholder": "Type a name for your multisig account",
 			"multisig-no-participants": "No participans added yet",
 			"multisig-participants": "Valid signers ({{numParticipants}} of {{maxParticipants}})",
+			"multisig-participants-warning message": "It is not recommended to create a Multisig with the same number of participants as required signatures",
 			"multisig-threshold-input-empty": "Enter a minimum required signatures value",
 			"multisig-threshold-input-label": "Minimum required signatures",
 			"multisig-threshold-input-max": "Max number of signatures is 10",
 			"multisig-threshold-input-max-warn": "Max number of signatures reached (10)",
 			"multisig-threshold-placeholder": "Type a minimum required signatures for your multisig account",
+			"multisig-threshold-question-mark-tooltip": "As best practice, always have more multisig signers than the minimum required signers. A 2-of-3 multisig is the most basic setup where 2 of the 3 participants are required to execute a transaction.",
 			"success-message": "Your new multisig account was created successfully."
 		},
 		"create-new-multisig-account-cta": "Create multisig",
@@ -697,7 +699,7 @@
 			"label-total-deposits": "Total amount you have deposited since stream started",
 			"label-total-withdrawals": "Total amount you have withdrawn since stream started",
 			"label-your-allocation": "Your remaining allocation",
-			"no-stream": "Please select or lookup a stream to view details",
+			"no-stream": "There are currently no money streams set up for this treasury",
 			"withdraw-funds-cta": "Withdraw funds"
 		},
 		"stream-list": {
