@@ -142,7 +142,6 @@ export const InvestView = () => {
     width,
     isSmallUpScreen,
     detailsPanelOpen,
-    setDtailsPanelOpen
   ]);  
 
   const renderInvestOptions = (

@@ -2697,6 +2697,8 @@ export const MultisigView = () => {
   const getOperationName = useCallback((op: OperationType) => {
 
     switch (op) {
+      case OperationType.CreateMint:
+        return "Create Mint";
       case OperationType.MintTokens:
         return "Mint token";
       case OperationType.TransferTokens:
@@ -2725,6 +2727,10 @@ export const MultisigView = () => {
         return "Close Stream";
       case OperationType.StreamAddFunds:
         return "Top Up Stream";
+      case OperationType.StreamPause:
+        return "Pause Stream";
+      case OperationType.StreamResume:
+        return "Resume Stream";
       default:
         return '';
     }
@@ -2807,7 +2813,12 @@ export const MultisigView = () => {
 
   const getOperationProgram = useCallback((op: OperationType) => {
 
-    if (op === OperationType.MintTokens || op === OperationType.TransferTokens) {
+    if (
+      op === OperationType.CreateMint ||
+      op === OperationType.MintTokens || 
+      op === OperationType.TransferTokens || 
+      op === OperationType.SetVaultAuthority
+    ) {
       return "SPL Token";
     } else if (op === OperationType.UpgradeProgram || op === OperationType.SetMultisigAuthority) {
       return "BPF Upgradable Loader";
@@ -2816,9 +2827,13 @@ export const MultisigView = () => {
     } else if (
       op === OperationType.TreasuryCreate || 
       op === OperationType.TreasuryClose || 
-      op === OperationType.TreasuryAddFunds || 
+      op === OperationType.TreasuryAddFunds ||
       op === OperationType.TreasuryRefreshBalance || 
-      op === OperationType.StreamCreate
+      op === OperationType.StreamCreate ||
+      op === OperationType.StreamPause ||
+      op === OperationType.StreamResume ||
+      op === OperationType.StreamClose ||
+      op === OperationType.StreamAddFunds
     ) {
       return "Mean MSP";
     } else {
@@ -3293,6 +3308,9 @@ export const MultisigView = () => {
               } else {
                 setSelectedMultisig(multisigInfoArray[0]);
               }
+              setTimeout(() => {
+                loadMultisigPendingTxs();
+              }, 100);
             } else {
               setSelectedMultisig(undefined);
               setMultisigPendingTxs([]);
@@ -3317,7 +3335,7 @@ export const MultisigView = () => {
     highLightableMultisigId,
     loadingMultisigAccounts,
     readAllMultisigAccounts,
-    // loadMultisigPendingTxs,
+    loadMultisigPendingTxs,
   ]);
 
   // Subscribe to multisig account changes
@@ -3537,7 +3555,6 @@ export const MultisigView = () => {
     width,
     isSmallUpScreen,
     detailsPanelOpen,
-    setDtailsPanelOpen
   ]);
 
   // Handle what to do when pending Tx confirmation reaches finality or on error
@@ -4186,6 +4203,7 @@ export const MultisigView = () => {
       multisigAccounts.map((item, index) => {
         const onMultisigClick = (ev: any) => {
           consoleOut('selected multisig:', item, 'blue');
+          setDtailsPanelOpen(true);
           setSelectedMultisig(item);
           setNeedRefreshTxs(true);
           setLoadingPrograms(true);
