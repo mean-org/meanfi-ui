@@ -3335,6 +3335,7 @@ export const MultisigView = () => {
     highLightableMultisigId,
     loadingMultisigAccounts,
     readAllMultisigAccounts,
+    loadMultisigPendingTxs,
   ]);
 
   // Subscribe to multisig account changes
