@@ -3318,7 +3318,11 @@ export const MultisigView = () => {
           });
 
         })
-        .catch(err => console.error(err))
+        .catch(err => {
+          console.error(err);
+          setMultisigPendingTxs([]);
+          consoleOut('multisigPendingTxs:', [], 'blue');
+        })
         .finally(() => setLoadingMultisigAccounts(false));
     });
 
