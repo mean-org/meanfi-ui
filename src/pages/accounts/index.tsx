@@ -24,7 +24,6 @@ import { Identicon } from '../../components/Identicon';
 import {
   fetchAccountTokens,
   findATokenAddress,
-  formatAmount,
   formatThousands,
   getAmountFromLamports,
   getFormattedRateAmount,
@@ -48,8 +47,6 @@ import { IconCopy } from '../../Icons';
 import { notify } from '../../utils/notifications';
 import { fetchAccountHistory, MappedTransaction } from '../../utils/history';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { isDesktop } from "react-device-detect";
-import useWindowSize from '../../hooks/useWindowResize';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import { refreshCachedRpc } from '../../models/connections-hq';
 import { AccountTokenParsedInfo } from '../../models/token';
@@ -117,8 +114,6 @@ export const AccountsView = () => {
   } = useContext(TransactionStatusContext);
 
   const { t } = useTranslation('common');
-  const { width } = useWindowSize();
-  const [isSmallUpScreen, setIsSmallUpScreen] = useState(isDesktop);
   const [isFirstLoad, setIsFirstLoad] = useState(true);
   const [accountAddressInput, setAccountAddressInput] = useState<string>('');
   const [tokensLoaded, setTokensLoaded] = useState(false);
@@ -195,14 +190,13 @@ export const AccountsView = () => {
       setTransactions(undefined);
     }
     setSelectedAsset(asset);
-    if (isSmallUpScreen || openDetailsPanel) {
+    if (openDetailsPanel) {
       setDtailsPanelOpen(true);
     }
     setTimeout(() => {
       startSwitch();
     }, 10);
   }, [
-    isSmallUpScreen,
     startSwitch,
     setTransactions,
     setSelectedAsset,
@@ -767,18 +761,6 @@ export const AccountsView = () => {
       window.removeEventListener('resize', resizeListener);
     }
   }, [accountAddressInput]);
-
-  // Detect when entering small screen mode
-  useEffect(() => {
-    if (isSmallUpScreen && width < 576) {
-      setIsSmallUpScreen(false);
-    }
-  }, [
-    width,
-    isSmallUpScreen,
-    detailsPanelOpen,
-    setDtailsPanelOpen
-  ]);
 
   const refreshStreamSummary = useCallback(async () => {
 

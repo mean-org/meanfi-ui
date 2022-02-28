@@ -997,7 +997,6 @@ export const TreasuriesView = () => {
     width,
     isSmallUpScreen,
     detailsPanelOpen,
-    setDtailsPanelOpen
   ]);
 
   // Treasury list refresh timeout
