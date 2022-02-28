@@ -22,7 +22,7 @@ export const MultisigUpgradeProgramModal = (props: {
   isBusy: boolean;
   nativeBalance: number;
   transactionFees: TransactionFees;
-
+  programId?: string;
 }) => {
   const { t } = useTranslation('common');
   const connection = useConnection();
@@ -30,12 +30,23 @@ export const MultisigUpgradeProgramModal = (props: {
   const {
     transactionStatus,
     setTransactionStatus
-
   } = useContext(AppStateContext);
 
   const [programId, setProgramId] = useState('');
   const [programDataAddress, setProgramDataAddress] = useState('');
   const [bufferAddress, setBufferAddress] = useState('');
+
+  // Get propgram ID from inpus
+  useEffect(() => {
+    if (props.isVisible && props.programId) {
+      if (isValidAddress(props.programId)) {
+        setProgramId(props.programId);
+      }
+    }
+  }, [
+    props.programId,
+    props.isVisible
+  ]);
 
   // Resolves programDataAddress
   useEffect(() => {
@@ -95,7 +106,7 @@ export const MultisigUpgradeProgramModal = (props: {
     });
   }
 
-  const onProgramChange = (e: any) => {
+  const onProgramIdChange = (e: any) => {
     const inputValue = e.target.value as string;
     const trimmedValue = inputValue.trim();
     setProgramId(trimmedValue);
@@ -142,13 +153,13 @@ export const MultisigUpgradeProgramModal = (props: {
           <>
             {/* Program address */}
             <div className="form-label">{t('multisig.upgrade-program.program-address-label')}</div>
-            <div className="well">
+            <div className={`well ${props.programId ? 'disabled' : ''}`}>
               <input id="token-address-field"
                 className="general-text-input"
                 autoComplete="on"
                 autoCorrect="off"
                 type="text"
-                onChange={onProgramChange}
+                onChange={onProgramIdChange}
                 placeholder={t('multisig.upgrade-program.program-address-placeholder')}
                 required={true}
                 spellCheck="false"

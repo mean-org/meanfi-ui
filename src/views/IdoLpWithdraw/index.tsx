@@ -184,7 +184,7 @@ export const IdoLpWithdraw = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('Withdraw Mean Lp transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Withdraw Mean Lp transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -197,7 +197,7 @@ export const IdoLpWithdraw = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot sign transaction! Wallet not found!'
         });
-        customLogger.logError('Withdraw Mean Lp transaction failed', { transcript: transactionLog });
+        customLogger.logWarning('Withdraw Mean Lp transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -395,7 +395,7 @@ export const IdoLpWithdraw = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('Collect Mean funds transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Collect Mean funds transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {

@@ -386,14 +386,17 @@ export const RepeatingPayment = () => {
     updateTokenListByFilter
   ]);
 
-  // Effect auto-select token on wallet connect and clear balance on disconnect
+  // Hook on wallet connect/disconnect
   useEffect(() => {
+
     if (previousWalletConnectState !== connected) {
-      // User is connecting
-      if (!previousWalletConnectState && connected) {
+      if (!previousWalletConnectState && connected && publicKey) {
+        consoleOut('User is connecting...', publicKey.toBase58(), 'green');
         setSelectedTokenBalance(0);
+      } else if (previousWalletConnectState && !connected) {
+        consoleOut('User is disconnecting...', '', 'green');
+        setUserBalances(undefined);
       }
-      setPreviousWalletConnectState(connected);
     } else if (!connected) {
       setSelectedTokenBalance(0);
     }
@@ -401,13 +404,12 @@ export const RepeatingPayment = () => {
     return () => {
       clearTimeout();
     };
+
   }, [
     connected,
+    publicKey,
     previousWalletConnectState,
-    tokenList,
-    setSelectedToken,
-    setSelectedTokenBalance,
-    setPreviousWalletConnectState,
+    setSelectedTokenBalance
   ]);
 
   // Reset results when the filter is cleared
@@ -765,7 +767,7 @@ export const RepeatingPayment = () => {
         consoleOut('Beneficiary address:', recipientAddress);
         const beneficiary = new PublicKey(recipientAddress as string);
         consoleOut('beneficiaryMint:', selectedToken.address);
-        const beneficiaryMint = new PublicKey(selectedToken.address as string);
+        const associatedToken = new PublicKey(selectedToken.address as string);
         const amount = toTokenAmount(parseFloat(fromCoinAmount as string), selectedToken.decimals);
         const rateAmount = toTokenAmount(parseFloat(paymentRateAmount as string), selectedToken.decimals);
         const now = new Date();
@@ -786,7 +788,7 @@ export const RepeatingPayment = () => {
           wallet: wallet.publicKey.toBase58(),                        // wallet
           treasury: 'undefined',                                      // treasury
           beneficiary: beneficiary.toBase58(),                        // beneficiary
-          beneficiaryMint: beneficiaryMint.toBase58(),                // beneficiaryMint
+          associatedToken: associatedToken.toBase58(),                // mint
           rateAmount: rateAmount,                                     // rateAmount
           rateIntervalInSeconds:
             getRateIntervalInSeconds(paymentRateFrequency),           // rateIntervalInSeconds
@@ -794,8 +796,10 @@ export const RepeatingPayment = () => {
           streamName: recipientNote
             ? recipientNote.trim()
             : undefined,                                              // streamName
-          allocation: amount                                          // allocation
+          allocation: amount,                                         // allocation
+          feePayedByTreasurer: false // TODO: Should come from the UI
         };
+
         consoleOut('data:', data);
 
         // Log input data
@@ -831,20 +835,20 @@ export const RepeatingPayment = () => {
         }
 
         // Init a streaming operation
-        const moneyStream = new MSP(endpoint, streamV2ProgramAddress, "finalized");
+        const msp = new MSP(endpoint, streamV2ProgramAddress, "finalized");
 
-        return await moneyStream.createStream(
-          publicKey,                                                  // initializer
-          publicKey,                                                  // wallet
-          undefined,                                                  // treasury
+        return await msp.streamPayment(
+          publicKey,                                                  // treasurer
           beneficiary,                                                // beneficiary
-          beneficiaryMint,                                            // beneficiaryMint
+          associatedToken,                                            // mint
           recipientNote,                                              // streamName
           amount,                                                     // allocationAssigned
-          0,                                                          // allocationReserved
           rateAmount,                                                 // rateAmount
           getRateIntervalInSeconds(paymentRateFrequency),             // rateIntervalInSeconds
           startUtc,                                                   // startUtc
+          0,                                                          // cliffVestAmount
+          0,                                                          // cliffVestPercent
+          false // TODO: (feePayedByTreasurer)
         )
         .then(value => {
           consoleOut('createStream returned transaction:', value);

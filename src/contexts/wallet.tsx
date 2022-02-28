@@ -302,7 +302,7 @@ export function WalletProvider({ children = null as any }) {
               setTimeout(() => {
                 setProviderName(item.name);
                 setAutoConnect(true);
-              }, 800);
+              }, 1000);
               close();
               if (!isInstalled && !item.isWebWallet) {
                 window.open(item.url, '_blank');

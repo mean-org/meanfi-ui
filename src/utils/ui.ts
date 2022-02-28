@@ -241,12 +241,13 @@ export const getPaymentRateOptionLabel = (val: PaymentRateType, trans?: any): st
 export const getAmountWithTokenSymbol = (
     amount: any,
     token: TokenInfo,
-    decimals = 2
+    decimals = 2,
+    abbr = false
 ): string => {
     if (!token) { return '--'; }
     const converted = amount ? amount.toString() : '0';
     const parsed = parseFloat(converted);
-    return `${formatAmount(parsed, decimals)} ${token.symbol}`;
+    return `${formatAmount(parsed, decimals, abbr)} ${token.symbol}`;
 }
 
 export const getTimesheetRequirementOptionLabel = (val: TimesheetRequirementOption, trans?: any): string => {
@@ -549,3 +550,10 @@ export const getTxFeeAmount = (fees: TransactionFees, amount?: any): number => {
     }
     return fee;
 };
+
+export function scrollToBottom(id: string) {
+    var div = document.getElementById(id);
+    if (div) {
+        div.scrollTop = div.scrollHeight - div.clientHeight;
+    }
+}

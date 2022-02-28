@@ -2,6 +2,9 @@
 	"account-area": {
 		"connect-button": "Conecte su billetera",
 		"copy-address": "Copiar dirección",
+		"diagnosis-info": "Información de diagnóstico",
+		"diagnosis-info-copied": "Información de diagnóstico copiada al portapapeles",
+		"diagnosis-info-not-copied": "No se pudo copiar la información de diagnóstico al portapapeles",
 		"disconnect": "Desconectar",
 		"explorer-link": "Ver en Solana Explorer",
 		"modal-title": "Cuenta",
@@ -61,6 +64,7 @@
 		"context-beneficiary": "Closing a stream will send the vested amount to your account ({{beneficiary}}) and stop the flow of money immediately.",
 		"context-treasurer-multiple-beneficiaries": "Al concluir esta transferencia monetaria se detendrá el flujo de dinero inmediatamente, se enviará los fondos adquiridos al beneficiario({{beneficiary}}), y se retornará los fondos pendientes a la cuenta ({{treasury}}) original.",
 		"context-treasurer-single-beneficiary": "Al concluir esta transferencia monetaria se detendrá el flujo de dinero inmediatamente, se enviará los fondos adquiridos al beneficiario ({{beneficiary}}), y se retornará los fondos pendientes al contribuidor original.",
+		"context-treasurer-aditional-message": "The above amounts are only accurate for paused and ended streams. For live steams, the amounts will be determined the moment the stream is closed.",
 		"loading-treasury-message": "Analyzing stream",
 		"modal-title": "Concluir transferencia",
 		"primary-cta": "Concluir transferencia",
@@ -111,6 +115,27 @@
 		"subscription": {
 			"description": "Configure un contrato de suscripción SaaS para pagos regulares de membresía. Piense en Netflix o en su membresía mensual de Gym Club.",
 			"name": "Suscripción"
+		}
+	},
+	"custody": {
+		"heading": "Crypto Asset Custody",
+		"subheading": "The most advanced digital asset platform, for secure crypto custody, trading, staking, governance, and more.",
+		"custody-button": "Apply to MeanFi Custody",
+		"first-container": {
+			"title-one": "Safeguard your investments",
+			"text-one": "We provide secure custody solutions for institutions and individuals alike so they can safely invest in crypto assets.",
+			"title-two": "Trade, borrow, and earn rewards",
+			"text-two": "With MeanFi Trading, access multiple venues through one onboarding. Borrow crypto or USD against crypto collateral, or lend and earn returns on assets under custody.",
+			"title-three": "Onboarding and Support",
+			"text-three": "Dedicated Support Team that guides you during the onboard process and help you resolve any challenge."
+		},
+		"second-container": {
+			"title": "WHY MEANFI CUSTODY",
+			"text": "We're a team of engineers, designers, and crypto experts who believe that the future is digital assets. However, with no way to securely store them right now we feel like our hands are tied behind our back. So we decided to build MeanFi Custody so that you can finally make your money work for you!"
+		},
+		"third-container": {
+			"title": "Supported Assets",
+			"text": "MeanFi supports assets that meet our standards of quality and safety. Our list includes USDC, USDT, SOL, DAI, and more. We are always looking to grow our portfolio with new Assets. To learn more about our roadmap, please get in touch."
 		}
 	},
 	"ddca-selector": {
@@ -217,6 +242,7 @@
 	"general": {
 		"cta-change": "Cambiar",
 		"cta-close": "Cerrar",
+		"cta-copy": "Copiar",
 		"cta-finish": "Terminar",
 		"cta-try-again": "Try again",
 		"day": "día",
@@ -247,6 +273,53 @@
 		"yes": "Yes",
 		"you": "usted"
 	},
+	"invest": {
+		"title": "Invest",
+		"subtitle": "The easiest way to grow your money stash",
+		"screen-title": "Invest Options",
+		"refresh-tooltip": "Refresh invest data",
+		"panel-right": {
+			"first-text": "MEAN staking rewards include emission incentives plus 30% of the protocol revenues (calculated weekly), and can be boosted using locking periods.",
+			"second-text": "Your staking rewards will be streamed over time and they can be withdrawn at any time.",
+			"stats": {
+				"staking-apr": "Staking APR",
+				"total-value-locked": "Total Value Locked",
+				"next-week-payout": "Next Week Payout"
+			},
+			"tabset": {
+				"stake": {
+					"name": "Stake",
+					"amount-label": "Amount to stake",
+					"period-label": "How long do you want to stake for?",
+					"days": "days",
+					"year": "year",
+					"years": "years",
+					"notification-label": "Staking period of {{periodValue}} {{periodTime}} will lock your Tokens until {{unstakeStartDate}} with estimated rewards of up to 100 MEAN",
+					"verified-label": "I agree to the Terms & Conditions",
+					"terms-and-conditions-tooltip": "Your tokens will be locked for the period of time selected and you will not be able to unstake them before the staking period ends. When you stake additional tokens to an existing contract, the staking period will be extended to the new end date for ALL of the tokens locked.",
+					"stake-button": "Stake"
+				},
+				"unstake": {
+					"name": "Unstake",
+					"notification-label-one": "Your currently have {{unstakeAmount}} MEAN staked which is currently locked until {{unstakeStartDate}}",
+					"notification-label-one-error": "You don't have any MEAN staked",
+					"amount-label": "Amount to unstake",
+					"notification-label-two": "Unstaking will withdraw the specified amount of unlocked MEAN tokens to your wallet",
+					"verified-label": "I agree to the Terms & Conditions",
+					"unstake-button-available": "Unstake",
+					"unstake-button-unavailable": "No available",
+					"send-amount": {
+						"label-right": "Available to unstake"
+					}
+				}
+			},
+			"staking-data": {
+				"text-one": "MEAN tokens locked till {{unstakeStartDate}}",
+				"text-two": "Staking rewards available to withdraw:",
+				"withdraw-button": "Withdraw Funds"
+			}
+		}
+	},
 	"language-selector": {
 		"modal-title": "Selector de idioma",
 		"primary-action": "Seleccionar",
@@ -264,12 +337,14 @@
 			"multisig-label-input-label": "Multisig name",
 			"multisig-label-placeholder": "Type a name for your multisig account",
 			"multisig-no-participants": "No participans added yet",
-			"multisig-participants": "Valid signers",
+			"multisig-participants": "Valid signers ({{numParticipants}} of {{maxParticipants}})",
+			"multisig-participants-warning message": "It is not recommended to create a Multisig with the same number of participants as required signatures",
 			"multisig-threshold-input-empty": "Enter a minimum required signatures value",
 			"multisig-threshold-input-label": "Minimum required signatures",
 			"multisig-threshold-input-max": "Max number of signatures is 10",
 			"multisig-threshold-input-max-warn": "Max number of signatures reached (10)",
 			"multisig-threshold-placeholder": "Type a minimum required signatures for your multisig account",
+			"multisig-threshold-question-mark-tooltip": "As best practice, always have more multisig signers than the minimum required signers. A 2-of-3 multisig is the most basic setup where 2 of the 3 participants are required to execute a transaction.",
 			"success-message": "Your new multisig account was created successfully."
 		},
 		"create-new-multisig-account-cta": "Create multisig",
@@ -302,16 +377,25 @@
 			"created-on": "Created on",
 			"cta-create-vault": "Create vault",
 			"cta-mint": "Mint",
+			"cta-no-programs": "Programs",
+			"cta-no-treasuries": "Treasuries",
+			"cta-no-vaults": "Vaults",
+			"cta-no-mints": "Mints",
+			"cta-programs": "Programs ({{itemCount}})",
 			"cta-transfer": "Transfer Tokens",
+			"cta-treasuries": "Treasuries ({{itemCount}})",
 			"cta-upgrade-program": "Upgrade Program",
-			"cta-view-all-vaults": "View all vaults",
+			"cta-vaults": "Vaults ({{itemCount}})",
+			"cta-mints": "Mints ({{itemCount}})",
 			"multisig-address-label": "Address",
 			"multisig-label-label": "Multisig name",
 			"multisig-owners": "Owners",
 			"multisig-participants": "Current Multisig Owners",
 			"no-multisig-loaded": "Create or select a multisig account to view details",
 			"no-multisig-selected": "Please select a multisig account to view details",
-			"required-signatures": "Required signatures"
+			"required-signatures": "Required signatures",
+			"multisig-tx-approve-busy": "Approving transaction",
+			"multisig-tx-execute-busy": "Executing transaction"
 		},
 		"multisig-accounts": {
 			"no-accounts": "No multisig accounts available",
@@ -329,13 +413,34 @@
 			"screen-title": "Programs - {{multisigName}} ({{programCount}})",
 			"screen-title-no-programs": "Programs"
 		},
+		"multisig-treasuries": {
+			"back-to-multisig-accounts-cta": "Back to Multisig accounts",
+			"back-to-treasuries": "Back to treasuries",
+			"cta-change-multisig-authority": "Transfer Ownership",
+			"cta-change-multisig-authority-busy": "Changing Multisig",
+			"cta-close": "Close treasury",
+			"cta-close-busy": "Closing treasury",
+			"cta-transfer": "Initiate Withdrawal",
+			"cta-transfer-busy": "Initiating Withdrawal Request",
+			"cta-create-treasury": "Create treasury",
+			"cta-create-treasury-busy": "Creating treasury",
+			"no-transactions": "No transactions for this treasury",
+			"no-vault-loaded": "No treasury loaded",
+			"no-vaults": "No multisig treasuries available",
+			"not-connected": "Please connect your wallet to see treasuries",
+			"refresh-tooltip": "Click to refresh the list of treasuries",
+			"screen-title": "Treasuries - {{multisigName}} ({{itemCount}})",
+			"screen-title-no-vaults": "Treasuries",
+			"multisig-treasury-detail-heading": "Treasury details"
+		},
 		"multisig-vaults": {
 			"back-to-multisig-accounts-cta": "Back to Multisig accounts",
-			"cta-change-multisig": "Transfer Ownership",
-			"cta-change-multisig-busy": "Changing Multisig",
+			"cta-change-multisig-authority": "Change Vault Ownership",
+			"cta-change-multisig-authority-busy": "Changing Multisig",
 			"cta-close": "Close vault",
 			"cta-close-busy": "Closing vault",
-			"cta-transfer": "Initiate Withdrawal",
+			"cta-create-vault-busy": "Creating vault",
+			"cta-transfer": "Request Funds Transfer",
 			"cta-transfer-busy": "Initiating Withdrawal Request",
 			"no-transactions": "No transactions for this vault",
 			"no-vault-loaded": "No vault loaded",
@@ -345,23 +450,63 @@
 			"screen-title": "Vaults - {{multisigName}} ({{vaultCount}})",
 			"screen-title-no-vaults": "Vaults",
 			"validation-amount-high": "Amount exceeds the vault balance",
-			"vault-detail-heading": "Vault details"
+			"vault-detail-heading": "Vault details",
+			"explanatory-paragraph": "By submitting this request, you will sign the transaction and approve it as one of the Multisig signers. Before the funds can be sent, the other Multisig members need to approve it.",
+			"main-cta": "Sign Funds Transfer Request"
 		},
 		"multisig-detail-heading": "Multisig account details",
+		"multisig-mints": {
+			"back-to-multisig-accounts-cta": "Back to Multisig accounts",
+			"change-mint-authority-modal-title": "Set Mint Authority",
+			"create-mint-modal-title": "Create mint",
+			"cta-change-mint-authority": "Transfer Ownership",
+			"cta-change-mint-authority-busy": "Changing Multisig",
+			"cta-create-mint": "Create mint",
+			"cta-create-mint-busy": "Creating mint",
+			"cta-mint-token": "Mint Tokens",
+			"cta-mint-token-busy": "Minting Tokens",
+			"mint-amount-label": "Select mint decimals",
+			"mint-detail-heading": "Mint details",
+			"multisig-already-owns-the-mint": "Selected multisig is already authority for this vault",
+			"no-mint": "No mint loaded",
+			"no-mints": "No mints available",
+			"no-transactions": "No transactions for this mint",
+			"not-connected": "Please connect your wallet to see mints",
+			"refresh-tooltip": "Click to refresh the list of mints",
+			"screen-title": "Mints - {{multisigName}} ({{itemCount}})",
+			"screen-title-no-mints": "Mints",
+			"selected-mint-label": "Selected Mint",
+			"success-message": "New mint authority set successfully."
+		},
 		"multisig-transactions": {
 			"column-created-on": "Created on",
+			"column-current-signatures": "Sig",
+			"column-my-status": "My Status",
 			"column-operation": "Operation",
 			"column-pending-signatures": "Signatures",
 			"column-program-id": "Program",
 			"loading-transactions": "Loading transactions",
+			"modal-title": "Transaction summary",
+			"tx-operation-success": "Operation {{operation}} succeeded",
+			"tx-operation-failure": "Operation {{operation}} failed",
 			"no-transactions": "This multisig account has no transactions"
 		},
 		"pending-transactions": "pending transactions",
 		"refresh-tooltip": "Click to refresh the list of multisig accounts",
 		"screen-title": "Multisig accounts",
+		"transfer-authority": {
+			"main-cta": "Set authority",
+			"main-cta-busy": "Setting authority",
+			"modal-title": "Transfer Ownership",
+			"multisig-already-owns-the-vault": "Selected multisig is already authority for this vault",
+			"multisig-selector-label": "New authority (multisig)",
+			"multisig-selector-placeholder": "Select or enter a multisig address",
+			"selected-vault-label": "Selected vault",
+			"success-message": "New vault authority set successfully."
+		},
 		"transfer-tokens": {
 			"main-cta": "Start Request",
-			"main-cta-busy": "Starting Withdrawal Request",
+			"main-cta-busy": "Starting Request",
 			"modal-title": "Initiate Withdrawal Request",
 			"source-address-label": "Transfer from",
 			"source-address-placeholder": "Enter the address of the source account",
@@ -372,6 +517,7 @@
 			"transfer-to-placeholder": "Enter the address of the destination account"
 		},
 		"update-multisig": {
+			"edit-not-allowed-message": "Cuando cambie los firmantes en un Multisig, todas las transacciones pendientes serán ANULADAS. Antes de continuar, asegúrese de que no haya transacciones importantes que deban completarse primero.",
 			"main-cta": "Save changes",
 			"main-cta-busy": "Saving changes",
 			"modal-title": "Edit multisig",
@@ -386,6 +532,18 @@
 			"program-address-label": "Program ID",
 			"program-address-placeholder": "Enter the address of the program",
 			"success-message": "Program upgraded successfully."
+		},
+		"set-program-authority": {
+			"main-cta": "Set Authority",
+			"main-cta-busy": "Setting Authority",
+			"modal-title": "New Upgrade Authority",
+			"new-authority-input-label": "New Upgrade Authority",
+			"new-authority-input-placeholder": "Address of new program upgrade authority"
+		},
+		"crud-multisig": {
+			"edit-multisig": "Editar multisig",
+			"delete-multisig": "Borrar multisig",
+			"update-multisig": "Migrar multisig"
 		}
 	},
 	"notifications": {
@@ -446,6 +604,10 @@
 		"screen-subtitle": "Setup payroll for your employees",
 		"screen-title": "Payroll"
 	},
+	"pre-footer": {
+		"made-with": "Made with ",
+		"on-solana": " on Solana"
+	},
 	"referrals": {
 		"address-invalid": "The referral address is not a valid solana address",
 		"address-processed": "Please connect your wallet to record this referral.",
@@ -493,6 +655,12 @@
 		}
 	},
 	"streams": {
+		"add-funds": {
+			"amount-label": "Amount",
+			"treasury-money-stream-title": "Treasury Funded Money Stream",
+			"treasury-money-stream-description": "As this stream was funded from a treasury, the funds being added will be allocated from the Treasury's available balance.",
+			"modal-title": "Add funds"
+		},
 		"back-to-my-streams-cta": "Volver a las transferencia",
 		"create-new-stream-cta": "New transfer",
 		"lookup-stream-cta-tooltip": "Buscar transferencia",
@@ -552,7 +720,7 @@
 			"label-total-deposits": "Cantidad total que ha depositado desde que comenzó la transferencia",
 			"label-total-withdrawals": "Cantidad total que ha retirado desde que comenzó la transferencia",
 			"label-your-allocation": "Your remaining allocation",
-			"no-stream": "Seleccione o busque una transferencia para ver los detalles",
+			"no-stream": "There are currently no money streams set up for this treasury",
 			"withdraw-funds-cta": "Retirar Fondos"
 		},
 		"stream-list": {
@@ -578,7 +746,8 @@
 			"title-sending-to": "Enviando a"
 		},
 		"stream-stats-incoming": "Incoming",
-		"stream-stats-outgoing": "Outgoing"
+		"stream-stats-outgoing": "Outgoing",
+		"stream-interval": "net-change"
 	},
 	"swap": {
 		"exchange-warning": "Mean Exchange solo está disponible en",
@@ -708,9 +877,9 @@
 			"exchange-on": "Intercambio en",
 			"hla-transaction-fee": "",
 			"min-recommended-amount": "Cantidad mínima recomendada",
-			"network-transaction-fee": "",
+			"network-transaction-fee": "Network fee",
 			"price-impact": "Price impact",
-			"protocol-transaction-fee": "",
+			"protocol-transaction-fee": "{{protocol}} LP fee",
 			"recipient-receives": "El destinatario recibe",
 			"slippage": "Tolerancia al deslizamiento",
 			"transaction-fee": "Tarifa de transacción",
@@ -757,6 +926,8 @@
 	},
 	"treasuries": {
 		"add-funds": {
+			"allocation-amount-label": "How Much Do You Want to Allocate?",
+			"allocation-heading": "To top up an existing stream, the funds being added will be allocated from the Treasury's available balance.",
 			"allocation-label": "How do you want to allocate these funds?",
 			"allocation-option-evenly": "Allocate evenly across all Money Streams",
 			"allocation-option-none": "Do not allocate (leave in Reserves)",
@@ -766,7 +937,11 @@
 			"label": "Add funds",
 			"main-cta": "Fund treasury",
 			"main-cta-busy": "Funding treasury",
+			"main-cta-fund-stream": "Fund Money Stream",
+			"main-cta-fund-stream-busy": "Funding Stream",
 			"modal-title": "Add funds to the Treasury",
+			"modal-title-fund-stream": "Add funds to a Money Stream",
+			"money-stream-to-topup-label": "Money Stream to top up",
 			"search-streams-placeholder": "Search stream by name or address",
 			"success-message": "Your treasury was funded successfully."
 		},
@@ -774,9 +949,16 @@
 		"close-treasury-confirmation": "Are you sure you want to close the treasury?",
 		"create-new-treasury-cta": "Create treasury",
 		"create-treasury": {
+			"create-multisig-cta": "Initiate treasury",
+			"create-multisig-cta-busy": "Initiating treasury",
+			"create-multisig-treasury-success": "You have successfully signed the Initiate treasury request.",
 			"main-cta": "Create",
 			"main-cta-busy": "Creating treasury",
 			"modal-title": "Create treasury",
+			"multisig-selector-label": "Multisig account",
+			"multisig-treasury-created-info": "To complete the treasury setup, the other Multisig signers need to approve it.",
+			"multisig-treasury-created-instructions": "Please ask the other users to sign this treasury creation transaction.",
+			"multisig-treasury-switch-label": "Is this treasury for a Multisig account?",
 			"success-message": "Your new treasury was created successfully.",
 			"treasury-name-input-empty": "Enter Treasury name",
 			"treasury-name-input-label": "Treasury name",
@@ -806,18 +988,25 @@
 			"cta-add-funds-busy": "Adding funds",
 			"cta-close": "Close treasury",
 			"cta-close-busy": "Closing treasury",
-			"funds-added-to-treasury": "Funds added to the treasury",
+			"cta-withdraw-multisig-treasury": "Withdraw funds",
+			"multisig-tx-headsup": "Transactions Pending Approval or Execution for this Treasury",
 			"no-treasury-loaded": "Create or lookup a treasury to view details",
 			"no-treasury-selected": "Please select or lookup a treasury to view details",
 			"number-of-streams": "Number of streams",
 			"treasury-address-label": "Address",
-			"treasury-name-label": "Treasury name"
+			"treasury-name-label": "Treasury name",
+			"unallocated-treasury-balance": "Unallocated Treasury Balance"
 		},
 		"treasury-detail-heading": "Treasury details",
+		"treasury-refresh-tooltip": "Refresh treasury data",
 		"treasury-list": {
+			"multisig-treasury-heading": "Multisig Treasuries - {{treasuryName}}",
+			"multisig-treasury-help": "Below is a list of all the treasuries that are connected to this Multsig",
+			"multisig-treasuries-view-all-cta": "Show All Treasuries",
 			"no-treasuries": "No treasuries available",
 			"not-connected": "Please connect your wallet to see your treasuries",
-			"total-streams-label": "streams"
+			"total-streams-label": "streams",
+			"multisig-treasury-label": "Multisig Treasury"
 		},
 		"treasury-streams": {
 			"add-stream-modal-title": "Add stream to the treasury",
@@ -831,7 +1020,7 @@
 			"column-description": "Description",
 			"column-destination": "Destination",
 			"column-rate": "Rate",
-			"column-started": "Started",
+			"column-funds-left": "Fondos restantes",
 			"create-stream-main-cta": "Create stream",
 			"create-stream-main-cta-busy": "Creating stream",
 			"loading-streams": "Loading streams",
@@ -851,7 +1040,11 @@
 		"en": "Inglés",
 		"es": "Español",
 		"fr": "Francés",
-		"pt": "Português"
+		"pt": "Português",
+		"tr": "Türkçe",
+		"zh": "Chinese",
+		"vi": "Vietnamese",
+		"ko": "Korean"
 	},
 	"ui-menus": {
 		"app-context-menu": {
@@ -873,15 +1066,21 @@
 			"accounts": "Cuentas",
 			"charts": "Gráficos",
 			"deposits": "Depósitos",
+			"invest": {
+				"pol-bonds": "POL Bonds",
+				"submenu-title": "Invertir",
+				"staking": "Staking"
+			},
 			"services": {
 				"custody": "Custody",
 				"faucet": "Faucet",
-				"multisig": "",
+				"multisig": "Multisig",
 				"submenu-title": "Servicios",
 				"treasuries": "Tesorería & Nómina de sueldos",
 				"wallet-guide": "Guía de Billeteras",
 				"wrap": "Wrap"
 			},
+			"stats": "Estadísticas",
 			"swap": "Intercambiar",
 			"transfers": "Transferencias"
 		}

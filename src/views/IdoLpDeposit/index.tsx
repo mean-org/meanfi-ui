@@ -197,7 +197,7 @@ export const IdoLpDeposit = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('IDO LP Deposit USDC transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('IDO LP Deposit USDC transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {

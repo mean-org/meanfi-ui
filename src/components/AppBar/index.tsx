@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, Tooltip } from 'antd';
 import { ThunderboltOutlined } from '@ant-design/icons';
 import { useWallet } from "../../contexts/wallet";
-import { CurrentUserBadge } from "../CurrentUserBadge";
+import { AccountDetails } from "../AccountDetails";
 import { ConnectButton } from "../ConnectButton";
 import { AppContextMenu } from "../AppContextMenu";
 import { CurrentBalance } from "../CurrentBalance";
@@ -125,15 +125,28 @@ export const AppBar = (props: {
       <Menu.Item key="deposits" onClick={showDepositOptionsModal} id="deposits-menu-item">
         <span className="menu-item-text">{t('ui-menus.main-menu.deposits')}</span>
       </Menu.Item>
+      {(isLocal() || isWhitelisted) && (
+        <Menu.Item key="/invest">
+          <Link to="/invest">{t('ui-menus.main-menu.invest.submenu-title')}</Link>
+        </Menu.Item>
+      )}
+      {/* {(isWhitelisted || isLocal()) && (
+        <SubMenu key="invest" title={t('ui-menus.main-menu.invest.submenu-title')}>
+          <Menu.Item key="/staking">
+            <Link to="/staking">{t('ui-menus.main-menu.invest.staking')}</Link>
+          </Menu.Item>
+          <Menu.Item key="/pol-bonds">
+            <Link to="/pol-bonds">{t('ui-menus.main-menu.invest.pol-bonds')}</Link>
+          </Menu.Item>
+        </SubMenu>
+      )} */}
       <SubMenu key="services" title={t('ui-menus.main-menu.services.submenu-title')}>
         <Menu.Item key="/treasuries">
           <Link to="/treasuries">{t('ui-menus.main-menu.services.treasuries')}</Link>
         </Menu.Item>
-        {(isWhitelisted || isLocal()) && (
-          <Menu.Item key="/multisig">
-            <Link to="/multisig">{t('ui-menus.main-menu.services.multisig')}</Link>
-          </Menu.Item>
-        )}
+        <Menu.Item key="/multisig">
+          <Link to="/multisig">{t('ui-menus.main-menu.services.multisig')}</Link>
+        </Menu.Item>
         <Menu.Item key="/custody">
           <Link to="/custody">{t('ui-menus.main-menu.services.custody')}</Link>
         </Menu.Item>
@@ -153,12 +166,9 @@ export const AppBar = (props: {
           </Menu.Item>
         )}
       </SubMenu>
-      <Menu.Item key="/ido">
-        <Link to="/ido">IDO</Link>
-      </Menu.Item>
       {(isLocal() || isWhitelisted) && (
         <Menu.Item key="/stats">
-          <Link to="/stats">Stats</Link>
+          <Link to="/stats">{t('ui-menus.main-menu.stats')}</Link>
         </Menu.Item>
       )}
     </Menu>
@@ -198,7 +208,7 @@ export const AppBar = (props: {
           {connected ? (
             <div className="connection-and-account-bar">
               <CurrentBalance />
-              <CurrentUserBadge />
+              <AccountDetails />
             </div>
           ) : (
             <>
@@ -235,14 +245,27 @@ export const AppBar = (props: {
               <li key="deposits" className="mobile-menu-item" onClick={showDepositOptionsModal} style={{'--animation-order': 4} as CustomCSSProps}>
                 <span className="menu-item-text">{t('ui-menus.main-menu.deposits')}</span>
               </li>
+              {(isWhitelisted || isLocal()) && (
+                <li key="invest" className={location.pathname === '/invest' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 4} as CustomCSSProps}>
+                  <Link to="/invest">{t('ui-menus.main-menu.invest.submenu-title')}</Link>
+                </li>
+              )}
+              {/* {(isWhitelisted || isLocal()) && (
+                <li key="staking" className={location.pathname === '/staking' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 4} as CustomCSSProps}>
+                  <Link to="/staking">{t('ui-menus.main-menu.invest.staking')}</Link>
+                </li>
+              )}
+              {(isWhitelisted || isLocal()) && (
+                <li key="pol-bonds" className={location.pathname === '/pol-bonds' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 4} as CustomCSSProps}>
+                  <Link to="/pol-bonds">{t('ui-menus.main-menu.invest.pol-bonds')}</Link>
+                </li>
+              )} */}
               <li key="/treasuries" className={location.pathname === '/treasuries' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 5} as CustomCSSProps}>
                 <Link to="/treasuries">{t('ui-menus.main-menu.services.treasuries')}</Link>
               </li>
-              {(isWhitelisted || isLocal()) && (
-                <li key="/multisig" className={location.pathname === '/multisig' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 6} as CustomCSSProps}>
-                  <Link to="/multisig">{t('ui-menus.main-menu.services.multisig')}</Link>
-                </li>
-              )}
+              <li key="/multisig" className={location.pathname === '/multisig' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 6} as CustomCSSProps}>
+                <Link to="/multisig">{t('ui-menus.main-menu.services.multisig')}</Link>
+              </li>
               <li key="/custody" className={location.pathname === '/custody' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 7} as CustomCSSProps}>
                 <Link to="/custody">{t('ui-menus.main-menu.services.custody')}</Link>
               </li>
@@ -262,12 +285,9 @@ export const AppBar = (props: {
                   &nbsp;<IconExternalLink className="mean-svg-icons link" />
                 </a>
               </li>
-              <li key="/ido" className="mobile-menu-item" style={{'--animation-order': isProd() ? 9 : 11} as CustomCSSProps}>
-                <Link to="/ido">IDO</Link>
-              </li>
               {(isLocal() || isWhitelisted) && (
                 <li key="/stats" className="mobile-menu-item" style={{'--animation-order': 12} as CustomCSSProps}>
-                  <Link to="/stats">Stats</Link>
+                  <Link to="/stats">{t('ui-menus.main-menu.stats')}</Link>
                 </li>
               )}
             </ul>

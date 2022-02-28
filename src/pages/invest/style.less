@@ -1,0 +1,123 @@
+.invest-layout {
+  margin-bottom: 1.5em;
+  max-height: fit-content !important;
+  .meanfi-two-panel-left .inner-container .item-block .transaction-list-row.money-streams-summary .rate-cell .rate-amount {
+    font-size: 12px !important;
+  }
+}
+
+.invest-layout .meanfi-two-panel-right .inner-container .stream-fields-container .info-label {
+  text-align: center;
+}
+
+.invest-layout .meanfi-two-panel-right .inner-container .stream-fields-container .transaction-detail-row {
+  justify-content: center;
+}
+
+.flexible-left {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  .left {
+    flex: 1 1 auto;
+  }
+}
+
+.flexible-right {
+  justify-content: flex-end !important;
+}
+
+.token-group {
+  display: flex;
+  align-items: center;
+  flex-flow: wrap;
+  .token-max {
+    margin-right: 8px;
+    min-width: 30px;
+    padding: 3px 6px;
+    color: #ffffff;
+    color: var(--color-white);
+    font-weight: 800;
+    font-size: 10px;
+    line-height: 11px;
+    white-space: nowrap;
+    text-align: center;
+    background: #b7001c;
+    background: var(--color-primary);
+    border-radius: 7px;
+    border-radius: var(--custom-border-radius);
+  }
+  span {
+    font-size: 10px;
+  }
+}
+
+.simplelink {
+  color: inherit;
+  text-decoration: none;
+}
+
+.info-label {
+  width: 100%;
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: rgba(0, 0, 0, 0.5);
+  color: var(--color-secondary-alpha-50);
+  margin-bottom: 4px;
+}
+
+.staking-data {
+  margin: 0 1em 1em 1em;
+  .staking-number {
+    float: right;
+  }
+  .staking-value {
+    font-size: 1.8rem;
+  }
+  span.anticon.anticon-arrow-down.mean-svg-icons {
+    font-size: 1.4rem;
+    margin-right: 4px;
+  }
+}
+
+.staking-background {
+  pointer-events: none;
+  position: absolute;
+  top: 2em;
+  width: calc(100% - 2rem);
+  height: calc(100% - 2rem);
+  left: 1rem;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0.25;
+  img.inbound {
+    height: 110%;
+  }
+}
+
+@media (min-width: 991px) and (max-width: 1120px) {
+  .column-width {
+    min-width: 35em;
+    width: auto;
+  }
+}
+
+@media (min-width: 1121px) {
+  .column-width {
+    min-width: 20em;
+    width: auto;
+  }
+}
+
+.confirm-terms {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  svg.mean-svg-icons {
+    height: 1.5em;
+  }
+}

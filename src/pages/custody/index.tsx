@@ -3,8 +3,10 @@ import { CustomerServiceOutlined, SafetyOutlined, TransactionOutlined } from "@a
 import { Avatar, Button, Col, Row } from "antd";
 import { PreFooter } from "../../components/PreFooter";
 import { MEAN_FINANCE_APPLY_TO_CUSTODY_FORM_URL } from "../../constants";
+import { useTranslation } from 'react-i18next';
 
 export const CustodyView = () => {
+  const { t } = useTranslation('common');
 
   const onApplyToMeanfiCustody = () => {
     window.open(MEAN_FINANCE_APPLY_TO_CUSTODY_FORM_URL, '_blank','noreferrer');
@@ -14,15 +16,15 @@ export const CustodyView = () => {
     <div className="solid-bg">
 
       <section className="hero">
-        <h1 className="heading">Crypto Asset Custody</h1>
-        <p className="subheading">The most advanced digital asset platform, for secure crypto custody, trading, staking, governance, and more.</p>
+        <h1 className="heading">{t("custody.heading")}</h1>
+        <p className="subheading">{t("custody.subheading")}</p>
         <Button
           className="main-cta"
           type="primary"
           shape="round"
           size="large"
           onClick={() => onApplyToMeanfiCustody()}>
-          Apply to MeanFi Custody
+          {t("custody.custody-button")}
         </Button>
       </section>
 
@@ -37,9 +39,9 @@ export const CustodyView = () => {
                     icon={<SafetyOutlined />}
                   />
                 </div>
-                <h2 className="highlight-title">Safeguard your investments</h2>
+                <h2 className="highlight-title">{t("custody.first-container.title-one")}</h2>
                 <div className="text-container">
-                  <p className="highlight-text">We provide secure custody solutions for institutions and individuals alike so they can safely invest in crypto assets.</p>
+                  <p className="highlight-text">{t("custody.first-container.text-one")}</p>
                 </div>
               </div>
             </Col>
@@ -51,9 +53,9 @@ export const CustodyView = () => {
                     icon={<TransactionOutlined />}
                   />
                 </div>
-                <h2 className="highlight-title">Trade, borrow, and earn rewards</h2>
+                <h2 className="highlight-title">{t("custody.first-container.title-two")}</h2>
                 <div className="text-container">
-                  <p className="highlight-text">With MeanFi Trading, access multiple venues through one onboarding. Borrow crypto or USD against crypto collateral, or lend and earn returns on assets under custody.</p>
+                  <p className="highlight-text">{t("custody.first-container.text-two")}</p>
                 </div>
               </div>
             </Col>
@@ -65,9 +67,9 @@ export const CustodyView = () => {
                     icon={<CustomerServiceOutlined />}
                   />
                 </div>
-                <h2 className="highlight-title">Onboarding and Support</h2>
+                <h2 className="highlight-title">{t("custody.first-container.title-three")}</h2>
                 <div className="text-container">
-                  <p className="highlight-text">Dedicated Support Team that guides you during the onboard process and help you resolve any challenge.</p>
+                  <p className="highlight-text">{t("custody.first-container.text-three")}</p>
                 </div>
               </div>
             </Col>
@@ -78,9 +80,9 @@ export const CustodyView = () => {
       <section className="content flex-center contrast-section min-section-height">
         <div className="container">
           <div className="highlight-box text-center">
-            <h2 className="highlight-title">WHY MEANFI CUSTODY</h2>
+            <h2 className="highlight-title">{t("custody.second-container.title")}</h2>
             <div className="text-container">
-              <p className="highlight-text">We're a team of engineers, designers, and crypto experts who believe that the future is digital assets. However, with no way to securely store them right now we feel like our hands are tied behind our back. So we decided to build MeanFi Custody so that you can finally make your money work for you!</p>
+              <p className="highlight-text">{t("custody.second-container.text")}</p>
             </div>
           </div>
         </div>
@@ -89,16 +91,16 @@ export const CustodyView = () => {
       <section className="content flex-center min-section-height">
         <div className="container">
           <div className="highlight-box text-center">
-            <h2 className="highlight-title">Supported Assets</h2>
+            <h2 className="highlight-title">{t("custody.third-container.title")}</h2>
             <div className="text-container">
-              <p className="highlight-text">MeanFi supports assets that meet our standards of quality and safety. Our list includes USDC, USDT, SOL, DAI, and more. We are always looking to grow our portfolio with new Assets. To learn more about our roadmap, please get in touch.</p>
+              <p className="highlight-text">{t("custody.third-container.text")}</p>
               <Button
                 className="main-cta"
                 type="primary"
                 shape="round"
                 size="large"
                 onClick={() => onApplyToMeanfiCustody()}>
-                Apply to MeanFi Custody
+                {t("custody.custody-button")}
               </Button>
             </div>
           </div>

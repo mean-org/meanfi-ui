@@ -74,24 +74,24 @@ export enum OperationType {
     DdcaClose = 23,
     // Multisig options
     CreateMultisig = 30,
-    MintTokens = 31,
-    TransferTokens = 32,
-    UpgradeProgram = 33,
-    CreateVault = 34,
-    UpgradeIDL = 35,
-    SetAuthority = 36,
+    EditMultisig = 31,
+    CreateMint = 32,
+    MintTokens = 33,
+    TransferTokens = 34,
+    SetMintAuthority = 35,
+    UpgradeProgram = 36,
+    CreateVault = 37,
+    UpgradeIDL = 38,
+    SetMultisigAuthority = 39,
+    SetVaultAuthority = 40,
+    ApproveTransaction = 41,
+    ExecuteTransaction = 42,
     // IDO
     IdoDeposit = 100,
     IdoWithdraw = 101,
     IdoClaim = 102,
     IdoLpClaim = 103,
     IdoCollectFunds = 104
-}
-
-export enum AllocationType {
-    All = 0,
-    Specific = 1,
-    None = 2
 }
 
 export enum WhitelistClaimType

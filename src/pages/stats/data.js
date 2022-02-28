@@ -6,15 +6,15 @@ export const data = {
   "token_address": "MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD",
   "owner_program": "Token Program",
   "authority": "Ffm9iByvunbBBkXXnBe6rz7UjLNaeq3VcAwaoZfkEJhw",
-  "decimals": "6",
-  "fully_dilluted_market_cap": "150,995,460",
-  "total_volume": "179,799",
-	"max_total_supply": "210,000,000",
-	"circulating_supply": "18,942,081",
-  "total_money_streams": "12,000",
-  "total_value_locked": "5,298,000",
-  "holders": "12,113",
-  "price": "0.65507823",
+  "decimals": 6,
+  "fully_dilluted_market_cap": 150995460,
+  "total_volume": 179799,
+	"max_total_supply": 210000000,
+	"circulating_supply": 18942081,
+  "total_money_streams": 12000,
+  "total_value_locked": 5298000,
+  "holders": 12113,
+  "price": 0.65507823,
   "priceChange": [
     {
       "priceData": "0.69889061",
@@ -150,7 +150,7 @@ export const data = {
       "buy": "https://www.gate.io/trade/MEAN_USDT",
       "img1": "https://www.gate.io/images/coin_icon/64/mean.png",
       "img2": "https://www.gate.io/images/coin_icon/64/usdt.png",
-      "total_liquidity": "16,997.0",
+      "total_liquidity": 16997.0,
       "total_value_locked": ""
     },
     {
@@ -161,7 +161,7 @@ export const data = {
       "buy": "https://www.gate.io/trade/MEAN_ETH",
       "img1": "https://www.gate.io/images/coin_icon/64/mean.png",
       "img2": "https://www.gate.io/images/coin_icon/64/eth.png",
-      "total_liquidity": "2,217.75",
+      "total_liquidity": 2217.75,
       "total_value_locked": ""
     },
     {
@@ -172,7 +172,7 @@ export const data = {
       "buy": "https://www.mexc.com/exchange/MEAN_USDT",
       "img1": "https://www.gate.io/images/coin_icon/64/mean.png",
       "img2": "https://www.gate.io/images/coin_icon/64/usdt.png",
-      "total_liquidity": "1,184,277",
+      "total_liquidity": 1184277,
       "total_value_locked": ""
     },
     {
@@ -183,7 +183,7 @@ export const data = {
       "buy": "https://www.orca.so/",
       "img1": "https://www.gate.io/images/coin_icon/64/mean.png",
       "img2": "https://www.orca.so/static/media/usdc.3b5972c1.svg",
-      "total_liquidity": "1,184,277",
+      "total_liquidity": 1184277,
       "total_value_locked": ""
     },
     {
@@ -194,7 +194,7 @@ export const data = {
       "buy": "https://raydium.io/",
       "img1": "https://www.gate.io/images/coin_icon/64/mean.png",
       "img2": "https://www.gate.io/images/coin_icon/64/ray.png",
-      "total_liquidity": "607,989.34",
+      "total_liquidity": 607989.34,
       "total_value_locked": ""
     },
     {
@@ -205,7 +205,7 @@ export const data = {
       "buy": "https://raydium.io/",
       "img1": "https://www.gate.io/images/coin_icon/64/mean.png",
       "img2": "https://www.orca.so/static/media/usdc.3b5972c1.svg",
-      "total_liquidity": "193,023.19",
+      "total_liquidity": 193023.19,
       "total_value_locked": ""
     },
     {
@@ -216,7 +216,7 @@ export const data = {
       "buy": "https://raydium.io/",
       "img1": "https://www.gate.io/images/coin_icon/64/mean.png",
       "img2": "https://www.gate.io/images/coin_icon/64/sol.png",
-      "total_liquidity": "47,053.94",
+      "total_liquidity": 47053.94,
       "total_value_locked": ""
     },
     {
@@ -227,7 +227,7 @@ export const data = {
       "buy": "https://www.hotbit.io/exchange?symbol=MEAN_USDT",
       "img1": "https://www.gate.io/images/coin_icon/64/mean.png",
       "img2": "https://www.gate.io/images/coin_icon/64/usdt.png",
-      "total_liquidity": "1,184,277",
+      "total_liquidity": 1184277,
       "total_value_locked": ""
     }
   ]

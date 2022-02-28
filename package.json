@@ -1,6 +1,6 @@
 {
   "name": "meanfi-ui",
-  "version": "0.8.10",
+  "version": "0.10.0",
   "private": true,
   "scripts": {
     "clean": "rm -rf build/*",
@@ -51,7 +51,7 @@
     "@mean-dao/ddca": "1.2.32",
     "@mean-dao/hybrid-liquidity-ag": "1.1.32",
     "@mean-dao/money-streaming": "1.7.8",
-    "@mean-dao/msp": "0.2.31",
+    "@mean-dao/msp": "^0.3.12",
     "@project-serum/anchor": "^0.20.1",
     "@project-serum/borsh": "^0.2.3",
     "@project-serum/serum": "^0.13.60",
@@ -59,7 +59,7 @@
     "@project-serum/swap": "0.1.0-alpha.32",
     "@project-serum/tokens": "^0.0.7",
     "@solana/spl-token": "^0.1.8",
-    "@solana/spl-token-registry": "0.2.1820",
+    "@solana/spl-token-registry": "0.2.2016",
     "@solana/spl-token-swap": "^0.1.0",
     "@solana/wallet-adapter-base": "^0.8.0",
     "@solana/web3.js": "^1.30.0",
@@ -133,6 +133,7 @@
     "eslint-plugin-react-hooks": "^4.3.0",
     "gh-pages": "^3.2",
     "prettier": "^2.4",
+    "react-git-info": "^2.0.1",
     "react-scripts": "4.0.3",
     "ts-loader": "^9.2.6",
     "typescript": "~4.5.2"

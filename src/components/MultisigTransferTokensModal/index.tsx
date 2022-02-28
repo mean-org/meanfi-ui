@@ -24,11 +24,11 @@ const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export const MultisigTransferTokensModal = (props: {
   handleClose: any;
   handleOk: any;
-  handleAfterClose: any;
   isVisible: boolean;
   isBusy: boolean;
   nativeBalance: number;
   transactionFees: TransactionFees;
+  selectedVault: MultisigVault | undefined;
   vaults: MultisigVault[]
 
 }) => {
@@ -48,24 +48,24 @@ export const MultisigTransferTokensModal = (props: {
   // Resolves fromVault
   useEffect(() => {
 
-    if (!props.isVisible || !connection || !publicKey || !props.vaults || !props.vaults.length) {
+    if (!props.isVisible || !connection || !publicKey || !props.vaults || props.vaults.length === 0) {
       return;
     }
 
     const timeout = setTimeout(() => {
-      console.log('modal vaults', props.vaults);
-      setFromVault(props.vaults[0]);
+      const vault = props.selectedVault || props.vaults[0];
+      consoleOut('From vault:', vault, 'blue');
+      setFromVault(vault);
     });
 
-    return () => {
-      clearTimeout(timeout);
-    }
+    return () => clearTimeout(timeout);
 
   }, [
+    publicKey,
     connection,
-    props.isVisible,
     props.vaults,
-    publicKey
+    props.isVisible,
+    props.selectedVault,
   ]);
 
   // Resolves fromMint
@@ -79,7 +79,7 @@ export const MultisigTransferTokensModal = (props: {
       connection.getAccountInfo(new PublicKey(fromVault.mint))
         .then(info => {
           if (info) {
-            console.log('info', info);
+            consoleOut('info:', info, 'blue');
             const mintInfo = MintLayout.decode(info.data);
             setFromMint(mintInfo);
           }
@@ -107,18 +107,8 @@ export const MultisigTransferTokensModal = (props: {
   }
 
   const onCloseModal = () => {
+    consoleOut('onCloseModal called!', '', 'crimson');
     props.handleClose();
-  }
-
-  const onAfterClose = () => {
-
-    setTimeout(() => {
-      setFromVault(undefined);
-      setTo('');
-      setAmount('');
-    }, 50);
-
-    props.handleAfterClose();
   }
 
   const onVaultChanged = useCallback((e: any) => {
@@ -173,7 +163,6 @@ export const MultisigTransferTokensModal = (props: {
       visible={props.isVisible}
       onOk={onAcceptModal}
       onCancel={onCloseModal}
-      afterClose={onAfterClose}
       width={props.isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}>
 
       <div className={!props.isBusy ? "panel1 show" : "panel1 hide"}>
@@ -291,6 +280,8 @@ export const MultisigTransferTokensModal = (props: {
                 </>
               )}
             </div>
+            {/* explanatory paragraph */}
+            <p>{t("multisig.multisig-vaults.explanatory-paragraph")}</p>
           </>
         ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
           <>
@@ -365,7 +356,7 @@ export const MultisigTransferTokensModal = (props: {
         </div>
         <div className="col-6">
           <Button
-            className={props.isBusy ? 'inactive' : ''}
+            className={`extra-height ${props.isBusy ? 'inactive' : ''}`}
             block
             type="primary"
             shape="round"
@@ -383,7 +374,7 @@ export const MultisigTransferTokensModal = (props: {
             {props.isBusy
               ? t('multisig.transfer-tokens.main-cta-busy')
               : transactionStatus.currentOperation === TransactionStatus.Iddle
-                ? t('multisig.transfer-tokens.main-cta')
+                ? t('multisig.multisig-vaults.main-cta')
                 : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
                   ? t('general.cta-finish')
                   : t('general.refresh')

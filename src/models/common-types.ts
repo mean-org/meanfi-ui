@@ -9,8 +9,9 @@ export interface SelectOption {
 
 export interface TreasuryTopupParams {
     amount: string;
+    tokenAmount: any;
     allocationType: AllocationType;
-    streamId?: string;
+    streamId: string;
 }
 
 export interface PartnerImage {

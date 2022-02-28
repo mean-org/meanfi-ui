@@ -10,10 +10,12 @@
   --color-selection: #f0f0f0;
   --color-item-selector-selected: #73c700;
   --color-incoming-transaction: #4e9800;
+  --color-green: #006820;
   --color-outgoing-transaction: #e02020;
   --color-pending-transaction: #e64d11;
   --color-paused-transaction: #1698e4;
-  --color-devnet-indicator: #F7B500;
+  --color-light-orange: #F7B500;
+  --color-yellow: #fefe42;
   --color-golden: #FFF2C0;
   --color-notify-info: #177ddc;
   --color-notify-success: #49aa19;
@@ -92,6 +94,7 @@
   --footer-bar-height: 56px;
   --container-max-width-450: 450px;
   --container-max-width-600: 600px;
+  --container-max-width-720: 720px;
 }
 
 // Inverted / Dark theme
@@ -103,11 +106,12 @@
   --color-selection: #1a1a1a;
   --color-item-selector-selected: #73c700;
   --color-incoming-transaction: #4e9800;
+  --color-green: #006820;
   --color-outgoing-transaction: #e02020;
   --color-pending-transaction: #e64d11;
   --color-paused-transaction: #1698e4;
-  --color-devnet-indicator: #F7B500;
-
+  --color-light-orange: #F7B500;
+  --color-yellow: #fefe42;
   --color-notify-info: #177ddc;
   --color-notify-success: #49aa19;
   --color-notify-warning: #d89614;
@@ -364,8 +368,17 @@ h1, h2, h3, h4, h5, h6 {
 .fg-orange {
   color: var(--color-orange) !important;
 }
+.fg-light-orange {
+  color: var(--color-light-orange) !important;
+}
 .fg-orange-red {
   color: var(--color-orange-red) !important;
+}
+.fg-yellow {
+  color: var(--color-yellow) !important;
+}
+.fg-green {
+  color: var(--color-green) !important;
 }
 // Background color classes
 .solid-bg {
@@ -380,8 +393,20 @@ h1, h2, h3, h4, h5, h6 {
 .bg-black {
   background-color: var(--color-black);
 }
+.bg-orange {
+  background-color: var(--color-orange) !important;
+}
+.bg-light-orange {
+  background-color: var(--color-light-orange) !important;
+}
 .bg-orange-red {
   background-color: var(--color-orange-red) !important;
+}
+.bg-yellow {
+  background-color: var(--color-yellow) !important;
+}
+.bg-green {
+  background-color: var(--color-green) !important;
 }
 
 // Layout
@@ -649,6 +674,10 @@ footer.ant-layout-footer {
   }
   &.ant-btn-sm {
     height: 32px;
+  }
+  &.extra-height {
+    white-space: normal;
+    height: fit-content !important;
   }
   &:not(:disabled) {
     background-color: var(--color-primary) !important;
@@ -1001,18 +1030,29 @@ footer.ant-layout-footer {
 }
 
 // Notification icons
-.anticon {
-  &.ant-notification-notice-icon-info {
-    color: var(--color-notify-info);
+.ant-notification-notice-with-icon {
+  .ant-notification-notice-close {
+    top: 10px;
+    right: 12px;
   }
-  &.ant-notification-notice-icon-success {
-    color: var(--color-notify-success);
+  .ant-notification-notice-icon {
+    margin-left: 0;
+    left: 24px;
+    &.ant-notification-notice-icon-info {
+      color: var(--color-notify-info);
+    }
+    &.ant-notification-notice-icon-success {
+      color: var(--color-notify-success);
+    }
+    &.ant-notification-notice-icon-warning {
+      color: var(--color-notify-warning);
+    }
+    &.ant-notification-notice-icon-error {
+      color: var(--color-notify-error);
+    }
   }
-  &.ant-notification-notice-icon-warning {
-    color: var(--color-notify-warning);
-  }
-  &.ant-notification-notice-icon-error {
-    color: var(--color-notify-error);
+  .ant-notification-notice-description {
+    margin-left: 40px;
   }
 }
 
@@ -1458,7 +1498,7 @@ footer.ant-layout-footer {
 
 // Account / Connection info
 .cluster-indicator {
-  color: var(--color-devnet-indicator);
+  color: var(--color-light-orange);
   margin-right: 7px;
   padding: 8px;
   .network-name {
@@ -1978,8 +2018,9 @@ main section {
   align-items: center;
   transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
   @media (max-width: 575.98px) {
-    padding-top: 74px;
     height: 100%;
+    padding-top: 74px;
+    padding-bottom: var(--footer-bar-height);
   }
   @media (min-width: 576px) and (max-width: 767.98px) {
     margin-bottom: 1rem;
@@ -2085,6 +2126,9 @@ main section {
 }
 .container-max-width-600 {
   max-width: var(--container-max-width-600);
+}
+.container-max-width-720 {
+  max-width: var(--container-max-width-720);
 }
 
 .card {
@@ -2346,7 +2390,6 @@ main section {
 .ant-select-dropdown {
   color: inherit;
   background-color: var(--color-component-background);
-  width: auto !important;
   .ant-select-item {
     color: inherit;
     &:not(.ant-select-item-option-selected) {
@@ -2501,6 +2544,11 @@ main section {
   border-radius: var(--custom-border-radius);
   background-color: var(--color-wells);
   padding: 6px;
+  &.disabled {
+    pointer-events: none;
+    opacity: 0.6;
+    background-color: var(--color-secondary-alpha-02);
+  }
 }
 
 // Fields go inside wells
@@ -2530,7 +2578,7 @@ main section {
     opacity: 0.6;
     background-color: var(--color-secondary-alpha-02);
   }
-  &:hover {
+  &:not(.disabled):hover {
     background-color: var(--darken);
   }
   .add-on {
@@ -3394,8 +3442,8 @@ main section {
   }
 }
 
-.simple-modal-inner-max-height {
-  max-height: 64vh;
+#multisig-participants-max-height {
+  max-height: 210px;
 }
 
 .icon-button-container {
@@ -3460,22 +3508,6 @@ main section {
     justify-content: flex-start;
     align-items: flex-start;
     padding: 12px 18px 10px;
-  }
-}
-.account-settings-group {
-  font-size: 1rem;
-  padding: 1rem;
-  border: 1px solid var(--color-secondary-alpha-25);
-  border-radius: var(--custom-border-radius);
-  position: relative;
-  display: grid;
-  grid-row-gap: 16px;
-  row-gap: 16px;
-  .account-settings-row {
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-start;
-    align-items: center;
   }
 }
 
@@ -3602,6 +3634,9 @@ main section {
     margin-right: auto;
     width: auto;
     border-radius: 6px;
+  }
+  .ant-row {
+    width: auto !important;
   }
 }
 
@@ -4330,6 +4365,9 @@ main section {
         }
       }
     }
+    .left-panel-inner-heading {
+      padding: 0px 0.8rem 8px 4px;
+    }
   }
   .meanfi-two-panel-right {
     width: 100%;
@@ -4842,7 +4880,9 @@ main section {
     background-color: var(--color-lightgray);
   }
 }
-
+.w-auto {
+  width: auto !important;
+}
 .w-50 {
   width: 50% !important;
 }
@@ -6874,6 +6914,17 @@ code {
 .bounce-right {
   animation: bounceright 1s ease-in-out infinite;
   margin-left: 9px;
+}
+
+.icon-label {
+  display: flex;
+  align-items: center;
+  svg {
+    width: 40px;
+    height: 16px;
+    display: flex;
+    margin: 0.5em;
+  }
 }
 
 // Animations

@@ -22,7 +22,7 @@ export const MultisigSetProgramAuthModal = (props: {
   isBusy: boolean;
   nativeBalance: number;
   transactionFees: TransactionFees;
-
+  programId?: string;
 }) => {
   const { t } = useTranslation('common');
   const connection = useConnection();
@@ -30,12 +30,23 @@ export const MultisigSetProgramAuthModal = (props: {
   const {
     transactionStatus,
     setTransactionStatus
-
   } = useContext(AppStateContext);
 
   const [programId, setProgramId] = useState('');
   const [programDataAddress, setProgramDataAddress] = useState('');
   const [newAuthAddress, setNewAuthAddress] = useState('');
+
+  // Get propgram ID from inpus
+  useEffect(() => {
+    if (props.isVisible && props.programId) {
+      if (isValidAddress(props.programId)) {
+        setProgramId(props.programId);
+      }
+    }
+  }, [
+    props.programId,
+    props.isVisible
+  ]);
 
   // Resolves programDataAddress
   useEffect(() => {
@@ -129,7 +140,7 @@ export const MultisigSetProgramAuthModal = (props: {
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={<div className="modal-title">{t('multisig.upgrade-program.modal-title')}</div>}
+      title={<div className="modal-title">{t('multisig.set-program-authority.modal-title')}</div>}
       footer={null}
       visible={props.isVisible}
       onOk={onAcceptModal}
@@ -143,7 +154,7 @@ export const MultisigSetProgramAuthModal = (props: {
           <>
             {/* Program address */}
             <div className="form-label">{t('multisig.upgrade-program.program-address-label')}</div>
-            <div className="well">
+            <div className={`well ${props.programId ? 'disabled' : ''}`}>
               <input id="token-address-field"
                 className="general-text-input"
                 autoComplete="on"
@@ -161,7 +172,7 @@ export const MultisigSetProgramAuthModal = (props: {
               )}
             </div>
             {/* New authority address */}
-            <div className="form-label">New Upgrade Authority</div>
+            <div className="form-label">{t('multisig.set-program-authority.new-authority-input-label')}</div>
             <div className="well">
               <input id="mint-to-field"
                 className="general-text-input"
@@ -169,7 +180,7 @@ export const MultisigSetProgramAuthModal = (props: {
                 autoCorrect="off"
                 type="text"
                 onChange={onNewAuthChanged}
-                placeholder={"Type the new program upgrade authority address"}
+                placeholder={t('multisig.set-program-authority.new-authority-input-placeholder')}
                 required={true}
                 spellCheck="false"
                 value={newAuthAddress}/>
@@ -269,9 +280,9 @@ export const MultisigSetProgramAuthModal = (props: {
               }
             }}>
             {props.isBusy
-              ? t('multisig.upgrade-program.main-cta-busy')
+              ? t('multisig.set-program-authority.main-cta-busy')
               : transactionStatus.currentOperation === TransactionStatus.Iddle
-                ? "Setting Authority"
+                ? t('multisig.set-program-authority.main-cta')
                 : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
                   ? t('general.cta-finish')
                   : t('general.refresh')

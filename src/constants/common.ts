@@ -7,13 +7,15 @@ export const PRICE_REFRESH_TIMEOUT = 10 * 60 * 1000;
 export const STREAMS_REFRESH_TIMEOUT = 5 * 60 * 1000;
 export const TRANSACTION_STATUS_RETRY = 3 * 1000;            // Retry fetch transaction status every 3 seconds
 export const TRANSACTION_STATUS_RETRY_TIMEOUT = 30 * 1000;   // Max timeout for trying fetch
-export const PERFORMANCE_SAMPLE_INTERVAL = 20 * 1000;
+export const PERFORMANCE_SAMPLE_INTERVAL = 30 * 1000;
+export const PERFORMANCE_SAMPLE_INTERVAL_FAST = 10 * 1000;
 export const PERFORMANCE_THRESHOLD = 1100;  // Min TPS to show the top bar (1100 but can be changed)
 
 export const MIN_SLIPPAGE_VALUE = 0.1;
 export const DEFAULT_SLIPPAGE_PERCENT = 1;
 export const MAX_SLIPPAGE_VALUE = 20;
 export const MAX_TOKEN_LIST_ITEMS = 50;
+export const MAX_MULTISIG_PARTICIPANTS = 10;
 
 export const INPUT_AMOUNT_PATTERN = /^[0-9]*[.,]?[0-9]*$/;
 export const DATEPICKER_FORMAT = 'MM/DD/YYYY';
@@ -29,6 +31,7 @@ export const GOOGLE_ANALYTICS_PROD_TAG_ID = 'G-5Q840FEC0G';
 export const SOLANA_WALLET_GUIDE = 'https://docs.solana.com/wallet-guide';
 export const SOLANA_EXPLORER_URI_INSPECT_ADDRESS = 'https://solscan.io/account/';
 export const SOLANA_EXPLORER_URI_INSPECT_TRANSACTION = 'https://solscan.io/tx/';
+export const SOLANA_STATUS_PAGE = 'https://status.solana.com/';
 export const MEAN_FINANCE_WEBSITE_URL = 'https://meanfi.com';
 export const MEAN_FINANCE_APP_ALLBRIDGE_URL = 'https://app.allbridge.io';
 export const MEAN_FINANCE_APP_RENBRIDGE_URL = 'https://bridge.renproject.io/mint';
@@ -85,6 +88,30 @@ export const LANGUAGES: Language[] = [
         flag: '/assets/flags/br.svg',
         locale: 'pt-BR'
     },
+    {
+        code: 'tr',
+        name: 'Türkçe',
+        flag: '/assets/flags/tr.svg',
+        locale: 'tr-TR'
+    },
+    // {
+    //     code: 'zh',
+    //     name: '中國人',
+    //     flag: '/assets/flags/cn.svg',
+    //     locale: 'zh-CN'
+    // },
+    // {
+    //     code: 'vi',
+    //     name: 'Tiếng Việt',
+    //     flag: '/assets/flags/vn.svg',
+    //     locale: 'vi-VN'
+    // },
+    // {
+    //     code: 'ko',
+    //     name: 'T한국인',
+    //     flag: '/assets/flags/kr.svg',
+    //     locale: 'ko-KR'
+    // },
 ];
 
 export const ALLOWED_ADDRESSES_LIST = [
@@ -92,11 +119,13 @@ export const ALLOWED_ADDRESSES_LIST = [
     '7kjcW2QHa9pN5e9Fx7LBM3kVwxCi3KteBtM7BMVzrMX4', // MRP
     'JAMR7AvQSbU3v6tfNidEZE3odxoRCahGFgiA4ksvdDkJ', // MRP
     '8XkcFZsRcQCtVxRCsqAbtKTsm4mj9CW9vbNPBtjqYWXw', // MRP
+    'ETo8bzsqfqS1ZcNK7W49vNe5pHh2qgE6jKaC2JTPyJDE', // MRP
     'GFefRR6EASXvnphnJApp2PRH1wF1B5pJijKBZGFzq1x1', // YAF
     'FkRtTexEwLtYerHRKUku7ZZJx1VuTqxwGF636nAuer3B', // YAF
     'FfdFf3EqcCuytTdeLvoELBh29WrAGVRjrm4595A2bRAR', // YGF
     'DA5hKdQLFQpMM95M1KwbRHnjQbvkvMEPUfaULjjrMPWw', // MT
     '9PLqBWNkjegBdz4UD5LYSswWVXfxMf8hUsK2R9b3Lj23', // AMA
+    'YxddwEVL4oQBqW8HAeeV4a2PHBC8qhfk1TMKbt2j7A6', // AMA
     'HGb43H86jJNLN4MW1sDWKruUZYrs3rkNQkf3acF8uXiv', // PNL
     '49XcDH9tWX67uw53TzNrPE5ovGsXd7VxgH735jBg6K64', // PL
     'HvPJ1eSqAnUtoC1dfKCAaDDFaWviHkbfBWoYJmP1BUDa', // TBM

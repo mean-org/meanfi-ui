@@ -1,6 +1,14 @@
-import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { AccountInfo, Commitment, Connection, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js"
+import { ASSOCIATED_TOKEN_PROGRAM_ID, AuthorityType, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { AccountInfo, Commitment, Connection, Keypair, PublicKey, sendAndConfirmTransaction, Transaction, TransactionInstruction } from "@solana/web3.js"
 import { AccountTokenParsedInfo } from "../models/token";
+
+export type ProgramAccounts = {
+  pubkey: PublicKey;
+  owner: PublicKey;
+  executable: PublicKey;
+  upgradeAuthority: PublicKey;
+  size: number;
+}
 
 export type AccountsDictionary = {
   publicKey: PublicKey;
@@ -122,4 +130,42 @@ export async function createTokenMergeTx(
   tx.recentBlockhash = hash.blockhash;
 
   return tx;
+}
+
+/**
+   * Assign a new owner to the account
+   *
+   * @param owner Owner of the token account
+   * @param account Public key of the mint/token account
+   * @param newOwner New owner of the mint/token account
+   * @param programId Token program ID
+   * @param authType Authority type
+   */
+export async function setAccountOwner(
+  connection: Connection,
+  owner: Keypair,
+  account: PublicKey,
+  newOwner: PublicKey,
+  programId: PublicKey,
+  authType: AuthorityType,
+): Promise<boolean> {
+  return await sendAndConfirmTransaction(
+    connection,
+    new Transaction().add(
+      Token.createSetAuthorityInstruction(
+        programId,        // always TOKEN_PROGRAM_ID
+        account,          // mint account || token account
+        newOwner,         // new auth (you can pass `null` to close it)
+        authType,         // authority type, there are 4 types => 'MintTokens' | 'FreezeAccount' | 'AccountOwner' | 'CloseAccount'
+        owner.publicKey,  // original auth
+        []                // for multisig
+      )
+    ),
+    [owner]
+  )
+  .then(() => true)
+  .catch(error => {
+    console.error(error);
+    return false;
+  });
 }

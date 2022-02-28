@@ -8,8 +8,9 @@ import { getTransactionOperationDescription, isValidAddress } from '../../utils/
 import { isError } from '../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TransactionFees } from '@mean-dao/money-streaming';
-import { getTokenAmountAndSymbolByTokenAddress, isValidNumber } from '../../utils/utils';
-import { MintTokensInfo } from '../../models/multisig';
+import { formatThousands, getTokenAmountAndSymbolByTokenAddress, isValidNumber, shortenAddress } from '../../utils/utils';
+import { MintTokensInfo, MultisigMint } from '../../models/multisig';
+import { Identicon } from '../Identicon';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -21,6 +22,7 @@ export const MultisigMintTokenModal = (props: {
   isBusy: boolean;
   nativeBalance: number;
   transactionFees: TransactionFees;
+  selectedMint: MultisigMint | undefined;
 }) => {
   const { t } = useTranslation('common');
   const {
@@ -89,6 +91,32 @@ export const MultisigMintTokenModal = (props: {
     window.location.reload();
   }
 
+  const renderMint = (item: MultisigMint) => {
+    return (
+      <div className="transaction-list-row no-pointer">
+        <div className="icon-cell">
+          <div className="token-icon">
+            <Identicon address={item.address} style={{
+              width: "28px",
+              display: "inline-flex",
+              height: "26px",
+              overflow: "hidden",
+              borderRadius: "50%"
+            }} />
+          </div>
+        </div>
+        <div className="description-cell">
+          <div className="title text-truncate">{shortenAddress(item.address.toBase58(), 8)}</div>
+          <div className="subtitle text-truncate">decimals: {item.decimals}</div>
+        </div>
+        <div className="rate-cell">
+          <div className="rate-amount text-uppercase">{formatThousands(item.supply, item.decimals)}</div>
+          <div className="interval">supply</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Modal
       className="mean-modal simple-modal"
@@ -105,7 +133,7 @@ export const MultisigMintTokenModal = (props: {
         {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
           <>
             {/* Token address */}
-            <div className="form-label">{t('multisig.mint-tokens.token-address-label')}</div>
+            {/* <div className="form-label">{t('multisig.mint-tokens.token-address-label')}</div>
             <div className="well">
               <input id="token-address-field"
                 className="general-text-input"
@@ -122,7 +150,17 @@ export const MultisigMintTokenModal = (props: {
                   {t('transactions.validation.address-validation')}
                 </span>
               )}
-            </div>
+            </div> */}
+
+            {props.selectedMint && (
+              <div className="mb-3">
+                <div className="form-label">{t('multisig.multisig-mints.selected-mint-label')}</div>
+                <div className="well">
+                  {renderMint(props.selectedMint)}
+                </div>
+              </div>
+            )}
+
             {/* Mint To Address */}
             <div className="form-label">{t('multisig.mint-tokens.mint-to-label')}</div>
             <div className="well">

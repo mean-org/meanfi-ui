@@ -166,13 +166,19 @@ export const formatPct = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 2,
 });
 
-export const formatThousands = (val: number, decimals?: number) => {
+export const formatThousands = (val: number, maxDecimals?: number, minDecimals = 0) => {
   let convertedVlue: Intl.NumberFormat;
 
-  if (decimals) {
-    convertedVlue = new Intl.NumberFormat('en-US', { maximumFractionDigits: 6 });
+  if (maxDecimals) {
+    convertedVlue = new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: minDecimals,
+      maximumFractionDigits: maxDecimals
+    });
   } else {
-    convertedVlue = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
+    convertedVlue = new Intl.NumberFormat("en-US", {
+      minimumFractionDigits: minDecimals,
+      maximumFractionDigits: 0
+    });
   }
 
   return convertedVlue.format(val);
@@ -603,4 +609,14 @@ export function cutNumber(amount: number, decimals: number) {
   const str = `${amount}`;
 
   return str.slice(0, str.indexOf('.') + decimals + 1);
+}
+
+// Some could prefer these instead of toUiAmount and toTokenAmount
+export const makeDecimal = (bn: BN, decimals: number): number => {
+  return bn.toNumber() / Math.pow(10, decimals)
+}
+
+export const makeInteger = (num: number, decimals: number): BN => {
+  const mul = Math.pow(10, decimals)
+  return new BN(num * mul)
 }

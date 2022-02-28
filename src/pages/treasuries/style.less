@@ -31,3 +31,40 @@
     background: var(--bg-color) !important;
   }
 }
+.bottom-ctas {
+  padding: 12px 0 0 0 !important;
+}
+@media (max-width: 575px) {
+  .ant-select-selector {
+    .transaction-list-row {
+      align-items: flex-start;
+      width: 0em !important;
+    }   
+  }
+  .ant-select-dropdown {
+    width: 20em !important;
+    min-width: 20em !important;
+    .transaction-list-row {
+      width: 20em !important;
+    }
+  }
+}
+.panel1.show {
+  .transaction-list-row {
+    .description-cell {
+      min-width: fit-content !important;
+      line-height: 0.5;
+    }
+  }
+}
+.ant-select-selector {
+  .transaction-list-row {
+    .description-cell {
+      min-width: fit-content !important;
+    }
+  }
+}
+
+.ant-select-dropdown .ant-select-item .ant-select-item-option-content .option-container {
+  min-width: auto !important;
+}

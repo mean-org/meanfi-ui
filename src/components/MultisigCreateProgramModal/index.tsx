@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import { Modal, Button } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { MultisigAccountInfo } from '../../models/multisig';
+import { MultisigV2 } from '../../models/multisig';
 import { IconCopy } from '../../Icons';
 import { copyText } from '../../utils/ui';
 import { notify } from '../../utils/notifications';
@@ -11,7 +11,7 @@ export const MultisigCreateProgramModal = (props: {
   handleOk: any;
   handleAfterClose: any;
   isVisible: boolean;
-  selectedMultisig: MultisigAccountInfo
+  selectedMultisig: MultisigV2
 }) => {
   const { t } = useTranslation('common');
 

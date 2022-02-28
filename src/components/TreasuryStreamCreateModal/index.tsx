@@ -2,7 +2,18 @@ import React, { useCallback, useEffect } from 'react';
 import { useContext, useState } from 'react';
 import { Modal, Button, Select, Dropdown, Menu, DatePicker, Checkbox, Divider } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
-import { cutNumber, formatAmount, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber, shortenAddress, toTokenAmount, toUiAmount } from '../../utils/utils';
+import {
+  cutNumber,
+  formatAmount,
+  getAmountWithSymbol,
+  getTokenAmountAndSymbolByTokenAddress,
+  getTxIxResume,
+  isValidNumber,
+  makeDecimal,
+  makeInteger,
+  shortenAddress,
+  toTokenAmount
+} from '../../utils/utils';
 import { useTranslation } from 'react-i18next';
 import { TokenInfo } from '@solana/spl-token-registry';
 import {
@@ -15,7 +26,6 @@ import {
   isToday,
   isValidAddress,
   PaymentRateTypeOption,
-  percentage
 } from '../../utils/ui';
 import { getTokenByMintAddress } from '../../utils/tokens';
 import { LoadingOutlined } from '@ant-design/icons';
@@ -29,12 +39,14 @@ import { DATEPICKER_FORMAT } from '../../constants';
 import { Identicon } from '../Identicon';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
-import { Connection, PublicKey, Transaction } from '@solana/web3.js';
+import { Connection, Keypair, PublicKey, Transaction } from '@solana/web3.js';
 import { customLogger } from '../..';
-import { MSP, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
+import { Constants as MSPV2Constants, MSP, TransactionFees, Treasury } from '@mean-dao/msp';
 import { TreasuryInfo } from '@mean-dao/money-streaming';
 import { useConnectionConfig } from '../../contexts/connection';
+import { Idl, Program } from '@project-serum/anchor';
 import { BN } from 'bn.js';
+import { u64 } from '@solana/spl-token';
 
 const { Option } = Select;
 
@@ -48,6 +60,9 @@ export const TreasuryStreamCreateModal = (props: {
   transactionFees: TransactionFees;
   withdrawTransactionFees: TransactionFees;
   treasuryDetails: Treasury | TreasuryInfo | undefined;
+  isMultisigTreasury: boolean;
+  multisigClient: Program<Idl>;
+  multisigAddress: PublicKey;
   userBalances: any;
 }) => {
   const { t } = useTranslation('common');
@@ -61,6 +76,7 @@ export const TreasuryStreamCreateModal = (props: {
     recipientAddress,
     loadingPrices,
     recipientNote,
+    isWhitelisted,
     paymentStartDate,
     fromCoinAmount,
     paymentRateAmount,
@@ -78,7 +94,6 @@ export const TreasuryStreamCreateModal = (props: {
     setPaymentRateAmount,
     setTransactionStatus,
     setIsVerifiedRecipient,
-    setIsAllocationReserved,
     setPaymentRateFrequency,
   } = useContext(AppStateContext);
   const {
@@ -88,23 +103,101 @@ export const TreasuryStreamCreateModal = (props: {
   const [currentStep, setCurrentStep] = useState(0);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
-  const [unallocatedBalance, setUnallocatedBalance] = useState(0);
+  const [unallocatedBalance, setUnallocatedBalance] = useState(new BN(0));
   const [isFeePaidByTreasurer, setIsFeePaidByTreasurer] = useState(false);
+  const [tokenAmount, setTokenAmount] = useState(new BN(0));
+  const [maxAllocatableAmount, setMaxAllocatableAmount] = useState<any>(undefined);
 
+  const isNewTreasury = useCallback(() => {
+    if (props.treasuryDetails) {
+      const v2 = props.treasuryDetails as Treasury;
+      return v2.version >= 2 ? true : false;
+    }
+
+    return false;
+  }, [props.treasuryDetails]);
+
+  const getMaxAmount = useCallback((preSetting = false) => {
+    if ((isFeePaidByTreasurer || preSetting) && props.withdrawTransactionFees) {
+      const BASE_100_TO_BASE_1_MULTIPLIER = 10_000;
+      const feeNumerator = props.withdrawTransactionFees.mspPercentFee * BASE_100_TO_BASE_1_MULTIPLIER;
+      const feeDenaminator = 1000000;
+      const badStreamMaxAllocation = unallocatedBalance
+        .mul(new BN(feeDenaminator))
+        .div(new BN(feeNumerator + feeDenaminator));
+
+      const feeAmount = badStreamMaxAllocation
+        .mul(new BN(feeNumerator))
+        .div(new BN(feeDenaminator));
+
+      const badTotal = badStreamMaxAllocation.add(feeAmount);
+      const badRemaining = unallocatedBalance.sub(badTotal);
+      const goodStreamMaxAllocation = unallocatedBalance.sub(feeAmount);
+      const goodTotal = goodStreamMaxAllocation.add(feeAmount);
+      const goodRemaining = unallocatedBalance.sub(goodTotal);
+      const maxAmount = goodStreamMaxAllocation;
+
+      if (isWhitelisted) {
+        const debugTable: any[] = [];
+        debugTable.push({
+          unallocatedBalance: unallocatedBalance.toNumber(),
+          feeNumerator: feeNumerator,
+          feePercentage01: feeNumerator/feeDenaminator,
+          badStreamMaxAllocation: badStreamMaxAllocation.toNumber(),
+          feeAmount: feeAmount.toNumber(),
+          badTotal: badTotal.toNumber(),
+          badRemaining: badRemaining.toNumber(),
+          goodStreamMaxAllocation: goodStreamMaxAllocation.toNumber(),
+          goodTotal: goodTotal.toNumber(),
+          goodRemaining: goodRemaining.toNumber(),
+        });
+        consoleOut('debug table', debugTable, 'blue');
+      }
+
+      if (!preSetting) {
+        setMaxAllocatableAmount(maxAmount);
+      }
+      return maxAmount;
+    }
+    if (!preSetting) {
+      setMaxAllocatableAmount(unallocatedBalance);
+    }
+    return unallocatedBalance;
+  },[
+    isWhitelisted,
+    unallocatedBalance,
+    isFeePaidByTreasurer,
+    props.withdrawTransactionFees,
+  ]);
+
+  // Set treasury unalocated balance in BN
   useEffect(() => {
     if (props.isVisible && props.treasuryDetails) {
-      const v2 = props.treasuryDetails as Treasury;
-      const isNewTreasury = v2.version >= 2 ? true : false;
       const unallocated = props.treasuryDetails.balance - props.treasuryDetails.allocationAssigned;
-      setUnallocatedBalance(isNewTreasury
-        ? toUiAmount(new BN(unallocated), selectedToken?.decimals || 6)
-        : unallocated
-      );
+      const ub = isNewTreasury()
+        ? new BN(unallocated)
+        : makeInteger(unallocated, selectedToken?.decimals || 6);
+      consoleOut('unallocatedBalance:', ub.toNumber(), 'blue');
+      setUnallocatedBalance(ub);
     }
   }, [
     props.isVisible,
     props.treasuryDetails,
-    selectedToken?.decimals
+    selectedToken?.decimals,
+    isNewTreasury,
+  ]);
+
+  // Set max amount allocatable to a stream in BN the first time
+  useEffect(() => {
+    if (props.isVisible && props.treasuryDetails && props.withdrawTransactionFees && !isFeePaidByTreasurer) {
+      getMaxAmount();
+    }
+  }, [
+    props.isVisible,
+    isFeePaidByTreasurer,
+    props.treasuryDetails,
+    props.withdrawTransactionFees,
+    getMaxAmount
   ]);
 
   /////////////////
@@ -141,9 +234,9 @@ export const TreasuryStreamCreateModal = (props: {
   const getStepOneContinueButtonLabel = (): string => {
     return !publicKey
       ? t('transactions.validation.not-connected')
-      : !recipientAddress || isAddressOwnAccount()
+      : !recipientAddress
         ? t('transactions.validation.select-recipient')
-        : !selectedToken || unallocatedBalance === 0
+        : !selectedToken || unallocatedBalance.toNumber() === 0
           ? t('transactions.validation.no-balance')
           : !paymentStartDate
             ? t('transactions.validation.no-valid-date')
@@ -155,16 +248,16 @@ export const TreasuryStreamCreateModal = (props: {
   }
 
   const getTransactionStartButtonLabel = (): string => {
-    const amount = fromCoinAmount ? parseFloat(fromCoinAmount) : 0;
     return !publicKey
       ? t('transactions.validation.not-connected')
-      : !recipientAddress || isAddressOwnAccount()
+      : !recipientAddress
       ? t('transactions.validation.select-recipient')
-      : !selectedToken || unallocatedBalance === 0
+      : !selectedToken || unallocatedBalance.isZero()
       ? t('transactions.validation.no-balance')
-      : amount === 0
+      : !tokenAmount || tokenAmount.isZero()
       ? t('transactions.validation.no-amount')
-      : (isFeePaidByTreasurer && amount > getMaxAmount()) || (!isFeePaidByTreasurer && amount > unallocatedBalance)
+      : (isFeePaidByTreasurer && tokenAmount.gt(maxAllocatableAmount)) ||
+        (!isFeePaidByTreasurer && tokenAmount.gt(unallocatedBalance))
       ? t('transactions.validation.amount-high')
       : !paymentStartDate
       ? t('transactions.validation.no-valid-date')
@@ -223,31 +316,6 @@ export const TreasuryStreamCreateModal = (props: {
     setEffectiveRate,
     setSelectedToken,
     toggleOverflowEllipsisMiddle
-  ]);
-
-  const getFeeAmount = (fees: TransactionFees, amount?: any): number => {
-    let fee = 0;
-    const inputAmount = amount ? parseFloat(amount) : 0;
-    if (fees) {
-      if (fees.mspPercentFee) {
-        fee = inputAmount ? percentage(fees.mspPercentFee, inputAmount) : 0;
-      } else if (fees.mspFlatFee) {
-        fee = fees.mspFlatFee;
-      }
-    }
-    return fee;
-  }
-
-  const getMaxAmount = useCallback(() => {
-    if (isFeePaidByTreasurer && props.withdrawTransactionFees) {
-      const fee = getFeeAmount(props.withdrawTransactionFees, unallocatedBalance);
-      return unallocatedBalance - fee;
-    }
-    return unallocatedBalance;
-  },[
-    unallocatedBalance,
-    isFeePaidByTreasurer,
-    props.withdrawTransactionFees,
   ]);
 
   /////////////////////
@@ -368,10 +436,12 @@ export const TreasuryStreamCreateModal = (props: {
     const newValue = e.target.value;
     if (newValue === null || newValue === undefined || newValue === "") {
       setFromCoinAmount("");
+      setTokenAmount(new BN(0));
     } else if (newValue === '.') {
       setFromCoinAmount(".");
     } else if (isValidNumber(newValue)) {
       setFromCoinAmount(newValue);
+      setTokenAmount(makeInteger(newValue, selectedToken?.decimals || 6));
     }
   };
 
@@ -380,6 +450,20 @@ export const TreasuryStreamCreateModal = (props: {
   }
 
   const onFeePayedByTreasurerChange = (e: any) => {
+
+    consoleOut('onFeePayedByTreasurerChange:', e.target.checked, 'blue');
+
+    if (e.target.checked && tokenAmount) {
+      const maxAmount = getMaxAmount(true);
+      consoleOut('tokenAmount:', tokenAmount.toNumber(), 'blue');
+      consoleOut('maxAmount:', maxAmount.toNumber(), 'blue');
+      if (tokenAmount.gt(maxAmount)) {
+        const decimals = selectedToken ? selectedToken.decimals : 6;
+        setFromCoinAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
+        setTokenAmount(new BN(maxAmount));
+      }
+    }
+
     setIsFeePaidByTreasurer(e.target.checked);
   }
 
@@ -402,123 +486,204 @@ export const TreasuryStreamCreateModal = (props: {
     setTransactionCancelled(false);
     setIsBusy(true);
 
-    const createTx = async (): Promise<boolean> => {
-      if (publicKey && props.treasuryDetails && selectedToken) {
-        consoleOut('Wallet address:', publicKey.toBase58());
+    const createStream = async (data: any) => {
 
-        setTransactionStatus({
-          lastOperation: TransactionStatus.TransactionStart,
-          currentOperation: TransactionStatus.InitTransaction
-        });
+      consoleOut('Starting create stream using MSP V2...', '', 'blue');
+      const msp = new MSP(endpoint, streamV2ProgramAddress, "finalized");
+      const streamAccount = Keypair.generate();
 
-        const beneficiary = new PublicKey(recipientAddress as string);
-        const associatedToken = new PublicKey(selectedToken?.address as string);
-        const treasury = new PublicKey(props.treasuryDetails.id as string);
-        const amount = fromCoinAmount
-          ? toTokenAmount(parseFloat(fromCoinAmount as string), selectedToken.decimals)
-          : 0;
-        const rateAmount = toTokenAmount(parseFloat(paymentRateAmount as string), selectedToken.decimals);
-        const reserved = (props.treasuryDetails as Treasury).treasuryType === TreasuryType.Lock ? true : false;
-        const now = new Date();
-        const parsedDate = Date.parse(paymentStartDate as string);
-        const startUtc = new Date(parsedDate);
-        startUtc.setHours(now.getHours());
-        startUtc.setMinutes(now.getMinutes());
-        startUtc.setSeconds(now.getSeconds());
-        startUtc.setMilliseconds(now.getMilliseconds());
-
-        consoleOut('fromParsedDate.toString()', startUtc.toString(), 'crimson');
-        consoleOut('fromParsedDate.toLocaleString()', startUtc.toLocaleString(), 'crimson');
-        consoleOut('fromParsedDate.toISOString()', startUtc.toISOString(), 'crimson');
-        consoleOut('fromParsedDate.toUTCString()', startUtc.toUTCString(), 'crimson');
-
-        // Create a transaction
-        const data = {
-          initializer: publicKey.toBase58(),                                          // initializer
-          treasurer: publicKey.toBase58(),                                            // treasurer
-          treasury: treasury.toBase58(),                                              // treasury
-          beneficiary: beneficiary.toBase58(),                                        // beneficiary
-          associatedToken: associatedToken.toBase58(),                                // associatedToken
-          streamName: recipientNote ? recipientNote.trim() : undefined,               // streamName
-          allocationAssigned: amount,                                                 // allocationAssigned
-          allocationReserved: reserved ? amount : 0,                                  // allocationReserved
-          rateAmount: rateAmount,                                                     // rateAmount
-          rateIntervalInSeconds: getRateIntervalInSeconds(paymentRateFrequency),      // rateIntervalInSeconds
-          startUtc: startUtc,                                                         // startUtc
-          cliffVestAmount: undefined,                                                 // cliffVestAmount
-          cliffVestPercent: undefined,                                                // cliffVestPercent
-          feePayedByTreasurer: isFeePaidByTreasurer                                   // feePayedByTreasurer
-        };
-        consoleOut('data:', data);
-
-        /**
-         * initializer: PublicKey,
-         * treasurer: PublicKey,
-         * treasury: PublicKey | undefined,
-         * beneficiary: PublicKey,
-         * associatedToken: PublicKey,
-         * streamName: string,
-         * allocationAssigned: number,
-         * allocationReserved?: number | undefined,
-         * rateAmount?: number | undefined,
-         * rateIntervalInSeconds?: number | undefined,
-         * startUtc?: Date | undefined,
-         * cliffVestAmount?: number | undefined,
-         * cliffVestPercent?: number | undefined,
-         * feePayedByTreasurer?: boolean | undefined
-         */
-
-        // Log input data
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
-          inputs: data
-        });
-
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
-          result: ''
-        });
-
-        // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
-        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        consoleOut('blockchainFee:', props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee, 'blue');
-        consoleOut('nativeBalance:', props.nativeBalance, 'blue');
-        if (props.nativeBalance < props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee) {
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.TransactionStartFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-            result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(props.nativeBalance, NATIVE_SOL_MINT.toBase58())
-            }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
-            })`
-          });
-          customLogger.logWarning('CreateStream for a treasury transaction failed', { transcript: transactionLog });
-          return false;
-        }
-
-        consoleOut('Starting withdraw using MSP V2...', '', 'blue');
-        const msp = new MSP(endpoint, streamV2ProgramAddress, "finalized");
+      if (!props.isMultisigTreasury) {
         return await msp.createStream(
-          publicKey,                                                        // initializer
-          publicKey,                                                        // treasurer
-          treasury,                                                         // treasury
-          beneficiary,                                                      // beneficiary
-          associatedToken,                                                  // associatedToken
-          recipientNote,                                                    // streamName
-          amount,                                                           // allocationAssigned
-          reserved ? amount : 0,                                            // allocationReserved
-          rateAmount,                                                       // rateAmount
-          getRateIntervalInSeconds(paymentRateFrequency),                   // rateIntervalInSeconds
-          startUtc,                                                         // startUtc
-          undefined,                                                        // cliffVestAmount
-          undefined,                                                        // cliffVestPercent
-          isFeePaidByTreasurer                                              // feePayedByTreasurer
-        )
+          new PublicKey(data.payer),                                          // initializer
+          new PublicKey(data.treasurer),                                      // treasurer
+          new PublicKey(data.treasury),                                       // treasury
+          new PublicKey(data.beneficiary),                                    // beneficiary
+          new PublicKey(data.associatedToken),                                // associatedToken
+          streamAccount,
+          data.streamName,                                                    // streamName
+          data.allocationAssigned,                                            // allocationAssigned
+          data.rateAmount,                                                    // rateAmount
+          data.rateIntervalInSeconds,                                         // rateIntervalInSeconds
+          data.startUtc,                                                      // startUtc
+          data.cliffVestAmount,                                               // cliffVestAmount
+          data.cliffVestPercent,                                              // cliffVestPercent
+          data.feePayedByTreasurer                                            // feePayedByTreasurer
+        );
+      }
+
+      if (!props.treasuryDetails || !props.multisigClient || !props.multisigAddress || !publicKey) { return null; }
+
+      let [multisigSigner] = await PublicKey.findProgramAddress(
+        [props.multisigAddress.toBuffer()],
+        props.multisigClient.programId
+      );
+
+      const timeStamp = new u64(Date.now() / 1000);
+
+      let [stream, streamBump] = await PublicKey.findProgramAddress(
+        [props.multisigAddress.toBuffer(), timeStamp.toBuffer()],
+        props.multisigClient.programId
+      );
+
+      let createStream = await msp.createStreamFromPda(
+        publicKey,                                                            // payer
+        multisigSigner,                                                       // treasurer
+        new PublicKey(data.treasury),                                         // treasury
+        new PublicKey(data.beneficiary),                                      // beneficiary
+        new PublicKey(data.associatedToken),                                  // associatedToken
+        stream,                                                               // stream PDA
+        data.streamName,                                                      // streamName
+        data.allocationAssigned,                                              // allocationAssigned
+        data.rateAmount,                                                      // rateAmount
+        data.rateIntervalInSeconds,                                           // rateIntervalInSeconds
+        data.startUtc,                                                        // startUtc
+        data.cliffVestAmount,                                                 // cliffVestAmount
+        data.cliffVestPercent,                                                // cliffVestPercent
+        data.feePayedByTreasurer                                              // feePayedByTreasurer
+      );
+
+      const ixData = Buffer.from(createStream.instructions[0].data);
+      const ixAccounts = createStream.instructions[0].keys;
+      const transaction = Keypair.generate();
+      const txSize = 1200;
+      const createIx = await props.multisigClient.account.transaction.createInstruction(
+        transaction,
+        txSize
+      );
+
+      let tx = props.multisigClient.transaction.createTransaction(
+        MSPV2Constants.MSP,
+        OperationType.StreamCreate,
+        ixAccounts as any,
+        ixData as any,
+        timeStamp,
+        new BN(streamBump),
+        {
+          accounts: {
+            multisig: props.multisigAddress,
+            transaction: transaction.publicKey,
+            proposer: publicKey,
+          },
+          preInstructions: [createIx],
+          signers: [transaction],
+        }
+      );
+
+      tx.feePayer = publicKey;
+      let { blockhash } = await props.multisigClient.provider.connection.getRecentBlockhash("finalized");
+      tx.recentBlockhash = blockhash;
+      tx.partialSign(transaction);
+
+      return tx;
+    }
+
+    const createTx = async (): Promise<boolean> => {
+
+      if (!publicKey || !props.treasuryDetails || !selectedToken) {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot start transaction! Wallet not found!'
+        });
+        customLogger.logError('CreateStream for a treasury transaction failed', { transcript: transactionLog });
+        return false;
+      }
+
+      consoleOut('Wallet address:', publicKey.toBase58());
+
+      setTransactionStatus({
+        lastOperation: TransactionStatus.TransactionStart,
+        currentOperation: TransactionStatus.InitTransaction
+      });
+
+      const beneficiary = new PublicKey(recipientAddress as string);
+      const associatedToken = new PublicKey(selectedToken?.address as string);
+      const treasury = new PublicKey(props.treasuryDetails.id as string);
+      const amount = tokenAmount;
+      const rateAmount = toTokenAmount(parseFloat(paymentRateAmount as string), selectedToken.decimals);
+      const now = new Date();
+      const parsedDate = Date.parse(paymentStartDate as string);
+      const startUtc = new Date(parsedDate);
+      startUtc.setHours(now.getHours());
+      startUtc.setMinutes(now.getMinutes());
+      startUtc.setSeconds(now.getSeconds());
+      startUtc.setMilliseconds(now.getMilliseconds());
+
+      consoleOut('fromParsedDate.toString()', startUtc.toString(), 'crimson');
+      consoleOut('fromParsedDate.toLocaleString()', startUtc.toLocaleString(), 'crimson');
+      consoleOut('fromParsedDate.toISOString()', startUtc.toISOString(), 'crimson');
+      consoleOut('fromParsedDate.toUTCString()', startUtc.toUTCString(), 'crimson');
+
+      // Create a transaction
+      const data = {
+        payer: publicKey.toBase58(),                                                // initializer
+        treasurer: publicKey.toBase58(),                                            // treasurer
+        treasury: treasury.toBase58(),                                              // treasury
+        beneficiary: beneficiary.toBase58(),                                        // beneficiary
+        associatedToken: associatedToken.toBase58(),                                // associatedToken
+        streamName: recipientNote ? recipientNote.trim() : undefined,               // streamName
+        allocationAssigned: amount,                                                 // allocationAssigned
+        rateAmount: rateAmount,                                                     // rateAmount
+        rateIntervalInSeconds: getRateIntervalInSeconds(paymentRateFrequency),      // rateIntervalInSeconds
+        startUtc: startUtc,                                                         // startUtc
+        cliffVestAmount: undefined,                                                 // cliffVestAmount
+        cliffVestPercent: undefined,                                                // cliffVestPercent
+        feePayedByTreasurer: isFeePaidByTreasurer                                   // feePayedByTreasurer
+      };
+
+      consoleOut('data:', data);
+
+      /**
+       * payer: PublicKey,
+       * treasurer: PublicKey,
+       * treasury: PublicKey | undefined,
+       * beneficiary: PublicKey,
+       * associatedToken: PublicKey,
+       * streamName: string,
+       * allocationAssigned: number,
+       * rateAmount?: number | undefined,
+       * rateIntervalInSeconds?: number | undefined,
+       * startUtc?: Date | undefined,
+       * cliffVestAmount?: number | undefined,
+       * cliffVestPercent?: number | undefined,
+       * feePayedByTreasurer?: boolean | undefined
+       */
+
+      // Log input data
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+        inputs: data
+      });
+
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+        result: ''
+      });
+
+      // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
+      // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+      consoleOut('blockchainFee:', props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee, 'blue');
+      consoleOut('nativeBalance:', props.nativeBalance, 'blue');
+
+      if (props.nativeBalance < props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee) {
+        setTransactionStatus({
+          lastOperation: transactionStatus.currentOperation,
+          currentOperation: TransactionStatus.TransactionStartFailure
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+          result: `Not enough balance (${
+            getTokenAmountAndSymbolByTokenAddress(props.nativeBalance, NATIVE_SOL_MINT.toBase58())
+          }) to pay for network fees (${
+            getTokenAmountAndSymbolByTokenAddress(props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+          })`
+        });
+        customLogger.logWarning('CreateStream for a treasury transaction failed', { transcript: transactionLog });
+        return false;
+      }
+
+      let result = await createStream(data)
         .then(value => {
+          if (!value) { return false; }
           consoleOut('createStream returned transaction:', value);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
@@ -544,14 +709,8 @@ export const TreasuryStreamCreateModal = (props: {
           customLogger.logError('CreateStream for a treasury transaction failed', { transcript: transactionLog });
           return false;
         });
-      } else {
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot start transaction! Wallet not found!'
-        });
-        customLogger.logError('CreateStream for a treasury transaction failed', { transcript: transactionLog });
-        return false;
-      }
+
+      return result;
     }
 
     const signTx = async (): Promise<boolean> => {
@@ -691,18 +850,12 @@ export const TreasuryStreamCreateModal = (props: {
       : false;
   }
 
-  const isAddressOwnAccount = (): boolean => {
-    return recipientAddress && publicKey && recipientAddress === publicKey.toBase58()
-           ? true : false;
-  }
-
   const isSendAmountValid = (): boolean => {
-    const amount = fromCoinAmount ? parseFloat(fromCoinAmount) : 0;
     return publicKey &&
            selectedToken &&
-           amount > 0 &&
-           ((isFeePaidByTreasurer && amount <= getMaxAmount()) ||
-            (!isFeePaidByTreasurer && amount <= unallocatedBalance))
+           tokenAmount && tokenAmount.toNumber() > 0 &&
+           ((isFeePaidByTreasurer && tokenAmount.lte(maxAllocatableAmount)) ||
+            (!isFeePaidByTreasurer && tokenAmount.lte(unallocatedBalance)))
     ? true
     : false;
   }
@@ -782,15 +935,11 @@ export const TreasuryStreamCreateModal = (props: {
               </div>
             </div>
             {
-              recipientAddress && !isValidAddress(recipientAddress) ? (
+              recipientAddress && !isValidAddress(recipientAddress) && (
                 <span className="form-field-error">
                   {t('transactions.validation.address-validation')}
                 </span>
-              ) : isAddressOwnAccount() ? (
-                <span className="form-field-error">
-                  {t('transactions.recipient.recipient-is-own-account')}
-                </span>
-              ) : (null)
+              )
             }
           </div>
 
@@ -846,7 +995,11 @@ export const TreasuryStreamCreateModal = (props: {
                 <span>{t('treasuries.treasury-streams.available-unallocated-balance-label')}:</span>
                 <span>
                   {`${unallocatedBalance && selectedToken
-                      ? getAmountWithSymbol(unallocatedBalance, selectedToken.address, true)
+                      ? getAmountWithSymbol(
+                          makeDecimal(new BN(unallocatedBalance), selectedToken.decimals),
+                          selectedToken.address,
+                          true
+                        )
                       : "0"
                   }`}
                 </span>
@@ -1013,7 +1166,20 @@ export const TreasuryStreamCreateModal = (props: {
                   {selectedToken && unallocatedBalance ? (
                     <div
                       className="token-max simplelink"
-                      onClick={() => setFromCoinAmount(cutNumber(getMaxAmount(), selectedToken.decimals))}>
+                      onClick={() => {
+                        const decimals = selectedToken ? selectedToken.decimals : 6;
+                        if (isFeePaidByTreasurer) {
+                          const maxAmount = getMaxAmount(true);
+                          consoleOut('tokenAmount:', tokenAmount.toNumber(), 'blue');
+                          consoleOut('maxAmount:', maxAmount.toNumber(), 'blue');
+                          setFromCoinAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
+                          setTokenAmount(new BN(maxAmount));
+                        } else {
+                          const maxAmount = getMaxAmount();
+                          setFromCoinAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
+                          setTokenAmount(new BN(maxAmount));
+                        }
+                      }}>
                       MAX
                     </div>
                   ) : null}
@@ -1041,7 +1207,11 @@ export const TreasuryStreamCreateModal = (props: {
                 <span>{t('treasuries.treasury-streams.available-unallocated-balance-label')}:</span>
                 <span>
                   {`${unallocatedBalance && selectedToken
-                      ? getAmountWithSymbol(unallocatedBalance, selectedToken.address, true)
+                      ? getAmountWithSymbol(
+                          makeDecimal(new BN(unallocatedBalance), selectedToken.decimals),
+                          selectedToken.address,
+                          true
+                        )
                       : "0"
                   }`}
                 </span>
@@ -1103,7 +1273,6 @@ export const TreasuryStreamCreateModal = (props: {
             disabled={!publicKey ||
               !isMemoValid() ||
               !isValidAddress(recipientAddress) ||
-              isAddressOwnAccount() ||
               !arePaymentSettingsValid()}>
             {getStepOneContinueButtonLabel()}
           </Button>
@@ -1119,7 +1288,6 @@ export const TreasuryStreamCreateModal = (props: {
           disabled={!publicKey ||
             !isMemoValid() ||
             !isValidAddress(recipientAddress) ||
-            isAddressOwnAccount() ||
             !arePaymentSettingsValid() ||
             !areSendAmountSettingsValid() ||
             !isVerifiedRecipient}>

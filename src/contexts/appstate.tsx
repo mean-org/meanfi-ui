@@ -36,8 +36,10 @@ import { TreasuryTypeOption } from "../models/treasuries";
 import { TREASURY_TYPE_OPTIONS } from "../constants/treasury-type-options";
 import { initialSummary, StreamsSummary } from "../models/streams";
 import { MSP, Stream } from "@mean-dao/msp";
+import { AccountDetails } from "../models";
 
 export interface TransactionStatusInfo {
+  customError?: any;
   lastOperation?: TransactionStatus | undefined;
   currentOperation?: TransactionStatus | undefined;
 }
@@ -72,12 +74,14 @@ interface AppStateConfig {
   streamList: Array<Stream | StreamInfo> | undefined;
   selectedStream: Stream | StreamInfo | undefined;
   streamDetail: Stream | StreamInfo | undefined;
+  activeStream: StreamInfo | Stream | undefined;
   highLightableStreamId: string | undefined;
   streamProgramAddress: string;
   streamV2ProgramAddress: string;
   loadingStreamActivity: boolean;
   streamActivity: StreamActivity[];
   customStreamDocked: boolean;
+  diagnosisInfo: AccountDetails | undefined;
   // Accounts
   shouldLoadTokens: boolean;
   splTokenList: UserTokenAccount[];
@@ -97,6 +101,9 @@ interface AppStateConfig {
   loadingRecurringBuys: boolean;
   // Multisig
   highLightableMultisigId: string | undefined;
+  // Staking
+  unstakeAmount: string;
+  unstakeStartDate: string | undefined;
   setTheme: (name: string) => void;
   setDtailsPanelOpen: (state: boolean) => void;
   showDepositOptionsModal: () => void;
@@ -130,6 +137,7 @@ interface AppStateConfig {
   openStreamById: (streamId: string, dock: boolean) => void;
   getStreamActivity: (streamId: string, version: number) => void;
   setCustomStreamDocked: (state: boolean) => void;
+  setDiagnosisInfo: (info: AccountDetails | undefined) => void;
   // Accounts
   setShouldLoadTokens: (state: boolean) => void;
   setTransactions: (map: MappedTransaction[] | undefined, addItems?: boolean) => void;
@@ -146,6 +154,9 @@ interface AppStateConfig {
   setLoadingRecurringBuys: (state: boolean) => void;
   // Multisig
   setHighLightableMultisigId: (id: string | undefined) => void,
+  // Staking
+  setUnstakeAmount: (data: string) => void;
+  setUnstakeStartDate: (date: string) => void;
 }
 
 const contextDefaultValues: AppStateConfig = {
@@ -181,12 +192,14 @@ const contextDefaultValues: AppStateConfig = {
   streamList: undefined,
   selectedStream: undefined,
   streamDetail: undefined,
+  activeStream: undefined,
   highLightableStreamId: undefined,
   streamProgramAddress: '',
   streamV2ProgramAddress: '',
   loadingStreamActivity: false,
   streamActivity: [],
   customStreamDocked: false,
+  diagnosisInfo: undefined,
   // Accounts
   shouldLoadTokens: true,
   splTokenList: [],
@@ -206,6 +219,9 @@ const contextDefaultValues: AppStateConfig = {
   loadingRecurringBuys: false,
   // Multisig
   highLightableMultisigId: undefined,
+  // Staking
+  unstakeAmount: '',
+  unstakeStartDate: 'undefined',
   setTheme: () => {},
   setDtailsPanelOpen: () => {},
   showDepositOptionsModal: () => {},
@@ -239,6 +255,7 @@ const contextDefaultValues: AppStateConfig = {
   openStreamById: () => {},
   getStreamActivity: () => {},
   setCustomStreamDocked: () => { },
+  setDiagnosisInfo: () => { },
   // Accounts
   setShouldLoadTokens: () => {},
   setTransactions: () => {},
@@ -255,6 +272,9 @@ const contextDefaultValues: AppStateConfig = {
   setLoadingRecurringBuys: () => {},
   // Multisig
   setHighLightableMultisigId: () => {},
+  // Staking
+  setUnstakeAmount: () => {},
+  setUnstakeStartDate: () => {}
 };
 
 export const AppStateContext = React.createContext<AppStateConfig>(contextDefaultValues);
@@ -340,14 +360,19 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [loadingStreamActivity, setLoadingStreamActivity] = useState(contextDefaultValues.loadingStreamActivity);
   const [streamActivity, setStreamActivity] = useState<StreamActivity[]>([]);
   const [customStreamDocked, setCustomStreamDocked] = useState(contextDefaultValues.customStreamDocked);
+  const [diagnosisInfo, setDiagnosisInfo] = useState<AccountDetails | undefined>(contextDefaultValues.diagnosisInfo);
 
   const [streamListv1, setStreamListv1] = useState<StreamInfo[] | undefined>();
   const [streamListv2, setStreamListv2] = useState<Stream[] | undefined>();
   const [streamList, setStreamList] = useState<Array<StreamInfo | Stream> | undefined>();
   const [selectedStream, updateSelectedStream] = useState<Stream | StreamInfo | undefined>();
   const [streamDetail, updateStreamDetail] = useState<Stream | StreamInfo | undefined>();
+  const [activeStream, setActiveStream] = useState<Stream | StreamInfo | undefined>();
   const [highLightableStreamId, setHighLightableStreamId] = useState<string | undefined>(contextDefaultValues.highLightableStreamId);
   const [highLightableMultisigId, setHighLightableMultisigId] = useState<string | undefined>(contextDefaultValues.highLightableMultisigId);
+
+  const [unstakeAmount, updateUnstakeAmount] = useState<string>(contextDefaultValues.unstakeAmount);
+  const [unstakeStartDate, updateUnstakeStartDate] = useState<string | undefined>(today);
 
   const setTheme = (name: string) => {
     updateTheme(name);
@@ -449,6 +474,14 @@ const AppStateProvider: React.FC = ({ children }) => {
     updateTransactionStatus(status);
   }
 
+  const setUnstakeAmount = (data: string) => {
+    updateUnstakeAmount(data);
+  }
+
+  const setUnstakeStartDate = (date: string) => {
+    updateUnstakeStartDate(date);
+  }
+
   const resetContractValues = () => {
     setFromCoinAmount('');
     setRecipientAddress('');
@@ -473,15 +506,16 @@ const AppStateProvider: React.FC = ({ children }) => {
   }
 
   const openStreamById = async (streamId: string, dock = false) => {
-    let streamPublicKey: PublicKey;
     try {
-      streamPublicKey = new PublicKey(streamId);
+      let streamPublicKey = new PublicKey(streamId);
       try {
         if (msp && publicKey) {
+          console.log('streamPublicKey', streamPublicKey.toBase58());
           const detail = await msp.getStream(streamPublicKey);
           consoleOut('customStream', detail);
           if (detail) {
             setStreamDetail(detail);
+            setActiveStream(detail);
             if (dock) {
               setStreamList([detail]);
               getStreamActivity(streamId, detail.version);
@@ -578,6 +612,7 @@ const AppStateProvider: React.FC = ({ children }) => {
           consoleOut('detail:', detail, 'blue');
           if (detail) {
             updateStreamDetail(detail);
+            setActiveStream(detail);
             const token = getTokenByMintAddress(detail.associatedToken as string);
             setSelectedToken(token);
             if (!loadingStreamActivity) {
@@ -843,6 +878,7 @@ const AppStateProvider: React.FC = ({ children }) => {
                     .then((detail: Stream | StreamInfo) => {
                       if (detail) {
                         updateStreamDetail(detail);
+                        setActiveStream(detail);
                         const token = getTokenByMintAddress(detail.associatedToken as string);
                         setSelectedToken(token);
                         if (!loadingStreamActivity) {
@@ -865,6 +901,7 @@ const AppStateProvider: React.FC = ({ children }) => {
                 } else {
                   if (item) {
                     updateStreamDetail(item);
+                    setActiveStream(item);
                     getStreamActivity(item.id as string, item.version);
                   }
                 }
@@ -872,6 +909,7 @@ const AppStateProvider: React.FC = ({ children }) => {
                 setStreamActivity([]);
                 updateSelectedStream(undefined);
                 updateStreamDetail(undefined);
+                setActiveStream(undefined);
               }
               updateLoadingStreams(false);
             }).catch(err => {
@@ -1151,12 +1189,14 @@ const AppStateProvider: React.FC = ({ children }) => {
         streamList,
         selectedStream,
         streamDetail,
+        activeStream,
         highLightableStreamId,
         streamProgramAddress,
         streamV2ProgramAddress,
         loadingStreamActivity,
         streamActivity,
         customStreamDocked,
+        diagnosisInfo,
         splTokenList,
         userTokens,
         selectedAsset,
@@ -1171,6 +1211,8 @@ const AppStateProvider: React.FC = ({ children }) => {
         recurringBuys,
         loadingRecurringBuys,
         highLightableMultisigId,
+        unstakeAmount,
+        unstakeStartDate,
         setTheme,
         setDtailsPanelOpen,
         setShouldLoadTokens,
@@ -1206,6 +1248,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         openStreamById,
         getStreamActivity,
         setCustomStreamDocked,
+        setDiagnosisInfo,
         setTransactions,
         setSelectedAsset,
         setAccountAddress,
@@ -1216,7 +1259,9 @@ const AppStateProvider: React.FC = ({ children }) => {
         setLoadingStreamsSummary,
         setRecurringBuys,
         setLoadingRecurringBuys,
-        setHighLightableMultisigId
+        setHighLightableMultisigId,
+        setUnstakeAmount,
+        setUnstakeStartDate
       }}>
       {children}
     </AppStateContext.Provider>

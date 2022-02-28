@@ -1,4 +1,4 @@
-import { PublicKey } from "@solana/web3.js";
+import { Keypair, PublicKey, SignaturePubkeyPair } from "@solana/web3.js";
 import { OperationType } from "./enums";
 
 export enum MultisigTransactionStatus {
@@ -7,10 +7,12 @@ export enum MultisigTransactionStatus {
   // Approved by the required amount of signers
   Approved = 1,
   // Successfully executed (didExecute = true)
-  Executed = 2
+  Executed = 2,
+  // Rejected by any owner
+  Rejected = 3
 };
 
-export type MultisigAccountInfo = {
+export type Multisig = {
   id: PublicKey;
   label: string;
   address: PublicKey;
@@ -20,9 +22,23 @@ export type MultisigAccountInfo = {
   ownerSeqNumber: number;
   createdOnUtc: Date;
   pendingTxsAmount: number;
+  version: number;
 };
 
-export type MultisigTransactionInfo = {
+export type MultisigV2 = {
+  id: PublicKey;
+  label: string;
+  address: PublicKey;
+  owners: MultisigParticipant[];
+  threshold: number;
+  nounce: number;
+  ownerSeqNumber: number;
+  createdOnUtc: Date;
+  pendingTxsAmount: number;
+  version: number
+};
+
+export type MultisigTransaction = {
   id: PublicKey;
   operation: OperationType;
   multisig: PublicKey;
@@ -32,6 +48,12 @@ export type MultisigTransactionInfo = {
   executedOn: Date | undefined;
   status: MultisigTransactionStatus;
   accounts: any[];
+  data: Buffer;
+  keypairs: Keypair[];
+  proposer: PublicKey | undefined;
+  pdaTimestamp: number | undefined,
+  pdaBump: number | undefined;
+  didSigned: boolean; // this should be a number needs to be changed in the program (0 = not signed, 1 = signed, 2 = rejected)
 }
 
 export type MintTokensInfo = {
@@ -55,7 +77,26 @@ export type MultisigVault = {
   state: number;
 }
 
+export type MultisigMint = {
+  address: PublicKey;
+  isInitialized: boolean;
+  decimals: number;
+  supply: any;
+  mintAuthority: PublicKey;
+  freezeAuthority: PublicKey;
+}
+
 export type MultisigParticipant = {
-  name: string;
   address: string;
+  name: string;
+}
+
+export type CreateMintPayload = {
+  decimals: number;
+}
+
+export type SetMintAuthPayload = {
+  multisig: string;
+  mint: string;
+  newAuthority: number;
 }

@@ -7,15 +7,15 @@ import { useTranslation } from 'react-i18next';
 import { consoleOut, getRateIntervalInSeconds, getTransactionStatusForLogs } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
 import { TokenInfo } from '@solana/spl-token-registry';
-import { Connection, PublicKey, Transaction } from '@solana/web3.js';
-import { OperationType, PaymentRateType, TransactionStatus, WhitelistClaimType } from '../../models/enums';
+import { Connection, Keypair, PublicKey, Transaction } from '@solana/web3.js';
+import { PaymentRateType, TransactionStatus, WhitelistClaimType } from '../../models/enums';
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
 import { appConfig, customLogger } from '../..';
 import { LoadingOutlined } from '@ant-design/icons';
 import { getWhitelistAllocation, sendRecordClaimTxRequest, sendSignClaimTxRequest } from '../../utils/api';
 import { Allocation } from '../../models/common-types';
 import CountUp from 'react-countup';
-import { isError, updateCreateStream2Tx } from '../../utils/transactions';
+import { isError } from '../../utils/transactions';
 import { calculateActionFees, MSP, MSP_ACTIONS, TransactionFees } from '@mean-dao/msp';
 import { useConnectionConfig } from '../../contexts/connection';
 import { useNavigate } from 'react-router-dom';
@@ -236,9 +236,9 @@ export const AirdropRedeem = (props: {
           treasury,                                                         // treasury
           beneficiary,                                                      // beneficiary
           associatedToken,                                                  // associatedToken
+          Keypair.generate(),
           streamName,                                                       // streamName
           allocation,                                                       // allocationAssigned
-          allocation,                                                       // allocationReserved
           rateAmount,                                                       // rateAmount
           getRateIntervalInSeconds(PaymentRateType.PerMonth),               // rateIntervalInSeconds
           now,                                                              // startUtc
@@ -338,7 +338,7 @@ export const AirdropRedeem = (props: {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logError('Create Airdrop Claim transaction failed', { transcript: transactionLog });
+            customLogger.logWarning('Create Airdrop Claim transaction failed', { transcript: transactionLog });
             return false;
           });
       } else {

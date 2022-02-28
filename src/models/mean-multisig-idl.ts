@@ -8,9 +8,19 @@ const idl: Idl = {
       "name": "createMultisig",
       "accounts": [
         {
+          "name": "proposer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
           "name": "multisig",
           "isMut": true,
           "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
         }
       ],
       "args": [
@@ -37,6 +47,39 @@ const idl: Idl = {
       ]
     },
     {
+      "name": "editMultisig",
+      "accounts": [
+        {
+          "name": "multisig",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "multisigSigner",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "owners",
+          "type": {
+            "vec": {
+              "defined": "Owner"
+            }
+          }
+        },
+        {
+          "name": "threshold",
+          "type": "u64"
+        },
+        {
+          "name": "label",
+          "type": "string"
+        }
+      ]
+    },
+    {
       "name": "createTransaction",
       "accounts": [
         {
@@ -51,7 +94,7 @@ const idl: Idl = {
         },
         {
           "name": "proposer",
-          "isMut": false,
+          "isMut": true,
           "isSigner": true
         }
       ],
@@ -75,6 +118,14 @@ const idl: Idl = {
         {
           "name": "data",
           "type": "bytes"
+        },
+        {
+          "name": "pdaTimestamp",
+          "type": "u64"
+        },
+        {
+          "name": "pdaBump",
+          "type": "u8"
         }
       ]
     },
@@ -83,7 +134,7 @@ const idl: Idl = {
       "accounts": [
         {
           "name": "multisig",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
@@ -93,86 +144,11 @@ const idl: Idl = {
         },
         {
           "name": "owner",
-          "isMut": false,
+          "isMut": true,
           "isSigner": true
         }
       ],
       "args": []
-    },
-    {
-      "name": "setOwnersAndChangeThreshold",
-      "accounts": [
-        {
-          "name": "multisig",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "multisigSigner",
-          "isMut": false,
-          "isSigner": true
-        }
-      ],
-      "args": [
-        {
-          "name": "owners",
-          "type": {
-            "vec": {
-              "defined": "Owner"
-            }
-          }
-        },
-        {
-          "name": "threshold",
-          "type": "u64"
-        }
-      ]
-    },
-    {
-      "name": "setOwners",
-      "accounts": [
-        {
-          "name": "multisig",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "multisigSigner",
-          "isMut": false,
-          "isSigner": true
-        }
-      ],
-      "args": [
-        {
-          "name": "owners",
-          "type": {
-            "vec": {
-              "defined": "Owner"
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "changeThreshold",
-      "accounts": [
-        {
-          "name": "multisig",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "multisigSigner",
-          "isMut": false,
-          "isSigner": true
-        }
-      ],
-      "args": [
-        {
-          "name": "threshold",
-          "type": "u64"
-        }
-      ]
     },
     {
       "name": "executeTransaction",
@@ -194,6 +170,41 @@ const idl: Idl = {
         }
       ],
       "args": []
+    },
+    {
+      "name": "executeTransactionPda",
+      "accounts": [
+        {
+          "name": "multisig",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "multisigSigner",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "pdaAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "transaction",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "pdaTimestamp",
+          "type": "u64"
+        },
+        {
+          "name": "pdaBump",
+          "type": "u8"
+        }
+      ]
     }
   ],
   accounts: [
@@ -231,17 +242,58 @@ const idl: Idl = {
           {
             "name": "pendingTxs",
             "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "MultisigV2",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owners",
+            "type": {
+              "array": [
+                {
+                  "defined": "OwnerData"
+                },
+                10
+              ]
+            }
           },
           {
-            "name": "ownersNames",
+            "name": "version",
+            "type": "u8"
+          },
+          {
+            "name": "nonce",
+            "type": "u8"
+          },
+          {
+            "name": "label",
             "type": {
-              "vec": {
-                "array": [
-                  "u8",
-                  32
-                ]
-              }
+              "array": [
+                "u8",
+                32
+              ]
             }
+          },
+          {
+            "name": "ownerSetSeqno",
+            "type": "u32"
+          },
+          {
+            "name": "threshold",
+            "type": "u64"
+          },
+          {
+            "name": "pendingTxs",
+            "type": "u64"
+          },
+          {
+            "name": "createdOn",
+            "type": "u64"
           }
         ]
       }
@@ -292,12 +344,33 @@ const idl: Idl = {
           {
             "name": "operation",
             "type": "u8"
+          },
+          {
+            "name": "keypairs",
+            "type": {
+              "vec": {
+                "array": [
+                  "u8",
+                  64
+                ]
+              }
+            }
+          },
+          {
+            "name": "proposer",
+            "type": "publicKey"
+          },
+          {
+            "name": "pdaTimestamp",
+            "type": "u64"
+          },
+          {
+            "name": "pdaBump",
+            "type": "u8"
           }
         ]
       }
-    }
-  ],
-  types: [
+    },
     {
       "name": "Owner",
       "type": {
@@ -310,6 +383,50 @@ const idl: Idl = {
           {
             "name": "name",
             "type": "string"
+          }
+        ]
+      }
+    }
+  ],
+  types: [
+    {
+      "name": "OwnerData",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "address",
+            "type": "publicKey"
+          },
+          {
+            "name": "name",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Keypair",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "publicKey",
+            "type": "publicKey"
+          },
+          {
+            "name": "secretKey",
+            "type": {
+              "array": [
+                "u8",
+                64
+              ]
+            }
           }
         ]
       }
@@ -385,6 +502,21 @@ const idl: Idl = {
       "code": 6009,
       "name": "OwnerNameTooLong",
       "msg": "Owner name must have less than 32 bytes"
+    },
+    {
+      "code": 6010,
+      "name": "InvalidMultisigNonce",
+      "msg": "Multisig nonce is not valid"
+    },
+    {
+      "code": 6011,
+      "name": "InvalidMultisigVersion",
+      "msg": "Multisig version is not valid"
+    },
+    {
+      "code": 6012,
+      "name": "InvalidOwnerSetSeqNumber",
+      "msg": "Multisig owner set secuency number is not valid"
     }
   ]
 }
