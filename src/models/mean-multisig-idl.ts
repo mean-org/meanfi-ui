@@ -108,17 +108,6 @@ const idl: Idl = {
           "type": "u8"
         },
         {
-          "name": "keypairs",
-          "type": {
-            "vec": {
-              "array": [
-                "u8",
-                64
-              ]
-            }
-          }
-        },
-        {
           "name": "accs",
           "type": {
             "vec": {
@@ -129,6 +118,14 @@ const idl: Idl = {
         {
           "name": "data",
           "type": "bytes"
+        },
+        {
+          "name": "pdaTimestamp",
+          "type": "u64"
+        },
+        {
+          "name": "pdaBump",
+          "type": "u8"
         }
       ]
     },
@@ -173,6 +170,41 @@ const idl: Idl = {
         }
       ],
       "args": []
+    },
+    {
+      "name": "executeTransactionPda",
+      "accounts": [
+        {
+          "name": "multisig",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "multisigSigner",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "pdaAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "transaction",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "pdaTimestamp",
+          "type": "u64"
+        },
+        {
+          "name": "pdaBump",
+          "type": "u8"
+        }
+      ]
     }
   ],
   accounts: [
@@ -327,6 +359,14 @@ const idl: Idl = {
           {
             "name": "proposer",
             "type": "publicKey"
+          },
+          {
+            "name": "pdaTimestamp",
+            "type": "u64"
+          },
+          {
+            "name": "pdaBump",
+            "type": "u8"
           }
         ]
       }

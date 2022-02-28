@@ -23,7 +23,8 @@ import {
   StatsView,
   MultisigVaultsView,
   MultisigProgramsView,
-  MultisigMintsView
+  MultisigMintsView,
+  MultisigTreasuriesStreams
 } from "./pages";
 
 import { ServiceUnavailableView } from "./pages/service-unavailable";
@@ -53,7 +54,6 @@ export function AppRoutes() {
                       <Route path="/accounts/streams" element={<AccountsView />} />
                       <Route path="/faucet" element={<FaucetView />} />
                       <Route path="/transfers" element={<TransfersView />} />
-                      <Route path="/treasuries" element={<TreasuriesView />} />
                       <Route path="/payroll" element={<PayrollView />} />
                       <Route path="/exchange" element={<SwapView />} />
                       {(isProd() || isLocal()) && (
@@ -72,6 +72,8 @@ export function AppRoutes() {
                       {/* <Route path="/staking" element={<StakingView />} /> */}
                       <Route path="/stats" element={<StatsView />} />
                       <Route path="/custody" element={<CustodyView />} />
+                      <Route path="/treasuries" element={<TreasuriesView />} />
+                      <Route path="/treasuries/:id/streams" element={<MultisigTreasuriesStreams />} />
                       <Route path="/multisig" element={<MultisigView />} />
                       <Route path="/multisig-mints" element={<MultisigMintsView />} />
                       <Route path="/multisig-vaults" element={<MultisigVaultsView />} />

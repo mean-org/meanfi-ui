@@ -8,6 +8,7 @@ export { IdoLiveView } from './ido-live';
 export { IdoView } from './ido';
 export { MultisigMintsView } from './multisig-mints';
 export { MultisigProgramsView } from './multisig-programs';
+export { MultisigTreasuryStreams as MultisigTreasuriesStreams } from './multisig-treasury-streams';
 export { MultisigVaultsView } from './multisig-vaults';
 export { MultisigView } from './multisig';
 export { NotFoundView } from './404';

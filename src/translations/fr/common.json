@@ -398,7 +398,9 @@
 			"multisig-participants": "Propriétaires actuels de Multisig",
 			"no-multisig-loaded": "Créez ou sélectionnez un compte multisig pour afficher les détails",
 			"no-multisig-selected": "Veuillez sélectionner un compte multisig pour afficher les détails",
-			"required-signatures": "Signatures requises"
+			"required-signatures": "Signatures requises",
+			"multisig-tx-approve-busy": "Approving transaction",
+			"multisig-tx-execute-busy": "Executing transaction"
 		},
 		"multisig-accounts": {
 			"no-accounts": "Aucun compte multisig disponible",
@@ -455,6 +457,7 @@
 		},
 		"multisig-treasuries": {
 			"back-to-multisig-accounts-cta": "Retour aux comptes Multisig",
+			"back-to-treasuries": "Back to treasuries",
 			"cta-change-multisig-authority": "Transfert de propriété",
 			"cta-change-multisig-authority-busy": "Modification de la multisignature",
 			"cta-close": "Fermer la trésorerie",
@@ -934,6 +937,7 @@
 			"label": "Ajouter des fonds",
 			"main-cta": "Trésorerie du fonds",
 			"main-cta-busy": "Trésorerie de financement",
+			"main-cta-fund-stream": "Fund Money Stream",
 			"modal-title": "Ajouter des fonds au Trésor",
 			"modal-title-fund-stream": "Add funds to a Money Stream",
 			"money-stream-to-topup-label": "Money Stream to top up",
@@ -993,6 +997,9 @@
 		"treasury-detail-heading": "Détails du Trésor",
 		"treasury-refresh-tooltip": "Refresh treasury data",
 		"treasury-list": {
+			"multisig-treasury-heading": "Multisig Treasuries - {{treasuryName}}",
+			"multisig-treasury-help": "Below is a list of all the treasuries that are connected to this Multsig",
+			"multisig-treasuries-view-all-cta": "Show All Treasuries",
 			"multisig-treasury-label": "Trésorerie multisig",
 			"no-treasuries": "Aucune trésorerie disponible",
 			"not-connected": "Veuillez connecter votre portefeuille pour voir vos trésoreries",

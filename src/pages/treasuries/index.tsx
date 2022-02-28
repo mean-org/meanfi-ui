@@ -24,9 +24,7 @@ import {
   getTokenByMintAddress,
   getTokenSymbol,
   getTxIxResume,
-  makeDecimal,
   shortenAddress,
-  toTokenAmount,
   toUiAmount
 } from '../../utils/utils';
 import { Button, Col, Divider, Dropdown, Empty, Menu, Modal, Row, Space, Spin, Tooltip } from 'antd';
@@ -41,7 +39,6 @@ import {
   isProd,
   getIntervalFromSeconds,
   delay,
-  getShortDate,
   isLocal,
   isDev
 } from '../../utils/ui';
@@ -56,7 +53,7 @@ import useWindowSize from '../../hooks/useWindowResize';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { notify, openNotification } from '../../utils/notifications';
-import { IconBank, IconClock, IconExternalLink, IconRefresh, IconShowAll, IconSort, IconTrash } from '../../Icons';
+import { IconBank, IconClock, IconExternalLink, IconRefresh, IconSort, IconTrash } from '../../Icons';
 import { TreasuryOpenModal } from '../../components/TreasuryOpenModal';
 import { MSP_ACTIONS, StreamInfo, STREAM_STATE, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { TreasuryCreateModal } from '../../components/TreasuryCreateModal';
@@ -79,7 +76,17 @@ import { TreasuryTopupParams } from '../../models/common-types';
 import { TokenInfo } from '@solana/spl-token-registry';
 import './style.less';
 import { Constants, refreshTreasuryBalanceInstruction } from '@mean-dao/money-streaming';
-import { TransactionFees, MSP_ACTIONS as MSP_ACTIONS_V2, calculateActionFees as calculateActionFeesV2, Treasury, Stream, STREAM_STATUS, MSP, TreasuryType, Constants as MSPV2Constants } from '@mean-dao/msp';
+import {
+  TransactionFees,
+  MSP_ACTIONS as MSP_ACTIONS_V2,
+  calculateActionFees as calculateActionFeesV2,
+  Treasury,
+  Stream,
+  STREAM_STATUS,
+  MSP,
+  TreasuryType,
+  Constants as MSPV2Constants
+} from '@mean-dao/msp';
 import BN from 'bn.js';
 import { InfoIcon } from '../../components/InfoIcon';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -402,24 +409,26 @@ export const TreasuriesView = () => {
 
   const getAllUserV2Treasuries = useCallback(async () => {
 
-    if (!connection || !publicKey || loadingTreasuries || !multisigAccounts || !msp) { return []; }
+    if (!connection || !publicKey || loadingTreasuries || !msp) { return []; }
 
-    let treasuries: Treasury[] = [];
+    let treasuries = await msp.listTreasuries(publicKey);
 
-    if (!selectedMultisig) {
-      treasuries = await msp.listTreasuries(publicKey);
-    }
+    if (selectedMultisig && multisigAccounts) {
 
-    let filterMultisigAccounts = selectedMultisig 
-      ? [selectedMultisig.address]
-      : multisigAccounts.map(m => m.address);
+      let multisigTreasuries: any[] = [];
 
-    if (filterMultisigAccounts) {
-      for (let key of filterMultisigAccounts) {
-        let multisigTreasuries = await msp.listTreasuries(key);
-        treasuries.push(...multisigTreasuries);
+      let filterMultisigAccounts = selectedMultisig
+        ? [selectedMultisig.address]
+        : multisigAccounts.map(m => m.address);
+
+      if (filterMultisigAccounts) {
+        for (let key of filterMultisigAccounts) {
+          multisigTreasuries.push(...(await msp.listTreasuries(key)));
+        }
       }
-    }    
+
+      treasuries = multisigTreasuries;
+    } 
 
     return treasuries.filter(t => !t.autoClose);
 
@@ -433,6 +442,7 @@ export const TreasuriesView = () => {
   ]);
 
   const refreshTreasuries = useCallback((reset = false) => {
+    
     if (!connection || !publicKey) { return; }
 
     if (msp && ms && fetchTxInfoStatus !== "fetching") {
@@ -465,7 +475,6 @@ export const TreasuriesView = () => {
               
           if (treasuryAccumulator.length) {
             if (reset) {
-              console.log('treasuryAddress under reset:', treasuryAddress);
               if (treasuryAddress) {
                 // treasuryAddress was passed in as query param?
                 const itemFromServer = treasuryAccumulator.find(i => i.id === treasuryAddress);
@@ -495,12 +504,9 @@ export const TreasuriesView = () => {
             }
 
             if (item) {
-              // setTreasuryDetails(item);
               const isNewTreasury = (item as Treasury).version && (item as Treasury).version >= 2 ? true : false;
               openTreasuryById(item.id as string, isNewTreasury);
             }
-
-            // setLoadingTreasuries(false);
 
           } else {
             setTreasuryDetails(undefined);
@@ -619,13 +625,6 @@ export const TreasuriesView = () => {
     connection,
     refreshUserBalances
   ]);
-
-  /**
-   * Block of code from multisig
-   * - Gets the list of multisigs for the user
-   * - Parse account for all items in the list
-   * - Select the matching item in the list by the supplied multisigAddress
-   */
 
   const readAllMultisigV2Accounts = useCallback(async (wallet: PublicKey) => { // V2
 
@@ -833,7 +832,7 @@ export const TreasuriesView = () => {
     const timeout = setTimeout(() => {
       if (location.search) {
         consoleOut(`try to select multisig ${multisigAddress} from list`, multisigAccounts, 'blue');
-        const selected = multisigAccounts.find(m => m.id.toBase58() === multisigAddress);
+        const selected = multisigAccounts.find(m => m.address.toBase58() === multisigAddress);
         if (selected) {
           consoleOut('selectedMultisig:', selected, 'blue');
           setSelectedMultisig(selected);
@@ -856,14 +855,25 @@ export const TreasuriesView = () => {
 
   // Load treasuries once per page access
   useEffect(() => {
+    
     if (!publicKey || !connection || treasuriesLoaded || loadingTreasuries || loadingMultisigAccounts || !multisigAccounts) {
       return;
+    }
+
+    const isMultisigInAccountList = (id: string) => {
+      return multisigAccounts.some(m => m.address.toBase58() === id);
     }
 
     // Verify query param
     const params = new URLSearchParams(location.search);
     if (params.has('treasury') && !treasuryAddress) {
       consoleOut('Wait for treasuryAddress on next render...', '', 'blue');
+      return;
+    } else if (params.has('multisig') && !multisigAddress) {
+      consoleOut('Wait for multisigAddress on next render...', '', 'blue');
+      return;
+    } else if (params.has('multisig') && multisigAddress && isMultisigInAccountList(multisigAddress) && !selectedMultisig ) {
+      consoleOut('Wait for selectedMultisig on next render...', '', 'blue');
       return;
     }
 
@@ -874,7 +884,9 @@ export const TreasuriesView = () => {
     publicKey,
     connection,
     treasuryAddress,
+    multisigAddress,
     location.search,
+    selectedMultisig,
     multisigAccounts,
     treasuriesLoaded,
     loadingTreasuries,
@@ -1047,6 +1059,7 @@ export const TreasuriesView = () => {
     }
   }, [
     publicKey,
+    multisigAccounts,
     selectedMultisig,
     fetchTxInfoStatus,
     lastSentTxSignature,
@@ -1155,7 +1168,7 @@ export const TreasuriesView = () => {
   ]);
 
   const isMultisigAvailable = useCallback((): boolean => {
-    return multisigAddress && selectedMultisig && selectedMultisig.id.toBase58() === multisigAddress
+    return multisigAddress && selectedMultisig && selectedMultisig.address.toBase58() === multisigAddress
             ? true
             : false;
   }, [
@@ -1566,7 +1579,10 @@ export const TreasuriesView = () => {
     getTransactionFeesV2,
     resetTransactionStatus
   ]);
-  const closeCreateTreasuryModal = useCallback(() => setIsCreateTreasuryModalVisibility(false), []);
+  const closeCreateTreasuryModal = useCallback(() => {
+    setIsCreateTreasuryModalVisibility(false);
+    resetTransactionStatus();
+  }, [resetTransactionStatus]);
 
   const onAcceptCreateTreasury = (data: TreasuryCreateOptions) => {
     consoleOut('treasury create options:', data, 'blue');
@@ -1595,11 +1611,9 @@ export const TreasuriesView = () => {
       });
     }
 
-    resetTransactionStatus();
   }, [
     retryOperationPayload,
     closeCreateTreasuryModal,
-    resetTransactionStatus,
     refreshTokenBalance,
     t,
   ]);
@@ -1717,9 +1731,10 @@ export const TreasuriesView = () => {
       let tx = multisigClient.transaction.createTransaction(
         MSPV2Constants.MSP, 
         OperationType.TreasuryRefreshBalance,
-        [],
         ixAccounts as any,
         ixData as any,
+        new BN(0),
+        new BN(0),
         {
           accounts: {
             multisig: multisig.id,
@@ -1995,12 +2010,15 @@ export const TreasuriesView = () => {
 
       if (!connection || !msp || !publicKey) { return null; }
 
+      const treasuryType = data.type === 'Open' ? TreasuryType.Open : TreasuryType.Lock;
+
       if (!data.multisig) {
+        console.log('data multisig', data.multisig);
         return await msp.createTreasury(
           new PublicKey(data.treasurer),                    // treasurer
           new PublicKey(data.treasurer),                    // treasurer
           data.label,                                       // label
-          data.type === 'Open' ? TreasuryType.Open : TreasuryType.Lock // type
+          treasuryType                                      // type
         );
       }
 
@@ -2015,7 +2033,7 @@ export const TreasuriesView = () => {
         publicKey,                                        // payer
         multisig.address,                                 // treasurer
         data.label,                                       // label
-        data.type,                                        // type
+        treasuryType,                                     // type
         true,                                             // solFeePayedByTreasury = true
       );
 
@@ -2032,9 +2050,10 @@ export const TreasuriesView = () => {
       let tx = multisigClient.transaction.createTransaction(
         MSPV2Constants.MSP, 
         OperationType.TreasuryCreate,
-        [],
         ixAccounts as any,
         ixData as any,
+        new BN(0),
+        new BN(0),
         {
           accounts: {
             multisig: multisig.id,
@@ -2079,7 +2098,7 @@ export const TreasuriesView = () => {
         label: createOptions.treasuryName,                                                                // label
         type: createOptions.treasuryType === TreasuryType.Open         // type
           ? 'Open'
-          : 'Locked',
+          : 'Lock',
         multisig: createOptions.multisigId                                                                // multisig
       };
 
@@ -2464,21 +2483,73 @@ export const TreasuriesView = () => {
 
       if (data.stream === '') {
         return await msp.addFunds(
-          new PublicKey(data.payer),                              // payer
-          new PublicKey(data.contributor),                              // contributor
-          new PublicKey(data.treasury),                               // treasury
-          new PublicKey(data.associatedToken),                        // associatedToken
+          new PublicKey(data.payer),                   // payer
+          new PublicKey(data.contributor),             // contributor
+          new PublicKey(data.treasury),                // treasury
+          new PublicKey(data.associatedToken),         // associatedToken
           data.amount,                                 // amount
         );
       }
 
-      return await msp.fundStream(
-        new PublicKey(data.payer),                              // payer
-        new PublicKey(data.contributor),                              // contributor
-        new PublicKey(data.treasury),                               // treasury
-        new PublicKey(data.stream),                        // stream
+      if (!isMultisigTreasury()) {
+        return await msp.allocate(
+          new PublicKey(data.payer),                   // payer
+          new PublicKey(data.contributor),             // treasurer
+          new PublicKey(data.treasury),                // treasury
+          new PublicKey(data.stream),                  // stream
+          data.amount,                                 // amount
+        );
+      }
+
+      if (!treasuryDetails || !multisigClient || !multisigAccounts || !publicKey) { return null; }
+
+      let treasury = treasuryDetails as Treasury;
+      let multisig = multisigAccounts.filter(m => m.address.toBase58() === treasury.treasurer)[0];
+
+      if (!multisig) { return null; }
+
+      let allocateTx = await msp.allocate(
+        new PublicKey(data.payer),                   // payer
+        new PublicKey(multisig.address),             // treasurer
+        new PublicKey(data.treasury),                // treasury
+        new PublicKey(data.stream),                  // stream
         data.amount,                                 // amount
-      )
+      );
+
+      const ixData = Buffer.from(allocateTx.instructions[0].data);
+      const ixAccounts = allocateTx.instructions[0].keys;
+      const transaction = Keypair.generate();
+      const txSize = 1000;
+      const txSigners = [transaction];
+      const createIx = await multisigClient.account.transaction.createInstruction(
+        transaction,
+        txSize
+      );
+      
+      let tx = multisigClient.transaction.createTransaction(
+        MSPV2Constants.MSP, 
+        OperationType.StreamAddFunds,
+        ixAccounts as any,
+        ixData as any,
+        new BN(0),
+        new BN(0),
+        {
+          accounts: {
+            multisig: multisig.id,
+            transaction: transaction.publicKey,
+            proposer: publicKey as PublicKey,
+          },
+          preInstructions: [createIx],
+          signers: txSigners,
+        }
+      );
+
+      tx.feePayer = publicKey;
+      let { blockhash } = await connection.getRecentBlockhash("finalized");
+      tx.recentBlockhash = blockhash;
+      tx.partialSign(...txSigners);
+
+      return tx;
     }
 
     const createTxV2 = async (): Promise<boolean> => {
@@ -2888,7 +2959,7 @@ export const TreasuriesView = () => {
 
       let closeTreasury = await msp.closeTreasury(
         publicKey,                                                // payer
-        new PublicKey(multisig.owners[0].address),             // TODO: This should come from the UI             
+        publicKey,                          // TODO: This should come from the UI         
         new PublicKey(data.treasury),                             // treasury
       );
 
@@ -2905,9 +2976,10 @@ export const TreasuriesView = () => {
       let tx = multisigClient.transaction.createTransaction(
         MSPV2Constants.MSP, 
         OperationType.TreasuryClose,
-        [],
         ixAccounts as any,
         ixData as any,
+        new BN(0),
+        new BN(0),
         {
           accounts: {
             multisig: multisig.id,
@@ -3327,7 +3399,7 @@ export const TreasuriesView = () => {
 
       let closeStream = await msp.closeStream(
         new PublicKey(data.payer),             // payer
-        multisig.address, // TODO: This should come from the UI 
+        new PublicKey(data.payer),             // TODO: This should come from the UI 
         new PublicKey(data.stream),            // stream,
         data.closeTreasury                     // closeTreasury
       );
@@ -3344,10 +3416,11 @@ export const TreasuriesView = () => {
       
       let tx = multisigClient.transaction.createTransaction(
         MSPV2Constants.MSP, 
-        OperationType.TreasuryCreate,
-        [],
+        OperationType.StreamClose,
         ixAccounts as any,
         ixData as any,
+        new BN(0),
+        new BN(0),
         {
           accounts: {
             multisig: multisig.id,
@@ -3769,9 +3842,10 @@ export const TreasuriesView = () => {
       let tx = multisigClient.transaction.createTransaction(
         MSPV2Constants.MSP, 
         OperationType.StreamPause,
-        [],
         ixAccounts as any,
         ixData as any,
+        new BN(0),
+        new BN(0),
         {
           accounts: {
             multisig: multisig.id,
@@ -4193,9 +4267,10 @@ export const TreasuriesView = () => {
       let tx = multisigClient.transaction.createTransaction(
         MSPV2Constants.MSP, 
         OperationType.StreamResume,
-        [],
         ixAccounts as any,
         ixData as any,
+        new BN(0),
+        new BN(0),
         {
           accounts: {
             multisig: multisig.id,
@@ -4524,8 +4599,17 @@ export const TreasuriesView = () => {
         </Menu.Item>
         <Menu.Item key="6" onClick={() => {
             setHighLightableStreamId(item.id as string);
-            refreshStreamList();
-            navigate('/accounts/streams');
+            if (isMultisigTreasury(treasuryDetails)) {
+              const urlBase = '/treasuries/';
+              const url = `${urlBase}${(treasuryDetails as Treasury).id}/streams`;
+              consoleOut('With treasurer:', (treasuryDetails as Treasury).treasurer, 'blue');
+              setHighLightableMultisigId((treasuryDetails as Treasury).treasurer as string);
+              consoleOut('Heading to:', url, 'blue');
+              navigate(url);
+            } else {
+              refreshStreamList();
+              navigate('/accounts/streams');
+            }
           }}>
           <span className="menu-item-text">Show stream</span>
         </Menu.Item>
@@ -4806,20 +4890,6 @@ export const TreasuriesView = () => {
                 </Button>
               }
 
-              {isUnderDevelopment() && (
-                isMultisigAvailable() && (
-                  <Button
-                    type="default"
-                    shape="round"
-                    size="small"
-                    className="thin-stroke"
-                    disabled={isTxInProgress() || loadingMultisigAccounts || isAnythingLoading()}
-                    onClick={() => {}}>
-                    {t('treasuries.treasury-detail.cta-withdraw-multisig-treasury')}
-                  </Button>
-                )
-              )}
-
               <Button
                 type="default"
                 shape="round"
@@ -4831,12 +4901,36 @@ export const TreasuriesView = () => {
                   loadingTreasuryDetails ||
                   (!treasuryDetails || !isNewTreasury || v2.balance - v2.allocationAssigned <= 0)
                 }
-                onClick={showCreateStreamModal}>
+                onClick={(showCreateStreamModal)}>
                 {isCreatingStream() && (<LoadingOutlined />)}
                 {isCreatingStream()
                   ? t('treasuries.treasury-streams.create-stream-main-cta-busy')
                   : t('treasuries.treasury-streams.create-stream-main-cta')}
               </Button>
+
+              {treasuryDetails && isMultisigTreasury() && (
+                <Button
+                  type="default"
+                  shape="round"
+                  size="small"
+                  className="thin-stroke"
+                  disabled={
+                    isTxInProgress() ||
+                    loadingTreasuries ||
+                    loadingTreasuryDetails ||
+                    loadingTreasuryStreams
+                  }
+                  onClick={() => {
+                    const urlBase = '/treasuries/';
+                    const url = `${urlBase}${(treasuryDetails as Treasury).id}/streams`;
+                    consoleOut('Heading to:', url, 'blue');
+                    consoleOut('With treasurer:', (treasuryDetails as Treasury).treasurer, 'blue');
+                    setHighLightableMultisigId((treasuryDetails as Treasury).treasurer as string);
+                    navigate(url);
+                  }}>
+                  View streams
+                </Button>
+              )}
             </>
           ) : (
             <div className="flex-row align-items">
@@ -4879,12 +4973,12 @@ export const TreasuriesView = () => {
 
   const renderTreasuryList = (
     <>
-    {isMultisigAvailable() && selectedMultisig && (
+    {/* {isMultisigAvailable() && selectedMultisig && (
       <div className="left-panel-inner-heading">
-        <div className="font-bold">Multsig Treasuries - [{selectedMultisig.label}]</div>
-        <div>Below is a list of all the treasuries that are connected to this Multsig</div>
+        <div className="font-bold">{t('treasuries.treasury-list.multisig-treasury-heading', { treasuryName: selectedMultisig.label })}</div>
+        <div>{t('treasuries.treasury-list.multisig-treasury-help')}</div>
       </div>
-    )}
+    )} */}
     {treasuryList && treasuryList.length > 0 ? (
       treasuryList.map((item, index) => {
         const v1 = item as TreasuryInfo;
@@ -4974,12 +5068,12 @@ export const TreasuriesView = () => {
       )}
       </>
     )}
-    {isMultisigAvailable() && (
+    {/* {isMultisigAvailable() && (
       <div className="py-3 px-3 simplelink" onClick={() => resetTreasuriesContext()}>
         <IconShowAll className="mean-svg-icons align-middle" />
-        <span className="ml-1 align-middle">Show All Treasuries</span>
+        <span className="ml-1 align-middle">{t('treasuries.treasury-list.multisig-treasuries-view-all-cta')}</span>
       </div>
-    )}
+    )} */}
     </>
   );
 
@@ -5153,9 +5247,9 @@ export const TreasuriesView = () => {
                       <Spin spinning={loadingTreasuries || loadingTreasuryDetails}>
                         {treasuryDetails && (
                           <>
-                            {isMultisigTreasury() && (
+                            {/* {isMultisigTreasury() && (
                               renderMultisigTxReminder()
-                            )}
+                            )} */}
                             {renderTreasuryMeta()}
                             <Divider className="activity-divider" plain></Divider>
                             {(!treasuryDetails.autoClose || (treasuryDetails.autoClose && getTreasuryTotalStreams(treasuryDetails) > 0 )) && (
