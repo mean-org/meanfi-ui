@@ -338,11 +338,13 @@
 			"multisig-label-placeholder": "Digite um nome para sua conta multisig",
 			"multisig-no-participants": "Nenhum participante adicionado ainda",
 			"multisig-participants": "Signatários válidos ({{numParticipants}} de {{maxParticipants}})",
+			"multisig-participants-warning message": "Não é recomendado criar um Multisig com o mesmo número de participantes que as assinaturas necessárias",
 			"multisig-threshold-input-empty": "Insira um valor mínimo de assinaturas obrigatório",
 			"multisig-threshold-input-label": "Assinaturas mínimas exigidas",
 			"multisig-threshold-input-max": "O número máximo de assinaturas é 10",
 			"multisig-threshold-input-max-warn": "Número máximo de assinaturas atingido (10)",
 			"multisig-threshold-placeholder": "Digite um mínimo de assinaturas necessárias para sua conta multisig",
+			"multisig-threshold-question-mark-tooltip": "As best practice, always have more multisig signers than the minimum required signers. A 2-of-3 multisig is the most basic setup where 2 of the 3 participants are required to execute a transaction.",
 			"success-message": "Sua nova conta multisig foi criada com sucesso."
 		},
 		"create-new-multisig-account-cta": "Criar multisig",

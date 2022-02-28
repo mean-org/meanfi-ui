@@ -1,6 +1,6 @@
 import React, { useContext, useEffect } from 'react';
 import { useState } from 'react';
-import { Modal, Button, Spin } from 'antd';
+import { Modal, Button, Spin, Tooltip } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { AppStateContext } from '../../contexts/appstate';
@@ -14,6 +14,7 @@ import { MultisigParticipants } from '../MultisigParticipants';
 import { MultisigParticipant } from '../../models/multisig';
 import { useWallet } from '../../contexts/wallet';
 import { MAX_MULTISIG_PARTICIPANTS } from '../../constants';
+import { IconHelpCircle, IconWarning } from '../../Icons';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -39,7 +40,7 @@ export const MultisigCreateModal = (props: {
   // When modal goes visible, add current wallet address as first participant
   useEffect(() => {
     if (publicKey && props.isVisible) {
-      setMultisigThreshold(1);
+      setMultisigThreshold(2);
       const items: MultisigParticipant[] = [];
       items.push({
           name: `Owner 1`,
@@ -90,6 +91,7 @@ export const MultisigCreateModal = (props: {
 
   const isFormValid = () => {
     return  multisigThreshold &&
+            multisigThreshold >= 2 &&
             multisigThreshold <= MAX_MULTISIG_PARTICIPANTS &&
             multisigLabel &&
             multisigOwners.length >= multisigThreshold &&
@@ -152,7 +154,14 @@ export const MultisigCreateModal = (props: {
 
             {/* Multisig threshold */}
             <div className="mb-3">
-              <div className="form-label">{t('multisig.create-multisig.multisig-threshold-input-label')}</div>
+              <div className="form-label icon-label">
+                {t('multisig.create-multisig.multisig-threshold-input-label')}
+                <Tooltip placement="top" title={t("multisig.create-multisig.multisig-threshold-question-mark-tooltip")}>
+                  <span>
+                    <IconHelpCircle className="mean-svg-icons" />
+                  </span>
+                </Tooltip>
+              </div>
               <div className={`well ${props.isBusy ? 'disabled' : ''}`}>
                 <div className="flex-fixed-right">
                   <div className="left">
@@ -169,7 +178,7 @@ export const MultisigCreateModal = (props: {
                     />
                   </div>
                 </div>
-                {!multisigThreshold || +multisigThreshold < 1 ? (
+                {!multisigThreshold || +multisigThreshold < 2 ? (
                   <span className="form-field-error">
                     {t('multisig.create-multisig.multisig-threshold-input-empty')}
                   </span>
@@ -192,7 +201,12 @@ export const MultisigCreateModal = (props: {
               }
               onParticipantsChanged={(e: MultisigParticipant[]) => setMultisigOwners(e)}
             />
-
+            {(!multisigThreshold || +multisigThreshold === multisigOwners.length) && (
+              <span className="form-field-error text-uppercase icon-label">
+                <IconWarning className="mean-svg-icons" />
+                {t('multisig.create-multisig.multisig-participants-warning message')}
+              </span>
+            )}
           </>
         ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
           <>
