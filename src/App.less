@@ -3895,7 +3895,7 @@ main section {
   }
   .icon-cell {
     position: relative;
-    flex: 0 0 30px;
+    flex: 0 0 34px;
     display: flex;
     .token-icon {
       border-radius: 50%;
@@ -3943,9 +3943,9 @@ main section {
   .description-cell {
     flex: 1 1 12rem;
     min-width: 12rem;
-    padding-left: 4px;
+    padding-left: 8px;
     .title {
-      display: inline-flex;
+      display: block;
       align-items: center;
       font-size: 16px;
       line-height: 1.2;
@@ -3959,7 +3959,7 @@ main section {
     }
   }
   .rate-cell {
-    flex: auto;
+    flex: 0 0 100px;
     padding: 0 4px 0 0;
     text-align: right;
     .rate-amount {
@@ -4114,7 +4114,7 @@ main section {
       align-items: center;
     }
     @media (max-width: 575.98px) {
-      padding: 0;
+      padding: 0 0.5rem 0 0;
       border: none;
       .bottom-ctas {
         padding-left: 0.6rem;
@@ -4132,6 +4132,7 @@ main section {
     min-height: 346px;
     .meanfi-two-panel-left,
     .meanfi-two-panel-right {
+      margin-right: -0.5rem;
       transition: transform 0.5s ease-in-out;
       height: 100%;
     }
@@ -4667,10 +4668,17 @@ main section {
 }
 
 .float-top-right {
-  position: absolute;
-  top: 0.3rem;
-  right: 0.3rem;
-  z-index: 1;
+  @media (max-width: 575.98px) {
+    position: relative;
+    text-align: right;
+    margin-bottom: 1rem;
+  }
+  @media (min-width: 576px) {
+    position: absolute;
+    top: 0.3rem;
+    right: 0.3rem;
+    z-index: 1;
+  }
 }
 
 // Utilities
