@@ -4670,16 +4670,14 @@ export const TreasuriesView = () => {
 
     return (
       <>
-        <div className="stats-row">
-          <div className="item-list-header compact">
-            <div className="header-row">
-              <div className="std-table-cell first-cell">&nbsp;</div>
-              <div className="std-table-cell responsive-cell">{t('treasuries.treasury-streams.column-activity')}</div>
-              <div className="std-table-cell fixed-width-90">{t('treasuries.treasury-streams.column-destination')}</div>
-              <div className="std-table-cell fixed-width-130">{t('treasuries.treasury-streams.column-rate')}</div>
-              <div className="std-table-cell fixed-width-72 text-right pr-1">{t('treasuries.treasury-streams.column-funds-left')}</div>
-              <div className="std-table-cell last-cell">&nbsp;</div>
-            </div>
+        <div className="item-list-header compact">
+          <div className="header-row">
+            <div className="std-table-cell first-cell">&nbsp;</div>
+            <div className="std-table-cell responsive-cell">{t('treasuries.treasury-streams.column-activity')}</div>
+            <div className="std-table-cell fixed-width-90">{t('treasuries.treasury-streams.column-destination')}</div>
+            <div className="std-table-cell fixed-width-130">{t('treasuries.treasury-streams.column-rate')}</div>
+            <div className="std-table-cell fixed-width-72 text-right pr-1">{t('treasuries.treasury-streams.column-funds-left')}</div>
+            <div className="std-table-cell last-cell">&nbsp;</div>
           </div>
         </div>
         <div className="activity-list-data-wrapper vertical-scroll">

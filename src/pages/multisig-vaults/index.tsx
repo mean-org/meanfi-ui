@@ -2844,48 +2844,50 @@ export const MultisigVaultsView = () => {
             <div className="std-table-cell text-center fixed-width-120">{t('multisig.multisig-transactions.column-pending-signatures')}</div>
           </div>
         </div>
-        {multisigPendingTxs && multisigPendingTxs.length && (
-          <div className="item-list-body compact">
-            {multisigPendingTxs.map(item => {
-              return (
-                <div
-                  key={item.id.toBase58()}
-                  style={{padding: '3px 0px'}}
-                  className={`item-list-row ${
-                    highlightedMultisigTx && highlightedMultisigTx.id.equals(item.id)
-                      ? isUiBusy() ? 'selected no-pointer click-disabled' : 'selected'
-                      : isUiBusy() ? 'no-pointer click-disabled' : 'simplelink'}`
-                  }
-                  onClick={() => showMultisigActionTransactionModal(item)}>
-                  <div className="std-table-cell responsive-cell">
-                    <span className="align-middle">{getOperationName(item.operation)}</span>
-                  </div>
-                  <div className="std-table-cell responsive-cell">
-                    <span className="align-middle">{getOperationProgram(item.operation)}</span>
-                  </div>
-                  <div className="std-table-cell fixed-width-110">
-                    <span className="align-middle">{getShortDate(item.createdOn.toString(), isCanvasTight() ? false : true)}</span>
-                  </div>
-                  <div className="std-table-cell fixed-width-90">
-                    <span className={`align-middle ${getTransactionUserStatusActionClass(item)}`}>{getTransactionUserStatusAction(item)}</span>
-                  </div>
-                  <div className="std-table-cell fixed-width-34">
-                    {
-                      item.status !== MultisigTransactionStatus.Executed ? (
-                        <span className="align-middle">{`${item.signers.filter(s => s === true).length}/${selectedMultisig.threshold}`}</span>
-                      ) : (
-                        <span className="align-middle">&nbsp;</span>
-                      )
+        <div className="activity-list-data-wrapper vertical-scroll">
+          <div className="activity-list h-100">
+            <div className="item-list-body compact">
+              {multisigPendingTxs.map(item => {
+                return (
+                  <div
+                    key={item.id.toBase58()}
+                    style={{padding: '3px 0px'}}
+                    className={`item-list-row ${
+                      highlightedMultisigTx && highlightedMultisigTx.id.equals(item.id)
+                        ? isUiBusy() ? 'selected no-pointer click-disabled' : 'selected'
+                        : isUiBusy() ? 'no-pointer click-disabled' : 'simplelink'}`
                     }
+                    onClick={() => showMultisigActionTransactionModal(item)}>
+                    <div className="std-table-cell responsive-cell">
+                      <span className="align-middle">{getOperationName(item.operation)}</span>
+                    </div>
+                    <div className="std-table-cell responsive-cell">
+                      <span className="align-middle">{getOperationProgram(item.operation)}</span>
+                    </div>
+                    <div className="std-table-cell fixed-width-110">
+                      <span className="align-middle">{getShortDate(item.createdOn.toString(), isCanvasTight() ? false : true)}</span>
+                    </div>
+                    <div className="std-table-cell fixed-width-90">
+                      <span className={`align-middle ${getTransactionUserStatusActionClass(item)}`}>{getTransactionUserStatusAction(item)}</span>
+                    </div>
+                    <div className="std-table-cell fixed-width-34">
+                      {
+                        item.status !== MultisigTransactionStatus.Executed ? (
+                          <span className="align-middle">{`${item.signers.filter(s => s === true).length}/${selectedMultisig.threshold}`}</span>
+                        ) : (
+                          <span className="align-middle">&nbsp;</span>
+                        )
+                      }
+                    </div>
+                    <div className="std-table-cell text-center fixed-width-120">
+                      <span className={`badge small ${getTransactionStatusClass(item)}`} style={{padding: '3px 5px'}}>{getTransactionStatusAction(item)}</span>
+                    </div>
                   </div>
-                  <div className="std-table-cell text-center fixed-width-120">
-                    <span className={`badge small ${getTransactionStatusClass(item)}`} style={{padding: '3px 5px'}}>{getTransactionStatusAction(item)}</span>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        )}
+        </div>
       </>
     );
   }

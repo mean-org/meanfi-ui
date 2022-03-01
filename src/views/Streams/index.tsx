@@ -2834,15 +2834,13 @@ export const Streams = () => {
     return (
       <>
         {streamActivity && streamActivity.length > 0 && (
-          <div className="stats-row">
-            <div className="item-list-header compact">
-              <div className="header-row">
-                <div className="std-table-cell first-cell">&nbsp;</div>
-                <div className="std-table-cell fixed-width-80">{t('streams.stream-activity.heading')}</div>
-                <div className="std-table-cell fixed-width-60">{t('streams.stream-activity.label-action')}</div>
-                <div className="std-table-cell fixed-width-60">{t('streams.stream-activity.label-amount')}</div>
-                <div className="std-table-cell fixed-width-120">{t('streams.stream-activity.label-date')}</div>
-              </div>
+          <div className="item-list-header compact">
+            <div className="header-row">
+              <div className="std-table-cell first-cell">&nbsp;</div>
+              <div className="std-table-cell fixed-width-80">{t('streams.stream-activity.heading')}</div>
+              <div className="std-table-cell fixed-width-60">{t('streams.stream-activity.label-action')}</div>
+              <div className="std-table-cell fixed-width-60">{t('streams.stream-activity.label-amount')}</div>
+              <div className="std-table-cell fixed-width-120">{t('streams.stream-activity.label-date')}</div>
             </div>
           </div>
         )}

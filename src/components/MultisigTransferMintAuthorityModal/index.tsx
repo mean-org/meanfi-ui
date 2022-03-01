@@ -77,7 +77,7 @@ export const MultisigTransferMintAuthorityModal = (props: {
           <div className="subtitle text-truncate">decimals: {item.decimals}</div>
         </div>
         <div className="rate-cell">
-          <div className="rate-amount text-uppercase">{formatThousands(item.supply, item.decimals)}</div>
+          <div className="rate-amount">{formatThousands(item.supply, item.decimals)}</div>
           <div className="interval">supply</div>
         </div>
       </div>
@@ -104,7 +104,16 @@ export const MultisigTransferMintAuthorityModal = (props: {
             <div className="subtitle text-truncate">{shortenAddress(item.address.toBase58(), 8)}</div>
           }
         </div>
-        <div className="description-cell text-right">
+        <div className="rate-cell">
+          <div className="rate-amount">
+            {
+              t('multisig.multisig-accounts.pending-transactions', {
+                txs: item.pendingTxsAmount
+              })
+            }
+          </div>
+        </div>
+        {/* <div className="description-cell text-right">
           <div className="subtitle">
           {
             t('multisig.multisig-accounts.pending-transactions', {
@@ -112,7 +121,7 @@ export const MultisigTransferMintAuthorityModal = (props: {
             })
           }
           </div>
-        </div>
+        </div> */}
       </div>
     ),
   });

@@ -94,7 +94,7 @@ export const MultisigVaultTransferAuthorityModal = (props: {
           <div className="subtitle text-truncate">{shortenAddress(item.address.toBase58(), 8)}</div>
         </div>
         <div className="rate-cell">
-          <div className="rate-amount text-uppercase">
+          <div className="rate-amount">
             {getTokenAmountAndSymbolByTokenAddress(
               makeDecimal(item.amount, token?.decimals || 6),
               token ? token.address as string : '',
@@ -126,7 +126,16 @@ export const MultisigVaultTransferAuthorityModal = (props: {
             <div className="subtitle text-truncate">{shortenAddress(item.address.toBase58(), 8)}</div>
           }
         </div>
-        <div className="description-cell text-right">
+        <div className="rate-cell">
+          <div className="rate-amount">
+            {
+              t('multisig.multisig-accounts.pending-transactions', {
+                txs: item.pendingTxsAmount
+              })
+            }
+          </div>
+        </div>
+        {/* <div className="description-cell text-right">
           <div className="subtitle">
           {
             t('multisig.multisig-accounts.pending-transactions', {
@@ -134,7 +143,7 @@ export const MultisigVaultTransferAuthorityModal = (props: {
             })
           }
           </div>
-        </div>
+        </div> */}
       </div>
     ),
   });
