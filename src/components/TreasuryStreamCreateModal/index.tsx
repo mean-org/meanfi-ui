@@ -1254,7 +1254,7 @@ export const TreasuryStreamCreateModal = (props: {
           </div>
 
           <div className="ml-1">
-            <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>{t('transactions.verified-recipient-label')}</Checkbox>
+            <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>{t('transfers.verified-recipient-disclaimer')}</Checkbox>
           </div>
 
         </div>

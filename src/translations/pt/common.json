@@ -515,7 +515,8 @@
 			"multisig-selector-label": "Nova autoridade (multisig)",
 			"multisig-selector-placeholder": "Selecione ou insira um endereço multisig",
 			"selected-vault-label": "Cofre selecionado",
-			"success-message": "Nova autoridade de cofre definida com sucesso."
+			"success-message": "Nova autoridade de cofre definida com sucesso.",
+			"vault-auth-destination-address-disclaimer": "I confirm the above New Authority Address entered or selected is a Multisig Account address and NOT a regular wallet address. I acknowledge that if I provide a non Multisig address, it will cause a permanent loss of the vault and its funds."
 		},
 		"transfer-tokens": {
 			"main-cta": "Iniciar solicitação",
@@ -909,8 +910,7 @@
 			"valid-start-funding": "Iniciar financiamento",
 			"valid-start-withdrawal": "Iniciar retirada",
 			"verified-recipient-unchecked": "Verificação do destinatário desmarcada"
-		},
-		"verified-recipient-label": "Tenho certeza de que o endereço do destinatário não pertence a uma troca."
+		}
 	},
 	"transfer-stream": {
 		"destination-address-is-sender": "O novo endereço não pode ser o remetente",
@@ -923,7 +923,8 @@
 	},
 	"transfers": {
 		"screen-subtitle": "Envie dinheiro para qualquer pessoa no mundo mais rapidamente",
-		"screen-title": "Transferências"
+		"screen-title": "Transferências",
+		"verified-recipient-disclaimer": "Tenho certeza de que o endereço do destinatário não pertence a uma troca."
 	},
 	"treasuries": {
 		"add-funds": {

@@ -518,7 +518,8 @@
 			"multisig-selector-label": "Quyền hạn mới (multisig)",
 			"multisig-selector-placeholder": "Chọn hoặc nhập một địa chỉ multisig",
 			"selected-vault-label": "Vault được chọn",
-			"success-message": "Quyền hạn của vault mới đã được thiết lập thành công"
+			"success-message": "Quyền hạn của vault mới đã được thiết lập thành công",
+			"vault-auth-destination-address-disclaimer": "I confirm the above New Authority Address entered or selected is a Multisig Account address and NOT a regular wallet address. I acknowledge that if I provide a non Multisig address, it will cause a permanent loss of the vault and its funds."
 		},
 		"transfer-tokens": {
 			"main-cta": "Bắt đầu yêu cầu",
@@ -912,8 +913,7 @@
 			"valid-start-funding": "Bắt đầu cấp tiền",
 			"valid-start-withdrawal": "Bắt đầu rút tiền",
 			"verified-recipient-unchecked": "Đã bỏ chọn xác minh người nhận"
-		},
-		"verified-recipient-label": "Tôi chắc chắn rằng địa chỉ người nhận không thuộc về một sàn giao dịch."
+		}
 	},
 	"transfer-stream": {
 		"destination-address-is-sender": "Địa chỉ mới không thể là người gửi",
@@ -926,7 +926,8 @@
 	},
 	"transfers": {
 		"screen-subtitle": "Gửi tiền cho bất kỳ ai trên thế giới nhanh hơn",
-		"screen-title": "Chuyển khoản"
+		"screen-title": "Chuyển khoản",
+		"verified-recipient-disclaimer": "Tôi chắc chắn rằng địa chỉ người nhận không thuộc về một sàn giao dịch."
 	},
 	"treasuries": {
 		"add-funds": {

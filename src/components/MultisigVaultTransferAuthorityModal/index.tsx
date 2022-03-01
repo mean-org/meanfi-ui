@@ -1,5 +1,5 @@
 import React, { useContext, useState } from 'react';
-import { Modal, Button, Spin, AutoComplete } from 'antd';
+import { Modal, Button, Spin, AutoComplete, Checkbox } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { AppStateContext } from '../../contexts/appstate';
@@ -34,6 +34,7 @@ export const MultisigVaultTransferAuthorityModal = (props: {
   } = useContext(AppStateContext);
 
   const [selectedAuthority, setSelectedAuthority] = useState('');
+  const [destinationAddressDisclaimerAccepted, setDestinationAddressDisclaimerAccepted] = useState(false);
 
   const onAcceptModal = () => {
     props.handleOk(selectedAuthority);
@@ -155,6 +156,10 @@ export const MultisigVaultTransferAuthorityModal = (props: {
     return options;
   }
 
+  const onDestinationAddressDisclaimerAcceptanceChange = (e: any) => {
+    setDestinationAddressDisclaimerAccepted(e.target.checked);
+  }
+
   return (
     <Modal
       className="mean-modal simple-modal"
@@ -214,6 +219,14 @@ export const MultisigVaultTransferAuthorityModal = (props: {
                   </span>
                 ) : null}
               </div>
+            </div>
+
+            <div className="mb-3 ml-1">
+              <Checkbox
+                checked={destinationAddressDisclaimerAccepted}
+                onChange={onDestinationAddressDisclaimerAcceptanceChange}>
+                {t('multisig.transfer-authority.vault-auth-destination-address-disclaimer')}
+              </Checkbox>
             </div>
 
           </>
@@ -295,7 +308,7 @@ export const MultisigVaultTransferAuthorityModal = (props: {
             type="primary"
             shape="round"
             size="middle"
-            disabled={!isValidForm()}
+            disabled={!isValidForm() || !destinationAddressDisclaimerAccepted}
             onClick={() => {
               if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
                 onAcceptModal();
