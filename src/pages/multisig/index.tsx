@@ -3308,6 +3308,9 @@ export const MultisigView = () => {
               } else {
                 setSelectedMultisig(multisigInfoArray[0]);
               }
+              setTimeout(() => {
+                loadMultisigPendingTxs();
+              }, 100);
             } else {
               setSelectedMultisig(undefined);
               setMultisigPendingTxs([]);
@@ -3332,7 +3335,7 @@ export const MultisigView = () => {
     highLightableMultisigId,
     loadingMultisigAccounts,
     readAllMultisigAccounts,
-    // loadMultisigPendingTxs,
+    loadMultisigPendingTxs,
   ]);
 
   // Subscribe to multisig account changes
@@ -3552,7 +3555,6 @@ export const MultisigView = () => {
     width,
     isSmallUpScreen,
     detailsPanelOpen,
-    setDtailsPanelOpen
   ]);
 
   // Handle what to do when pending Tx confirmation reaches finality or on error
@@ -4201,6 +4203,7 @@ export const MultisigView = () => {
       multisigAccounts.map((item, index) => {
         const onMultisigClick = (ev: any) => {
           consoleOut('selected multisig:', item, 'blue');
+          setDtailsPanelOpen(true);
           setSelectedMultisig(item);
           setNeedRefreshTxs(true);
           setLoadingPrograms(true);
