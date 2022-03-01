@@ -4127,7 +4127,8 @@ main section {
     flex-direction: column;
     justify-content: flex-start;
     overflow: auto;
-    max-height: calc(100% - (1rem + var(--footer-bar-height)));
+    // max-height: calc(100% - (1rem + var(--footer-bar-height)));
+    max-height: calc(100% - 1rem);
     min-height: 346px;
     .meanfi-two-panel-left,
     .meanfi-two-panel-right {
@@ -4410,6 +4411,12 @@ main section {
           }
         }
       }
+      .activity-list-data-wrapper {
+        min-height: 100px;
+        max-height: 24%;
+        margin-bottom: 20px;
+        height: 100%;
+      }
       .transaction-list-data-wrapper {
         @media (min-width: 576px) {
           &:not(.empty) {
@@ -4446,6 +4453,10 @@ main section {
       }
       .stream-details-data-wrapper {
         max-height: calc(100% - 0.6rem);
+        &.vertical-scroll {
+          margin-right: -0.5rem;
+          padding-right: 0.5rem;
+        }
       }
       .stream-fields-container {
         position: relative;

@@ -2832,49 +2832,57 @@ export const Streams = () => {
 
   const renderActivities = (streamVersion: number) => {
     return (
-      <div className="activity-list">
-        <Spin spinning={loadingStreamActivity}>
-          {streamActivity && (
-            <>
-              <div className="item-list-header compact">
-                <div className="header-row">
-                  <div className="std-table-cell first-cell">&nbsp;</div>
-                  <div className="std-table-cell fixed-width-80">{t('streams.stream-activity.heading')}</div>
-                  <div className="std-table-cell fixed-width-60">{t('streams.stream-activity.label-action')}</div>
-                  <div className="std-table-cell fixed-width-60">{t('streams.stream-activity.label-amount')}</div>
-                  <div className="std-table-cell fixed-width-120">{t('streams.stream-activity.label-date')}</div>
-                </div>
+      <>
+        {streamActivity && streamActivity.length > 0 && (
+          <div className="stats-row">
+            <div className="item-list-header compact">
+              <div className="header-row">
+                <div className="std-table-cell first-cell">&nbsp;</div>
+                <div className="std-table-cell fixed-width-80">{t('streams.stream-activity.heading')}</div>
+                <div className="std-table-cell fixed-width-60">{t('streams.stream-activity.label-action')}</div>
+                <div className="std-table-cell fixed-width-60">{t('streams.stream-activity.label-amount')}</div>
+                <div className="std-table-cell fixed-width-120">{t('streams.stream-activity.label-date')}</div>
               </div>
-              <div className="item-list-body compact">
-                {streamActivity.map((item, index) => {
-                  return (
-                    <a key={`${index}`} className="item-list-row" target="_blank" rel="noopener noreferrer"
-                        href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature}${getSolanaExplorerClusterParam()}`}>
-                      <div className="std-table-cell first-cell">{getActivityIcon(item)}</div>
-                      <div className="std-table-cell fixed-width-80">
-                        <span className={isAddressMyAccount(item.initializer) ? 'text-capitalize align-middle' : 'align-middle'}>{getActivityActor(item)}</span>
-                      </div>
-                      <div className="std-table-cell fixed-width-60">
-                        <span className="align-middle">{getActivityAction(item)}</span>
-                      </div>
-                      <div className="std-table-cell fixed-width-60">
-                        <span className="align-middle">{
-                          getAmountWithSymbol(
-                            getActivityAmountDisplay(item, streamVersion), item.mint
-                          )}
-                        </span>
-                      </div>
-                      <div className="std-table-cell fixed-width-120" >
-                        <span className="align-middle">{getShortDate(item.utcDate as string, true)}</span>
-                      </div>
-                    </a>
-                  );
-                })}
-              </div>
-            </>
-          )}
-        </Spin>
-      </div>
+            </div>
+          </div>
+        )}
+        <div className="activity-list-data-wrapper vertical-scroll">
+          <div className="activity-list h-100">
+            <Spin spinning={loadingStreamActivity}>
+              {streamActivity && streamActivity.length > 0 && (
+                <>
+                  <div className="item-list-body compact">
+                    {streamActivity.map((item, index) => {
+                      return (
+                        <a key={`${index}`} className="item-list-row" target="_blank" rel="noopener noreferrer"
+                            href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature}${getSolanaExplorerClusterParam()}`}>
+                          <div className="std-table-cell first-cell">{getActivityIcon(item)}</div>
+                          <div className="std-table-cell fixed-width-80">
+                            <span className={isAddressMyAccount(item.initializer) ? 'text-capitalize align-middle' : 'align-middle'}>{getActivityActor(item)}</span>
+                          </div>
+                          <div className="std-table-cell fixed-width-60">
+                            <span className="align-middle">{getActivityAction(item)}</span>
+                          </div>
+                          <div className="std-table-cell fixed-width-60">
+                            <span className="align-middle">{
+                              getAmountWithSymbol(
+                                getActivityAmountDisplay(item, streamVersion), item.mint
+                              )}
+                            </span>
+                          </div>
+                          <div className="std-table-cell fixed-width-120" >
+                            <span className="align-middle">{getShortDate(item.utcDate as string, true)}</span>
+                          </div>
+                        </a>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </Spin>
+          </div>
+        </div>
+      </>
     );
   }
 
@@ -2884,7 +2892,7 @@ export const Streams = () => {
       <>
         {stream && (
           <>
-            <div className="stream-details-data-wrapper vertical-scroll">
+            <div className="stream-details-data-wrapper">
 
               <Spin spinning={loadingStreams}>
                 <div className="stream-fields-container">
@@ -3157,7 +3165,7 @@ export const Streams = () => {
       <>
         {stream && (
           <>
-            <div className="stream-details-data-wrapper vertical-scroll">
+            <div className="stream-details-data-wrapper">
 
               <Spin spinning={loadingStreams}>
                 <div className="stream-fields-container">
@@ -3387,7 +3395,7 @@ export const Streams = () => {
       <>
         {stream && (
           <>
-            <div className="stream-details-data-wrapper vertical-scroll">
+            <div className="stream-details-data-wrapper">
 
               <Spin spinning={loadingStreams}>
                 <div className="stream-fields-container">
@@ -3711,7 +3719,7 @@ export const Streams = () => {
       <>
         {stream && (
           <>
-            <div className="stream-details-data-wrapper vertical-scroll">
+            <div className="stream-details-data-wrapper">
 
               <Spin spinning={loadingStreams}>
                 <div className="stream-fields-container">
