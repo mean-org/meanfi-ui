@@ -4466,6 +4466,7 @@ export const MultisigView = () => {
           isVisible={isCreateMultisigModalVisible}
           nativeBalance={nativeBalance}
           transactionFees={transactionFees}
+          multisigAccounts={multisigAccounts}
           handleOk={onAcceptCreateMultisig}
           handleClose={() => setIsCreateMultisigModalVisible(false)}
           isBusy={isBusy}
@@ -4481,6 +4482,7 @@ export const MultisigView = () => {
           multisigName={selectedMultisig.label}
           multisigThreshold={selectedMultisig.threshold}
           multisigParticipants={selectedMultisig.owners}
+          multisigAccounts={multisigAccounts}
           handleClose={() => setIsEditMultisigModalVisible(false)}
           isBusy={isBusy}
         />

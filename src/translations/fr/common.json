@@ -332,6 +332,7 @@
 			"main-cta": "Créer",
 			"main-cta-busy": "Création de plusieurs signatures",
 			"modal-title": "Créer plusieurs signatures",
+			"multisig-address-used-as-participant": "Cannot use a multisig address as participant",
 			"multisig-duplicate-participants": "Participants en double trouvés, veuillez vérifier.",
 			"multisig-label-input-empty": "Entrez un nom multisig",
 			"multisig-label-input-label": "Nom multisignature",
