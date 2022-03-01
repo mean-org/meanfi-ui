@@ -3067,8 +3067,6 @@ export const MultisigView = () => {
 
     if (!connection || !upgradeAuthority) { return undefined; }
 
-    console.log(`Searching for programs with upgrade authority: ${upgradeAuthority}`);
-
     // 1. Fetch executable data account having upgradeAuthority as upgrade authority
     const BPFLoaderUpgradeab1e = new PublicKey("BPFLoaderUpgradeab1e11111111111111111111111");
     const executableDataAccountsFilter: MemcmpFilter = { memcmp: { offset: 13, bytes: upgradeAuthority.toBase58() } }
@@ -3121,13 +3119,11 @@ export const MultisigView = () => {
 
       } as ProgramAccounts;
 
-      console.log(`Upgrade Authority: ${upgradeAuthority} --> Executable Data: ${executableData} --> Program: ${foundProgram}`);
+      // console.log(`Upgrade Authority: ${upgradeAuthority} --> Executable Data: ${executableData} --> Program: ${foundProgram}`);
 
       programs.push(foundProgram);
 
     }
-
-    console.log(`${programs.length} programs found!`);
 
     return programs;
 
@@ -3199,7 +3195,11 @@ export const MultisigView = () => {
         }
         setMultisigPendingTxs(sortedTxs);
       })
-      .catch(err => console.error(err))
+      .catch(err => {
+        console.error(err);
+        setMultisigPendingTxs([]);
+        consoleOut('multisigPendingTxs:', [], 'blue');
+      })
       .finally(() => setLoadingMultisigTxs(false));
 
   }, [
@@ -3265,6 +3265,7 @@ export const MultisigView = () => {
 
     const timeout = setTimeout(() => {
 
+      consoleOut('=======================================', '', 'green');
       readAllMultisigAccounts(publicKey)
         .then((allInfo: any) => {
           let multisigInfoArray: (MultisigV2 | Multisig)[] = [];
@@ -3424,6 +3425,7 @@ export const MultisigView = () => {
       return;
     }
 
+    consoleOut('Triggering loadMultisigPendingTxs using setNeedRefreshTxs...', '', 'blue');
     setNeedRefreshTxs(false);
     loadMultisigPendingTxs();
 
@@ -3472,9 +3474,6 @@ export const MultisigView = () => {
     });
 
     const timeout = setTimeout(() => {
-
-      consoleOut('Calling getProgramsByUpgradeAuthority from useEffect...', '', 'blue');
-
       getProgramsByUpgradeAuthority(selectedMultisig.address)
         .then(programs => {
           consoleOut('programs:', programs, 'blue');
@@ -4206,6 +4205,7 @@ export const MultisigView = () => {
     {multisigAccounts && multisigAccounts.length ? (
       multisigAccounts.map((item, index) => {
         const onMultisigClick = (ev: any) => {
+          consoleOut('=======================================', '', 'green');
           consoleOut('selected multisig:', item, 'blue');
           setDtailsPanelOpen(true);
           setSelectedMultisig(item);
