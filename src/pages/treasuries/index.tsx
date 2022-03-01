@@ -17,7 +17,6 @@ import { AppStateContext } from '../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
 import { Identicon } from '../../components/Identicon';
 import {
-  cutNumber,
   formatAmount,
   formatThousands,
   getAmountWithSymbol,
@@ -26,7 +25,6 @@ import {
   getTokenSymbol,
   getTxIxResume,
   makeDecimal,
-  makeInteger,
   shortenAddress,
   toUiAmount
 } from '../../utils/utils';
@@ -118,6 +116,7 @@ export const TreasuriesView = () => {
     streamV2ProgramAddress,
     previousWalletConnectState,
     isWhitelisted,
+    setStreamList,
     setSelectedToken,
     setEffectiveRate,
     refreshStreamList,
@@ -4621,6 +4620,8 @@ export const TreasuriesView = () => {
               const urlBase = '/treasuries/';
               const url = `${urlBase}${(treasuryDetails as Treasury).id}/streams`;
               consoleOut('With treasurer:', (treasuryDetails as Treasury).treasurer, 'blue');
+              // Populate the list of streams in the state before going there.
+              setStreamList(treasuryStreams || []);
               setHighLightableMultisigId((treasuryDetails as Treasury).treasurer as string);
               consoleOut('Heading to:', url, 'blue');
               navigate(url);
@@ -4939,6 +4940,8 @@ export const TreasuriesView = () => {
                     const url = `${urlBase}${(treasuryDetails as Treasury).id}/streams`;
                     consoleOut('Heading to:', url, 'blue');
                     consoleOut('With treasurer:', (treasuryDetails as Treasury).treasurer, 'blue');
+                    // Populate the list of streams in the state before going there.
+                    setStreamList(treasuryStreams || []);
                     setHighLightableMultisigId((treasuryDetails as Treasury).treasurer as string);
                     navigate(url);
                   }}>

@@ -332,6 +332,7 @@
 			"main-cta": "Yarat",
 			"main-cta-busy": "Çoklu-İmza yaratılıyor",
 			"modal-title": "Çoklu-İmza yarat",
+			"multisig-address-used-as-participant": "Cannot use a multisig address as participant",
 			"multisig-duplicate-participants": "İkileyen katılımcılar bulundu, lütfen göz atın.",
 			"multisig-label-input-empty": "Çoklu-İmza ismi girin",
 			"multisig-label-input-label": "Çoklu-İmza ismi",

@@ -311,6 +311,7 @@
 			"main-cta": "Create",
 			"main-cta-busy": "Creating multisig",
 			"modal-title": "Create multisig",
+			"multisig-address-used-as-participant": "Cannot use a multisig address as participant",
 			"multisig-duplicate-participants": "Found duplicate participants, please review.",
 			"multisig-label-input-empty": "Enter a multisig name",
 			"multisig-label-input-label": "Multisig name",

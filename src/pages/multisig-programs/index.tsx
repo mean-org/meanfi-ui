@@ -966,6 +966,7 @@ export const MultisigProgramsView = () => {
         .catch(err => {
           console.error(err);
           setMultisigPendingTxs([]);
+          consoleOut('multisigPendingTxs:', [], 'blue');
         })
         .finally(() => setLoadingMultisigTxs(false));
     });
