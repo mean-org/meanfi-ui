@@ -332,6 +332,7 @@
 			"main-cta": "Crio",
 			"main-cta-busy": "Criando multisig",
 			"modal-title": "Criar multisig",
+			"multisig-address-used-as-participant": "Cannot use a multisig address as participant",
 			"multisig-duplicate-participants": "Encontrou participantes duplicados, revise.",
 			"multisig-label-input-empty": "Digite um nome multisig",
 			"multisig-label-input-label": "Nome multisig",

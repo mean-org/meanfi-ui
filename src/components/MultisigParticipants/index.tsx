@@ -10,6 +10,7 @@ export const MultisigParticipants = (props: {
     onParticipantsChanged: any;
     label: string;
     disabled?: boolean;
+    multisigAddresses: string[];
 }) => {
     const { t } = useTranslation('common');
 
@@ -50,6 +51,10 @@ export const MultisigParticipants = (props: {
         return new Set(items).size !== items.length ? true : false;
     }
 
+    const isInputMultisigAddress = (address: string) => {
+        return props.multisigAddresses.includes(address);
+    }
+
     return (
         <>
         <div className={`flex-fixed-right ${props.disabled ? 'click-disabled' : ''}`}>
@@ -88,7 +93,13 @@ export const MultisigParticipants = (props: {
                                 value={participant.address}
                                 allowClear={true}
                                 alwaysShowClear={true}
-                                error={isValidAddress(participant.address) ? '' : t('transactions.validation.valid-address-required')}
+                                error={
+                                    isValidAddress(participant.address)
+                                        ? isInputMultisigAddress(participant.address)
+                                            ? t('multisig.create-multisig.multisig-address-used-as-participant')
+                                            : ''
+                                        : t('transactions.validation.valid-address-required')
+                                }
                                 onInputClear={() => onRemoveSingleItem(index)}
                                 onInputChange={(e: any) => {
                                     const value = e.target.value;
