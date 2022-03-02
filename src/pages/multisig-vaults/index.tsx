@@ -682,22 +682,15 @@ export const MultisigVaultsView = () => {
       MEAN_MULTISIG
     );
 
-    const accountInfos = await connection.getProgramAccounts(TOKEN_PROGRAM_ID, {
-      filters: [
-        {
-          memcmp: { offset: 32, bytes: multisigSigner.toBase58() },
-        }, 
-        {
-          dataSize: AccountLayout.span
-        }
-      ],
-    });
+    const accountInfoContext = await connection.getTokenAccountsByOwner(
+      multisigSigner,
+      { programId: TOKEN_PROGRAM_ID }
+    );
 
-    if (!accountInfos || !accountInfos.length) { return []; }
+    if (!accountInfoContext.value || !accountInfoContext.value.length) { return []; }
 
-    const results = accountInfos.map((t: any) => {
+    const results = accountInfoContext.value.map((t: any) => {
       let tokenAccount = ACCOUNT_LAYOUT.decode(t.account.data);
-      // let tokenAccount = AccountLayout.decode(t.account.data);
       tokenAccount.address = t.pubkey;
       return tokenAccount;
     });
@@ -2098,9 +2091,7 @@ export const MultisigVaultsView = () => {
     onVaultAuthorityTransfered
   ]);
 
-
   // Common Multisig Approve / Execute logic
-
   const onTxExecuted = useCallback(() => {
 
   },[]);

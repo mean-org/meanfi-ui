@@ -12,7 +12,7 @@ import { ConfirmOptions, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Syste
 import { Program, Provider } from '@project-serum/anchor';
 import MultisigIdl from "../../models/mean-multisig-idl";
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
-import { MintLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { MintLayout, Token, TOKEN_PROGRAM_ID, u64 } from '@solana/spl-token';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { consoleOut, copyText, delay, getReadableDate, getShortDate, getTransactionOperationDescription, getTransactionStatusForLogs, isDev, isLocal } from '../../utils/ui';
 import { Identicon } from '../../components/Identicon';
@@ -713,13 +713,14 @@ export const MultisigMintsView = () => {
     if (!mintInfos || !mintInfos.length) { return []; }
 
     const results = mintInfos.map((t: any) => {
-      let mintAccount = MintLayout.decode(t.account.data);
+      let mintAccount = MintLayout.decode(Buffer.from(t.account.data));
       mintAccount.address = t.pubkey;
+      const supply = mintAccount.supply as Uint8Array;
       return {
         address: mintAccount.address,
         isInitialized: mintAccount.isInitialized === 1 ? true : false,
         decimals: mintAccount.decimals,
-        supply: new BN(mintAccount.supply).toNumber(),
+        supply: new BN(supply, 10, 'le').toNumber(),
         mintAuthority: mintAccount.freezeAuthority ? new PublicKey(mintAccount.freezeAuthority) : null,
         freezeAuthority: mintAccount.freezeAuthority ? new PublicKey(mintAccount.freezeAuthority) : null
         
