@@ -8,6 +8,7 @@ import {
 import {
   ConfirmOptions,
   Connection,
+  GetProgramAccountsFilter,
   Keypair,
   LAMPORTS_PER_SOL,
   MemcmpFilter,
@@ -122,7 +123,7 @@ export const MultisigView = () => {
   // Pending Txs
   const [needRefreshTxs, setNeedRefreshTxs] = useState(true);
   const [loadingMultisigTxs, setLoadingMultisigTxs] = useState(false);
-  const [multisigPendingTxs, setMultisigPendingTxs] = useState<MultisigTransaction[]>([]);
+  const [multisigTxs, setMultisigTxs] = useState<MultisigTransaction[]>([]);
   const [highlightedMultisigTx, sethHighlightedMultisigTx] = useState<MultisigTransaction | undefined>();
   // Vaults
   const [multisigVaults, setMultisigVaults] = useState<any[]>([]);
@@ -204,12 +205,8 @@ export const MultisigView = () => {
 
     const accountInfos = await connection.getProgramAccounts(TOKEN_PROGRAM_ID, {
       filters: [
-        {
-          memcmp: { offset: 32, bytes: multisigSigner.toBase58() },
-        }, 
-        {
-          dataSize: AccountLayout.span
-        }
+        { memcmp: { offset: 32, bytes: multisigSigner.toBase58() } }, 
+        { dataSize: AccountLayout.span }
       ],
     });
 
@@ -2981,7 +2978,7 @@ export const MultisigView = () => {
           id: info.publicKey,
           version: info.account.version,
           label: new TextDecoder().decode(labelBuffer),
-          address,
+          authority: address,
           nounce: info.account.nonce,
           ownerSeqNumber: info.account.ownerSetSeqno,
           threshold: info.account.threshold.toNumber(),
@@ -3028,7 +3025,7 @@ export const MultisigView = () => {
           id: info.publicKey,
           version: 1,
           label: new TextDecoder().decode(labelBuffer),
-          address,
+          authority: address,
           nounce: info.account.nonce,
           ownerSeqNumber: info.account.ownerSetSeqno,
           threshold: info.account.threshold.toNumber(),
@@ -3049,7 +3046,7 @@ export const MultisigView = () => {
     if (!connection || !publicKey || !msp || !selectedMultisig) { return []; }
 
     try {
-      const treasuries = await msp.listTreasuries(selectedMultisig.address);
+      const treasuries = await msp.listTreasuries(selectedMultisig.authority);
       return treasuries;
     } catch (error) {
       console.error(error);
@@ -3129,34 +3126,28 @@ export const MultisigView = () => {
 
   }, [connection]);
 
-  const loadMultisigPendingTxs = useCallback(() => {
-    if (!connection || !publicKey || !selectedMultisig || loadingMultisigTxs) { 
+  const loadMultisigTxs = useCallback(() => {
+    
+    if (!connection || !publicKey || !multisigClient || !selectedMultisig || !selectedMultisig.id || loadingMultisigTxs) { 
       return;
     }
 
-    setTimeout(() => {
-      setLoadingMultisigTxs(true);
-    },);
-
+    setLoadingMultisigTxs(true);
     let transactions: MultisigTransaction[] = [];
 
     multisigClient.account.transaction
       .all(selectedMultisig.id.toBuffer())
       .then((txs) => {
         for (let tx of txs) {
-
           // console.log('tx account', tx.account);
-
-          let currentOwnerIndex = selectedMultisig.owners
-            .findIndex((o: MultisigParticipant) => o.address === publicKey.toBase58());
-
+          let currentOwnerIndex = selectedMultisig.owners.findIndex((o: any) => o.address === publicKey.toBase58());
           let txInfo = Object.assign({}, {
             id: tx.publicKey,
             multisig: tx.account.multisig,
             programId: tx.account.programId,
             signers: tx.account.signers,
             createdOn: new Date(tx.account.createdOn.toNumber() * 1000),
-            executedOn: tx.account.executedOn > 0
+            executedOn: tx.account.executedOn > 0 && tx.account.executedOn.byteLength <= 53
               ? new Date(tx.account.executedOn.toNumber() * 1000) 
               : undefined,
             status: getTransactionStatus(tx.account),
@@ -3164,17 +3155,10 @@ export const MultisigView = () => {
             accounts: tx.account.accounts,
             didSigned: tx.account.signers[currentOwnerIndex],
             proposer: tx.account.proposer,
-            pdaTimestamp: tx.account.pdaTimestamp ? tx.account.pdaTimestamp.toNumber() : undefined,
-            pdaBump: tx.account.pdaBump ? tx.account.pdaBump : undefined,
-            keypairs: tx.account.keypairs
-              .map((k: any) => {
-                try {
-                  return Keypair.fromSecretKey(Uint8Array.from(Buffer.from(k)));
-                } catch {
-                  return undefined;
-                }
-              })
-              .filter((k: any) => k !== undefined)
+            pdaTimestamp: tx.account.pdaTimestamp && tx.account.pdaTimestamp.byteLength <= 53 ? tx.account.pdaTimestamp.toNumber() : undefined,
+            pdaBump: tx.account.pdaBump,
+            data: tx.account.data,
+            keypairs: []
 
           } as MultisigTransaction);
           
@@ -3193,21 +3177,22 @@ export const MultisigView = () => {
           }));
           console.table(debugTable);
         }
-        setMultisigPendingTxs(sortedTxs);
+        setMultisigTxs(sortedTxs);
+        setLoadingMultisigTxs(false);
       })
       .catch(err => {
         console.error(err);
-        setMultisigPendingTxs([]);
-        consoleOut('multisigPendingTxs:', [], 'blue');
-      })
-      .finally(() => setLoadingMultisigTxs(false));
+        setMultisigTxs([]);
+        setLoadingMultisigTxs(false);
+        consoleOut('multisig txs:', [], 'blue');
+      });
 
   }, [
-    publicKey,
-    connection,
-    selectedMultisig,
+    connection, 
+    publicKey, 
+    multisigClient,
+    selectedMultisig, 
     loadingMultisigTxs,
-    multisigClient.account.transaction,
     getTransactionStatus
   ]);
 
@@ -3298,7 +3283,7 @@ export const MultisigView = () => {
             if (multisigInfoArray.length > 0) {
               if (highLightableMultisigId) {
                 // Select a multisig that was instructed to highlight when entering this feature
-                item = multisigInfoArray.find(m => m.address.toBase58() === highLightableMultisigId);
+                item = multisigInfoArray.find(m => m.authority.toBase58() === highLightableMultisigId);
               } else if (selectedMultisig) {
                 // Or re-select the one active
                 item = selectedMultisig.id ? multisigInfoArray.find(m => m.id.equals(selectedMultisig.id)) : undefined;
@@ -3310,18 +3295,18 @@ export const MultisigView = () => {
                 setSelectedMultisig(multisigInfoArray[0]);
               }
               setTimeout(() => {
-                loadMultisigPendingTxs();
+                loadMultisigTxs();
               }, 100);
             } else {
               setSelectedMultisig(undefined);
-              setMultisigPendingTxs([]);
+              setMultisigTxs([]);
             }
           });
 
         })
         .catch(err => {
           console.error(err);
-          setMultisigPendingTxs([]);
+          setMultisigTxs([]);
           consoleOut('multisigPendingTxs:', [], 'blue');
         })
         .finally(() => setLoadingMultisigAccounts(false));
@@ -3340,7 +3325,7 @@ export const MultisigView = () => {
     highLightableMultisigId,
     loadingMultisigAccounts,
     readAllMultisigAccounts,
-    loadMultisigPendingTxs,
+    loadMultisigTxs,
   ]);
 
   // Subscribe to multisig account changes
@@ -3388,7 +3373,7 @@ export const MultisigView = () => {
                 id: selectedMultisig.id,
                 version: account.version,
                 label: new TextDecoder().decode(labelBuffer),
-                address,
+                authority: address,
                 // nounce: account.nounce,
                 nounce: selectedMultisig.nounce,
                 ownerSeqNumber: account.ownerSetSeqno,
@@ -3427,13 +3412,13 @@ export const MultisigView = () => {
 
     consoleOut('Triggering loadMultisigPendingTxs using setNeedRefreshTxs...', '', 'blue');
     setNeedRefreshTxs(false);
-    loadMultisigPendingTxs();
+    loadMultisigTxs();
 
   }, [
     publicKey,
     selectedMultisig,
     needRefreshTxs,
-    loadMultisigPendingTxs
+    loadMultisigTxs
   ]);
 
   // Get multisig treasuries for the selected multisig
@@ -3465,7 +3450,7 @@ export const MultisigView = () => {
   // Get Programs
   useEffect(() => {
 
-    if (!connection || !publicKey || !selectedMultisig || !selectedMultisig.address || !loadingPrograms) {
+    if (!connection || !publicKey || !selectedMultisig || !selectedMultisig.authority || !loadingPrograms) {
       return;
     }
 
@@ -3474,7 +3459,7 @@ export const MultisigView = () => {
     });
 
     const timeout = setTimeout(() => {
-      getProgramsByUpgradeAuthority(selectedMultisig.address)
+      getProgramsByUpgradeAuthority(selectedMultisig.authority)
         .then(programs => {
           consoleOut('programs:', programs, 'blue');
           setPrograms(programs);
@@ -3568,7 +3553,7 @@ export const MultisigView = () => {
       clearTransactionStatusContext();
       setLoadingMultisigAccounts(true);
       sethHighlightedMultisigTx(undefined);
-      loadMultisigPendingTxs();
+      loadMultisigTxs();
     }
   }, [
     publicKey,
@@ -3576,7 +3561,7 @@ export const MultisigView = () => {
     lastSentTxSignature,
     lastSentTxOperationType,
     clearTransactionStatusContext,
-    loadMultisigPendingTxs
+    loadMultisigTxs
   ]);
 
   // Get Multisig Vaults
@@ -3821,7 +3806,7 @@ export const MultisigView = () => {
       return (
         <div className="mb-2">{t('multisig.multisig-transactions.loading-transactions')}</div>
       );
-    } else if (selectedMultisig && !loadingMultisigTxs && multisigPendingTxs.length === 0) {
+    } else if (selectedMultisig && !loadingMultisigTxs && multisigTxs.length === 0) {
       return (
         <div className="mb-2">{t('multisig.multisig-transactions.no-transactions')}</div>
       );
@@ -3842,7 +3827,7 @@ export const MultisigView = () => {
         <div className="activity-list-data-wrapper vertical-scroll">
           <div className="activity-list h-100">
             <div className="item-list-body compact">
-              {multisigPendingTxs.map(item => {
+              {multisigTxs.map(item => {
                 return (
                   <div
                     key={item.id.toBase58()}
@@ -3957,10 +3942,10 @@ export const MultisigView = () => {
                   <span className="info-icon">
                     <IconShieldOutline className="mean-svg-icons" />
                   </span>
-                  <div onClick={() => copyMultisigAddress(selectedMultisig.address)} 
+                  <div onClick={() => copyMultisigAddress(selectedMultisig.authority)} 
                        className="info-data flex-row wrap align-items-center simplelink underline-on-hover"
                        style={{cursor: 'pointer', fontSize: '1.1rem'}}>
-                    {shortenAddress(selectedMultisig.address.toBase58(), 8)}
+                    {shortenAddress(selectedMultisig.authority.toBase58(), 8)}
                   </div>
                 </div>
               </Col>
@@ -4039,7 +4024,7 @@ export const MultisigView = () => {
             disabled={isTxInProgress() || loadingMultisigAccounts}
             onClick={() => {
               if (selectedMultisig) {
-                const url = `/treasuries?multisig=${selectedMultisig.address.toBase58()}`;
+                const url = `/treasuries?multisig=${selectedMultisig.authority.toBase58()}`;
                 navigate(url);
               }
             }}>
@@ -4194,7 +4179,7 @@ export const MultisigView = () => {
                 <div className="title text-truncate">{shortenAddress(item.id.toBase58(), 8)}</div>
               )}
               {
-                <div className="subtitle text-truncate">{shortenAddress(item.address.toBase58(), 8)}</div>
+                <div className="subtitle text-truncate">{shortenAddress(item.authority.toBase58(), 8)}</div>
               }
             </div>
             <div className="rate-cell">

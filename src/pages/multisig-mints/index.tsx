@@ -624,7 +624,7 @@ export const MultisigMintsView = () => {
           id: info.publicKey,
           version: info.account.version,
           label: new TextDecoder().decode(labelBuffer),
-          address,
+          authority: address,
           nounce: info.account.nonce,
           ownerSeqNumber: info.account.ownerSetSeqno,
           threshold: info.account.threshold.toNumber(),
@@ -671,7 +671,7 @@ export const MultisigMintsView = () => {
           id: info.publicKey,
           version: 1,
           label: new TextDecoder().decode(labelBuffer),
-          address,
+          authority: address,
           nounce: info.account.nonce,
           ownerSeqNumber: info.account.ownerSetSeqno,
           threshold: info.account.threshold.toNumber(),
@@ -1174,7 +1174,7 @@ export const MultisigMintsView = () => {
 
       // Create a transaction
       const payload = {
-        multisig: selectedMultisig.address.toBase58(),
+        multisig: selectedMultisig.authority.toBase58(),
         mint: selectedMint.address.toBase58(),
         newAuthority: authority
       } as SetMintAuthPayload;
@@ -3018,7 +3018,7 @@ export const MultisigMintsView = () => {
                         icon={<ArrowLeftOutlined />}
                         onClick={() => {
                           if (selectedMultisig) {
-                            setHighLightableMultisigId(selectedMultisig.address.toBase58());
+                            setHighLightableMultisigId(selectedMultisig.authority.toBase58());
                           }
                           navigate('/multisig');
                         }}

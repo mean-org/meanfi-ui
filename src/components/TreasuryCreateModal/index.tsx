@@ -126,7 +126,7 @@ export const TreasuryCreateModal = (props: {
                             <div className="title text-truncate">
                               {option.label}
                             </div>
-                            <div className="subtitle text-truncate">{shortenAddress(option.address.toBase58(), 8)}</div>
+                            <div className="subtitle text-truncate">{shortenAddress(option.authority.toBase58(), 8)}</div>
                           </div>
                           <div className="rate-cell">
                             <div className="rate-amount">

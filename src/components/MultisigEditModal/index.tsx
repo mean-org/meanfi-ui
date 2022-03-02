@@ -57,7 +57,7 @@ export const MultisigEditModal = (props: {
         setInputOwners(props.multisigParticipants);
       }
       if (props.multisigAccounts && props.multisigAccounts.length > 0) {
-        const msAddresses = props.multisigAccounts.map(ms => ms.address.toBase58());
+        const msAddresses = props.multisigAccounts.map(ms => ms.authority.toBase58());
         setMultisigAddresses(msAddresses);
       }
     }

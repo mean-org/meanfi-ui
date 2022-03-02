@@ -611,7 +611,7 @@ export const MultisigProgramsView = () => {
           id: info.publicKey,
           version: info.account.version,
           label: new TextDecoder().decode(labelBuffer),
-          address,
+          authority: address,
           nounce: info.account.nonce,
           ownerSeqNumber: info.account.ownerSetSeqno,
           threshold: info.account.threshold.toNumber(),
@@ -658,7 +658,7 @@ export const MultisigProgramsView = () => {
           id: info.publicKey,
           version: 1,
           label: new TextDecoder().decode(labelBuffer),
-          address,
+          authority: address,
           nounce: info.account.nonce,
           ownerSeqNumber: info.account.ownerSetSeqno,
           threshold: info.account.threshold.toNumber(),
@@ -875,7 +875,7 @@ export const MultisigProgramsView = () => {
   // Get Programs
   useEffect(() => {
 
-    if (!connection || !publicKey || !selectedMultisig || !selectedMultisig.address || !loadingPrograms) {
+    if (!connection || !publicKey || !selectedMultisig || !selectedMultisig.authority || !loadingPrograms) {
       return;
     }
 
@@ -883,7 +883,7 @@ export const MultisigProgramsView = () => {
 
       consoleOut('Calling getProgramsByUpgradeAuthority from useEffect...', '', 'blue');
 
-      getProgramsByUpgradeAuthority(selectedMultisig.address)
+      getProgramsByUpgradeAuthority(selectedMultisig.authority)
         .then(programs => {
           consoleOut('programs:', programs, 'blue');
           if (programs && programs.length > 0) {
@@ -3029,7 +3029,7 @@ export const MultisigProgramsView = () => {
                         icon={<ArrowLeftOutlined />}
                         onClick={() => {
                           if (selectedMultisig) {
-                            setHighLightableMultisigId(selectedMultisig.address.toBase58());
+                            setHighLightableMultisigId(selectedMultisig.authority.toBase58());
                           }
                           navigate('/multisig');
                         }}
