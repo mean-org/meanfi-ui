@@ -574,7 +574,7 @@ export const TreasuryTransferTokensModal = (props: {
             {props.isBusy
               ? t('multisig.transfer-tokens.main-cta-busy')
               : transactionStatus.currentOperation === TransactionStatus.Iddle
-                ? t('multisig.multisig-vaults.main-cta')
+                ? t('withdraw-funds.modal.main-cta')
                 : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
                   ? t('general.cta-finish')
                   : t('general.refresh')

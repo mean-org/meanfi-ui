@@ -1105,7 +1105,8 @@
 		"modal": {
 			"title": "Withdraw Unallocated Treasury Funds",
 			"selected-treasury-label": "From treasury account",
-			"verified-label": "I'm sure the recipient address doesn't belong to an exchange"
+			"verified-label": "I'm sure the recipient address doesn't belong to an exchange",
+			"main-cta": "Withdraw Funds"
 		}
 	}
 }
