@@ -2860,6 +2860,36 @@ export const MultisigView = () => {
     selectedMultisig
   ]);
 
+  const isUserTheProposer = useCallback((): boolean => {
+    if (!highlightedMultisigTx || !publicKey) { return false; }
+
+    return  publicKey &&
+            highlightedMultisigTx.proposer &&
+            publicKey.equals(highlightedMultisigTx.proposer)
+        ? true
+        : false;
+
+  }, [
+    publicKey,
+    highlightedMultisigTx
+  ]);
+
+  const isTreasuryOperation = useCallback(() => {
+
+    if (!highlightedMultisigTx) { return false; }
+
+    return  highlightedMultisigTx.operation === OperationType.TreasuryCreate ||
+            highlightedMultisigTx.operation === OperationType.TreasuryClose ||
+            highlightedMultisigTx.operation === OperationType.TreasuryAddFunds ||
+            highlightedMultisigTx.operation === OperationType.TreasuryStreamCreate ||
+            highlightedMultisigTx.operation === OperationType.StreamCreate ||
+            highlightedMultisigTx.operation === OperationType.StreamClose ||
+            highlightedMultisigTx.operation === OperationType.StreamAddFunds
+      ? true
+      : false;
+
+  },[highlightedMultisigTx])
+
   const canShowApproveButton = useCallback(() => {
 
     if (!highlightedMultisigTx) { return false; }
@@ -2869,8 +2899,6 @@ export const MultisigView = () => {
       !highlightedMultisigTx.didSigned
     );
 
-    // console.log('show approve result', result);
-
     return result;
 
   },[highlightedMultisigTx])
@@ -2878,26 +2906,6 @@ export const MultisigView = () => {
   const canShowExecuteButton = useCallback(() => {
 
     if (!highlightedMultisigTx) { return false; }
-
-    const isUserTheProposer = () => {
-      return  publicKey &&
-              highlightedMultisigTx.proposer &&
-              publicKey.equals(highlightedMultisigTx.proposer)
-        ? true
-        : false;
-    }
-
-    const isTreasuryOperation = () => {
-      return  highlightedMultisigTx.operation === OperationType.TreasuryCreate ||
-              highlightedMultisigTx.operation === OperationType.TreasuryClose ||
-              highlightedMultisigTx.operation === OperationType.TreasuryAddFunds ||
-              highlightedMultisigTx.operation === OperationType.TreasuryStreamCreate ||
-              highlightedMultisigTx.operation === OperationType.StreamCreate ||
-              highlightedMultisigTx.operation === OperationType.StreamClose ||
-              highlightedMultisigTx.operation === OperationType.StreamAddFunds
-        ? true
-        : false;
-    }
 
     const isPendingForExecution = () => {
       return  highlightedMultisigTx.status === MultisigTransactionStatus.Approved &&
@@ -2917,8 +2925,9 @@ export const MultisigView = () => {
     }
 
   },[
-    highlightedMultisigTx, 
-    publicKey
+    highlightedMultisigTx,
+    isTreasuryOperation,
+    isUserTheProposer,
   ])
 
   const onAfterEveryModalClose = useCallback(() => resetTransactionStatus(),[resetTransactionStatus]);
@@ -3393,12 +3402,13 @@ export const MultisigView = () => {
                 nounce: selectedMultisig.nounce,
                 ownerSeqNumber: account.ownerSetSeqno,
                 threshold: account.threshold.toNumber(),
-                pendingTxsAmount: new BN(account.pendingTxs).toNumber(),
+                pendingTxsAmount: new BN(account.pendingTxs || 0).toNumber(),
                 createdOnUtc: new Date(account.createdOn.toNumber() * 1000),
                 owners: owners
 
               } as MultisigV2;
 
+              consoleOut('account:', account, 'blue');
               consoleOut('multisigInfo:', multisigInfo, 'blue');
 
               setSelectedMultisig(multisigInfo);
@@ -3646,23 +3656,6 @@ export const MultisigView = () => {
 
     return initiator;
   }, [selectedMultisig]);
-
-  const isUserTxInitiator = useCallback((mtx: MultisigTransaction): boolean => {
-    if (!selectedMultisig || !publicKey) { return false; }
-
-    const initiator = getTxInitiator(mtx);
-
-    if (initiator && initiator.address === publicKey.toBase58()) {
-      return true;
-    }
-
-    return false;
-
-  }, [
-    publicKey,
-    selectedMultisig,
-    getTxInitiator
-  ]);
 
   const getTxSignedCount = useCallback((mtx: MultisigTransaction) => {
     if (mtx && mtx.signers) {
@@ -4441,6 +4434,7 @@ export const MultisigView = () => {
           multisigThreshold={selectedMultisig.threshold}
           multisigParticipants={selectedMultisig.owners}
           multisigAccounts={multisigAccounts}
+          multisigPendingTxsAmount={selectedMultisig.pendingTxsAmount}
           handleClose={() => setIsEditMultisigModalVisible(false)}
           isBusy={isBusy}
         />
@@ -4500,11 +4494,11 @@ export const MultisigView = () => {
                 {/* Normal stuff - YOUR USER INPUTS / INFO AND ACTIONS */}
                 {isTxPendingExecution() ? (
                   <>
-                    {/* Am I the Tx initiator */}
-                    {getTxInitiator(highlightedMultisigTx)?.address === publicKey?.toBase58() ? (
-                      <h3 className="text-center">A Transaction on this Multisig is ready for your execution.</h3>
-                    ) : (
+                    {/* Custom execution-ready message */}
+                    {isTreasuryOperation() && !isUserTheProposer() ? (
                       <h3 className="text-center">A transaction on this Multisig is now ready for execution. Please tell the person who initiated this transaction to execute it.</h3>
+                    ) : (
+                      <h3 className="text-center">A Transaction on this Multisig is ready for {isUserTheProposer() ? 'your execution' : 'execution'}.</h3>
                     )}
                     <Divider className="mt-2" />
                     <div className="mb-2">Proposed Action: {getOperationName(highlightedMultisigTx.operation)}</div>
