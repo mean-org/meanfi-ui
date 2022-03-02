@@ -1027,6 +1027,8 @@
 			"column-rate": "Rate",
 			"create-stream-main-cta": "Create stream",
 			"create-stream-main-cta-busy": "Creating stream",
+			"create-treasury-switch-label": "Do you want to create multiple streams with the same settings?",
+			"multiple-address-list": "Multiple address list",
 			"fee-payed-by-treasurer": "I want to pay fees for this stream instead of the beneficiary",
 			"loading-streams": "Loading streams",
 			"minimum-allocation-advice": "You must set a minimum allocation for this Money Stream up to the unallocated balance available in the Treasury.",
