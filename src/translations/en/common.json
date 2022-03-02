@@ -342,7 +342,7 @@
 			"multisig-label-placeholder": "Type a name for your multisig account",
 			"multisig-no-participants": "No participants added yet",
 			"multisig-participants": "Valid signers ({{numParticipants}} of {{maxParticipants}})",
-			"multisig-participants-warning message": "It is not recommended to create a Multisig with the same number of participants as required signatures",
+			"multisig-participants-warning-message": "It is not recommended to create a Multisig with the same number of participants as required signatures",
 			"multisig-threshold-input-empty": "Enter a minimum required signatures value",
 			"multisig-threshold-input-label": "Minimum required signatures",
 			"multisig-threshold-input-max": "Max number of signatures is 10",
@@ -1098,6 +1098,12 @@
 		"label-available-amount": "Funds available to withdraw now",
 		"label-input-amount": "Enter amount to withdraw",
 		"label-input-right": "By percentual preset",
-		"modal-title": "Withdraw funds"
+		"modal-title": "Withdraw funds",
+		"button-title": "Withdraw funds",
+		"modal": {
+			"title": "Withdraw Unallocated Treasury Funds",
+			"selected-treasury-label": "From treasury account",
+			"verified-label": "I'm sure the recipient address doesn't belong to an exchange"
+		}
 	}
 }

@@ -98,6 +98,7 @@ import { MultisigParticipant, MultisigV2 } from '../../models/multisig';
 import { Program, Provider } from '@project-serum/anchor';
 import { TreasuryCreateOptions } from '../../models/treasuries';
 import { customLogger } from '../..';
+import { TreasuryTransferTokensModal } from '../../components/TreasuryTransferTokensModal';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -4572,6 +4573,28 @@ export const TreasuriesView = () => {
     });
   };
 
+  // Transfer token modal
+  const [isTransferTokenModalVisible, setIsTransferTokenModalVisible] = useState(false);
+  const showTransferTokenModal = useCallback(() => {
+    setIsTransferTokenModalVisible(true);
+    const fees = {
+      blockchainFee: 0.000005,
+      mspFlatFee: 0.000010,
+      mspPercentFee: 0
+    };
+    setTransactionFees(fees);
+  }, []);
+
+  // const onAcceptTransferToken = (params: any) => {
+  //   consoleOut('params', params, 'blue');
+  //   onExecuteTransferTokensTx(params);
+  // };
+
+  const onAfterEveryModalClose = useCallback(() => {
+    consoleOut('onAfterEveryModalClose called!', '', 'crimson');
+    resetTransactionStatus();
+  },[resetTransactionStatus]);
+
   ///////////////
   // Rendering //
   ///////////////
@@ -4882,7 +4905,7 @@ export const TreasuriesView = () => {
     const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
     return (
       <>
-        <Space size="middle">
+        <Space size="middle" wrap>
           {isNewTreasury ? (
             <>
               {
@@ -4920,6 +4943,17 @@ export const TreasuriesView = () => {
                 {isCreatingStream()
                   ? t('treasuries.treasury-streams.create-stream-main-cta-busy')
                   : t('treasuries.treasury-streams.create-stream-main-cta')}
+              </Button>
+
+              <Button
+                type="default"
+                shape="round"
+                size="small"
+                className="thin-stroke"
+                disabled={getTreasuryUnallocatedBalance() <= 0}
+                onClick={showTransferTokenModal}
+              >
+                {t('withdraw-funds.button-title')}
               </Button>
 
               {treasuryDetails && isMultisigTreasury() && (
@@ -5544,6 +5578,22 @@ export const TreasuriesView = () => {
           )}
         </div>
       </Modal>
+
+      {isTransferTokenModalVisible && (
+        <TreasuryTransferTokensModal
+          isVisible={isTransferTokenModalVisible}
+          nativeBalance={nativeBalance}
+          transactionFees={transactionFees}
+          treasuryDetails={treasuryDetails}
+          multisigAccounts={multisigAccounts}
+          handleOk=""
+          handleClose={() => {
+            onAfterEveryModalClose();
+            setIsTransferTokenModalVisible(false);
+          }}
+          isBusy={isBusy}
+        />
+      )}
 
       <PreFooter />
     </>
