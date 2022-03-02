@@ -2437,6 +2437,11 @@ main section {
       }
     }
   }
+  &:not(.stream-select-dropdown) {
+    width: auto !important;
+    min-width: 260px !important;
+    max-width: 400px !important;
+  }
   &.stream-select-dropdown {
     .ant-select-item.ant-select-item-option {
       padding: 0;
@@ -3879,7 +3884,7 @@ main section {
   }
   border-radius: 18px;
   height: 48px;
-  padding: 6px;
+  padding: 6px 4px;
   @media (min-width: 768px) {
     border-top-left-radius: 18px;
     border-top-right-radius: 0;
@@ -3895,7 +3900,7 @@ main section {
   }
   .icon-cell {
     position: relative;
-    flex: 0 0 30px;
+    flex: 0 0 34px;
     display: flex;
     .token-icon {
       border-radius: 50%;
@@ -3941,11 +3946,11 @@ main section {
     }
   }
   .description-cell {
-    flex: 1 1 12rem;
-    min-width: 12rem;
-    padding-left: 4px;
+    flex: 1 1 calc(100% - 148px);
+    min-width: calc(100% - 148px);
+    padding-left: 8px;
     .title {
-      display: inline-flex;
+      display: block;
       align-items: center;
       font-size: 16px;
       line-height: 1.2;
@@ -3959,7 +3964,7 @@ main section {
     }
   }
   .rate-cell {
-    flex: auto;
+    flex: 0 0 100px;
     padding: 0 4px 0 0;
     text-align: right;
     .rate-amount {
@@ -4127,10 +4132,13 @@ main section {
     flex-direction: column;
     justify-content: flex-start;
     overflow: auto;
-    max-height: calc(100% - (1rem + var(--footer-bar-height)));
+    // max-height: calc(100% - (1rem + var(--footer-bar-height)));
+    max-height: calc(100% - 1rem);
     min-height: 346px;
+    margin-right: -0.5rem;
     .meanfi-two-panel-left,
     .meanfi-two-panel-right {
+      padding-right: 1rem;
       transition: transform 0.5s ease-in-out;
       height: 100%;
     }
@@ -4410,6 +4418,12 @@ main section {
           }
         }
       }
+      .activity-list-data-wrapper {
+        min-height: 100px;
+        max-height: 24%;
+        margin-bottom: 20px;
+        height: 100%;
+      }
       .transaction-list-data-wrapper {
         @media (min-width: 576px) {
           &:not(.empty) {
@@ -4446,6 +4460,10 @@ main section {
       }
       .stream-details-data-wrapper {
         max-height: calc(100% - 0.6rem);
+        &.vertical-scroll {
+          margin-right: -0.5rem;
+          padding-right: 0.5rem;
+        }
       }
       .stream-fields-container {
         position: relative;
@@ -4656,10 +4674,17 @@ main section {
 }
 
 .float-top-right {
-  position: absolute;
-  top: 0.3rem;
-  right: 0.3rem;
-  z-index: 1;
+  @media (max-width: 575.98px) {
+    position: relative;
+    text-align: right;
+    margin-bottom: 1rem;
+  }
+  @media (min-width: 576px) {
+    position: absolute;
+    top: 0.3rem;
+    right: 0.3rem;
+    z-index: 1;
+  }
 }
 
 // Utilities

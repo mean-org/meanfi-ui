@@ -23,6 +23,7 @@ import { reportConnectedAccount } from "../../utils/api";
 import { Connection } from "@solana/web3.js";
 import useOnlineStatus from "../../contexts/online-status";
 import { AccountDetails } from "../../models";
+import { analytics } from "../../App";
 
 const { Header, Content, Footer } = Layout;
 
@@ -192,8 +193,13 @@ export const AppLayout = React.memo((props: any) => {
 
   // Report route
   useEffect(() => {
+    // Report pageview in GA only for prod
     if (environment === 'production') {
       ReactGA.pageview(location.pathname);
+    }
+    // Report page view in Segment for all envs
+    if (analytics) {
+      analytics.page(location.pathname);
     }
   }, [location.pathname]);
 

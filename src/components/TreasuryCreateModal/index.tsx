@@ -128,13 +128,13 @@ export const TreasuryCreateModal = (props: {
                             </div>
                             <div className="subtitle text-truncate">{shortenAddress(option.address.toBase58(), 8)}</div>
                           </div>
-                          <div className="description-cell text-right">
-                            <div className="subtitle">
-                            {
-                              t('multisig.multisig-accounts.pending-transactions', {
-                                txs: option.pendingTxsAmount
-                              })
-                            }
+                          <div className="rate-cell">
+                            <div className="rate-amount">
+                              {
+                                t('multisig.multisig-accounts.pending-transactions', {
+                                  txs: option.pendingTxsAmount
+                                })
+                              }
                             </div>
                           </div>
                         </div>

@@ -4680,38 +4680,42 @@ export const TreasuriesView = () => {
             <div className="std-table-cell last-cell">&nbsp;</div>
           </div>
         </div>
-        <div className="item-list-body compact">
-          {treasuryStreams.map((item, index) => {
-            const status = getStreamStatus(item);
-            return (
-              <div className={`item-list-row ${highlightedStream && highlightedStream.id === item.id ? 'selected' : ''}`} key={item.id as string}>
-                <div className="std-table-cell first-cell">{getStreamIcon(item)}</div>
-                <div className="std-table-cell responsive-cell">
-                  {status && (<span className="badge darken small text-uppercase mr-1">{status}</span>)}
-                  <span className="align-middle">{getStreamDescription(item)}</span>
-                </div>
-                <div className="std-table-cell fixed-width-90">
-                  <span className="align-middle">{shortenAddress(item.version < 2 ? (item as StreamInfo).beneficiaryAddress as string : (item as Stream).beneficiary as string)}</span>
-                </div>
-                <div className="std-table-cell fixed-width-130">
-                  <span className="align-middle">
-                    {item.rateAmount > 0 ? getRateAmountDisplay(item) : getDepositAmountDisplay(item)}
-                    {item && item.rateAmount > 0 && (
-                      <span>{getIntervalFromSeconds(item.rateIntervalInSeconds, true, t)}</span>
-                    )}
-                  </span>
-                </div>
-                <div className="std-table-cell fixed-width-72 text-right pr-1">
-                  <span className="align-middle">{getDepletionLabel(item)}</span>
-                </div>
-                <div className="std-table-cell last-cell">
-                  <span className={`icon-button-container ${isClosingTreasury() && highlightedStream ? 'click-disabled' : ''}`}>
-                    {renderStreamOptions(item)}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
+        <div className="activity-list-data-wrapper vertical-scroll">
+          <div className="activity-list h-100">
+            <div className="item-list-body compact">
+              {treasuryStreams.map((item, index) => {
+                const status = getStreamStatus(item);
+                return (
+                  <div className={`item-list-row ${highlightedStream && highlightedStream.id === item.id ? 'selected' : ''}`} key={item.id as string}>
+                    <div className="std-table-cell first-cell">{getStreamIcon(item)}</div>
+                    <div className="std-table-cell responsive-cell">
+                      {status && (<span className="badge darken small text-uppercase mr-1">{status}</span>)}
+                      <span className="align-middle">{getStreamDescription(item)}</span>
+                    </div>
+                    <div className="std-table-cell fixed-width-90">
+                      <span className="align-middle">{shortenAddress(item.version < 2 ? (item as StreamInfo).beneficiaryAddress as string : (item as Stream).beneficiary as string)}</span>
+                    </div>
+                    <div className="std-table-cell fixed-width-130">
+                      <span className="align-middle">
+                        {item.rateAmount > 0 ? getRateAmountDisplay(item) : getDepositAmountDisplay(item)}
+                        {item && item.rateAmount > 0 && (
+                          <span>{getIntervalFromSeconds(item.rateIntervalInSeconds, true, t)}</span>
+                        )}
+                      </span>
+                    </div>
+                    <div className="std-table-cell fixed-width-72 text-right pr-1">
+                      <span className="align-middle">{getDepletionLabel(item)}</span>
+                    </div>
+                    <div className="std-table-cell last-cell">
+                      <span className={`icon-button-container ${isClosingTreasury() && highlightedStream ? 'click-disabled' : ''}`}>
+                        {renderStreamOptions(item)}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </>
     );

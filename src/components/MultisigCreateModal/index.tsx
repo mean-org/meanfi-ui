@@ -127,6 +127,9 @@ export const MultisigCreateModal = (props: {
     }
   }
 
+  console.log(multisigOwners[+multisigThreshold - 1]);
+  
+
   return (
     <Modal
       className="mean-modal simple-modal"
@@ -215,7 +218,7 @@ export const MultisigCreateModal = (props: {
               multisigAddresses={multisigAddresses}
               onParticipantsChanged={(e: MultisigParticipant[]) => setMultisigOwners(e)}
             />
-            {(!multisigThreshold || +multisigThreshold === multisigOwners.length) && (
+            {(multisigOwners.length >= 2 && multisigOwners.length === +multisigThreshold && multisigOwners[+multisigThreshold - 1].address !== '') && (
               <span className="form-field-error text-uppercase icon-label">
                 <IconWarning className="mean-svg-icons" />
                 {t('multisig.create-multisig.multisig-participants-warning message')}
