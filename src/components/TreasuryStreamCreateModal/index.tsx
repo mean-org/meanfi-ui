@@ -923,9 +923,9 @@ export const TreasuryStreamCreateModal = (props: {
         <div className={currentStep === 0 ? "contract-wrapper panel1 show" : "contract-wrapper panel1 hide"}>
 
           {/* Create Treasury checkbox */}
-          <div className="mb-2 flex-row align-items-center">
+          <div className="mb-2 flex-row align-items-start">
             <span className="form-label w-auto mb-0">{t('treasuries.treasury-streams.create-treasury-switch-label')}</span>
-            <Radio.Group className="ml-2" 
+            <Radio.Group className="ml-2 d-flex" 
               onChange={onCloseMultipleStreamsChanged} 
               value={enableMultipleStreamsOption}
             >
