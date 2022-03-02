@@ -834,7 +834,7 @@ export const TreasuriesView = () => {
     const timeout = setTimeout(() => {
       if (location.search) {
         consoleOut(`try to select multisig ${multisigAddress} from list`, multisigAccounts, 'blue');
-        const selected = multisigAccounts.find(m => m.authority.toBase58() === multisigAddress);
+        const selected = multisigAccounts.find(m => m.id.toBase58() === multisigAddress);
         if (selected) {
           consoleOut('selectedMultisig:', selected, 'blue');
           setSelectedMultisig(selected);
@@ -863,7 +863,7 @@ export const TreasuriesView = () => {
     }
 
     const isMultisigInAccountList = (id: string) => {
-      return multisigAccounts.some(m => m.authority.toBase58() === id);
+      return multisigAccounts.some(m => m.id.toBase58() === id);
     }
 
     // Verify query param
@@ -1185,7 +1185,7 @@ export const TreasuriesView = () => {
   ]);
 
   const isMultisigAvailable = useCallback((): boolean => {
-    return multisigAddress && selectedMultisig && selectedMultisig.authority.toBase58() === multisigAddress
+    return multisigAddress && selectedMultisig && selectedMultisig.id.toBase58() === multisigAddress
             ? true
             : false;
   }, [
@@ -4622,8 +4622,11 @@ export const TreasuriesView = () => {
               consoleOut('With treasurer:', (treasuryDetails as Treasury).treasurer, 'blue');
               // Populate the list of streams in the state before going there.
               setStreamList(treasuryStreams || []);
-              setHighLightableMultisigId((treasuryDetails as Treasury).treasurer as string);
               consoleOut('Heading to:', url, 'blue');
+              // Set this so we can know how to return
+              if (selectedMultisig) {
+                setHighLightableMultisigId(selectedMultisig.id.toBase58());
+              }
               navigate(url);
             } else {
               refreshStreamList();
@@ -4742,11 +4745,11 @@ export const TreasuriesView = () => {
         <div className="description-cell">
           <div className="font-bold simplelink underline-on-hover" onClick={() => {
             if (selectedMultisig) {
-              consoleOut('Navigating to multisig:', selectedMultisig.authority.toBase58(), 'blue');
-              setHighLightableMultisigId(selectedMultisig.authority.toBase58());
+              consoleOut('Navigating to multisig:', selectedMultisig.id.toBase58(), 'blue');
+              setHighLightableMultisigId(selectedMultisig.id.toBase58());
             } else if (multisig) {
               consoleOut('Navigating to multisig:', multisig.authority.toBase58(), 'blue');
-              setHighLightableMultisigId(multisig.authority.toBase58());
+              setHighLightableMultisigId(multisig.id.toBase58());
             }
             navigate('/multisig');
           }}>{t('treasuries.treasury-detail.multisig-tx-headsup')}</div>
@@ -4890,24 +4893,22 @@ export const TreasuriesView = () => {
         <Space size="middle">
           {isNewTreasury ? (
             <>
-              {
-                <Button
-                  type="default"
-                  shape="round"
-                  size="small"
-                  className="thin-stroke"
-                  disabled={isTxInProgress() || loadingTreasuries}
-                  onClick={() => {
-                    setHighLightableStreamId(undefined);
-                    sethHighlightedStream(undefined);
-                    showAddFundsModal();
-                  }}>
-                  {isAddingFunds() && (<LoadingOutlined />)}
-                  {isAddingFunds()
-                    ? t('treasuries.treasury-detail.cta-add-funds-busy')
-                    : t('treasuries.treasury-detail.cta-add-funds')}
-                </Button>
-              }
+              <Button
+                type="default"
+                shape="round"
+                size="small"
+                className="thin-stroke"
+                disabled={isTxInProgress() || loadingTreasuries}
+                onClick={() => {
+                  setHighLightableStreamId(undefined);
+                  sethHighlightedStream(undefined);
+                  showAddFundsModal();
+                }}>
+                {isAddingFunds() && (<LoadingOutlined />)}
+                {isAddingFunds()
+                  ? t('treasuries.treasury-detail.cta-add-funds-busy')
+                  : t('treasuries.treasury-detail.cta-add-funds')}
+              </Button>
 
               <Button
                 type="default"
@@ -4946,7 +4947,10 @@ export const TreasuriesView = () => {
                     consoleOut('With treasurer:', (treasuryDetails as Treasury).treasurer, 'blue');
                     // Populate the list of streams in the state before going there.
                     setStreamList(treasuryStreams || []);
-                    setHighLightableMultisigId((treasuryDetails as Treasury).treasurer as string);
+                    // Set this so we can know how to return
+                    if (selectedMultisig) {
+                      setHighLightableMultisigId(selectedMultisig.id.toBase58());
+                    }
                     navigate(url);
                   }}>
                   View streams
@@ -4961,7 +4965,12 @@ export const TreasuriesView = () => {
               </InfoIcon>
             </div>
           )}
-          {isClosingTreasury() ? (
+          {isCreatingTreasury() ? (
+            <div className="flex-row flex-center">
+              <LoadingOutlined />
+              <span className="ml-1">{t('treasuries.treasury-detail.cta-create-treasury-busy')}</span>
+            </div>
+          ) : isClosingTreasury() ? (
             <div className="flex-row flex-center">
               <LoadingOutlined />
               <span className="ml-1">{t('treasuries.treasury-detail.cta-close-busy')}</span>
@@ -5139,9 +5148,10 @@ export const TreasuriesView = () => {
                           icon={<ArrowLeftOutlined />}
                           onClick={() => {
                             if (selectedMultisig) {
-                              setHighLightableMultisigId(selectedMultisig.authority.toBase58());
+                              consoleOut('selectedMultisig.id', selectedMultisig.id.toBase58(), 'blue');
+                              setHighLightableMultisigId(selectedMultisig.id.toBase58());
+                              navigate('/multisig');
                             }
-                            navigate('/multisig');
                           }}
                         />
                       </Tooltip>

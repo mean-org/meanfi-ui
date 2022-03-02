@@ -3292,7 +3292,7 @@ export const MultisigView = () => {
             if (multisigInfoArray.length > 0) {
               if (highLightableMultisigId) {
                 // Select a multisig that was instructed to highlight when entering this feature
-                item = multisigInfoArray.find(m => m.authority.toBase58() === highLightableMultisigId);
+                item = multisigInfoArray.find(m => m.id.toBase58() === highLightableMultisigId);
               } else if (selectedMultisig) {
                 // Or re-select the one active
                 item = selectedMultisig.id ? multisigInfoArray.find(m => m.id.equals(selectedMultisig.id)) : undefined;
@@ -4017,7 +4017,7 @@ export const MultisigView = () => {
             disabled={isTxInProgress() || loadingMultisigAccounts}
             onClick={() => {
               if (selectedMultisig) {
-                const url = `/treasuries?multisig=${selectedMultisig.authority.toBase58()}`;
+                const url = `/treasuries?multisig=${selectedMultisig.id.toBase58()}`;
                 navigate(url);
               }
             }}>
@@ -4165,14 +4165,12 @@ export const MultisigView = () => {
             </div>
             <div className="description-cell">
               {item.label ? (
-                <div className="title text-truncate">
-                  {item.label}
-                </div>
+                <div className="title text-truncate">{item.label}</div>
               ) : (
                 <div className="title text-truncate">{shortenAddress(item.id.toBase58(), 8)}</div>
               )}
               {
-                <div className="subtitle text-truncate">{shortenAddress(item.authority.toBase58(), 8)}</div>
+                <div className="subtitle text-truncate">{shortenAddress(item.id.toBase58(), 8)}</div>
               }
             </div>
             <div className="rate-cell">

@@ -117,14 +117,12 @@ export const MultisigVaultTransferAuthorityModal = (props: {
         </div>
         <div className="description-cell">
           {item.label ? (
-            <div className="title text-truncate">
-              {item.label}
-            </div>
+            <div className="title text-truncate">{item.label}</div>
           ) : (
             <div className="title text-truncate">{shortenAddress(item.id.toBase58(), 8)}</div>
           )}
           {
-            <div className="subtitle text-truncate">{shortenAddress(item.authority.toBase58(), 8)}</div>
+            <div className="subtitle text-truncate">{shortenAddress(item.id.toBase58(), 8)}</div>
           }
         </div>
         <div className="rate-cell">
@@ -136,15 +134,6 @@ export const MultisigVaultTransferAuthorityModal = (props: {
             }
           </div>
         </div>
-        {/* <div className="description-cell text-right">
-          <div className="subtitle">
-          {
-            t('multisig.multisig-accounts.pending-transactions', {
-              txs: item.pendingTxsAmount
-            })
-          }
-          </div>
-        </div> */}
       </div>
     ),
   });

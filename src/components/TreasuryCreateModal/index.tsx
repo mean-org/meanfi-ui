@@ -123,10 +123,8 @@ export const TreasuryCreateModal = (props: {
                             <Identicon address={option.id} style={{ width: "30", display: "inline-flex" }} />
                           </div>
                           <div className="description-cell">
-                            <div className="title text-truncate">
-                              {option.label}
-                            </div>
-                            <div className="subtitle text-truncate">{shortenAddress(option.authority.toBase58(), 8)}</div>
+                            <div className="title text-truncate">{option.label}</div>
+                            <div className="subtitle text-truncate">{shortenAddress(option.id.toBase58(), 8)}</div>
                           </div>
                           <div className="rate-cell">
                             <div className="rate-amount">
