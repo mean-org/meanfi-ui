@@ -332,6 +332,7 @@
 			"main-cta": "Yarat",
 			"main-cta-busy": "Çoklu-İmza yaratılıyor",
 			"modal-title": "Çoklu-İmza yarat",
+			"multisig-address-used-as-participant": "Cannot use a multisig address as participant",
 			"multisig-duplicate-participants": "İkileyen katılımcılar bulundu, lütfen göz atın.",
 			"multisig-label-input-empty": "Çoklu-İmza ismi girin",
 			"multisig-label-input-label": "Çoklu-İmza ismi",
@@ -514,7 +515,8 @@
 			"multisig-selector-label": "Yeni yetki (çoklu-imza)",
 			"multisig-selector-placeholder": "Bir çoklu-imza hesabı gir ve ya seç",
 			"selected-vault-label": "Seçilmiş kasa",
-			"success-message": "Yeni kasa yetkisi başarıyla düzenlendi"
+			"success-message": "Yeni kasa yetkisi başarıyla düzenlendi",
+			"vault-auth-destination-address-disclaimer": "I confirm the above New Authority Address entered or selected is a Multisig Account address and NOT a regular wallet address. I acknowledge that if I provide a non Multisig address, it will cause a permanent loss of the vault and its funds."
 		},
 		"transfer-tokens": {
 			"main-cta": "Talep etmeye başla",
@@ -908,8 +910,7 @@
 			"valid-start-funding": "Fonlamaya başlayın",
 			"valid-start-withdrawal": "Para çekme işlemini başlat",
 			"verified-recipient-unchecked": "Alıcı doğrulaması işaretlenmemiş"
-		},
-		"verified-recipient-label": "Alıcı adresinin bir borsaya ait olmadığından eminim."
+		}
 	},
 	"transfer-stream": {
 		"destination-address-is-sender": "Yeni adres gönderen olamaz",
@@ -922,7 +923,8 @@
 	},
 	"transfers": {
 		"screen-subtitle": "Dünyadaki herkese daha hızlı para gönderin",
-		"screen-title": "Transferler"
+		"screen-title": "Transferler",
+		"verified-recipient-disclaimer": "Alıcı adresinin bir borsaya ait olmadığından eminim."
 	},
 	"treasuries": {
 		"add-funds": {

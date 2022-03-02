@@ -311,6 +311,7 @@
 			"main-cta": "Create",
 			"main-cta-busy": "Creating multisig",
 			"modal-title": "Create multisig",
+			"multisig-address-used-as-participant": "Cannot use a multisig address as participant",
 			"multisig-duplicate-participants": "Found duplicate participants, please review.",
 			"multisig-label-input-empty": "Enter a multisig name",
 			"multisig-label-input-label": "Multisig name",
@@ -481,7 +482,8 @@
 			"multisig-selector-label": "New authority (multisig)",
 			"multisig-selector-placeholder": "Select or enter a multisig address",
 			"selected-vault-label": "Selected vault",
-			"success-message": "New vault authority set successfully."
+			"success-message": "New vault authority set successfully.",
+			"vault-auth-destination-address-disclaimer": "I confirm the above New Authority Address entered or selected is a Multisig Account address and NOT a regular wallet address. I acknowledge that if I provide a non Multisig address, it will cause a permanent loss of the vault and its funds."
 		},
 		"transfer-tokens": {
 			"main-cta": "Start Request",
@@ -896,12 +898,12 @@
 			"valid-start-funding": "Start funding",
 			"valid-start-withdrawal": "Start withdrawal",
 			"verified-recipient-unchecked": "Recipient verification unchecked"
-		},
-		"verified-recipient-label": "I'm sure the recipient address doesn't belong to an exchange."
+		}
 	},
 	"transfers": {
 		"screen-subtitle": "Send money to anyone in the world faster",
-		"screen-title": "Transfers"
+		"screen-title": "Transfers",
+		"verified-recipient-disclaimer": "I'm sure the recipient address doesn't belong to an exchange."
 	},
 	"treasuries": {
 		"add-funds": {

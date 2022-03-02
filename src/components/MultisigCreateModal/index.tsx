@@ -5,13 +5,13 @@ import { useTranslation } from 'react-i18next';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { AppStateContext } from '../../contexts/appstate';
 import { TransactionStatus } from '../../models/enums';
-import { getTransactionOperationDescription, isValidAddress } from '../../utils/ui';
+import { consoleOut, getTransactionOperationDescription, isValidAddress } from '../../utils/ui';
 import { isError } from '../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TransactionFees } from '@mean-dao/money-streaming';
 import { getTokenAmountAndSymbolByTokenAddress, isValidNumber } from '../../utils/utils';
 import { MultisigParticipants } from '../MultisigParticipants';
-import { MultisigParticipant } from '../../models/multisig';
+import { MultisigParticipant, MultisigV2 } from '../../models/multisig';
 import { useWallet } from '../../contexts/wallet';
 import { MAX_MULTISIG_PARTICIPANTS } from '../../constants';
 import { IconHelpCircle, IconWarning } from '../../Icons';
@@ -25,6 +25,7 @@ export const MultisigCreateModal = (props: {
   isBusy: boolean;
   nativeBalance: number;
   transactionFees: TransactionFees;
+  multisigAccounts: MultisigV2[];
 }) => {
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
@@ -36,6 +37,7 @@ export const MultisigCreateModal = (props: {
   const [multisigLabel, setMultisigLabel] = useState('');
   const [multisigThreshold, setMultisigThreshold] = useState(0);
   const [multisigOwners, setMultisigOwners] = useState<MultisigParticipant[]>([]);
+  const [multisigAddresses, setMultisigAddresses] = useState<string[]>([]);
 
   // When modal goes visible, add current wallet address as first participant
   useEffect(() => {
@@ -47,10 +49,15 @@ export const MultisigCreateModal = (props: {
           address: publicKey.toBase58()
       });
       setMultisigOwners(items);
+      if (props.multisigAccounts && props.multisigAccounts.length > 0) {
+        const msAddresses = props.multisigAccounts.map(ms => ms.authority.toBase58());
+        setMultisigAddresses(msAddresses);
+      }
     }
   }, [
     publicKey,
     props.isVisible,
+    props.multisigAccounts
   ]);
 
   const onAcceptModal = () => {
@@ -89,6 +96,11 @@ export const MultisigCreateModal = (props: {
     setMultisigLabel(e.target.value);
   }
 
+  const noDuplicateExists = (arr: MultisigParticipant[]): boolean => {
+    const items = arr.map(i => i.address);
+    return new Set(items).size === items.length ? true : false;
+  }
+
   const isFormValid = () => {
     return  multisigThreshold &&
             multisigThreshold >= 2 &&
@@ -96,7 +108,8 @@ export const MultisigCreateModal = (props: {
             multisigLabel &&
             multisigOwners.length >= multisigThreshold &&
             multisigOwners.length <= MAX_MULTISIG_PARTICIPANTS &&
-            isOwnersListValid()
+            isOwnersListValid() &&
+            noDuplicateExists(multisigOwners)
       ? true
       : false;
   }
@@ -202,6 +215,7 @@ export const MultisigCreateModal = (props: {
                   maxParticipants: MAX_MULTISIG_PARTICIPANTS
                 })
               }
+              multisigAddresses={multisigAddresses}
               onParticipantsChanged={(e: MultisigParticipant[]) => setMultisigOwners(e)}
             />
             {(multisigOwners.length >= 2 && multisigOwners.length === +multisigThreshold && multisigOwners[+multisigThreshold - 1].address !== '') && (

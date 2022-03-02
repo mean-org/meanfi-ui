@@ -1052,7 +1052,7 @@ export const OneTimePayment = () => {
 
         {/* Confirm recipient address is correct Checkbox */}
         <div className="mb-2">
-          <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>{t('transactions.verified-recipient-label')}</Checkbox>
+          <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>{t('transfers.verified-recipient-disclaimer')}</Checkbox>
         </div>
 
         {/* Action button */}

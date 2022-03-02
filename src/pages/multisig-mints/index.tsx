@@ -12,7 +12,7 @@ import { ConfirmOptions, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Syste
 import { Program, Provider } from '@project-serum/anchor';
 import MultisigIdl from "../../models/mean-multisig-idl";
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
-import { MintLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { MintLayout, Token, TOKEN_PROGRAM_ID, u64 } from '@solana/spl-token';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { consoleOut, copyText, delay, getReadableDate, getShortDate, getTransactionOperationDescription, getTransactionStatusForLogs, isDev, isLocal } from '../../utils/ui';
 import { Identicon } from '../../components/Identicon';
@@ -500,6 +500,36 @@ export const MultisigMintsView = () => {
 
   },[]);
 
+  const isUserTheProposer = useCallback((): boolean => {
+    if (!highlightedMultisigTx || !publicKey) { return false; }
+
+    return  publicKey &&
+            highlightedMultisigTx.proposer &&
+            publicKey.equals(highlightedMultisigTx.proposer)
+        ? true
+        : false;
+
+  }, [
+    publicKey,
+    highlightedMultisigTx
+  ]);
+
+  const isTreasuryOperation = useCallback(() => {
+
+    if (!highlightedMultisigTx) { return false; }
+
+    return  highlightedMultisigTx.operation === OperationType.TreasuryCreate ||
+            highlightedMultisigTx.operation === OperationType.TreasuryClose ||
+            highlightedMultisigTx.operation === OperationType.TreasuryAddFunds ||
+            highlightedMultisigTx.operation === OperationType.TreasuryStreamCreate ||
+            highlightedMultisigTx.operation === OperationType.StreamCreate ||
+            highlightedMultisigTx.operation === OperationType.StreamClose ||
+            highlightedMultisigTx.operation === OperationType.StreamAddFunds
+      ? true
+      : false;
+
+  },[highlightedMultisigTx])
+
   const canShowApproveButton = useCallback(() => {
 
     if (!highlightedMultisigTx) { return false; }
@@ -509,8 +539,6 @@ export const MultisigMintsView = () => {
       !highlightedMultisigTx.didSigned
     );
 
-    // console.log('show approve result', result);
-
     return result;
 
   },[highlightedMultisigTx])
@@ -518,26 +546,6 @@ export const MultisigMintsView = () => {
   const canShowExecuteButton = useCallback(() => {
 
     if (!highlightedMultisigTx) { return false; }
-
-    const isUserTheProposer = () => {
-      return  publicKey &&
-              highlightedMultisigTx.proposer &&
-              publicKey.equals(highlightedMultisigTx.proposer)
-        ? true
-        : false;
-    }
-
-    const isTreasuryOperation = () => {
-      return  highlightedMultisigTx.operation === OperationType.TreasuryCreate ||
-              highlightedMultisigTx.operation === OperationType.TreasuryClose ||
-              highlightedMultisigTx.operation === OperationType.TreasuryAddFunds ||
-              highlightedMultisigTx.operation === OperationType.TreasuryStreamCreate ||
-              highlightedMultisigTx.operation === OperationType.StreamCreate ||
-              highlightedMultisigTx.operation === OperationType.StreamClose ||
-              highlightedMultisigTx.operation === OperationType.StreamAddFunds
-        ? true
-        : false;
-    }
 
     const isPendingForExecution = () => {
       return  highlightedMultisigTx.status === MultisigTransactionStatus.Approved &&
@@ -557,8 +565,9 @@ export const MultisigMintsView = () => {
     }
 
   },[
-    highlightedMultisigTx, 
-    publicKey
+    highlightedMultisigTx,
+    isTreasuryOperation,
+    isUserTheProposer,
   ])
 
 
@@ -624,7 +633,7 @@ export const MultisigMintsView = () => {
           id: info.publicKey,
           version: info.account.version,
           label: new TextDecoder().decode(labelBuffer),
-          address,
+          authority: address,
           nounce: info.account.nonce,
           ownerSeqNumber: info.account.ownerSetSeqno,
           threshold: info.account.threshold.toNumber(),
@@ -671,7 +680,7 @@ export const MultisigMintsView = () => {
           id: info.publicKey,
           version: 1,
           label: new TextDecoder().decode(labelBuffer),
-          address,
+          authority: address,
           nounce: info.account.nonce,
           ownerSeqNumber: info.account.ownerSetSeqno,
           threshold: info.account.threshold.toNumber(),
@@ -713,13 +722,14 @@ export const MultisigMintsView = () => {
     if (!mintInfos || !mintInfos.length) { return []; }
 
     const results = mintInfos.map((t: any) => {
-      let mintAccount = MintLayout.decode(t.account.data);
+      let mintAccount = MintLayout.decode(Buffer.from(t.account.data));
       mintAccount.address = t.pubkey;
+      const supply = mintAccount.supply as Uint8Array;
       return {
         address: mintAccount.address,
         isInitialized: mintAccount.isInitialized === 1 ? true : false,
         decimals: mintAccount.decimals,
-        supply: new BN(mintAccount.supply).toNumber(),
+        supply: new BN(supply, 10, 'le').toNumber(),
         mintAuthority: mintAccount.freezeAuthority ? new PublicKey(mintAccount.freezeAuthority) : null,
         freezeAuthority: mintAccount.freezeAuthority ? new PublicKey(mintAccount.freezeAuthority) : null
         
@@ -1173,7 +1183,7 @@ export const MultisigMintsView = () => {
 
       // Create a transaction
       const payload = {
-        multisig: selectedMultisig.address.toBase58(),
+        multisig: selectedMultisig.authority.toBase58(),
         mint: selectedMint.address.toBase58(),
         newAuthority: authority
       } as SetMintAuthPayload;
@@ -3017,7 +3027,7 @@ export const MultisigMintsView = () => {
                         icon={<ArrowLeftOutlined />}
                         onClick={() => {
                           if (selectedMultisig) {
-                            setHighLightableMultisigId(selectedMultisig.address.toBase58());
+                            setHighLightableMultisigId(selectedMultisig.authority.toBase58());
                           }
                           navigate('/multisig');
                         }}
@@ -3191,11 +3201,11 @@ export const MultisigMintsView = () => {
                 {/* Normal stuff - YOUR USER INPUTS / INFO AND ACTIONS */}
                 {isTxPendingExecution() ? (
                   <>
-                    {/* Am I the Tx initiator */}
-                    {getTxInitiator(highlightedMultisigTx)?.address === publicKey?.toBase58() ? (
-                      <h3 className="text-center">A Transaction on this Multisig is ready for your execution.</h3>
-                    ) : (
+                    {/* Custom execution-ready message */}
+                    {isTreasuryOperation() && !isUserTheProposer() ? (
                       <h3 className="text-center">A transaction on this Multisig is now ready for execution. Please tell the person who initiated this transaction to execute it.</h3>
+                    ) : (
+                      <h3 className="text-center">A Transaction on this Multisig is ready for {isUserTheProposer() ? 'your execution' : 'execution'}.</h3>
                     )}
                     <Divider className="mt-2" />
                     <div className="mb-2">Proposed Action: {getOperationName(highlightedMultisigTx.operation)}</div>

@@ -1,5 +1,5 @@
 import React, { useContext, useState } from 'react';
-import { Modal, Button, Spin, AutoComplete } from 'antd';
+import { Modal, Button, Spin, AutoComplete, Checkbox } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { AppStateContext } from '../../contexts/appstate';
@@ -34,6 +34,7 @@ export const MultisigVaultTransferAuthorityModal = (props: {
   } = useContext(AppStateContext);
 
   const [selectedAuthority, setSelectedAuthority] = useState('');
+  const [destinationAddressDisclaimerAccepted, setDestinationAddressDisclaimerAccepted] = useState(false);
 
   const onAcceptModal = () => {
     props.handleOk(selectedAuthority);
@@ -50,7 +51,7 @@ export const MultisigVaultTransferAuthorityModal = (props: {
   const isValidForm = (): boolean => {
     return selectedAuthority &&
             isValidAddress(selectedAuthority) &&
-            (!props.selectedMultisig || (props.selectedMultisig && selectedAuthority !== props.selectedMultisig.address.toBase58()))
+            (!props.selectedMultisig || (props.selectedMultisig && selectedAuthority !== props.selectedMultisig.authority.toBase58()))
       ? true
       : false;
   }
@@ -94,7 +95,7 @@ export const MultisigVaultTransferAuthorityModal = (props: {
           <div className="subtitle text-truncate">{shortenAddress(item.address.toBase58(), 8)}</div>
         </div>
         <div className="rate-cell">
-          <div className="rate-amount text-uppercase">
+          <div className="rate-amount">
             {getTokenAmountAndSymbolByTokenAddress(
               makeDecimal(item.amount, token?.decimals || 6),
               token ? token.address as string : '',
@@ -107,8 +108,8 @@ export const MultisigVaultTransferAuthorityModal = (props: {
   }
 
   const renderMultisigSelectItem = (item: MultisigV2) => ({
-    key: item.address.toBase58(),
-    value: item.address.toBase58(),
+    key: item.authority.toBase58(),
+    value: item.authority.toBase58(),
     label: (
       <div className={`transaction-list-row`}>
         <div className="icon-cell">
@@ -123,10 +124,19 @@ export const MultisigVaultTransferAuthorityModal = (props: {
             <div className="title text-truncate">{shortenAddress(item.id.toBase58(), 8)}</div>
           )}
           {
-            <div className="subtitle text-truncate">{shortenAddress(item.address.toBase58(), 8)}</div>
+            <div className="subtitle text-truncate">{shortenAddress(item.authority.toBase58(), 8)}</div>
           }
         </div>
-        <div className="description-cell text-right">
+        <div className="rate-cell">
+          <div className="rate-amount">
+            {
+              t('multisig.multisig-accounts.pending-transactions', {
+                txs: item.pendingTxsAmount
+              })
+            }
+          </div>
+        </div>
+        {/* <div className="description-cell text-right">
           <div className="subtitle">
           {
             t('multisig.multisig-accounts.pending-transactions', {
@@ -134,7 +144,7 @@ export const MultisigVaultTransferAuthorityModal = (props: {
             })
           }
           </div>
-        </div>
+        </div> */}
       </div>
     ),
   });
@@ -144,6 +154,10 @@ export const MultisigVaultTransferAuthorityModal = (props: {
       return renderMultisigSelectItem(multisig);
     });
     return options;
+  }
+
+  const onDestinationAddressDisclaimerAcceptanceChange = (e: any) => {
+    setDestinationAddressDisclaimerAccepted(e.target.checked);
   }
 
   return (
@@ -187,15 +201,15 @@ export const MultisigVaultTransferAuthorityModal = (props: {
                       }}
                       filterOption={(inputValue, option) => {
                         const originalItem = props.multisigAccounts.find(i => {
-                          return i.address.toBase58() === option!.key ? true : false;
+                          return i.authority.toBase58() === option!.key ? true : false;
                         });
-                        return option!.value.indexOf(inputValue) !== -1 || originalItem?.address.toBase58().indexOf(inputValue) !== -1
+                        return option!.value.indexOf(inputValue) !== -1 || originalItem?.authority.toBase58().indexOf(inputValue) !== -1
                       }}
                       onSelect={onMultisigSelected}
                     />
                   </div>
                 </div>
-                {props.selectedMultisig && selectedAuthority === props.selectedMultisig.address.toBase58() ? (
+                {props.selectedMultisig && selectedAuthority === props.selectedMultisig.authority.toBase58() ? (
                   <span className="form-field-error">
                     {t('multisig.transfer-authority.multisig-already-owns-the-vault')}
                   </span>
@@ -205,6 +219,14 @@ export const MultisigVaultTransferAuthorityModal = (props: {
                   </span>
                 ) : null}
               </div>
+            </div>
+
+            <div className="mb-3 ml-1">
+              <Checkbox
+                checked={destinationAddressDisclaimerAccepted}
+                onChange={onDestinationAddressDisclaimerAcceptanceChange}>
+                {t('multisig.transfer-authority.vault-auth-destination-address-disclaimer')}
+              </Checkbox>
             </div>
 
           </>
@@ -286,7 +308,7 @@ export const MultisigVaultTransferAuthorityModal = (props: {
             type="primary"
             shape="round"
             size="middle"
-            disabled={!isValidForm()}
+            disabled={!isValidForm() || !destinationAddressDisclaimerAccepted}
             onClick={() => {
               if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
                 onAcceptModal();

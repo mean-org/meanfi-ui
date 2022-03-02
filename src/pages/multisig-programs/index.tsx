@@ -487,6 +487,36 @@ export const MultisigProgramsView = () => {
 
   },[]);
 
+  const isUserTheProposer = useCallback((): boolean => {
+    if (!highlightedMultisigTx || !publicKey) { return false; }
+
+    return  publicKey &&
+            highlightedMultisigTx.proposer &&
+            publicKey.equals(highlightedMultisigTx.proposer)
+        ? true
+        : false;
+
+  }, [
+    publicKey,
+    highlightedMultisigTx
+  ]);
+
+  const isTreasuryOperation = useCallback(() => {
+
+    if (!highlightedMultisigTx) { return false; }
+
+    return  highlightedMultisigTx.operation === OperationType.TreasuryCreate ||
+            highlightedMultisigTx.operation === OperationType.TreasuryClose ||
+            highlightedMultisigTx.operation === OperationType.TreasuryAddFunds ||
+            highlightedMultisigTx.operation === OperationType.TreasuryStreamCreate ||
+            highlightedMultisigTx.operation === OperationType.StreamCreate ||
+            highlightedMultisigTx.operation === OperationType.StreamClose ||
+            highlightedMultisigTx.operation === OperationType.StreamAddFunds
+      ? true
+      : false;
+
+  },[highlightedMultisigTx])
+
   const canShowApproveButton = useCallback(() => {
 
     if (!highlightedMultisigTx) { return false; }
@@ -496,8 +526,6 @@ export const MultisigProgramsView = () => {
       !highlightedMultisigTx.didSigned
     );
 
-    // console.log('show approve result', result);
-
     return result;
 
   },[highlightedMultisigTx])
@@ -505,26 +533,6 @@ export const MultisigProgramsView = () => {
   const canShowExecuteButton = useCallback(() => {
 
     if (!highlightedMultisigTx) { return false; }
-
-    const isUserTheProposer = () => {
-      return  publicKey &&
-              highlightedMultisigTx.proposer &&
-              publicKey.equals(highlightedMultisigTx.proposer)
-        ? true
-        : false;
-    }
-
-    const isTreasuryOperation = () => {
-      return  highlightedMultisigTx.operation === OperationType.TreasuryCreate ||
-              highlightedMultisigTx.operation === OperationType.TreasuryClose ||
-              highlightedMultisigTx.operation === OperationType.TreasuryAddFunds ||
-              highlightedMultisigTx.operation === OperationType.TreasuryStreamCreate ||
-              highlightedMultisigTx.operation === OperationType.StreamCreate ||
-              highlightedMultisigTx.operation === OperationType.StreamClose ||
-              highlightedMultisigTx.operation === OperationType.StreamAddFunds
-        ? true
-        : false;
-    }
 
     const isPendingForExecution = () => {
       return  highlightedMultisigTx.status === MultisigTransactionStatus.Approved &&
@@ -544,8 +552,9 @@ export const MultisigProgramsView = () => {
     }
 
   },[
-    highlightedMultisigTx, 
-    publicKey
+    highlightedMultisigTx,
+    isTreasuryOperation,
+    isUserTheProposer,
   ])
 
 
@@ -611,7 +620,7 @@ export const MultisigProgramsView = () => {
           id: info.publicKey,
           version: info.account.version,
           label: new TextDecoder().decode(labelBuffer),
-          address,
+          authority: address,
           nounce: info.account.nonce,
           ownerSeqNumber: info.account.ownerSetSeqno,
           threshold: info.account.threshold.toNumber(),
@@ -658,7 +667,7 @@ export const MultisigProgramsView = () => {
           id: info.publicKey,
           version: 1,
           label: new TextDecoder().decode(labelBuffer),
-          address,
+          authority: address,
           nounce: info.account.nonce,
           ownerSeqNumber: info.account.ownerSetSeqno,
           threshold: info.account.threshold.toNumber(),
@@ -875,7 +884,7 @@ export const MultisigProgramsView = () => {
   // Get Programs
   useEffect(() => {
 
-    if (!connection || !publicKey || !selectedMultisig || !selectedMultisig.address || !loadingPrograms) {
+    if (!connection || !publicKey || !selectedMultisig || !selectedMultisig.authority || !loadingPrograms) {
       return;
     }
 
@@ -883,7 +892,7 @@ export const MultisigProgramsView = () => {
 
       consoleOut('Calling getProgramsByUpgradeAuthority from useEffect...', '', 'blue');
 
-      getProgramsByUpgradeAuthority(selectedMultisig.address)
+      getProgramsByUpgradeAuthority(selectedMultisig.authority)
         .then(programs => {
           consoleOut('programs:', programs, 'blue');
           if (programs && programs.length > 0) {
@@ -966,6 +975,7 @@ export const MultisigProgramsView = () => {
         .catch(err => {
           console.error(err);
           setMultisigPendingTxs([]);
+          consoleOut('multisigPendingTxs:', [], 'blue');
         })
         .finally(() => setLoadingMultisigTxs(false));
     });
@@ -3028,7 +3038,7 @@ export const MultisigProgramsView = () => {
                         icon={<ArrowLeftOutlined />}
                         onClick={() => {
                           if (selectedMultisig) {
-                            setHighLightableMultisigId(selectedMultisig.address.toBase58());
+                            setHighLightableMultisigId(selectedMultisig.authority.toBase58());
                           }
                           navigate('/multisig');
                         }}
@@ -3216,11 +3226,11 @@ export const MultisigProgramsView = () => {
                 {/* Normal stuff - YOUR USER INPUTS / INFO AND ACTIONS */}
                 {isTxPendingExecution() ? (
                   <>
-                    {/* Am I the Tx initiator */}
-                    {getTxInitiator(highlightedMultisigTx)?.address === publicKey?.toBase58() ? (
-                      <h3 className="text-center">A Transaction on this Multisig is ready for your execution.</h3>
-                    ) : (
+                    {/* Custom execution-ready message */}
+                    {isTreasuryOperation() && !isUserTheProposer() ? (
                       <h3 className="text-center">A transaction on this Multisig is now ready for execution. Please tell the person who initiated this transaction to execute it.</h3>
+                    ) : (
+                      <h3 className="text-center">A Transaction on this Multisig is ready for {isUserTheProposer() ? 'your execution' : 'execution'}.</h3>
                     )}
                     <Divider className="mt-2" />
                     <div className="mb-2">Proposed Action: {getOperationName(highlightedMultisigTx.operation)}</div>

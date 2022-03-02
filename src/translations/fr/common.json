@@ -332,6 +332,7 @@
 			"main-cta": "Créer",
 			"main-cta-busy": "Création de plusieurs signatures",
 			"modal-title": "Créer plusieurs signatures",
+			"multisig-address-used-as-participant": "Cannot use a multisig address as participant",
 			"multisig-duplicate-participants": "Participants en double trouvés, veuillez vérifier.",
 			"multisig-label-input-empty": "Entrez un nom multisig",
 			"multisig-label-input-label": "Nom multisignature",
@@ -514,7 +515,8 @@
 			"multisig-selector-label": "Nouvelle autorité (multisig)",
 			"multisig-selector-placeholder": "Sélectionnez ou entrez une adresse multisig",
 			"selected-vault-label": "Coffre sélectionné",
-			"success-message": "Nouvelle autorité de coffre définie avec succès."
+			"success-message": "Nouvelle autorité de coffre définie avec succès.",
+			"vault-auth-destination-address-disclaimer": "I confirm the above New Authority Address entered or selected is a Multisig Account address and NOT a regular wallet address. I acknowledge that if I provide a non Multisig address, it will cause a permanent loss of the vault and its funds."
 		},
 		"transfer-tokens": {
 			"main-cta": "Démarrer la demande",
@@ -908,8 +910,7 @@
 			"valid-start-funding": "Commencer le financement",
 			"valid-start-withdrawal": "Commencer le retrait",
 			"verified-recipient-unchecked": "Vérification du destinataire décochée"
-		},
-		"verified-recipient-label": "Je suis sûr que l'adresse du destinataire n'appartient pas à un échange."
+		}
 	},
 	"transfer-stream": {
 		"destination-address-is-sender": "La nouvelle adresse ne peut pas être l'expéditeur",
@@ -922,7 +923,8 @@
 	},
 	"transfers": {
 		"screen-subtitle": "Envoyez de l'argent à n'importe qui dans le monde plus rapidement",
-		"screen-title": "Transferts"
+		"screen-title": "Transferts",
+		"verified-recipient-disclaimer": "Je suis sûr que l'adresse du destinataire n'appartient pas à un échange."
 	},
 	"treasuries": {
 		"add-funds": {

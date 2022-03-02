@@ -484,6 +484,36 @@ export const MultisigVaultsView = () => {
 
   },[]);
 
+  const isUserTheProposer = useCallback((): boolean => {
+    if (!highlightedMultisigTx || !publicKey) { return false; }
+
+    return  publicKey &&
+            highlightedMultisigTx.proposer &&
+            publicKey.equals(highlightedMultisigTx.proposer)
+        ? true
+        : false;
+
+  }, [
+    publicKey,
+    highlightedMultisigTx
+  ]);
+
+  const isTreasuryOperation = useCallback(() => {
+
+    if (!highlightedMultisigTx) { return false; }
+
+    return  highlightedMultisigTx.operation === OperationType.TreasuryCreate ||
+            highlightedMultisigTx.operation === OperationType.TreasuryClose ||
+            highlightedMultisigTx.operation === OperationType.TreasuryAddFunds ||
+            highlightedMultisigTx.operation === OperationType.TreasuryStreamCreate ||
+            highlightedMultisigTx.operation === OperationType.StreamCreate ||
+            highlightedMultisigTx.operation === OperationType.StreamClose ||
+            highlightedMultisigTx.operation === OperationType.StreamAddFunds
+      ? true
+      : false;
+
+  },[highlightedMultisigTx])
+
   const canShowApproveButton = useCallback(() => {
 
     if (!highlightedMultisigTx) { return false; }
@@ -493,8 +523,6 @@ export const MultisigVaultsView = () => {
       !highlightedMultisigTx.didSigned
     );
 
-    // console.log('show approve result', result);
-
     return result;
 
   },[highlightedMultisigTx])
@@ -502,26 +530,6 @@ export const MultisigVaultsView = () => {
   const canShowExecuteButton = useCallback(() => {
 
     if (!highlightedMultisigTx) { return false; }
-
-    const isUserTheProposer = () => {
-      return  publicKey &&
-              highlightedMultisigTx.proposer &&
-              publicKey.equals(highlightedMultisigTx.proposer)
-        ? true
-        : false;
-    }
-
-    const isTreasuryOperation = () => {
-      return  highlightedMultisigTx.operation === OperationType.TreasuryCreate ||
-              highlightedMultisigTx.operation === OperationType.TreasuryClose ||
-              highlightedMultisigTx.operation === OperationType.TreasuryAddFunds ||
-              highlightedMultisigTx.operation === OperationType.TreasuryStreamCreate ||
-              highlightedMultisigTx.operation === OperationType.StreamCreate ||
-              highlightedMultisigTx.operation === OperationType.StreamClose ||
-              highlightedMultisigTx.operation === OperationType.StreamAddFunds
-        ? true
-        : false;
-    }
 
     const isPendingForExecution = () => {
       return  highlightedMultisigTx.status === MultisigTransactionStatus.Approved &&
@@ -541,8 +549,9 @@ export const MultisigVaultsView = () => {
     }
 
   },[
-    highlightedMultisigTx, 
-    publicKey
+    highlightedMultisigTx,
+    isTreasuryOperation,
+    isUserTheProposer,
   ])
 
   ////////////////////////////////////////
@@ -607,7 +616,7 @@ export const MultisigVaultsView = () => {
           id: info.publicKey,
           version: info.account.version,
           label: new TextDecoder().decode(labelBuffer),
-          address,
+          authority: address,
           nounce: info.account.nonce,
           ownerSeqNumber: info.account.ownerSetSeqno,
           threshold: info.account.threshold.toNumber(),
@@ -654,7 +663,7 @@ export const MultisigVaultsView = () => {
           id: info.publicKey,
           version: 1,
           label: new TextDecoder().decode(labelBuffer),
-          address,
+          authority: address,
           nounce: info.account.nonce,
           ownerSeqNumber: info.account.ownerSetSeqno,
           threshold: info.account.threshold.toNumber(),
@@ -682,22 +691,15 @@ export const MultisigVaultsView = () => {
       MEAN_MULTISIG
     );
 
-    const accountInfos = await connection.getProgramAccounts(TOKEN_PROGRAM_ID, {
-      filters: [
-        {
-          memcmp: { offset: 32, bytes: multisigSigner.toBase58() },
-        }, 
-        {
-          dataSize: AccountLayout.span
-        }
-      ],
-    });
+    const accountInfoContext = await connection.getTokenAccountsByOwner(
+      multisigSigner,
+      { programId: TOKEN_PROGRAM_ID }
+    );
 
-    if (!accountInfos || !accountInfos.length) { return []; }
+    if (!accountInfoContext.value || !accountInfoContext.value.length) { return []; }
 
-    const results = accountInfos.map((t: any) => {
+    const results = accountInfoContext.value.map((t: any) => {
       let tokenAccount = ACCOUNT_LAYOUT.decode(t.account.data);
-      // let tokenAccount = AccountLayout.decode(t.account.data);
       tokenAccount.address = t.pubkey;
       return tokenAccount;
     });
@@ -2098,9 +2100,7 @@ export const MultisigVaultsView = () => {
     onVaultAuthorityTransfered
   ]);
 
-
   // Common Multisig Approve / Execute logic
-
   const onTxExecuted = useCallback(() => {
 
   },[]);
@@ -2844,48 +2844,50 @@ export const MultisigVaultsView = () => {
             <div className="std-table-cell text-center fixed-width-120">{t('multisig.multisig-transactions.column-pending-signatures')}</div>
           </div>
         </div>
-        {multisigPendingTxs && multisigPendingTxs.length && (
-          <div className="item-list-body compact">
-            {multisigPendingTxs.map(item => {
-              return (
-                <div
-                  key={item.id.toBase58()}
-                  style={{padding: '3px 0px'}}
-                  className={`item-list-row ${
-                    highlightedMultisigTx && highlightedMultisigTx.id.equals(item.id)
-                      ? isUiBusy() ? 'selected no-pointer click-disabled' : 'selected'
-                      : isUiBusy() ? 'no-pointer click-disabled' : 'simplelink'}`
-                  }
-                  onClick={() => showMultisigActionTransactionModal(item)}>
-                  <div className="std-table-cell responsive-cell">
-                    <span className="align-middle">{getOperationName(item.operation)}</span>
-                  </div>
-                  <div className="std-table-cell responsive-cell">
-                    <span className="align-middle">{getOperationProgram(item.operation)}</span>
-                  </div>
-                  <div className="std-table-cell fixed-width-110">
-                    <span className="align-middle">{getShortDate(item.createdOn.toString(), isCanvasTight() ? false : true)}</span>
-                  </div>
-                  <div className="std-table-cell fixed-width-90">
-                    <span className={`align-middle ${getTransactionUserStatusActionClass(item)}`}>{getTransactionUserStatusAction(item)}</span>
-                  </div>
-                  <div className="std-table-cell fixed-width-34">
-                    {
-                      item.status !== MultisigTransactionStatus.Executed ? (
-                        <span className="align-middle">{`${item.signers.filter(s => s === true).length}/${selectedMultisig.threshold}`}</span>
-                      ) : (
-                        <span className="align-middle">&nbsp;</span>
-                      )
+        <div className="activity-list-data-wrapper vertical-scroll">
+          <div className="activity-list h-100">
+            <div className="item-list-body compact">
+              {multisigPendingTxs.map(item => {
+                return (
+                  <div
+                    key={item.id.toBase58()}
+                    style={{padding: '3px 0px'}}
+                    className={`item-list-row ${
+                      highlightedMultisigTx && highlightedMultisigTx.id.equals(item.id)
+                        ? isUiBusy() ? 'selected no-pointer click-disabled' : 'selected'
+                        : isUiBusy() ? 'no-pointer click-disabled' : 'simplelink'}`
                     }
+                    onClick={() => showMultisigActionTransactionModal(item)}>
+                    <div className="std-table-cell responsive-cell">
+                      <span className="align-middle">{getOperationName(item.operation)}</span>
+                    </div>
+                    <div className="std-table-cell responsive-cell">
+                      <span className="align-middle">{getOperationProgram(item.operation)}</span>
+                    </div>
+                    <div className="std-table-cell fixed-width-110">
+                      <span className="align-middle">{getShortDate(item.createdOn.toString(), isCanvasTight() ? false : true)}</span>
+                    </div>
+                    <div className="std-table-cell fixed-width-90">
+                      <span className={`align-middle ${getTransactionUserStatusActionClass(item)}`}>{getTransactionUserStatusAction(item)}</span>
+                    </div>
+                    <div className="std-table-cell fixed-width-34">
+                      {
+                        item.status !== MultisigTransactionStatus.Executed ? (
+                          <span className="align-middle">{`${item.signers.filter(s => s === true).length}/${selectedMultisig.threshold}`}</span>
+                        ) : (
+                          <span className="align-middle">&nbsp;</span>
+                        )
+                      }
+                    </div>
+                    <div className="std-table-cell text-center fixed-width-120">
+                      <span className={`badge small ${getTransactionStatusClass(item)}`} style={{padding: '3px 5px'}}>{getTransactionStatusAction(item)}</span>
+                    </div>
                   </div>
-                  <div className="std-table-cell text-center fixed-width-120">
-                    <span className={`badge small ${getTransactionStatusClass(item)}`} style={{padding: '3px 5px'}}>{getTransactionStatusAction(item)}</span>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        )}
+        </div>
       </>
     );
   }
@@ -3062,7 +3064,7 @@ export const MultisigVaultsView = () => {
                         icon={<ArrowLeftOutlined />}
                         onClick={() => {
                           if (selectedMultisig) {
-                            setHighLightableMultisigId(selectedMultisig.address.toBase58());
+                            setHighLightableMultisigId(selectedMultisig.authority.toBase58());
                           }
                           navigate('/multisig');
                         }}
@@ -3259,11 +3261,11 @@ export const MultisigVaultsView = () => {
                 {/* Normal stuff - YOUR USER INPUTS / INFO AND ACTIONS */}
                 {isTxPendingExecution() ? (
                   <>
-                    {/* Am I the Tx initiator */}
-                    {getTxInitiator(highlightedMultisigTx)?.address === publicKey?.toBase58() ? (
-                      <h3 className="text-center">A Transaction on this Multisig is ready for your execution.</h3>
-                    ) : (
+                    {/* Custom execution-ready message */}
+                    {isTreasuryOperation() && !isUserTheProposer() ? (
                       <h3 className="text-center">A transaction on this Multisig is now ready for execution. Please tell the person who initiated this transaction to execute it.</h3>
+                    ) : (
+                      <h3 className="text-center">A Transaction on this Multisig is ready for {isUserTheProposer() ? 'your execution' : 'execution'}.</h3>
                     )}
                     <Divider className="mt-2" />
                     <div className="mb-2">Proposed Action: {getOperationName(highlightedMultisigTx.operation)}</div>

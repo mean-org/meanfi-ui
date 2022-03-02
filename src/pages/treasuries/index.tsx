@@ -17,7 +17,6 @@ import { AppStateContext } from '../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
 import { Identicon } from '../../components/Identicon';
 import {
-  cutNumber,
   formatAmount,
   formatThousands,
   getAmountWithSymbol,
@@ -26,7 +25,6 @@ import {
   getTokenSymbol,
   getTxIxResume,
   makeDecimal,
-  makeInteger,
   shortenAddress,
   toUiAmount
 } from '../../utils/utils';
@@ -119,6 +117,7 @@ export const TreasuriesView = () => {
     streamV2ProgramAddress,
     previousWalletConnectState,
     isWhitelisted,
+    setStreamList,
     setSelectedToken,
     setEffectiveRate,
     refreshStreamList,
@@ -422,8 +421,8 @@ export const TreasuriesView = () => {
       let multisigTreasuries: any[] = [];
 
       let filterMultisigAccounts = selectedMultisig
-        ? [selectedMultisig.address]
-        : multisigAccounts.map(m => m.address);
+        ? [selectedMultisig.authority]
+        : multisigAccounts.map(m => m.authority);
 
       if (filterMultisigAccounts) {
         for (let key of filterMultisigAccounts) {
@@ -680,7 +679,7 @@ export const TreasuriesView = () => {
           id: info.publicKey,
           version: info.account.version,
           label: new TextDecoder().decode(labelBuffer),
-          address,
+          authority: address,
           nounce: info.account.nonce,
           ownerSeqNumber: info.account.ownerSetSeqno,
           threshold: info.account.threshold.toNumber(),
@@ -706,7 +705,7 @@ export const TreasuriesView = () => {
 
     let treasurer = new PublicKey(treasuryInfo.treasurer as string);
 
-    if (!treasurer.equals(publicKey) && multisigAccounts && multisigAccounts.findIndex(m => m.address.equals(treasurer)) !== -1) {
+    if (!treasurer.equals(publicKey) && multisigAccounts && multisigAccounts.findIndex(m => m.authority.equals(treasurer)) !== -1) {
       return true;
     }
 
@@ -729,7 +728,7 @@ export const TreasuriesView = () => {
     let treasurer = new PublicKey(treasuryInfo.treasurer as string);
 
     if (!multisigAccounts || !treasuryDetails) { return PublicKey.default; }
-    const multisig = multisigAccounts.filter(a => a.address.equals(treasurer))[0];
+    const multisig = multisigAccounts.filter(a => a.authority.equals(treasurer))[0];
     if (!multisig) { return PublicKey.default; }
     return multisig.id;
 
@@ -748,7 +747,7 @@ export const TreasuriesView = () => {
 
     const timeout = setTimeout(() => {
       let treasury = treasuryDetails as Treasury;
-      let multisig = multisigAccounts.find(m => m.address.toBase58() === treasury.treasurer);
+      let multisig = multisigAccounts.find(m => m.authority.toBase58() === treasury.treasurer);
       
       if (!multisig) {
         setTreasuryPendingTxs(0);
@@ -836,7 +835,7 @@ export const TreasuriesView = () => {
     const timeout = setTimeout(() => {
       if (location.search) {
         consoleOut(`try to select multisig ${multisigAddress} from list`, multisigAccounts, 'blue');
-        const selected = multisigAccounts.find(m => m.address.toBase58() === multisigAddress);
+        const selected = multisigAccounts.find(m => m.authority.toBase58() === multisigAddress);
         if (selected) {
           consoleOut('selectedMultisig:', selected, 'blue');
           setSelectedMultisig(selected);
@@ -865,7 +864,7 @@ export const TreasuriesView = () => {
     }
 
     const isMultisigInAccountList = (id: string) => {
-      return multisigAccounts.some(m => m.address.toBase58() === id);
+      return multisigAccounts.some(m => m.authority.toBase58() === id);
     }
 
     // Verify query param
@@ -1187,7 +1186,7 @@ export const TreasuriesView = () => {
   ]);
 
   const isMultisigAvailable = useCallback((): boolean => {
-    return multisigAddress && selectedMultisig && selectedMultisig.address.toBase58() === multisigAddress
+    return multisigAddress && selectedMultisig && selectedMultisig.authority.toBase58() === multisigAddress
             ? true
             : false;
   }, [
@@ -1202,7 +1201,7 @@ export const TreasuriesView = () => {
       if (v2.version && v2.version >= 2) {
         const isMultisig = isMultisigTreasury();
         if (isMultisig && multisigAccounts) {
-          return multisigAccounts.find(m => m.address.toBase58() === v2.treasurer) ? true : false;
+          return multisigAccounts.find(m => m.authority.toBase58() === v2.treasurer) ? true : false;
         }
         return v2.treasurer === publicKey.toBase58() ? true : false;
       }
@@ -1727,13 +1726,13 @@ export const TreasuriesView = () => {
       if (!treasuryDetails || !multisigClient || !multisigAccounts || !publicKey) { return null; }
 
       let treasury = treasuryDetails as Treasury;
-      let multisig = multisigAccounts.filter(m => m.address.toBase58() === treasury.treasurer)[0];
+      let multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
 
       if (!multisig) { return null; }
 
       let refreshTreasury = await msp.refreshTreasuryData(
         new PublicKey(publicKey),
-        multisig.address,
+        multisig.authority,
         new PublicKey(data.treasury)
       );
 
@@ -2050,7 +2049,7 @@ export const TreasuriesView = () => {
       // Create Treasury
       const createTreasuryTx = await msp.createTreasury(
         publicKey,                                        // payer
-        multisig.address,                                 // treasurer
+        multisig.authority,                               // treasurer
         data.label,                                       // label
         treasuryType,                                     // type
         true,                                             // solFeePayedByTreasury = true
@@ -2523,13 +2522,13 @@ export const TreasuriesView = () => {
       if (!treasuryDetails || !multisigClient || !multisigAccounts || !publicKey) { return null; }
 
       let treasury = treasuryDetails as Treasury;
-      let multisig = multisigAccounts.filter(m => m.address.toBase58() === treasury.treasurer)[0];
+      let multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
 
       if (!multisig) { return null; }
 
       let allocateTx = await msp.allocate(
         new PublicKey(data.payer),                   // payer
-        new PublicKey(multisig.address),             // treasurer
+        new PublicKey(multisig.authority),           // treasurer
         new PublicKey(data.treasury),                // treasury
         new PublicKey(data.stream),                  // stream
         data.amount,                                 // amount
@@ -2972,7 +2971,7 @@ export const TreasuriesView = () => {
       if (!treasuryDetails || !multisigClient || !multisigAccounts || !publicKey) { return null; }
 
       let treasury = treasuryDetails as Treasury;
-      let multisig = multisigAccounts.filter(m => m.address.toBase58() === treasury.treasurer)[0];
+      let multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
 
       if (!multisig) { return null; }
 
@@ -3412,7 +3411,7 @@ export const TreasuriesView = () => {
       if (!treasuryDetails || !multisigClient || !multisigAccounts || !publicKey) { return null; }
 
       let treasury = treasuryDetails as Treasury;
-      let multisig = multisigAccounts.filter(m => m.address.toBase58() === treasury.treasurer)[0];
+      let multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
 
       if (!multisig) { return null; }
 
@@ -3838,13 +3837,13 @@ export const TreasuriesView = () => {
       if (!treasuryDetails || !multisigClient || !multisigAccounts || !publicKey) { return null; }
 
       let treasury = treasuryDetails as Treasury;
-      let multisig = multisigAccounts.filter(m => m.address.toBase58() === treasury.treasurer)[0];
+      let multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
 
       if (!multisig) { return null; }
 
       let pauseStream = await msp.pauseStream(
         new PublicKey(data.payer),                   // payer
-        multisig.address,                            // treasurer
+        multisig.authority,                          // treasurer
         new PublicKey(data.stream),                  // stream,
       );
 
@@ -4263,13 +4262,13 @@ export const TreasuriesView = () => {
       if (!treasuryDetails || !multisigClient || !multisigAccounts || !publicKey) { return null; }
 
       let treasury = treasuryDetails as Treasury;
-      let multisig = multisigAccounts.filter(m => m.address.toBase58() === treasury.treasurer)[0];
+      let multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
 
       if (!multisig) { return null; }
 
       let resumeStream = await msp.resumeStream(
         new PublicKey(data.payer),                   // payer
-        multisig.address,                            // treasurer
+        multisig.authority,                          // treasurer
         new PublicKey(data.stream),                  // stream,
       );
 
@@ -4644,6 +4643,8 @@ export const TreasuriesView = () => {
               const urlBase = '/treasuries/';
               const url = `${urlBase}${(treasuryDetails as Treasury).id}/streams`;
               consoleOut('With treasurer:', (treasuryDetails as Treasury).treasurer, 'blue');
+              // Populate the list of streams in the state before going there.
+              setStreamList(treasuryStreams || []);
               setHighLightableMultisigId((treasuryDetails as Treasury).treasurer as string);
               consoleOut('Heading to:', url, 'blue');
               navigate(url);
@@ -4702,38 +4703,42 @@ export const TreasuriesView = () => {
             <div className="std-table-cell last-cell">&nbsp;</div>
           </div>
         </div>
-        <div className="item-list-body compact">
-          {treasuryStreams.map((item, index) => {
-            const status = getStreamStatus(item);
-            return (
-              <div className={`item-list-row ${highlightedStream && highlightedStream.id === item.id ? 'selected' : ''}`} key={item.id as string}>
-                <div className="std-table-cell first-cell">{getStreamIcon(item)}</div>
-                <div className="std-table-cell responsive-cell">
-                  {status && (<span className="badge darken small text-uppercase mr-1">{status}</span>)}
-                  <span className="align-middle">{getStreamDescription(item)}</span>
-                </div>
-                <div className="std-table-cell fixed-width-90">
-                  <span className="align-middle">{shortenAddress(item.version < 2 ? (item as StreamInfo).beneficiaryAddress as string : (item as Stream).beneficiary as string)}</span>
-                </div>
-                <div className="std-table-cell fixed-width-130">
-                  <span className="align-middle">
-                    {item.rateAmount > 0 ? getRateAmountDisplay(item) : getDepositAmountDisplay(item)}
-                    {item && item.rateAmount > 0 && (
-                      <span>{getIntervalFromSeconds(item.rateIntervalInSeconds, true, t)}</span>
-                    )}
-                  </span>
-                </div>
-                <div className="std-table-cell fixed-width-72 text-right pr-1">
-                  <span className="align-middle">{getDepletionLabel(item)}</span>
-                </div>
-                <div className="std-table-cell last-cell">
-                  <span className={`icon-button-container ${isClosingTreasury() && highlightedStream ? 'click-disabled' : ''}`}>
-                    {renderStreamOptions(item)}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
+        <div className="activity-list-data-wrapper vertical-scroll">
+          <div className="activity-list h-100">
+            <div className="item-list-body compact">
+              {treasuryStreams.map((item, index) => {
+                const status = getStreamStatus(item);
+                return (
+                  <div className={`item-list-row ${highlightedStream && highlightedStream.id === item.id ? 'selected' : ''}`} key={item.id as string}>
+                    <div className="std-table-cell first-cell">{getStreamIcon(item)}</div>
+                    <div className="std-table-cell responsive-cell">
+                      {status && (<span className="badge darken small text-uppercase mr-1">{status}</span>)}
+                      <span className="align-middle">{getStreamDescription(item)}</span>
+                    </div>
+                    <div className="std-table-cell fixed-width-90">
+                      <span className="align-middle">{shortenAddress(item.version < 2 ? (item as StreamInfo).beneficiaryAddress as string : (item as Stream).beneficiary as string)}</span>
+                    </div>
+                    <div className="std-table-cell fixed-width-130">
+                      <span className="align-middle">
+                        {item.rateAmount > 0 ? getRateAmountDisplay(item) : getDepositAmountDisplay(item)}
+                        {item && item.rateAmount > 0 && (
+                          <span>{getIntervalFromSeconds(item.rateIntervalInSeconds, true, t)}</span>
+                        )}
+                      </span>
+                    </div>
+                    <div className="std-table-cell fixed-width-72 text-right pr-1">
+                      <span className="align-middle">{getDepletionLabel(item)}</span>
+                    </div>
+                    <div className="std-table-cell last-cell">
+                      <span className={`icon-button-container ${isClosingTreasury() && highlightedStream ? 'click-disabled' : ''}`}>
+                        {renderStreamOptions(item)}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </>
     );
@@ -4744,7 +4749,7 @@ export const TreasuriesView = () => {
     const v2 = treasuryDetails as Treasury;
     const isNewTreasury = v2.version >= 2 ? true : false;
     const multisig = v2 && isNewTreasury && multisigAccounts
-      ? multisigAccounts.find(m => m.address.toBase58() === v2.treasurer)
+      ? multisigAccounts.find(m => m.authority.toBase58() === v2.treasurer)
       : undefined;
     return (
       <div key="streams" className="transaction-list-row no-pointer mb-2">
@@ -4760,11 +4765,11 @@ export const TreasuriesView = () => {
         <div className="description-cell">
           <div className="font-bold simplelink underline-on-hover" onClick={() => {
             if (selectedMultisig) {
-              consoleOut('Navigating to multisig:', selectedMultisig.address.toBase58(), 'blue');
-              setHighLightableMultisigId(selectedMultisig.address.toBase58());
+              consoleOut('Navigating to multisig:', selectedMultisig.authority.toBase58(), 'blue');
+              setHighLightableMultisigId(selectedMultisig.authority.toBase58());
             } else if (multisig) {
-              consoleOut('Navigating to multisig:', multisig.address.toBase58(), 'blue');
-              setHighLightableMultisigId(multisig.address.toBase58());
+              consoleOut('Navigating to multisig:', multisig.authority.toBase58(), 'blue');
+              setHighLightableMultisigId(multisig.authority.toBase58());
             }
             navigate('/multisig');
           }}>{t('treasuries.treasury-detail.multisig-tx-headsup')}</div>
@@ -4973,6 +4978,8 @@ export const TreasuriesView = () => {
                     const url = `${urlBase}${(treasuryDetails as Treasury).id}/streams`;
                     consoleOut('Heading to:', url, 'blue');
                     consoleOut('With treasurer:', (treasuryDetails as Treasury).treasurer, 'blue');
+                    // Populate the list of streams in the state before going there.
+                    setStreamList(treasuryStreams || []);
                     setHighLightableMultisigId((treasuryDetails as Treasury).treasurer as string);
                     navigate(url);
                   }}>
@@ -5166,7 +5173,7 @@ export const TreasuriesView = () => {
                           icon={<ArrowLeftOutlined />}
                           onClick={() => {
                             if (selectedMultisig) {
-                              setHighLightableMultisigId(selectedMultisig.address.toBase58());
+                              setHighLightableMultisigId(selectedMultisig.authority.toBase58());
                             }
                             navigate('/multisig');
                           }}
