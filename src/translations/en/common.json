@@ -343,7 +343,7 @@
 			"multisig-label-placeholder": "Type a name for your multisig account",
 			"multisig-no-participants": "No participants added yet",
 			"multisig-participants": "Valid signers ({{numParticipants}} of {{maxParticipants}})",
-			"multisig-participants-warning message": "It is not recommended to create a Multisig with the same number of participants as required signatures",
+			"multisig-participants-warning-message": "It is not recommended to create a Multisig with the same number of participants as required signatures",
 			"multisig-threshold-input-empty": "Enter a minimum required signatures value",
 			"multisig-threshold-input-label": "Minimum required signatures",
 			"multisig-threshold-input-max": "Max number of signatures is 10",
@@ -610,7 +610,7 @@
 		"address-processed": "Please connect your wallet to record this referral.",
 		"connect-to-refer-friend": "Please connect your wallet to refer a friend",
 		"modal-title": "Refer a friend",
-		"refer-friend-hint": "Refer a friend and earn up to $25 in MEAN tokens when they exchange $100 worth of crypto",
+		"refer-friend-hint": "Refer your friends by sharing the link below…",
 		"see-rules": "See rules for details",
 		"share-to": "Share to"
 	},
@@ -893,6 +893,7 @@
 			"exchange-unavailable": "Exchange unavailable",
 			"insufficient-amount-needed": "Need at least {{amount}} {{symbol}} to exchange",
 			"insufficient-balance-needed": "Need at least {{balance}} SOL",
+			"invalid-account": "Cannot use a Multisig address as a destination account",
 			"invalid-amount": "Invalid amount",
 			"invalid-exchange": "Select token",
 			"invalid-solana-address": "Invalid solana address",
@@ -1029,6 +1030,8 @@
 			"column-rate": "Rate",
 			"create-stream-main-cta": "Create stream",
 			"create-stream-main-cta-busy": "Creating stream",
+			"create-treasury-switch-label": "Do you want to create multiple streams with the same settings?",
+			"multiple-address-list": "Multiple address list",
 			"fee-payed-by-treasurer": "I want to pay fees for this stream instead of the beneficiary",
 			"loading-streams": "Loading streams",
 			"minimum-allocation-advice": "You must set a minimum allocation for this Money Stream up to the unallocated balance available in the Treasury.",
@@ -1100,6 +1103,13 @@
 		"label-available-amount": "Funds available to withdraw now",
 		"label-input-amount": "Enter amount to withdraw",
 		"label-input-right": "By percentual preset",
-		"modal-title": "Withdraw funds"
+		"modal-title": "Withdraw funds",
+		"button-title": "Withdraw funds",
+		"modal": {
+			"title": "Withdraw Treasury Funds",
+			"selected-treasury-label": "From treasury account",
+			"verified-label": "I'm sure the recipient address doesn't belong to an exchange",
+			"main-cta": "Withdraw Funds"
+		}
 	}
 }

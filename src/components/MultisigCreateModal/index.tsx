@@ -221,7 +221,7 @@ export const MultisigCreateModal = (props: {
             {(multisigOwners.length >= 2 && multisigOwners.length === +multisigThreshold && multisigOwners[+multisigThreshold - 1].address !== '') && (
               <span className="form-field-error text-uppercase icon-label">
                 <IconWarning className="mean-svg-icons" />
-                {t('multisig.create-multisig.multisig-participants-warning message')}
+                {t('multisig.create-multisig.multisig-participants-warning-message')}
               </span>
             )}
           </>

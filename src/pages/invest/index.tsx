@@ -23,6 +23,7 @@ export const InvestView = () => {
     selectedToken,
     unstakeAmount,
     unstakeStartDate,
+    stakingMultiplier,
     detailsPanelOpen,
     setFromCoinAmount,
     setIsVerifiedRecipient,
@@ -75,7 +76,7 @@ export const InvestView = () => {
   const stakingData = [
     {
       label: "Your Current Stake:",
-      value: "3.78x boost"
+      value: ""
     },
     {
       label: "My Staked MEAN",
@@ -84,6 +85,10 @@ export const InvestView = () => {
     {
       label: "Avg. Locked Yield",
       value: `${annualPercentageYield}%`
+    },
+    {
+      label: "Staking Lock Boost",
+      value: `${stakingMultiplier}x boost`
     },
     // {
     //   label: "My Locked eMEAN",
@@ -378,35 +383,36 @@ export const StakeTabView = () => {
     setFromCoinAmount,
     setIsVerifiedRecipient,
     setUnstakeAmount,
-    setUnstakeStartDate
+    setUnstakeStartDate,
+    setStakingMultiplier
   } = useContext(AppStateContext);
   const { connected } = useWallet();
   const { t } = useTranslation('common');
   const periods = [
     {
-      value: 0,
+      value: 7,
       time: t("invest.panel-right.tabset.stake.days"),
-      multiplier: "1x"
+      multiplier: 1
     },
     {
       value: 30,
       time: t("invest.panel-right.tabset.stake.days"),
-      multiplier: "1.1x"
+      multiplier: 1.1
     },
     {
       value: 90,
       time: t("invest.panel-right.tabset.stake.days"),
-      multiplier: "1.2x"
+      multiplier: 1.2
     },
     {
       value: 1,
       time: t("invest.panel-right.tabset.stake.year"),
-      multiplier: "2.0x"
+      multiplier: 2.0
     },
     {
       value: 4,
       time: t("invest.panel-right.tabset.stake.years"),
-      multiplier: "4.0x"
+      multiplier: 4.0
     },
   ];
 
@@ -463,9 +469,10 @@ export const StakeTabView = () => {
     showTransactionModal
   ]);
 
-  const onChangeValue = (value: number, time: string) => {
+  const onChangeValue = (value: number, time: string, rate: number) => {
     setPeriodValue(value);
     setPeriodTime(time);
+    setStakingMultiplier(rate);
   }
 
   useEffect(() => {
@@ -532,8 +539,8 @@ export const StakeTabView = () => {
         <div className="left token-group">
           {periods.map((period, index) => (
             <div key={index} className="mb-1 d-flex flex-column align-items-center">
-              <div className="token-max simplelink" onClick={() => onChangeValue(period.value, period.time)}>{period.value} {period.time}</div>
-              <span>{period.multiplier}</span>
+              <div className="token-max simplelink" onClick={() => onChangeValue(period.value, period.time, period.multiplier)}>{period.value} {period.time}</div>
+              <span>{`${period.multiplier}x`}</span>
             </div>
           ))}
         </div>

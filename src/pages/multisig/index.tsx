@@ -4599,7 +4599,7 @@ export const MultisigView = () => {
 
           {/* CTAs shown always - IF DIFFERENT CTAS ARE BEST FOR EACH STAGE, MOVE THEM INSIDE THE PANELS */}
           <div className="transaction-progress mt-3">
-            <Space size="middle">
+            <Space size="middle" wrap>
               <Button
                 type="text"
                 shape="round"
