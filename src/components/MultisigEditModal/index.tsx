@@ -27,6 +27,7 @@ export const MultisigEditModal = (props: {
   multisigThreshold?: number;
   multisigAccounts: MultisigV2[];
   multisigParticipants?: MultisigParticipant[];
+  multisigPendingTxsAmount: number;
 }) => {
   const { t } = useTranslation('common');
   const {
@@ -232,7 +233,7 @@ export const MultisigEditModal = (props: {
               onParticipantsChanged={(e: MultisigParticipant[]) => setMultisigOwners(e)}
             />
 
-            {hasOwnersChanges() && (
+            {hasOwnersChanges() && props.multisigPendingTxsAmount > 0 && (
               <div className="font-size-100 fg-orange-red pl-1">{t('multisig.update-multisig.edit-not-allowed-message')}</div>
             )}
 
