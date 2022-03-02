@@ -9,7 +9,7 @@ import { consoleOut, getTransactionOperationDescription, isValidAddress } from '
 import { isError } from '../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { StreamInfo, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming';
-import { cutNumber, formatAmount, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, isValidNumber, makeDecimal, makeInteger, shortenAddress } from '../../utils/utils';
+import { cutNumber, formatAmount, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, isValidNumber, makeDecimal, makeInteger, shortenAddress, toUiAmount } from '../../utils/utils';
 import { useWallet } from '../../contexts/wallet';
 import { PublicKey } from '@solana/web3.js';
 import { MultisigV2 } from '../../models/multisig';
@@ -23,7 +23,7 @@ import { StreamTreasuryType } from '../../models/treasuries';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
-export const TreasuryTransferTokensModal = (props: {
+export const TreasuryTransferFundsModal = (props: {
   handleClose: any;
   handleOk: any;
   isVisible: boolean;
@@ -55,8 +55,7 @@ export const TreasuryTransferTokensModal = (props: {
   const [localStreamDetail, setLocalStreamDetail] = useState<Stream | StreamInfo | undefined>(undefined);
   const [maxAllocatableAmount, setMaxAllocatableAmount] = useState<any>(undefined);
   const [streamTreasuryType, setStreamTreasuryType] = useState<StreamTreasuryType | undefined>(undefined);
-
-  let item: Treasury | TreasuryInfo | undefined = undefined;
+  const [multisigAddresses, setMultisigAddresses] = useState<string[]>([]);
 
   const isMultisigTreasury = useCallback((treasury?: any) => {
     let treasuryInfo: any = treasury ?? props.treasuryDetails;
@@ -67,7 +66,7 @@ export const TreasuryTransferTokensModal = (props: {
 
     let treasurer = new PublicKey(treasuryInfo.treasurer as string);
 
-    if (!treasurer.equals(publicKey) && props.multisigAccounts && props.multisigAccounts.findIndex(m => m.address.equals(treasurer)) !== -1) {
+    if (!treasurer.equals(publicKey) && props.multisigAccounts && props.multisigAccounts.findIndex(m => m.authority.equals(treasurer)) !== -1) {
       return true;
     }
 
@@ -86,14 +85,25 @@ export const TreasuryTransferTokensModal = (props: {
     return true;
   }, [props.treasuryDetails]);
 
-  const onAcceptTopup = () => {
+  const onAcceptWithdrawTreasuryFunds = () => {
     props.handleOk({
       amount: topupAmount,
       tokenAmount: tokenAmount,
-      treasuryType: streamTreasuryType,
-      fundFromTreasury: shouldFundFromTreasury()
+      destinationAccount: to
     });
   }
+
+  useEffect(() => {
+    if (props.isVisible) {
+      if (props.multisigAccounts && props.multisigAccounts.length > 0) {
+        const msAddresses = props.multisigAccounts.map(ms => ms.id.toBase58());
+        setMultisigAddresses(msAddresses);
+      }
+    }
+  }, [
+    props.isVisible,
+    props.multisigAccounts
+  ]);
 
   const onCloseModal = () => {
     consoleOut('onCloseModal called!', '', 'crimson');
@@ -151,6 +161,10 @@ export const TreasuryTransferTokensModal = (props: {
             (!isfeePayedByTreasurerOn() && tokenAmount.lte(unallocatedBalance)))))
       ? true
       : false;
+  }
+
+  const isInputMultisigAddress = (address: string) => {
+    return multisigAddresses.includes(address);
   }
 
   const getMaxAmount = useCallback((preSetting = false) => {
@@ -305,7 +319,7 @@ export const TreasuryTransferTokensModal = (props: {
       title={<div className="modal-title">{t('withdraw-funds.modal.title')}</div>}
       footer={null}
       visible={props.isVisible}
-      onOk={onAcceptTopup}
+      onOk={onAcceptWithdrawTreasuryFunds}
       onCancel={onCloseModal}
       afterClose={() => {
         setTopupAmount("");
@@ -340,9 +354,13 @@ export const TreasuryTransferTokensModal = (props: {
                 required={true}
                 spellCheck="false"
                 value={to}/>
-              {to && !isValidAddress(to) && (
+              {to && !isValidAddress(to) ? (
                 <span className="form-field-error">
                   {t('transactions.validation.address-validation')}
+                </span>
+              ) : isInputMultisigAddress(to) && (
+                <span className="form-field-error">
+                  {t('transactions.validation.invalid-account')}
                 </span>
               )}
             </div>
@@ -469,17 +487,21 @@ export const TreasuryTransferTokensModal = (props: {
                   </span>
                 </div>
               </div>
+              {(parseFloat(topupAmount) > makeDecimal(unallocatedBalance, 6)) && (
+                <span className="form-field-error">
+                  {t('transactions.validation.invalid-amount')}
+                </span>
+              )}
             </div>
 
             {/* explanatory paragraph */}
-            {isMultisigTreasury(item) && (
+            {isMultisigTreasury(props.treasuryDetails) && (
               <p>{t("multisig.multisig-vaults.explanatory-paragraph")}</p>
             )}
 
             {/* confirm that the recipient address doesn't belong to an exchange */}
             <div className="mt-2 confirm-terms">
               <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>
-
                 {t("withdraw-funds.modal.verified-label")}
               </Checkbox>
             </div>
@@ -546,7 +568,7 @@ export const TreasuryTransferTokensModal = (props: {
             size="middle"
             className={props.isBusy ? 'inactive' : ''}
             onClick={() => isError(transactionStatus.currentOperation)
-              ? onAcceptTopup()
+              ? onAcceptWithdrawTreasuryFunds()
               : onCloseModal()}>
             {isError(transactionStatus.currentOperation)
               ? t('general.retry')
@@ -561,10 +583,10 @@ export const TreasuryTransferTokensModal = (props: {
             type="primary"
             shape="round"
             size="middle"
-            disabled={!isValidForm()}
+            disabled={!isValidForm() || isInputMultisigAddress(to)}
             onClick={() => {
               if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
-                onAcceptTopup();
+                onAcceptWithdrawTreasuryFunds();
               } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
                 onCloseModal();
               } else {

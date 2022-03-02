@@ -893,6 +893,7 @@
 			"exchange-unavailable": "Exchange unavailable",
 			"insufficient-amount-needed": "Need at least {{amount}} {{symbol}} to exchange",
 			"insufficient-balance-needed": "Need at least {{balance}} SOL",
+			"invalid-account": "Cannot use a Multisig address as a destination account",
 			"invalid-amount": "Invalid amount",
 			"invalid-exchange": "Select token",
 			"invalid-solana-address": "Invalid solana address",
@@ -1105,7 +1106,7 @@
 		"modal-title": "Withdraw funds",
 		"button-title": "Withdraw funds",
 		"modal": {
-			"title": "Withdraw Unallocated Treasury Funds",
+			"title": "Withdraw Treasury Funds",
 			"selected-treasury-label": "From treasury account",
 			"verified-label": "I'm sure the recipient address doesn't belong to an exchange",
 			"main-cta": "Withdraw Funds"
