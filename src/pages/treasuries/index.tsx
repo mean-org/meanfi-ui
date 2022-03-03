@@ -4566,13 +4566,11 @@ export const TreasuriesView = () => {
   const [isTransferFundsModalVisible, setIsTransferFundsModalVisible] = useState(false);
   const showTransferFundsModal = useCallback(() => {
     setIsTransferFundsModalVisible(true);
-    const fees = {
-      blockchainFee: 0.000005,
-      mspFlatFee: 0.000010,
-      mspPercentFee: 0
-    };
-    setTransactionFees(fees);
-  }, []);
+    getTransactionFeesV2(MSP_ACTIONS_V2.treasuryWithdraw).then(value => {
+      setTransactionFees(value);
+      consoleOut('transactionFees:', value, 'orange');
+    });
+  }, [getTransactionFeesV2]);
 
   const onAcceptTreasuryTransferFunds = (params: any) => {
     consoleOut('params', params, 'blue');
@@ -4597,11 +4595,6 @@ export const TreasuriesView = () => {
     setRetryOperationPayload(data);
     setIsBusy(true);
 
-    const createTreasuryTransferFundsTx = async (data: any) => {
-      consoleOut("Pending development of createTreasuryTransferFundsTx");
-      return new Transaction();
-    }
-
     const createTx = async () => {
 
       if (!connection || !wallet || !publicKey) {
@@ -4613,18 +4606,40 @@ export const TreasuriesView = () => {
         return false;
       }
 
-      consoleOut("Start transaction for create treasury", '', 'blue');
-      consoleOut('Wallet address:', publicKey.toBase58());
+      if (!treasuryDetails || !msp) {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+          result: 'Cannot start transaction! Treasury details or MSP client not found!'
+        });
+        customLogger.logError('Treasury withdraw transaction failed', { transcript: transactionLog });
+        return false;
+      }
 
       setTransactionStatus({
         lastOperation: TransactionStatus.TransactionStart,
         currentOperation: TransactionStatus.InitTransaction
       });
 
-      // Create a transaction
-      const payload = data;
+      /**
+       * payer: PublicKey,
+       * destination: PublicKey,
+       * treasury: PublicKey,
+       * amount: number
+       */
 
+      const destinationPk = new PublicKey(data.destinationAccount);
+      const treasuryPk = new PublicKey(treasuryDetails.id);
+      const amount = data.tokenAmount;
+
+      // Create a transaction
+      const payload = {
+        payer: publicKey.toBase58(),
+        destination: destinationPk.toBase58(),
+        treasury: treasuryPk.toBase58(),
+        amount: amount.toNumber()
+      };
       consoleOut('payload:', payload);
+
       // Log input data
       transactionLog.push({
         action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
@@ -4658,12 +4673,17 @@ export const TreasuriesView = () => {
         return false;
       }
 
-      consoleOut('Starting Treasury Withdraw...', '', 'blue');
+      consoleOut('Starting Treasury Withdraw using MSP V2...', '', 'blue');
 
-      let result = await createTreasuryTransferFundsTx(payload)
+      let result = await msp.treasuryWithdraw(
+          publicKey,
+          destinationPk,
+          treasuryPk,
+          amount
+        )
         .then(value => {
           if (!value) { return false; }
-          consoleOut('createTreasuryTransferFundsTx returned transaction:', value);
+          consoleOut('treasuryWithdraw returned transaction:', value);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
@@ -4676,7 +4696,7 @@ export const TreasuriesView = () => {
           return true;
         })
         .catch(error => {
-          console.error('createTreasuryTransferFundsTx error:', error);
+          console.error('treasuryWithdraw error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.InitTransactionFailure
