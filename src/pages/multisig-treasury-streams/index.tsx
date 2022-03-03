@@ -939,12 +939,12 @@ export const MultisigTreasuryStreams = () => {
     const onCopyStreamAddress = (data: any) => {
         if (copyText(data.toString())) {
             notify({
-                description: t("notifications.streamid-copied-message"),
+                description: t("notifications.account-address-copied-message"),
                 type: "info",
             });
         } else {
             notify({
-                description: t("notifications.streamid-not-copied-message"),
+                description: t("notifications.account-address-not-copied-message"),
                 type: "error",
             });
         }

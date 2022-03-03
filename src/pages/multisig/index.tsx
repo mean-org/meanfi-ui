@@ -641,16 +641,16 @@ export const MultisigView = () => {
   }
 
   // Copy address to clipboard
-  const copyMultisigAddress = useCallback((address: any) => {
+  const copyAddressToClipboard = useCallback((address: any) => {
 
     if (copyText(address.toString())) {
       notify({
-        description: t('notifications.multisigid-copied-message'),
+        description: t('notifications.account-address-copied-message'),
         type: "info"
       });
     } else {
       notify({
-        description: t('notifications.multisigid-not-copied-message'),
+        description: t('notifications.account-address-not-copied-message'),
         type: "error"
       });
     }
@@ -3935,7 +3935,7 @@ export const MultisigView = () => {
                   <span className="info-icon">
                     <IconShieldOutline className="mean-svg-icons" />
                   </span>
-                  <div onClick={() => copyMultisigAddress(selectedMultisig.authority)} 
+                  <div onClick={() => copyAddressToClipboard(selectedMultisig.authority)} 
                        className="info-data flex-row wrap align-items-center simplelink underline-on-hover"
                        style={{cursor: 'pointer', fontSize: '1.1rem'}}>
                     {shortenAddress(selectedMultisig.authority.toBase58(), 8)}
@@ -4364,7 +4364,7 @@ export const MultisigView = () => {
                         <>
                           <span
                             className="copy-cta"
-                            onClick={() => copyMultisigAddress(selectedMultisig.id)}>
+                            onClick={() => copyAddressToClipboard(selectedMultisig.id)}>
                               {`${t('multisig.multisig-account-detail.copy-id-title')}: ${selectedMultisig.id}`}
                           </span>
                           <a

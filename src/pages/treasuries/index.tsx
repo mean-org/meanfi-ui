@@ -1506,6 +1506,23 @@ export const TreasuriesView = () => {
             : false;
   }
 
+  // Copy address to clipboard
+  const copyAddressToClipboard = useCallback((address: any) => {
+
+    if (copyText(address.toString())) {
+      notify({
+        description: t('notifications.account-address-copied-message'),
+        type: "info"
+      });
+    } else {
+      notify({
+        description: t('notifications.account-address-not-copied-message'),
+        type: "error"
+      });
+    }
+
+  },[t])
+
   ////////////////
   //   Events   //
   ////////////////
@@ -1535,34 +1552,6 @@ export const TreasuriesView = () => {
     refreshTreasuries(false);
     setCustomStreamDocked(false);
   };
-
-  const onCopyTreasuryAddress = (data: any) => {
-    if (copyText(data.toString())) {
-      notify({
-        description: t('notifications.treasuryid-copied-message'),
-        type: "info"
-      });
-    } else {
-      notify({
-        description: t('notifications.treasuryid-not-copied-message'),
-        type: "error"
-      });
-    }
-  }
-
-  const onCopyStreamAddress = (data: any) => {
-    if (copyText(data.toString())) {
-      notify({
-        description: t('notifications.streamid-copied-message'),
-        type: "info"
-      });
-    } else {
-      notify({
-        description: t('notifications.streamid-not-copied-message'),
-        type: "error"
-      });
-    }
-  }
 
   // Open treasury modal
   const [isOpenTreasuryModalVisible, setIsOpenTreasuryModalVisibility] = useState(false);
@@ -4879,7 +4868,7 @@ export const TreasuriesView = () => {
             <span className="menu-item-text">{t('treasuries.treasury-streams.option-close-stream')}</span>
           </Menu.Item>
         )}
-        <Menu.Item key="5" onClick={() => onCopyStreamAddress(item.id)}>
+        <Menu.Item key="5" onClick={() => copyAddressToClipboard(item.id)}>
           <span className="menu-item-text">Copy Stream ID</span>
         </Menu.Item>
         <Menu.Item key="6" onClick={() => {
@@ -5196,16 +5185,23 @@ export const TreasuriesView = () => {
                   : t('treasuries.treasury-streams.create-stream-main-cta')}
               </Button>
 
-              <Button
-                type="default"
-                shape="round"
-                size="small"
-                className="thin-stroke"
-                disabled={getTreasuryUnallocatedBalance() <= 0}
-                onClick={showTransferFundsModal}
-              >
-                {t('withdraw-funds.button-title')}
-              </Button>
+              {isUnderDevelopment() && (
+                <Button
+                  type="default"
+                  shape="round"
+                  size="small"
+                  className="thin-stroke"
+                  disabled={
+                    getTreasuryUnallocatedBalance() <= 0 ||
+                    isTxInProgress() ||
+                    loadingTreasuries ||
+                    loadingTreasuryDetails ||
+                    loadingTreasuryStreams
+                  }
+                  onClick={showTransferFundsModal}>
+                  {t('withdraw-funds.button-title')}
+                </Button>
+              )}
 
               {treasuryDetails && isMultisigTreasury() && (
                 <Button
@@ -5584,7 +5580,7 @@ export const TreasuriesView = () => {
                     </div>
                     {treasuryDetails && (
                       <div className="stream-share-ctas">
-                        <span className="copy-cta" onClick={() => onCopyTreasuryAddress(treasuryDetails.id)}>TREASURY ID: {treasuryDetails.id}</span>
+                        <span className="copy-cta" onClick={() => copyAddressToClipboard(treasuryDetails.id)}>TREASURY ID: {treasuryDetails.id}</span>
                         <a className="explorer-cta" target="_blank" rel="noopener noreferrer"
                           href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${treasuryDetails.id}${getSolanaExplorerClusterParam()}`}>
                           <IconExternalLink className="mean-svg-icons" />

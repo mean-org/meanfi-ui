@@ -28,16 +28,16 @@ export const MultisigCreateProgramModal = (props: {
   }
 
   // Copy address to clipboard
-  const copyMultisigAddress = useCallback((address: any) => {
+  const copyAddressToClipboard = useCallback((address: any) => {
 
     if (copyText(address.toString())) {
       notify({
-        description: t('notifications.multisigid-copied-message'),
+        description: t('notifications.account-address-copied-message'),
         type: "info"
       });
     } else {
       notify({
-        description: t('notifications.multisigid-not-copied-message'),
+        description: t('notifications.account-address-not-copied-message'),
         type: "error"
       });
     }
@@ -66,7 +66,7 @@ export const MultisigCreateProgramModal = (props: {
               </span>
             </div>
             <div className="right">
-              <div className="add-on simplelink" onClick={() => copyMultisigAddress(props.selectedMultisig.authority.toBase58())}>
+              <div className="add-on simplelink" onClick={() => copyAddressToClipboard(props.selectedMultisig.authority.toBase58())}>
                 <IconCopy className="mean-svg-icons" />
               </div>
             </div>

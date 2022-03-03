@@ -345,6 +345,23 @@ export const Streams = () => {
     return false;
   }
 
+  // Copy address to clipboard
+  const copyAddressToClipboard = useCallback((address: any) => {
+
+    if (copyText(address.toString())) {
+      notify({
+        description: t('notifications.account-address-copied-message'),
+        type: "info"
+      });
+    } else {
+      notify({
+        description: t('notifications.account-address-not-copied-message'),
+        type: "error"
+      });
+    }
+
+  },[t])
+
   /////////////////
   //   EFFECTS   //
   /////////////////
@@ -2594,20 +2611,6 @@ export const Streams = () => {
     );
   }
 
-  const onCopyStreamAddress = (data: any) => {
-    if (copyText(data.toString())) {
-      notify({
-        description: t('notifications.streamid-copied-message'),
-        type: "info"
-      });
-    } else {
-      notify({
-        description: t('notifications.streamid-not-copied-message'),
-        type: "error"
-      });
-    }
-  }
-
   const onRefreshStreamsClick = () => {
     refreshStreamList(true);
     setCustomStreamDocked(false);
@@ -3145,7 +3148,7 @@ export const Streams = () => {
               ) : renderActivities(stream.version)}
             </div>
             <div className="stream-share-ctas">
-              <span className="copy-cta" onClick={() => onCopyStreamAddress(stream.id)}>STREAM ID: {stream.id}</span>
+              <span className="copy-cta" onClick={() => copyAddressToClipboard(stream.id)}>STREAM ID: {stream.id}</span>
               <a className="explorer-cta" target="_blank" rel="noopener noreferrer"
                 href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${stream.id}${getSolanaExplorerClusterParam()}`}>
                 <IconExternalLink className="mean-svg-icons" />
@@ -3375,7 +3378,7 @@ export const Streams = () => {
               ) : renderActivities(stream.version)}
             </div>
             <div className="stream-share-ctas">
-              <span className="copy-cta" onClick={() => onCopyStreamAddress(stream.id)}>STREAM ID: {stream.id}</span>
+              <span className="copy-cta" onClick={() => copyAddressToClipboard(stream.id)}>STREAM ID: {stream.id}</span>
               <a className="explorer-cta" target="_blank" rel="noopener noreferrer"
                 href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${stream.id}${getSolanaExplorerClusterParam()}`}>
                 <IconExternalLink className="mean-svg-icons" />
@@ -3699,7 +3702,7 @@ export const Streams = () => {
               ) : renderActivities(stream.version)}
             </div>
             <div className="stream-share-ctas">
-              <span className="copy-cta" onClick={() => onCopyStreamAddress(stream.id)}>STREAM ID: {stream.id}</span>
+              <span className="copy-cta" onClick={() => copyAddressToClipboard(stream.id)}>STREAM ID: {stream.id}</span>
               <a className="explorer-cta" target="_blank" rel="noopener noreferrer"
                 href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${stream.id}${getSolanaExplorerClusterParam()}`}>
                 <IconExternalLink className="mean-svg-icons" />
@@ -3954,7 +3957,7 @@ export const Streams = () => {
               ) : renderActivities(stream.version)}
             </div>
             <div className="stream-share-ctas">
-              <span className="copy-cta" onClick={() => onCopyStreamAddress(stream.id)}>STREAM ID: {stream.id}</span>
+              <span className="copy-cta" onClick={() => copyAddressToClipboard(stream.id)}>STREAM ID: {stream.id}</span>
               <a className="explorer-cta" target="_blank" rel="noopener noreferrer"
                 href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${stream.id}${getSolanaExplorerClusterParam()}`}>
                 <IconExternalLink className="mean-svg-icons" />

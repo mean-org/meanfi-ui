@@ -86,24 +86,24 @@ export const FirstCardsLayout = ({
     if (event.currentTarget.name === "Address") {
       if (data.token_address && copyText(data.token_address)) {
         notify({
-          description: t('notifications.token-address-copied-message'),
+          description: t('notifications.account-address-copied-message'),
           type: "info"
         });
       } else {
         notify({
-          description: t('notifications.token-address-not-copied-message'),
+          description: t('notifications.account-address-not-copied-message'),
           type: "error"
         });
       }
     } else if (event.currentTarget.name === "Authority") {
       if (data.authority && copyText(data.authority)) {
         notify({
-          description: t('notifications.token-authority-copied-message'),
+          description: t('notifications.account-address-copied-message'),
           type: "info"
         });
       } else {
         notify({
-          description: t('notifications.token-authority-not-copied-message'),
+          description: t('notifications.account-address-not-copied-message'),
           type: "error"
         });
       }
