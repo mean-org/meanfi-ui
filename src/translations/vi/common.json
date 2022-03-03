@@ -61,10 +61,10 @@
 	"close-stream": {
 		"cant-close-message": "Bạn không thể đóng luồng từ một kho bạc bị khóa",
 		"cant-topup-message": "Bạn không thể nạp thêm tài sản vào luồng từ một kho bạc bị khóa",
-		"context-beneficiary": "Closing a stream will send the vested amount to your account ({{beneficiary}}) and stop the flow of money immediately.",
-		"context-treasurer-aditional-message": "The above amounts are only accurate for paused and ended streams. For live steams, the amounts will be determined the moment the stream is closed.",
-		"context-treasurer-multiple-beneficiaries": "Closing a stream will stop the money flow, send the vested amount to the beneficiary ({{beneficiary}}), and return the unvested amounts back to the original treasury ({{treasury}}).",
-		"context-treasurer-single-beneficiary": "Closing a stream will stop the money flow, send the vested amount to the beneficiary ({{beneficiary}}), and return the unvested amount back to the contributor.",
+		"context-beneficiary": "Đóng một stream sẽ gửi số tiền đã cấp tới tài khoản ({{beneficiary}}) và dừng chuyển tiền ngay lập tức",
+		"context-treasurer-aditional-message": "Số lượng phía trên chỉ chính xác cho stream đã tạm dừng hoặc đã kết thúc. Với stream còn đang chạy thì số lượng sẽ được xác định tại thời điểm stream được đóng",
+		"context-treasurer-multiple-beneficiaries": "Việc đóng một stream sẽ dừng cấp tiền, và gửi số tiền đã cấp cho người thụ hưởng ({{beneficiary}}) và trả lại số tiền chưa cấp trở lại kho bạc ({{treasury}}).",
+		"context-treasurer-single-beneficiary": "Việc đóng một stream sẽ dừng cấp tiền, và gửi số tiền đã cấp cho người thụ hưởng ({{beneficiary}}) và trả lại số tiền chưa cấp trở lại cho người đóng góp.",
 		"loading-treasury-message": "Đang phân tích stream",
 		"modal-title": "Đóng stream",
 		"primary-cta": "Đóng stream",
@@ -88,11 +88,11 @@
 			"name": "Thanh toán một lần"
 		},
 		"payroll": {
-			"description": "Setup payroll for an employee or contractor, anywhere in the world without the overhead of traditional banking services.",
+			"description": "Thiết lập bảng lương cho nhân viên hoặc nhà thầu, ở bất kỳ đâu trên thế giới mà không cần các dịch vụ ngân hàng truyền thống.",
 			"name": "Lương bổng"
 		},
 		"pension-fund": {
-			"description": "For employers setting up pension plans that pay employees upon qualifying events, such as reaching retirement age.",
+			"description": "Đối với người sử dụng lao động thiết lập kế hoạch lương hưu trả cho nhân viên khi các sự kiện đủ điều kiện, chẳng hạn như đến tuổi nghỉ hưu.",
 			"name": "Quỹ hưu trí"
 		},
 		"primary-action": "Tiếp theo",
@@ -118,24 +118,24 @@
 		}
 	},
 	"custody": {
-		"custody-button": "Apply to MeanFi Custody",
+		"custody-button": "Ứng tuyển vào dịch vụ Lưu ký của MeanFi",
 		"first-container": {
-			"text-one": "We provide secure custody solutions for institutions and individuals alike so they can safely invest in crypto assets.",
-			"text-three": "Dedicated Support Team that guides you during the onboard process and help you resolve any challenge.",
-			"text-two": "With MeanFi Trading, access multiple venues through one onboarding. Borrow crypto or USD against crypto collateral, or lend and earn returns on assets under custody.",
-			"title-one": "Safeguard your investments",
-			"title-three": "Onboarding and Support",
-			"title-two": "Trade, borrow, and earn rewards"
+			"text-one": "Chúng tôi cung cấp các giải pháp lưu ký an toàn cho các tổ chức và cá nhân để họ có thể đầu tư một cách an toàn vào tài sản tiền điện tử.",
+			"text-three": "Nhóm hỗ trợ tận tâm hướng dẫn bạn trong suốt quá trình tham gia và giúp bạn giải quyết mọi thách thức.",
+			"text-two": "Với MeanFi Trading, truy cập nhiều địa điểm thông qua một lần giới thiệu. Vay tiền điện tử hoặc USD đối với tài sản thế chấp bằng tiền điện tử hoặc cho vay và kiếm lợi nhuận từ tài sản đang được lưu ký.",
+			"title-one": "Bảo vệ các khoản đầu tư của bạn",
+			"title-three": "Giới thiệu và hỗ trợ",
+			"title-two": "Giao dịch, vay mượn và kiếm phần thưởng"
 		},
-		"heading": "Crypto Asset Custody",
+		"heading": "Lưu ký Tài sản Tiền điện tử",
 		"second-container": {
-			"text": "We're a team of engineers, designers, and crypto experts who believe that the future is digital assets. However, with no way to securely store them right now we feel like our hands are tied behind our back. So we decided to build MeanFi Custody so that you can finally make your money work for you!",
-			"title": "WHY MEANFI CUSTODY"
+			"text": "Chúng tôi là một nhóm các kỹ sư, nhà thiết kế và chuyên gia tiền điện tử, những người tin rằng tương lai là tài sản kỹ thuật số. Tuy nhiên, với việc không có cách nào để cất giữ chúng một cách an toàn ngay bây giờ chúng ta cảm thấy như bị trói tay sau lưng. Vì vậy, chúng tôi quyết định xây dựng dịch vu Lưu ký MeanFi để tiền cuối cùng có thể làm việc cho bạn!",
+			"title": "TẠI SAO LÀ DỊCH VỤ LƯU KÝ MEANFI"
 		},
-		"subheading": "The most advanced digital asset platform, for secure crypto custody, trading, staking, governance, and more.",
+		"subheading": "Nền tảng tài sản kỹ thuật số tiên tiến nhất, để lưu ký tiền điện tử an toàn, giao dịch, đặt cược, quản trị và hơn thế nữa.",
 		"third-container": {
-			"text": "MeanFi supports assets that meet our standards of quality and safety. Our list includes USDC, USDT, SOL, DAI, and more. We are always looking to grow our portfolio with new Assets. To learn more about our roadmap, please get in touch.",
-			"title": "Supported Assets"
+			"text": "MeanFi hỗ trợ các tài sản đáp ứng các tiêu chuẩn về chất lượng và an toàn của chúng tôi. Danh sách của chúng tôi bao gồm USDC, USDT, SOL, DAI, v.v. Chúng tôi luôn tìm cách phát triển danh mục đầu tư của mình với các Tài sản mới. Để tìm hiểu thêm về lộ trình của chúng tôi, vui lòng liên hệ.",
+			"title": "Danh sách tài sản hỗ trợ"
 		}
 	},
 	"ddca-selector": {
@@ -226,7 +226,7 @@
 	"error-screens": {
 		"network-status": "Kiểm tra trạng thái mạng",
 		"report-problem": "Báo cáo vấn đề",
-		"service-unavailable-message": "It appears there's congestion on the network at the moment. Please wait a few minutes and try again."
+		"service-unavailable-message": "Có vẻ như có sự tắc nghẽn trên mạng vào lúc này. Xin chờ một vài phút và thử lại."
 	},
 	"faucet": {
 		"current-sol-balance": "Số dư SOL hiện tại",
@@ -275,47 +275,47 @@
 	},
 	"invest": {
 		"panel-left": {
-			"no-invest-options": "No invest options available",
-			"not-connected": "Please connect your wallet to see your invest options"
+			"no-invest-options": "Không có tùy chọn đầu tư khả dụng",
+			"not-connected": "Vui lòng kết nối ví của bạn để thấy tùy chọn đầu tư"
 		},
 		"panel-right": {
-			"first-text": "MEAN staking rewards include emission incentives plus 30% of the protocol revenues (calculated weekly), and can be boosted using locking periods.",
-			"second-text": "Your staking rewards will be streamed over time and they can be withdrawn at any time.",
+			"first-text": "Phần thưởng stake MEAN bao gồm các ưu đãi phát thải cộng với 30% doanh thu từ giao thức (được tính hàng tuần) và có thể được tăng cường bằng cách sử dụng các khoảng thời gian khóa.",
+			"second-text": "Phần thưởng stake của bạn sẽ được gửi trực tiếp cho bạn và chúng có thể được rút bất cứ lúc nào.",
 			"staking-data": {
-				"text-one": "MEAN tokens locked till {{unstakeStartDate}}",
-				"text-two": "Staking rewards available to withdraw:",
-				"withdraw-button": "Withdraw Funds"
+				"text-one": "Token MEAN sẽ được khóa tới {{unstakeStartDate}}",
+				"text-two": "Phần thưởng stake khả dụng để rút:",
+				"withdraw-button": "Rút tiền"
 			},
 			"stats": {
-				"next-week-payout": "Next Week Payout",
+				"next-week-payout": "Khoản thanh toán tuần tới",
 				"staking-apr": "Staking APR",
-				"total-value-locked": "Total Value Locked"
+				"total-value-locked": "Tổng tài sản bị khóa"
 			},
 			"tabset": {
 				"stake": {
-					"amount-label": "Amount to stake",
+					"amount-label": "Số lượng stake",
 					"days": "ngày",
 					"name": "Stake",
-					"notification-label": "Staking period of {{periodValue}} {{periodTime}} will lock your Tokens until {{unstakeStartDate}} with estimated rewards of up to 100 MEAN",
-					"period-label": "How long do you want to stake for?",
+					"notification-label": "Thời gian Stake cố định {{periodValue}} {{periodTime}} sẽ khóa Token của bạn cho đến {{unstakeStartDate}} với phần thưởng ước tính lên đến 100 MEAN",
+					"period-label": "Bạn muốn stake bao lâu?",
 					"stake-button": "Stake",
-					"terms-and-conditions-tooltip": "Your tokens will be locked for the period of time selected and you will not be able to unstake them before the staking period ends. When you stake additional tokens to an existing contract, the staking period will be extended to the new end date for ALL of the tokens locked.",
-					"verified-label": "I agree to the Terms & Conditions",
+					"terms-and-conditions-tooltip": "Các token của bạn sẽ bị khóa trong khoảng thời gian đã chọn và bạn sẽ không thể hủy bỏ chúng trước khi thời gian stake kết thúc. Khi bạn stake thêm token vào một hợp đồng hiện có, thời gian stake sẽ được kéo dài đến ngày kết thúc mới cho TẤT CẢ các token bị khóa.",
+					"verified-label": "Tôi đồng ý với các Điều khoản & Điều kiện",
 					"year": "năm",
-					"years": "years"
+					"years": "năm"
 				},
 				"unstake": {
-					"amount-label": "Amount to unstake",
+					"amount-label": "Số lượng unstake",
 					"name": "Unstake",
-					"notification-label-one": "Your currently have {{unstakeAmount}} MEAN staked which is currently locked until {{unstakeStartDate}}",
-					"notification-label-one-error": "You don't have any MEAN staked",
-					"notification-label-two": "Unstaking will withdraw the specified amount of unlocked MEAN tokens to your wallet",
+					"notification-label-one": "Số lượng {{unstakeAmount}} MEAN đang stake của bạn sẽ được khóa lại đến {{unstakeStartDate}}",
+					"notification-label-one-error": "Bạn không có MEAN nào đang stake",
+					"notification-label-two": "Việc hủy stake sẽ rút số lượng token MEAN đã mở khóa vào ví của bạn",
 					"send-amount": {
-						"label-right": "Available to unstake"
+						"label-right": "Hủy stake khả dụng"
 					},
-					"unstake-button-available": "Unstake",
-					"unstake-button-unavailable": "No available",
-					"verified-label": "I agree to the Terms & Conditions"
+					"unstake-button-available": "Hủy stake",
+					"unstake-button-unavailable": "Không khả dụng",
+					"verified-label": "Tôi đồng ý với các Điều khoản & Điều kiện"
 				}
 			}
 		},
@@ -337,12 +337,13 @@
 			"main-cta-busy": "Đang tạo multisig",
 			"modal-title": "Tạo multisig",
 			"multisig-address-used-as-participant": "Cannot use a multisig address as participant",
+			"multisig-duplicate-participants": "Phát hiện người tham gia bị trùng, vui lòng kiểm tra lại",
 			"multisig-label-input-empty": "Nhập tên multisig",
 			"multisig-label-input-label": "Tên multisig",
 			"multisig-label-placeholder": "Nhập tên cho tài khoản multisig của bạn",
 			"multisig-no-participants": "Chưa có người tham gia nào",
 			"multisig-participants": "Người ký hợp lệ ({{numParticipants}} trên {{maxParticipants}})",
-			"multisig-participants-warning message": "It is not recommended to create a Multisig with the same number of participants as required signatures",
+			"multisig-participants-warning-message": "It is not recommended to create a Multisig with the same number of participants as required signatures",
 			"multisig-threshold-input-empty": "Nhập số lượng chữ ký bắt buộc tối thiểu",
 			"multisig-threshold-input-label": "Số lượng chữ ký bắt buộc tối thiểu",
 			"multisig-threshold-input-max": "Số lượng chữ ký tối đa là 10",
@@ -386,12 +387,12 @@
 			"created-on": "Ngày tạo",
 			"cta-create-vault": "Tạo Vault",
 			"cta-mint": "Đúc",
-			"cta-mints": "Mints ({{itemCount}})",
-			"cta-no-mints": "Mints",
-			"cta-no-programs": "Programs",
+			"cta-mints": "Đúc ({{itemCount}})",
+			"cta-no-mints": "Đúc",
+			"cta-no-programs": "Chương trình",
 			"cta-no-treasuries": "Kho bạc",
-			"cta-no-vaults": "Danh sách vault",
-			"cta-programs": "Programs ({{itemCount}})",
+			"cta-no-vaults": "Vaults",
+			"cta-programs": "Chương trình ({{itemCount}})",
 			"cta-transfer": "Chuyển khoản các token",
 			"cta-treasuries": "Kho bạc ({{itemCount}})",
 			"cta-upgrade-program": "Nâng cấp chương trình",
@@ -400,8 +401,8 @@
 			"multisig-label-label": "Tên multisig",
 			"multisig-owners": "Chủ sở hữu",
 			"multisig-participants": "Chủ sở hữu Multisig hiện tại",
-			"multisig-tx-approve-busy": "Approving transaction",
-			"multisig-tx-execute-busy": "Executing transaction",
+			"multisig-tx-approve-busy": "Đang phê duyệt giao dịch",
+			"multisig-tx-execute-busy": "Đang  thực hiện giao dịch",
 			"no-multisig-loaded": "Tạo hoặc chọn một tài khoản multisig để xem chi tiết",
 			"no-multisig-selected": "Vui lòng chọn một tài khoản multisig để xem chi tiết",
 			"required-signatures": "Số lượng chữ ký yêu cầu"
@@ -413,27 +414,27 @@
 		},
 		"multisig-detail-heading": "Chi tiết tài khoản multisig",
 		"multisig-mints": {
-			"back-to-multisig-accounts-cta": "Back to Multisig accounts",
-			"change-mint-authority-modal-title": "Set Mint Authority",
-			"create-mint-modal-title": "Create mint",
-			"cta-change-mint-authority": "Transfer Ownership",
-			"cta-change-mint-authority-busy": "Changing Multisig",
-			"cta-create-mint": "Create mint",
-			"cta-create-mint-busy": "Creating mint",
-			"cta-mint-token": "Mint Tokens",
-			"cta-mint-token-busy": "Minting Tokens",
-			"mint-amount-label": "Select mint decimals",
-			"mint-detail-heading": "Mint details",
-			"multisig-already-owns-the-mint": "Selected multisig is already authority for this vault",
-			"no-mint": "No mint loaded",
-			"no-mints": "No mints available",
-			"no-transactions": "No transactions for this mint",
-			"not-connected": "Please connect your wallet to see mints",
-			"refresh-tooltip": "Click to refresh the list of mints",
+			"back-to-multisig-accounts-cta": "Quay về danh sách tài khoản Multisig",
+			"change-mint-authority-modal-title": "Thiết lập quyền hạn Mint",
+			"create-mint-modal-title": "Tạo mint",
+			"cta-change-mint-authority": "Chuyển quyền sở hữu",
+			"cta-change-mint-authority-busy": "Đang thay đổi Multisig",
+			"cta-create-mint": "Tạo mint",
+			"cta-create-mint-busy": "Đang tạo mint",
+			"cta-mint-token": "Token mint",
+			"cta-mint-token-busy": "Đang đúc token",
+			"mint-amount-label": "Chọn số thập phân mint",
+			"mint-detail-heading": "Chi tiết Mint",
+			"multisig-already-owns-the-mint": "Multisig được chọn đã có thẩm quyền cho vault này",
+			"no-mint": "Không có mint được nạp",
+			"no-mints": "Không có mint khả dụng",
+			"no-transactions": "Không có giao dịch cho mint này",
+			"not-connected": "Vui lòng kết nối ví của bạn để xem danh sách mint",
+			"refresh-tooltip": "Nhấn để làm mới danh sách mint",
 			"screen-title": "Mints - {{multisigName}} ({{itemCount}})",
 			"screen-title-no-mints": "Mints",
-			"selected-mint-label": "Selected Mint",
-			"success-message": "New mint authority set successfully."
+			"selected-mint-label": "Mint được chọn",
+			"success-message": "Thẩm quyền mint mới đã được thiết lập thành công"
 		},
 		"multisig-programs": {
 			"cta-create-program": "Tạo chương trình",
@@ -461,7 +462,7 @@
 		},
 		"multisig-treasuries": {
 			"back-to-multisig-accounts-cta": "Quay lại danh sách tài khoản Multisig",
-			"back-to-treasuries": "Back to treasuries",
+			"back-to-treasuries": "Quay về danh sách kho bạc",
 			"cta-change-multisig-authority": "Chuyển quyền sở hữu",
 			"cta-change-multisig-authority-busy": "Đang thay đổi Multisig",
 			"cta-close": "Đóng kho bạc",
@@ -488,8 +489,8 @@
 			"cta-create-vault-busy": "Đang tạo vault",
 			"cta-transfer": "Khởi tạo rút tiền",
 			"cta-transfer-busy": "Đang khởi tạo yêu cầu rút tiền",
-			"explanatory-paragraph": "By submitting this request, you will sign the transaction and approve it as one of the Multisig signers. Before the funds can be sent, the other Multisig members need to approve it.",
-			"main-cta": "Sign Funds Transfer Request",
+			"explanatory-paragraph": "Bằng cách gửi yêu cầu này, bạn sẽ ký giao dịch và chấp thuận nó với tư cách là một trong những người ký Multisig. Trước khi tiền có thể được gửi, các thành viên Multisig khác cần phải phê duyệt nó.",
+			"main-cta": "Ký yêu cầu chuyển tiền",
 			"no-transactions": "Vault này không có giao dịch nào",
 			"no-vault-loaded": "Không có vault nào được nạp",
 			"no-vaults": "Không có vault khả dụng",
@@ -569,7 +570,7 @@
 		"network-connection-down": "Không có kết nối mạng. App đang OFFLINE!",
 		"network-connection-good": "Tình trạng mạng tốt",
 		"network-connection-poor": "Tình trạng mạng không được tốt",
-		"network-performance-low": "Solana network is experiencing degraded performance. Transactions may fail to send or confirm.",
+		"network-performance-low": "Mạng Solana đang có hiệu suất bị suy giảm. Giao dịch có thể không thể gửi hoặc xác nhận.",
 		"referral-link-copied-message": "Link giới thiệu bạn đã được sao chép vào bộ nhớ",
 		"referral-link-not-copied-message": "Không thể sao chép link giới thiệu bạn",
 		"success-account-funded-message": "Tài khoản đã được cấp tiền",
@@ -591,8 +592,8 @@
 		"screen-title": "Lương bổng"
 	},
 	"pre-footer": {
-		"made-with": "Made with ",
-		"on-solana": " on Solana"
+		"made-with": "Làm với",
+		"on-solana": "trên Solana"
 	},
 	"referrals": {
 		"address-invalid": "Địa chỉ giới thiệu không phải là địa chỉ solana hợp lệ",
@@ -637,20 +638,20 @@
 			"token-decimals": "Số thập phân",
 			"token-name": "Tên"
 		},
-		"title": "Stats",
+		"title": "Thống kê",
 		"total-liquidity-btn": "Thêm thanh khoản"
 	},
 	"streams": {
 		"add-funds": {
-			"amount-label": "Amount",
-			"modal-title": "Add funds",
-			"treasury-money-stream-description": "As this stream was funded from a treasury, the funds being added will be allocated from the Treasury's available balance.",
-			"treasury-money-stream-title": "Treasury Funded Money Stream"
+			"amount-label": "Số lượng",
+			"modal-title": "Thêm tiền",
+			"treasury-money-stream-description": "Vì dòng tiền này được tài trợ từ kho bạc, nên số tiền được bổ sung sẽ được phân bổ từ số dư khả dụng của Kho bạc.",
+			"treasury-money-stream-title": "Kho bạc đã cấp tiền cho Money Stream"
 		},
 		"back-to-my-streams-cta": "Quay về danh sách Money Streams",
 		"create-new-stream-cta": "Chuyển khoản mới",
 		"lookup-stream-cta-tooltip": "Tra cứu một stream",
-		"pause-stream-confirmation": "Pausing the stream will stop streaming money from the treasury ({{treasury}}) to the beneficiary ({{beneficiary}}).",
+		"pause-stream-confirmation": "Việc tạm dừng stream sẽ làm dừng dòng tiền chạy từ kho bạc ({{treasury}}) tới người thụ hưởng ({{beneficiary}}).",
 		"pause-stream-cta": "Tạm dừng",
 		"pause-stream-modal-title": "Tạm dừng stream",
 		"refresh-tooltip": "Nhấn để làm mới stream",
@@ -658,13 +659,13 @@
 		"resume-stream-cta": "Tiếp tục",
 		"screen-title": "Money Streams",
 		"status": {
-			"scheduled": "Bắt đầu vào",
+			"scheduled": "Bắt đầu vào {{date}}",
 			"status-running": "Đang chạy",
 			"status-scheduled": "Đã lập lịch",
 			"status-stopped": "Đã dừng",
 			"stopped": "Đã hết quỹ",
 			"stopped-manually": "Đã dừng thủ công",
-			"streaming": "Streaming"
+			"streaming": "Đang stream"
 		},
 		"stream-activity": {
 			"action-deposit": "Nạp",
@@ -780,7 +781,7 @@
 				"per-minute": "mỗi phút",
 				"per-month": "mỗi tháng",
 				"per-week": "mỗi tuần",
-				"per-year": "mõi năm"
+				"per-year": "mỗi năm"
 			},
 			"rate-label": "Tần suất",
 			"token-label": "Người nhận nhận được"
@@ -882,6 +883,7 @@
 			"exchange-unavailable": "Giao dịch không khả dụng",
 			"insufficient-amount-needed": "Cần ít nhất {{amount}} {{symbol}} để giao dịch",
 			"insufficient-balance-needed": "Cần ít nhất {{balance}} SOL",
+			"invalid-account": "Cannot use a Multisig address as a destination account",
 			"invalid-amount": "Số lượng không hợp lệ",
 			"invalid-exchange": "Chọn token",
 			"invalid-solana-address": "Địa chỉ solana không hợp lệ",
@@ -921,8 +923,8 @@
 	},
 	"treasuries": {
 		"add-funds": {
-			"allocation-amount-label": "How Much Do You Want to Allocate?",
-			"allocation-heading": "To top up an existing stream, the funds being added will be allocated from the Treasury's available balance.",
+			"allocation-amount-label": "Bạn muốn phân bổ bao nhiêu?",
+			"allocation-heading": "Để nạp tiền vào stream hiện có, số tiền được thêm vào sẽ được phân bổ từ số dư khả dụng của Kho bạc.",
 			"allocation-label": "Bạn muốn phân bổ những khoản tiền này như thế nào?",
 			"allocation-option-evenly": "Phân bổ đồng đều trên tất cả các Money stream",
 			"allocation-option-none": "Không phân bổ (để lại trong Dự trữ)",
@@ -932,10 +934,10 @@
 			"label": "Nạp tiền",
 			"main-cta": "Nạp tiền",
 			"main-cta-busy": "Đang nạp tiền",
-			"main-cta-fund-stream": "Fund Money Stream",
-			"main-cta-fund-stream-busy": "Funding Stream",
+			"main-cta-fund-stream": "Nạp tiền",
+			"main-cta-fund-stream-busy": "Đang nạp tiền",
 			"modal-title": "Nạp tiền vào Kho bạc",
-			"modal-title-fund-stream": "Add funds to a Money Stream",
+			"modal-title-fund-stream": "Nạp tiền vào Money stream",
 			"money-stream-to-topup-label": "Money Stream to top up",
 			"search-streams-placeholder": "Tìm stream theo tên và địa chỉ",
 			"success-message": "Kho bạc của bạn đã được nạp tiền thành công"
@@ -951,7 +953,7 @@
 			"main-cta-busy": "Đang tạo kho bạc",
 			"modal-title": "Tạo kho bạc",
 			"multisig-selector-label": "Tài khoản multisig",
-			"multisig-treasury-created-info": "To complete the treasury setup, the other Multisig signers need to approve it.",
+			"multisig-treasury-created-info": "Để hoàn thành thiết lập kho bạc, những người ký Multisig khác cần phải phê duyệt nó.",
 			"multisig-treasury-created-instructions": "Vui lòng yêu cầu người dùng khác ký vào giao dịch tạo kho bạc này",
 			"multisig-treasury-switch-label": "Kho bạc dành cho tài khoản multisig?",
 			"success-message": "Kho bạc mới của bạn đã được tạo thành công",
@@ -990,19 +992,19 @@
 			"number-of-streams": "Số lượng stream",
 			"treasury-address-label": "Địa chỉ",
 			"treasury-name-label": "Tên kho bạc",
-			"unallocated-treasury-balance": "Unallocated Treasury Balance"
+			"unallocated-treasury-balance": "Số dư Kho bạc chưa phân bổ"
 		},
 		"treasury-detail-heading": "Chi tiết kho bạc",
 		"treasury-list": {
-			"multisig-treasuries-view-all-cta": "Show All Treasuries",
-			"multisig-treasury-heading": "Multisig Treasuries - {{treasuryName}}",
-			"multisig-treasury-help": "Below is a list of all the treasuries that are connected to this Multsig",
+			"multisig-treasuries-view-all-cta": "Hiển thị tất cả kho bạc",
+			"multisig-treasury-heading": "Kho bạc Multisig - {{treasuryName}}",
+			"multisig-treasury-help": "Dưới đây là danh sách tất cả các kho bạc được kết nối với Multsig này",
 			"multisig-treasury-label": "Kho bạc Multisig",
 			"no-treasuries": "Không có kho bạc nào",
 			"not-connected": "Vui lòng kết nối ví để thấy kho bạc của bạn",
 			"total-streams-label": "streams"
 		},
-		"treasury-refresh-tooltip": "Refresh treasury data",
+		"treasury-refresh-tooltip": "Làm mới dữ liệu kho bạc",
 		"treasury-streams": {
 			"add-stream-modal-title": "Thêm stream vào kho bạc",
 			"allocate-funds-label": "Phân bổ quỹ",
@@ -1014,13 +1016,15 @@
 			"column-activity": "Money streams",
 			"column-description": "Mô tả",
 			"column-destination": "Nơi nhận",
-			"column-funds-left": "Funds left",
+			"column-funds-left": "Số tiền còn lại",
 			"column-rate": "Tỉ lệ",
 			"create-stream-main-cta": "Tạo stream",
 			"create-stream-main-cta-busy": "Đang tạo stream",
+			"create-treasury-switch-label": "Do you want to create multiple streams with the same settings?",
 			"fee-payed-by-treasurer": "Tôi muốn trả phí cho stream này thay vì người thụ hưởng",
 			"loading-streams": "Đang tải stream",
 			"minimum-allocation-advice": "Bạn phải đặt mức phân bổ tối thiểu cho Money stream này lên đến số dư chưa phân bổ hiện có trong Kho bạc.",
+			"multiple-address-list": "Multiple address list",
 			"no-streams": "Kho bạc này không có stream nào hoạt động",
 			"option-close-stream": "Đóng",
 			"option-explorer-link": "Xem trên Solana Explorer",
@@ -1034,6 +1038,7 @@
 	"ui-language": {
 		"en": "Tiếng Anh",
 		"es": "Tiếng Tây Ban Nha",
+		"fa": "Persian",
 		"fr": "Tiếng Pháp",
 		"ko": "Tiếng Hàn",
 		"pt": "Tiếng Bồ Đào Nha",
@@ -1075,7 +1080,7 @@
 				"wallet-guide": "Hướng dẫn Ví",
 				"wrap": "Wrap"
 			},
-			"stats": "Số liệu thống kê",
+			"stats": "Thống kê",
 			"swap": "Giao dịch",
 			"transfers": "Chuyển khoản"
 		}
@@ -1086,9 +1091,16 @@
 		"primary-action": "Chọn"
 	},
 	"withdraw-funds": {
+		"button-title": "Withdraw funds",
 		"label-available-amount": "Số tiền có thể rút ngay",
 		"label-input-amount": "Nhập số lượng muốn rút",
 		"label-input-right": "Theo phần trăm đặt trước",
+		"modal": {
+			"main-cta": "Withdraw Funds",
+			"selected-treasury-label": "From treasury account",
+			"title": "Withdraw Treasury Funds",
+			"verified-label": "I'm sure the recipient address doesn't belong to an exchange"
+		},
 		"modal-title": "Rút tiền"
 	}
 }
