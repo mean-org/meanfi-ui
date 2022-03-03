@@ -9,7 +9,7 @@ import i18next from 'i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import common_es from "./translations/es/common.json";
 import common_en from "./translations/en/common.json";
-// import common_fa from "./translations/fa/common.json";
+import common_fa from "./translations/fa/common.json";
 import common_fr from "./translations/fr/common.json";
 import common_pt from "./translations/pt/common.json";
 import common_tr from "./translations/tr/common.json";
@@ -36,9 +36,9 @@ i18next.use(LanguageDetector).init({
     es: {
       common: common_es
     },
-    // fa: {
-    //   common: common_fa
-    // },
+    fa: {
+      common: common_fa
+    },
     fr: {
       common: common_fr
     },

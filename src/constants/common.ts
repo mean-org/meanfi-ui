@@ -76,12 +76,12 @@ export const LANGUAGES: Language[] = [
         flag: '/assets/flags/es.svg',
         locale: 'es-ES'
     },
-    // {
-    //     code: 'fa',
-    //     name: 'Persian',
-    //     flag: '/assets/flags/ir.svg',
-    //     locale: 'fa-IR'
-    // },
+    {
+        code: 'fa',
+        name: 'فارسی',
+        flag: '/assets/flags/ir.svg',
+        locale: 'fa-IR'
+    },
     {
         code: 'fr',
         name: 'Français',
