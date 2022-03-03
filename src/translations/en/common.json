@@ -1021,10 +1021,10 @@
 			"create-stream-main-cta": "Create stream",
 			"create-stream-main-cta-busy": "Creating stream",
 			"create-treasury-switch-label": "Do you want to create multiple streams with the same settings?",
-			"multiple-address-list": "Multiple address list",
 			"fee-payed-by-treasurer": "I want to pay fees for this stream instead of the beneficiary",
 			"loading-streams": "Loading streams",
 			"minimum-allocation-advice": "You must set a minimum allocation for this Money Stream up to the unallocated balance available in the Treasury.",
+			"multiple-address-list": "Multiple address list",
 			"no-streams": "This treasury has no active streams",
 			"option-close-stream": "Close",
 			"option-explorer-link": "View on Solana Explorer",
@@ -1091,16 +1091,16 @@
 		"primary-action": "Select"
 	},
 	"withdraw-funds": {
+		"button-title": "Withdraw funds",
 		"label-available-amount": "Funds available to withdraw now",
 		"label-input-amount": "Enter amount to withdraw",
 		"label-input-right": "By percentual preset",
-		"modal-title": "Withdraw funds",
-		"button-title": "Withdraw funds",
 		"modal": {
-			"title": "Withdraw Treasury Funds",
+			"main-cta": "Withdraw Funds",
 			"selected-treasury-label": "From treasury account",
-			"verified-label": "I'm sure the recipient address doesn't belong to an exchange",
-			"main-cta": "Withdraw Funds"
-		}
+			"title": "Withdraw Treasury Funds",
+			"verified-label": "I'm sure the recipient address doesn't belong to an exchange"
+		},
+		"modal-title": "Withdraw funds"
 	}
 }
