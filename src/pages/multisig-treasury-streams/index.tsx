@@ -939,12 +939,12 @@ export const MultisigTreasuryStreams = () => {
     const onCopyStreamAddress = (data: any) => {
         if (copyText(data.toString())) {
             notify({
-                description: t("notifications.streamid-copied-message"),
+                description: t("notifications.account-address-copied-message"),
                 type: "info",
             });
         } else {
             notify({
-                description: t("notifications.streamid-not-copied-message"),
+                description: t("notifications.account-address-not-copied-message"),
                 type: "error",
             });
         }
@@ -1212,52 +1212,56 @@ export const MultisigTreasuryStreams = () => {
                                     </div>
                                 </div>
                             </div>
-                            <div className="item-list-body compact">
-                                {streamActivity.map((item, index) => {
-                                    return (
-                                        <a
-                                            key={`${index}`}
-                                            className="item-list-row"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature
-                                                }${getSolanaExplorerClusterParam()}`}
-                                        >
-                                            <div className="std-table-cell first-cell">
-                                                {getActivityIcon(item)}
-                                            </div>
-                                            <div className="std-table-cell fixed-width-80">
-                                                <span
-                                                    className={
-                                                        isAddressMyAccount(item.initializer)
-                                                            ? "text-capitalize align-middle"
-                                                            : "align-middle"
-                                                    }
+                            <div className="activity-list-data-wrapper vertical-scroll">
+                                <div className="activity-list h-100">
+                                    <div className="item-list-body compact">
+                                        {streamActivity.map((item, index) => {
+                                            return (
+                                                <a
+                                                    key={`${index}`}
+                                                    className="item-list-row"
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature
+                                                        }${getSolanaExplorerClusterParam()}`}
                                                 >
-                                                    {getActivityActor(item)}
-                                                </span>
-                                            </div>
-                                            <div className="std-table-cell fixed-width-60">
-                                                <span className="align-middle">
-                                                    {getActivityAction(item)}
-                                                </span>
-                                            </div>
-                                            <div className="std-table-cell fixed-width-60">
-                                                <span className="align-middle">
-                                                    {getAmountWithSymbol(
-                                                        getActivityAmountDisplay(item, streamVersion),
-                                                        item.mint
-                                                    )}
-                                                </span>
-                                            </div>
-                                            <div className="std-table-cell fixed-width-120">
-                                                <span className="align-middle">
-                                                    {getShortDate(item.utcDate as string, true)}
-                                                </span>
-                                            </div>
-                                        </a>
-                                    );
-                                })}
+                                                    <div className="std-table-cell first-cell">
+                                                        {getActivityIcon(item)}
+                                                    </div>
+                                                    <div className="std-table-cell fixed-width-80">
+                                                        <span
+                                                            className={
+                                                                isAddressMyAccount(item.initializer)
+                                                                    ? "text-capitalize align-middle"
+                                                                    : "align-middle"
+                                                            }
+                                                        >
+                                                            {getActivityActor(item)}
+                                                        </span>
+                                                    </div>
+                                                    <div className="std-table-cell fixed-width-60">
+                                                        <span className="align-middle">
+                                                            {getActivityAction(item)}
+                                                        </span>
+                                                    </div>
+                                                    <div className="std-table-cell fixed-width-60">
+                                                        <span className="align-middle">
+                                                            {getAmountWithSymbol(
+                                                                getActivityAmountDisplay(item, streamVersion),
+                                                                item.mint
+                                                            )}
+                                                        </span>
+                                                    </div>
+                                                    <div className="std-table-cell fixed-width-120">
+                                                        <span className="align-middle">
+                                                            {getShortDate(item.utcDate as string, true)}
+                                                        </span>
+                                                    </div>
+                                                </a>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
                             </div>
                         </>
                     )}

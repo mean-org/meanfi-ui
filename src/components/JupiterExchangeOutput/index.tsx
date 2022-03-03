@@ -24,6 +24,7 @@ export const JupiterExchangeOutput = (props: {
   onToggleShowFullRouteList: any;
   className?: string;
   readonly?: boolean;
+  isBusy?: boolean;
 }) => {
 
   const { t } = useTranslation("common");
@@ -121,20 +122,20 @@ export const JupiterExchangeOutput = (props: {
         {/* Main row */}
         <div className="flex-fixed-left">
           <div className="left">
-            <span className={`add-on ${!props.readonly ? 'simplelink' : ''}`}>
+            <span className={`add-on ${!props.readonly || !props.isBusy ? 'simplelink' : ''}`}>
               <TokenDisplay onClick={
                 () => {
-                  if (!props.readonly) {
+                  if (!props.readonly || !props.isBusy) {
                     props.onSelectToken();
                   }
                 }}
                 fullTokenInfo={props.toToken}
                 mintAddress={props.toToken ? props.toToken.address : ''}
                 name={props.toToken ? props.toToken.name : ''}
-                className={!props.readonly ? 'simplelink' : ''}
+                className={!props.readonly || !props.isBusy ? 'simplelink' : ''}
                 noTokenLabel={t('swap.token-select-destination')}
                 showName={false}
-                showCaretDown={!props.readonly}
+                showCaretDown={!props.readonly || !props.isBusy}
               />
             </span>
           </div>
@@ -170,12 +171,14 @@ export const JupiterExchangeOutput = (props: {
                       key={`${index}`}
                       className={
                         index === selectedRouteIndex
-                          ? "swap-client-card selected"
-                          : "swap-client-card"
+                          ? `swap-client-card ${props.isBusy ? 'no-pointer' : 'selected'}`
+                          : `swap-client-card ${props.isBusy ? 'no-pointer' : ''}`
                       }
                       onClick={() => {
-                        setSelectedRouteIndex(index);
-                        props.onSelectedRoute(c);
+                        if (!props.isBusy) {
+                          setSelectedRouteIndex(index);
+                          props.onSelectedRoute(c);
+                        }
                       }}>
                       <div className="card-content">
                         {index === 0 && showBadge && (
@@ -224,7 +227,15 @@ export const JupiterExchangeOutput = (props: {
             </div>
             <div className="fg-secondary-60 pl-1">
               {props.routes.length > 2 && (
-                <span className="simplelink underline-on-hover" onClick={props.onToggleShowFullRouteList}>{props.showAllRoutes ? 'Show less' : 'Show more'}</span>
+                <span
+                  className={props.isBusy ? 'no-pointer' : 'simplelink underline-on-hover'}
+                  onClick={() => {
+                    if (!props.isBusy) {
+                      props.onToggleShowFullRouteList();
+                    }
+                  }}>
+                  {props.showAllRoutes ? 'Show less' : 'Show more'}
+                </span>
               )}
             </div>
           </>

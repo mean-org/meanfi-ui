@@ -332,6 +332,7 @@
 			"main-cta": "Yarat",
 			"main-cta-busy": "Çoklu-İmza yaratılıyor",
 			"modal-title": "Çoklu-İmza yarat",
+			"multisig-address-used-as-participant": "Cannot use a multisig address as participant",
 			"multisig-duplicate-participants": "İkileyen katılımcılar bulundu, lütfen göz atın.",
 			"multisig-label-input-empty": "Çoklu-İmza ismi girin",
 			"multisig-label-input-label": "Çoklu-İmza ismi",
@@ -514,7 +515,8 @@
 			"multisig-selector-label": "Yeni yetki (çoklu-imza)",
 			"multisig-selector-placeholder": "Bir çoklu-imza hesabı gir ve ya seç",
 			"selected-vault-label": "Seçilmiş kasa",
-			"success-message": "Yeni kasa yetkisi başarıyla düzenlendi"
+			"success-message": "Yeni kasa yetkisi başarıyla düzenlendi",
+			"vault-auth-destination-address-disclaimer": "I confirm the above New Authority Address entered or selected is a Multisig Account address and NOT a regular wallet address. I acknowledge that if I provide a non Multisig address, it will cause a permanent loss of the vault and its funds."
 		},
 		"transfer-tokens": {
 			"main-cta": "Talep etmeye başla",
@@ -561,25 +563,15 @@
 		"friend-referral-completed": "Arkadaşa referans olma tamamlandı",
 		"invalid-publickey-message": "Geçersiz görünür anahtar. Lütfen yazdığınızı kontrol edin",
 		"invalid-streamid-message": "Geçersiz aktarım ID'si",
-		"multisigid-copied-message": "Çoklu-İmza hesabı başarıyla kopyalandı",
-		"multisigid-not-copied-message": "Çoklu-imza adresi kopyalanamadı",
 		"network-connection-down": "Ağ bağlantısı yok. Uygulama OFFLINE!",
 		"network-connection-good": "Ağ bağlantısı iyi",
 		"network-connection-poor": "Ağ bağlantı kalitesi çok düşük",
 		"network-performance-low": "Solana ağı düşük performansı deneyimliyor. İşlemin onaylanması ya da gönderilmesi başarısız olabilir",
 		"referral-link-copied-message": "Arkadaş referans linki kopyalandı",
 		"referral-link-not-copied-message": "Arkadaşının referans linki kopyalanamadı",
-		"streamid-copied-message": "Aktarım adresi başarıyla kopyalandı",
-		"streamid-not-copied-message": "Aktarım adresi kopyalanamadı",
 		"success-account-funded-message": "Hesap fonlandı",
 		"success-loading-stream-message": "{{streamId}} bu ID'li aktarım adresi yüklendi",
 		"success-loading-treasury-message": "{{treasuryId}} bu ID'li hazine adresi yüklendi",
-		"token-address-copied-message": "Token adresi başarıyla kopyalandı",
-		"token-address-not-copied-message": "Token adresi kopyalanamadı",
-		"token-authority-copied-message": "Token yetikisi başarıyla kopyalandı",
-		"token-authority-not-copied-message": "Token yetkisi kopyalanamadı",
-		"treasuryid-copied-message": "Hazine adresi başarıyla kopyalandı",
-		"treasuryid-not-copied-message": "Hazine adresi kopyalanamadı",
 		"wallet-connect-message": "{{address}} cüzdanına bağlanıldı",
 		"wallet-connection-event-title": "Cüzdan güncellendi",
 		"wallet-disconnect-message": "Cüzdandan çık"
@@ -908,8 +900,7 @@
 			"valid-start-funding": "Fonlamaya başlayın",
 			"valid-start-withdrawal": "Para çekme işlemini başlat",
 			"verified-recipient-unchecked": "Alıcı doğrulaması işaretlenmemiş"
-		},
-		"verified-recipient-label": "Alıcı adresinin bir borsaya ait olmadığından eminim."
+		}
 	},
 	"transfer-stream": {
 		"destination-address-is-sender": "Yeni adres gönderen olamaz",
@@ -922,7 +913,8 @@
 	},
 	"transfers": {
 		"screen-subtitle": "Dünyadaki herkese daha hızlı para gönderin",
-		"screen-title": "Transferler"
+		"screen-title": "Transferler",
+		"verified-recipient-disclaimer": "Alıcı adresinin bir borsaya ait olmadığından eminim."
 	},
 	"treasuries": {
 		"add-funds": {

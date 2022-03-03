@@ -1909,15 +1909,8 @@ export const OneTimeExchange = (props: {
               showTokenSelector();
             }}
             onPriceClick={() => refreshPrices()}
-            inputPosition={inputPosition}
-            translationId="source"
-            inputLabel={
-              fromMint && mintList[fromMint]
-                ? `~$${fromAmount
-                  ? formatAmount(parseFloat(fromAmount) * getPricePerToken(mintList[fromMint] as TokenInfo), 2)
-                  : '0.00' }`
-                : ''
-            }
+            debounceTime={500}
+            className="mb-0"
           />
 
           <div className="flip-button-container">

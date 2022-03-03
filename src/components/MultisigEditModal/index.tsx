@@ -11,7 +11,7 @@ import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TransactionFees } from '@mean-dao/money-streaming';
 import { getTokenAmountAndSymbolByTokenAddress, isValidNumber } from '../../utils/utils';
 import { MultisigParticipants } from '../MultisigParticipants';
-import { MultisigParticipant } from '../../models/multisig';
+import { MultisigParticipant, MultisigV2 } from '../../models/multisig';
 import { MAX_MULTISIG_PARTICIPANTS } from '../../constants';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -25,7 +25,9 @@ export const MultisigEditModal = (props: {
   transactionFees: TransactionFees;
   multisigName?: string;
   multisigThreshold?: number;
+  multisigAccounts: MultisigV2[];
   multisigParticipants?: MultisigParticipant[];
+  multisigPendingTxsAmount: number;
 }) => {
   const { t } = useTranslation('common');
   const {
@@ -37,6 +39,7 @@ export const MultisigEditModal = (props: {
   const [multisigThreshold, setMultisigThreshold] = useState(0);
   const [inputOwners, setInputOwners] = useState<MultisigParticipant[] | undefined>(undefined);
   const [multisigOwners, setMultisigOwners] = useState<MultisigParticipant[]>([]);
+  const [multisigAddresses, setMultisigAddresses] = useState<string[]>([]);
 
   // When modal goes visible, get passed-in owners to populate participants component
   // Also get threshold and labe (name)
@@ -54,13 +57,18 @@ export const MultisigEditModal = (props: {
       if (inputOwners === undefined) {
         setInputOwners(props.multisigParticipants);
       }
+      if (props.multisigAccounts && props.multisigAccounts.length > 0) {
+        const msAddresses = props.multisigAccounts.map(ms => ms.id.toBase58());
+        setMultisigAddresses(msAddresses);
+      }
     }
   }, [
     inputOwners,
     props.isVisible,
     props.multisigName,
+    props.multisigAccounts,
+    props.multisigThreshold,
     props.multisigParticipants,
-    props.multisigThreshold
   ]);
 
   const hasOwnersChanges = useCallback(() => {
@@ -112,13 +120,19 @@ export const MultisigEditModal = (props: {
     setMultisigLabel(e.target.value);
   }
 
+  const noDuplicateExists = (arr: MultisigParticipant[]): boolean => {
+    const items = arr.map(i => i.address);
+    return new Set(items).size === items.length ? true : false;
+  }
+
   const isFormValid = () => {
     return  multisigThreshold &&
             multisigThreshold <= MAX_MULTISIG_PARTICIPANTS &&
             multisigLabel &&
             multisigOwners.length >= multisigThreshold &&
             multisigOwners.length <= MAX_MULTISIG_PARTICIPANTS &&
-            isOwnersListValid()
+            isOwnersListValid() &&
+            noDuplicateExists(multisigOwners)
       ? true
       : false;
   }
@@ -214,11 +228,12 @@ export const MultisigEditModal = (props: {
                   maxParticipants: MAX_MULTISIG_PARTICIPANTS
                 })
               }
+              multisigAddresses={multisigAddresses}
               disabled={props.isBusy}
               onParticipantsChanged={(e: MultisigParticipant[]) => setMultisigOwners(e)}
             />
 
-            {hasOwnersChanges() && (
+            {hasOwnersChanges() && props.multisigPendingTxsAmount > 0 && (
               <div className="font-size-100 fg-orange-red pl-1">{t('multisig.update-multisig.edit-not-allowed-message')}</div>
             )}
 

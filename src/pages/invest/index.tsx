@@ -2,17 +2,17 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import './style.less';
 import { ArrowDownOutlined, CheckOutlined, ReloadOutlined } from "@ant-design/icons";
 import { Button, Tooltip, Row, Col, Space, Empty, Spin } from "antd";
+import moment from 'moment';
 import Checkbox from "antd/lib/checkbox/Checkbox";
+import Modal from "antd/lib/modal/Modal";
 import { useTranslation } from 'react-i18next';
 import { isDesktop } from "react-device-detect";
-import { IconStats } from "../../Icons";
 import { TokenDisplay } from "../../components/TokenDisplay";
 import { PreFooter } from "../../components/PreFooter";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
 import { cutNumber, formatAmount, formatThousands, getAmountWithSymbol, isValidNumber } from "../../utils/utils";
-import moment from 'moment';
-import Modal from "antd/lib/modal/Modal";
+import { IconStats } from "../../Icons";
 import { IconHelpCircle } from "../../Icons/IconHelpCircle";
 import useWindowSize from '../../hooks/useWindowResize';
 
@@ -23,6 +23,7 @@ export const InvestView = () => {
     selectedToken,
     unstakeAmount,
     unstakeStartDate,
+    stakingMultiplier,
     detailsPanelOpen,
     setFromCoinAmount,
     setIsVerifiedRecipient,
@@ -35,11 +36,12 @@ export const InvestView = () => {
 
   const [currentTab, setCurrentTab] = useState<SwapOption>("stake");
   const [stakingRewards, setStakingRewards] = useState<number>(0);
+  // const [selectedInvest, setSelectedInvest] = useState<any>(undefined);
   const annualPercentageYield = 5;
 
   const investItems = [
     {
-      id: "0",
+      id: 0,
       name: "MEAN",
       mintAddress: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg",
       title: "Stake MEAN",
@@ -47,7 +49,7 @@ export const InvestView = () => {
       interval: "APR"
     },
     {
-      id: "1",
+      id: 1,
       name: "Test",
       mintAddress: "https://www.orca.so/static/media/usdc.3b5972c1.svg",
       title: "Test",
@@ -74,7 +76,7 @@ export const InvestView = () => {
   const stakingData = [
     {
       label: "Your Current Stake:",
-      value: "3.78x boost"
+      value: ""
     },
     {
       label: "My Staked MEAN",
@@ -83,6 +85,10 @@ export const InvestView = () => {
     {
       label: "Avg. Locked Yield",
       value: `${annualPercentageYield}%`
+    },
+    {
+      label: "Staking Lock Boost",
+      value: `${stakingMultiplier}x boost`
     },
     // {
     //   label: "My Locked eMEAN",
@@ -94,24 +100,13 @@ export const InvestView = () => {
     // },
   ];
 
+  const [selectedInvest, setSelectedInvest] = useState<any>(investItems[0]);
+
   const onTabChange = (option: SwapOption) => {
     setCurrentTab(option);
     setFromCoinAmount('');
     setIsVerifiedRecipient(false);
   }
-
-  const [activeTab, setActiveTab] = useState(investItems[0].title);
-
-  const onInvestClick = useCallback((e: any, openDetailsPanel: boolean = false) => {
-
-    if (e.target.innerHTML !== activeTab) {
-      setActiveTab(e.target.innerHTML);
-    }
-
-    if (isSmallUpScreen || openDetailsPanel) {
-      setDtailsPanelOpen(true);
-    }
-  }, [activeTab, isSmallUpScreen, setDtailsPanelOpen]);  
 
   // Withdraw funds modal
   const [isWithdrawModalVisible, setIsWithdrawModalVisible] = useState(false);
@@ -142,28 +137,34 @@ export const InvestView = () => {
     width,
     isSmallUpScreen,
     detailsPanelOpen,
-    setDtailsPanelOpen
   ]);  
 
   const renderInvestOptions = (
     <>
       {investItems && investItems.length ? (
-        investItems.map((item, index) => (
-          <div key={index} onClick={onInvestClick} className={`transaction-list-row ${activeTab === item.title  ? "selected" : ''}`}>
-            <div className="icon-cell">
-              <div className="token-icon">
-                <img alt={item.name} width="30" height="30" src={item.mintAddress} />
+        investItems.map((item, index) => {
+          const onInvestClick = () => {
+            setDtailsPanelOpen(true);
+            setSelectedInvest(item);
+          };
+
+          return(
+            <div key={index} onClick={onInvestClick} className={`transaction-list-row ${selectedInvest.id === item.id ? "selected" : ''}`}>
+              <div className="icon-cell">
+                <div className="token-icon">
+                  <img alt={item.name} width="30" height="30" src={item.mintAddress} />
+                </div>
+              </div>
+              <div className="description-cell">
+                <div className="title">{item.title}</div>
+              </div>
+              <div className="rate-cell">
+                <div className="rate-amount">{item.rateAmount}%</div>
+                <div className="interval">{item.interval}</div>
               </div>
             </div>
-            <div className="description-cell">
-              <div className="title">{item.title}</div>
-            </div>
-            <div className="rate-cell">
-              <div className="rate-amount">{item.rateAmount}%</div>
-              <div className="interval">{item.interval}</div>
-            </div>
-          </div>
-        ))
+          )
+        })
       ) : (
         <div className="h-100 flex-center">
           <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{!connected
@@ -183,7 +184,7 @@ export const InvestView = () => {
               <IconStats className="mean-svg-icons" />
               <div>{t('invest.title')}</div>
             </div>
-            <div className="subtitle">
+            <div className="subtitle text-center">
             {t('invest.subtitle')}
             </div>
           </div>
@@ -218,7 +219,7 @@ export const InvestView = () => {
 
             <div className="meanfi-two-panel-right">
               <div className="inner-container">
-                {activeTab === "Stake MEAN" && (
+                {selectedInvest.id === 0 && (
                   <>
                     {/* Background animation */}
                     {stakingRewards > 0 && (
@@ -233,7 +234,7 @@ export const InvestView = () => {
                     <div className="pinned-token-separator"></div>
 
                     {/* Staking Stats */}
-                    <div className="stream-fields-container">
+                    <div className="invest-fields-container">
                       <div className="mb-3">
                         <Row>
                           {stakingStats.map((stat, index) => (
@@ -348,11 +349,11 @@ export const InvestView = () => {
                   </>
                 )}
 
-                {activeTab === "Test" && (
+                {selectedInvest.id === 1 && (
                   <h2>Test</h2>
                 )}
 
-                {activeTab === undefined && (
+                {selectedInvest.id === undefined && (
                   <div className="h-100 flex-center">
                     <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
                   </div>
@@ -382,35 +383,36 @@ export const StakeTabView = () => {
     setFromCoinAmount,
     setIsVerifiedRecipient,
     setUnstakeAmount,
-    setUnstakeStartDate
+    setUnstakeStartDate,
+    setStakingMultiplier
   } = useContext(AppStateContext);
   const { connected } = useWallet();
   const { t } = useTranslation('common');
   const periods = [
     {
-      value: 0,
+      value: 7,
       time: t("invest.panel-right.tabset.stake.days"),
-      multiplier: "1x"
+      multiplier: 1
     },
     {
       value: 30,
       time: t("invest.panel-right.tabset.stake.days"),
-      multiplier: "1.1x"
+      multiplier: 1.1
     },
     {
       value: 90,
       time: t("invest.panel-right.tabset.stake.days"),
-      multiplier: "1.2x"
+      multiplier: 1.2
     },
     {
       value: 1,
       time: t("invest.panel-right.tabset.stake.year"),
-      multiplier: "2.0x"
+      multiplier: 2.0
     },
     {
       value: 4,
       time: t("invest.panel-right.tabset.stake.years"),
-      multiplier: "4.0x"
+      multiplier: 4.0
     },
   ];
 
@@ -467,9 +469,10 @@ export const StakeTabView = () => {
     showTransactionModal
   ]);
 
-  const onChangeValue = (value: number, time: string) => {
+  const onChangeValue = (value: number, time: string, rate: number) => {
     setPeriodValue(value);
     setPeriodTime(time);
+    setStakingMultiplier(rate);
   }
 
   useEffect(() => {
@@ -536,8 +539,8 @@ export const StakeTabView = () => {
         <div className="left token-group">
           {periods.map((period, index) => (
             <div key={index} className="mb-1 d-flex flex-column align-items-center">
-              <div className="token-max simplelink" onClick={() => onChangeValue(period.value, period.time)}>{period.value} {period.time}</div>
-              <span>{period.multiplier}</span>
+              <div className="token-max simplelink" onClick={() => onChangeValue(period.value, period.time, period.multiplier)}>{period.value} {period.time}</div>
+              <span>{`${period.multiplier}x`}</span>
             </div>
           ))}
         </div>

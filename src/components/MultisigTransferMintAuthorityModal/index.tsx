@@ -43,7 +43,7 @@ export const MultisigTransferMintAuthorityModal = (props: {
   const isValidForm = (): boolean => {
     return selectedAuthority &&
             isValidAddress(selectedAuthority) &&
-            (!props.selectedMultisig || (props.selectedMultisig && selectedAuthority !== props.selectedMultisig.address.toBase58()))
+            (!props.selectedMultisig || (props.selectedMultisig && selectedAuthority !== props.selectedMultisig.authority.toBase58()))
       ? true
       : false;
   }
@@ -77,7 +77,7 @@ export const MultisigTransferMintAuthorityModal = (props: {
           <div className="subtitle text-truncate">decimals: {item.decimals}</div>
         </div>
         <div className="rate-cell">
-          <div className="rate-amount text-uppercase">{formatThousands(item.supply, item.decimals)}</div>
+          <div className="rate-amount">{formatThousands(item.supply, item.decimals)}</div>
           <div className="interval">supply</div>
         </div>
       </div>
@@ -85,8 +85,8 @@ export const MultisigTransferMintAuthorityModal = (props: {
   }
 
   const renderMultisigSelectItem = (item: MultisigV2) => ({
-    key: item.address.toBase58(),
-    value: item.address.toBase58(),
+    key: item.authority.toBase58(),
+    value: item.authority.toBase58(),
     label: (
       <div className={`transaction-list-row`}>
         <div className="icon-cell">
@@ -94,23 +94,21 @@ export const MultisigTransferMintAuthorityModal = (props: {
         </div>
         <div className="description-cell">
           {item.label ? (
-            <div className="title text-truncate">
-              {item.label}
-            </div>
+            <div className="title text-truncate">{item.label}</div>
           ) : (
             <div className="title text-truncate">{shortenAddress(item.id.toBase58(), 8)}</div>
           )}
           {
-            <div className="subtitle text-truncate">{shortenAddress(item.address.toBase58(), 8)}</div>
+            <div className="subtitle text-truncate">{shortenAddress(item.id.toBase58(), 8)}</div>
           }
         </div>
-        <div className="description-cell text-right">
-          <div className="subtitle">
-          {
-            t('multisig.multisig-accounts.pending-transactions', {
-              txs: item.pendingTxsAmount
-            })
-          }
+        <div className="rate-cell">
+          <div className="rate-amount">
+            {
+              t('multisig.multisig-accounts.pending-transactions', {
+                txs: item.pendingTxsAmount
+              })
+            }
           </div>
         </div>
       </div>
@@ -164,15 +162,15 @@ export const MultisigTransferMintAuthorityModal = (props: {
                       }}
                       filterOption={(inputValue, option) => {
                         const originalItem = props.multisigAccounts.find(i => {
-                          return i.address.toBase58() === option!.key ? true : false;
+                          return i.authority.toBase58() === option!.key ? true : false;
                         });
-                        return option!.value.indexOf(inputValue) !== -1 || originalItem?.address.toBase58().indexOf(inputValue) !== -1
+                        return option!.value.indexOf(inputValue) !== -1 || originalItem?.authority.toBase58().indexOf(inputValue) !== -1
                       }}
                       onSelect={onMultisigSelected}
                     />
                   </div>
                 </div>
-                {props.selectedMultisig && selectedAuthority === props.selectedMultisig.address.toBase58() ? (
+                {props.selectedMultisig && selectedAuthority === props.selectedMultisig.authority.toBase58() ? (
                   <span className="form-field-error">
                     {t('multisig.multisig-mints.multisig-already-owns-the-mint')}
                   </span>

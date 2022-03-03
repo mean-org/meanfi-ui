@@ -336,13 +336,14 @@
 			"main-cta": "Create",
 			"main-cta-busy": "Creating multisig",
 			"modal-title": "Create multisig",
+			"multisig-address-used-as-participant": "Cannot use a multisig address as participant",
 			"multisig-duplicate-participants": "Found duplicate participants, please review.",
 			"multisig-label-input-empty": "Enter a multisig name",
 			"multisig-label-input-label": "Multisig name",
 			"multisig-label-placeholder": "Type a name for your multisig account",
 			"multisig-no-participants": "No participants added yet",
 			"multisig-participants": "Valid signers ({{numParticipants}} of {{maxParticipants}})",
-			"multisig-participants-warning message": "It is not recommended to create a Multisig with the same number of participants as required signatures",
+			"multisig-participants-warning-message": "It is not recommended to create a Multisig with the same number of participants as required signatures",
 			"multisig-threshold-input-empty": "Enter a minimum required signatures value",
 			"multisig-threshold-input-label": "Minimum required signatures",
 			"multisig-threshold-input-max": "Max number of signatures is 10",
@@ -518,7 +519,8 @@
 			"multisig-selector-label": "New authority (multisig)",
 			"multisig-selector-placeholder": "Select or enter a multisig address",
 			"selected-vault-label": "Selected vault",
-			"success-message": "New vault authority set successfully."
+			"success-message": "New vault authority set successfully.",
+			"vault-auth-destination-address-disclaimer": "I confirm the above New Authority Address entered or selected is a Multisig Account address and NOT a regular wallet address. I acknowledge that if I provide a non Multisig address, it will cause a permanent loss of the vault and its funds."
 		},
 		"transfer-tokens": {
 			"main-cta": "Start Request",
@@ -565,25 +567,15 @@
 		"friend-referral-completed": "Friend referral completed",
 		"invalid-publickey-message": "Invalid public key. Please check input",
 		"invalid-streamid-message": "Invalid stream id",
-		"multisigid-copied-message": "Multisig address successfully copied to clipboard",
-		"multisigid-not-copied-message": "Could not copy multisig address",
 		"network-connection-down": "No network connection. App is OFFLINE!",
 		"network-connection-good": "Network connection is good",
 		"network-connection-poor": "Network connection quality is very poor",
 		"network-performance-low": "Solana network is experiencing degraded performance. Transactions may fail to send or confirm.",
 		"referral-link-copied-message": "Friend referral link copied to clipboard",
 		"referral-link-not-copied-message": "Could not copy your Friend referral link",
-		"streamid-copied-message": "Stream address successfully copied to clipboard",
-		"streamid-not-copied-message": "Could not copy stream Address",
 		"success-account-funded-message": "Account funded",
 		"success-loading-stream-message": "The stream with ID {{streamId}} has been loaded",
 		"success-loading-treasury-message": "The treasury with ID {{treasuryId}} has been loaded",
-		"token-address-copied-message": "Token Address successfully copied",
-		"token-address-not-copied-message": "Could not copy Token Address",
-		"token-authority-copied-message": "Token Authority successfully copied",
-		"token-authority-not-copied-message": "Could not copy Token Authority",
-		"treasuryid-copied-message": "Treasury address successfully copied to clipboard",
-		"treasuryid-not-copied-message": "Could not copy treasury Address",
 		"wallet-connect-message": "Connected to wallet {{address}}",
 		"wallet-connection-event-title": "Wallet update",
 		"wallet-disconnect-message": "Disconnected from wallet"
@@ -608,7 +600,7 @@
 		"address-processed": "Please connect your wallet to record this referral.",
 		"connect-to-refer-friend": "Please connect your wallet to refer a friend",
 		"modal-title": "Refer a friend",
-		"refer-friend-hint": "Refer a friend and earn up to $25 in MEAN tokens when they exchange $100 worth of crypto",
+		"refer-friend-hint": "Refer your friends by sharing the link below…",
 		"see-rules": "See rules for details",
 		"share-to": "Share to"
 	},
@@ -891,6 +883,7 @@
 			"exchange-unavailable": "Exchange unavailable",
 			"insufficient-amount-needed": "Need at least {{amount}} {{symbol}} to exchange",
 			"insufficient-balance-needed": "Need at least {{balance}} SOL",
+			"invalid-account": "Cannot use a Multisig address as a destination account",
 			"invalid-amount": "Invalid amount",
 			"invalid-exchange": "Select token",
 			"invalid-solana-address": "Invalid solana address",
@@ -912,8 +905,7 @@
 			"valid-start-funding": "Start funding",
 			"valid-start-withdrawal": "Start withdrawal",
 			"verified-recipient-unchecked": "Recipient verification unchecked"
-		},
-		"verified-recipient-label": "I'm sure the recipient address doesn't belong to an exchange."
+		}
 	},
 	"transfer-stream": {
 		"destination-address-is-sender": "The new address cannot be the sender",
@@ -926,7 +918,8 @@
 	},
 	"transfers": {
 		"screen-subtitle": "Send money to anyone in the world faster",
-		"screen-title": "Transfers"
+		"screen-title": "Transfers",
+		"verified-recipient-disclaimer": "I'm sure the recipient address doesn't belong to an exchange."
 	},
 	"treasuries": {
 		"add-funds": {
@@ -1027,6 +1020,8 @@
 			"column-rate": "Rate",
 			"create-stream-main-cta": "Create stream",
 			"create-stream-main-cta-busy": "Creating stream",
+			"create-treasury-switch-label": "Do you want to create multiple streams with the same settings?",
+			"multiple-address-list": "Multiple address list",
 			"fee-payed-by-treasurer": "I want to pay fees for this stream instead of the beneficiary",
 			"loading-streams": "Loading streams",
 			"minimum-allocation-advice": "You must set a minimum allocation for this Money Stream up to the unallocated balance available in the Treasury.",
@@ -1099,6 +1094,13 @@
 		"label-available-amount": "Funds available to withdraw now",
 		"label-input-amount": "Enter amount to withdraw",
 		"label-input-right": "By percentual preset",
-		"modal-title": "Withdraw funds"
+		"modal-title": "Withdraw funds",
+		"button-title": "Withdraw funds",
+		"modal": {
+			"title": "Withdraw Treasury Funds",
+			"selected-treasury-label": "From treasury account",
+			"verified-label": "I'm sure the recipient address doesn't belong to an exchange",
+			"main-cta": "Withdraw Funds"
+		}
 	}
 }

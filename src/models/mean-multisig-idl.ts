@@ -90,7 +90,7 @@ const idl: Idl = {
         {
           "name": "transaction",
           "isMut": true,
-          "isSigner": false
+          "isSigner": true
         },
         {
           "name": "proposer",

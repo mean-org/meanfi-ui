@@ -15,7 +15,7 @@ export enum MultisigTransactionStatus {
 export type Multisig = {
   id: PublicKey;
   label: string;
-  address: PublicKey;
+  authority: PublicKey;
   owners: MultisigParticipant[];
   threshold: number;
   nounce: number;
@@ -28,7 +28,7 @@ export type Multisig = {
 export type MultisigV2 = {
   id: PublicKey;
   label: string;
-  address: PublicKey;
+  authority: PublicKey;
   owners: MultisigParticipant[];
   threshold: number;
   nounce: number;

@@ -941,7 +941,6 @@ export const ExchangeDcasView = () => {
     width,
     isSmallUpScreen,
     detailsPanelOpen,
-    setDtailsPanelOpen
   ]);
 
   // Handle what to do when pending Tx confirmation reaches finality or on error

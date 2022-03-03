@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect } from 'react';
 import { useContext, useState } from 'react';
-import { Modal, Button, Select, Dropdown, Menu, DatePicker, Checkbox, Divider } from 'antd';
+import { Modal, Button, Select, Dropdown, Menu, DatePicker, Checkbox, Divider, Radio } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
 import {
   cutNumber,
@@ -107,6 +107,7 @@ export const TreasuryStreamCreateModal = (props: {
   const [isFeePaidByTreasurer, setIsFeePaidByTreasurer] = useState(false);
   const [tokenAmount, setTokenAmount] = useState(new BN(0));
   const [maxAllocatableAmount, setMaxAllocatableAmount] = useState<any>(undefined);
+  const [enableMultipleStreamsOption, setEnableMultipleStreamsOption] = useState(false);
 
   const isNewTreasury = useCallback(() => {
     if (props.treasuryDetails) {
@@ -471,9 +472,19 @@ export const TreasuryStreamCreateModal = (props: {
     setIsVerifiedRecipient(e.target.checked);
   }
 
+  const onCloseMultipleStreamsChanged = (e: any) => {
+    setEnableMultipleStreamsOption(e.target.value);
+  }  
+
   // const onAllocationReservedChanged = (e: any) => {
   //   setIsAllocationReserved(e.target.value);
   // }
+
+  const [csvFile, setCsvFile] = useState();
+
+  const selectCsvHandler = (e: any) => {
+    setCsvFile(e.target.files[0]);
+  }
 
   const onTransactionStart = async () => {
     let transaction: Transaction;
@@ -910,38 +921,69 @@ export const TreasuryStreamCreateModal = (props: {
         <StepSelector step={currentStep} steps={2} onValueSelected={onStepperChange} />
 
         <div className={currentStep === 0 ? "contract-wrapper panel1 show" : "contract-wrapper panel1 hide"}>
-          <div className="form-label">{t('transactions.recipient.label')}</div>
-          <div className="well">
-            <div className="flex-fixed-right">
-              <div className="left position-relative">
-                <span className="recipient-field-wrapper">
-                  <input id="payment-recipient-field"
-                    className="general-text-input"
-                    autoComplete="on"
-                    autoCorrect="off"
-                    type="text"
-                    onFocus={handleRecipientAddressFocusIn}
-                    onChange={handleRecipientAddressChange}
-                    onBlur={handleRecipientAddressFocusOut}
-                    placeholder={t('transactions.recipient.placeholder')}
-                    required={true}
-                    spellCheck="false"
-                    value={recipientAddress}/>
-                  <span id="payment-recipient-static-field"
-                        className={`${recipientAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>
-                    {recipientAddress || t('transactions.recipient.placeholder')}
+
+          {/* Create Treasury checkbox */}
+          <div className="mb-2 flex-row align-items-start">
+            <span className="form-label w-auto mb-0">{t('treasuries.treasury-streams.create-treasury-switch-label')}</span>
+            <Radio.Group className="ml-2 d-flex" 
+              onChange={onCloseMultipleStreamsChanged} 
+              value={enableMultipleStreamsOption}
+            >
+              <Radio value={true}>{t('general.yes')}</Radio>
+              <Radio value={false}>{t('general.no')}</Radio>
+            </Radio.Group>
+          </div>
+
+          <div className="form-label">{!enableMultipleStreamsOption ? t('transactions.recipient.label') : t('treasuries.treasury-streams.multiple-address-list')}</div>
+          
+          {!enableMultipleStreamsOption ? (
+            <div className="well">
+              <div className="flex-fixed-right">
+                <div className="left position-relative">
+                  <span className="recipient-field-wrapper">
+                    <input id="payment-recipient-field"
+                      className="general-text-input"
+                      autoComplete="on"
+                      autoCorrect="off"
+                      type="text"
+                      onFocus={handleRecipientAddressFocusIn}
+                      onChange={handleRecipientAddressChange}
+                      onBlur={handleRecipientAddressFocusOut}
+                      placeholder={t('transactions.recipient.placeholder')}
+                      required={true}
+                      spellCheck="false"
+                      value={recipientAddress}/>
+                    <span id="payment-recipient-static-field"
+                          className={`${recipientAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>
+                      {recipientAddress || t('transactions.recipient.placeholder')}
+                    </span>
                   </span>
-                </span>
+                </div>
+              </div>
+              {
+                recipientAddress && !isValidAddress(recipientAddress) && (
+                  <span className="form-field-error">
+                    {t('transactions.validation.address-validation')}
+                  </span>
+                )
+              }
+            </div>
+          ) : (
+            <div className="well">
+              <div className="flex-fixed-right">
+                <div className="left position-relative">
+                  <span className="recipient-field-wrapper">
+                    <input
+                      type='file'
+                      accept='.csv'
+                      id='csvFile'
+                      onChange={selectCsvHandler}
+                    />
+                  </span>
+                </div>
               </div>
             </div>
-            {
-              recipientAddress && !isValidAddress(recipientAddress) && (
-                <span className="form-field-error">
-                  {t('transactions.validation.address-validation')}
-                </span>
-              )
-            }
-          </div>
+          )}
 
           <div className="form-label">{t('transactions.rate-and-frequency.amount-label')}</div>
           <div className="well">
@@ -1254,7 +1296,7 @@ export const TreasuryStreamCreateModal = (props: {
           </div>
 
           <div className="ml-1">
-            <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>{t('transactions.verified-recipient-label')}</Checkbox>
+            <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>{t('transfers.verified-recipient-disclaimer')}</Checkbox>
           </div>
 
         </div>

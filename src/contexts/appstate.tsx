@@ -104,6 +104,7 @@ interface AppStateConfig {
   // Staking
   unstakeAmount: string;
   unstakeStartDate: string | undefined;
+  stakingMultiplier: number;
   setTheme: (name: string) => void;
   setDtailsPanelOpen: (state: boolean) => void;
   showDepositOptionsModal: () => void;
@@ -157,6 +158,7 @@ interface AppStateConfig {
   // Staking
   setUnstakeAmount: (data: string) => void;
   setUnstakeStartDate: (date: string) => void;
+  setStakingMultiplier: (rate: number) => void;
 }
 
 const contextDefaultValues: AppStateConfig = {
@@ -222,6 +224,7 @@ const contextDefaultValues: AppStateConfig = {
   // Staking
   unstakeAmount: '',
   unstakeStartDate: 'undefined',
+  stakingMultiplier: 1,
   setTheme: () => {},
   setDtailsPanelOpen: () => {},
   showDepositOptionsModal: () => {},
@@ -274,7 +277,8 @@ const contextDefaultValues: AppStateConfig = {
   setHighLightableMultisigId: () => {},
   // Staking
   setUnstakeAmount: () => {},
-  setUnstakeStartDate: () => {}
+  setUnstakeStartDate: () => {},
+  setStakingMultiplier: () => {}
 };
 
 export const AppStateContext = React.createContext<AppStateConfig>(contextDefaultValues);
@@ -659,6 +663,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   const [selectedToken, updateSelectedToken] = useState<TokenInfo>();
   const [tokenBalance, updateTokenBalance] = useState<number>(contextDefaultValues.tokenBalance);
+  const [stakingMultiplier, updateStakingMultiplier] = useState<number>(contextDefaultValues.stakingMultiplier);
   const [coinPrices, setCoinPrices] = useState<any>(null);
   const [loadingPrices, setLoadingPrices] = useState<boolean>(contextDefaultValues.loadingPrices);
   const [effectiveRate, updateEffectiveRate] = useState<number>(contextDefaultValues.effectiveRate);
@@ -672,6 +677,10 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   const setSelectedTokenBalance = (balance: number) => {
     updateTokenBalance(balance);
+  }
+
+  const setStakingMultiplier = (rate: number) => {
+    updateStakingMultiplier(rate);
   }
 
   const setEffectiveRate = (rate: number) => {
@@ -1213,6 +1222,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         highLightableMultisigId,
         unstakeAmount,
         unstakeStartDate,
+        stakingMultiplier,
         setTheme,
         setDtailsPanelOpen,
         setShouldLoadTokens,
@@ -1261,7 +1271,8 @@ const AppStateProvider: React.FC = ({ children }) => {
         setLoadingRecurringBuys,
         setHighLightableMultisigId,
         setUnstakeAmount,
-        setUnstakeStartDate
+        setUnstakeStartDate,
+        setStakingMultiplier
       }}>
       {children}
     </AppStateContext.Provider>

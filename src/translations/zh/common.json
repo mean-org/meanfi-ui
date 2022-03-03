@@ -311,6 +311,7 @@
 			"main-cta": "Create",
 			"main-cta-busy": "Creating multisig",
 			"modal-title": "Create multisig",
+			"multisig-address-used-as-participant": "Cannot use a multisig address as participant",
 			"multisig-duplicate-participants": "Found duplicate participants, please review.",
 			"multisig-label-input-empty": "Enter a multisig name",
 			"multisig-label-input-label": "Multisig name",
@@ -481,7 +482,8 @@
 			"multisig-selector-label": "New authority (multisig)",
 			"multisig-selector-placeholder": "Select or enter a multisig address",
 			"selected-vault-label": "Selected vault",
-			"success-message": "New vault authority set successfully."
+			"success-message": "New vault authority set successfully.",
+			"vault-auth-destination-address-disclaimer": "I confirm the above New Authority Address entered or selected is a Multisig Account address and NOT a regular wallet address. I acknowledge that if I provide a non Multisig address, it will cause a permanent loss of the vault and its funds."
 		},
 		"transfer-tokens": {
 			"main-cta": "Start Request",
@@ -540,28 +542,18 @@
 		"friend-referral-completed": "Friend referral completed",
 		"invalid-publickey-message": "Invalid public key. Please check input",
 		"invalid-streamid-message": "Invalid stream id",
-		"multisigid-copied-message": "Multisig address successfully copied to clipboard",
-		"multisigid-not-copied-message": "Could not copy multisig address",
 		"network-connection-down": "No network connection. App is OFFLINE!",
 		"network-connection-good": "Network connection is good",
 		"network-connection-poor": "Network connection quality is very poor",
 		"network-performance-low": "Solana network is experiencing degraded performance. Transactions may fail to send or confirm.",
 		"referral-link-copied-message": "Friend referral link copied to clipboard",
 		"referral-link-not-copied-message": "Could not copy your Friend referral link",
-		"streamid-copied-message": "Stream address successfully copied to clipboard",
-		"streamid-not-copied-message": "Could not copy stream Address",
 		"success-account-funded-message": "Account funded",
 		"success-loading-stream-message": "The stream with ID {{streamId}} has been loaded",
 		"success-loading-treasury-message": "The treasury with ID {{treasuryId}} has been loaded",
-		"treasuryid-copied-message": "Treasury address successfully copied to clipboard",
-		"treasuryid-not-copied-message": "Could not copy treasury Address",
 		"wallet-connect-message": "Connected to wallet {{address}}",
 		"wallet-connection-event-title": "Wallet update",
-		"wallet-disconnect-message": "Disconnected from wallet",
-		"token-address-copied-message": "Token Address successfully copied",
-		"token-address-not-copied-message": "Could not copy Token Address",
-		"token-authority-copied-message": "Token Authority successfully copied",
-		"token-authority-not-copied-message": "Could not copy Token Authority"
+		"wallet-disconnect-message": "Disconnected from wallet"
 	},
 	"open-stream": {
 		"label-streamid-input": "Stream id to open",
@@ -896,12 +888,12 @@
 			"valid-start-funding": "Start funding",
 			"valid-start-withdrawal": "Start withdrawal",
 			"verified-recipient-unchecked": "Recipient verification unchecked"
-		},
-		"verified-recipient-label": "I'm sure the recipient address doesn't belong to an exchange."
+		}
 	},
 	"transfers": {
 		"screen-subtitle": "Send money to anyone in the world faster",
-		"screen-title": "Transfers"
+		"screen-title": "Transfers",
+		"verified-recipient-disclaimer": "I'm sure the recipient address doesn't belong to an exchange."
 	},
 	"treasuries": {
 		"add-funds": {

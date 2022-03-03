@@ -336,7 +336,7 @@
 			"main-cta": "Tạo",
 			"main-cta-busy": "Đang tạo multisig",
 			"modal-title": "Tạo multisig",
-			"multisig-duplicate-participants": "Phát hiện người tham gia bị trùng, vui lòng kiểm tra lại",
+			"multisig-address-used-as-participant": "Cannot use a multisig address as participant",
 			"multisig-label-input-empty": "Nhập tên multisig",
 			"multisig-label-input-label": "Tên multisig",
 			"multisig-label-placeholder": "Nhập tên cho tài khoản multisig của bạn",
@@ -518,7 +518,8 @@
 			"multisig-selector-label": "Quyền hạn mới (multisig)",
 			"multisig-selector-placeholder": "Chọn hoặc nhập một địa chỉ multisig",
 			"selected-vault-label": "Vault được chọn",
-			"success-message": "Quyền hạn của vault mới đã được thiết lập thành công"
+			"success-message": "Quyền hạn của vault mới đã được thiết lập thành công",
+			"vault-auth-destination-address-disclaimer": "I confirm the above New Authority Address entered or selected is a Multisig Account address and NOT a regular wallet address. I acknowledge that if I provide a non Multisig address, it will cause a permanent loss of the vault and its funds."
 		},
 		"transfer-tokens": {
 			"main-cta": "Bắt đầu yêu cầu",
@@ -565,25 +566,15 @@
 		"friend-referral-completed": "Mời bạn hoàn thành",
 		"invalid-publickey-message": "Public key không hợp lệ. Vui lòng kiểm tra nội dung nhập",
 		"invalid-streamid-message": "Stream id không hợp lệ",
-		"multisigid-copied-message": "Địa chỉ multisig đã được sao chép vào bộ nhớ thành công",
-		"multisigid-not-copied-message": "Không thể sao chép địa chỉ multisig",
 		"network-connection-down": "Không có kết nối mạng. App đang OFFLINE!",
 		"network-connection-good": "Tình trạng mạng tốt",
 		"network-connection-poor": "Tình trạng mạng không được tốt",
 		"network-performance-low": "Solana network is experiencing degraded performance. Transactions may fail to send or confirm.",
 		"referral-link-copied-message": "Link giới thiệu bạn đã được sao chép vào bộ nhớ",
 		"referral-link-not-copied-message": "Không thể sao chép link giới thiệu bạn",
-		"streamid-copied-message": "Địa chỉ stream đã được sao chép vào bộ nhớ thành công",
-		"streamid-not-copied-message": "Không thể sao chép địa chỉ stream",
 		"success-account-funded-message": "Tài khoản đã được cấp tiền",
 		"success-loading-stream-message": "Stream với ID {{streamId}} đã được tải",
 		"success-loading-treasury-message": "Kho bạc với ID {{treasuryId}} đã được tải",
-		"token-address-copied-message": "Địa chỉ token đã được sao chép thành công",
-		"token-address-not-copied-message": "Không thể sao chép địa chỉ Token",
-		"token-authority-copied-message": "Token Authority đã sao chép thành công",
-		"token-authority-not-copied-message": "Không thể sao chép Token Authority",
-		"treasuryid-copied-message": "Địa chỉ kho bạc đã được sao chép vào bộ nhớ thành công",
-		"treasuryid-not-copied-message": "Không thể sao chép địa chỉ kho bạc",
 		"wallet-connect-message": "Đã kết nối ví {{address}}",
 		"wallet-connection-event-title": "Cập nhật tình trạng ví",
 		"wallet-disconnect-message": "Kết nối từ ví đã bị ngắt"
@@ -912,8 +903,7 @@
 			"valid-start-funding": "Bắt đầu cấp tiền",
 			"valid-start-withdrawal": "Bắt đầu rút tiền",
 			"verified-recipient-unchecked": "Đã bỏ chọn xác minh người nhận"
-		},
-		"verified-recipient-label": "Tôi chắc chắn rằng địa chỉ người nhận không thuộc về một sàn giao dịch."
+		}
 	},
 	"transfer-stream": {
 		"destination-address-is-sender": "Địa chỉ mới không thể là người gửi",
@@ -926,7 +916,8 @@
 	},
 	"transfers": {
 		"screen-subtitle": "Gửi tiền cho bất kỳ ai trên thế giới nhanh hơn",
-		"screen-title": "Chuyển khoản"
+		"screen-title": "Chuyển khoản",
+		"verified-recipient-disclaimer": "Tôi chắc chắn rằng địa chỉ người nhận không thuộc về một sàn giao dịch."
 	},
 	"treasuries": {
 		"add-funds": {
