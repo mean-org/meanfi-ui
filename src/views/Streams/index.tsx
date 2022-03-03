@@ -2893,7 +2893,7 @@ export const Streams = () => {
       <>
         {stream && (
           <>
-            <div className="stream-details-data-wrapper">
+            <div className="stream-details-data-wrapper vertical-scroll">
 
               <Spin spinning={loadingStreams}>
                 <div className="stream-fields-container">
@@ -3166,7 +3166,7 @@ export const Streams = () => {
       <>
         {stream && (
           <>
-            <div className="stream-details-data-wrapper">
+            <div className="stream-details-data-wrapper vertical-scroll">
 
               <Spin spinning={loadingStreams}>
                 <div className="stream-fields-container">
@@ -3396,7 +3396,7 @@ export const Streams = () => {
       <>
         {stream && (
           <>
-            <div className="stream-details-data-wrapper">
+            <div className="stream-details-data-wrapper vertical-scroll">
 
               <Spin spinning={loadingStreams}>
                 <div className="stream-fields-container">
@@ -3720,7 +3720,7 @@ export const Streams = () => {
       <>
         {stream && (
           <>
-            <div className="stream-details-data-wrapper">
+            <div className="stream-details-data-wrapper vertical-scroll">
 
               <Spin spinning={loadingStreams}>
                 <div className="stream-fields-container">
