@@ -106,12 +106,12 @@ export const ReferFriendModal = (props: {
                 <IconLinkedin className="mean-svg-icons" />
               </LinkedinShareButton>
             </div>
-            <div className="text-center mt-1">
+            {/* <div className="text-center mt-1">
               <a className="simplelink underline-on-hover"
                   target="_blank" rel="noopener noreferrer"
                   href="https://docs.meanfi.com/governance/mean-token/tge-and-airdrop">{t('referrals.see-rules')}
               </a>
-            </div>
+            </div> */}
         </div>
     </Modal>
   );

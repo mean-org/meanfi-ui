@@ -604,7 +604,7 @@
 		"address-processed": "Bu referansı kaydetmek için lütfen cüzdanınızı bağlayın",
 		"connect-to-refer-friend": "Bir arkadaşınıza referans olmak için lütfen cüzdanınızı bağlayın",
 		"modal-title": "Arkadaşına referans ol",
-		"refer-friend-hint": "Bir arkadaşına referans ol, onlar 100 dolarlık işlem yaptığında $25 değerinde MEAN token kazan",
+		"refer-friend-hint": "Aşağıdaki bağlantıyı paylaşarak arkadaşlarınızı yönlendirin...",
 		"see-rules": "Detaylar için kuralları görüntüle",
 		"share-to": ".... ile paylaş"
 	},
