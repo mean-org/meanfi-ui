@@ -296,7 +296,7 @@
 					"amount-label": "Stake edilecek miktar",
 					"days": "Günler",
 					"name": "Stake",
-					"notification-label": "Stake periyodu {{periodValue}} {{periodTime}} boyunca, {{unstakeStartdate}} kadar tokenlarınız kilitli kalacak,tahmini 100 MEAN tokena kadar ödül.",
+					"notification-label": "Stake periyodu {{periodValue}} {{periodTime}} boyunca, {{unstakeStartDate}} kadar tokenlarınız kilitli kalacak,tahmini 100 MEAN tokena kadar ödül.",
 					"period-label": "Ne kadar süre boyunca stake etmek istiyorsunuz?",
 					"stake-button": "Stake",
 					"terms-and-conditions-tooltip": "Tokenlarınız seçilen süre boyunca kilitlenir ve stake dönemi sona ermeden geri alamazsınız. Mevcut kontrata ek tokenlar stake ettiğinizde, kilitli stake süresi TÜM tokenlar için yeni bitiş tarihine kadar uzatılacaktır.",

@@ -284,7 +284,7 @@
 			"staking-data": {
 				"text-one": "MEAN tokens locked till {{unstakeStartDate}}",
 				"text-two": "Staking rewards available to withdraw:",
-				"withdraw-button": "Withdraw Funds"
+				"withdraw-button": "Withdraw Rewards"
 			},
 			"stats": {
 				"next-week-payout": "Next Week Payout",
