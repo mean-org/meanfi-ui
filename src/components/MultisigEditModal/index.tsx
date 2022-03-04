@@ -84,6 +84,18 @@ export const MultisigEditModal = (props: {
     multisigOwners
   ]);
 
+  const isFormDirty = useCallback(() => {
+    return multisigLabel !== props.multisigName ||
+           multisigThreshold !== props.multisigThreshold ||
+           hasOwnersChanges()
+  }, [
+    multisigLabel,
+    multisigThreshold,
+    props.multisigName,
+    props.multisigThreshold,
+    hasOwnersChanges,
+  ]);
+
   const onAcceptModal = () => {
     props.handleOk({
       label: multisigLabel,
@@ -233,7 +245,7 @@ export const MultisigEditModal = (props: {
               onParticipantsChanged={(e: MultisigParticipant[]) => setMultisigOwners(e)}
             />
 
-            {hasOwnersChanges() && props.multisigPendingTxsAmount > 0 && (
+            {isFormDirty() && props.multisigPendingTxsAmount > 0 && (
               <div className="font-size-100 fg-orange-red pl-1">{t('multisig.update-multisig.edit-not-allowed-message')}</div>
             )}
 
