@@ -2714,6 +2714,8 @@ export const MultisigView = () => {
         return "Close Treasury";
       case OperationType.TreasuryRefreshBalance:
         return "Refresh Treasury Data";
+      case OperationType.TreasuryWithdraw:
+        return "Withdraw Treasury Funds";
       case OperationType.CreateVault:
         return "Create Vault";
       case OperationType.SetVaultAuthority:
@@ -2825,7 +2827,8 @@ export const MultisigView = () => {
       op === OperationType.TreasuryCreate || 
       op === OperationType.TreasuryClose || 
       op === OperationType.TreasuryAddFunds ||
-      op === OperationType.TreasuryRefreshBalance || 
+      op === OperationType.TreasuryRefreshBalance ||
+      op === OperationType.TreasuryWithdraw ||
       op === OperationType.StreamCreate ||
       op === OperationType.StreamPause ||
       op === OperationType.StreamResume ||
@@ -2879,6 +2882,7 @@ export const MultisigView = () => {
             highlightedMultisigTx.operation === OperationType.TreasuryClose ||
             highlightedMultisigTx.operation === OperationType.TreasuryAddFunds ||
             highlightedMultisigTx.operation === OperationType.TreasuryStreamCreate ||
+            highlightedMultisigTx.operation === OperationType.TreasuryWithdraw ||
             highlightedMultisigTx.operation === OperationType.StreamCreate ||
             highlightedMultisigTx.operation === OperationType.StreamClose ||
             highlightedMultisigTx.operation === OperationType.StreamAddFunds

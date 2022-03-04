@@ -18,7 +18,6 @@ import {
   IconBank,
   IconBox,
   IconClock,
-  IconDownload,
   IconExternalLink,
   IconRefresh,
   IconShare,
@@ -115,10 +114,10 @@ export const Streams = () => {
     detailsPanelOpen,
     transactionStatus,
     customStreamDocked,
-    lastStreamsSummary,
     streamProgramAddress,
     loadingStreamsSummary,
     loadingStreamActivity,
+    hasMoreStreamActivity,
     highLightableStreamId,
     streamV2ProgramAddress,
     setStreamList,
@@ -128,6 +127,7 @@ export const Streams = () => {
     setEffectiveRate,
     setSelectedStream,
     refreshStreamList,
+    getStreamActivity,
     setStreamsSummary,
     setDtailsPanelOpen,
     setShouldLoadTokens,
@@ -2881,8 +2881,22 @@ export const Streams = () => {
                 </>
               )}
             </Spin>
+            {hasMoreStreamActivity && (
+              <div className="mt-1 text-center">
+                <span className={loadingStreamActivity ? 'no-pointer' : 'secondary-link underline-on-hover'}
+                    role="link"
+                    onClick={() => {
+                    if (streamDetail) {
+                        getStreamActivity(streamDetail.id as string, streamDetail.version);
+                    }
+                  }}>
+                  {t('general.cta-load-more')}
+                </span>
+              </div>
+            )}
           </div>
         </div>
+
       </>
     );
   }
@@ -2893,7 +2907,7 @@ export const Streams = () => {
       <>
         {stream && (
           <>
-            <div className="stream-details-data-wrapper">
+            <div className="stream-details-data-wrapper vertical-scroll">
 
               <Spin spinning={loadingStreams}>
                 <div className="stream-fields-container">
@@ -3143,8 +3157,10 @@ export const Streams = () => {
               </Spin>
 
               <Divider className="activity-divider" plain></Divider>
-              {!streamActivity || streamActivity.length === 0 ? (
-                <p>{t('streams.stream-activity.no-activity')}.</p>
+              {loadingStreamActivity && (!streamActivity || streamActivity.length === 0) ? (
+                <p>{t('streams.stream-activity.loading-activity')}</p>
+              ) : !loadingStreamActivity && (!streamActivity || streamActivity.length === 0) ? (
+                <p>{t('streams.stream-activity.no-activity')}</p>
               ) : renderActivities(stream.version)}
             </div>
             <div className="stream-share-ctas">
@@ -3166,7 +3182,7 @@ export const Streams = () => {
       <>
         {stream && (
           <>
-            <div className="stream-details-data-wrapper">
+            <div className="stream-details-data-wrapper vertical-scroll">
 
               <Spin spinning={loadingStreams}>
                 <div className="stream-fields-container">
@@ -3373,8 +3389,10 @@ export const Streams = () => {
               </Spin>
 
               <Divider className="activity-divider" plain></Divider>
-              {!streamActivity || streamActivity.length === 0 ? (
-                <p>{t('streams.stream-activity.no-activity')}.</p>
+              {loadingStreamActivity && (!streamActivity || streamActivity.length === 0) ? (
+                <p>{t('streams.stream-activity.loading-activity')}</p>
+              ) : !loadingStreamActivity && (!streamActivity || streamActivity.length === 0) ? (
+                <p>{t('streams.stream-activity.no-activity')}</p>
               ) : renderActivities(stream.version)}
             </div>
             <div className="stream-share-ctas">
@@ -3396,7 +3414,7 @@ export const Streams = () => {
       <>
         {stream && (
           <>
-            <div className="stream-details-data-wrapper">
+            <div className="stream-details-data-wrapper vertical-scroll">
 
               <Spin spinning={loadingStreams}>
                 <div className="stream-fields-container">
@@ -3697,8 +3715,10 @@ export const Streams = () => {
               </Spin>
 
               <Divider className="activity-divider" plain></Divider>
-              {!streamActivity || streamActivity.length === 0 ? (
-                <p>{t('streams.stream-activity.no-activity')}.</p>
+              {loadingStreamActivity && (!streamActivity || streamActivity.length === 0) ? (
+                <p>{t('streams.stream-activity.loading-activity')}</p>
+              ) : !loadingStreamActivity && (!streamActivity || streamActivity.length === 0) ? (
+                <p>{t('streams.stream-activity.no-activity')}</p>
               ) : renderActivities(stream.version)}
             </div>
             <div className="stream-share-ctas">
@@ -3720,7 +3740,7 @@ export const Streams = () => {
       <>
         {stream && (
           <>
-            <div className="stream-details-data-wrapper">
+            <div className="stream-details-data-wrapper vertical-scroll">
 
               <Spin spinning={loadingStreams}>
                 <div className="stream-fields-container">
@@ -3952,8 +3972,10 @@ export const Streams = () => {
               </Spin>
 
               <Divider className="activity-divider" plain></Divider>
-              {!streamActivity || streamActivity.length === 0 ? (
-                <p>{t('streams.stream-activity.no-activity')}.</p>
+              {loadingStreamActivity && (!streamActivity || streamActivity.length === 0) ? (
+                <p>{t('streams.stream-activity.loading-activity')}</p>
+              ) : !loadingStreamActivity && (!streamActivity || streamActivity.length === 0) ? (
+                <p>{t('streams.stream-activity.no-activity')}</p>
               ) : renderActivities(stream.version)}
             </div>
             <div className="stream-share-ctas">
@@ -3984,9 +4006,8 @@ export const Streams = () => {
           event.currentTarget.className = "error";
         };
         return (
-          <div key={`${index + 50}`} onClick={onStreamClick}
-            id={`${item.id}`}
-            className={`transaction-list-row ${streamDetail && streamDetail.id === item.id ? 'selected' : ''}`}>
+          <div key={`${index + 50}`} onClick={onStreamClick} id={`${item.id}`}
+              className={`transaction-list-row ${streamDetail && streamDetail.id === item.id ? 'selected' : ''}`}>
             <div className="icon-cell">
               {getStreamTypeIcon(item)}
               <div className="token-icon">

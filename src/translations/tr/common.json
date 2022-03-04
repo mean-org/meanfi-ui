@@ -34,7 +34,6 @@
 		"create-account-help-link": "Cüzdanlar hakkında öğren",
 		"create-account-help-post": "hesabı aç",
 		"create-account-help-pre": "Solana'da yeni misin?",
-		"history-load-more-cta-label": "Daha fazlasını yükle",
 		"history-panel-title": "Varlık transferi",
 		"history-table-activity": "Aktivite",
 		"history-table-amount": "Miktar",
@@ -245,6 +244,7 @@
 		"cta-copy": "Kopyala",
 		"cta-finish": "Bitir",
 		"cta-try-again": "Tekrar dene",
+		"cta-load-more": "Daha fazlasını yükle",
 		"day": "gün",
 		"days": "günler",
 		"finished": "Bitirildi",
@@ -674,6 +674,7 @@
 			"label-action": "Hareketler",
 			"label-amount": "Miktar",
 			"label-date": "Tarih",
+			"loading-activity": "Loading stream activity",
 			"no-activity": "Şu ana kadar aktivite yok"
 		},
 		"stream-detail": {

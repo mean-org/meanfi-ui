@@ -34,7 +34,6 @@
 		"create-account-help-link": "Tìm hiểu về ví",
 		"create-account-help-post": "để mở một tài khoản",
 		"create-account-help-pre": "Người dùng Solana mới?",
-		"history-load-more-cta-label": "Tải thêm",
 		"history-panel-title": "Giao dịch tài sản",
 		"history-table-activity": "Hoạt động",
 		"history-table-amount": "Số lượng",
@@ -245,6 +244,7 @@
 		"cta-copy": "Sao chép",
 		"cta-finish": "Kết thúc",
 		"cta-try-again": "Thử lại",
+		"cta-load-more": "Tải thêm",
 		"day": "ngày",
 		"days": "ngày",
 		"finished": "Đã kết thúc",
@@ -674,6 +674,7 @@
 			"label-action": "Hoạt động",
 			"label-amount": "Số lượng",
 			"label-date": "Ngày",
+			"loading-activity": "Loading stream activity",
 			"no-activity": "Không có hoạt động"
 		},
 		"stream-detail": {

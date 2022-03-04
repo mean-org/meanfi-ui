@@ -436,6 +436,8 @@ export const MultisigProgramsView = () => {
         return "Close Treasury";
       case OperationType.TreasuryRefreshBalance:
         return "Refresh Treasury Data";
+      case OperationType.TreasuryWithdraw:
+        return "Withdraw Treasury Funds";
       case OperationType.CreateVault:
         return "Create Vault";
       case OperationType.SetVaultAuthority:

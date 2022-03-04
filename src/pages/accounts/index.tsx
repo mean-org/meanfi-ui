@@ -1369,7 +1369,7 @@ export const AccountsView = () => {
                             size="small"
                             disabled={status === FetchStatus.Fetching}
                             onClick={() => startSwitch()}>
-                            {status === FetchStatus.Fetching ? t('general.loading') : t('assets.history-load-more-cta-label')}
+                            {status === FetchStatus.Fetching ? t('general.loading') : t('general.cta-load-more')}
                           </Button>
                         </div>
                       )}

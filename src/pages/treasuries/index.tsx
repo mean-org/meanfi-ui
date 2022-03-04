@@ -186,19 +186,41 @@ export const TreasuriesView = () => {
 
     if (params.has('multisig')) {             // Preset multisig address if passed-in
       multisig = params.get('multisig');
-      setMultisigAddress(multisig || '');
-      consoleOut('multisigAddress:', multisig, 'blue');
+      if (multisig && !selectedMultisig) {
+        setTimeout(() => {
+          setTreasuriesLoaded(false);         // Trigger treasuries load once per route change
+        });
+      }
+      setMultisigAddress(multisig || '');     // Store it in the state
+      consoleOut('params.get("multisig") =', multisig, 'crimson');
     } else if (params.has('treasury')) {      // Preset treasury address if passed-in
       treasury = params.get('treasury');
+      if (treasury && !treasuryAddress) {
+        setTimeout(() => {
+          setTreasuriesLoaded(false);         // Trigger treasuries load once per route change
+        });
+      }
       setTreasuryAddress(treasury || '');
-      consoleOut('treasuryAddress:', treasury, 'blue');
-    } else if (selectedMultisig) {            // Clean any data we may have data relative to a previous multisig
-      setMultisigAddress('');
-      setSelectedMultisig(undefined);
+      consoleOut('params.get("treasury") =', treasury, 'crimson');
+    } else {                                  // Clean any data we may have data relative to a previous multisig
+      if (selectedMultisig) {
+        setMultisigAddress('');
+        setSelectedMultisig(undefined);
+        setTimeout(() => {
+          setTreasuriesLoaded(false);         // Trigger treasuries load once per route change
+        });
+      } else if (treasuryAddress) {
+        setTreasuryAddress('');
+        setTimeout(() => {
+          setTreasuriesLoaded(false);         // Trigger treasuries load once per route change
+        });
+      }
+      consoleOut('No params passed!', '', 'crimson');
     }
   }, [
     location.search,
-    selectedMultisig,
+    treasuryAddress,
+    selectedMultisig
   ]);
 
   // Create and cache the connection
@@ -447,7 +469,7 @@ export const TreasuriesView = () => {
 
   const refreshTreasuries = useCallback((reset = false) => {
     
-    if (!connection || !publicKey) { return; }
+    if (!connection || !publicKey || loadingTreasuries) { return; }
 
     if (msp && ms && fetchTxInfoStatus !== "fetching") {
 
@@ -531,8 +553,9 @@ export const TreasuriesView = () => {
     connection,
     treasuryAddress,
     treasuryDetails,
-    fetchTxInfoStatus,
     selectedMultisig,
+    fetchTxInfoStatus,
+    loadingTreasuries,
     clearTransactionStatusContext,
     openTreasuryById,
     getAllUserV2Treasuries
@@ -860,41 +883,48 @@ export const TreasuriesView = () => {
   // Load treasuries once per page access
   useEffect(() => {
     
-    if (!publicKey || !connection || treasuriesLoaded || loadingTreasuries || loadingMultisigAccounts || !multisigAccounts) {
-      return;
-    }
+    if (!publicKey || treasuriesLoaded) { return; }
 
-    const isMultisigInAccountList = (id: string) => {
-      return multisigAccounts.some(m => m.id.toBase58() === id);
-    }
-
-    // Verify query param
+    /**
+     * Verify query params before calling refreshTreasuries
+     * 
+     * The reason for this is that when query params are passed and stored in the state
+     * they will be available in the next/further render(s).
+     * treasuryAddress is needed for highlighting a treasury in the list after the list is refreshed
+     * multisigAddress is needed to obtain the selectedMultisig
+     * selectedMultisig is needed because refreshTreasuries will obtain a list of treasuries for
+     * the multisig authority if available, if not it will obtain the user's treasuries
+     */
     const params = new URLSearchParams(location.search);
-    if (params.has('treasury') && !treasuryAddress) {
-      consoleOut('Wait for treasuryAddress on next render...', '', 'blue');
-      return;
-    } else if (params.has('multisig') && !multisigAddress) {
-      consoleOut('Wait for multisigAddress on next render...', '', 'blue');
-      return;
-    } else if (params.has('multisig') && multisigAddress && isMultisigInAccountList(multisigAddress) && !selectedMultisig ) {
-      consoleOut('Wait for selectedMultisig on next render...', '', 'blue');
-      return;
+    if (params.has('treasury')) {
+      if (!treasuryAddress) {
+        consoleOut('Wait for treasuryAddress on next render...', '✓', 'brown');
+        return;
+      }
+      consoleOut('treasuryAddress is available...', '✓', 'brown');
+    } else if (params.has('multisig')) {
+      if (!multisigAddress) {
+        consoleOut('Wait for multisigAddress on next render...', '✓', 'brown');
+        return;
+      } else if (!selectedMultisig) {
+        consoleOut('Now wait for selectedMultisig to be available...', '✓', 'brown');
+        return;
+      }
+      consoleOut('multisigAddress and selectedMultisig are available...', '✓', 'brown');
+    } else {
+      consoleOut('No params passed!', '✓', 'brown');
     }
 
+    consoleOut('Calling refreshTreasuries...', '', 'blue');
     setTreasuriesLoaded(true);
-    consoleOut('Loading treasuries with wallet connection...', '', 'blue');
     refreshTreasuries(true);
   }, [
     publicKey,
-    connection,
+    location.search,
     treasuryAddress,
     multisigAddress,
-    location.search,
     selectedMultisig,
-    multisigAccounts,
     treasuriesLoaded,
-    loadingTreasuries,
-    loadingMultisigAccounts,
     refreshTreasuries
   ]);
 
@@ -1603,9 +1633,7 @@ export const TreasuriesView = () => {
     refreshTokenBalance();
 
     const usedOptions = retryOperationPayload as TreasuryCreateOptions;
-    consoleOut('retryOperationPayload:', retryOperationPayload, 'crimson');
-    consoleOut('usedOptions:', usedOptions, 'crimson');
-    consoleOut('createOptions:', createOptions, 'crimson');
+    consoleOut('retryOperationPayload:', retryOperationPayload, 'blue');
 
     if (createOptions && createOptions.multisigId) {
       notify({
@@ -4566,13 +4594,11 @@ export const TreasuriesView = () => {
   const [isTransferFundsModalVisible, setIsTransferFundsModalVisible] = useState(false);
   const showTransferFundsModal = useCallback(() => {
     setIsTransferFundsModalVisible(true);
-    const fees = {
-      blockchainFee: 0.000005,
-      mspFlatFee: 0.000010,
-      mspPercentFee: 0
-    };
-    setTransactionFees(fees);
-  }, []);
+    getTransactionFeesV2(MSP_ACTIONS_V2.treasuryWithdraw).then(value => {
+      setTransactionFees(value);
+      consoleOut('transactionFees:', value, 'orange');
+    });
+  }, [getTransactionFeesV2]);
 
   const onAcceptTreasuryTransferFunds = (params: any) => {
     consoleOut('params', params, 'blue');
@@ -4597,9 +4623,62 @@ export const TreasuriesView = () => {
     setRetryOperationPayload(data);
     setIsBusy(true);
 
-    const createTreasuryTransferFundsTx = async (data: any) => {
-      consoleOut("Pending development of createTreasuryTransferFundsTx");
-      return new Transaction();
+    const treasuryWithdraw = async (data: any) => {
+
+      if (!msp) { return null; }
+
+      let treasuryWithdraw = await msp.treasuryWithdraw(
+        new PublicKey(data.payer),              // payer
+        new PublicKey(data.destination),        // treasurer
+        new PublicKey(data.treasury),           // treasury
+        data.amount                             // amount
+      );
+
+      if (!isMultisigTreasury()) {
+        return treasuryWithdraw;
+      }
+
+      if (!treasuryDetails || !multisigClient || !multisigAccounts || !publicKey) { return null; }
+
+      let treasury = treasuryDetails as Treasury;
+      let multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
+
+      if (!multisig) { return null; }
+
+      const ixData = Buffer.from(treasuryWithdraw.instructions[0].data);
+      const ixAccounts = treasuryWithdraw.instructions[0].keys;
+      const transaction = Keypair.generate();
+      const txSize = 1000;
+      const txSigners = [transaction];
+      const createIx = await multisigClient.account.transaction.createInstruction(
+        transaction,
+        txSize
+      );
+      
+      let tx = multisigClient.transaction.createTransaction(
+        MSPV2Constants.MSP, 
+        OperationType.TreasuryWithdraw,
+        ixAccounts as any,
+        ixData as any,
+        new BN(0),
+        new BN(0),
+        {
+          accounts: {
+            multisig: multisig.id,
+            transaction: transaction.publicKey,
+            proposer: publicKey as PublicKey,
+          },
+          preInstructions: [createIx],
+          signers: txSigners,
+        }
+      );
+
+      tx.feePayer = publicKey;
+      let { blockhash } = await connection.getRecentBlockhash("finalized");
+      tx.recentBlockhash = blockhash;
+      tx.partialSign(...txSigners);
+
+      return tx;
     }
 
     const createTx = async () => {
@@ -4613,16 +4692,38 @@ export const TreasuriesView = () => {
         return false;
       }
 
-      consoleOut("Start transaction for create treasury", '', 'blue');
-      consoleOut('Wallet address:', publicKey.toBase58());
+      if (!treasuryDetails || !msp) {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+          result: 'Cannot start transaction! Treasury details or MSP client not found!'
+        });
+        customLogger.logError('Treasury withdraw transaction failed', { transcript: transactionLog });
+        return false;
+      }
 
       setTransactionStatus({
         lastOperation: TransactionStatus.TransactionStart,
         currentOperation: TransactionStatus.InitTransaction
       });
 
+      /**
+       * payer: PublicKey,
+       * destination: PublicKey,
+       * treasury: PublicKey,
+       * amount: number
+       */
+
+      const destinationPk = new PublicKey(data.destinationAccount);
+      const treasuryPk = new PublicKey(treasuryDetails.id);
+      const amount = data.tokenAmount;
+
       // Create a transaction
-      const payload = data;
+      const payload = {
+        payer: publicKey.toBase58(),
+        destination: destinationPk.toBase58(),
+        treasury: treasuryPk.toBase58(),
+        amount: amount.toNumber()
+      };
 
       consoleOut('payload:', payload);
       // Log input data
@@ -4658,12 +4759,12 @@ export const TreasuriesView = () => {
         return false;
       }
 
-      consoleOut('Starting Treasury Withdraw...', '', 'blue');
+      consoleOut('Starting Treasury Withdraw using MSP V2...', '', 'blue');
 
-      let result = await createTreasuryTransferFundsTx(payload)
+      let result = await treasuryWithdraw(payload)
         .then(value => {
           if (!value) { return false; }
-          consoleOut('createTreasuryTransferFundsTx returned transaction:', value);
+          consoleOut('treasuryWithdraw returned transaction:', value);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
@@ -4676,7 +4777,7 @@ export const TreasuriesView = () => {
           return true;
         })
         .catch(error => {
-          console.error('createTreasuryTransferFundsTx error:', error);
+          console.error('treasuryWithdraw error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.InitTransactionFailure
@@ -4824,7 +4925,6 @@ export const TreasuriesView = () => {
   };
 
   const onAfterEveryModalClose = useCallback(() => {
-    consoleOut('onAfterEveryModalClose called!', '', 'crimson');
     resetTransactionStatus();
   },[resetTransactionStatus]);
 
