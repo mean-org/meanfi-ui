@@ -499,7 +499,14 @@
 			"screen-title": "Vaults - {{multisigName}} ({{vaultCount}})",
 			"screen-title-no-vaults": "Vaults",
 			"validation-amount-high": "Amount exceeds the vault balance",
-			"vault-detail-heading": "Vault details"
+			"vault-detail-heading": "Vault details",
+			"delete-vault": {
+				"modal-title": "Delete a Multisig Vault",
+				"selected-vault-label": "Vault selected",
+				"warning-message": "Only empty vaults can be deleted. To delete a vault you need to first transfer all funds to another account.",
+				"explanatory-paragraph": "By submitting this request, you will sign the transaction and approve it as one of the Multisig signers. Before the vault is deleted, the other Multisig members need to approve it.",
+				"main-cta": "Submit Delete Request"
+			}
 		},
 		"pending-transactions": "pending transactions",
 		"refresh-tooltip": "Click to refresh the list of multisig accounts",

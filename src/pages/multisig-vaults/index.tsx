@@ -31,6 +31,7 @@ import { MultisigVaultTransferAuthorityModal } from '../../components/MultisigVa
 import { customLogger } from '../..';
 import useWindowSize from '../../hooks/useWindowResize';
 import { isError } from '../../utils/transactions';
+import { MultisigVaultDeleteModal } from '../../components/MultisigVaultDeleteModal';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -2103,25 +2104,19 @@ export const MultisigVaultsView = () => {
   // Delete vault modal
   const [isDeleteVaultModalVisible, setIsDeleteVaultModalVisible] = useState(false);
   const showDeleteVaultModal = useCallback(() => {
-    setIsDeleteVaultModalVisible(true);
-    const fees = {
-      blockchainFee: 0.000005,
-      mspFlatFee: 0.000010,
-      mspPercentFee: 0
-    };
-    setTransactionFees(fees);
+    setIsDeleteVaultModalVisible(true);    
   }, []);
 
   const onAcceptDeleteVault = () => {
     onExecuteDeleteVaultTx();
   };
 
-  const onVaultDeleted = useCallback(() => {
-    // refreshVaults();
-    resetTransactionStatus();
-  },[
-    resetTransactionStatus
-  ]);
+  // const onVaultDeleted = useCallback(() => {
+  //   // refreshVaults();
+  //   resetTransactionStatus();
+  // },[
+  //   resetTransactionStatus
+  // ]);
 
   const onExecuteDeleteVaultTx = useCallback(async () => {
 
@@ -3477,8 +3472,8 @@ export const MultisigVaultsView = () => {
                               shape="circle"
                               size="middle"
                               icon={<IconTrash className="mean-svg-icons" />}
-                              onClick={() => {}}
-                              disabled={isTxInProgress() || selectedVault.amount.toNumber() === 0}
+                              onClick={showDeleteVaultModal}
+                              disabled={isTxInProgress()}
                             />
                           </Tooltip>
                         </span>
@@ -3572,6 +3567,20 @@ export const MultisigVaultsView = () => {
           multisigAccounts={multisigAccounts}
           selectedVault={selectedVault}
           vaults={multisigVaults}
+        />
+      )}
+
+      {isDeleteVaultModalVisible && (
+        <MultisigVaultDeleteModal
+          isVisible={isDeleteVaultModalVisible}
+          handleOk={onAcceptDeleteVault}
+          handleAfterClose={onAfterEveryModalClose}
+          handleClose={() => {
+            onAfterEveryModalClose();
+            setIsDeleteVaultModalVisible(false);
+          }}
+          isBusy={isBusy}
+          selectedVault={selectedVault}
         />
       )}
 
