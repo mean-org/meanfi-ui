@@ -47,7 +47,7 @@ import { useConnectionConfig } from '../../contexts/connection';
 import { Idl, Program } from '@project-serum/anchor';
 import { BN } from 'bn.js';
 import { u64 } from '@solana/spl-token';
-import * as fs from 'fs';
+import fs from 'fs';
 
 const { Option } = Select;
 
@@ -484,58 +484,31 @@ export const TreasuryStreamCreateModal = (props: {
   const [csvFile, setCsvFile] = useState<any>();
 
   const selectCsvHandler = (e: any) => {
+
     let reader = new FileReader();
-
-    const fileByteArray: any[] = [];
-
-    reader.readAsArrayBuffer(e.target.files[0]);
 
     reader.onloadend = (e: any) => {
       if (e.target.readyState === FileReader.DONE) {
-        const arrayBuffer = e.target.result,
-          array = new Uint8Array(arrayBuffer);
-        for (const a of array) {
-          fileByteArray.push(a);
-        }
-        console.log(fileByteArray);
-
-        setCsvFile(Buffer.from(fileByteArray));
+        setCsvFile(e.target.result);
       }
     }
+
+    reader.readAsText(e.target.files[0]);
+  }
+
+  useEffect(() => {
+
+    if (!fs || !csvFile) { return; }
     
-    // setCsvFile(buffer);
-  }
+    const timeout = setTimeout(() => {
+      console.log(csvFile);
+    });
 
-  async function readCsv(path: string | Buffer) {
-    try {
-      
-      const data = fs.readFileSync(path, {encoding: "utf-8"});
-      const splittedData = data.split("\n");
-      let dataFormatted: any[] = [];
-  
-      for (let line of splittedData) {
-        // const splittedLine = line.split(",");
-  
-        // if (splittedLine.length < 2) {
-        //   continue;
-        // }
-  
-        dataFormatted.push({
-          address: line
-        });
-      }
-  
-      return dataFormatted;
-      
-    } catch (err) {
-      console.error(err);
+    return () => {
+      clearTimeout(timeout);
     }
-  }
 
-
-  readCsv(csvFile).then(value => {console.log(value)});  
-
-
+  }, [csvFile]);
 
   const onTransactionStart = async () => {
     let transaction: Transaction;
