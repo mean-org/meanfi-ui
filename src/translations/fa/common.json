@@ -34,7 +34,6 @@
 		"create-account-help-link": "با کیف پول ها آشنا شوید",
 		"create-account-help-post": "برای افتتاح حساب",
 		"create-account-help-pre": "تازه وارد به سولانا؟",
-		"history-load-more-cta-label": "بارگذاری بیشتر",
 		"history-panel-title": "معاملات دارایی",
 		"history-table-activity": "فعالیت",
 		"history-table-amount": "مقدار",
@@ -245,6 +244,7 @@
 		"cta-copy": "کپی",
 		"cta-finish": "پایان",
 		"cta-try-again": "دوباره امتحان کنید",
+		"cta-load-more": "بارگذاری بیشتر",
 		"day": "روز",
 		"days": "روزها",
 		"finished": "تمام شده",
@@ -674,6 +674,7 @@
 			"label-action": "اقدام",
 			"label-amount": "مقدار",
 			"label-date": "تاریخ",
+			"loading-activity": "Loading stream activity",
 			"no-activity": "هیچ فعالیتی تا الان"
 		},
 		"stream-detail": {

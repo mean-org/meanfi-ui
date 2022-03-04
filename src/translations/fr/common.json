@@ -34,7 +34,6 @@
 		"create-account-help-link": "En savoir plus sur les portefeuilles",
 		"create-account-help-post": "ouvrir un compte",
 		"create-account-help-pre": "Nouveau sur Solana ?",
-		"history-load-more-cta-label": "Charger plus",
 		"history-panel-title": "Opérations sur actifs",
 		"history-table-activity": "Activité",
 		"history-table-amount": "Montant",
@@ -245,6 +244,7 @@
 		"cta-copy": "Copie",
 		"cta-finish": "Finir",
 		"cta-try-again": "Essayer à nouveau",
+		"cta-load-more": "Charger plus",
 		"day": "journée",
 		"days": "jours",
 		"finished": "Fini",
@@ -670,6 +670,7 @@
 			"label-action": "action",
 			"label-amount": "Montant",
 			"label-date": "Date",
+			"loading-activity": "Loading stream activity",
 			"no-activity": "Aucune activité à ce jour"
 		},
 		"stream-detail": {

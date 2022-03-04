@@ -34,7 +34,6 @@
 		"create-account-help-link": "Conheça as carteiras",
 		"create-account-help-post": "para abrir uma conta",
 		"create-account-help-pre": "Novo em Solana?",
-		"history-load-more-cta-label": "Carregue mais",
 		"history-panel-title": "Transações de ativos",
 		"history-table-activity": "Atividade",
 		"history-table-amount": "Montante",
@@ -245,6 +244,7 @@
 		"cta-copy": "Cópia de",
 		"cta-finish": "Terminar",
 		"cta-try-again": "Tente novamente",
+		"cta-load-more": "Carregue mais",
 		"day": "dia",
 		"days": "dias",
 		"finished": "Finalizado",
@@ -670,6 +670,7 @@
 			"label-action": "Açao",
 			"label-amount": "Montante",
 			"label-date": "Encontro",
+			"loading-activity": "Loading stream activity",
 			"no-activity": "Nenhuma atividade até o momento"
 		},
 		"stream-detail": {

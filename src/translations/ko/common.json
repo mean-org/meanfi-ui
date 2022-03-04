@@ -34,7 +34,6 @@
 		"create-account-help-link": "Learn about wallets",
 		"create-account-help-post": "to open an account",
 		"create-account-help-pre": "New to Solana?",
-		"history-load-more-cta-label": "Load more",
 		"history-panel-title": "Asset transactions",
 		"history-table-activity": "Activity",
 		"history-table-amount": "Amount",
@@ -245,6 +244,7 @@
 		"cta-copy": "Copy",
 		"cta-finish": "Finish",
 		"cta-try-again": "Try again",
+		"cta-load-more": "Load more",
 		"day": "day",
 		"days": "days",
 		"finished": "Finished",
@@ -679,6 +679,7 @@
 			"label-action": "Action",
 			"label-amount": "Amount",
 			"label-date": "Date",
+			"loading-activity": "Loading stream activity",
 			"no-activity": "No activity so far"
 		},
 		"stream-detail": {
