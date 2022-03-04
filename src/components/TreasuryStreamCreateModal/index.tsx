@@ -238,15 +238,15 @@ export const TreasuryStreamCreateModal = (props: {
       ? t('transactions.validation.not-connected')
       : !recipientAddress
         ? t('transactions.validation.select-recipient')
-        : !selectedToken || unallocatedBalance.toNumber() === 0
-          ? t('transactions.validation.no-balance')
-          : !paymentStartDate
-            ? t('transactions.validation.no-valid-date')
-            : !recipientNote
-              ? 'Memo cannot be empty'
-              : !arePaymentSettingsValid()
-                ? getPaymentSettingsButtonLabel()
-                : t('transactions.validation.valid-continue');
+          : !selectedToken || unallocatedBalance.toNumber() === 0
+            ? t('transactions.validation.no-balance')
+            : !paymentStartDate
+              ? t('transactions.validation.no-valid-date')
+              : !recipientNote
+                ? 'Memo cannot be empty'
+                : !arePaymentSettingsValid()
+                  ? getPaymentSettingsButtonLabel()
+                  : t('transactions.validation.valid-continue');
   }
 
   const getTransactionStartButtonLabel = (): string => {
@@ -481,10 +481,14 @@ export const TreasuryStreamCreateModal = (props: {
   //   setIsAllocationReserved(e.target.value);
   // }
 
+  // Multi-recipient
   const [csvFile, setCsvFile] = useState<any>();
+  const [csvArray, setCsvArray] = useState([]);
+  const [listValidAddresses, setListValidAddresses] = useState([]);
+  const [amountInvalidAddresses, setAmountInvalidAddresses] = useState<number>();
+  const [validMultiRecipientsList, setValidMultiRecipientsList] = useState<any>();
 
   const selectCsvHandler = (e: any) => {
-
     let reader = new FileReader();
 
     reader.onloadend = (e: any) => {
@@ -497,11 +501,10 @@ export const TreasuryStreamCreateModal = (props: {
   }
 
   useEffect(() => {
-
     if (!fs || !csvFile) { return; }
     
     const timeout = setTimeout(() => {
-      console.log(csvFile);
+      setCsvArray(csvFile.replace(/,\r/g, '').split('\n'));
     });
 
     return () => {
@@ -509,6 +512,37 @@ export const TreasuryStreamCreateModal = (props: {
     }
 
   }, [csvFile]);
+
+  useEffect(() => {
+    if (enableMultipleStreamsOption) {
+      setCsvArray([]);
+      setPaymentRateAmount('');
+      setRecipientNote('');
+    } else {
+      setRecipientAddress('');
+      setPaymentRateAmount('');
+      setRecipientNote('');
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enableMultipleStreamsOption]);
+
+  useEffect(() => {
+    let validAddresses = csvArray.filter((csvItem: any) => isValidAddress(csvItem));
+
+    let invalidAddresses = csvArray.length - validAddresses.length;
+    
+    let validList = !amountInvalidAddresses;
+
+    setListValidAddresses(validAddresses);
+    setAmountInvalidAddresses(invalidAddresses);
+    setValidMultiRecipientsList(validList);
+
+  }, [
+    amountInvalidAddresses,
+    csvArray
+  ]);
+
+  console.log(validMultiRecipientsList);
 
   const onTransactionStart = async () => {
     let transaction: Transaction;
@@ -977,9 +1011,7 @@ export const TreasuryStreamCreateModal = (props: {
                       required={true}
                       spellCheck="false"
                       value={recipientAddress}/>
-                    <span id="payment-recipient-static-field"
-                          className={`${recipientAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>
-                      {recipientAddress || t('transactions.recipient.placeholder')}
+                    <span id="payment-recipient-static-field" className={`${recipientAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>{recipientAddress || t('transactions.recipient.placeholder')}
                     </span>
                   </span>
                 </div>
@@ -1006,6 +1038,20 @@ export const TreasuryStreamCreateModal = (props: {
                   </span>
                 </div>
               </div>
+              {
+                (!validMultiRecipientsList && amountInvalidAddresses === csvArray.length) && (
+                  <span className="form-field-error">
+                    {t('transactions.validation.multi-recipient-invalid-list')}
+                  </span>
+                )
+              }
+              {
+                (!validMultiRecipientsList && amountInvalidAddresses !== csvArray.length) && (
+                  <span className="form-field-error">
+                    {t('transactions.validation.multi-recipient-invalid-addresses', {amountInvalidAddresses: amountInvalidAddresses})}
+                  </span>
+                )
+              }
             </div>
           )}
 
@@ -1148,7 +1194,7 @@ export const TreasuryStreamCreateModal = (props: {
 
         <div className={currentStep === 1 ? "contract-wrapper panel2 show" : "contract-wrapper panel2 hide"}>
 
-          {publicKey && recipientAddress && (
+          {publicKey && (
             <>
               <div className="flex-fixed-right">
                 <div className="left">
@@ -1161,38 +1207,78 @@ export const TreasuryStreamCreateModal = (props: {
                   </span>
                 </div>
               </div>
-              <div className="well">
-                <div className="three-col-flexible-middle">
-                  <div className="left flex-row">
-                    <div className="flex-center">
-                      <Identicon
-                        address={isValidAddress(recipientAddress) ? recipientAddress : NATIVE_SOL_MINT.toBase58()}
-                        style={{ width: "30", display: "inline-flex" }} />
-                    </div>
-                    <div className="flex-column pl-3">
-                      <div className="address">
-                        {publicKey && isValidAddress(recipientAddress)
-                          ? shortenAddress(recipientAddress)
-                          : t('transactions.validation.no-recipient')}
+
+              {(recipientAddress && !enableMultipleStreamsOption) && (
+                <div className="well">
+                  <div className="three-col-flexible-middle">
+                    <div className="left flex-row">
+                      <div className="flex-center">
+                        <Identicon
+                          address={isValidAddress(recipientAddress) ? recipientAddress : NATIVE_SOL_MINT.toBase58()}
+                          style={{ width: "30", display: "inline-flex" }} />
                       </div>
-                      <div className="inner-label mt-0">{recipientNote || '-'}</div>
+                      <div className="flex-column pl-3">
+                        <div className="address">
+                          {publicKey && isValidAddress(recipientAddress)
+                            ? shortenAddress(recipientAddress)
+                            : t('transactions.validation.no-recipient')}
+                        </div>
+                        <div className="inner-label mt-0">{recipientNote || '-'}</div>
+                      </div>
                     </div>
-                  </div>
-                  <div className="middle flex-center">
-                    <div className="vertical-bar"></div>
-                  </div>
-                  <div className="right flex-column">
-                    <div className="rate">
-                      {selectedToken
-                        ? getTokenAmountAndSymbolByTokenAddress(parseFloat(paymentRateAmount), selectedToken.address)
-                        : '-'
-                      }
-                      {getIntervalFromSeconds(getRateIntervalInSeconds(paymentRateFrequency), true, t)}
+                    <div className="middle flex-center">
+                      <div className="vertical-bar"></div>
                     </div>
-                    <div className="inner-label mt-0">{paymentStartDate}</div>
+                    <div className="right flex-column">
+                      <div className="rate">
+                        {selectedToken
+                          ? getTokenAmountAndSymbolByTokenAddress(parseFloat(paymentRateAmount), selectedToken.address)
+                          : '-'
+                        }
+                        {getIntervalFromSeconds(getRateIntervalInSeconds(paymentRateFrequency), true, t)}
+                      </div>
+                      <div className="inner-label mt-0">{paymentStartDate}</div>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
+
+              {(csvArray && enableMultipleStreamsOption) && (
+                listValidAddresses.map((csvItem: any) => (
+                  <div key={csvItem} className="well">
+                    <div className="three-col-flexible-middle">
+                      <div className="left flex-row">
+                        <div className="flex-center">
+                          <Identicon
+                            address={isValidAddress(csvItem) ? csvItem : NATIVE_SOL_MINT.toBase58()}
+                            style={{ width: "30", display: "inline-flex" }} />
+                        </div>
+                        <div className="flex-column pl-3">
+                          <div className="address">
+                            {publicKey && isValidAddress(csvItem)
+                              ? shortenAddress(csvItem)
+                              : t('transactions.validation.no-recipient')}
+                          </div>
+                          <div className="inner-label mt-0">{recipientNote || '-'}</div>
+                        </div>
+                      </div>
+                      <div className="middle flex-center">
+                        <div className="vertical-bar"></div>
+                      </div>
+                      <div className="right flex-column">
+                        <div className="rate">
+                          {selectedToken
+                            ? getTokenAmountAndSymbolByTokenAddress(parseFloat(paymentRateAmount), selectedToken.address)
+                            : '-'
+                          }
+                          {getIntervalFromSeconds(getRateIntervalInSeconds(paymentRateFrequency), true, t)}
+                        </div>
+                        <div className="inner-label mt-0">{paymentStartDate}</div>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
             </>
           )}
 
@@ -1337,8 +1423,8 @@ export const TreasuryStreamCreateModal = (props: {
             onClick={onContinueButtonClick}
             disabled={!publicKey ||
               !isMemoValid() ||
-              !isValidAddress(recipientAddress) ||
-              csvFile !== '' ||
+              ((recipientAddress && !isValidAddress(recipientAddress)) || 
+              !validMultiRecipientsList) ||
               !arePaymentSettingsValid()}>
             {getStepOneContinueButtonLabel()}
           </Button>
@@ -1353,7 +1439,8 @@ export const TreasuryStreamCreateModal = (props: {
           onClick={onTransactionStart}
           disabled={!publicKey ||
             !isMemoValid() ||
-            !isValidAddress(recipientAddress) ||
+            ((recipientAddress && !isValidAddress(recipientAddress)) || 
+            !validMultiRecipientsList) ||
             !arePaymentSettingsValid() ||
             !areSendAmountSettingsValid() ||
             !isVerifiedRecipient}>

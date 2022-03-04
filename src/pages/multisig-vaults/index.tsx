@@ -360,6 +360,34 @@ export const MultisigVaultsView = () => {
     fetchTxInfoStatus,
   ]);
 
+  const canDeleteVault = useCallback((): boolean => {
+    const isTxPendingApproval = (tx: MultisigTransaction) => {
+      if (tx) {
+        if (tx.status === MultisigTransactionStatus.Pending) {
+          return true;
+        }
+      }
+      return false;
+    };
+
+    const isTxPendingExecution = (tx: MultisigTransaction) => {
+      if (tx) {
+        if (tx.status === MultisigTransactionStatus.Approved) {
+          return true;
+        }
+      }
+      return false;
+    };
+
+    if (selectedVault && (!multisigPendingTxs || multisigPendingTxs.length === 0)) {
+      return true;
+    }
+    const found = multisigPendingTxs.find(tx => tx.operation === OperationType.DeleteVault && (isTxPendingApproval(tx) || isTxPendingExecution(tx)));
+
+    return found ? false : true;
+
+  }, [selectedVault, multisigPendingTxs]);
+
   const isSuccess = (): boolean => {
     return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
   }
@@ -434,6 +462,8 @@ export const MultisigVaultsView = () => {
         return "Close Treasury";
       case OperationType.TreasuryRefreshBalance:
         return "Refresh Treasury Data";
+      case OperationType.DeleteVault:
+        return "Close Vault";
       case OperationType.CreateVault:
         return "Create Vault";
       case OperationType.SetVaultAuthority:
@@ -2104,19 +2134,17 @@ export const MultisigVaultsView = () => {
   // Delete vault modal
   const [isDeleteVaultModalVisible, setIsDeleteVaultModalVisible] = useState(false);
   const showDeleteVaultModal = useCallback(() => {
-    setIsDeleteVaultModalVisible(true);    
+    setIsDeleteVaultModalVisible(true);
   }, []);
 
   const onAcceptDeleteVault = () => {
     onExecuteDeleteVaultTx();
   };
 
-  // const onVaultDeleted = useCallback(() => {
-  //   // refreshVaults();
-  //   resetTransactionStatus();
-  // },[
-  //   resetTransactionStatus
-  // ]);
+  const onVaultDeleted = useCallback(() => {
+    setIsDeleteVaultModalVisible(false);
+    resetTransactionStatus();
+  },[resetTransactionStatus]);
 
   const onExecuteDeleteVaultTx = useCallback(async () => {
 
@@ -2403,31 +2431,30 @@ export const MultisigVaultsView = () => {
               currentOperation: TransactionStatus.TransactionFinished
             });
             await delay(1000);
-            onVaultAuthorityTransfered();
-            setIsTransferVaultAuthorityModalVisible(false);
+            onVaultDeleted();
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
 
   }, [
-    clearTransactionStatusContext, 
-    wallet, 
-    publicKey, 
-    selectedVault, 
-    selectedMultisig, 
-    multisigClient.programId, 
-    multisigClient.account.transaction, 
-    multisigClient.transaction, 
-    connection, 
-    setTransactionStatus, 
-    transactionFees.blockchainFee, 
-    transactionFees.mspFlatFee, 
-    nativeBalance, 
-    transactionStatus.currentOperation, 
-    transactionCancelled, 
-    startFetchTxSignatureInfo, 
-    onVaultAuthorityTransfered
+    clearTransactionStatusContext,
+    wallet,
+    publicKey,
+    selectedMultisig,
+    multisigClient.programId,
+    multisigClient.account.transaction,
+    multisigClient.transaction,
+    connection,
+    selectedVault,
+    setTransactionStatus,
+    transactionFees.blockchainFee,
+    transactionFees.mspFlatFee,
+    nativeBalance,
+    transactionStatus.currentOperation,
+    transactionCancelled,
+    startFetchTxSignatureInfo,
+    onVaultDeleted
   ]);
 
   // Common Multisig Approve / Execute logic
@@ -3473,7 +3500,7 @@ export const MultisigVaultsView = () => {
                               size="middle"
                               icon={<IconTrash className="mean-svg-icons" />}
                               onClick={showDeleteVaultModal}
-                              disabled={isTxInProgress()}
+                              disabled={isTxInProgress() || !canDeleteVault()}
                             />
                           </Tooltip>
                         </span>

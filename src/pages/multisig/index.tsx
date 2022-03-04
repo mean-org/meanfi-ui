@@ -2716,6 +2716,8 @@ export const MultisigView = () => {
         return "Refresh Treasury Data";
       case OperationType.TreasuryWithdraw:
         return "Withdraw Treasury Funds";
+      case OperationType.DeleteVault:
+        return "Close Vault";
       case OperationType.CreateVault:
         return "Create Vault";
       case OperationType.SetVaultAuthority:

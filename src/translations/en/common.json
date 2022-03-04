@@ -882,6 +882,8 @@
 		},
 		"validation": {
 			"address-validation": "Not a valid address format",
+			"multi-recipient-invalid-list": "Your list don't have valid addresses",
+			"multi-recipient-invalid-addresses": "{{amountInvalidAddresses}} elements in your list don't have a valid address format",
 			"amount-high": "Amount exceeds your balance",
 			"amount-low": "Not enough balance",
 			"amount-lt-fee": "Amount has to be greater than the transaction fee",
