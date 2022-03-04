@@ -118,6 +118,7 @@ interface AppStateConfig {
   setCoinPrices: (prices: any) => void;
   refreshTokenBalance: () => void;
   resetContractValues: () => void;
+  resetStreamsState: () => void;
   refreshStreamList: (reset?: boolean) => void;
   setContract: (name: string) => void;
   setTreasuryOption: (option: TreasuryTypeOption | undefined) => void;
@@ -241,6 +242,7 @@ const contextDefaultValues: AppStateConfig = {
   setCoinPrices: () => {},
   refreshTokenBalance: () => {},
   resetContractValues: () => {},
+  resetStreamsState: () => {},
   refreshStreamList: () => {},
   setRecipientAddress: () => {},
   setRecipientNote: () => {},
@@ -290,7 +292,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const { t } = useTranslation('common');
   // Parent contexts
   const connection = useConnection();
-  const { publicKey, connected, wallet } = useWallet();
+  const { publicKey, connected } = useWallet();
   const connectionConfig = useConnectionConfig();
   const accounts = useAccountsContext();
   const [isWhitelisted, setIsWhitelisted] = useState(contextDefaultValues.isWhitelisted);
@@ -504,10 +506,20 @@ const AppStateProvider: React.FC = ({ children }) => {
     });
   }
 
+  const resetStreamsState = () => {
+    setStreamList([]);
+    setStreamActivity([]);
+    setStreamDetail(undefined);
+    setActiveStream(undefined);
+    setLoadingStreamActivity(false);
+    setHasMoreStreamActivity(true);
+  }
+
   const setPreviousWalletConnectState = (state: boolean) => {
     updatePreviousWalletConnectState(state);
     if (state === false) {
       resetContractValues();
+      resetStreamsState();
       setCustomStreamDocked(false);
     }
   }
@@ -1273,6 +1285,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         setCoinPrices,
         refreshTokenBalance,
         resetContractValues,
+        resetStreamsState,
         refreshStreamList,
         setContract,
         setDdcaOption,
