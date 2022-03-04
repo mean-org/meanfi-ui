@@ -4595,6 +4595,64 @@ export const TreasuriesView = () => {
     setRetryOperationPayload(data);
     setIsBusy(true);
 
+    const treasuryWithdraw = async (data: any) => {
+
+      if (!msp) { return null; }
+
+      let treasuryWithdraw = await msp.treasuryWithdraw(
+        new PublicKey(data.payer),              // payer
+        new PublicKey(data.destination),        // treasurer
+        new PublicKey(data.treasury),           // treasury
+        data.amount                             // amount
+      );
+
+      if (!isMultisigTreasury()) {
+        return treasuryWithdraw;
+      }
+
+      if (!treasuryDetails || !multisigClient || !multisigAccounts || !publicKey) { return null; }
+
+      let treasury = treasuryDetails as Treasury;
+      let multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
+
+      if (!multisig) { return null; }
+
+      const ixData = Buffer.from(treasuryWithdraw.instructions[0].data);
+      const ixAccounts = treasuryWithdraw.instructions[0].keys;
+      const transaction = Keypair.generate();
+      const txSize = 1000;
+      const txSigners = [transaction];
+      const createIx = await multisigClient.account.transaction.createInstruction(
+        transaction,
+        txSize
+      );
+      
+      let tx = multisigClient.transaction.createTransaction(
+        MSPV2Constants.MSP, 
+        OperationType.TreasuryWithdraw,
+        ixAccounts as any,
+        ixData as any,
+        new BN(0),
+        new BN(0),
+        {
+          accounts: {
+            multisig: multisig.id,
+            transaction: transaction.publicKey,
+            proposer: publicKey as PublicKey,
+          },
+          preInstructions: [createIx],
+          signers: txSigners,
+        }
+      );
+
+      tx.feePayer = publicKey;
+      let { blockhash } = await connection.getRecentBlockhash("finalized");
+      tx.recentBlockhash = blockhash;
+      tx.partialSign(...txSigners);
+
+      return tx;
+    }
+
     const createTx = async () => {
 
       if (!connection || !wallet || !publicKey) {
@@ -4638,8 +4696,8 @@ export const TreasuriesView = () => {
         treasury: treasuryPk.toBase58(),
         amount: amount.toNumber()
       };
-      consoleOut('payload:', payload);
 
+      consoleOut('payload:', payload);
       // Log input data
       transactionLog.push({
         action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
@@ -4675,12 +4733,7 @@ export const TreasuriesView = () => {
 
       consoleOut('Starting Treasury Withdraw using MSP V2...', '', 'blue');
 
-      let result = await msp.treasuryWithdraw(
-          publicKey,
-          destinationPk,
-          treasuryPk,
-          amount
-        )
+      let result = await treasuryWithdraw(payload)
         .then(value => {
           if (!value) { return false; }
           consoleOut('treasuryWithdraw returned transaction:', value);
