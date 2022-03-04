@@ -47,6 +47,7 @@ import { useConnectionConfig } from '../../contexts/connection';
 import { Idl, Program } from '@project-serum/anchor';
 import { BN } from 'bn.js';
 import { u64 } from '@solana/spl-token';
+import * as fs from 'fs';
 
 const { Option } = Select;
 
@@ -480,11 +481,61 @@ export const TreasuryStreamCreateModal = (props: {
   //   setIsAllocationReserved(e.target.value);
   // }
 
-  const [csvFile, setCsvFile] = useState();
+  const [csvFile, setCsvFile] = useState<any>();
 
   const selectCsvHandler = (e: any) => {
-    setCsvFile(e.target.files[0]);
+    let reader = new FileReader();
+
+    const fileByteArray: any[] = [];
+
+    reader.readAsArrayBuffer(e.target.files[0]);
+
+    reader.onloadend = (e: any) => {
+      if (e.target.readyState === FileReader.DONE) {
+        const arrayBuffer = e.target.result,
+          array = new Uint8Array(arrayBuffer);
+        for (const a of array) {
+          fileByteArray.push(a);
+        }
+        console.log(fileByteArray);
+
+        setCsvFile(Buffer.from(fileByteArray));
+      }
+    }
+    
+    // setCsvFile(buffer);
   }
+
+  async function readCsv(path: string | Buffer) {
+    try {
+      
+      const data = fs.readFileSync(path, {encoding: "utf-8"});
+      const splittedData = data.split("\n");
+      let dataFormatted: any[] = [];
+  
+      for (let line of splittedData) {
+        // const splittedLine = line.split(",");
+  
+        // if (splittedLine.length < 2) {
+        //   continue;
+        // }
+  
+        dataFormatted.push({
+          address: line
+        });
+      }
+  
+      return dataFormatted;
+      
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+
+  readCsv(csvFile).then(value => {console.log(value)});  
+
+
 
   const onTransactionStart = async () => {
     let transaction: Transaction;
@@ -991,8 +1042,7 @@ export const TreasuryStreamCreateModal = (props: {
               <div className="left">
                 <span className="add-on">
                   {(selectedToken && tokenList) && (
-                    <Select className={`token-selector-dropdown ${props.associatedToken ? 'click-disabled' : ''}`} value={selectedToken.address}
-                            onChange={onTokenChange} bordered={false} showArrow={false}>
+                    <Select className={`token-selector-dropdown ${props.associatedToken ? 'click-disabled' : ''}`} value={selectedToken.address} onChange={onTokenChange} bordered={false} showArrow={false}>
                       {tokenList.map((option) => {
                         return (
                           <Option key={option.address} value={option.address}>
@@ -1315,6 +1365,7 @@ export const TreasuryStreamCreateModal = (props: {
             disabled={!publicKey ||
               !isMemoValid() ||
               !isValidAddress(recipientAddress) ||
+              csvFile !== '' ||
               !arePaymentSettingsValid()}>
             {getStepOneContinueButtonLabel()}
           </Button>
