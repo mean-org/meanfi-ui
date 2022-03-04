@@ -186,19 +186,41 @@ export const TreasuriesView = () => {
 
     if (params.has('multisig')) {             // Preset multisig address if passed-in
       multisig = params.get('multisig');
-      setMultisigAddress(multisig || '');
-      consoleOut('multisigAddress:', multisig, 'blue');
+      if (multisig && !selectedMultisig) {
+        setTimeout(() => {
+          setTreasuriesLoaded(false);         // Trigger treasuries load once per route change
+        });
+      }
+      setMultisigAddress(multisig || '');     // Store it in the state
+      consoleOut('params.get("multisig") =', multisig, 'crimson');
     } else if (params.has('treasury')) {      // Preset treasury address if passed-in
       treasury = params.get('treasury');
+      if (treasury && !treasuryAddress) {
+        setTimeout(() => {
+          setTreasuriesLoaded(false);         // Trigger treasuries load once per route change
+        });
+      }
       setTreasuryAddress(treasury || '');
-      consoleOut('treasuryAddress:', treasury, 'blue');
-    } else if (selectedMultisig) {            // Clean any data we may have data relative to a previous multisig
-      setMultisigAddress('');
-      setSelectedMultisig(undefined);
+      consoleOut('params.get("treasury") =', treasury, 'crimson');
+    } else {                                  // Clean any data we may have data relative to a previous multisig
+      if (selectedMultisig) {
+        setMultisigAddress('');
+        setSelectedMultisig(undefined);
+        setTimeout(() => {
+          setTreasuriesLoaded(false);         // Trigger treasuries load once per route change
+        });
+      } else if (treasuryAddress) {
+        setTreasuryAddress('');
+        setTimeout(() => {
+          setTreasuriesLoaded(false);         // Trigger treasuries load once per route change
+        });
+      }
+      consoleOut('No params passed!', '', 'crimson');
     }
   }, [
     location.search,
-    selectedMultisig,
+    treasuryAddress,
+    selectedMultisig
   ]);
 
   // Create and cache the connection
@@ -447,7 +469,7 @@ export const TreasuriesView = () => {
 
   const refreshTreasuries = useCallback((reset = false) => {
     
-    if (!connection || !publicKey) { return; }
+    if (!connection || !publicKey || loadingTreasuries) { return; }
 
     if (msp && ms && fetchTxInfoStatus !== "fetching") {
 
@@ -531,8 +553,9 @@ export const TreasuriesView = () => {
     connection,
     treasuryAddress,
     treasuryDetails,
-    fetchTxInfoStatus,
     selectedMultisig,
+    fetchTxInfoStatus,
+    loadingTreasuries,
     clearTransactionStatusContext,
     openTreasuryById,
     getAllUserV2Treasuries
@@ -860,41 +883,48 @@ export const TreasuriesView = () => {
   // Load treasuries once per page access
   useEffect(() => {
     
-    if (!publicKey || !connection || treasuriesLoaded || loadingTreasuries || loadingMultisigAccounts || !multisigAccounts) {
-      return;
-    }
+    if (!publicKey || treasuriesLoaded) { return; }
 
-    const isMultisigInAccountList = (id: string) => {
-      return multisigAccounts.some(m => m.id.toBase58() === id);
-    }
-
-    // Verify query param
+    /**
+     * Verify query params before calling refreshTreasuries
+     * 
+     * The reason for this is that when query params are passed and stored in the state
+     * they will be available in the next/further render(s).
+     * treasuryAddress is needed for highlighting a treasury in the list after the list is refreshed
+     * multisigAddress is needed to obtain the selectedMultisig
+     * selectedMultisig is needed because refreshTreasuries will obtain a list of treasuries for
+     * the multisig authority if available, if not it will obtain the user's treasuries
+     */
     const params = new URLSearchParams(location.search);
-    if (params.has('treasury') && !treasuryAddress) {
-      consoleOut('Wait for treasuryAddress on next render...', '', 'blue');
-      return;
-    } else if (params.has('multisig') && !multisigAddress) {
-      consoleOut('Wait for multisigAddress on next render...', '', 'blue');
-      return;
-    } else if (params.has('multisig') && multisigAddress && isMultisigInAccountList(multisigAddress) && !selectedMultisig ) {
-      consoleOut('Wait for selectedMultisig on next render...', '', 'blue');
-      return;
+    if (params.has('treasury')) {
+      if (!treasuryAddress) {
+        consoleOut('Wait for treasuryAddress on next render...', '✓', 'brown');
+        return;
+      }
+      consoleOut('treasuryAddress is available...', '✓', 'brown');
+    } else if (params.has('multisig')) {
+      if (!multisigAddress) {
+        consoleOut('Wait for multisigAddress on next render...', '✓', 'brown');
+        return;
+      } else if (!selectedMultisig) {
+        consoleOut('Now wait for selectedMultisig to be available...', '✓', 'brown');
+        return;
+      }
+      consoleOut('multisigAddress and selectedMultisig are available...', '✓', 'brown');
+    } else {
+      consoleOut('No params passed!', '✓', 'brown');
     }
 
+    consoleOut('Calling refreshTreasuries...', '', 'blue');
     setTreasuriesLoaded(true);
-    consoleOut('Loading treasuries with wallet connection...', '', 'blue');
     refreshTreasuries(true);
   }, [
     publicKey,
-    connection,
+    location.search,
     treasuryAddress,
     multisigAddress,
-    location.search,
     selectedMultisig,
-    multisigAccounts,
     treasuriesLoaded,
-    loadingTreasuries,
-    loadingMultisigAccounts,
     refreshTreasuries
   ]);
 
@@ -1603,9 +1633,7 @@ export const TreasuriesView = () => {
     refreshTokenBalance();
 
     const usedOptions = retryOperationPayload as TreasuryCreateOptions;
-    consoleOut('retryOperationPayload:', retryOperationPayload, 'crimson');
-    consoleOut('usedOptions:', usedOptions, 'crimson');
-    consoleOut('createOptions:', createOptions, 'crimson');
+    consoleOut('retryOperationPayload:', retryOperationPayload, 'blue');
 
     if (createOptions && createOptions.multisigId) {
       notify({
@@ -4897,7 +4925,6 @@ export const TreasuriesView = () => {
   };
 
   const onAfterEveryModalClose = useCallback(() => {
-    consoleOut('onAfterEveryModalClose called!', '', 'crimson');
     resetTransactionStatus();
   },[resetTransactionStatus]);
 
