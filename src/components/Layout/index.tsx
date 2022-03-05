@@ -33,7 +33,6 @@ export const AppLayout = React.memo((props: any) => {
 
   const {
     theme,
-    isWhitelisted,
     detailsPanelOpen,
     addAccountPanelOpen,
     canShowAccountDetails,
