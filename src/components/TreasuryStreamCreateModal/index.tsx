@@ -236,9 +236,9 @@ export const TreasuryStreamCreateModal = (props: {
   const getStepOneContinueButtonLabel = (): string => {
     return !publicKey
       ? t('transactions.validation.not-connected')
-      : (!enableMultipleStreamsOption && !recipientAddress)  
-        ? t('transactions.validation.select-recipient')
-        : (enableMultipleStreamsOption && !csvArray)
+      : (!enableMultipleStreamsOption && !recipientAddress)
+        ? t('transactions.validation.select-recipient') 
+        : (enableMultipleStreamsOption && !validMultiRecipientsList)
           ? t('transactions.validation.select-address-list')
           : !selectedToken || unallocatedBalance.toNumber() === 0
             ? t('transactions.validation.no-balance')
@@ -249,14 +249,14 @@ export const TreasuryStreamCreateModal = (props: {
                 : !arePaymentSettingsValid()
                   ? getPaymentSettingsButtonLabel()
                   : t('transactions.validation.valid-continue');
-  }
+  };
 
   const getTransactionStartButtonLabel = (): string => {
     return !publicKey
       ? t('transactions.validation.not-connected')
-      : (!enableMultipleStreamsOption && !recipientAddress) 
-      ? t('transactions.validation.select-recipient')
-      : (enableMultipleStreamsOption && !csvArray)
+      : (!enableMultipleStreamsOption && !recipientAddress)
+      ? t('transactions.validation.select-recipient') 
+      : (enableMultipleStreamsOption && !validMultiRecipientsList)
       ? t('transactions.validation.select-address-list')
       : !selectedToken || unallocatedBalance.isZero()
       ? t('transactions.validation.no-balance')
@@ -274,7 +274,7 @@ export const TreasuryStreamCreateModal = (props: {
       : !isVerifiedRecipient
       ? t('transactions.validation.verified-recipient-unchecked')
       : t('transactions.validation.valid-approve');
-  }
+  };
 
   const getPaymentSettingsButtonLabel = (): string => {
     const rateAmount = parseFloat(paymentRateAmount || '0');
@@ -490,10 +490,10 @@ export const TreasuryStreamCreateModal = (props: {
   
     if (!enableMultipleStreamsOption) {
       setCsvArray([]);
+      setIsCsvSelected(false);
     }
-  }, [
-    enableMultipleStreamsOption
-  ]);
+
+  }, [enableMultipleStreamsOption]);
 
   // const onAllocationReservedChanged = (e: any) => {
   //   setIsAllocationReserved(e.target.value);
@@ -507,7 +507,7 @@ export const TreasuryStreamCreateModal = (props: {
         setCsvFile(e.target.result);
       }
     }
-
+    
     reader.readAsText(e.target.files[0]);
   }
 
@@ -538,7 +538,7 @@ export const TreasuryStreamCreateModal = (props: {
     
     return () => {
       clearTimeout(timeout);
-    }
+    }    
 
   }, [csvFile]);
 
@@ -549,9 +549,7 @@ export const TreasuryStreamCreateModal = (props: {
 
     setListValidAddresses(validAddresses);
     setAmountInvalidAddresses(invalidAddresses);
-  }, [
-    csvArray
-  ]);
+  }, [csvArray]);
 
   useEffect(() => {
     if (isCsvSelected) {
