@@ -58,7 +58,7 @@ import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import dateFormat from 'dateformat';
 import { useNativeAccount } from '../../contexts/accounts';
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
-import { AccountLayout, MintLayout, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { AccountLayout, MintLayout, TOKEN_PROGRAM_ID, u64 } from '@solana/spl-token';
 import { useNavigate } from 'react-router-dom';
 import { Multisig, MultisigV2, MultisigParticipant, MultisigTransaction, MultisigTransactionStatus, MultisigMint } from '../../models/multisig';
 import { MultisigCreateModal } from '../../components/MultisigCreateModal';
@@ -3170,7 +3170,7 @@ export const MultisigView = () => {
             accounts: tx.account.accounts,
             didSigned: tx.account.signers[currentOwnerIndex],
             proposer: tx.account.proposer,
-            pdaTimestamp: tx.account.pdaTimestamp && tx.account.pdaTimestamp.byteLength <= 53 ? tx.account.pdaTimestamp.toNumber() : undefined,
+            pdaTimestamp: tx.account.pdaTimestamp ? tx.account.pdaTimestamp.toNumber() : undefined,
             pdaBump: tx.account.pdaBump,
             data: tx.account.data,
             keypairs: []
