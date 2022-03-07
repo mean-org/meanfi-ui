@@ -12,7 +12,7 @@ import { PreFooter } from "../../components/PreFooter";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
 import { cutNumber, formatAmount, formatThousands, getAmountWithSymbol, isValidNumber } from "../../utils/utils";
-import { IconStats } from "../../Icons";
+import { IconRefresh, IconStats } from "../../Icons";
 import { IconHelpCircle } from "../../Icons/IconHelpCircle";
 import useWindowSize from '../../hooks/useWindowResize';
 
@@ -98,6 +98,45 @@ export const InvestView = () => {
     //   label: "My xMEAN Balance",
     //   value: "20,805.1232"
     // },
+  ];
+
+  const liquidityPools = [
+    {
+      tokenImg: "",
+      platform: "Raydium",
+      pair: "MEAN/RAY",
+      liquidity: "1,937,521",
+      volume: "7,521.45",
+      anualPercentageRate: "5.1",
+      investLink: "https://raydium.io/liquidity/?ammId=HJNaZ5dDrKWKqo6JiBqjNvqfDFUtPVxS2fotbCdTw7pm"
+    },
+    {
+      tokenImg: "",
+      platform: "Raydium",
+      pair: "MEAN/SOL",
+      liquidity: "1,937,521",
+      volume: "7,521.45",
+      anualPercentageRate: "5.1",
+      investLink: "https://raydium.io/liquidity/?ammId=57sBQHecBZVxMdHB1pCVNEMyQXmZi7NrxgVRznkDmvKS"
+    },
+    {
+      tokenImg: "",
+      platform: "Raydium",
+      pair: "MEAN/USDC",
+      liquidity: "1,937,521",
+      volume: "7,521.45",
+      anualPercentageRate: "5.1",
+      investLink: "https://raydium.io/liquidity/?ammId=5jcGFqXyB3xUrdS7LGmJ3R5a4pYaPPFs3mjFnqgwgo4x"
+    },
+    {
+      tokenImg: "",
+      platform: "Raydium",
+      pair: "MEAN/USDC",
+      liquidity: "1,937,521",
+      volume: "7,521.45",
+      anualPercentageRate: "5.1",
+      investLink: ""
+    },
   ];
 
   const [selectedInvest, setSelectedInvest] = useState<any>(investItems[0]);
@@ -350,7 +389,85 @@ export const InvestView = () => {
                 )}
 
                 {selectedInvest.id === 1 && (
-                  <h2>Test</h2>
+                  <>
+                    <h2>{t("invest.panel-right.liquidity-pool.title")}</h2>
+
+                    <p>{t("invest.panel-right.liquidity-pool.text-one")}</p>
+
+                    <p>{t("invest.panel-right.liquidity-pool.text-two")}</p>
+
+                    <div className="float-top-right">
+                      <span className="icon-button-container secondary-button">
+                        <Tooltip placement="bottom" title={t("invest.panel-right.liquidity-pool.refresh-tooltip")}>
+                          <Button
+                            type="default"
+                            shape="circle"
+                            size="middle"
+                            icon={<IconRefresh className="mean-svg-icons" />}
+                            onClick={() => {}}
+                            // disabled={
+                            //   isTxInProgress() ||
+                            //   !isTreasurer() ||
+                            //   isAnythingLoading() ||
+                            //   !isTreasuryFunded()
+                            // }
+                          />
+                        </Tooltip>
+                      </span>
+                    </div>
+
+                    <div className="stats-row">
+                      <div className="item-list-header compact"><div className="header-row">
+                        <div className="std-table-cell first-cell">&nbsp;</div>
+                        <div className="std-table-cell responsive-cell">Platform</div>
+                        <div className="std-table-cell responsive-cell pr-2">LP Pair</div>
+                        <div className="std-table-cell responsive-cell pr-2 text-right">Liquidity</div>
+                        <div className="std-table-cell responsive-cell pr-2 text-right">Vol (24hrs)</div>
+                        <div className="std-table-cell responsive-cell pr-2 text-right">Est APR</div>
+                        <div className="std-table-cell responsive-cell pl-2 text-center">Invest</div>
+                        </div>
+                      </div>
+
+                      <div className="transaction-list-data-wrapper vertical-scroll">
+                        <div className="activity-list h-100">
+                          <div className="item-list-body compact">
+                            {liquidityPools.map((pool) => (
+                              <a className="item-list-row" target="_blank" rel="noopener noreferrer" href={pool.investLink}>
+                              <div className="std-table-cell first-cell">
+                                <div className="icon-cell">
+                                  <div className="token-icon">
+                                    <img alt="Raydium" width="20" height="20" src="https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R/logo.png" />
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="std-table-cell responsive-cell">
+                                <span>{pool.platform}</span>
+                              </div>
+                              <div className="std-table-cell responsive-cell pr-2">
+                                <span>{pool.pair}</span>
+                              </div>
+                              <div className="std-table-cell responsive-cell pr-2 text-right">
+                                <span>${pool.liquidity}</span>
+                              </div>
+                              <div className="std-table-cell responsive-cell pr-2 text-right">
+                                <span>${pool.volume}</span>
+                              </div>
+                              <div className="std-table-cell responsive-cell pr-2 text-right">
+                                <span>{pool.anualPercentageRate}%</span>
+                              </div>
+                              <div className="std-table-cell responsive-cell pl-2 text-center">
+                                <span role="img" aria-label="arrow-up" className="anticon anticon-arrow-up mean-svg-icons outgoing upright">
+                                  <svg viewBox="64 64 896 896" focusable="false" data-icon="arrow-up" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M868 545.5L536.1 163a31.96 31.96 0 00-48.3 0L156 545.5a7.97 7.97 0 006 13.2h81c4.6 0 9-2 12.1-5.5L474 300.9V864c0 4.4 3.6 8 8 8h60c4.4 0 8-3.6 8-8V300.9l218.9 252.3c3 3.5 7.4 5.5 12.1 5.5h81c6.8 0 10.5-8 6-13.2z"></path></svg>
+                                </span>
+                              </div>
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                  </>
                 )}
 
                 {selectedInvest.id === undefined && (
@@ -668,8 +785,8 @@ export const UnstakeTabView = () => {
 
     setFromCoinAmount(percentageFromCoinAmount);
     // setFromCoinAmount(formatAmount(parseFloat(percentageFromCoinAmount), 6).toString());
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [percentageValue]);
-
 
   useEffect(() => {
     parseFloat(unstakeAmount) > 0 && currentDate === unstakeStartDate ?
