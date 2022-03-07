@@ -43,7 +43,8 @@ export const InvestView = () => {
     {
       id: 0,
       name: "MEAN",
-      mintAddress: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg",
+      symbol1: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg",
+      symbol2: "",
       title: "Stake MEAN",
       rateAmount: "52.09",
       interval: "APR"
@@ -51,10 +52,11 @@ export const InvestView = () => {
     {
       id: 1,
       name: "Test",
-      mintAddress: "https://www.orca.so/static/media/usdc.3b5972c1.svg",
-      title: "Test",
-      rateAmount: "10",
-      interval: "ROI"
+      symbol1: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R/logo.png",
+      symbol2: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE/logo.png",
+      title: "MEAN Liquidity Pools and Farms",
+      rateAmount: "Up to 50",
+      interval: "APY"
     }
   ];
 
@@ -102,7 +104,7 @@ export const InvestView = () => {
 
   const liquidityPools = [
     {
-      tokenImg: "",
+      tokenImg: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R/logo.png",
       platform: "Raydium",
       pair: "MEAN/RAY",
       liquidity: "1,937,521",
@@ -111,7 +113,7 @@ export const InvestView = () => {
       investLink: "https://raydium.io/liquidity/?ammId=HJNaZ5dDrKWKqo6JiBqjNvqfDFUtPVxS2fotbCdTw7pm"
     },
     {
-      tokenImg: "",
+      tokenImg: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R/logo.png",
       platform: "Raydium",
       pair: "MEAN/SOL",
       liquidity: "1,937,521",
@@ -120,7 +122,7 @@ export const InvestView = () => {
       investLink: "https://raydium.io/liquidity/?ammId=57sBQHecBZVxMdHB1pCVNEMyQXmZi7NrxgVRznkDmvKS"
     },
     {
-      tokenImg: "",
+      tokenImg: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R/logo.png",
       platform: "Raydium",
       pair: "MEAN/USDC",
       liquidity: "1,937,521",
@@ -129,8 +131,8 @@ export const InvestView = () => {
       investLink: "https://raydium.io/liquidity/?ammId=5jcGFqXyB3xUrdS7LGmJ3R5a4pYaPPFs3mjFnqgwgo4x"
     },
     {
-      tokenImg: "",
-      platform: "Raydium",
+      tokenImg: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE/logo.png",
+      platform: "Orca",
       pair: "MEAN/USDC",
       liquidity: "1,937,521",
       volume: "7,521.45",
@@ -190,8 +192,15 @@ export const InvestView = () => {
           return(
             <div key={index} onClick={onInvestClick} className={`transaction-list-row ${selectedInvest.id === item.id ? "selected" : ''}`}>
               <div className="icon-cell">
-                <div className="token-icon">
-                  <img alt={item.name} width="30" height="30" src={item.mintAddress} />
+                <div className="contain-icons">
+                  <div className="token-icon">
+                    <img alt={item.name} width="30" height="30" src={item.symbol1} />
+                  </div>
+                  {item.symbol2 !== "" && (
+                    <div className="token-icon">
+                      <img alt={item.name} width="30" height="30" src={item.symbol2} />
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="description-cell">
@@ -387,7 +396,8 @@ export const InvestView = () => {
                     </Row>
                   </>
                 )}
-
+                
+                {/* Mean Liquidity Pools & Farms */}
                 {selectedInvest.id === 1 && (
                   <>
                     <h2>{t("invest.panel-right.liquidity-pool.title")}</h2>
@@ -405,12 +415,7 @@ export const InvestView = () => {
                             size="middle"
                             icon={<IconRefresh className="mean-svg-icons" />}
                             onClick={() => {}}
-                            // disabled={
-                            //   isTxInProgress() ||
-                            //   !isTreasurer() ||
-                            //   isAnythingLoading() ||
-                            //   !isTreasuryFunded()
-                            // }
+                            // disabled={}
                           />
                         </Tooltip>
                       </span>
@@ -436,7 +441,7 @@ export const InvestView = () => {
                               <div className="std-table-cell first-cell">
                                 <div className="icon-cell">
                                   <div className="token-icon">
-                                    <img alt="Raydium" width="20" height="20" src="https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R/logo.png" />
+                                    <img alt={pool.platform} width="20" height="20" src={pool.tokenImg} />
                                   </div>
                                 </div>
                               </div>
@@ -466,7 +471,6 @@ export const InvestView = () => {
                         </div>
                       </div>
                     </div>
-
                   </>
                 )}
 
