@@ -485,6 +485,9 @@ export const TreasuryStreamCreateModal = (props: {
   const [csvFile, setCsvFile] = useState<any>();
   const [csvArray, setCsvArray] = useState<any>([]);
   const [listValidAddresses, setListValidAddresses] = useState([]);
+  const [isCsvSelected, setIsCsvSelected] = useState<boolean>(false);
+  const [validMultiRecipientsList, setValidMultiRecipientsList] = useState<boolean>(false);
+  const [amountInvalidAddresses, setAmountInvalidAddresses] = useState<number>();
 
   const selectCsvHandler = (e: any) => {
     let reader = new FileReader();
@@ -520,6 +523,8 @@ export const TreasuryStreamCreateModal = (props: {
 
       setCsvArray(dataFormatted);
     });
+
+    setIsCsvSelected(true);
     
     return () => {
       clearTimeout(timeout);
@@ -543,9 +548,26 @@ export const TreasuryStreamCreateModal = (props: {
   useEffect(() => {
     let validAddresses = csvArray.filter((csvItem: any) => isValidAddress(csvItem.address));
 
+    let invalidAddresses = csvArray.length - validAddresses.length;
+
     setListValidAddresses(validAddresses);
+    setAmountInvalidAddresses(invalidAddresses);
   }, [
     csvArray
+  ]);
+
+  useEffect(() => {
+    if (isCsvSelected) {
+      if (listValidAddresses.length > 0) {
+        setValidMultiRecipientsList(true);
+      } else if (listValidAddresses.length === 0) {
+        setValidMultiRecipientsList(false);
+      }
+    }
+  }, [
+    isCsvSelected,
+    csvFile,
+    listValidAddresses
   ]);
 
   const onTransactionStart = async () => {
@@ -1043,9 +1065,16 @@ export const TreasuryStreamCreateModal = (props: {
                 </div>
               </div>
               {
-                !listValidAddresses && (
+                (isCsvSelected && !validMultiRecipientsList) && (
                   <span className="form-field-error">
                     {t('transactions.validation.multi-recipient-invalid-list')}
+                  </span>
+                )
+              }
+              {
+                (isCsvSelected && validMultiRecipientsList && (listValidAddresses.length < csvArray.length)) && (
+                  <span className="form-field-error">
+                    {t('transactions.validation.multi-recipient-invalid-addresses', {amountInvalidAddresses: amountInvalidAddresses})}
                   </span>
                 )
               }
@@ -1425,7 +1454,7 @@ export const TreasuryStreamCreateModal = (props: {
             disabled={!publicKey ||
               (!enableMultipleStreamsOption && !isMemoValid()) ||
               ((recipientAddress && !isValidAddress(recipientAddress)) || 
-              !listValidAddresses) ||
+              (!isCsvSelected || (isCsvSelected && !validMultiRecipientsList))) ||
               !arePaymentSettingsValid()}>
             {getStepOneContinueButtonLabel()}
           </Button>
@@ -1441,7 +1470,7 @@ export const TreasuryStreamCreateModal = (props: {
           disabled={!publicKey ||
             !isMemoValid() ||
             ((recipientAddress && !isValidAddress(recipientAddress)) || 
-            !listValidAddresses) ||
+            (!isCsvSelected || (isCsvSelected && !validMultiRecipientsList))) ||
             !arePaymentSettingsValid() ||
             !areSendAmountSettingsValid() ||
             !isVerifiedRecipient}>
