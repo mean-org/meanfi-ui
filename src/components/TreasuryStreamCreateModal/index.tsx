@@ -236,13 +236,13 @@ export const TreasuryStreamCreateModal = (props: {
   const getStepOneContinueButtonLabel = (): string => {
     return !publicKey
       ? t('transactions.validation.not-connected')
-      : !recipientAddress
+      : recipientAddress
         ? t('transactions.validation.select-recipient')
           : !selectedToken || unallocatedBalance.toNumber() === 0
             ? t('transactions.validation.no-balance')
             : !paymentStartDate
               ? t('transactions.validation.no-valid-date')
-              : !recipientNote
+              : (!enableMultipleStreamsOption && !recipientNote)
                 ? 'Memo cannot be empty'
                 : !arePaymentSettingsValid()
                   ? getPaymentSettingsButtonLabel()
@@ -263,7 +263,7 @@ export const TreasuryStreamCreateModal = (props: {
       ? t('transactions.validation.amount-high')
       : !paymentStartDate
       ? t('transactions.validation.no-valid-date')
-      : !recipientNote
+      : (!enableMultipleStreamsOption && !recipientNote)
       ? 'Memo cannot be empty'
       : !arePaymentSettingsValid()
       ? getPaymentSettingsButtonLabel()
@@ -483,10 +483,8 @@ export const TreasuryStreamCreateModal = (props: {
 
   // Multi-recipient
   const [csvFile, setCsvFile] = useState<any>();
-  const [csvArray, setCsvArray] = useState([]);
+  const [csvArray, setCsvArray] = useState<any>([]);
   const [listValidAddresses, setListValidAddresses] = useState([]);
-  const [amountInvalidAddresses, setAmountInvalidAddresses] = useState<number>();
-  const [validMultiRecipientsList, setValidMultiRecipientsList] = useState<any>();
 
   const selectCsvHandler = (e: any) => {
     let reader = new FileReader();
@@ -502,11 +500,27 @@ export const TreasuryStreamCreateModal = (props: {
 
   useEffect(() => {
     if (!fs || !csvFile) { return; }
+
+    const splittedData = csvFile.split("\n");
+    let dataFormatted: any[] = [];
     
     const timeout = setTimeout(() => {
-      setCsvArray(csvFile.replace(/,\r/g, '').split('\n'));
-    });
+      for (let line of splittedData) {
+        const splittedLine = line.split(",");
+  
+        if (splittedLine.length < 2) {
+          continue;
+        }
+  
+        dataFormatted.push({
+          note: splittedLine[0].trim(),
+          address: splittedLine[1].trim()
+        });
+      }
 
+      setCsvArray(dataFormatted);
+    });
+    
     return () => {
       clearTimeout(timeout);
     }
@@ -527,22 +541,12 @@ export const TreasuryStreamCreateModal = (props: {
   }, [enableMultipleStreamsOption]);
 
   useEffect(() => {
-    let validAddresses = csvArray.filter((csvItem: any) => isValidAddress(csvItem));
-
-    let invalidAddresses = csvArray.length - validAddresses.length;
-    
-    let validList = !amountInvalidAddresses;
+    let validAddresses = csvArray.filter((csvItem: any) => isValidAddress(csvItem.address));
 
     setListValidAddresses(validAddresses);
-    setAmountInvalidAddresses(invalidAddresses);
-    setValidMultiRecipientsList(validList);
-
   }, [
-    amountInvalidAddresses,
     csvArray
   ]);
-
-  console.log(validMultiRecipientsList);
 
   const onTransactionStart = async () => {
     let transaction: Transaction;
@@ -1039,16 +1043,9 @@ export const TreasuryStreamCreateModal = (props: {
                 </div>
               </div>
               {
-                (!validMultiRecipientsList && amountInvalidAddresses === csvArray.length) && (
+                !listValidAddresses && (
                   <span className="form-field-error">
                     {t('transactions.validation.multi-recipient-invalid-list')}
-                  </span>
-                )
-              }
-              {
-                (!validMultiRecipientsList && amountInvalidAddresses !== csvArray.length) && (
-                  <span className="form-field-error">
-                    {t('transactions.validation.multi-recipient-invalid-addresses', {amountInvalidAddresses: amountInvalidAddresses})}
                   </span>
                 )
               }
@@ -1171,25 +1168,29 @@ export const TreasuryStreamCreateModal = (props: {
             </div>
           </div>
 
-          <div className="form-label">{t('transactions.memo2.label')}</div>
-          <div className="well m-0">
-            <div className="flex-fixed-right">
-              <div className="left">
-                <input
-                  id="payment-memo-field"
-                  className="w-100 general-text-input"
-                  autoComplete="on"
-                  autoCorrect="off"
-                  type="text"
-                  maxLength={32}
-                  onChange={handleRecipientNoteChange}
-                  placeholder={t('transactions.memo2.placeholder')}
-                  spellCheck="false"
-                  value={recipientNote}
-                />
+          {!enableMultipleStreamsOption && (
+            <>
+              <div className="form-label">{t('transactions.memo2.label')}</div>
+              <div className="well m-0">
+                <div className="flex-fixed-right">
+                  <div className="left">
+                    <input
+                      id="payment-memo-field"
+                      className="w-100 general-text-input"
+                      autoComplete="on"
+                      autoCorrect="off"
+                      type="text"
+                      maxLength={32}
+                      onChange={handleRecipientNoteChange}
+                      placeholder={t('transactions.memo2.placeholder')}
+                      spellCheck="false"
+                      value={recipientNote}
+                    />
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
+            </>
+          )}
         </div>
 
         <div className={currentStep === 1 ? "contract-wrapper panel2 show" : "contract-wrapper panel2 hide"}>
@@ -1245,21 +1246,21 @@ export const TreasuryStreamCreateModal = (props: {
 
               {(csvArray && enableMultipleStreamsOption) && (
                 listValidAddresses.map((csvItem: any) => (
-                  <div key={csvItem} className="well">
+                  <div key={csvItem.address} className="well">
                     <div className="three-col-flexible-middle">
                       <div className="left flex-row">
                         <div className="flex-center">
                           <Identicon
-                            address={isValidAddress(csvItem) ? csvItem : NATIVE_SOL_MINT.toBase58()}
+                            address={isValidAddress(csvItem.address) ? csvItem.address : NATIVE_SOL_MINT.toBase58()}
                             style={{ width: "30", display: "inline-flex" }} />
                         </div>
                         <div className="flex-column pl-3">
                           <div className="address">
-                            {publicKey && isValidAddress(csvItem)
-                              ? shortenAddress(csvItem)
+                            {publicKey && isValidAddress(csvItem.address)
+                              ? shortenAddress(csvItem.address)
                               : t('transactions.validation.no-recipient')}
                           </div>
-                          <div className="inner-label mt-0">{recipientNote || '-'}</div>
+                          <div className="inner-label mt-0">{csvItem.note || '-'}</div>
                         </div>
                       </div>
                       <div className="middle flex-center">
@@ -1422,9 +1423,9 @@ export const TreasuryStreamCreateModal = (props: {
             size="large"
             onClick={onContinueButtonClick}
             disabled={!publicKey ||
-              !isMemoValid() ||
+              (!enableMultipleStreamsOption && !isMemoValid()) ||
               ((recipientAddress && !isValidAddress(recipientAddress)) || 
-              !validMultiRecipientsList) ||
+              !listValidAddresses) ||
               !arePaymentSettingsValid()}>
             {getStepOneContinueButtonLabel()}
           </Button>
@@ -1440,7 +1441,7 @@ export const TreasuryStreamCreateModal = (props: {
           disabled={!publicKey ||
             !isMemoValid() ||
             ((recipientAddress && !isValidAddress(recipientAddress)) || 
-            !validMultiRecipientsList) ||
+            !listValidAddresses) ||
             !arePaymentSettingsValid() ||
             !areSendAmountSettingsValid() ||
             !isVerifiedRecipient}>
