@@ -236,8 +236,10 @@ export const TreasuryStreamCreateModal = (props: {
   const getStepOneContinueButtonLabel = (): string => {
     return !publicKey
       ? t('transactions.validation.not-connected')
-      : recipientAddress
+      : (!enableMultipleStreamsOption && !recipientAddress)  
         ? t('transactions.validation.select-recipient')
+        : (enableMultipleStreamsOption && !csvArray)
+          ? t('transactions.validation.select-address-list')
           : !selectedToken || unallocatedBalance.toNumber() === 0
             ? t('transactions.validation.no-balance')
             : !paymentStartDate
@@ -252,8 +254,10 @@ export const TreasuryStreamCreateModal = (props: {
   const getTransactionStartButtonLabel = (): string => {
     return !publicKey
       ? t('transactions.validation.not-connected')
-      : !recipientAddress
+      : (!enableMultipleStreamsOption && !recipientAddress) 
       ? t('transactions.validation.select-recipient')
+      : (enableMultipleStreamsOption && !csvArray)
+      ? t('transactions.validation.select-address-list')
       : !selectedToken || unallocatedBalance.isZero()
       ? t('transactions.validation.no-balance')
       : !tokenAmount || tokenAmount.isZero()
@@ -473,14 +477,6 @@ export const TreasuryStreamCreateModal = (props: {
     setIsVerifiedRecipient(e.target.checked);
   }
 
-  const onCloseMultipleStreamsChanged = (e: any) => {
-    setEnableMultipleStreamsOption(e.target.value);
-  }  
-
-  // const onAllocationReservedChanged = (e: any) => {
-  //   setIsAllocationReserved(e.target.value);
-  // }
-
   // Multi-recipient
   const [csvFile, setCsvFile] = useState<any>();
   const [csvArray, setCsvArray] = useState<any>([]);
@@ -488,6 +484,20 @@ export const TreasuryStreamCreateModal = (props: {
   const [isCsvSelected, setIsCsvSelected] = useState<boolean>(false);
   const [validMultiRecipientsList, setValidMultiRecipientsList] = useState<boolean>(false);
   const [amountInvalidAddresses, setAmountInvalidAddresses] = useState<number>();
+
+  const onCloseMultipleStreamsChanged = useCallback((e: any) => {
+    setEnableMultipleStreamsOption(e.target.value);
+  
+    if (!enableMultipleStreamsOption) {
+      setCsvArray([]);
+    }
+  }, [
+    enableMultipleStreamsOption
+  ]);
+
+  // const onAllocationReservedChanged = (e: any) => {
+  //   setIsAllocationReserved(e.target.value);
+  // }
 
   const selectCsvHandler = (e: any) => {
     let reader = new FileReader();
@@ -533,19 +543,6 @@ export const TreasuryStreamCreateModal = (props: {
   }, [csvFile]);
 
   useEffect(() => {
-    if (enableMultipleStreamsOption) {
-      setCsvArray([]);
-      setPaymentRateAmount('');
-      setRecipientNote('');
-    } else {
-      setRecipientAddress('');
-      setPaymentRateAmount('');
-      setRecipientNote('');
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enableMultipleStreamsOption]);
-
-  useEffect(() => {
     let validAddresses = csvArray.filter((csvItem: any) => isValidAddress(csvItem.address));
 
     let invalidAddresses = csvArray.length - validAddresses.length;
@@ -558,16 +555,17 @@ export const TreasuryStreamCreateModal = (props: {
 
   useEffect(() => {
     if (isCsvSelected) {
-      if (listValidAddresses.length > 0) {
+      if (listValidAddresses.length > 0 && listValidAddresses.length === csvArray.length) {
         setValidMultiRecipientsList(true);
-      } else if (listValidAddresses.length === 0) {
+      } else {
         setValidMultiRecipientsList(false);
       }
     }
   }, [
     isCsvSelected,
     csvFile,
-    listValidAddresses
+    listValidAddresses,
+    csvArray
   ]);
 
   const onTransactionStart = async () => {
@@ -1065,14 +1063,14 @@ export const TreasuryStreamCreateModal = (props: {
                 </div>
               </div>
               {
-                (isCsvSelected && !validMultiRecipientsList) && (
+                (!validMultiRecipientsList && (isCsvSelected && listValidAddresses.length === 0)) && (
                   <span className="form-field-error">
                     {t('transactions.validation.multi-recipient-invalid-list')}
                   </span>
                 )
               }
               {
-                (isCsvSelected && validMultiRecipientsList && (listValidAddresses.length < csvArray.length)) && (
+                (!validMultiRecipientsList && (listValidAddresses.length !== 0 && listValidAddresses.length < csvArray.length)) && (
                   <span className="form-field-error">
                     {t('transactions.validation.multi-recipient-invalid-addresses', {amountInvalidAddresses: amountInvalidAddresses})}
                   </span>
@@ -1273,7 +1271,7 @@ export const TreasuryStreamCreateModal = (props: {
                 </div>
               )}
 
-              {(csvArray && enableMultipleStreamsOption) && (
+              {(csvArray && enableMultipleStreamsOption && validMultiRecipientsList) && (
                 listValidAddresses.map((csvItem: any) => (
                   <div key={csvItem.address} className="well">
                     <div className="three-col-flexible-middle">
@@ -1453,8 +1451,7 @@ export const TreasuryStreamCreateModal = (props: {
             onClick={onContinueButtonClick}
             disabled={!publicKey ||
               (!enableMultipleStreamsOption && !isMemoValid()) ||
-              ((recipientAddress && !isValidAddress(recipientAddress)) || 
-              (!isCsvSelected || (isCsvSelected && !validMultiRecipientsList))) ||
+              ((!enableMultipleStreamsOption ? !isValidAddress(recipientAddress) : (!isCsvSelected || !validMultiRecipientsList))) ||
               !arePaymentSettingsValid()}>
             {getStepOneContinueButtonLabel()}
           </Button>
@@ -1468,9 +1465,8 @@ export const TreasuryStreamCreateModal = (props: {
           size="large"
           onClick={onTransactionStart}
           disabled={!publicKey ||
-            !isMemoValid() ||
-            ((recipientAddress && !isValidAddress(recipientAddress)) || 
-            (!isCsvSelected || (isCsvSelected && !validMultiRecipientsList))) ||
+            (!enableMultipleStreamsOption && !isMemoValid()) ||
+            ((!enableMultipleStreamsOption ? !isValidAddress(recipientAddress) : !validMultiRecipientsList)) ||
             !arePaymentSettingsValid() ||
             !areSendAmountSettingsValid() ||
             !isVerifiedRecipient}>

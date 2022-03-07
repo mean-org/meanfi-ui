@@ -888,7 +888,7 @@
 		},
 		"validation": {
 			"address-validation": "Not a valid address format",
-			"multi-recipient-invalid-list": "Your list don't have valid addresses",
+			"multi-recipient-invalid-list": "Your csv has no valid addresses",
 			"multi-recipient-invalid-addresses": "{{amountInvalidAddresses}} elements in your list don't have a valid address format",
 			"amount-high": "Amount exceeds your balance",
 			"amount-low": "Not enough balance",
@@ -913,6 +913,7 @@
 			"not-connected": "Connect your wallet",
 			"payment-rate-high": "Payment rate exceeds your balance",
 			"select-recipient": "Select recipient",
+			"select-address-list": "Select address list",
 			"select-stream": "Select a stream",
 			"valid-address-required": "A valid solana address is required",
 			"valid-approve": "Approve on your wallet",
