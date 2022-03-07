@@ -7,6 +7,8 @@ import { refreshCachedRpc } from './models/connections-hq';
 import { useTranslation } from 'react-i18next';
 import { Analytics, AnalyticsBrowser } from '@segment/analytics-next';
 import { appConfig } from '.';
+import { isLocal } from './utils/ui';
+import { environment } from './environments/environment';
 
 const { Content } = Layout;
 export let analytics: Analytics | undefined = undefined;
@@ -27,7 +29,10 @@ function App() {
       let [response] = await AnalyticsBrowser.load({ writeKey });
       analytics = response;
     }
-    loadAnalytics();
+    // Load Segment Analytics only for PROD and DEV
+    if (environment !== "local" || !isLocal()) {
+      loadAnalytics();
+    }
   }, [writeKey]);
 
   // Use the preferred theme or dark as a default
