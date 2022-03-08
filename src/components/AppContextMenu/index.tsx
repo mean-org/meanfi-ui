@@ -155,15 +155,14 @@ export const AppContextMenu = () => {
 
   return (
     <>
-      <Dropdown overlay={menu} trigger={["click"]}>
+      <Dropdown overlay={menu} placement="bottomRight" trigger={["click"]}>
         <Button
           shape="round"
           type="text"
           size="middle"
           className="ant-btn-shaded"
           onClick={(e) => e.preventDefault()}
-          icon={<EllipsisOutlined />}
-        ></Button>
+          icon={<EllipsisOutlined />}/>
       </Dropdown>
       <LanguageSelector
         isVisible={isLanguageModalVisible}
