@@ -108,6 +108,7 @@ export const TreasuryStreamCreateModal = (props: {
   const [tokenAmount, setTokenAmount] = useState(new BN(0));
   const [maxAllocatableAmount, setMaxAllocatableAmount] = useState<any>(undefined);
   const [enableMultipleStreamsOption, setEnableMultipleStreamsOption] = useState(false);
+  const today = new Date().toLocaleDateString("en-US");
   const [csvFile, setCsvFile] = useState<any>();
   const [csvArray, setCsvArray] = useState<any>([]);
   const [listValidAddresses, setListValidAddresses] = useState([]);
@@ -485,6 +486,29 @@ export const TreasuryStreamCreateModal = (props: {
   const onIsVerifiedRecipientChange = (e: any) => {
     setIsVerifiedRecipient(e.target.checked);
   }
+
+  const onCloseModal = () => {
+    props.handleClose();
+    onAfterClose();
+  }
+
+  const onAfterClose = () => {
+    setTimeout(() => {
+      setRecipientAddress("");
+      setRecipientNote("");
+      setPaymentRateAmount("");
+      setCsvArray([]);
+      setIsCsvSelected(false);
+      setFromCoinAmount("");
+      setIsVerifiedRecipient(false);
+      setPaymentRateFrequency(PaymentRateType.PerMonth);
+      setPaymentStartDate(today);
+    }, 50);
+    setTransactionStatus({
+      lastOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
+    });
+  }  
 
   // Multi-recipient
   const onCloseMultipleStreamsChanged = useCallback((e: any) => {
@@ -1053,7 +1077,8 @@ export const TreasuryStreamCreateModal = (props: {
       footer={null}
       visible={props.isVisible}
       onOk={props.handleOk}
-      onCancel={props.handleClose}
+      onCancel={onCloseModal}
+      afterClose={onAfterClose}
       width={480}>
 
       <div className="scrollable-content">
@@ -1341,8 +1366,8 @@ export const TreasuryStreamCreateModal = (props: {
               )}
 
               {(csvArray && enableMultipleStreamsOption && validMultiRecipientsList) && (
-                listValidAddresses.map((csvItem: any) => (
-                  <div key={csvItem.address} className="well">
+                listValidAddresses.map((csvItem: any, index: number) => (
+                  <div key={index} className="well">
                     <div className="three-col-flexible-middle">
                       <div className="left flex-row">
                         <div className="flex-center">
@@ -1356,7 +1381,7 @@ export const TreasuryStreamCreateModal = (props: {
                               ? shortenAddress(csvItem.address)
                               : t('transactions.validation.no-recipient')}
                           </div>
-                          <div className="inner-label mt-0">{csvItem.streamName || '-'}</div>
+                          <div className="inner-label mt-0">{csvItem.streamName.substring(0, 15) || '-'}</div>
                         </div>
                       </div>
                       <div className="middle flex-center">
