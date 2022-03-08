@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect } from 'react';
 import { useContext, useState } from 'react';
-import { Modal, Button, Select, Dropdown, Menu, DatePicker, Checkbox, Divider, Radio } from 'antd';
+import { Modal, Button, Select, Dropdown, Menu, DatePicker, Checkbox, Divider, Radio, Tooltip } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
 import {
   cutNumber,
@@ -30,7 +30,7 @@ import {
 import { getTokenByMintAddress } from '../../utils/tokens';
 import { LoadingOutlined } from '@ant-design/icons';
 import { TokenDisplay } from '../TokenDisplay';
-import { IconCaretDown, IconEdit } from '../../Icons';
+import { IconCaretDown, IconEdit, IconHelpCircle } from '../../Icons';
 import { OperationType, PaymentRateType, TransactionStatus } from '../../models/enums';
 import moment from "moment";
 import { useWallet } from '../../contexts/wallet';
@@ -1073,7 +1073,16 @@ export const TreasuryStreamCreateModal = (props: {
             </Radio.Group>
           </div>
 
-          <div className="form-label">{!enableMultipleStreamsOption ? t('transactions.recipient.label') : t('treasuries.treasury-streams.multiple-address-list')}</div>
+          <div className="form-label icon-label">
+            {!enableMultipleStreamsOption ? t('transactions.recipient.label') : t('treasuries.treasury-streams.multiple-address-list')}
+            {enableMultipleStreamsOption && (
+              <Tooltip placement="top" title={t("treasuries.treasury-streams.multiple-address-question-mark-tooltip")}>
+                <span>
+                  <IconHelpCircle className="mean-svg-icons" />
+                </span>
+              </Tooltip>
+            )}
+          </div>
           
           {!enableMultipleStreamsOption ? (
             <div className="well">

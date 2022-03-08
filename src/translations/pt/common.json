@@ -1019,6 +1019,8 @@
 			"fee-payed-by-treasurer": "Quero pagar taxas por este fluxo em vez do beneficiário",
 			"loading-streams": "Carregando fluxos",
 			"minimum-allocation-advice": "Você deve definir uma alocação mínima para este Fluxo de Dinheiro até o saldo não alocado disponível no Tesouro.",
+			"multiple-address-list": "Multiple address list",
+			"multiple-address-question-mark-tooltip": "Please provide a csv text file with one address per line in the following format: \n MEMO or STREAM NAME, WALLET ADDRESS. \n\n Here is an example of how it should look: \n Epoch 1, FrdFf3EqcGuytTweLvoELBt29WrAGVYjrh4585A2bTAZ \n\n Before you submit the file, please make sure the recipient addresses are correct and do not belong to an exchange.",
 			"no-streams": "Este tesouro não tem fluxos ativos",
 			"option-close-stream": "Fechar",
 			"option-explorer-link": "Ver no Solana Explorer",

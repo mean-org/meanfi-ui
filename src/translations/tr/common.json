@@ -1026,6 +1026,7 @@
 			"loading-streams": "Aktarımlar yükleniyor",
 			"minimum-allocation-advice": "Bu Para Akışı için Hazine'de bulunan tahsis edilmemiş bakiyeye kadar bir minimum tahsisat belirlemelisiniz.",
 			"multiple-address-list": "Multiple address list",
+			"multiple-address-question-mark-tooltip": "Please provide a csv text file with one address per line in the following format: \n MEMO or STREAM NAME, WALLET ADDRESS. \n\n Here is an example of how it should look: \n Epoch 1, FrdFf3EqcGuytTweLvoELBt29WrAGVYjrh4585A2bTAZ \n\n Before you submit the file, please make sure the recipient addresses are correct and do not belong to an exchange.",
 			"no-streams": "Bu hazinenin aktif aktarımı yok",
 			"option-close-stream": "Kapat",
 			"option-explorer-link": "Solana Explorer'da görüntüle",

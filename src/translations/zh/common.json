@@ -995,6 +995,8 @@
 			"create-stream-main-cta-busy": "Creating stream",
 			"loading-streams": "Loading streams",
 			"minimum-allocation-advice": "You must set a minimum allocation for this Money Stream up to the unallocated balance available in the Treasury.",
+			"multiple-address-list": "Multiple address list",
+			"multiple-address-question-mark-tooltip": "Please provide a csv text file with one address per line in the following format: \n MEMO or STREAM NAME, WALLET ADDRESS. \n\n Here is an example of how it should look: \n Epoch 1, FrdFf3EqcGuytTweLvoELBt29WrAGVYjrh4585A2bTAZ \n\n Before you submit the file, please make sure the recipient addresses are correct and do not belong to an exchange.",
 			"no-streams": "This treasury has no active streams",
 			"option-close-stream": "Close",
 			"option-explorer-link": "View on Solana Explorer",

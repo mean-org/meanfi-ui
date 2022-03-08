@@ -1026,6 +1026,7 @@
 			"loading-streams": "در حال بارگیری استریم ها",
 			"minimum-allocation-advice": "شما باید حداقل تخصیص را برای این مانی استریم تا میزان موجودی تخصیص نیافته موجود در treasury تعیین کنید.",
 			"multiple-address-list": "Multiple address list",
+			"multiple-address-question-mark-tooltip": "Please provide a csv text file with one address per line in the following format: \n MEMO or STREAM NAME, WALLET ADDRESS. \n\n Here is an example of how it should look: \n Epoch 1, FrdFf3EqcGuytTweLvoELBt29WrAGVYjrh4585A2bTAZ \n\n Before you submit the file, please make sure the recipient addresses are correct and do not belong to an exchange.",
 			"no-streams": "این treasury هیچ استریم فعالی ندارد",
 			"option-close-stream": "بستن",
 			"option-explorer-link": "مشاهده در سولانا اکسپلورر",
