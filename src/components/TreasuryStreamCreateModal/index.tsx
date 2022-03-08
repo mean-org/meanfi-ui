@@ -41,13 +41,12 @@ import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { Connection, Keypair, PublicKey, Transaction } from '@solana/web3.js';
 import { customLogger } from '../..';
-import { Constants as MSPV2Constants, MSP, TransactionFees, Treasury } from '@mean-dao/msp';
+import { Beneficiary, Constants as MSPV2Constants, MSP, StreamBeneficiary, TransactionFees, Treasury } from '@mean-dao/msp';
 import { TreasuryInfo } from '@mean-dao/money-streaming';
 import { useConnectionConfig } from '../../contexts/connection';
 import { Idl, Program } from '@project-serum/anchor';
 import { BN } from 'bn.js';
 import { u64 } from '@solana/spl-token';
-import fs from 'fs';
 
 const { Option } = Select;
 
@@ -512,7 +511,7 @@ export const TreasuryStreamCreateModal = (props: {
   }
 
   useEffect(() => {
-    if (!fs || !csvFile) { return; }
+    if (!csvFile) { return; }
 
     const splittedData = csvFile.split("\n");
     let dataFormatted: any[] = [];
@@ -526,7 +525,7 @@ export const TreasuryStreamCreateModal = (props: {
         }
   
         dataFormatted.push({
-          note: splittedLine[0].trim(),
+          streamName: splittedLine[0].trim(),
           address: splittedLine[1].trim()
         });
       }
@@ -543,13 +542,23 @@ export const TreasuryStreamCreateModal = (props: {
   }, [csvFile]);
 
   useEffect(() => {
-    let validAddresses = csvArray.filter((csvItem: any) => isValidAddress(csvItem.address));
 
-    let invalidAddresses = csvArray.length - validAddresses.length;
+    if (!csvArray.length) { return; }
 
-    setListValidAddresses(validAddresses);
-    setAmountInvalidAddresses(invalidAddresses);
-  }, [csvArray]);
+    const timeout = setTimeout(() => {
+      let validAddresses = csvArray.filter((csvItem: any) => isValidAddress(csvItem.address));
+      setListValidAddresses(validAddresses);
+      let invalidAddresses = csvArray.length - validAddresses.length;
+      setAmountInvalidAddresses(invalidAddresses);
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [
+    csvArray
+  ]);
 
   useEffect(() => {
     if (isCsvSelected) {
@@ -567,31 +576,38 @@ export const TreasuryStreamCreateModal = (props: {
   ]);
 
   const onTransactionStart = async () => {
-    let transaction: Transaction;
-    let signedTransaction: Transaction;
-    let signature: any;
-    let encodedTx: string;
+
+    let transactions: Transaction[] = [];
+    let signedTransactions: Transaction[] = [];
+    let signatures: string[] = [];
+    let encodedTxs: string[] = [];
+
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
     setTransactionCancelled(false);
     setIsBusy(true);
 
-    const createStream = async (data: any) => {
+    const createStreams = async (data: any) => {
 
-      consoleOut('Starting create stream using MSP V2...', '', 'blue');
+      consoleOut('Starting create streams using MSP V2...', '', 'blue');
       const msp = new MSP(endpoint, streamV2ProgramAddress, "finalized");
-      const streamAccount = Keypair.generate();
 
       if (!props.isMultisigTreasury) {
-        return await msp.createStream(
+
+        const beneficiaries = data.beneficiaries.map((b: any) => {
+          return {
+            address: new PublicKey(b.address),
+            ...b
+          } as Beneficiary
+        });
+
+        return await msp.createStreams(
           new PublicKey(data.payer),                                          // initializer
           new PublicKey(data.treasurer),                                      // treasurer
           new PublicKey(data.treasury),                                       // treasury
-          new PublicKey(data.beneficiary),                                    // beneficiary
+          beneficiaries,                                                      // beneficiary
           new PublicKey(data.associatedToken),                                // associatedToken
-          streamAccount,
-          data.streamName,                                                    // streamName
           data.allocationAssigned,                                            // allocationAssigned
           data.rateAmount,                                                    // rateAmount
           data.rateIntervalInSeconds,                                         // rateIntervalInSeconds
@@ -609,21 +625,41 @@ export const TreasuryStreamCreateModal = (props: {
         props.multisigClient.programId
       );
 
-      const timeStamp = new u64(Date.now() / 1000);
+      let streams: any[] = [];
+      let streamsBumps: any = {};
+      let seedCounter = 0;
 
-      let [stream, streamBump] = await PublicKey.findProgramAddress(
-        [props.multisigAddress.toBuffer(), timeStamp.toBuffer()],
-        props.multisigClient.programId
-      );
+      const timeStamp = parseInt((Date.now() / 1000).toString());
 
-      let createStream = await msp.createStreamFromPda(
+      for (let beneficiary of data.beneficiaries) {
+        
+        let timeStampCounter = new u64(timeStamp + seedCounter);
+        let [stream, streamBump] = await PublicKey.findProgramAddress(
+          [props.multisigAddress.toBuffer(), timeStampCounter.toBuffer()],
+          props.multisigClient.programId
+        );
+
+        streams.push({
+          name: beneficiary.streamName,
+          address: stream,
+          beneficiary: new PublicKey(beneficiary.address)
+
+        } as StreamBeneficiary);
+
+        streamsBumps[stream.toBase58()] = {
+          bump: streamBump,
+          timeStamp: timeStampCounter
+        };
+
+        seedCounter += 1;
+      }
+
+      let createStreams = await msp.createStreamsFromPda(
         publicKey,                                                            // payer
         multisigSigner,                                                       // treasurer
         new PublicKey(data.treasury),                                         // treasury
-        new PublicKey(data.beneficiary),                                      // beneficiary
         new PublicKey(data.associatedToken),                                  // associatedToken
-        stream,                                                               // stream PDA
-        data.streamName,                                                      // streamName
+        streams,                                                              // streams
         data.allocationAssigned,                                              // allocationAssigned
         data.rateAmount,                                                      // rateAmount
         data.rateIntervalInSeconds,                                           // rateIntervalInSeconds
@@ -633,49 +669,55 @@ export const TreasuryStreamCreateModal = (props: {
         data.feePayedByTreasurer                                              // feePayedByTreasurer
       );
 
-      const ixData = Buffer.from(createStream.instructions[0].data);
-      const ixAccounts = createStream.instructions[0].keys;
-      const transaction = Keypair.generate();
-      const txSize = 1200;
-      const createIx = await props.multisigClient.account.transaction.createInstruction(
-        transaction,
-        txSize
-      );
+      let txs: Transaction[] = [];
 
-      let tx = props.multisigClient.transaction.createTransaction(
-        MSPV2Constants.MSP,
-        OperationType.StreamCreate,
-        ixAccounts as any,
-        ixData as any,
-        timeStamp,
-        new BN(streamBump),
-        {
-          accounts: {
-            multisig: props.multisigAddress,
-            transaction: transaction.publicKey,
-            proposer: publicKey,
-          },
-          preInstructions: [createIx],
-          signers: [transaction],
-        }
-      );
+      for (let createTx of createStreams) {
+        const ixData = Buffer.from(createTx.instructions[0].data);
+        const ixAccounts = createTx.instructions[0].keys;
+        const transaction = Keypair.generate();
+        const txSize = 1200;
+        const createIx = await props.multisigClient.account.transaction.createInstruction(
+          transaction,
+          txSize
+        );
 
-      tx.feePayer = publicKey;
-      let { blockhash } = await props.multisigClient.provider.connection.getRecentBlockhash("finalized");
-      tx.recentBlockhash = blockhash;
-      tx.partialSign(transaction);
+        let streamSeedData = streamsBumps[createTx.instructions[0].keys[7].pubkey.toBase58()];
+        let tx = props.multisigClient.transaction.createTransaction(
+          MSPV2Constants.MSP,
+          OperationType.StreamCreate,
+          ixAccounts as any,
+          ixData as any,
+          new u64(streamSeedData.timeStamp.toNumber()),
+          new BN(streamSeedData.bump),
+          {
+            accounts: {
+              multisig: props.multisigAddress,
+              transaction: transaction.publicKey,
+              proposer: publicKey,
+            },
+            preInstructions: [createIx],
+            signers: [transaction],
+          }
+        );
 
-      return tx;
+        tx.feePayer = publicKey;
+        let { blockhash } = await props.multisigClient.provider.connection.getRecentBlockhash("finalized");
+        tx.recentBlockhash = blockhash;
+        tx.partialSign(transaction);
+        txs.push(tx);
+      } 
+
+      return txs;
     }
 
-    const createTx = async (): Promise<boolean> => {
+    const createTxs = async (): Promise<boolean> => {
 
       if (!publicKey || !props.treasuryDetails || !selectedToken) {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
         });
-        customLogger.logError('CreateStream for a treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('CreateStreams for a treasury transaction failed', { transcript: transactionLog });
         return false;
       }
 
@@ -686,10 +728,13 @@ export const TreasuryStreamCreateModal = (props: {
         currentOperation: TransactionStatus.InitTransaction
       });
 
-      const beneficiary = new PublicKey(recipientAddress as string);
+      const beneficiaries = !enableMultipleStreamsOption 
+        ? [{ streamName: recipientNote ? recipientNote.trim() : '', address: recipientAddress as string }]
+        : csvArray;
+
       const associatedToken = new PublicKey(selectedToken?.address as string);
       const treasury = new PublicKey(props.treasuryDetails.id as string);
-      const amount = tokenAmount;
+      const amount = tokenAmount.div(new BN(beneficiaries.length));
       const rateAmount = toTokenAmount(parseFloat(paymentRateAmount as string), selectedToken.decimals);
       const now = new Date();
       const parsedDate = Date.parse(paymentStartDate as string);
@@ -709,9 +754,8 @@ export const TreasuryStreamCreateModal = (props: {
         payer: publicKey.toBase58(),                                                // initializer
         treasurer: publicKey.toBase58(),                                            // treasurer
         treasury: treasury.toBase58(),                                              // treasury
-        beneficiary: beneficiary.toBase58(),                                        // beneficiary
+        beneficiaries: beneficiaries,                                               // beneficiaries
         associatedToken: associatedToken.toBase58(),                                // associatedToken
-        streamName: recipientNote ? recipientNote.trim() : undefined,               // streamName
         allocationAssigned: amount,                                                 // allocationAssigned
         rateAmount: rateAmount,                                                     // rateAmount
         rateIntervalInSeconds: getRateIntervalInSeconds(paymentRateFrequency),      // rateIntervalInSeconds
@@ -727,9 +771,8 @@ export const TreasuryStreamCreateModal = (props: {
        * payer: PublicKey,
        * treasurer: PublicKey,
        * treasury: PublicKey | undefined,
-       * beneficiary: PublicKey,
+       * beneficiaries: any[],
        * associatedToken: PublicKey,
-       * streamName: string,
        * allocationAssigned: number,
        * rateAmount?: number | undefined,
        * rateIntervalInSeconds?: number | undefined,
@@ -768,23 +811,23 @@ export const TreasuryStreamCreateModal = (props: {
             getTokenAmountAndSymbolByTokenAddress(props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
           })`
         });
-        customLogger.logWarning('CreateStream for a treasury transaction failed', { transcript: transactionLog });
+        customLogger.logWarning('CreateStreams for a treasury transaction failed', { transcript: transactionLog });
         return false;
       }
 
-      let result = await createStream(data)
-        .then(value => {
-          if (!value) { return false; }
-          consoleOut('createStream returned transaction:', value);
+      let result = await createStreams(data)
+        .then(values => {
+          if (!values || !values.length) { return false; }
+          // consoleOut('createStreams returned transaction:', values);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-            result: getTxIxResume(value)
+            // result: getTxIxResume(value)
           });
-          transaction = value;
+          transactions = values;
           return true;
         })
         .catch(error => {
@@ -804,17 +847,31 @@ export const TreasuryStreamCreateModal = (props: {
       return result;
     }
 
-    const signTx = async (): Promise<boolean> => {
-      if (wallet) {
-        consoleOut('Signing transaction...');
-        return await wallet.signTransaction(transaction)
-        .then((signed: Transaction) => {
-          consoleOut('signTransaction returned a signed transaction:', signed);
-          signedTransaction = signed;
+    const signTxs = async (): Promise<boolean> => {
+
+      if (!wallet) {
+        console.error('Cannot sign transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot sign transaction! Wallet not found!'
+        });
+        customLogger.logError('CreateStream for a treasury transaction failed', { transcript: transactionLog });
+        return false;
+      }
+
+      consoleOut('Signing transactions...');
+      let result = await wallet.signAllTransactions(transactions)
+        .then((signed: Transaction[]) => {
+          // consoleOut('signTransaction returned a signed transaction:', signed);
+          signedTransactions = signed;
           // Try signature verification by serializing the transaction
           try {
-            encodedTx = signedTransaction.serialize().toString('base64');
-            consoleOut('encodedTx:', encodedTx, 'orange');
+            encodedTxs = signedTransactions.map(t => t.serialize().toString('base64'));
+            consoleOut('encodedTxs:', encodedTxs, 'orange');
           } catch (error) {
             console.error(error);
             setTransactionStatus({
@@ -825,7 +882,7 @@ export const TreasuryStreamCreateModal = (props: {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logError('CreateStream for a treasury transaction failed', { transcript: transactionLog });
+            customLogger.logError('CreateStreams for a treasury transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -848,81 +905,80 @@ export const TreasuryStreamCreateModal = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('CreateStream for a treasury transaction failed', { transcript: transactionLog });
+          customLogger.logError('CreateStreams for a treasury transaction failed', { transcript: transactionLog });
           return false;
         });
-      } else {
-        console.error('Cannot sign transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.WalletNotFound
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot sign transaction! Wallet not found!'
-        });
-        customLogger.logError('CreateStream for a treasury transaction failed', { transcript: transactionLog });
-        return false;
-      }
+
+      return result;
     }
 
-    const sendTx = async (): Promise<boolean> => {
-      if (wallet) {
-        return await props.connection
-          .sendEncodedTransaction(encodedTx)
-          .then(sig => {
-            consoleOut('sendEncodedTransaction returned a signature:', sig);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.ConfirmTransaction
-            });
-            signature = sig;
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
-              result: `signature: ${signature}`
-            });
-            return true;
-          })
-          .catch(error => {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransaction,
-              currentOperation: TransactionStatus.SendTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
-              result: { error, encodedTx }
-            });
-            customLogger.logError('CreateStream for a treasury transaction failed', { transcript: transactionLog });
-            return false;
-          });
-      } else {
-        console.error('Cannot send transaction! Wallet not found!');
+    const sendTxs = async (): Promise<boolean> => {
+
+      if (!wallet) {
+        console.error('Cannot send transactions! Wallet not found!');
         setTransactionStatus({
           lastOperation: TransactionStatus.SendTransaction,
           currentOperation: TransactionStatus.WalletNotFound
         });
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot send transaction! Wallet not found!'
+          result: 'Cannot send transactions! Wallet not found!'
         });
-        customLogger.logError('CreateStream for a treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('CreateStreams for a treasury transaction failed', { transcript: transactionLog });
         return false;
       }
+
+      const promises: Promise<string>[] = [];
+
+      for (let tx of encodedTxs) {
+        promises.push(props.connection.sendEncodedTransaction(tx));
+      }
+
+      let result = await Promise.all(promises)
+        .then(sigs => {
+          consoleOut('sendEncodedTransaction returned a signature:', sigs);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SendTransactionSuccess,
+            currentOperation: TransactionStatus.ConfirmTransaction
+          });
+          signatures = sigs;
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
+            result: `signatures: ${signatures}`
+          });
+          return true;
+        })
+        .catch(error => {
+          console.error(error);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SendTransaction,
+            currentOperation: TransactionStatus.SendTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+            // result: { error, encodedTx }
+          });
+          customLogger.logError('CreateStream for a treasury transaction failed', { transcript: transactionLog });
+          return false;
+        });
+
+      return result;
     }
 
     if (wallet) {
-      const create = await createTx();
+      const create = await createTxs();
       consoleOut('created:', create);
       if (create && !transactionCancelled) {
-        const sign = await signTx();
+        const sign = await signTxs();
         consoleOut('signed:', sign);
         if (sign && !transactionCancelled) {
-          const sent = await sendTx();
+          const sent = await sendTxs();
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
-            consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.TreasuryStreamCreate);
+            consoleOut('Send Txs to confirmation queue:', signatures);
+            signatures.forEach(s => {
+              startFetchTxSignatureInfo(s, "finalized", OperationType.TreasuryStreamCreate);
+            });
             setIsBusy(false);
             props.handleOk();
           } else { setIsBusy(false); }
@@ -1033,7 +1089,10 @@ export const TreasuryStreamCreateModal = (props: {
                       required={true}
                       spellCheck="false"
                       value={recipientAddress}/>
-                    <span id="payment-recipient-static-field" className={`${recipientAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>{recipientAddress || t('transactions.recipient.placeholder')}
+                    <span 
+                      id="payment-recipient-static-field" 
+                      className={`${recipientAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>
+                      {recipientAddress ? recipientAddress : t('transactions.recipient.placeholder')}
                     </span>
                   </span>
                 </div>
@@ -1285,7 +1344,7 @@ export const TreasuryStreamCreateModal = (props: {
                               ? shortenAddress(csvItem.address)
                               : t('transactions.validation.no-recipient')}
                           </div>
-                          <div className="inner-label mt-0">{csvItem.note || '-'}</div>
+                          <div className="inner-label mt-0">{csvItem.streamName || '-'}</div>
                         </div>
                       </div>
                       <div className="middle flex-center">

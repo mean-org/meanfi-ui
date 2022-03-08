@@ -236,7 +236,6 @@ export const AirdropRedeem = (props: {
           treasury,                                                         // treasury
           beneficiary,                                                      // beneficiary
           associatedToken,                                                  // associatedToken
-          Keypair.generate(),
           streamName,                                                       // streamName
           allocation,                                                       // allocationAssigned
           rateAmount,                                                       // rateAmount
