@@ -108,6 +108,12 @@ export const TreasuryStreamCreateModal = (props: {
   const [tokenAmount, setTokenAmount] = useState(new BN(0));
   const [maxAllocatableAmount, setMaxAllocatableAmount] = useState<any>(undefined);
   const [enableMultipleStreamsOption, setEnableMultipleStreamsOption] = useState(false);
+  const [csvFile, setCsvFile] = useState<any>();
+  const [csvArray, setCsvArray] = useState<any>([]);
+  const [listValidAddresses, setListValidAddresses] = useState([]);
+  const [isCsvSelected, setIsCsvSelected] = useState<boolean>(false);
+  const [validMultiRecipientsList, setValidMultiRecipientsList] = useState<boolean>(false);
+  const [amountInvalidAddresses, setAmountInvalidAddresses] = useState<number>();
 
   const isNewTreasury = useCallback(() => {
     if (props.treasuryDetails) {
@@ -127,9 +133,11 @@ export const TreasuryStreamCreateModal = (props: {
         .mul(new BN(feeDenaminator))
         .div(new BN(feeNumerator + feeDenaminator));
 
+      const feeMultiRecipientsNumerator = feeNumerator * listValidAddresses.length;
+
       const feeAmount = badStreamMaxAllocation
-        .mul(new BN(feeNumerator))
-        .div(new BN(feeDenaminator));
+        .mul(new BN(!enableMultipleStreamsOption ? feeNumerator : feeMultiRecipientsNumerator))
+        .div(new BN(feeDenaminator));      
 
       const badTotal = badStreamMaxAllocation.add(feeAmount);
       const badRemaining = unallocatedBalance.sub(badTotal);
@@ -169,6 +177,8 @@ export const TreasuryStreamCreateModal = (props: {
     unallocatedBalance,
     isFeePaidByTreasurer,
     props.withdrawTransactionFees,
+    enableMultipleStreamsOption,
+    listValidAddresses.length
   ]);
 
   // Set treasury unalocated balance in BN
@@ -477,13 +487,6 @@ export const TreasuryStreamCreateModal = (props: {
   }
 
   // Multi-recipient
-  const [csvFile, setCsvFile] = useState<any>();
-  const [csvArray, setCsvArray] = useState<any>([]);
-  const [listValidAddresses, setListValidAddresses] = useState([]);
-  const [isCsvSelected, setIsCsvSelected] = useState<boolean>(false);
-  const [validMultiRecipientsList, setValidMultiRecipientsList] = useState<boolean>(false);
-  const [amountInvalidAddresses, setAmountInvalidAddresses] = useState<number>();
-
   const onCloseMultipleStreamsChanged = useCallback((e: any) => {
     setEnableMultipleStreamsOption(e.target.value);
   
@@ -1377,8 +1380,7 @@ export const TreasuryStreamCreateModal = (props: {
               <div className="left">
                 <span className="add-on">
                   {(selectedToken && tokenList) && (
-                    <Select className={`token-selector-dropdown ${props.associatedToken ? 'click-disabled' : ''}`} value={selectedToken.address}
-                            onChange={onTokenChange} bordered={false} showArrow={false}>
+                    <Select className={`token-selector-dropdown ${props.associatedToken ? 'click-disabled' : ''}`} value={selectedToken.address} onChange={onTokenChange} bordered={false} showArrow={false}>
                       {tokenList.map((option) => {
                         return (
                           <Option key={option.address} value={option.address}>
