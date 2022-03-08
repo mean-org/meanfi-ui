@@ -598,10 +598,10 @@ export const TreasuryStreamCreateModal = (props: {
 
       if (!props.isMultisigTreasury) {
 
-        const beneficiaries = data.beneficiaries.map((b: any) => {
+        const beneficiaries: Beneficiary[] = data.beneficiaries.map((b: any) => {
           return {
-            address: new PublicKey(b.address),
-            ...b
+            ...b,
+            address: new PublicKey(b.address)
           } as Beneficiary
         });
 
@@ -628,7 +628,7 @@ export const TreasuryStreamCreateModal = (props: {
         props.multisigClient.programId
       );
 
-      let streams: any[] = [];
+      let streams: StreamBeneficiary[] = [];
       let streamsBumps: any = {};
       let seedCounter = 0;
 
