@@ -56,7 +56,8 @@ export const AppLayout = React.memo((props: any) => {
   const [previousChain, setChain] = useState("");
   const [gaInitialized, setGaInitialized] = useState(false);
   const [referralAddress, setReferralAddress] = useLocalStorage('pendingReferral', '');
-  const [avgTps, setAvgTps] = useState<number | undefined>(undefined);
+  // undefined at first (never had a value), null = couldn't get, number the value successfully retrieved
+  const [avgTps, setAvgTps] = useState<number | null | undefined>(undefined);
   const [needRefresh, setNeedRefresh] = useState(true);
 
   // Clear cachedRpc on App destroy (window is being reloaded)
@@ -76,67 +77,91 @@ export const AppLayout = React.memo((props: any) => {
     // window.localStorage.removeItem('providerName');
   }
 
-  // Get network TPS
-  useEffect(() => {
+  // Callback to fetch performance data (TPS)
+  const getPerformanceSamples = useCallback(async () => {
 
+    consoleOut('Excecuting fetch TPS...');
     let connection: Connection;
 
     if (isProd()) {
-      connection = new Connection("https://api.mainnet-beta.solana.com");
+      connection = new Connection("https://ssc-dao.genesysgo.net/");
     } else {
       connection = new Connection("https://api.devnet.solana.com/");
     }
 
-    if (!connection) { return; }
+    if (!connection) { return null; }
 
     const round = (series: number[]) => {
       return series.map((n) => Math.round(n));
     }
 
-    const getPerformanceSamples = async () => {
-      try {
-        const samples = await connection.getRecentPerformanceSamples(60);
+    try {
+      const samples = await connection.getRecentPerformanceSamples(30);
 
-        if (samples.length < 1) {
-          // no samples to work with (node has no history).
-          return; // we will allow for a timeout instead of throwing an error
-        }
-
-        let tpsValues = samples
-          .filter((sample) => {
-              return sample.numTransactions !== 0;
-          })
-          .map((sample) => {
-              return sample.numTransactions / sample.samplePeriodSecs;
-          });
-
-        tpsValues = round(tpsValues);
-        // consoleOut('Last 60 TPS samples:', tpsValues, 'blue');
-
-        const averagegTps = Math.round(tpsValues[0]);
-        setAvgTps(averagegTps);
-      } catch (error) {
-        console.error(error);
+      if (samples.length < 1) {
+        // no samples to work with (node has no history).
+        return null; // we will allow for a timeout instead of throwing an error
       }
-    };
 
-    const performanceInterval = setInterval(
-      getPerformanceSamples,
-      avgTps && avgTps < PERFORMANCE_THRESHOLD
-        ? isProd()
-          ? PERFORMANCE_SAMPLE_INTERVAL_FAST
-          : PERFORMANCE_SAMPLE_INTERVAL
+      let tpsValues = samples
+        .filter((sample) => {
+            return sample.numTransactions !== 0;
+        })
+        .map((sample) => {
+            return sample.numTransactions / sample.samplePeriodSecs;
+        });
+
+      tpsValues = round(tpsValues);
+      const averagegTps = Math.round(tpsValues[0]);
+      consoleOut('averagegTps:', averagegTps, 'blue');
+      return averagegTps;
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
+  }, []);
+
+  // Get Performance Samples on a timeout
+  useEffect(() => {
+
+    // Hoping this to happens once
+    if (avgTps === undefined && needRefresh) {
+      setTimeout(() => {
+        setAvgTps(null);
+        setNeedRefresh(false);
+      });
+      getPerformanceSamples()
+        .then(value => {
+          if (value) {
+            setAvgTps(value);
+          }
+        });
+    }
+
+    // Set to run every 30 sec
+    const performanceInterval = setInterval(() => {
+      getPerformanceSamples()
+        .then(value => {
+          if (value) {
+            setNeedRefresh(true);
+            setAvgTps(value);
+          }
+        });
+    },
+    avgTps && avgTps < PERFORMANCE_THRESHOLD
+      ? isProd()
+        ? PERFORMANCE_SAMPLE_INTERVAL_FAST
         : PERFORMANCE_SAMPLE_INTERVAL
+      : PERFORMANCE_SAMPLE_INTERVAL
     );
-
-    getPerformanceSamples();
 
     return () => {
       clearInterval(performanceInterval);
     };
   }, [
     avgTps,
-    connectionConfig.endpoint
+    needRefresh,
+    getPerformanceSamples
   ]);
 
   const getPlatform = (): string => {
@@ -381,7 +406,7 @@ export const AppLayout = React.memo((props: any) => {
     <>
     <div className="App">
       <Layout>
-        {(isProd() && avgTps !== undefined && avgTps < PERFORMANCE_THRESHOLD) && (
+        {(isProd() && (avgTps !== undefined && avgTps !== null) && avgTps < PERFORMANCE_THRESHOLD) && (
           <div className="warning-bar">
             <a className="simplelink underline-on-hover" target="_blank" rel="noopener noreferrer" href={SOLANA_STATUS_PAGE}>
               {t('notifications.network-performance-low')}
