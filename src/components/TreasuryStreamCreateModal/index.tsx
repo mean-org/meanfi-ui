@@ -112,9 +112,9 @@ export const TreasuryStreamCreateModal = (props: {
   const [csvFile, setCsvFile] = useState<any>();
   const [csvArray, setCsvArray] = useState<any>([]);
   const [listValidAddresses, setListValidAddresses] = useState([]);
+  const [hasIsOwnWallet, setHasIsOwnWallet] = useState<boolean>(false);
   const [isCsvSelected, setIsCsvSelected] = useState<boolean>(false);
   const [validMultiRecipientsList, setValidMultiRecipientsList] = useState<boolean>(false);
-  const [amountInvalidAddresses, setAmountInvalidAddresses] = useState<number>();
 
   const isNewTreasury = useCallback(() => {
     if (props.treasuryDetails) {
@@ -528,6 +528,8 @@ export const TreasuryStreamCreateModal = (props: {
   const selectCsvHandler = (e: any) => {
     let reader = new FileReader();
 
+    setHasIsOwnWallet(false);
+
     reader.onloadend = (e: any) => {
       if (e.target.readyState === FileReader.DONE) {
         setCsvFile(e.target.result);
@@ -573,10 +575,18 @@ export const TreasuryStreamCreateModal = (props: {
     if (!csvArray.length) { return; }
 
     const timeout = setTimeout(() => {
-      let validAddresses = csvArray.filter((csvItem: any) => isValidAddress(csvItem.address));
-      setListValidAddresses(validAddresses);
-      let invalidAddresses = csvArray.length - validAddresses.length;
-      setAmountInvalidAddresses(invalidAddresses);
+      const validAddresses = csvArray.filter((csvItem: any) => isValidAddress(csvItem.address));
+
+      const validAddressesSingleSigner = validAddresses.filter((csvItem: any) => wallet && !(csvItem.address === `${wallet.publicKey.toBase58()}`));
+
+      if (!props.isMultisigTreasury) {
+        setListValidAddresses(validAddressesSingleSigner);
+        if ((validAddresses.length - validAddressesSingleSigner.length) > 0) {
+          setHasIsOwnWallet(true);
+        }
+      } else {
+        setListValidAddresses(validAddresses);
+      }
     });
 
     return () => {
@@ -584,12 +594,14 @@ export const TreasuryStreamCreateModal = (props: {
     }
 
   }, [
-    csvArray
+    csvArray,
+    props.isMultisigTreasury,
+    wallet
   ]);
 
   useEffect(() => {
     if (isCsvSelected) {
-      if (listValidAddresses.length > 0 && listValidAddresses.length === csvArray.length) {
+      if (listValidAddresses.length > 0) {
         setValidMultiRecipientsList(true);
       } else {
         setValidMultiRecipientsList(false);
@@ -599,7 +611,7 @@ export const TreasuryStreamCreateModal = (props: {
     isCsvSelected,
     csvFile,
     listValidAddresses,
-    csvArray
+    csvArray,
   ]);
 
   const onTransactionStart = async () => {
@@ -1163,13 +1175,6 @@ export const TreasuryStreamCreateModal = (props: {
                   </span>
                 )
               }
-              {
-                (!validMultiRecipientsList && (listValidAddresses.length !== 0 && listValidAddresses.length < csvArray.length)) && (
-                  <span className="form-field-error">
-                    {t('transactions.validation.multi-recipient-invalid-addresses', {amountInvalidAddresses: amountInvalidAddresses})}
-                  </span>
-                )
-              }
             </div>
           )}
 
@@ -1318,70 +1323,34 @@ export const TreasuryStreamCreateModal = (props: {
 
           {publicKey && (
             <>
-              <div className="flex-fixed-right">
-                <div className="left">
-                  <div className="form-label">{t('transactions.resume')}</div>
-                </div>
-                <div className="right">
-                  <span className="flat-button change-button" onClick={() => setCurrentStep(0)}>
-                    <IconEdit className="mean-svg-icons" />
-                    <span>{t('general.cta-change')}</span>
-                  </span>
-                </div>
-              </div>
-
               {(recipientAddress && !enableMultipleStreamsOption) && (
-                <div className="well">
-                  <div className="three-col-flexible-middle">
-                    <div className="left flex-row">
-                      <div className="flex-center">
-                        <Identicon
-                          address={isValidAddress(recipientAddress) ? recipientAddress : NATIVE_SOL_MINT.toBase58()}
-                          style={{ width: "30", display: "inline-flex" }} />
-                      </div>
-                      <div className="flex-column pl-3">
-                        <div className="address">
-                          {publicKey && isValidAddress(recipientAddress)
-                            ? shortenAddress(recipientAddress)
-                            : t('transactions.validation.no-recipient')}
-                        </div>
-                        <div className="inner-label mt-0">{recipientNote || '-'}</div>
-                      </div>
-                    </div>
-                    <div className="middle flex-center">
-                      <div className="vertical-bar"></div>
-                    </div>
-                    <div className="right flex-column">
-                      <div className="rate">
-                        {selectedToken
-                          ? getTokenAmountAndSymbolByTokenAddress(parseFloat(paymentRateAmount), selectedToken.address)
-                          : '-'
-                        }
-                        {getIntervalFromSeconds(getRateIntervalInSeconds(paymentRateFrequency), true, t)}
-                      </div>
-                      <div className="inner-label mt-0">{paymentStartDate}</div>
-                    </div>
+                <>
+                <div className="flex-fixed-right">
+                  <div className="left">
+                    <div className="form-label">{t('transactions.resume')}</div>
+                  </div>
+                  <div className="right">
+                    <span className="flat-button change-button" onClick={() => setCurrentStep(0)}>
+                      <IconEdit className="mean-svg-icons" />
+                      <span>{t('general.cta-change')}</span>
+                    </span>
                   </div>
                 </div>
-              )}
-
-              {(csvArray && enableMultipleStreamsOption && validMultiRecipientsList) && (
-                listValidAddresses.map((csvItem: any, index: number) => (
-                  <div key={index} className="well">
+                  <div className="well">
                     <div className="three-col-flexible-middle">
                       <div className="left flex-row">
                         <div className="flex-center">
                           <Identicon
-                            address={isValidAddress(csvItem.address) ? csvItem.address : NATIVE_SOL_MINT.toBase58()}
+                            address={isValidAddress(recipientAddress) ? recipientAddress : NATIVE_SOL_MINT.toBase58()}
                             style={{ width: "30", display: "inline-flex" }} />
                         </div>
                         <div className="flex-column pl-3">
                           <div className="address">
-                            {publicKey && isValidAddress(csvItem.address)
-                              ? shortenAddress(csvItem.address)
+                            {publicKey && isValidAddress(recipientAddress)
+                              ? shortenAddress(recipientAddress)
                               : t('transactions.validation.no-recipient')}
                           </div>
-                          <div className="inner-label mt-0">{csvItem.streamName.substring(0, 15) || '-'}</div>
+                          <div className="inner-label mt-0">{recipientNote || '-'}</div>
                         </div>
                       </div>
                       <div className="middle flex-center">
@@ -1399,7 +1368,64 @@ export const TreasuryStreamCreateModal = (props: {
                       </div>
                     </div>
                   </div>
-                ))
+                </>
+              )}
+
+              {(csvArray && enableMultipleStreamsOption && validMultiRecipientsList) && (
+                <>
+                  {!props.isMultisigTreasury && (
+                    hasIsOwnWallet && (
+                      <span className="form-field-error text-uppercase">
+                        <p>{t("treasuries.treasury-streams.message-warning")}</p>
+                      </span>
+                    )
+                  )}
+                  <div className="flex-fixed-right">
+                    <div className="left">
+                      <div className="form-label">{t('transactions.resume')}</div>
+                    </div>
+                    <div className="right">
+                      <span className="flat-button change-button" onClick={() => setCurrentStep(0)}>
+                        <IconEdit className="mean-svg-icons" />
+                        <span>{t('general.cta-change')}</span>
+                      </span>
+                    </div>
+                  </div>
+                  {listValidAddresses.map((csvItem: any, index: number) => (
+                    <div key={index} className="well">
+                      <div className="three-col-flexible-middle">
+                        <div className="left flex-row">
+                          <div className="flex-center">
+                            <Identicon
+                              address={isValidAddress(csvItem.address) ? csvItem.address : NATIVE_SOL_MINT.toBase58()}
+                              style={{ width: "30", display: "inline-flex" }} />
+                          </div>
+                          <div className="flex-column pl-3">
+                            <div className="address">
+                              {publicKey && isValidAddress(csvItem.address)
+                                ? shortenAddress(csvItem.address)
+                                : t('transactions.validation.no-recipient')}
+                            </div>
+                            <div className="inner-label mt-0">{csvItem.streamName.substring(0, 15) || '-'}</div>
+                          </div>
+                        </div>
+                        <div className="middle flex-center">
+                          <div className="vertical-bar"></div>
+                        </div>
+                        <div className="right flex-column">
+                          <div className="rate">
+                            {selectedToken
+                              ? getTokenAmountAndSymbolByTokenAddress(parseFloat(paymentRateAmount), selectedToken.address)
+                              : '-'
+                            }
+                            {getIntervalFromSeconds(getRateIntervalInSeconds(paymentRateFrequency), true, t)}
+                          </div>
+                          <div className="inner-label mt-0">{paymentStartDate}</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </>
               )}
             </>
           )}
