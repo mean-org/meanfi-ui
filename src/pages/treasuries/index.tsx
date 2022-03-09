@@ -5343,7 +5343,7 @@ export const TreasuriesView = () => {
           {isCreatingTreasury() ? (
             <div className="flex-row flex-center">
               <LoadingOutlined />
-              <span className="ml-1">{t('treasuries.treasury-detail.cta-create-treasury-busy')}</span>
+              <span className="ml-1">{t('treasuries.create-treasury.main-cta-busy')}</span>
             </div>
           ) : isClosingTreasury() ? (
             <div className="flex-row flex-center">
