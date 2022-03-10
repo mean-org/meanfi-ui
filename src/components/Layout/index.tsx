@@ -80,7 +80,6 @@ export const AppLayout = React.memo((props: any) => {
   // Callback to fetch performance data (TPS)
   const getPerformanceSamples = useCallback(async () => {
 
-    consoleOut('Excecuting fetch TPS...');
     let connection: Connection;
 
     if (isProd()) {
@@ -112,9 +111,9 @@ export const AppLayout = React.memo((props: any) => {
         });
 
       tpsValues = round(tpsValues);
-      const averagegTps = Math.round(tpsValues[0]);
-      consoleOut('averagegTps:', averagegTps, 'blue');
-      return averagegTps;
+      const averageTps = Math.round(tpsValues[0]);
+      consoleOut('averageTps:', averageTps, 'blue');
+      return averageTps;
     } catch (error) {
       console.error(error);
       return null;
