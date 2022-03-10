@@ -246,16 +246,16 @@ export const TreasuryStreamCreateModal = (props: {
   const getStepOneContinueButtonLabel = (): string => {
     return !publicKey
       ? t('transactions.validation.not-connected')
-      : (!enableMultipleStreamsOption && !recipientAddress)
-        ? t('transactions.validation.select-recipient') 
-        : (enableMultipleStreamsOption && !validMultiRecipientsList)
-          ? t('transactions.validation.select-address-list')
-          : !selectedToken || unallocatedBalance.toNumber() === 0
-            ? t('transactions.validation.no-balance')
-            : !paymentStartDate
-              ? t('transactions.validation.no-valid-date')
-              : (!enableMultipleStreamsOption && !recipientNote)
-                ? 'Memo cannot be empty'
+      : (!enableMultipleStreamsOption && !recipientNote)
+        ? 'Memo cannot be empty'
+        : (!enableMultipleStreamsOption && !recipientAddress)
+          ? t('transactions.validation.select-recipient') 
+          : (enableMultipleStreamsOption && !validMultiRecipientsList)
+            ? t('transactions.validation.select-address-list')
+            : !selectedToken || unallocatedBalance.toNumber() === 0
+              ? t('transactions.validation.no-balance')
+              : !paymentStartDate
+                ? t('transactions.validation.no-valid-date')
                 : !arePaymentSettingsValid()
                   ? getPaymentSettingsButtonLabel()
                   : t('transactions.validation.valid-continue');
@@ -264,6 +264,8 @@ export const TreasuryStreamCreateModal = (props: {
   const getTransactionStartButtonLabel = (): string => {
     return !publicKey
       ? t('transactions.validation.not-connected')
+      : (!enableMultipleStreamsOption && !recipientNote)
+      ? 'Memo cannot be empty'
       : (!enableMultipleStreamsOption && !recipientAddress)
       ? t('transactions.validation.select-recipient') 
       : (enableMultipleStreamsOption && !validMultiRecipientsList)
@@ -277,8 +279,6 @@ export const TreasuryStreamCreateModal = (props: {
       ? t('transactions.validation.amount-high')
       : !paymentStartDate
       ? t('transactions.validation.no-valid-date')
-      : (!enableMultipleStreamsOption && !recipientNote)
-      ? 'Memo cannot be empty'
       : !arePaymentSettingsValid()
       ? getPaymentSettingsButtonLabel()
       : !isVerifiedRecipient
@@ -1110,6 +1110,30 @@ export const TreasuryStreamCreateModal = (props: {
             </Radio.Group>
           </div>
 
+          {!enableMultipleStreamsOption && (
+            <>
+              <div className="form-label">{t('transactions.memo2.label')}</div>
+              <div className="well">
+                <div className="flex-fixed-right">
+                  <div className="left">
+                    <input
+                      id="payment-memo-field"
+                      className="w-100 general-text-input"
+                      autoComplete="on"
+                      autoCorrect="off"
+                      type="text"
+                      maxLength={32}
+                      onChange={handleRecipientNoteChange}
+                      placeholder={t('transactions.memo2.placeholder')}
+                      spellCheck="false"
+                      value={recipientNote}
+                    />
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
           <div className="form-label icon-label">
             {!enableMultipleStreamsOption ? t('transactions.recipient.label') : t('treasuries.treasury-streams.multiple-address-list')}
             {enableMultipleStreamsOption && (
@@ -1293,30 +1317,6 @@ export const TreasuryStreamCreateModal = (props: {
               </div>
             </div>
           </div>
-
-          {!enableMultipleStreamsOption && (
-            <>
-              <div className="form-label">{t('transactions.memo2.label')}</div>
-              <div className="well m-0">
-                <div className="flex-fixed-right">
-                  <div className="left">
-                    <input
-                      id="payment-memo-field"
-                      className="w-100 general-text-input"
-                      autoComplete="on"
-                      autoCorrect="off"
-                      type="text"
-                      maxLength={32}
-                      onChange={handleRecipientNoteChange}
-                      placeholder={t('transactions.memo2.placeholder')}
-                      spellCheck="false"
-                      value={recipientNote}
-                    />
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
         </div>
 
         <div className={currentStep === 1 ? "contract-wrapper panel2 show" : "contract-wrapper panel2 hide"}>
