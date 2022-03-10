@@ -9,12 +9,14 @@ import { useTranslation } from 'react-i18next';
 import { isDesktop } from "react-device-detect";
 import { TokenDisplay } from "../../components/TokenDisplay";
 import { PreFooter } from "../../components/PreFooter";
+import { useConnection } from '../../contexts/connection';
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
 import { cutNumber, formatAmount, formatThousands, getAmountWithSymbol, isValidNumber } from "../../utils/utils";
 import { IconRefresh, IconStats } from "../../Icons";
 import { IconHelpCircle } from "../../Icons/IconHelpCircle";
 import useWindowSize from '../../hooks/useWindowResize';
+import { consoleOut } from "../../utils/ui";
 
 type SwapOption = "stake" | "unstake";
 
@@ -29,6 +31,7 @@ export const InvestView = () => {
     setIsVerifiedRecipient,
     setDtailsPanelOpen
   } = useContext(AppStateContext);
+  const connection = useConnection();
   const { connected } = useWallet();
   const { t } = useTranslation('common');
   const { width } = useWindowSize();
@@ -38,6 +41,8 @@ export const InvestView = () => {
   const [stakingRewards, setStakingRewards] = useState<number>(0);
   // const [selectedInvest, setSelectedInvest] = useState<any>(undefined);
   const annualPercentageYield = 5;
+  const [raydiumInfo, setRaydiumInfo] = useState<any>([]);
+  const [orcaInfo, setOrcaInfo] = useState<any>([]);
 
   const investItems = [
     {
@@ -102,44 +107,47 @@ export const InvestView = () => {
     // },
   ];
 
-  const liquidityPools = [
-    {
-      tokenImg: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R/logo.png",
-      platform: "Raydium",
-      pair: "MEAN/RAY",
-      liquidity: "1,937,521",
-      volume: "7,521.45",
-      anualPercentageRate: "5.1",
-      investLink: "https://raydium.io/liquidity/?ammId=HJNaZ5dDrKWKqo6JiBqjNvqfDFUtPVxS2fotbCdTw7pm"
-    },
-    {
-      tokenImg: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R/logo.png",
-      platform: "Raydium",
-      pair: "MEAN/SOL",
-      liquidity: "1,937,521",
-      volume: "7,521.45",
-      anualPercentageRate: "5.1",
-      investLink: "https://raydium.io/liquidity/?ammId=57sBQHecBZVxMdHB1pCVNEMyQXmZi7NrxgVRznkDmvKS"
-    },
-    {
-      tokenImg: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R/logo.png",
-      platform: "Raydium",
-      pair: "MEAN/USDC",
-      liquidity: "1,937,521",
-      volume: "7,521.45",
-      anualPercentageRate: "5.1",
-      investLink: "https://raydium.io/liquidity/?ammId=5jcGFqXyB3xUrdS7LGmJ3R5a4pYaPPFs3mjFnqgwgo4x"
-    },
-    {
-      tokenImg: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE/logo.png",
-      platform: "Orca",
-      pair: "MEAN/USDC",
-      liquidity: "1,937,521",
-      volume: "7,521.45",
-      anualPercentageRate: "5.1",
-      investLink: ""
-    },
-  ];
+  // const liquidityPools = [
+  //   {
+  //     tokenImg: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE/logo.png",
+  //     platform: "Orca",
+  //     pair: "MEAN/USDC",
+  //     liquidity: orcaLiquidity && formatThousands(orcaLiquidity),
+  //     volume: orcaVolume && formatThousands(orcaVolume),
+  //     anualPercentageRate: "5.1",
+  //     investLink: ""
+  //   },
+  // ];
+
+  useEffect(() => {
+    if (!connection) { return; }
+
+    (async () => {
+      fetch('https://api.orca.so/pools')
+        .then((res) => res.json())
+        .then((data) => {
+          console.log(data.find((item: any) => item.name2 === "MEAN/USDC"));
+
+          const orcaData = data.find((item: any) => item.name2 === "MEAN/USDC");
+
+          setOrcaInfo(orcaData);
+        })
+        .catch((error) => {
+          consoleOut(error);
+        })
+
+      fetch('https://api.raydium.io/pairs')
+        .then((res) => res.json())
+        .then((data) => {
+          const raydiumData = data.filter((item: any) => item.name.substr(0, 4) === "MEAN");
+
+          setRaydiumInfo(raydiumData);
+        })
+        .catch((error) => {
+          consoleOut(error);
+        })
+    })();
+  }, [connection]);
 
   const [selectedInvest, setSelectedInvest] = useState<any>(investItems[0]);
 
@@ -425,48 +433,79 @@ export const InvestView = () => {
                       <div className="item-list-header compact"><div className="header-row">
                         <div className="std-table-cell first-cell">&nbsp;</div>
                         <div className="std-table-cell responsive-cell">Platform</div>
-                        <div className="std-table-cell responsive-cell pr-2">LP Pair</div>
-                        <div className="std-table-cell responsive-cell pr-2 text-right">Liquidity</div>
-                        <div className="std-table-cell responsive-cell pr-2 text-right">Vol (24hrs)</div>
-                        <div className="std-table-cell responsive-cell pr-2 text-right">Est APR</div>
-                        <div className="std-table-cell responsive-cell pl-2 text-center">Invest</div>
+                        <div className="std-table-cell responsive-cell pr-1">LP Pair</div>
+                        <div className="std-table-cell responsive-cell pr-1 text-right">Liquidity</div>
+                        <div className="std-table-cell responsive-cell pr-1 text-right">Vol (24hrs)</div>
+                        <div className="std-table-cell responsive-cell pr-1 text-right">Est APR</div>
+                        <div className="std-table-cell responsive-cell pl-1 text-center">Invest</div>
                         </div>
                       </div>
 
                       <div className="transaction-list-data-wrapper vertical-scroll">
                         <div className="activity-list h-100">
                           <div className="item-list-body compact">
-                            {liquidityPools.map((pool) => (
-                              <a className="item-list-row" target="_blank" rel="noopener noreferrer" href={pool.investLink}>
+                            {raydiumInfo.map((raydium: any) => (
+                              <a className="item-list-row" target="_blank" rel="noopener noreferrer" href={`https://raydium.io/liquidity/?ammId=${raydium.amm_id}`}>
                               <div className="std-table-cell first-cell">
                                 <div className="icon-cell">
                                   <div className="token-icon">
-                                    <img alt={pool.platform} width="20" height="20" src={pool.tokenImg} />
+                                    <img alt="Raydium" width="20" height="20" src="https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R/logo.png" />
                                   </div>
                                 </div>
                               </div>
                               <div className="std-table-cell responsive-cell">
-                                <span>{pool.platform}</span>
+                                <span>Raydium</span>
                               </div>
-                              <div className="std-table-cell responsive-cell pr-2">
-                                <span>{pool.pair}</span>
+                              <div className="std-table-cell responsive-cell pr-1">
+                                <span>{raydium.name.replace(/-/g, "/")}</span>
                               </div>
-                              <div className="std-table-cell responsive-cell pr-2 text-right">
-                                <span>${pool.liquidity}</span>
+                              <div className="std-table-cell responsive-cell pr-1 text-right">
+                                <span>${formatThousands(raydium.liquidity)}</span>
                               </div>
-                              <div className="std-table-cell responsive-cell pr-2 text-right">
-                                <span>${pool.volume}</span>
+                              <div className="std-table-cell responsive-cell pr-1 text-right">
+                                <span>${formatThousands(raydium.volume_24h)}</span>
                               </div>
-                              <div className="std-table-cell responsive-cell pr-2 text-right">
-                                <span>{pool.anualPercentageRate}%</span>
+                              <div className="std-table-cell responsive-cell pr-1 text-right">
+                                <span>{cutNumber(raydium.apy, 2)}%</span>
                               </div>
-                              <div className="std-table-cell responsive-cell pl-2 text-center">
+                              <div className="std-table-cell responsive-cell pl-1 text-center">
                                 <span role="img" aria-label="arrow-up" className="anticon anticon-arrow-up mean-svg-icons outgoing upright">
                                   <svg viewBox="64 64 896 896" focusable="false" data-icon="arrow-up" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M868 545.5L536.1 163a31.96 31.96 0 00-48.3 0L156 545.5a7.97 7.97 0 006 13.2h81c4.6 0 9-2 12.1-5.5L474 300.9V864c0 4.4 3.6 8 8 8h60c4.4 0 8-3.6 8-8V300.9l218.9 252.3c3 3.5 7.4 5.5 12.1 5.5h81c6.8 0 10.5-8 6-13.2z"></path></svg>
                                 </span>
                               </div>
                               </a>
                             ))}
+                            {/* {orcaInfo.map((orca: any) => ( */}
+                              <a className="item-list-row" target="_blank" rel="noopener noreferrer" href="https://www.orca.so/pools">
+                              <div className="std-table-cell first-cell">
+                                <div className="icon-cell">
+                                  <div className="token-icon">
+                                    <img alt="Raydium" width="20" height="20" src="https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE/logo.png" />
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="std-table-cell responsive-cell">
+                                <span>Orca</span>
+                              </div>
+                              <div className="std-table-cell responsive-cell pr-1">
+                                <span>{orcaInfo.name2}</span>
+                              </div>
+                              <div className="std-table-cell responsive-cell pr-1 text-right">
+                                <span>${formatThousands(orcaInfo.liquidity)}</span>
+                              </div>
+                              <div className="std-table-cell responsive-cell pr-1 text-right">
+                                <span>${formatThousands(orcaInfo.volume_24h)}</span>
+                              </div>
+                              <div className="std-table-cell responsive-cell pr-1 text-right">
+                                <span>{cutNumber(orcaInfo.apy_7d, 2)}%</span>
+                              </div>
+                              <div className="std-table-cell responsive-cell pl-1 text-center">
+                                <span role="img" aria-label="arrow-up" className="anticon anticon-arrow-up mean-svg-icons outgoing upright">
+                                  <svg viewBox="64 64 896 896" focusable="false" data-icon="arrow-up" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M868 545.5L536.1 163a31.96 31.96 0 00-48.3 0L156 545.5a7.97 7.97 0 006 13.2h81c4.6 0 9-2 12.1-5.5L474 300.9V864c0 4.4 3.6 8 8 8h60c4.4 0 8-3.6 8-8V300.9l218.9 252.3c3 3.5 7.4 5.5 12.1 5.5h81c6.8 0 10.5-8 6-13.2z"></path></svg>
+                                </span>
+                              </div>
+                              </a>
+                            {/* ))} */}
                           </div>
                         </div>
                       </div>
