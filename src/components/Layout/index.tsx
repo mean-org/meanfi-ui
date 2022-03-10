@@ -112,7 +112,6 @@ export const AppLayout = React.memo((props: any) => {
 
       tpsValues = round(tpsValues);
       const averageTps = Math.round(tpsValues[0]);
-      consoleOut('averageTps:', averageTps, 'blue');
       return averageTps;
     } catch (error) {
       console.error(error);
