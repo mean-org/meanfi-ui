@@ -1092,9 +1092,9 @@ export const ExchangeDcasView = () => {
     const toToken = MEAN_TOKEN_LIST.find(t => t.address === item.toMint);
 
     return (
-      <span>Buying <strong>{getTokenAmountAndSymbolByTokenAddress(
+      <span>{t("ddcas.exchange-dcas.detail-panel-word-one")} <strong>{getTokenAmountAndSymbolByTokenAddress(
           item.amountPerSwap,
-          item.fromMint)}</strong> worth of <strong>{toToken?.symbol}</strong> every <span className="text-lowercase">{recurrencePeriod}</span>
+          item.fromMint)}</strong> {t("ddcas.exchange-dcas.detail-panel-word-two")} <strong>{toToken?.symbol}</strong> {t("ddcas.exchange-dcas.detail-panel-word-three")} <span className="text-lowercase">{recurrencePeriod}</span>
       </span>
     );
   }
@@ -1195,11 +1195,11 @@ export const ExchangeDcasView = () => {
       */}
       {(ddcaDetails && ddcaDetails.toBalance > 0) && (
         <Menu.Item key="1" onClick={showWithdrawModal}>
-          <span className="menu-item-text">Withdraw</span>
+          <span className="menu-item-text">{t("ddcas.exchange-dcas.withdraw")}</span>
         </Menu.Item>
       )}
       <Menu.Item key="2" onClick={showCloseDdcaModal}>
-        <span className="menu-item-text">Cancel and withdraw everything</span>
+        <span className="menu-item-text">{t("ddcas.exchange-dcas.cancel-withdraw-everything")}</span>
       </Menu.Item>
     </Menu>
   );
@@ -1235,7 +1235,7 @@ export const ExchangeDcasView = () => {
             {ddcaDetails && (
               <Row className="mb-3">
                 <Col span={11}>
-                  <div className="info-label">Total deposits</div>
+                  <div className="info-label">{t("ddcas.exchange-dcas.total-deposits")}</div>
                   <div className="transaction-detail-row">
                     {getTokenIconAndAmount(
                       ddcaDetails.fromMint,
@@ -1245,7 +1245,7 @@ export const ExchangeDcasView = () => {
                 </Col>
                 <Col span={13} className="pl-4">
                   <div className="info-label">
-                    Total left (will run out by {getShortDate(ddcaDetails.fromBalanceWillRunOutByUtc)})
+                  {t("ddcas.exchange-dcas.total-left")} {getShortDate(ddcaDetails.fromBalanceWillRunOutByUtc)})
                   </div>
                   <div className="transaction-detail-row">
                     {getTokenIconAndAmount(ddcaDetails.fromMint, ddcaDetails.fromBalance)}
@@ -1258,7 +1258,7 @@ export const ExchangeDcasView = () => {
             {ddcaDetails && (
               <div className="mb-3">
                 <div className="info-label">
-                  Exchanged for (avg rate 1 {getToken(ddcaDetails.fromMint)?.symbol} ≈ {getTokenAmountAndSymbolByTokenAddress(
+                {t("ddcas.exchange-dcas.exchanged-for")} {getToken(ddcaDetails.fromMint)?.symbol} ≈ {getTokenAmountAndSymbolByTokenAddress(
                       ddcaDetails.swapAvgRate,
                       ddcaDetails.toMint
                     )})
@@ -1275,10 +1275,10 @@ export const ExchangeDcasView = () => {
               </div>
             )}
 
-            {/* Next schaduled exchange */}
+            {/* Next scheduled exchange */}
             {ddcaDetails && (
               <div className="mb-3">
-                <div className="info-label">Next scheduled exchange</div>
+                <div className="info-label">{t("ddcas.exchange-dcas.next-scheduled-exchange")}</div>
                 <div className="transaction-detail-row">
                   <span className="info-icon">
                     <IconClock className="mean-svg-icons" />
@@ -1373,7 +1373,7 @@ export const ExchangeDcasView = () => {
                           <ArrowDownOutlined className="incoming"/>
                         </div>
                         <div className="std-table-cell responsive-cell">
-                          <span className="align-middle">Deposited {getTokenAmountAndSymbolByTokenAddress(ddcaDetails.totalDepositsAmount, ddcaDetails.fromMint)}</span>
+                          <span className="align-middle">{t('ddcas.exchange-dcas.deposited')} {getTokenAmountAndSymbolByTokenAddress(ddcaDetails.totalDepositsAmount, ddcaDetails.fromMint)}</span>
                         </div>
                         <div className="std-table-cell fixed-width-150">
                           <span className="align-middle">{getShortDate(ddcaDetails.startUtc as string, true)}</span>
@@ -1464,7 +1464,7 @@ export const ExchangeDcasView = () => {
               </div>
             </div>
             <div className="rate-cell">
-              <div className="rate-amount">Every</div>
+              <div className="rate-amount">{t('ddcas.exchange-dcas.rate-amount')}</div>
               <div className="interval">{getRecurrencePeriod(item)}</div>
             </div>
           </div>
@@ -1522,7 +1522,7 @@ export const ExchangeDcasView = () => {
 
             {/* Right / down panel */}
             <div className="meanfi-two-panel-right">
-              <div className="meanfi-panel-heading"><span className="title">Exchange details</span></div>
+              <div className="meanfi-panel-heading"><span className="title">{t('ddcas.exchange-dcas.exchange-details')}</span></div>
               <div className="inner-container">
                 {ddcaDetails ? renderRecurringBuy : (
                   <div className="h-75 flex-center">

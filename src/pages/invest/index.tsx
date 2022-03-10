@@ -424,12 +424,12 @@ export const InvestView = () => {
                     <div className="stats-row">
                       <div className="item-list-header compact"><div className="header-row">
                         <div className="std-table-cell first-cell">&nbsp;</div>
-                        <div className="std-table-cell responsive-cell">Platform</div>
-                        <div className="std-table-cell responsive-cell pr-2">LP Pair</div>
-                        <div className="std-table-cell responsive-cell pr-2 text-right">Liquidity</div>
-                        <div className="std-table-cell responsive-cell pr-2 text-right">Vol (24hrs)</div>
-                        <div className="std-table-cell responsive-cell pr-2 text-right">Est APR</div>
-                        <div className="std-table-cell responsive-cell pl-2 text-center">Invest</div>
+                        <div className="std-table-cell responsive-cell">{t("invest.panel-right.liquidity-pool.platform")}</div>
+                        <div className="std-table-cell responsive-cell pr-2">{t("invest.panel-right.liquidity-pool.lp-pair")}</div>
+                        <div className="std-table-cell responsive-cell pr-2 text-right">{t("invest.panel-right.liquidity-pool.liquidity")}</div>
+                        <div className="std-table-cell responsive-cell pr-2 text-right">{t("invest.panel-right.liquidity-pool.volume")}</div>
+                        <div className="std-table-cell responsive-cell pr-2 text-right">{t("invest.panel-right.liquidity-pool.est-apr")}</div>
+                        <div className="std-table-cell responsive-cell pl-2 text-center">{t("invest.panel-right.liquidity-pool.invest")}</div>
                         </div>
                       </div>
 

@@ -203,6 +203,20 @@
 			"primary-cta": "Confirm",
 			"secondary-cta": "Back"
 		},
+		"exchange-dcas": {
+			"detail-panel-word-one": "Buying",
+			"detail-panel-word-two": "worth of",
+			"detail-panel-word-three": "every",
+			"withdraw": "Withdraw",
+			"cancel-withdraw-everything": "Cancel and withdraw everything",
+			"total-deposits": "Total deposits",
+			"total-left": "Total left (will run out by",
+			"exchanged-for": "Exchanged for (avg rate 1",
+			"next-scheduled-exchange": "Next scheduled exchange",
+			"deposited": "Deposited",
+			"rate-amount": "Every",
+			"exchange-details": "Exchange details"
+		},
 		"screen-title": "Recurring buys",
 		"setup-close-warning": "Closing without clicking Start will skip your first purchase. Close anyways?",
 		"streams-ddcas": "Click to refresh recurring buys"
@@ -274,51 +288,67 @@
 		"you": "you"
 	},
 	"invest": {
-		"title": "Invest",
-		"subtitle": "The easiest way to grow your money stash",
-		"screen-title": "Invest Options",
-		"refresh-tooltip": "Refresh invest data",
+		"panel-left": {
+			"no-invest-options": "No invest options available",
+			"not-connected": "Please connect your wallet to see your invest options"
+		},
 		"panel-right": {
 			"first-text": "MEAN staking rewards include emission incentives plus 30% of the protocol revenues (calculated weekly), and can be boosted using locking periods.",
 			"second-text": "Your staking rewards will be streamed over time and they can be withdrawn at any time.",
-			"stats": {
-				"staking-apr": "Staking APR",
-				"total-value-locked": "Total Value Locked",
-				"next-week-payout": "Next Week Payout"
-			},
-			"tabset": {
-				"stake": {
-					"name": "Stake",
-					"amount-label": "Amount to stake",
-					"period-label": "How long do you want to stake for?",
-					"days": "days",
-					"year": "year",
-					"years": "years",
-					"notification-label": "Staking period of {{periodValue}} {{periodTime}} will lock your Tokens until {{unstakeStartDate}} with estimated rewards of up to 100 MEAN",
-					"verified-label": "I agree to the Terms & Conditions",
-					"terms-and-conditions-tooltip": "Your tokens will be locked for the period of time selected and you will not be able to unstake them before the staking period ends. When you stake additional tokens to an existing contract, the staking period will be extended to the new end date for ALL of the tokens locked.",
-					"stake-button": "Stake"
-				},
-				"unstake": {
-					"name": "Unstake",
-					"notification-label-one": "Your currently have {{unstakeAmount}} MEAN staked which is currently locked until {{unstakeStartDate}}",
-					"notification-label-one-error": "You don't have any MEAN staked",
-					"amount-label": "Amount to unstake",
-					"notification-label-two": "Unstaking will withdraw the specified amount of unlocked MEAN tokens to your wallet",
-					"verified-label": "I agree to the Terms & Conditions",
-					"unstake-button-available": "Unstake",
-					"unstake-button-unavailable": "No available",
-					"send-amount": {
-						"label-right": "Available to unstake"
-					}
-				}
-			},
 			"staking-data": {
 				"text-one": "MEAN tokens locked till {{unstakeStartDate}}",
 				"text-two": "Staking rewards available to withdraw:",
-				"withdraw-button": "Withdraw Funds"
+				"withdraw-button": "Withdraw Rewards"
+			},
+			"liquidity-pool": {
+				"title": "Mean Liquidity Pools & Farms",
+				"text-one": "MEAN Liquidity Pools are currently available on Orca and Raydium with multiple pools including MEAN/SOL, MEAN/RAY and MEAN/USDC.",
+				"text-two": "Before you add funds to a pool, be sure to read and accept the risks associated with investing in a Liquidity pool.",
+				"refresh-tooltip": "Refresh liquidity data",
+				"platform": "Platform",
+				"lp-pair": "LP Pair",
+				"liquidity": "Liquidity",
+				"volume": "Vol (24hrs)",
+				"est-apr": "Est APR",
+				"invest": "Invest"
+			},
+			"stats": {
+				"next-week-payout": "Next Week Payout",
+				"staking-apr": "Staking APR",
+				"total-value-locked": "Total Value Locked"
+			},
+			"tabset": {
+				"stake": {
+					"amount-label": "Amount to stake",
+					"days": "days",
+					"name": "Stake",
+					"notification-label": "Staking period of {{periodValue}} {{periodTime}} will lock your Tokens until {{unstakeStartDate}} with estimated rewards of up to 100 MEAN",
+					"period-label": "How long do you want to stake for?",
+					"stake-button": "Stake",
+					"terms-and-conditions-tooltip": "Your tokens will be locked for the period of time selected and you will not be able to unstake them before the staking period ends. When you stake additional tokens to an existing contract, the staking period will be extended to the new end date for ALL of the tokens locked.",
+					"verified-label": "I agree to the Terms & Conditions",
+					"year": "year",
+					"years": "years"
+				},
+				"unstake": {
+					"amount-label": "Amount to unstake",
+					"name": "Unstake",
+					"notification-label-one": "Your currently have {{unstakeAmount}} MEAN staked which is currently locked until {{unstakeStartDate}}",
+					"notification-label-one-error": "You don't have any MEAN staked",
+					"notification-label-two": "Unstaking will withdraw the specified amount of unlocked MEAN tokens to your wallet",
+					"send-amount": {
+						"label-right": "Available to unstake"
+					},
+					"unstake-button-available": "Unstake",
+					"unstake-button-unavailable": "No available",
+					"verified-label": "I agree to the Terms & Conditions"
+				}
 			}
-		}
+		},
+		"refresh-tooltip": "Refresh invest data",
+		"screen-title": "Invest Options",
+		"subtitle": "The easiest way to grow your money stash",
+		"title": "Invest"
 	},
 	"language-selector": {
 		"modal-title": "Language selector",
@@ -386,6 +416,7 @@
 			"cta-transfer": "Transfer Tokens",
 			"cta-treasuries": "Treasuries ({{itemCount}})",
 			"cta-upgrade-program": "Upgrade Program",
+			"cta-upgrade-idl-busy": "Upgrading IDL",
 			"cta-vaults": "Vaults ({{itemCount}})",
 			"cta-mints": "Mints ({{itemCount}})",
 			"multisig-address-label": "Address",
@@ -425,7 +456,11 @@
 			"screen-title": "Mints - {{multisigName}} ({{itemCount}})",
 			"screen-title-no-mints": "Mints",
 			"selected-mint-label": "Selected Mint",
-			"success-message": "New mint authority set successfully."
+			"success-message": "New mint authority set successfully.",
+			"multisig-authority": "Multisig Authority",
+			"decimals": "decimals:",
+			"supply": "supply",
+			"mint-address": "MINT ADDRESS:"
 		},
 		"multisig-transactions": {
 			"column-created-on": "Created on",
@@ -438,7 +473,26 @@
 			"modal-title": "Transaction summary",
 			"tx-operation-success": "Operation {{operation}} succeeded",
 			"tx-operation-failure": "Operation {{operation}} failed",
-			"no-transactions": "This multisig account has no transactions"
+			"no-transactions": "This multisig account has no transactions",
+			"tx-operation-pending-one": "A transaction on this Multisig is now ready for execution. Please tell the person who initiated this transaction to execute it.",
+			"tx-operation-pending-two": "A Transaction on this Multisig is ready for",
+			"proposed-action": "Proposed Action:",
+			"submitted-on": "Submitted on:",
+			"initiator": "Initiator:",
+			"initiator-transaction": "This transaction was submitted by",
+			"transaction-required": "This transaction required",
+			"transaction-has": "This transaction has",
+			"transaction-awaiting": "A Transaction on this Multisig is awaiting",
+			"address": "Address:",
+			"approval": "approval.",
+			"your-status": "Your Status:",
+			"signers-to-approve": "signers to approve it in order to be executed.",
+			"signed": "Signed.",
+			"signed-so-far": "Signed so far.",
+			"explain-failure": "Explain failure condition if specific",
+			"ready-for-execution": "This transaction is now ready for execution. Please tell the person who initiated this transaction to execute it.",
+			"treasury-closed-warning": "When a treasury is closed, all funds left over will be deposited to the initiator's wallet. Please confirm this is acceptable before you sign.",
+			"not-signed": "Not Signed"
 		},
 		"multisig-programs": {
 			"cta-create-program": "Create program",
@@ -595,6 +649,11 @@
 	"payroll": {
 		"screen-subtitle": "Setup payroll for your employees",
 		"screen-title": "Payroll"
+	},
+	"page-not-found": {
+		"title": "Page not found (404) - Mean Finance",
+		"message": "Page not found",
+		"button": "Go Home"
 	},
 	"pre-footer": {
 		"made-with": "Made with ",
