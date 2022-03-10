@@ -5285,23 +5285,21 @@ export const TreasuriesView = () => {
                   : t('treasuries.treasury-streams.create-stream-main-cta')}
               </Button>
 
-              {isUnderDevelopment() && (
-                <Button
-                  type="default"
-                  shape="round"
-                  size="small"
-                  className="thin-stroke"
-                  disabled={
-                    getTreasuryUnallocatedBalance() <= 0 ||
-                    isTxInProgress() ||
-                    loadingTreasuries ||
-                    loadingTreasuryDetails ||
-                    loadingTreasuryStreams
-                  }
-                  onClick={showTransferFundsModal}>
-                  {t('withdraw-funds.button-title')}
-                </Button>
-              )}
+              <Button
+                type="default"
+                shape="round"
+                size="small"
+                className="thin-stroke"
+                disabled={
+                  getTreasuryUnallocatedBalance() <= 0 ||
+                  isTxInProgress() ||
+                  loadingTreasuries ||
+                  loadingTreasuryDetails ||
+                  loadingTreasuryStreams
+                }
+                onClick={showTransferFundsModal}>
+                {t('withdraw-funds.button-title')}
+              </Button>
 
               {treasuryDetails && isMultisigTreasury() && (
                 <Button
@@ -5343,7 +5341,7 @@ export const TreasuriesView = () => {
           {isCreatingTreasury() ? (
             <div className="flex-row flex-center">
               <LoadingOutlined />
-              <span className="ml-1">{t('treasuries.treasury-detail.cta-create-treasury-busy')}</span>
+              <span className="ml-1">{t('treasuries.create-treasury.main-cta-busy')}</span>
             </div>
           ) : isClosingTreasury() ? (
             <div className="flex-row flex-center">

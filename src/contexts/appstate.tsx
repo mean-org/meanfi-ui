@@ -955,10 +955,12 @@ const AppStateProvider: React.FC = ({ children }) => {
                     setActiveStream(item);
                     const token = getTokenByMintAddress(item.associatedToken as string);
                     setSelectedToken(token);
-                    if (!loadingStreamActivity) {
+                    setTimeout(() => {
+                      setStreamActivity([]);
+                      setHasMoreStreamActivity(true);
                       setLoadingStreamActivity(true);
-                      getStreamActivity(item.id as string, item.version);
-                    }
+                    });
+                    getStreamActivity(item.id as string, item.version, true);
                   }
                 }
               } else {
