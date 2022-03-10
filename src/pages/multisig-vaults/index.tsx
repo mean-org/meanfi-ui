@@ -3496,7 +3496,7 @@ export const MultisigVaultsView = () => {
               <div className="inner-container">
                 {publicKey ? (
                   <>
-                    {(isUnderDevelopment() && selectedVault) && (
+                    {selectedVault && (
                       <div className="float-top-right">
                         <span className="icon-button-container secondary-button">
                           <Tooltip placement="bottom" title={t('multisig.multisig-vaults.cta-close')}>
