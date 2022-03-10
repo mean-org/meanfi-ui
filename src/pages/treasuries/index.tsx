@@ -5285,23 +5285,21 @@ export const TreasuriesView = () => {
                   : t('treasuries.treasury-streams.create-stream-main-cta')}
               </Button>
 
-              {isUnderDevelopment() && (
-                <Button
-                  type="default"
-                  shape="round"
-                  size="small"
-                  className="thin-stroke"
-                  disabled={
-                    getTreasuryUnallocatedBalance() <= 0 ||
-                    isTxInProgress() ||
-                    loadingTreasuries ||
-                    loadingTreasuryDetails ||
-                    loadingTreasuryStreams
-                  }
-                  onClick={showTransferFundsModal}>
-                  {t('withdraw-funds.button-title')}
-                </Button>
-              )}
+              <Button
+                type="default"
+                shape="round"
+                size="small"
+                className="thin-stroke"
+                disabled={
+                  getTreasuryUnallocatedBalance() <= 0 ||
+                  isTxInProgress() ||
+                  loadingTreasuries ||
+                  loadingTreasuryDetails ||
+                  loadingTreasuryStreams
+                }
+                onClick={showTransferFundsModal}>
+                {t('withdraw-funds.button-title')}
+              </Button>
 
               {treasuryDetails && isMultisigTreasury() && (
                 <Button
