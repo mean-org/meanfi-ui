@@ -712,19 +712,19 @@ export const IdoLiveView = () => {
             selectedToken={selectedToken}
           />
         );
-      case "airdrop":
-        return (
-          <AirdropRedeem
-            connection={connection}
-            idoClient={idoClient}
-            idoDetails={idoDetails}
-            idoStatus={idoStatus}
-            redeemStarted={today > redeemStartUtc}
-            disabled={today < redeemStartUtc || fetchTxInfoStatus === "fetching"}
-            nativeBalance={nativeBalance}
-            selectedToken={selectedToken}
-          />
-        );
+      // case "airdrop":
+      //   return (
+      //     <AirdropRedeem
+      //       connection={connection}
+      //       idoClient={idoClient}
+      //       idoDetails={idoDetails}
+      //       idoStatus={idoStatus}
+      //       redeemStarted={today > redeemStartUtc}
+      //       disabled={today < redeemStartUtc || fetchTxInfoStatus === "fetching"}
+      //       nativeBalance={nativeBalance}
+      //       selectedToken={selectedToken}
+      //     />
+      //   );
       default:
         return null;
     }
@@ -733,12 +733,12 @@ export const IdoLiveView = () => {
   const renderClaimsTabset = (
     <>
       <div className="button-tabset-container">
-        <div className={`tab-button ${currentClaimsTab === "ido-claims" ? 'active' : ''}`} onClick={() => onClaimsTabChange("ido-claims")}>
+        <div className="tab-button" onClick={() => onClaimsTabChange("ido-claims")}>
           IDO
         </div>
-        <div className={`tab-button ${currentClaimsTab === "airdrop" ? 'active' : ''}`} onClick={() => onClaimsTabChange("airdrop")}>
+        {/* <div className={`tab-button ${currentClaimsTab === "airdrop" ? 'active' : ''}`} onClick={() => onClaimsTabChange("airdrop")}>
           Airdrop
-        </div>
+        </div> */}
       </div>
       <div className="redeem-inner-area">
         {renderClaimsForms()}

@@ -31,6 +31,7 @@ import { MultisigVaultTransferAuthorityModal } from '../../components/MultisigVa
 import { customLogger } from '../..';
 import useWindowSize from '../../hooks/useWindowResize';
 import { isError } from '../../utils/transactions';
+import { MultisigVaultDeleteModal } from '../../components/MultisigVaultDeleteModal';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -359,6 +360,34 @@ export const MultisigVaultsView = () => {
     fetchTxInfoStatus,
   ]);
 
+  const canDeleteVault = useCallback((): boolean => {
+    const isTxPendingApproval = (tx: MultisigTransaction) => {
+      if (tx) {
+        if (tx.status === MultisigTransactionStatus.Pending) {
+          return true;
+        }
+      }
+      return false;
+    };
+
+    const isTxPendingExecution = (tx: MultisigTransaction) => {
+      if (tx) {
+        if (tx.status === MultisigTransactionStatus.Approved) {
+          return true;
+        }
+      }
+      return false;
+    };
+
+    if (selectedVault && (!multisigPendingTxs || multisigPendingTxs.length === 0)) {
+      return true;
+    }
+    const found = multisigPendingTxs.find(tx => tx.operation === OperationType.DeleteVault && (isTxPendingApproval(tx) || isTxPendingExecution(tx)));
+
+    return found ? false : true;
+
+  }, [selectedVault, multisigPendingTxs]);
+
   const isSuccess = (): boolean => {
     return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
   }
@@ -433,6 +462,8 @@ export const MultisigVaultsView = () => {
         return "Close Treasury";
       case OperationType.TreasuryRefreshBalance:
         return "Refresh Treasury Data";
+      case OperationType.DeleteVault:
+        return "Close Vault";
       case OperationType.CreateVault:
         return "Create Vault";
       case OperationType.SetVaultAuthority:
@@ -484,6 +515,36 @@ export const MultisigVaultsView = () => {
 
   },[]);
 
+  const isUserTheProposer = useCallback((): boolean => {
+    if (!highlightedMultisigTx || !publicKey) { return false; }
+
+    return  publicKey &&
+            highlightedMultisigTx.proposer &&
+            publicKey.equals(highlightedMultisigTx.proposer)
+        ? true
+        : false;
+
+  }, [
+    publicKey,
+    highlightedMultisigTx
+  ]);
+
+  const isTreasuryOperation = useCallback(() => {
+
+    if (!highlightedMultisigTx) { return false; }
+
+    return  highlightedMultisigTx.operation === OperationType.TreasuryCreate ||
+            highlightedMultisigTx.operation === OperationType.TreasuryClose ||
+            highlightedMultisigTx.operation === OperationType.TreasuryAddFunds ||
+            highlightedMultisigTx.operation === OperationType.TreasuryStreamCreate ||
+            highlightedMultisigTx.operation === OperationType.StreamCreate ||
+            highlightedMultisigTx.operation === OperationType.StreamClose ||
+            highlightedMultisigTx.operation === OperationType.StreamAddFunds
+      ? true
+      : false;
+
+  },[highlightedMultisigTx])
+
   const canShowApproveButton = useCallback(() => {
 
     if (!highlightedMultisigTx) { return false; }
@@ -493,8 +554,6 @@ export const MultisigVaultsView = () => {
       !highlightedMultisigTx.didSigned
     );
 
-    // console.log('show approve result', result);
-
     return result;
 
   },[highlightedMultisigTx])
@@ -502,26 +561,6 @@ export const MultisigVaultsView = () => {
   const canShowExecuteButton = useCallback(() => {
 
     if (!highlightedMultisigTx) { return false; }
-
-    const isUserTheProposer = () => {
-      return  publicKey &&
-              highlightedMultisigTx.proposer &&
-              publicKey.equals(highlightedMultisigTx.proposer)
-        ? true
-        : false;
-    }
-
-    const isTreasuryOperation = () => {
-      return  highlightedMultisigTx.operation === OperationType.TreasuryCreate ||
-              highlightedMultisigTx.operation === OperationType.TreasuryClose ||
-              highlightedMultisigTx.operation === OperationType.TreasuryAddFunds ||
-              highlightedMultisigTx.operation === OperationType.TreasuryStreamCreate ||
-              highlightedMultisigTx.operation === OperationType.StreamCreate ||
-              highlightedMultisigTx.operation === OperationType.StreamClose ||
-              highlightedMultisigTx.operation === OperationType.StreamAddFunds
-        ? true
-        : false;
-    }
 
     const isPendingForExecution = () => {
       return  highlightedMultisigTx.status === MultisigTransactionStatus.Approved &&
@@ -541,8 +580,9 @@ export const MultisigVaultsView = () => {
     }
 
   },[
-    highlightedMultisigTx, 
-    publicKey
+    highlightedMultisigTx,
+    isTreasuryOperation,
+    isUserTheProposer,
   ])
 
   ////////////////////////////////////////
@@ -607,7 +647,7 @@ export const MultisigVaultsView = () => {
           id: info.publicKey,
           version: info.account.version,
           label: new TextDecoder().decode(labelBuffer),
-          address,
+          authority: address,
           nounce: info.account.nonce,
           ownerSeqNumber: info.account.ownerSetSeqno,
           threshold: info.account.threshold.toNumber(),
@@ -654,7 +694,7 @@ export const MultisigVaultsView = () => {
           id: info.publicKey,
           version: 1,
           label: new TextDecoder().decode(labelBuffer),
-          address,
+          authority: address,
           nounce: info.account.nonce,
           ownerSeqNumber: info.account.ownerSetSeqno,
           threshold: info.account.threshold.toNumber(),
@@ -682,22 +722,15 @@ export const MultisigVaultsView = () => {
       MEAN_MULTISIG
     );
 
-    const accountInfos = await connection.getProgramAccounts(TOKEN_PROGRAM_ID, {
-      filters: [
-        {
-          memcmp: { offset: 32, bytes: multisigSigner.toBase58() },
-        }, 
-        {
-          dataSize: AccountLayout.span
-        }
-      ],
-    });
+    const accountInfoContext = await connection.getTokenAccountsByOwner(
+      multisigSigner,
+      { programId: TOKEN_PROGRAM_ID }
+    );
 
-    if (!accountInfos || !accountInfos.length) { return []; }
+    if (!accountInfoContext.value || !accountInfoContext.value.length) { return []; }
 
-    const results = accountInfos.map((t: any) => {
+    const results = accountInfoContext.value.map((t: any) => {
       let tokenAccount = ACCOUNT_LAYOUT.decode(t.account.data);
-      // let tokenAccount = AccountLayout.decode(t.account.data);
       tokenAccount.address = t.pubkey;
       return tokenAccount;
     });
@@ -715,6 +748,13 @@ export const MultisigVaultsView = () => {
       setMultisigVaults(result);
       if (result.length > 0 && !selectedVault) {
         setSelectedVault(result[0]);
+      } else if (result.length > 0 && selectedVault) {
+        const newItem = result.find(i => i.address === selectedVault.address);
+        if (newItem) {
+          setSelectedVault(newItem);
+        } else {
+          setSelectedVault(result[0]);
+        }
       }
     })
     .catch(err => console.error(err))
@@ -983,7 +1023,6 @@ export const MultisigVaultsView = () => {
     multisigAddress,
     fetchTxInfoStatus,
     lastSentTxSignature,
-    // lastSentTxOperationType,
     clearTransactionStatusContext,
     refreshVaults,
   ]);
@@ -2098,9 +2137,333 @@ export const MultisigVaultsView = () => {
     onVaultAuthorityTransfered
   ]);
 
+  // Delete vault modal
+  const [isDeleteVaultModalVisible, setIsDeleteVaultModalVisible] = useState(false);
+  const showDeleteVaultModal = useCallback(() => {
+    setIsDeleteVaultModalVisible(true);
+  }, []);
+
+  const onAcceptDeleteVault = () => {
+    onExecuteDeleteVaultTx();
+  };
+
+  const onVaultDeleted = useCallback(() => {
+    setIsDeleteVaultModalVisible(false);
+    resetTransactionStatus();
+  },[resetTransactionStatus]);
+
+  const onExecuteDeleteVaultTx = useCallback(async () => {
+
+    let transaction: Transaction;
+    let signedTransaction: Transaction;
+    let signature: any;
+    let encodedTx: string;
+    const transactionLog: any[] = [];
+
+    clearTransactionStatusContext();
+    setTransactionCancelled(false);
+    setIsBusy(true);
+
+    const deleteVaultTx = async (vault: MultisigVault) => {
+
+      if (!publicKey || !selectedMultisig || !selectedMultisig.id || !vault) { 
+        return null;
+      }
+
+      const [authority] = await PublicKey.findProgramAddress(
+        [selectedMultisig.id.toBuffer()],
+        multisigClient.programId
+      );
+
+      if (!authority.equals(vault.owner)) {
+        throw Error("Invalid vault owner");
+      }
+
+      const closeIx = Token.createCloseAccountInstruction(
+        TOKEN_PROGRAM_ID,
+        vault.address,
+        publicKey,
+        vault.owner,
+        []
+      );
+
+      const ixAccounts = closeIx.keys;
+      const ixData = Buffer.from(closeIx.data);
+      const transaction = Keypair.generate();
+      const txSize = 1000;
+      const createIx = await multisigClient.account.transaction.createInstruction(
+        transaction,
+        txSize
+      );
+
+      let tx = multisigClient.transaction.createTransaction(
+        TOKEN_PROGRAM_ID,
+        OperationType.DeleteVault,
+        ixAccounts,
+        ixData,
+        new BN(0),
+        new BN(0),
+        {
+          accounts: {
+            multisig: selectedMultisig.id,
+            transaction: transaction.publicKey,
+            proposer: publicKey
+          },
+          preInstructions: [createIx],
+          signers: [transaction]
+        }
+      );
+
+      tx.feePayer = publicKey;
+      const { blockhash } = await connection.getRecentBlockhash("finalized");
+      tx.recentBlockhash = blockhash;
+      tx.partialSign(...[transaction]);
+
+      return tx;
+    }
+
+    const createTx = async (): Promise<boolean> => {
+
+      if (!publicKey || !selectedVault) {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot start transaction! Wallet not found!'
+        });
+        customLogger.logError('Delete Vault transaction failed', { transcript: transactionLog });
+        return false;
+      }
+
+      setTransactionStatus({
+        lastOperation: TransactionStatus.TransactionStart,
+        currentOperation: TransactionStatus.InitTransaction
+      });
+
+      // Create transaction payload for debugging
+      const payload = {
+        vault: selectedVault.address.toBase58(),
+      };
+
+      consoleOut('data:', payload);
+      // Log input data
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+        inputs: payload
+      });
+
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+        result: ''
+      });
+
+      // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
+      // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+      consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
+      consoleOut('nativeBalance:', nativeBalance, 'blue');
+
+      if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
+        setTransactionStatus({
+          lastOperation: transactionStatus.currentOperation,
+          currentOperation: TransactionStatus.TransactionStartFailure
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+          result: `Not enough balance (${
+            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+          }) to pay for network fees (${
+            getTokenAmountAndSymbolByTokenAddress(
+              transactionFees.blockchainFee + transactionFees.mspFlatFee, 
+              NATIVE_SOL_MINT.toBase58()
+            )
+          })`
+        });
+        customLogger.logWarning('Transfer tokens transaction failed', { transcript: transactionLog });
+        return false;
+      }
+
+      let result =  await deleteVaultTx(selectedVault)
+        .then(value => {
+          if (!value) { return false; }
+          consoleOut('deleteVaultTx returned transaction:', value);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.InitTransactionSuccess,
+            currentOperation: TransactionStatus.SignTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+            result: getTxIxResume(value)
+          });
+          transaction = value;
+          return true;
+        })
+        .catch(error => {
+          console.error('deleteVaultTx error:', error);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.InitTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+            result: `${error}`
+          });
+          customLogger.logError('Delete Vault transaction failed', { transcript: transactionLog });
+          return false;
+        });
+
+      return result;
+    }
+
+    const signTx = async (): Promise<boolean> => {
+      if (wallet) {
+        consoleOut('Signing transaction...');
+        return await wallet.signTransaction(transaction)
+        .then((signed: Transaction) => {
+          consoleOut('signTransaction returned a signed transaction:', signed);
+          signedTransaction = signed;
+          // Try signature verification by serializing the transaction
+          try {
+            encodedTx = signedTransaction.serialize().toString('base64');
+            consoleOut('encodedTx:', encodedTx, 'orange');
+          } catch (error) {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransaction,
+              currentOperation: TransactionStatus.SignTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            });
+            customLogger.logError('Delete Vault transaction failed', { transcript: transactionLog });
+            return false;
+          }
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransactionSuccess,
+            currentOperation: TransactionStatus.SendTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
+            result: {signer: wallet.publicKey.toBase58()}
+          });
+          return true;
+        })
+        .catch(error => {
+          console.error(error);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransaction,
+            currentOperation: TransactionStatus.SignTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+          });
+          customLogger.logError('Delete Vault transaction failed', { transcript: transactionLog });
+          return false;
+        });
+      } else {
+        console.error('Cannot sign transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot sign transaction! Wallet not found!'
+        });
+        customLogger.logError('Delete Vault transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const sendTx = async (): Promise<boolean> => {
+      if (wallet) {
+        return await connection
+          .sendEncodedTransaction(encodedTx)
+          .then(sig => {
+            consoleOut('sendEncodedTransaction returned a signature:', sig);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.ConfirmTransaction
+            });
+            signature = sig;
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
+              result: `signature: ${signature}`
+            });
+            return true;
+          })
+          .catch(error => {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransaction,
+              currentOperation: TransactionStatus.SendTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+              result: { error, encodedTx }
+            });
+            customLogger.logError('Delete Vault transaction failed', { transcript: transactionLog });
+            return false;
+          });
+      } else {
+        console.error('Cannot send transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SendTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot send transaction! Wallet not found!'
+        });
+        customLogger.logError('Delete Vault transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    if (wallet) {
+      const created = await createTx();
+      consoleOut('created:', created);
+      if (created && !transactionCancelled) {
+        const sign = await signTx();
+        consoleOut('signed:', sign);
+        if (sign && !transactionCancelled) {
+          const sent = await sendTx();
+          consoleOut('sent:', sent);
+          if (sent && !transactionCancelled) {
+            consoleOut('Send Tx to confirmation queue:', signature);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.DeleteVault);
+            setIsBusy(false);
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.TransactionFinished
+            });
+            await delay(1000);
+            onVaultDeleted();
+          } else { setIsBusy(false); }
+        } else { setIsBusy(false); }
+      } else { setIsBusy(false); }
+    }
+
+  }, [
+    clearTransactionStatusContext,
+    wallet,
+    publicKey,
+    selectedMultisig,
+    multisigClient.programId,
+    multisigClient.account.transaction,
+    multisigClient.transaction,
+    connection,
+    selectedVault,
+    setTransactionStatus,
+    transactionFees.blockchainFee,
+    transactionFees.mspFlatFee,
+    nativeBalance,
+    transactionStatus.currentOperation,
+    transactionCancelled,
+    startFetchTxSignatureInfo,
+    onVaultDeleted
+  ]);
 
   // Common Multisig Approve / Execute logic
-
   const onTxExecuted = useCallback(() => {
 
   },[]);
@@ -2844,48 +3207,50 @@ export const MultisigVaultsView = () => {
             <div className="std-table-cell text-center fixed-width-120">{t('multisig.multisig-transactions.column-pending-signatures')}</div>
           </div>
         </div>
-        {multisigPendingTxs && multisigPendingTxs.length && (
-          <div className="item-list-body compact">
-            {multisigPendingTxs.map(item => {
-              return (
-                <div
-                  key={item.id.toBase58()}
-                  style={{padding: '3px 0px'}}
-                  className={`item-list-row ${
-                    highlightedMultisigTx && highlightedMultisigTx.id.equals(item.id)
-                      ? isUiBusy() ? 'selected no-pointer click-disabled' : 'selected'
-                      : isUiBusy() ? 'no-pointer click-disabled' : 'simplelink'}`
-                  }
-                  onClick={() => showMultisigActionTransactionModal(item)}>
-                  <div className="std-table-cell responsive-cell">
-                    <span className="align-middle">{getOperationName(item.operation)}</span>
-                  </div>
-                  <div className="std-table-cell responsive-cell">
-                    <span className="align-middle">{getOperationProgram(item.operation)}</span>
-                  </div>
-                  <div className="std-table-cell fixed-width-110">
-                    <span className="align-middle">{getShortDate(item.createdOn.toString(), isCanvasTight() ? false : true)}</span>
-                  </div>
-                  <div className="std-table-cell fixed-width-90">
-                    <span className={`align-middle ${getTransactionUserStatusActionClass(item)}`}>{getTransactionUserStatusAction(item)}</span>
-                  </div>
-                  <div className="std-table-cell fixed-width-34">
-                    {
-                      item.status !== MultisigTransactionStatus.Executed ? (
-                        <span className="align-middle">{`${item.signers.filter(s => s === true).length}/${selectedMultisig.threshold}`}</span>
-                      ) : (
-                        <span className="align-middle">&nbsp;</span>
-                      )
+        <div className="activity-list-data-wrapper vertical-scroll">
+          <div className="activity-list h-100">
+            <div className="item-list-body compact">
+              {multisigPendingTxs.map(item => {
+                return (
+                  <div
+                    key={item.id.toBase58()}
+                    style={{padding: '3px 0px'}}
+                    className={`item-list-row ${
+                      highlightedMultisigTx && highlightedMultisigTx.id.equals(item.id)
+                        ? isUiBusy() ? 'selected no-pointer click-disabled' : 'selected'
+                        : isUiBusy() ? 'no-pointer click-disabled' : 'simplelink'}`
                     }
+                    onClick={() => showMultisigActionTransactionModal(item)}>
+                    <div className="std-table-cell responsive-cell">
+                      <span className="align-middle">{getOperationName(item.operation)}</span>
+                    </div>
+                    <div className="std-table-cell responsive-cell">
+                      <span className="align-middle">{getOperationProgram(item.operation)}</span>
+                    </div>
+                    <div className="std-table-cell fixed-width-110">
+                      <span className="align-middle">{getShortDate(item.createdOn.toString(), isCanvasTight() ? false : true)}</span>
+                    </div>
+                    <div className="std-table-cell fixed-width-90">
+                      <span className={`align-middle ${getTransactionUserStatusActionClass(item)}`}>{getTransactionUserStatusAction(item)}</span>
+                    </div>
+                    <div className="std-table-cell fixed-width-34">
+                      {
+                        item.status !== MultisigTransactionStatus.Executed ? (
+                          <span className="align-middle">{`${item.signers.filter(s => s === true).length}/${selectedMultisig.threshold}`}</span>
+                        ) : (
+                          <span className="align-middle">&nbsp;</span>
+                        )
+                      }
+                    </div>
+                    <div className="std-table-cell text-center fixed-width-120">
+                      <span className={`badge small ${getTransactionStatusClass(item)}`} style={{padding: '3px 5px'}}>{getTransactionStatusAction(item)}</span>
+                    </div>
                   </div>
-                  <div className="std-table-cell text-center fixed-width-120">
-                    <span className={`badge small ${getTransactionStatusClass(item)}`} style={{padding: '3px 5px'}}>{getTransactionStatusAction(item)}</span>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        )}
+        </div>
       </>
     );
   }
@@ -3062,7 +3427,7 @@ export const MultisigVaultsView = () => {
                         icon={<ArrowLeftOutlined />}
                         onClick={() => {
                           if (selectedMultisig) {
-                            setHighLightableMultisigId(selectedMultisig.address.toBase58());
+                            setHighLightableMultisigId(selectedMultisig.authority.toBase58());
                           }
                           navigate('/multisig');
                         }}
@@ -3131,7 +3496,7 @@ export const MultisigVaultsView = () => {
               <div className="inner-container">
                 {publicKey ? (
                   <>
-                    {(isUnderDevelopment() && selectedVault) && (
+                    {selectedVault && (
                       <div className="float-top-right">
                         <span className="icon-button-container secondary-button">
                           <Tooltip placement="bottom" title={t('multisig.multisig-vaults.cta-close')}>
@@ -3140,8 +3505,8 @@ export const MultisigVaultsView = () => {
                               shape="circle"
                               size="middle"
                               icon={<IconTrash className="mean-svg-icons" />}
-                              onClick={() => {}}
-                              disabled={isTxInProgress() || selectedVault.amount.toNumber() === 0}
+                              onClick={showDeleteVaultModal}
+                              disabled={isTxInProgress() || !canDeleteVault()}
                             />
                           </Tooltip>
                         </span>
@@ -3238,6 +3603,20 @@ export const MultisigVaultsView = () => {
         />
       )}
 
+      {isDeleteVaultModalVisible && (
+        <MultisigVaultDeleteModal
+          isVisible={isDeleteVaultModalVisible}
+          handleOk={onAcceptDeleteVault}
+          handleAfterClose={onAfterEveryModalClose}
+          handleClose={() => {
+            onAfterEveryModalClose();
+            setIsDeleteVaultModalVisible(false);
+          }}
+          isBusy={isBusy}
+          selectedVault={selectedVault}
+        />
+      )}
+
       {/* Transaction confirm and execution modal launched from each Tx row */}
       {(isMultisigActionTransactionModalVisible && highlightedMultisigTx && selectedMultisig) && (
         <Modal
@@ -3259,11 +3638,11 @@ export const MultisigVaultsView = () => {
                 {/* Normal stuff - YOUR USER INPUTS / INFO AND ACTIONS */}
                 {isTxPendingExecution() ? (
                   <>
-                    {/* Am I the Tx initiator */}
-                    {getTxInitiator(highlightedMultisigTx)?.address === publicKey?.toBase58() ? (
-                      <h3 className="text-center">A Transaction on this Multisig is ready for your execution.</h3>
-                    ) : (
+                    {/* Custom execution-ready message */}
+                    {isTreasuryOperation() && !isUserTheProposer() ? (
                       <h3 className="text-center">A transaction on this Multisig is now ready for execution. Please tell the person who initiated this transaction to execute it.</h3>
+                    ) : (
+                      <h3 className="text-center">A Transaction on this Multisig is ready for {isUserTheProposer() ? 'your execution' : 'execution'}.</h3>
                     )}
                     <Divider className="mt-2" />
                     <div className="mb-2">Proposed Action: {getOperationName(highlightedMultisigTx.operation)}</div>

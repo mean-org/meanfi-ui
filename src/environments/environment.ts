@@ -7,6 +7,7 @@ export interface AppConfig {
     transakApiKey: string;
     streamProgramAddress: string;
     streamV2ProgramAddress: string;
+    segmentAnalyticsKey: string;
     influxDbUrl: string;
     influxDbToken: string;
     influxDbOrg: string;
@@ -30,6 +31,7 @@ export class AppConfigService {
             transakApiKey: 'ba0eae8b-fed1-4c2f-8e62-2b8a69ac60d0',
             streamProgramAddress: 'H6wJxgkcc93yeUFnsZHgor3Q3pSWgGpEysfqKrwLtMko',
             streamV2ProgramAddress: 'MSPCUMbLfy2MeT6geLMMzrUkv1Tx88XRApaVRdyxTuu',
+            segmentAnalyticsKey: 'TPMrxxFTOatu7SCEMDBfMTThsPdqp4VU',
             influxDbUrl: 'https://metrics.meanfi.com:8086',
             influxDbToken: 'AcVhBSCQ8XE9nTpR5cf2Gv8aU420BG-eKbxYDX-_PQ_qwyE4YS0oXeZFd8drfMkossPRs-fKqFMf7cbqxXatng==',
             influxDbOrg: 'meanops',
@@ -42,25 +44,6 @@ export class AppConfigService {
             exchangeFeeAccountOwner: 'CLazQV1BhSrxfgRHko4sC8GYBU3DoHcX4xxRZd12Kohr',
             exchangeFlatFee: 0.25
         },
-        staging: {
-            appUrl: 'https://app-stage.meanfi.com',
-            apiUrl: 'https://tempo-api-dev.meanops.com',
-            transakUrl: 'https://staging-global.transak.com',
-            transakApiKey: '7ad31a0c-3cf3-4c1e-bb59-e92973007787',
-            streamProgramAddress: '37z61WhJCAaDADwcpJRHgr66FUhHB9TfkS49Ssvp3Cdb',
-            streamV2ProgramAddress: 'MSPCUMbLfy2MeT6geLMMzrUkv1Tx88XRApaVRdyxTuu',
-            influxDbUrl: 'https://metrics.meanfi.com:8086',
-            influxDbToken: 'T4-kVufYOioZNKsVvIeWrIcNlqdrQkc3gxvQSHxw7jZVgN7YOfF-1MpcSpcarKdt9ptkjkZGPl6VuA7s7WLXcw==',
-            influxDbOrg: 'meanops',
-            influxDbBucket: 'meanfi-stage',
-            logglyCustomerKey: '8aaea666-b5e8-469b-828a-89c9ca60cdef',
-            logglyTag: 'MeanFiWebApp',
-            idoAccountAddress: '',
-            idoAirdropTreasuryAddress: '7AoKzQPk16CVHdy2k3T2G41K8jfCdf2wgkMkwXmYWv54',
-            idoAirdropTreasurerAddress: 'GYHuK9gPVPJm7VqgFX7wKQ93U9rPCwKqjzLh32P1Ed4G',
-            exchangeFeeAccountOwner: 'CLazQV1BhSrxfgRHko4sC8GYBU3DoHcX4xxRZd12Kohr',
-            exchangeFlatFee: 0.25
-        },
         // dev and local will have same config
         development: {
             appUrl: 'https://app-dev.meanfi.com',
@@ -69,6 +52,7 @@ export class AppConfigService {
             transakApiKey: '7ad31a0c-3cf3-4c1e-bb59-e92973007787',
             streamProgramAddress: '9yMq7x4LstWYWi14pr8BEBsEX33L3HnugpiM2PT96x4k',
             streamV2ProgramAddress: 'MSPCUMbLfy2MeT6geLMMzrUkv1Tx88XRApaVRdyxTuu',
+            segmentAnalyticsKey: '1VSk356IiaThR9fBBDko2QMJFDas33Yf',
             influxDbUrl: 'https://metrics.meanfi.com:8086',
             influxDbToken: 'TJZtqtjU7WWWXs6OOP4xXqBB2O1G7bew53NJbU5nhbxou_Oo6TGw5owVwSxsBJbrJ70zeusJydAUwhr8L5mB-A==',
             influxDbOrg: 'meanops',
@@ -88,6 +72,7 @@ export class AppConfigService {
             transakApiKey: '7ad31a0c-3cf3-4c1e-bb59-e92973007787',
             streamProgramAddress: '9yMq7x4LstWYWi14pr8BEBsEX33L3HnugpiM2PT96x4k',
             streamV2ProgramAddress: 'MSPCUMbLfy2MeT6geLMMzrUkv1Tx88XRApaVRdyxTuu',
+            segmentAnalyticsKey: '1VSk356IiaThR9fBBDko2QMJFDas33Yf',
             influxDbUrl: 'https://metrics.meanfi.com:8086',
             influxDbToken: 'TJZtqtjU7WWWXs6OOP4xXqBB2O1G7bew53NJbU5nhbxou_Oo6TGw5owVwSxsBJbrJ70zeusJydAUwhr8L5mB-A==',
             influxDbOrg: 'meanops',

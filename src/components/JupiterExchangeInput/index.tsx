@@ -41,6 +41,7 @@ export const JupiterExchangeInput = (props: {
     return (
         <>
         <div className={`well ${props.className || ''}`}>
+
             {/* Balance row */}
             <div className="flex-fixed-right">
                 <div className="left inner-label">
@@ -133,75 +134,6 @@ export const JupiterExchangeInput = (props: {
             </div>
 
         </div>
-
-        {/* <div className="transaction-field mb-0">
-
-            <div className={`transaction-field-row ${props.inputPosition === "right" ? 'reverse' : '' }`}>
-                <span className="field-label-left">
-                    <span className={`balance-amount ${loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}`} onClick={props.onPriceClick}>
-                    {props.inputLabel || "0.00"}
-                    </span>
-                </span>
-                <span className="field-label-right">
-                    {connected && (
-                        <>
-                            <span>{t('transactions.send-amount.label-right')}:</span>
-                            <span className="balance-amount simplelink" onClick={props.onBalanceClick}>
-                                {`${props.token && props.tokenBalance
-                                    ? props.tokenBalance
-                                    : "0"
-                                }`}
-                            </span>
-                            {props.tokenBalance && (
-                                <span className={`balance-amount ${loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}`} onClick={props.onPriceClick}>
-                                    {`(~$${props.token && props.tokenBalance
-                                        ? formatAmount(parseFloat(props.tokenBalance) * getPricePerToken(props.token as TokenInfo), 2)
-                                        : "0.00"
-                                    })`}
-                                </span>
-                            )}
-                        </>
-                    )}
-                </span>
-            </div>
-
-            <div className={`transaction-field-row ${props.inputPosition === "left" ? 'main-row' : 'main-row reverse' }`}>
-                <div className="input-control">
-                    <DebounceInput
-                        className="general-text-input"
-                        inputMode="decimal"
-                        autoComplete="off"
-                        autoCorrect="off"
-                        type="text"
-                        onChange={props.onInputChange}
-                        pattern="^[0-9]*[.,]?[0-9]*$"
-                        placeholder="0.0"
-                        minLength={1}
-                        maxLength={79}
-                        debounceTimeout={props.debounceTime || 300}
-                        spellCheck="false"
-                        readOnly={props.readonly ? true : false}
-                        value={props.tokenAmount}
-                    />
-                </div>
-                <span className="add-ons">
-                    <div className={`token-group ${props.inputPosition === "right" ? 'flex-row-reverse' : ''}`}>
-                        {props.token && props.tokenBalance && props.onMaxAmount && props.translationId === 'source' ? (
-                            <div className="token-max simplelink" onClick={props.onMaxAmount}>MAX</div>
-                        ) : null}
-                        <TokenDisplay onClick={props.onSelectToken}
-                            fullTokenInfo={props.token}
-                            mintAddress={props.token ? props.token.address : ''}
-                            name={props.token ? props.token.name : ''}
-                            className="simplelink"
-                            noTokenLabel={t(`swap.token-select-${props.translationId}`)}
-                            showName={false}
-                            showCaretDown={true}
-                        />
-                    </div>
-                </span>
-            </div>
-        </div> */}
         </>
     );
 };

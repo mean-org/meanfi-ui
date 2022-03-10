@@ -123,18 +123,16 @@ export const TreasuryCreateModal = (props: {
                             <Identicon address={option.id} style={{ width: "30", display: "inline-flex" }} />
                           </div>
                           <div className="description-cell">
-                            <div className="title text-truncate">
-                              {option.label}
-                            </div>
-                            <div className="subtitle text-truncate">{shortenAddress(option.address.toBase58(), 8)}</div>
+                            <div className="title text-truncate">{option.label}</div>
+                            <div className="subtitle text-truncate">{shortenAddress(option.id.toBase58(), 8)}</div>
                           </div>
-                          <div className="description-cell text-right">
-                            <div className="subtitle">
-                            {
-                              t('multisig.multisig-accounts.pending-transactions', {
-                                txs: option.pendingTxsAmount
-                              })
-                            }
+                          <div className="rate-cell">
+                            <div className="rate-amount">
+                              {
+                                t('multisig.multisig-accounts.pending-transactions', {
+                                  txs: option.pendingTxsAmount
+                                })
+                              }
                             </div>
                           </div>
                         </div>
@@ -148,6 +146,31 @@ export const TreasuryCreateModal = (props: {
         </div>
       </div>
     );
+  }
+
+  const renderSelectedMultisig = () => {
+    return (
+      props.selectedMultisig && (
+        <div className={`transaction-list-row w-100 no-pointer`}>
+          <div className="icon-cell">
+            <Identicon address={props.selectedMultisig.id} style={{ width: "30", display: "inline-flex" }} />
+          </div>
+          <div className="description-cell">
+            <div className="title text-truncate">{props.selectedMultisig.label}</div>
+            <div className="subtitle text-truncate">{shortenAddress(props.selectedMultisig.id.toBase58(), 8)}</div>
+          </div>
+          <div className="rate-cell">
+            <div className="rate-amount">
+              {
+                t('multisig.multisig-accounts.pending-transactions', {
+                  txs: props.selectedMultisig.pendingTxsAmount
+                })
+              }
+            </div>
+          </div>
+        </div>
+      )
+    )
   }
 
   return (
@@ -214,30 +237,33 @@ export const TreasuryCreateModal = (props: {
             </div>
 
             {/* Multisig Treasury checkbox */}
-            {props.multisigAccounts.length > 0 && (
-              <div className="mb-2 flex-row align-items-center">
-                <span className="form-label w-auto mb-0">{t('treasuries.create-treasury.multisig-treasury-switch-label')}</span>
-                {/* <a className="simplelink" href="https://docs.meanfi.com/" target="_blank" rel="noopener noreferrer">
-                  <Button
-                    className="info-icon-button"
-                    type="default"
-                    shape="circle">
-                    <InfoCircleOutlined />
-                  </Button>
-                </a> */}
-                <Radio.Group className="ml-2" onChange={onCloseTreasuryOptionChanged} value={enableMultisigTreasuryOption}>
-                  <Radio value={true}>{t('general.yes')}</Radio>
-                  <Radio value={false}>{t('general.no')}</Radio>
-                </Radio.Group>
-              </div>
-            )}
+            {
+              // (!props.selectedMultisig && props.multisigAccounts.length > 0) && (
+              //   <div className="mb-2 flex-row align-items-center">
+              //     <span className="form-label w-auto mb-0">{t('treasuries.create-treasury.multisig-treasury-switch-label')}</span>
+              //     {/* <a className="simplelink" href="https://docs.meanfi.com/" target="_blank" rel="noopener noreferrer">
+              //       <Button
+              //         className="info-icon-button"
+              //         type="default"
+              //         shape="circle">
+              //         <InfoCircleOutlined />
+              //       </Button>
+              //     </a> */}
+              //     <Radio.Group className="ml-2" onChange={onCloseTreasuryOptionChanged} value={enableMultisigTreasuryOption}>
+              //       <Radio value={true}>{t('general.yes')}</Radio>
+              //       <Radio value={false}>{t('general.no')}</Radio>
+              //     </Radio.Group>
+              //   </div>
+              // )
+            }
 
             {(enableMultisigTreasuryOption && props.multisigAccounts.length > 0) && (
               <>
                 <div className="mb-3">
                   <div className="form-label">{t('treasuries.create-treasury.multisig-selector-label')}</div>
                   <div className="well">
-                    {renderMultisigSelectItems()}
+                    {/* {renderMultisigSelectItems()} */}
+                    {renderSelectedMultisig()}
                   </div>
                 </div>
               </>

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect } from 'react';
 import { useContext, useState } from 'react';
-import { Modal, Button, Select, Dropdown, Menu, DatePicker, Checkbox, Divider } from 'antd';
+import { Modal, Button, Select, Dropdown, Menu, DatePicker, Checkbox, Divider, Radio, Tooltip } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
 import {
   cutNumber,
@@ -30,7 +30,7 @@ import {
 import { getTokenByMintAddress } from '../../utils/tokens';
 import { LoadingOutlined } from '@ant-design/icons';
 import { TokenDisplay } from '../TokenDisplay';
-import { IconCaretDown, IconEdit } from '../../Icons';
+import { IconCaretDown, IconEdit, IconHelpCircle } from '../../Icons';
 import { OperationType, PaymentRateType, TransactionStatus } from '../../models/enums';
 import moment from "moment";
 import { useWallet } from '../../contexts/wallet';
@@ -41,7 +41,7 @@ import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { Connection, Keypair, PublicKey, Transaction } from '@solana/web3.js';
 import { customLogger } from '../..';
-import { Constants as MSPV2Constants, MSP, TransactionFees, Treasury } from '@mean-dao/msp';
+import { Beneficiary, Constants as MSPV2Constants, MSP, StreamBeneficiary, TransactionFees, Treasury } from '@mean-dao/msp';
 import { TreasuryInfo } from '@mean-dao/money-streaming';
 import { useConnectionConfig } from '../../contexts/connection';
 import { Idl, Program } from '@project-serum/anchor';
@@ -107,6 +107,14 @@ export const TreasuryStreamCreateModal = (props: {
   const [isFeePaidByTreasurer, setIsFeePaidByTreasurer] = useState(false);
   const [tokenAmount, setTokenAmount] = useState(new BN(0));
   const [maxAllocatableAmount, setMaxAllocatableAmount] = useState<any>(undefined);
+  const [enableMultipleStreamsOption, setEnableMultipleStreamsOption] = useState(false);
+  const today = new Date().toLocaleDateString("en-US");
+  const [csvFile, setCsvFile] = useState<any>();
+  const [csvArray, setCsvArray] = useState<any>([]);
+  const [listValidAddresses, setListValidAddresses] = useState([]);
+  const [hasIsOwnWallet, setHasIsOwnWallet] = useState<boolean>(false);
+  const [isCsvSelected, setIsCsvSelected] = useState<boolean>(false);
+  const [validMultiRecipientsList, setValidMultiRecipientsList] = useState<boolean>(false);
 
   const isNewTreasury = useCallback(() => {
     if (props.treasuryDetails) {
@@ -126,9 +134,11 @@ export const TreasuryStreamCreateModal = (props: {
         .mul(new BN(feeDenaminator))
         .div(new BN(feeNumerator + feeDenaminator));
 
+      const feeMultiRecipientsNumerator = feeNumerator * listValidAddresses.length;
+
       const feeAmount = badStreamMaxAllocation
-        .mul(new BN(feeNumerator))
-        .div(new BN(feeDenaminator));
+        .mul(new BN(!enableMultipleStreamsOption ? feeNumerator : feeMultiRecipientsNumerator))
+        .div(new BN(feeDenaminator));      
 
       const badTotal = badStreamMaxAllocation.add(feeAmount);
       const badRemaining = unallocatedBalance.sub(badTotal);
@@ -168,6 +178,8 @@ export const TreasuryStreamCreateModal = (props: {
     unallocatedBalance,
     isFeePaidByTreasurer,
     props.withdrawTransactionFees,
+    enableMultipleStreamsOption,
+    listValidAddresses.length
   ]);
 
   // Set treasury unalocated balance in BN
@@ -234,24 +246,28 @@ export const TreasuryStreamCreateModal = (props: {
   const getStepOneContinueButtonLabel = (): string => {
     return !publicKey
       ? t('transactions.validation.not-connected')
-      : !recipientAddress
-        ? t('transactions.validation.select-recipient')
-        : !selectedToken || unallocatedBalance.toNumber() === 0
-          ? t('transactions.validation.no-balance')
-          : !paymentStartDate
-            ? t('transactions.validation.no-valid-date')
-            : !recipientNote
-              ? 'Memo cannot be empty'
-              : !arePaymentSettingsValid()
-                ? getPaymentSettingsButtonLabel()
-                : t('transactions.validation.valid-continue');
-  }
+      : (!enableMultipleStreamsOption && !recipientAddress)
+        ? t('transactions.validation.select-recipient') 
+        : (enableMultipleStreamsOption && !validMultiRecipientsList)
+          ? t('transactions.validation.select-address-list')
+          : !selectedToken || unallocatedBalance.toNumber() === 0
+            ? t('transactions.validation.no-balance')
+            : !paymentStartDate
+              ? t('transactions.validation.no-valid-date')
+              : (!enableMultipleStreamsOption && !recipientNote)
+                ? 'Memo cannot be empty'
+                : !arePaymentSettingsValid()
+                  ? getPaymentSettingsButtonLabel()
+                  : t('transactions.validation.valid-continue');
+  };
 
   const getTransactionStartButtonLabel = (): string => {
     return !publicKey
       ? t('transactions.validation.not-connected')
-      : !recipientAddress
-      ? t('transactions.validation.select-recipient')
+      : (!enableMultipleStreamsOption && !recipientAddress)
+      ? t('transactions.validation.select-recipient') 
+      : (enableMultipleStreamsOption && !validMultiRecipientsList)
+      ? t('transactions.validation.select-address-list')
       : !selectedToken || unallocatedBalance.isZero()
       ? t('transactions.validation.no-balance')
       : !tokenAmount || tokenAmount.isZero()
@@ -261,14 +277,14 @@ export const TreasuryStreamCreateModal = (props: {
       ? t('transactions.validation.amount-high')
       : !paymentStartDate
       ? t('transactions.validation.no-valid-date')
-      : !recipientNote
+      : (!enableMultipleStreamsOption && !recipientNote)
       ? 'Memo cannot be empty'
       : !arePaymentSettingsValid()
       ? getPaymentSettingsButtonLabel()
       : !isVerifiedRecipient
       ? t('transactions.validation.verified-recipient-unchecked')
       : t('transactions.validation.valid-approve');
-  }
+  };
 
   const getPaymentSettingsButtonLabel = (): string => {
     const rateAmount = parseFloat(paymentRateAmount || '0');
@@ -471,36 +487,166 @@ export const TreasuryStreamCreateModal = (props: {
     setIsVerifiedRecipient(e.target.checked);
   }
 
+  const onCloseModal = () => {
+    props.handleClose();
+    onAfterClose();
+  }
+
+  const onAfterClose = () => {
+    setTimeout(() => {
+      setRecipientAddress("");
+      setRecipientNote("");
+      setPaymentRateAmount("");
+      setCsvArray([]);
+      setIsCsvSelected(false);
+      setFromCoinAmount("");
+      setIsVerifiedRecipient(false);
+      setPaymentRateFrequency(PaymentRateType.PerMonth);
+      setPaymentStartDate(today);
+    }, 50);
+    setTransactionStatus({
+      lastOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
+    });
+  }  
+
+  // Multi-recipient
+  const onCloseMultipleStreamsChanged = useCallback((e: any) => {
+    setEnableMultipleStreamsOption(e.target.value);
+  
+    if (!enableMultipleStreamsOption) {
+      setCsvArray([]);
+      setIsCsvSelected(false);
+    }
+
+  }, [enableMultipleStreamsOption]);
+
   // const onAllocationReservedChanged = (e: any) => {
   //   setIsAllocationReserved(e.target.value);
   // }
 
+  const selectCsvHandler = (e: any) => {
+    let reader = new FileReader();
+
+    setHasIsOwnWallet(false);
+
+    reader.onloadend = (e: any) => {
+      if (e.target.readyState === FileReader.DONE) {
+        setCsvFile(e.target.result);
+      }
+    }
+    
+    reader.readAsText(e.target.files[0]);
+  }
+
+  useEffect(() => {
+    if (!csvFile) { return; }
+
+    const splittedData = csvFile.split("\n");
+    let dataFormatted: any[] = [];
+    
+    const timeout = setTimeout(() => {
+      for (let line of splittedData) {
+        const splittedLine = line.split(",");
+  
+        if (splittedLine.length < 2) {
+          continue;
+        }
+  
+        dataFormatted.push({
+          streamName: splittedLine[0].trim(),
+          address: splittedLine[1].trim()
+        });
+      }
+
+      setCsvArray(dataFormatted);
+    });
+
+    setIsCsvSelected(true);
+    
+    return () => {
+      clearTimeout(timeout);
+    }    
+
+  }, [csvFile]);
+
+  useEffect(() => {
+
+    if (!csvArray.length) { return; }
+
+    const timeout = setTimeout(() => {
+      const validAddresses = csvArray.filter((csvItem: any) => isValidAddress(csvItem.address));
+
+      const validAddressesSingleSigner = validAddresses.filter((csvItem: any) => wallet && !(csvItem.address === `${wallet.publicKey.toBase58()}`));
+
+      if (!props.isMultisigTreasury) {
+        setListValidAddresses(validAddressesSingleSigner);
+        if ((validAddresses.length - validAddressesSingleSigner.length) > 0) {
+          setHasIsOwnWallet(true);
+        }
+      } else {
+        setListValidAddresses(validAddresses);
+      }
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [
+    csvArray,
+    props.isMultisigTreasury,
+    wallet
+  ]);
+
+  useEffect(() => {
+    if (isCsvSelected) {
+      if (listValidAddresses.length > 0) {
+        setValidMultiRecipientsList(true);
+      } else {
+        setValidMultiRecipientsList(false);
+      }
+    }
+  }, [
+    isCsvSelected,
+    csvFile,
+    listValidAddresses,
+    csvArray,
+  ]);
+
   const onTransactionStart = async () => {
-    let transaction: Transaction;
-    let signedTransaction: Transaction;
-    let signature: any;
-    let encodedTx: string;
+
+    let transactions: Transaction[] = [];
+    let signedTransactions: Transaction[] = [];
+    let signatures: string[] = [];
+    let encodedTxs: string[] = [];
+
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
     setTransactionCancelled(false);
     setIsBusy(true);
 
-    const createStream = async (data: any) => {
+    const createStreams = async (data: any) => {
 
-      consoleOut('Starting create stream using MSP V2...', '', 'blue');
+      consoleOut('Starting create streams using MSP V2...', '', 'blue');
       const msp = new MSP(endpoint, streamV2ProgramAddress, "finalized");
-      const streamAccount = Keypair.generate();
 
       if (!props.isMultisigTreasury) {
-        return await msp.createStream(
+
+        const beneficiaries: Beneficiary[] = data.beneficiaries.map((b: any) => {
+          return {
+            ...b,
+            address: new PublicKey(b.address)
+          } as Beneficiary
+        });
+
+        return await msp.createStreams(
           new PublicKey(data.payer),                                          // initializer
           new PublicKey(data.treasurer),                                      // treasurer
           new PublicKey(data.treasury),                                       // treasury
-          new PublicKey(data.beneficiary),                                    // beneficiary
+          beneficiaries,                                                      // beneficiary
           new PublicKey(data.associatedToken),                                // associatedToken
-          streamAccount,
-          data.streamName,                                                    // streamName
           data.allocationAssigned,                                            // allocationAssigned
           data.rateAmount,                                                    // rateAmount
           data.rateIntervalInSeconds,                                         // rateIntervalInSeconds
@@ -518,21 +664,41 @@ export const TreasuryStreamCreateModal = (props: {
         props.multisigClient.programId
       );
 
-      const timeStamp = new u64(Date.now() / 1000);
+      let streams: StreamBeneficiary[] = [];
+      let streamsBumps: any = {};
+      let seedCounter = 0;
 
-      let [stream, streamBump] = await PublicKey.findProgramAddress(
-        [props.multisigAddress.toBuffer(), timeStamp.toBuffer()],
-        props.multisigClient.programId
-      );
+      const timeStamp = parseInt((Date.now() / 1000).toString());
 
-      let createStream = await msp.createStreamFromPda(
+      for (let beneficiary of data.beneficiaries) {
+        
+        let timeStampCounter = new u64(timeStamp + seedCounter);
+        let [stream, streamBump] = await PublicKey.findProgramAddress(
+          [props.multisigAddress.toBuffer(), timeStampCounter.toBuffer()],
+          props.multisigClient.programId
+        );
+
+        streams.push({
+          name: beneficiary.streamName,
+          address: stream,
+          beneficiary: new PublicKey(beneficiary.address)
+
+        } as StreamBeneficiary);
+
+        streamsBumps[stream.toBase58()] = {
+          bump: streamBump,
+          timeStamp: timeStampCounter
+        };
+
+        seedCounter += 1;
+      }
+
+      let createStreams = await msp.createStreamsFromPda(
         publicKey,                                                            // payer
         multisigSigner,                                                       // treasurer
         new PublicKey(data.treasury),                                         // treasury
-        new PublicKey(data.beneficiary),                                      // beneficiary
         new PublicKey(data.associatedToken),                                  // associatedToken
-        stream,                                                               // stream PDA
-        data.streamName,                                                      // streamName
+        streams,                                                              // streams
         data.allocationAssigned,                                              // allocationAssigned
         data.rateAmount,                                                      // rateAmount
         data.rateIntervalInSeconds,                                           // rateIntervalInSeconds
@@ -542,49 +708,55 @@ export const TreasuryStreamCreateModal = (props: {
         data.feePayedByTreasurer                                              // feePayedByTreasurer
       );
 
-      const ixData = Buffer.from(createStream.instructions[0].data);
-      const ixAccounts = createStream.instructions[0].keys;
-      const transaction = Keypair.generate();
-      const txSize = 1200;
-      const createIx = await props.multisigClient.account.transaction.createInstruction(
-        transaction,
-        txSize
-      );
+      let txs: Transaction[] = [];
 
-      let tx = props.multisigClient.transaction.createTransaction(
-        MSPV2Constants.MSP,
-        OperationType.StreamCreate,
-        ixAccounts as any,
-        ixData as any,
-        timeStamp,
-        new BN(streamBump),
-        {
-          accounts: {
-            multisig: props.multisigAddress,
-            transaction: transaction.publicKey,
-            proposer: publicKey,
-          },
-          preInstructions: [createIx],
-          signers: [transaction],
-        }
-      );
+      for (let createTx of createStreams) {
+        const ixData = Buffer.from(createTx.instructions[0].data);
+        const ixAccounts = createTx.instructions[0].keys;
+        const transaction = Keypair.generate();
+        const txSize = 1200;
+        const createIx = await props.multisigClient.account.transaction.createInstruction(
+          transaction,
+          txSize
+        );
 
-      tx.feePayer = publicKey;
-      let { blockhash } = await props.multisigClient.provider.connection.getRecentBlockhash("finalized");
-      tx.recentBlockhash = blockhash;
-      tx.partialSign(transaction);
+        let streamSeedData = streamsBumps[createTx.instructions[0].keys[7].pubkey.toBase58()];
+        let tx = props.multisigClient.transaction.createTransaction(
+          MSPV2Constants.MSP,
+          OperationType.StreamCreate,
+          ixAccounts as any,
+          ixData as any,
+          new u64(streamSeedData.timeStamp.toNumber()),
+          new BN(streamSeedData.bump),
+          {
+            accounts: {
+              multisig: props.multisigAddress,
+              transaction: transaction.publicKey,
+              proposer: publicKey,
+            },
+            preInstructions: [createIx],
+            signers: [transaction],
+          }
+        );
 
-      return tx;
+        tx.feePayer = publicKey;
+        let { blockhash } = await props.multisigClient.provider.connection.getRecentBlockhash("finalized");
+        tx.recentBlockhash = blockhash;
+        tx.partialSign(transaction);
+        txs.push(tx);
+      } 
+
+      return txs;
     }
 
-    const createTx = async (): Promise<boolean> => {
+    const createTxs = async (): Promise<boolean> => {
 
       if (!publicKey || !props.treasuryDetails || !selectedToken) {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
         });
-        customLogger.logError('CreateStream for a treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('CreateStreams for a treasury transaction failed', { transcript: transactionLog });
         return false;
       }
 
@@ -595,10 +767,13 @@ export const TreasuryStreamCreateModal = (props: {
         currentOperation: TransactionStatus.InitTransaction
       });
 
-      const beneficiary = new PublicKey(recipientAddress as string);
+      const beneficiaries = !enableMultipleStreamsOption 
+        ? [{ streamName: recipientNote ? recipientNote.trim() : '', address: recipientAddress as string }]
+        : csvArray;
+
       const associatedToken = new PublicKey(selectedToken?.address as string);
       const treasury = new PublicKey(props.treasuryDetails.id as string);
-      const amount = tokenAmount;
+      const amount = tokenAmount.div(new BN(beneficiaries.length));
       const rateAmount = toTokenAmount(parseFloat(paymentRateAmount as string), selectedToken.decimals);
       const now = new Date();
       const parsedDate = Date.parse(paymentStartDate as string);
@@ -618,9 +793,8 @@ export const TreasuryStreamCreateModal = (props: {
         payer: publicKey.toBase58(),                                                // initializer
         treasurer: publicKey.toBase58(),                                            // treasurer
         treasury: treasury.toBase58(),                                              // treasury
-        beneficiary: beneficiary.toBase58(),                                        // beneficiary
+        beneficiaries: beneficiaries,                                               // beneficiaries
         associatedToken: associatedToken.toBase58(),                                // associatedToken
-        streamName: recipientNote ? recipientNote.trim() : undefined,               // streamName
         allocationAssigned: amount,                                                 // allocationAssigned
         rateAmount: rateAmount,                                                     // rateAmount
         rateIntervalInSeconds: getRateIntervalInSeconds(paymentRateFrequency),      // rateIntervalInSeconds
@@ -636,9 +810,8 @@ export const TreasuryStreamCreateModal = (props: {
        * payer: PublicKey,
        * treasurer: PublicKey,
        * treasury: PublicKey | undefined,
-       * beneficiary: PublicKey,
+       * beneficiaries: any[],
        * associatedToken: PublicKey,
-       * streamName: string,
        * allocationAssigned: number,
        * rateAmount?: number | undefined,
        * rateIntervalInSeconds?: number | undefined,
@@ -677,23 +850,23 @@ export const TreasuryStreamCreateModal = (props: {
             getTokenAmountAndSymbolByTokenAddress(props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
           })`
         });
-        customLogger.logWarning('CreateStream for a treasury transaction failed', { transcript: transactionLog });
+        customLogger.logWarning('CreateStreams for a treasury transaction failed', { transcript: transactionLog });
         return false;
       }
 
-      let result = await createStream(data)
-        .then(value => {
-          if (!value) { return false; }
-          consoleOut('createStream returned transaction:', value);
+      let result = await createStreams(data)
+        .then(values => {
+          if (!values || !values.length) { return false; }
+          // consoleOut('createStreams returned transaction:', values);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-            result: getTxIxResume(value)
+            // result: getTxIxResume(value)
           });
-          transaction = value;
+          transactions = values;
           return true;
         })
         .catch(error => {
@@ -713,17 +886,31 @@ export const TreasuryStreamCreateModal = (props: {
       return result;
     }
 
-    const signTx = async (): Promise<boolean> => {
-      if (wallet) {
-        consoleOut('Signing transaction...');
-        return await wallet.signTransaction(transaction)
-        .then((signed: Transaction) => {
-          consoleOut('signTransaction returned a signed transaction:', signed);
-          signedTransaction = signed;
+    const signTxs = async (): Promise<boolean> => {
+
+      if (!wallet) {
+        console.error('Cannot sign transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot sign transaction! Wallet not found!'
+        });
+        customLogger.logError('CreateStream for a treasury transaction failed', { transcript: transactionLog });
+        return false;
+      }
+
+      consoleOut('Signing transactions...');
+      let result = await wallet.signAllTransactions(transactions)
+        .then((signed: Transaction[]) => {
+          // consoleOut('signTransaction returned a signed transaction:', signed);
+          signedTransactions = signed;
           // Try signature verification by serializing the transaction
           try {
-            encodedTx = signedTransaction.serialize().toString('base64');
-            consoleOut('encodedTx:', encodedTx, 'orange');
+            encodedTxs = signedTransactions.map(t => t.serialize().toString('base64'));
+            consoleOut('encodedTxs:', encodedTxs, 'orange');
           } catch (error) {
             console.error(error);
             setTransactionStatus({
@@ -734,7 +921,7 @@ export const TreasuryStreamCreateModal = (props: {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logError('CreateStream for a treasury transaction failed', { transcript: transactionLog });
+            customLogger.logError('CreateStreams for a treasury transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -757,81 +944,80 @@ export const TreasuryStreamCreateModal = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('CreateStream for a treasury transaction failed', { transcript: transactionLog });
+          customLogger.logError('CreateStreams for a treasury transaction failed', { transcript: transactionLog });
           return false;
         });
-      } else {
-        console.error('Cannot sign transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.WalletNotFound
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot sign transaction! Wallet not found!'
-        });
-        customLogger.logError('CreateStream for a treasury transaction failed', { transcript: transactionLog });
-        return false;
-      }
+
+      return result;
     }
 
-    const sendTx = async (): Promise<boolean> => {
-      if (wallet) {
-        return await props.connection
-          .sendEncodedTransaction(encodedTx)
-          .then(sig => {
-            consoleOut('sendEncodedTransaction returned a signature:', sig);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.ConfirmTransaction
-            });
-            signature = sig;
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
-              result: `signature: ${signature}`
-            });
-            return true;
-          })
-          .catch(error => {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransaction,
-              currentOperation: TransactionStatus.SendTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
-              result: { error, encodedTx }
-            });
-            customLogger.logError('CreateStream for a treasury transaction failed', { transcript: transactionLog });
-            return false;
-          });
-      } else {
-        console.error('Cannot send transaction! Wallet not found!');
+    const sendTxs = async (): Promise<boolean> => {
+
+      if (!wallet) {
+        console.error('Cannot send transactions! Wallet not found!');
         setTransactionStatus({
           lastOperation: TransactionStatus.SendTransaction,
           currentOperation: TransactionStatus.WalletNotFound
         });
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot send transaction! Wallet not found!'
+          result: 'Cannot send transactions! Wallet not found!'
         });
-        customLogger.logError('CreateStream for a treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('CreateStreams for a treasury transaction failed', { transcript: transactionLog });
         return false;
       }
+
+      const promises: Promise<string>[] = [];
+
+      for (let tx of encodedTxs) {
+        promises.push(props.connection.sendEncodedTransaction(tx));
+      }
+
+      let result = await Promise.all(promises)
+        .then(sigs => {
+          consoleOut('sendEncodedTransaction returned a signature:', sigs);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SendTransactionSuccess,
+            currentOperation: TransactionStatus.ConfirmTransaction
+          });
+          signatures = sigs;
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
+            result: `signatures: ${signatures}`
+          });
+          return true;
+        })
+        .catch(error => {
+          console.error(error);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SendTransaction,
+            currentOperation: TransactionStatus.SendTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+            // result: { error, encodedTx }
+          });
+          customLogger.logError('CreateStream for a treasury transaction failed', { transcript: transactionLog });
+          return false;
+        });
+
+      return result;
     }
 
     if (wallet) {
-      const create = await createTx();
+      const create = await createTxs();
       consoleOut('created:', create);
       if (create && !transactionCancelled) {
-        const sign = await signTx();
+        const sign = await signTxs();
         consoleOut('signed:', sign);
         if (sign && !transactionCancelled) {
-          const sent = await sendTx();
+          const sent = await sendTxs();
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
-            consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.TreasuryStreamCreate);
+            consoleOut('Send Txs to confirmation queue:', signatures);
+            signatures.forEach(s => {
+              startFetchTxSignatureInfo(s, "finalized", OperationType.TreasuryStreamCreate);
+            });
             setIsBusy(false);
             props.handleOk();
           } else { setIsBusy(false); }
@@ -903,45 +1089,94 @@ export const TreasuryStreamCreateModal = (props: {
       footer={null}
       visible={props.isVisible}
       onOk={props.handleOk}
-      onCancel={props.handleClose}
+      onCancel={onCloseModal}
+      afterClose={onAfterClose}
       width={480}>
 
       <div className="scrollable-content">
         <StepSelector step={currentStep} steps={2} onValueSelected={onStepperChange} />
 
         <div className={currentStep === 0 ? "contract-wrapper panel1 show" : "contract-wrapper panel1 hide"}>
-          <div className="form-label">{t('transactions.recipient.label')}</div>
-          <div className="well">
-            <div className="flex-fixed-right">
-              <div className="left position-relative">
-                <span className="recipient-field-wrapper">
-                  <input id="payment-recipient-field"
-                    className="general-text-input"
-                    autoComplete="on"
-                    autoCorrect="off"
-                    type="text"
-                    onFocus={handleRecipientAddressFocusIn}
-                    onChange={handleRecipientAddressChange}
-                    onBlur={handleRecipientAddressFocusOut}
-                    placeholder={t('transactions.recipient.placeholder')}
-                    required={true}
-                    spellCheck="false"
-                    value={recipientAddress}/>
-                  <span id="payment-recipient-static-field"
-                        className={`${recipientAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>
-                    {recipientAddress || t('transactions.recipient.placeholder')}
-                  </span>
-                </span>
-              </div>
-            </div>
-            {
-              recipientAddress && !isValidAddress(recipientAddress) && (
-                <span className="form-field-error">
-                  {t('transactions.validation.address-validation')}
-                </span>
-              )
-            }
+
+          {/* Create Treasury checkbox */}
+          <div className="mb-2 flex-row align-items-start">
+            <span className="form-label w-auto mb-0">{t('treasuries.treasury-streams.create-treasury-switch-label')}</span>
+            <Radio.Group className="ml-2 d-flex" 
+              onChange={onCloseMultipleStreamsChanged} 
+              value={enableMultipleStreamsOption}
+            >
+              <Radio value={true}>{t('general.yes')}</Radio>
+              <Radio value={false}>{t('general.no')}</Radio>
+            </Radio.Group>
           </div>
+
+          <div className="form-label icon-label">
+            {!enableMultipleStreamsOption ? t('transactions.recipient.label') : t('treasuries.treasury-streams.multiple-address-list')}
+            {enableMultipleStreamsOption && (
+              <Tooltip placement="top" title={t("treasuries.treasury-streams.multiple-address-question-mark-tooltip")}>
+                <span>
+                  <IconHelpCircle className="mean-svg-icons" />
+                </span>
+              </Tooltip>
+            )}
+          </div>
+          
+          {!enableMultipleStreamsOption ? (
+            <div className="well">
+              <div className="flex-fixed-right">
+                <div className="left position-relative">
+                  <span className="recipient-field-wrapper">
+                    <input id="payment-recipient-field"
+                      className="general-text-input"
+                      autoComplete="on"
+                      autoCorrect="off"
+                      type="text"
+                      onFocus={handleRecipientAddressFocusIn}
+                      onChange={handleRecipientAddressChange}
+                      onBlur={handleRecipientAddressFocusOut}
+                      placeholder={t('transactions.recipient.placeholder')}
+                      required={true}
+                      spellCheck="false"
+                      value={recipientAddress}/>
+                    <span 
+                      id="payment-recipient-static-field" 
+                      className={`${recipientAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>
+                      {recipientAddress ? recipientAddress : t('transactions.recipient.placeholder')}
+                    </span>
+                  </span>
+                </div>
+              </div>
+              {
+                recipientAddress && !isValidAddress(recipientAddress) && (
+                  <span className="form-field-error">
+                    {t('transactions.validation.address-validation')}
+                  </span>
+                )
+              }
+            </div>
+          ) : (
+            <div className="well">
+              <div className="flex-fixed-right">
+                <div className="left position-relative">
+                  <span className="recipient-field-wrapper">
+                    <input
+                      type='file'
+                      accept='.csv'
+                      id='csvFile'
+                      onChange={selectCsvHandler}
+                    />
+                  </span>
+                </div>
+              </div>
+              {
+                (!validMultiRecipientsList && (isCsvSelected && listValidAddresses.length === 0)) && (
+                  <span className="form-field-error">
+                    {t('transactions.validation.multi-recipient-invalid-list')}
+                  </span>
+                )
+              }
+            </div>
+          )}
 
           <div className="form-label">{t('transactions.rate-and-frequency.amount-label')}</div>
           <div className="well">
@@ -949,8 +1184,7 @@ export const TreasuryStreamCreateModal = (props: {
               <div className="left">
                 <span className="add-on">
                   {(selectedToken && tokenList) && (
-                    <Select className={`token-selector-dropdown ${props.associatedToken ? 'click-disabled' : ''}`} value={selectedToken.address}
-                            onChange={onTokenChange} bordered={false} showArrow={false}>
+                    <Select className={`token-selector-dropdown ${props.associatedToken ? 'click-disabled' : ''}`} value={selectedToken.address} onChange={onTokenChange} bordered={false} showArrow={false}>
                       {tokenList.map((option) => {
                         return (
                           <Option key={option.address} value={option.address}>
@@ -1060,74 +1294,139 @@ export const TreasuryStreamCreateModal = (props: {
             </div>
           </div>
 
-          <div className="form-label">{t('transactions.memo2.label')}</div>
-          <div className="well m-0">
-            <div className="flex-fixed-right">
-              <div className="left">
-                <input
-                  id="payment-memo-field"
-                  className="w-100 general-text-input"
-                  autoComplete="on"
-                  autoCorrect="off"
-                  type="text"
-                  maxLength={32}
-                  onChange={handleRecipientNoteChange}
-                  placeholder={t('transactions.memo2.placeholder')}
-                  spellCheck="false"
-                  value={recipientNote}
-                />
+          {!enableMultipleStreamsOption && (
+            <>
+              <div className="form-label">{t('transactions.memo2.label')}</div>
+              <div className="well m-0">
+                <div className="flex-fixed-right">
+                  <div className="left">
+                    <input
+                      id="payment-memo-field"
+                      className="w-100 general-text-input"
+                      autoComplete="on"
+                      autoCorrect="off"
+                      type="text"
+                      maxLength={32}
+                      onChange={handleRecipientNoteChange}
+                      placeholder={t('transactions.memo2.placeholder')}
+                      spellCheck="false"
+                      value={recipientNote}
+                    />
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
+            </>
+          )}
         </div>
 
         <div className={currentStep === 1 ? "contract-wrapper panel2 show" : "contract-wrapper panel2 hide"}>
 
-          {publicKey && recipientAddress && (
+          {publicKey && (
             <>
-              <div className="flex-fixed-right">
-                <div className="left">
-                  <div className="form-label">{t('transactions.resume')}</div>
+              {(recipientAddress && !enableMultipleStreamsOption) && (
+                <>
+                <div className="flex-fixed-right">
+                  <div className="left">
+                    <div className="form-label">{t('transactions.resume')}</div>
+                  </div>
+                  <div className="right">
+                    <span className="flat-button change-button" onClick={() => setCurrentStep(0)}>
+                      <IconEdit className="mean-svg-icons" />
+                      <span>{t('general.cta-change')}</span>
+                    </span>
+                  </div>
                 </div>
-                <div className="right">
-                  <span className="flat-button change-button" onClick={() => setCurrentStep(0)}>
-                    <IconEdit className="mean-svg-icons" />
-                    <span>{t('general.cta-change')}</span>
-                  </span>
-                </div>
-              </div>
-              <div className="well">
-                <div className="three-col-flexible-middle">
-                  <div className="left flex-row">
-                    <div className="flex-center">
-                      <Identicon
-                        address={isValidAddress(recipientAddress) ? recipientAddress : NATIVE_SOL_MINT.toBase58()}
-                        style={{ width: "30", display: "inline-flex" }} />
-                    </div>
-                    <div className="flex-column pl-3">
-                      <div className="address">
-                        {publicKey && isValidAddress(recipientAddress)
-                          ? shortenAddress(recipientAddress)
-                          : t('transactions.validation.no-recipient')}
+                  <div className="well">
+                    <div className="three-col-flexible-middle">
+                      <div className="left flex-row">
+                        <div className="flex-center">
+                          <Identicon
+                            address={isValidAddress(recipientAddress) ? recipientAddress : NATIVE_SOL_MINT.toBase58()}
+                            style={{ width: "30", display: "inline-flex" }} />
+                        </div>
+                        <div className="flex-column pl-3">
+                          <div className="address">
+                            {publicKey && isValidAddress(recipientAddress)
+                              ? shortenAddress(recipientAddress)
+                              : t('transactions.validation.no-recipient')}
+                          </div>
+                          <div className="inner-label mt-0">{recipientNote || '-'}</div>
+                        </div>
                       </div>
-                      <div className="inner-label mt-0">{recipientNote || '-'}</div>
+                      <div className="middle flex-center">
+                        <div className="vertical-bar"></div>
+                      </div>
+                      <div className="right flex-column">
+                        <div className="rate">
+                          {selectedToken
+                            ? getTokenAmountAndSymbolByTokenAddress(parseFloat(paymentRateAmount), selectedToken.address)
+                            : '-'
+                          }
+                          {getIntervalFromSeconds(getRateIntervalInSeconds(paymentRateFrequency), true, t)}
+                        </div>
+                        <div className="inner-label mt-0">{paymentStartDate}</div>
+                      </div>
                     </div>
                   </div>
-                  <div className="middle flex-center">
-                    <div className="vertical-bar"></div>
-                  </div>
-                  <div className="right flex-column">
-                    <div className="rate">
-                      {selectedToken
-                        ? getTokenAmountAndSymbolByTokenAddress(parseFloat(paymentRateAmount), selectedToken.address)
-                        : '-'
-                      }
-                      {getIntervalFromSeconds(getRateIntervalInSeconds(paymentRateFrequency), true, t)}
+                </>
+              )}
+
+              {(csvArray && enableMultipleStreamsOption && validMultiRecipientsList) && (
+                <>
+                  {!props.isMultisigTreasury && (
+                    hasIsOwnWallet && (
+                      <span className="form-field-error text-uppercase">
+                        <p>{t("treasuries.treasury-streams.message-warning")}</p>
+                      </span>
+                    )
+                  )}
+                  <div className="flex-fixed-right">
+                    <div className="left">
+                      <div className="form-label">{t('transactions.resume')}</div>
                     </div>
-                    <div className="inner-label mt-0">{paymentStartDate}</div>
+                    <div className="right">
+                      <span className="flat-button change-button" onClick={() => setCurrentStep(0)}>
+                        <IconEdit className="mean-svg-icons" />
+                        <span>{t('general.cta-change')}</span>
+                      </span>
+                    </div>
                   </div>
-                </div>
-              </div>
+                  {listValidAddresses.map((csvItem: any, index: number) => (
+                    <div key={index} className="well">
+                      <div className="three-col-flexible-middle">
+                        <div className="left flex-row">
+                          <div className="flex-center">
+                            <Identicon
+                              address={isValidAddress(csvItem.address) ? csvItem.address : NATIVE_SOL_MINT.toBase58()}
+                              style={{ width: "30", display: "inline-flex" }} />
+                          </div>
+                          <div className="flex-column pl-3">
+                            <div className="address">
+                              {publicKey && isValidAddress(csvItem.address)
+                                ? shortenAddress(csvItem.address)
+                                : t('transactions.validation.no-recipient')}
+                            </div>
+                            <div className="inner-label mt-0">{csvItem.streamName.substring(0, 15) || '-'}</div>
+                          </div>
+                        </div>
+                        <div className="middle flex-center">
+                          <div className="vertical-bar"></div>
+                        </div>
+                        <div className="right flex-column">
+                          <div className="rate">
+                            {selectedToken
+                              ? getTokenAmountAndSymbolByTokenAddress(parseFloat(paymentRateAmount), selectedToken.address)
+                              : '-'
+                            }
+                            {getIntervalFromSeconds(getRateIntervalInSeconds(paymentRateFrequency), true, t)}
+                          </div>
+                          <div className="inner-label mt-0">{paymentStartDate}</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
             </>
           )}
 
@@ -1141,8 +1440,7 @@ export const TreasuryStreamCreateModal = (props: {
               <div className="left">
                 <span className="add-on">
                   {(selectedToken && tokenList) && (
-                    <Select className={`token-selector-dropdown ${props.associatedToken ? 'click-disabled' : ''}`} value={selectedToken.address}
-                            onChange={onTokenChange} bordered={false} showArrow={false}>
+                    <Select className={`token-selector-dropdown ${props.associatedToken ? 'click-disabled' : ''}`} value={selectedToken.address} onChange={onTokenChange} bordered={false} showArrow={false}>
                       {tokenList.map((option) => {
                         return (
                           <Option key={option.address} value={option.address}>
@@ -1254,7 +1552,7 @@ export const TreasuryStreamCreateModal = (props: {
           </div>
 
           <div className="ml-1">
-            <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>{t('transactions.verified-recipient-label')}</Checkbox>
+            <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>{t('transfers.verified-recipient-disclaimer')}</Checkbox>
           </div>
 
         </div>
@@ -1271,8 +1569,8 @@ export const TreasuryStreamCreateModal = (props: {
             size="large"
             onClick={onContinueButtonClick}
             disabled={!publicKey ||
-              !isMemoValid() ||
-              !isValidAddress(recipientAddress) ||
+              (!enableMultipleStreamsOption && !isMemoValid()) ||
+              ((!enableMultipleStreamsOption ? !isValidAddress(recipientAddress) : (!isCsvSelected || !validMultiRecipientsList))) ||
               !arePaymentSettingsValid()}>
             {getStepOneContinueButtonLabel()}
           </Button>
@@ -1286,8 +1584,8 @@ export const TreasuryStreamCreateModal = (props: {
           size="large"
           onClick={onTransactionStart}
           disabled={!publicKey ||
-            !isMemoValid() ||
-            !isValidAddress(recipientAddress) ||
+            (!enableMultipleStreamsOption && !isMemoValid()) ||
+            ((!enableMultipleStreamsOption ? !isValidAddress(recipientAddress) : !validMultiRecipientsList)) ||
             !arePaymentSettingsValid() ||
             !areSendAmountSettingsValid() ||
             !isVerifiedRecipient}>

@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction, TransferParams } from "@solana/web3.js";
+import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { Button, Col, Divider, Modal, Row, Tooltip } from "antd";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { getPlatformFeeAccounts, Jupiter, RouteInfo, TOKEN_LIST_URL, TransactionFeeInfo } from "@jup-ag/core";
@@ -20,7 +20,7 @@ import { useTranslation } from "react-i18next";
 import { TextInput } from "../../components/TextInput";
 import { Identicon } from "../../components/Identicon";
 import { JupiterExchangeOutput } from "../../components/JupiterExchangeOutput";
-import { InfoCircleOutlined, LoadingOutlined, ReloadOutlined, SyncOutlined } from "@ant-design/icons";
+import { InfoCircleOutlined, LoadingOutlined, ReloadOutlined, SyncOutlined, WarningFilled } from "@ant-design/icons";
 import { appConfig, customLogger } from "../..";
 import BN from 'bn.js';
 import "./style.less";
@@ -32,6 +32,8 @@ import { wrapSol } from "@mean-dao/money-streaming/lib/utils";
 import { unwrapSol } from "@mean-dao/hybrid-liquidity-ag";
 import { SignerWalletAdapter } from "@solana/wallet-adapter-base";
 import { TokenDisplay } from "../../components/TokenDisplay";
+import { environment } from "../../environments/environment";
+import { DcaInterval } from "../../models/ddca-models";
 
 export const JupiterExchange = (props: {
     queryFromMint: string | null;
@@ -45,6 +47,7 @@ export const JupiterExchange = (props: {
     const [userBalances, setUserBalances] = useState<any>();
     const {
         coinPrices,
+        ddcaOption,
         transactionStatus,
         previousWalletConnectState,
         setTransactionStatus,
@@ -1002,9 +1005,11 @@ export const JupiterExchange = (props: {
 
         if (jupiter && inputToken && outputToken && slippage && inputAmount && !isWrap() && !isUnwrap()) {
             timer = setInterval(() => {
-                consoleOut(`Trigger refresh routes after ${EXCHANGE_ROUTES_REFRESH_TIMEOUT / 1000} seconds`);
-                setRefreshing(true);
-                refreshRoutes();
+                if (!isBusy) {
+                    consoleOut(`Trigger refresh routes after ${EXCHANGE_ROUTES_REFRESH_TIMEOUT / 1000} seconds`);
+                    setRefreshing(true);
+                    refreshRoutes();
+                }
             }, EXCHANGE_ROUTES_REFRESH_TIMEOUT);
         }
 
@@ -1014,6 +1019,7 @@ export const JupiterExchange = (props: {
             }
         };
     }, [
+        isBusy,
         jupiter,
         slippage,
         inputToken,
@@ -1962,6 +1968,7 @@ export const JupiterExchange = (props: {
                             consoleOut('onSelectedRoute:', route, 'blue');
                             setSelectedRoute(route);
                         }}
+                        isBusy={isBusy || refreshing}
                         showAllRoutes={showFullRoutesList && !isWrap() && !isUnwrap()}
                         onToggleShowFullRouteList={onShowLpListToggled}
                     />
@@ -1992,7 +1999,11 @@ export const JupiterExchange = (props: {
                             onStartSwapTx();
                         }
                     }}
-                    disabled={!isExchangeValid() || refreshing} >
+                    disabled={
+                        !isExchangeValid() ||
+                        environment !== 'production' ||
+                        refreshing
+                    }>
                     {isBusy && (
                         <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
                     )}
@@ -2005,6 +2016,26 @@ export const JupiterExchange = (props: {
                         : transactionStartButtonLabel
                     }
                 </Button>
+
+                {/* Warning */}
+                {environment !== 'production' && (
+                    <div className="notifications">
+                        <div data-show="true" className="ant-alert ant-alert-warning" role="alert">
+                            <span role="img" aria-label="exclamation-circle" className="anticon anticon-exclamation-circle ant-alert-icon">
+                                <WarningFilled />
+                            </span>
+                            <div className="ant-alert-content">
+                                <div className="ant-alert-message">
+                                    {t('swap.exchange-warning')}&nbsp;
+                                    <a className="primary-link" href={`${appConfig.getConfig('production').appUrl}/exchange`} target="_blank" rel="noopener noreferrer">MAINNET</a>
+                                    <span className="ml-1">(<a className="simplelink underline-on-hover" target="_blank" rel="noopener noreferrer"
+                                        href="https://docs.meanfi.com/tutorials/faq#why-is-the-mean-exchange-not-available-to-test-in-devnet">Why?</a>)</span>
+                                </div>
+                                <div className="ant-alert-description"></div>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
             </div>
 

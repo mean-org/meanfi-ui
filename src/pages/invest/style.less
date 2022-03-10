@@ -1,17 +1,23 @@
 .invest-layout {
   margin-bottom: 1.5em;
   max-height: fit-content !important;
-  .meanfi-two-panel-left .inner-container .item-block .transaction-list-row.money-streams-summary .rate-cell .rate-amount {
-    font-size: 12px !important;
+}
+
+.meanfi-two-panel-layout .meanfi-two-panel-right .inner-container .invest-fields-container {
+  position: relative;
+  .transaction-detail-row {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.1rem;
+    color: #212121;
+    color: var(--color-secondary);
+ }
+ .info-label {
+    text-align: center;
   }
-}
-
-.invest-layout .meanfi-two-panel-right .inner-container .stream-fields-container .info-label {
-  text-align: center;
-}
-
-.invest-layout .meanfi-two-panel-right .inner-container .stream-fields-container .transaction-detail-row {
-  justify-content: center;
 }
 
 .flexible-left {
@@ -34,8 +40,8 @@
   align-items: center;
   flex-flow: wrap;
   .token-max {
-    margin-right: 8px;
-    min-width: 30px;
+    margin: 0.25em;
+    min-width: 45px;
     padding: 3px 6px;
     color: #ffffff;
     color: var(--color-white);
@@ -114,10 +120,37 @@
 }
 
 .confirm-terms {
-  display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   svg.mean-svg-icons {
-    height: 1.5em;
+    width: 14px;
+    height: 16px;
+    margin: 0 0.25em;
+    display: flex;
   }
+}
+
+.stats-row {
+  .std-table-cell.first-cell {
+    width: 25px;
+  }
+}
+.contain-icons {
+  display: flex;
+  justify-content: center;
+  margin-left: 0.8em;
+  .token-icon {
+    border-radius: 50%;
+    display: inline-block;
+    font-size: 35px;
+    height: 1em;
+    position: relative;
+    vertical-align: middle;
+    width: 1em;
+    margin-left: -0.25em;
+  }
+}
+
+.transaction-list-row .rate-cell {
+  flex: auto !important;
 }

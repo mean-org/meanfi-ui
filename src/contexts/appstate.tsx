@@ -80,6 +80,7 @@ interface AppStateConfig {
   streamV2ProgramAddress: string;
   loadingStreamActivity: boolean;
   streamActivity: StreamActivity[];
+  hasMoreStreamActivity: boolean;
   customStreamDocked: boolean;
   diagnosisInfo: AccountDetails | undefined;
   // Accounts
@@ -104,6 +105,7 @@ interface AppStateConfig {
   // Staking
   unstakeAmount: string;
   unstakeStartDate: string | undefined;
+  stakingMultiplier: number;
   setTheme: (name: string) => void;
   setDtailsPanelOpen: (state: boolean) => void;
   showDepositOptionsModal: () => void;
@@ -116,6 +118,7 @@ interface AppStateConfig {
   setCoinPrices: (prices: any) => void;
   refreshTokenBalance: () => void;
   resetContractValues: () => void;
+  resetStreamsState: () => void;
   refreshStreamList: (reset?: boolean) => void;
   setContract: (name: string) => void;
   setTreasuryOption: (option: TreasuryTypeOption | undefined) => void;
@@ -157,6 +160,7 @@ interface AppStateConfig {
   // Staking
   setUnstakeAmount: (data: string) => void;
   setUnstakeStartDate: (date: string) => void;
+  setStakingMultiplier: (rate: number) => void;
 }
 
 const contextDefaultValues: AppStateConfig = {
@@ -198,6 +202,7 @@ const contextDefaultValues: AppStateConfig = {
   streamV2ProgramAddress: '',
   loadingStreamActivity: false,
   streamActivity: [],
+  hasMoreStreamActivity: true,
   customStreamDocked: false,
   diagnosisInfo: undefined,
   // Accounts
@@ -222,6 +227,7 @@ const contextDefaultValues: AppStateConfig = {
   // Staking
   unstakeAmount: '',
   unstakeStartDate: 'undefined',
+  stakingMultiplier: 1,
   setTheme: () => {},
   setDtailsPanelOpen: () => {},
   showDepositOptionsModal: () => {},
@@ -236,6 +242,7 @@ const contextDefaultValues: AppStateConfig = {
   setCoinPrices: () => {},
   refreshTokenBalance: () => {},
   resetContractValues: () => {},
+  resetStreamsState: () => {},
   refreshStreamList: () => {},
   setRecipientAddress: () => {},
   setRecipientNote: () => {},
@@ -274,7 +281,8 @@ const contextDefaultValues: AppStateConfig = {
   setHighLightableMultisigId: () => {},
   // Staking
   setUnstakeAmount: () => {},
-  setUnstakeStartDate: () => {}
+  setUnstakeStartDate: () => {},
+  setStakingMultiplier: () => {}
 };
 
 export const AppStateContext = React.createContext<AppStateConfig>(contextDefaultValues);
@@ -284,7 +292,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const { t } = useTranslation('common');
   // Parent contexts
   const connection = useConnection();
-  const { publicKey, connected, wallet } = useWallet();
+  const { publicKey, connected } = useWallet();
   const connectionConfig = useConnectionConfig();
   const accounts = useAccountsContext();
   const [isWhitelisted, setIsWhitelisted] = useState(contextDefaultValues.isWhitelisted);
@@ -359,6 +367,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [loadingStreams, updateLoadingStreams] = useState(false);
   const [loadingStreamActivity, setLoadingStreamActivity] = useState(contextDefaultValues.loadingStreamActivity);
   const [streamActivity, setStreamActivity] = useState<StreamActivity[]>([]);
+  const [hasMoreStreamActivity, setHasMoreStreamActivity] = useState<boolean>(contextDefaultValues.hasMoreStreamActivity);
   const [customStreamDocked, setCustomStreamDocked] = useState(contextDefaultValues.customStreamDocked);
   const [diagnosisInfo, setDiagnosisInfo] = useState<AccountDetails | undefined>(contextDefaultValues.diagnosisInfo);
 
@@ -497,10 +506,20 @@ const AppStateProvider: React.FC = ({ children }) => {
     });
   }
 
+  const resetStreamsState = () => {
+    setStreamList([]);
+    setStreamActivity([]);
+    setStreamDetail(undefined);
+    setActiveStream(undefined);
+    setLoadingStreamActivity(false);
+    setHasMoreStreamActivity(true);
+  }
+
   const setPreviousWalletConnectState = (state: boolean) => {
     updatePreviousWalletConnectState(state);
     if (state === false) {
       resetContractValues();
+      resetStreamsState();
       setCustomStreamDocked(false);
     }
   }
@@ -518,7 +537,9 @@ const AppStateProvider: React.FC = ({ children }) => {
             setActiveStream(detail);
             if (dock) {
               setStreamList([detail]);
-              getStreamActivity(streamId, detail.version);
+              setStreamActivity([]);
+              setHasMoreStreamActivity(true);
+              getStreamActivity(streamId, detail.version, true);
               setCustomStreamDocked(true);
               notify({
                 description: t('notifications.success-loading-stream-message', {streamId: shortenAddress(streamId, 10)}),
@@ -558,12 +579,14 @@ const AppStateProvider: React.FC = ({ children }) => {
     }
   }
 
-  const getStreamActivity = useCallback((streamId: string, version: number) => {
+  const getStreamActivity = useCallback((streamId: string, version: number, clearHistory = false) => {
     if (!connected || !streamId || !ms || !msp) {
       return [];
     }
 
     if (!loadingStreamActivity) {
+
+      consoleOut('Loading stream activity...', '', 'crimson');
 
       setLoadingStreamActivity(true);
       const streamPublicKey = new PublicKey(streamId);
@@ -579,18 +602,38 @@ const AppStateProvider: React.FC = ({ children }) => {
             console.error(err);
             setStreamActivity([]);
             setLoadingStreamActivity(false);
-          });
+          })
+          .finally(() => setHasMoreStreamActivity(false));
 
       } else {
-        msp.listStreamActivity(streamPublicKey)
-          .then(value => {
+        const before = clearHistory
+          ? ''
+          : streamActivity && streamActivity.length > 0
+            ? streamActivity[streamActivity.length - 1].signature
+            : '';
+        consoleOut('before:', before, 'crimson');
+        msp.listStreamActivity(streamPublicKey, before, 5)
+          .then((value: StreamActivity[]) => {
             consoleOut('activity:', value);
-            setStreamActivity(value);
+            const activities = clearHistory
+              ? []
+              : streamActivity && streamActivity.length > 0
+                ? JSON.parse(JSON.stringify(streamActivity)) // Object.assign({}, streamActivity)
+                : [];
+
+            if (value && value.length > 0) {
+              activities.push(...value);
+              setHasMoreStreamActivity(true);
+            } else {
+              setHasMoreStreamActivity(false);
+            }
+            setStreamActivity(activities);
             setLoadingStreamActivity(false);
           })
           .catch(err => {
             console.error(err);
             setStreamActivity([]);
+            setHasMoreStreamActivity(false);
             setLoadingStreamActivity(false);
           });  
       }
@@ -600,6 +643,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     ms,
     msp,
     connected,
+    streamActivity,
     loadingStreamActivity
   ]);
 
@@ -611,18 +655,25 @@ const AppStateProvider: React.FC = ({ children }) => {
         .then((detail: Stream | StreamInfo) => {
           consoleOut('detail:', detail, 'blue');
           if (detail) {
+            if (detail.id !== streamDetail?.id) {
+              setTimeout(() => {
+                setStreamActivity([]);
+                setHasMoreStreamActivity(true);
+                setLoadingStreamActivity(true);
+              });
+              getStreamActivity(detail.id as string, detail.version, true);
+            }
             updateStreamDetail(detail);
             setActiveStream(detail);
             const token = getTokenByMintAddress(detail.associatedToken as string);
             setSelectedToken(token);
-            if (!loadingStreamActivity) {
-              setLoadingStreamActivity(true);
-              getStreamActivity(detail.id as string, detail.version);
-            }
           }
         })
-    } else {
-      setStreamActivity([]);
+        .catch((error: any) => {
+          console.error(error);
+          setStreamActivity([]);
+          setHasMoreStreamActivity(false);
+        });
     }
   }
 
@@ -659,6 +710,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   const [selectedToken, updateSelectedToken] = useState<TokenInfo>();
   const [tokenBalance, updateTokenBalance] = useState<number>(contextDefaultValues.tokenBalance);
+  const [stakingMultiplier, updateStakingMultiplier] = useState<number>(contextDefaultValues.stakingMultiplier);
   const [coinPrices, setCoinPrices] = useState<any>(null);
   const [loadingPrices, setLoadingPrices] = useState<boolean>(contextDefaultValues.loadingPrices);
   const [effectiveRate, updateEffectiveRate] = useState<number>(contextDefaultValues.effectiveRate);
@@ -672,6 +724,10 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   const setSelectedTokenBalance = (balance: number) => {
     updateTokenBalance(balance);
+  }
+
+  const setStakingMultiplier = (rate: number) => {
+    updateStakingMultiplier(rate);
   }
 
   const setEffectiveRate = (rate: number) => {
@@ -871,6 +927,10 @@ const AppStateProvider: React.FC = ({ children }) => {
                   item = Object.assign({}, streamAccumulator[0]);
                 }
                 consoleOut('selectedStream:', item, 'blue');
+
+                setStreamActivity([]);
+                setHasMoreStreamActivity(true);
+
                 if (item && selectedStream && item.id !== selectedStream.id) {
                   updateSelectedStream(item);
                   const mspInstance: any = item.version < 2 ? ms : msp;
@@ -881,32 +941,31 @@ const AppStateProvider: React.FC = ({ children }) => {
                         setActiveStream(detail);
                         const token = getTokenByMintAddress(detail.associatedToken as string);
                         setSelectedToken(token);
-                        if (!loadingStreamActivity) {
+                        setTimeout(() => {
+                          setStreamActivity([]);
+                          setHasMoreStreamActivity(true);
                           setLoadingStreamActivity(true);
-                          const streamPublicKey = new PublicKey(detail.id as string);
-                          mspInstance.listStreamActivity(streamPublicKey)
-                            .then((value: any) => {
-                              consoleOut('activity:', value, 'blue');
-                              setStreamActivity(value);
-                              setLoadingStreamActivity(false);
-                            })
-                            .catch((err: any) => {
-                              console.error(err);
-                              setStreamActivity([]);
-                              setLoadingStreamActivity(false);
-                            });
-                        }
+                        });
+                        getStreamActivity(detail.id as string, detail.version, true);
                       }
                     })
                 } else {
                   if (item) {
                     updateStreamDetail(item);
                     setActiveStream(item);
-                    getStreamActivity(item.id as string, item.version);
+                    const token = getTokenByMintAddress(item.associatedToken as string);
+                    setSelectedToken(token);
+                    setTimeout(() => {
+                      setStreamActivity([]);
+                      setHasMoreStreamActivity(true);
+                      setLoadingStreamActivity(true);
+                    });
+                    getStreamActivity(item.id as string, item.version, true);
                   }
                 }
               } else {
                 setStreamActivity([]);
+                setHasMoreStreamActivity(false);
                 updateSelectedStream(undefined);
                 updateStreamDetail(undefined);
                 setActiveStream(undefined);
@@ -1195,6 +1254,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         streamV2ProgramAddress,
         loadingStreamActivity,
         streamActivity,
+        hasMoreStreamActivity,
         customStreamDocked,
         diagnosisInfo,
         splTokenList,
@@ -1213,6 +1273,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         highLightableMultisigId,
         unstakeAmount,
         unstakeStartDate,
+        stakingMultiplier,
         setTheme,
         setDtailsPanelOpen,
         setShouldLoadTokens,
@@ -1226,6 +1287,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         setCoinPrices,
         refreshTokenBalance,
         resetContractValues,
+        resetStreamsState,
         refreshStreamList,
         setContract,
         setDdcaOption,
@@ -1261,7 +1323,8 @@ const AppStateProvider: React.FC = ({ children }) => {
         setLoadingRecurringBuys,
         setHighLightableMultisigId,
         setUnstakeAmount,
-        setUnstakeStartDate
+        setUnstakeStartDate,
+        setStakingMultiplier
       }}>
       {children}
     </AppStateContext.Provider>

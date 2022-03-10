@@ -86,6 +86,7 @@ export enum OperationType {
     SetVaultAuthority = 40,
     ApproveTransaction = 41,
     ExecuteTransaction = 42,
+    DeleteVault = 43,
     // IDO
     IdoDeposit = 100,
     IdoWithdraw = 101,

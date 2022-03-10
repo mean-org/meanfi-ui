@@ -104,6 +104,7 @@ export const MultisigTreasuryStreams = () => {
         streamsSummary,
         detailsPanelOpen,
         streamProgramAddress,
+        hasMoreStreamActivity,
         loadingStreamsSummary,
         highLightableStreamId,
         streamV2ProgramAddress,
@@ -210,18 +211,7 @@ export const MultisigTreasuryStreams = () => {
                                         setSelectedToken(token);
                                         if (!loadingStreamActivity) {
                                             setLoadingStreamActivity(true);
-                                            const streamPublicKey = new PublicKey(detail.id as string);
-                                            msp.listStreamActivity(streamPublicKey)
-                                                .then((value: any) => {
-                                                    consoleOut('activity:', value, 'blue');
-                                                    setStreamActivity(value);
-                                                    setLoadingStreamActivity(false);
-                                                })
-                                                .catch((err: any) => {
-                                                    console.error(err);
-                                                    setStreamActivity([]);
-                                                    setLoadingStreamActivity(false);
-                                                });
+                                            getStreamActivity(detail.id as string, detail.version);
                                         }
                                     }
                                 })
@@ -249,14 +239,14 @@ export const MultisigTreasuryStreams = () => {
         ms,
         msp,
         publicKey,
-        setStreamList,
         selectedStream,
-        setStreamDetail,
-        setSelectedToken,
-        getStreamActivity,
-        highLightableStreamId,
         loadingStreamActivity,
+        highLightableStreamId,
         loadingTreasuryStreams,
+        getStreamActivity,
+        setSelectedToken,
+        setStreamDetail,
+        setStreamList,
     ]);
 
     const getTreasuryName = useCallback(() => {
@@ -939,12 +929,12 @@ export const MultisigTreasuryStreams = () => {
     const onCopyStreamAddress = (data: any) => {
         if (copyText(data.toString())) {
             notify({
-                description: t("notifications.streamid-copied-message"),
+                description: t("notifications.account-address-copied-message"),
                 type: "info",
             });
         } else {
             notify({
-                description: t("notifications.streamid-not-copied-message"),
+                description: t("notifications.account-address-not-copied-message"),
                 type: "error",
             });
         }
@@ -1193,71 +1183,67 @@ export const MultisigTreasuryStreams = () => {
         return (
             <div className="activity-list">
                 <Spin spinning={loadingStreamActivity}>
-                    {streamActivity && (
+                    {streamActivity && streamActivity.length > 0 && (
                         <>
-                            <div className="item-list-header compact">
-                                <div className="header-row">
-                                    <div className="std-table-cell first-cell">&nbsp;</div>
-                                    <div className="std-table-cell fixed-width-80">
-                                        {t("streams.stream-activity.heading")}
-                                    </div>
-                                    <div className="std-table-cell fixed-width-60">
-                                        {t("streams.stream-activity.label-action")}
-                                    </div>
-                                    <div className="std-table-cell fixed-width-60">
-                                        {t("streams.stream-activity.label-amount")}
-                                    </div>
-                                    <div className="std-table-cell fixed-width-120">
-                                        {t("streams.stream-activity.label-date")}
+                            {streamActivity && streamActivity.length > 0 && (
+                                <div className="item-list-header compact">
+                                    <div className="header-row">
+                                        <div className="std-table-cell first-cell">&nbsp;</div>
+                                        <div className="std-table-cell fixed-width-80">{t('streams.stream-activity.heading')}</div>
+                                        <div className="std-table-cell fixed-width-60">{t('streams.stream-activity.label-action')}</div>
+                                        <div className="std-table-cell fixed-width-60">{t('streams.stream-activity.label-amount')}</div>
+                                        <div className="std-table-cell fixed-width-120">{t('streams.stream-activity.label-date')}</div>
                                     </div>
                                 </div>
-                            </div>
-                            <div className="item-list-body compact">
-                                {streamActivity.map((item, index) => {
-                                    return (
-                                        <a
-                                            key={`${index}`}
-                                            className="item-list-row"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature
-                                                }${getSolanaExplorerClusterParam()}`}
-                                        >
-                                            <div className="std-table-cell first-cell">
-                                                {getActivityIcon(item)}
-                                            </div>
-                                            <div className="std-table-cell fixed-width-80">
-                                                <span
-                                                    className={
-                                                        isAddressMyAccount(item.initializer)
-                                                            ? "text-capitalize align-middle"
-                                                            : "align-middle"
+                            )}
+                            <div className="activity-list-data-wrapper vertical-scroll">
+                                <div className="activity-list h-100">
+                                    <Spin spinning={loadingStreamActivity}>
+                                        {streamActivity && streamActivity.length > 0 && (
+                                            <>
+                                                <div className="item-list-body compact">
+                                                    {streamActivity.map((item, index) => {
+                                                        return (
+                                                            <a key={`${index}`} className="item-list-row" target="_blank" rel="noopener noreferrer"
+                                                                href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature}${getSolanaExplorerClusterParam()}`}>
+                                                                <div className="std-table-cell first-cell">{getActivityIcon(item)}</div>
+                                                                <div className="std-table-cell fixed-width-80">
+                                                                    <span className={isAddressMyAccount(item.initializer) ? 'text-capitalize align-middle' : 'align-middle'}>{getActivityActor(item)}</span>
+                                                                </div>
+                                                                <div className="std-table-cell fixed-width-60">
+                                                                    <span className="align-middle">{getActivityAction(item)}</span>
+                                                                </div>
+                                                                <div className="std-table-cell fixed-width-60">
+                                                                    <span className="align-middle">{
+                                                                        getAmountWithSymbol(
+                                                                            getActivityAmountDisplay(item, streamVersion), item.mint
+                                                                        )}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="std-table-cell fixed-width-120" >
+                                                                    <span className="align-middle">{getShortDate(item.utcDate as string, true)}</span>
+                                                                </div>
+                                                            </a>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </>
+                                        )}
+                                    </Spin>
+                                    {hasMoreStreamActivity && (
+                                        <div className="mt-1 text-center">
+                                            <span className={loadingStreamActivity ? 'no-pointer' : 'secondary-link underline-on-hover'}
+                                                role="link"
+                                                onClick={() => {
+                                                    if (streamDetail) {
+                                                        getStreamActivity(streamDetail.id as string, streamDetail.version);
                                                     }
-                                                >
-                                                    {getActivityActor(item)}
-                                                </span>
-                                            </div>
-                                            <div className="std-table-cell fixed-width-60">
-                                                <span className="align-middle">
-                                                    {getActivityAction(item)}
-                                                </span>
-                                            </div>
-                                            <div className="std-table-cell fixed-width-60">
-                                                <span className="align-middle">
-                                                    {getAmountWithSymbol(
-                                                        getActivityAmountDisplay(item, streamVersion),
-                                                        item.mint
-                                                    )}
-                                                </span>
-                                            </div>
-                                            <div className="std-table-cell fixed-width-120">
-                                                <span className="align-middle">
-                                                    {getShortDate(item.utcDate as string, true)}
-                                                </span>
-                                            </div>
-                                        </a>
-                                    );
-                                })}
+                                                }}>
+                                            {t('general.cta-load-more')}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </>
                     )}
@@ -1514,11 +1500,11 @@ export const MultisigTreasuryStreams = () => {
                             </Spin>
 
                             <Divider className="activity-divider" plain></Divider>
-                            {!streamActivity || streamActivity.length === 0 ? (
-                                <p>{t("streams.stream-activity.no-activity")}.</p>
-                            ) : (
-                                renderActivities(stream.version)
-                            )}
+                            {loadingStreamActivity && (!streamActivity || streamActivity.length === 0) ? (
+                                <p>{t('streams.stream-activity.loading-activity')}</p>
+                            ) : !loadingStreamActivity && (!streamActivity || streamActivity.length === 0) ? (
+                                <p>{t('streams.stream-activity.no-activity')}</p>
+                            ) : renderActivities(stream.version)}
                         </div>
                         <div className="stream-share-ctas">
                             <span
@@ -1766,11 +1752,11 @@ export const MultisigTreasuryStreams = () => {
                             </Spin>
 
                             <Divider className="activity-divider" plain></Divider>
-                            {!streamActivity || streamActivity.length === 0 ? (
-                                <p>{t("streams.stream-activity.no-activity")}.</p>
-                            ) : (
-                                renderActivities(stream.version)
-                            )}
+                            {loadingStreamActivity && (!streamActivity || streamActivity.length === 0) ? (
+                                <p>{t('streams.stream-activity.loading-activity')}</p>
+                            ) : !loadingStreamActivity && (!streamActivity || streamActivity.length === 0) ? (
+                                <p>{t('streams.stream-activity.no-activity')}</p>
+                            ) : renderActivities(stream.version)}
                         </div>
                         <div className="stream-share-ctas">
                             <span
@@ -2065,11 +2051,11 @@ export const MultisigTreasuryStreams = () => {
                             </Spin>
 
                             <Divider className="activity-divider" plain></Divider>
-                            {!streamActivity || streamActivity.length === 0 ? (
-                                <p>{t("streams.stream-activity.no-activity")}.</p>
-                            ) : (
-                                renderActivities(stream.version)
-                            )}
+                            {loadingStreamActivity && (!streamActivity || streamActivity.length === 0) ? (
+                                <p>{t('streams.stream-activity.loading-activity')}</p>
+                            ) : !loadingStreamActivity && (!streamActivity || streamActivity.length === 0) ? (
+                                <p>{t('streams.stream-activity.no-activity')}</p>
+                            ) : renderActivities(stream.version)}
                         </div>
                         <div className="stream-share-ctas">
                             <span
@@ -2338,11 +2324,11 @@ export const MultisigTreasuryStreams = () => {
                             </Spin>
 
                             <Divider className="activity-divider" plain></Divider>
-                            {!streamActivity || streamActivity.length === 0 ? (
-                                <p>{t("streams.stream-activity.no-activity")}.</p>
-                            ) : (
-                                renderActivities(stream.version)
-                            )}
+                            {loadingStreamActivity && (!streamActivity || streamActivity.length === 0) ? (
+                                <p>{t('streams.stream-activity.loading-activity')}</p>
+                            ) : !loadingStreamActivity && (!streamActivity || streamActivity.length === 0) ? (
+                                <p>{t('streams.stream-activity.no-activity')}</p>
+                            ) : renderActivities(stream.version)}
                         </div>
                         <div className="stream-share-ctas">
                             <span
@@ -2369,7 +2355,7 @@ export const MultisigTreasuryStreams = () => {
 
     const renderStreamList = (
         <>
-            {streamList && streamList.length ? (
+            {streamList && streamList.length > 0 ? (
                 streamList.map((item, index) => {
                     const token = item.associatedToken
                         ? getTokenByMintAddress(item.associatedToken as string)
@@ -2390,9 +2376,7 @@ export const MultisigTreasuryStreams = () => {
                             key={`${index + 50}`}
                             onClick={onStreamClick}
                             id={`${item.id}`}
-                            className={`transaction-list-row ${streamDetail && streamDetail.id === item.id ? "selected" : ""
-                                }`}
-                        >
+                            className={`transaction-list-row ${streamDetail && streamDetail.id === item.id ? "selected" : ""}`}>
                             <div className="icon-cell">
                                 {getStreamTypeIcon(item)}
                                 <div className="token-icon">
@@ -2526,8 +2510,7 @@ export const MultisigTreasuryStreams = () => {
                                 {/* item block */}
                                 <div className="item-block vertical-scroll">
                                     <Spin spinning={loadingTreasuryStreams || loadingTreasuryDetails}>
-                                        {streamsSummary &&
-                                            streamsSummary.totalAmount > 0 &&
+                                        {streamsSummary && streamsSummary.totalAmount > 0 &&
                                             renderMoneyStreamsSummary}
                                         {renderStreamList}
                                     </Spin>

@@ -1481,15 +1481,8 @@ export const RecurringExchange = (props: {
               showTokenSelector();
             }}
             onPriceClick={() => refreshPrices()}
-            inputPosition={inputPosition}
-            translationId="source"
-            inputLabel={
-              fromMint && mintList[fromMint]
-                ? `~$${fromAmount
-                  ? formatAmount(parseFloat(fromAmount) * getPricePerToken(mintList[fromMint] as TokenInfo), 2)
-                  : '0.00' }`
-                : ''
-            }
+            debounceTime={500}
+            className="mb-0"
           />
 
           <div className="flip-button-container">
@@ -1585,11 +1578,11 @@ export const RecurringExchange = (props: {
             size="large"
             onClick={showDdcaSetup}
             disabled={
-              !isValidBalance() || 
-              !isSwapAmountValid() || 
-              !exchangeInfo || 
-              !exchangeInfo?.amountOut || 
-              (environment !== 'production' && ddcaOption?.dcaInterval === DcaInterval.OneTimeExchange) 
+              !isValidBalance() ||
+              !isSwapAmountValid() ||
+              !exchangeInfo ||
+              !exchangeInfo?.amountOut ||
+              (environment !== 'production' && ddcaOption?.dcaInterval === DcaInterval.OneTimeExchange)
             }>
             {transactionStartButtonLabel}
           </Button>
