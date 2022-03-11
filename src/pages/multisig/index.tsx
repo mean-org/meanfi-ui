@@ -1,6 +1,7 @@
 import React, { useCallback, useContext, useMemo } from 'react';
 import {
   CheckOutlined,
+  CopyOutlined,
   InfoCircleOutlined,
   LoadingOutlined,
   ReloadOutlined,
@@ -8,7 +9,6 @@ import {
 import {
   ConfirmOptions,
   Connection,
-  GetProgramAccountsFilter,
   Keypair,
   LAMPORTS_PER_SOL,
   MemcmpFilter,
@@ -22,7 +22,7 @@ import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
 import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
-import { AppStateContext } from '../../contexts/appstate';
+import { AppStateContext, TransactionStatusInfo } from '../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
 import { Identicon } from '../../components/Identicon';
 import {
@@ -1571,15 +1571,18 @@ export const MultisigView = () => {
         .catch((error: any) => {
           console.error(error);
           const txStatus = {
-            customError: '',
+            customError: undefined,
             lastOperation: TransactionStatus.SendTransaction,
             currentOperation: TransactionStatus.SendTransactionFailure
-          };
+          } as TransactionStatusInfo;
           if (error.toString().indexOf('0x1794') !== -1) {
             let treasury = data.transaction.operation === OperationType.StreamClose
               ? data.transaction.accounts[5].pubkey.toBase58()
               : data.transaction.accounts[3].pubkey.toBase58();
-            txStatus.customError = `Your transaction failed to submit due to there not being enough SOL to cover the fees. Please fund the treasury with at least 0.00002 SOL and then retry this operation.\n\nTreasury ID: ${treasury}`;
+            txStatus.customError = {
+              message: 'Your transaction failed to submit due to there not being enough SOL to cover the fees. Please fund the treasury with at least 0.00002 SOL and then retry this operation.\n\nTreasury ID: ',
+              data: treasury
+            };
           }
           setTransactionStatus(txStatus);
           transactionLog.push({
@@ -4593,11 +4596,23 @@ export const MultisigView = () => {
                         operation: getOperationName(highlightedMultisigTx.operation)
                       })}</h4>
                       <h4 className="mb-3">
-                      {
-                        !transactionStatus.customError 
-                          ? getTransactionOperationDescription(transactionStatus.currentOperation, t)
-                          : transactionStatus.customError
-                      }
+                      {!transactionStatus.customError
+                        ? getTransactionOperationDescription(transactionStatus.currentOperation, t)
+                        : (
+                          <>
+                            <span>{transactionStatus.customError.message}</span>
+                            <span className="ml-1">[{shortenAddress(transactionStatus.customError.data.toBase58(), 8)}]</span>
+                            <div className="icon-button-container">
+                              <Button
+                                type="default"
+                                shape="circle"
+                                size="middle"
+                                icon={<CopyOutlined />}
+                                onClick={() => copyAddressToClipboard(transactionStatus.customError.data)}
+                              />
+                            </div>
+                          </>
+                        )}
                       </h4>
                     </>
                   )}
