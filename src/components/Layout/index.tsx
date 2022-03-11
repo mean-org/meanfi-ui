@@ -23,7 +23,7 @@ import { reportConnectedAccount } from "../../utils/api";
 import { Connection } from "@solana/web3.js";
 import useOnlineStatus from "../../contexts/online-status";
 import { AccountDetails } from "../../models";
-import { analytics } from "../../App";
+import { segmentAnalytics } from "../../App";
 
 const { Header, Content, Footer } = Layout;
 
@@ -219,10 +219,8 @@ export const AppLayout = React.memo((props: any) => {
     if (environment === 'production') {
       ReactGA.pageview(location.pathname);
     }
-    // Report page view in Segment for all envs
-    if (analytics) {
-      analytics.page(location.pathname);
-    }
+    // Report page view in Segment
+    segmentAnalytics.recordPageVisit(location.pathname)
   }, [location.pathname]);
 
   // Effect Network change
@@ -253,6 +251,14 @@ export const AppLayout = React.memo((props: any) => {
       if (!previousWalletConnectState && connected) {
         if (publicKey) {
           const walletAddress = publicKey.toBase58();
+
+          // Record user login in Segment Analytics
+          segmentAnalytics.recordIdentity(walletAddress, {
+            platform: getPlatform(),
+            browser: browserName,
+            walletProvider: provider?.name || 'Other'
+          });
+
           if (!isLocal()) {
             sendConnectionMetric(walletAddress);
           }
@@ -278,6 +284,11 @@ export const AppLayout = React.memo((props: any) => {
         refreshTokenBalance();
         setPreviousWalletConnectState(true);
       } else if (previousWalletConnectState && !connected) {
+        // Record user as anonymous in Segment Analytics
+        segmentAnalytics.recordIdentity('', {
+            platform: getPlatform(),
+            browser: browserName,
+        });
         setPreviousWalletConnectState(false);
         setNeedRefresh(true);
         setStreamList([]);
@@ -293,16 +304,17 @@ export const AppLayout = React.memo((props: any) => {
     location,
     publicKey,
     connected,
+    provider?.name,
     referralAddress,
     previousWalletConnectState,
-    t,
-    setStreamList,
-    setSelectedAsset,
-    setAccountAddress,
-    setReferralAddress,
-    refreshTokenBalance,
+    setPreviousWalletConnectState,
     sendConnectionMetric,
-    setPreviousWalletConnectState
+    refreshTokenBalance,
+    setReferralAddress,
+    setAccountAddress,
+    setSelectedAsset,
+    setStreamList,
+    t,
   ]);
 
   // Get referral address from query string params and save it to localStorage

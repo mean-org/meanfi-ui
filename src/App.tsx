@@ -5,13 +5,14 @@ import "./App.less";
 import { useLocalStorageState } from './utils/utils';
 import { refreshCachedRpc } from './models/connections-hq';
 import { useTranslation } from 'react-i18next';
-import { Analytics, AnalyticsBrowser } from '@segment/analytics-next';
+import { AnalyticsBrowser } from '@segment/analytics-next';
 import { appConfig } from '.';
 import { isLocal } from './utils/ui';
 import { environment } from './environments/environment';
+import { SegmentAnalyticsService } from './utils/segment-service';
 
 const { Content } = Layout;
-export let analytics: Analytics | undefined = undefined;
+export const segmentAnalytics = new SegmentAnalyticsService();
 
 function App() {
 
@@ -27,7 +28,7 @@ function App() {
     }
     const loadAnalytics = async () => {
       let [response] = await AnalyticsBrowser.load({ writeKey });
-      analytics = response;
+      segmentAnalytics.analytics = response;
     }
     // Load Segment Analytics only for PROD and DEV
     if (environment !== "local" || !isLocal()) {
