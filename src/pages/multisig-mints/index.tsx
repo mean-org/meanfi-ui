@@ -1141,6 +1141,8 @@ export const MultisigMintsView = () => {
         OperationType.SetMultisigAuthority,
         ixAccounts,
         ixData,
+        0,
+        0,
         {
           accounts: {
             multisig: new PublicKey(data.multisig),
@@ -3173,15 +3175,17 @@ export const MultisigMintsView = () => {
         />
       )}
 
-      <MultisigMintTokenModal
-        isVisible={isMintTokenModalVisible}
-        nativeBalance={nativeBalance}
-        transactionFees={transactionFees}
-        handleOk={onAcceptMintToken}
-        handleClose={() => setIsMintTokenModalVisible(false)}
-        isBusy={isBusy}
-        selectedMint={selectedMint}
-      />
+      {isMintTokenModalVisible && (
+        <MultisigMintTokenModal
+          isVisible={isMintTokenModalVisible}
+          nativeBalance={nativeBalance}
+          transactionFees={transactionFees}
+          handleOk={onAcceptMintToken}
+          handleClose={() => setIsMintTokenModalVisible(false)}
+          isBusy={isBusy}
+          selectedMint={selectedMint}
+        />
+      )}
 
       {/* Transaction confirm and execution modal launched from each Tx row */}
       {(isMultisigActionTransactionModalVisible && highlightedMultisigTx && selectedMultisig) && (
