@@ -748,6 +748,13 @@ export const MultisigVaultsView = () => {
       setMultisigVaults(result);
       if (result.length > 0 && !selectedVault) {
         setSelectedVault(result[0]);
+      } else if (result.length > 0 && selectedVault) {
+        const newItem = result.find(i => i.address === selectedVault.address);
+        if (newItem) {
+          setSelectedVault(newItem);
+        } else {
+          setSelectedVault(result[0]);
+        }
       }
     })
     .catch(err => console.error(err))
@@ -1016,7 +1023,6 @@ export const MultisigVaultsView = () => {
     multisigAddress,
     fetchTxInfoStatus,
     lastSentTxSignature,
-    // lastSentTxOperationType,
     clearTransactionStatusContext,
     refreshVaults,
   ]);
@@ -3490,7 +3496,7 @@ export const MultisigVaultsView = () => {
               <div className="inner-container">
                 {publicKey ? (
                   <>
-                    {(isUnderDevelopment() && selectedVault) && (
+                    {selectedVault && (
                       <div className="float-top-right">
                         <span className="icon-button-container secondary-button">
                           <Tooltip placement="bottom" title={t('multisig.multisig-vaults.cta-close')}>
