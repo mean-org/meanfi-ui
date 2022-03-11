@@ -1078,6 +1078,7 @@ export const MultisigMintsView = () => {
   // Transfer Mint authority modal
   const [isTransferMintAuthorityModalVisible, setIsTransferMintAuthorityModalVisible] = useState(false);
   const showTransferMintAuthorityModal = useCallback(() => {
+    resetTransactionStatus();
     setIsTransferMintAuthorityModalVisible(true);
     const fees = {
       blockchainFee: 0.000005,
@@ -1085,7 +1086,7 @@ export const MultisigMintsView = () => {
       mspPercentFee: 0
     };
     setTransactionFees(fees);
-  }, []);
+  }, [resetTransactionStatus]);
 
   const onAcceptTransferMintAuthority = (selectedAuthority: string) => {
     consoleOut('selectedAuthority', selectedAuthority, 'blue');
@@ -1418,6 +1419,7 @@ export const MultisigMintsView = () => {
   // Create Mint modal
   const [isCreateMintModalVisible, setIsCreateMintModalVisible] = useState(false);
   const showCreateMintModal = useCallback(() => {
+    resetTransactionStatus();
     setIsCreateMintModalVisible(true);
     const fees = {
       blockchainFee: 0.000005,
@@ -1425,7 +1427,7 @@ export const MultisigMintsView = () => {
       mspPercentFee: 0
     };
     setTransactionFees(fees);
-  }, []);
+  }, [resetTransactionStatus]);
 
   const onAcceptCreateMint = (createMintPayload: CreateMintPayload) => {
     consoleOut('createMintPayload', createMintPayload, 'blue');
@@ -1740,6 +1742,7 @@ export const MultisigMintsView = () => {
   // Mint tokens modal
   const [isMintTokenModalVisible, setIsMintTokenModalVisible] = useState(false);
   const showMintTokenModal = useCallback(() => {
+    resetTransactionStatus();
     const fees = {
       blockchainFee: 0.000005,
       mspFlatFee: 0.000010,
@@ -1747,7 +1750,7 @@ export const MultisigMintsView = () => {
     };
     setTransactionFees(fees);
     setIsMintTokenModalVisible(true);
-  }, []);
+  }, [resetTransactionStatus]);
 
   const onAcceptMintToken = (params: any) => {
     consoleOut('params', params, 'blue');
@@ -2663,6 +2666,7 @@ export const MultisigMintsView = () => {
   // Transaction confirm and execution modal launched from each Tx row
   const [isMultisigActionTransactionModalVisible, setMultisigActionTransactionModalVisible] = useState(false);
   const showMultisigActionTransactionModal = useCallback((tx: MultisigTransaction) => {
+    resetTransactionStatus();
     const fees = {
       blockchainFee: 0.000005,
       mspFlatFee: 0.000010,
@@ -2671,7 +2675,7 @@ export const MultisigMintsView = () => {
     setTransactionFees(fees);
     sethHighlightedMultisigTx(tx);
     setMultisigActionTransactionModalVisible(true);
-  }, []);
+  }, [resetTransactionStatus]);
 
   const onAcceptMultisigActionModal = (item: MultisigTransaction) => {
     consoleOut('onAcceptMultisigActionModal:', item, 'blue');
