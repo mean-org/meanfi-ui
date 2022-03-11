@@ -76,28 +76,24 @@ export const InvestView = () => {
       value: "$7.64M"
     },
     {
-      label: t("invest.panel-right.stats.next-week-payout"),
+      label: t("invest.panel-right.stats.total-mean-rewards"),
       value: "$108,730"
     }
   ];
 
   const stakingData = [
     {
-      label: "Your Current Stake:",
-      value: ""
-    },
-    {
       label: "My Staked MEAN",
       value: unstakeAmount ? cutNumber(parseFloat(unstakeAmount), 6) : 0
     },
-    {
-      label: "Avg. Locked Yield",
-      value: `${annualPercentageYield}%`
-    },
-    {
-      label: "Staking Lock Boost",
-      value: `${stakingMultiplier}x boost`
-    },
+    // {
+    //   label: "Avg. Locked Yield",
+    //   value: `${annualPercentageYield}%`
+    // },
+    // {
+    //   label: "Staking Lock Boost",
+    //   value: `${stakingMultiplier}x boost`
+    // },
     // {
     //   label: "My Locked eMEAN",
     //   value: "1,000"
@@ -281,19 +277,20 @@ export const InvestView = () => {
                 {selectedInvest.id === 0 && (
                   <>
                     {/* Background animation */}
-                    {stakingRewards > 0 && (
+                    {/* {stakingRewards > 0 && (
                       <div className="staking-background">
                         <img className="inbound" src="/assets/incoming-crypto.svg" alt="" />
                       </div>
-                    )}
+                    )} */}
 
                     {/* Staking paragraphs */}
+                    <h2>{t("invest.panel-right.title")}</h2>
                     <p>{t("invest.panel-right.first-text")}</p>
-                    <p>{t("invest.panel-right.second-text")}</p>
+                    <p className="pb-1">{t("invest.panel-right.second-text")}</p>
                     <div className="pinned-token-separator"></div>
 
                     {/* Staking Stats */}
-                    <div className="invest-fields-container">
+                    <div className="invest-fields-container pt-2">
                       <div className="mb-3">
                         <Row>
                           {stakingStats.map((stat, index) => (
@@ -336,6 +333,7 @@ export const InvestView = () => {
                       {/* Staking data */}
                       <Col xs={24} sm={12} md={24} lg={12} className="column-width">
                         <div className="staking-data">
+                          <h3>{t("invest.panel-right.staking-data.title")}</h3>
                           <Row>
                             {stakingData.map((data, index) => (
                               <>
@@ -347,9 +345,10 @@ export const InvestView = () => {
                                 </Col>
                               </>
                             ))}
-                            <span className="info-label mt-1">{t("invest.panel-right.staking-data.text-one", {unstakeStartDate: unstakeStartDate})}</span>
-                            <span className="info-label">{t("invest.panel-right.staking-data.text-two")}</span>
-                            <Col span={24} className="d-flex flex-column justify-content-end align-items-end mt-1">
+                            <span className="mt-2">{t("invest.panel-right.staking-data.text-one", {unstakeStartDate: unstakeStartDate})}</span>
+
+                            <span className="mt-1"><i>{t("invest.panel-right.staking-data.text-two")}</i></span>
+                            {/* <Col span={24} className="d-flex flex-column justify-content-end align-items-end mt-1">
                               <div className="transaction-detail-row">
                                 <span className="info-icon">
                                   {stakingRewards > 0 && (
@@ -360,10 +359,10 @@ export const InvestView = () => {
                                   <span className="staking-value mb-2 mt-1">{!stakingRewards ? 0 : cutNumber(stakingRewards, 6)} {selectedToken && selectedToken.name}</span>
                                 </span>
                               </div>
-                            </Col>
+                            </Col> */}
 
                             {/* Withdraw button */}
-                            <Col span={24} className="d-flex flex-column justify-content-end align-items-end mt-1">
+                            {/* <Col span={24} className="d-flex flex-column justify-content-end align-items-end mt-1">
                               <Space size="middle">
                                 <Button
                                   type="default"
@@ -376,7 +375,7 @@ export const InvestView = () => {
                                   {t("invest.panel-right.staking-data.withdraw-button")}
                                 </Button>
                               </Space>
-                            </Col>
+                            </Col> */}
 
                             {/* Withdraw funds transaction execution modal */}
                             <Modal
@@ -698,7 +697,7 @@ export const StakeTabView = () => {
         <div className="left token-group">
           {periods.map((period, index) => (
             <div key={index} className="mb-1 d-flex flex-column align-items-center">
-              <div className="token-max simplelink" onClick={() => onChangeValue(period.value, period.time, period.multiplier)}>{period.value} {period.time}</div>
+              <div className={`token-max simplelink ${period.value === 7 ? "active" : "disabled"}`} onClick={() => onChangeValue(period.value, period.time, period.multiplier)}>{period.value} {period.time}</div>
               <span>{`${period.multiplier}x`}</span>
             </div>
           ))}

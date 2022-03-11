@@ -279,11 +279,13 @@
 			"not-connected": "Please connect your wallet to see your invest options"
 		},
 		"panel-right": {
-			"first-text": "MEAN staking rewards include emission incentives plus 30% of the protocol revenues (calculated weekly), and can be boosted using locking periods.",
-			"second-text": "Your staking rewards will be streamed over time and they can be withdrawn at any time.",
+			"title": "Stake MEAN to Earn MEAN Rewards",
+			"first-text": "MEAN staking rewards include emission incentives plus a share of the protocol revenues, and can be boosted using locking periods. When you stake your MEAN, you get sMEAN in return.",
+			"second-text": "Simply holding your sMEAN is all that is required to continuously grow your MEAN stash. You don't need to harvest the rewards with MEAN staking. When you unstake your sMEAN, you will receive the rewards earned in the form of additional MEAN on top of the amount staked.",
 			"staking-data": {
+				"title": "Your Current Stake:",
 				"text-one": "MEAN tokens locked till {{unstakeStartDate}}",
-				"text-two": "Staking rewards available to withdraw:",
+				"text-two": "Additional locking boost periods are coming soon! Only 7 days locking is currently available.",
 				"withdraw-button": "Withdraw Rewards"
 			},
 			"liquidity-pool": {
@@ -293,7 +295,7 @@
 				"refresh-tooltip": "Refresh liquidity data"
 			},
 			"stats": {
-				"next-week-payout": "Next Week Payout",
+				"total-mean-rewards": "Total MEAN Rewards",
 				"staking-apr": "Staking APR",
 				"total-value-locked": "Total Value Locked"
 			},
@@ -302,7 +304,7 @@
 					"amount-label": "Amount to stake",
 					"days": "days",
 					"name": "Stake",
-					"notification-label": "Staking period of {{periodValue}} {{periodTime}} will lock your Tokens until {{unstakeStartDate}} with estimated rewards of up to 100 MEAN",
+					"notification-label": "Staking period of {{periodValue}} {{periodTime}} will lock your Tokens until {{unstakeStartDate}}.",
 					"period-label": "How long do you want to stake for?",
 					"stake-button": "Stake",
 					"terms-and-conditions-tooltip": "Your tokens will be locked for the period of time selected and you will not be able to unstake them before the staking period ends. When you stake additional tokens to an existing contract, the staking period will be extended to the new end date for ALL of the tokens locked.",

@@ -279,15 +279,16 @@
 			"not-connected": "Seçeneklerinizi görmek için cüzdanınızı bağlayın"
 		},
 		"panel-right": {
-			"first-text": "MEAN stake ödülleri, emisyon teşviklerini artı protokol gelirlerinin %30'unu (haftalık olarak hesaplanır) içerir ve kilitleme süreleri kullanılarak artırılabilir.",
-			"second-text": "Stake ödülleriniz zamanla aktarılır ve herhangi bir zamanda çekilebilirler.",
+			"title": "Stake MEAN to Earn MEAN Rewards",
+			"first-text": "MEAN staking rewards include emission incentives plus a share of the protocol revenues, and can be boosted using locking periods. When you stake your MEAN, you get sMEAN in return.",
+			"second-text": "Simply holding your sMEAN is all that is required to continuously grow your MEAN stash. You don't need to harvest the rewards with MEAN staking. When you unstake your sMEAN, you will receive the rewards earned in the form of additional MEAN on top of the amount staked.",
 			"staking-data": {
 				"text-one": "MEAN tokenları {{unstakeStartDate}} kadar kilitli",
-				"text-two": "Staking ödülleri çekilebilecek:",
+				"text-two": "Additional locking boost periods are coming soon! Only 7 days locking is currently available.",
 				"withdraw-button": "Fonları Çek"
 			},
 			"stats": {
-				"next-week-payout": "Gelecek Haftanın Ödemesi",
+				"total-mean-rewards": "Total MEAN Rewards",
 				"staking-apr": "Staking APR",
 				"total-value-locked": "Toplam Kilitli Değer"
 			},
@@ -296,7 +297,7 @@
 					"amount-label": "Stake edilecek miktar",
 					"days": "Günler",
 					"name": "Stake",
-					"notification-label": "Stake periyodu {{periodValue}} {{periodTime}} boyunca, {{unstakeStartDate}} kadar tokenlarınız kilitli kalacak,tahmini 100 MEAN tokena kadar ödül.",
+					"notification-label": "Staking period of {{periodValue}} {{periodTime}} will lock your Tokens until {{unstakeStartDate}}.",
 					"period-label": "Ne kadar süre boyunca stake etmek istiyorsunuz?",
 					"stake-button": "Stake",
 					"terms-and-conditions-tooltip": "Tokenlarınız seçilen süre boyunca kilitlenir ve stake dönemi sona ermeden geri alamazsınız. Mevcut kontrata ek tokenlar stake ettiğinizde, kilitli stake süresi TÜM tokenlar için yeni bitiş tarihine kadar uzatılacaktır.",

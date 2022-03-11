@@ -279,15 +279,16 @@
 			"not-connected": "Vui lòng kết nối ví của bạn để thấy tùy chọn đầu tư"
 		},
 		"panel-right": {
-			"first-text": "Phần thưởng stake MEAN bao gồm các ưu đãi phát thải cộng với 30% doanh thu từ giao thức (được tính hàng tuần) và có thể được tăng cường bằng cách sử dụng các khoảng thời gian khóa.",
-			"second-text": "Phần thưởng stake của bạn sẽ được gửi trực tiếp cho bạn và chúng có thể được rút bất cứ lúc nào.",
+			"title": "Stake MEAN to Earn MEAN Rewards",
+			"first-text": "MEAN staking rewards include emission incentives plus a share of the protocol revenues, and can be boosted using locking periods. When you stake your MEAN, you get sMEAN in return.",
+			"second-text": "Simply holding your sMEAN is all that is required to continuously grow your MEAN stash. You don't need to harvest the rewards with MEAN staking. When you unstake your sMEAN, you will receive the rewards earned in the form of additional MEAN on top of the amount staked.",
 			"staking-data": {
 				"text-one": "Token MEAN sẽ được khóa tới {{unstakeStartDate}}",
-				"text-two": "Phần thưởng stake khả dụng để rút:",
+				"text-two": "Additional locking boost periods are coming soon! Only 7 days locking is currently available.",
 				"withdraw-button": "Rút tiền"
 			},
 			"stats": {
-				"next-week-payout": "Khoản thanh toán tuần tới",
+				"total-mean-rewards": "Total MEAN Rewards",
 				"staking-apr": "Staking APR",
 				"total-value-locked": "Tổng tài sản bị khóa"
 			},
@@ -296,7 +297,7 @@
 					"amount-label": "Số lượng stake",
 					"days": "ngày",
 					"name": "Stake",
-					"notification-label": "Thời gian Stake cố định {{periodValue}} {{periodTime}} sẽ khóa Token của bạn cho đến {{unstakeStartDate}} với phần thưởng ước tính lên đến 100 MEAN",
+					"notification-label": "Staking period of {{periodValue}} {{periodTime}} will lock your Tokens until {{unstakeStartDate}}.",
 					"period-label": "Bạn muốn stake bao lâu?",
 					"stake-button": "Stake",
 					"terms-and-conditions-tooltip": "Các token của bạn sẽ bị khóa trong khoảng thời gian đã chọn và bạn sẽ không thể hủy bỏ chúng trước khi thời gian stake kết thúc. Khi bạn stake thêm token vào một hợp đồng hiện có, thời gian stake sẽ được kéo dài đến ngày kết thúc mới cho TẤT CẢ các token bị khóa.",
