@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Modal, Button, Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
@@ -30,6 +30,16 @@ export const MultisigMintTokenModal = (props: {
   const [tokenAddress, setTokenAddress] = useState('');
   const [mintToAddress, setMintToAddress] = useState('');
   const [mintAmount, setMintAmount] = useState('');
+
+  // Store selectedMint address when modal goes visible
+  useEffect(() => {
+    if (props.isVisible && props.selectedMint) {
+      setTokenAddress(props.selectedMint.address.toBase58());
+    }
+  }, [
+    props.isVisible,
+    props.selectedMint
+  ]);
 
   const onAcceptModal = () => {
     props.handleOk({
@@ -78,7 +88,7 @@ export const MultisigMintTokenModal = (props: {
             isValidAddress(tokenAddress) &&
             isValidAddress(mintToAddress) &&
             mintAmount &&
-            +mintAmount > 0
+            parseFloat(mintAmount) > 0
       ? true
       : false;
   }
