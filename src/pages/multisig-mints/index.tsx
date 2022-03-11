@@ -1069,12 +1069,6 @@ export const MultisigMintsView = () => {
   //   Events   //
   ////////////////
 
-  const onAfterEveryModalClose = useCallback(() => {
-    consoleOut('onAfterEveryModalClose called!', '', 'crimson');
-    resetTransactionStatus();
-  },[resetTransactionStatus]);
-
-
   // Transfer Mint authority modal
   const [isTransferMintAuthorityModalVisible, setIsTransferMintAuthorityModalVisible] = useState(false);
   const showTransferMintAuthorityModal = useCallback(() => {
@@ -2948,6 +2942,13 @@ export const MultisigMintsView = () => {
           setSelectedMint(item);
           setDtailsPanelOpen(true);
           consoleOut('selected mint:', item, 'blue');
+          consoleOut('selected mint readable:', {
+            decimals: item.decimals,
+            address: item.address.toBase58(),
+            mintAuthority: item.mintAuthority.toBase58(),
+            freezeAuthority: item.freezeAuthority.toBase58(),
+            supply: item.supply,
+          }, 'blue');
           setLoadingMultisigTxs(true);
         };
         return (
@@ -3164,10 +3165,7 @@ export const MultisigMintsView = () => {
           nativeBalance={nativeBalance}
           transactionFees={transactionFees}
           handleOk={onAcceptTransferMintAuthority}
-          handleClose={() => {
-            onAfterEveryModalClose();
-            setIsTransferMintAuthorityModalVisible(false);
-          }}
+          handleClose={() => setIsTransferMintAuthorityModalVisible(false)}
           isBusy={isBusy}
           selectedMultisig={selectedMultisig}
           multisigAccounts={multisigAccounts}
@@ -3180,7 +3178,6 @@ export const MultisigMintsView = () => {
         nativeBalance={nativeBalance}
         transactionFees={transactionFees}
         handleOk={onAcceptMintToken}
-        handleAfterClose={onAfterEveryModalClose}
         handleClose={() => setIsMintTokenModalVisible(false)}
         isBusy={isBusy}
         selectedMint={selectedMint}

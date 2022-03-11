@@ -17,7 +17,6 @@ const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export const MultisigMintTokenModal = (props: {
   handleClose: any;
   handleOk: any;
-  handleAfterClose: any;
   isVisible: boolean;
   isBusy: boolean;
   nativeBalance: number;
@@ -45,13 +44,11 @@ export const MultisigMintTokenModal = (props: {
   }
 
   const onAfterClose = () => {
-
     setTimeout(() => {
       setTokenAddress('');
       setMintToAddress('');
       setMintAmount('');
     }, 50);
-    props.handleAfterClose();
   }
 
   const onTokenAddressChange = (e: any) => {
