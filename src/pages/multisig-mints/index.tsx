@@ -1820,7 +1820,7 @@ export const MultisigMintsView = () => {
       const ixAccounts = mintIx.keys;
       const ixData = Buffer.from(mintIx.data);
       const transaction = Keypair.generate();
-      const txSize = 1000; // todo
+      const txSize = 1200;
       ixs.push(
         await multisigClient.account.transaction.createInstruction(
           transaction,
@@ -1833,6 +1833,8 @@ export const MultisigMintsView = () => {
         OperationType.MintTokens,
         ixAccounts,
         ixData,
+        new BN(0),
+        new BN(0),
         {
           accounts: {
             multisig: selectedMultisig.id,
