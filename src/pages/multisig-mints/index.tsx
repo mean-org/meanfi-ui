@@ -142,13 +142,18 @@ export const MultisigMintsView = () => {
       return MultisigTransactionStatus.Executed;
     } 
 
-    const approvals = account.signers.filter((s: boolean) => s === true).length;
+    let status = MultisigTransactionStatus.Pending;
+    let approvals = account.signers.filter((s: boolean) => s === true).length;
 
     if (selectedMultisig && selectedMultisig.threshold === approvals) {
-      return MultisigTransactionStatus.Approved;
+      status = MultisigTransactionStatus.Approved;
     }
 
-    return MultisigTransactionStatus.Pending;
+    if (selectedMultisig && selectedMultisig.ownerSeqNumber !== account.ownerSetSeqno) {
+      status = MultisigTransactionStatus.Voided;
+    }
+
+    return status;
 
   },[
     selectedMultisig
@@ -188,6 +193,15 @@ export const MultisigMintsView = () => {
     }
     return 0;
   }, []);
+
+  const isTxVoided = useCallback(() => {
+    if (highlightedMultisigTx) {
+      if (highlightedMultisigTx.status === MultisigTransactionStatus.Voided) {
+        return true;
+      }
+    }
+    return false;
+  }, [highlightedMultisigTx]);
 
   const isTxPendingApproval = useCallback(() => {
     if (highlightedMultisigTx) {
@@ -302,6 +316,10 @@ export const MultisigMintsView = () => {
       return "Completed";
     }
 
+    if (mtx.status === MultisigTransactionStatus.Voided) {
+      return "Voided";
+    }
+
     return "Rejected";
 
   },[]);
@@ -350,7 +368,7 @@ export const MultisigMintsView = () => {
       return "info";
     } 
     
-    if(mtx.status === MultisigTransactionStatus.Approved) {
+    if(mtx.status === MultisigTransactionStatus.Approved || mtx.status === MultisigTransactionStatus.Voided) {
       return "error";
     }
 

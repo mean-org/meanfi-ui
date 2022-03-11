@@ -1,4 +1,4 @@
-import { Keypair, PublicKey, SignaturePubkeyPair } from "@solana/web3.js";
+import { Keypair, PublicKey } from "@solana/web3.js";
 import { OperationType } from "./enums";
 
 export enum MultisigTransactionStatus {
@@ -9,7 +9,9 @@ export enum MultisigTransactionStatus {
   // Successfully executed (didExecute = true)
   Executed = 2,
   // Rejected by any owner
-  Rejected = 3
+  Rejected = 3,
+  // Invalid owners set seq number
+  Voided = 4,
 };
 
 export type Multisig = {
@@ -46,6 +48,7 @@ export type MultisigTransaction = {
   signers: boolean[];
   createdOn: Date;
   executedOn: Date | undefined;
+  ownerSeqNumber: number;
   status: MultisigTransactionStatus;
   accounts: any[];
   data: Buffer;
