@@ -43,6 +43,7 @@ export const InvestView = () => {
   const annualPercentageYield = 5;
   const [raydiumInfo, setRaydiumInfo] = useState<any>([]);
   const [orcaInfo, setOrcaInfo] = useState<any>([]);
+  const [maxRadiumAprValue, setMaxRadiumAprValue] = useState<number>(0);
 
   const investItems = [
     {
@@ -60,7 +61,7 @@ export const InvestView = () => {
       symbol1: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R/logo.png",
       symbol2: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE/logo.png",
       title: "MEAN Liquidity Pools and Farms",
-      rateAmount: "Up to 50",
+      rateAmount: `Up to ${maxRadiumAprValue}`,
       interval: "APY"
     }
   ];
@@ -107,18 +108,6 @@ export const InvestView = () => {
     // },
   ];
 
-  // const liquidityPools = [
-  //   {
-  //     tokenImg: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE/logo.png",
-  //     platform: "Orca",
-  //     pair: "MEAN/USDC",
-  //     liquidity: orcaLiquidity && formatThousands(orcaLiquidity),
-  //     volume: orcaVolume && formatThousands(orcaVolume),
-  //     anualPercentageRate: "5.1",
-  //     investLink: ""
-  //   },
-  // ];
-
   useEffect(() => {
     if (!connection) { return; }
 
@@ -126,28 +115,42 @@ export const InvestView = () => {
       fetch('https://api.orca.so/pools')
         .then((res) => res.json())
         .then((data) => {
-          console.log(data.find((item: any) => item.name2 === "MEAN/USDC"));
-
           const orcaData = data.find((item: any) => item.name2 === "MEAN/USDC");
 
-          setOrcaInfo(orcaData);
+          if (!Array.isArray(orcaData)) {
+            setOrcaInfo([orcaData]);
+          } else {
+            setOrcaInfo(orcaData);
+          }
         })
         .catch((error) => {
           consoleOut(error);
         })
+    })();
 
-      fetch('https://api.raydium.io/pairs')
+    (async () => {
+      // fetch('https://api.raydium.io/pairs') - old version
+      fetch('https://api.raydium.io/v2/main/pairs')
         .then((res) => res.json())
         .then((data) => {
           const raydiumData = data.filter((item: any) => item.name.substr(0, 4) === "MEAN");
+
+          let maxRadiumApr = raydiumData.map((item: any) => {
+            let properties = item.apr7d;
+
+            return properties;
+          });
+
+          setMaxRadiumAprValue(Math.max(...maxRadiumApr));
 
           setRaydiumInfo(raydiumData);
         })
         .catch((error) => {
           consoleOut(error);
         })
-    })();
-  }, [connection]);
+      })();
+
+  }, [connection]);  
 
   const [selectedInvest, setSelectedInvest] = useState<any>(investItems[0]);
 
@@ -211,11 +214,11 @@ export const InvestView = () => {
                   )}
                 </div>
               </div>
-              <div className="description-cell">
+              <div className="description-cell pr-4">
                 <div className="title">{item.title}</div>
               </div>
-              <div className="rate-cell">
-                <div className="rate-amount">{item.rateAmount}%</div>
+              <div className="rate-cell w-50">
+                <div className="rate-amount" style={{minWidth: "fit-content !important"}}>{item.rateAmount}%</div>
                 <div className="interval">{item.interval}</div>
               </div>
             </div>
@@ -423,7 +426,6 @@ export const InvestView = () => {
                             size="middle"
                             icon={<IconRefresh className="mean-svg-icons" />}
                             onClick={() => {}}
-                            // disabled={}
                           />
                         </Tooltip>
                       </span>
@@ -431,13 +433,13 @@ export const InvestView = () => {
 
                     <div className="stats-row">
                       <div className="item-list-header compact"><div className="header-row">
-                        <div className="std-table-cell first-cell">&nbsp;</div>
-                        <div className="std-table-cell responsive-cell">Platform</div>
-                        <div className="std-table-cell responsive-cell pr-1">LP Pair</div>
-                        <div className="std-table-cell responsive-cell pr-1 text-right">Liquidity</div>
-                        <div className="std-table-cell responsive-cell pr-1 text-right">Vol (24hrs)</div>
-                        <div className="std-table-cell responsive-cell pr-1 text-right">Est APR</div>
-                        <div className="std-table-cell responsive-cell pl-1 text-center">Invest</div>
+                        <div className="std-table-cell responsive-cell text-left
+                        ">Platform</div>
+                        <div className="std-table-cell responsive-cell pr-1 text-left">LP Pair</div>
+                        <div className="std-table-cell responsive-cell pr-2 text-right">Liquidity</div>
+                        <div className="std-table-cell responsive-cell pr-2 text-right">Vol (24hrs)</div>
+                        <div className="std-table-cell responsive-cell pr-2 text-right">APR/APY 7D</div>
+                        <div className="std-table-cell responsive-cell pl-1 text-center invest-col">Invest</div>
                         </div>
                       </div>
 
@@ -445,67 +447,64 @@ export const InvestView = () => {
                         <div className="activity-list h-100">
                           <div className="item-list-body compact">
                             {raydiumInfo.map((raydium: any) => (
-                              <a className="item-list-row" target="_blank" rel="noopener noreferrer" href={`https://raydium.io/liquidity/?ammId=${raydium.amm_id}`}>
-                              <div className="std-table-cell first-cell">
-                                <div className="icon-cell">
+                              <a key={raydium.ammId} className="item-list-row" target="_blank" rel="noopener noreferrer" 
+                              href={`https://raydium.io/liquidity/add/?coin0=MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD&coin1=${raydium.name.slice(5) === "SOL" ? "sol&fixed" : raydium.name.slice(5) === "RAY" ? "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R&fixed" : "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&fixed"}=coin0&ammId=${raydium.ammId}`}>
+                              <div className="std-table-cell responsive-cell pl-0">
+                                <div className="icon-cell pr-1 d-inline-block">
                                   <div className="token-icon">
                                     <img alt="Raydium" width="20" height="20" src="https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R/logo.png" />
                                   </div>
                                 </div>
-                              </div>
-                              <div className="std-table-cell responsive-cell">
                                 <span>Raydium</span>
                               </div>
                               <div className="std-table-cell responsive-cell pr-1">
                                 <span>{raydium.name.replace(/-/g, "/")}</span>
                               </div>
                               <div className="std-table-cell responsive-cell pr-1 text-right">
-                                <span>${formatThousands(raydium.liquidity)}</span>
+                                <span>{raydium.liquidity > 0 ? `$${formatThousands(raydium.liquidity)}` : "--"}</span>
                               </div>
                               <div className="std-table-cell responsive-cell pr-1 text-right">
-                                <span>${formatThousands(raydium.volume_24h)}</span>
+                                <span>{raydium.volume24h > 0 ? `$${formatThousands(raydium.volume24h)}` : "--"}</span>
                               </div>
                               <div className="std-table-cell responsive-cell pr-1 text-right">
-                                <span>{cutNumber(raydium.apy, 2)}%</span>
+                                <span>{raydium.apr7d > 0 ? `${cutNumber(raydium.apr7d, 2)}%` : "--"}</span>
                               </div>
-                              <div className="std-table-cell responsive-cell pl-1 text-center">
+                              <div className="std-table-cell responsive-cell pl-1 text-center invest-col">
                                 <span role="img" aria-label="arrow-up" className="anticon anticon-arrow-up mean-svg-icons outgoing upright">
                                   <svg viewBox="64 64 896 896" focusable="false" data-icon="arrow-up" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M868 545.5L536.1 163a31.96 31.96 0 00-48.3 0L156 545.5a7.97 7.97 0 006 13.2h81c4.6 0 9-2 12.1-5.5L474 300.9V864c0 4.4 3.6 8 8 8h60c4.4 0 8-3.6 8-8V300.9l218.9 252.3c3 3.5 7.4 5.5 12.1 5.5h81c6.8 0 10.5-8 6-13.2z"></path></svg>
                                 </span>
                               </div>
                               </a>
                             ))}
-                            {/* {orcaInfo.map((orca: any) => ( */}
-                              <a className="item-list-row" target="_blank" rel="noopener noreferrer" href="https://www.orca.so/pools">
-                              <div className="std-table-cell first-cell">
-                                <div className="icon-cell">
+                            {orcaInfo.map((orca: any) => (
+                              <a key={orca.name2} className="item-list-row" target="_blank" rel="noopener noreferrer" href="https://www.orca.so/pools">
+                              <div className="std-table-cell responsive-cell pl-0">
+                                <div className="icon-cell pr-1 d-inline-block">
                                   <div className="token-icon">
                                     <img alt="Raydium" width="20" height="20" src="https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE/logo.png" />
                                   </div>
                                 </div>
-                              </div>
-                              <div className="std-table-cell responsive-cell">
                                 <span>Orca</span>
                               </div>
                               <div className="std-table-cell responsive-cell pr-1">
-                                <span>{orcaInfo.name2}</span>
+                                <span>{orca.name2}</span>
                               </div>
                               <div className="std-table-cell responsive-cell pr-1 text-right">
-                                <span>${formatThousands(orcaInfo.liquidity)}</span>
+                                <span>{orca.liquidity > 0 ? `$${formatThousands(orca.liquidity)}` : "--"}</span>
                               </div>
                               <div className="std-table-cell responsive-cell pr-1 text-right">
-                                <span>${formatThousands(orcaInfo.volume_24h)}</span>
+                                <span>{orca.volume_24h > 0 ? `$${formatThousands(orca.volume_24h)}` : "--"}</span>
                               </div>
                               <div className="std-table-cell responsive-cell pr-1 text-right">
-                                <span>{cutNumber(orcaInfo.apy_7d, 2)}%</span>
+                                <span>{orca.apy_7d > 0 ? `${cutNumber(orca.apy_7d * 100, 2)}% APY` : "--"}</span>
                               </div>
-                              <div className="std-table-cell responsive-cell pl-1 text-center">
+                              <div className="std-table-cell responsive-cell pl-1 text-center invest-col">
                                 <span role="img" aria-label="arrow-up" className="anticon anticon-arrow-up mean-svg-icons outgoing upright">
                                   <svg viewBox="64 64 896 896" focusable="false" data-icon="arrow-up" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M868 545.5L536.1 163a31.96 31.96 0 00-48.3 0L156 545.5a7.97 7.97 0 006 13.2h81c4.6 0 9-2 12.1-5.5L474 300.9V864c0 4.4 3.6 8 8 8h60c4.4 0 8-3.6 8-8V300.9l218.9 252.3c3 3.5 7.4 5.5 12.1 5.5h81c6.8 0 10.5-8 6-13.2z"></path></svg>
                                 </span>
                               </div>
                               </a>
-                            {/* ))} */}
+                            ))}
                           </div>
                         </div>
                       </div>
