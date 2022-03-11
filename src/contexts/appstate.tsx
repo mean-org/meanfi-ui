@@ -11,7 +11,7 @@ import {
 } from "../constants";
 import { ContractDefinition } from "../models/contract-definition";
 import { DdcaFrequencyOption } from "../models/ddca-models";
-import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
+import { PaymentRateType, TimesheetRequirementOption, TransactionStatus, LockPeriodType } from "../models/enums";
 import { StreamActivity, StreamInfo } from '@mean-dao/money-streaming/lib/types';
 import { useWallet } from "./wallet";
 import { getNetworkIdByCluster, useConnection, useConnectionConfig } from "./connection";
@@ -63,6 +63,7 @@ interface AppStateConfig {
   paymentStartDate: string | undefined;
   paymentRateAmount: string;
   paymentRateFrequency: PaymentRateType;
+  lockPeriodFrequency: LockPeriodType;
   timeSheetRequirement: TimesheetRequirementOption;
   isVerifiedRecipient: boolean;
   isAllocationReserved: boolean;
@@ -127,6 +128,7 @@ interface AppStateConfig {
   setPaymentStartDate: (date: string) => void;
   setPaymentRateAmount: (data: string) => void;
   setPaymentRateFrequency: (freq: PaymentRateType) => void;
+  setLockPeriodFrequency: (freq: LockPeriodType) => void;
   setTimeSheetRequirement: (req: TimesheetRequirementOption) => void;
   setIsVerifiedRecipient: (state: boolean) => void;
   setIsAllocationReserved: (state: boolean) => void;
@@ -182,6 +184,7 @@ const contextDefaultValues: AppStateConfig = {
   paymentStartDate: undefined,
   paymentRateAmount: '',
   paymentRateFrequency: PaymentRateType.PerMonth,
+  lockPeriodFrequency: LockPeriodType.Month,
   timeSheetRequirement: TimesheetRequirementOption.NotRequired,
   isVerifiedRecipient: false,
   isAllocationReserved: false,
@@ -249,6 +252,7 @@ const contextDefaultValues: AppStateConfig = {
   setPaymentStartDate: () => {},
   setPaymentRateAmount: () => {},
   setPaymentRateFrequency: () => {},
+  setLockPeriodFrequency: () => {},
   setTimeSheetRequirement: () => {},
   setIsVerifiedRecipient: () => {},
   setIsAllocationReserved: () => {},
@@ -358,6 +362,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [fromCoinAmount, updateFromCoinAmount] = useState<string>(contextDefaultValues.fromCoinAmount);
   const [paymentRateAmount, updatePaymentRateAmount] = useState<string>(contextDefaultValues.paymentRateAmount);
   const [paymentRateFrequency, updatePaymentRateFrequency] = useState<PaymentRateType>(PaymentRateType.PerMonth);
+  const [lockPeriodFrequency, updateLockPeriodFrequency] = useState<LockPeriodType>(LockPeriodType.Month);
   const [timeSheetRequirement, updateTimeSheetRequirement] = useState<TimesheetRequirementOption>(TimesheetRequirementOption.NotRequired);
   const [isVerifiedRecipient, setIsVerifiedRecipient] = useState<boolean>(contextDefaultValues.isVerifiedRecipient);
   const [isAllocationReserved, setIsAllocationReserved] = useState<boolean>(contextDefaultValues.isAllocationReserved);
@@ -475,6 +480,10 @@ const AppStateProvider: React.FC = ({ children }) => {
     updatePaymentRateFrequency(freq);
   }
 
+  const setLockPeriodFrequency = (freq: LockPeriodType) => {
+    updateLockPeriodFrequency(freq);
+  }
+
   const setTimeSheetRequirement = (req: TimesheetRequirementOption) => {
     updateTimeSheetRequirement(req);
   }
@@ -497,6 +506,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     setRecipientNote('');
     setPaymentStartDate(today);
     setPaymentRateAmount('');
+    setPaymentRateFrequency(PaymentRateType.PerMonth);
     setPaymentRateFrequency(PaymentRateType.PerMonth);
     setIsVerifiedRecipient(false);
     setIsAllocationReserved(false);
@@ -1237,6 +1247,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         paymentStartDate,
         paymentRateAmount,
         paymentRateFrequency,
+        lockPeriodFrequency,
         timeSheetRequirement,
         isVerifiedRecipient,
         isAllocationReserved,
@@ -1297,6 +1308,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         setPaymentStartDate,
         setPaymentRateAmount,
         setPaymentRateFrequency,
+        setLockPeriodFrequency,
         setTimeSheetRequirement,
         setIsVerifiedRecipient,
         setIsAllocationReserved,
