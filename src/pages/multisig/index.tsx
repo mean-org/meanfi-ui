@@ -1571,7 +1571,6 @@ export const MultisigView = () => {
           return true;
         })
         .catch((error: any) => {
-          console.error(error);
           const txStatus = {
             customError: undefined,
             lastOperation: TransactionStatus.SendTransaction,

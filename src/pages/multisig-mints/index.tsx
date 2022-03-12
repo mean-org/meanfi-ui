@@ -16,7 +16,7 @@ import { MintLayout, Token, TOKEN_PROGRAM_ID, u64 } from '@solana/spl-token';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { consoleOut, copyText, delay, getReadableDate, getShortDate, getTransactionOperationDescription, getTransactionStatusForLogs, isDev, isLocal } from '../../utils/ui';
 import { Identicon } from '../../components/Identicon';
-import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, toUiAmount } from '../../utils/utils';
+import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress, toUiAmount } from '../../utils/utils';
 import { MultisigV2, MultisigParticipant, MultisigTransaction, MultisigTransactionStatus, Multisig, CreateMintPayload, MultisigMint, SetMintAuthPayload } from '../../models/multisig';
 import { TransactionFees } from '@mean-dao/msp';
 import { useNativeAccount } from '../../contexts/accounts';
@@ -1167,7 +1167,7 @@ export const MultisigMintsView = () => {
 
       const ixAccounts = setAuthIx.keys;
       const ixData = Buffer.from(setAuthIx.data);
-      const txSize = 1000;
+      const txSize = 1200;
       const transaction = Keypair.generate();
       const createIx = await multisigClient.account.transaction.createInstruction(
         transaction,
@@ -1179,8 +1179,8 @@ export const MultisigMintsView = () => {
         OperationType.SetMultisigAuthority,
         ixAccounts,
         ixData,
-        0,
-        0,
+        new BN(0),
+        new BN(0),
         {
           accounts: {
             multisig: new PublicKey(data.multisig),
@@ -1195,6 +1195,8 @@ export const MultisigMintsView = () => {
       tx.feePayer = publicKey;
       const { blockhash } = await connection.getRecentBlockhash("finalized");
       tx.recentBlockhash = blockhash;
+
+      tx.partialSign(transaction);
   
       return tx;
     };
@@ -1220,7 +1222,7 @@ export const MultisigMintsView = () => {
 
       // Create a transaction
       const payload = {
-        multisig: selectedMultisig.authority.toBase58(),
+        multisig: selectedMultisig.id.toBase58(),
         mint: selectedMint.address.toBase58(),
         newAuthority: authority
       } as SetMintAuthPayload;
@@ -3318,7 +3320,7 @@ export const MultisigMintsView = () => {
               <div className="subtitle text-truncate">decimals: {item.decimals}</div>
             </div>
             <div className="rate-cell">
-              <div className="rate-amount text-uppercase">{formatThousands(item.supply, item.decimals)}</div>
+              <div className="rate-amount text-uppercase">{formatThousands(makeDecimal(new BN(item.supply), item.decimals), item.decimals)}</div>
               <div className="interval">supply</div>
             </div>
           </div>
