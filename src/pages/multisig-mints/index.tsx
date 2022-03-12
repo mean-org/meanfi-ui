@@ -1127,6 +1127,7 @@ export const MultisigMintsView = () => {
 
   const onMintAuthorityTransfered = useCallback(() => {
 
+    setIsTransferMintAuthorityModalVisible(true);
     resetTransactionStatus();
 
   },[
@@ -1422,9 +1423,8 @@ export const MultisigMintsView = () => {
               currentOperation: TransactionStatus.TransactionFinished
             });
             await delay(1000);
-            onMintAuthorityTransfered();
             setOngoingOperation(undefined);
-            setIsMintTokenModalVisible(false);
+            onMintAuthorityTransfered();
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
