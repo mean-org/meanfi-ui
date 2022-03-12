@@ -1,7 +1,5 @@
-import { environment } from "../environments/environment";
-import { browserName, browserVersion } from "react-device-detect";
-import { consoleOut } from "./ui";
 import { Analytics } from "@segment/analytics-next";
+import { consoleOut } from "./ui";
 
 export enum AppUsageEvent {
     // Sitewide Actions
@@ -62,17 +60,25 @@ export interface SegmentTransferData {
 export class SegmentAnalyticsService {
 
     private _analytics: Analytics | undefined = undefined;
-
-    constructor() {
-        consoleOut('Segment analytics initialized!', '', 'blue');
-    }
+    private _userId: string = '';
 
     public set analytics(instance: Analytics | undefined) {
-        this._analytics = instance;
+        if (instance) {
+            this._analytics = instance;
+            console.log(`%cSegment analytics initialized!`, 'color:brown');
+        }
     }
 
     public get analytics(): Analytics | undefined {
         return this._analytics;
+    }
+
+    public set userId(value : string) {
+        this._userId = value;
+    }
+
+    public get userId() : string {
+        return this._userId;
     }
 
     /**
@@ -104,19 +110,24 @@ export class SegmentAnalyticsService {
      * Every time the user navigates to a page
      */
 
-    public recordIdentity(userId: string = '', userInfo?: any): void {
-        if (!userId && !userInfo) {
-            consoleOut('recordIdentity was called without necessary params', '', 'red');
-            return;
-        }
+    public recordIdentity(userId: string, userInfo: any): void {
         if (this._analytics) {
-            if (userId && userInfo) {
-                this._analytics.identify(userId, userInfo);
-            } else if (userInfo && !userId) {
-                this._analytics.identify(userInfo);
-            } else {
-                this._analytics.identify(userId);
-            }
+            this._analytics.identify(userId, userInfo);
+        }
+    }
+
+    /**
+     * Calls Segment Analytics to set anonymous user
+     * @returns {void} - Nothing
+     * When to use:
+     * Every time the user navigates to a page without wallet connection
+     * Call it just before page
+     */
+
+    public recordAnonymousIdentity(): void {
+        if (this._analytics) {
+            this._analytics.setAnonymousId();
+            // this.userId = this._analytics.user().id.toString();
         }
     }
 
@@ -140,18 +151,4 @@ export class SegmentAnalyticsService {
         }
     }
 
-    private getEnv(): string {
-        switch (environment) {
-            case 'production':
-                return 'Production'
-            case 'staging':
-                return 'Staging'
-            default:
-                return 'Development'
-        }
-    }
-
-    private getBrowser(): string {
-        return `${browserName} ${browserVersion}`;
-    }
 }
