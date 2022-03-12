@@ -221,7 +221,10 @@ export const AppLayout = React.memo((props: any) => {
     }
     // Report page view in Segment
     segmentAnalytics.recordPageVisit(location.pathname)
-  }, [location.pathname]);
+  }, [
+    publicKey,
+    location.pathname,
+  ]);
 
   // Effect Network change
   useEffect(() => {
@@ -254,6 +257,7 @@ export const AppLayout = React.memo((props: any) => {
 
           // Record user login in Segment Analytics
           segmentAnalytics.recordIdentity(walletAddress, {
+            connected: true,
             platform: getPlatform(),
             browser: browserName,
             walletProvider: provider?.name || 'Other'
@@ -284,11 +288,6 @@ export const AppLayout = React.memo((props: any) => {
         refreshTokenBalance();
         setPreviousWalletConnectState(true);
       } else if (previousWalletConnectState && !connected) {
-        // Record user as anonymous in Segment Analytics
-        segmentAnalytics.recordIdentity('', {
-            platform: getPlatform(),
-            browser: browserName,
-        });
         setPreviousWalletConnectState(false);
         setNeedRefresh(true);
         setStreamList([]);
@@ -298,6 +297,14 @@ export const AppLayout = React.memo((props: any) => {
           description: t('notifications.wallet-disconnect-message'),
           type: 'info'
         });
+        // Send identity to Segment if no wallew connection
+        if (!publicKey) {
+          segmentAnalytics.recordIdentity('', {
+            connected: false,
+            platform: getPlatform(),
+            browser: browserName
+          });
+        }
       }
     }
   }, [
