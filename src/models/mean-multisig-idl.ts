@@ -130,6 +130,27 @@ const idl: Idl = {
       ]
     },
     {
+      "name": "cancelTransaction",
+      "accounts": [
+        {
+          "name": "transaction",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "multisig",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "proposer",
+          "isMut": true,
+          "isSigner": true
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "approve",
       "accounts": [
         {
@@ -517,6 +538,11 @@ const idl: Idl = {
       "code": 6012,
       "name": "InvalidOwnerSetSeqNumber",
       "msg": "Multisig owner set secuency number is not valid"
+    },
+    {
+      "code": 6013,
+      "name": "InvalidMultisig",
+      "msg": "Multisig account is not valid"
     }
   ]
 }

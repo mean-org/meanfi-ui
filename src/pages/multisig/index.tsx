@@ -1018,8 +1018,10 @@ export const MultisigView = () => {
     consoleOut('onAcceptMultisigActionModal:', item, 'blue');
     if (item.status === MultisigTransactionStatus.Pending) {
       onExecuteApproveTx({ transaction: item });
-    } if (item.status === MultisigTransactionStatus.Approved) {
+    } else if (item.status === MultisigTransactionStatus.Approved) {
       onExecuteFinishTx({ transaction: item })
+    } else if (item.status === MultisigTransactionStatus.Voided) {
+      onExecuteCancelTx({ transaction: item })
     }
   };
 
@@ -1636,6 +1638,302 @@ export const MultisigView = () => {
     clearTransactionStatusContext,
     setTransactionStatus,
     onTxExecuted,
+  ]);
+
+  const onExecuteCancelTx = useCallback(async (data: any) => {
+
+    let transaction: Transaction;
+    let signedTransaction: Transaction;
+    let signature: any;
+    let encodedTx: string;
+    const transactionLog: any[] = [];
+
+    clearTransactionStatusContext();
+    setTransactionCancelled(false);
+    setRetryOperationPayload(data);
+    setIsBusy(true);
+
+    const cancelTx = async (data: any) => {
+
+      if (
+        !publicKey || 
+        !selectedMultisig || 
+        !selectedMultisig.id || 
+        !selectedMultisig.id.equals(data.transaction.multisig) || 
+        data.transaction.proposer.equals(publicKey) ||
+        data.transaction.ownerSeqNumber === selectedMultisig.ownerSeqNumber ||
+        data.transaction.executedOn
+      ) {
+        return null;
+      }
+      
+      let tx = multisigClient.transaction.cancelTransaction(
+        {
+          accounts: {
+            transaction: data.transaction.id,
+            multisig: selectedMultisig.id,
+            proposer: publicKey as PublicKey,
+          }
+        }
+      );
+
+      tx.feePayer = publicKey;
+      const { blockhash } = await connection.getRecentBlockhash("finalized");
+      tx.recentBlockhash = blockhash;
+
+      return tx;
+    };
+
+    const createTx = async (): Promise<boolean> => {
+
+      if (publicKey && data) {
+        consoleOut("Start transaction for create stream", '', 'blue');
+        consoleOut('Wallet address:', publicKey.toBase58());
+
+        setTransactionStatus({
+          lastOperation: TransactionStatus.TransactionStart,
+          currentOperation: TransactionStatus.InitTransaction
+        });
+
+        // Create a transaction
+        const payload = { transaction: data.transaction };  
+        consoleOut('data:', payload);
+
+        // Log input data
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+          inputs: payload
+        });
+
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+          result: ''
+        });
+
+        // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
+        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+        consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
+        consoleOut('nativeBalance:', nativeBalance, 'blue');
+
+        if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.TransactionStartFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+            result: `Not enough balance (${
+              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            }) to pay for network fees (${
+              getTokenAmountAndSymbolByTokenAddress(
+                transactionFees.blockchainFee + transactionFees.mspFlatFee, 
+                NATIVE_SOL_MINT.toBase58()
+              )
+            })`
+          });
+          customLogger.logWarning('Finish Cancel transaction failed', { transcript: transactionLog });
+          return false;
+        }
+
+        return await cancelTx(payload)
+          .then(value => {
+            if (!value) { return false; }
+            consoleOut('Returned transaction:', value);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.InitTransactionSuccess,
+              currentOperation: TransactionStatus.SignTransaction
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+              result: getTxIxResume(value)
+            });
+            transaction = value;
+            return true;
+          })
+          .catch(error => {
+            console.error('cancel tx error:', error);
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.InitTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+              result: `${error}`
+            });
+            customLogger.logError('Finish Cancel transaction failed', { transcript: transactionLog });
+            return false;
+          });
+
+      } else {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot start transaction! Wallet not found!'
+        });
+        customLogger.logError('Finish Cancel transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const signTx = async (): Promise<boolean> => {
+      if (wallet) {
+        consoleOut('Signing transaction...');
+        return await wallet.signTransaction(transaction)
+        .then((signed: Transaction) => {
+          consoleOut('signTransaction returned a signed transaction:', signed);
+          signedTransaction = signed;
+          // Try signature verification by serializing the transaction
+          try {
+            encodedTx = signedTransaction.serialize().toString('base64');
+            consoleOut('encodedTx:', encodedTx, 'orange');
+          } catch (error) {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransaction,
+              currentOperation: TransactionStatus.SignTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            });
+            customLogger.logError('Finish Cancel transaction failed', { transcript: transactionLog });
+            return false;
+          }
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransactionSuccess,
+            currentOperation: TransactionStatus.SendTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
+            result: {signer: wallet.publicKey.toBase58()}
+          });
+          return true;
+        })
+        .catch(error => {
+          console.error(error);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransaction,
+            currentOperation: TransactionStatus.SignTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+          });
+          customLogger.logError('Finish Cancel transaction failed', { transcript: transactionLog });
+          return false;
+        });
+      } else {
+        console.error('Cannot sign transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot sign transaction! Wallet not found!'
+        });
+        customLogger.logError('Finish Cancel transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const sendTx = async (): Promise<boolean> => {
+
+      if (!wallet) {
+        console.error('Cannot send transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SendTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot send transaction! Wallet not found!'
+        });
+        customLogger.logError('Finish Cancel transaction failed', { transcript: transactionLog });
+        return false;
+      }
+
+      let result = await connection
+        .sendEncodedTransaction(encodedTx)
+        .then(sig => {
+          consoleOut('sendEncodedTransaction returned a signature:', sig);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SendTransactionSuccess,
+            currentOperation: TransactionStatus.ConfirmTransaction
+          });
+          signature = sig;
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
+            result: `signature: ${signature}`
+          });
+          return true;
+        })
+        .catch((error: any) => {
+          console.error(error);
+          const txStatus = {
+            customError: undefined,
+            lastOperation: TransactionStatus.SendTransaction,
+            currentOperation: TransactionStatus.SendTransactionFailure
+          } as TransactionStatusInfo;
+          if (error.toString().indexOf('0x1794') !== -1) {
+            let treasury = data.transaction.operation === OperationType.StreamClose
+              ? data.transaction.accounts[5].pubkey.toBase58()
+              : data.transaction.accounts[3].pubkey.toBase58();
+            txStatus.customError = {
+              message: 'Your transaction failed to submit due to there not being enough SOL to cover the fees. Please fund the treasury with at least 0.00002 SOL and then retry this operation.\n\nTreasury ID: ',
+              data: treasury
+            };
+          }
+          setTransactionStatus(txStatus);
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+            result: { error, encodedTx }
+          });
+          customLogger.logError('Finish Cancel transaction failed', { transcript: transactionLog });
+          return false;
+        });
+
+      return result;
+    }
+
+    if (wallet) {
+      const create = await createTx();
+      consoleOut('created:', create);
+      if (create && !transactionCancelled) {
+        const sign = await signTx();
+        consoleOut('signed:', sign);
+        if (sign && !transactionCancelled) {
+          const sent = await sendTx();
+          consoleOut('sent:', sent);
+          if (sent && !transactionCancelled) {
+            consoleOut('Send Tx to confirmation queue:', signature);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.CancelTransaction);
+            setIsBusy(false);
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.TransactionFinished
+            });
+            onTxExecuted();
+            setOngoingOperation(undefined);
+          } else { setIsBusy(false); }
+        } else { setIsBusy(false); }
+      } else { setIsBusy(false); }
+    }
+
+  }, [
+    clearTransactionStatusContext, 
+    connection, 
+    multisigClient.transaction, 
+    nativeBalance, 
+    onTxExecuted, 
+    publicKey, 
+    selectedMultisig, 
+    setTransactionStatus, 
+    startFetchTxSignatureInfo, 
+    transactionCancelled, 
+    transactionFees.blockchainFee, 
+    transactionFees.mspFlatFee, 
+    transactionStatus.currentOperation, 
+    wallet
   ]);
 
   const isMintingToken = useCallback((): boolean => {
@@ -2945,6 +3243,22 @@ export const MultisigView = () => {
     isUserTheProposer,
   ])
 
+  const canShowCancelButton = useCallback(() => {
+
+    if (!highlightedMultisigTx || !highlightedMultisigTx.proposer || !publicKey) { return false; }
+
+    let result = (
+      highlightedMultisigTx.proposer.toBase58() === publicKey.toBase58() &&
+      highlightedMultisigTx.status === MultisigTransactionStatus.Voided
+    );
+
+    return result;
+
+  },[
+    publicKey, 
+    highlightedMultisigTx
+  ])
+
   const onAfterEveryModalClose = useCallback(() => resetTransactionStatus(),[resetTransactionStatus]);
 
   const readAllMultisigAccounts = useCallback(async (wallet: PublicKey) => {
@@ -3753,13 +4067,17 @@ export const MultisigView = () => {
       ? 'Executing transaction'
       : isTxPendingApproval()
         ? 'Approving transaction'
-        : '';
+        : isTxVoided() 
+          ? 'Cancelling Transaction' 
+          : '';
 
     const iddleLabel = isTxPendingExecution()
       ? 'Execute transaction'
       : isTxPendingApproval()
         ? 'Approve transaction'
-        : '';
+        : isTxVoided() 
+          ? 'Cancel Transaction' 
+          : '';
 
     return isBusy
       ? busyLabel
@@ -3773,6 +4091,7 @@ export const MultisigView = () => {
     transactionStatus.currentOperation,
     isTxPendingExecution,
     isTxPendingApproval,
+    isTxVoided,
     t,
   ]);
 
@@ -4654,7 +4973,7 @@ export const MultisigView = () => {
                 }
               </Button>
               {
-                (canShowExecuteButton() || canShowApproveButton())
+                (canShowExecuteButton() || canShowApproveButton() || canShowCancelButton())
                 &&
                 (
                   <Button
