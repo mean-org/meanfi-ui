@@ -798,17 +798,20 @@ export const MultisigVaultsView = () => {
     getMultisigVaults(connection, new PublicKey(multisigAddress))
     .then((result: MultisigVault[]) => {
       setMultisigVaults(result);
+      let item: MultisigVault | undefined = undefined;
       if (result.length > 0 && !selectedVault) {
-        setSelectedVault(result[0]);
+        item = Object.assign({}, result[0]);
       } else if (result.length > 0 && selectedVault) {
         const newItem = result.find(i => i.address === selectedVault.address);
         if (newItem) {
-          setSelectedVault(newItem);
+          item = Object.assign({}, newItem);
         } else {
-          setSelectedVault(result[0]);
+          item = Object.assign({}, result[0]);
         }
       }
-    })
+      setSelectedVault(item);
+      consoleOut('selectedVault:', item, 'blue');
+  })
     .catch(err => console.error(err))
     .finally(() => setLoadingVaults(false));
 
@@ -943,10 +946,19 @@ export const MultisigVaultsView = () => {
       getMultisigVaults(connection, new PublicKey(multisigAddress))
       .then((result: MultisigVault[]) => {
         setMultisigVaults(result);
-        if (result.length > 0) {
-          setSelectedVault(result[0]);
-          consoleOut('selectedVault:', result[0], 'blue');
+        let item: MultisigVault | undefined = undefined;
+        if (result.length > 0 && !selectedVault) {
+          item = Object.assign({}, result[0]);
+        } else if (result.length > 0 && selectedVault) {
+          const newItem = result.find(i => i.address === selectedVault.address);
+          if (newItem) {
+            item = Object.assign({}, newItem);
+          } else {
+            item = Object.assign({}, result[0]);
+          }
         }
+        setSelectedVault(item);
+        consoleOut('selectedVault:', item, 'blue');
       })
       .catch(err => console.error(err))
       .finally(() => setLoadingVaults(false));
@@ -956,6 +968,7 @@ export const MultisigVaultsView = () => {
       clearTimeout(timeout);
     }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   },[
     publicKey,
     connection,

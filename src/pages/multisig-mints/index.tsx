@@ -924,10 +924,19 @@ export const MultisigMintsView = () => {
       getMultisigMints(connection, new PublicKey(multisigAddress))
       .then((result: MultisigMint[]) => {
         setMultisigMints(result);
-        if (result.length > 0) {
-          setSelectedMint(result[0]);
-          consoleOut('selectedMint:', result[0], 'blue');
+        let item: MultisigMint | undefined = undefined;
+        if (result.length > 0 && !selectedMint) {
+          item = Object.assign({}, result[0]);
+        } else if (result.length > 0 && selectedMint) {
+          const newItem = result.find(i => i.address.equals(selectedMint.address));
+          if (newItem) {
+            item = Object.assign({}, newItem);
+          } else {
+            item = Object.assign({}, result[0]);
+          }
         }
+        setSelectedMint(item);
+        consoleOut('selectedMint:', item, 'blue');
       })
       .catch(err => console.error(err))
       .finally(() => setLoadingMints(false));
@@ -937,6 +946,7 @@ export const MultisigMintsView = () => {
       clearTimeout(timeout);
     }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   },[
     publicKey,
     connection,
