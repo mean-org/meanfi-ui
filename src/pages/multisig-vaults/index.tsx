@@ -16,7 +16,7 @@ import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout, Token, TOKEN_PR
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { consoleOut, copyText, delay, getReadableDate, getShortDate, getTransactionOperationDescription, getTransactionStatusForLogs, isDev, isLocal } from '../../utils/ui';
 import { Identicon } from '../../components/Identicon';
-import { getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, getTxIxResume, shortenAddress, toUiAmount } from '../../utils/utils';
+import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, getTxIxResume, makeDecimal, shortenAddress } from '../../utils/utils';
 import { MultisigV2, MultisigParticipant, MultisigTransaction, MultisigTransactionStatus, MultisigVault, Multisig } from '../../models/multisig';
 import { TransactionFees } from '@mean-dao/msp';
 import { MultisigCreateVaultModal } from '../../components/MultisigCreateVaultModal';
@@ -774,6 +774,18 @@ export const MultisigVaultsView = () => {
       tokenAccount.address = t.pubkey;
       return tokenAccount;
     });
+
+    // Set vault decimals to the mint decimals for easiness in UI.
+    for (let v = 0; v < results.length; v++) {
+      if (v % 3 === 0) { await delay(200); }
+      const mintInfo = await connection.getAccountInfo(results[v].mint);
+      if (mintInfo) {
+        const mint = MintLayout.decode(mintInfo.data);
+        results[v].decimals = mint.decimals;
+      } else {
+        results[v].decimals = 0;
+      }
+    }
 
     consoleOut('multisig vaults:', results, 'blue');
     return results;
@@ -3410,7 +3422,7 @@ export const MultisigVaultsView = () => {
   // Rendering //
   ///////////////
 
-  const getTokenIconAndAmount = (tokenAddress: string, amount: any) => {
+  const getTokenIconAndAmount = (tokenAddress: string, amount: any, decimals: number) => {
     const token = tokenList.find(t => t.address === tokenAddress);
     if (!token) {
       return (
@@ -3419,12 +3431,7 @@ export const MultisigVaultsView = () => {
             <Identicon address={tokenAddress} style={{ width: "30", display: "inline-flex" }} />
           </span>
           <span className="info-data">
-          {
-            getTokenAmountAndSymbolByTokenAddress(
-              toUiAmount(new BN(amount), 6),
-              tokenAddress
-            )
-          }
+            {formatThousands(makeDecimal(amount, decimals), decimals)}
           </span>
         </>
       );
@@ -3435,12 +3442,7 @@ export const MultisigVaultsView = () => {
           <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} />
         </span>
         <span className="info-data">
-          {
-            getTokenAmountAndSymbolByTokenAddress(
-              toUiAmount(new BN(amount), token.decimals || 6),
-              token.address
-            )
-          }
+          {formatThousands(makeDecimal(amount, token.decimals || decimals), token.decimals || decimals)}
         </span>
       </>
     );
@@ -3612,7 +3614,8 @@ export const MultisigVaultsView = () => {
                   {
                     getTokenIconAndAmount(
                       selectedVault.mint.toBase58(),
-                      selectedVault.amount
+                      selectedVault.amount,
+                      selectedVault.decimals || 6
                     )
                   }
                 </div>
@@ -3668,9 +3671,16 @@ export const MultisigVaultsView = () => {
         const onVaultSelected = (ev: any) => {
           setSelectedVault(item);
           setDtailsPanelOpen(true);
-          const resume = `\naddress: ${item.address.toBase58()}\nmint: ${token ? token.address : item.mint.toBase58()}\nauth: ${item.owner.toBase58()}`;
-          consoleOut('resume:', resume, 'blue');
           consoleOut('selected vault:', item, 'blue');
+          consoleOut('selected vault readable:', {
+            address: item.address.toBase58(),
+            owner: item.owner.toBase58(),
+            mint: item.mint.toBase58(),
+            mintDecimals: item.decimals,
+            closeAuthority: item.closeAuthority.toBase58(),
+            amount: item.amount.toNumber(),
+            uiAmount: makeDecimal(item.amount, item.decimals),
+          }, 'blue');
           setLoadingMultisigTxs(true);
         };
         return (
@@ -3705,11 +3715,7 @@ export const MultisigVaultsView = () => {
             </div>
             <div className="rate-cell">
               <div className="rate-amount text-uppercase">
-                {getTokenAmountAndSymbolByTokenAddress(
-                  toUiAmount(new BN(item.amount), token?.decimals || 6),
-                  token ? token.address as string : '',
-                  true
-                )}
+                {formatThousands(makeDecimal(item.amount, item.decimals), item.decimals)}
               </div>
             </div>
           </div>

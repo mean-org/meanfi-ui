@@ -78,6 +78,7 @@ export type MultisigVault = {
   mint: PublicKey;
   owner: PublicKey;
   state: number;
+  decimals: number;
 }
 
 export type MultisigMint = {
