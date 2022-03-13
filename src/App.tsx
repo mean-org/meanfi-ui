@@ -30,10 +30,14 @@ function App() {
       let [response] = await AnalyticsBrowser.load({ writeKey });
       segmentAnalytics.analytics = response;
     }
+
     // Load Segment Analytics only for PROD and DEV
-    if (environment !== "local" || !isLocal()) {
-      loadAnalytics();
-    }
+    // if (!isLocal()) {
+    //   loadAnalytics();
+    // }
+
+    loadAnalytics();
+
   }, [writeKey]);
 
   // Use the preferred theme or dark as a default

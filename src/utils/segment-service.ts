@@ -110,9 +110,9 @@ export class SegmentAnalyticsService {
      * Every time the user navigates to a page
      */
 
-    public recordIdentity(userId: string, userInfo: any): void {
+    public recordIdentity(userId: string, userInfo: any, callback?: any | undefined): void {
         if (this._analytics) {
-            this._analytics.identify(userId, userInfo);
+            this._analytics.identify(userId, userInfo, callback);
         }
     }
 
