@@ -272,11 +272,6 @@ export const AppLayout = React.memo((props: any) => {
             walletProvider: provider?.name || 'Other',
             theme: theme,
             language: language
-          }, () => {
-            segmentAnalytics.recordEvent(AppUsageEvent.WalletConnected, {
-              walletAddress,
-              walletProvider: provider?.name || 'Other'
-            })
           });
 
           if (!isLocal()) {
@@ -319,6 +314,8 @@ export const AppLayout = React.memo((props: any) => {
             connected: false,
             platform: getPlatform(),
             browser: browserName
+          }, () => {
+            segmentAnalytics.recordEvent(AppUsageEvent.WalletDisconnected);
           });
         }
       }

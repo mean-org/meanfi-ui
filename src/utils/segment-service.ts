@@ -3,13 +3,17 @@ import { consoleOut } from "./ui";
 
 export enum AppUsageEvent {
     // Sitewide Actions
+    WalletConnect = "Connect wallet",
     WalletConnected = "Wallet Connected",
+    WalletDisconnect = "Disconnect wallet",
     WalletDisconnected = "Wallet Disconnected",
+    WalletSelected = "Wallet selected",
     WalletChange = "Wallet Change",
-    StreamRefresh = "Stream List Refresh",
     // Stream Actions
     // Top Up Funds Action
     // Page /accounts/streams
+    StreamRefresh = "Stream List Refresh",
+    NewTransferButton = "New transfer start",
     StreamTopupButton = "Stream Top up Button",
     StreamTopupCreated = "Stream Top up Create",
     StreamTopupSigned = "Stream Top up Signed",
@@ -18,13 +22,14 @@ export enum AppUsageEvent {
     // Withdraw Funds Action
     // Page /accounts/streams
     StreamWithdrawalButton = "Stream withdraw funds Button",
+    StreamWithdrawalStart = "Stream withdraw funds execute",
     StreamWithdrawalCreated = "Stream withdraw funds Create",
     StreamWithdrawalSigned = "Stream withdraw funds Signed",
     StreamWithdrawalCompleted = "Stream withdraw funds Completed",
     StreamWithdrawalFailed = "Stream withdraw funds Failed",
     // Transfer Stream Action
     // Page /accounts/streams
-    StreamTransferCreated = "Stream Transfer Create",
+    StreamTransferCreated = "Stream Transfer Created",
     StreamTransferSigned = "Stream Transfer Signed",
     StreamTransferCompleted = "Stream Transfer Completed",
     StreamTransferFailed = "Stream Transfer Failed",
@@ -141,13 +146,13 @@ export class SegmentAnalyticsService {
      * Every time the user performs an action that we want to track :D
      */
 
-    public recordEvent(event: AppUsageEvent | StatsTriggertEvent, data: any): void {
-        if (!event || !data) {
-            consoleOut('recordEvent was called without necessary params', '', 'red');
-            return;
-        }
+    public recordEvent(event: AppUsageEvent | StatsTriggertEvent, data?: any, callback?: any | undefined): void {
         if (this._analytics) {
-            this._analytics.track(event, data);
+            if (event && !data && !callback) {
+                this._analytics.track(event);
+            } else {
+                this._analytics.track(event, data, callback);
+            }
         }
     }
 
