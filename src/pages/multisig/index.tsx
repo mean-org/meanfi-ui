@@ -3726,9 +3726,6 @@ export const MultisigView = () => {
 
               } as MultisigV2;
 
-              consoleOut('account:', account, 'blue');
-              consoleOut('multisigInfo:', multisigInfo, 'blue');
-
               setSelectedMultisig(multisigInfo);
             });
           }
@@ -3974,6 +3971,16 @@ export const MultisigView = () => {
 
     return initiator;
   }, [selectedMultisig]);
+
+  const isUserTxInitiator = useCallback(() => {
+    if (!highlightedMultisigTx || !publicKey) { return false; }
+    const initiator = getTxInitiator(highlightedMultisigTx);
+    return initiator && publicKey.toBase58() === initiator.address ? true : false;
+  }, [
+    publicKey,
+    highlightedMultisigTx,
+    getTxInitiator,
+  ]);
 
   const getTxSignedCount = useCallback((mtx: MultisigTransaction) => {
     if (mtx && mtx.signers) {
@@ -4867,7 +4874,13 @@ export const MultisigView = () => {
                   </>
                 ) : (
                   <>
-                    <h3 className="text-center">This transaction has {isTxRejected() ? 'been rejected' : 'already been executed'}.</h3>
+                    {isTxVoided() ? (
+                      <h3 className="text-center">This pending transaction has been VOIDED due to the Multisig being edited.{isUserTxInitiator() ? ' Please cancel it below to remove it from the list.' : ''}</h3>
+                    ) : isTxRejected() ? (
+                      <h3 className="text-center">This transaction has been rejected.</h3>
+                      ) : (
+                      <h3 className="text-center">This transaction has already been executed.</h3>
+                    )}
                     <Divider className="mt-2" />
                     <div className="mb-2">Proposed Action: {getOperationName(highlightedMultisigTx.operation)}</div>
                     <div className="mb-2">Submitted on: {getReadableDate(highlightedMultisigTx.createdOn.toString(), true)}</div>
