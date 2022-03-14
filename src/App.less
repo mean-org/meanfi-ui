@@ -6870,11 +6870,13 @@ code {
 }
 
 .panel1,
-.panel2 {
+.panel2,
+.panel3 {
     width: 100%;
 }
 .panel1.show,
-.panel2.show {
+.panel2.show,
+.panel3.show {
     height: auto;
     opacity: 1;
     transition-property: height, opacity;
@@ -6882,7 +6884,8 @@ code {
     transition-timing-function: ease-in-out;
 }
 .panel1.hide,
-.panel2.hide {
+.panel2.hide,
+.panel3.hide {
     height: 0;
     opacity: 0;
     padding: 0 !important;
@@ -6971,6 +6974,10 @@ code {
     display: flex;
     margin: 0.5em;
   }
+}
+
+.warning-message {
+  color: var(--color-notify-warning);
 }
 
 // Animations

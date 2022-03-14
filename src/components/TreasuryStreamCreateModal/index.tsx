@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect } from 'react';
 import { useContext, useState } from 'react';
-import { Modal, Button, Select, Dropdown, Menu, DatePicker, Checkbox, Divider, Radio, Tooltip } from 'antd';
+import { Modal, Button, Select, Dropdown, Menu, DatePicker, Checkbox, Divider, Radio, Tooltip, Row, Col } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
 import {
   cutNumber,
@@ -32,7 +32,7 @@ import {
 import { getTokenByMintAddress } from '../../utils/tokens';
 import { LoadingOutlined } from '@ant-design/icons';
 import { TokenDisplay } from '../TokenDisplay';
-import { IconCaretDown, IconEdit, IconHelpCircle } from '../../Icons';
+import { IconCaretDown, IconEdit, IconHelpCircle, IconWarning } from '../../Icons';
 import { OperationType, PaymentRateType, TransactionStatus, LockPeriodType } from '../../models/enums';
 import moment from "moment";
 import { useWallet } from '../../contexts/wallet';
@@ -286,6 +286,18 @@ export const TreasuryStreamCreateModal = (props: {
                   ? getPaymentSettingsButtonLabel()
                   : t('transactions.validation.valid-continue');
   };
+
+  const getStepTwoContinueButtonLabel = (): string => {
+    return !publicKey
+      ? t('transactions.validation.not-connected')
+      : (!enableMultipleStreamsOption && !recipientNote)
+      ? 'Memo cannot be empty'
+      : (!enableMultipleStreamsOption && !recipientAddress)
+      ? t('transactions.validation.select-recipient')
+      : !selectedToken || unallocatedBalance.toNumber() === 0
+      ? t('transactions.validation.no-balance')
+      : t('transactions.validation.valid-continue');
+  }
 
   const getTransactionStartButtonLabel = (): string => {
     return !publicKey
@@ -1151,16 +1163,18 @@ export const TreasuryStreamCreateModal = (props: {
           )}
 
           {/* Create Treasury checkbox */}
-          <div className="mb-2 flex-row align-items-start">
-            <span className="form-label w-auto mb-0">{t('treasuries.treasury-streams.create-treasury-switch-label')}</span>
-            <Radio.Group className="ml-2 d-flex" 
-              onChange={onCloseMultipleStreamsChanged} 
-              value={enableMultipleStreamsOption}
-            >
-              <Radio value={true}>{t('general.yes')}</Radio>
-              <Radio value={false}>{t('general.no')}</Radio>
-            </Radio.Group>
-          </div>
+          {(treasuryOption && treasuryOption.type === TreasuryType.Open) && (
+            <div className="mb-2 flex-row align-items-start">
+              <span className="form-label w-auto mb-0">{t('treasuries.treasury-streams.create-treasury-switch-label')}</span>
+              <Radio.Group className="ml-2 d-flex" 
+                onChange={onCloseMultipleStreamsChanged} 
+                value={enableMultipleStreamsOption}
+              >
+                <Radio value={true}>{t('general.yes')}</Radio>
+                <Radio value={false}>{t('general.no')}</Radio>
+              </Radio.Group>
+            </div>
+          )}
 
           {!enableMultipleStreamsOption && (
             <>
@@ -1383,17 +1397,17 @@ export const TreasuryStreamCreateModal = (props: {
                 <>
                   {(recipientAddress && !enableMultipleStreamsOption) && (
                     <>
-                    <div className="flex-fixed-right">
-                      <div className="left">
-                        <div className="form-label">{t('transactions.resume')}</div>
+                      <div className="flex-fixed-right">
+                        <div className="left">
+                          <div className="form-label">{t('transactions.resume')}</div>
+                        </div>
+                        <div className="right">
+                          <span className="flat-button change-button" onClick={() => setCurrentStep(0)}>
+                            <IconEdit className="mean-svg-icons" />
+                            <span>{t('general.cta-change')}</span>
+                          </span>
+                        </div>
                       </div>
-                      <div className="right">
-                        <span className="flat-button change-button" onClick={() => setCurrentStep(0)}>
-                          <IconEdit className="mean-svg-icons" />
-                          <span>{t('general.cta-change')}</span>
-                        </span>
-                      </div>
-                    </div>
                       <div className="well">
                         <div className="three-col-flexible-middle">
                           <div className="left flex-row">
@@ -1747,6 +1761,48 @@ export const TreasuryStreamCreateModal = (props: {
             </>
           )}
         </div>
+
+        <div className={currentStep === 2 ? "contract-wrapper panel3 show" : "contract-wrapper panel3 hide"}>
+
+          {(treasuryOption && treasuryOption.type === TreasuryType.Lock) && (
+            <>
+              <div className="flex-fixed-right">
+                <div className="left">
+                  <div className="text-uppercase mb-2">{t('transactions.resume')}</div>
+                </div>
+                <div className="right">
+                  <span className="flat-button change-button" onClick={() => setCurrentStep(0)}>
+                    <IconEdit className="mean-svg-icons" />
+                    <span>{t('general.cta-change')}</span>
+                  </span>
+                </div>
+              </div>
+
+              <div className="mb-2">Confirm the terms for My Awesome Investor</div>
+
+              <Row className="mb-2">
+                <Col span={24}>Sending: 125 SOL</Col>
+                <Col span={24}>To Address: FULL_ADDRESS_GOES_HERE</Col>
+                <Col span={24}>Starting on: 03/24/2022</Col>
+                <Col span={24}>Cliff release: 12.5 SOL (on commencement)</Col>
+                <Col span={24}>Release rate: 3.125 SOL / month</Col>
+              </Row>
+
+              <span className="warning-message icon-label mb-3">
+                <IconWarning className="mean-svg-icons" />
+                IMPORTANT: This is a locked money stream, and once started, you cannot cancel, pause or change its details. Verify all information before proceeding.
+              </span>
+
+              <div className="ml-1 mb-3">
+                <Checkbox checked={isFeePaidByTreasurer} onChange={onFeePayedByTreasurerChange}>{t('treasuries.treasury-streams.fee-payed-by-treasurer')}</Checkbox>
+              </div>
+
+              <div className="ml-1">
+                <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>{t('transfers.verified-recipient-disclaimer')}</Checkbox>
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
       <Divider plain/>
@@ -1788,7 +1844,22 @@ export const TreasuryStreamCreateModal = (props: {
             : getTransactionStartButtonLabel()}
         </Button>
       </div>
-
+      <div className={currentStep === 2 ? "contract-wrapper panel3 show" : "contract-wrapper panel3 hide"}>
+        <Button
+            className="main-cta"
+            block
+            type="primary"
+            shape="round"
+            size="large"
+            onClick={onContinueButtonClick}
+            // disabled={!publicKey ||
+            //   (!enableMultipleStreamsOption && !isMemoValid()) ||
+            //   ((!enableMultipleStreamsOption ? !isValidAddress(recipientAddress) : (!isCsvSelected || !validMultiRecipientsList))) ||
+            //   !arePaymentSettingsValid()}
+            >
+            {getStepTwoContinueButtonLabel()}
+          </Button>
+      </div>
     </Modal>
   );
 };
