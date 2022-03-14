@@ -4933,7 +4933,7 @@ export const MultisigView = () => {
                         : (
                           <>
                             <span>{transactionStatus.customError.message}</span>
-                            <span className="ml-1">[{shortenAddress(transactionStatus.customError.data.toBase58(), 8)}]</span>
+                            <span className="ml-1">[{shortenAddress(transactionStatus.customError.data, 8)}]</span>
                             <div className="icon-button-container">
                               <Button
                                 type="default"
