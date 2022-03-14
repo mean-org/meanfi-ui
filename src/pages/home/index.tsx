@@ -8,7 +8,7 @@ export const HomeView = () => {
     <>
     <Helmet>
       <title>Home - Mean Finance</title>
-      <link rel="canonical" href="https://app.meanfi.com/accounts" />
+      <link rel="canonical" href="https://app.meanfi.com/" />
       <meta name="description" content="Water flows, and now, money does too. Welcome to Mean Finance, your money unleashed!" />
       <meta name="google-site-verification" content="u-gc96PrpV7y_DAaA0uoo4tc2ffcgi_1r6hqSViM-F8" />
     </Helmet>

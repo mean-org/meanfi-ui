@@ -24,6 +24,8 @@ import { WalletConnectWalletAdapter } from "../wallet-adapters/walletconnect";
 import { SlopeWalletAdapter } from "../wallet-adapters/slope";
 import { MathWalletAdapter } from "../wallet-adapters/mathwallet";
 import { DownOutlined, UpOutlined } from "@ant-design/icons";
+import { segmentAnalytics } from "../App";
+import { AppUsageEvent } from "../utils/segment-service";
 
 export const WALLET_PROVIDERS = [
   {
@@ -298,6 +300,11 @@ export function WalletProvider({ children = null as any }) {
               if (wallet) {
                 wallet.disconnect();
               }
+              // Record user event in Segment Analytics
+              segmentAnalytics.recordEvent(AppUsageEvent.WalletSelected, {
+                walletProvider: item.name,
+                isWebWallet: item.isWebWallet
+              });
               // TODO: This is not the right way of doing this, there most be a better way
               setTimeout(() => {
                 setProviderName(item.name);

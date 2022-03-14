@@ -1192,14 +1192,24 @@ export const AccountsView = () => {
 
   return (
     <>
-      <Helmet>
-        <title>Accounts - Mean Finance</title>
-        <link rel="canonical" href="https://app.meanfi.com/accounts" />
-        <meta name="description" content="Water flows, and now, money does too. Welcome to Mean Finance, your money unleashed!" />
-        <meta name="google-site-verification" content="u-gc96PrpV7y_DAaA0uoo4tc2ffcgi_1r6hqSViM-F8" />
-      </Helmet>
-
       <div className="container main-container">
+
+        {location.pathname === '/accounts/streams' ? (
+          <Helmet>
+            <title>Streams - Mean Finance</title>
+            <link rel="canonical" href="/accounts/streams" />
+            <meta name="description" content="Streams. Manage your live money streams" />
+            <meta name="keywords" content="streams, transfers, send money" />
+          </Helmet>
+        ) : (
+          <Helmet>
+            <title>Accounts - Mean Finance</title>
+            <link rel="canonical" href="/accounts" />
+            <meta name="description" content="Accounts. Keep track of your assets and transactions" />
+            <meta name="google-site-verification" content="u-gc96PrpV7y_DAaA0uoo4tc2ffcgi_1r6hqSViM-F8" />
+            <meta name="keywords" content="assets, token accounts, transactions" />
+          </Helmet>
+        )}
 
         {/* {isLocal() && (
           <div className="debug-bar">
@@ -1210,7 +1220,11 @@ export const AccountsView = () => {
         )} */}
 
         {/* This is a SEO mandatory h1 but it is not visible */}
-        <h1 className="mandatory-h1">Accounts, Where you keep track of your assets</h1>
+        {location.pathname === '/accounts/streams' ? (
+          <h1 className="mandatory-h1">Manage your live money streams</h1>
+        ) : (
+          <h1 className="mandatory-h1">Keep track of your assets and transactions</h1>
+        )}
 
         <div className={(canShowAccountDetails && accountAddress) ? 'interaction-area' : 'interaction-area flex-center h-75'}>
 

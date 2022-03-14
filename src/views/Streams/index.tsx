@@ -90,6 +90,8 @@ import { StreamsSummary } from "../../models/streams";
 import { UserTokenAccount } from "../../models/transactions";
 import { customLogger } from "../..";
 import { StreamTreasuryType } from "../../models/treasuries";
+import { segmentAnalytics } from "../../App";
+import { AppUsageEvent } from "../../utils/segment-service";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -1011,6 +1013,8 @@ export const Streams = () => {
   // Add funds modal
   const [isAddFundsModalVisible, setIsAddFundsModalVisibility] = useState(false);
   const showAddFundsModal = useCallback(() => {
+    // Record user event in Segment Analytics
+    segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupButton);
     const token = getTokenByMintAddress(streamDetail?.associatedToken as string);
     consoleOut("stream token:", token?.symbol);
     if (token) {
@@ -1499,6 +1503,8 @@ export const Streams = () => {
   const [isWithdrawModalVisible, setIsWithdrawModalVisibility] = useState(false);
 
   const showWithdrawModal = useCallback(async () => {
+    // Record user event in Segment Analytics
+    segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalButton);
     const lastDetail = Object.assign({}, streamDetail);
     resetTransactionStatus();
     setLastStreamDetail(lastDetail);
@@ -1530,10 +1536,17 @@ export const Streams = () => {
   const onAcceptWithdraw = (amount: any) => {
     closeWithdrawModal();
     consoleOut('Withdraw amount:', parseFloat(amount));
+    // Record user event in Segment Analytics
+    segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalStart, {
+      token: selectedToken?.symbol,
+      amount: amount
+    });
     onExecuteWithdrawFundsTransaction(amount);
   };
 
-  const onActivateContractScreen = () => {
+  const onCreateNewTransfer = () => {
+    // Record user event in Segment Analytics
+    segmentAnalytics.recordEvent(AppUsageEvent.NewTransferButton);
     setCustomStreamDocked(false);
     navigate("/transfers");
   };
@@ -2612,6 +2625,8 @@ export const Streams = () => {
   }
 
   const onRefreshStreamsClick = () => {
+    // Record user event in Segment Analytics
+    segmentAnalytics.recordEvent(AppUsageEvent.StreamRefresh);
     refreshStreamList(true);
     setCustomStreamDocked(false);
   };
@@ -4143,7 +4158,7 @@ export const Streams = () => {
                     block
                     type="primary"
                     shape="round"
-                    onClick={onActivateContractScreen}>
+                    onClick={onCreateNewTransfer}>
                     {t('streams.create-new-stream-cta')}
                   </Button>
                 </div>

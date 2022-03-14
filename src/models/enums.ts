@@ -96,6 +96,7 @@ export enum OperationType {
     ApproveTransaction = 41,
     ExecuteTransaction = 42,
     DeleteVault = 43,
+    CancelTransaction = 44,
     // IDO
     IdoDeposit = 100,
     IdoWithdraw = 101,

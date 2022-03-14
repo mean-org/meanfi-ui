@@ -47,7 +47,7 @@ export class CustomLoggerService {
             'subdomain': 'intelerit.com',
             'useDomainProxy': false
         });
-        consoleOut('logger:', logger, 'blue');
+        console.log(`%cLoggly logger initialized!`, 'color:brown');
     }
 
     public async logInfo(message: string, data?: any) {

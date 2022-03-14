@@ -66,54 +66,63 @@ export const requestOptions: RequestInit = {
 export const LANGUAGES: Language[] = [
     {
         code: 'en',
+        isoName: 'English',
         name: 'English',
         flag: '/assets/flags/us.svg',
         locale: 'en-US'
     },
     {
         code: 'es',
+        isoName: 'Spanish',
         name: 'Español',
         flag: '/assets/flags/es.svg',
         locale: 'es-ES'
     },
     {
         code: 'fa',
+        isoName: 'Farsi',
         name: 'فارسی',
         flag: '/assets/flags/ir.svg',
         locale: 'fa-IR'
     },
     {
         code: 'fr',
+        isoName: 'French',
         name: 'Français',
         flag: '/assets/flags/fr.svg',
         locale: 'fr-FR'
     },
     {
         code: 'pt',
+        isoName: 'Portuguese',
         name: 'Português',
         flag: '/assets/flags/br.svg',
         locale: 'pt-BR'
     },
     {
         code: 'tr',
+        isoName: 'Turkish',
         name: 'Türkçe',
         flag: '/assets/flags/tr.svg',
         locale: 'tr-TR'
     },
     // {
     //     code: 'zh',
+    //     isoName: 'Chinese',
     //     name: '中國人',
     //     flag: '/assets/flags/cn.svg',
     //     locale: 'zh-CN'
     // },
     {
         code: 'vi',
+        isoName: 'Vietnamese',
         name: 'Tiếng Việt',
         flag: '/assets/flags/vn.svg',
         locale: 'vi-VN'
     },
     // {
     //     code: 'ko',
+    //     isoName: 'Korean',
     //     name: 'T한국인',
     //     flag: '/assets/flags/kr.svg',
     //     locale: 'ko-KR'

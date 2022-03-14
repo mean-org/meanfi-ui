@@ -48,7 +48,7 @@
     "@jup-ag/core": "1.0.0-beta.11",
     "@ledgerhq/hw-transport": "^6.11",
     "@ledgerhq/hw-transport-webhid": "^6.11",
-    "@mean-dao/ddca": "1.2.32",
+    "@mean-dao/ddca": "1.2.33",
     "@mean-dao/hybrid-liquidity-ag": "1.1.32",
     "@mean-dao/money-streaming": "^1.7.10",
     "@mean-dao/msp": "^0.5.5",

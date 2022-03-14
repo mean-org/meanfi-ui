@@ -18,6 +18,8 @@ import { copyText } from "../../utils/ui";
 import { getSolanaExplorerClusterParam } from "../../contexts/connection";
 import { useTranslation } from "react-i18next";
 import { AppStateContext } from '../../contexts/appstate';
+import { segmentAnalytics } from '../../App';
+import { AppUsageEvent } from '../../utils/segment-service';
 
 const { Panel } = Collapse;
 
@@ -39,6 +41,8 @@ export const AccountDetails = () => {
     setTimeout(() => {
       select();
     }, 500);
+    // Record user event in Segment Analytics
+    segmentAnalytics.recordEvent(AppUsageEvent.WalletChange);
     close();
   }
 
@@ -85,6 +89,8 @@ export const AccountDetails = () => {
   const onDisconnectWallet = () => {
     setSelectedStream(undefined);
     setStreamList(undefined);
+    // Record user event in Segment Analytics
+    segmentAnalytics.recordEvent(AppUsageEvent.WalletDisconnect);
     close();
     disconnect();
     // TODO: If we decide to turn OFF wallet autoConnect then next line will be needed
