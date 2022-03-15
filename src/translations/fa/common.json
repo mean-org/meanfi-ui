@@ -951,6 +951,14 @@
 			"create-multisig-cta": "treasury را آغاز کنید",
 			"create-multisig-cta-busy": "راه اندازی treasury",
 			"create-multisig-treasury-success": "شما درخواست treasury اولیه را با موفقیت امضا کردید.",
+			"lock-period": {
+				"minutes": "minutes",
+				"hours": "hours",
+				"days": "days",
+				"weeks": "weeks",
+				"months": "months",
+				"years": "years"
+			},
 			"main-cta": "راه اندازی",
 			"main-cta-busy": "ایجاد treasury",
 			"modal-title": "treasury  ایجاد کنید",

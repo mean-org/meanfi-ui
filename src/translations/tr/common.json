@@ -951,6 +951,14 @@
 			"create-multisig-cta": "Hazineyi başlat",
 			"create-multisig-cta-busy": "Hazine başlatılıyor",
 			"create-multisig-treasury-success": "Çoklu-İmza onayı için gönderilen hazine talebini başlatın.",
+			"lock-period": {
+				"minutes": "minutes",
+				"hours": "hours",
+				"days": "days",
+				"weeks": "weeks",
+				"months": "months",
+				"years": "years"
+			},
 			"main-cta": "Oluştur",
 			"main-cta-busy": "Hazine oluşturuluyor",
 			"modal-title": "Hazine oluştur",

@@ -33,7 +33,7 @@ import { getTokenByMintAddress } from '../../utils/tokens';
 import { LoadingOutlined } from '@ant-design/icons';
 import { TokenDisplay } from '../TokenDisplay';
 import { IconCaretDown, IconEdit, IconHelpCircle, IconWarning } from '../../Icons';
-import { OperationType, PaymentRateType, TransactionStatus, LockPeriodType } from '../../models/enums';
+import { OperationType, PaymentRateType, TransactionStatus } from '../../models/enums';
 import moment from "moment";
 import { useWallet } from '../../contexts/wallet';
 import { StepSelector } from '../StepSelector';
@@ -49,8 +49,6 @@ import { useConnectionConfig } from '../../contexts/connection';
 import { Idl, Program } from '@project-serum/anchor';
 import { BN } from 'bn.js';
 import { u64 } from '@solana/spl-token';
-const percentages = [25, 50, 75, 100];
-
 
 const { Option } = Select;
 
@@ -85,6 +83,7 @@ export const TreasuryStreamCreateModal = (props: {
     paymentStartDate,
     fromCoinAmount,
     paymentRateAmount,
+    lockPeriodAmount,
     paymentRateFrequency,
     lockPeriodFrequency,
     transactionStatus,
@@ -98,6 +97,7 @@ export const TreasuryStreamCreateModal = (props: {
     setRecipientAddress,
     setPaymentStartDate,
     setPaymentRateAmount,
+    setLockPeriodAmount,
     setTransactionStatus,
     setIsVerifiedRecipient,
     setPaymentRateFrequency,
@@ -122,7 +122,9 @@ export const TreasuryStreamCreateModal = (props: {
   const [hasIsOwnWallet, setHasIsOwnWallet] = useState<boolean>(false);
   const [isCsvSelected, setIsCsvSelected] = useState<boolean>(false);
   const [validMultiRecipientsList, setValidMultiRecipientsList] = useState<boolean>(false);
+  const percentages = [5, 10, 15, 20];
   const [percentageValue, setPercentageValue] = useState<number>(0);
+  const [cliffRelease, setCliffRelease] = useState<string>("")
 
   const isNewTreasury = useCallback(() => {
     if (props.treasuryDetails) {
@@ -251,13 +253,13 @@ export const TreasuryStreamCreateModal = (props: {
     return options;
   }
 
-  const getLockPeriodOptionsFromEnum = (value: any): LockPeriodTypeOption[] => {
+  const getLockPeriodOptionsFromEnum = (value: any): PaymentRateTypeOption[] => {
     let index = 0;
-    const options: LockPeriodTypeOption[] = [];
+    const options: PaymentRateTypeOption[] = [];
     for (const enumMember in value) {
         const mappedValue = parseInt(enumMember, 10);
         if (!isNaN(mappedValue)) {
-            const item = new LockPeriodTypeOption(
+            const item = new PaymentRateTypeOption(
                 index,
                 mappedValue,
                 getLockPeriodOptionLabel(mappedValue, t)
@@ -290,12 +292,16 @@ export const TreasuryStreamCreateModal = (props: {
   const getStepTwoContinueButtonLabel = (): string => {
     return !publicKey
       ? t('transactions.validation.not-connected')
-      : (!enableMultipleStreamsOption && !recipientNote)
-      ? 'Memo cannot be empty'
-      : (!enableMultipleStreamsOption && !recipientAddress)
-      ? t('transactions.validation.select-recipient')
+      : !lockPeriodAmount
+      ? 'Lock period cannot be empty'
+      : !cliffRelease
+      ? 'Add cliff to release'
       : !selectedToken || unallocatedBalance.toNumber() === 0
       ? t('transactions.validation.no-balance')
+      : !paymentStartDate
+      ? t('transactions.validation.no-valid-date')
+      : !areSendAmountSettingsValid()
+      ? getPaymentSettingsButtonLabel()
       : t('transactions.validation.valid-continue');
   }
 
@@ -326,9 +332,16 @@ export const TreasuryStreamCreateModal = (props: {
 
   const getPaymentSettingsButtonLabel = (): string => {
     const rateAmount = parseFloat(paymentRateAmount || '0');
-    return !rateAmount
-      ? t('transactions.validation.no-payment-rate')
-      : '';
+
+    if (treasuryOption && treasuryOption.type === TreasuryType.Lock) {
+      return !rateAmount
+        ? 'Add funds to commit'
+        : '';
+    } else {
+      return !rateAmount
+        ? t('transactions.validation.no-payment-rate')
+        : '';
+    }
   }
 
   const toggleOverflowEllipsisMiddle = useCallback((state: boolean) => {
@@ -435,8 +448,12 @@ export const TreasuryStreamCreateModal = (props: {
     setCurrentStep(value);
   }
 
-  const onContinueButtonClick = () => {
+  const onContinueStepOneButtonClick = () => {
     setCurrentStep(1);  // Go to step 2
+  }
+
+  const onContinueStepTwoButtonClick = () => {
+    setCurrentStep(2);  // Go to step 3
   }
 
   const handleRecipientNoteChange = (e: any) => {
@@ -477,7 +494,19 @@ export const TreasuryStreamCreateModal = (props: {
     setPaymentRateFrequency(val);
   }
 
-  const handleLockPeriodOptionChange = (val: LockPeriodType) => {
+  const handleLockPeriodAmountChange = (e: any) => {
+
+    let periodAmountValue = e.target.value;
+
+    if (periodAmountValue.length > 2) {
+      periodAmountValue = periodAmountValue.substr(0, 2);
+      setLockPeriodAmount(periodAmountValue);
+    } else {
+      setLockPeriodAmount(periodAmountValue);
+    }
+  }
+
+  const handleLockPeriodOptionChange = (val: PaymentRateType) => {
     setLockPeriodFrequency(val);
   }
 
@@ -539,12 +568,14 @@ export const TreasuryStreamCreateModal = (props: {
       setRecipientAddress("");
       setRecipientNote("");
       setPaymentRateAmount("");
+      setFromCoinAmount("");
       setCsvArray([]);
       setIsCsvSelected(false);
-      setFromCoinAmount("");
       setIsVerifiedRecipient(false);
       setPaymentRateFrequency(PaymentRateType.PerMonth);
       setPaymentStartDate(today);
+      setLockPeriodAmount("");
+      setLockPeriodFrequency(PaymentRateType.PerMonth);
     }, 50);
     setTransactionStatus({
       lastOperation: TransactionStatus.Iddle,
@@ -659,6 +690,22 @@ export const TreasuryStreamCreateModal = (props: {
     listValidAddresses,
     csvArray,
   ]);
+
+  useEffect(() => {
+    const percentageFromCoinAmount = parseFloat(fromCoinAmount) > 0 ? `${(parseFloat(fromCoinAmount)*percentageValue/100)}` : '';
+
+    setCliffRelease(percentageFromCoinAmount);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [percentageValue]);
+
+  useEffect(() => {
+    if (treasuryOption && treasuryOption.type === TreasuryType.Lock) {
+      setPaymentRateAmount(cutNumber(parseFloat(cliffRelease) / parseFloat(lockPeriodAmount), 6));
+    }
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cliffRelease, lockPeriodAmount]);
 
   const onTransactionStart = async () => {
 
@@ -1093,13 +1140,13 @@ export const TreasuryStreamCreateModal = (props: {
   }
 
   const isRateAmountValid = (): boolean => {
-    return paymentRateAmount && parseFloat(paymentRateAmount) > 0
+    return ((paymentRateAmount && parseFloat(paymentRateAmount) > 0) || (fromCoinAmount && parseFloat(fromCoinAmount) > 0))
      ? true
      : false;
   }
 
   const areSendAmountSettingsValid = (): boolean => {
-    return isSendAmountValid() && paymentStartDate ? true : false;
+    return (isSendAmountValid() && paymentStartDate) ? true : false;
   }
 
   const arePaymentSettingsValid = (): boolean => {
@@ -1130,7 +1177,7 @@ export const TreasuryStreamCreateModal = (props: {
 
   const lockPeriodOptionsMenu = (
     <Menu>
-      {getLockPeriodOptionsFromEnum(LockPeriodType).map((item) => {
+      {getLockPeriodOptionsFromEnum(PaymentRateType).map((item) => {
         return (
           <Menu.Item
             key={item.key}
@@ -1295,6 +1342,28 @@ export const TreasuryStreamCreateModal = (props: {
                       })}
                     </Select>
                   )}
+                  {(treasuryOption && treasuryOption.type === TreasuryType.Lock) && (
+                    selectedToken && unallocatedBalance ? (
+                      <div
+                        className="token-max simplelink"
+                        onClick={() => {
+                          const decimals = selectedToken ? selectedToken.decimals : 6;
+                          if (isFeePaidByTreasurer) {
+                            const maxAmount = getMaxAmount(true);
+                            consoleOut('tokenAmount:', tokenAmount.toNumber(), 'blue');
+                            consoleOut('maxAmount:', maxAmount.toNumber(), 'blue');
+                            setFromCoinAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
+                            setTokenAmount(new BN(maxAmount));
+                          } else {
+                            const maxAmount = getMaxAmount();
+                            setFromCoinAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
+                            setTokenAmount(new BN(maxAmount));
+                          }
+                        }}>
+                        MAX
+                      </div>
+                    ) : null
+                  )}
                 </span>
               </div>
               <div className="right">
@@ -1304,13 +1373,13 @@ export const TreasuryStreamCreateModal = (props: {
                   autoComplete="off"
                   autoCorrect="off"
                   type="text"
-                  onChange={handlePaymentRateAmountChange}
+                  onChange={(treasuryOption && treasuryOption.type === TreasuryType.Lock) ? handleFromCoinAmountChange : handlePaymentRateAmountChange}
                   pattern="^[0-9]*[.,]?[0-9]*$"
                   placeholder="0.0"
                   minLength={1}
                   maxLength={79}
                   spellCheck="false"
-                  value={paymentRateAmount}
+                  value={(treasuryOption && treasuryOption.type === TreasuryType.Lock) ? fromCoinAmount : paymentRateAmount}
                 />
               </div>
             </div>
@@ -1330,12 +1399,18 @@ export const TreasuryStreamCreateModal = (props: {
               </div>
               <div className="right inner-label">
                 <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
-                  ~${paymentRateAmount && effectiveRate
-                    ? formatAmount(parseFloat(paymentRateAmount) * effectiveRate, 2)
+                  ~${((treasuryOption && treasuryOption.type === TreasuryType.Lock) ? (fromCoinAmount && effectiveRate) : (paymentRateAmount && effectiveRate))
+                    ? (formatAmount(parseFloat((treasuryOption && treasuryOption.type === TreasuryType.Lock) ? 
+                    fromCoinAmount : paymentRateAmount) * effectiveRate, 2))
                     : "0.00"}
                 </span>
               </div>
             </div>
+            {(parseFloat((treasuryOption && treasuryOption.type === TreasuryType.Lock) ? fromCoinAmount : paymentRateAmount) > makeDecimal(unallocatedBalance, 6)) && (
+                <span className="form-field-error">
+                  {t('transactions.validation.invalid-amount')}
+                </span>
+              )}
           </div>
 
           {(treasuryOption && treasuryOption.type === TreasuryType.Open) && (
@@ -1630,14 +1705,16 @@ export const TreasuryStreamCreateModal = (props: {
           ) : (
             <>
               {(treasuryOption && treasuryOption.type === TreasuryType.Lock) && (
-                <div className="mb-2">VISITING TERMS</div>
+                <div className="mb-2">VESTING TERMS</div>
               )}
 
-              <div className="flex-fixed-right">
-                <div className="left">
-                  <div className="mb-3">Specify the vesting terms for My Awesome Investor below. You will be sending 125 MEAN to CLAaz... Kohr using these terms and schedule.</div>
+              {(recipientNote && recipientAddress && fromCoinAmount && selectedToken) && (
+                <div className="flex-fixed-right">
+                  <div className="left">
+                    <div className="mb-3">Specify the vesting terms for {recipientNote} below. You will be sending {fromCoinAmount} {selectedToken && selectedToken.name} to {shortenAddress(recipientAddress)} using these terms and schedule.</div>
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="form-label">LOCK PERIOD</div>
               <div className="d-flex">
@@ -1645,16 +1722,18 @@ export const TreasuryStreamCreateModal = (props: {
                   <div className="flex-fixed-right">
                     <div className="left">
                       <input
-                        id="payment-memo-field"
+                        id="plock-period-field"
                         className="w-100 general-text-input"
                         autoComplete="on"
                         autoCorrect="off"
                         type="number"
-                        maxLength={32}
-                        onChange={handleRecipientNoteChange}
-                        placeholder="Number of months"
+                        onChange={handleLockPeriodAmountChange}
+                        placeholder={`Number of ${getLockPeriodOptionLabel(lockPeriodFrequency, t)}`}
                         spellCheck="false"
-                        value=""
+                        min={0}
+                        max={12}
+                        maxLength={2}
+                        value={parseFloat(lockPeriodAmount)}
                       />
                     </div>
                   </div>
@@ -1740,19 +1819,18 @@ export const TreasuryStreamCreateModal = (props: {
                       minLength={1}
                       maxLength={79}
                       spellCheck="false"
-                      value={fromCoinAmount}
+                      value={cliffRelease}
                     />
                   </div>
                 </div>
                 <div className="flex-fixed-right">
                   <div className="left inner-label">
-                    <span>{t('invest.panel-right.tabset.unstake.send-amount.label-right')}:</span>
-                    <span>10</span>
+                    <span>What amount is released on commencement?</span>
                   </div>
                   <div className="right inner-label">
                     <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
-                      ~${fromCoinAmount && effectiveRate
-                        ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
+                      ~${cliffRelease && effectiveRate
+                        ? formatAmount(parseFloat(cliffRelease) * effectiveRate, 2)
                         : "0.00"}
                     </span>
                   </div>
@@ -1778,14 +1856,24 @@ export const TreasuryStreamCreateModal = (props: {
                 </div>
               </div>
 
-              <div className="mb-2">Confirm the terms for My Awesome Investor</div>
+              <div className="mb-2">Confirm the terms for {recipientNote ? recipientNote : "--"}</div>
 
               <Row className="mb-2">
-                <Col span={24}>Sending: 125 SOL</Col>
-                <Col span={24}>To Address: FULL_ADDRESS_GOES_HERE</Col>
-                <Col span={24}>Starting on: 03/24/2022</Col>
-                <Col span={24}>Cliff release: 12.5 SOL (on commencement)</Col>
-                <Col span={24}>Release rate: 3.125 SOL / month</Col>
+                <Col span={24}>
+                  <strong>Sending:  </strong> {(fromCoinAmount) ? `${cutNumber(parseFloat(fromCoinAmount), 6)} ${selectedToken && selectedToken.name}` : "--"}
+                </Col>
+                <Col span={24}>
+                  <strong>To Address:  </strong> {recipientAddress ? recipientAddress : "--"}
+                </Col>
+                <Col span={24}>
+                  <strong>Starting on:  </strong> {paymentStartDate}
+                </Col>
+                <Col span={24}>
+                  <strong>Cliff release:  </strong> {cliffRelease ? (`${cutNumber(parseFloat(cliffRelease), 6)} ${selectedToken && selectedToken.name} (on commencement)`) : "--"}
+                </Col>
+                <Col span={24}>
+                  <strong>Release rate:  </strong> {(cliffRelease && lockPeriodAmount && selectedToken && lockPeriodFrequency) ? (`${paymentRateAmount} ${selectedToken.name} / ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`) : "--"}
+                </Col>
               </Row>
 
               <span className="warning-message icon-label mb-3">
@@ -1814,14 +1902,16 @@ export const TreasuryStreamCreateModal = (props: {
             type="primary"
             shape="round"
             size="large"
-            onClick={onContinueButtonClick}
+            onClick={onContinueStepOneButtonClick}
             disabled={!publicKey ||
               (!enableMultipleStreamsOption && !isMemoValid()) ||
               ((!enableMultipleStreamsOption ? !isValidAddress(recipientAddress) : (!isCsvSelected || !validMultiRecipientsList))) ||
+              (parseFloat(fromCoinAmount || paymentRateAmount) > makeDecimal(unallocatedBalance, 6)) ||
               !arePaymentSettingsValid()}>
             {getStepOneContinueButtonLabel()}
           </Button>
       </div>
+
       <div className={currentStep === 1 ? "contract-wrapper panel2 show" : "contract-wrapper panel2 hide"}>
         <Button
           className={`main-cta ${isBusy ? 'inactive' : ''}`}
@@ -1829,19 +1919,32 @@ export const TreasuryStreamCreateModal = (props: {
           type="primary"
           shape="round"
           size="large"
-          onClick={onTransactionStart}
-          disabled={!publicKey ||
+          onClick={(treasuryOption && treasuryOption.type === TreasuryType.Lock) ? onContinueStepTwoButtonClick : onTransactionStart}
+          disabled={(treasuryOption && treasuryOption.type === TreasuryType.Lock) ? (
+            !publicKey ||
+            !lockPeriodAmount ||
+            !cliffRelease
+          ) : (
+            !publicKey ||
             (!enableMultipleStreamsOption && !isMemoValid()) ||
             ((!enableMultipleStreamsOption ? !isValidAddress(recipientAddress) : !validMultiRecipientsList)) ||
+            (parseFloat(fromCoinAmount || paymentRateAmount) > makeDecimal(unallocatedBalance, 6)) ||
             !arePaymentSettingsValid() ||
             !areSendAmountSettingsValid() ||
-            !isVerifiedRecipient}>
-          {isBusy && (
-            <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
+            !isVerifiedRecipient
           )}
-          {isBusy
+        >
+          {(treasuryOption && treasuryOption.type === TreasuryType.Open) && (
+            isBusy && (
+              <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
+            )
+          )}
+          {(treasuryOption && treasuryOption.type === TreasuryType.Open) && (isBusy
             ? t('treasuries.treasury-streams.create-stream-main-cta-busy')
-            : getTransactionStartButtonLabel()}
+            : getTransactionStartButtonLabel()
+          )}
+
+          {(treasuryOption && treasuryOption.type === TreasuryType.Lock) && getStepTwoContinueButtonLabel()}
         </Button>
       </div>
       <div className={currentStep === 2 ? "contract-wrapper panel3 show" : "contract-wrapper panel3 hide"}>
@@ -1851,13 +1954,13 @@ export const TreasuryStreamCreateModal = (props: {
             type="primary"
             shape="round"
             size="large"
-            onClick={onContinueButtonClick}
-            // disabled={!publicKey ||
-            //   (!enableMultipleStreamsOption && !isMemoValid()) ||
-            //   ((!enableMultipleStreamsOption ? !isValidAddress(recipientAddress) : (!isCsvSelected || !validMultiRecipientsList))) ||
-            //   !arePaymentSettingsValid()}
-            >
-            {getStepTwoContinueButtonLabel()}
+            onClick={onTransactionStart}
+            disabled={!publicKey ||
+              !arePaymentSettingsValid() ||
+              !areSendAmountSettingsValid() ||
+              !isVerifiedRecipient
+            }>
+            {getTransactionStartButtonLabel()}
           </Button>
       </div>
     </Modal>

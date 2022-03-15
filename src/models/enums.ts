@@ -17,15 +17,15 @@ export enum PaymentRateType {
     PerMonth = 4,   // 2629750
     PerYear = 5,    // 31557000
 }
-// In seconds for the API
-export enum LockPeriodType {
-    Minute = 0,  // 60
-    Hour = 1,    // 3600
-    Day = 2,     // 86400
-    Week = 3,    // 604800
-    Month = 4,   // 2629750
-    Year = 5,    // 31557000
-}
+// // In seconds for the API
+// export enum LockPeriodType {
+//     PerMinute = 0,  // 60
+//     PerHour = 1,    // 3600
+//     PerDay = 2,     // 86400
+//     PerWeek = 3,    // 604800
+//     PerMonth = 4,   // 2629750
+//     PerYear = 5,    // 31557000
+// }
 
 export enum TimesheetRequirementOption {
     NotRequired = 0,

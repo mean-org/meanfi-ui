@@ -946,6 +946,14 @@
 			"create-multisig-cta": "Initiate treasury",
 			"create-multisig-cta-busy": "Initiating treasury",
 			"create-multisig-treasury-success": "You have successfully signed the Initiate treasury request.",
+			"lock-period": {
+				"minutes": "minutes",
+				"hours": "hours",
+				"days": "days",
+				"weeks": "weeks",
+				"months": "months",
+				"years": "years"
+			},
 			"main-cta": "Create",
 			"main-cta-busy": "Creating treasury",
 			"modal-title": "Create treasury",
