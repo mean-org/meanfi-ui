@@ -4,7 +4,7 @@ import { useContext } from "react";
 import { AppStateContext } from "../../contexts/appstate";
 import { useTranslation } from "react-i18next";
 import { DcaInterval } from '../../models/ddca-models';
-import { consoleOut, getTransactionStatusForLogs, percentage } from '../../utils/ui';
+import { consoleOut, getTransactionStatusForLogs, isProd, percentage } from '../../utils/ui';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume } from '../../utils/utils';
 import "./style.less";
@@ -63,38 +63,32 @@ export const DdcaSetupModal = (props: {
   const [ddcaAccountPda, setDdcaAccountPda] = useState<PublicKey | undefined>();
   const [lockedFromTokenBalance, setLockedFromTokenBalance] = useState<number | undefined>(undefined);
 
-  // Set lockedFromTokenBalance from injected props.fromTokenBalance once por modal open
-  useEffect(() => {
-    if (!lockedFromTokenBalance) {
-      setLockedFromTokenBalance(props.fromTokenBalance);
-    }
-  }, [
-    lockedFromTokenBalance,
-    props.fromTokenBalance
-  ]);
-
-  const isProd = (): boolean => {
-    return environment === 'production';
-  }
-
-  const getGasFeeAmount = (): number => {
+  const getGasFeeAmount = useCallback((): number => {
     return props.ddcaTxFees.maxBlockchainFee + (props.ddcaTxFees.maxFeePerSwap * (lockedSliderValue + 1));
-  }
+  }, [
+    lockedSliderValue,
+    props.ddcaTxFees.maxFeePerSwap,
+    props.ddcaTxFees.maxBlockchainFee,
+  ]);
 
   const hasEnoughNativeBalanceForFees = (): boolean => {
     return props.userBalance >= getGasFeeAmount() ? true : false;
   }
 
-  const getTotalSolAmount = (): number => {
+  const getTotalSolAmount = useCallback((): number => {
     const depositAmount = props.fromTokenAmount * (lockedSliderValue + 1);
     return depositAmount + getGasFeeAmount();
-  }
+  }, [
+    lockedSliderValue,
+    props.fromTokenAmount,
+    getGasFeeAmount,
+  ]);
 
-  const isNative = (): boolean => {
+  const isNative = useCallback((): boolean => {
     return props.fromToken && props.fromToken.symbol === 'SOL' ? true : false;
-  }
+  }, [props.fromToken]);
 
-  const getInterval = (): number => {
+  const getInterval = useCallback((): number => {
     switch (ddcaOption?.dcaInterval) {
       case DcaInterval.RepeatingDaily:
         return 86400;
@@ -107,7 +101,7 @@ export const DdcaSetupModal = (props: {
       default:
         return 0;
     }
-  }
+  }, [ddcaOption?.dcaInterval]);
 
   const getRecurrencePeriod = useCallback((): string => {
     let strOut = '';
@@ -196,6 +190,16 @@ export const DdcaSetupModal = (props: {
   //////////////////////////
   //   Data Preparation   //
   //////////////////////////
+
+  // Set lockedFromTokenBalance from injected props.fromTokenBalance once por modal open
+  useEffect(() => {
+    if (!lockedFromTokenBalance) {
+      setLockedFromTokenBalance(props.fromTokenBalance);
+    }
+  }, [
+    lockedFromTokenBalance,
+    props.fromTokenBalance
+  ]);
 
   /**
    * Set values for rangeMin, rangeMax and recurrencePeriod
@@ -767,12 +771,12 @@ export const DdcaSetupModal = (props: {
 
   };
 
-  function confirm(e: any) {
+  function onConfirm(e: any) {
     consoleOut('close confirmation accepted');
     onOperationCancel(true);
   }
 
-  function cancel(e: any) {
+  function onCancel(e: any) {
     consoleOut('close confirmation cancelled');
   }
 
@@ -802,8 +806,8 @@ export const DdcaSetupModal = (props: {
         <Popconfirm
           placement="bottomRight"
           title={t('ddcas.setup-close-warning')}
-          onConfirm={confirm}
-          onCancel={cancel}
+          onConfirm={onConfirm}
+          onCancel={onCancel}
           okText={t('general.yes')}
           cancelText={t('general.no')}
           className="max-popover-width">
