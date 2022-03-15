@@ -19,7 +19,7 @@ import {
   toTokenAmount,
 } from "../../utils/utils";
 import { Identicon } from "../../components/Identicon";
-import { DATEPICKER_FORMAT } from "../../constants";
+import { DATEPICKER_FORMAT, SIMPLE_DATE_TIME_FORMAT } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
 import { OperationType, PaymentRateType, TransactionStatus } from "../../models/enums";
 import {
@@ -62,6 +62,7 @@ import { MSP_ACTIONS } from '@mean-dao/money-streaming/lib/types';
 import { MSP, MSP_ACTIONS as MSP_ACTIONS_V2, TransactionFees, calculateActionFees as calculateActionFeesV2 } from "@mean-dao/msp";
 import { AppUsageEvent, SegmentStreamRPTransferData } from '../../utils/segment-service';
 import { segmentAnalytics } from '../../App';
+import dateFormat from 'dateformat';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -677,7 +678,7 @@ export const RepeatingPayment = () => {
           asset: selectedToken?.symbol,
           allocation: data.allocation,
           beneficiary: data.beneficiary,
-          startUtc: data.startUtc.toISOString(),
+          startUtc: dateFormat(data.startUtc, SIMPLE_DATE_TIME_FORMAT),
           rateAmount: data.rateAmount,
           interval: getPaymentRateOptionLabel(paymentRateFrequency),
           feePayedByTreasurer: false
@@ -821,10 +822,10 @@ export const RepeatingPayment = () => {
         // Report event to Segment analytics
         const segmentData = {
           asset: selectedToken?.symbol,
-          allocation: data.allocation,
+          allocation: parseFloat(fromCoinAmount as string),
           beneficiary: data.beneficiary,
-          startUtc: data.startUtc.toISOString(),
-          rateAmount: data.rateAmount,
+          startUtc: dateFormat(data.startUtc, SIMPLE_DATE_TIME_FORMAT),
+          rateAmount: parseFloat(paymentRateAmount as string),
           interval: getPaymentRateOptionLabel(paymentRateFrequency),
           feePayedByTreasurer: data.feePayedByTreasurer
         } as SegmentStreamRPTransferData;

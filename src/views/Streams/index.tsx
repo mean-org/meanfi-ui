@@ -724,9 +724,9 @@ export const Streams = () => {
   ]);
 
   const hideCloseStreamModal = useCallback(() => setIsCloseStreamModalVisibility(false), []);
-  const onAcceptCloseStream = (closeTreasury: boolean) => {
+  const onAcceptCloseStream = (data: any) => {
     hideCloseStreamModal();
-    onExecuteCloseStreamTransaction(closeTreasury);
+    onExecuteCloseStreamTransaction(data);
   };
 
   // Open stream modal
@@ -1229,7 +1229,7 @@ export const Streams = () => {
           contributor: data.contributor,
           treasury: data.treasury,
           contributorMint: token ? `${token} [${data.contributorMint}]` : data.contributorMint,
-          amount: data.amount,
+          amount: parseFloat(addFundsData.amount.toFixed(selectedToken?.decimals || 6))
         } as SegmentStreamAddFundsData;
         segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupApproveFormButton, segmentData);
 
@@ -1353,7 +1353,7 @@ export const Streams = () => {
         contributorMint: selectedToken
           ? `${selectedToken.symbol} [${selectedToken.address}]`
           : associatedToken.toBase58(),
-        amount: addFundsData.amount,
+        amount: parseFloat(addFundsData.amount.toFixed(selectedToken?.decimals || 6))
       } as SegmentStreamAddFundsData;
       segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupApproveFormButton, segmentData);
 
@@ -2044,10 +2044,9 @@ export const Streams = () => {
           asset: withdrawData.token,
           stream: data.stream,
           beneficiary: data.beneficiary,
-          amount: amount,
-          fee: withdrawData.fee,
+          feeAmount: withdrawData.fee,
           inputAmount: withdrawData.inputAmount,
-          receiveAmount: withdrawData.receiveAmount
+          sentAmount: withdrawData.receiveAmount
         } as SegmentStreamWithdrawData;
         consoleOut('segment data:', segmentData, 'brown');
         segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalStartFormButton, segmentData);
@@ -2154,10 +2153,9 @@ export const Streams = () => {
           asset: withdrawData.token,
           stream: data.stream,
           beneficiary: data.beneficiary,
-          amount: amount,
-          fee: withdrawData.fee,
+          feeAmount: withdrawData.fee,
           inputAmount: withdrawData.inputAmount,
-          receiveAmount: withdrawData.receiveAmount
+          sentAmount: withdrawData.receiveAmount
         } as SegmentStreamWithdrawData;
         consoleOut('segment data:', segmentData, 'brown');
         segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalStartFormButton, segmentData);
@@ -2408,7 +2406,7 @@ export const Streams = () => {
     resetTransactionStatus();
   }
 
-  const onExecuteCloseStreamTransaction = async (closeTreasury: boolean) => {
+  const onExecuteCloseStreamTransaction = async (closeTreasuryData: any) => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
@@ -2428,17 +2426,21 @@ export const Streams = () => {
         const streamPublicKey = new PublicKey(streamDetail.id as string);
 
         const data = {
-          stream: streamPublicKey.toBase58(),                     // stream
-          initializer: wallet.publicKey.toBase58(),               // initializer
-          autoCloseTreasury: closeTreasury                        // closeTreasury
+          stream: streamPublicKey.toBase58(),                       // stream
+          initializer: wallet.publicKey.toBase58(),                 // initializer
+          autoCloseTreasury: closeTreasuryData.autoCloseTreasury    // closeTreasury
         }
         consoleOut('data:', data);
 
         // Report event to Segment analytics
         const segmentData = {
+          asset: selectedToken?.symbol,
           stream: data.stream,
           initializer: data.initializer,
           closeTreasury: data.autoCloseTreasury,
+          vestedReturns: closeTreasuryData.vestedReturns,
+          unvestedReturns: closeTreasuryData.unvestedReturns,
+          feeAmount: closeTreasuryData.feeAmount
         } as SegmentStreamCloseData;
         segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseStreamFormButton, segmentData);
 
@@ -2480,7 +2482,7 @@ export const Streams = () => {
         return await ms.closeStream(
           publicKey as PublicKey,                           // Initializer public key
           streamPublicKey,                                  // Stream ID
-          closeTreasury                                     // closeTreasury
+          closeTreasuryData.autoCloseTreasury               // closeTreasury
         )
         .then(value => {
           consoleOut('closeStream returned transaction:', value);
@@ -2529,17 +2531,21 @@ export const Streams = () => {
         const streamPublicKey = new PublicKey(streamDetail.id as string);
 
         const data = {
-          stream: streamPublicKey.toBase58(),                     // stream
-          initializer: publicKey.toBase58(),                      // initializer
-          autoCloseTreasury: closeTreasury                        // closeTreasury
+          stream: streamPublicKey.toBase58(),                       // stream
+          initializer: publicKey.toBase58(),                        // initializer
+          autoCloseTreasury: closeTreasuryData.autoCloseTreasury    // closeTreasury
         }
         consoleOut('data:', data);
 
         // Report event to Segment analytics
         const segmentData = {
+          asset: selectedToken?.symbol,
           stream: data.stream,
           initializer: data.initializer,
           closeTreasury: data.autoCloseTreasury,
+          vestedReturns: closeTreasuryData.vestedReturns,
+          unvestedReturns: closeTreasuryData.unvestedReturns,
+          feeAmount: closeTreasuryData.feeAmount
         } as SegmentStreamCloseData;
         segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseStreamFormButton, segmentData);
 
@@ -2582,7 +2588,7 @@ export const Streams = () => {
           publicKey as PublicKey,                           // payer
           publicKey as PublicKey,                           // destination
           streamPublicKey,                                  // stream
-          closeTreasury                                     // closeTreasury
+          closeTreasuryData.autoCloseTreasury               // closeTreasury
         )
         .then(value => {
           consoleOut('closeStream returned transaction:', value);
