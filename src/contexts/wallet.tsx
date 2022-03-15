@@ -55,7 +55,7 @@ export const WALLET_PROVIDERS = [
     adapter: PhantomWalletAdapter,
     adapterParams: undefined,
     hideOnDesktop: false,
-    hideOnMobile: true,
+    hideOnMobile: false,
     isWebWallet: false
   },
   {
