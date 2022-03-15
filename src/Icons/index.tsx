@@ -49,6 +49,8 @@ export { IconStats } from "./IconStats";
 export { IconStream } from "./IconStream";
 export { IconSun } from "./IconSun";
 export { IconSwapFlip } from "./IconSwapFlip";
+export { IconSwitchRunning } from "./IconSwitchRunning";
+export { IconSwitchStopped } from "./IconSwitchStopped";
 export { IconTelegram } from "./IconTelegram";
 export { IconTimer } from "./IconTimer";
 export { IconTrash } from "./IconTrash";
