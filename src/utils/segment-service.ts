@@ -70,20 +70,27 @@ export interface SegmentStreamRPTransferData {
     asset: string;
     allocation: number;
     beneficiary: string;
-    startUtc: string;
     rateAmount: number;
     interval: string;
     feePayedByTreasurer: boolean;
+    startUtc: string;
 }
+
+/**
+ * When fee could potentially apply, lets include these three values even if fee is 0
+ * inputAmount: 1.000000
+ * feeAmount: 0.009825
+ * sentAmount: 0.990175
+ */
 
 export interface SegmentStreamWithdrawData {
     asset: string;
-    fee: number;
     stream: string;
     beneficiary: string;
     amount: number;
     inputAmount: number;
-    receiveAmount: number;
+    feeAmount: number;
+    sentAmount: number;
 }
 
 export interface SegmentStreamTransferOwnershipData {
@@ -101,9 +108,13 @@ export interface SegmentStreamAddFundsData {
 }
 
 export interface SegmentStreamCloseData {
+    asset: string;
     stream: string;
     initializer: string;
     closeTreasury: boolean;
+    vestedReturns: number;
+    unvestedReturns: number;
+    feeAmount: number;
 }
 
 export class SegmentAnalyticsService {

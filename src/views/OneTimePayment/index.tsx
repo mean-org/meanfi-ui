@@ -9,7 +9,7 @@ import {
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnection, useConnectionConfig } from "../../contexts/connection";
 import { formatAmount, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber, toTokenAmount } from "../../utils/utils";
-import { DATEPICKER_FORMAT } from "../../constants";
+import { DATEPICKER_FORMAT, SIMPLE_DATE_TIME_FORMAT } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
 import { OperationType, TransactionStatus } from "../../models/enums";
 import {
@@ -43,6 +43,7 @@ import { TokenListItem } from '../../components/TokenListItem';
 import { calculateActionFees, MSP, MSP_ACTIONS, TransactionFees } from '@mean-dao/msp';
 import { segmentAnalytics } from '../../App';
 import { AppUsageEvent, SegmentStreamOTPTransferData } from '../../utils/segment-service';
+import dateFormat from 'dateformat';
 
 const { Option } = Select;
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -565,9 +566,9 @@ export const OneTimePayment = () => {
       // Report event to Segment analytics
       const segmentData = {
         asset: selectedToken?.symbol,
-        amount: amount,
+        amount: parseFloat(fromCoinAmount as string),
         beneficiary: data.beneficiary,
-        startUtc: startUtc.toISOString()
+        startUtc: dateFormat(startUtc, SIMPLE_DATE_TIME_FORMAT)
       } as SegmentStreamOTPTransferData;
       segmentAnalytics.recordEvent(AppUsageEvent.TransferOTPFormButton, segmentData);
 
