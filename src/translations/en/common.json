@@ -934,7 +934,8 @@
 		"modal-title": "Transfer stream",
 		"streamid-empty": "Missing address",
 		"streamid-open-cta": "Transfer",
-		"streamid-placeholder": "New beneficiary wallet address"
+		"streamid-placeholder": "New beneficiary wallet address",
+		"streamid-checkbox": "I'm sure the recipient address doesn't belong to an exchange."
 	},
 	"transfers": {
 		"screen-subtitle": "Send money to anyone in the world faster",

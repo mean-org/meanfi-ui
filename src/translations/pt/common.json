@@ -911,7 +911,8 @@
 		"modal-title": "Transferir fluxo",
 		"streamid-empty": "Endereço ausente",
 		"streamid-open-cta": "Transferir",
-		"streamid-placeholder": "Novo endereço da carteira do beneficiário"
+		"streamid-placeholder": "Novo endereço da carteira do beneficiário",
+		"streamid-checkbox": "I'm sure the recipient address doesn't belong to an exchange."
 	},
 	"transfers": {
 		"screen-subtitle": "Envie dinheiro para qualquer pessoa no mundo mais rapidamente",

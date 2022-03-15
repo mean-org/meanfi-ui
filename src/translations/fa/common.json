@@ -916,7 +916,8 @@
 		"modal-title": "منتقل کردن stream",
 		"streamid-empty": "آدرس موجود نیست",
 		"streamid-open-cta": "منتقل کردن",
-		"streamid-placeholder": "آدرس کیف پول ذینفع جدید"
+		"streamid-placeholder": "آدرس کیف پول ذینفع جدید",
+		"streamid-checkbox": "I'm sure the recipient address doesn't belong to an exchange."
 	},
 	"transfers": {
 		"screen-subtitle": "برای هر کسی در دنیا سریعتر پول بفرستید",

@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useContext } from 'react';
 import { useState } from 'react';
 import { Modal, Button } from 'antd';
 import { useTranslation } from 'react-i18next';
@@ -6,6 +6,8 @@ import { isValidAddress } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
 import { Stream } from '@mean-dao/msp';
 import { StreamInfo } from '@mean-dao/money-streaming';
+import Checkbox from 'antd/lib/checkbox/Checkbox';
+import { AppStateContext } from '../../contexts/appstate';
 
 export const StreamTransferOpenModal = (props: {
   handleClose: any;
@@ -16,6 +18,10 @@ export const StreamTransferOpenModal = (props: {
   const [address, setAddress] = useState('');
   const { publicKey } = useWallet();
   const { t } = useTranslation('common');
+  const {
+    isVerifiedRecipient,
+    setIsVerifiedRecipient
+  } = useContext(AppStateContext);
 
   const isAddressTreasurer = useCallback((address: string): boolean => {
     if (props.streamDetail && address) {
@@ -45,6 +51,10 @@ export const StreamTransferOpenModal = (props: {
     }, 50);
   }
 
+  const onIsVerifiedRecipientChange = (e: any) => {
+    setIsVerifiedRecipient(e.target.checked);
+  }
+
   return (
     <Modal
       className="mean-modal"
@@ -72,7 +82,6 @@ export const StreamTransferOpenModal = (props: {
                 value={address}/>
             </span>
           </div>
-          <div className="right">&nbsp;</div>
         </div>
         {
           address && !isValidAddress(address) ? (
@@ -89,7 +98,10 @@ export const StreamTransferOpenModal = (props: {
             </span>
           ) : (null)
         }
+      </div>
 
+      <div className="ml-1 mb-3">
+        <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>{t('transfer-stream.streamid-checkbox')}</Checkbox>
       </div>
 
       <Button
@@ -98,7 +110,7 @@ export const StreamTransferOpenModal = (props: {
         type="primary"
         shape="round"
         size="large"
-        disabled={!address || !isValidAddress(address) || isAddressOwnAccount() || isAddressTreasurer(address)}
+        disabled={!address || !isValidAddress(address) || isAddressOwnAccount() || isAddressTreasurer(address) || !isVerifiedRecipient}
         onClick={onAcceptNewAddress}>
         {!address ? t('transfer-stream.streamid-empty') : t('transfer-stream.streamid-open-cta')}
       </Button>

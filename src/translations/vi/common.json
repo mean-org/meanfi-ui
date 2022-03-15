@@ -916,7 +916,8 @@
 		"modal-title": "Chuyển stream",
 		"streamid-empty": "Thiếu địa chỉ",
 		"streamid-open-cta": "Chuyển",
-		"streamid-placeholder": "Địa chỉ ví của người thụ hưởng mới"
+		"streamid-placeholder": "Địa chỉ ví của người thụ hưởng mới",
+		"streamid-checkbox": "I'm sure the recipient address doesn't belong to an exchange."
 	},
 	"transfers": {
 		"screen-subtitle": "Gửi tiền cho bất kỳ ai trên thế giới nhanh hơn",

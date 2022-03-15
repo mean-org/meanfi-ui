@@ -911,7 +911,8 @@
 		"modal-title": "Flux de transfert",
 		"streamid-empty": "Adresse manquante",
 		"streamid-open-cta": "Transfert",
-		"streamid-placeholder": "Nouvelle adresse de portefeuille bénéficiaire"
+		"streamid-placeholder": "Nouvelle adresse de portefeuille bénéficiaire",
+		"streamid-checkbox": "I'm sure the recipient address doesn't belong to an exchange."
 	},
 	"transfers": {
 		"screen-subtitle": "Envoyez de l'argent à n'importe qui dans le monde plus rapidement",

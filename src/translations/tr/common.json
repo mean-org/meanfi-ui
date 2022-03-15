@@ -916,7 +916,8 @@
 		"modal-title": "Aktarımı transfer et",
 		"streamid-empty": "Eksik adres",
 		"streamid-open-cta": "Transfer",
-		"streamid-placeholder": "Yeni yararlanıcı cüzdan adresi"
+		"streamid-placeholder": "Yeni yararlanıcı cüzdan adresi",
+		"streamid-checkbox": "I'm sure the recipient address doesn't belong to an exchange."
 	},
 	"transfers": {
 		"screen-subtitle": "Dünyadaki herkese daha hızlı para gönderin",
