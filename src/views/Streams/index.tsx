@@ -1088,13 +1088,6 @@ export const Streams = () => {
   const onAcceptAddFunds = (data: any) => {
     closeAddFundsModal();
     consoleOut('AddFunds input:', data, 'blue');
-    // Record user event in Segment Analytics
-    segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalStartFormButton, {
-      token: selectedToken?.symbol,
-      amount: data.amount,
-      treasuryType: data.treasuryType,
-      fundFromTreasury: data.fundFromTreasury
-    });
     onExecuteAddFundsTransaction(data);
   };
 
@@ -1564,7 +1557,7 @@ export const Streams = () => {
 
   // Withdraw funds modal
   const [lastStreamDetail, setLastStreamDetail] = useState<Stream | StreamInfo | undefined>(undefined);
-  const [withdrawFundsAmount, setWithdrawFundsAmount] = useState<number>(0);
+  const [withdrawFundsAmount, setWithdrawFundsAmount] = useState<any>();
   const [isWithdrawModalVisible, setIsWithdrawModalVisibility] = useState(false);
 
   const showWithdrawModal = useCallback(async () => {
@@ -1593,15 +1586,15 @@ export const Streams = () => {
   ]);
 
   const closeWithdrawModal = useCallback(() => {
-    setWithdrawFundsAmount(0);
+    setWithdrawFundsAmount(undefined);
     setLastStreamDetail(undefined);
     setIsWithdrawModalVisibility(false);
   }, []);
 
-  const onAcceptWithdraw = (amount: any) => {
+  const onAcceptWithdraw = (data: any) => {
     closeWithdrawModal();
-    consoleOut('Withdraw amount:', parseFloat(amount));
-    onExecuteWithdrawFundsTransaction(amount);
+    consoleOut('Withdraw amount:', parseFloat(data.amount));
+    onExecuteWithdrawFundsTransaction(data);
   };
 
   const onCreateNewTransfer = () => {
@@ -2016,7 +2009,7 @@ export const Streams = () => {
     resetTransactionStatus();
   }
 
-  const onExecuteWithdrawFundsTransaction = async (withdrawAmount: string) => {
+  const onExecuteWithdrawFundsTransaction = async (withdrawData: any) => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
@@ -2036,8 +2029,8 @@ export const Streams = () => {
 
         const stream = new PublicKey(streamDetail.id as string);
         const beneficiary = new PublicKey((streamDetail as StreamInfo).beneficiaryAddress as string);
-        const amount = parseFloat(withdrawAmount);
-        setWithdrawFundsAmount(amount);
+        const amount = parseFloat(withdrawData.amount);
+        setWithdrawFundsAmount(withdrawData);
 
         const data = {
           stream: stream.toBase58(),
@@ -2048,10 +2041,15 @@ export const Streams = () => {
 
         // Report event to Segment analytics
         const segmentData = {
+          token: withdrawData.token,
           stream: data.stream,
           beneficiary: data.beneficiary,
-          amount: data.amount,
+          amount: amount,
+          fee: withdrawData.fee,
+          inputAmount: withdrawData.inputAmount,
+          receiveAmount: withdrawData.receiveAmount
         } as SegmentStreamWithdrawData;
+        consoleOut('segment data:', segmentData, 'brown');
         segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalStartFormButton, segmentData);
 
         // Log input data
@@ -2141,8 +2139,8 @@ export const Streams = () => {
 
         const stream = new PublicKey(streamDetail.id as string);
         const beneficiary = new PublicKey((streamDetail as Stream).beneficiary as string);
-        const amount = toTokenAmount(parseFloat(withdrawAmount as string), selectedToken.decimals);
-        setWithdrawFundsAmount(parseFloat(withdrawAmount as string));
+        const amount = toTokenAmount(parseFloat(withdrawData.amount as string), selectedToken.decimals);
+        setWithdrawFundsAmount(withdrawData);
 
         const data = {
           stream: stream.toBase58(),
@@ -2153,10 +2151,15 @@ export const Streams = () => {
 
         // Report event to Segment analytics
         const segmentData = {
+          token: withdrawData.token,
           stream: data.stream,
           beneficiary: data.beneficiary,
-          amount: data.amount,
+          amount: amount,
+          fee: withdrawData.fee,
+          inputAmount: withdrawData.inputAmount,
+          receiveAmount: withdrawData.receiveAmount
         } as SegmentStreamWithdrawData;
+        consoleOut('segment data:', segmentData, 'brown');
         segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalStartFormButton, segmentData);
 
         // Log input data
@@ -4534,7 +4537,7 @@ export const Streams = () => {
               <>
                 <Spin indicator={bigLoadingIcon} className="icon" />
                 <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
-                <h5 className="operation">{t('transactions.status.tx-withdraw-operation')} {getAmountWithSymbol(withdrawFundsAmount, streamDetail?.associatedToken as string)}</h5>
+                <h5 className="operation">{t('transactions.status.tx-withdraw-operation')} {withdrawFundsAmount.inputAmount}</h5>
                 {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
                   <div className="indication">{t('transactions.status.instructions')}</div>
                 )}

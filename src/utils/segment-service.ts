@@ -68,9 +68,13 @@ export interface SegmentStreamTransferData {
 }
 
 export interface SegmentStreamWithdrawData {
+    token: string;
+    fee: number;
     stream: string;
     beneficiary: string;
     amount: number;
+    inputAmount: number;
+    receiveAmount: number;
 }
 
 export interface SegmentStreamTransferData {
