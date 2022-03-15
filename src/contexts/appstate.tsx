@@ -1000,7 +1000,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     lastSentTxStatus,
     fetchTxInfoStatus,
     customStreamDocked,
-    loadingStreamActivity,
     highLightableStreamId,
     clearTransactionStatusContext,
     getStreamActivity

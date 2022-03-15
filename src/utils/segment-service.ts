@@ -3,63 +3,94 @@ import { consoleOut } from "./ui";
 
 export enum AppUsageEvent {
     // Sitewide Actions
-    WalletConnect = "Connect wallet",
-    WalletConnected = "Wallet Connected",
-    WalletDisconnect = "Disconnect wallet",
-    WalletDisconnected = "Wallet Disconnected",
+    WalletConnect = "Wallet connect button click",
+    WalletConnected = "Wallet connected",
+    WalletDisconnect = "Wallet disconnect button click",
+    WalletDisconnected = "Wallet disconnected",
     WalletSelected = "Wallet selected",
-    WalletChange = "Wallet Change",
+    WalletChange = "Wallet change button click",
+	UserIdentified = "User identified with wallet address",
+	UserIdentifiedAnon = "User identified as anonymous",
     // Stream Actions
     // Top Up Funds Action
     // Page /accounts/streams
-    StreamRefresh = "Stream List Refresh",
-    NewTransferButton = "New transfer start",
-    StreamTopupButton = "Stream Top up Button",
-    StreamTopupCreated = "Stream Top up Create",
+    StreamRefresh = "Stream list refresh button click",
+	// See OTP and RTP for the next actions in this flow
+    NewTransferButton = "New transfer button click", 
+	// Top Up
+    StreamTopupButton = "Stream Top up button click",
+    StreamTopupApproveFormButton = "Stream Top up approve button click",
     StreamTopupSigned = "Stream Top up Signed",
     StreamTopupCompleted = "Stream Top up Completed",
     StreamTopupFailed = "Stream Top up Failed",
     // Withdraw Funds Action
     // Page /accounts/streams
-    StreamWithdrawalButton = "Stream withdraw funds Button",
-    StreamWithdrawalStart = "Stream withdraw funds execute",
-    StreamWithdrawalCreated = "Stream withdraw funds Create",
+    StreamWithdrawalButton = "Stream withdraw funds button click",
+    StreamWithdrawalStartFormButton = "Stream withdraw start form button click",
     StreamWithdrawalSigned = "Stream withdraw funds Signed",
     StreamWithdrawalCompleted = "Stream withdraw funds Completed",
     StreamWithdrawalFailed = "Stream withdraw funds Failed",
-    // Transfer Stream Action
+    // Transfer Ownerships of Stream Action
     // Page /accounts/streams
-    StreamTransferCreated = "Stream Transfer Created",
-    StreamTransferSigned = "Stream Transfer Signed",
-    StreamTransferCompleted = "Stream Transfer Completed",
-    StreamTransferFailed = "Stream Transfer Failed",
+    StreamTransferOwnershipButton = "Stream Transfer Ownership button click",
+    StreamTransferOwnershipFormButton = "Stream Transfer Ownership form button click",
+    StreamTransferSigned = "Stream Transfer Ownership Signed",
+    StreamTransferCompleted = "Stream Transfer Ownership Completed",
+    StreamTransferFailed = "Stream Transfer Ownership Failed",
     // Close Stream Action
     // Page /accounts/streams
-    StreamCloseCreated = "Stream Close Create",
+    StreamCloseButton = "Stream Close button click",
+    StreamCloseStreamFormButton = "Stream Close form button click",
     StreamCloseSigned = "Stream Close Signed",
     StreamCloseCompleted = "Stream Close Completed",
     StreamCloseFailed = "Stream Close Failed",
     // Page /transfers
-    TransferOTPCreated = "New OTP Created",
+    TransferOTPFormButton = "New OTP approve form button click",
     TransferOTPSigned = "New OTP Signed",
     TransferOTPCompleted = "New OTP Completed",
     TransferOTPFailed = "New OTP Failed",
-    TransferRecurringCreated = "New RTP Created",
+    TransferRecurringFormButton = "New RTP approve form button click",
     TransferRecurringSigned = "New RTP Signed",
     TransferRecurringCompleted = "New RTP Completed",
+    TransferRecurringFailed = "New RTP Failed",
 }
 
 export enum StatsTriggertEvent {
     TvlCollect = "Event description",
 }
 
-export interface SegmentTransferData {
-    type: string;
+export interface SegmentStreamTransferData {
     token: string;
-    rate: number;
-    amount: string;
+    amount: number;
     startUtc: string;
-    error: string;
+    rate?: number;
+    error?: string;
+}
+
+export interface SegmentStreamWithdrawData {
+    stream: string;
+    beneficiary: string;
+    amount: number;
+}
+
+export interface SegmentStreamTransferData {
+    stream: string;
+    beneficiary: string;
+    newBeneficiary: string;
+}
+
+export interface SegmentStreamAddFundsData {
+    contributor: string;
+    treasury: string;
+    stream: string;
+    contributorMint: string;
+    amount: number;
+}
+
+export interface SegmentStreamCloseData {
+    stream: string;
+    initializer: string;
+    closeTreasury: boolean;
 }
 
 export class SegmentAnalyticsService {
