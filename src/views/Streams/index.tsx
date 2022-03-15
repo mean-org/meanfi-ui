@@ -91,7 +91,7 @@ import { UserTokenAccount } from "../../models/transactions";
 import { customLogger } from "../..";
 import { StreamTreasuryType } from "../../models/treasuries";
 import { segmentAnalytics } from "../../App";
-import { AppUsageEvent, SegmentStreamAddFundsData, SegmentStreamCloseData, SegmentStreamTransferData, SegmentStreamWithdrawData } from "../../utils/segment-service";
+import { AppUsageEvent, SegmentStreamAddFundsData, SegmentStreamCloseData, SegmentStreamTransferOwnershipData, SegmentStreamWithdrawData } from "../../utils/segment-service";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -811,7 +811,7 @@ export const Streams = () => {
           stream: data.stream,
           beneficiary: data.beneficiary,
           newBeneficiary: data.newBeneficiary
-        } as SegmentStreamTransferData;
+        } as SegmentStreamTransferOwnershipData;
         segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferOwnershipFormButton, segmentData);
 
         // Log input data
@@ -2041,7 +2041,7 @@ export const Streams = () => {
 
         // Report event to Segment analytics
         const segmentData = {
-          token: withdrawData.token,
+          asset: withdrawData.token,
           stream: data.stream,
           beneficiary: data.beneficiary,
           amount: amount,
@@ -2151,7 +2151,7 @@ export const Streams = () => {
 
         // Report event to Segment analytics
         const segmentData = {
-          token: withdrawData.token,
+          asset: withdrawData.token,
           stream: data.stream,
           beneficiary: data.beneficiary,
           amount: amount,

@@ -59,16 +59,25 @@ export enum StatsTriggertEvent {
     TvlCollect = "Event description",
 }
 
-export interface SegmentStreamTransferData {
-    token: string;
+export interface SegmentStreamOTPTransferData {
+    asset: string;
     amount: number;
+    beneficiary: string;
     startUtc: string;
-    rate?: number;
-    error?: string;
+}
+
+export interface SegmentStreamRPTransferData {
+    asset: string;
+    allocation: number;
+    beneficiary: string;
+    startUtc: string;
+    rateAmount: number;
+    interval: string;
+    feePayedByTreasurer: boolean;
 }
 
 export interface SegmentStreamWithdrawData {
-    token: string;
+    asset: string;
     fee: number;
     stream: string;
     beneficiary: string;
@@ -77,7 +86,7 @@ export interface SegmentStreamWithdrawData {
     receiveAmount: number;
 }
 
-export interface SegmentStreamTransferData {
+export interface SegmentStreamTransferOwnershipData {
     stream: string;
     beneficiary: string;
     newBeneficiary: string;

@@ -42,7 +42,7 @@ import { TextInput } from '../../components/TextInput';
 import { TokenListItem } from '../../components/TokenListItem';
 import { calculateActionFees, MSP, MSP_ACTIONS, TransactionFees } from '@mean-dao/msp';
 import { segmentAnalytics } from '../../App';
-import { AppUsageEvent, SegmentStreamTransferData } from '../../utils/segment-service';
+import { AppUsageEvent, SegmentStreamOTPTransferData } from '../../utils/segment-service';
 
 const { Option } = Select;
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -559,15 +559,16 @@ export const OneTimePayment = () => {
           ? recipientNote.trim()
           : undefined                                                               // streamName
       };
-      
+
       consoleOut('data:', data, 'blue');
 
       // Report event to Segment analytics
       const segmentData = {
-        token: selectedToken?.symbol,
-        amount: data.amount,
+        asset: selectedToken?.symbol,
+        amount: amount,
+        beneficiary: data.beneficiary,
         startUtc: startUtc.toISOString()
-      } as SegmentStreamTransferData;
+      } as SegmentStreamOTPTransferData;
       segmentAnalytics.recordEvent(AppUsageEvent.TransferOTPFormButton, segmentData);
 
       // Log input data

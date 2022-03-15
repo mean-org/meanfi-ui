@@ -60,6 +60,8 @@ import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
 import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import { MSP_ACTIONS } from '@mean-dao/money-streaming/lib/types';
 import { MSP, MSP_ACTIONS as MSP_ACTIONS_V2, TransactionFees, calculateActionFees as calculateActionFeesV2 } from "@mean-dao/msp";
+import { AppUsageEvent, SegmentStreamRPTransferData } from '../../utils/segment-service';
+import { segmentAnalytics } from '../../App';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -101,7 +103,6 @@ export const RepeatingPayment = () => {
     setIsVerifiedRecipient,
     setPaymentRateFrequency,
     setSelectedTokenBalance,
-    setPreviousWalletConnectState
   } = useContext(AppStateContext);
   const {
     clearTransactionStatusContext,
@@ -671,6 +672,19 @@ export const RepeatingPayment = () => {
         };
         consoleOut('data:', data);
 
+        // Report event to Segment analytics
+        const segmentData = {
+          asset: selectedToken?.symbol,
+          allocation: data.allocation,
+          beneficiary: data.beneficiary,
+          startUtc: data.startUtc.toISOString(),
+          rateAmount: data.rateAmount,
+          interval: getPaymentRateOptionLabel(paymentRateFrequency),
+          feePayedByTreasurer: false
+        } as SegmentStreamRPTransferData;
+        consoleOut('segment data:', segmentData, 'brown');
+        segmentAnalytics.recordEvent(AppUsageEvent.TransferRecurringFormButton, segmentData);
+
         // Log input data
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
@@ -700,6 +714,7 @@ export const RepeatingPayment = () => {
             })`
           });
           customLogger.logWarning('Repeating Payment transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.TransferRecurringFailed, { transcript: transactionLog });
           return false;
         }
 
@@ -742,6 +757,7 @@ export const RepeatingPayment = () => {
             result: `${error}`
           });
           customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.TransferRecurringFailed, { transcript: transactionLog });
           return false;
         });
       } else {
@@ -750,6 +766,7 @@ export const RepeatingPayment = () => {
           result: 'Cannot start transaction! Wallet not found!'
         });
         customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.TransferRecurringFailed, { transcript: transactionLog });
         return false;
       }
     }
@@ -799,8 +816,20 @@ export const RepeatingPayment = () => {
           allocation: amount,                                         // allocation
           feePayedByTreasurer: false // TODO: Should come from the UI
         };
-
         consoleOut('data:', data);
+
+        // Report event to Segment analytics
+        const segmentData = {
+          asset: selectedToken?.symbol,
+          allocation: data.allocation,
+          beneficiary: data.beneficiary,
+          startUtc: data.startUtc.toISOString(),
+          rateAmount: data.rateAmount,
+          interval: getPaymentRateOptionLabel(paymentRateFrequency),
+          feePayedByTreasurer: data.feePayedByTreasurer
+        } as SegmentStreamRPTransferData;
+        consoleOut('segment data:', segmentData, 'brown');
+        segmentAnalytics.recordEvent(AppUsageEvent.TransferRecurringFormButton, segmentData);
 
         // Log input data
         transactionLog.push({
@@ -831,6 +860,7 @@ export const RepeatingPayment = () => {
             })`
           });
           customLogger.logWarning('Repeating Payment transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.TransferRecurringFailed, { transcript: transactionLog });
           return false;
         }
 
@@ -874,6 +904,7 @@ export const RepeatingPayment = () => {
             result: `${error}`
           });
           customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.TransferRecurringFailed, { transcript: transactionLog });
           return false;
         });
       } else {
@@ -882,6 +913,7 @@ export const RepeatingPayment = () => {
           result: 'Cannot start transaction! Wallet not found!'
         });
         customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.TransferRecurringFailed, { transcript: transactionLog });
         return false;
       }
     }
@@ -908,6 +940,7 @@ export const RepeatingPayment = () => {
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
+            segmentAnalytics.recordEvent(AppUsageEvent.TransferRecurringFailed, { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -917,6 +950,10 @@ export const RepeatingPayment = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
             result: {signer: wallet.publicKey.toBase58()}
+          });
+          segmentAnalytics.recordEvent(AppUsageEvent.TransferRecurringSigned, {
+            signature,
+            encodedTx
           });
           return true;
         })
@@ -931,6 +968,7 @@ export const RepeatingPayment = () => {
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.TransferRecurringFailed, { transcript: transactionLog });
           return false;
         });
       } else {
@@ -944,6 +982,7 @@ export const RepeatingPayment = () => {
           result: 'Cannot sign transaction! Wallet not found!'
         });
         customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.TransferRecurringFailed, { transcript: transactionLog });
         return false;
       }
     }
@@ -976,6 +1015,7 @@ export const RepeatingPayment = () => {
               result: { error, encodedTx }
             });
             customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
+            segmentAnalytics.recordEvent(AppUsageEvent.TransferRecurringFailed, { transcript: transactionLog });
             return false;
           });
       } else {
@@ -989,6 +1029,7 @@ export const RepeatingPayment = () => {
           result: 'Cannot send transaction! Wallet not found!'
         });
         customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.TransferRecurringFailed, { transcript: transactionLog });
         return false;
       }
     }
