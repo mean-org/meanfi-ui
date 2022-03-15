@@ -12,7 +12,7 @@ export class DdcaFrequencyOption {
     translationId: string;
     disabled: boolean;
     constructor() {
-        this.dcaInterval = DcaInterval.OneTimeExchange;
+        this.dcaInterval = DcaInterval.RepeatingWeekly;
         this.name = '';
         this.translationId = '';
         this.disabled = true;

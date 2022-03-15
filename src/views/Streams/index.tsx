@@ -91,7 +91,7 @@ import { UserTokenAccount } from "../../models/transactions";
 import { customLogger } from "../..";
 import { StreamTreasuryType } from "../../models/treasuries";
 import { segmentAnalytics } from "../../App";
-import { AppUsageEvent } from "../../utils/segment-service";
+import { AppUsageEvent, SegmentStreamAddFundsData, SegmentStreamCloseData, SegmentStreamTransferOwnershipData, SegmentStreamWithdrawData } from "../../utils/segment-service";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -806,6 +806,14 @@ export const Streams = () => {
         }
         consoleOut('Transfer stream data:', data);
 
+        // Report event to Segment analytics
+        const segmentData = {
+          stream: data.stream,
+          beneficiary: data.beneficiary,
+          newBeneficiary: data.newBeneficiary
+        } as SegmentStreamTransferOwnershipData;
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferOwnershipFormButton, segmentData);
+
         // Log input data
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
@@ -835,6 +843,7 @@ export const Streams = () => {
             })`
           });
           customLogger.logWarning('Transfer stream transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferFailed, { transcript: transactionLog });
           return false;
         }
 
@@ -869,6 +878,7 @@ export const Streams = () => {
             result: `${error}`
           });
           customLogger.logError('Transfer stream transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferFailed, { transcript: transactionLog });
           return false;
         });
       } else {
@@ -877,6 +887,7 @@ export const Streams = () => {
           result: 'Cannot start transaction! Wallet not found!'
         });
         customLogger.logError('Transfer stream transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferFailed, { transcript: transactionLog });
         return false;
       }
     }
@@ -903,6 +914,7 @@ export const Streams = () => {
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('Transfer stream transaction failed', { transcript: transactionLog });
+            segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferFailed, { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -912,6 +924,10 @@ export const Streams = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
             result: {signer: wallet.publicKey.toBase58()}
+          });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferSigned, {
+            signature,
+            encodedTx
           });
           return true;
         })
@@ -926,6 +942,7 @@ export const Streams = () => {
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logWarning('Transfer stream transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferFailed, { transcript: transactionLog });
           return false;
         });
       } else {
@@ -939,6 +956,7 @@ export const Streams = () => {
           result: 'Cannot sign transaction! Wallet not found!'
         });
         customLogger.logError('Transfer stream transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferFailed, { transcript: transactionLog });
         return false;
       }
     }
@@ -971,6 +989,7 @@ export const Streams = () => {
               result: { error, encodedTx }
             });
             customLogger.logError('Transfer stream transaction failed', { transcript: transactionLog });
+            segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferFailed, { transcript: transactionLog });
             return false;
           });
       } else {
@@ -984,6 +1003,7 @@ export const Streams = () => {
           result: 'Cannot send transaction! Wallet not found!'
         });
         customLogger.logError('Transfer stream transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferFailed, { transcript: transactionLog });
         return false;
       }
     }
@@ -1130,6 +1150,7 @@ export const Streams = () => {
           result: `${error}`
         });
         customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupFailed, { transcript: transactionLog });
         return false;
       });
     }
@@ -1174,6 +1195,7 @@ export const Streams = () => {
           result: `${error}`
         });
         customLogger.logError('Allocate transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupFailed, { transcript: transactionLog });
         return false;
       });
     }
@@ -1199,6 +1221,17 @@ export const Streams = () => {
           amount                                                  // amount
         }
         consoleOut('add funds data:', data);
+
+        // Report event to Segment analytics
+        const token = selectedToken ? selectedToken.symbol : '';
+        const segmentData = {
+          stream: data.stream,
+          contributor: data.contributor,
+          treasury: data.treasury,
+          contributorMint: token ? `${token} [${data.contributorMint}]` : data.contributorMint,
+          amount: data.amount,
+        } as SegmentStreamAddFundsData;
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupApproveFormButton, segmentData);
 
         // Log input data
         transactionLog.push({
@@ -1229,6 +1262,7 @@ export const Streams = () => {
             })`
           });
           customLogger.logWarning('Add funds transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupFailed, { transcript: transactionLog });
           return false;
         }
 
@@ -1266,6 +1300,7 @@ export const Streams = () => {
             result: `${error}`
           });
           customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupFailed, { transcript: transactionLog });
           return false;
         });
       } else {
@@ -1274,6 +1309,7 @@ export const Streams = () => {
           result: 'Cannot start transaction! Wallet not found!'
         });
         customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupFailed, { transcript: transactionLog });
         return false;
       }
     }
@@ -1296,7 +1332,7 @@ export const Streams = () => {
 
       const stream = new PublicKey(streamDetail.id as string);
       const treasury = new PublicKey((streamDetail as Stream).treasury as string);
-      // const amount = toTokenAmount(parseFloat(addFundsData.amount as string), selectedToken.decimals);
+      const associatedToken = new PublicKey(streamDetail.associatedToken as string);
       const amount = addFundsData.tokenAmount;
       setAddFundsPayload(addFundsData);
 
@@ -1308,6 +1344,18 @@ export const Streams = () => {
       }
 
       consoleOut('add funds data:', data);
+
+      // Report event to Segment analytics
+      const segmentData = {
+        stream: data.stream,
+        contributor: data.contributor,
+        treasury: data.treasury,
+        contributorMint: selectedToken
+          ? `${selectedToken.symbol} [${selectedToken.address}]`
+          : associatedToken.toBase58(),
+        amount: addFundsData.amount,
+      } as SegmentStreamAddFundsData;
+      segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupApproveFormButton, segmentData);
 
       // Log input data
       transactionLog.push({
@@ -1339,6 +1387,7 @@ export const Streams = () => {
           })`
         });
         customLogger.logWarning('Add funds transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupFailed, { transcript: transactionLog });
         return false;
       }
 
@@ -1385,6 +1434,7 @@ export const Streams = () => {
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+            segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupFailed, { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -1394,6 +1444,10 @@ export const Streams = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
             result: {signer: wallet.publicKey.toBase58()}
+          });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupSigned, {
+            signature,
+            encodedTx
           });
           return true;
         })
@@ -1408,6 +1462,7 @@ export const Streams = () => {
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logWarning('Add funds transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupFailed, { transcript: transactionLog });
           return false;
         });
       } else {
@@ -1421,6 +1476,7 @@ export const Streams = () => {
           result: 'Cannot sign transaction! Wallet not found!'
         });
         customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupFailed, { transcript: transactionLog });
         return false;
       }
     }
@@ -1453,6 +1509,7 @@ export const Streams = () => {
               result: { error, encodedTx }
             });
             customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+            segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupFailed, { transcript: transactionLog });
             return false;
           });
       } else {
@@ -1466,6 +1523,7 @@ export const Streams = () => {
           result: 'Cannot send transaction! Wallet not found!'
         });
         customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupFailed, { transcript: transactionLog });
         return false;
       }
     }
@@ -1499,7 +1557,7 @@ export const Streams = () => {
 
   // Withdraw funds modal
   const [lastStreamDetail, setLastStreamDetail] = useState<Stream | StreamInfo | undefined>(undefined);
-  const [withdrawFundsAmount, setWithdrawFundsAmount] = useState<number>(0);
+  const [withdrawFundsAmount, setWithdrawFundsAmount] = useState<any>();
   const [isWithdrawModalVisible, setIsWithdrawModalVisibility] = useState(false);
 
   const showWithdrawModal = useCallback(async () => {
@@ -1528,20 +1586,15 @@ export const Streams = () => {
   ]);
 
   const closeWithdrawModal = useCallback(() => {
-    setWithdrawFundsAmount(0);
+    setWithdrawFundsAmount(undefined);
     setLastStreamDetail(undefined);
     setIsWithdrawModalVisibility(false);
   }, []);
 
-  const onAcceptWithdraw = (amount: any) => {
+  const onAcceptWithdraw = (data: any) => {
     closeWithdrawModal();
-    consoleOut('Withdraw amount:', parseFloat(amount));
-    // Record user event in Segment Analytics
-    segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalStart, {
-      token: selectedToken?.symbol,
-      amount: amount
-    });
-    onExecuteWithdrawFundsTransaction(amount);
+    consoleOut('Withdraw amount:', parseFloat(data.amount));
+    onExecuteWithdrawFundsTransaction(data);
   };
 
   const onCreateNewTransfer = () => {
@@ -1807,44 +1860,92 @@ export const Streams = () => {
     return label;
   }
 
+  const recordTxConfirmationResult = useCallback((operation: OperationType, success = true) => {
+    let event: any;
+    switch (operation) {
+      case OperationType.StreamCreate:
+        event = success ? AppUsageEvent.TransferRecurringCompleted : AppUsageEvent.TransferRecurringFailed;
+        segmentAnalytics.recordEvent(event, { signature: lastSentTxSignature });
+        break;
+      case OperationType.StreamWithdraw:
+        event = success ? AppUsageEvent.StreamWithdrawalCompleted : AppUsageEvent.StreamWithdrawalFailed;
+        segmentAnalytics.recordEvent(event, { signature: lastSentTxSignature });
+        break;
+      case OperationType.StreamClose:
+        event = success ? AppUsageEvent.StreamCloseCompleted : AppUsageEvent.StreamCloseFailed;
+        segmentAnalytics.recordEvent(event, { signature: lastSentTxSignature });
+        break;
+      case OperationType.StreamAddFunds:
+        event = success ? AppUsageEvent.StreamTopupCompleted : AppUsageEvent.StreamTopupFailed;
+        segmentAnalytics.recordEvent(event, { signature: lastSentTxSignature });
+        break;
+      case OperationType.StreamTransferBeneficiary:
+        event = success ? AppUsageEvent.StreamTransferCompleted : AppUsageEvent.StreamTransferFailed;
+        segmentAnalytics.recordEvent(event, { signature: lastSentTxSignature });
+        break;
+      default:
+        break;
+    }
+  }, [lastSentTxSignature]);
+
   // Handle what to do when pending Tx confirmation reaches finality or on error
   useEffect(() => {
     if (!streamDetail) { return; }
 
-    if (lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
-      switch (lastSentTxOperationType) {
-        case OperationType.StreamClose:
-        case OperationType.StreamCreate:
-          if (streamList && streamList.length > 1) {
-            const filteredStreams = streamList.filter(s => s.id !== streamDetail.id);
-            setStreamList(filteredStreams);
-          }
-          refreshStreamList(true);
-          break;
-        case OperationType.StreamAddFunds:
-          clearTransactionStatusContext();
-          if (customStreamDocked) {
-            openStreamById(streamDetail?.id as string, false);
-          } else {
+    if (lastSentTxSignature) {
+      if (fetchTxInfoStatus === "error") {
+        if (lastSentTxOperationType !== undefined) {
+          recordTxConfirmationResult(lastSentTxOperationType, false);
+        }
+        clearTransactionStatusContext();
+        return;
+      } else if (fetchTxInfoStatus === "fetched") {
+        switch (lastSentTxOperationType) {
+          case OperationType.StreamWithdraw:
+            clearTransactionStatusContext();
+            recordTxConfirmationResult(lastSentTxOperationType);
             refreshStreamList(false);
-          }
-          break;
-        default:
-          refreshStreamList(false);
-          break;
+            break;
+          case OperationType.StreamClose:
+            recordTxConfirmationResult(lastSentTxOperationType);
+            if (streamList && streamList.length > 1) {
+              const filteredStreams = streamList.filter(s => s.id !== streamDetail.id);
+              setStreamList(filteredStreams);
+            }
+            refreshStreamList(true);
+            break;
+          case OperationType.StreamTransferBeneficiary:
+          case OperationType.StreamCreate:
+            recordTxConfirmationResult(lastSentTxOperationType);
+            refreshStreamList(true);
+            break;
+          case OperationType.StreamAddFunds:
+            recordTxConfirmationResult(lastSentTxOperationType);
+            clearTransactionStatusContext();
+            if (customStreamDocked) {
+              openStreamById(streamDetail?.id as string, false);
+            } else {
+              refreshStreamList(false);
+            }
+            break;
+          default:
+            refreshStreamList(false);
+            break;
+        }
       }
     }
   }, [
     streamList,
     streamDetail,
     fetchTxInfoStatus,
+    customStreamDocked,
     lastSentTxSignature,
     lastSentTxOperationType,
-    customStreamDocked,
-    setStreamList,
+    clearTransactionStatusContext,
+    recordTxConfirmationResult,
     refreshStreamList,
     openStreamById,
-    clearTransactionStatusContext
+    setStreamList,
   ]);
 
   // Transaction execution (Applies to all transactions)
@@ -1908,7 +2009,7 @@ export const Streams = () => {
     resetTransactionStatus();
   }
 
-  const onExecuteWithdrawFundsTransaction = async (withdrawAmount: string) => {
+  const onExecuteWithdrawFundsTransaction = async (withdrawData: any) => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
@@ -1928,8 +2029,8 @@ export const Streams = () => {
 
         const stream = new PublicKey(streamDetail.id as string);
         const beneficiary = new PublicKey((streamDetail as StreamInfo).beneficiaryAddress as string);
-        const amount = parseFloat(withdrawAmount);
-        setWithdrawFundsAmount(amount);
+        const amount = parseFloat(withdrawData.amount);
+        setWithdrawFundsAmount(withdrawData);
 
         const data = {
           stream: stream.toBase58(),
@@ -1937,6 +2038,19 @@ export const Streams = () => {
           amount: amount
         };
         consoleOut('withdraw params:', data, 'brown');
+
+        // Report event to Segment analytics
+        const segmentData = {
+          asset: withdrawData.token,
+          stream: data.stream,
+          beneficiary: data.beneficiary,
+          amount: amount,
+          fee: withdrawData.fee,
+          inputAmount: withdrawData.inputAmount,
+          receiveAmount: withdrawData.receiveAmount
+        } as SegmentStreamWithdrawData;
+        consoleOut('segment data:', segmentData, 'brown');
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalStartFormButton, segmentData);
 
         // Log input data
         transactionLog.push({
@@ -1967,6 +2081,7 @@ export const Streams = () => {
             })`
           });
           customLogger.logWarning('Withdraw transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, { transcript: transactionLog });
           return false;
         }
 
@@ -2001,6 +2116,7 @@ export const Streams = () => {
             result: `${error}`
           });
           customLogger.logError('Withdraw transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, { transcript: transactionLog });
           return false;
         });
       } else {
@@ -2009,6 +2125,7 @@ export const Streams = () => {
           result: 'Cannot start transaction! Wallet not found!'
         });
         customLogger.logError('Withdraw transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, { transcript: transactionLog });
         return false;
       }
     }
@@ -2022,8 +2139,8 @@ export const Streams = () => {
 
         const stream = new PublicKey(streamDetail.id as string);
         const beneficiary = new PublicKey((streamDetail as Stream).beneficiary as string);
-        const amount = toTokenAmount(parseFloat(withdrawAmount as string), selectedToken.decimals);
-        setWithdrawFundsAmount(parseFloat(withdrawAmount as string));
+        const amount = toTokenAmount(parseFloat(withdrawData.amount as string), selectedToken.decimals);
+        setWithdrawFundsAmount(withdrawData);
 
         const data = {
           stream: stream.toBase58(),
@@ -2031,6 +2148,19 @@ export const Streams = () => {
           amount: amount
         };
         consoleOut('withdraw params:', data, 'brown');
+
+        // Report event to Segment analytics
+        const segmentData = {
+          asset: withdrawData.token,
+          stream: data.stream,
+          beneficiary: data.beneficiary,
+          amount: amount,
+          fee: withdrawData.fee,
+          inputAmount: withdrawData.inputAmount,
+          receiveAmount: withdrawData.receiveAmount
+        } as SegmentStreamWithdrawData;
+        consoleOut('segment data:', segmentData, 'brown');
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalStartFormButton, segmentData);
 
         // Log input data
         transactionLog.push({
@@ -2061,6 +2191,7 @@ export const Streams = () => {
             })`
           });
           customLogger.logWarning('Withdraw transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, { transcript: transactionLog });
           return false;
         }
 
@@ -2095,6 +2226,7 @@ export const Streams = () => {
             result: `${error}`
           });
           customLogger.logError('Withdraw transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, { transcript: transactionLog });
           return false;
         });
       } else {
@@ -2103,6 +2235,7 @@ export const Streams = () => {
           result: 'Cannot start transaction! Wallet not found!'
         });
         customLogger.logError('Withdraw transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, { transcript: transactionLog });
         return false;
       }
     }
@@ -2129,6 +2262,7 @@ export const Streams = () => {
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('Withdraw transaction failed', { transcript: transactionLog });
+            segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -2138,6 +2272,10 @@ export const Streams = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
             result: {signer: wallet.publicKey.toBase58()}
+          });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalSigned, {
+            signature,
+            encodedTx
           });
           return true;
         })
@@ -2152,6 +2290,7 @@ export const Streams = () => {
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logWarning('Withdraw transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, { transcript: transactionLog });
           return false;
         });
       } else {
@@ -2165,6 +2304,7 @@ export const Streams = () => {
           result: 'Cannot sign transaction! Wallet not found!'
         });
         customLogger.logError('Withdraw transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, { transcript: transactionLog });
         return false;
       }
     }
@@ -2197,6 +2337,7 @@ export const Streams = () => {
               result: { error, encodedTx }
             });
             customLogger.logError('Withdraw transaction failed', { transcript: transactionLog });
+            segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, { transcript: transactionLog });
             return false;
           });
       } else {
@@ -2210,6 +2351,7 @@ export const Streams = () => {
           result: 'Cannot send transaction! Wallet not found!'
         });
         customLogger.logError('Withdraw transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, { transcript: transactionLog });
         return false;
       }
     }
@@ -2292,6 +2434,14 @@ export const Streams = () => {
         }
         consoleOut('data:', data);
 
+        // Report event to Segment analytics
+        const segmentData = {
+          stream: data.stream,
+          initializer: data.initializer,
+          closeTreasury: data.autoCloseTreasury,
+        } as SegmentStreamCloseData;
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseStreamFormButton, segmentData);
+
         // Log input data
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
@@ -2321,6 +2471,7 @@ export const Streams = () => {
             })`
           });
           customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFailed, { transcript: transactionLog });
           return false;
         }
 
@@ -2355,6 +2506,7 @@ export const Streams = () => {
             result: `${error}`
           });
           customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFailed, { transcript: transactionLog });
           return false;
         });
       } else {
@@ -2363,6 +2515,7 @@ export const Streams = () => {
           result: 'Cannot start transaction! Wallet not found!'
         });
         customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFailed, { transcript: transactionLog });
         return false;
       }
     }
@@ -2381,6 +2534,14 @@ export const Streams = () => {
           autoCloseTreasury: closeTreasury                        // closeTreasury
         }
         consoleOut('data:', data);
+
+        // Report event to Segment analytics
+        const segmentData = {
+          stream: data.stream,
+          initializer: data.initializer,
+          closeTreasury: data.autoCloseTreasury,
+        } as SegmentStreamCloseData;
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseStreamFormButton, segmentData);
 
         // Log input data
         transactionLog.push({
@@ -2411,6 +2572,7 @@ export const Streams = () => {
             })`
           });
           customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFailed, { transcript: transactionLog });
           return false;
         }
 
@@ -2446,6 +2608,7 @@ export const Streams = () => {
             result: `${error}`
           });
           customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFailed, { transcript: transactionLog });
           return false;
         });
       } else {
@@ -2454,6 +2617,7 @@ export const Streams = () => {
           result: 'Cannot start transaction! Wallet not found!'
         });
         customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFailed, { transcript: transactionLog });
         return false;
       }
     }
@@ -2480,6 +2644,7 @@ export const Streams = () => {
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
+            segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFailed, { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -2489,6 +2654,10 @@ export const Streams = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
             result: {signer: wallet.publicKey.toBase58()}
+          });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseSigned, {
+            signature,
+            encodedTx
           });
           return true;
         })
@@ -2503,6 +2672,7 @@ export const Streams = () => {
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFailed, { transcript: transactionLog });
           return false;
         });
       } else {
@@ -2516,6 +2686,7 @@ export const Streams = () => {
           result: 'Cannot sign transaction! Wallet not found!'
         });
         customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFailed, { transcript: transactionLog });
         return false;
       }
     }
@@ -2548,6 +2719,7 @@ export const Streams = () => {
               result: { error, encodedTx }
             });
             customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
+            segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFailed, { transcript: transactionLog });
             return false;
           });
       } else {
@@ -2561,6 +2733,7 @@ export const Streams = () => {
           result: 'Cannot send transaction! Wallet not found!'
         });
         customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFailed, { transcript: transactionLog });
         return false;
       }
     }
@@ -4364,7 +4537,7 @@ export const Streams = () => {
               <>
                 <Spin indicator={bigLoadingIcon} className="icon" />
                 <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
-                <h5 className="operation">{t('transactions.status.tx-withdraw-operation')} {getAmountWithSymbol(withdrawFundsAmount, streamDetail?.associatedToken as string)}</h5>
+                <h5 className="operation">{t('transactions.status.tx-withdraw-operation')} {withdrawFundsAmount.inputAmount}</h5>
                 {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
                   <div className="indication">{t('transactions.status.instructions')}</div>
                 )}

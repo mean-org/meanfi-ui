@@ -8,7 +8,6 @@ import { useTranslation } from 'react-i18next';
 import { AnalyticsBrowser } from '@segment/analytics-next';
 import { appConfig } from '.';
 import { isLocal } from './utils/ui';
-import { environment } from './environments/environment';
 import { SegmentAnalyticsService } from './utils/segment-service';
 
 const { Content } = Layout;
@@ -32,11 +31,11 @@ function App() {
     }
 
     // Load Segment Analytics only for PROD and DEV
-    // if (!isLocal()) {
-    //   loadAnalytics();
-    // }
+    if (!isLocal()) {
+      loadAnalytics();
+    }
 
-    loadAnalytics();
+    // loadAnalytics();
 
   }, [writeKey]);
 
