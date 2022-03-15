@@ -13,7 +13,6 @@ import { InfoIcon } from '../InfoIcon';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { useWallet } from '../../contexts/wallet';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
-import { environment } from '../../environments/environment';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { customLogger } from '../..';
 import { DdcaClient, TransactionFees } from '@mean-dao/ddca';
@@ -244,11 +243,8 @@ export const DdcaSetupModal = (props: {
       const isOpValid = minimumRequired < lockedFromTokenBalance ? true : false;
 
       // Set the slider position
-      if (isOpValid) {
-        setRecurrencePeriod(initialValue);
-      } else {
-        setRecurrencePeriod(minRangeSelectable);
-      }
+      let sliderPosition = isOpValid ? initialValue : minRangeSelectable;
+      setRecurrencePeriod(sliderPosition);
 
       consoleOut('HLA INFO', props.hlaInfo, 'blue');
       consoleOut('remainingAccounts', props.hlaInfo.remainingAccounts.map(a => a.pubkey.toBase58()), 'blue');
@@ -259,6 +255,16 @@ export const DdcaSetupModal = (props: {
     lockedFromTokenBalance,
     props.hlaInfo,
     getTotalPeriod
+  ]);
+
+  // Set lockedSliderValue once when the modal is openes but we have a recurrencePeriod > 0
+  useEffect(() => {
+    if (props.isVisible && recurrencePeriod) {
+      setLockedSliderValue(recurrencePeriod);
+    }
+  }, [
+    props.isVisible,
+    recurrencePeriod,
   ]);
 
   ////////////////
