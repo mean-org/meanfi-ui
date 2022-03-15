@@ -109,7 +109,7 @@ export const DdcaSetupModal = (props: {
     }
   }
 
-  const getRecurrencePeriod = (): string => {
+  const getRecurrencePeriod = useCallback((): string => {
     let strOut = '';
     switch (ddcaOption?.dcaInterval) {
       case DcaInterval.RepeatingDaily:
@@ -128,7 +128,10 @@ export const DdcaSetupModal = (props: {
         break;
     }
     return strOut;
-  }
+  }, [
+    ddcaOption?.dcaInterval,
+    t
+  ]);
 
   const getTotalPeriod = useCallback((periodValue: number): string => {
     let strOut = '';
@@ -154,7 +157,7 @@ export const DdcaSetupModal = (props: {
     ddcaOption?.dcaInterval
   ])
 
-  const getModalHeadline = () => {
+  const getModalHeadline = useCallback(() => {
     // Buy 100 USDC worth of SOL every week ,for 6 weeks, starting today.
     // Buy {{fromTokenAmount}} worth of {{toTokenSymbol}} {{recurrencePeriod}} for {{totalPeriod}}, starting today.
     return `<span>${t('ddca-setup-modal.headline', {
@@ -163,7 +166,15 @@ export const DdcaSetupModal = (props: {
       recurrencePeriod: getRecurrencePeriod(),
       totalPeriod: getTotalPeriod(lockedSliderValue)
     })}</span>`;
-  }
+  }, [
+    lockedSliderValue,
+    props.fromTokenAmount,
+    props.toToken?.symbol,
+    props.fromToken?.address,
+    getRecurrencePeriod,
+    getTotalPeriod,
+    t,
+  ]);
 
   function sliderTooltipFormatter(value?: number) {
     return (
