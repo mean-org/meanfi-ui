@@ -845,7 +845,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   // Preselect a DDCA frequency option
   useEffect(() => {
 
-    const setContractOrAutoSelectFirst = (name?: string) => {
+    const setFrequencyOrAutoSelectFirst = (name?: string) => {
       if (name) {
         if (ddcaOptFromCache) {
           updateDdcaOption(ddcaOptFromCache);
@@ -861,7 +861,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       }
     }
 
-    setContractOrAutoSelectFirst(ddcaOptionName);
+    setFrequencyOrAutoSelectFirst(ddcaOptionName);
     return () => {};
   }, [
     ddcaOptionName,
