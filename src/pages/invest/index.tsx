@@ -27,6 +27,8 @@ export const InvestView = () => {
     unstakeStartDate,
     stakingMultiplier,
     detailsPanelOpen,
+    userTokens,
+    setSelectedToken,
     setFromCoinAmount,
     setIsVerifiedRecipient,
     setDtailsPanelOpen
@@ -62,7 +64,7 @@ export const InvestView = () => {
       symbol2: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE/logo.png",
       title: "MEAN Liquidity Pools and Farms",
       rateAmount: `Up to ${maxRadiumAprValue}`,
-      interval: "APY"
+      interval: "APR/APY 7D"
     }
   ];
 
@@ -172,6 +174,23 @@ export const InvestView = () => {
     closeWithdrawModal();
   }
 
+  // Get MEAN token info
+  useEffect(() => {
+    if (!connection) { return; }
+
+    (async () => {
+      const token = userTokens.find(t => t.symbol === 'MEAN');
+      if (!token) { return; }
+
+      setSelectedToken(token);
+    })();
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    connection,
+    userTokens
+  ]);
+
   useEffect(() => {
     setStakingRewards(parseFloat(unstakeAmount) * annualPercentageYield / 100);
   }, [unstakeAmount]);  
@@ -185,7 +204,7 @@ export const InvestView = () => {
     width,
     isSmallUpScreen,
     detailsPanelOpen,
-  ]);  
+  ]);
 
   const renderInvestOptions = (
     <>

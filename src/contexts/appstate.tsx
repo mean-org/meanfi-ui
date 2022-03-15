@@ -11,7 +11,7 @@ import {
 } from "../constants";
 import { ContractDefinition } from "../models/contract-definition";
 import { DdcaFrequencyOption } from "../models/ddca-models";
-import { PaymentRateType, TimesheetRequirementOption, TransactionStatus, LockPeriodType } from "../models/enums";
+import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
 import { StreamActivity, StreamInfo } from '@mean-dao/money-streaming/lib/types';
 import { useWallet } from "./wallet";
 import { getNetworkIdByCluster, useConnection, useConnectionConfig } from "./connection";
@@ -62,8 +62,9 @@ interface AppStateConfig {
   recipientNote: string;
   paymentStartDate: string | undefined;
   paymentRateAmount: string;
+  lockPeriodAmount: string;
   paymentRateFrequency: PaymentRateType;
-  lockPeriodFrequency: LockPeriodType;
+  lockPeriodFrequency: PaymentRateType;
   timeSheetRequirement: TimesheetRequirementOption;
   isVerifiedRecipient: boolean;
   isAllocationReserved: boolean;
@@ -127,8 +128,9 @@ interface AppStateConfig {
   setRecipientNote: (note: string) => void;
   setPaymentStartDate: (date: string) => void;
   setPaymentRateAmount: (data: string) => void;
+  setLockPeriodAmount: (data: string) => void;
   setPaymentRateFrequency: (freq: PaymentRateType) => void;
-  setLockPeriodFrequency: (freq: LockPeriodType) => void;
+  setLockPeriodFrequency: (freq: PaymentRateType) => void;
   setTimeSheetRequirement: (req: TimesheetRequirementOption) => void;
   setIsVerifiedRecipient: (state: boolean) => void;
   setIsAllocationReserved: (state: boolean) => void;
@@ -183,8 +185,9 @@ const contextDefaultValues: AppStateConfig = {
   recipientNote: '',
   paymentStartDate: undefined,
   paymentRateAmount: '',
+  lockPeriodAmount: '',
   paymentRateFrequency: PaymentRateType.PerMonth,
-  lockPeriodFrequency: LockPeriodType.Month,
+  lockPeriodFrequency: PaymentRateType.PerMonth,
   timeSheetRequirement: TimesheetRequirementOption.NotRequired,
   isVerifiedRecipient: false,
   isAllocationReserved: false,
@@ -251,6 +254,7 @@ const contextDefaultValues: AppStateConfig = {
   setRecipientNote: () => {},
   setPaymentStartDate: () => {},
   setPaymentRateAmount: () => {},
+  setLockPeriodAmount: () => {},
   setPaymentRateFrequency: () => {},
   setLockPeriodFrequency: () => {},
   setTimeSheetRequirement: () => {},
@@ -361,8 +365,9 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [paymentStartDate, updatePaymentStartDate] = useState<string | undefined>(today);
   const [fromCoinAmount, updateFromCoinAmount] = useState<string>(contextDefaultValues.fromCoinAmount);
   const [paymentRateAmount, updatePaymentRateAmount] = useState<string>(contextDefaultValues.paymentRateAmount);
+  const [lockPeriodAmount, updateLockPeriodAmount] = useState<string>(contextDefaultValues.lockPeriodAmount);
   const [paymentRateFrequency, updatePaymentRateFrequency] = useState<PaymentRateType>(PaymentRateType.PerMonth);
-  const [lockPeriodFrequency, updateLockPeriodFrequency] = useState<LockPeriodType>(LockPeriodType.Month);
+  const [lockPeriodFrequency, updateLockPeriodFrequency] = useState<PaymentRateType>(PaymentRateType.PerMonth);
   const [timeSheetRequirement, updateTimeSheetRequirement] = useState<TimesheetRequirementOption>(TimesheetRequirementOption.NotRequired);
   const [isVerifiedRecipient, setIsVerifiedRecipient] = useState<boolean>(contextDefaultValues.isVerifiedRecipient);
   const [isAllocationReserved, setIsAllocationReserved] = useState<boolean>(contextDefaultValues.isAllocationReserved);
@@ -476,11 +481,15 @@ const AppStateProvider: React.FC = ({ children }) => {
     updatePaymentRateAmount(data);
   }
 
+  const setLockPeriodAmount = (data: string) => {
+    updateLockPeriodAmount(data);
+  }
+
   const setPaymentRateFrequency = (freq: PaymentRateType) => {
     updatePaymentRateFrequency(freq);
   }
 
-  const setLockPeriodFrequency = (freq: LockPeriodType) => {
+  const setLockPeriodFrequency = (freq: PaymentRateType) => {
     updateLockPeriodFrequency(freq);
   }
 
@@ -506,6 +515,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     setRecipientNote('');
     setPaymentStartDate(today);
     setPaymentRateAmount('');
+    setLockPeriodAmount('');
     setPaymentRateFrequency(PaymentRateType.PerMonth);
     setPaymentRateFrequency(PaymentRateType.PerMonth);
     setIsVerifiedRecipient(false);
@@ -1245,6 +1255,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         recipientNote,
         paymentStartDate,
         paymentRateAmount,
+        lockPeriodAmount,
         paymentRateFrequency,
         lockPeriodFrequency,
         timeSheetRequirement,
@@ -1306,6 +1317,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         setRecipientNote,
         setPaymentStartDate,
         setPaymentRateAmount,
+        setLockPeriodAmount,
         setPaymentRateFrequency,
         setLockPeriodFrequency,
         setTimeSheetRequirement,

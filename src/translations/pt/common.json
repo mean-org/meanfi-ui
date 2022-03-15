@@ -946,6 +946,14 @@
 			"create-multisig-cta": "Iniciar tesouraria",
 			"create-multisig-cta-busy": "Iniciando tesouraria",
 			"create-multisig-treasury-success": "Iniciar solicitação de tesouraria submetida para aprovação da Multisig.",
+			"lock-period": {
+				"minutes": "minutes",
+				"hours": "hours",
+				"days": "days",
+				"weeks": "weeks",
+				"months": "months",
+				"years": "years"
+			},
 			"main-cta": "Crio",
 			"main-cta-busy": "Criando tesouraria",
 			"modal-title": "Criar tesouraria",

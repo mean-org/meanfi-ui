@@ -3,7 +3,7 @@ import bs58 from "bs58";
 import moment from "moment";
 import { TransactionFees } from "@mean-dao/money-streaming/lib/types";
 import { TransactionStatusInfo } from "../contexts/appstate";
-import { PaymentRateType, TimesheetRequirementOption, TransactionStatus, LockPeriodType } from "../models/enums";
+import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
 import { formatAmount } from "./utils";
 import { environment } from "../environments/environment";
 import { SIMPLE_DATE_FORMAT, SIMPLE_DATE_TIME_FORMAT, VERBOSE_DATE_FORMAT, VERBOSE_DATE_TIME_FORMAT } from "../constants";
@@ -51,12 +51,12 @@ export class PaymentRateTypeOption {
 
 export class LockPeriodTypeOption {
     key: number;
-    value: LockPeriodType;
+    value: PaymentRateType;
     text: string;
 
     constructor(
         public _key: number,
-        public _value: LockPeriodType,
+        public _value: PaymentRateType,
         public _text: string
     ) {
         this.key = _key;
@@ -254,26 +254,26 @@ export const getPaymentRateOptionLabel = (val: PaymentRateType, trans?: any): st
     return result;
 }
 
-export const getLockPeriodOptionLabel = (val: LockPeriodType, trans?: any): string => {
+export const getLockPeriodOptionLabel = (val: PaymentRateType, trans?: any): string => {
     let result = '';
     switch (val) {
-        case LockPeriodType.Minute:
-            result = trans ? trans('treasuries.create-treasury.lock-period.minute') : 'minute';
+        case PaymentRateType.PerMinute:
+            result = trans ? trans('treasuries.create-treasury.lock-period.minutes') : 'minutes';
             break;
-        case LockPeriodType.Hour:
-            result = trans ? trans('treasuries.create-treasury.lock-period.hour') : 'hour';
+        case PaymentRateType.PerHour:
+            result = trans ? trans('treasuries.create-treasury.lock-period.hours') : 'hours';
             break;
-        case LockPeriodType.Day:
-            result = trans ? trans('treasuries.create-treasury.lock-period.day') : 'day';
+        case PaymentRateType.PerDay:
+            result = trans ? trans('treasuries.create-treasury.lock-period.days') : 'days';
             break;
-        case LockPeriodType.Week:
-            result = trans ? trans('treasuries.create-treasury.lock-period.week') : 'week';
+        case PaymentRateType.PerWeek:
+            result = trans ? trans('treasuries.create-treasury.lock-period.weeks') : 'weeks';
             break;
-        case LockPeriodType.Month:
-            result = trans ? trans('treasuries.create-treasury.lock-period.month') : 'month';
+        case PaymentRateType.PerMonth:
+            result = trans ? trans('treasuries.create-treasury.lock-period.months') : 'months';
             break;
-        case LockPeriodType.Year:
-            result = trans ? trans('treasuries.create-treasury.lock-period.year') : 'year';
+        case PaymentRateType.PerYear:
+            result = trans ? trans('treasuries.create-treasury.lock-period.years') : 'years';
             break;
         default:
             break;

@@ -946,6 +946,14 @@
 			"create-multisig-cta": "Initier la trésorerie",
 			"create-multisig-cta-busy": "Trésorerie initiatique",
 			"create-multisig-treasury-success": "Initier la demande de trésorerie soumise pour approbation Multisig.",
+			"lock-period": {
+				"minutes": "minutes",
+				"hours": "hours",
+				"days": "days",
+				"weeks": "weeks",
+				"months": "months",
+				"years": "years"
+			},
 			"main-cta": "Créer",
 			"main-cta-busy": "Création de trésorerie",
 			"modal-title": "Créer une trésorerie",
