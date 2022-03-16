@@ -4713,7 +4713,7 @@ export const MultisigView = () => {
                     </div>
 
                     {/* Copy address CTA */}
-                    <div className="stream-share-ctas">
+                    {/* <div className="stream-share-ctas">
                       {selectedMultisig && (
                         <>
                           <span
@@ -4730,7 +4730,7 @@ export const MultisigView = () => {
                           </a>
                         </>
                       )}
-                    </div>
+                    </div> */}
                   </>
                 ) : (
                   <div className="h-100 flex-center">
