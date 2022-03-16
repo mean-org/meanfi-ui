@@ -16,25 +16,28 @@ import { cutNumber, formatAmount, formatThousands, getAmountWithSymbol, isValidN
 import { IconRefresh, IconStats } from "../../Icons";
 import { IconHelpCircle } from "../../Icons/IconHelpCircle";
 import useWindowSize from '../../hooks/useWindowResize';
-import { consoleOut } from "../../utils/ui";
+import { consoleOut, isLocal } from "../../utils/ui";
+import { useNavigate } from "react-router-dom";
 
 type SwapOption = "stake" | "unstake";
 
 export const InvestView = () => {
   const {
+    userTokens,
     selectedToken,
     unstakeAmount,
+    isWhitelisted,
     unstakeStartDate,
-    stakingMultiplier,
     detailsPanelOpen,
-    userTokens,
-    setSelectedToken,
-    setFromCoinAmount,
+    stakingMultiplier,
     setIsVerifiedRecipient,
-    setDtailsPanelOpen
+    setDtailsPanelOpen,
+    setFromCoinAmount,
+    setSelectedToken,
   } = useContext(AppStateContext);
+  const navigate = useNavigate();
   const connection = useConnection();
-  const { connected } = useWallet();
+  const { connected, publicKey } = useWallet();
   const { t } = useTranslation('common');
   const { width } = useWindowSize();
   const [isSmallUpScreen, setIsSmallUpScreen] = useState(isDesktop);
@@ -46,6 +49,18 @@ export const InvestView = () => {
   const [raydiumInfo, setRaydiumInfo] = useState<any>([]);
   const [orcaInfo, setOrcaInfo] = useState<any>([]);
   const [maxRadiumAprValue, setMaxRadiumAprValue] = useState<number>(0);
+
+  // If there is no connected wallet or the connected wallet is not whitelisted
+  // when the App is run NOT in local mode then redirect user to /accounts
+  useEffect(() => {
+    if (!isLocal() && (!publicKey || !isWhitelisted)) {
+      navigate('/accounts');
+    }
+  }, [
+    publicKey,
+    isWhitelisted,
+    navigate
+  ]);
 
   const investItems = [
     {

@@ -4068,8 +4068,18 @@ export const MultisigVaultsView = () => {
                   {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                     <>
                       {/* Pre Tx execution failures here */}
-                      <h4 className="font-bold mb-3">{t('multisig.multisig-transactions.tx-operation-failure')}</h4>
-                      <h4 className="mb-3">Explain failure condition if specific</h4>
+                      <h4 className="mb-4">
+                        {t('transactions.status.tx-start-failure', {
+                          accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                            nativeBalance,
+                            NATIVE_SOL_MINT.toBase58()
+                          ),
+                          feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                            transactionFees.blockchainFee + transactionFees.mspFlatFee,
+                            NATIVE_SOL_MINT.toBase58()
+                          )})
+                        }
+                      </h4>
                     </>
                   ) : (
                     <>
