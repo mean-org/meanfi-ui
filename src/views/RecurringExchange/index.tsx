@@ -1431,10 +1431,6 @@ export const RecurringExchange = (props: {
     </>
   );
 
-  // TODO: Convert the input field class "transaction-field" to the new general purpose class "well"
-  // Kept for compatibility but it must be removed after conversion
-  const inputPosition = "right";
-
   return (
     <>
       <Spin spinning={refreshing}>

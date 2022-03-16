@@ -62,7 +62,9 @@ interface AppStateConfig {
   recipientNote: string;
   paymentStartDate: string | undefined;
   paymentRateAmount: string;
+  lockPeriodAmount: string;
   paymentRateFrequency: PaymentRateType;
+  lockPeriodFrequency: PaymentRateType;
   timeSheetRequirement: TimesheetRequirementOption;
   isVerifiedRecipient: boolean;
   isAllocationReserved: boolean;
@@ -126,7 +128,9 @@ interface AppStateConfig {
   setRecipientNote: (note: string) => void;
   setPaymentStartDate: (date: string) => void;
   setPaymentRateAmount: (data: string) => void;
+  setLockPeriodAmount: (data: string) => void;
   setPaymentRateFrequency: (freq: PaymentRateType) => void;
+  setLockPeriodFrequency: (freq: PaymentRateType) => void;
   setTimeSheetRequirement: (req: TimesheetRequirementOption) => void;
   setIsVerifiedRecipient: (state: boolean) => void;
   setIsAllocationReserved: (state: boolean) => void;
@@ -181,7 +185,9 @@ const contextDefaultValues: AppStateConfig = {
   recipientNote: '',
   paymentStartDate: undefined,
   paymentRateAmount: '',
+  lockPeriodAmount: '',
   paymentRateFrequency: PaymentRateType.PerMonth,
+  lockPeriodFrequency: PaymentRateType.PerMonth,
   timeSheetRequirement: TimesheetRequirementOption.NotRequired,
   isVerifiedRecipient: false,
   isAllocationReserved: false,
@@ -248,7 +254,9 @@ const contextDefaultValues: AppStateConfig = {
   setRecipientNote: () => {},
   setPaymentStartDate: () => {},
   setPaymentRateAmount: () => {},
+  setLockPeriodAmount: () => {},
   setPaymentRateFrequency: () => {},
+  setLockPeriodFrequency: () => {},
   setTimeSheetRequirement: () => {},
   setIsVerifiedRecipient: () => {},
   setIsAllocationReserved: () => {},
@@ -357,7 +365,9 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [paymentStartDate, updatePaymentStartDate] = useState<string | undefined>(today);
   const [fromCoinAmount, updateFromCoinAmount] = useState<string>(contextDefaultValues.fromCoinAmount);
   const [paymentRateAmount, updatePaymentRateAmount] = useState<string>(contextDefaultValues.paymentRateAmount);
+  const [lockPeriodAmount, updateLockPeriodAmount] = useState<string>(contextDefaultValues.lockPeriodAmount);
   const [paymentRateFrequency, updatePaymentRateFrequency] = useState<PaymentRateType>(PaymentRateType.PerMonth);
+  const [lockPeriodFrequency, updateLockPeriodFrequency] = useState<PaymentRateType>(PaymentRateType.PerMonth);
   const [timeSheetRequirement, updateTimeSheetRequirement] = useState<TimesheetRequirementOption>(TimesheetRequirementOption.NotRequired);
   const [isVerifiedRecipient, setIsVerifiedRecipient] = useState<boolean>(contextDefaultValues.isVerifiedRecipient);
   const [isAllocationReserved, setIsAllocationReserved] = useState<boolean>(contextDefaultValues.isAllocationReserved);
@@ -471,8 +481,16 @@ const AppStateProvider: React.FC = ({ children }) => {
     updatePaymentRateAmount(data);
   }
 
+  const setLockPeriodAmount = (data: string) => {
+    updateLockPeriodAmount(data);
+  }
+
   const setPaymentRateFrequency = (freq: PaymentRateType) => {
     updatePaymentRateFrequency(freq);
+  }
+
+  const setLockPeriodFrequency = (freq: PaymentRateType) => {
+    updateLockPeriodFrequency(freq);
   }
 
   const setTimeSheetRequirement = (req: TimesheetRequirementOption) => {
@@ -497,6 +515,8 @@ const AppStateProvider: React.FC = ({ children }) => {
     setRecipientNote('');
     setPaymentStartDate(today);
     setPaymentRateAmount('');
+    setLockPeriodAmount('');
+    setPaymentRateFrequency(PaymentRateType.PerMonth);
     setPaymentRateFrequency(PaymentRateType.PerMonth);
     setIsVerifiedRecipient(false);
     setIsAllocationReserved(false);
@@ -835,7 +855,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   // Preselect a DDCA frequency option
   useEffect(() => {
 
-    const setContractOrAutoSelectFirst = (name?: string) => {
+    const setFrequencyOrAutoSelectFirst = (name?: string) => {
       if (name) {
         if (ddcaOptFromCache) {
           updateDdcaOption(ddcaOptFromCache);
@@ -851,7 +871,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       }
     }
 
-    setContractOrAutoSelectFirst(ddcaOptionName);
+    setFrequencyOrAutoSelectFirst(ddcaOptionName);
     return () => {};
   }, [
     ddcaOptionName,
@@ -990,7 +1010,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     lastSentTxStatus,
     fetchTxInfoStatus,
     customStreamDocked,
-    loadingStreamActivity,
     highLightableStreamId,
     clearTransactionStatusContext,
     getStreamActivity
@@ -1236,7 +1255,9 @@ const AppStateProvider: React.FC = ({ children }) => {
         recipientNote,
         paymentStartDate,
         paymentRateAmount,
+        lockPeriodAmount,
         paymentRateFrequency,
+        lockPeriodFrequency,
         timeSheetRequirement,
         isVerifiedRecipient,
         isAllocationReserved,
@@ -1296,7 +1317,9 @@ const AppStateProvider: React.FC = ({ children }) => {
         setRecipientNote,
         setPaymentStartDate,
         setPaymentRateAmount,
+        setLockPeriodAmount,
         setPaymentRateFrequency,
+        setLockPeriodFrequency,
         setTimeSheetRequirement,
         setIsVerifiedRecipient,
         setIsAllocationReserved,

@@ -9,27 +9,35 @@ import { useTranslation } from 'react-i18next';
 import { isDesktop } from "react-device-detect";
 import { TokenDisplay } from "../../components/TokenDisplay";
 import { PreFooter } from "../../components/PreFooter";
+import { useConnection } from '../../contexts/connection';
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
 import { cutNumber, formatAmount, formatThousands, getAmountWithSymbol, isValidNumber } from "../../utils/utils";
 import { IconRefresh, IconStats } from "../../Icons";
 import { IconHelpCircle } from "../../Icons/IconHelpCircle";
 import useWindowSize from '../../hooks/useWindowResize';
+import { consoleOut, isLocal } from "../../utils/ui";
+import { useNavigate } from "react-router-dom";
 
 type SwapOption = "stake" | "unstake";
 
 export const InvestView = () => {
   const {
+    userTokens,
     selectedToken,
     unstakeAmount,
+    isWhitelisted,
     unstakeStartDate,
-    stakingMultiplier,
     detailsPanelOpen,
-    setFromCoinAmount,
+    stakingMultiplier,
     setIsVerifiedRecipient,
-    setDtailsPanelOpen
+    setDtailsPanelOpen,
+    setFromCoinAmount,
+    setSelectedToken,
   } = useContext(AppStateContext);
-  const { connected } = useWallet();
+  const navigate = useNavigate();
+  const connection = useConnection();
+  const { connected, publicKey } = useWallet();
   const { t } = useTranslation('common');
   const { width } = useWindowSize();
   const [isSmallUpScreen, setIsSmallUpScreen] = useState(isDesktop);
@@ -38,6 +46,21 @@ export const InvestView = () => {
   const [stakingRewards, setStakingRewards] = useState<number>(0);
   // const [selectedInvest, setSelectedInvest] = useState<any>(undefined);
   const annualPercentageYield = 5;
+  const [raydiumInfo, setRaydiumInfo] = useState<any>([]);
+  const [orcaInfo, setOrcaInfo] = useState<any>([]);
+  const [maxRadiumAprValue, setMaxRadiumAprValue] = useState<number>(0);
+
+  // If there is no connected wallet or the connected wallet is not whitelisted
+  // when the App is run NOT in local mode then redirect user to /accounts
+  useEffect(() => {
+    if (!isLocal() && (!publicKey || !isWhitelisted)) {
+      navigate('/accounts');
+    }
+  }, [
+    publicKey,
+    isWhitelisted,
+    navigate
+  ]);
 
   const investItems = [
     {
@@ -55,8 +78,8 @@ export const InvestView = () => {
       symbol1: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R/logo.png",
       symbol2: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE/logo.png",
       title: "MEAN Liquidity Pools and Farms",
-      rateAmount: "Up to 50",
-      interval: "APY"
+      rateAmount: `Up to ${maxRadiumAprValue}`,
+      interval: "APR/APY 7D"
     }
   ];
 
@@ -70,28 +93,24 @@ export const InvestView = () => {
       value: "$7.64M"
     },
     {
-      label: t("invest.panel-right.stats.next-week-payout"),
+      label: t("invest.panel-right.stats.total-mean-rewards"),
       value: "$108,730"
     }
   ];
 
   const stakingData = [
     {
-      label: "Your Current Stake:",
-      value: ""
-    },
-    {
       label: "My Staked MEAN",
       value: unstakeAmount ? cutNumber(parseFloat(unstakeAmount), 6) : 0
     },
-    {
-      label: "Avg. Locked Yield",
-      value: `${annualPercentageYield}%`
-    },
-    {
-      label: "Staking Lock Boost",
-      value: `${stakingMultiplier}x boost`
-    },
+    // {
+    //   label: "Avg. Locked Yield",
+    //   value: `${annualPercentageYield}%`
+    // },
+    // {
+    //   label: "Staking Lock Boost",
+    //   value: `${stakingMultiplier}x boost`
+    // },
     // {
     //   label: "My Locked eMEAN",
     //   value: "1,000"
@@ -102,44 +121,49 @@ export const InvestView = () => {
     // },
   ];
 
-  const liquidityPools = [
-    {
-      tokenImg: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R/logo.png",
-      platform: "Raydium",
-      pair: "MEAN/RAY",
-      liquidity: "1,937,521",
-      volume: "7,521.45",
-      anualPercentageRate: "5.1",
-      investLink: "https://raydium.io/liquidity/?ammId=HJNaZ5dDrKWKqo6JiBqjNvqfDFUtPVxS2fotbCdTw7pm"
-    },
-    {
-      tokenImg: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R/logo.png",
-      platform: "Raydium",
-      pair: "MEAN/SOL",
-      liquidity: "1,937,521",
-      volume: "7,521.45",
-      anualPercentageRate: "5.1",
-      investLink: "https://raydium.io/liquidity/?ammId=57sBQHecBZVxMdHB1pCVNEMyQXmZi7NrxgVRznkDmvKS"
-    },
-    {
-      tokenImg: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R/logo.png",
-      platform: "Raydium",
-      pair: "MEAN/USDC",
-      liquidity: "1,937,521",
-      volume: "7,521.45",
-      anualPercentageRate: "5.1",
-      investLink: "https://raydium.io/liquidity/?ammId=5jcGFqXyB3xUrdS7LGmJ3R5a4pYaPPFs3mjFnqgwgo4x"
-    },
-    {
-      tokenImg: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE/logo.png",
-      platform: "Orca",
-      pair: "MEAN/USDC",
-      liquidity: "1,937,521",
-      volume: "7,521.45",
-      anualPercentageRate: "5.1",
-      investLink: ""
-    },
-  ];
+  useEffect(() => {
+    if (!connection) { return; }
+
+    (async () => {
+      fetch('https://api.orca.so/pools')
+        .then((res) => res.json())
+        .then((data) => {
+          const orcaData = data.find((item: any) => item.name2 === "MEAN/USDC");
+
+          if (!Array.isArray(orcaData)) {
+            setOrcaInfo([orcaData]);
+          } else {
+            setOrcaInfo(orcaData);
+          }
+        })
+        .catch((error) => {
+          consoleOut(error);
+        })
+    })();
+
+    (async () => {
+      // fetch('https://api.raydium.io/pairs') - old version
+      fetch('https://api.raydium.io/v2/main/pairs')
+        .then((res) => res.json())
+        .then((data) => {
+          const raydiumData = data.filter((item: any) => item.name.substr(0, 4) === "MEAN");
+
+          let maxRadiumApr = raydiumData.map((item: any) => {
+            let properties = item.apr7d;
+
+            return properties;
+          });
+
+          setMaxRadiumAprValue(Math.max(...maxRadiumApr));
+
+          setRaydiumInfo(raydiumData);
+        })
+        .catch((error) => {
+          consoleOut(error);
+        })
+      })();
+
+  }, [connection]);  
 
   const [selectedInvest, setSelectedInvest] = useState<any>(investItems[0]);
 
@@ -165,6 +189,23 @@ export const InvestView = () => {
     closeWithdrawModal();
   }
 
+  // Get MEAN token info
+  useEffect(() => {
+    if (!connection) { return; }
+
+    (async () => {
+      const token = userTokens.find(t => t.symbol === 'MEAN');
+      if (!token) { return; }
+
+      setSelectedToken(token);
+    })();
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    connection,
+    userTokens
+  ]);
+
   useEffect(() => {
     setStakingRewards(parseFloat(unstakeAmount) * annualPercentageYield / 100);
   }, [unstakeAmount]);  
@@ -178,7 +219,7 @@ export const InvestView = () => {
     width,
     isSmallUpScreen,
     detailsPanelOpen,
-  ]);  
+  ]);
 
   const renderInvestOptions = (
     <>
@@ -203,11 +244,11 @@ export const InvestView = () => {
                   )}
                 </div>
               </div>
-              <div className="description-cell">
+              <div className="description-cell pr-4">
                 <div className="title">{item.title}</div>
               </div>
-              <div className="rate-cell">
-                <div className="rate-amount">{item.rateAmount}%</div>
+              <div className="rate-cell w-50">
+                <div className="rate-amount" style={{minWidth: "fit-content !important"}}>{item.rateAmount}%</div>
                 <div className="interval">{item.interval}</div>
               </div>
             </div>
@@ -270,19 +311,20 @@ export const InvestView = () => {
                 {selectedInvest.id === 0 && (
                   <>
                     {/* Background animation */}
-                    {stakingRewards > 0 && (
+                    {/* {stakingRewards > 0 && (
                       <div className="staking-background">
                         <img className="inbound" src="/assets/incoming-crypto.svg" alt="" />
                       </div>
-                    )}
+                    )} */}
 
                     {/* Staking paragraphs */}
+                    <h2>{t("invest.panel-right.title")}</h2>
                     <p>{t("invest.panel-right.first-text")}</p>
-                    <p>{t("invest.panel-right.second-text")}</p>
+                    <p className="pb-1">{t("invest.panel-right.second-text")}</p>
                     <div className="pinned-token-separator"></div>
 
                     {/* Staking Stats */}
-                    <div className="invest-fields-container">
+                    <div className="invest-fields-container pt-2">
                       <div className="mb-3">
                         <Row>
                           {stakingStats.map((stat, index) => (
@@ -325,6 +367,7 @@ export const InvestView = () => {
                       {/* Staking data */}
                       <Col xs={24} sm={12} md={24} lg={12} className="column-width">
                         <div className="staking-data">
+                          <h3>{t("invest.panel-right.staking-data.title")}</h3>
                           <Row>
                             {stakingData.map((data, index) => (
                               <>
@@ -336,9 +379,10 @@ export const InvestView = () => {
                                 </Col>
                               </>
                             ))}
-                            <span className="info-label mt-1">{t("invest.panel-right.staking-data.text-one", {unstakeStartDate: unstakeStartDate})}</span>
-                            <span className="info-label">{t("invest.panel-right.staking-data.text-two")}</span>
-                            <Col span={24} className="d-flex flex-column justify-content-end align-items-end mt-1">
+                            <span className="mt-2">{t("invest.panel-right.staking-data.text-one", {unstakeStartDate: unstakeStartDate})}</span>
+
+                            <span className="mt-1"><i>{t("invest.panel-right.staking-data.text-two")}</i></span>
+                            {/* <Col span={24} className="d-flex flex-column justify-content-end align-items-end mt-1">
                               <div className="transaction-detail-row">
                                 <span className="info-icon">
                                   {stakingRewards > 0 && (
@@ -349,10 +393,10 @@ export const InvestView = () => {
                                   <span className="staking-value mb-2 mt-1">{!stakingRewards ? 0 : cutNumber(stakingRewards, 6)} {selectedToken && selectedToken.name}</span>
                                 </span>
                               </div>
-                            </Col>
+                            </Col> */}
 
                             {/* Withdraw button */}
-                            <Col span={24} className="d-flex flex-column justify-content-end align-items-end mt-1">
+                            {/* <Col span={24} className="d-flex flex-column justify-content-end align-items-end mt-1">
                               <Space size="middle">
                                 <Button
                                   type="default"
@@ -365,7 +409,7 @@ export const InvestView = () => {
                                   {t("invest.panel-right.staking-data.withdraw-button")}
                                 </Button>
                               </Space>
-                            </Col>
+                            </Col> */}
 
                             {/* Withdraw funds transaction execution modal */}
                             <Modal
@@ -415,7 +459,6 @@ export const InvestView = () => {
                             size="middle"
                             icon={<IconRefresh className="mean-svg-icons" />}
                             onClick={() => {}}
-                            // disabled={}
                           />
                         </Tooltip>
                       </span>
@@ -423,44 +466,72 @@ export const InvestView = () => {
 
                     <div className="stats-row">
                       <div className="item-list-header compact"><div className="header-row">
-                        <div className="std-table-cell first-cell">&nbsp;</div>
-                        <div className="std-table-cell responsive-cell">Platform</div>
-                        <div className="std-table-cell responsive-cell pr-2">LP Pair</div>
+                        <div className="std-table-cell responsive-cell text-left
+                        ">Platform</div>
+                        <div className="std-table-cell responsive-cell pr-1 text-left">LP Pair</div>
                         <div className="std-table-cell responsive-cell pr-2 text-right">Liquidity</div>
                         <div className="std-table-cell responsive-cell pr-2 text-right">Vol (24hrs)</div>
-                        <div className="std-table-cell responsive-cell pr-2 text-right">Est APR</div>
-                        <div className="std-table-cell responsive-cell pl-2 text-center">Invest</div>
+                        <div className="std-table-cell responsive-cell pr-2 text-right">APR/APY 7D</div>
+                        <div className="std-table-cell responsive-cell pl-1 text-center invest-col">Invest</div>
                         </div>
                       </div>
 
                       <div className="transaction-list-data-wrapper vertical-scroll">
                         <div className="activity-list h-100">
                           <div className="item-list-body compact">
-                            {liquidityPools.map((pool) => (
-                              <a className="item-list-row" target="_blank" rel="noopener noreferrer" href={pool.investLink}>
-                              <div className="std-table-cell first-cell">
-                                <div className="icon-cell">
+                            {raydiumInfo.map((raydium: any) => (
+                              <a key={raydium.ammId} className="item-list-row" target="_blank" rel="noopener noreferrer" 
+                              href={`https://raydium.io/liquidity/add/?coin0=MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD&coin1=${raydium.name.slice(5) === "SOL" ? "sol&fixed" : raydium.name.slice(5) === "RAY" ? "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R&fixed" : "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&fixed"}=coin0&ammId=${raydium.ammId}`}>
+                              <div className="std-table-cell responsive-cell pl-0">
+                                <div className="icon-cell pr-1 d-inline-block">
                                   <div className="token-icon">
-                                    <img alt={pool.platform} width="20" height="20" src={pool.tokenImg} />
+                                    <img alt="Raydium" width="20" height="20" src="https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R/logo.png" />
                                   </div>
                                 </div>
+                                <span>Raydium</span>
                               </div>
-                              <div className="std-table-cell responsive-cell">
-                                <span>{pool.platform}</span>
+                              <div className="std-table-cell responsive-cell pr-1">
+                                <span>{raydium.name.replace(/-/g, "/")}</span>
                               </div>
-                              <div className="std-table-cell responsive-cell pr-2">
-                                <span>{pool.pair}</span>
+                              <div className="std-table-cell responsive-cell pr-1 text-right">
+                                <span>{raydium.liquidity > 0 ? `$${formatThousands(raydium.liquidity)}` : "--"}</span>
                               </div>
-                              <div className="std-table-cell responsive-cell pr-2 text-right">
-                                <span>${pool.liquidity}</span>
+                              <div className="std-table-cell responsive-cell pr-1 text-right">
+                                <span>{raydium.volume24h > 0 ? `$${formatThousands(raydium.volume24h)}` : "--"}</span>
                               </div>
-                              <div className="std-table-cell responsive-cell pr-2 text-right">
-                                <span>${pool.volume}</span>
+                              <div className="std-table-cell responsive-cell pr-1 text-right">
+                                <span>{raydium.apr7d > 0 ? `${cutNumber(raydium.apr7d, 2)}%` : "--"}</span>
                               </div>
-                              <div className="std-table-cell responsive-cell pr-2 text-right">
-                                <span>{pool.anualPercentageRate}%</span>
+                              <div className="std-table-cell responsive-cell pl-1 text-center invest-col">
+                                <span role="img" aria-label="arrow-up" className="anticon anticon-arrow-up mean-svg-icons outgoing upright">
+                                  <svg viewBox="64 64 896 896" focusable="false" data-icon="arrow-up" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M868 545.5L536.1 163a31.96 31.96 0 00-48.3 0L156 545.5a7.97 7.97 0 006 13.2h81c4.6 0 9-2 12.1-5.5L474 300.9V864c0 4.4 3.6 8 8 8h60c4.4 0 8-3.6 8-8V300.9l218.9 252.3c3 3.5 7.4 5.5 12.1 5.5h81c6.8 0 10.5-8 6-13.2z"></path></svg>
+                                </span>
                               </div>
-                              <div className="std-table-cell responsive-cell pl-2 text-center">
+                              </a>
+                            ))}
+                            {orcaInfo.map((orca: any) => (
+                              <a key={orca.name2} className="item-list-row" target="_blank" rel="noopener noreferrer" href="https://www.orca.so/pools">
+                              <div className="std-table-cell responsive-cell pl-0">
+                                <div className="icon-cell pr-1 d-inline-block">
+                                  <div className="token-icon">
+                                    <img alt="Raydium" width="20" height="20" src="https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE/logo.png" />
+                                  </div>
+                                </div>
+                                <span>Orca</span>
+                              </div>
+                              <div className="std-table-cell responsive-cell pr-1">
+                                <span>{orca.name2}</span>
+                              </div>
+                              <div className="std-table-cell responsive-cell pr-1 text-right">
+                                <span>{orca.liquidity > 0 ? `$${formatThousands(orca.liquidity)}` : "--"}</span>
+                              </div>
+                              <div className="std-table-cell responsive-cell pr-1 text-right">
+                                <span>{orca.volume_24h > 0 ? `$${formatThousands(orca.volume_24h)}` : "--"}</span>
+                              </div>
+                              <div className="std-table-cell responsive-cell pr-1 text-right">
+                                <span>{orca.apy_7d > 0 ? `${cutNumber(orca.apy_7d * 100, 2)}% APY` : "--"}</span>
+                              </div>
+                              <div className="std-table-cell responsive-cell pl-1 text-center invest-col">
                                 <span role="img" aria-label="arrow-up" className="anticon anticon-arrow-up mean-svg-icons outgoing upright">
                                   <svg viewBox="64 64 896 896" focusable="false" data-icon="arrow-up" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M868 545.5L536.1 163a31.96 31.96 0 00-48.3 0L156 545.5a7.97 7.97 0 006 13.2h81c4.6 0 9-2 12.1-5.5L474 300.9V864c0 4.4 3.6 8 8 8h60c4.4 0 8-3.6 8-8V300.9l218.9 252.3c3 3.5 7.4 5.5 12.1 5.5h81c6.8 0 10.5-8 6-13.2z"></path></svg>
                                 </span>
@@ -660,7 +731,7 @@ export const StakeTabView = () => {
         <div className="left token-group">
           {periods.map((period, index) => (
             <div key={index} className="mb-1 d-flex flex-column align-items-center">
-              <div className="token-max simplelink" onClick={() => onChangeValue(period.value, period.time, period.multiplier)}>{period.value} {period.time}</div>
+              <div className={`token-max simplelink ${period.value === 7 ? "active" : "disabled"}`} onClick={() => onChangeValue(period.value, period.time, period.multiplier)}>{period.value} {period.time}</div>
               <span>{`${period.multiplier}x`}</span>
             </div>
           ))}

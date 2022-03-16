@@ -17,13 +17,14 @@ import ReactGA from 'react-ga';
 import { InfluxDB, Point } from '@influxdata/influxdb-client';
 import { isMobile, isDesktop, isTablet, browserName, osName, osVersion, fullBrowserVersion, deviceType } from "react-device-detect";
 import { environment } from "../../environments/environment";
-import { GOOGLE_ANALYTICS_PROD_TAG_ID, PERFORMANCE_SAMPLE_INTERVAL, PERFORMANCE_SAMPLE_INTERVAL_FAST, PERFORMANCE_THRESHOLD, SOLANA_STATUS_PAGE } from "../../constants";
+import { GOOGLE_ANALYTICS_PROD_TAG_ID, LANGUAGES, PERFORMANCE_SAMPLE_INTERVAL, PERFORMANCE_SAMPLE_INTERVAL_FAST, PERFORMANCE_THRESHOLD, SOLANA_STATUS_PAGE } from "../../constants";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import { reportConnectedAccount } from "../../utils/api";
 import { Connection } from "@solana/web3.js";
 import useOnlineStatus from "../../contexts/online-status";
 import { AccountDetails } from "../../models";
-import { analytics } from "../../App";
+import { segmentAnalytics } from "../../App";
+import { AppUsageEvent } from "../../utils/segment-service";
 
 const { Header, Content, Footer } = Layout;
 
@@ -49,13 +50,14 @@ export const AppLayout = React.memo((props: any) => {
     setPreviousWalletConnectState
   } = useContext(AppStateContext);
 
-  const { t } = useTranslation('common');
+  const { t, i18n } = useTranslation("common");
   const { isOnline, responseTime } = useOnlineStatus();
   const connectionConfig = useConnectionConfig();
   const { provider, connected, publicKey } = useWallet();
   const [previousChain, setChain] = useState("");
   const [gaInitialized, setGaInitialized] = useState(false);
   const [referralAddress, setReferralAddress] = useLocalStorage('pendingReferral', '');
+  const [language, setLanguage] = useState("");
   // undefined at first (never had a value), null = couldn't get, number the value successfully retrieved
   const [avgTps, setAvgTps] = useState<number | null | undefined>(undefined);
   const [needRefresh, setNeedRefresh] = useState(true);
@@ -219,11 +221,12 @@ export const AppLayout = React.memo((props: any) => {
     if (environment === 'production') {
       ReactGA.pageview(location.pathname);
     }
-    // Report page view in Segment for all envs
-    if (analytics) {
-      analytics.page(location.pathname);
-    }
-  }, [location.pathname]);
+    // Report page view in Segment
+    segmentAnalytics.recordPageVisit(location.pathname)
+  }, [
+    publicKey,
+    location.pathname,
+  ]);
 
   // Effect Network change
   useEffect(() => {
@@ -246,6 +249,13 @@ export const AppLayout = React.memo((props: any) => {
     avgTps
   ]);
 
+  // Get the current ISO language used by the user
+  useEffect(() => {
+    const selectedLanguage = i18n.language;
+    const item = LANGUAGES.find(l => l.code === selectedLanguage)?.isoName;
+    setLanguage(item || LANGUAGES[0].isoName);
+  }, [i18n.language]);
+
   // Hook on the wallet connect/disconnect
   useEffect(() => {
     if (previousWalletConnectState !== connected) {
@@ -253,6 +263,17 @@ export const AppLayout = React.memo((props: any) => {
       if (!previousWalletConnectState && connected) {
         if (publicKey) {
           const walletAddress = publicKey.toBase58();
+
+          // Record user login in Segment Analytics
+          segmentAnalytics.recordIdentity(walletAddress, {
+            connected: true,
+            platform: getPlatform(),
+            browser: browserName,
+            walletProvider: provider?.name || 'Other',
+            theme: theme,
+            language: language
+          });
+
           if (!isLocal()) {
             sendConnectionMetric(walletAddress);
           }
@@ -287,22 +308,35 @@ export const AppLayout = React.memo((props: any) => {
           description: t('notifications.wallet-disconnect-message'),
           type: 'info'
         });
+        // Send identity to Segment if no wallew connection
+        if (!publicKey) {
+          segmentAnalytics.recordIdentity('', {
+            connected: false,
+            platform: getPlatform(),
+            browser: browserName
+          }, () => {
+            segmentAnalytics.recordEvent(AppUsageEvent.WalletDisconnected);
+          });
+        }
       }
     }
   }, [
+    theme,
     location,
+    language,
     publicKey,
     connected,
+    provider?.name,
     referralAddress,
     previousWalletConnectState,
-    t,
-    setStreamList,
-    setSelectedAsset,
-    setAccountAddress,
-    setReferralAddress,
-    refreshTokenBalance,
+    setPreviousWalletConnectState,
     sendConnectionMetric,
-    setPreviousWalletConnectState
+    refreshTokenBalance,
+    setReferralAddress,
+    setAccountAddress,
+    setSelectedAsset,
+    setStreamList,
+    t,
   ]);
 
   // Get referral address from query string params and save it to localStorage

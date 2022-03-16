@@ -279,15 +279,16 @@
 			"not-connected": "لطفاً کیف پول خود را وصل کنید تا گزینه های سرمایه گذاری خود را ببینید"
 		},
 		"panel-right": {
-			"first-text": "جوایز استیکینگ MEAN شامل مشوق های انتشار به علاوه 30 درصد از درآمد پروتکل (محاسبه هفتگی) است و می تواند با استفاده از دوره های قفل افزایش یابد.",
-			"second-text": "جوایز استیکینگ شما به مرور زمان پخش می شود و می توان آنها را در هر زمانی پس گرفت.",
+			"title": "Stake MEAN to Earn MEAN Rewards",
+			"first-text": "MEAN staking rewards include emission incentives plus a share of the protocol revenues, and can be boosted using locking periods. When you stake your MEAN, you get sMEAN in return.",
+			"second-text": "Simply holding your sMEAN is all that is required to continuously grow your MEAN stash. You don't need to harvest the rewards with MEAN staking. When you unstake your sMEAN, you will receive the rewards earned in the form of additional MEAN on top of the amount staked.",
 			"staking-data": {
 				"text-one": "MEAN توکن‌ها تا {{unstakeStartDate}} قفل هستند",
-				"text-two": "پاداش های استیکینگ موجود برای برداشت:",
+				"text-two": "Additional locking boost periods are coming soon! Only 7 days locking is currently available.",
 				"withdraw-button": "برداشت وجوه"
 			},
 			"stats": {
-				"next-week-payout": "پرداخت هفته آینده",
+				"total-mean-rewards": "Total MEAN Rewards",
 				"staking-apr": "Staking APR",
 				"total-value-locked": "ارزش کل قفل شده است"
 			},
@@ -296,7 +297,7 @@
 					"amount-label": "مقدار سهام(استک)",
 					"days": "روزها",
 					"name": "سهام (استک)",
-					"notification-label": "دوره استیکینگ {{periodValue}} {{periodTime}} توکن های شما را تا {{unstakeStartDate}} با جوایز تخمینی تا 100 میانگین قفل می کند",
+					"notification-label": "Staking period of {{periodValue}} {{periodTime}} will lock your Tokens until {{unstakeStartDate}}.",
 					"period-label": "برای چه مدت می خواهید استک کنید؟",
 					"stake-button": "سهام (استک)",
 					"terms-and-conditions-tooltip": "توکن‌های شما برای مدت زمان انتخابی قفل خواهند شد و نمی‌توانید قبل از پایان دوره استیکینگ آن‌ها را باز کنید. وقتی توکن‌های اضافی را در یک قرارداد موجود قرار می‌دهید، دوره استیکینگ برای همه توکن‌های قفل‌شده تا تاریخ پایان جدید تمدید می‌شود.",
@@ -700,7 +701,7 @@
 			"label-sending-to": "ارسال به",
 			"label-sent-to": "فرستاده شد به",
 			"label-start-date-default": "تاریخ شروع",
-			"label-start-date-scheduled": "برنامه ریزی شده است",
+			"label-start-date-scheduled": "Scheduled to start on",
 			"label-start-date-scheduled-otp": "تحویل برنامه ریزی شده",
 			"label-start-date-started": "آغاز شده",
 			"label-their-allocation": "تخصیص آنها",
@@ -915,7 +916,8 @@
 		"modal-title": "منتقل کردن stream",
 		"streamid-empty": "آدرس موجود نیست",
 		"streamid-open-cta": "منتقل کردن",
-		"streamid-placeholder": "آدرس کیف پول ذینفع جدید"
+		"streamid-placeholder": "آدرس کیف پول ذینفع جدید",
+		"streamid-checkbox": "I'm sure the recipient address doesn't belong to an exchange."
 	},
 	"transfers": {
 		"screen-subtitle": "برای هر کسی در دنیا سریعتر پول بفرستید",
@@ -950,6 +952,14 @@
 			"create-multisig-cta": "treasury را آغاز کنید",
 			"create-multisig-cta-busy": "راه اندازی treasury",
 			"create-multisig-treasury-success": "شما درخواست treasury اولیه را با موفقیت امضا کردید.",
+			"lock-period": {
+				"minutes": "minutes",
+				"hours": "hours",
+				"days": "days",
+				"weeks": "weeks",
+				"months": "months",
+				"years": "years"
+			},
 			"main-cta": "راه اندازی",
 			"main-cta-busy": "ایجاد treasury",
 			"modal-title": "treasury  ایجاد کنید",

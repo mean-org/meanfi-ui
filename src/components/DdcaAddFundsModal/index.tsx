@@ -52,14 +52,18 @@ export const DdcaAddFundsModal = (props: {
 
   const fromToken = useMemo(() => MEAN_TOKEN_LIST.find(t => t.address === props.ddcaDetails?.fromMint), [props.ddcaDetails]);
 
-  const getModalHeadline = () => {
+  const getModalHeadline = useCallback(() => {
     if (!props.ddcaDetails) { return ''; }
     return `<span>${t('ddcas.add-funds.headline', {
       fromTokenAmount: getTokenAmountAndSymbolByTokenAddress(
         props.ddcaDetails.amountPerSwap * lockedSliderValue,
         props.ddcaDetails.fromMint)
     })}</span>`;
-  }
+  }, [
+    lockedSliderValue,
+    props.ddcaDetails,
+    t,
+  ]);
 
   const getGasFeeAmount = (): number => {
     return props.ddcaTxFees.maxBlockchainFee + (props.ddcaTxFees.maxFeePerSwap * (lockedSliderValue));

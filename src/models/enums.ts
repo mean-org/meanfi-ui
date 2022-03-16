@@ -17,6 +17,15 @@ export enum PaymentRateType {
     PerMonth = 4,   // 2629750
     PerYear = 5,    // 31557000
 }
+// // In seconds for the API
+// export enum LockPeriodType {
+//     PerMinute = 0,  // 60
+//     PerHour = 1,    // 3600
+//     PerDay = 2,     // 86400
+//     PerWeek = 3,    // 604800
+//     PerMonth = 4,   // 2629750
+//     PerYear = 5,    // 31557000
+// }
 
 export enum TimesheetRequirementOption {
     NotRequired = 0,
@@ -87,6 +96,7 @@ export enum OperationType {
     ApproveTransaction = 41,
     ExecuteTransaction = 42,
     DeleteVault = 43,
+    CancelTransaction = 44,
     // IDO
     IdoDeposit = 100,
     IdoWithdraw = 101,

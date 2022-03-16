@@ -21,6 +21,8 @@ import {
   IconExternalLink,
   IconRefresh,
   IconShare,
+  IconSwitchRunning,
+  IconSwitchStopped,
   IconUpload,
 } from "../../Icons";
 import { AppStateContext } from "../../contexts/appstate";
@@ -90,6 +92,8 @@ import { StreamsSummary } from "../../models/streams";
 import { UserTokenAccount } from "../../models/transactions";
 import { customLogger } from "../..";
 import { StreamTreasuryType } from "../../models/treasuries";
+import { segmentAnalytics } from "../../App";
+import { AppUsageEvent, SegmentStreamAddFundsData, SegmentStreamCloseData, SegmentStreamTransferOwnershipData, SegmentStreamWithdrawData } from "../../utils/segment-service";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -722,9 +726,9 @@ export const Streams = () => {
   ]);
 
   const hideCloseStreamModal = useCallback(() => setIsCloseStreamModalVisibility(false), []);
-  const onAcceptCloseStream = (closeTreasury: boolean) => {
+  const onAcceptCloseStream = (data: any) => {
     hideCloseStreamModal();
-    onExecuteCloseStreamTransaction(closeTreasury);
+    onExecuteCloseStreamTransaction(data);
   };
 
   // Open stream modal
@@ -804,6 +808,15 @@ export const Streams = () => {
         }
         consoleOut('Transfer stream data:', data);
 
+        // Report event to Segment analytics
+        const segmentData = {
+          stream: data.stream,
+          beneficiary: data.beneficiary,
+          newBeneficiary: data.newBeneficiary
+        } as SegmentStreamTransferOwnershipData;
+        consoleOut('segment data:', segmentData, 'brown');
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferOwnershipFormButton, segmentData);
+
         // Log input data
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
@@ -833,6 +846,7 @@ export const Streams = () => {
             })`
           });
           customLogger.logWarning('Transfer stream transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferFailed, { transcript: transactionLog });
           return false;
         }
 
@@ -867,6 +881,7 @@ export const Streams = () => {
             result: `${error}`
           });
           customLogger.logError('Transfer stream transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferFailed, { transcript: transactionLog });
           return false;
         });
       } else {
@@ -875,6 +890,7 @@ export const Streams = () => {
           result: 'Cannot start transaction! Wallet not found!'
         });
         customLogger.logError('Transfer stream transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferFailed, { transcript: transactionLog });
         return false;
       }
     }
@@ -901,6 +917,7 @@ export const Streams = () => {
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('Transfer stream transaction failed', { transcript: transactionLog });
+            segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferFailed, { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -910,6 +927,10 @@ export const Streams = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
             result: {signer: wallet.publicKey.toBase58()}
+          });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferSigned, {
+            signature,
+            encodedTx
           });
           return true;
         })
@@ -924,6 +945,7 @@ export const Streams = () => {
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logWarning('Transfer stream transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferFailed, { transcript: transactionLog });
           return false;
         });
       } else {
@@ -937,6 +959,7 @@ export const Streams = () => {
           result: 'Cannot sign transaction! Wallet not found!'
         });
         customLogger.logError('Transfer stream transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferFailed, { transcript: transactionLog });
         return false;
       }
     }
@@ -969,6 +992,7 @@ export const Streams = () => {
               result: { error, encodedTx }
             });
             customLogger.logError('Transfer stream transaction failed', { transcript: transactionLog });
+            segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferFailed, { transcript: transactionLog });
             return false;
           });
       } else {
@@ -982,6 +1006,7 @@ export const Streams = () => {
           result: 'Cannot send transaction! Wallet not found!'
         });
         customLogger.logError('Transfer stream transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferFailed, { transcript: transactionLog });
         return false;
       }
     }
@@ -1011,6 +1036,8 @@ export const Streams = () => {
   // Add funds modal
   const [isAddFundsModalVisible, setIsAddFundsModalVisibility] = useState(false);
   const showAddFundsModal = useCallback(() => {
+    // Record user event in Segment Analytics
+    segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupButton);
     const token = getTokenByMintAddress(streamDetail?.associatedToken as string);
     consoleOut("stream token:", token?.symbol);
     if (token) {
@@ -1126,6 +1153,7 @@ export const Streams = () => {
           result: `${error}`
         });
         customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupFailed, { transcript: transactionLog });
         return false;
       });
     }
@@ -1170,6 +1198,7 @@ export const Streams = () => {
           result: `${error}`
         });
         customLogger.logError('Allocate transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupFailed, { transcript: transactionLog });
         return false;
       });
     }
@@ -1195,6 +1224,18 @@ export const Streams = () => {
           amount                                                  // amount
         }
         consoleOut('add funds data:', data);
+
+        // Report event to Segment analytics
+        const token = selectedToken ? selectedToken.symbol : '';
+        const segmentData = {
+          stream: data.stream,
+          contributor: data.contributor,
+          treasury: data.treasury,
+          contributorMint: token ? `${token} [${data.contributorMint}]` : data.contributorMint,
+          amount: parseFloat(addFundsData.amount.toFixed(selectedToken?.decimals || 6))
+        } as SegmentStreamAddFundsData;
+        consoleOut('segment data:', segmentData, 'brown');
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupApproveFormButton, segmentData);
 
         // Log input data
         transactionLog.push({
@@ -1225,6 +1266,7 @@ export const Streams = () => {
             })`
           });
           customLogger.logWarning('Add funds transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupFailed, { transcript: transactionLog });
           return false;
         }
 
@@ -1262,6 +1304,7 @@ export const Streams = () => {
             result: `${error}`
           });
           customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupFailed, { transcript: transactionLog });
           return false;
         });
       } else {
@@ -1270,6 +1313,7 @@ export const Streams = () => {
           result: 'Cannot start transaction! Wallet not found!'
         });
         customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupFailed, { transcript: transactionLog });
         return false;
       }
     }
@@ -1292,7 +1336,7 @@ export const Streams = () => {
 
       const stream = new PublicKey(streamDetail.id as string);
       const treasury = new PublicKey((streamDetail as Stream).treasury as string);
-      // const amount = toTokenAmount(parseFloat(addFundsData.amount as string), selectedToken.decimals);
+      const associatedToken = new PublicKey(streamDetail.associatedToken as string);
       const amount = addFundsData.tokenAmount;
       setAddFundsPayload(addFundsData);
 
@@ -1304,6 +1348,19 @@ export const Streams = () => {
       }
 
       consoleOut('add funds data:', data);
+
+      // Report event to Segment analytics
+      const segmentData = {
+        stream: data.stream,
+        contributor: data.contributor,
+        treasury: data.treasury,
+        contributorMint: selectedToken
+          ? `${selectedToken.symbol} [${selectedToken.address}]`
+          : associatedToken.toBase58(),
+        amount: parseFloat(addFundsData.amount.toFixed(selectedToken?.decimals || 6))
+      } as SegmentStreamAddFundsData;
+      consoleOut('segment data:', segmentData, 'brown');
+      segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupApproveFormButton, segmentData);
 
       // Log input data
       transactionLog.push({
@@ -1335,6 +1392,7 @@ export const Streams = () => {
           })`
         });
         customLogger.logWarning('Add funds transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupFailed, { transcript: transactionLog });
         return false;
       }
 
@@ -1381,6 +1439,7 @@ export const Streams = () => {
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+            segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupFailed, { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -1390,6 +1449,10 @@ export const Streams = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
             result: {signer: wallet.publicKey.toBase58()}
+          });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupSigned, {
+            signature,
+            encodedTx
           });
           return true;
         })
@@ -1404,6 +1467,7 @@ export const Streams = () => {
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logWarning('Add funds transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupFailed, { transcript: transactionLog });
           return false;
         });
       } else {
@@ -1417,6 +1481,7 @@ export const Streams = () => {
           result: 'Cannot sign transaction! Wallet not found!'
         });
         customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupFailed, { transcript: transactionLog });
         return false;
       }
     }
@@ -1449,6 +1514,7 @@ export const Streams = () => {
               result: { error, encodedTx }
             });
             customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+            segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupFailed, { transcript: transactionLog });
             return false;
           });
       } else {
@@ -1462,6 +1528,7 @@ export const Streams = () => {
           result: 'Cannot send transaction! Wallet not found!'
         });
         customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupFailed, { transcript: transactionLog });
         return false;
       }
     }
@@ -1495,10 +1562,12 @@ export const Streams = () => {
 
   // Withdraw funds modal
   const [lastStreamDetail, setLastStreamDetail] = useState<Stream | StreamInfo | undefined>(undefined);
-  const [withdrawFundsAmount, setWithdrawFundsAmount] = useState<number>(0);
+  const [withdrawFundsAmount, setWithdrawFundsAmount] = useState<any>();
   const [isWithdrawModalVisible, setIsWithdrawModalVisibility] = useState(false);
 
   const showWithdrawModal = useCallback(async () => {
+    // Record user event in Segment Analytics
+    segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalButton);
     const lastDetail = Object.assign({}, streamDetail);
     resetTransactionStatus();
     setLastStreamDetail(lastDetail);
@@ -1522,18 +1591,20 @@ export const Streams = () => {
   ]);
 
   const closeWithdrawModal = useCallback(() => {
-    setWithdrawFundsAmount(0);
+    setWithdrawFundsAmount(undefined);
     setLastStreamDetail(undefined);
     setIsWithdrawModalVisibility(false);
   }, []);
 
-  const onAcceptWithdraw = (amount: any) => {
+  const onAcceptWithdraw = (data: any) => {
     closeWithdrawModal();
-    consoleOut('Withdraw amount:', parseFloat(amount));
-    onExecuteWithdrawFundsTransaction(amount);
+    consoleOut('Withdraw amount:', parseFloat(data.amount));
+    onExecuteWithdrawFundsTransaction(data);
   };
 
-  const onActivateContractScreen = () => {
+  const onCreateNewTransfer = () => {
+    // Record user event in Segment Analytics
+    segmentAnalytics.recordEvent(AppUsageEvent.NewTransferButton);
     setCustomStreamDocked(false);
     navigate("/transfers");
   };
@@ -1794,44 +1865,92 @@ export const Streams = () => {
     return label;
   }
 
+  const recordTxConfirmationResult = useCallback((operation: OperationType, success = true) => {
+    let event: any;
+    switch (operation) {
+      case OperationType.StreamCreate:
+        event = success ? AppUsageEvent.TransferRecurringCompleted : AppUsageEvent.TransferRecurringFailed;
+        segmentAnalytics.recordEvent(event, { signature: lastSentTxSignature });
+        break;
+      case OperationType.StreamWithdraw:
+        event = success ? AppUsageEvent.StreamWithdrawalCompleted : AppUsageEvent.StreamWithdrawalFailed;
+        segmentAnalytics.recordEvent(event, { signature: lastSentTxSignature });
+        break;
+      case OperationType.StreamClose:
+        event = success ? AppUsageEvent.StreamCloseCompleted : AppUsageEvent.StreamCloseFailed;
+        segmentAnalytics.recordEvent(event, { signature: lastSentTxSignature });
+        break;
+      case OperationType.StreamAddFunds:
+        event = success ? AppUsageEvent.StreamTopupCompleted : AppUsageEvent.StreamTopupFailed;
+        segmentAnalytics.recordEvent(event, { signature: lastSentTxSignature });
+        break;
+      case OperationType.StreamTransferBeneficiary:
+        event = success ? AppUsageEvent.StreamTransferCompleted : AppUsageEvent.StreamTransferFailed;
+        segmentAnalytics.recordEvent(event, { signature: lastSentTxSignature });
+        break;
+      default:
+        break;
+    }
+  }, [lastSentTxSignature]);
+
   // Handle what to do when pending Tx confirmation reaches finality or on error
   useEffect(() => {
     if (!streamDetail) { return; }
 
-    if (lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
-      switch (lastSentTxOperationType) {
-        case OperationType.StreamClose:
-        case OperationType.StreamCreate:
-          if (streamList && streamList.length > 1) {
-            const filteredStreams = streamList.filter(s => s.id !== streamDetail.id);
-            setStreamList(filteredStreams);
-          }
-          refreshStreamList(true);
-          break;
-        case OperationType.StreamAddFunds:
-          clearTransactionStatusContext();
-          if (customStreamDocked) {
-            openStreamById(streamDetail?.id as string, false);
-          } else {
+    if (lastSentTxSignature) {
+      if (fetchTxInfoStatus === "error") {
+        if (lastSentTxOperationType !== undefined) {
+          recordTxConfirmationResult(lastSentTxOperationType, false);
+        }
+        clearTransactionStatusContext();
+        return;
+      } else if (fetchTxInfoStatus === "fetched") {
+        switch (lastSentTxOperationType) {
+          case OperationType.StreamWithdraw:
+            clearTransactionStatusContext();
+            recordTxConfirmationResult(lastSentTxOperationType);
             refreshStreamList(false);
-          }
-          break;
-        default:
-          refreshStreamList(false);
-          break;
+            break;
+          case OperationType.StreamClose:
+            recordTxConfirmationResult(lastSentTxOperationType);
+            if (streamList && streamList.length > 1) {
+              const filteredStreams = streamList.filter(s => s.id !== streamDetail.id);
+              setStreamList(filteredStreams);
+            }
+            refreshStreamList(true);
+            break;
+          case OperationType.StreamTransferBeneficiary:
+          case OperationType.StreamCreate:
+            recordTxConfirmationResult(lastSentTxOperationType);
+            refreshStreamList(true);
+            break;
+          case OperationType.StreamAddFunds:
+            recordTxConfirmationResult(lastSentTxOperationType);
+            clearTransactionStatusContext();
+            if (customStreamDocked) {
+              openStreamById(streamDetail?.id as string, false);
+            } else {
+              refreshStreamList(false);
+            }
+            break;
+          default:
+            refreshStreamList(false);
+            break;
+        }
       }
     }
   }, [
     streamList,
     streamDetail,
     fetchTxInfoStatus,
+    customStreamDocked,
     lastSentTxSignature,
     lastSentTxOperationType,
-    customStreamDocked,
-    setStreamList,
+    clearTransactionStatusContext,
+    recordTxConfirmationResult,
     refreshStreamList,
     openStreamById,
-    clearTransactionStatusContext
+    setStreamList,
   ]);
 
   // Transaction execution (Applies to all transactions)
@@ -1895,7 +2014,7 @@ export const Streams = () => {
     resetTransactionStatus();
   }
 
-  const onExecuteWithdrawFundsTransaction = async (withdrawAmount: string) => {
+  const onExecuteWithdrawFundsTransaction = async (withdrawData: any) => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
@@ -1915,8 +2034,8 @@ export const Streams = () => {
 
         const stream = new PublicKey(streamDetail.id as string);
         const beneficiary = new PublicKey((streamDetail as StreamInfo).beneficiaryAddress as string);
-        const amount = parseFloat(withdrawAmount);
-        setWithdrawFundsAmount(amount);
+        const amount = parseFloat(withdrawData.amount);
+        setWithdrawFundsAmount(withdrawData);
 
         const data = {
           stream: stream.toBase58(),
@@ -1924,6 +2043,18 @@ export const Streams = () => {
           amount: amount
         };
         consoleOut('withdraw params:', data, 'brown');
+
+        // Report event to Segment analytics
+        const segmentData = {
+          asset: withdrawData.token,
+          stream: data.stream,
+          beneficiary: data.beneficiary,
+          feeAmount: withdrawData.fee,
+          inputAmount: withdrawData.inputAmount,
+          sentAmount: withdrawData.receiveAmount
+        } as SegmentStreamWithdrawData;
+        consoleOut('segment data:', segmentData, 'brown');
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalStartFormButton, segmentData);
 
         // Log input data
         transactionLog.push({
@@ -1954,6 +2085,7 @@ export const Streams = () => {
             })`
           });
           customLogger.logWarning('Withdraw transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, { transcript: transactionLog });
           return false;
         }
 
@@ -1988,6 +2120,7 @@ export const Streams = () => {
             result: `${error}`
           });
           customLogger.logError('Withdraw transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, { transcript: transactionLog });
           return false;
         });
       } else {
@@ -1996,6 +2129,7 @@ export const Streams = () => {
           result: 'Cannot start transaction! Wallet not found!'
         });
         customLogger.logError('Withdraw transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, { transcript: transactionLog });
         return false;
       }
     }
@@ -2009,8 +2143,8 @@ export const Streams = () => {
 
         const stream = new PublicKey(streamDetail.id as string);
         const beneficiary = new PublicKey((streamDetail as Stream).beneficiary as string);
-        const amount = toTokenAmount(parseFloat(withdrawAmount as string), selectedToken.decimals);
-        setWithdrawFundsAmount(parseFloat(withdrawAmount as string));
+        const amount = toTokenAmount(parseFloat(withdrawData.amount as string), selectedToken.decimals);
+        setWithdrawFundsAmount(withdrawData);
 
         const data = {
           stream: stream.toBase58(),
@@ -2018,6 +2152,18 @@ export const Streams = () => {
           amount: amount
         };
         consoleOut('withdraw params:', data, 'brown');
+
+        // Report event to Segment analytics
+        const segmentData = {
+          asset: withdrawData.token,
+          stream: data.stream,
+          beneficiary: data.beneficiary,
+          feeAmount: withdrawData.fee,
+          inputAmount: withdrawData.inputAmount,
+          sentAmount: withdrawData.receiveAmount
+        } as SegmentStreamWithdrawData;
+        consoleOut('segment data:', segmentData, 'brown');
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalStartFormButton, segmentData);
 
         // Log input data
         transactionLog.push({
@@ -2048,6 +2194,7 @@ export const Streams = () => {
             })`
           });
           customLogger.logWarning('Withdraw transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, { transcript: transactionLog });
           return false;
         }
 
@@ -2082,6 +2229,7 @@ export const Streams = () => {
             result: `${error}`
           });
           customLogger.logError('Withdraw transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, { transcript: transactionLog });
           return false;
         });
       } else {
@@ -2090,6 +2238,7 @@ export const Streams = () => {
           result: 'Cannot start transaction! Wallet not found!'
         });
         customLogger.logError('Withdraw transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, { transcript: transactionLog });
         return false;
       }
     }
@@ -2116,6 +2265,7 @@ export const Streams = () => {
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('Withdraw transaction failed', { transcript: transactionLog });
+            segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -2125,6 +2275,10 @@ export const Streams = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
             result: {signer: wallet.publicKey.toBase58()}
+          });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalSigned, {
+            signature,
+            encodedTx
           });
           return true;
         })
@@ -2139,6 +2293,7 @@ export const Streams = () => {
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logWarning('Withdraw transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, { transcript: transactionLog });
           return false;
         });
       } else {
@@ -2152,6 +2307,7 @@ export const Streams = () => {
           result: 'Cannot sign transaction! Wallet not found!'
         });
         customLogger.logError('Withdraw transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, { transcript: transactionLog });
         return false;
       }
     }
@@ -2184,6 +2340,7 @@ export const Streams = () => {
               result: { error, encodedTx }
             });
             customLogger.logError('Withdraw transaction failed', { transcript: transactionLog });
+            segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, { transcript: transactionLog });
             return false;
           });
       } else {
@@ -2197,6 +2354,7 @@ export const Streams = () => {
           result: 'Cannot send transaction! Wallet not found!'
         });
         customLogger.logError('Withdraw transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, { transcript: transactionLog });
         return false;
       }
     }
@@ -2253,7 +2411,7 @@ export const Streams = () => {
     resetTransactionStatus();
   }
 
-  const onExecuteCloseStreamTransaction = async (closeTreasury: boolean) => {
+  const onExecuteCloseStreamTransaction = async (closeTreasuryData: any) => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
@@ -2273,11 +2431,24 @@ export const Streams = () => {
         const streamPublicKey = new PublicKey(streamDetail.id as string);
 
         const data = {
-          stream: streamPublicKey.toBase58(),                     // stream
-          initializer: wallet.publicKey.toBase58(),               // initializer
-          autoCloseTreasury: closeTreasury                        // closeTreasury
+          stream: streamPublicKey.toBase58(),                         // stream
+          initializer: wallet.publicKey.toBase58(),                   // initializer
+          autoCloseTreasury: closeTreasuryData.closeTreasuryOption    // closeTreasury
         }
         consoleOut('data:', data);
+
+        // Report event to Segment analytics
+        const segmentData = {
+          asset: selectedToken?.symbol,
+          stream: data.stream,
+          initializer: data.initializer,
+          closeTreasury: data.autoCloseTreasury,
+          vestedReturns: closeTreasuryData.vestedReturns,
+          unvestedReturns: closeTreasuryData.unvestedReturns,
+          feeAmount: closeTreasuryData.feeAmount
+        } as SegmentStreamCloseData;
+        consoleOut('segment data:', segmentData, 'brown');
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseStreamFormButton, segmentData);
 
         // Log input data
         transactionLog.push({
@@ -2308,15 +2479,16 @@ export const Streams = () => {
             })`
           });
           customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFailed, { transcript: transactionLog });
           return false;
         }
 
         consoleOut('Starting closeStream using MSP V1...', '', 'blue');
         // Create a transaction
         return await ms.closeStream(
-          publicKey as PublicKey,                           // Initializer public key
-          streamPublicKey,                                  // Stream ID
-          closeTreasury                                     // closeTreasury
+          publicKey as PublicKey,                             // Initializer public key
+          streamPublicKey,                                    // Stream ID
+          closeTreasuryData.closeTreasuryOption               // closeTreasury
         )
         .then(value => {
           consoleOut('closeStream returned transaction:', value);
@@ -2342,6 +2514,7 @@ export const Streams = () => {
             result: `${error}`
           });
           customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFailed, { transcript: transactionLog });
           return false;
         });
       } else {
@@ -2350,6 +2523,7 @@ export const Streams = () => {
           result: 'Cannot start transaction! Wallet not found!'
         });
         customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFailed, { transcript: transactionLog });
         return false;
       }
     }
@@ -2363,11 +2537,24 @@ export const Streams = () => {
         const streamPublicKey = new PublicKey(streamDetail.id as string);
 
         const data = {
-          stream: streamPublicKey.toBase58(),                     // stream
-          initializer: publicKey.toBase58(),                      // initializer
-          autoCloseTreasury: closeTreasury                        // closeTreasury
+          stream: streamPublicKey.toBase58(),                         // stream
+          initializer: publicKey.toBase58(),                          // initializer
+          autoCloseTreasury: closeTreasuryData.closeTreasuryOption    // closeTreasury
         }
         consoleOut('data:', data);
+
+        // Report event to Segment analytics
+        const segmentData = {
+          asset: selectedToken?.symbol,
+          stream: data.stream,
+          initializer: data.initializer,
+          closeTreasury: data.autoCloseTreasury,
+          vestedReturns: closeTreasuryData.vestedReturns,
+          unvestedReturns: closeTreasuryData.unvestedReturns,
+          feeAmount: closeTreasuryData.feeAmount
+        } as SegmentStreamCloseData;
+        consoleOut('segment data:', segmentData, 'brown');
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseStreamFormButton, segmentData);
 
         // Log input data
         transactionLog.push({
@@ -2398,6 +2585,7 @@ export const Streams = () => {
             })`
           });
           customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFailed, { transcript: transactionLog });
           return false;
         }
 
@@ -2407,7 +2595,7 @@ export const Streams = () => {
           publicKey as PublicKey,                           // payer
           publicKey as PublicKey,                           // destination
           streamPublicKey,                                  // stream
-          closeTreasury                                     // closeTreasury
+          closeTreasuryData.closeTreasuryOption             // closeTreasury
         )
         .then(value => {
           consoleOut('closeStream returned transaction:', value);
@@ -2433,6 +2621,7 @@ export const Streams = () => {
             result: `${error}`
           });
           customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFailed, { transcript: transactionLog });
           return false;
         });
       } else {
@@ -2441,6 +2630,7 @@ export const Streams = () => {
           result: 'Cannot start transaction! Wallet not found!'
         });
         customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFailed, { transcript: transactionLog });
         return false;
       }
     }
@@ -2467,6 +2657,7 @@ export const Streams = () => {
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
+            segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFailed, { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -2476,6 +2667,10 @@ export const Streams = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
             result: {signer: wallet.publicKey.toBase58()}
+          });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseSigned, {
+            signature,
+            encodedTx
           });
           return true;
         })
@@ -2490,6 +2685,7 @@ export const Streams = () => {
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFailed, { transcript: transactionLog });
           return false;
         });
       } else {
@@ -2503,6 +2699,7 @@ export const Streams = () => {
           result: 'Cannot sign transaction! Wallet not found!'
         });
         customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFailed, { transcript: transactionLog });
         return false;
       }
     }
@@ -2535,6 +2732,7 @@ export const Streams = () => {
               result: { error, encodedTx }
             });
             customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
+            segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFailed, { transcript: transactionLog });
             return false;
           });
       } else {
@@ -2548,6 +2746,7 @@ export const Streams = () => {
           result: 'Cannot send transaction! Wallet not found!'
         });
         customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFailed, { transcript: transactionLog });
         return false;
       }
     }
@@ -2612,6 +2811,8 @@ export const Streams = () => {
   }
 
   const onRefreshStreamsClick = () => {
+    // Record user event in Segment Analytics
+    segmentAnalytics.recordEvent(AppUsageEvent.StreamRefresh);
     refreshStreamList(true);
     setCustomStreamDocked(false);
   };
@@ -2920,100 +3121,103 @@ export const Streams = () => {
                   }
 
                   {/* Sender */}
-                  <Row className="mb-3">
-                    <Col span={12}>
-                      <div className="info-label">
-                        {stream.state === STREAM_STATE.Paused
-                          ? t('streams.stream-detail.label-received-from')
-                          : t('streams.stream-detail.label-receiving-from')
-                        }
-                      </div>
-                      <div className="transaction-detail-row">
-                        <span className="info-icon">
-                          <IconShare className="mean-svg-icons" />
-                        </span>
-                        <span className="info-data">
-                          <a className="secondary-link" target="_blank" rel="noopener noreferrer"
-                            href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${stream.treasurerAddress}${getSolanaExplorerClusterParam()}`}>
-                            {shortenAddress(`${stream.treasurerAddress}`)}
-                          </a>
-                        </span>
-                      </div>
-                    </Col>
-                    <Col span={12}>
-                      {isOtp() ? (
-                        <>
-                          <div className="info-label">
-                            Amount
-                          </div>
-                          <div className="transaction-detail-row">
-                            <span className="info-icon token-icon">
-                              {token?.logoURI ? (
-                                <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} />
-                              ) : (
-                                <Identicon address={stream.associatedToken} style={{ width: "30", display: "inline-flex" }} />
-                              )}
-                            </span>
-                            <span className="info-data ml-1">
-                              {
-                                getTokenAmountAndSymbolByTokenAddress(
-                                  toUiAmount(new BN(stream.state === STREAM_STATE.Schedule ? stream.allocationAssigned : stream.escrowVestedAmount), token?.decimals || 6),
-                                  stream.associatedToken as string
-                                )
-                              }
-                            </span>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div className="info-label">{t('streams.stream-detail.label-payment-rate')}</div>
-                          <div className="transaction-detail-row">
-                            <span className="info-data">
-                              {getAmountWithSymbol(stream.rateAmount, stream.associatedToken as string)}
-                              {getIntervalFromSeconds(stream?.rateIntervalInSeconds as number, true, t)}
-                            </span>
-                          </div>
-                        </>
-                      )}
-                    </Col>
-                  </Row>
-
-                  {/* Date funded for OTPs */}
-                  {isOtp() && (
+                  <>
+                    <h2 className="mb-3">{getStreamDescription(stream)}</h2>
                     <Row className="mb-3">
                       <Col span={12}>
                         <div className="info-label">
-                          {t('streams.stream-detail.label-amount')}&nbsp;({t('streams.stream-detail.amount-funded-date')} {getReadableDate(stream?.fundedOnUtc as string)})
+                          {stream.state === STREAM_STATE.Paused
+                            ? t('streams.stream-detail.label-received-from')
+                            : t('streams.stream-detail.label-receiving-from')
+                          }
                         </div>
                         <div className="transaction-detail-row">
                           <span className="info-icon">
-                            <IconUpload className="mean-svg-icons" />
+                            <IconShare className="mean-svg-icons" />
                           </span>
-                          {stream ?
-                            (
-                              <span className="info-data">
-                              {stream
-                                ? getAmountWithSymbol(stream.allocationAssigned, stream.associatedToken as string)
-                                : '--'}
-                              </span>
-                            ) : (
-                              <span className="info-data">&nbsp;</span>
-                            )}
+                          <span className="info-data">
+                            <a className="secondary-link" target="_blank" rel="noopener noreferrer"
+                              href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${stream.treasurerAddress}${getSolanaExplorerClusterParam()}`}>
+                              {shortenAddress(`${stream.treasurerAddress}`)}
+                            </a>
+                          </span>
                         </div>
                       </Col>
                       <Col span={12}>
-                        <div className="info-label">{getStartDateLabel()}</div>
-                        <div className="transaction-detail-row">
-                          <span className="info-icon">
-                            <IconClock className="mean-svg-icons" />
-                          </span>
-                          <span className="info-data">
-                            {getReadableDate(stream?.startUtc as string)}
-                          </span>
-                        </div>
+                        {isOtp() ? (
+                          <>
+                            <div className="info-label">
+                              Amount
+                            </div>
+                            <div className="transaction-detail-row">
+                              <span className="info-icon token-icon">
+                                {token?.logoURI ? (
+                                  <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} />
+                                ) : (
+                                  <Identicon address={stream.associatedToken} style={{ width: "30", display: "inline-flex" }} />
+                                )}
+                              </span>
+                              <span className="info-data ml-1">
+                                {
+                                  getTokenAmountAndSymbolByTokenAddress(
+                                    toUiAmount(new BN(stream.state === STREAM_STATE.Schedule ? stream.allocationAssigned : stream.escrowVestedAmount), token?.decimals || 6),
+                                    stream.associatedToken as string
+                                  )
+                                }
+                              </span>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="info-label">{t('streams.stream-detail.label-payment-rate')}</div>
+                            <div className="transaction-detail-row">
+                              <span className="info-data">
+                                {getAmountWithSymbol(stream.rateAmount, stream.associatedToken as string)}
+                                {getIntervalFromSeconds(stream?.rateIntervalInSeconds as number, true, t)}
+                              </span>
+                            </div>
+                          </>
+                        )}
                       </Col>
                     </Row>
-                  )}
+
+                    {/* Date funded for OTPs */}
+                    {isOtp() && (
+                      <Row className="mb-3">
+                        <Col span={12}>
+                          <div className="info-label">
+                            {t('streams.stream-detail.label-amount')}&nbsp;({t('streams.stream-detail.amount-funded-date')} {getReadableDate(stream?.fundedOnUtc as string)})
+                          </div>
+                          <div className="transaction-detail-row">
+                            <span className="info-icon">
+                              <IconUpload className="mean-svg-icons" />
+                            </span>
+                            {stream ?
+                              (
+                                <span className="info-data">
+                                {stream
+                                  ? getAmountWithSymbol(stream.allocationAssigned, stream.associatedToken as string)
+                                  : '--'}
+                                </span>
+                              ) : (
+                                <span className="info-data">&nbsp;</span>
+                              )}
+                          </div>
+                        </Col>
+                        <Col span={12}>
+                          <div className="info-label">{getStartDateLabel()}</div>
+                          <div className="transaction-detail-row">
+                            <span className="info-icon">
+                              <IconClock className="mean-svg-icons" />
+                            </span>
+                            <span className="info-data">
+                              {getReadableDate(stream?.startUtc as string)}
+                            </span>
+                          </div>
+                        </Col>
+                      </Row>
+                    )}
+                  </>
 
                   {/* Amount / Funds left (Total Unvested) & Started date */}
                   <Row className="mb-3">
@@ -3078,7 +3282,7 @@ export const Streams = () => {
                   {!isScheduledOtp() && (
                     <>
                       {/* Funds available to withdraw now (Total Vested) */}
-                      <Row className="mb-3">
+                      <Row className="mb-3 mt-4">
                         <Col span={24}>
                           <div className="info-label">{t('streams.stream-detail.label-funds-available-to-withdraw')}</div>
                           <div className="transaction-detail-row">
@@ -3195,63 +3399,66 @@ export const Streams = () => {
                   }
 
                   {/* Sender */}
-                  <Row className="mb-3">
-                    <Col span={12}>
-                      <div className="info-label">
-                        {stream.status === STREAM_STATUS.Paused
-                          ? t('streams.stream-detail.label-received-from')
-                          : t('streams.stream-detail.label-receiving-from')
-                        }
-                      </div>
-                      <div className="transaction-detail-row">
-                        <span className="info-icon">
-                          <IconShare className="mean-svg-icons" />
-                        </span>
-                        <span className="info-data">
-                          <a className="secondary-link" target="_blank" rel="noopener noreferrer"
-                            href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${stream.treasurer}${getSolanaExplorerClusterParam()}`}>
-                            {shortenAddress(`${stream.treasurer}`)}
-                          </a>
-                        </span>
-                      </div>
-                    </Col>
-                    <Col span={12}>
-                      {isOtp() ? (
-                        <>
-                          <div className="info-label">
-                            Amount
-                          </div>
-                          <div className="transaction-detail-row">
-                            <span className="info-icon token-icon">
-                              {token?.logoURI ? (
-                                <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} />
-                              ) : (
-                                <Identicon address={stream.associatedToken} style={{ width: "30", display: "inline-flex" }} />
-                              )}
-                            </span>
-                            <span className="info-data ml-1">
-                              {
-                                getTokenAmountAndSymbolByTokenAddress(
-                                  toUiAmount(new BN(stream.status === STREAM_STATUS.Schedule ? stream.allocationAssigned : stream.withdrawableAmount), token?.decimals || 6),
-                                  stream.associatedToken as string
-                                )
-                              }
-                            </span>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div className="info-label">{t('streams.stream-detail.label-payment-rate')}</div>
-                          <div className="transaction-detail-row">
-                            <span className="info-data">
-                              {getAmountWithSymbol(toUiAmount(new BN(stream.rateAmount), selectedToken?.decimals || 6), stream.associatedToken as string)}
-                              {getIntervalFromSeconds(stream.rateIntervalInSeconds as number, true, t)}
-                            </span>
-                          </div>
-                        </>
-                      )}
-                    </Col>
-                  </Row>
+                  <>
+                    <h2 className="mb-3">{getStreamDescription(stream)}</h2>
+                    <Row className="mb-3">
+                      <Col span={12}>
+                        <div className="info-label">
+                          {stream.status === STREAM_STATUS.Paused
+                            ? t('streams.stream-detail.label-received-from')
+                            : t('streams.stream-detail.label-receiving-from')
+                          }
+                        </div>
+                        <div className="transaction-detail-row">
+                          <span className="info-icon">
+                            <IconShare className="mean-svg-icons" />
+                          </span>
+                          <span className="info-data">
+                            <a className="secondary-link" target="_blank" rel="noopener noreferrer"
+                              href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${stream.treasurer}${getSolanaExplorerClusterParam()}`}>
+                              {shortenAddress(`${stream.treasurer}`)}
+                            </a>
+                          </span>
+                        </div>
+                      </Col>
+                      <Col span={12}>
+                        {isOtp() ? (
+                          <>
+                            <div className="info-label">
+                              Amount
+                            </div>
+                            <div className="transaction-detail-row">
+                              <span className="info-icon token-icon">
+                                {token?.logoURI ? (
+                                  <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} />
+                                ) : (
+                                  <Identicon address={stream.associatedToken} style={{ width: "30", display: "inline-flex" }} />
+                                )}
+                              </span>
+                              <span className="info-data ml-1">
+                                {
+                                  getTokenAmountAndSymbolByTokenAddress(
+                                    toUiAmount(new BN(stream.status === STREAM_STATUS.Schedule ? stream.allocationAssigned : stream.withdrawableAmount), token?.decimals || 6),
+                                    stream.associatedToken as string
+                                  )
+                                }
+                              </span>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="info-label">{t('streams.stream-detail.label-payment-rate')}</div>
+                            <div className="transaction-detail-row">
+                              <span className="info-data">
+                                {getAmountWithSymbol(toUiAmount(new BN(stream.rateAmount), selectedToken?.decimals || 6), stream.associatedToken as string)}
+                                {getIntervalFromSeconds(stream.rateIntervalInSeconds as number, true, t)}
+                              </span>
+                            </div>
+                          </>
+                        )}
+                      </Col>
+                    </Row>
+                  </>
 
                   {/* Amount / Funds left (Total Unvested) & Started date */}
                   <Row className="mb-3">
@@ -3318,7 +3525,7 @@ export const Streams = () => {
                   {!isScheduledOtp() && (
                     <>
                       {/* Funds available to withdraw now (Total Vested) */}
-                      <Row className="mb-3">
+                      <Row className="mb-3 mt-4">
                         <Col span={24}>
                           <div className="info-label">{t('streams.stream-detail.label-funds-available-to-withdraw')}</div>
                           <div className="transaction-detail-row">
@@ -3428,6 +3635,7 @@ export const Streams = () => {
 
                   {treasuryDetails && !(treasuryDetails as any).autoClose && treasuryDetails.id === stream.treasuryAddress && (
                     <div className="mb-3">
+                      <h2 className="mb-0">{getStreamDescription(stream)}</h2>
                       <div className="flex-row align-items-center">
                         <span className="font-bold">Treasury - {getTreasuryName()}</span>
                         <span className={`badge small ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
@@ -3448,7 +3656,6 @@ export const Streams = () => {
                           </Tooltip>
                         </span>
                       </div>
-                      <div>Stream - {getStreamDescription(stream)}</div>
                     </div>
                   )}
 
@@ -3588,35 +3795,52 @@ export const Streams = () => {
                   {isOtp() ? (
                     null
                   ) : (
-                    <div className="mb-3">
-                      <div className="info-label">{t('streams.stream-detail.label-funds-sent')}</div>
-                      <div className="transaction-detail-row">
-                        <span className="info-icon">
-                          <IconUpload className="mean-svg-icons" />
-                        </span>
-                        {stream ? (
-                          <span className="info-data">
-                          {stream
-                            ? getAmountWithSymbol(
-                              stream.allocationAssigned - 
-                              stream.allocationLeft + 
-                              stream.escrowVestedAmount, 
-                              stream.associatedToken as string
-                            )
-                            : '--'}
+                    <Row className="mb-3">
+                      <Col span={12}>
+                        <div className="info-label">{t('streams.stream-detail.label-funds-sent')}</div>
+                        <div className="transaction-detail-row">
+                          <span className="info-icon">
+                            <IconUpload className="mean-svg-icons" />
                           </span>
-                        ) : (
-                          <span className="info-data">&nbsp;</span>
-                        )}
-                      </div>
-                    </div>
+                          {stream ? (
+                            <span className="info-data">
+                            {stream
+                              ? getAmountWithSymbol(
+                                stream.allocationAssigned - 
+                                stream.allocationLeft + 
+                                stream.escrowVestedAmount, 
+                                stream.associatedToken as string
+                              )
+                              : '--'}
+                            </span>
+                          ) : (
+                            <span className="info-data">&nbsp;</span>
+                          )}
+                        </div>
+                      </Col>
+                      <Col span={12}>
+                        <div className="info-label">{t('streams.stream-detail.label-status')}</div>
+                        <div className="transaction-detail-row">
+                          <span className="info-icon">
+                            {getStreamStatus(stream) === "Running" ? (
+                              <IconSwitchRunning className="mean-svg-icons" />
+                            ) : (
+                              <IconSwitchStopped className="mean-svg-icons" />
+                            )}
+                          </span>
+                          <span className="info-data">
+                            {getStreamStatus(stream)}
+                          </span>
+                        </div>
+                      </Col>
+                    </Row>
                   )}
 
                   {/* Funds left (Total Unvested) */}
                   {isOtp() ? (
                     null
                   ) : (
-                    <div className="mb-3">
+                    <div className="mb-3 mt-4">
                       <div className="info-label text-truncate">{t('streams.stream-detail.label-funds-left-in-account')}</div>
                       <div className="transaction-detail-row">
                         <span className="info-icon">
@@ -3754,6 +3978,7 @@ export const Streams = () => {
 
                   {treasuryDetails && !(treasuryDetails as any).autoClose && treasuryDetails.id === stream.treasury && (
                     <div className="mb-3">
+                      <h2 className="mb-0">{getStreamDescription(stream)}</h2>
                       <div className="flex-row align-items-center">
                         <span className="font-bold">Treasury - {getTreasuryName()}</span>
                         <span className={`badge small ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
@@ -3774,7 +3999,6 @@ export const Streams = () => {
                           </Tooltip>
                         </span>
                       </div>
-                      <div>Stream - {getStreamDescription(stream)}</div>
                     </div>
                   )}
 
@@ -3882,31 +4106,48 @@ export const Streams = () => {
                   {isOtp() ? (
                     null
                   ) : (
-                    <div className="mb-3">
-                      <div className="info-label">{t('streams.stream-detail.label-funds-sent')}</div>
-                      <div className="transaction-detail-row">
-                        <span className="info-icon">
-                          <IconUpload className="mean-svg-icons" />
-                        </span>
-                        {stream ? (
-                          <span className="info-data">
-                            {getAmountWithSymbol(
-                              toUiAmount(new BN(stream.fundsSentToBeneficiary), selectedToken?.decimals || 6),
-                              stream.associatedToken as string
+                    <Row className="mb-3">
+                      <Col span={12}>
+                        <div className="info-label">{t('streams.stream-detail.label-funds-sent')}</div>
+                        <div className="transaction-detail-row">
+                          <span className="info-icon">
+                            <IconUpload className="mean-svg-icons" />
+                          </span>
+                          {stream ? (
+                            <span className="info-data">
+                              {getAmountWithSymbol(
+                                toUiAmount(new BN(stream.fundsSentToBeneficiary), selectedToken?.decimals || 6),
+                                stream.associatedToken as string
+                              )}
+                            </span>
+                          ) : (
+                            <span className="info-data">&nbsp;</span>
+                          )}
+                        </div>
+                      </Col>
+                      <Col span={12}>
+                        <div className="info-label">{t('streams.stream-detail.label-status')}</div>
+                        <div className="transaction-detail-row">
+                          <span className="info-icon">
+                            {getStreamStatus(stream) === "Running" ? (
+                              <IconSwitchRunning className="mean-svg-icons" />
+                            ) : (
+                              <IconSwitchStopped className="mean-svg-icons" />
                             )}
                           </span>
-                        ) : (
-                          <span className="info-data">&nbsp;</span>
-                        )}
-                      </div>
-                    </div>
+                          <span className="info-data">
+                            {getStreamStatus(stream)}
+                          </span>
+                        </div>
+                      </Col>
+                    </Row>
                   )}
 
                   {/* Funds left (Total Unvested) */}
                   {isOtp() ? (
                     null
                   ) : (
-                    <div className="mb-3">
+                    <div className="mb-3 mt-4">
                       <div className="info-label text-truncate">{t('streams.stream-detail.label-funds-left-in-account')}</div>
                       <div className="transaction-detail-row">
                         <span className="info-icon">
@@ -4143,7 +4384,7 @@ export const Streams = () => {
                     block
                     type="primary"
                     shape="round"
-                    onClick={onActivateContractScreen}>
+                    onClick={onCreateNewTransfer}>
                     {t('streams.create-new-stream-cta')}
                   </Button>
                 </div>
@@ -4349,7 +4590,7 @@ export const Streams = () => {
               <>
                 <Spin indicator={bigLoadingIcon} className="icon" />
                 <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
-                <h5 className="operation">{t('transactions.status.tx-withdraw-operation')} {getAmountWithSymbol(withdrawFundsAmount, streamDetail?.associatedToken as string)}</h5>
+                <h5 className="operation">{t('transactions.status.tx-withdraw-operation')} {withdrawFundsAmount ? withdrawFundsAmount.inputAmount : 0}</h5>
                 {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
                   <div className="indication">{t('transactions.status.instructions')}</div>
                 )}

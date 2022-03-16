@@ -279,12 +279,13 @@
 		"screen-title": "Invest Options",
 		"refresh-tooltip": "Refresh invest data",
 		"panel-right": {
-			"first-text": "MEAN staking rewards include emission incentives plus 30% of the protocol revenues (calculated weekly), and can be boosted using locking periods.",
-			"second-text": "Your staking rewards will be streamed over time and they can be withdrawn at any time.",
+			"title": "Stake MEAN to Earn MEAN Rewards",
+			"first-text": "MEAN staking rewards include emission incentives plus a share of the protocol revenues, and can be boosted using locking periods. When you stake your MEAN, you get sMEAN in return.",
+			"second-text": "Simply holding your sMEAN is all that is required to continuously grow your MEAN stash. You don't need to harvest the rewards with MEAN staking. When you unstake your sMEAN, you will receive the rewards earned in the form of additional MEAN on top of the amount staked.",
 			"stats": {
 				"staking-apr": "Staking APR",
 				"total-value-locked": "Total Value Locked",
-				"next-week-payout": "Next Week Payout"
+				"total-mean-rewards": "Total MEAN Rewards"
 			},
 			"tabset": {
 				"stake": {
@@ -294,7 +295,7 @@
 					"days": "days",
 					"year": "year",
 					"years": "years",
-					"notification-label": "Staking period of {{periodValue}} {{periodTime}} will lock your Tokens until {{unstakeStartDate}} with estimated rewards of up to 100 MEAN",
+					"notification-label": "Staking period of {{periodValue}} {{periodTime}} will lock your Tokens until {{unstakeStartDate}}.",
 					"verified-label": "I agree to the Terms & Conditions",
 					"terms-and-conditions-tooltip": "Your tokens will be locked for the period of time selected and you will not be able to unstake them before the staking period ends. When you stake additional tokens to an existing contract, the staking period will be extended to the new end date for ALL of the tokens locked.",
 					"stake-button": "Stake"
@@ -315,7 +316,7 @@
 			},
 			"staking-data": {
 				"text-one": "MEAN tokens locked till {{unstakeStartDate}}",
-				"text-two": "Staking rewards available to withdraw:",
+				"text-two": "Additional locking boost periods are coming soon! Only 7 days locking is currently available.",
 				"withdraw-button": "Withdraw Funds"
 			}
 		}
@@ -696,7 +697,7 @@
 			"label-sending-to": "Enviando para",
 			"label-sent-to": "Enviado para",
 			"label-start-date-default": "Data de início",
-			"label-start-date-scheduled": "Agendado",
+			"label-start-date-scheduled": "Scheduled to start on",
 			"label-start-date-scheduled-otp": "Entrega programada",
 			"label-start-date-started": "Iniciado",
 			"label-their-allocation": "Sua alocação",
@@ -910,7 +911,8 @@
 		"modal-title": "Transferir fluxo",
 		"streamid-empty": "Endereço ausente",
 		"streamid-open-cta": "Transferir",
-		"streamid-placeholder": "Novo endereço da carteira do beneficiário"
+		"streamid-placeholder": "Novo endereço da carteira do beneficiário",
+		"streamid-checkbox": "I'm sure the recipient address doesn't belong to an exchange."
 	},
 	"transfers": {
 		"screen-subtitle": "Envie dinheiro para qualquer pessoa no mundo mais rapidamente",
@@ -945,6 +947,14 @@
 			"create-multisig-cta": "Iniciar tesouraria",
 			"create-multisig-cta-busy": "Iniciando tesouraria",
 			"create-multisig-treasury-success": "Iniciar solicitação de tesouraria submetida para aprovação da Multisig.",
+			"lock-period": {
+				"minutes": "minutes",
+				"hours": "hours",
+				"days": "days",
+				"weeks": "weeks",
+				"months": "months",
+				"years": "years"
+			},
 			"main-cta": "Crio",
 			"main-cta-busy": "Criando tesouraria",
 			"modal-title": "Criar tesouraria",

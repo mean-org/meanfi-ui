@@ -3,6 +3,7 @@ export class Language {
     name!: string;
     flag!: string;
     locale!: string;
+    isoName!: string;
 }
 
 export interface Country {
