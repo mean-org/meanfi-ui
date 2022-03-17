@@ -129,18 +129,19 @@ export const LANGUAGES: Language[] = [
     // },
 ];
 
-export const ALLOWED_ADDRESSES_LIST = [
+export const DAO_CORE_TEAM_WHITELIST = [
     '657iCEUXfuYRPrxYsMMiG1nQ8CaqsFRVX1GxBXHGUFXi', // ERR
     '7kjcW2QHa9pN5e9Fx7LBM3kVwxCi3KteBtM7BMVzrMX4', // MRP
     'JAMR7AvQSbU3v6tfNidEZE3odxoRCahGFgiA4ksvdDkJ', // MRP
     '8XkcFZsRcQCtVxRCsqAbtKTsm4mj9CW9vbNPBtjqYWXw', // MRP
     'ETo8bzsqfqS1ZcNK7W49vNe5pHh2qgE6jKaC2JTPyJDE', // MRP
+    'CmbwXRT5z5aCxCzATqm5aZr7XpTh2AN7ToG35csw7YV',  // Moe
     'GFefRR6EASXvnphnJApp2PRH1wF1B5pJijKBZGFzq1x1', // YAF
     'FkRtTexEwLtYerHRKUku7ZZJx1VuTqxwGF636nAuer3B', // YAF
     'FfdFf3EqcCuytTdeLvoELBh29WrAGVRjrm4595A2bRAR', // YGF
     'DA5hKdQLFQpMM95M1KwbRHnjQbvkvMEPUfaULjjrMPWw', // MT
     '9PLqBWNkjegBdz4UD5LYSswWVXfxMf8hUsK2R9b3Lj23', // AMA
-    'YxddwEVL4oQBqW8HAeeV4a2PHBC8qhfk1TMKbt2j7A6', // AMA
+    'YxddwEVL4oQBqW8HAeeV4a2PHBC8qhfk1TMKbt2j7A6',  // AMA
     'HGb43H86jJNLN4MW1sDWKruUZYrs3rkNQkf3acF8uXiv', // PNL
     '49XcDH9tWX67uw53TzNrPE5ovGsXd7VxgH735jBg6K64', // PL
     'HvPJ1eSqAnUtoC1dfKCAaDDFaWviHkbfBWoYJmP1BUDa', // TBM
@@ -151,36 +152,3 @@ export const ALLOWED_ADDRESSES_LIST = [
 // REAL DATES
 export const IDO_START_DATE = { year: 2021, month: 11, day: 22, hour: 15, minute: 0, second: 0 };
 export const IDO_FETCH_FREQUENCY = 5 * 60 * 1000;       // IDO data fetch polling interval
-
-export const IDO_RESTRICTED_COUNTRIES: Country[] = [
-    { isoCode: 'AF', name: 'Afghanistan' },
-    { isoCode: 'CI', name: 'Ivory Coast' },
-    { isoCode: 'CU', name: 'Cuba' },
-    { isoCode: 'IQ', name: 'Iraq' },
-    { isoCode: 'IR', name: 'Iran' },
-    { isoCode: 'LR', name: 'Liberia' },
-    { isoCode: 'KP', name: 'North Korea' },
-    { isoCode: 'SY', name: 'Syria' },
-    { isoCode: 'SD', name: 'Sudan' },
-    { isoCode: 'SS', name: 'South Sudan' },
-    { isoCode: 'ZW', name: 'Zimbabwe' },
-    { isoCode: 'AG', name: 'Antigua' },
-    { isoCode: 'US', name: 'United States' },
-    { isoCode: 'AS', name: 'American Samoa' },
-    { isoCode: 'GU', name: 'Guam' },
-    { isoCode: 'MP', name: 'Northern Mariana Islands' },
-    { isoCode: 'PR', name: 'Puerto Rico' },
-    { isoCode: 'UM', name: 'United States Minor Outlying Islands' },
-    { isoCode: 'VI', name: 'US Virgin Islands' },
-    { isoCode: 'UA', name: 'Ukraine' },
-    { isoCode: 'BY', name: 'Belarus' },
-    { isoCode: 'AL', name: 'Albania' },
-    { isoCode: 'MM', name: 'Burma' },
-    { isoCode: 'CF', name: 'Central African Republic' },
-    { isoCode: 'CD', name: 'Democratic Republic of Congo' },
-    { isoCode: 'LY', name: 'Libya' },
-    { isoCode: 'SO', name: 'Somalia' },
-    { isoCode: 'YE', name: 'Yemen' },
-    { isoCode: 'GB', name: 'United Kingdom' },
-    { isoCode: 'TH', name: 'Thailand' }
-];

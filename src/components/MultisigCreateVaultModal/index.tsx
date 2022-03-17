@@ -48,8 +48,8 @@ export const MultisigCreateVaultModal = (props: {
 
   const getTransactionStartButtonLabel = (): string => {
     return !token
-      ? t('multisig.create-vault.no-token')
-      : t('multisig.create-vault.main-cta');
+      ? t('multisig.create-asset.no-token')
+      : t('multisig.create-asset.main-cta');
   }
 
   /////////////////////
@@ -176,7 +176,7 @@ export const MultisigCreateVaultModal = (props: {
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={<div className="modal-title">{t('multisig.create-vault.modal-title')}</div>}
+      title={<div className="modal-title">{t('multisig.create-asset.modal-title')}</div>}
       footer={null}
       visible={props.isVisible}
       onOk={onAcceptModal}
@@ -190,7 +190,7 @@ export const MultisigCreateVaultModal = (props: {
           <>
             {/* Token mint */}
             <div className="mb-3">
-              <div className="form-label">{t('multisig.create-vault.token-label')}</div>
+              <div className="form-label">{t('multisig.create-asset.token-label')}</div>
               <div className={`well ${props.isBusy ? 'disabled' : ''}`}>
                 <div className="flex-fixed-left">
                   <div className="left">
@@ -235,7 +235,7 @@ export const MultisigCreateVaultModal = (props: {
           <>
             <div className="transaction-progress">
               <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-              <h4 className="font-bold">{t('multisig.create-vault.success-message')}</h4>
+              <h4 className="font-bold">{t('multisig.create-asset.success-message')}</h4>
             </div>
           </>
         ) : (
@@ -320,7 +320,7 @@ export const MultisigCreateVaultModal = (props: {
                 }
               }}>
               {props.isBusy
-                ? t('multisig.create-vault.main-cta-busy')
+                ? t('multisig.create-asset.main-cta-busy')
                 : transactionStatus.currentOperation === TransactionStatus.Iddle
                 ? getTransactionStartButtonLabel()
                 : t('general.refresh')
