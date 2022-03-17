@@ -152,36 +152,3 @@ export const DAO_CORE_TEAM_WHITELIST = [
 // REAL DATES
 export const IDO_START_DATE = { year: 2021, month: 11, day: 22, hour: 15, minute: 0, second: 0 };
 export const IDO_FETCH_FREQUENCY = 5 * 60 * 1000;       // IDO data fetch polling interval
-
-export const IDO_RESTRICTED_COUNTRIES: Country[] = [
-    { isoCode: 'AF', name: 'Afghanistan' },
-    { isoCode: 'CI', name: 'Ivory Coast' },
-    { isoCode: 'CU', name: 'Cuba' },
-    { isoCode: 'IQ', name: 'Iraq' },
-    { isoCode: 'IR', name: 'Iran' },
-    { isoCode: 'LR', name: 'Liberia' },
-    { isoCode: 'KP', name: 'North Korea' },
-    { isoCode: 'SY', name: 'Syria' },
-    { isoCode: 'SD', name: 'Sudan' },
-    { isoCode: 'SS', name: 'South Sudan' },
-    { isoCode: 'ZW', name: 'Zimbabwe' },
-    { isoCode: 'AG', name: 'Antigua' },
-    { isoCode: 'US', name: 'United States' },
-    { isoCode: 'AS', name: 'American Samoa' },
-    { isoCode: 'GU', name: 'Guam' },
-    { isoCode: 'MP', name: 'Northern Mariana Islands' },
-    { isoCode: 'PR', name: 'Puerto Rico' },
-    { isoCode: 'UM', name: 'United States Minor Outlying Islands' },
-    { isoCode: 'VI', name: 'US Virgin Islands' },
-    { isoCode: 'UA', name: 'Ukraine' },
-    { isoCode: 'BY', name: 'Belarus' },
-    { isoCode: 'AL', name: 'Albania' },
-    { isoCode: 'MM', name: 'Burma' },
-    { isoCode: 'CF', name: 'Central African Republic' },
-    { isoCode: 'CD', name: 'Democratic Republic of Congo' },
-    { isoCode: 'LY', name: 'Libya' },
-    { isoCode: 'SO', name: 'Somalia' },
-    { isoCode: 'YE', name: 'Yemen' },
-    { isoCode: 'GB', name: 'United Kingdom' },
-    { isoCode: 'TH', name: 'Thailand' }
-];
