@@ -30,6 +30,7 @@ import { isError } from '../../utils/transactions';
 import { MultisigMintTokenModal } from '../../components/MultisigMintTokenModal';
 import { MultisigCreateMintModal } from '../../components/MultisigCreateMintModal';
 import { MultisigTransferMintAuthorityModal } from '../../components/MultisigTransferMintAuthorityModal';
+import { getOperationName } from '../../utils/multisig-helpers';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -443,51 +444,6 @@ export const MultisigMintsView = () => {
     loadingMultisigTxs,
     loadingMultisigAccounts,
   ]);
-
-  const getOperationName = useCallback((op: OperationType) => {
-
-    switch (op) {
-      case OperationType.CreateMint:
-        return "Create Mint";
-      case OperationType.MintTokens:
-        return "Mint token";
-      case OperationType.TransferTokens:
-        return "Transfer tokens";
-      case OperationType.UpgradeProgram:
-        return "Upgrade program";
-      case OperationType.UpgradeIDL:
-        return "Upgrade IDL";
-      case OperationType.SetMultisigAuthority:
-        return "Set Multisig Authority";
-      case OperationType.EditMultisig:
-        return "Edit Multisig";
-      case OperationType.TreasuryCreate:
-        return "Create Treasury";
-      case OperationType.TreasuryClose:
-        return "Close Treasury";
-      case OperationType.TreasuryRefreshBalance:
-        return "Refresh Treasury Data";
-      case OperationType.DeleteVault:
-        return "Close Vault";
-      case OperationType.CreateVault:
-        return "Create Vault";
-      case OperationType.SetVaultAuthority:
-        return "Change Vault Authority";
-      case OperationType.StreamCreate:
-        return "Create Stream";
-      case OperationType.StreamClose:
-        return "Close Stream";
-      case OperationType.StreamAddFunds:
-        return "Top Up Stream";
-      case OperationType.StreamPause:
-        return "Pause Stream";
-      case OperationType.StreamResume:
-        return "Resume Stream";
-      default:
-        return '';
-    }
-
-  },[]);
 
   const getOperationProgram = useCallback((op: OperationType) => {
 
@@ -3631,8 +3587,18 @@ export const MultisigMintsView = () => {
                   {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                     <>
                       {/* Pre Tx execution failures here */}
-                      <h4 className="font-bold mb-3">{t('multisig.multisig-transactions.tx-operation-failure')}</h4>
-                      <h4 className="mb-3">Explain failure condition if specific</h4>
+                      <h4 className="mb-4">
+                        {t('transactions.status.tx-start-failure', {
+                          accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                            nativeBalance,
+                            NATIVE_SOL_MINT.toBase58()
+                          ),
+                          feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                            transactionFees.blockchainFee + transactionFees.mspFlatFee,
+                            NATIVE_SOL_MINT.toBase58()
+                          )})
+                        }
+                      </h4>
                     </>
                   ) : (
                     <>

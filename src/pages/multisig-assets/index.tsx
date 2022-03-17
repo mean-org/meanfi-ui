@@ -32,10 +32,11 @@ import { customLogger } from '../..';
 import useWindowSize from '../../hooks/useWindowResize';
 import { isError } from '../../utils/transactions';
 import { MultisigVaultDeleteModal } from '../../components/MultisigVaultDeleteModal';
+import { getOperationName } from '../../utils/multisig-helpers';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
-export const MultisigVaultsView = () => {
+export const MultisigAssetsView = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { account } = useNativeAccount();
@@ -399,7 +400,7 @@ export const MultisigVaultsView = () => {
     if (selectedVault && (!multisigPendingTxs || multisigPendingTxs.length === 0)) {
       return true;
     }
-    const found = multisigPendingTxs.find(tx => tx.operation === OperationType.DeleteVault && (isTxPendingApproval(tx) || isTxPendingExecution(tx)));
+    const found = multisigPendingTxs.find(tx => tx.operation === OperationType.DeleteAsset && (isTxPendingApproval(tx) || isTxPendingExecution(tx)));
 
     return found ? false : true;
 
@@ -413,7 +414,7 @@ export const MultisigVaultsView = () => {
 
     return ( 
       fetchTxInfoStatus === "fetching" && 
-      lastSentTxOperationType === OperationType.CreateVault
+      lastSentTxOperationType === OperationType.CreateAsset
     );
 
   }, [
@@ -437,7 +438,7 @@ export const MultisigVaultsView = () => {
 
     return ( 
       fetchTxInfoStatus === "fetching" && 
-      lastSentTxOperationType === OperationType.SetVaultAuthority
+      lastSentTxOperationType === OperationType.SetAssetAuthority
     );
 
   }, [
@@ -456,58 +457,13 @@ export const MultisigVaultsView = () => {
     loadingMultisigAccounts,
   ]);
 
-  const getOperationName = useCallback((op: OperationType) => {
-
-    switch (op) {
-      case OperationType.CreateMint:
-        return "Create Mint";
-      case OperationType.MintTokens:
-        return "Mint token";
-      case OperationType.TransferTokens:
-        return "Transfer tokens";
-      case OperationType.UpgradeProgram:
-        return "Upgrade program";
-      case OperationType.UpgradeIDL:
-        return "Upgrade IDL";
-      case OperationType.SetMultisigAuthority:
-        return "Set Multisig Authority";
-      case OperationType.EditMultisig:
-        return "Edit Multisig";
-      case OperationType.TreasuryCreate:
-        return "Create Treasury";
-      case OperationType.TreasuryClose:
-        return "Close Treasury";
-      case OperationType.TreasuryRefreshBalance:
-        return "Refresh Treasury Data";
-      case OperationType.DeleteVault:
-        return "Close Vault";
-      case OperationType.CreateVault:
-        return "Create Vault";
-      case OperationType.SetVaultAuthority:
-        return "Change Vault Authority";
-      case OperationType.StreamCreate:
-        return "Create Stream";
-      case OperationType.StreamClose:
-        return "Close Stream";
-      case OperationType.StreamAddFunds:
-        return "Top Up Stream";
-      case OperationType.StreamPause:
-        return "Pause Stream";
-      case OperationType.StreamResume:
-        return "Resume Stream";
-      default:
-        return '';
-    }
-
-  },[]);
-
   const getOperationProgram = useCallback((op: OperationType) => {
 
     if (
       op === OperationType.CreateMint ||
       op === OperationType.MintTokens || 
       op === OperationType.TransferTokens || 
-      op === OperationType.SetVaultAuthority
+      op === OperationType.SetAssetAuthority
     ) {
       return "SPL Token";
     } else if (op === OperationType.UpgradeProgram || op === OperationType.SetMultisigAuthority) {
@@ -743,7 +699,7 @@ export const MultisigVaultsView = () => {
       });
   };
 
-  // Get multisig vaults on demmand
+  // Get multisig assets on demmand
   const getMultisigVaults = useCallback(async (
     connection: Connection,
     multisig: PublicKey
@@ -768,7 +724,7 @@ export const MultisigVaultsView = () => {
       return tokenAccount;
     });
 
-    // Set vault decimals to the mint decimals for easiness in UI.
+    // Set asset decimals to the mint decimals for easiness in UI.
     for (let v = 0; v < results.length; v++) {
       if (v % 3 === 0) { await delay(200); }
       const mintInfo = await connection.getAccountInfo(results[v].mint);
@@ -780,7 +736,7 @@ export const MultisigVaultsView = () => {
       }
     }
 
-    consoleOut('multisig vaults:', results, 'blue');
+    consoleOut('multisig assets:', results, 'blue');
     return results;
 
   },[]);
@@ -1135,7 +1091,7 @@ export const MultisigVaultsView = () => {
     resetTransactionStatus();
   },[resetTransactionStatus]);
 
-  // Create vault modal
+  // Create asset modal
   const [isCreateVaultModalVisible, setIsCreateVaultModalVisible] = useState(false);
   const onShowCreateVaultModal = useCallback(() => {
     setIsCreateVaultModalVisible(true);
@@ -1152,7 +1108,7 @@ export const MultisigVaultsView = () => {
     // refreshVaults();
     resetTransactionStatus();
     notify({
-      description: t('multisig.create-vault.success-message'),
+      description: t('multisig.create-asset.success-message'),
       type: "success"
     });
 
@@ -1419,7 +1375,7 @@ export const MultisigVaultsView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.CreateVault);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.CreateAsset);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -1859,7 +1815,7 @@ export const MultisigVaultsView = () => {
     clearTransactionStatusContext,
   ]);
 
-  // Transfer vault authority modal
+  // Transfer asset authority modal
   const [isTransferVaultAuthorityModalVisible, setIsTransferVaultAuthorityModalVisible] = useState(false);
   const showTransferVaultAuthorityModal = useCallback(() => {
     setIsTransferVaultAuthorityModalVisible(true);
@@ -1928,7 +1884,7 @@ export const MultisigVaultsView = () => {
 
       let tx = multisigClient.transaction.createTransaction(
         TOKEN_PROGRAM_ID,
-        OperationType.SetVaultAuthority,
+        OperationType.SetAssetAuthority,
         ixAccounts,
         ixData,
         new BN(0),
@@ -2161,7 +2117,7 @@ export const MultisigVaultsView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.SetVaultAuthority);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.SetAssetAuthority);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -2195,7 +2151,7 @@ export const MultisigVaultsView = () => {
     onVaultAuthorityTransfered
   ]);
 
-  // Delete vault modal
+  // Delete asset modal
   const [isDeleteVaultModalVisible, setIsDeleteVaultModalVisible] = useState(false);
   const showDeleteVaultModal = useCallback(() => {
     setIsDeleteVaultModalVisible(true);
@@ -2222,9 +2178,9 @@ export const MultisigVaultsView = () => {
     setTransactionCancelled(false);
     setIsBusy(true);
 
-    const deleteVaultTx = async (vault: MultisigVault) => {
+    const deleteVaultTx = async (asset: MultisigVault) => {
 
-      if (!publicKey || !selectedMultisig || !selectedMultisig.id || !vault) { 
+      if (!publicKey || !selectedMultisig || !selectedMultisig.id || !asset) { 
         return null;
       }
 
@@ -2233,15 +2189,15 @@ export const MultisigVaultsView = () => {
         multisigClient.programId
       );
 
-      if (!authority.equals(vault.owner)) {
-        throw Error("Invalid vault owner");
+      if (!authority.equals(asset.owner)) {
+        throw Error("Invalid asset owner");
       }
 
       const closeIx = Token.createCloseAccountInstruction(
         TOKEN_PROGRAM_ID,
-        vault.address,
+        asset.address,
         publicKey,
-        vault.owner,
+        asset.owner,
         []
       );
 
@@ -2256,7 +2212,7 @@ export const MultisigVaultsView = () => {
 
       let tx = multisigClient.transaction.createTransaction(
         TOKEN_PROGRAM_ID,
-        OperationType.DeleteVault,
+        OperationType.DeleteAsset,
         ixAccounts,
         ixData,
         new BN(0),
@@ -2298,7 +2254,7 @@ export const MultisigVaultsView = () => {
 
       // Create transaction payload for debugging
       const payload = {
-        vault: selectedVault.address.toBase58(),
+        asset: selectedVault.address.toBase58(),
       };
 
       consoleOut('data:', payload);
@@ -2488,7 +2444,7 @@ export const MultisigVaultsView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.DeleteVault);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.DeleteAsset);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -3465,7 +3421,7 @@ export const MultisigVaultsView = () => {
             className="thin-stroke"
             disabled={isTxInProgress() || loadingVaults}
             onClick={showTransferTokenModal}>
-            {t('multisig.multisig-vaults.cta-transfer')}
+            {t('multisig.multisig-assets.cta-transfer')}
           </Button>
           <Button
             type="default"
@@ -3474,24 +3430,24 @@ export const MultisigVaultsView = () => {
             className="thin-stroke"
             disabled={isTxInProgress() || loadingVaults}
             onClick={showTransferVaultAuthorityModal}>
-            {t('multisig.multisig-vaults.cta-change-multisig-authority')}
+            {t('multisig.multisig-assets.cta-change-multisig-authority')}
           </Button>
 
           {/* Operation indication */}
           {isCreatingVault() ? (
             <div className="flex-row flex-center">
               <LoadingOutlined />
-              <span className="ml-1">{t('multisig.multisig-vaults.cta-create-vault-busy')}</span>
+              <span className="ml-1">{t('multisig.multisig-assets.cta-create-asset-busy')}</span>
             </div>
           ) : isSendingTokens() ? (
             <div className="flex-row flex-center">
               <LoadingOutlined />
-              <span className="ml-1">{t('multisig.multisig-vaults.cta-transfer-busy')}</span>
+              <span className="ml-1">{t('multisig.multisig-assets.cta-transfer-busy')}</span>
             </div>
           ) : isSettingVaultAuthority() ? (
             <div className="flex-row flex-center">
               <LoadingOutlined />
-              <span className="ml-1">{t('multisig.multisig-vaults.cta-change-multisig-authority-busy')}</span>
+              <span className="ml-1">{t('multisig.multisig-assets.cta-change-multisig-authority-busy')}</span>
             </div>
           ) : null}
         </Space>
@@ -3677,8 +3633,8 @@ export const MultisigVaultsView = () => {
         const onVaultSelected = (ev: any) => {
           setSelectedVault(item);
           setDtailsPanelOpen(true);
-          consoleOut('selected vault:', item, 'blue');
-          consoleOut('selected vault readable:', {
+          consoleOut('selected asset:', item, 'blue');
+          consoleOut('selected asset readable:', {
             address: item.address.toBase58(),
             owner: item.owner.toBase58(),
             mint: item.mint.toBase58(),
@@ -3731,8 +3687,8 @@ export const MultisigVaultsView = () => {
       <>
         <div className="h-100 flex-center">
           <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{publicKey
-            ? t('multisig.multisig-vaults.no-vaults')
-            : t('multisig.multisig-vaults.not-connected')}</p>} />
+            ? t('multisig.multisig-assets.no-assets')
+            : t('multisig.multisig-assets.not-connected')}</p>} />
         </div>
       </>
     )}
@@ -3769,7 +3725,7 @@ export const MultisigVaultsView = () => {
               <div className="meanfi-panel-heading">
                 <div className="back-button">
                   <span className="icon-button-container">
-                    <Tooltip placement="bottom" title={t('multisig.multisig-vaults.back-to-multisig-accounts-cta')}>
+                    <Tooltip placement="bottom" title={t('multisig.multisig-assets.back-to-multisig-accounts-cta')}>
                       <Button
                         type="default"
                         shape="circle"
@@ -3788,14 +3744,14 @@ export const MultisigVaultsView = () => {
                 <IconSafe className="mean-svg-icons mr-1" />
                 <span className="title">
                   {multisigVaults && selectedMultisig
-                    ? t('multisig.multisig-vaults.screen-title', {
+                    ? t('multisig.multisig-assets.screen-title', {
                         multisigName: selectedMultisig.label,
-                        vaultCount: multisigVaults ? multisigVaults.length : 0
+                        itemCount: multisigVaults ? multisigVaults.length : 0
                       })
-                    : t('multisig.multisig-vaults.screen-title-no-vaults')
+                    : t('multisig.multisig-assets.screen-title-no-assets')
                   }
                 </span>
-                <Tooltip placement="bottom" title={t('multisig.multisig-vaults.refresh-tooltip')}>
+                <Tooltip placement="bottom" title={t('multisig.multisig-assets.refresh-tooltip')}>
                   <div className={`transaction-stats ${loadingVaults ? 'click-disabled' : 'simplelink'}`} onClick={refreshVaults}>
                     <Spin size="small" />
                     <span className="transaction-legend">
@@ -3828,7 +3784,7 @@ export const MultisigVaultsView = () => {
                       disabled={!publicKey || !selectedMultisig}
                       onClick={onShowCreateVaultModal}>
                       {publicKey
-                        ? t('multisig.multisig-account-detail.cta-create-vault')
+                        ? t('multisig.multisig-account-detail.cta-create-asset')
                         : t('transactions.validation.not-connected')
                       }
                     </Button>
@@ -3840,7 +3796,7 @@ export const MultisigVaultsView = () => {
 
             <div className="meanfi-two-panel-right">
               <div className="meanfi-panel-heading">
-                <span className="title">{t('multisig.multisig-vaults.vault-detail-heading')}</span>
+                <span className="title">{t('multisig.multisig-assets.asset-detail-heading')}</span>
               </div>
 
               <div className="inner-container">
@@ -3849,7 +3805,7 @@ export const MultisigVaultsView = () => {
                     {selectedVault && (
                       <div className="float-top-right">
                         <span className="icon-button-container secondary-button">
-                          <Tooltip placement="bottom" title={t('multisig.multisig-vaults.cta-close')}>
+                          <Tooltip placement="bottom" title={t('multisig.multisig-assets.cta-close')}>
                             <Button
                               type="default"
                               shape="circle"
@@ -3878,7 +3834,7 @@ export const MultisigVaultsView = () => {
                         <>
                         {(!multisigVaults || multisigVaults.length === 0) && !selectedVault && (
                           <div className="h-100 flex-center">
-                            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{t('multisig.multisig-vaults.no-vault-loaded')}</p>} />
+                            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{t('multisig.multisig-assets.no-asset-loaded')}</p>} />
                           </div>
                         )}
                         </>
@@ -3886,7 +3842,7 @@ export const MultisigVaultsView = () => {
                     </div>
                     {selectedVault && (
                       <div className="stream-share-ctas">
-                        <span className="copy-cta" onClick={() => copyAddressToClipboard(selectedVault.address.toBase58())}>VAULT ADDRESS: {selectedVault.address.toBase58()}</span>
+                        <span className="copy-cta" onClick={() => copyAddressToClipboard(selectedVault.address.toBase58())}>ASSET ADDRESS: {selectedVault.address.toBase58()}</span>
                         <a className="explorer-cta" target="_blank" rel="noopener noreferrer"
                           href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${selectedVault.address.toBase58()}${getSolanaExplorerClusterParam()}`}>
                           <IconExternalLink className="mean-svg-icons" />
@@ -3930,7 +3886,7 @@ export const MultisigVaultsView = () => {
           }}
           selectedVault={selectedVault}
           isBusy={isBusy}
-          vaults={multisigVaults}
+          assets={multisigVaults}
         />
       )}
 
@@ -3949,7 +3905,7 @@ export const MultisigVaultsView = () => {
           selectedMultisig={selectedMultisig}
           multisigAccounts={multisigAccounts}
           selectedVault={selectedVault}
-          vaults={multisigVaults}
+          assets={multisigVaults}
         />
       )}
 
@@ -4068,8 +4024,18 @@ export const MultisigVaultsView = () => {
                   {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                     <>
                       {/* Pre Tx execution failures here */}
-                      <h4 className="font-bold mb-3">{t('multisig.multisig-transactions.tx-operation-failure')}</h4>
-                      <h4 className="mb-3">Explain failure condition if specific</h4>
+                      <h4 className="mb-4">
+                        {t('transactions.status.tx-start-failure', {
+                          accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                            nativeBalance,
+                            NATIVE_SOL_MINT.toBase58()
+                          ),
+                          feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                            transactionFees.blockchainFee + transactionFees.mspFlatFee,
+                            NATIVE_SOL_MINT.toBase58()
+                          )})
+                        }
+                      </h4>
                     </>
                   ) : (
                     <>

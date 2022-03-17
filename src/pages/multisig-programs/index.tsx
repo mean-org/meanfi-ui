@@ -31,6 +31,7 @@ import { encodeInstruction } from '../../models/idl';
 import { MultisigUpgradeProgramModal } from '../../components/MultisigUpgradeProgramModal';
 import { MultisigUpgradeIDLModal } from '../../components/MultisigUpgradeIDL';
 import { MultisigSetProgramAuthModal } from '../../components/MultisigSetProgramAuthModal';
+import { getOperationName } from '../../utils/multisig-helpers';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -429,60 +430,13 @@ export const MultisigProgramsView = () => {
     loadingMultisigAccounts,
   ]);
 
-  const getOperationName = useCallback((op: OperationType) => {
-
-    switch (op) {
-      case OperationType.CreateMint:
-        return "Create Mint";
-      case OperationType.MintTokens:
-        return "Mint token";
-      case OperationType.TransferTokens:
-        return "Transfer tokens";
-      case OperationType.UpgradeProgram:
-        return "Upgrade program";
-      case OperationType.UpgradeIDL:
-        return "Upgrade IDL";
-      case OperationType.SetMultisigAuthority:
-        return "Set Multisig Authority";
-      case OperationType.EditMultisig:
-        return "Edit Multisig";
-      case OperationType.TreasuryCreate:
-        return "Create Treasury";
-      case OperationType.TreasuryClose:
-        return "Close Treasury";
-      case OperationType.TreasuryRefreshBalance:
-        return "Refresh Treasury Data";
-      case OperationType.TreasuryWithdraw:
-        return "Withdraw Treasury Funds";
-      case OperationType.DeleteVault:
-        return "Close Vault";
-      case OperationType.CreateVault:
-        return "Create Vault";
-      case OperationType.SetVaultAuthority:
-        return "Change Vault Authority";
-      case OperationType.StreamCreate:
-        return "Create Stream";
-      case OperationType.StreamClose:
-        return "Close Stream";
-      case OperationType.StreamAddFunds:
-        return "Top Up Stream";
-      case OperationType.StreamPause:
-        return "Pause Stream";
-      case OperationType.StreamResume:
-        return "Resume Stream";
-      default:
-        return '';
-    }
-
-  },[]);
-
   const getOperationProgram = useCallback((op: OperationType) => {
 
     if (
       op === OperationType.CreateMint ||
       op === OperationType.MintTokens || 
       op === OperationType.TransferTokens || 
-      op === OperationType.SetVaultAuthority
+      op === OperationType.SetAssetAuthority
     ) {
       return "SPL Token";
     } else if (op === OperationType.UpgradeProgram || op === OperationType.SetMultisigAuthority) {
@@ -3363,7 +3317,7 @@ export const MultisigProgramsView = () => {
               <div className="meanfi-panel-heading">
                 <div className="back-button">
                   <span className="icon-button-container">
-                    <Tooltip placement="bottom" title={t('multisig.multisig-vaults.back-to-multisig-accounts-cta')}>
+                    <Tooltip placement="bottom" title={t('multisig.multisig-assets.back-to-multisig-accounts-cta')}>
                       <Button
                         type="default"
                         shape="circle"
@@ -3639,8 +3593,18 @@ export const MultisigProgramsView = () => {
                   {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                     <>
                       {/* Pre Tx execution failures here */}
-                      <h4 className="font-bold mb-3">{t('multisig.multisig-transactions.tx-operation-failure')}</h4>
-                      <h4 className="mb-3">Explain failure condition if specific</h4>
+                      <h4 className="mb-4">
+                        {t('transactions.status.tx-start-failure', {
+                          accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                            nativeBalance,
+                            NATIVE_SOL_MINT.toBase58()
+                          ),
+                          feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                            transactionFees.blockchainFee + transactionFees.mspFlatFee,
+                            NATIVE_SOL_MINT.toBase58()
+                          )})
+                        }
+                      </h4>
                     </>
                   ) : (
                     <>

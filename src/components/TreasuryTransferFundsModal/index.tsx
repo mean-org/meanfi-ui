@@ -496,7 +496,7 @@ export const TreasuryTransferFundsModal = (props: {
 
             {/* explanatory paragraph */}
             {isMultisigTreasury(props.treasuryDetails) && (
-              <p>{t("multisig.multisig-vaults.explanatory-paragraph")}</p>
+              <p>{t("multisig.multisig-assets.explanatory-paragraph")}</p>
             )}
 
             {/* confirm that the recipient address doesn't belong to an exchange */}
