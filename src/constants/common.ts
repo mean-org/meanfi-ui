@@ -129,18 +129,19 @@ export const LANGUAGES: Language[] = [
     // },
 ];
 
-export const ALLOWED_ADDRESSES_LIST = [
+export const DAO_CORE_TEAM_WHITELIST = [
     '657iCEUXfuYRPrxYsMMiG1nQ8CaqsFRVX1GxBXHGUFXi', // ERR
     '7kjcW2QHa9pN5e9Fx7LBM3kVwxCi3KteBtM7BMVzrMX4', // MRP
     'JAMR7AvQSbU3v6tfNidEZE3odxoRCahGFgiA4ksvdDkJ', // MRP
     '8XkcFZsRcQCtVxRCsqAbtKTsm4mj9CW9vbNPBtjqYWXw', // MRP
     'ETo8bzsqfqS1ZcNK7W49vNe5pHh2qgE6jKaC2JTPyJDE', // MRP
+    'CmbwXRT5z5aCxCzATqm5aZr7XpTh2AN7ToG35csw7YV',  // Moe
     'GFefRR6EASXvnphnJApp2PRH1wF1B5pJijKBZGFzq1x1', // YAF
     'FkRtTexEwLtYerHRKUku7ZZJx1VuTqxwGF636nAuer3B', // YAF
     'FfdFf3EqcCuytTdeLvoELBh29WrAGVRjrm4595A2bRAR', // YGF
     'DA5hKdQLFQpMM95M1KwbRHnjQbvkvMEPUfaULjjrMPWw', // MT
     '9PLqBWNkjegBdz4UD5LYSswWVXfxMf8hUsK2R9b3Lj23', // AMA
-    'YxddwEVL4oQBqW8HAeeV4a2PHBC8qhfk1TMKbt2j7A6', // AMA
+    'YxddwEVL4oQBqW8HAeeV4a2PHBC8qhfk1TMKbt2j7A6',  // AMA
     'HGb43H86jJNLN4MW1sDWKruUZYrs3rkNQkf3acF8uXiv', // PNL
     '49XcDH9tWX67uw53TzNrPE5ovGsXd7VxgH735jBg6K64', // PL
     'HvPJ1eSqAnUtoC1dfKCAaDDFaWviHkbfBWoYJmP1BUDa', // TBM
