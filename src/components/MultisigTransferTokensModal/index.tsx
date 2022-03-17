@@ -53,9 +53,9 @@ export const MultisigTransferTokensModal = (props: {
     }
 
     const timeout = setTimeout(() => {
-      const vault = props.selectedVault || props.vaults[0];
-      consoleOut('From vault:', vault, 'blue');
-      setFromVault(vault);
+      const asset = props.selectedVault || props.vaults[0];
+      consoleOut('From asset:', asset, 'blue');
+      setFromVault(asset);
     });
 
     return () => clearTimeout(timeout);
@@ -114,7 +114,7 @@ export const MultisigTransferTokensModal = (props: {
   const onVaultChanged = useCallback((e: any) => {
     
     if (props.vaults && props.vaults.length) {
-      consoleOut("vault selected:", e, 'blue');
+      consoleOut("asset selected:", e, 'blue');
       const selectedFromVault = props.vaults.filter(v => v.address.toBase58() === e)[0];
       setFromVault(selectedFromVault);
     }
@@ -171,7 +171,7 @@ export const MultisigTransferTokensModal = (props: {
           <>
             {/* Transfer from */}
             <div className="mb-3">
-              <div className="form-label">{t('multisig.create-vault.token-label')}</div>
+              <div className="form-label">{t('multisig.create-asset.token-label')}</div>
               <div className={`well ${props.isBusy ? 'disabled' : ''}`}>
                 <div className="flex-fixed-left">
                   <div className="left">
@@ -273,7 +273,7 @@ export const MultisigTransferTokensModal = (props: {
                 {
                   +amount > toUiAmount(fromVault.amount, fromMint.decimals || 6) ? (
                     <span className="form-field-error">
-                      {t('multisig.multisig-vaults.validation-amount-high')}
+                      {t('multisig.multisig-assets.validation-amount-high')}
                     </span>
                   ) : (null)
                 }
@@ -281,7 +281,7 @@ export const MultisigTransferTokensModal = (props: {
               )}
             </div>
             {/* explanatory paragraph */}
-            <p>{t("multisig.multisig-vaults.explanatory-paragraph")}</p>
+            <p>{t("multisig.multisig-assets.explanatory-paragraph")}</p>
           </>
         ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
           <>
@@ -374,7 +374,7 @@ export const MultisigTransferTokensModal = (props: {
             {props.isBusy
               ? t('multisig.transfer-tokens.main-cta-busy')
               : transactionStatus.currentOperation === TransactionStatus.Iddle
-                ? t('multisig.multisig-vaults.main-cta')
+                ? t('multisig.multisig-assets.main-cta')
                 : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
                   ? t('general.cta-finish')
                   : t('general.refresh')

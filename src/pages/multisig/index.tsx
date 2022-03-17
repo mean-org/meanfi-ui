@@ -77,6 +77,7 @@ import { MSP, Treasury } from '@mean-dao/msp';
 import { customLogger } from '../..';
 import { isError } from '../../utils/transactions';
 import { ProgramAccounts } from '../../utils/accounts';
+import { getOperationName } from '../../utils/multisig-helpers';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -2992,57 +2993,6 @@ export const MultisigView = () => {
     loadingMultisigAccounts,
   ]);
 
-  const getOperationName = useCallback((op: OperationType) => {
-
-    switch (op) {
-      case OperationType.CreateMint:
-        return "Create Mint";
-      case OperationType.MintTokens:
-        return "Mint token";
-      case OperationType.TransferTokens:
-        return "Transfer tokens";
-      case OperationType.UpgradeProgram:
-        return "Upgrade program";
-      case OperationType.UpgradeIDL:
-        return "Upgrade IDL";
-      case OperationType.SetMultisigAuthority:
-        return "Set Multisig Authority";
-      case OperationType.EditMultisig:
-        return "Edit Multisig";
-      case OperationType.TreasuryCreate:
-        return "Create Treasury";
-      case OperationType.TreasuryClose:
-        return "Close Treasury";
-      case OperationType.TreasuryRefreshBalance:
-        return "Refresh Treasury Data";
-      case OperationType.TreasuryWithdraw:
-        return "Withdraw Treasury Funds";
-      case OperationType.DeleteVault:
-        return "Close Vault";
-      case OperationType.CreateVault:
-        return "Create Vault";
-      case OperationType.SetVaultAuthority:
-        return "Change Vault Authority";
-      case OperationType.StreamCreate:
-        return "Create Stream";
-      case OperationType.StreamClose:
-        return "Close Stream";
-      case OperationType.StreamAddFunds:
-        return "Top Up Stream";
-      case OperationType.StreamPause:
-        return "Pause Stream";
-      case OperationType.StreamResume:
-        return "Resume Stream";
-      default:
-        return '';
-    }
-
-    // if (op === OperationType.TreasuryAddFunds) {
-    //   return "Add Funds to Treasury";
-    // }
-
-  },[]);
-
   const getTransactionStatusAction = useCallback((mtx: MultisigTransaction) => {
 
     if (mtx.status === MultisigTransactionStatus.Pending) {
@@ -3123,7 +3073,7 @@ export const MultisigView = () => {
       op === OperationType.CreateMint ||
       op === OperationType.MintTokens || 
       op === OperationType.TransferTokens || 
-      op === OperationType.SetVaultAuthority
+      op === OperationType.SetAssetAuthority
     ) {
       return "SPL Token";
     } else if (op === OperationType.UpgradeProgram || op === OperationType.SetMultisigAuthority) {
@@ -4351,13 +4301,13 @@ export const MultisigView = () => {
             }}>
             {multisigVaults && multisigVaults.length > 0 ? (
               <span>
-                {t('multisig.multisig-account-detail.cta-vaults', {
+                {t('multisig.multisig-account-detail.cta-assets', {
                   itemCount: multisigVaults.length
                 })}
               </span>
               ) : (
               <span>
-                {t('multisig.multisig-account-detail.cta-no-vaults')}
+                {t('multisig.multisig-account-detail.cta-no-assets')}
               </span>
             )}
           </Button>
