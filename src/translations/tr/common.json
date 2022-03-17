@@ -284,12 +284,13 @@
 			"second-text": "Simply holding your sMEAN is all that is required to continuously grow your MEAN stash. You don't need to harvest the rewards with MEAN staking. When you unstake your sMEAN, you will receive the rewards earned in the form of additional MEAN on top of the amount staked.",
 			"staking-data": {
 				"text-one": "MEAN tokenları {{unstakeStartDate}} kadar kilitli",
-				"text-two": "Additional locking boost periods are coming soon! Only 7 days locking is currently available.",
+				"text-two": "Locking boost periods are coming soon to earn even more MEAN!",
 				"withdraw-button": "Fonları Çek"
 			},
 			"stats": {
 				"total-mean-rewards": "Total MEAN Rewards",
-				"staking-apr": "Staking APR",
+				"staking-apy": "Staking APY",
+				"staking-apy-tooltip": "The APY associated with sMEAN is a representation of the price of sMEAN over a 365 day period.",
 				"total-value-locked": "Toplam Kilitli Değer"
 			},
 			"tabset": {
@@ -309,8 +310,8 @@
 					"amount-label": "Stakeden çıkarılacak miktar",
 					"name": "Stakeden çıkar",
 					"notification-label-one": "Şu ana kadar {{unstakeAmount}} MEAN stake edildi bu tokenlar {{unstakeStartDate}} kadar kilitli kalacak.",
-					"notification-label-one-error": "Hiç stake edilmiş MEAN yok",
-					"notification-label-two": "Unstake, belirtilen miktarda kilidi açılmış MEAN tokenı cüzdanınıza çekecektir.",
+					"notification-label-one-error": "Hiç stake edilmiş sMEAN yok",
+					"notification-label-two": "Unstake, belirtilen miktarda kilidi açılmış sMEAN tokenı cüzdanınıza çekecektir.",
 					"send-amount": {
 						"label-right": "Stakeden çıkarılabilir"
 					},

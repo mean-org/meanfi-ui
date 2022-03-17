@@ -284,12 +284,13 @@
 			"second-text": "Simply holding your sMEAN is all that is required to continuously grow your MEAN stash. You don't need to harvest the rewards with MEAN staking. When you unstake your sMEAN, you will receive the rewards earned in the form of additional MEAN on top of the amount staked.",
 			"staking-data": {
 				"text-one": "MEAN توکن‌ها تا {{unstakeStartDate}} قفل هستند",
-				"text-two": "Additional locking boost periods are coming soon! Only 7 days locking is currently available.",
+				"text-two": "Locking boost periods are coming soon to earn even more MEAN!",
 				"withdraw-button": "برداشت وجوه"
 			},
 			"stats": {
 				"total-mean-rewards": "Total MEAN Rewards",
-				"staking-apr": "Staking APR",
+				"staking-apy": "Staking APY",
+				"staking-apy-tooltip": "The APY associated with sMEAN is a representation of the price of sMEAN over a 365 day period.",
 				"total-value-locked": "ارزش کل قفل شده است"
 			},
 			"tabset": {
@@ -309,8 +310,8 @@
 					"amount-label": "مبلغ مورد نظر لغو استک",
 					"name": "لغو استک",
 					"notification-label-one": "شما در حال حاضر {{unstakeAmount}} MEAN استک شده دارید که در حال حاضر تا {{unstakeStartDate}} قفل است",
-					"notification-label-one-error": "شما هیچ MEAN استک شده ندارید",
-					"notification-label-two": "Unstaking مقدار مشخصی از توکن های MEAN باز شده را به کیف پول شما برداشت می کند",
+					"notification-label-one-error": "شما هیچ sMEAN استک شده ندارید",
+					"notification-label-two": "Unstaking مقدار مشخصی از توکن های sMEAN باز شده را به کیف پول شما برداشت می کند",
 					"send-amount": {
 						"label-right": "موجود برای unstake"
 					},

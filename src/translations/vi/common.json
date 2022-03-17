@@ -284,12 +284,13 @@
 			"second-text": "Simply holding your sMEAN is all that is required to continuously grow your MEAN stash. You don't need to harvest the rewards with MEAN staking. When you unstake your sMEAN, you will receive the rewards earned in the form of additional MEAN on top of the amount staked.",
 			"staking-data": {
 				"text-one": "Token MEAN sẽ được khóa tới {{unstakeStartDate}}",
-				"text-two": "Additional locking boost periods are coming soon! Only 7 days locking is currently available.",
+				"text-two": "Locking boost periods are coming soon to earn even more MEAN!",
 				"withdraw-button": "Rút tiền"
 			},
 			"stats": {
 				"total-mean-rewards": "Total MEAN Rewards",
-				"staking-apr": "Staking APR",
+				"staking-apy": "Staking APY",
+				"staking-apy-tooltip": "The APY associated with sMEAN is a representation of the price of sMEAN over a 365 day period.",
 				"total-value-locked": "Tổng tài sản bị khóa"
 			},
 			"tabset": {
@@ -309,8 +310,8 @@
 					"amount-label": "Số lượng unstake",
 					"name": "Unstake",
 					"notification-label-one": "Số lượng {{unstakeAmount}} MEAN đang stake của bạn sẽ được khóa lại đến {{unstakeStartDate}}",
-					"notification-label-one-error": "Bạn không có MEAN nào đang stake",
-					"notification-label-two": "Việc hủy stake sẽ rút số lượng token MEAN đã mở khóa vào ví của bạn",
+					"notification-label-one-error": "Bạn không có sMEAN nào đang stake",
+					"notification-label-two": "Việc hủy stake sẽ rút số lượng token sMEAN đã mở khóa vào ví của bạn",
 					"send-amount": {
 						"label-right": "Hủy stake khả dụng"
 					},

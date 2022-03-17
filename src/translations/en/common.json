@@ -285,7 +285,7 @@
 			"staking-data": {
 				"title": "Your Current Stake:",
 				"text-one": "MEAN tokens locked till {{unstakeStartDate}}",
-				"text-two": "Additional locking boost periods are coming soon! Only 7 days locking is currently available.",
+				"text-two": "Locking boost periods are coming soon to earn even more MEAN!",
 				"withdraw-button": "Withdraw Rewards"
 			},
 			"liquidity-pool": {
@@ -296,7 +296,8 @@
 			},
 			"stats": {
 				"total-mean-rewards": "Total MEAN Rewards",
-				"staking-apr": "Staking APR",
+				"staking-apy": "Staking APY",
+				"staking-apy-tooltip": "The APY associated with sMEAN is a representation of the price of sMEAN over a 365 day period.",
 				"total-value-locked": "Total Value Locked"
 			},
 			"tabset": {
@@ -316,8 +317,8 @@
 					"amount-label": "Amount to unstake",
 					"name": "Unstake",
 					"notification-label-one": "Your currently have {{unstakeAmount}} MEAN staked which is currently locked until {{unstakeStartDate}}",
-					"notification-label-one-error": "You don't have any MEAN staked",
-					"notification-label-two": "Unstaking will withdraw the specified amount of unlocked MEAN tokens to your wallet",
+					"notification-label-one-error": "You don't have any sMEAN staked",
+					"notification-label-two": "Unstaking will withdraw the specified amount of unlocked sMEAN tokens to your wallet",
 					"send-amount": {
 						"label-right": "Available to unstake"
 					},
