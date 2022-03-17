@@ -3351,30 +3351,30 @@ main section {
       }
       @media (min-width: 576px) {
         .ant-divider.ant-divider-horizontal.ant-divider-plain {
-          margin: 24px -24px;
+          margin: 0;
           width: auto;
         }
         .scrollable-content {
           max-height: 64vh;
-          overflow-y: overlay;
-          // &::-webkit-scrollbar {
-          //   width: 4px;
-          //   height: 0;
+          overflow-y: auto;
+          &::-webkit-scrollbar {
+            width: 4px;
+            height: 0;
+          }
+          // &::-webkit-scrollbar-track-piece {
+          //   -webkit-border-radius: 0;
+          //   border-radius: 0;
+          //   border-bottom-right-radius: 4px;
+          //   border-bottom-left-radius: 4px;
+          //   background-color: var(--color-secondary-alpha-10);
           // }
-          &::-webkit-scrollbar-track-piece {
-            -webkit-border-radius: 0;
-            border-radius: 0;
-            border-bottom-right-radius: 4px;
-            border-bottom-left-radius: 4px;
-            background-color: var(--color-secondary-alpha-10);
-          }
-          &::-webkit-scrollbar-track {
-            -webkit-border-radius: 0;
-            border-radius: 0;
-            border-bottom-right-radius: 4px;
-            border-bottom-left-radius: 4px;
-            background-color: var(--color-secondary-alpha-10);
-          }
+          // &::-webkit-scrollbar-track {
+          //   -webkit-border-radius: 0;
+          //   border-radius: 0;
+          //   border-bottom-right-radius: 4px;
+          //   border-bottom-left-radius: 4px;
+          //   background-color: var(--color-secondary-alpha-10);
+          // }
           &::-webkit-scrollbar-thumb {
             -webkit-border-radius: 0;
             border-radius: 0;
@@ -3393,9 +3393,6 @@ main section {
       }
       .contract-wrapper {
         padding: 1.5em;
-      }
-      .ant-divider.ant-divider-horizontal.ant-divider-plain {
-        margin: 0 !important;
       }
       .ant-modal-header {
         height: 54px;
@@ -3417,7 +3414,7 @@ main section {
       }
       .ant-modal-body {
         height: auto;
-        padding: 0;
+        padding: 0.25em;
       }
       .ant-modal-close {
         color: var(--color-secondary-alpha-50);
