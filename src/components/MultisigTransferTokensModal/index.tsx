@@ -29,16 +29,12 @@ export const MultisigTransferTokensModal = (props: {
   nativeBalance: number;
   transactionFees: TransactionFees;
   selectedVault: MultisigVault | undefined;
-  vaults: MultisigVault[]
-
+  assets: MultisigVault[]
 }) => {
   const { t } = useTranslation('common');
   const connection = useConnection();
   const { publicKey } = useWallet();
-  const {
-    transactionStatus,
-    setTransactionStatus
-  } = useContext(AppStateContext);
+  const { transactionStatus } = useContext(AppStateContext);
 
   const [fromVault, setFromVault] = useState<MultisigVault>();
   const [fromMint, setFromMint] = useState<any>();
@@ -48,12 +44,12 @@ export const MultisigTransferTokensModal = (props: {
   // Resolves fromVault
   useEffect(() => {
 
-    if (!props.isVisible || !connection || !publicKey || !props.vaults || props.vaults.length === 0) {
+    if (!props.isVisible || !connection || !publicKey || !props.assets || props.assets.length === 0) {
       return;
     }
 
     const timeout = setTimeout(() => {
-      const asset = props.selectedVault || props.vaults[0];
+      const asset = props.selectedVault || props.assets[0];
       consoleOut('From asset:', asset, 'blue');
       setFromVault(asset);
     });
@@ -63,7 +59,7 @@ export const MultisigTransferTokensModal = (props: {
   }, [
     publicKey,
     connection,
-    props.vaults,
+    props.assets,
     props.isVisible,
     props.selectedVault,
   ]);
@@ -113,14 +109,14 @@ export const MultisigTransferTokensModal = (props: {
 
   const onVaultChanged = useCallback((e: any) => {
     
-    if (props.vaults && props.vaults.length) {
+    if (props.assets && props.assets.length) {
       consoleOut("asset selected:", e, 'blue');
-      const selectedFromVault = props.vaults.filter(v => v.address.toBase58() === e)[0];
+      const selectedFromVault = props.assets.filter(v => v.address.toBase58() === e)[0];
       setFromVault(selectedFromVault);
     }
 
   },[
-    props.vaults
+    props.assets
   ]);
 
   const onMintToAddressChange = (e: any) => {
@@ -176,14 +172,14 @@ export const MultisigTransferTokensModal = (props: {
                 <div className="flex-fixed-left">
                   <div className="left">
                     <span className="add-on">
-                      {props.vaults && props.vaults.length > 0 && fromVault && fromMint && (
+                      {props.assets && props.assets.length > 0 && fromVault && fromMint && (
                         <Select className={`token-selector-dropdown auto-height`} value={fromVault.address.toBase58()}
                             style={{width:400, maxWidth:'none'}}
                             onChange={onVaultChanged} bordered={false} showArrow={false}
                             dropdownRender={menu => (
                             <div>{menu}</div>
                           )}>
-                          {props.vaults.map((option: MultisigVault) => {
+                          {props.assets.map((option: MultisigVault) => {
                             const token = getTokenByMintAddress(option.mint.toBase58());
                             const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
                               event.currentTarget.src = FALLBACK_COIN_IMAGE;

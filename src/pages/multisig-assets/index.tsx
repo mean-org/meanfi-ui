@@ -699,7 +699,7 @@ export const MultisigAssetsView = () => {
       });
   };
 
-  // Get multisig vaults on demmand
+  // Get multisig assets on demmand
   const getMultisigVaults = useCallback(async (
     connection: Connection,
     multisig: PublicKey
@@ -736,7 +736,7 @@ export const MultisigAssetsView = () => {
       }
     }
 
-    consoleOut('multisig vaults:', results, 'blue');
+    consoleOut('multisig assets:', results, 'blue');
     return results;
 
   },[]);
@@ -3842,7 +3842,7 @@ export const MultisigAssetsView = () => {
                     </div>
                     {selectedVault && (
                       <div className="stream-share-ctas">
-                        <span className="copy-cta" onClick={() => copyAddressToClipboard(selectedVault.address.toBase58())}>VAULT ADDRESS: {selectedVault.address.toBase58()}</span>
+                        <span className="copy-cta" onClick={() => copyAddressToClipboard(selectedVault.address.toBase58())}>ASSET ADDRESS: {selectedVault.address.toBase58()}</span>
                         <a className="explorer-cta" target="_blank" rel="noopener noreferrer"
                           href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${selectedVault.address.toBase58()}${getSolanaExplorerClusterParam()}`}>
                           <IconExternalLink className="mean-svg-icons" />
@@ -3886,7 +3886,7 @@ export const MultisigAssetsView = () => {
           }}
           selectedVault={selectedVault}
           isBusy={isBusy}
-          vaults={multisigVaults}
+          assets={multisigVaults}
         />
       )}
 
@@ -3905,7 +3905,7 @@ export const MultisigAssetsView = () => {
           selectedMultisig={selectedMultisig}
           multisigAccounts={multisigAccounts}
           selectedVault={selectedVault}
-          vaults={multisigVaults}
+          assets={multisigVaults}
         />
       )}
 

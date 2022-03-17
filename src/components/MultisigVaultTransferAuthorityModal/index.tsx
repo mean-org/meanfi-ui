@@ -26,7 +26,7 @@ export const MultisigVaultTransferAuthorityModal = (props: {
   selectedMultisig: MultisigV2 | undefined;
   multisigAccounts: MultisigV2[];
   selectedVault: MultisigVault | undefined;
-  vaults: MultisigVault[]
+  assets: MultisigVault[]
 }) => {
   const { t } = useTranslation('common');
   const {
