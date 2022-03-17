@@ -5513,7 +5513,7 @@ export const TreasuriesView = () => {
                 {isMultisigAvailable() && (
                   <div className="back-button">
                     <span className="icon-button-container">
-                      <Tooltip placement="bottom" title={t('multisig.multisig-vaults.back-to-multisig-accounts-cta')}>
+                      <Tooltip placement="bottom" title={t('multisig.multisig-assets.back-to-multisig-accounts-cta')}>
                         <Button
                           type="default"
                           shape="circle"

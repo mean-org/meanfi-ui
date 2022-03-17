@@ -26,7 +26,7 @@ export const MultisigVaultTransferAuthorityModal = (props: {
   selectedMultisig: MultisigV2 | undefined;
   multisigAccounts: MultisigV2[];
   selectedVault: MultisigVault | undefined;
-  vaults: MultisigVault[]
+  assets: MultisigVault[]
 }) => {
   const { t } = useTranslation('common');
   const {
@@ -167,7 +167,7 @@ export const MultisigVaultTransferAuthorityModal = (props: {
 
             {props.selectedVault && (
               <div className="mb-3">
-                <div className="form-label">{t('multisig.transfer-authority.selected-vault-label')}</div>
+                <div className="form-label">{t('multisig.transfer-authority.selected-asset-label')}</div>
                 <div className="well">
                   {renderVault(props.selectedVault)}
                 </div>
@@ -200,7 +200,7 @@ export const MultisigVaultTransferAuthorityModal = (props: {
                 </div>
                 {props.selectedMultisig && selectedAuthority === props.selectedMultisig.authority.toBase58() ? (
                   <span className="form-field-error">
-                    {t('multisig.transfer-authority.multisig-already-owns-the-vault')}
+                    {t('multisig.transfer-authority.multisig-already-owns-the-asset')}
                   </span>
                 ) : selectedAuthority && !isValidAddress(selectedAuthority) ? (
                   <span className="form-field-error">
@@ -214,7 +214,7 @@ export const MultisigVaultTransferAuthorityModal = (props: {
               <Checkbox
                 checked={destinationAddressDisclaimerAccepted}
                 onChange={onDestinationAddressDisclaimerAcceptanceChange}>
-                {t('multisig.transfer-authority.vault-auth-destination-address-disclaimer')}
+                {t('multisig.transfer-authority.asset-auth-destination-address-disclaimer')}
               </Checkbox>
             </div>
 
