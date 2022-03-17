@@ -3356,11 +3356,11 @@ main section {
         }
         .scrollable-content {
           max-height: 64vh;
-          overflow-y: auto;
-          &::-webkit-scrollbar {
-            width: 4px;
-            height: 0;
-          }
+          overflow-y: overlay;
+          // &::-webkit-scrollbar {
+          //   width: 4px;
+          //   height: 0;
+          // }
           &::-webkit-scrollbar-track-piece {
             -webkit-border-radius: 0;
             border-radius: 0;
@@ -3389,8 +3389,14 @@ main section {
         }
       }
       .stepper-wrapper {
-        padding: 0 0.25rem 0.6rem;
-      }      
+        padding: 1.5em 1.8em 0;
+      }
+      .contract-wrapper {
+        padding: 1.5em;
+      }
+      .ant-divider.ant-divider-horizontal.ant-divider-plain {
+        margin: 0 !important;
+      }
       .ant-modal-header {
         height: 54px;
         padding: 8px 50px 8px 17px;
@@ -3411,6 +3417,7 @@ main section {
       }
       .ant-modal-body {
         height: auto;
+        padding: 0;
       }
       .ant-modal-close {
         color: var(--color-secondary-alpha-50);
@@ -6609,6 +6616,7 @@ code {
 
 .transaction-progress {
   text-align: center;
+  padding: 0 1.5em 1.5em;
   .icon {
     margin: 1rem;
     &.anticon-check {
@@ -6873,6 +6881,7 @@ code {
 .panel2,
 .panel3 {
     width: 100%;
+    padding: 1.5em 1.5em 0;
 }
 .panel1.show,
 .panel2.show,

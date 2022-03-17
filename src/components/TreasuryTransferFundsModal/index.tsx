@@ -500,7 +500,7 @@ export const TreasuryTransferFundsModal = (props: {
             )}
 
             {/* confirm that the recipient address doesn't belong to an exchange */}
-            <div className="mt-2 confirm-terms">
+            <div className="mt-2 mb-3 confirm-terms">
               <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>
                 {t("withdraw-funds.modal.verified-label")}
               </Checkbox>
