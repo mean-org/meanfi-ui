@@ -4345,7 +4345,7 @@ export const MultisigView = () => {
             disabled={isTxInProgress() || loadingMultisigAccounts}
             onClick={() => {
               if (selectedMultisig) {
-                const url = `/multisig-vaults?multisig=${selectedMultisig.id.toBase58()}`;
+                const url = `/multisig-assets?multisig=${selectedMultisig.id.toBase58()}`;
                 navigate(url);
               }
             }}>

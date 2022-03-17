@@ -35,7 +35,7 @@ import { MultisigVaultDeleteModal } from '../../components/MultisigVaultDeleteMo
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
-export const MultisigVaultsView = () => {
+export const MultisigAssetsView = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { account } = useNativeAccount();
