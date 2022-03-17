@@ -1,7 +1,7 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { findATokenAddress, getTokenByMintAddress, shortenAddress, useLocalStorageState } from "../utils/utils";
 import {
-  ALLOWED_ADDRESSES_LIST,
+  DAO_CORE_TEAM_WHITELIST,
   BANNED_TOKENS,
   DDCA_FREQUENCY_OPTIONS,
   PRICE_REFRESH_TIMEOUT,
@@ -422,7 +422,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       if (!publicKey) {
         setIsWhitelisted(false);
       } else {
-        const isWl = ALLOWED_ADDRESSES_LIST.some(a => a === publicKey.toBase58());
+        const isWl = DAO_CORE_TEAM_WHITELIST.some(a => a === publicKey.toBase58());
         setIsWhitelisted(isWl);
       }
     }
