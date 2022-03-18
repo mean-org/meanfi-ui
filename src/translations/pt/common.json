@@ -634,6 +634,18 @@
 		"lookup-stream-cta-tooltip": "Pesquisar um fluxo",
 		"pause-stream-confirmation": "Pausar o fluxo interromperá o fluxo de dinheiro do tesouro ({{treasury}}) para o beneficiário ({{beneficiary}}).",
 		"pause-stream-cta": "Pausa",
+		"edit-stream": {
+			"modal-title": "Edit Money Stream",
+			"edit-stream-tooltip": "Edit money stream",
+			"name-input-label": "Stream name",
+			"name-input-placeholder": "Type a name for your stream",
+			"name-input-hint": "What is this stream being sent for?",
+			"send-amount-input-label": "Amount to Send",
+			"frequency-input-label": "Frequency",
+			"frequency-input-hint": "How often will this amount be sent?",
+			"main-cta": "Update stream",
+			"main-cta-busy": "Updating stream"
+		},
 		"pause-stream-modal-title": "Pausar transmissão",
 		"pause-stream-tooltip": "Pausar transmissão",
 		"locked-stream-modal-title": "Locked Money Stream",

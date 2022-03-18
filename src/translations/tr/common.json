@@ -638,6 +638,18 @@
 		"lookup-stream-cta-tooltip": "Akış Arama",
 		"pause-stream-confirmation": "Akışın duraklatılması hazineden ({{treasury}}) yararlanıcıya ({{beneficiary}}) para aktarımını durduracaktır.",
 		"pause-stream-cta": "Duraklat",
+		"edit-stream": {
+			"modal-title": "Edit Money Stream",
+			"edit-stream-tooltip": "Edit money stream",
+			"name-input-label": "Stream name",
+			"name-input-placeholder": "Type a name for your stream",
+			"name-input-hint": "What is this stream being sent for?",
+			"send-amount-input-label": "Amount to Send",
+			"frequency-input-label": "Frequency",
+			"frequency-input-hint": "How often will this amount be sent?",
+			"main-cta": "Update stream",
+			"main-cta-busy": "Updating stream"
+		},
 		"pause-stream-modal-title": "Aktarımı duraklat",
 		"pause-stream-tooltip": "Aktarımı duraklat",
 		"locked-stream-modal-title": "Locked Money Stream",

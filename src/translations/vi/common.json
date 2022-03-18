@@ -638,6 +638,18 @@
 		"lookup-stream-cta-tooltip": "Tra cứu một stream",
 		"pause-stream-confirmation": "Việc tạm dừng stream sẽ làm dừng dòng tiền chạy từ kho bạc ({{treasury}}) tới người thụ hưởng ({{beneficiary}}).",
 		"pause-stream-cta": "Tạm dừng",
+		"edit-stream": {
+			"modal-title": "Edit Money Stream",
+			"edit-stream-tooltip": "Edit money stream",
+			"name-input-label": "Stream name",
+			"name-input-placeholder": "Type a name for your stream",
+			"name-input-hint": "What is this stream being sent for?",
+			"send-amount-input-label": "Amount to Send",
+			"frequency-input-label": "Frequency",
+			"frequency-input-hint": "How often will this amount be sent?",
+			"main-cta": "Update stream",
+			"main-cta-busy": "Updating stream"
+		},
 		"pause-stream-modal-title": "Tạm dừng stream",
 		"pause-stream-tooltip": "Tạm dừng stream",
 		"locked-stream-modal-title": "Locked Money Stream",

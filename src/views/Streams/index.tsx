@@ -18,6 +18,7 @@ import {
   IconBank,
   IconBox,
   IconClock,
+  IconEdit,
   IconExternalLink,
   IconLock,
   IconPause,
@@ -105,6 +106,7 @@ import { MultisigV2 } from "../../models/multisig";
 import { StreamPauseModal } from "../../components/StreamPauseModal";
 import { StreamResumeModal } from "../../components/StreamResumeModal";
 import { StreamLockedModal } from "../../components/StreamLockedModal";
+import { StreamEditModal } from "../../components/StreamEditModal";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -1682,6 +1684,369 @@ export const Streams = () => {
   };
 
   const hideLockedStreamModal = useCallback(() => setIsLockedStreamModalVisibility(false), []);
+
+  // Edit stream modal
+  const [isEditStreamModalVisible, setIsEditStreamModalVisibility] = useState(false);
+  const onEditStreamClick = useCallback(() => {
+    resetTransactionStatus();
+    setIsEditStreamModalVisibility(true);
+  },[
+    resetTransactionStatus
+  ]);
+
+  const onStreamModified = useCallback(() => {
+    setIsEditStreamModalVisibility(false);
+    resetTransactionStatus();
+    notify({
+      description: t('multisig.update-multisig.success-message'),
+      type: "success"
+    });
+
+  },[
+    t,
+    resetTransactionStatus
+  ]);
+
+  const hideEditStreamModal = useCallback(() => setIsEditStreamModalVisibility(false), []);
+  const onAcceptEditStream = () => {
+    hideEditStreamModal();
+    // onExecuteResumeStreamTransaction();
+  };
+
+  // const onAcceptEditMultisig = (data: any) => {
+  //   consoleOut('multisig:', data, 'blue');
+  //   onExecuteEditMultisigTx(data);
+  // };
+
+  // const onExecuteEditMultisigTx = useCallback(async (data: any) => {
+
+  //   let transaction: Transaction;
+  //   let signedTransaction: Transaction;
+  //   let signature: any;
+  //   let encodedTx: string;
+  //   const transactionLog: any[] = [];
+
+  //   clearTransactionStatusContext();
+  //   setTransactionCancelled(false);
+  //   setOngoingOperation(OperationType.CreateMultisig);
+  //   setRetryOperationPayload(data);
+  //   setIsBusy(true);
+
+  //   const editMultisig = async (data: any) => {
+
+  //     const [multisigSigner] = await PublicKey.findProgramAddress(
+  //       [selectedMultisig.id.toBuffer()],
+  //       multisigClient.programId
+  //     );
+
+  //     const owners = data.owners.map((p: MultisigParticipant) => {
+  //       return {
+  //         address: new PublicKey(p.address),
+  //         name: p.name
+  //       }
+  //     });
+
+  //     const pid = multisigClient.programId;
+  //     const operation = OperationType.EditMultisig;
+  //     // Edit Multisig
+  //     const ixData = multisigClient.coder.instruction.encode("edit_multisig", {
+  //       owners: owners,
+  //       threshold: new BN(data.threshold),
+  //       label: data.label as any
+  //     });
+
+  //     const ixAccounts = [
+  //       {
+  //         pubkey: selectedMultisig.id,
+  //         isWritable: true,
+  //         isSigner: false,
+  //       },
+  //       {
+  //         pubkey: multisigSigner,
+  //         isWritable: false,
+  //         isSigner: true,
+  //       },
+  //     ];
+
+  //     const transaction = Keypair.generate();
+  //     const txSize = 1000;
+  //     const createIx = await multisigClient.account.transaction.createInstruction(
+  //       transaction,
+  //       txSize
+  //     );
+      
+  //     let tx = multisigClient.transaction.createTransaction(
+  //       pid, 
+  //       operation,
+  //       ixAccounts as any,
+  //       ixData as any,
+  //       new BN(0),
+  //       new BN(0),
+  //       {
+  //         accounts: {
+  //           multisig: selectedMultisig.id,
+  //           transaction: transaction.publicKey,
+  //           proposer: publicKey as PublicKey,
+  //         },
+  //         preInstructions: [createIx],
+  //         signers: [transaction, wallet as any],
+  //       }
+  //     );
+
+  //     tx.feePayer = publicKey;
+  //     const { blockhash } = await connection.getRecentBlockhash("finalized");
+  //     tx.recentBlockhash = blockhash;
+  //     tx.partialSign(...[transaction]);
+
+  //     return tx;
+  //   };
+
+  //   const createTx = async (): Promise<boolean> => {
+
+  //     if (publicKey && data) {
+  //       consoleOut("Start transaction for create multisig", '', 'blue');
+  //       consoleOut('Wallet address:', publicKey.toBase58());
+
+  //       setTransactionStatus({
+  //         lastOperation: TransactionStatus.TransactionStart,
+  //         currentOperation: TransactionStatus.InitTransaction
+  //       });
+
+  //       // Create a transaction
+  //       const payload = {
+  //         wallet: publicKey.toBase58(),                               // wallet
+  //         label: data.label,                                          // multisig label
+  //         threshold: data.threshold,
+  //         owners: data.owners
+  //       };
+
+  //       consoleOut('data:', payload);
+
+  //       // Log input data
+  //       transactionLog.push({
+  //         action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+  //         inputs: payload
+  //       });
+
+  //       transactionLog.push({
+  //         action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+  //         result: ''
+  //       });
+
+  //       // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
+  //       // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+  //       consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
+  //       consoleOut('nativeBalance:', nativeBalance, 'blue');
+
+  //       if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
+  //         setTransactionStatus({
+  //           lastOperation: transactionStatus.currentOperation,
+  //           currentOperation: TransactionStatus.TransactionStartFailure
+  //         });
+  //         transactionLog.push({
+  //           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+  //           result: `Not enough balance (${
+  //             getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+  //           }) to pay for network fees (${
+  //             getTokenAmountAndSymbolByTokenAddress(
+  //               transactionFees.blockchainFee + transactionFees.mspFlatFee, 
+  //               NATIVE_SOL_MINT.toBase58()
+  //             )
+  //           })`
+  //         });
+  //         customLogger.logWarning('Edit multisig transaction failed', { transcript: transactionLog });
+  //         return false;
+  //       }
+
+  //       return await editMultisig(data)
+  //         .then(value => {
+  //           consoleOut('editMultisig returned transaction:', value);
+  //           setTransactionStatus({
+  //             lastOperation: TransactionStatus.InitTransactionSuccess,
+  //             currentOperation: TransactionStatus.SignTransaction
+  //           });
+  //           transactionLog.push({
+  //             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+  //             result: getTxIxResume(value)
+  //           });
+  //           transaction = value;
+  //           return true;
+  //         })
+  //         .catch(error => {
+  //           console.error('editMultisig error:', error);
+  //           setTransactionStatus({
+  //             lastOperation: transactionStatus.currentOperation,
+  //             currentOperation: TransactionStatus.InitTransactionFailure
+  //           });
+  //           transactionLog.push({
+  //             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+  //             result: `${error}`
+  //           });
+  //           customLogger.logError('Edit multisig transaction failed', { transcript: transactionLog });
+  //           return false;
+  //         });
+
+  //     } else {
+  //       transactionLog.push({
+  //         action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+  //         result: 'Cannot start transaction! Wallet not found!'
+  //       });
+  //       customLogger.logError('Edit multisig transaction failed', { transcript: transactionLog });
+  //       return false;
+  //     }
+  //   }
+
+  //   const signTx = async (): Promise<boolean> => {
+  //     if (wallet) {
+  //       consoleOut('Signing transaction...');
+  //       return await wallet.signTransaction(transaction)
+  //       .then((signed: Transaction) => {
+  //         consoleOut('signTransaction returned a signed transaction:', signed);
+  //         signedTransaction = signed;
+  //         // Try signature verification by serializing the transaction
+  //         try {
+  //           encodedTx = signedTransaction.serialize().toString('base64');
+  //           consoleOut('encodedTx:', encodedTx, 'orange');
+  //         } catch (error) {
+  //           console.error(error);
+  //           setTransactionStatus({
+  //             lastOperation: TransactionStatus.SignTransaction,
+  //             currentOperation: TransactionStatus.SignTransactionFailure
+  //           });
+  //           transactionLog.push({
+  //             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+  //             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+  //           });
+  //           customLogger.logError('Edit multisig transaction failed', { transcript: transactionLog });
+  //           return false;
+  //         }
+  //         setTransactionStatus({
+  //           lastOperation: TransactionStatus.SignTransactionSuccess,
+  //           currentOperation: TransactionStatus.SendTransaction
+  //         });
+  //         transactionLog.push({
+  //           action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
+  //           result: {signer: wallet.publicKey.toBase58()}
+  //         });
+  //         return true;
+  //       })
+  //       .catch(error => {
+  //         console.error(error);
+  //         setTransactionStatus({
+  //           lastOperation: TransactionStatus.SignTransaction,
+  //           currentOperation: TransactionStatus.SignTransactionFailure
+  //         });
+  //         transactionLog.push({
+  //           action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+  //           result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+  //         });
+  //         customLogger.logError('Edit multisig transaction failed', { transcript: transactionLog });
+  //         return false;
+  //       });
+  //     } else {
+  //       console.error('Cannot sign transaction! Wallet not found!');
+  //       setTransactionStatus({
+  //         lastOperation: TransactionStatus.SignTransaction,
+  //         currentOperation: TransactionStatus.WalletNotFound
+  //       });
+  //       transactionLog.push({
+  //         action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+  //         result: 'Cannot sign transaction! Wallet not found!'
+  //       });
+  //       customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
+  //       return false;
+  //     }
+  //   }
+
+  //   const sendTx = async (): Promise<boolean> => {
+  //     if (wallet) {
+  //       return await connection
+  //         .sendEncodedTransaction(encodedTx)
+  //         .then(sig => {
+  //           consoleOut('sendEncodedTransaction returned a signature:', sig);
+  //           setTransactionStatus({
+  //             lastOperation: TransactionStatus.SendTransactionSuccess,
+  //             currentOperation: TransactionStatus.ConfirmTransaction
+  //           });
+  //           signature = sig;
+  //           transactionLog.push({
+  //             action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
+  //             result: `signature: ${signature}`
+  //           });
+  //           return true;
+  //         })
+  //         .catch(error => {
+  //           console.error(error);
+  //           setTransactionStatus({
+  //             lastOperation: TransactionStatus.SendTransaction,
+  //             currentOperation: TransactionStatus.SendTransactionFailure
+  //           });
+  //           transactionLog.push({
+  //             action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+  //             result: { error, encodedTx }
+  //           });
+  //           customLogger.logError('Edit multisig transaction failed', { transcript: transactionLog });
+  //           return false;
+  //         });
+  //     } else {
+  //       console.error('Cannot send transaction! Wallet not found!');
+  //       setTransactionStatus({
+  //         lastOperation: TransactionStatus.SendTransaction,
+  //         currentOperation: TransactionStatus.WalletNotFound
+  //       });
+  //       transactionLog.push({
+  //         action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+  //         result: 'Cannot send transaction! Wallet not found!'
+  //       });
+  //       customLogger.logError('Edit multisig transaction failed', { transcript: transactionLog });
+  //       return false;
+  //     }
+  //   }
+
+  //   if (wallet) {
+  //     const create = await createTx();
+  //     consoleOut('created:', create);
+  //     if (create && !transactionCancelled) {
+  //       const sign = await signTx();
+  //       consoleOut('signed:', sign);
+  //       if (sign && !transactionCancelled) {
+  //         const sent = await sendTx();
+  //         consoleOut('sent:', sent);
+  //         if (sent && !transactionCancelled) {
+  //           consoleOut('Send Tx to confirmation queue:', signature);
+  //           startFetchTxSignatureInfo(signature, "finalized", OperationType.EditMultisig);
+  //           setIsBusy(false);
+  //           setTransactionStatus({
+  //             lastOperation: transactionStatus.currentOperation,
+  //             currentOperation: TransactionStatus.TransactionFinished
+  //           });
+  //           onMultisigModified();
+  //           setOngoingOperation(undefined);
+  //           setIsEditMultisigModalVisible(false);
+  //         } else { setIsBusy(false); }
+  //       } else { setIsBusy(false); }
+  //     } else { setIsBusy(false); }
+  //   }
+
+  // }, [
+  //   selectedMultisig,
+  //   clearTransactionStatusContext,
+  //   connection,
+  //   multisigClient.account.transaction,
+  //   multisigClient.coder.instruction,
+  //   multisigClient.programId,
+  //   multisigClient.transaction,
+  //   nativeBalance,
+  //   onMultisigModified,
+  //   publicKey,
+  //   setTransactionStatus,
+  //   startFetchTxSignatureInfo,
+  //   transactionCancelled,
+  //   transactionFees.blockchainFee,
+  //   transactionFees.mspFlatFee,
+  //   transactionStatus.currentOperation,
+  //   wallet
+  // ]);
 
 
   const isMultisigTreasury = useCallback((treasury?: any) => {
@@ -5443,6 +5808,16 @@ export const Streams = () => {
                 {/* Top action icons */}
                 <div className="float-top-right">
                   <span className="icon-button-container secondary-button">
+                    <Tooltip placement="bottom" title={t('streams.edit-stream.edit-stream-tooltip')}>
+                      <Button
+                        type="default"
+                        shape="circle"
+                        size="middle"
+                        icon={<IconEdit className="mean-svg-icons" style={{padding: "2px 0 0"}} />}
+                        onClick={() => onEditStreamClick()}
+                        disabled={isInboundStream(streamDetail)}
+                      />
+                    </Tooltip>
                     <Tooltip placement="bottom" title={t('streams.stream-detail.close-money-stream-menu-item')}>
                       <Button
                         type="default"
@@ -5548,6 +5923,14 @@ export const Streams = () => {
                 : msp
               : undefined
           }
+        />
+
+        <StreamEditModal
+          isVisible={isEditStreamModalVisible}
+          handleOk={onAcceptEditStream}
+          handleClose={hideEditStreamModal}
+          streamDetail={streamDetail}
+          isBusy={isBusy}
         />
 
         {isAddFundsModalVisible && (

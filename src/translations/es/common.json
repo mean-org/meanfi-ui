@@ -644,6 +644,18 @@
 		"lookup-stream-cta-tooltip": "Buscar transferencia",
 		"pause-stream-confirmation": "Pausing the stream will stop streaming money from the treasury ({{treasury}}) to the beneficiary ({{beneficiary}}).",
 		"pause-stream-cta": "Pause",
+		"edit-stream": {
+			"modal-title": "Edit Money Stream",
+			"edit-stream-tooltip": "Edit money stream",
+			"name-input-label": "Stream name",
+			"name-input-placeholder": "Type a name for your stream",
+			"name-input-hint": "What is this stream being sent for?",
+			"send-amount-input-label": "Amount to Send",
+			"frequency-input-label": "Frequency",
+			"frequency-input-hint": "How often will this amount be sent?",
+			"main-cta": "Update stream",
+			"main-cta-busy": "Updating stream"
+		},
 		"pause-stream-modal-title": "Pause stream",
 		"pause-stream-tooltip": "Pause Stream",
 		"locked-stream-modal-title": "Locked Money Stream",
