@@ -411,7 +411,9 @@ export const InvestView = () => {
                             <div className="info-label icon-label justify-content-center">
                               {t("invest.panel-right.stats.staking-apy")}
                               <Tooltip placement="top" title={t("invest.panel-right.stats.staking-apy-tooltip")}>
-                                <IconHelpCircle className="mean-svg-icons" />
+                                <span>
+                                  <IconHelpCircle className="mean-svg-icons" />
+                                </span>
                               </Tooltip>
                             </div>
                             <div className="transaction-detail-row">
