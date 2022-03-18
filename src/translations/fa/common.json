@@ -309,7 +309,7 @@
 				"unstake": {
 					"amount-label": "مبلغ مورد نظر لغو استک",
 					"name": "لغو استک",
-					"notification-label-one": "شما در حال حاضر {{unstakeAmount}} MEAN استک شده دارید که در حال حاضر تا {{unstakeStartDate}} قفل است",
+					"notification-label-one": "شما در حال حاضر {{unstakeAmount}} sMEAN استک شده دارید که در حال حاضر تا {{unstakeStartDate}} قفل است",
 					"notification-label-one-error": "شما هیچ sMEAN استک شده ندارید",
 					"notification-label-two": "Unstaking مقدار مشخصی از توکن های sMEAN باز شده را به کیف پول شما برداشت می کند",
 					"send-amount": {

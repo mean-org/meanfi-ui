@@ -282,7 +282,7 @@
 				},
 				"unstake": {
 					"name": "Unstake",
-					"notification-label-one": "Your currently have {{unstakeAmount}} MEAN staked which is currently locked until {{unstakeStartDate}}",
+					"notification-label-one": "Your currently have {{unstakeAmount}} sMEAN staked which is currently locked until {{unstakeStartDate}}",
 					"notification-label-one-error": "You don't have any sMEAN staked",
 					"amount-label": "Amount to unstake",
 					"notification-label-two": "Unstaking will withdraw the specified amount of unlocked sMEAN tokens to your wallet",

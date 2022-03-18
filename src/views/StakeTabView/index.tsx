@@ -44,7 +44,7 @@ export const StakeTabView = () => {
   const { t } = useTranslation('common');
   const periods = [
     {
-      value: 7,
+      value: 0,
       time: t("invest.panel-right.tabset.stake.days"),
       multiplier: 1
     },

@@ -20,7 +20,7 @@ import { consoleOut, isLocal, isProd } from "../../utils/ui";
 import { useNavigate } from "react-router-dom";
 import { ConfirmOptions } from "@solana/web3.js";
 import { Provider } from "@project-serum/anchor";
-import { EnvMintAddresses, StakingClient } from "@mean-dao/staking";
+import { EnvMintAddresses, StakePoolInfo, StakingClient } from "@mean-dao/staking";
 import { StakeTabView } from "../../views/StakeTabView";
 import { UnstakeTabView } from "../../views/UnstakeTabView";
 import { MEAN_TOKEN_LIST } from "../../constants/token-list";
@@ -57,6 +57,7 @@ export const InvestView = () => {
   const [maxRadiumAprValue, setMaxRadiumAprValue] = useState<number>(0);
   const [meanAddresses, setMeanAddresses] = useState<EnvMintAddresses>();
   const [pageInitialized, setPageInitialized] = useState<boolean>(false);
+  const [sMeanStakingAmount, setSMeanStakingAmount] = useState<StakePoolInfo>();
 
   // If there is no connected wallet or the connected wallet is not whitelisted
   // when the App is run NOT in local mode then redirect user to /accounts
@@ -144,6 +145,14 @@ export const InvestView = () => {
 
     if (!pageInitialized) {
       const meanAddress = stakeClient.getMintAddresses();
+
+      stakeClient.getStakePoolInfo().then((value) => {
+        consoleOut("sMEAN to USDC rate: ", value.sMeanToUsdcRate);
+        consoleOut("MEAN to sMEAN rate: ", value.meanToSMeanRate);
+        consoleOut("sMEAN to MEAN rate: ", value.sMeanToMeanRate);
+        consoleOut("TVL: ", value.tvl);
+        consoleOut("APY: ", value.apy);
+      });
   
       consoleOut(meanAddress.mean.toBase58());
       consoleOut(meanAddress.sMean.toBase58());
