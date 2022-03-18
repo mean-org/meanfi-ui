@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect } from 'react';
+import "./style.less";
 import { useContext, useState } from 'react';
 import { Modal, Button, Select, Dropdown, Menu, DatePicker, Checkbox, Divider, Radio, Tooltip, Row, Col } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
@@ -1191,7 +1192,7 @@ export const TreasuryStreamCreateModal = (props: {
 
   return (
     <Modal
-      className="mean-modal"
+      className="mean-modal treasury-stream-create-modal"
       title={(treasuryOption && treasuryOption.type === TreasuryType.Open) ? (<div className="modal-title">{t('treasuries.treasury-streams.add-stream-modal-title')}</div>) : (<div className="modal-title">Add a locked money stream</div>)}
       footer={null}
       visible={props.isVisible}

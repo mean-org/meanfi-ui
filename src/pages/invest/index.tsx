@@ -482,7 +482,7 @@ export const InvestView = () => {
                                 </Col>
                               </>
                             ))}
-                            <span className="mt-2">{t("invest.panel-right.staking-data.text-one", {unstakeStartDate: unstakeStartDate})}</span>
+                            {/* <span className="mt-2">{t("invest.panel-right.staking-data.text-one", {unstakeStartDate: unstakeStartDate})}</span> */}
 
                             <span className="mt-1"><i>{t("invest.panel-right.staking-data.text-two")}</i></span>
                             {/* <Col span={24} className="d-flex flex-column justify-content-end align-items-end mt-1">
