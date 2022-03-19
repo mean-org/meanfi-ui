@@ -146,16 +146,16 @@ export const InvestView = () => {
     if (!pageInitialized) {
       const meanAddress = stakeClient.getMintAddresses();
 
-      stakeClient.getStakePoolInfo().then((value) => {
-        consoleOut("sMEAN to USDC rate: ", value.sMeanToUsdcRate);
-        consoleOut("MEAN to sMEAN rate: ", value.meanToSMeanRate);
-        consoleOut("sMEAN to MEAN rate: ", value.sMeanToMeanRate);
-        consoleOut("TVL: ", value.tvl);
-        consoleOut("APY: ", value.apy);
-      });
+      // stakeClient.getStakePoolInfo().then((value) => {
+      //   consoleOut("sMEAN to USDC rate: ", value.sMeanToUsdcRate);
+      //   consoleOut("MEAN to sMEAN rate: ", value.meanToSMeanRate);
+      //   consoleOut("sMEAN to MEAN rate: ", value.sMeanToMeanRate);
+      //   consoleOut("TVL: ", value.tvl);
+      //   consoleOut("APY: ", value.apy);
+      // });
   
-      consoleOut(meanAddress.mean.toBase58());
-      consoleOut(meanAddress.sMean.toBase58());
+      // consoleOut(meanAddress.mean.toBase58());
+      // consoleOut(meanAddress.sMean.toBase58());
 
       setMeanAddresses(meanAddress);
 
