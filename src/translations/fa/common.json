@@ -868,6 +868,8 @@
 			"exchange-on": "مبادله بر",
 			"hla-transaction-fee": "هزینه جمع آوری",
 			"min-recommended-amount": "حداقل مقدار توصیه شده",
+			"minimum-received": "Minimum received",
+			"minimum-sol-for-transaction": "Minimum SOL required",
 			"network-transaction-fee": "فی شبکه",
 			"price-impact": "تاثیر قیمت",
 			"protocol-transaction-fee": "{{protocol}} هزینه LP",

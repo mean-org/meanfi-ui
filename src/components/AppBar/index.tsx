@@ -160,7 +160,7 @@ export const AppBar = (props: {
             <Link to="/faucet">{t('ui-menus.main-menu.services.faucet')}</Link>
           </Menu.Item>
         )}
-        {!isProd() && (
+        {(!isProd() || isLocal()) && (
           <Menu.Item key="/wrap">
             <Link to="/wrap">{t('ui-menus.main-menu.services.wrap')}</Link>
           </Menu.Item>
@@ -275,7 +275,7 @@ export const AppBar = (props: {
                     <Link to="/faucet">{t('ui-menus.main-menu.services.faucet')}</Link>
                   </li>
                 )}
-                {!isProd() && (
+                {(!isProd() || isLocal()) && (
                   <li key="/wrap" className={location.pathname === '/wrap' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 9} as CustomCSSProps}>
                     <Link to="/wrap">{t('ui-menus.main-menu.services.wrap')}</Link>
                   </li>

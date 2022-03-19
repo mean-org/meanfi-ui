@@ -45,7 +45,7 @@
     "@ant-design/icons": "^4.7",
     "@craco/craco": "^6.4",
     "@influxdata/influxdb-client": "1.23.0",
-    "@jup-ag/core": "1.0.0-beta.11",
+    "@jup-ag/core": "1.0.0-beta.18",
     "@ledgerhq/hw-transport": "^6.11",
     "@ledgerhq/hw-transport-webhid": "^6.11",
     "@mean-dao/ddca": "1.2.33",

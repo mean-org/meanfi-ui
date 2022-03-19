@@ -868,6 +868,8 @@
 			"exchange-on": "Giao dịch trên",
 			"hla-transaction-fee": "Phí tổng hợp",
 			"min-recommended-amount": "Số lượng tối thiểu được đề xuất",
+			"minimum-received": "Minimum received",
+			"minimum-sol-for-transaction": "Minimum SOL required",
 			"network-transaction-fee": "Phí mạng",
 			"price-impact": "Tác động giá",
 			"protocol-transaction-fee": "Phí LP trên {{protocol}}",

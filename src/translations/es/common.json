@@ -874,6 +874,8 @@
 			"exchange-on": "Intercambio en",
 			"hla-transaction-fee": "",
 			"min-recommended-amount": "Cantidad mínima recomendada",
+			"minimum-received": "Minimum received",
+			"minimum-sol-for-transaction": "Minimum SOL required",
 			"network-transaction-fee": "Network fee",
 			"price-impact": "Price impact",
 			"protocol-transaction-fee": "{{protocol}} LP fee",

@@ -864,6 +864,8 @@
 			"exchange-on": "Troca em",
 			"hla-transaction-fee": "Taxa do agregador",
 			"min-recommended-amount": "Quantidade mínima recomendada",
+			"minimum-received": "Minimum received",
+			"minimum-sol-for-transaction": "Minimum SOL required",
 			"network-transaction-fee": "Taxa de rede",
 			"price-impact": "Impacto do preço",
 			"protocol-transaction-fee": "{{protocol}} taxa de LP",
