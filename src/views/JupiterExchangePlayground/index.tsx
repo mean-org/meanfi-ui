@@ -28,7 +28,6 @@ import { NATIVE_SOL } from "../../utils/tokens";
 import { MEAN_TOKEN_LIST, PINNED_TOKENS } from "../../constants/token-list";
 import { InfoIcon } from "../../components/InfoIcon";
 import { TransactionStatus } from "../../models/enums";
-import { wrapSol } from "@mean-dao/money-streaming/lib/utils";
 import { unwrapSol } from "@mean-dao/hybrid-liquidity-ag";
 import { SignerWalletAdapter } from "@solana/wallet-adapter-base";
 import { TokenDisplay } from "../../components/TokenDisplay";
@@ -55,8 +54,8 @@ export const JupiterExchangePlayground = (props: {
         setTransactionStatus,
         refreshPrices,
     } = useContext(AppStateContext);
-    const [transactionCancelled, setTransactionCancelled] = useState(false);
     const [isBusy, setIsBusy] = useState(false);
+    const [isUnwrapping, setIsUnwrapping] = useState(false);
     const [fromMint, setFromMint] = useState<string | undefined>();
     const [toMint, setToMint] = useState<string | undefined>(undefined);
     const [paramsProcessed, setParamsProcessed] = useState(false);
@@ -990,236 +989,6 @@ export const JupiterExchangePlayground = (props: {
         refreshRoutes,
     ]);
 
-    const onStartWrapTx = async () => {
-        let transaction: Transaction;
-        let signedTransaction: Transaction;
-        let signature: any;
-        let encodedTx: string;
-        const transactionLog: any[] = [];
-
-        setTransactionCancelled(false);
-        setIsBusy(true);
-
-        const createTx = async (): Promise<boolean> => {
-            if (wallet) {
-                setTransactionStatus({
-                    lastOperation: TransactionStatus.TransactionStart,
-                    currentOperation: TransactionStatus.InitTransaction,
-                });
-
-                // Log input data
-                transactionLog.push({
-                    action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
-                    inputs: `wrapAmount: ${inputAmount}`
-                });
-
-                transactionLog.push({
-                    action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
-                    result: ''
-                });
-
-                return await wrapSol(
-                    connection,                 // connection
-                    publicKey as PublicKey,     // from
-                    inputAmount                 // amount
-                )
-                    .then((value) => {
-                        consoleOut("wrapSol returned transaction:", value);
-                        // Stage 1 completed - The transaction is created and returned
-                        setTransactionStatus({
-                            lastOperation: TransactionStatus.InitTransactionSuccess,
-                            currentOperation: TransactionStatus.SignTransaction,
-                        });
-                        transactionLog.push({
-                            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-                            result: getTxIxResume(value)
-                        });
-                        transaction = value;
-                        return true;
-                    })
-                    .catch((error) => {
-                        console.error("wrapSol transaction init error:", error);
-                        setTransactionStatus({
-                            lastOperation: transactionStatus.currentOperation,
-                            currentOperation: TransactionStatus.InitTransactionFailure,
-                        });
-                        transactionLog.push({
-                            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
-                            result: `${error}`
-                        });
-                        customLogger.logError('Wrap transaction failed', { transcript: transactionLog });
-                        return false;
-                    });
-            } else {
-                transactionLog.push({
-                    action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-                    result: 'Cannot start transaction! Wallet not found!'
-                });
-                customLogger.logError('Wrap transaction failed', { transcript: transactionLog });
-                return false;
-            }
-        };
-
-        const signTx = async (): Promise<boolean> => {
-            if (wallet) {
-                consoleOut("Signing transaction...");
-                return await wallet
-                    .signTransaction(transaction)
-                    .then((signed: Transaction) => {
-                        consoleOut("signTransaction returned a signed transaction:", signed);
-                        signedTransaction = signed;
-                        // Try signature verification by serializing the transaction
-                        try {
-                            encodedTx = signedTransaction.serialize().toString('base64');
-                            consoleOut('encodedTx:', encodedTx, 'orange');
-                        } catch (error) {
-                            console.error(error);
-                            setTransactionStatus({
-                                lastOperation: TransactionStatus.SignTransaction,
-                                currentOperation: TransactionStatus.SignTransactionFailure
-                            });
-                            transactionLog.push({
-                                action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-                                result: { signer: `${wallet.publicKey.toBase58()}`, error: `${error}` }
-                            });
-                            customLogger.logError('Wrap transaction failed', { transcript: transactionLog });
-                            return false;
-                        }
-                        setTransactionStatus({
-                            lastOperation: TransactionStatus.SignTransactionSuccess,
-                            currentOperation: TransactionStatus.SendTransaction,
-                        });
-                        transactionLog.push({
-                            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-                            result: { signer: wallet.publicKey.toBase58() }
-                        });
-                        return true;
-                    })
-                    .catch(error => {
-                        console.error("Signing transaction failed!");
-                        setTransactionStatus({
-                            lastOperation: TransactionStatus.SignTransaction,
-                            currentOperation: TransactionStatus.SignTransactionFailure,
-                        });
-                        transactionLog.push({
-                            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-                            result: { signer: `${wallet.publicKey.toBase58()}`, error: `${error}` }
-                        });
-                        customLogger.logError('Wrap transaction failed', { transcript: transactionLog });
-                        return false;
-                    });
-            } else {
-                console.error("Cannot sign transaction! Wallet not found!");
-                setTransactionStatus({
-                    lastOperation: TransactionStatus.SignTransaction,
-                    currentOperation: TransactionStatus.WalletNotFound,
-                });
-                transactionLog.push({
-                    action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-                    result: 'Cannot sign transaction! Wallet not found!'
-                });
-                customLogger.logError('Wrap transaction failed', { transcript: transactionLog });
-                return false;
-            }
-        };
-
-        const sendTx = async (): Promise<boolean> => {
-            if (wallet) {
-                return await connection
-                    .sendEncodedTransaction(encodedTx)
-                    .then((sig) => {
-                        consoleOut("sendEncodedTransaction returned a signature:", sig);
-                        setTransactionStatus({
-                            lastOperation: TransactionStatus.SendTransactionSuccess,
-                            currentOperation: TransactionStatus.ConfirmTransaction,
-                        });
-                        signature = sig;
-                        transactionLog.push({
-                            action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
-                            result: `signature: ${signature}`
-                        });
-                        return true;
-                    })
-                    .catch((error) => {
-                        console.error(error);
-                        setTransactionStatus({
-                            lastOperation: TransactionStatus.SendTransaction,
-                            currentOperation: TransactionStatus.SendTransactionFailure,
-                        });
-                        transactionLog.push({
-                            action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
-                            result: { error, encodedTx }
-                        });
-                        customLogger.logError('Wrap transaction failed', { transcript: transactionLog });
-                        return false;
-                    });
-            } else {
-                setTransactionStatus({
-                    lastOperation: TransactionStatus.SendTransaction,
-                    currentOperation: TransactionStatus.WalletNotFound,
-                });
-                transactionLog.push({
-                    action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-                    result: 'Cannot send transaction! Wallet not found!'
-                });
-                customLogger.logError('Wrap transaction failed', { transcript: transactionLog });
-                return false;
-            }
-        };
-
-        const confirmTx = async (): Promise<boolean> => {
-            return await connection
-                .confirmTransaction(signature, "confirmed")
-                .then((result) => {
-                    consoleOut("confirmTransaction result:", result);
-                    setTransactionStatus({
-                        lastOperation: TransactionStatus.ConfirmTransactionSuccess,
-                        currentOperation: TransactionStatus.TransactionFinished,
-                    });
-                    transactionLog.push({
-                        action: getTransactionStatusForLogs(TransactionStatus.TransactionFinished),
-                        result: ''
-                    });
-                    return true;
-                })
-                .catch(() => {
-                    setTransactionStatus({
-                        lastOperation: TransactionStatus.ConfirmTransaction,
-                        currentOperation: TransactionStatus.ConfirmTransactionFailure,
-                    });
-                    transactionLog.push({
-                        action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
-                        result: signature
-                    });
-                    customLogger.logError('Wrap transaction failed', { transcript: transactionLog });
-                    return false;
-                });
-        };
-
-        if (wallet) {
-            const create = await createTx();
-            consoleOut("created:", create);
-            if (create && !transactionCancelled) {
-                const sign = await signTx();
-                consoleOut("signed:", sign);
-                if (sign && !transactionCancelled) {
-                    const sent = await sendTx();
-                    consoleOut("sent:", sent);
-                    if (sent && !transactionCancelled) {
-                        const confirmed = await confirmTx();
-                        consoleOut("confirmed:", confirmed);
-                        if (confirmed) {
-                            setIsBusy(false);
-                            setInputAmount(0);
-                            setFromAmount('');
-                            refreshUserBalances();
-                        } else { setIsBusy(false); }
-                    } else { setIsBusy(false); }
-                } else { setIsBusy(false); }
-            } else { setIsBusy(false); }
-        }
-    }
-
     const onStartUnwrapTx = async () => {
         let transaction: Transaction;
         let signedTransaction: Transaction;
@@ -1227,9 +996,6 @@ export const JupiterExchangePlayground = (props: {
         let encodedTx: string;
         const transactionLog: any[] = [];
 
-        setTransactionCancelled(false);
-        setIsBusy(true);
-
         const createTx = async (): Promise<boolean> => {
             if (wallet) {
                 setTransactionStatus({
@@ -1237,10 +1003,12 @@ export const JupiterExchangePlayground = (props: {
                     currentOperation: TransactionStatus.InitTransaction,
                 });
 
+                consoleOut('wrapAmount:', wSolBalance, 'blue')
+
                 // Log input data
                 transactionLog.push({
                     action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
-                    inputs: `wrapAmount: ${inputAmount}`
+                    inputs: `wrapAmount: ${wSolBalance}`
                 });
 
                 transactionLog.push({
@@ -1252,7 +1020,7 @@ export const JupiterExchangePlayground = (props: {
                     connection,                 // connection
                     wallet,                     // wallet
                     Keypair.generate(),
-                    inputAmount                 // amount
+                    wSolBalance                 // amount
                 )
                     .then((value) => {
                         consoleOut("wrapSol returned transaction:", value);
@@ -1428,26 +1196,29 @@ export const JupiterExchangePlayground = (props: {
         };
 
         if (wallet) {
+            setIsUnwrapping(true);
             const create = await createTx();
             consoleOut("created:", create);
-            if (create && !transactionCancelled) {
+            if (create) {
                 const sign = await signTx();
                 consoleOut("signed:", sign);
-                if (sign && !transactionCancelled) {
+                if (sign) {
                     const sent = await sendTx();
                     consoleOut("sent:", sent);
-                    if (sent && !transactionCancelled) {
+                    if (sent) {
                         const confirmed = await confirmTx();
                         consoleOut("confirmed:", confirmed);
                         if (confirmed) {
-                            setIsBusy(false);
+                            setIsUnwrapping(false);
                             setInputAmount(0);
                             setFromAmount('');
-                            refreshUserBalances();
-                        } else { setIsBusy(false); }
-                    } else { setIsBusy(false); }
-                } else { setIsBusy(false); }
-            } else { setIsBusy(false); }
+                            setTimeout(() => {
+                                refreshUserBalances();
+                            });
+                        } else { setIsUnwrapping(false); }
+                    } else { setIsUnwrapping(false); }
+                } else { setIsUnwrapping(false); }
+            } else { setIsUnwrapping(false); }
         }
     }
 
@@ -1763,7 +1534,7 @@ export const JupiterExchangePlayground = (props: {
                 </div>
             )} */}
 
-            {wSolBalance && (
+            {wSolBalance > 0 && (
                 <div className="swap-wrapper">
                     <div className="well mb-1">
                         <div className="flex-fixed-right align-items-center">
@@ -1772,8 +1543,10 @@ export const JupiterExchangePlayground = (props: {
                                 <Button
                                     type="primary"
                                     shape="round"
+                                    disabled={isUnwrapping}
+                                    onClick={onStartUnwrapTx}
                                     size="small">
-                                    Unwrap SOL
+                                    {isUnwrapping ? 'Unwrapping SOL' : 'Unwrap SOL'}
                                 </Button>
                             </div>
                         </div>
