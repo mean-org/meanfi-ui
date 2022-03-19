@@ -846,6 +846,8 @@
 			"exchange-on": "Echange sur",
 			"hla-transaction-fee": "Frais d'agrégateur",
 			"min-recommended-amount": "Montant minimum recommandé",
+			"minimum-received": "Minimum received",
+			"minimum-sol-for-transaction": "Minimum SOL required",
 			"network-transaction-fee": "Frais de réseau",
 			"price-impact": "Incidence sur les prix",
 			"protocol-transaction-fee": "{{protocol}} frais de LP",

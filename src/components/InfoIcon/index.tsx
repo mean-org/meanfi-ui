@@ -12,10 +12,10 @@ export const InfoIcon = (props: {
 }) => {
   return (
     <Popover
-      title={props.title || null}
+      title={props.title || null}
       trigger={props.trigger || "hover"}
       placement={props.placement || "top"}
-      content={<div style={{ width: 300 }}>{props.content}</div>}>
+      content={<div style={{ width: 320 }}>{props.content}</div>}>
       <Button
         className="info-icon-button"
         type="default"

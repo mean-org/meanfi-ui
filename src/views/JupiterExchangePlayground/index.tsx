@@ -2,7 +2,7 @@ import React, { useCallback, useContext, useEffect, useMemo, useState } from "re
 import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { Button, Col, Divider, Modal, Row, Tooltip } from "antd";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { getPlatformFeeAccounts, Jupiter, RouteInfo, TOKEN_LIST_URL, TransactionFeeInfo } from "@jup-ag/core";
+import { getPlatformFeeAccounts, Jupiter, MarketInfo, RouteInfo, TOKEN_LIST_URL, TransactionFeeInfo } from "@jup-ag/core";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import { TOKEN_PROGRAM_ID } from "../../utils/ids";
 import { useWallet } from "../../contexts/wallet";
@@ -12,7 +12,7 @@ import { DEFAULT_SLIPPAGE_PERCENT, EXCHANGE_ROUTES_REFRESH_TIMEOUT, MAX_TOKEN_LI
 import { JupiterExchangeInput } from "../../components/JupiterExchangeInput";
 import { useNativeAccount, useUserAccounts } from "../../contexts/accounts";
 import { ACCOUNT_LAYOUT } from "../../utils/layouts";
-import { formatThousands, getTxIxResume, isValidNumber, toTokenAmount, toUiAmount } from "../../utils/utils";
+import { cutNumber, formatThousands, getTxIxResume, isValidNumber, toTokenAmount, toUiAmount } from "../../utils/utils";
 import { AppStateContext } from "../../contexts/appstate";
 import { IconSwapFlip } from "../../Icons";
 import { SwapSettings } from "../../components/SwapSettings";
@@ -33,6 +33,7 @@ import { SignerWalletAdapter } from "@solana/wallet-adapter-base";
 import { TokenDisplay } from "../../components/TokenDisplay";
 
 export const COMMON_EXCHANGE_TOKENS = ['USDC', 'USDT', 'MEAN', 'SOL'];
+const MINIMUM_REQUIRED_SOL_BALANCE = 0.05;
 
 export const JupiterExchangePlayground = (props: {
     queryFromMint: string | null;
@@ -508,7 +509,7 @@ export const JupiterExchangePlayground = (props: {
         }
 
         let balance = fromMint === WRAPPED_SOL_MINT_ADDRESS
-            ? nativeBalance
+            ? nativeBalance - MINIMUM_REQUIRED_SOL_BALANCE
             : userBalances[fromMint] || 0;
 
         return balance <= 0 ? 0 : balance;
@@ -891,7 +892,7 @@ export const JupiterExchangePlayground = (props: {
         if (selectedRoute) {
             selectedRoute.getDepositAndFee()
                 .then(value => {
-                    consoleOut('transactionFeeInfo:', value, 'blue');
+                    consoleOut('feeInfo:', value, 'blue');
                     setFeeInfo(value);
                 });
         }
@@ -1299,11 +1300,18 @@ export const JupiterExchangePlayground = (props: {
     // Rendering
     const infoRow = (caption: string, value: string, separator: string = '≈', route: boolean = false) => {
         return (
-            <Row>
-                <Col span={11} className="text-right">{caption}</Col>
-                <Col span={1} className="text-center fg-secondary-70">{separator}</Col>
-                <Col span={11} className="text-left fg-secondary-70">{value}</Col>
-            </Row>
+            <>
+                <div className="three-col-info-row">
+                    <div className="left text-right">{caption}</div>
+                    <div className="middle text-center">{separator}</div>
+                    <div className="right text-left">{value}</div>
+                </div>
+                {/* <Row>
+                    <Col span={11} className="text-right">{caption}</Col>
+                    <Col span={1} className="text-center fg-secondary-70">{separator}</Col>
+                    <Col span={11} className="text-left fg-secondary-70">{value}</Col>
+                </Row> */}
+            </>
         );
     };
 
@@ -1312,9 +1320,15 @@ export const JupiterExchangePlayground = (props: {
         return fromMint && toMint && selectedRoute ? (
             <>
                 {
-                    !refreshing && inputAmount && feeInfo && infoRow(
+                    !refreshing && inputAmount && feeInfo && feeInfo.minimumSOLForTransaction === feeInfo.signatureFee && infoRow(
                         t('transactions.transaction-info.network-transaction-fee'),
                         `${toUiAmount(new BN(feeInfo.signatureFee), sol.decimals)} SOL`
+                    )
+                }
+                {
+                    !refreshing && inputAmount && feeInfo && feeInfo.minimumSOLForTransaction > feeInfo.signatureFee && infoRow(
+                        t('transactions.transaction-info.minimum-sol-for-transaction'),
+                        `${toUiAmount(new BN(feeInfo.minimumSOLForTransaction), sol.decimals)} SOL`
                     )
                 }
                 {
@@ -1326,7 +1340,20 @@ export const JupiterExchangePlayground = (props: {
                 {
                     !refreshing && inputAmount && selectedRoute && infoRow(
                         t('transactions.transaction-info.price-impact'),
-                        `${parseFloat((selectedRoute.priceImpactPct * 100 || 0).toFixed(4))}%`
+                        selectedRoute.priceImpactPct * 100 < 0.1
+                            ? '0.1%'
+                            : `${(selectedRoute.priceImpactPct * 100).toFixed(4)}%`,
+                        selectedRoute.priceImpactPct * 100 < 0.1 ? '<' : '≈'
+                    )
+                }
+                {
+                    !refreshing && inputAmount && outputToken && infoRow(
+                        t('transactions.transaction-info.minimum-received'),
+                        `${formatThousands(
+                            selectedRoute?.outAmountWithSlippage /
+                              10 ** outputToken.decimals || 1,
+                            outputToken.decimals
+                        )} ${outputToken.symbol}`
                     )
                 }
             </>
@@ -1581,7 +1608,7 @@ export const JupiterExchangePlayground = (props: {
                                 console.log('maxFromAmount', maxFromAmount);
                                 if (toMint && mintList[fromMint] && maxFromAmount > 0) {
                                     setInputAmount(maxFromAmount);
-                                    const formattedAmount = maxFromAmount.toFixed(mintList[fromMint].decimals);
+                                    const formattedAmount = cutNumber(maxFromAmount, mintList[fromMint].decimals);
                                     setFromAmount(formattedAmount);
                                 }
                             }
@@ -1591,6 +1618,11 @@ export const JupiterExchangePlayground = (props: {
                             setSubjectTokenSelection("source");
                             showTokenSelector();
                         }}
+                        hint={
+                            inputToken && inputToken.address === WRAPPED_SOL_MINT_ADDRESS
+                                ? 'We recommend having at least 0.05 SOL for any transaction'
+                                : ''
+                        }
                         className="mb-0"
                         onPriceClick={() => refreshPrices()}
                         onBalanceClick={() => refreshUserBalances()}

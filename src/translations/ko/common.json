@@ -856,6 +856,8 @@
 			"exchange-on": "Exchange on",
 			"hla-transaction-fee": "Aggregator fee",
 			"min-recommended-amount": "Recommended minimum amount",
+			"minimum-received": "Minimum received",
+			"minimum-sol-for-transaction": "Minimum SOL required",
 			"network-transaction-fee": "Network fee",
 			"price-impact": "Price impact",
 			"protocol-transaction-fee": "{{protocol}} LP fee",

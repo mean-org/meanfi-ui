@@ -2,7 +2,7 @@ import React, { useCallback, useContext, useEffect, useMemo, useState } from 're
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { PreFooter } from "../../components/PreFooter";
 import { getTokenBySymbol, TokenInfo } from '../../utils/tokens';
-import { consoleOut, isLocal, isProd } from '../../utils/ui';
+import { consoleOut, isProd } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
 import { DdcaClient } from '@mean-dao/ddca';
 import { AppStateContext } from '../../contexts/appstate';
@@ -14,7 +14,6 @@ import { IconExchange } from '../../Icons';
 import { RecurringExchange, } from '../../views';
 
 import { JupiterExchangePlayground } from '../../views/JupiterExchangePlayground';
-import { Result } from 'antd';
 import { WarningFilled } from '@ant-design/icons';
 
 type SwapOption = "one-time" | "recurring";
@@ -42,7 +41,11 @@ export const JupiterExchangeTestingPage = () => {
     // Get from address from symbol passed via query string param
     if (params.has('from')) {
       const symbol = params.get('from');
-      from = symbol ? getTokenBySymbol(symbol) : null;
+      from = symbol
+        ? symbol === 'SOL'
+          ? getTokenBySymbol('wSOL')
+          : getTokenBySymbol(symbol)
+        : null;
       if (from) {
         setQueryFromMint(from.address);
       }

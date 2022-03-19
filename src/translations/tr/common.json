@@ -850,6 +850,8 @@
 			"exchange-on": "... 'da Alım-Satım",
 			"hla-transaction-fee": "Toplayıcı ücreti",
 			"min-recommended-amount": "Önerilen minimum miktar",
+			"minimum-received": "Minimum received",
+			"minimum-sol-for-transaction": "Minimum SOL required",
 			"network-transaction-fee": "Ağ ücreti",
 			"price-impact": "Fiyat etkisi",
 			"protocol-transaction-fee": "{{protocol}} LP ücreti",
