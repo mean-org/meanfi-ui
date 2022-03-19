@@ -4,7 +4,7 @@ import { Button, Col, Divider, Modal, Row, Tooltip } from "antd";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { getPlatformFeeAccounts, Jupiter, RouteInfo, TOKEN_LIST_URL, TransactionFeeInfo } from "@jup-ag/core";
 import useLocalStorage from "../../hooks/useLocalStorage";
-import { NATIVE_SOL_MINT, TOKEN_PROGRAM_ID } from "../../utils/ids";
+import { TOKEN_PROGRAM_ID } from "../../utils/ids";
 import { useWallet } from "../../contexts/wallet";
 import { consoleOut, getTransactionStatusForLogs, isProd } from "../../utils/ui";
 import { getJupiterTokenList } from "../../utils/api";
@@ -500,20 +500,24 @@ export const JupiterExchangePlayground = (props: {
     };
 
     // Calculates the max allowed amount to swap
+    // TODO: Review the whole MAX amount story. Jupiter seems to always charge 0.05 SOL no matter what.
     const getMaxAllowedSwapAmount = useCallback(() => {
 
         if (!fromMint || !toMint || !userBalances) {
             return 0;
         }
 
-        let balance = parseFloat(userBalances[fromMint]);
+        let balance = fromMint === WRAPPED_SOL_MINT_ADDRESS
+            ? nativeBalance
+            : userBalances[fromMint] || 0;
 
         return balance <= 0 ? 0 : balance;
 
     }, [
         toMint,
         fromMint,
-        userBalances
+        userBalances,
+        nativeBalance,
     ]);
 
     // Get routeMap, which maps each tokenMint and their respective tokenMints that are swappable
@@ -1758,6 +1762,24 @@ export const JupiterExchangePlayground = (props: {
                     <span className="ml-1">minOutAmount:</span><span className="ml-1 font-bold fg-dark-active">{minOutAmount || '-'}</span>
                 </div>
             )} */}
+
+            {wSolBalance && (
+                <div className="swap-wrapper">
+                    <div className="well mb-1">
+                        <div className="flex-fixed-right align-items-center">
+                            <div className="left">You have {formatThousands(wSolBalance, sol.decimals)} <strong>wrapped SOL</strong> in your wallet. Click to unwrap to native SOL.</div>
+                            <div className="right">
+                                <Button
+                                    type="primary"
+                                    shape="round"
+                                    size="small">
+                                    Unwrap SOL
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <div className="swap-wrapper">
 
