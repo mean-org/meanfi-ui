@@ -6,7 +6,6 @@ import { AccountLayout, u64, MintInfo, MintLayout } from "@solana/spl-token";
 import { TokenAccount } from "./../models";
 import { chunks } from "./../utils/utils";
 import { EventEmitter } from "./../utils/eventEmitter";
-import { useUserAccounts } from "../hooks/useUserAccounts";
 import { WRAPPED_SOL_MINT, programIds } from "../utils/ids";
 
 const AccountsContext = React.createContext<any>(null);
@@ -644,3 +643,11 @@ export const deserializeMint = (data: Buffer) => {
 
   return mintInfo as MintInfo;
 };
+
+export function useUserAccounts() {
+  const context = useAccountsContext();
+  return {
+    userAccounts: context.userAccounts as TokenAccount[],
+    tokenAccounts: context.tokenAccounts as TokenAccount[],
+  };
+}

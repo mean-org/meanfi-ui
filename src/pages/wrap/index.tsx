@@ -19,11 +19,17 @@ import {
   LoadingOutlined,
   WarningOutlined,
 } from "@ant-design/icons";
-import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, getTxFeeAmount, getTxPercentFeeAmount } from "../../utils/ui";
+import {
+  consoleOut,
+  getTransactionModalTitle,
+  getTransactionOperationDescription,
+  getTransactionStatusForLogs,
+  getTxFeeAmount,
+  getTxPercentFeeAmount
+} from "../../utils/ui";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { useTranslation } from "react-i18next";
 import { PreFooter } from "../../components/PreFooter";
-import { Identicon } from "../../components/Identicon";
 import { useNativeAccount } from "../../contexts/accounts";
 import { customLogger } from '../..';
 import { TokenDisplay } from '../../components/TokenDisplay';

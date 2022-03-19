@@ -1106,9 +1106,9 @@ export const AccountsView = () => {
           const change = getChange(accIdx, meta);
           return isSelectedAssetNativeAccount() && change !== 0 ? true : false;
         });
-        return filtered?.map((trans: MappedTransaction) => {
+        return filtered?.map((trans: MappedTransaction, index: number) => {
           return <TransactionItemView
-                    key={trans.signature}
+                    key={`${index}`}
                     transaction={trans}
                     selectedAsset={selectedAsset as UserTokenAccount}
                     accountAddress={accountAddress}
@@ -1116,10 +1116,10 @@ export const AccountsView = () => {
         });
       } else {
         // Render the transactions collection
-        return transactions?.map((trans: MappedTransaction) => {
+        return transactions?.map((trans: MappedTransaction, index: number) => {
           if (trans.parsedTransaction && trans.parsedTransaction.meta && trans.parsedTransaction.meta.err === null) {
             return <TransactionItemView
-                      key={trans.signature}
+                      key={`${index}`}
                       transaction={trans}
                       selectedAsset={selectedAsset as UserTokenAccount}
                       accountAddress={accountAddress}
