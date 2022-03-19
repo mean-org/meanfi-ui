@@ -441,14 +441,14 @@ export const JupiterExchange = (props: {
                 ? Math.round(inputAmount * 10 ** inputToken.decimals)
                 : 0; // Lamports based on token decimals
             const routes = inputToken && outputToken
-                ? (await jupiter.computeRoutes(
-                    new PublicKey(inputToken.address),
-                    new PublicKey(outputToken.address),
-                    inputAmountLamports,
-                    slippage,
-                    true,
-                ))
-                : null;
+                ?   await jupiter.computeRoutes({
+                        inputMint: new PublicKey(inputToken.address),
+                        outputMint: new PublicKey(outputToken.address),
+                        inputAmount: inputAmountLamports,
+                        slippage,
+                        forceFetch: true,
+                    })
+                :   null;
 
             if (routes && routes.routesInfos) {
                 consoleOut('routesInfos:', routes.routesInfos, 'blue');
@@ -1499,18 +1499,8 @@ export const JupiterExchange = (props: {
         try {
             // Prepare execute exchange
             const { execute } = await jupiter.exchange({
-                route: selectedRoute,
+                routeInfo: selectedRoute,
             });
-
-            // const transferParams: TransferParams = {
-            //     fromPubkey: publicKey,
-            //     lamports: 20000,
-            //     toPubkey: new PublicKey(platformFeesOwner)
-            // };
-
-            // transactions.swapTransaction.add(
-            //     SystemProgram.transfer(transferParams)
-            // );
 
             // Execute swap
             const swapResult: any = await execute({
