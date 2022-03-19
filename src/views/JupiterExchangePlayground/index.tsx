@@ -83,6 +83,7 @@ export const JupiterExchangePlayground = (props: {
     const [transactionStartButtonLabel, setTransactionStartButtonLabel] = useState('');
     const [feeInfo, setFeeInfo] = useState<TransactionFeeInfo | undefined>(undefined);
     const [quickTokens, setQuickTokens] = useState<TokenInfo[]>([]);
+    const [swapRate, setSwapRate] = useState(false)
 
     const platformFeesOwner = appConfig.getConfig().exchangeFeeAccountOwner;
     const platformFeeAmount = appConfig.getConfig().exchangeFlatFee;
@@ -1614,7 +1615,23 @@ export const JupiterExchangePlayground = (props: {
                             {
                                 inputToken && outputToken && selectedRoute && selectedRoute.outAmount ? (
                                     <>
-                                        <span>{`1 ${inputToken.symbol} ≈ ${(toUiAmount(new BN(selectedRoute.outAmount), outputToken.decimals) / inputAmount).toFixed(outputToken.decimals)} ${outputToken.symbol}`}</span>
+                                        <span className="simplelink underline-on-hover" onClick={() => setSwapRate(!swapRate)}>
+                                            {swapRate ? (
+                                                <>
+                                                    1 {inputToken.symbol} ≈{' '}
+                                                    {(toUiAmount(new BN(selectedRoute.outAmount), outputToken.decimals) / inputAmount).toFixed(outputToken.decimals)}
+                                                    {' '}
+                                                    {outputToken.symbol}
+                                                </>
+                                            ) : (
+                                                <>
+                                                    1 {outputToken.symbol} ≈{' '}
+                                                    {(inputAmount / toUiAmount(new BN(selectedRoute.outAmount), outputToken.decimals)).toFixed(outputToken.decimals)}
+                                                    {' '}
+                                                    {inputToken.symbol}
+                                                </>
+                                            )}
+                                        </span>
                                         {fromAmount && (
                                             <InfoIcon content={txInfoContent()} placement="bottom">
                                                 <InfoCircleOutlined style={{ lineHeight: 0 }} />
