@@ -1,8 +1,8 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
-import { Button, Col, Divider, Modal, Row, Tooltip } from "antd";
+import { Button, Divider, Modal, Tooltip } from "antd";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { getPlatformFeeAccounts, Jupiter, MarketInfo, RouteInfo, TOKEN_LIST_URL, TransactionFeeInfo } from "@jup-ag/core";
+import { getPlatformFeeAccounts, Jupiter, RouteInfo, TOKEN_LIST_URL, TransactionFeeInfo } from "@jup-ag/core";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import { TOKEN_PROGRAM_ID } from "../../utils/ids";
 import { useWallet } from "../../contexts/wallet";
@@ -1306,11 +1306,6 @@ export const JupiterExchangePlayground = (props: {
                     <div className="middle text-center">{separator}</div>
                     <div className="right text-left">{value}</div>
                 </div>
-                {/* <Row>
-                    <Col span={11} className="text-right">{caption}</Col>
-                    <Col span={1} className="text-center fg-secondary-70">{separator}</Col>
-                    <Col span={11} className="text-left fg-secondary-70">{value}</Col>
-                </Row> */}
             </>
         );
     };

@@ -1357,7 +1357,7 @@ export const AccountsView = () => {
                       <div className={((!isSelectedAssetNativeAccount() && hasTransactions()) ||
                                       (isSelectedAssetNativeAccount() && hasTransactions() && solAccountItems > 0))
                                       ? 'transaction-list-data-wrapper vertical-scroll'
-                                      : 'transaction-list-data-wrapper empty'}>
+                                      : 'transaction-list-data-wrapper vertical-scroll empty'}>
                         <div className="activity-list h-100">
                           {
                             status === FetchStatus.Fetching && !((!isSelectedAssetNativeAccount() && hasTransactions()) ||
