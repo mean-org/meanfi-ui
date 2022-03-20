@@ -158,7 +158,13 @@ export const StreamWithdrawModal = (props: {
     const isMaxAmount = getDisplayAmount(maxAmount) === getDisplayAmount(+withdrawAmountInput)
       ? true : false;
     setWithdrawAmountInput('');
-    props.handleOk(isMaxAmount ? maxAmount : withdrawAmountInput);
+    props.handleOk({
+      token: props.selectedToken?.symbol,
+      amount: isMaxAmount ? `${maxAmount}` : withdrawAmountInput,
+      inputAmount: parseFloat(withdrawAmountInput),
+      fee: feeAmount || 0,
+      receiveAmount: parseFloat(withdrawAmountInput) - (feeAmount as number)
+    });
   };
 
   const onCloseModal = () => {

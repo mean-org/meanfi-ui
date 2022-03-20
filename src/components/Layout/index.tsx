@@ -17,13 +17,14 @@ import ReactGA from 'react-ga';
 import { InfluxDB, Point } from '@influxdata/influxdb-client';
 import { isMobile, isDesktop, isTablet, browserName, osName, osVersion, fullBrowserVersion, deviceType } from "react-device-detect";
 import { environment } from "../../environments/environment";
-import { GOOGLE_ANALYTICS_PROD_TAG_ID, PERFORMANCE_SAMPLE_INTERVAL, PERFORMANCE_SAMPLE_INTERVAL_FAST, PERFORMANCE_THRESHOLD, SOLANA_STATUS_PAGE } from "../../constants";
+import { GOOGLE_ANALYTICS_PROD_TAG_ID, LANGUAGES, PERFORMANCE_SAMPLE_INTERVAL, PERFORMANCE_SAMPLE_INTERVAL_FAST, PERFORMANCE_THRESHOLD, SOLANA_STATUS_PAGE } from "../../constants";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import { reportConnectedAccount } from "../../utils/api";
 import { Connection } from "@solana/web3.js";
 import useOnlineStatus from "../../contexts/online-status";
 import { AccountDetails } from "../../models";
-import { analytics } from "../../App";
+import { segmentAnalytics } from "../../App";
+import { AppUsageEvent } from "../../utils/segment-service";
 
 const { Header, Content, Footer } = Layout;
 
@@ -49,14 +50,16 @@ export const AppLayout = React.memo((props: any) => {
     setPreviousWalletConnectState
   } = useContext(AppStateContext);
 
-  const { t } = useTranslation('common');
+  const { t, i18n } = useTranslation("common");
   const { isOnline, responseTime } = useOnlineStatus();
   const connectionConfig = useConnectionConfig();
   const { provider, connected, publicKey } = useWallet();
   const [previousChain, setChain] = useState("");
   const [gaInitialized, setGaInitialized] = useState(false);
   const [referralAddress, setReferralAddress] = useLocalStorage('pendingReferral', '');
-  const [avgTps, setAvgTps] = useState<number | undefined>(undefined);
+  const [language, setLanguage] = useState("");
+  // undefined at first (never had a value), null = couldn't get, number the value successfully retrieved
+  const [avgTps, setAvgTps] = useState<number | null | undefined>(undefined);
   const [needRefresh, setNeedRefresh] = useState(true);
 
   // Clear cachedRpc on App destroy (window is being reloaded)
@@ -76,67 +79,89 @@ export const AppLayout = React.memo((props: any) => {
     // window.localStorage.removeItem('providerName');
   }
 
-  // Get network TPS
-  useEffect(() => {
+  // Callback to fetch performance data (TPS)
+  const getPerformanceSamples = useCallback(async () => {
 
     let connection: Connection;
 
     if (isProd()) {
-      connection = new Connection("https://api.mainnet-beta.solana.com");
+      connection = new Connection("https://ssc-dao.genesysgo.net/");
     } else {
       connection = new Connection("https://api.devnet.solana.com/");
     }
 
-    if (!connection) { return; }
+    if (!connection) { return null; }
 
     const round = (series: number[]) => {
       return series.map((n) => Math.round(n));
     }
 
-    const getPerformanceSamples = async () => {
-      try {
-        const samples = await connection.getRecentPerformanceSamples(60);
+    try {
+      const samples = await connection.getRecentPerformanceSamples(30);
 
-        if (samples.length < 1) {
-          // no samples to work with (node has no history).
-          return; // we will allow for a timeout instead of throwing an error
-        }
-
-        let tpsValues = samples
-          .filter((sample) => {
-              return sample.numTransactions !== 0;
-          })
-          .map((sample) => {
-              return sample.numTransactions / sample.samplePeriodSecs;
-          });
-
-        tpsValues = round(tpsValues);
-        // consoleOut('Last 60 TPS samples:', tpsValues, 'blue');
-
-        const averagegTps = Math.round(tpsValues[0]);
-        setAvgTps(averagegTps);
-      } catch (error) {
-        console.error(error);
+      if (samples.length < 1) {
+        // no samples to work with (node has no history).
+        return null; // we will allow for a timeout instead of throwing an error
       }
-    };
 
-    const performanceInterval = setInterval(
-      getPerformanceSamples,
-      avgTps && avgTps < PERFORMANCE_THRESHOLD
-        ? isProd()
-          ? PERFORMANCE_SAMPLE_INTERVAL_FAST
-          : PERFORMANCE_SAMPLE_INTERVAL
+      let tpsValues = samples
+        .filter((sample) => {
+            return sample.numTransactions !== 0;
+        })
+        .map((sample) => {
+            return sample.numTransactions / sample.samplePeriodSecs;
+        });
+
+      tpsValues = round(tpsValues);
+      const averageTps = Math.round(tpsValues[0]);
+      return averageTps;
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
+  }, []);
+
+  // Get Performance Samples on a timeout
+  useEffect(() => {
+
+    // Hoping this to happens once
+    if (avgTps === undefined && needRefresh) {
+      setTimeout(() => {
+        setAvgTps(null);
+        setNeedRefresh(false);
+      });
+      getPerformanceSamples()
+        .then(value => {
+          if (value) {
+            setAvgTps(value);
+          }
+        });
+    }
+
+    // Set to run every 30 sec
+    const performanceInterval = setInterval(() => {
+      getPerformanceSamples()
+        .then(value => {
+          if (value) {
+            setNeedRefresh(true);
+            setAvgTps(value);
+          }
+        });
+    },
+    avgTps && avgTps < PERFORMANCE_THRESHOLD
+      ? isProd()
+        ? PERFORMANCE_SAMPLE_INTERVAL_FAST
         : PERFORMANCE_SAMPLE_INTERVAL
+      : PERFORMANCE_SAMPLE_INTERVAL
     );
-
-    getPerformanceSamples();
 
     return () => {
       clearInterval(performanceInterval);
     };
   }, [
     avgTps,
-    connectionConfig.endpoint
+    needRefresh,
+    getPerformanceSamples
   ]);
 
   const getPlatform = (): string => {
@@ -196,11 +221,12 @@ export const AppLayout = React.memo((props: any) => {
     if (environment === 'production') {
       ReactGA.pageview(location.pathname);
     }
-    // Report page view in Segment for all envs
-    if (analytics) {
-      analytics.page(location.pathname);
-    }
-  }, [location.pathname]);
+    // Report page view in Segment
+    segmentAnalytics.recordPageVisit(location.pathname)
+  }, [
+    publicKey,
+    location.pathname,
+  ]);
 
   // Effect Network change
   useEffect(() => {
@@ -223,6 +249,13 @@ export const AppLayout = React.memo((props: any) => {
     avgTps
   ]);
 
+  // Get the current ISO language used by the user
+  useEffect(() => {
+    const selectedLanguage = i18n.language;
+    const item = LANGUAGES.find(l => l.code === selectedLanguage)?.isoName;
+    setLanguage(item || LANGUAGES[0].isoName);
+  }, [i18n.language]);
+
   // Hook on the wallet connect/disconnect
   useEffect(() => {
     if (previousWalletConnectState !== connected) {
@@ -230,6 +263,17 @@ export const AppLayout = React.memo((props: any) => {
       if (!previousWalletConnectState && connected) {
         if (publicKey) {
           const walletAddress = publicKey.toBase58();
+
+          // Record user login in Segment Analytics
+          segmentAnalytics.recordIdentity(walletAddress, {
+            connected: true,
+            platform: getPlatform(),
+            browser: browserName,
+            walletProvider: provider?.name || 'Other',
+            theme: theme,
+            language: language
+          });
+
           if (!isLocal()) {
             sendConnectionMetric(walletAddress);
           }
@@ -264,22 +308,35 @@ export const AppLayout = React.memo((props: any) => {
           description: t('notifications.wallet-disconnect-message'),
           type: 'info'
         });
+        // Send identity to Segment if no wallew connection
+        if (!publicKey) {
+          segmentAnalytics.recordIdentity('', {
+            connected: false,
+            platform: getPlatform(),
+            browser: browserName
+          }, () => {
+            segmentAnalytics.recordEvent(AppUsageEvent.WalletDisconnected);
+          });
+        }
       }
     }
   }, [
+    theme,
     location,
+    language,
     publicKey,
     connected,
+    provider?.name,
     referralAddress,
     previousWalletConnectState,
-    t,
-    setStreamList,
-    setSelectedAsset,
-    setAccountAddress,
-    setReferralAddress,
-    refreshTokenBalance,
+    setPreviousWalletConnectState,
     sendConnectionMetric,
-    setPreviousWalletConnectState
+    refreshTokenBalance,
+    setReferralAddress,
+    setAccountAddress,
+    setSelectedAsset,
+    setStreamList,
+    t,
   ]);
 
   // Get referral address from query string params and save it to localStorage
@@ -381,7 +438,7 @@ export const AppLayout = React.memo((props: any) => {
     <>
     <div className="App">
       <Layout>
-        {(isProd() && avgTps !== undefined && avgTps < PERFORMANCE_THRESHOLD) && (
+        {(isProd() && (avgTps !== undefined && avgTps !== null) && avgTps < PERFORMANCE_THRESHOLD) && (
           <div className="warning-bar">
             <a className="simplelink underline-on-hover" target="_blank" rel="noopener noreferrer" href={SOLANA_STATUS_PAGE}>
               {t('notifications.network-performance-low')}

@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import './style.less';
 import { ArrowDownOutlined, CheckOutlined, ReloadOutlined } from "@ant-design/icons";
 import { Button, Tooltip, Row, Col, Space, Empty, Spin } from "antd";
@@ -9,12 +9,21 @@ import { useTranslation } from 'react-i18next';
 import { isDesktop } from "react-device-detect";
 import { TokenDisplay } from "../../components/TokenDisplay";
 import { PreFooter } from "../../components/PreFooter";
+import { useConnection, useConnectionConfig } from '../../contexts/connection';
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
 import { cutNumber, formatAmount, formatThousands, getAmountWithSymbol, isValidNumber } from "../../utils/utils";
 import { IconRefresh, IconStats } from "../../Icons";
 import { IconHelpCircle } from "../../Icons/IconHelpCircle";
 import useWindowSize from '../../hooks/useWindowResize';
+import { consoleOut, isLocal, isProd } from "../../utils/ui";
+import { useNavigate } from "react-router-dom";
+import { ConfirmOptions } from "@solana/web3.js";
+import { Provider } from "@project-serum/anchor";
+import { EnvMintAddresses, StakePoolInfo, StakingClient } from "@mean-dao/staking";
+import { StakeTabView } from "../../views/StakeTabView";
+import { UnstakeTabView } from "../../views/UnstakeTabView";
+import { MEAN_TOKEN_LIST } from "../../constants/token-list";
 
 type SwapOption = "stake" | "unstake";
 
@@ -22,14 +31,19 @@ export const InvestView = () => {
   const {
     selectedToken,
     unstakeAmount,
+    isWhitelisted,
     unstakeStartDate,
-    stakingMultiplier,
     detailsPanelOpen,
-    setFromCoinAmount,
+    stakingMultiplier,
     setIsVerifiedRecipient,
-    setDtailsPanelOpen
+    setDtailsPanelOpen,
+    setFromCoinAmount,
+    setSelectedToken,
   } = useContext(AppStateContext);
-  const { connected } = useWallet();
+  const navigate = useNavigate();
+  const connection = useConnection();
+  const { cluster, endpoint } = useConnectionConfig();
+  const { connected, publicKey } = useWallet();
   const { t } = useTranslation('common');
   const { width } = useWindowSize();
   const [isSmallUpScreen, setIsSmallUpScreen] = useState(isDesktop);
@@ -38,116 +52,221 @@ export const InvestView = () => {
   const [stakingRewards, setStakingRewards] = useState<number>(0);
   // const [selectedInvest, setSelectedInvest] = useState<any>(undefined);
   const annualPercentageYield = 5;
+  const [raydiumInfo, setRaydiumInfo] = useState<any>([]);
+  const [orcaInfo, setOrcaInfo] = useState<any>([]);
+  const [maxRadiumAprValue, setMaxRadiumAprValue] = useState<number>(0);
+  const [meanAddresses, setMeanAddresses] = useState<EnvMintAddresses>();
+  const [pageInitialized, setPageInitialized] = useState<boolean>(false);
+  const [sMeanStakingAmount, setSMeanStakingAmount] = useState<StakePoolInfo>();
+
+  // If there is no connected wallet or the connected wallet is not whitelisted
+  // when the App is run NOT in local mode then redirect user to /accounts
+  useEffect(() => {
+    if (!isLocal() && (!publicKey || !isWhitelisted)) {
+      navigate('/accounts');
+    }
+  }, [
+    publicKey,
+    isWhitelisted,
+    navigate
+  ]);
 
   const investItems = [
     {
       id: 0,
-      name: "MEAN",
+      name: "Stake",
       symbol1: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg",
       symbol2: "",
-      title: "Stake MEAN",
+      title: t("invest.panel-left.invest-stake-tab-title"),
       rateAmount: "52.09",
-      interval: "APR"
+      interval: "APY"
     },
     {
       id: 1,
-      name: "Test",
+      name: "Liquidity",
       symbol1: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R/logo.png",
       symbol2: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE/logo.png",
-      title: "MEAN Liquidity Pools and Farms",
-      rateAmount: "Up to 50",
-      interval: "APY"
-    }
-  ];
-
-  const stakingStats = [
-    {
-      label: t("invest.panel-right.stats.staking-apr"),
-      value: "52.09%"
-    },
-    {
-      label: t("invest.panel-right.stats.total-value-locked"),
-      value: "$7.64M"
-    },
-    {
-      label: t("invest.panel-right.stats.next-week-payout"),
-      value: "$108,730"
+      title: t("invest.panel-left.invest-liquidity-tab-title"),
+      rateAmount: `${t("invest.panel-left.liquidity-value-label")} ${maxRadiumAprValue}`,
+      interval: "APR/APY"
     }
   ];
 
   const stakingData = [
     {
-      label: "Your Current Stake:",
-      value: ""
-    },
-    {
-      label: "My Staked MEAN",
+      label: t("invest.panel-right.staking-data.label-my-staked"),
       value: unstakeAmount ? cutNumber(parseFloat(unstakeAmount), 6) : 0
     },
-    {
-      label: "Avg. Locked Yield",
-      value: `${annualPercentageYield}%`
-    },
-    {
-      label: "Staking Lock Boost",
-      value: `${stakingMultiplier}x boost`
-    },
     // {
-    //   label: "My Locked eMEAN",
+    //   label: t("invest.panel-right.staking-data.label-avg"),
+    //   value: `${annualPercentageYield}%`
+    // },
+    // {
+    //   label: t("invest.panel-right.staking-data.label-boost"),
+    //   value: `${stakingMultiplier}x boost`
+    // },
+    // {
+    //   label: t("invest.panel-right.staking-data.label-locked"),
     //   value: "1,000"
     // },
     // {
-    //   label: "My xMEAN Balance",
+    //   label: t("invest.panel-right.staking-data.label-balance"),
     //   value: "20,805.1232"
     // },
   ];
 
-  const liquidityPools = [
-    {
-      tokenImg: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R/logo.png",
-      platform: "Raydium",
-      pair: "MEAN/RAY",
-      liquidity: "1,937,521",
-      volume: "7,521.45",
-      anualPercentageRate: "5.1",
-      investLink: "https://raydium.io/liquidity/?ammId=HJNaZ5dDrKWKqo6JiBqjNvqfDFUtPVxS2fotbCdTw7pm"
-    },
-    {
-      tokenImg: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R/logo.png",
-      platform: "Raydium",
-      pair: "MEAN/SOL",
-      liquidity: "1,937,521",
-      volume: "7,521.45",
-      anualPercentageRate: "5.1",
-      investLink: "https://raydium.io/liquidity/?ammId=57sBQHecBZVxMdHB1pCVNEMyQXmZi7NrxgVRznkDmvKS"
-    },
-    {
-      tokenImg: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R/logo.png",
-      platform: "Raydium",
-      pair: "MEAN/USDC",
-      liquidity: "1,937,521",
-      volume: "7,521.45",
-      anualPercentageRate: "5.1",
-      investLink: "https://raydium.io/liquidity/?ammId=5jcGFqXyB3xUrdS7LGmJ3R5a4pYaPPFs3mjFnqgwgo4x"
-    },
-    {
-      tokenImg: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE/logo.png",
-      platform: "Orca",
-      pair: "MEAN/USDC",
-      liquidity: "1,937,521",
-      volume: "7,521.45",
-      anualPercentageRate: "5.1",
-      investLink: ""
-    },
-  ];
+  // Create and cache Staking client instance
+  const stakeClient = useMemo(() => {
+
+    const opts: ConfirmOptions = {
+      preflightCommitment: "confirmed",
+      commitment: "confirmed",
+    };
+
+    return new StakingClient(
+      cluster,
+      endpoint,
+      publicKey,
+      opts,
+      isProd() ? false : true
+    )
+
+  }, [
+    cluster,
+    endpoint,
+    publicKey
+  ]);
+
+  // Get tokens from staking client
+  useEffect(() => {
+    if (!stakeClient) {
+      return;
+    }
+
+    if (!pageInitialized) {
+      const meanAddress = stakeClient.getMintAddresses();
+
+      // stakeClient.getStakePoolInfo().then((value) => {
+      //   consoleOut("sMEAN to USDC rate: ", value.sMeanToUsdcRate);
+      //   consoleOut("MEAN to sMEAN rate: ", value.meanToSMeanRate);
+      //   consoleOut("sMEAN to MEAN rate: ", value.sMeanToMeanRate);
+      //   consoleOut("TVL: ", value.tvl);
+      //   consoleOut("APY: ", value.apy);
+      // });
+  
+      // consoleOut(meanAddress.mean.toBase58());
+      // consoleOut(meanAddress.sMean.toBase58());
+
+      setMeanAddresses(meanAddress);
+
+      if (currentTab === "stake") {
+        const token = MEAN_TOKEN_LIST.find(t => t.address === meanAddress.mean.toBase58());
+
+        if (token) {
+          consoleOut("MEAN token", token);
+          setSelectedToken(token);
+        } else {
+          consoleOut("MEAN not available in the token list, please add");
+        }
+
+      } else {
+        const token = MEAN_TOKEN_LIST.find(t => t.address === meanAddress.sMean.toBase58());
+
+        if (token) {
+          consoleOut("sMEAN token", token);
+          setSelectedToken(token);
+        } else {
+          consoleOut("sMEAN not available in the token list, please add");
+        }
+      }
+    }
+  }, [
+    stakeClient,
+    pageInitialized,
+    currentTab,
+    setSelectedToken
+  ]);
+
+  useEffect(() => {
+    if (!connection) { return; }
+
+    (async () => {
+      fetch('https://api.orca.so/pools')
+        .then((res) => res.json())
+        .then((data) => {
+          const orcaData = data.find((item: any) => item.name2 === "MEAN/USDC");
+
+          if (!Array.isArray(orcaData)) {
+            setOrcaInfo([orcaData]);
+          } else {
+            setOrcaInfo(orcaData);
+          }
+        })
+        .catch((error) => {
+          consoleOut(error);
+        })
+    })();
+
+    (async () => {
+      // fetch('https://api.raydium.io/pairs') - old version
+      fetch('https://api.raydium.io/v2/main/pairs')
+        .then((res) => res.json())
+        .then((data) => {
+          const raydiumData = data.filter((item: any) => item.name.substr(0, 4) === "MEAN");
+
+          let maxRadiumApr = raydiumData.map((item: any) => {
+            let properties = item.apr7d;
+
+            return properties;
+          });
+
+          setMaxRadiumAprValue(Math.max(...maxRadiumApr));
+
+          setRaydiumInfo(raydiumData);
+        })
+        .catch((error) => {
+          consoleOut(error);
+        })
+      })();
+
+  }, [connection]);  
 
   const [selectedInvest, setSelectedInvest] = useState<any>(investItems[0]);
 
-  const onTabChange = (option: SwapOption) => {
-    setCurrentTab(option);
-    setFromCoinAmount('');
-    setIsVerifiedRecipient(false);
-  }
+  const onTabChange = useCallback((option: SwapOption) => {
+    if (meanAddresses) {
+      if (option === "stake") {
+        const token = MEAN_TOKEN_LIST.find(t => t.address === meanAddresses.mean.toBase58());
+
+        if (token) {
+          consoleOut("MEAN token", token);
+          setSelectedToken(token);
+        } else {
+          consoleOut("MEAN not available in the token list, please add");
+        }
+
+      } else {
+        const token = MEAN_TOKEN_LIST.find(t => t.address === meanAddresses.sMean.toBase58());
+
+        if (token) {
+          consoleOut("sMEAN token", token);
+          setSelectedToken(token);
+        } else {
+          consoleOut("sMEAN not available in the token list, please add");
+        }
+      }
+
+      setCurrentTab(option);
+      setFromCoinAmount('');
+      setIsVerifiedRecipient(false);
+    }
+
+  }, [
+    meanAddresses,
+    setFromCoinAmount,
+    setIsVerifiedRecipient,
+    setSelectedToken
+  ]);
 
   // Withdraw funds modal
   const [isWithdrawModalVisible, setIsWithdrawModalVisible] = useState(false);
@@ -178,7 +297,17 @@ export const InvestView = () => {
     width,
     isSmallUpScreen,
     detailsPanelOpen,
-  ]);  
+  ]);
+
+  // Set when a page is initialized
+  useEffect(() => {
+    if (!pageInitialized && stakeClient) {
+      setPageInitialized(true);
+    }
+  }, [
+    pageInitialized,
+    stakeClient
+  ]);
 
   const renderInvestOptions = (
     <>
@@ -203,11 +332,11 @@ export const InvestView = () => {
                   )}
                 </div>
               </div>
-              <div className="description-cell">
+              <div className="description-cell pr-4">
                 <div className="title">{item.title}</div>
               </div>
-              <div className="rate-cell">
-                <div className="rate-amount">{item.rateAmount}%</div>
+              <div className="rate-cell w-50">
+                <div className="rate-amount" style={{minWidth: "fit-content !important"}}>{item.rateAmount}%</div>
                 <div className="interval">{item.interval}</div>
               </div>
             </div>
@@ -270,29 +399,51 @@ export const InvestView = () => {
                 {selectedInvest.id === 0 && (
                   <>
                     {/* Background animation */}
-                    {stakingRewards > 0 && (
+                    {/* {stakingRewards > 0 && (
                       <div className="staking-background">
                         <img className="inbound" src="/assets/incoming-crypto.svg" alt="" />
                       </div>
-                    )}
+                    )} */}
 
                     {/* Staking paragraphs */}
+                    <h2>{t("invest.panel-right.title")}</h2>
                     <p>{t("invest.panel-right.first-text")}</p>
-                    <p>{t("invest.panel-right.second-text")}</p>
+                    <p className="pb-1">{t("invest.panel-right.second-text")}</p>
                     <div className="pinned-token-separator"></div>
 
                     {/* Staking Stats */}
-                    <div className="invest-fields-container">
+                    <div className="invest-fields-container pt-2">
                       <div className="mb-3">
                         <Row>
-                          {stakingStats.map((stat, index) => (
-                            <Col key={index} span={8}>
-                              <div className="info-label">
-                                {stat.label}
-                              </div>
-                              <div className="transaction-detail-row">{stat.value}</div>
-                            </Col>
-                          ))}
+                          <Col span={8}>
+                            <div className="info-label icon-label justify-content-center">
+                              {t("invest.panel-right.stats.staking-apy")}
+                              <Tooltip placement="top" title={t("invest.panel-right.stats.staking-apy-tooltip")}>
+                                <span>
+                                  <IconHelpCircle className="mean-svg-icons" />
+                                </span>
+                              </Tooltip>
+                            </div>
+                            <div className="transaction-detail-row">
+                              52.09%
+                            </div>
+                          </Col>
+                          <Col span={8}>
+                            <div className="info-label">
+                              {t("invest.panel-right.stats.total-value-locked")}
+                            </div>
+                            <div className="transaction-detail-row">
+                              $7.64M
+                            </div>
+                          </Col>
+                          <Col span={8}>
+                            <div className="info-label">
+                              {t("invest.panel-right.stats.total-mean-rewards")}
+                            </div>
+                            <div className="transaction-detail-row">
+                              $108,730
+                            </div>
+                          </Col>
                         </Row>
                       </div>
                     </div>
@@ -300,31 +451,34 @@ export const InvestView = () => {
                     <Row gutter={[8, 8]} className="d-flex justify-content-center">
                       {/* Tabset */}
                       <Col xs={24} sm={12} md={24} lg={12} className="column-width">
-                        <div className="place-transaction-box mb-3">
-                          <div className="button-tabset-container">
-                            <div className={`tab-button ${currentTab === "stake" ? 'active' : ''}`} onClick={() => onTabChange("stake")}>
-                              {t('invest.panel-right.tabset.stake.name')}
+                        {meanAddresses && (
+                          <div className="place-transaction-box mb-3">
+                            <div className="button-tabset-container">
+                              <div className={`tab-button ${currentTab === "stake" ? 'active' : ''}`} onClick={() => onTabChange("stake")}>
+                                {t('invest.panel-right.tabset.stake.name')}
+                              </div>
+                              <div className={`tab-button ${currentTab === "unstake" ? 'active' : ''}`} onClick={() => onTabChange("unstake")}>
+                                {t('invest.panel-right.tabset.unstake.name')}
+                              </div>
                             </div>
-                            <div className={`tab-button ${currentTab === "unstake" ? 'active' : ''}`} onClick={() => onTabChange("unstake")}>
-                              {t('invest.panel-right.tabset.unstake.name')}
-                            </div>
+
+                            {/* Tab Stake */}
+                            {currentTab === "stake" && (
+                              <StakeTabView />
+                            )}
+
+                            {/* Tab unstake */}
+                            {currentTab === "unstake" && (
+                              <UnstakeTabView />
+                            )}
                           </div>
-
-                          {/* Tab Stake */}
-                          {currentTab === "stake" && (
-                            <StakeTabView />
-                          )}
-
-                          {/* Tab unstake */}
-                          {currentTab === "unstake" && (
-                            <UnstakeTabView />
-                          )}
-                        </div>
+                        )}
                       </Col>
 
                       {/* Staking data */}
                       <Col xs={24} sm={12} md={24} lg={12} className="column-width">
                         <div className="staking-data">
+                          <h3>{t("invest.panel-right.staking-data.title")}</h3>
                           <Row>
                             {stakingData.map((data, index) => (
                               <>
@@ -336,9 +490,10 @@ export const InvestView = () => {
                                 </Col>
                               </>
                             ))}
-                            <span className="info-label mt-1">{t("invest.panel-right.staking-data.text-one", {unstakeStartDate: unstakeStartDate})}</span>
-                            <span className="info-label">{t("invest.panel-right.staking-data.text-two")}</span>
-                            <Col span={24} className="d-flex flex-column justify-content-end align-items-end mt-1">
+                            {/* <span className="mt-2">{t("invest.panel-right.staking-data.text-one", {unstakeStartDate: unstakeStartDate})}</span> */}
+
+                            <span className="mt-1"><i>{t("invest.panel-right.staking-data.text-two")}</i></span>
+                            {/* <Col span={24} className="d-flex flex-column justify-content-end align-items-end mt-1">
                               <div className="transaction-detail-row">
                                 <span className="info-icon">
                                   {stakingRewards > 0 && (
@@ -349,10 +504,10 @@ export const InvestView = () => {
                                   <span className="staking-value mb-2 mt-1">{!stakingRewards ? 0 : cutNumber(stakingRewards, 6)} {selectedToken && selectedToken.name}</span>
                                 </span>
                               </div>
-                            </Col>
+                            </Col> */}
 
                             {/* Withdraw button */}
-                            <Col span={24} className="d-flex flex-column justify-content-end align-items-end mt-1">
+                            {/* <Col span={24} className="d-flex flex-column justify-content-end align-items-end mt-1">
                               <Space size="middle">
                                 <Button
                                   type="default"
@@ -365,7 +520,7 @@ export const InvestView = () => {
                                   {t("invest.panel-right.staking-data.withdraw-button")}
                                 </Button>
                               </Space>
-                            </Col>
+                            </Col> */}
 
                             {/* Withdraw funds transaction execution modal */}
                             <Modal
@@ -415,7 +570,6 @@ export const InvestView = () => {
                             size="middle"
                             icon={<IconRefresh className="mean-svg-icons" />}
                             onClick={() => {}}
-                            // disabled={}
                           />
                         </Tooltip>
                       </span>
@@ -423,44 +577,72 @@ export const InvestView = () => {
 
                     <div className="stats-row">
                       <div className="item-list-header compact"><div className="header-row">
-                        <div className="std-table-cell first-cell">&nbsp;</div>
-                        <div className="std-table-cell responsive-cell">{t("invest.panel-right.liquidity-pool.platform")}</div>
-                        <div className="std-table-cell responsive-cell pr-2">{t("invest.panel-right.liquidity-pool.lp-pair")}</div>
-                        <div className="std-table-cell responsive-cell pr-2 text-right">{t("invest.panel-right.liquidity-pool.liquidity")}</div>
-                        <div className="std-table-cell responsive-cell pr-2 text-right">{t("invest.panel-right.liquidity-pool.volume")}</div>
-                        <div className="std-table-cell responsive-cell pr-2 text-right">{t("invest.panel-right.liquidity-pool.est-apr")}</div>
-                        <div className="std-table-cell responsive-cell pl-2 text-center">{t("invest.panel-right.liquidity-pool.invest")}</div>
+                        <div className="std-table-cell responsive-cell text-left
+                        ">{t("invest.panel-right.liquidity-pool.column-platform")}</div>
+                        <div className="std-table-cell responsive-cell pr-1 text-left">{t("invest.panel-right.liquidity-pool.column-lppair")}</div>
+                        <div className="std-table-cell responsive-cell pr-2 text-right">{t("invest.panel-right.liquidity-pool.column-liquidity")}</div>
+                        <div className="std-table-cell responsive-cell pr-2 text-right">{t("invest.panel-right.liquidity-pool.column-volume")}</div>
+                        <div className="std-table-cell responsive-cell pr-2 text-right">{t("invest.panel-right.liquidity-pool.column-apr/apy")}</div>
+                        <div className="std-table-cell responsive-cell pl-1 text-center invest-col">{t("invest.panel-right.liquidity-pool.column-invest")}</div>
                         </div>
                       </div>
 
                       <div className="transaction-list-data-wrapper vertical-scroll">
                         <div className="activity-list h-100">
                           <div className="item-list-body compact">
-                            {liquidityPools.map((pool) => (
-                              <a className="item-list-row" target="_blank" rel="noopener noreferrer" href={pool.investLink}>
-                              <div className="std-table-cell first-cell">
-                                <div className="icon-cell">
+                            {raydiumInfo.map((raydium: any) => (
+                              <a key={raydium.ammId} className="item-list-row" target="_blank" rel="noopener noreferrer" 
+                              href={`https://raydium.io/liquidity/add/?coin0=MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD&coin1=${raydium.name.slice(5) === "SOL" ? "sol&fixed" : raydium.name.slice(5) === "RAY" ? "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R&fixed" : "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&fixed"}=coin0&ammId=${raydium.ammId}`}>
+                              <div className="std-table-cell responsive-cell pl-0">
+                                <div className="icon-cell pr-1 d-inline-block">
                                   <div className="token-icon">
-                                    <img alt={pool.platform} width="20" height="20" src={pool.tokenImg} />
+                                    <img alt="Raydium" width="20" height="20" src="https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R/logo.png" />
                                   </div>
                                 </div>
+                                <span>Raydium</span>
                               </div>
-                              <div className="std-table-cell responsive-cell">
-                                <span>{pool.platform}</span>
+                              <div className="std-table-cell responsive-cell pr-1">
+                                <span>{raydium.name.replace(/-/g, "/")}</span>
                               </div>
-                              <div className="std-table-cell responsive-cell pr-2">
-                                <span>{pool.pair}</span>
+                              <div className="std-table-cell responsive-cell pr-1 text-right">
+                                <span>{raydium.liquidity > 0 ? `$${formatThousands(raydium.liquidity)}` : "--"}</span>
                               </div>
-                              <div className="std-table-cell responsive-cell pr-2 text-right">
-                                <span>${pool.liquidity}</span>
+                              <div className="std-table-cell responsive-cell pr-1 text-right">
+                                <span>{raydium.volume24h > 0 ? `$${formatThousands(raydium.volume24h)}` : "--"}</span>
                               </div>
-                              <div className="std-table-cell responsive-cell pr-2 text-right">
-                                <span>${pool.volume}</span>
+                              <div className="std-table-cell responsive-cell pr-1 text-right">
+                                <span>{raydium.apr7d > 0 ? `${cutNumber(raydium.apr7d, 2)}%` : "--"}</span>
                               </div>
-                              <div className="std-table-cell responsive-cell pr-2 text-right">
-                                <span>{pool.anualPercentageRate}%</span>
+                              <div className="std-table-cell responsive-cell pl-1 text-center invest-col">
+                                <span role="img" aria-label="arrow-up" className="anticon anticon-arrow-up mean-svg-icons outgoing upright">
+                                  <svg viewBox="64 64 896 896" focusable="false" data-icon="arrow-up" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M868 545.5L536.1 163a31.96 31.96 0 00-48.3 0L156 545.5a7.97 7.97 0 006 13.2h81c4.6 0 9-2 12.1-5.5L474 300.9V864c0 4.4 3.6 8 8 8h60c4.4 0 8-3.6 8-8V300.9l218.9 252.3c3 3.5 7.4 5.5 12.1 5.5h81c6.8 0 10.5-8 6-13.2z"></path></svg>
+                                </span>
                               </div>
-                              <div className="std-table-cell responsive-cell pl-2 text-center">
+                              </a>
+                            ))}
+                            {orcaInfo.map((orca: any) => (
+                              <a key={orca.name2} className="item-list-row" target="_blank" rel="noopener noreferrer" href="https://www.orca.so/pools">
+                              <div className="std-table-cell responsive-cell pl-0">
+                                <div className="icon-cell pr-1 d-inline-block">
+                                  <div className="token-icon">
+                                    <img alt="Raydium" width="20" height="20" src="https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE/logo.png" />
+                                  </div>
+                                </div>
+                                <span>Orca</span>
+                              </div>
+                              <div className="std-table-cell responsive-cell pr-1">
+                                <span>{orca.name2}</span>
+                              </div>
+                              <div className="std-table-cell responsive-cell pr-1 text-right">
+                                <span>{orca.liquidity > 0 ? `$${formatThousands(orca.liquidity)}` : "--"}</span>
+                              </div>
+                              <div className="std-table-cell responsive-cell pr-1 text-right">
+                                <span>{orca.volume_24h > 0 ? `$${formatThousands(orca.volume_24h)}` : "--"}</span>
+                              </div>
+                              <div className="std-table-cell responsive-cell pr-1 text-right">
+                                <span>{orca.apy_7d > 0 ? `${cutNumber(orca.apy_7d * 100, 2)}% APY` : "--"}</span>
+                              </div>
+                              <div className="std-table-cell responsive-cell pl-1 text-center invest-col">
                                 <span role="img" aria-label="arrow-up" className="anticon anticon-arrow-up mean-svg-icons outgoing upright">
                                   <svg viewBox="64 64 896 896" focusable="false" data-icon="arrow-up" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M868 545.5L536.1 163a31.96 31.96 0 00-48.3 0L156 545.5a7.97 7.97 0 006 13.2h81c4.6 0 9-2 12.1-5.5L474 300.9V864c0 4.4 3.6 8 8 8h60c4.4 0 8-3.6 8-8V300.9l218.9 252.3c3 3.5 7.4 5.5 12.1 5.5h81c6.8 0 10.5-8 6-13.2z"></path></svg>
                                 </span>
@@ -488,401 +670,3 @@ export const InvestView = () => {
     </>
   );
 };
-
-export const StakeTabView = () => {
-  const {
-    selectedToken,
-    tokenBalance,
-    effectiveRate,
-    loadingPrices,
-    fromCoinAmount,
-    isVerifiedRecipient,
-    paymentStartDate,
-    unstakeAmount,
-    unstakeStartDate,
-    refreshPrices,
-    setFromCoinAmount,
-    setIsVerifiedRecipient,
-    setUnstakeAmount,
-    setUnstakeStartDate,
-    setStakingMultiplier
-  } = useContext(AppStateContext);
-  const { connected } = useWallet();
-  const { t } = useTranslation('common');
-  const periods = [
-    {
-      value: 7,
-      time: t("invest.panel-right.tabset.stake.days"),
-      multiplier: 1
-    },
-    {
-      value: 30,
-      time: t("invest.panel-right.tabset.stake.days"),
-      multiplier: 1.1
-    },
-    {
-      value: 90,
-      time: t("invest.panel-right.tabset.stake.days"),
-      multiplier: 1.2
-    },
-    {
-      value: 1,
-      time: t("invest.panel-right.tabset.stake.year"),
-      multiplier: 2.0
-    },
-    {
-      value: 4,
-      time: t("invest.panel-right.tabset.stake.years"),
-      multiplier: 4.0
-    },
-  ];
-
-  const [periodValue, setPeriodValue] = useState<number>(periods[0].value);
-  const [periodTime, setPeriodTime] = useState<string>(periods[0].time);
-
-  // Transaction execution modal
-  const [isTransactionModalVisible, setTransactionModalVisible] = useState(false);
-  const showTransactionModal = useCallback(() => setTransactionModalVisible(true), []);
-  const closeTransactionModal = useCallback(() => setTransactionModalVisible(false), []);
-
-  const handleFromCoinAmountChange = (e: any) => {
-    const newValue = e.target.value;
-    if (newValue === null || newValue === undefined || newValue === "") {
-      setFromCoinAmount("");
-    } else if (newValue === '.') {
-      setFromCoinAmount(".");
-    } else if (isValidNumber(newValue)) {
-      setFromCoinAmount(newValue);
-    }
-  };
-
-  const isSendAmountValid = (): boolean => {
-    return  connected &&
-            selectedToken &&
-            tokenBalance &&
-            fromCoinAmount &&
-            parseFloat(fromCoinAmount) > 0 &&
-            parseFloat(fromCoinAmount) <= tokenBalance
-      ? true
-      : false;
-  }
-
-  const areSendAmountSettingsValid = (): boolean => {
-    return paymentStartDate && isSendAmountValid() ? true : false;
-  }  
-
-  const onIsVerifiedRecipientChange = (e: any) => {
-    setIsVerifiedRecipient(e.target.checked);
-  }
-
-  const onAfterTransactionModalClosed = () => {
-    const unstakeAmountAfterTransaction = !unstakeAmount ? fromCoinAmount : `${parseFloat(unstakeAmount) + parseFloat(fromCoinAmount)}`;
-
-    setUnstakeAmount(unstakeAmountAfterTransaction);
-    setFromCoinAmount("");
-    setIsVerifiedRecipient(false);
-    closeTransactionModal();
-  }
-
-  const onTransactionStart = useCallback(async () => {
-    showTransactionModal();
-  }, [
-    showTransactionModal
-  ]);
-
-  const onChangeValue = (value: number, time: string, rate: number) => {
-    setPeriodValue(value);
-    setPeriodTime(time);
-    setStakingMultiplier(rate);
-  }
-
-  useEffect(() => {
-    const unstakeStartDateUpdate = moment().add(periodValue, periodValue === 1 ? "year" : periodValue === 4 ? "years" : "days").format("LL")
-
-    setUnstakeStartDate(unstakeStartDateUpdate);
-  }, [periodTime, periodValue, setUnstakeStartDate]);
-  
-  return (
-    <>
-      <div className="form-label">{t("invest.panel-right.tabset.stake.amount-label")}</div>
-      <div className="well">
-        <div className="flex-fixed-left">
-          <div className="left">
-            <span className="add-on simplelink">
-              {selectedToken && (
-                <TokenDisplay onClick={() => {}}
-                  mintAddress={selectedToken.address}
-                  name={selectedToken.name}
-                />
-              )}
-            </span>
-          </div>
-          <div className="right">
-            <input
-              className="general-text-input text-right"
-              inputMode="decimal"
-              autoComplete="off"
-              autoCorrect="off"
-              type="text"
-              onChange={handleFromCoinAmountChange}
-              pattern="^[0-9]*[.,]?[0-9]*$"
-              placeholder="0.0"
-              minLength={1}
-              maxLength={79}
-              spellCheck="false"
-              value={fromCoinAmount}
-            />
-          </div>
-        </div>
-        <div className="flex-fixed-right">
-          <div className="left inner-label">
-            <span>{t('transactions.send-amount.label-right')}:</span>
-            <span>
-              {`${tokenBalance && selectedToken
-                  ? getAmountWithSymbol(tokenBalance, selectedToken?.address, true)
-                  : "0"
-              }`}
-            </span>
-          </div>
-          <div className="right inner-label">
-            <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
-              ~${fromCoinAmount && effectiveRate
-                ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
-                : "0.00"}
-            </span>
-          </div>
-        </div>
-      </div>
-    
-      {/* Periods */}
-      <span className="info-label">{t("invest.panel-right.tabset.stake.period-label")}</span>
-      <div className="flexible-left mb-1 mt-2">
-        <div className="left token-group">
-          {periods.map((period, index) => (
-            <div key={index} className="mb-1 d-flex flex-column align-items-center">
-              <div className="token-max simplelink" onClick={() => onChangeValue(period.value, period.time, period.multiplier)}>{period.value} {period.time}</div>
-              <span>{`${period.multiplier}x`}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-      <span className="info-label">{t("invest.panel-right.tabset.stake.notification-label", { periodValue: periodValue, periodTime: periodTime, unstakeStartDate: unstakeStartDate })}</span>
-
-      {/* Confirm that have read the terms and conditions */}
-      <div className="mt-2 d-flex confirm-terms">
-        <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>{t("invest.panel-right.tabset.stake.verified-label")}</Checkbox>
-        <Tooltip placement="top" title={t("invest.panel-right.tabset.stake.terms-and-conditions-tooltip")}>
-          <span>
-            <IconHelpCircle className="mean-svg-icons" />
-          </span>
-        </Tooltip>
-      </div>
-
-      {/* Action button */}
-      <Button
-        className="main-cta mt-2"
-        block
-        type="primary"
-        shape="round"
-        size="large"
-        onClick={onTransactionStart}
-        disabled={
-          !areSendAmountSettingsValid() ||
-          !isVerifiedRecipient}
-      >
-        {t("invest.panel-right.tabset.stake.stake-button")} {selectedToken && selectedToken.name}
-      </Button>
-
-      {/* Transaction execution modal */}
-      <Modal
-        className="mean-modal no-full-screen"
-        maskClosable={false}
-        visible={isTransactionModalVisible}
-        onCancel={closeTransactionModal}
-        afterClose={onAfterTransactionModalClosed}
-        width={330}
-        footer={null}>
-        <div className="transaction-progress"> 
-          <CheckOutlined style={{ fontSize: 48 }} className="icon" />
-          <h4 className="font-bold mb-1 text-uppercase">
-            Operation completed
-          </h4>
-          <p className="operation">
-            {fromCoinAmount} {selectedToken && selectedToken.name} has been stake successfully
-          </p>
-          <Button
-            block
-            type="primary"
-            shape="round"
-            size="middle"
-            onClick={closeTransactionModal}>
-            {t('general.cta-close')}
-          </Button>
-        </div>
-      </Modal>
-    </>
-  )
-}
-
-export const UnstakeTabView = () => {
-  const {
-    selectedToken,
-    effectiveRate,
-    loadingPrices,
-    fromCoinAmount,
-    // isVerifiedRecipient,
-    paymentStartDate,
-    unstakeStartDate,
-    unstakeAmount,
-    refreshPrices,
-    setFromCoinAmount,
-    setUnstakeAmount
-    // setIsVerifiedRecipient
-  } = useContext(AppStateContext);
-  const { t } = useTranslation('common');
-  const percentages = [25, 50, 75, 100];
-  const [percentageValue, setPercentageValue] = useState<number>(0);
-  const [availableUnstake, setAvailableUnstake] = useState<number>(0);
-
-  const currentDate = moment().format("LL");
-
-  const onChangeValue = (value: number) => {
-    setPercentageValue(value);
-  };
-  
-  const handleFromCoinAmountChange = (e: any) => {
-    const newValue = e.target.value;
-    if (newValue === null || newValue === undefined || newValue === "") {
-      setFromCoinAmount("");
-    } else if (newValue === '.') {
-      setFromCoinAmount(".");
-    } else if (isValidNumber(newValue)) {
-      setFromCoinAmount(newValue);
-    }
-  };
-
-  // const onIsVerifiedRecipientChange = (e: any) => {
-  //   setIsVerifiedRecipient(e.target.checked);
-  // }
-
-  const isSendAmountValid = (): boolean => {
-    return  fromCoinAmount &&
-            parseFloat(fromCoinAmount) > 0 &&
-            parseFloat(fromCoinAmount) <= parseFloat(unstakeAmount)
-      ? true
-      : false;
-  }
-
-  const areSendAmountSettingsValid = (): boolean => {
-    return paymentStartDate && isSendAmountValid() ? true : false;
-  }
-
-  const handleUnstake = () => {
-    const newUnstakeAmount = (parseFloat(unstakeAmount) - parseFloat(fromCoinAmount)).toString();
-
-    setUnstakeAmount(newUnstakeAmount);
-    setFromCoinAmount('');
-  }
-
-  useEffect(() => {
-    const percentageFromCoinAmount = parseFloat(unstakeAmount) > 0 ? `${(parseFloat(unstakeAmount)*percentageValue/100)}` : '';
-
-    setFromCoinAmount(percentageFromCoinAmount);
-    // setFromCoinAmount(formatAmount(parseFloat(percentageFromCoinAmount), 6).toString());
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [percentageValue]);
-
-  useEffect(() => {
-    parseFloat(unstakeAmount) > 0 && currentDate === unstakeStartDate ?
-      setAvailableUnstake(parseFloat(unstakeAmount))
-    :
-      setAvailableUnstake(0)
-  }, [currentDate, unstakeAmount, unstakeStartDate]);
-
-  return (
-    <>
-      <span className="info-label">{unstakeAmount ? t("invest.panel-right.tabset.unstake.notification-label-one", {unstakeAmount: cutNumber(parseFloat(unstakeAmount), 6), unstakeStartDate: unstakeStartDate}) : t("invest.panel-right.tabset.unstake.notification-label-one-error")}</span>
-      <div className="form-label mt-2">{t("invest.panel-right.tabset.unstake.amount-label")}</div>
-      <div className="well">
-        <div className="flexible-right mb-1">
-          <div className="token-group">
-            {percentages.map((percentage, index) => (
-              <div key={index} className="mb-1 d-flex flex-column align-items-center">
-                <div className={`token-max simplelink ${availableUnstake !== 0 ? "active" : "disabled"}`} onClick={() => onChangeValue(percentage)}>{percentage}%</div>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="flex-fixed-left">
-          <div className="left">
-            <span className="add-on simplelink">
-              {selectedToken && (
-                <TokenDisplay onClick={() => {}}
-                  mintAddress={selectedToken.address}
-                  name={selectedToken.name}
-                />
-              )}
-            </span>
-          </div>
-          <div className="right">
-            <input
-              className="general-text-input text-right"
-              inputMode="decimal"
-              autoComplete="off"
-              autoCorrect="off"
-              type="text"
-              onChange={handleFromCoinAmountChange}
-              pattern="^[0-9]*[.,]?[0-9]*$"
-              placeholder="0.0"
-              minLength={1}
-              maxLength={79}
-              spellCheck="false"
-              value={fromCoinAmount}
-            />
-          </div>
-        </div>
-        <div className="flex-fixed-right">
-          <div className="left inner-label">
-            <span>{t('invest.panel-right.tabset.unstake.send-amount.label-right')}:</span>
-            <span>{formatAmount(availableUnstake, 6)}</span>
-          </div>
-          <div className="right inner-label">
-            <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
-              ~${fromCoinAmount && effectiveRate
-                ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
-                : "0.00"}
-            </span>
-          </div>
-        </div>
-      </div>
-      <span className="info-label">{t("invest.panel-right.tabset.unstake.notification-label-two")}</span>
-      
-      {/* Confirm that have read the terms and conditions */}
-      {/* <div className="mt-2 confirm-terms">
-        <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>{t("invest.panel-right.tabset.unstake.verified-label")}</Checkbox>
-        <Tooltip placement="top" title={t("invest.panel-right.tabset.unstake.terms-and-conditions-tooltip")}>
-          <span>
-            <IconHelpCircle className="mean-svg-icons" />
-          </span>
-        </Tooltip>
-      </div> */}
-
-      {/* Action button */}
-      <Button
-        className="main-cta mt-2"
-        block
-        type="primary"
-        shape="round"
-        size="large"
-        onClick={handleUnstake}
-        disabled={
-          !areSendAmountSettingsValid() ||
-          // !isVerifiedRecipient ||
-          availableUnstake <= 0
-        }
-      >
-        {availableUnstake <= 0 ? t("invest.panel-right.tabset.unstake.unstake-button-unavailable") : t("invest.panel-right.tabset.unstake.unstake-button-available")} {selectedToken && selectedToken.name}
-      </Button>
-    </>
-  )
-}

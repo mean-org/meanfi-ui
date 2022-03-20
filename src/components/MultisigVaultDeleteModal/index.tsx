@@ -86,7 +86,7 @@ export const MultisigVaultDeleteModal = (props: {
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={<div className="modal-title">{t('multisig.multisig-vaults.delete-vault.modal-title')}</div>}
+      title={<div className="modal-title">{t('multisig.multisig-assets.delete-asset.modal-title')}</div>}
       footer={null}
       visible={props.isVisible}
       onOk={onAcceptDeleteVault}
@@ -97,11 +97,11 @@ export const MultisigVaultDeleteModal = (props: {
         {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
           <>
             {(props.selectedVault && props.selectedVault.amount.toNumber() > 0) && (
-              <h3>{t('multisig.multisig-vaults.delete-vault.warning-message')}</h3>
+              <h3>{t('multisig.multisig-assets.delete-asset.warning-message')}</h3>
             )}
             {props.selectedVault && (
               <div className="mb-3">
-                <div className="form-label">{t('multisig.multisig-vaults.delete-vault.selected-vault-label')}</div>
+                <div className="form-label">{t('multisig.multisig-assets.delete-asset.selected-asset-label')}</div>
                 <div className="well">
                   {renderVault(props.selectedVault)}
                 </div>
@@ -109,7 +109,7 @@ export const MultisigVaultDeleteModal = (props: {
             )}
 
             {/* explanatory paragraph */}
-            <p>{t('multisig.multisig-vaults.delete-vault.explanatory-paragraph')}</p>
+            <p>{t('multisig.multisig-assets.delete-asset.explanatory-paragraph')}</p>
           </>
         ) : (
           <>
@@ -179,7 +179,7 @@ export const MultisigVaultDeleteModal = (props: {
             {props.isBusy
               ? t('multisig.transfer-tokens.main-cta-busy')
               : transactionStatus.currentOperation === TransactionStatus.Iddle
-                ? t('multisig.multisig-vaults.delete-vault.main-cta')
+                ? t('multisig.multisig-assets.delete-asset.main-cta')
                 : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
                   ? t('general.cta-finish')
                   : t('general.refresh')

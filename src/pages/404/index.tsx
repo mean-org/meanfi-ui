@@ -15,7 +15,7 @@ export const NotFoundView = () => {
       <Helmet>
         <title>{t("page-not-found.title")}</title>
         <link rel="canonical" href="https://app.meanfi.com/404" />
-        <meta name="description" content="Water flows, and now, money does too. Welcome to Mean Finance, your money unleashed!" />
+        <meta name="description" content="Water flows, and now, money does too. Welcome to Mean Finance. Are you lost?" />
       </Helmet>
       <div className="container main-container">
         <div className="not-found-container">

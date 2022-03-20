@@ -21,10 +21,11 @@ import {
   WrapView,
   MultisigView,
   StatsView,
-  MultisigVaultsView,
+  MultisigAssetsView,
   MultisigProgramsView,
   MultisigMintsView,
-  MultisigTreasuriesStreams
+  MultisigTreasuryStreams,
+  JupiterExchangeTestingPage
 } from "./pages";
 
 import { ServiceUnavailableView } from "./pages/service-unavailable";
@@ -55,6 +56,7 @@ export function AppRoutes() {
                       <Route path="/faucet" element={<FaucetView />} />
                       <Route path="/transfers" element={<TransfersView />} />
                       <Route path="/payroll" element={<PayrollView />} />
+                      <Route path="/jupiter-exchange-testing" element={<JupiterExchangeTestingPage />} />
                       <Route path="/exchange" element={<SwapView />} />
                       {(isProd() || isLocal()) && (
                         <Route path="/exchange-dcas" element={<ExchangeDcasView />} />
@@ -73,10 +75,10 @@ export function AppRoutes() {
                       <Route path="/stats" element={<StatsView />} />
                       <Route path="/custody" element={<CustodyView />} />
                       <Route path="/treasuries" element={<TreasuriesView />} />
-                      <Route path="/treasuries/:id/streams" element={<MultisigTreasuriesStreams />} />
+                      <Route path="/treasuries/:id/streams" element={<MultisigTreasuryStreams />} />
                       <Route path="/multisig" element={<MultisigView />} />
                       <Route path="/multisig-mints" element={<MultisigMintsView />} />
-                      <Route path="/multisig-vaults" element={<MultisigVaultsView />} />
+                      <Route path="/multisig-assets" element={<MultisigAssetsView />} />
                       <Route path="/multisig-programs" element={<MultisigProgramsView />} />
                       <Route path="/service-unavailable" element={<ServiceUnavailableView />} />
                       <Route path='*' element={<NotFoundView />} />

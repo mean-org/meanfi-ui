@@ -288,43 +288,32 @@
 		"you": "vocês"
 	},
 	"invest": {
+		"title": "Invest",
+		"subtitle": "The easiest way to grow your money stash",
+		"screen-title": "Invest Options",
+		"refresh-tooltip": "Refresh invest data",
 		"panel-left": {
+			"invest-stake-tab-title": "Stake MEAN",
+			"invest-liquidity-tab-title": "MEAN Liquidity Pools",
+			"liquidity-value-label": "Up to",
 			"no-invest-options": "No invest options available",
 			"not-connected": "Please connect your wallet to see your invest options"
 		},
 		"panel-right": {
-			"first-text": "MEAN staking rewards include emission incentives plus 30% of the protocol revenues (calculated weekly), and can be boosted using locking periods.",
-			"second-text": "Your staking rewards will be streamed over time and they can be withdrawn at any time.",
-			"staking-data": {
-				"text-one": "MEAN tokens locked till {{unstakeStartDate}}",
-				"text-two": "Staking rewards available to withdraw:",
-				"withdraw-button": "Withdraw Rewards"
-			},
-			"liquidity-pool": {
-				"title": "Mean Liquidity Pools & Farms",
-				"text-one": "MEAN Liquidity Pools are currently available on Orca and Raydium with multiple pools including MEAN/SOL, MEAN/RAY and MEAN/USDC.",
-				"text-two": "Before you add funds to a pool, be sure to read and accept the risks associated with investing in a Liquidity pool.",
-				"refresh-tooltip": "Refresh liquidity data",
-				"platform": "Platform",
-				"lp-pair": "LP Pair",
-				"liquidity": "Liquidity",
-				"volume": "Vol (24hrs)",
-				"est-apr": "Est APR",
-				"invest": "Invest"
-			},
+			"title": "Stake MEAN to Earn MEAN Rewards",
+			"first-text": "MEAN staking rewards include emission incentives plus a share of the protocol revenues, and can be boosted using locking periods. When you stake your MEAN, you get sMEAN in return.",
+			"second-text": "Simply holding your sMEAN is all that is required to continuously grow your MEAN stash. You don't need to harvest the rewards with MEAN staking. When you unstake your sMEAN, you will receive the rewards earned in the form of additional MEAN on top of the amount staked.",
 			"stats": {
-				"next-week-payout": "Next Week Payout",
-				"staking-apr": "Staking APR",
-				"total-value-locked": "Total Value Locked"
+				"staking-apy": "Staking APY",
+				"staking-apy-tooltip": "The APY associated with sMEAN is a representation of the price of sMEAN over a 365 day period.",
+				"total-value-locked": "Total Value Locked",
+				"total-mean-rewards": "Total MEAN Rewards"
 			},
 			"tabset": {
 				"stake": {
 					"amount-label": "Amount to stake",
 					"days": "days",
-					"name": "Stake",
-					"notification-label": "Staking period of {{periodValue}} {{periodTime}} will lock your Tokens until {{unstakeStartDate}} with estimated rewards of up to 100 MEAN",
-					"period-label": "How long do you want to stake for?",
-					"stake-button": "Stake",
+					"notification-label": "Staking period of {{periodValue}} {{periodTime}} will lock your Tokens until {{unstakeStartDate}}.",
 					"terms-and-conditions-tooltip": "Your tokens will be locked for the period of time selected and you will not be able to unstake them before the staking period ends. When you stake additional tokens to an existing contract, the staking period will be extended to the new end date for ALL of the tokens locked.",
 					"verified-label": "I agree to the Terms & Conditions",
 					"year": "year",
@@ -333,9 +322,9 @@
 				"unstake": {
 					"amount-label": "Amount to unstake",
 					"name": "Unstake",
-					"notification-label-one": "Your currently have {{unstakeAmount}} MEAN staked which is currently locked until {{unstakeStartDate}}",
-					"notification-label-one-error": "You don't have any MEAN staked",
-					"notification-label-two": "Unstaking will withdraw the specified amount of unlocked MEAN tokens to your wallet",
+					"notification-label-one": "Your currently have {{unstakeAmount}} sMEAN staked which is currently locked until {{unstakeStartDate}}",
+					"notification-label-one-error": "You don't have any sMEAN staked",
+					"notification-label-two": "Unstaking will withdraw the specified amount of unlocked sMEAN tokens to your wallet",
 					"send-amount": {
 						"label-right": "Available to unstake"
 					},
@@ -343,12 +332,31 @@
 					"unstake-button-unavailable": "No available",
 					"verified-label": "I agree to the Terms & Conditions"
 				}
+			},
+			"liquidity-pool": {
+				"title": "MEAN Liquidity Pools",
+				"text-one": "MEAN Liquidity Pools are currently available on Orca and Raydium with multiple pools including MEAN/SOL, MEAN/RAY and MEAN/USDC.",
+				"text-two": "Before you add funds to a pool, be sure to read and accept the risks associated with investing in a liquidity pool.",
+				"refresh-tooltip": "Refresh liquidity data",
+				"column-platform": "Platform",
+				"column-lppair": "LP Pair",
+				"column-liquidity": "Liquidity",
+				"column-volume": "Vol (24hrs)",
+				"column-apr/apy": "APR/APY",
+				"column-invest": "Invest"
+			},
+			"staking-data": {
+				"title": "Your Current Stake:",
+				"label-my-staked": "My Staked MEAN",
+				"label-avg": "Avg. Locked Yield",
+				"label-boost": "Staking Lock Boost",
+				"label-locked": "My Locked eMEAN",
+				"label-balance": "My xMEAN Balance",
+				"text-one": "MEAN tokens locked till {{unstakeStartDate}}",
+				"text-two": "Locking boost periods are coming soon to earn even more MEAN!",
+				"withdraw-button": "Withdraw Funds"
 			}
-		},
-		"refresh-tooltip": "Refresh invest data",
-		"screen-title": "Invest Options",
-		"subtitle": "The easiest way to grow your money stash",
-		"title": "Invest"
+		}
 	},
 	"language-selector": {
 		"modal-title": "Seletor de idioma",
@@ -379,7 +387,7 @@
 			"success-message": "Sua nova conta multisig foi criada com sucesso."
 		},
 		"create-new-multisig-account-cta": "Criar multisig",
-		"create-vault": {
+		"create-asset": {
 			"main-cta": "Crio",
 			"main-cta-busy": "Criando cofre",
 			"modal-title": "Criar um cofre multisig",
@@ -411,18 +419,17 @@
 			"authority": "Autoridade",
 			"copy-id-title": "ID MULTIIG",
 			"created-on": "Criado em",
-			"cta-create-vault": "Criar cofre",
+			"cta-create-asset": "Criar cofre",
 			"cta-mint": "Hortelã",
 			"cta-no-programs": "Programas",
 			"cta-no-treasuries": "Tesouros",
-			"cta-no-vaults": "Cofres",
+			"cta-no-assets": "Cofres",
 			"cta-no-mints": "Mints",
 			"cta-programs": "Programas ({{itemCount}})",
 			"cta-transfer": "Transferir tokens",
 			"cta-treasuries": "Tesouros ({{itemCount}})",
 			"cta-upgrade-program": "Programa de atualização",
-			"cta-upgrade-idl-busy": "Upgrading IDL",
-			"cta-vaults": "Cofres ({{itemCount}})",
+			"cta-assets": "Cofres ({{itemCount}})",
 			"cta-mints": "Mints ({{itemCount}})",
 			"multisig-address-label": "Endereço",
 			"multisig-label-label": "Nome multisig",
@@ -511,43 +518,26 @@
 			"not-signed": "Not Signed"
 		},
 		"multisig-treasuries": {
-			"back-to-multisig-accounts-cta": "Voltar para contas Multisig",
-			"back-to-treasuries": "Back to treasuries",
-			"cta-change-multisig-authority": "Transferir propriedade",
-			"cta-change-multisig-authority-busy": "Mudando o Multisig",
-			"cta-close": "Fechar tesouraria",
-			"cta-close-busy": "Tesouraria de fechamento",
-			"cta-create-treasury": "Criar tesouraria",
-			"cta-create-treasury-busy": "Criando tesouraria",
-			"cta-transfer": "Iniciar Retirada",
-			"cta-transfer-busy": "Iniciando a Solicitação de Retirada",
-			"multisig-treasury-detail-heading": "Detalhes do Tesouro",
-			"no-transactions": "Nenhuma transação para este tesouro",
-			"no-vault-loaded": "Nenhum tesouro carregado",
-			"no-vaults": "Não há tesourarias multisig disponíveis",
-			"not-connected": "Por favor, conecte sua carteira para ver os tesouros",
-			"refresh-tooltip": "Clique para atualizar a lista de tesouros",
-			"screen-title": "Tesouros - {{multisigName}} ({{itemCount}})",
-			"screen-title-no-vaults": "Tesouros"
+			"back-to-treasuries": "Back to treasuries"
 		},
-		"multisig-vaults": {
+		"multisig-assets": {
 			"back-to-multisig-accounts-cta": "Voltar para contas Multisig",
 			"cta-change-multisig-authority": "Transferir propriedade",
 			"cta-change-multisig-authority-busy": "Mudando o Multisig",
 			"cta-close": "Fechar cofre",
 			"cta-close-busy": "Fechando cofre",
-			"cta-create-vault-busy": "Criando cofre",
+			"cta-create-asset-busy": "Criando cofre",
 			"cta-transfer": "Iniciar Retirada",
 			"cta-transfer-busy": "Iniciando a Solicitação de Retirada",
 			"no-transactions": "Nenhuma transação para este cofre",
-			"no-vault-loaded": "Nenhum cofre carregado",
-			"no-vaults": "Não há cofres disponíveis",
+			"no-asset-loaded": "Nenhum cofre carregado",
+			"no-assets": "Não há cofres disponíveis",
 			"not-connected": "Conecte sua carteira para ver os cofres",
 			"refresh-tooltip": "Clique para atualizar a lista de cofres",
-			"screen-title": "Cofres - {{multisigName}} ({{vaultCount}})",
-			"screen-title-no-vaults": "Cofres",
+			"screen-title": "Cofres - {{multisigName}} ({{itemCount}})",
+			"screen-title-no-assets": "Cofres",
 			"validation-amount-high": "O valor excede o saldo do cofre",
-			"vault-detail-heading": "Detalhes do cofre",
+			"asset-detail-heading": "Detalhes do cofre",
 			"explanatory-paragraph": "By submitting this request, you will sign the transaction and approve it as one of the Multisig signers. Before the funds can be sent, the other Multisig members need to approve it.",
 			"main-cta": "Sign Funds Transfer Request"
 		},
@@ -565,12 +555,12 @@
 			"main-cta": "Definir autoridade",
 			"main-cta-busy": "Configurando autoridade",
 			"modal-title": "Transferir propriedade",
-			"multisig-already-owns-the-vault": "O multisig selecionado já é autoridade para este cofre",
+			"multisig-already-owns-the-asset": "O multisig selecionado já é autoridade para este cofre",
 			"multisig-selector-label": "Nova autoridade (multisig)",
 			"multisig-selector-placeholder": "Selecione ou insira um endereço multisig",
-			"selected-vault-label": "Cofre selecionado",
+			"selected-asset-label": "Cofre selecionado",
 			"success-message": "Nova autoridade de cofre definida com sucesso.",
-			"vault-auth-destination-address-disclaimer": "I confirm the above New Authority Address entered or selected is a Multisig Account address and NOT a regular wallet address. I acknowledge that if I provide a non Multisig address, it will cause a permanent loss of the vault and its funds."
+			"asset-auth-destination-address-disclaimer": "I confirm the above New Authority Address entered or selected is a Multisig Account address and NOT a regular wallet address. I acknowledge that if I provide a non Multisig address, it will cause a permanent loss of the vault and its funds."
 		},
 		"transfer-tokens": {
 			"main-cta": "Iniciar solicitação",
@@ -708,8 +698,26 @@
 		"lookup-stream-cta-tooltip": "Pesquisar um fluxo",
 		"pause-stream-confirmation": "Pausar o fluxo interromperá o fluxo de dinheiro do tesouro ({{treasury}}) para o beneficiário ({{beneficiary}}).",
 		"pause-stream-cta": "Pausa",
+		"edit-stream": {
+			"modal-title": "Edit Money Stream",
+			"edit-stream-tooltip": "Edit money stream",
+			"name-input-label": "Stream name",
+			"name-input-placeholder": "Type a name for your stream",
+			"name-input-hint": "What is this stream being sent for?",
+			"send-amount-input-label": "Amount to Send",
+			"frequency-input-label": "Frequency",
+			"frequency-input-hint": "How often will this amount be sent?",
+			"main-cta": "Update stream",
+			"main-cta-busy": "Updating stream"
+		},
 		"pause-stream-modal-title": "Pausar transmissão",
+		"pause-stream-tooltip": "Pausar transmissão",
+		"locked-stream-modal-title": "Locked Money Stream",
+		"locked-stream-tooltip": "This Stream is Locked",
+		"resume-stream-modal-title": "Resume stream",
+		"resume-stream-tooltip": "Resume Stream",
 		"refresh-tooltip": "Clique para atualizar os fluxos",
+		"locked-stream-message": "You cannot close or top up a stream from a locked treasury",
 		"resume-stream-confirmation": "Retome o fluxo de dinheiro do tesouro ({{treasury}}) para o beneficiário ({{beneficiary}}).",
 		"resume-stream-cta": "Retomar",
 		"screen-title": "Fluxos de dinheiro",
@@ -755,7 +763,7 @@
 			"label-sending-to": "Enviando para",
 			"label-sent-to": "Enviado para",
 			"label-start-date-default": "Data de início",
-			"label-start-date-scheduled": "Agendado",
+			"label-start-date-scheduled": "Scheduled to start on",
 			"label-start-date-scheduled-otp": "Entrega programada",
 			"label-start-date-started": "Iniciado",
 			"label-their-allocation": "Sua alocação",
@@ -920,6 +928,8 @@
 			"exchange-on": "Troca em",
 			"hla-transaction-fee": "Taxa do agregador",
 			"min-recommended-amount": "Quantidade mínima recomendada",
+			"minimum-received": "Minimum received",
+			"minimum-sol-for-transaction": "Minimum SOL required",
 			"network-transaction-fee": "Taxa de rede",
 			"price-impact": "Impacto do preço",
 			"protocol-transaction-fee": "{{protocol}} taxa de LP",
@@ -969,7 +979,8 @@
 		"modal-title": "Transferir fluxo",
 		"streamid-empty": "Endereço ausente",
 		"streamid-open-cta": "Transferir",
-		"streamid-placeholder": "Novo endereço da carteira do beneficiário"
+		"streamid-placeholder": "Novo endereço da carteira do beneficiário",
+		"streamid-checkbox": "I'm sure the recipient address doesn't belong to an exchange."
 	},
 	"transfers": {
 		"screen-subtitle": "Envie dinheiro para qualquer pessoa no mundo mais rapidamente",
@@ -1004,6 +1015,14 @@
 			"create-multisig-cta": "Iniciar tesouraria",
 			"create-multisig-cta-busy": "Iniciando tesouraria",
 			"create-multisig-treasury-success": "Iniciar solicitação de tesouraria submetida para aprovação da Multisig.",
+			"lock-period": {
+				"minutes": "minutes",
+				"hours": "hours",
+				"days": "days",
+				"weeks": "weeks",
+				"months": "months",
+				"years": "years"
+			},
 			"main-cta": "Crio",
 			"main-cta-busy": "Criando tesouraria",
 			"modal-title": "Criar tesouraria",
@@ -1062,6 +1081,24 @@
 		},
 		"treasury-streams": {
 			"add-stream-modal-title": "Adicionar fluxo ao tesouro",
+			"add-stream-locked": {
+				"modal-title": "Add a locked money stream",
+				"panel1-name": "Recipient's info",
+				"panel2-name": "Vesting terms",
+				"panel2-summary": "Specify the vesting terms for {{recipientNote}} below. You will be sending {{fromCoinAmount}} {{selectedTokenName}} to {{recipientShortenAddress}} using these terms and schedule.",
+				"panel2-lock-period-label": "Lock period",
+				"panel2-commencement-date-label": "Commencement date",
+				"panel2-cliff-release-label": "Cliff release (on commencement)",
+				"panel2-cliff-release-inner-label": "What amount is released on commencement?",
+				"panel3-name": "Recipient's info",
+				"panel3-text-one": "Confirm the terms for",
+				"panel3-sending": "Sending:",
+				"panel3-to-address": "To Address:",
+				"panel3-starting-on": "Starting on:",
+				"panel3-cliff-release": "Cliff release:",
+				"panel3-release-rate": "Release rate:",
+				"panel3-warning-message": "IMPORTANT: This is a locked money stream, and once started, you cannot cancel, pause or change its details. Verify all information before proceeding."
+			},
 			"allocate-funds-label": "Distribuir fundos",
 			"allocation-reserved-label": "Esta alocação é totalmente RESERVADA",
 			"available-unallocated-balance-label": "Saldo não alocado disponível",

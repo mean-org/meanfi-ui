@@ -66,11 +66,9 @@ const QRCode = require('qrcode.react');
 export const AccountsView = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const connection = useConnectionConfig();
+  const { endpoint } = useConnectionConfig();
   const { publicKey, connected, wallet } = useWallet();
   const { theme } = useContext(AppStateContext);
-  const [customConnection, setCustomConnection] = useState<Connection>();
-  const [msp, setMsp] = useState<MSP | undefined>();
   const {
     coinPrices,
     userTokens,
@@ -140,27 +138,42 @@ export const AccountsView = () => {
     closeQrScannerModal();
   };
 
-  useEffect(() => {
+  const connection = useMemo(() => new Connection(endpoint, {
+    commitment: "confirmed",
+    disableRetryOnRateLimit: true
+  }), [
+    endpoint
+  ]);
 
-    if (!wallet || !publicKey || !connection || !connected || msp) {
-      return;
+  // Create and cache Money Streaming Program instance
+  const ms = useMemo(() => new MoneyStreaming(
+    endpoint,
+    streamProgramAddress,
+    "finalized"
+  ), [
+    endpoint,
+    streamProgramAddress
+  ]);
+
+  const msp = useMemo(() => {
+    if (publicKey) {
+      console.log('New MSP from /acounts');
+      return new MSP(
+        endpoint,
+        streamV2ProgramAddress,
+        "finalized"
+      );
     }
-
-    console.log('New MSP from /acounts');
-    setMsp(new MSP(
-      connection.endpoint,
-      streamV2ProgramAddress,
-      "finalized"
-    ));
-
+    return undefined;
   }, [
-    msp,
-    connected, 
-    connection, 
-    publicKey, 
-    wallet,
+    publicKey,
+    endpoint,
     streamV2ProgramAddress
-  ])
+  ]);
+
+  ////////////////////////////
+  //   Events and actions   //
+  ////////////////////////////
 
   const startSwitch = useCallback(() => {
     setStatus(FetchStatus.Fetching);
@@ -203,13 +216,19 @@ export const AccountsView = () => {
     setDtailsPanelOpen,
   ])
 
-  const onAddAccountAddress = () => {
+  const onAddAccountAddress = useCallback(() => {
     setAccountAddress(accountAddressInput);
     setShouldLoadTokens(true);
     setCanShowAccountDetails(true);
     setAccountAddressInput('');
     setAddAccountPanelOpen(false);
-  }
+  }, [
+    accountAddressInput,
+    setCanShowAccountDetails,
+    setAddAccountPanelOpen,
+    setShouldLoadTokens,
+    setAccountAddress,
+  ]);
 
   const handleScanAnotherAddressButtonClick = () => {
     setCanShowAccountDetails(false);
@@ -317,6 +336,151 @@ export const AccountsView = () => {
     return false;
   }
 
+  const updateAtaFlag = useCallback(async (token: UserTokenAccount): Promise<boolean> => {
+    const ata = await findATokenAddress(new PublicKey(accountAddress), new PublicKey(token.address));
+    return ata && token.publicAddress && ata.toBase58() === token.publicAddress ? true : false;
+  }, [accountAddress]);
+
+  const refreshStreamSummary = useCallback(async () => {
+
+    if (!msp || !publicKey || (!streamListv1 && !streamListv2) || loadingStreamsSummary) { return; }
+
+    setLoadingStreamsSummary(true);
+
+    let resume: StreamsSummary = {
+      totalNet: 0,
+      incomingAmount: 0,
+      outgoingAmount: 0,
+      totalAmount: 0
+    };
+
+    const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], publicKey);
+    const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], publicKey);
+
+    // consoleOut('=========== Block strat ===========', '', 'orange');
+
+    for (let stream of updatedStreamsv1) {
+
+      const isIncoming = stream.beneficiaryAddress && stream.beneficiaryAddress === publicKey.toBase58()
+        ? true
+        : false;
+
+      if (isIncoming) {
+        resume['incomingAmount'] = resume['incomingAmount'] + 1;
+      } else {
+        resume['outgoingAmount'] = resume['outgoingAmount'] + 1;
+      }
+
+      // Get refreshed data
+      let freshStream = await ms.refreshStream(stream) as StreamInfo;
+      if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
+
+      const asset = getTokenByMintAddress(freshStream.associatedToken as string);
+      const pricePerToken = getPricePerToken(asset as UserTokenAccount);
+      const rate = asset ? (pricePerToken ? pricePerToken : 1) : 1;
+      const decimals = asset ? asset.decimals : 9;
+      const amount = isIncoming ? freshStream.escrowVestedAmount : freshStream.escrowUnvestedAmount;
+      const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * rate;
+
+      if (isIncoming) {
+        resume['totalNet'] += amountChange;
+      } else {
+        resume['totalNet'] -= amountChange;
+      }
+    }
+
+    resume['totalAmount'] = updatedStreamsv1.length;
+
+    for (let stream of updatedStreamsv2) {
+
+      const isIncoming = stream.beneficiary && stream.beneficiary === publicKey.toBase58()
+        ? true
+        : false;
+
+      if (isIncoming) {
+        resume['incomingAmount'] = resume['incomingAmount'] + 1;
+      } else {
+        resume['outgoingAmount'] = resume['outgoingAmount'] + 1;
+      }
+
+      // Get refreshed data
+      let freshStream = await msp.refreshStream(stream) as Stream;
+      if (!freshStream || freshStream.status !== STREAM_STATUS.Running) { continue; }
+
+      const asset = getTokenByMintAddress(freshStream.associatedToken as string);
+      const pricePerToken = getPricePerToken(asset as UserTokenAccount);
+      const rate = asset ? (pricePerToken ? pricePerToken : 1) : 1;
+      const decimals = asset ? asset.decimals : 9;
+      const amount = isIncoming ? freshStream.fundsSentToBeneficiary : freshStream.fundsLeftInStream;
+      const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * rate;
+
+      if (isIncoming) {
+        resume['totalNet'] += amountChange;
+      } else {
+        resume['totalNet'] -= amountChange;
+      }
+    }
+
+    resume['totalAmount'] += updatedStreamsv2.length;
+    // consoleOut('=========== Block ends ===========', '', 'orange');
+
+    // Update state
+    setLastStreamsSummary(streamsSummary);
+    setStreamsSummary(resume);
+    setLoadingStreamsSummary(false);
+
+  }, [
+    ms, 
+    msp,
+    publicKey, 
+    streamListv1, 
+    streamListv2, 
+    streamsSummary, 
+    loadingStreamsSummary, 
+    getPricePerToken, 
+    setStreamsSummary, 
+    setLastStreamsSummary, 
+    setLoadingStreamsSummary
+  ]);
+
+  // Filter only useful Txs for the SOL account and return count
+  const getSolAccountItems = useCallback((txs: MappedTransaction[]): number => {
+
+    const getChange = (accountIndex: number, meta: ParsedConfirmedTransactionMeta | null): number => {
+      if (meta !== null && accountIndex !== -1) {
+        const prevBalance = meta.preBalances[accountIndex] || 0;
+        const postbalance = meta.postBalances[accountIndex] || 0;
+        const change = getAmountFromLamports(postbalance) - getAmountFromLamports(prevBalance);
+        return change;
+      }
+      return 0;
+    }
+
+    if (txs && txs.length) {
+
+      // Show only txs that have SOL changes
+      const filtered = txs.filter(tx => {
+        const meta = tx.parsedTransaction && tx.parsedTransaction.meta
+          ? tx.parsedTransaction.meta
+          : null;
+        if (!meta || meta.err !== null) { return false; }
+        const accounts = tx.parsedTransaction.transaction.message.accountKeys;
+        const accIdx = accounts.findIndex(acc => acc.pubkey.toBase58() === accountAddress);
+        if (isSelectedAssetNativeAccount() && accIdx === -1) { return false; }
+        const change = getChange(accIdx, meta);
+        return isSelectedAssetNativeAccount() && change !== 0 ? true : false;
+      });
+
+      consoleOut(`${filtered.length} useful Txs`);
+      return filtered.length || 0;
+    } else {
+      return 0;
+    }
+  }, [
+    accountAddress,
+    isSelectedAssetNativeAccount
+  ]);
+
   // Token Merger Modal
   const hideTokenMergerModal = useCallback(() => setTokenMergerModalVisibility(false), []);
   const showTokenMergerModal = useCallback(() => setTokenMergerModalVisibility(true), []);
@@ -329,33 +493,9 @@ export const AccountsView = () => {
     hideTokenMergerModal
   ]);
 
-  // Setup custom connection with 'confirmed' commitment
-  useEffect(() => {
-    if (!customConnection) {
-      setCustomConnection(new Connection(connection.endpoint, {
-        commitment: "confirmed",
-        disableRetryOnRateLimit: true
-      }));
-    }
-  }, [
-    connection.endpoint,
-    customConnection
-  ]);
-
-  // Create and cache Money Streaming Program instance
-  const ms = useMemo(() => new MoneyStreaming(
-    connection.endpoint,
-    streamProgramAddress,
-    "finalized"
-  ), [
-    connection.endpoint,
-    streamProgramAddress
-  ]);
-
-  const updateAtaFlag = useCallback(async (token: UserTokenAccount): Promise<boolean> => {
-    const ata = await findATokenAddress(new PublicKey(accountAddress), new PublicKey(token.address));
-    return ata && token.publicAddress && ata.toBase58() === token.publicAddress ? true : false;
-  }, [accountAddress]);
+  /////////////////////
+  // Data management //
+  /////////////////////
 
   // Load streams on entering /accounts
   useEffect(() => {
@@ -364,7 +504,9 @@ export const AccountsView = () => {
     setTransactions([]);
 
     setTimeout(() => {
-      setShouldLoadTokens(true);
+      if (!shouldLoadTokens) {
+        setShouldLoadTokens(true);
+      }
     }, 1000);
 
     if (publicKey && (!streamList || streamList.length === 0)) {
@@ -385,13 +527,9 @@ export const AccountsView = () => {
   // Fetch all the owned token accounts on demmand via setShouldLoadTokens(true)
   // Also, do this after any Tx is completed in places where token balances were indeed changed)
   useEffect(() => {
-    if (!customConnection || !accountAddress || !shouldLoadTokens || !userTokens || userTokens.length === 0 || !splTokenList || splTokenList.length === 0 ) {
+    if (!connection || !accountAddress || !shouldLoadTokens || !userTokens || userTokens.length === 0 || !splTokenList || splTokenList.length === 0 ) {
       return;
     }
-
-    // setTimeout(() => {
-    //   setShouldLoadTokens(false);
-    // });
 
     const timeout = setTimeout(() => {
       setShouldLoadTokens(false);
@@ -402,12 +540,12 @@ export const AccountsView = () => {
       const pk = new PublicKey(accountAddress);
 
       // Fetch SOL balance.
-      customConnection.getBalance(pk)
+      connection.getBalance(pk)
         .then(solBalance => {
           meanTokensCopy[0].balance = solBalance / LAMPORTS_PER_SOL;
           meanTokensCopy[0].publicAddress = accountAddress;
 
-          fetchAccountTokens(customConnection, pk)
+          fetchAccountTokens(connection, pk)
             .then(accTks => {
               if (accTks) {
                 consoleOut('fetched accountTokens:', accTks.map(i => {
@@ -568,7 +706,7 @@ export const AccountsView = () => {
     }
 
   }, [
-    customConnection,
+    connection,
     shouldLoadTokens,
     accountAddress,
     selectedAsset,
@@ -579,48 +717,10 @@ export const AccountsView = () => {
     setShouldLoadTokens,
   ]);
 
-  // Filter only useful Txs for the SOL account and return count
-  const getSolAccountItems = useCallback((txs: MappedTransaction[]): number => {
-
-    const getChange = (accountIndex: number, meta: ParsedConfirmedTransactionMeta | null): number => {
-      if (meta !== null && accountIndex !== -1) {
-        const prevBalance = meta.preBalances[accountIndex] || 0;
-        const postbalance = meta.postBalances[accountIndex] || 0;
-        const change = getAmountFromLamports(postbalance) - getAmountFromLamports(prevBalance);
-        return change;
-      }
-      return 0;
-    }
-
-    if (txs && txs.length) {
-
-      // Show only txs that have SOL changes
-      const filtered = txs.filter(tx => {
-        const meta = tx.parsedTransaction && tx.parsedTransaction.meta
-          ? tx.parsedTransaction.meta
-          : null;
-        if (!meta || meta.err !== null) { return false; }
-        const accounts = tx.parsedTransaction.transaction.message.accountKeys;
-        const accIdx = accounts.findIndex(acc => acc.pubkey.toBase58() === accountAddress);
-        if (isSelectedAssetNativeAccount() && accIdx === -1) { return false; }
-        const change = getChange(accIdx, meta);
-        return isSelectedAssetNativeAccount() && change !== 0 ? true : false;
-      });
-
-      consoleOut(`${filtered.length} useful Txs`);
-      return filtered.length || 0;
-    } else {
-      return 0;
-    }
-  }, [
-    accountAddress,
-    isSelectedAssetNativeAccount
-  ]);
-
   // Load the transactions when signaled
   useEffect(() => {
 
-    if (shouldLoadTransactions && tokensLoaded && customConnection && accountAddress && selectedAsset && !loadingTransactions) {
+    if (shouldLoadTransactions && tokensLoaded && connection && accountAddress && selectedAsset && !loadingTransactions) {
       setShouldLoadTransactions(false);
       setLoadingTransactions(true);
 
@@ -645,7 +745,7 @@ export const AccountsView = () => {
       }
 
       fetchAccountHistory(
-        customConnection,
+        connection,
         pk,
         options,
         true
@@ -653,13 +753,22 @@ export const AccountsView = () => {
       .then(history => {
         consoleOut('history:', history, 'blue');
         setTransactions(history.transactionMap, true);
+        setStatus(FetchStatus.Fetched);
 
         if (history.transactionMap && history.transactionMap.length && pk.toBase58() === accountAddress) {
           const validItems = getSolAccountItems(history.transactionMap);
-          setSolAccountItems(current => current + validItems);
+          const nativeAccountTxItems = solAccountItems + validItems;
+          setSolAccountItems(nativeAccountTxItems);
+          // If the valid items are less than 10, get more (only once after the first fetch)
+          // Only for the native account where some Txs might have no balance changes
+          if (!history.before && nativeAccountTxItems < 10) {
+            setTimeout(() => {
+              consoleOut('Few items, loading more...', '', 'green');
+              startSwitch();
+            }, 100);
+          }
         }
 
-        setStatus(FetchStatus.Fetched);
       })
       .catch(error => {
         console.error(error);
@@ -669,12 +778,13 @@ export const AccountsView = () => {
     }
 
   }, [
-    lastTxSignature,
+    connection,
     transactions,
     tokensLoaded,
     selectedAsset,
     accountAddress,
-    customConnection,
+    lastTxSignature,
+    solAccountItems,
     loadingTransactions,
     loadingStreamsSummary,
     shouldLoadTransactions,
@@ -761,108 +871,6 @@ export const AccountsView = () => {
       window.removeEventListener('resize', resizeListener);
     }
   }, [accountAddressInput]);
-
-  const refreshStreamSummary = useCallback(async () => {
-
-    if (!msp || !publicKey || (!streamListv1 && !streamListv2) || loadingStreamsSummary) { return; }
-
-    setLoadingStreamsSummary(true);
-
-    let resume: StreamsSummary = {
-      totalNet: 0,
-      incomingAmount: 0,
-      outgoingAmount: 0,
-      totalAmount: 0
-    };
-
-    const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], publicKey);
-    const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], publicKey);
-
-    // consoleOut('=========== Block strat ===========', '', 'orange');
-
-    for (let stream of updatedStreamsv1) {
-
-      const isIncoming = stream.beneficiaryAddress && stream.beneficiaryAddress === publicKey.toBase58()
-        ? true
-        : false;
-
-      if (isIncoming) {
-        resume['incomingAmount'] = resume['incomingAmount'] + 1;
-      } else {
-        resume['outgoingAmount'] = resume['outgoingAmount'] + 1;
-      }
-
-      // Get refreshed data
-      let freshStream = await ms.refreshStream(stream) as StreamInfo;
-      if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
-
-      const asset = getTokenByMintAddress(freshStream.associatedToken as string);
-      const pricePerToken = getPricePerToken(asset as UserTokenAccount);
-      const rate = asset ? (pricePerToken ? pricePerToken : 1) : 1;
-      const decimals = asset ? asset.decimals : 9;
-      const amount = isIncoming ? freshStream.escrowVestedAmount : freshStream.escrowUnvestedAmount;
-      const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * rate;
-
-      if (isIncoming) {
-        resume['totalNet'] += amountChange;
-      } else {
-        resume['totalNet'] -= amountChange;
-      }
-    }
-
-    resume['totalAmount'] = updatedStreamsv1.length;
-
-    for (let stream of updatedStreamsv2) {
-
-      const isIncoming = stream.beneficiary && stream.beneficiary === publicKey.toBase58()
-        ? true
-        : false;
-
-      if (isIncoming) {
-        resume['incomingAmount'] = resume['incomingAmount'] + 1;
-      } else {
-        resume['outgoingAmount'] = resume['outgoingAmount'] + 1;
-      }
-
-      // Get refreshed data
-      let freshStream = await msp.refreshStream(stream) as Stream;
-      if (!freshStream || freshStream.status !== STREAM_STATUS.Running) { continue; }
-
-      const asset = getTokenByMintAddress(freshStream.associatedToken as string);
-      const pricePerToken = getPricePerToken(asset as UserTokenAccount);
-      const rate = asset ? (pricePerToken ? pricePerToken : 1) : 1;
-      const decimals = asset ? asset.decimals : 9;
-      const amount = isIncoming ? freshStream.fundsSentToBeneficiary : freshStream.fundsLeftInStream;
-      const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * rate;
-
-      if (isIncoming) {
-        resume['totalNet'] += amountChange;
-      } else {
-        resume['totalNet'] -= amountChange;
-      }
-    }
-
-    resume['totalAmount'] += updatedStreamsv2.length;
-    // consoleOut('=========== Block ends ===========', '', 'orange');
-
-    // Update state
-    setLastStreamsSummary(streamsSummary);
-    setStreamsSummary(resume);
-    setLoadingStreamsSummary(false);
-
-  }, [
-    ms, 
-    msp,
-    publicKey, 
-    streamListv1, 
-    streamListv2, 
-    streamsSummary, 
-    loadingStreamsSummary, 
-    getPricePerToken, 
-    setStreamsSummary, 
-    setLastStreamsSummary, 
-    setLoadingStreamsSummary
-  ]);
 
   // Live data calculation
   useEffect(() => {
@@ -1098,9 +1106,9 @@ export const AccountsView = () => {
           const change = getChange(accIdx, meta);
           return isSelectedAssetNativeAccount() && change !== 0 ? true : false;
         });
-        return filtered?.map((trans: MappedTransaction) => {
+        return filtered?.map((trans: MappedTransaction, index: number) => {
           return <TransactionItemView
-                    key={trans.signature}
+                    key={`${index}`}
                     transaction={trans}
                     selectedAsset={selectedAsset as UserTokenAccount}
                     accountAddress={accountAddress}
@@ -1108,10 +1116,10 @@ export const AccountsView = () => {
         });
       } else {
         // Render the transactions collection
-        return transactions?.map((trans: MappedTransaction) => {
+        return transactions?.map((trans: MappedTransaction, index: number) => {
           if (trans.parsedTransaction && trans.parsedTransaction.meta && trans.parsedTransaction.meta.err === null) {
             return <TransactionItemView
-                      key={trans.signature}
+                      key={`${index}`}
                       transaction={trans}
                       selectedAsset={selectedAsset as UserTokenAccount}
                       accountAddress={accountAddress}
@@ -1192,14 +1200,24 @@ export const AccountsView = () => {
 
   return (
     <>
-      <Helmet>
-        <title>Accounts - Mean Finance</title>
-        <link rel="canonical" href="https://app.meanfi.com/accounts" />
-        <meta name="description" content="Water flows, and now, money does too. Welcome to Mean Finance, your money unleashed!" />
-        <meta name="google-site-verification" content="u-gc96PrpV7y_DAaA0uoo4tc2ffcgi_1r6hqSViM-F8" />
-      </Helmet>
-
       <div className="container main-container">
+
+        {location.pathname === '/accounts/streams' ? (
+          <Helmet>
+            <title>Streams - Mean Finance</title>
+            <link rel="canonical" href="/accounts/streams" />
+            <meta name="description" content="Streams. Manage your live money streams" />
+            <meta name="keywords" content="streams, transfers, send money" />
+          </Helmet>
+        ) : (
+          <Helmet>
+            <title>Accounts - Mean Finance</title>
+            <link rel="canonical" href="/accounts" />
+            <meta name="description" content="Accounts. Keep track of your assets and transactions" />
+            <meta name="google-site-verification" content="u-gc96PrpV7y_DAaA0uoo4tc2ffcgi_1r6hqSViM-F8" />
+            <meta name="keywords" content="assets, token accounts, transactions" />
+          </Helmet>
+        )}
 
         {/* {isLocal() && (
           <div className="debug-bar">
@@ -1210,7 +1228,11 @@ export const AccountsView = () => {
         )} */}
 
         {/* This is a SEO mandatory h1 but it is not visible */}
-        <h1 className="mandatory-h1">Accounts, Where you keep track of your assets</h1>
+        {location.pathname === '/accounts/streams' ? (
+          <h1 className="mandatory-h1">Manage your live money streams</h1>
+        ) : (
+          <h1 className="mandatory-h1">Keep track of your assets and transactions</h1>
+        )}
 
         <div className={(canShowAccountDetails && accountAddress) ? 'interaction-area' : 'interaction-area flex-center h-75'}>
 
@@ -1335,7 +1357,7 @@ export const AccountsView = () => {
                       <div className={((!isSelectedAssetNativeAccount() && hasTransactions()) ||
                                       (isSelectedAssetNativeAccount() && hasTransactions() && solAccountItems > 0))
                                       ? 'transaction-list-data-wrapper vertical-scroll'
-                                      : 'transaction-list-data-wrapper empty'}>
+                                      : 'transaction-list-data-wrapper vertical-scroll empty'}>
                         <div className="activity-list h-100">
                           {
                             status === FetchStatus.Fetching && !((!isSelectedAssetNativeAccount() && hasTransactions()) ||
@@ -1473,9 +1495,9 @@ export const AccountsView = () => {
 
       </div>
 
-      {(customConnection && selectedTokenMergeGroup && isTokenMergerModalVisible) && (
+      {(connection && selectedTokenMergeGroup && isTokenMergerModalVisible) && (
         <AccountsMergeModal
-          connection={customConnection}
+          connection={connection}
           isVisible={isTokenMergerModalVisible}
           handleOk={onFinishedTokenMerge}
           handleClose={hideTokenMergerModal}

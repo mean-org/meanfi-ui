@@ -258,6 +258,15 @@ export const StreamCloseModal = (props: {
     getFeeAmount
   ]);
 
+  const onAcceptModal = () => {
+    props.handleOk({
+      closeTreasuryOption,
+      vestedReturns: getWithdrawableAmount(),
+      unvestedReturns: amITreasurer() ? getUnvested() : 0,
+      feeAmount: amIBeneficiary() && getWithdrawableAmount() > 0 ? feeAmount : 0
+    });
+  }
+
   const onCloseTreasuryOptionChanged = (e: any) => {
     setCloseTreasuryOption(e.target.value);
   }
@@ -373,7 +382,7 @@ export const StreamCloseModal = (props: {
                 type="primary"
                 shape="round"
                 size="large"
-                onClick={() => props.handleOk(closeTreasuryOption)}>
+                onClick={onAcceptModal}>
                 {t('close-stream.primary-cta')}
             </Button>
           </div>

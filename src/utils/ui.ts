@@ -49,6 +49,22 @@ export class PaymentRateTypeOption {
     }
 }
 
+export class LockPeriodTypeOption {
+    key: number;
+    value: PaymentRateType;
+    text: string;
+
+    constructor(
+        public _key: number,
+        public _value: PaymentRateType,
+        public _text: string
+    ) {
+        this.key = _key;
+        this.value = _value;
+        this.text = _text;
+    }
+}
+
 export const formatters = {
     default: new Intl.NumberFormat(),
     currency: new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }),
@@ -231,6 +247,33 @@ export const getPaymentRateOptionLabel = (val: PaymentRateType, trans?: any): st
             break;
         case PaymentRateType.PerYear:
             result = trans ? trans('transactions.rate-and-frequency.payment-rates.per-year') : 'per year';
+            break;
+        default:
+            break;
+    }
+    return result;
+}
+
+export const getLockPeriodOptionLabel = (val: PaymentRateType, trans?: any): string => {
+    let result = '';
+    switch (val) {
+        case PaymentRateType.PerMinute:
+            result = trans ? trans('treasuries.create-treasury.lock-period.minutes') : 'minutes';
+            break;
+        case PaymentRateType.PerHour:
+            result = trans ? trans('treasuries.create-treasury.lock-period.hours') : 'hours';
+            break;
+        case PaymentRateType.PerDay:
+            result = trans ? trans('treasuries.create-treasury.lock-period.days') : 'days';
+            break;
+        case PaymentRateType.PerWeek:
+            result = trans ? trans('treasuries.create-treasury.lock-period.weeks') : 'weeks';
+            break;
+        case PaymentRateType.PerMonth:
+            result = trans ? trans('treasuries.create-treasury.lock-period.months') : 'months';
+            break;
+        case PaymentRateType.PerYear:
+            result = trans ? trans('treasuries.create-treasury.lock-period.years') : 'years';
             break;
         default:
             break;

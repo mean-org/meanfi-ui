@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Modal, Button, Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
@@ -17,7 +17,6 @@ const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export const MultisigMintTokenModal = (props: {
   handleClose: any;
   handleOk: any;
-  handleAfterClose: any;
   isVisible: boolean;
   isBusy: boolean;
   nativeBalance: number;
@@ -32,6 +31,16 @@ export const MultisigMintTokenModal = (props: {
   const [mintToAddress, setMintToAddress] = useState('');
   const [mintAmount, setMintAmount] = useState('');
 
+  // Store selectedMint address when modal goes visible
+  useEffect(() => {
+    if (props.isVisible && props.selectedMint) {
+      setTokenAddress(props.selectedMint.address.toBase58());
+    }
+  }, [
+    props.isVisible,
+    props.selectedMint
+  ]);
+
   const onAcceptModal = () => {
     props.handleOk({
       tokenAddress: tokenAddress,
@@ -45,13 +54,11 @@ export const MultisigMintTokenModal = (props: {
   }
 
   const onAfterClose = () => {
-
     setTimeout(() => {
       setTokenAddress('');
       setMintToAddress('');
       setMintAmount('');
     }, 50);
-    props.handleAfterClose();
   }
 
   const onTokenAddressChange = (e: any) => {
@@ -81,7 +88,7 @@ export const MultisigMintTokenModal = (props: {
             isValidAddress(tokenAddress) &&
             isValidAddress(mintToAddress) &&
             mintAmount &&
-            +mintAmount > 0
+            parseFloat(mintAmount) > 0
       ? true
       : false;
   }

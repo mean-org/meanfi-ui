@@ -9,7 +9,7 @@ import {
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnection, useConnectionConfig } from "../../contexts/connection";
 import { formatAmount, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber, toTokenAmount } from "../../utils/utils";
-import { DATEPICKER_FORMAT } from "../../constants";
+import { DATEPICKER_FORMAT, SIMPLE_DATE_TIME_FORMAT } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
 import { OperationType, TransactionStatus } from "../../models/enums";
 import {
@@ -41,6 +41,9 @@ import { TokenDisplay } from '../../components/TokenDisplay';
 import { TextInput } from '../../components/TextInput';
 import { TokenListItem } from '../../components/TokenListItem';
 import { calculateActionFees, MSP, MSP_ACTIONS, TransactionFees } from '@mean-dao/msp';
+import { segmentAnalytics } from '../../App';
+import { AppUsageEvent, SegmentStreamOTPTransferData } from '../../utils/segment-service';
+import dateFormat from 'dateformat';
 
 const { Option } = Select;
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -79,7 +82,6 @@ export const OneTimePayment = () => {
     setTransactionStatus,
     setIsVerifiedRecipient,
     setSelectedTokenBalance,
-    setPreviousWalletConnectState
   } = useContext(AppStateContext);
   const {
     clearTransactionStatusContext,
@@ -558,8 +560,17 @@ export const OneTimePayment = () => {
           ? recipientNote.trim()
           : undefined                                                               // streamName
       };
-      
+
       consoleOut('data:', data, 'blue');
+
+      // Report event to Segment analytics
+      const segmentData = {
+        asset: selectedToken?.symbol,
+        amount: parseFloat(fromCoinAmount as string),
+        beneficiary: data.beneficiary,
+        startUtc: dateFormat(startUtc, SIMPLE_DATE_TIME_FORMAT)
+      } as SegmentStreamOTPTransferData;
+      segmentAnalytics.recordEvent(AppUsageEvent.TransferOTPFormButton, segmentData);
 
       // Log input data
       transactionLog.push({
@@ -591,12 +602,24 @@ export const OneTimePayment = () => {
           })`
         });
         customLogger.logWarning('One-Time Payment transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.TransferOTPFailed, { transcript: transactionLog });
         return false;
       }
 
       let result = await otpTx(data)
         .then(value => {
-          if (!value) { return false; }
+          if (!value) {
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.InitTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+            });
+            customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
+            segmentAnalytics.recordEvent(AppUsageEvent.TransferOTPFailed, { transcript: transactionLog });
+            return false;
+          }
           consoleOut('oneTimePayment returned transaction:', value);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
@@ -620,6 +643,7 @@ export const OneTimePayment = () => {
             result: `${error}`
           });
           customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.TransferOTPFailed, { transcript: transactionLog });
           return false;
         });
 
@@ -648,6 +672,7 @@ export const OneTimePayment = () => {
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
+            segmentAnalytics.recordEvent(AppUsageEvent.TransferOTPFailed, { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -657,6 +682,10 @@ export const OneTimePayment = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
             result: {signer: wallet.publicKey.toBase58()}
+          });
+          segmentAnalytics.recordEvent(AppUsageEvent.TransferOTPSigned, {
+            signature,
+            encodedTx
           });
           return true;
         })
@@ -671,6 +700,7 @@ export const OneTimePayment = () => {
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.TransferOTPFailed, { transcript: transactionLog });
           return false;
         });
       } else {
@@ -684,6 +714,7 @@ export const OneTimePayment = () => {
           result: 'Cannot sign transaction! Wallet not found!'
         });
         customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.TransferOTPFailed, { transcript: transactionLog });
         return false;
       }
     }
@@ -716,6 +747,7 @@ export const OneTimePayment = () => {
               result: { error, encodedTx }
             });
             customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
+            segmentAnalytics.recordEvent(AppUsageEvent.TransferOTPFailed, { transcript: transactionLog });
             return false;
           });
       } else {
@@ -729,6 +761,7 @@ export const OneTimePayment = () => {
           result: 'Cannot send transaction! Wallet not found!'
         });
         customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
+        segmentAnalytics.recordEvent(AppUsageEvent.TransferOTPFailed, { transcript: transactionLog });
         return false;
       }
     }
@@ -747,6 +780,9 @@ export const OneTimePayment = () => {
               action: getTransactionStatusForLogs(TransactionStatus.TransactionFinished),
               result: ''
             });
+            segmentAnalytics.recordEvent(AppUsageEvent.TransferOTPCompleted, {
+              signature
+            });
             return true;
           } else {
             setTransactionStatus({
@@ -758,6 +794,7 @@ export const OneTimePayment = () => {
               result: signature
             });
             customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
+            segmentAnalytics.recordEvent(AppUsageEvent.TransferOTPFailed, { transcript: transactionLog });
             throw(result?.value?.err || new Error("Could not confirm transaction"));
           }
         })
@@ -771,18 +808,19 @@ export const OneTimePayment = () => {
             result: signature
           });
           customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
+          segmentAnalytics.recordEvent(AppUsageEvent.TransferOTPFailed, { transcript: transactionLog });
           return false;
         });
     }
 
     if (wallet) {
       showTransactionModal();
-      const create = await createTx();
-      consoleOut('created:', create);
-      if (create && !transactionCancelled) {
-        const sign = await signTx();
-        consoleOut('signed:', sign);
-        if (sign && !transactionCancelled) {
+      const created = await createTx();
+      consoleOut('created:', created);
+      if (created && !transactionCancelled) {
+        const signed = await signTx();
+        consoleOut('signed:', signed);
+        if (signed && !transactionCancelled) {
           const sent = await sendTx();
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {

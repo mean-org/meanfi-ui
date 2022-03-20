@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect } from 'react';
+import "./style.less";
 import { useContext, useState } from 'react';
-import { Modal, Button, Select, Dropdown, Menu, DatePicker, Checkbox, Divider, Radio, Tooltip } from 'antd';
+import { Modal, Button, Select, Dropdown, Menu, DatePicker, Checkbox, Divider, Radio, Tooltip, Row, Col } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
 import {
   cutNumber,
@@ -20,17 +21,19 @@ import {
   consoleOut,
   disabledDate,
   getIntervalFromSeconds,
+  getLockPeriodOptionLabel,
   getPaymentRateOptionLabel,
   getRateIntervalInSeconds,
   getTransactionStatusForLogs,
   isToday,
   isValidAddress,
   PaymentRateTypeOption,
+  LockPeriodTypeOption,
 } from '../../utils/ui';
 import { getTokenByMintAddress } from '../../utils/tokens';
 import { LoadingOutlined } from '@ant-design/icons';
 import { TokenDisplay } from '../TokenDisplay';
-import { IconCaretDown, IconEdit, IconHelpCircle } from '../../Icons';
+import { IconCaretDown, IconEdit, IconHelpCircle, IconWarning } from '../../Icons';
 import { OperationType, PaymentRateType, TransactionStatus } from '../../models/enums';
 import moment from "moment";
 import { useWallet } from '../../contexts/wallet';
@@ -41,7 +44,7 @@ import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { Connection, Keypair, PublicKey, Transaction } from '@solana/web3.js';
 import { customLogger } from '../..';
-import { Beneficiary, Constants as MSPV2Constants, MSP, StreamBeneficiary, TransactionFees, Treasury } from '@mean-dao/msp';
+import { Beneficiary, Constants as MSPV2Constants, MSP, StreamBeneficiary, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
 import { TreasuryInfo } from '@mean-dao/money-streaming';
 import { useConnectionConfig } from '../../contexts/connection';
 import { Idl, Program } from '@project-serum/anchor';
@@ -68,6 +71,7 @@ export const TreasuryStreamCreateModal = (props: {
   const { t } = useTranslation('common');
   const { wallet, publicKey } = useWallet();
   const { endpoint } = useConnectionConfig();
+  const { treasuryOption } = useContext(AppStateContext);
   const {
     tokenList,
     coinPrices,
@@ -80,7 +84,9 @@ export const TreasuryStreamCreateModal = (props: {
     paymentStartDate,
     fromCoinAmount,
     paymentRateAmount,
+    lockPeriodAmount,
     paymentRateFrequency,
+    lockPeriodFrequency,
     transactionStatus,
     isVerifiedRecipient,
     streamV2ProgramAddress,
@@ -92,9 +98,11 @@ export const TreasuryStreamCreateModal = (props: {
     setRecipientAddress,
     setPaymentStartDate,
     setPaymentRateAmount,
+    setLockPeriodAmount,
     setTransactionStatus,
     setIsVerifiedRecipient,
     setPaymentRateFrequency,
+    setLockPeriodFrequency
   } = useContext(AppStateContext);
   const {
     clearTransactionStatusContext,
@@ -115,6 +123,9 @@ export const TreasuryStreamCreateModal = (props: {
   const [hasIsOwnWallet, setHasIsOwnWallet] = useState<boolean>(false);
   const [isCsvSelected, setIsCsvSelected] = useState<boolean>(false);
   const [validMultiRecipientsList, setValidMultiRecipientsList] = useState<boolean>(false);
+  const percentages = [5, 10, 15, 20];
+  const [percentageValue, setPercentageValue] = useState<number>(0);
+  const [cliffRelease, setCliffRelease] = useState<string>("")
 
   const isNewTreasury = useCallback(() => {
     if (props.treasuryDetails) {
@@ -243,27 +254,63 @@ export const TreasuryStreamCreateModal = (props: {
     return options;
   }
 
+  const getLockPeriodOptionsFromEnum = (value: any): PaymentRateTypeOption[] => {
+    let index = 0;
+    const options: PaymentRateTypeOption[] = [];
+    for (const enumMember in value) {
+        const mappedValue = parseInt(enumMember, 10);
+        if (!isNaN(mappedValue)) {
+            const item = new PaymentRateTypeOption(
+                index,
+                mappedValue,
+                getLockPeriodOptionLabel(mappedValue, t)
+            );
+            options.push(item);
+        }
+        index++;
+    }
+    return options;
+  }
+
   const getStepOneContinueButtonLabel = (): string => {
     return !publicKey
       ? t('transactions.validation.not-connected')
-      : (!enableMultipleStreamsOption && !recipientAddress)
-        ? t('transactions.validation.select-recipient') 
-        : (enableMultipleStreamsOption && !validMultiRecipientsList)
-          ? t('transactions.validation.select-address-list')
-          : !selectedToken || unallocatedBalance.toNumber() === 0
-            ? t('transactions.validation.no-balance')
-            : !paymentStartDate
-              ? t('transactions.validation.no-valid-date')
-              : (!enableMultipleStreamsOption && !recipientNote)
-                ? 'Memo cannot be empty'
+      : (!enableMultipleStreamsOption && !recipientNote)
+        ? 'Memo cannot be empty'
+        : (!enableMultipleStreamsOption && !recipientAddress)
+          ? t('transactions.validation.select-recipient') 
+          : (enableMultipleStreamsOption && !validMultiRecipientsList)
+            ? t('transactions.validation.select-address-list')
+            : !selectedToken || unallocatedBalance.toNumber() === 0
+              ? t('transactions.validation.no-balance')
+              : !paymentStartDate
+                ? t('transactions.validation.no-valid-date')
                 : !arePaymentSettingsValid()
                   ? getPaymentSettingsButtonLabel()
                   : t('transactions.validation.valid-continue');
   };
 
+  const getStepTwoContinueButtonLabel = (): string => {
+    return !publicKey
+      ? t('transactions.validation.not-connected')
+      : !lockPeriodAmount
+      ? 'Lock period cannot be empty'
+      : !cliffRelease
+      ? 'Add cliff to release'
+      : !selectedToken || unallocatedBalance.toNumber() === 0
+      ? t('transactions.validation.no-balance')
+      : !paymentStartDate
+      ? t('transactions.validation.no-valid-date')
+      : !areSendAmountSettingsValid()
+      ? getPaymentSettingsButtonLabel()
+      : t('transactions.validation.valid-continue');
+  }
+
   const getTransactionStartButtonLabel = (): string => {
     return !publicKey
       ? t('transactions.validation.not-connected')
+      : (!enableMultipleStreamsOption && !recipientNote)
+      ? 'Memo cannot be empty'
       : (!enableMultipleStreamsOption && !recipientAddress)
       ? t('transactions.validation.select-recipient') 
       : (enableMultipleStreamsOption && !validMultiRecipientsList)
@@ -277,8 +324,6 @@ export const TreasuryStreamCreateModal = (props: {
       ? t('transactions.validation.amount-high')
       : !paymentStartDate
       ? t('transactions.validation.no-valid-date')
-      : (!enableMultipleStreamsOption && !recipientNote)
-      ? 'Memo cannot be empty'
       : !arePaymentSettingsValid()
       ? getPaymentSettingsButtonLabel()
       : !isVerifiedRecipient
@@ -288,9 +333,16 @@ export const TreasuryStreamCreateModal = (props: {
 
   const getPaymentSettingsButtonLabel = (): string => {
     const rateAmount = parseFloat(paymentRateAmount || '0');
-    return !rateAmount
-      ? t('transactions.validation.no-payment-rate')
-      : '';
+
+    if (treasuryOption && treasuryOption.type === TreasuryType.Lock) {
+      return !rateAmount
+        ? 'Add funds to commit'
+        : '';
+    } else {
+      return !rateAmount
+        ? t('transactions.validation.no-payment-rate')
+        : '';
+    }
   }
 
   const toggleOverflowEllipsisMiddle = useCallback((state: boolean) => {
@@ -397,8 +449,12 @@ export const TreasuryStreamCreateModal = (props: {
     setCurrentStep(value);
   }
 
-  const onContinueButtonClick = () => {
+  const onContinueStepOneButtonClick = () => {
     setCurrentStep(1);  // Go to step 2
+  }
+
+  const onContinueStepTwoButtonClick = () => {
+    setCurrentStep(2);  // Go to step 3
   }
 
   const handleRecipientNoteChange = (e: any) => {
@@ -437,6 +493,22 @@ export const TreasuryStreamCreateModal = (props: {
 
   const handlePaymentRateOptionChange = (val: PaymentRateType) => {
     setPaymentRateFrequency(val);
+  }
+
+  const handleLockPeriodAmountChange = (e: any) => {
+
+    let periodAmountValue = e.target.value;
+
+    if (periodAmountValue.length > 2) {
+      periodAmountValue = periodAmountValue.substr(0, 2);
+      setLockPeriodAmount(periodAmountValue);
+    } else {
+      setLockPeriodAmount(periodAmountValue);
+    }
+  }
+
+  const handleLockPeriodOptionChange = (val: PaymentRateType) => {
+    setLockPeriodFrequency(val);
   }
 
   const onTokenChange = (e: any) => {
@@ -497,18 +569,24 @@ export const TreasuryStreamCreateModal = (props: {
       setRecipientAddress("");
       setRecipientNote("");
       setPaymentRateAmount("");
+      setFromCoinAmount("");
       setCsvArray([]);
       setIsCsvSelected(false);
-      setFromCoinAmount("");
       setIsVerifiedRecipient(false);
       setPaymentRateFrequency(PaymentRateType.PerMonth);
       setPaymentStartDate(today);
+      setLockPeriodAmount("");
+      setLockPeriodFrequency(PaymentRateType.PerMonth);
     }, 50);
     setTransactionStatus({
       lastOperation: TransactionStatus.Iddle,
       currentOperation: TransactionStatus.Iddle
     });
-  }  
+  } 
+  
+  const onChangeValuePercentages = (value: number) => {
+    setPercentageValue(value);
+  };
 
   // Multi-recipient
   const onCloseMultipleStreamsChanged = useCallback((e: any) => {
@@ -613,6 +691,22 @@ export const TreasuryStreamCreateModal = (props: {
     listValidAddresses,
     csvArray,
   ]);
+
+  useEffect(() => {
+    const percentageFromCoinAmount = parseFloat(fromCoinAmount) > 0 ? `${(parseFloat(fromCoinAmount)*percentageValue/100)}` : '';
+
+    setCliffRelease(percentageFromCoinAmount);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [percentageValue]);
+
+  useEffect(() => {
+    if (treasuryOption && treasuryOption.type === TreasuryType.Lock) {
+      setPaymentRateAmount(cutNumber(parseFloat(cliffRelease) / parseFloat(lockPeriodAmount), 6));
+    }
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cliffRelease, lockPeriodAmount]);
 
   const onTransactionStart = async () => {
 
@@ -1047,13 +1141,13 @@ export const TreasuryStreamCreateModal = (props: {
   }
 
   const isRateAmountValid = (): boolean => {
-    return paymentRateAmount && parseFloat(paymentRateAmount) > 0
+    return ((paymentRateAmount && parseFloat(paymentRateAmount) > 0) || (fromCoinAmount && parseFloat(fromCoinAmount) > 0))
      ? true
      : false;
   }
 
   const areSendAmountSettingsValid = (): boolean => {
-    return isSendAmountValid() && paymentStartDate ? true : false;
+    return (isSendAmountValid() && paymentStartDate) ? true : false;
   }
 
   const arePaymentSettingsValid = (): boolean => {
@@ -1082,10 +1176,24 @@ export const TreasuryStreamCreateModal = (props: {
     </Menu>
   );
 
+  const lockPeriodOptionsMenu = (
+    <Menu>
+      {getLockPeriodOptionsFromEnum(PaymentRateType).map((item) => {
+        return (
+          <Menu.Item
+            key={item.key}
+            onClick={() => handleLockPeriodOptionChange(item.value)}>
+            {item.text}
+          </Menu.Item>
+        );
+      })}
+    </Menu>
+  );  
+
   return (
     <Modal
-      className="mean-modal"
-      title={<div className="modal-title">{t('treasuries.treasury-streams.add-stream-modal-title')}</div>}
+      className="mean-modal treasury-stream-create-modal"
+      title={(treasuryOption && treasuryOption.type === TreasuryType.Open) ? (<div className="modal-title">{t('treasuries.treasury-streams.add-stream-modal-title')}</div>) : (<div className="modal-title">{t('treasuries.treasury-streams.add-stream-locked.modal-title')}</div>)}
       footer={null}
       visible={props.isVisible}
       onOk={props.handleOk}
@@ -1094,21 +1202,51 @@ export const TreasuryStreamCreateModal = (props: {
       width={480}>
 
       <div className="scrollable-content">
-        <StepSelector step={currentStep} steps={2} onValueSelected={onStepperChange} />
+        <StepSelector step={currentStep} steps={(treasuryOption && treasuryOption.type === TreasuryType.Lock) ? 3 : 2} onValueSelected={onStepperChange} />
 
         <div className={currentStep === 0 ? "contract-wrapper panel1 show" : "contract-wrapper panel1 hide"}>
 
+          {(treasuryOption && treasuryOption.type === TreasuryType.Lock) && (
+            <div className="mb-2 text-uppercase">{t('treasuries.treasury-streams.add-stream-locked.panel1-name')}</div>
+          )}
+
           {/* Create Treasury checkbox */}
-          <div className="mb-2 flex-row align-items-start">
-            <span className="form-label w-auto mb-0">{t('treasuries.treasury-streams.create-treasury-switch-label')}</span>
-            <Radio.Group className="ml-2 d-flex" 
-              onChange={onCloseMultipleStreamsChanged} 
-              value={enableMultipleStreamsOption}
-            >
-              <Radio value={true}>{t('general.yes')}</Radio>
-              <Radio value={false}>{t('general.no')}</Radio>
-            </Radio.Group>
-          </div>
+          {(treasuryOption && treasuryOption.type === TreasuryType.Open) && (
+            <div className="mb-2 flex-row align-items-start">
+              <span className="form-label w-auto mb-0">{t('treasuries.treasury-streams.create-treasury-switch-label')}</span>
+              <Radio.Group className="ml-2 d-flex" 
+                onChange={onCloseMultipleStreamsChanged} 
+                value={enableMultipleStreamsOption}
+              >
+                <Radio value={true}>{t('general.yes')}</Radio>
+                <Radio value={false}>{t('general.no')}</Radio>
+              </Radio.Group>
+            </div>
+          )}
+
+          {!enableMultipleStreamsOption && (
+            <>
+              <div className="form-label">{t('transactions.memo2.label')}</div>
+              <div className="well">
+                <div className="flex-fixed-right">
+                  <div className="left">
+                    <input
+                      id="payment-memo-field"
+                      className="w-100 general-text-input"
+                      autoComplete="on"
+                      autoCorrect="off"
+                      type="text"
+                      maxLength={32}
+                      onChange={handleRecipientNoteChange}
+                      placeholder={t('transactions.memo2.placeholder')}
+                      spellCheck="false"
+                      value={recipientNote}
+                    />
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
 
           <div className="form-label icon-label">
             {!enableMultipleStreamsOption ? t('transactions.recipient.label') : t('treasuries.treasury-streams.multiple-address-list')}
@@ -1178,7 +1316,7 @@ export const TreasuryStreamCreateModal = (props: {
             </div>
           )}
 
-          <div className="form-label">{t('transactions.rate-and-frequency.amount-label')}</div>
+          <div className="form-label">{(treasuryOption && treasuryOption.type === TreasuryType.Open) ? t('transactions.rate-and-frequency.amount-label') : "TOTAL FUNDS TO COMMIT"}</div>
           <div className="well">
             <div className="flex-fixed-left">
               <div className="left">
@@ -1205,6 +1343,28 @@ export const TreasuryStreamCreateModal = (props: {
                       })}
                     </Select>
                   )}
+                  {(treasuryOption && treasuryOption.type === TreasuryType.Lock) && (
+                    selectedToken && unallocatedBalance ? (
+                      <div
+                        className="token-max simplelink"
+                        onClick={() => {
+                          const decimals = selectedToken ? selectedToken.decimals : 6;
+                          if (isFeePaidByTreasurer) {
+                            const maxAmount = getMaxAmount(true);
+                            consoleOut('tokenAmount:', tokenAmount.toNumber(), 'blue');
+                            consoleOut('maxAmount:', maxAmount.toNumber(), 'blue');
+                            setFromCoinAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
+                            setTokenAmount(new BN(maxAmount));
+                          } else {
+                            const maxAmount = getMaxAmount();
+                            setFromCoinAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
+                            setTokenAmount(new BN(maxAmount));
+                          }
+                        }}>
+                        MAX
+                      </div>
+                    ) : null
+                  )}
                 </span>
               </div>
               <div className="right">
@@ -1214,13 +1374,13 @@ export const TreasuryStreamCreateModal = (props: {
                   autoComplete="off"
                   autoCorrect="off"
                   type="text"
-                  onChange={handlePaymentRateAmountChange}
+                  onChange={(treasuryOption && treasuryOption.type === TreasuryType.Lock) ? handleFromCoinAmountChange : handlePaymentRateAmountChange}
                   pattern="^[0-9]*[.,]?[0-9]*$"
                   placeholder="0.0"
                   minLength={1}
                   maxLength={79}
                   spellCheck="false"
-                  value={paymentRateAmount}
+                  value={(treasuryOption && treasuryOption.type === TreasuryType.Lock) ? fromCoinAmount : paymentRateAmount}
                 />
               </div>
             </div>
@@ -1240,78 +1400,64 @@ export const TreasuryStreamCreateModal = (props: {
               </div>
               <div className="right inner-label">
                 <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
-                  ~${paymentRateAmount && effectiveRate
-                    ? formatAmount(parseFloat(paymentRateAmount) * effectiveRate, 2)
+                  ~${((treasuryOption && treasuryOption.type === TreasuryType.Lock) ? (fromCoinAmount && effectiveRate) : (paymentRateAmount && effectiveRate))
+                    ? (formatAmount(parseFloat((treasuryOption && treasuryOption.type === TreasuryType.Lock) ? 
+                    fromCoinAmount : paymentRateAmount) * effectiveRate, 2))
                     : "0.00"}
                 </span>
               </div>
             </div>
+            {(parseFloat((treasuryOption && treasuryOption.type === TreasuryType.Lock) ? fromCoinAmount : paymentRateAmount) > makeDecimal(unallocatedBalance, 6)) && (
+                <span className="form-field-error">
+                  {t('transactions.validation.invalid-amount')}
+                </span>
+              )}
           </div>
 
-          <div className="form-label">{t('transactions.rate-and-frequency.rate-label')}</div>
-          <div className="well">
-            <Dropdown
-              overlay={paymentRateOptionsMenu}
-              trigger={["click"]}>
-              <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
-                <div className="left">
-                  <span className="capitalize-first-letter">{getPaymentRateOptionLabel(paymentRateFrequency, t)}{" "}</span>
-                </div>
-                <div className="right">
-                  <IconCaretDown className="mean-svg-icons" />
-                </div>
-              </span>
-            </Dropdown>
-          </div>
-
-          <div className="form-label">{t('transactions.send-date.label')}</div>
-          <div className="well">
-            <div className="flex-fixed-right">
-              <div className="left static-data-field">
-                {isToday(paymentStartDate || '')
-                  ? `${paymentStartDate} (${t('common:general.now')})`
-                  : `${paymentStartDate}`}
-              </div>
-              <div className="right">
-                <div className="add-on simplelink">
-                  <DatePicker
-                    size="middle"
-                    bordered={false}
-                    className="addon-date-picker"
-                    aria-required={true}
-                    allowClear={false}
-                    disabledDate={disabledDate}
-                    placeholder={t('transactions.send-date.placeholder')}
-                    onChange={(value, date) => handleDateChange(date)}
-                    value={moment(
-                      paymentStartDate,
-                      DATEPICKER_FORMAT
-                    )}
-                    format={DATEPICKER_FORMAT}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {!enableMultipleStreamsOption && (
+          {(treasuryOption && treasuryOption.type === TreasuryType.Open) && (
             <>
-              <div className="form-label">{t('transactions.memo2.label')}</div>
-              <div className="well m-0">
+              <div className="form-label">{t('transactions.rate-and-frequency.rate-label')}</div>
+              <div className="well">
+                <Dropdown
+                  overlay={paymentRateOptionsMenu}
+                  trigger={["click"]}>
+                  <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
+                    <div className="left">
+                      <span className="capitalize-first-letter">{getPaymentRateOptionLabel(paymentRateFrequency, t)}{" "}</span>
+                    </div>
+                    <div className="right">
+                      <IconCaretDown className="mean-svg-icons" />
+                    </div>
+                  </span>
+                </Dropdown>
+              </div>
+
+              <div className="form-label">{t('transactions.send-date.label')}</div>
+              <div className="well">
                 <div className="flex-fixed-right">
-                  <div className="left">
-                    <input
-                      id="payment-memo-field"
-                      className="w-100 general-text-input"
-                      autoComplete="on"
-                      autoCorrect="off"
-                      type="text"
-                      maxLength={32}
-                      onChange={handleRecipientNoteChange}
-                      placeholder={t('transactions.memo2.placeholder')}
-                      spellCheck="false"
-                      value={recipientNote}
-                    />
+                  <div className="left static-data-field">
+                    {isToday(paymentStartDate || '')
+                      ? `${paymentStartDate} (${t('common:general.now')})`
+                      : `${paymentStartDate}`}
+                  </div>
+                  <div className="right">
+                    <div className="add-on simplelink">
+                      <DatePicker
+                        size="middle"
+                        bordered={false}
+                        className="addon-date-picker"
+                        aria-required={true}
+                        allowClear={false}
+                        disabledDate={disabledDate}
+                        placeholder={t('transactions.send-date.placeholder')}
+                        onChange={(value, date) => handleDateChange(date)}
+                        value={moment(
+                          paymentStartDate,
+                          DATEPICKER_FORMAT
+                        )}
+                        format={DATEPICKER_FORMAT}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1321,240 +1467,430 @@ export const TreasuryStreamCreateModal = (props: {
 
         <div className={currentStep === 1 ? "contract-wrapper panel2 show" : "contract-wrapper panel2 hide"}>
 
-          {publicKey && (
+          {treasuryOption && treasuryOption.type === TreasuryType.Open ? (
             <>
-              {(recipientAddress && !enableMultipleStreamsOption) && (
+              {publicKey && (
                 <>
-                <div className="flex-fixed-right">
+                  {(recipientAddress && !enableMultipleStreamsOption) && (
+                    <>
+                      <div className="flex-fixed-right">
+                        <div className="left">
+                          <div className="form-label">{t('transactions.resume')}</div>
+                        </div>
+                        <div className="right">
+                          <span className="flat-button change-button" onClick={() => setCurrentStep(0)}>
+                            <IconEdit className="mean-svg-icons" />
+                            <span>{t('general.cta-change')}</span>
+                          </span>
+                        </div>
+                      </div>
+                      <div className="well">
+                        <div className="three-col-flexible-middle">
+                          <div className="left flex-row">
+                            <div className="flex-center">
+                              <Identicon
+                                address={isValidAddress(recipientAddress) ? recipientAddress : NATIVE_SOL_MINT.toBase58()}
+                                style={{ width: "30", display: "inline-flex" }} />
+                            </div>
+                            <div className="flex-column pl-3">
+                              <div className="address">
+                                {publicKey && isValidAddress(recipientAddress)
+                                  ? shortenAddress(recipientAddress)
+                                  : t('transactions.validation.no-recipient')}
+                              </div>
+                              <div className="inner-label mt-0">{recipientNote || '-'}</div>
+                            </div>
+                          </div>
+                          <div className="middle flex-center">
+                            <div className="vertical-bar"></div>
+                          </div>
+                          <div className="right flex-column">
+                            <div className="rate">
+                              {selectedToken
+                                ? getTokenAmountAndSymbolByTokenAddress(parseFloat(paymentRateAmount), selectedToken.address)
+                                : '-'
+                              }
+                              {getIntervalFromSeconds(getRateIntervalInSeconds(paymentRateFrequency), true, t)}
+                            </div>
+                            <div className="inner-label mt-0">{paymentStartDate}</div>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {(csvArray && enableMultipleStreamsOption && validMultiRecipientsList) && (
+                    <>
+                      {!props.isMultisigTreasury && (
+                        hasIsOwnWallet && (
+                          <span className="form-field-error text-uppercase">
+                            <p>{t("treasuries.treasury-streams.message-warning")}</p>
+                          </span>
+                        )
+                      )}
+                      <div className="flex-fixed-right">
+                        <div className="left">
+                          <div className="form-label">{t('transactions.resume')}</div>
+                        </div>
+                        <div className="right">
+                          <span className="flat-button change-button" onClick={() => setCurrentStep(0)}>
+                            <IconEdit className="mean-svg-icons" />
+                            <span>{t('general.cta-change')}</span>
+                          </span>
+                        </div>
+                      </div>
+                      {listValidAddresses.map((csvItem: any, index: number) => (
+                        <div key={index} className="well">
+                          <div className="three-col-flexible-middle">
+                            <div className="left flex-row">
+                              <div className="flex-center">
+                                <Identicon
+                                  address={isValidAddress(csvItem.address) ? csvItem.address : NATIVE_SOL_MINT.toBase58()}
+                                  style={{ width: "30", display: "inline-flex" }} />
+                              </div>
+                              <div className="flex-column pl-3">
+                                <div className="address">
+                                  {publicKey && isValidAddress(csvItem.address)
+                                    ? shortenAddress(csvItem.address)
+                                    : t('transactions.validation.no-recipient')}
+                                </div>
+                                <div className="inner-label mt-0">{csvItem.streamName.substring(0, 15) || '-'}</div>
+                              </div>
+                            </div>
+                            <div className="middle flex-center">
+                              <div className="vertical-bar"></div>
+                            </div>
+                            <div className="right flex-column">
+                              <div className="rate">
+                                {selectedToken
+                                  ? getTokenAmountAndSymbolByTokenAddress(parseFloat(paymentRateAmount), selectedToken.address)
+                                  : '-'
+                                }
+                                {getIntervalFromSeconds(getRateIntervalInSeconds(paymentRateFrequency), true, t)}
+                              </div>
+                              <div className="inner-label mt-0">{paymentStartDate}</div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                </>
+              )}
+
+              <div className="mb-3 text-center">
+                <div>{t('treasuries.treasury-streams.minimum-allocation-advice')}</div>
+              </div>
+
+              <div className="form-label">{t('treasuries.treasury-streams.allocate-funds-label')}</div>
+              <div className="well">
+                <div className="flex-fixed-left">
                   <div className="left">
-                    <div className="form-label">{t('transactions.resume')}</div>
+                    <span className="add-on">
+                      {(selectedToken && tokenList) && (
+                        <Select className={`token-selector-dropdown ${props.associatedToken ? 'click-disabled' : ''}`} value={selectedToken.address} onChange={onTokenChange} bordered={false} showArrow={false}>
+                          {tokenList.map((option) => {
+                            return (
+                              <Option key={option.address} value={option.address}>
+                                <div className="option-container">
+                                  <TokenDisplay onClick={() => {}}
+                                    mintAddress={option.address}
+                                    name={option.name}
+                                    showCaretDown={props.associatedToken ? false : true}
+                                  />
+                                  <div className="balance">
+                                    {props.userBalances && props.userBalances[option.address] > 0 && (
+                                      <span>{getTokenAmountAndSymbolByTokenAddress(props.userBalances[option.address], option.address, true)}</span>
+                                    )}
+                                  </div>
+                                </div>
+                              </Option>
+                            );
+                          })}
+                        </Select>
+                      )}
+                      {selectedToken && unallocatedBalance ? (
+                        <div
+                          className="token-max simplelink"
+                          onClick={() => {
+                            const decimals = selectedToken ? selectedToken.decimals : 6;
+                            if (isFeePaidByTreasurer) {
+                              const maxAmount = getMaxAmount(true);
+                              consoleOut('tokenAmount:', tokenAmount.toNumber(), 'blue');
+                              consoleOut('maxAmount:', maxAmount.toNumber(), 'blue');
+                              setFromCoinAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
+                              setTokenAmount(new BN(maxAmount));
+                            } else {
+                              const maxAmount = getMaxAmount();
+                              setFromCoinAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
+                              setTokenAmount(new BN(maxAmount));
+                            }
+                          }}>
+                          MAX
+                        </div>
+                      ) : null}
+                    </span>
                   </div>
                   <div className="right">
-                    <span className="flat-button change-button" onClick={() => setCurrentStep(0)}>
-                      <IconEdit className="mean-svg-icons" />
-                      <span>{t('general.cta-change')}</span>
+                    <input
+                      className="general-text-input text-right"
+                      inputMode="decimal"
+                      autoComplete="off"
+                      autoCorrect="off"
+                      type="text"
+                      onChange={handleFromCoinAmountChange}
+                      pattern="^[0-9]*[.,]?[0-9]*$"
+                      placeholder="0.0"
+                      minLength={1}
+                      maxLength={79}
+                      spellCheck="false"
+                      value={fromCoinAmount}
+                    />
+                  </div>
+                </div>
+                <div className="flex-fixed-right">
+                  <div className="left inner-label">
+                    <span>{t('treasuries.treasury-streams.available-unallocated-balance-label')}:</span>
+                    <span>
+                      {`${unallocatedBalance && selectedToken
+                          ? getAmountWithSymbol(
+                              makeDecimal(new BN(unallocatedBalance), selectedToken.decimals),
+                              selectedToken.address,
+                              true
+                            )
+                          : "0"
+                      }`}
+                    </span>
+                  </div>
+                  <div className="right inner-label">
+                    <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
+                      ~${fromCoinAmount && effectiveRate
+                        ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
+                        : "0.00"}
                     </span>
                   </div>
                 </div>
-                  <div className="well">
-                    <div className="three-col-flexible-middle">
-                      <div className="left flex-row">
-                        <div className="flex-center">
-                          <Identicon
-                            address={isValidAddress(recipientAddress) ? recipientAddress : NATIVE_SOL_MINT.toBase58()}
-                            style={{ width: "30", display: "inline-flex" }} />
-                        </div>
-                        <div className="flex-column pl-3">
-                          <div className="address">
-                            {publicKey && isValidAddress(recipientAddress)
-                              ? shortenAddress(recipientAddress)
-                              : t('transactions.validation.no-recipient')}
-                          </div>
-                          <div className="inner-label mt-0">{recipientNote || '-'}</div>
-                        </div>
-                      </div>
-                      <div className="middle flex-center">
-                        <div className="vertical-bar"></div>
-                      </div>
-                      <div className="right flex-column">
-                        <div className="rate">
-                          {selectedToken
-                            ? getTokenAmountAndSymbolByTokenAddress(parseFloat(paymentRateAmount), selectedToken.address)
-                            : '-'
-                          }
-                          {getIntervalFromSeconds(getRateIntervalInSeconds(paymentRateFrequency), true, t)}
-                        </div>
-                        <div className="inner-label mt-0">{paymentStartDate}</div>
-                      </div>
-                    </div>
+              </div>
+
+              {/* {treasuryOption && treasuryOption.type === TreasuryType.Lock && (
+                <div className="mb-2 flex-fixed-right">
+                  <div className="left form-label flex-row align-items-center">
+                    {t('treasuries.treasury-streams.allocation-reserved-label')}
+                    <a className="simplelink" href="https://docs.meanfi.com/platform/specifications/money-streaming-protocol#treasuries-and-streams"
+                        target="_blank" rel="noopener noreferrer">
+                      <Button
+                        className="info-icon-button"
+                        type="default"
+                        shape="circle">
+                        <InfoCircleOutlined />
+                      </Button>
+                    </a>
                   </div>
-                </>
+                  <div className="right">
+                    <Radio.Group onChange={onAllocationReservedChanged} value={isAllocationReserved}>
+                      <Radio value={true}>{t('general.yes')}</Radio>
+                      <Radio value={false}>{t('general.no')}</Radio>
+                    </Radio.Group>
+                  </div>
+                </div>
+              )} */}
+
+              <div className="ml-1 mb-3">
+                <Checkbox checked={isFeePaidByTreasurer} onChange={onFeePayedByTreasurerChange}>{t('treasuries.treasury-streams.fee-payed-by-treasurer')}</Checkbox>
+              </div>
+
+              <div className="ml-1">
+                <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>{t('transfers.verified-recipient-disclaimer')}</Checkbox>
+              </div>
+            </>
+          ) : (
+            <>
+              {(treasuryOption && treasuryOption.type === TreasuryType.Lock) && (
+                <div className="mb-2 text-uppercase">{t('treasuries.treasury-streams.add-stream-locked.panel2-name')}</div>
               )}
 
-              {(csvArray && enableMultipleStreamsOption && validMultiRecipientsList) && (
-                <>
-                  {!props.isMultisigTreasury && (
-                    hasIsOwnWallet && (
-                      <span className="form-field-error text-uppercase">
-                        <p>{t("treasuries.treasury-streams.message-warning")}</p>
-                      </span>
-                    )
-                  )}
+              {(recipientNote && recipientAddress && fromCoinAmount && selectedToken) && (
+                <div className="flex-fixed-right">
+                  <div className="left">
+                    <div className="mb-3">{t('treasuries.treasury-streams.add-stream-locked.panel2-summary', { recipientNote: recipientNote, fromCoinAmount: fromCoinAmount, selectedTokenName: selectedToken && selectedToken.name, recipientShortenAddress: shortenAddress(recipientAddress)})}</div>
+                  </div>
+                </div>
+              )}
+
+              <div className="form-label">{t('treasuries.treasury-streams.add-stream-locked.panel2-lock-period-label')}</div>
+              <div className="d-flex">
+                <div className="well w-25 mr-1">
                   <div className="flex-fixed-right">
                     <div className="left">
-                      <div className="form-label">{t('transactions.resume')}</div>
-                    </div>
-                    <div className="right">
-                      <span className="flat-button change-button" onClick={() => setCurrentStep(0)}>
-                        <IconEdit className="mean-svg-icons" />
-                        <span>{t('general.cta-change')}</span>
-                      </span>
+                      <input
+                        id="plock-period-field"
+                        className="w-100 general-text-input"
+                        autoComplete="on"
+                        autoCorrect="off"
+                        type="number"
+                        onChange={handleLockPeriodAmountChange}
+                        placeholder={`Number of ${getLockPeriodOptionLabel(lockPeriodFrequency, t)}`}
+                        spellCheck="false"
+                        min={0}
+                        max={12}
+                        maxLength={2}
+                        value={parseFloat(lockPeriodAmount)}
+                      />
                     </div>
                   </div>
-                  {listValidAddresses.map((csvItem: any, index: number) => (
-                    <div key={index} className="well">
-                      <div className="three-col-flexible-middle">
-                        <div className="left flex-row">
-                          <div className="flex-center">
-                            <Identicon
-                              address={isValidAddress(csvItem.address) ? csvItem.address : NATIVE_SOL_MINT.toBase58()}
-                              style={{ width: "30", display: "inline-flex" }} />
-                          </div>
-                          <div className="flex-column pl-3">
-                            <div className="address">
-                              {publicKey && isValidAddress(csvItem.address)
-                                ? shortenAddress(csvItem.address)
-                                : t('transactions.validation.no-recipient')}
-                            </div>
-                            <div className="inner-label mt-0">{csvItem.streamName.substring(0, 15) || '-'}</div>
-                          </div>
-                        </div>
-                        <div className="middle flex-center">
-                          <div className="vertical-bar"></div>
-                        </div>
-                        <div className="right flex-column">
-                          <div className="rate">
-                            {selectedToken
-                              ? getTokenAmountAndSymbolByTokenAddress(parseFloat(paymentRateAmount), selectedToken.address)
-                              : '-'
-                            }
-                            {getIntervalFromSeconds(getRateIntervalInSeconds(paymentRateFrequency), true, t)}
-                          </div>
-                          <div className="inner-label mt-0">{paymentStartDate}</div>
-                        </div>
+                </div>
+                <div className="well w-75 ml-1">
+                  <Dropdown
+                    overlay={lockPeriodOptionsMenu}
+                    trigger={["click"]}>
+                    <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
+                      <div className="left">
+                        <span>{getLockPeriodOptionLabel(lockPeriodFrequency, t)}{" "}</span>
                       </div>
+                      <div className="right">
+                        <IconCaretDown className="mean-svg-icons" />
+                      </div>
+                    </span>
+                  </Dropdown>
+                </div>
+              </div>
+
+              <div className="form-label">{t('treasuries.treasury-streams.add-stream-locked.panel2-commencement-date-label')}</div>
+              <div className="well">
+                <div className="flex-fixed-right">
+                  <div className="left static-data-field">
+                    {isToday(paymentStartDate || '')
+                      ? `${paymentStartDate} (${t('common:general.now')})`
+                      : `${paymentStartDate}`}
+                  </div>
+                  <div className="right">
+                    <div className="add-on simplelink">
+                      <DatePicker
+                        size="middle"
+                        bordered={false}
+                        className="addon-date-picker"
+                        aria-required={true}
+                        allowClear={false}
+                        disabledDate={disabledDate}
+                        placeholder={t('transactions.send-date.placeholder')}
+                        onChange={(value, date) => handleDateChange(date)}
+                        value={moment(
+                          paymentStartDate,
+                          DATEPICKER_FORMAT
+                        )}
+                        format={DATEPICKER_FORMAT}
+                      />
                     </div>
-                  ))}
-                </>
-              )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="form-label mt-2">{t('treasuries.treasury-streams.add-stream-locked.panel2-cliff-release-label')}</div>
+              <div className="well">
+                <div className="flexible-right mb-1">
+                  <div className="token-group">
+                    {percentages.map((percentage, index) => (
+                      <div key={index} className="mb-1 d-flex flex-column align-items-center">
+                        <div className="token-max simplelink active" onClick={() => onChangeValuePercentages(percentage)}>{percentage}%</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex-fixed-left">
+                  <div className="left">
+                    <span className="add-on simplelink">
+                      {selectedToken && (
+                        <TokenDisplay onClick={() => {}}
+                          mintAddress={selectedToken.address}
+                          name={selectedToken.name}
+                        />
+                      )}
+                    </span>
+                  </div>
+                  <div className="right">
+                    <input
+                      className="general-text-input text-right"
+                      inputMode="decimal"
+                      autoComplete="off"
+                      autoCorrect="off"
+                      type="text"
+                      onChange={handleFromCoinAmountChange}
+                      pattern="^[0-9]*[.,]?[0-9]*$"
+                      placeholder="0.0"
+                      minLength={1}
+                      maxLength={79}
+                      spellCheck="false"
+                      value={cliffRelease}
+                    />
+                  </div>
+                </div>
+                <div className="flex-fixed-right">
+                  <div className="left inner-label">
+                    <span>{t('treasuries.treasury-streams.add-stream-locked.panel2-cliff-release-inner-label')}</span>
+                  </div>
+                  <div className="right inner-label">
+                    <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
+                      ~${cliffRelease && effectiveRate
+                        ? formatAmount(parseFloat(cliffRelease) * effectiveRate, 2)
+                        : "0.00"}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </>
           )}
+        </div>
 
-          <div className="mb-3 text-center">
-            <div>{t('treasuries.treasury-streams.minimum-allocation-advice')}</div>
-          </div>
+        <div className={currentStep === 2 ? "contract-wrapper panel3 show" : "contract-wrapper panel3 hide"}>
 
-          <div className="form-label">{t('treasuries.treasury-streams.allocate-funds-label')}</div>
-          <div className="well">
-            <div className="flex-fixed-left">
-              <div className="left">
-                <span className="add-on">
-                  {(selectedToken && tokenList) && (
-                    <Select className={`token-selector-dropdown ${props.associatedToken ? 'click-disabled' : ''}`} value={selectedToken.address} onChange={onTokenChange} bordered={false} showArrow={false}>
-                      {tokenList.map((option) => {
-                        return (
-                          <Option key={option.address} value={option.address}>
-                            <div className="option-container">
-                              <TokenDisplay onClick={() => {}}
-                                mintAddress={option.address}
-                                name={option.name}
-                                showCaretDown={props.associatedToken ? false : true}
-                              />
-                              <div className="balance">
-                                {props.userBalances && props.userBalances[option.address] > 0 && (
-                                  <span>{getTokenAmountAndSymbolByTokenAddress(props.userBalances[option.address], option.address, true)}</span>
-                                )}
-                              </div>
-                            </div>
-                          </Option>
-                        );
-                      })}
-                    </Select>
-                  )}
-                  {selectedToken && unallocatedBalance ? (
-                    <div
-                      className="token-max simplelink"
-                      onClick={() => {
-                        const decimals = selectedToken ? selectedToken.decimals : 6;
-                        if (isFeePaidByTreasurer) {
-                          const maxAmount = getMaxAmount(true);
-                          consoleOut('tokenAmount:', tokenAmount.toNumber(), 'blue');
-                          consoleOut('maxAmount:', maxAmount.toNumber(), 'blue');
-                          setFromCoinAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
-                          setTokenAmount(new BN(maxAmount));
-                        } else {
-                          const maxAmount = getMaxAmount();
-                          setFromCoinAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
-                          setTokenAmount(new BN(maxAmount));
-                        }
-                      }}>
-                      MAX
-                    </div>
-                  ) : null}
-                </span>
+          {(treasuryOption && treasuryOption.type === TreasuryType.Lock) && (
+            <>
+              <div className="flex-fixed-right">
+                <div className="left">
+                  <div className="text-uppercase mb-2">{t('transactions.resume')}</div>
+                </div>
+                <div className="right">
+                  <span className="flat-button change-button" onClick={() => setCurrentStep(0)}>
+                    <IconEdit className="mean-svg-icons" />
+                    <span>{t('general.cta-change')}</span>
+                  </span>
+                </div>
               </div>
-              <div className="right">
-                <input
-                  className="general-text-input text-right"
-                  inputMode="decimal"
-                  autoComplete="off"
-                  autoCorrect="off"
-                  type="text"
-                  onChange={handleFromCoinAmountChange}
-                  pattern="^[0-9]*[.,]?[0-9]*$"
-                  placeholder="0.0"
-                  minLength={1}
-                  maxLength={79}
-                  spellCheck="false"
-                  value={fromCoinAmount}
-                />
-              </div>
-            </div>
-            <div className="flex-fixed-right">
-              <div className="left inner-label">
-                <span>{t('treasuries.treasury-streams.available-unallocated-balance-label')}:</span>
-                <span>
-                  {`${unallocatedBalance && selectedToken
-                      ? getAmountWithSymbol(
-                          makeDecimal(new BN(unallocatedBalance), selectedToken.decimals),
-                          selectedToken.address,
-                          true
-                        )
-                      : "0"
-                  }`}
-                </span>
-              </div>
-              <div className="right inner-label">
-                <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
-                  ~${fromCoinAmount && effectiveRate
-                    ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
-                    : "0.00"}
-                </span>
-              </div>
-            </div>
-          </div>
 
-          {/* {treasuryOption && treasuryOption.type === TreasuryType.Lock && (
-            <div className="mb-2 flex-fixed-right">
-              <div className="left form-label flex-row align-items-center">
-                {t('treasuries.treasury-streams.allocation-reserved-label')}
-                <a className="simplelink" href="https://docs.meanfi.com/platform/specifications/money-streaming-protocol#treasuries-and-streams"
-                    target="_blank" rel="noopener noreferrer">
-                  <Button
-                    className="info-icon-button"
-                    type="default"
-                    shape="circle">
-                    <InfoCircleOutlined />
-                  </Button>
-                </a>
+              <div className="mb-2">{t('treasuries.treasury-streams.add-stream-locked.panel3-text-one')} {recipientNote ? recipientNote : "--"}</div>
+
+              <Row className="mb-2">
+                <Col span={24}>
+                  <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-sending')}  </strong> {(fromCoinAmount) ? `${cutNumber(parseFloat(fromCoinAmount), 6)} ${selectedToken && selectedToken.name}` : "--"}
+                </Col>
+                <Col span={24}>
+                  <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-to-address')}  </strong> {recipientAddress ? recipientAddress : "--"}
+                </Col>
+                <Col span={24}>
+                  <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-starting-on')}  </strong> {paymentStartDate}
+                </Col>
+                <Col span={24}>
+                  <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-cliff-release')}  </strong> {cliffRelease ? (`${cutNumber(parseFloat(cliffRelease), 6)} ${selectedToken && selectedToken.name} (on commencement)`) : "--"}
+                </Col>
+                <Col span={24}>
+                  <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-release-rate')}  </strong> {(cliffRelease && lockPeriodAmount && selectedToken && lockPeriodFrequency) ? (`${paymentRateAmount} ${selectedToken.name} / ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`) : "--"}
+                </Col>
+              </Row>
+
+              <span className="warning-message icon-label mb-3">
+                <IconWarning className="mean-svg-icons" />
+                {t('treasuries.treasury-streams.add-stream-locked.panel3-warning-message')}
+              </span>
+
+              <div className="ml-1 mb-3">
+                <Checkbox checked={isFeePaidByTreasurer} onChange={onFeePayedByTreasurerChange}>{t('treasuries.treasury-streams.fee-payed-by-treasurer')}</Checkbox>
               </div>
-              <div className="right">
-                <Radio.Group onChange={onAllocationReservedChanged} value={isAllocationReserved}>
-                  <Radio value={true}>{t('general.yes')}</Radio>
-                  <Radio value={false}>{t('general.no')}</Radio>
-                </Radio.Group>
+
+              <div className="ml-1">
+                <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>{t('transfers.verified-recipient-disclaimer')}</Checkbox>
               </div>
-            </div>
-          )} */}
-
-          <div className="ml-1 mb-3">
-            <Checkbox checked={isFeePaidByTreasurer} onChange={onFeePayedByTreasurerChange}>{t('treasuries.treasury-streams.fee-payed-by-treasurer')}</Checkbox>
-          </div>
-
-          <div className="ml-1">
-            <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>{t('transfers.verified-recipient-disclaimer')}</Checkbox>
-          </div>
-
+            </>
+          )}
         </div>
       </div>
 
@@ -1567,14 +1903,16 @@ export const TreasuryStreamCreateModal = (props: {
             type="primary"
             shape="round"
             size="large"
-            onClick={onContinueButtonClick}
+            onClick={onContinueStepOneButtonClick}
             disabled={!publicKey ||
               (!enableMultipleStreamsOption && !isMemoValid()) ||
               ((!enableMultipleStreamsOption ? !isValidAddress(recipientAddress) : (!isCsvSelected || !validMultiRecipientsList))) ||
+              (parseFloat(fromCoinAmount || paymentRateAmount) > makeDecimal(unallocatedBalance, 6)) ||
               !arePaymentSettingsValid()}>
             {getStepOneContinueButtonLabel()}
           </Button>
       </div>
+
       <div className={currentStep === 1 ? "contract-wrapper panel2 show" : "contract-wrapper panel2 hide"}>
         <Button
           className={`main-cta ${isBusy ? 'inactive' : ''}`}
@@ -1582,22 +1920,50 @@ export const TreasuryStreamCreateModal = (props: {
           type="primary"
           shape="round"
           size="large"
-          onClick={onTransactionStart}
-          disabled={!publicKey ||
+          onClick={(treasuryOption && treasuryOption.type === TreasuryType.Lock) ? onContinueStepTwoButtonClick : onTransactionStart}
+          disabled={(treasuryOption && treasuryOption.type === TreasuryType.Lock) ? (
+            !publicKey ||
+            !lockPeriodAmount ||
+            !cliffRelease
+          ) : (
+            !publicKey ||
             (!enableMultipleStreamsOption && !isMemoValid()) ||
             ((!enableMultipleStreamsOption ? !isValidAddress(recipientAddress) : !validMultiRecipientsList)) ||
+            (parseFloat(fromCoinAmount || paymentRateAmount) > makeDecimal(unallocatedBalance, 6)) ||
             !arePaymentSettingsValid() ||
             !areSendAmountSettingsValid() ||
-            !isVerifiedRecipient}>
-          {isBusy && (
-            <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
+            !isVerifiedRecipient
           )}
-          {isBusy
+        >
+          {(treasuryOption && treasuryOption.type === TreasuryType.Open) && (
+            isBusy && (
+              <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
+            )
+          )}
+          {(treasuryOption && treasuryOption.type === TreasuryType.Open) && (isBusy
             ? t('treasuries.treasury-streams.create-stream-main-cta-busy')
-            : getTransactionStartButtonLabel()}
+            : getTransactionStartButtonLabel()
+          )}
+
+          {(treasuryOption && treasuryOption.type === TreasuryType.Lock) && getStepTwoContinueButtonLabel()}
         </Button>
       </div>
-
+      <div className={currentStep === 2 ? "contract-wrapper panel3 show" : "contract-wrapper panel3 hide"}>
+        <Button
+            className="main-cta"
+            block
+            type="primary"
+            shape="round"
+            size="large"
+            onClick={onTransactionStart}
+            disabled={!publicKey ||
+              !arePaymentSettingsValid() ||
+              !areSendAmountSettingsValid() ||
+              !isVerifiedRecipient
+            }>
+            {getTransactionStartButtonLabel()}
+          </Button>
+      </div>
     </Modal>
   );
 };
