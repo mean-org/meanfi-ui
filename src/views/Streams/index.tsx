@@ -54,6 +54,8 @@ import {
   getTransactionModalTitle,
   getTransactionOperationDescription,
   getTransactionStatusForLogs,
+  isDev,
+  isLocal,
   isValidAddress,
 } from "../../utils/ui";
 import { StreamOpenModal } from '../../components/StreamOpenModal';
@@ -138,6 +140,7 @@ export const Streams = () => {
     highLightableStreamId,
     streamV2ProgramAddress,
     tokenBalance,
+    isWhitelisted,
     setStreamList,
     openStreamById,
     setStreamDetail,
@@ -183,6 +186,10 @@ export const Streams = () => {
   const [streamTreasuryType, setStreamTreasuryType] = useState<StreamTreasuryType | undefined>(undefined);
   const [loadingTreasuryDetails, setLoadingTreasuryDetails] = useState(true);
   const [treasuryDetails, setTreasuryDetails] = useState<Treasury | TreasuryInfo | undefined>(undefined);
+
+  const isUnderDevelopment = () => {
+    return isLocal() || (isDev() && isWhitelisted) ? true : false;
+  }
 
   // Create and cache Money Streaming Program instance
   const ms = useMemo(() => new MoneyStreaming(
@@ -5806,30 +5813,32 @@ export const Streams = () => {
             {connected && streamDetail ? (
               <>
                 {/* Top action icons */}
-                <div className="float-top-right">
-                  <span className="icon-button-container secondary-button">
-                    <Tooltip placement="bottom" title={t('streams.edit-stream.edit-stream-tooltip')}>
-                      <Button
-                        type="default"
-                        shape="circle"
-                        size="middle"
-                        icon={<IconEdit className="mean-svg-icons" style={{padding: "2px 0 0"}} />}
-                        onClick={() => onEditStreamClick()}
-                        disabled={isInboundStream(streamDetail)}
-                      />
-                    </Tooltip>
-                    <Tooltip placement="bottom" title={t('streams.stream-detail.close-money-stream-menu-item')}>
-                      <Button
-                        type="default"
-                        shape="circle"
-                        size="middle"
-                        icon={<IconTrash className="mean-svg-icons" />}
-                        onClick={showCloseStreamModal}
-                        disabled
-                      />
-                    </Tooltip>
-                  </span>
-                </div>
+                {isUnderDevelopment() && (
+                  <div className="float-top-right">
+                    <span className="icon-button-container secondary-button">
+                      <Tooltip placement="bottom" title={t('streams.edit-stream.edit-stream-tooltip')}>
+                        <Button
+                          type="default"
+                          shape="circle"
+                          size="middle"
+                          icon={<IconEdit className="mean-svg-icons" style={{padding: "2px 0 0"}} />}
+                          onClick={() => onEditStreamClick()}
+                          disabled={isInboundStream(streamDetail)}
+                        />
+                      </Tooltip>
+                      <Tooltip placement="bottom" title={t('streams.stream-detail.close-money-stream-menu-item')}>
+                        <Button
+                          type="default"
+                          shape="circle"
+                          size="middle"
+                          icon={<IconTrash className="mean-svg-icons" />}
+                          onClick={showCloseStreamModal}
+                          disabled
+                        />
+                      </Tooltip>
+                    </span>
+                  </div>
+                )}
 
               {isInboundStream(streamDetail)
                 ? streamDetail.version < 2

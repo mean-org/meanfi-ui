@@ -1193,7 +1193,7 @@ export const TreasuryStreamCreateModal = (props: {
   return (
     <Modal
       className="mean-modal treasury-stream-create-modal"
-      title={(treasuryOption && treasuryOption.type === TreasuryType.Open) ? (<div className="modal-title">{t('treasuries.treasury-streams.add-stream-modal-title')}</div>) : (<div className="modal-title">Add a locked money stream</div>)}
+      title={(treasuryOption && treasuryOption.type === TreasuryType.Open) ? (<div className="modal-title">{t('treasuries.treasury-streams.add-stream-modal-title')}</div>) : (<div className="modal-title">{t('treasuries.treasury-streams.add-stream-locked.modal-title')}</div>)}
       footer={null}
       visible={props.isVisible}
       onOk={props.handleOk}
@@ -1207,7 +1207,7 @@ export const TreasuryStreamCreateModal = (props: {
         <div className={currentStep === 0 ? "contract-wrapper panel1 show" : "contract-wrapper panel1 hide"}>
 
           {(treasuryOption && treasuryOption.type === TreasuryType.Lock) && (
-            <div className="mb-2">RECIPIENT'S INFO</div>
+            <div className="mb-2 text-uppercase">{t('treasuries.treasury-streams.add-stream-locked.panel1-name')}</div>
           )}
 
           {/* Create Treasury checkbox */}
@@ -1706,18 +1706,18 @@ export const TreasuryStreamCreateModal = (props: {
           ) : (
             <>
               {(treasuryOption && treasuryOption.type === TreasuryType.Lock) && (
-                <div className="mb-2">VESTING TERMS</div>
+                <div className="mb-2 text-uppercase">{t('treasuries.treasury-streams.add-stream-locked.panel2-name')}</div>
               )}
 
               {(recipientNote && recipientAddress && fromCoinAmount && selectedToken) && (
                 <div className="flex-fixed-right">
                   <div className="left">
-                    <div className="mb-3">Specify the vesting terms for {recipientNote} below. You will be sending {fromCoinAmount} {selectedToken && selectedToken.name} to {shortenAddress(recipientAddress)} using these terms and schedule.</div>
+                    <div className="mb-3">{t('treasuries.treasury-streams.add-stream-locked.panel2-summary', { recipientNote: recipientNote, fromCoinAmount: fromCoinAmount, selectedTokenName: selectedToken && selectedToken.name, recipientShortenAddress: shortenAddress(recipientAddress)})}</div>
                   </div>
                 </div>
               )}
 
-              <div className="form-label">LOCK PERIOD</div>
+              <div className="form-label">{t('treasuries.treasury-streams.add-stream-locked.panel2-lock-period-label')}</div>
               <div className="d-flex">
                 <div className="well w-25 mr-1">
                   <div className="flex-fixed-right">
@@ -1755,7 +1755,7 @@ export const TreasuryStreamCreateModal = (props: {
                 </div>
               </div>
 
-              <div className="form-label">COMMENCEMENT DATE</div>
+              <div className="form-label">{t('treasuries.treasury-streams.add-stream-locked.panel2-commencement-date-label')}</div>
               <div className="well">
                 <div className="flex-fixed-right">
                   <div className="left static-data-field">
@@ -1785,7 +1785,7 @@ export const TreasuryStreamCreateModal = (props: {
                 </div>
               </div>
 
-              <div className="form-label mt-2">CLIFF RELEASE (ON COMMENCEMENT)</div>
+              <div className="form-label mt-2">{t('treasuries.treasury-streams.add-stream-locked.panel2-cliff-release-label')}</div>
               <div className="well">
                 <div className="flexible-right mb-1">
                   <div className="token-group">
@@ -1826,7 +1826,7 @@ export const TreasuryStreamCreateModal = (props: {
                 </div>
                 <div className="flex-fixed-right">
                   <div className="left inner-label">
-                    <span>What amount is released on commencement?</span>
+                    <span>{t('treasuries.treasury-streams.add-stream-locked.panel2-cliff-release-inner-label')}</span>
                   </div>
                   <div className="right inner-label">
                     <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
@@ -1857,29 +1857,29 @@ export const TreasuryStreamCreateModal = (props: {
                 </div>
               </div>
 
-              <div className="mb-2">Confirm the terms for {recipientNote ? recipientNote : "--"}</div>
+              <div className="mb-2">{t('treasuries.treasury-streams.add-stream-locked.panel3-text-one')} {recipientNote ? recipientNote : "--"}</div>
 
               <Row className="mb-2">
                 <Col span={24}>
-                  <strong>Sending:  </strong> {(fromCoinAmount) ? `${cutNumber(parseFloat(fromCoinAmount), 6)} ${selectedToken && selectedToken.name}` : "--"}
+                  <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-sending')}  </strong> {(fromCoinAmount) ? `${cutNumber(parseFloat(fromCoinAmount), 6)} ${selectedToken && selectedToken.name}` : "--"}
                 </Col>
                 <Col span={24}>
-                  <strong>To Address:  </strong> {recipientAddress ? recipientAddress : "--"}
+                  <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-to-address')}  </strong> {recipientAddress ? recipientAddress : "--"}
                 </Col>
                 <Col span={24}>
-                  <strong>Starting on:  </strong> {paymentStartDate}
+                  <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-starting-on')}  </strong> {paymentStartDate}
                 </Col>
                 <Col span={24}>
-                  <strong>Cliff release:  </strong> {cliffRelease ? (`${cutNumber(parseFloat(cliffRelease), 6)} ${selectedToken && selectedToken.name} (on commencement)`) : "--"}
+                  <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-cliff-release')}  </strong> {cliffRelease ? (`${cutNumber(parseFloat(cliffRelease), 6)} ${selectedToken && selectedToken.name} (on commencement)`) : "--"}
                 </Col>
                 <Col span={24}>
-                  <strong>Release rate:  </strong> {(cliffRelease && lockPeriodAmount && selectedToken && lockPeriodFrequency) ? (`${paymentRateAmount} ${selectedToken.name} / ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`) : "--"}
+                  <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-release-rate')}  </strong> {(cliffRelease && lockPeriodAmount && selectedToken && lockPeriodFrequency) ? (`${paymentRateAmount} ${selectedToken.name} / ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`) : "--"}
                 </Col>
               </Row>
 
               <span className="warning-message icon-label mb-3">
                 <IconWarning className="mean-svg-icons" />
-                IMPORTANT: This is a locked money stream, and once started, you cannot cancel, pause or change its details. Verify all information before proceeding.
+                {t('treasuries.treasury-streams.add-stream-locked.panel3-warning-message')}
               </span>
 
               <div className="ml-1 mb-3">

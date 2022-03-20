@@ -5,16 +5,17 @@ import { Modal, Button, Spin, Dropdown, Menu, Row, Col } from 'antd';
 import { PaymentRateType, TransactionStatus } from '../../models/enums';
 import { TokenInfo } from "@solana/spl-token-registry";
 import { TokenListItem } from "../TokenListItem";
-import { consoleOut, getPaymentRateOptionLabel, isValidAddress, PaymentRateTypeOption } from "../../utils/ui";
+import { consoleOut, getIntervalFromSeconds, getPaymentRateOptionLabel, isValidAddress, PaymentRateTypeOption } from "../../utils/ui";
 import { useWallet } from "../../contexts/wallet";
 import { TokenDisplay } from "../TokenDisplay";
-import { formatAmount, getAmountWithSymbol, isValidNumber } from "../../utils/utils";
+import { formatAmount, getAmountWithSymbol, isValidNumber, toUiAmount } from "../../utils/utils";
 import { TextInput } from "../TextInput";
 import { useNavigate } from "react-router-dom";
 import { IconCaretDown } from "../../Icons";
 import { isError } from "../../utils/transactions";
 import { StreamInfo } from '@mean-dao/money-streaming/lib/types';
 import { Stream } from "@mean-dao/msp";
+import { BN } from "bn.js";
 
 export const StreamEditModal = (props: {
   handleClose: any;
@@ -34,19 +35,40 @@ export const StreamEditModal = (props: {
     tokenList,
     tokenBalance,
     loadingPrices,
+    recipientNote,
     fromCoinAmount,
     paymentRateFrequency,
+    selectedStream,
     setTransactionStatus,
     setSelectedToken,
     setEffectiveRate,
     refreshPrices,
+    setRecipientNote,
     setFromCoinAmount,
     setPaymentRateFrequency
   } = useContext(AppStateContext);
-  const [streamNameLabel, setStreamNameLabel] = useState('');
   const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
   const [tokenFilter, setTokenFilter] = useState("");
   const [userBalances, setUserBalances] = useState<any>();
+
+  useEffect(() => {
+    if (props.streamDetail) {
+      // setRecipientNote();
+
+      setFromCoinAmount(toUiAmount(new BN(props.streamDetail.rateAmount), 6).toString());
+
+      // let frequency = getIntervalFromSeconds(props.streamDetail.rateIntervalInSeconds, false, t);
+      // const camalize = frequency.toLowerCase().replace(/[^a-zA-Z0-9]+(.)/g, (m, chr) => chr.toUpperCase());
+      // const rateType = camalize.charAt(0).toUpperCase() + camalize.slice(1);
+      
+      // setPaymentRateFrequency(PaymentRateType[rateType]);
+    }
+  }, [
+    props.streamDetail,
+    setFromCoinAmount, 
+    setPaymentRateFrequency, 
+    t
+  ]);
 
   const refreshPage = () => {
     props.handleClose();
@@ -76,8 +98,8 @@ export const StreamEditModal = (props: {
   }
 
   const onNameInputValueChange = (e: any) => {
-    setStreamNameLabel(e.target.value);
-  }
+    setRecipientNote(e.target.value);
+  }  
 
   // Reset results when the filter is cleared
   // useEffect(() => {
@@ -200,7 +222,7 @@ export const StreamEditModal = (props: {
   useEffect(() => {
     // if (props.isVisible) {
     //   if (props.streamName) {
-    //     setStreamNameLabel(props.streamName);
+    //     setRecipientNote(props.streamName);
     //   }
     // }
   }, []);
@@ -277,7 +299,7 @@ export const StreamEditModal = (props: {
                         maxLength={32}
                         onChange={onNameInputValueChange}
                         placeholder={t('streams.edit-stream.name-input-placeholder')}
-                        value={streamNameLabel}
+                        value={recipientNote}
                       />
                     </div>
                   </div>
