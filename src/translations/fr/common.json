@@ -278,6 +278,13 @@
 		"subtitle": "The easiest way to grow your money stash",
 		"screen-title": "Invest Options",
 		"refresh-tooltip": "Refresh invest data",
+		"panel-left": {
+			"invest-stake-tab-title": "Stake MEAN",
+			"invest-liquidity-tab-title": "MEAN Liquidity Pools",
+			"liquidity-value-label": "Up to",
+			"no-invest-options": "No invest options available",
+			"not-connected": "Please connect your wallet to see your invest options"
+		},
 		"panel-right": {
 			"title": "Stake MEAN to Earn MEAN Rewards",
 			"first-text": "MEAN staking rewards include emission incentives plus a share of the protocol revenues, and can be boosted using locking periods. When you stake your MEAN, you get sMEAN in return.",
@@ -287,6 +294,18 @@
 				"staking-apy-tooltip": "The APY associated with sMEAN is a representation of the price of sMEAN over a 365 day period.",
 				"total-value-locked": "Total Value Locked",
 				"total-mean-rewards": "Total MEAN Rewards"
+			},
+			"liquidity-pool": {
+				"title": "MEAN Liquidity Pools",
+				"text-one": "MEAN Liquidity Pools are currently available on Orca and Raydium with multiple pools including MEAN/SOL, MEAN/RAY and MEAN/USDC.",
+				"text-two": "Before you add funds to a pool, be sure to read and accept the risks associated with investing in a liquidity pool.",
+				"refresh-tooltip": "Refresh liquidity data",
+				"column-platform": "Platform",
+				"column-lppair": "LP Pair",
+				"column-liquidity": "Liquidity",
+				"column-volume": "Vol (24hrs)",
+				"column-apr/apy": "APR/APY",
+				"column-invest": "Invest"
 			},
 			"tabset": {
 				"stake": {
@@ -316,6 +335,12 @@
 				}
 			},
 			"staking-data": {
+				"title": "Your Current Stake:",
+				"label-my-staked": "My Staked MEAN",
+				"label-avg": "Avg. Locked Yield",
+				"label-boost": "Staking Lock Boost",
+				"label-locked": "My Locked eMEAN",
+				"label-balance": "My xMEAN Balance",
 				"text-one": "MEAN tokens locked till {{unstakeStartDate}}",
 				"text-two": "Locking boost periods are coming soon to earn even more MEAN!",
 				"withdraw-button": "Withdraw Funds"

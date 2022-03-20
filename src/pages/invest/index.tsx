@@ -74,43 +74,43 @@ export const InvestView = () => {
   const investItems = [
     {
       id: 0,
-      name: "MEAN",
+      name: "Stake",
       symbol1: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg",
       symbol2: "",
-      title: "Stake MEAN",
+      title: t("invest.panel-left.invest-stake-tab-title"),
       rateAmount: "52.09",
       interval: "APY"
     },
     {
       id: 1,
-      name: "Test",
+      name: "Liquidity",
       symbol1: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R/logo.png",
       symbol2: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE/logo.png",
-      title: "MEAN Liquidity Pools and Farms",
-      rateAmount: `Up to ${maxRadiumAprValue}`,
-      interval: "APR/APY 7D"
+      title: t("invest.panel-left.invest-liquidity-tab-title"),
+      rateAmount: `${t("invest.panel-left.liquidity-value-label")} ${maxRadiumAprValue}`,
+      interval: "APR/APY"
     }
   ];
 
   const stakingData = [
     {
-      label: "My Staked MEAN",
+      label: t("invest.panel-right.staking-data.label-my-staked"),
       value: unstakeAmount ? cutNumber(parseFloat(unstakeAmount), 6) : 0
     },
     // {
-    //   label: "Avg. Locked Yield",
+    //   label: t("invest.panel-right.staking-data.label-avg"),
     //   value: `${annualPercentageYield}%`
     // },
     // {
-    //   label: "Staking Lock Boost",
+    //   label: t("invest.panel-right.staking-data.label-boost"),
     //   value: `${stakingMultiplier}x boost`
     // },
     // {
-    //   label: "My Locked eMEAN",
+    //   label: t("invest.panel-right.staking-data.label-locked"),
     //   value: "1,000"
     // },
     // {
-    //   label: "My xMEAN Balance",
+    //   label: t("invest.panel-right.staking-data.label-balance"),
     //   value: "20,805.1232"
     // },
   ];
@@ -262,7 +262,6 @@ export const InvestView = () => {
     }
 
   }, [
-    currentTab,
     meanAddresses,
     setFromCoinAmount,
     setIsVerifiedRecipient,
@@ -579,12 +578,12 @@ export const InvestView = () => {
                     <div className="stats-row">
                       <div className="item-list-header compact"><div className="header-row">
                         <div className="std-table-cell responsive-cell text-left
-                        ">Platform</div>
-                        <div className="std-table-cell responsive-cell pr-1 text-left">LP Pair</div>
-                        <div className="std-table-cell responsive-cell pr-2 text-right">Liquidity</div>
-                        <div className="std-table-cell responsive-cell pr-2 text-right">Vol (24hrs)</div>
-                        <div className="std-table-cell responsive-cell pr-2 text-right">APR/APY 7D</div>
-                        <div className="std-table-cell responsive-cell pl-1 text-center invest-col">Invest</div>
+                        ">{t("invest.panel-right.liquidity-pool.column-platform")}</div>
+                        <div className="std-table-cell responsive-cell pr-1 text-left">{t("invest.panel-right.liquidity-pool.column-lppair")}</div>
+                        <div className="std-table-cell responsive-cell pr-2 text-right">{t("invest.panel-right.liquidity-pool.column-liquidity")}</div>
+                        <div className="std-table-cell responsive-cell pr-2 text-right">{t("invest.panel-right.liquidity-pool.column-volume")}</div>
+                        <div className="std-table-cell responsive-cell pr-2 text-right">{t("invest.panel-right.liquidity-pool.column-apr/apy")}</div>
+                        <div className="std-table-cell responsive-cell pl-1 text-center invest-col">{t("invest.panel-right.liquidity-pool.column-invest")}</div>
                         </div>
                       </div>
 

@@ -275,6 +275,9 @@
 	},
 	"invest": {
 		"panel-left": {
+			"invest-stake-tab-title": "Stake MEAN",
+			"invest-liquidity-tab-title": "MEAN Liquidity Pools",
+			"liquidity-value-label": "Up to",
 			"no-invest-options": "Uygun yatırım seçeneği yok",
 			"not-connected": "Seçeneklerinizi görmek için cüzdanınızı bağlayın"
 		},
@@ -283,9 +286,27 @@
 			"first-text": "MEAN staking rewards include emission incentives plus a share of the protocol revenues, and can be boosted using locking periods. When you stake your MEAN, you get sMEAN in return.",
 			"second-text": "Simply holding your sMEAN is all that is required to continuously grow your MEAN stash. You don't need to harvest the rewards with MEAN staking. When you unstake your sMEAN, you will receive the rewards earned in the form of additional MEAN on top of the amount staked.",
 			"staking-data": {
+				"title": "Your Current Stake:",
+				"label-my-staked": "My Staked MEAN",
+				"label-avg": "Avg. Locked Yield",
+				"label-boost": "Staking Lock Boost",
+				"label-locked": "My Locked eMEAN",
+				"label-balance": "My xMEAN Balance",
 				"text-one": "MEAN tokenları {{unstakeStartDate}} kadar kilitli",
 				"text-two": "Locking boost periods are coming soon to earn even more MEAN!",
 				"withdraw-button": "Fonları Çek"
+			},
+			"liquidity-pool": {
+				"title": "MEAN Liquidity Pools",
+				"text-one": "MEAN Liquidity Pools are currently available on Orca and Raydium with multiple pools including MEAN/SOL, MEAN/RAY and MEAN/USDC.",
+				"text-two": "Before you add funds to a pool, be sure to read and accept the risks associated with investing in a liquidity pool.",
+				"refresh-tooltip": "Refresh liquidity data",
+				"column-platform": "Platform",
+				"column-lppair": "LP Pair",
+				"column-liquidity": "Liquidity",
+				"column-volume": "Vol (24hrs)",
+				"column-apr/apy": "APR/APY",
+				"column-invest": "Invest"
 			},
 			"stats": {
 				"total-mean-rewards": "Total MEAN Rewards",
