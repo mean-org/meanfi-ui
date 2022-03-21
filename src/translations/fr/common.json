@@ -203,6 +203,20 @@
 			"primary-cta": "Confirmer",
 			"secondary-cta": "Retour"
 		},
+		"exchange-dcas": {
+			"detail-panel-word-one": "Buying",
+			"detail-panel-word-two": "worth of",
+			"detail-panel-word-three": "every",
+			"withdraw": "Withdraw",
+			"cancel-withdraw-everything": "Cancel and withdraw everything",
+			"total-deposits": "Total deposits",
+			"total-left": "Total left (will run out by",
+			"exchanged-for": "Exchanged for (avg rate 1",
+			"next-scheduled-exchange": "Next scheduled exchange",
+			"deposited": "Deposited",
+			"rate-amount": "Every",
+			"exchange-details": "Exchange details"
+		},
 		"screen-title": "Achats récurrents",
 		"setup-close-warning": "Fermeture sans clic.  Commencer ignorera votre premier achat.  Fermer quand même ?",
 		"streams-ddcas": "Cliquez pour actualiser les achats récurrents"
@@ -309,29 +323,26 @@
 			},
 			"tabset": {
 				"stake": {
-					"name": "Stake",
 					"amount-label": "Amount to stake",
-					"period-label": "How long do you want to stake for?",
 					"days": "days",
-					"year": "year",
-					"years": "years",
 					"notification-label": "Staking period of {{periodValue}} {{periodTime}} will lock your Tokens until {{unstakeStartDate}}.",
-					"verified-label": "I agree to the Terms & Conditions",
 					"terms-and-conditions-tooltip": "Your tokens will be locked for the period of time selected and you will not be able to unstake them before the staking period ends. When you stake additional tokens to an existing contract, the staking period will be extended to the new end date for ALL of the tokens locked.",
-					"stake-button": "Stake"
+					"verified-label": "I agree to the Terms & Conditions",
+					"year": "year",
+					"years": "years"
 				},
 				"unstake": {
+					"amount-label": "Amount to unstake",
 					"name": "Unstake",
 					"notification-label-one": "Your currently have {{unstakeAmount}} sMEAN staked which is currently locked until {{unstakeStartDate}}",
 					"notification-label-one-error": "You don't have any sMEAN staked",
-					"amount-label": "Amount to unstake",
 					"notification-label-two": "Unstaking will withdraw the specified amount of unlocked sMEAN tokens to your wallet",
-					"verified-label": "I agree to the Terms & Conditions",
-					"unstake-button-available": "Unstake",
-					"unstake-button-unavailable": "No available",
 					"send-amount": {
 						"label-right": "Available to unstake"
-					}
+					},
+					"unstake-button-available": "Unstake",
+					"unstake-button-unavailable": "No available",
+					"verified-label": "I agree to the Terms & Conditions"
 				}
 			},
 			"staking-data": {
@@ -457,7 +468,11 @@
 			"screen-title": "Mints - {{multisigName}} ({{itemCount}})",
 			"screen-title-no-mints": "Mints",
 			"selected-mint-label": "Selected Mint",
-			"success-message": "New mint authority set successfully."
+			"success-message": "New mint authority set successfully.",
+			"multisig-authority": "Multisig Authority",
+			"decimals": "decimals:",
+			"supply": "supply",
+			"mint-address": "MINT ADDRESS:"
 		},
 		"multisig-programs": {
 			"cta-create-program": "Créer un programme",
@@ -481,7 +496,26 @@
 			"modal-title": "Récapitulatif des transactions",
 			"no-transactions": "Ce compte multisig n'a aucune transaction",
 			"tx-operation-failure": "L'opération {{operation}} a échoué",
-			"tx-operation-success": "L'opération {{operation}} a réussi"
+			"tx-operation-success": "L'opération {{operation}} a réussi",
+			"tx-operation-pending-one": "A transaction on this Multisig is now ready for execution. Please tell the person who initiated this transaction to execute it.",
+			"tx-operation-pending-two": "A Transaction on this Multisig is ready for",
+			"proposed-action": "Proposed Action:",
+			"submitted-on": "Submitted on:",
+			"initiator": "Initiator:",
+			"initiator-transaction": "This transaction was submitted by",
+			"transaction-required": "This transaction required",
+			"transaction-has": "This transaction has",
+			"transaction-awaiting": "A Transaction on this Multisig is awaiting",
+			"address": "Address:",
+			"approval": "approval.",
+			"your-status": "Your Status:",
+			"signers-to-approve": "signers to approve it in order to be executed.",
+			"signed": "Signed.",
+			"signed-so-far": "Signed so far.",
+			"explain-failure": "Explain failure condition if specific",
+			"ready-for-execution": "This transaction is now ready for execution. Please tell the person who initiated this transaction to execute it.",
+			"treasury-closed-warning": "When a treasury is closed, all funds left over will be deposited to the initiator's wallet. Please confirm this is acceptable before you sign.",
+			"not-signed": "Not Signed"
 		},
 		"multisig-treasuries": {
 			"back-to-treasuries": "Back to treasuries"
@@ -596,6 +630,11 @@
 	"payroll": {
 		"screen-subtitle": "Configurer la paie de vos employés",
 		"screen-title": "Paie"
+	},
+	"page-not-found": {
+		"title": "Page not found (404) - Mean Finance",
+		"message": "Page not found",
+		"button": "Go Home"
 	},
 	"pre-footer": {
 		"made-with": "Made with ",

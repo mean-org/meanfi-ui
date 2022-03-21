@@ -120,13 +120,13 @@ export const LANGUAGES: Language[] = [
         flag: '/assets/flags/vn.svg',
         locale: 'vi-VN'
     },
-    // {
-    //     code: 'ko',
-    //     isoName: 'Korean',
-    //     name: 'T한국인',
-    //     flag: '/assets/flags/kr.svg',
-    //     locale: 'ko-KR'
-    // },
+    {
+        code: 'ko',
+        isoName: 'Korean',
+        name: 'T한국인',
+        flag: '/assets/flags/kr.svg',
+        locale: 'ko-KR'
+    },
 ];
 
 export const DAO_CORE_TEAM_WHITELIST = [

@@ -203,6 +203,20 @@
 			"primary-cta": "Onayla",
 			"secondary-cta": "Geri"
 		},
+		"exchange-dcas": {
+			"detail-panel-word-one": "Buying",
+			"detail-panel-word-two": "worth of",
+			"detail-panel-word-three": "every",
+			"withdraw": "Withdraw",
+			"cancel-withdraw-everything": "Cancel and withdraw everything",
+			"total-deposits": "Total deposits",
+			"total-left": "Total left (will run out by",
+			"exchanged-for": "Exchanged for (avg rate 1",
+			"next-scheduled-exchange": "Next scheduled exchange",
+			"deposited": "Deposited",
+			"rate-amount": "Every",
+			"exchange-details": "Exchange details"
+		},
 		"screen-title": "Tekrarlayan satın alma",
 		"setup-close-warning": "Tıklamadan kapanır. Başlangıç ilk satın alma işlemini atlayacak. Yine de kapansın mı?",
 		"streams-ddcas": "Tekrarlayan satın almayı güncellemek için tıkla"
@@ -457,7 +471,11 @@
 			"screen-title": "Mintler - {{multisigName}} ({{itemCount}})",
 			"screen-title-no-mints": "Mintler",
 			"selected-mint-label": "Seçilmiş mint",
-			"success-message": "Yeni mint yetkisi başarıyla ayarlandı"
+			"success-message": "Yeni mint yetkisi başarıyla ayarlandı",
+			"multisig-authority": "Multisig Authority",
+			"decimals": "decimals:",
+			"supply": "supply",
+			"mint-address": "MINT ADDRESS:"
 		},
 		"multisig-programs": {
 			"cta-create-program": "Program oluştur",
@@ -481,7 +499,26 @@
 			"modal-title": "İşlem özeti",
 			"no-transactions": "Bu çoklu-imza hesabının işlemi yok",
 			"tx-operation-failure": "{{operation}} iÅ lemi baÅ arÄ±sÄ±z oldu",
-			"tx-operation-success": "{{operation}} iÅ lemi baÅ arÄ±lÄ± oldu"
+			"tx-operation-success": "{{operation}} iÅ lemi baÅ arÄ±lÄ± oldu",
+			"tx-operation-pending-one": "A transaction on this Multisig is now ready for execution. Please tell the person who initiated this transaction to execute it.",
+			"tx-operation-pending-two": "A Transaction on this Multisig is ready for",
+			"proposed-action": "Proposed Action:",
+			"submitted-on": "Submitted on:",
+			"initiator": "Initiator:",
+			"initiator-transaction": "This transaction was submitted by",
+			"transaction-required": "This transaction required",
+			"transaction-has": "This transaction has",
+			"transaction-awaiting": "A Transaction on this Multisig is awaiting",
+			"address": "Address:",
+			"approval": "approval.",
+			"your-status": "Your Status:",
+			"signers-to-approve": "signers to approve it in order to be executed.",
+			"signed": "Signed.",
+			"signed-so-far": "Signed so far.",
+			"explain-failure": "Explain failure condition if specific",
+			"ready-for-execution": "This transaction is now ready for execution. Please tell the person who initiated this transaction to execute it.",
+			"treasury-closed-warning": "When a treasury is closed, all funds left over will be deposited to the initiator's wallet. Please confirm this is acceptable before you sign.",
+			"not-signed": "Not Signed"
 		},
 		"multisig-treasuries": {
 			"back-to-treasuries": "Hazinelere geri dön"
@@ -596,6 +633,11 @@
 	"payroll": {
 		"screen-subtitle": "Çalışanlarınız için ödeme planı ayarlayın",
 		"screen-title": "Ödeme planı"
+	},
+	"page-not-found": {
+		"title": "Page not found (404) - Mean Finance",
+		"message": "Page not found",
+		"button": "Go Home"
 	},
 	"pre-footer": {
 		"made-with": "Beraber yapıldı",
