@@ -336,6 +336,7 @@
 					"notification-label": "Staking period of {{periodValue}} {{periodTime}} will lock your Tokens until {{unstakeStartDate}}.",
 					"period-label": "برای چه مدت می خواهید استک کنید؟",
 					"stake-button": "سهام (استک)",
+					"stake-button-busy": "Staking",
 					"terms-and-conditions-tooltip": "توکن‌های شما برای مدت زمان انتخابی قفل خواهند شد و نمی‌توانید قبل از پایان دوره استیکینگ آن‌ها را باز کنید. وقتی توکن‌های اضافی را در یک قرارداد موجود قرار می‌دهید، دوره استیکینگ برای همه توکن‌های قفل‌شده تا تاریخ پایان جدید تمدید می‌شود.",
 					"verified-label": "من با شرایط و قوانین موافق هستم",
 					"year": "سال",

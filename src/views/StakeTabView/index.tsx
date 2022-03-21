@@ -1,48 +1,46 @@
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import './style.less';
-import { ArrowDownOutlined, CheckOutlined, ReloadOutlined } from "@ant-design/icons";
-import { Button, Tooltip, Row, Col, Space, Empty, Spin, Modal } from "antd";
+import { CheckOutlined, LoadingOutlined,  } from "@ant-design/icons";
+import { Button, Modal } from "antd";
 import moment from 'moment';
-// import Checkbox from "antd/lib/checkbox/Checkbox";
 import { useTranslation } from 'react-i18next';
-// import { isDesktop } from "react-device-detect";
 import { TokenDisplay } from "../../components/TokenDisplay";
-// import { PreFooter } from "../../components/PreFooter";
-// import { useConnection, useConnectionConfig } from '../../contexts/connection';
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
-import { cutNumber, formatAmount, formatThousands, getAmountWithSymbol, isValidNumber } from "../../utils/utils";
+import { formatAmount, formatThousands, getAmountWithSymbol, getTxIxResume, isValidNumber } from "../../utils/utils";
 import { DebounceInput } from "react-debounce-input";
 import { StakeQuote, StakingClient } from "@mean-dao/staking";
-// import { IconRefresh, IconStats } from "../../Icons";
-// import { IconHelpCircle } from "../../Icons/IconHelpCircle";
-// import useWindowSize from '../../hooks/useWindowResize';
-// import { consoleOut, isLocal, isProd } from "../../utils/ui";
-// import { useNavigate } from "react-router-dom";
-// import { ConfirmOptions } from "@solana/web3.js";
-// import { Provider } from "@project-serum/anchor";
+import { Transaction } from "@solana/web3.js";
+import { TransactionStatusContext } from "../../contexts/transaction-status";
+import { OperationType, TransactionStatus } from "../../models/enums";
+import { consoleOut, getTransactionStatusForLogs } from "../../utils/ui";
+import { customLogger } from "../..";
+import { useConnection } from "../../contexts/connection";
+import { notify } from "../../utils/notifications";
 
 export const StakeTabView = (props: {
   stakeClient: StakingClient;
 }) => {
   const {
-    selectedToken,
+    stakedAmount,
     tokenBalance,
+    selectedToken,
     effectiveRate,
     loadingPrices,
     fromCoinAmount,
-    isVerifiedRecipient,
     paymentStartDate,
-    stakedAmount,
-    unstakeStartDate,
-    refreshPrices,
-    setFromCoinAmount,
+    transactionStatus,
     setIsVerifiedRecipient,
-    setStakedAmount,
+    setTransactionStatus,
     setUnstakeStartDate,
-    setStakingMultiplier
+    setFromCoinAmount,
+    setStakedAmount,
+    refreshPrices,
   } = useContext(AppStateContext);
-  const { connected } = useWallet();
+  const { enqueueTransactionConfirmation } = useContext(TransactionStatusContext);
+  const connection = useConnection();
+  const [isBusy, setIsBusy] = useState(false);
+  const { connected, wallet } = useWallet();
   const { t } = useTranslation('common');
   const periods = [
     {
@@ -121,9 +119,264 @@ export const StakeTabView = (props: {
   }
 
   const onTransactionStart = useCallback(async () => {
-    showTransactionModal();
+    let transaction: Transaction;
+    let signedTransaction: Transaction;
+    let signature = "";
+    let encodedTx: string;
+    const transactionLog: any[] = [];
+
+    const createTx = async (): Promise<boolean> => {
+      if (wallet && props.stakeClient) {
+        setTransactionStatus({
+          lastOperation: TransactionStatus.TransactionStart,
+          currentOperation: TransactionStatus.InitTransaction,
+        });
+
+        const uiAmount = parseFloat(fromCoinAmount);
+        consoleOut("uiAmount:", uiAmount, "blue");
+
+        // Log input data
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+          inputs: `uiAmount: ${uiAmount}`,
+        });
+
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+          result: "",
+        });
+
+        return await props.stakeClient
+          .stakeTransaction(
+            uiAmount // uiAmount
+          )
+          .then((value) => {
+            consoleOut("stakeTransaction returned transaction:", value);
+            // Stage 1 completed - The transaction is created and returned
+            setTransactionStatus({
+              lastOperation: TransactionStatus.InitTransactionSuccess,
+              currentOperation: TransactionStatus.SignTransaction,
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+              result: getTxIxResume(value),
+            });
+            transaction = value;
+            return true;
+          })
+          .catch((error) => {
+            console.error("stakeTransaction init error:", error);
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.InitTransactionFailure,
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+              result: `${error}`,
+            });
+            customLogger.logError("Stake transaction failed", {
+              transcript: transactionLog,
+            });
+            return false;
+          });
+      } else {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: "Cannot start transaction! Wallet not found!",
+        });
+        customLogger.logError("Stake transaction failed", {
+          transcript: transactionLog,
+        });
+        return false;
+      }
+    };
+
+    const signTx = async (): Promise<boolean> => {
+      if (wallet) {
+        consoleOut("Signing transaction...");
+        return await wallet
+          .signTransaction(transaction)
+          .then((signed: Transaction) => {
+            consoleOut(
+              "signTransaction returned a signed transaction:",
+              signed
+            );
+            signedTransaction = signed;
+            // Try signature verification by serializing the transaction
+            try {
+              encodedTx = signedTransaction.serialize().toString("base64");
+              consoleOut("encodedTx:", encodedTx, "orange");
+            } catch (error) {
+              console.error(error);
+              setTransactionStatus({
+                lastOperation: TransactionStatus.SignTransaction,
+                currentOperation: TransactionStatus.SignTransactionFailure,
+              });
+              transactionLog.push({
+                action: getTransactionStatusForLogs(
+                  TransactionStatus.SignTransactionFailure
+                ),
+                result: {
+                  signer: `${wallet.publicKey.toBase58()}`,
+                  error: `${error}`,
+                },
+              });
+              customLogger.logError("Stake transaction failed", {
+                transcript: transactionLog,
+              });
+              return false;
+            }
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransactionSuccess,
+              currentOperation: TransactionStatus.SendTransaction,
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(
+                TransactionStatus.SignTransactionSuccess
+              ),
+              result: { signer: wallet.publicKey.toBase58() },
+            });
+            return true;
+          })
+          .catch((error) => {
+            console.error("Signing transaction failed!");
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransaction,
+              currentOperation: TransactionStatus.SignTransactionFailure,
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(
+                TransactionStatus.SignTransactionFailure
+              ),
+              result: {
+                signer: `${wallet.publicKey.toBase58()}`,
+                error: `${error}`,
+              },
+            });
+            customLogger.logError("Stake transaction failed", {
+              transcript: transactionLog,
+            });
+            return false;
+          });
+      } else {
+        console.error("Cannot sign transaction! Wallet not found!");
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.WalletNotFound,
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: "Cannot sign transaction! Wallet not found!",
+        });
+        customLogger.logError("Stake transaction failed", {
+          transcript: transactionLog,
+        });
+        return false;
+      }
+    };
+
+    const sendTx = async (): Promise<boolean> => {
+      if (wallet) {
+        return await connection
+          .sendEncodedTransaction(encodedTx)
+          .then((sig: any) => {
+            consoleOut("sendEncodedTransaction returned a signature:", sig);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.ConfirmTransaction,
+            });
+            signature = sig;
+            transactionLog.push({
+              action: getTransactionStatusForLogs(
+                TransactionStatus.SendTransactionSuccess
+              ),
+              result: `signature: ${signature}`,
+            });
+            return true;
+          })
+          .catch((error: any) => {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransaction,
+              currentOperation: TransactionStatus.SendTransactionFailure,
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(
+                TransactionStatus.SendTransactionFailure
+              ),
+              result: { error, encodedTx },
+            });
+            customLogger.logError("Stake transaction failed", {
+              transcript: transactionLog,
+            });
+            return false;
+          });
+      } else {
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SendTransaction,
+          currentOperation: TransactionStatus.WalletNotFound,
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: "Cannot send transaction! Wallet not found!",
+        });
+        customLogger.logError("Stake transaction failed", {
+          transcript: transactionLog,
+        });
+        return false;
+      }
+    };
+
+    if (wallet && selectedToken) {
+      setIsBusy(true);
+      const create = await createTx();
+      consoleOut("created:", create);
+      if (create) {
+        const sign = await signTx();
+        consoleOut("signed:", sign);
+        if (sign) {
+          const sent = await sendTx();
+          consoleOut("sent:", sent);
+          if (sent) {
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.Stake,
+              finality: "confirmed",
+              txInfoFetchStatus: "fetching",
+              notificationTitle: "Confirming transaction",
+              notificationMessage: `Successfully staked ${formatThousands(
+                parseFloat(fromCoinAmount),
+                selectedToken.decimals
+              )} ${selectedToken.symbol}`,
+            });
+            setIsBusy(false);
+            setFromCoinAmount("");
+          } else {
+            notify({
+              message: t("notifications.error-title"),
+              description: t("notifications.error-sending-transaction"),
+              type: "error",
+            });
+            setIsBusy(false);
+          }
+        } else {
+          setIsBusy(false);
+        }
+      } else {
+        setIsBusy(false);
+      }
+    }
   }, [
-    showTransactionModal
+    wallet,
+    connection,
+    selectedToken,
+    fromCoinAmount,
+    props.stakeClient,
+    transactionStatus.currentOperation,
+    enqueueTransactionConfirmation,
+    setTransactionStatus,
+    setFromCoinAmount,
+    t,
   ]);
 
   // const onChangeValue = (value: number, time: string, rate: number) => {
@@ -153,7 +406,7 @@ export const StakeTabView = (props: {
 
     setUnstakeStartDate(unstakeStartDateUpdate);
   }, [periodTime, periodValue, setUnstakeStartDate]);
-  
+
   return (
     <>
       <div className="form-label">{t("invest.panel-right.tabset.stake.amount-label")}</div>
@@ -239,13 +492,17 @@ export const StakeTabView = (props: {
         shape="round"
         size="large"
         onClick={onTransactionStart}
-        // disabled={
-        //   !areSendAmountSettingsValid() ||
-        //   !isVerifiedRecipient}
         disabled={
-          !areSendAmountSettingsValid()}
-      >
-        {t("invest.panel-right.tabset.stake.stake-button")} {selectedToken && selectedToken.name}
+          isBusy ||
+          !areSendAmountSettingsValid()
+        }>
+        {isBusy && (<span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>)}
+        {
+          isBusy
+            ? t("invest.panel-right.tabset.stake.stake-button-busy")
+            : t("invest.panel-right.tabset.stake.stake-button")
+        }
+        {` ${selectedToken && selectedToken.symbol}`}
       </Button>
 
       {/* Transaction execution modal */}

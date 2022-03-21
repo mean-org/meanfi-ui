@@ -335,6 +335,7 @@
 					"notification-label": "Staking period of {{periodValue}} {{periodTime}} will lock your Tokens until {{unstakeStartDate}}.",
 					"period-label": "How long do you want to stake for?",
 					"stake-button": "Stake",
+					"stake-button-busy": "Staking",
 					"terms-and-conditions-tooltip": "Your tokens will be locked for the period of time selected and you will not be able to unstake them before the staking period ends. When you stake additional tokens to an existing contract, the staking period will be extended to the new end date for ALL of the tokens locked.",
 					"verified-label": "I agree to the Terms & Conditions",
 					"year": "year",

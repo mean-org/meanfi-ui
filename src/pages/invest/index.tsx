@@ -18,26 +18,28 @@ import { IconHelpCircle } from "../../Icons/IconHelpCircle";
 import useWindowSize from '../../hooks/useWindowResize';
 import { consoleOut, isLocal, isProd } from "../../utils/ui";
 import { useNavigate } from "react-router-dom";
-import { ConfirmOptions } from "@solana/web3.js";
+import { ConfirmOptions, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { Provider } from "@project-serum/anchor";
 import { EnvMintAddresses, StakePoolInfo, StakingClient } from "@mean-dao/staking";
 import { StakeTabView } from "../../views/StakeTabView";
 import { UnstakeTabView } from "../../views/UnstakeTabView";
 import { MEAN_TOKEN_LIST } from "../../constants/token-list";
+import { useNativeAccount } from "../../contexts/accounts";
 
 type SwapOption = "stake" | "unstake";
 
 export const InvestView = () => {
   const {
-    selectedToken,
     stakedAmount,
-    unstakedAmount,
     isWhitelisted,
+    selectedToken,
+    fromCoinAmount,
+    unstakedAmount,
     unstakeStartDate,
     detailsPanelOpen,
     stakingMultiplier,
-    fromCoinAmount,
     setIsVerifiedRecipient,
+    refreshTokenBalance,
     setDtailsPanelOpen,
     setFromCoinAmount,
     setSelectedToken,
@@ -46,10 +48,13 @@ export const InvestView = () => {
   const connection = useConnection();
   const { cluster, endpoint } = useConnectionConfig();
   const { connected, publicKey } = useWallet();
+  const { account } = useNativeAccount();
   const { t } = useTranslation('common');
   const { width } = useWindowSize();
   const [isSmallUpScreen, setIsSmallUpScreen] = useState(isDesktop);
-
+  const [nativeBalance, setNativeBalance] = useState(0);
+  const [userBalances, setUserBalances] = useState<any>();
+  const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [currentTab, setCurrentTab] = useState<SwapOption>("stake");
   const [stakingRewards, setStakingRewards] = useState<number>(0);
   // const [selectedInvest, setSelectedInvest] = useState<any>(undefined);
@@ -71,6 +76,27 @@ export const InvestView = () => {
     publicKey,
     isWhitelisted,
     navigate
+  ]);
+
+  // Keep account balance updated
+  useEffect(() => {
+
+    const getAccountBalance = (): number => {
+      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
+    }
+
+    if (account?.lamports !== previousBalance || !nativeBalance) {
+      // Refresh token balance
+      refreshTokenBalance();
+      setNativeBalance(getAccountBalance());
+      // Update previous balance
+      setPreviousBalance(account?.lamports);
+    }
+  }, [
+    account,
+    nativeBalance,
+    previousBalance,
+    refreshTokenBalance
   ]);
 
   const investItems = [
@@ -263,6 +289,9 @@ export const InvestView = () => {
         if (token) {
           consoleOut("sMEAN token", token);
           setSelectedToken(token);
+          setTimeout(() => {
+            refreshTokenBalance();
+          }, 50);
         } else {
           consoleOut("sMEAN not available in the token list, please add");
         }
@@ -275,9 +304,10 @@ export const InvestView = () => {
 
   }, [
     meanAddresses,
-    setFromCoinAmount,
     setIsVerifiedRecipient,
-    setSelectedToken
+    refreshTokenBalance,
+    setFromCoinAmount,
+    setSelectedToken,
   ]);
 
   // Withdraw funds modal

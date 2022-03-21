@@ -336,6 +336,7 @@
 					"notification-label": "Staking period of {{periodValue}} {{periodTime}} will lock your Tokens until {{unstakeStartDate}}.",
 					"period-label": "Bạn muốn stake bao lâu?",
 					"stake-button": "Stake",
+					"stake-button-busy": "Staking",
 					"terms-and-conditions-tooltip": "Các token của bạn sẽ bị khóa trong khoảng thời gian đã chọn và bạn sẽ không thể hủy bỏ chúng trước khi thời gian stake kết thúc. Khi bạn stake thêm token vào một hợp đồng hiện có, thời gian stake sẽ được kéo dài đến ngày kết thúc mới cho TẤT CẢ các token bị khóa.",
 					"verified-label": "Tôi đồng ý với các Điều khoản & Điều kiện",
 					"year": "năm",

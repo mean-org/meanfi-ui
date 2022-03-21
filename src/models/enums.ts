@@ -101,6 +101,9 @@ export enum OperationType {
     Wrap = 50,
     Unwrap = 51,
     Swap = 52,
+    // Invest
+    Stake = 53,
+    Unstake = 54,
     // IDO
     IdoDeposit = 100,
     IdoWithdraw = 101,

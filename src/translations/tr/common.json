@@ -336,6 +336,7 @@
 					"notification-label": "Staking period of {{periodValue}} {{periodTime}} will lock your Tokens until {{unstakeStartDate}}.",
 					"period-label": "Ne kadar süre boyunca stake etmek istiyorsunuz?",
 					"stake-button": "Stake",
+					"stake-button-busy": "Staking",
 					"terms-and-conditions-tooltip": "Tokenlarınız seçilen süre boyunca kilitlenir ve stake dönemi sona ermeden geri alamazsınız. Mevcut kontrata ek tokenlar stake ettiğinizde, kilitli stake süresi TÜM tokenlar için yeni bitiş tarihine kadar uzatılacaktır.",
 					"verified-label": "Şartları & Koşulları kabul ediyorum.",
 					"year": "yıl",
