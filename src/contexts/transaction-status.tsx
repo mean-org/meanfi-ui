@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useContext } from "react";
 import { TransactionConfirmationStatus } from "@solana/web3.js";
 import { useConnection } from "./connection";
 import { fetchTransactionStatus } from "../utils/transactions";
@@ -11,6 +11,15 @@ import { shortenAddress } from "../utils/utils";
 
 export type TxStatus = "fetching" | "fetched" | "error";
 const key = 'updatable';
+
+export interface TransactionStatusInfo {
+  signature: string;
+  operationType: OperationType;
+  notificationTitle: string;
+  notificationMessage: string;
+}
+
+const txStatusCache = new Map<string, TransactionStatusInfo>();
 
 interface TransactionStatusConfig {
   lastSentTxSignature: string;
@@ -182,6 +191,49 @@ const TransactionStatusProvider: React.FC = ({ children }) => {
       {children}
     </TransactionStatusContext.Provider>
   );
+};
+
+export function useTransactionConfirmationQueue() {
+  const context = useContext(TransactionStatusContext);
+  return context;
+}
+
+export const transactionStatusCache = {
+  add: (
+    signature: string,
+    data: TransactionStatusInfo,
+  ) => {
+      if (!data || !data.signature) { return; }
+
+      const isNew = !txStatusCache.has(signature);
+      if (isNew) {
+          txStatusCache.set(signature, data);
+      }
+      return data;
+  },
+  get: (signature: string) => {
+      return txStatusCache.get(signature);
+  },
+  delete: (signature: string) => {
+      if (txStatusCache.get(signature)) {
+          txStatusCache.delete(signature);
+          return true;
+      }
+      return false;
+  },
+  update: (
+    signature: string,
+    data: TransactionStatusInfo,
+  ) => {
+      if (txStatusCache.get(signature)) {
+          txStatusCache.set(signature, data);
+          return true;
+      }
+      return false;
+  },
+  clear: () => {
+      txStatusCache.clear();
+  },
 };
 
 export default TransactionStatusProvider;
