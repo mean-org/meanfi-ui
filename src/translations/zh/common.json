@@ -582,6 +582,7 @@
 		"error-ledger-title": "Ledger Error",
 		"error-loading-streamid-message": "Could not find or load stream with ID {{streamId}}",
 		"error-loading-treasuryid-message": "Could not find or open treasury with ID {{treasuryId}}",
+		"error-sending-transaction": "Error submitting the transaction, please try again.",
 		"error-title": "Error",
 		"friend-referral-completed": "Friend referral completed",
 		"invalid-publickey-message": "Invalid public key. Please check input",

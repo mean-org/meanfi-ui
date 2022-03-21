@@ -27,10 +27,12 @@ import "./style.less";
 import { NATIVE_SOL } from "../../utils/tokens";
 import { MEAN_TOKEN_LIST, PINNED_TOKENS } from "../../constants/token-list";
 import { InfoIcon } from "../../components/InfoIcon";
-import { TransactionStatus } from "../../models/enums";
+import { OperationType, TransactionStatus } from "../../models/enums";
 import { unwrapSol } from "@mean-dao/hybrid-liquidity-ag";
 import { SignerWalletAdapter } from "@solana/wallet-adapter-base";
 import { TokenDisplay } from "../../components/TokenDisplay";
+import { TransactionStatusContext } from "../../contexts/transaction-status";
+import { notify } from "../../utils/notifications";
 
 export const COMMON_EXCHANGE_TOKENS = ['USDC', 'USDT', 'MEAN', 'SOL'];
 const MINIMUM_REQUIRED_SOL_BALANCE = 0.05;
@@ -55,6 +57,7 @@ export const JupiterExchangePlayground = (props: {
         setTransactionStatus,
         refreshPrices,
     } = useContext(AppStateContext);
+    const { enqueueTransactionConfirmation } = useContext(TransactionStatusContext);
     const [isBusy, setIsBusy] = useState(false);
     const [isUnwrapping, setIsUnwrapping] = useState(false);
     const [fromMint, setFromMint] = useState<string | undefined>();
@@ -1168,35 +1171,6 @@ export const JupiterExchangePlayground = (props: {
             }
         };
 
-        const confirmTx = async (): Promise<boolean> => {
-            return await connection
-                .confirmTransaction(signature, "confirmed")
-                .then((result) => {
-                    consoleOut("confirmTransaction result:", result);
-                    setTransactionStatus({
-                        lastOperation: TransactionStatus.ConfirmTransactionSuccess,
-                        currentOperation: TransactionStatus.TransactionFinished,
-                    });
-                    transactionLog.push({
-                        action: getTransactionStatusForLogs(TransactionStatus.TransactionFinished),
-                        result: ''
-                    });
-                    return true;
-                })
-                .catch(() => {
-                    setTransactionStatus({
-                        lastOperation: TransactionStatus.ConfirmTransaction,
-                        currentOperation: TransactionStatus.ConfirmTransactionFailure,
-                    });
-                    transactionLog.push({
-                        action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
-                        result: signature
-                    });
-                    customLogger.logError('Unwrap transaction failed', { transcript: transactionLog });
-                    return false;
-                });
-        };
-
         if (wallet) {
             setIsUnwrapping(true);
             const create = await createTx();
@@ -1208,17 +1182,28 @@ export const JupiterExchangePlayground = (props: {
                     const sent = await sendTx();
                     consoleOut("sent:", sent);
                     if (sent) {
-                        const confirmed = await confirmTx();
-                        consoleOut("confirmed:", confirmed);
-                        if (confirmed) {
-                            setIsUnwrapping(false);
-                            setInputAmount(0);
-                            setFromAmount('');
-                            setTimeout(() => {
-                                refreshUserBalances();
-                            });
-                        } else { setIsUnwrapping(false); }
-                    } else { setIsUnwrapping(false); }
+                        enqueueTransactionConfirmation({
+                            signature: signature,
+                            operationType: OperationType.Unwrap,
+                            finality: "confirmed",
+                            txInfoFetchStatus: "fetching",
+                            notificationTitle: 'Confirming transaction',
+                            notificationMessage: `Successfully unwrapped ${formatThousands(wSolBalance, sol.decimals)} SOL`
+                        });
+                        setIsUnwrapping(false);
+                        setInputAmount(0);
+                        setFromAmount('');
+                        setTimeout(() => {
+                            refreshUserBalances();
+                        });
+                    } else {
+                        notify({
+                            message: t('notifications.error-title'),
+                            description: t('notifications.error-sending-transaction'),
+                            type: "error"
+                        });
+                        setIsUnwrapping(false);
+                    }
                 } else { setIsUnwrapping(false); }
             } else { setIsUnwrapping(false); }
         }

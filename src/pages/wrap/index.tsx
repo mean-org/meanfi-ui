@@ -21,6 +21,7 @@ import {
 } from "@ant-design/icons";
 import {
   consoleOut,
+  delay,
   getTransactionModalTitle,
   getTransactionOperationDescription,
   getTransactionStatusForLogs,
@@ -48,10 +49,7 @@ export const WrapView = () => {
     refreshTokenBalance,
     setTransactionStatus,
   } = useContext(AppStateContext);
-  const {
-    confirmationHistory,
-    enqueueTransactionConfirmation,
-  } = useContext(TransactionStatusContext);
+  const { enqueueTransactionConfirmation } = useContext(TransactionStatusContext);
   const { t } = useTranslation("common");
   const [isBusy, setIsBusy] = useState(false);
   const [wrapAmount, setWrapAmount] = useState<string>("");
@@ -121,6 +119,55 @@ export const WrapView = () => {
     const fee = wrapFees.blockchainFee + getTxPercentFeeAmount(wrapFees, nativeBalance);
     return nativeBalance - fee;
   }
+
+  const isSuccess = useCallback(() => {
+
+    return (
+      transactionStatus.currentOperation ===
+      TransactionStatus.TransactionFinished
+    );
+
+  },[
+    transactionStatus.currentOperation
+  ]);
+
+  const isError = useCallback(() => {
+    return transactionStatus.currentOperation ===
+      TransactionStatus.TransactionStartFailure ||
+      transactionStatus.currentOperation ===
+        TransactionStatus.InitTransactionFailure ||
+      transactionStatus.currentOperation ===
+        TransactionStatus.SignTransactionFailure ||
+      transactionStatus.currentOperation ===
+        TransactionStatus.SendTransactionFailure ||
+      transactionStatus.currentOperation ===
+        TransactionStatus.ConfirmTransactionFailure
+      ? true
+      : false;
+
+  }, [
+    transactionStatus.currentOperation
+  ]);
+
+  const resetTransactionStatus = useCallback(() => {
+
+    setTransactionStatus({
+      lastOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
+    });
+
+  }, [setTransactionStatus]);
+
+  const onTransactionModalClosed = useCallback(() => {
+    if (isBusy) {
+      setTransactionCancelled(true);
+    }
+    if (isSuccess()) {
+      setWrapAmount("");
+    }
+    hideTransactionModal();
+    resetTransactionStatus();
+  }, [hideTransactionModal, isBusy, isSuccess, resetTransactionStatus]);
 
   const onTransactionStart = async () => {
     let transaction: Transaction;
@@ -317,35 +364,6 @@ export const WrapView = () => {
       }
     };
 
-    const confirmTx = async (): Promise<boolean> => {
-      return await connection
-        .confirmTransaction(signature, "finalized")
-        .then((result) => {
-          consoleOut("confirmTransaction result:", result);
-          setTransactionStatus({
-            lastOperation: TransactionStatus.ConfirmTransactionSuccess,
-            currentOperation: TransactionStatus.TransactionFinished,
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.TransactionFinished),
-            result: ''
-          });
-          return true;
-        })
-        .catch(() => {
-          setTransactionStatus({
-            lastOperation: TransactionStatus.ConfirmTransaction,
-            currentOperation: TransactionStatus.ConfirmTransactionFailure,
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
-            result: signature
-          });
-          customLogger.logError('Wrap transaction failed', { transcript: transactionLog });
-          return false;
-        });
-    };
-
     if (wallet) {
       showTransactionModal();
       const create = await createTx();
@@ -371,26 +389,12 @@ export const WrapView = () => {
               currentOperation: TransactionStatus.TransactionFinished,
             });
             setIsBusy(false);
-            // const confirmed = await confirmTx();
-            // consoleOut("confirmed:", confirmed);
-            // if (confirmed) {
-            //   setIsBusy(false);
-            // } else { setIsBusy(false); }
+            await delay(1500);
+            onTransactionModalClosed();
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
-  };
-
-  const onAfterTransactionModalClosed = () => {
-    if (isBusy) {
-      setTransactionCancelled(true);
-    }
-    if (isSuccess()) {
-      setWrapAmount("");
-      hideTransactionModal();
-    }
-    resetTransactionStatus();
   };
 
   const setValue = (value: string) => {
@@ -415,34 +419,6 @@ export const WrapView = () => {
       parseFloat(wrapAmount) > 0 &&
       parseFloat(wrapAmount) > (wrapFees.blockchainFee + getTxPercentFeeAmount(wrapFees, wrapAmount)) &&
       parseFloat(wrapAmount) <= getMaxPossibleAmount()
-      ? true
-      : false;
-  };
-
-  const resetTransactionStatus = () => {
-    setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle
-    });
-  }
-
-  const isSuccess = (): boolean => {
-    return (
-      transactionStatus.currentOperation === TransactionStatus.TransactionFinished
-    );
-  };
-
-  const isError = (): boolean => {
-    return transactionStatus.currentOperation ===
-      TransactionStatus.TransactionStartFailure ||
-      transactionStatus.currentOperation ===
-        TransactionStatus.InitTransactionFailure ||
-      transactionStatus.currentOperation ===
-        TransactionStatus.SignTransactionFailure ||
-      transactionStatus.currentOperation ===
-        TransactionStatus.SendTransactionFailure ||
-      transactionStatus.currentOperation ===
-        TransactionStatus.ConfirmTransactionFailure
       ? true
       : false;
   };
@@ -593,8 +569,7 @@ export const WrapView = () => {
                 maskClosable={false}
                 visible={isTransactionModalVisible}
                 title={getTransactionModalTitle(transactionStatus, isBusy, t)}
-                onCancel={hideTransactionModal}
-                afterClose={onAfterTransactionModalClosed}
+                onCancel={onTransactionModalClosed}
                 width={330}
                 footer={null}>
                 <div className="transaction-progress">

@@ -606,6 +606,7 @@
 		"error-ledger-title": "خطای لجر",
 		"error-loading-streamid-message": "stream با شناسه {{streamId}} یافت نشد یا بارگیری شد",
 		"error-loading-treasuryid-message": "خزانه با شناسه {{treasuryId}} یافت نشد یا باز شد",
+		"error-sending-transaction": "Error submitting the transaction, please try again.",
 		"error-title": "خطا",
 		"friend-referral-completed": "معرفی دوست تکمیل شد",
 		"invalid-publickey-message": "کلید عمومی نامعتبر است. لطفا ورودی را بررسی کنید",

@@ -613,6 +613,7 @@
 		"error-ledger-title": "렛저 오류",
 		"error-loading-streamid-message": "ID가 {{streamId}}인 스트림을 찾거나 로드할 수 없습니다.",
 		"error-loading-treasuryid-message": "ID가 {{treasuryId}}인 트레저리를 찾거나 열 수 없습니다.",
+		"error-sending-transaction": "Error submitting the transaction, please try again.",
 		"error-title": "오류",
 		"friend-referral-completed": "친구 추천 완료",
 		"invalid-publickey-message": "잘못된 공개 키입니다. 입력을 확인하십시오",

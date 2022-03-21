@@ -603,6 +603,7 @@
 		"error-ledger-title": "Error de Ledger",
 		"error-loading-streamid-message": "No pudimos encontrar o cargar la transferencia con el ID {{streamId}}",
 		"error-loading-treasuryid-message": "Could not find or open treasury with ID {{treasuryId}}",
+		"error-sending-transaction": "Error submitting the transaction, please try again.",
 		"error-title": "Error",
 		"friend-referral-completed": "Friend referral completed",
 		"invalid-publickey-message": "Clave pública incorrecta. Revise la clave e intente de nuevo",
