@@ -6691,14 +6691,22 @@ code {
   border-top: 1px solid var(--color-secondary-alpha-05);
 }
 
+/* bottom: var(--main-navigation-bar-height); */
 .ant-message {
   top: 0;
   color: var(--color-secondary-alpha-85);
   .ant-message-notice.custom-message {
     margin-top: var(--main-navigation-bar-height);
-    text-align: right;
+    justify-content: flex-end;
+    display: flex;
     .ant-message-notice-content {
       background-color: var(--color-section-contrast);
+      .ant-message-custom-content {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        text-align: left;
+      }
     }
   }
 }

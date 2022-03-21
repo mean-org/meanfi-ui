@@ -11,7 +11,7 @@ import { WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { Button, Col, Modal, Row, Spin } from "antd";
 import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber } from "../../utils/utils";
 import { AppStateContext } from "../../contexts/appstate";
-import { TransactionStatus } from "../../models/enums";
+import { OperationType, TransactionStatus } from "../../models/enums";
 import { calculateActionFees, wrapSol } from '@mean-dao/money-streaming/lib/utils';
 import { MSP_ACTIONS, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import {
@@ -33,6 +33,7 @@ import { PreFooter } from "../../components/PreFooter";
 import { useNativeAccount } from "../../contexts/accounts";
 import { customLogger } from '../..';
 import { TokenDisplay } from '../../components/TokenDisplay';
+import { TransactionStatusContext } from '../../contexts/transaction-status';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -47,6 +48,10 @@ export const WrapView = () => {
     refreshTokenBalance,
     setTransactionStatus,
   } = useContext(AppStateContext);
+  const {
+    confirmationHistory,
+    enqueueTransactionConfirmation,
+  } = useContext(TransactionStatusContext);
   const { t } = useTranslation("common");
   const [isBusy, setIsBusy] = useState(false);
   const [wrapAmount, setWrapAmount] = useState<string>("");
@@ -120,7 +125,7 @@ export const WrapView = () => {
   const onTransactionStart = async () => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
-    let signature: string;
+    let signature = '';
     let encodedTx: string;
     const transactionLog: any[] = [];
 
@@ -353,22 +358,27 @@ export const WrapView = () => {
           consoleOut("sent:", sent);
           setWrapAmount("");
           if (sent && !transactionCancelled) {
-            const confirmed = await confirmTx();
-            consoleOut("confirmed:", confirmed);
-            if (confirmed) {
-              setIsBusy(false);
-            } else {
-              setIsBusy(false);
-            }
-          } else {
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.Wrap,
+              finality: "confirmed",
+              txInfoFetchStatus: "fetching",
+              notificationTitle: 'Confirming transaction',
+              notificationMessage: 'Transaction confirmed!'
+            });
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.TransactionFinished,
+            });
             setIsBusy(false);
-          }
-        } else {
-          setIsBusy(false);
-        }
-      } else {
-        setIsBusy(false);
-      }
+            // const confirmed = await confirmTx();
+            // consoleOut("confirmed:", confirmed);
+            // if (confirmed) {
+            //   setIsBusy(false);
+            // } else { setIsBusy(false); }
+          } else { setIsBusy(false); }
+        } else { setIsBusy(false); }
+      } else { setIsBusy(false); }
     }
   };
 
