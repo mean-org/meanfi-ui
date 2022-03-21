@@ -603,6 +603,7 @@
 		"error-ledger-title": "Erro de razão",
 		"error-loading-streamid-message": "Não foi possível encontrar ou carregar stream com ID {{streamId}}",
 		"error-loading-treasuryid-message": "Não foi possível encontrar ou abrir a tesouraria com o ID {{treasuryId}}",
+		"error-sending-transaction": "Error submitting the transaction, please try again.",
 		"error-title": "Erro",
 		"friend-referral-completed": "Referência de amigo concluída",
 		"invalid-publickey-message": "Chave pública inválida.  Por favor, verifique a entrada",

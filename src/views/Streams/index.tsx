@@ -2586,7 +2586,7 @@ export const Streams = () => {
           contributor: data.contributor,
           treasury: data.treasury,
           contributorMint: token ? `${token} [${data.contributorMint}]` : data.contributorMint,
-          amount: parseFloat(addFundsData.amount.toFixed(selectedToken?.decimals || 6))
+          amount
         } as SegmentStreamAddFundsData;
         consoleOut('segment data:', segmentData, 'brown');
         segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupApproveFormButton, segmentData);
@@ -2711,7 +2711,7 @@ export const Streams = () => {
         contributorMint: selectedToken
           ? `${selectedToken.symbol} [${selectedToken.address}]`
           : associatedToken.toBase58(),
-        amount: parseFloat(addFundsData.amount.toFixed(selectedToken?.decimals || 6))
+        amount: parseFloat(addFundsData.amount)
       } as SegmentStreamAddFundsData;
       consoleOut('segment data:', segmentData, 'brown');
       segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupApproveFormButton, segmentData);

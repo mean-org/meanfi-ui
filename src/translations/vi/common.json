@@ -606,6 +606,7 @@
 		"error-ledger-title": "Lỗi Ledger",
 		"error-loading-streamid-message": "Không thể tìm hoặc nạp stream với ID {{streamId}}",
 		"error-loading-treasuryid-message": "Không thể tìm hoặc nạp kho bạc với ID {{treasuryId}}",
+		"error-sending-transaction": "Error submitting the transaction, please try again.",
 		"error-title": "Lỗi",
 		"friend-referral-completed": "Mời bạn hoàn thành",
 		"invalid-publickey-message": "Public key không hợp lệ. Vui lòng kiểm tra nội dung nhập",

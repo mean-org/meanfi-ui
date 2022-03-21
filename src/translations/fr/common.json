@@ -603,6 +603,7 @@
 		"error-ledger-title": "Erreur de grand livre",
 		"error-loading-streamid-message": "Impossible de trouver ou de charger le flux avec l'ID {{streamId}}",
 		"error-loading-treasuryid-message": "Impossible de trouver ou d'ouvrir la trésorerie avec l'ID {{Treasury Id}}",
+		"error-sending-transaction": "Error submitting the transaction, please try again.",
 		"error-title": "Erreur",
 		"friend-referral-completed": "Parrainage d'ami terminé",
 		"invalid-publickey-message": "Clé publique invalide.  Veuillez vérifier l'entrée",

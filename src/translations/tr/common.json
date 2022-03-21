@@ -606,6 +606,7 @@
 		"error-ledger-title": "Ledger hatası",
 		"error-loading-streamid-message": "{{streamId}} ID'si ile aktarım bulunamadı ya da yüklenemedi",
 		"error-loading-treasuryid-message": "{{treasuryId}} ile hazine bulunamadı ya da açılamadı",
+		"error-sending-transaction": "Error submitting the transaction, please try again.",
 		"error-title": "Hata",
 		"friend-referral-completed": "Arkadaşa referans olma tamamlandı",
 		"invalid-publickey-message": "Geçersiz görünür anahtar. Lütfen yazdığınızı kontrol edin",

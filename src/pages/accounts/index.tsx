@@ -761,12 +761,12 @@ export const AccountsView = () => {
           setSolAccountItems(nativeAccountTxItems);
           // If the valid items are less than 10, get more (only once after the first fetch)
           // Only for the native account where some Txs might have no balance changes
-          if (!history.before && nativeAccountTxItems < 10) {
-            setTimeout(() => {
-              consoleOut('Few items, loading more...', '', 'green');
-              startSwitch();
-            }, 100);
-          }
+          // if (!history.before && nativeAccountTxItems < 10) {
+          //   setTimeout(() => {
+          //     consoleOut('Few items, loading more...', '', 'green');
+          //     startSwitch();
+          //   }, 100);
+          // }
         }
 
       })

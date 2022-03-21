@@ -97,12 +97,16 @@ export enum OperationType {
     ExecuteTransaction = 42,
     DeleteAsset = 43,
     CancelTransaction = 44,
+    // Tools
+    Wrap = 50,
+    Unwrap = 51,
+    Swap = 52,
     // IDO
     IdoDeposit = 100,
     IdoWithdraw = 101,
     IdoClaim = 102,
     IdoLpClaim = 103,
-    IdoCollectFunds = 104
+    IdoCollectFunds = 104,
 }
 
 export enum WhitelistClaimType
