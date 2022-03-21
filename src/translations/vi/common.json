@@ -344,7 +344,7 @@
 				"unstake": {
 					"amount-label": "Số lượng unstake",
 					"name": "Unstake",
-					"notification-label-one": "Số lượng {{unstakeAmount}} sMEAN đang stake của bạn sẽ được khóa lại đến {{unstakeStartDate}}",
+					"notification-label-one": "Số lượng {{stakedAmount}} sMEAN đang stake của bạn sẽ được khóa lại đến {{unstakeStartDate}}",
 					"notification-label-one-error": "Bạn không có sMEAN nào đang stake",
 					"notification-label-two": "Việc hủy stake sẽ rút số lượng token sMEAN đã mở khóa vào ví của bạn",
 					"send-amount": {

@@ -1,10 +1,9 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import './style.less';
 import { ArrowDownOutlined, CheckOutlined, ReloadOutlined } from "@ant-design/icons";
-import { Button, Tooltip, Row, Col, Space, Empty, Spin } from "antd";
+import { Button, Tooltip, Row, Col, Space, Empty, Spin, Modal } from "antd";
 import moment from 'moment';
 // import Checkbox from "antd/lib/checkbox/Checkbox";
-import Modal from "antd/lib/modal/Modal";
 import { useTranslation } from 'react-i18next';
 // import { isDesktop } from "react-device-detect";
 import { TokenDisplay } from "../../components/TokenDisplay";
@@ -13,6 +12,8 @@ import { TokenDisplay } from "../../components/TokenDisplay";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
 import { cutNumber, formatAmount, formatThousands, getAmountWithSymbol, isValidNumber } from "../../utils/utils";
+import { DebounceInput } from "react-debounce-input";
+import { StakeQuote, StakingClient } from "@mean-dao/staking";
 // import { IconRefresh, IconStats } from "../../Icons";
 // import { IconHelpCircle } from "../../Icons/IconHelpCircle";
 // import useWindowSize from '../../hooks/useWindowResize';
@@ -20,9 +21,10 @@ import { cutNumber, formatAmount, formatThousands, getAmountWithSymbol, isValidN
 // import { useNavigate } from "react-router-dom";
 // import { ConfirmOptions } from "@solana/web3.js";
 // import { Provider } from "@project-serum/anchor";
-// import { EnvMintAddresses, StakingClient } from "@mean-dao/staking";
 
-export const StakeTabView = () => {
+export const StakeTabView = (props: {
+  stakeClient: StakingClient;
+}) => {
   const {
     selectedToken,
     tokenBalance,
@@ -31,12 +33,12 @@ export const StakeTabView = () => {
     fromCoinAmount,
     isVerifiedRecipient,
     paymentStartDate,
-    unstakeAmount,
+    stakedAmount,
     unstakeStartDate,
     refreshPrices,
     setFromCoinAmount,
     setIsVerifiedRecipient,
-    setUnstakeAmount,
+    setStakedAmount,
     setUnstakeStartDate,
     setStakingMultiplier
   } = useContext(AppStateContext);
@@ -72,6 +74,7 @@ export const StakeTabView = () => {
 
   const [periodValue, setPeriodValue] = useState<number>(periods[0].value);
   const [periodTime, setPeriodTime] = useState<string>(periods[0].time);
+  const [stakeQuote, setStakeQuote] = useState<StakeQuote>();
 
   // Transaction execution modal
   const [isTransactionModalVisible, setTransactionModalVisible] = useState(false);
@@ -109,9 +112,9 @@ export const StakeTabView = () => {
   }
 
   const onAfterTransactionModalClosed = () => {
-    const unstakeAmountAfterTransaction = !unstakeAmount ? fromCoinAmount : `${parseFloat(unstakeAmount) + parseFloat(fromCoinAmount)}`;
+    const unstakeAmountAfterTransaction = !stakedAmount ? fromCoinAmount : `${parseFloat(stakedAmount) + parseFloat(fromCoinAmount)}`;
 
-    setUnstakeAmount(unstakeAmountAfterTransaction);
+    setStakedAmount(unstakeAmountAfterTransaction);
     setFromCoinAmount("");
     setIsVerifiedRecipient(false);
     closeTransactionModal();
@@ -123,11 +126,27 @@ export const StakeTabView = () => {
     showTransactionModal
   ]);
 
-  const onChangeValue = (value: number, time: string, rate: number) => {
-    setPeriodValue(value);
-    setPeriodTime(time);
-    setStakingMultiplier(rate);
-  }
+  // const onChangeValue = (value: number, time: string, rate: number) => {
+  //   setPeriodValue(value);
+  //   setPeriodTime(time);
+  //   setStakingMultiplier(rate);
+  // }
+
+  useEffect(() => {
+    if (!props.stakeClient) {
+      return;
+    }
+
+    props.stakeClient.getStakeQuote(parseFloat(stakedAmount)).then((value: any) => {
+      setStakeQuote(value.meanInUiAmount);
+    }).catch((error: any) => {
+      console.error(error);
+    });
+
+  }, [
+    props.stakeClient,
+    stakedAmount
+  ]);
 
   useEffect(() => {
     const unstakeStartDateUpdate = moment().add(periodValue, periodValue === 1 ? "year" : periodValue === 4 ? "years" : "days").format("LL")
@@ -151,7 +170,7 @@ export const StakeTabView = () => {
             </span>
           </div>
           <div className="right">
-            <input
+            <DebounceInput
               className="general-text-input text-right"
               inputMode="decimal"
               autoComplete="off"
@@ -162,6 +181,7 @@ export const StakeTabView = () => {
               placeholder="0.0"
               minLength={1}
               maxLength={79}
+              debounceTimeout={400}
               spellCheck="false"
               value={fromCoinAmount}
             />
@@ -243,7 +263,7 @@ export const StakeTabView = () => {
             Operation completed
           </h4>
           <p className="operation">
-            {fromCoinAmount} {selectedToken && selectedToken.name} has been stake successfully
+            {fromCoinAmount} MEAN has been staked successfully
           </p>
           <Button
             block

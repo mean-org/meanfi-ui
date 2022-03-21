@@ -344,7 +344,7 @@
 				"unstake": {
 					"amount-label": "Stakeden çıkarılacak miktar",
 					"name": "Stakeden çıkar",
-					"notification-label-one": "Şu ana kadar {{unstakeAmount}} sMEAN stake edildi bu tokenlar {{unstakeStartDate}} kadar kilitli kalacak.",
+					"notification-label-one": "Şu ana kadar {{stakedAmount}} sMEAN stake edildi bu tokenlar {{unstakeStartDate}} kadar kilitli kalacak.",
 					"notification-label-one-error": "Hiç stake edilmiş sMEAN yok",
 					"notification-label-two": "Unstake, belirtilen miktarda kilidi açılmış sMEAN tokenı cüzdanınıza çekecektir.",
 					"send-amount": {

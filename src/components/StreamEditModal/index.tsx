@@ -55,7 +55,7 @@ export const StreamEditModal = (props: {
     if (props.streamDetail) {
       // setRecipientNote();
 
-      setFromCoinAmount(toUiAmount(new BN(props.streamDetail.rateAmount), 6).toString());
+      // setFromCoinAmount(toUiAmount(new BN(props.streamDetail.rateAmount), 6).toString());
 
       // let frequency = getIntervalFromSeconds(props.streamDetail.rateIntervalInSeconds, false, t);
       // const camalize = frequency.toLowerCase().replace(/[^a-zA-Z0-9]+(.)/g, (m, chr) => chr.toUpperCase());
@@ -65,12 +65,20 @@ export const StreamEditModal = (props: {
     }
   }, [
     props.streamDetail,
-    setFromCoinAmount, 
-    setPaymentRateFrequency, 
-    t
   ]);
 
   const refreshPage = () => {
+    if (props.streamDetail) {
+      // setRecipientNote();
+
+      // setFromCoinAmount(toUiAmount(new BN(props.streamDetail.rateAmount), 6).toString());
+
+      // let frequency = getIntervalFromSeconds(props.streamDetail.rateIntervalInSeconds, false, t);
+      // const camalize = frequency.toLowerCase().replace(/[^a-zA-Z0-9]+(.)/g, (m, chr) => chr.toUpperCase());
+      // const rateType = camalize.charAt(0).toUpperCase() + camalize.slice(1);
+      
+      // setPaymentRateFrequency(PaymentRateType[rateType]);
+    }
     props.handleClose();
     window.location.reload();
   }
@@ -87,9 +95,9 @@ export const StreamEditModal = (props: {
 
   const onAfterClose = () => {
 
-    // setTimeout(() => {
-    //   setStreamNameLabel('');
-    // }, 50);
+    setTimeout(() => {
+
+    });
 
     setTransactionStatus({
         lastOperation: TransactionStatus.Iddle,
@@ -99,19 +107,7 @@ export const StreamEditModal = (props: {
 
   const onNameInputValueChange = (e: any) => {
     setRecipientNote(e.target.value);
-  }  
-
-  // Reset results when the filter is cleared
-  // useEffect(() => {
-  //   if (tokenList && tokenList.length && filteredTokenList.length === 0 && !tokenFilter) {
-  //     updateTokenListByFilter(tokenFilter);
-  //   }
-  // }, [
-  //   tokenList,
-  //   tokenFilter,
-  //   filteredTokenList,
-  //   updateTokenListByFilter
-  // ]);
+  }
 
   const handleFromCoinAmountChange = (e: any) => {
     const newValue = e.target.value;
@@ -218,14 +214,6 @@ export const StreamEditModal = (props: {
   const handlePaymentRateOptionChange = (val: PaymentRateType) => {
     setPaymentRateFrequency(val);
   }
-
-  useEffect(() => {
-    // if (props.isVisible) {
-    //   if (props.streamName) {
-    //     setRecipientNote(props.streamName);
-    //   }
-    // }
-  }, []);
 
   const paymentRateOptionsMenu = (
     <Menu>
@@ -349,13 +337,13 @@ export const StreamEditModal = (props: {
                       }`}
                     </span>
                   </div>
-                  <div className="right inner-label">
+                  {/* <div className="right inner-label">
                     <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
                       ~${fromCoinAmount && effectiveRate
                         ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
                         : "0.00"}
                     </span>
-                  </div>
+                  </div> */}
                 </div>
               </div>
               

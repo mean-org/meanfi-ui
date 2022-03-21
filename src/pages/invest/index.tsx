@@ -30,11 +30,13 @@ type SwapOption = "stake" | "unstake";
 export const InvestView = () => {
   const {
     selectedToken,
-    unstakeAmount,
+    stakedAmount,
+    unstakedAmount,
     isWhitelisted,
     unstakeStartDate,
     detailsPanelOpen,
     stakingMultiplier,
+    fromCoinAmount,
     setIsVerifiedRecipient,
     setDtailsPanelOpen,
     setFromCoinAmount,
@@ -57,7 +59,7 @@ export const InvestView = () => {
   const [maxRadiumAprValue, setMaxRadiumAprValue] = useState<number>(0);
   const [meanAddresses, setMeanAddresses] = useState<EnvMintAddresses>();
   const [pageInitialized, setPageInitialized] = useState<boolean>(false);
-  const [sMeanStakingAmount, setSMeanStakingAmount] = useState<StakePoolInfo>();
+  const [stakePoolInfo, setStakePoolInfo] = useState<StakePoolInfo>();
 
   // If there is no connected wallet or the connected wallet is not whitelisted
   // when the App is run NOT in local mode then redirect user to /accounts
@@ -95,7 +97,7 @@ export const InvestView = () => {
   const stakingData = [
     {
       label: t("invest.panel-right.staking-data.label-my-staked"),
-      value: unstakeAmount ? cutNumber(parseFloat(unstakeAmount), 6) : 0
+      value: stakedAmount ? cutNumber(parseFloat(stakedAmount), 6) : 0
     },
     // {
     //   label: t("invest.panel-right.staking-data.label-avg"),
@@ -146,17 +148,6 @@ export const InvestView = () => {
     if (!pageInitialized) {
       const meanAddress = stakeClient.getMintAddresses();
 
-      // stakeClient.getStakePoolInfo().then((value) => {
-      //   consoleOut("sMEAN to USDC rate: ", value.sMeanToUsdcRate);
-      //   consoleOut("MEAN to sMEAN rate: ", value.meanToSMeanRate);
-      //   consoleOut("sMEAN to MEAN rate: ", value.sMeanToMeanRate);
-      //   consoleOut("TVL: ", value.tvl);
-      //   consoleOut("APY: ", value.apy);
-      // });
-  
-      // consoleOut(meanAddress.mean.toBase58());
-      // consoleOut(meanAddress.sMean.toBase58());
-
       setMeanAddresses(meanAddress);
 
       if (currentTab === "stake") {
@@ -184,6 +175,27 @@ export const InvestView = () => {
     stakeClient,
     pageInitialized,
     currentTab,
+    fromCoinAmount,
+    setSelectedToken
+  ]);
+
+  // Get staking pool info from staking client
+  useEffect(() => {
+    if (!stakeClient) {
+      return;
+    }
+
+    stakeClient.getStakePoolInfo().then((value) => {
+      setStakePoolInfo(value);
+    }).catch((error) => {
+      console.error(error);
+    });
+
+  }, [
+    stakeClient,
+    pageInitialized,
+    currentTab,
+    fromCoinAmount,
     setSelectedToken
   ]);
 
@@ -229,7 +241,7 @@ export const InvestView = () => {
         })
       })();
 
-  }, [connection]);  
+  }, [connection]);
 
   const [selectedInvest, setSelectedInvest] = useState<any>(investItems[0]);
 
@@ -285,8 +297,8 @@ export const InvestView = () => {
   }
 
   useEffect(() => {
-    setStakingRewards(parseFloat(unstakeAmount) * annualPercentageYield / 100);
-  }, [unstakeAmount]);  
+    setStakingRewards(parseFloat(stakedAmount) * annualPercentageYield / 100);
+  }, [stakedAmount]);  
 
   // Detect when entering small screen mode
   useEffect(() => {
@@ -425,7 +437,7 @@ export const InvestView = () => {
                               </Tooltip>
                             </div>
                             <div className="transaction-detail-row">
-                              52.09%
+                              {stakePoolInfo ? (stakePoolInfo.apy * 100).toFixed(2) : "0"}%
                             </div>
                           </Col>
                           <Col span={8}>
@@ -433,7 +445,7 @@ export const InvestView = () => {
                               {t("invest.panel-right.stats.total-value-locked")}
                             </div>
                             <div className="transaction-detail-row">
-                              $7.64M
+                              ${stakePoolInfo ? formatThousands(stakePoolInfo.tvl, 2) : "0"}
                             </div>
                           </Col>
                           <Col span={8}>
@@ -441,7 +453,7 @@ export const InvestView = () => {
                               {t("invest.panel-right.stats.total-mean-rewards")}
                             </div>
                             <div className="transaction-detail-row">
-                              $108,730
+                              ${stakePoolInfo ? formatThousands(stakePoolInfo.totalMeanRewards, 2) : "0"}
                             </div>
                           </Col>
                         </Row>
@@ -464,12 +476,12 @@ export const InvestView = () => {
 
                             {/* Tab Stake */}
                             {currentTab === "stake" && (
-                              <StakeTabView />
+                              <StakeTabView stakeClient={stakeClient} />
                             )}
 
                             {/* Tab unstake */}
                             {currentTab === "unstake" && (
-                              <UnstakeTabView />
+                              <UnstakeTabView stakeClient={stakeClient} />
                             )}
                           </div>
                         )}

@@ -105,7 +105,8 @@ interface AppStateConfig {
   // Multisig
   highLightableMultisigId: string | undefined;
   // Staking
-  unstakeAmount: string;
+  stakedAmount: string;
+  unstakedAmount: string;
   unstakeStartDate: string | undefined;
   stakingMultiplier: number;
   setTheme: (name: string) => void;
@@ -162,7 +163,8 @@ interface AppStateConfig {
   // Multisig
   setHighLightableMultisigId: (id: string | undefined) => void,
   // Staking
-  setUnstakeAmount: (data: string) => void;
+  setStakedAmount: (data: string) => void;
+  setUnstakedAmount: (data: string) => void;
   setUnstakeStartDate: (date: string) => void;
   setStakingMultiplier: (rate: number) => void;
 }
@@ -231,7 +233,8 @@ const contextDefaultValues: AppStateConfig = {
   // Multisig
   highLightableMultisigId: undefined,
   // Staking
-  unstakeAmount: '',
+  stakedAmount: '',
+  unstakedAmount: '',
   unstakeStartDate: 'undefined',
   stakingMultiplier: 1,
   setTheme: () => {},
@@ -288,7 +291,8 @@ const contextDefaultValues: AppStateConfig = {
   // Multisig
   setHighLightableMultisigId: () => {},
   // Staking
-  setUnstakeAmount: () => {},
+  setStakedAmount: () => {},
+  setUnstakedAmount: () => {},
   setUnstakeStartDate: () => {},
   setStakingMultiplier: () => {}
 };
@@ -390,7 +394,8 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [highLightableStreamId, setHighLightableStreamId] = useState<string | undefined>(contextDefaultValues.highLightableStreamId);
   const [highLightableMultisigId, setHighLightableMultisigId] = useState<string | undefined>(contextDefaultValues.highLightableMultisigId);
 
-  const [unstakeAmount, updateUnstakeAmount] = useState<string>(contextDefaultValues.unstakeAmount);
+  const [stakedAmount, updateStakedAmount] = useState<string>(contextDefaultValues.stakedAmount);
+  const [unstakedAmount, updatedUnstakeAmount] = useState<string>(contextDefaultValues.unstakedAmount);
   const [unstakeStartDate, updateUnstakeStartDate] = useState<string | undefined>(today);
 
   const setTheme = (name: string) => {
@@ -501,8 +506,12 @@ const AppStateProvider: React.FC = ({ children }) => {
     updateTransactionStatus(status);
   }
 
-  const setUnstakeAmount = (data: string) => {
-    updateUnstakeAmount(data);
+  const setStakedAmount = (data: string) => {
+    updateStakedAmount(data);
+  }
+
+  const setUnstakedAmount = (data: string) => {
+    updatedUnstakeAmount(data);
   }
 
   const setUnstakeStartDate = (date: string) => {
@@ -1292,7 +1301,8 @@ const AppStateProvider: React.FC = ({ children }) => {
         recurringBuys,
         loadingRecurringBuys,
         highLightableMultisigId,
-        unstakeAmount,
+        stakedAmount,
+        unstakedAmount,
         unstakeStartDate,
         stakingMultiplier,
         setTheme,
@@ -1345,7 +1355,8 @@ const AppStateProvider: React.FC = ({ children }) => {
         setRecurringBuys,
         setLoadingRecurringBuys,
         setHighLightableMultisigId,
-        setUnstakeAmount,
+        setStakedAmount,
+        setUnstakedAmount,
         setUnstakeStartDate,
         setStakingMultiplier
       }}>

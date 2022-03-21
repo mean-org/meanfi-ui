@@ -1,7 +1,7 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import './style.less';
 // import { ArrowDownOutlined, CheckOutlined, ReloadOutlined } from "@ant-design/icons";
-import { Button, Tooltip, Row, Col, Space, Empty, Spin } from "antd";
+import { Button, Tooltip, Row, Col, Space, Empty, Spin, Modal } from "antd";
 import moment from 'moment';
 // import Checkbox from "antd/lib/checkbox/Checkbox";
 // import Modal from "antd/lib/modal/Modal";
@@ -12,6 +12,8 @@ import { TokenDisplay } from "../../components/TokenDisplay";
 // import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
 import { cutNumber, formatAmount, formatThousands, getAmountWithSymbol, isValidNumber } from "../../utils/utils";
+import { CheckOutlined } from "@ant-design/icons";
+import { StakingClient, UnstakeQuote } from "@mean-dao/staking";
 // import { IconRefresh, IconStats } from "../../Icons";
 // import { IconHelpCircle } from "../../Icons/IconHelpCircle";
 // import useWindowSize from '../../hooks/useWindowResize';
@@ -21,7 +23,9 @@ import { cutNumber, formatAmount, formatThousands, getAmountWithSymbol, isValidN
 // import { Provider } from "@project-serum/anchor";
 // import { EnvMintAddresses, StakingClient } from "@mean-dao/staking";
 
-export const UnstakeTabView = () => {
+export const UnstakeTabView = (props: {
+  stakeClient: StakingClient;
+}) => {
   const {
     selectedToken,
     effectiveRate,
@@ -30,17 +34,20 @@ export const UnstakeTabView = () => {
     // isVerifiedRecipient,
     paymentStartDate,
     unstakeStartDate,
-    unstakeAmount,
+    stakedAmount,
+    unstakedAmount,
     refreshPrices,
     setFromCoinAmount,
-    setUnstakeAmount
+    setStakedAmount,
+    setUnstakedAmount
     // setIsVerifiedRecipient
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
   const percentages = [25, 50, 75, 100];
   const [percentageValue, setPercentageValue] = useState<number>(0);
   const [availableUnstake, setAvailableUnstake] = useState<number>(0);
-
+  const [unstakeQuote, setUnstakeQuote] = useState<UnstakeQuote>();
+  
   const currentDate = moment().format("LL");
 
   const onChangeValue = (value: number) => {
@@ -65,7 +72,7 @@ export const UnstakeTabView = () => {
   const isSendAmountValid = (): boolean => {
     return  fromCoinAmount &&
             parseFloat(fromCoinAmount) > 0 &&
-            parseFloat(fromCoinAmount) <= parseFloat(unstakeAmount)
+            parseFloat(fromCoinAmount) <= parseFloat(stakedAmount)
       ? true
       : false;
   }
@@ -74,31 +81,71 @@ export const UnstakeTabView = () => {
     return paymentStartDate && isSendAmountValid() ? true : false;
   }
 
-  const handleUnstake = () => {
-    const newUnstakeAmount = (parseFloat(unstakeAmount) - parseFloat(fromCoinAmount)).toString();
+  // Transaction execution modal
+  const [isTransactionModalVisible, setTransactionModalVisible] = useState(false);
+  const showTransactionModal = useCallback(() => setTransactionModalVisible(true), []);
+  const closeTransactionModal = useCallback(() => setTransactionModalVisible(false), []);
 
-    setUnstakeAmount(newUnstakeAmount);
+  const onTransactionStart = useCallback(async () => {
+    showTransactionModal();
+
+    const newStakedAmount = (parseFloat(stakedAmount) - parseFloat(unstakedAmount)).toString();
+
+    setStakedAmount(newStakedAmount);
     setFromCoinAmount('');
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    showTransactionModal
+  ]);
+
+  const onAfterTransactionModalClosed = () => {
+    // const unstakeAmountAfterTransaction = !stakedAmount ? fromCoinAmount : `${parseFloat(stakedAmount) + parseFloat(fromCoinAmount)}`;
+
+    // setStakedAmount(unstakeAmountAfterTransaction);
+    setFromCoinAmount("");
+    closeTransactionModal();
   }
 
   useEffect(() => {
-    const percentageFromCoinAmount = parseFloat(unstakeAmount) > 0 ? `${(parseFloat(unstakeAmount)*percentageValue/100)}` : '';
+    if (!props.stakeClient) {
+      return;
+    }
+
+    props.stakeClient.getUnstakeQuote(parseFloat(stakedAmount)).then((value: any) => {
+      setUnstakeQuote(value.meanOutUiAmount);
+    }).catch((error: any) => {
+      console.error(error);
+    });
+    
+  }, [
+    props.stakeClient,
+    stakedAmount
+  ]);
+
+  useEffect(() => {
+    const percentageFromCoinAmount = parseFloat(stakedAmount) > 0 ? `${(parseFloat(stakedAmount)*percentageValue/100)}` : '';
 
     setFromCoinAmount(percentageFromCoinAmount);
+
+    setUnstakedAmount(percentageFromCoinAmount);
+
     // setFromCoinAmount(formatAmount(parseFloat(percentageFromCoinAmount), 6).toString());
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [percentageValue]);
 
   useEffect(() => {
-    parseFloat(unstakeAmount) > 0 && currentDate === unstakeStartDate ?
-      setAvailableUnstake(parseFloat(unstakeAmount))
+    parseFloat(stakedAmount) > 0 && currentDate === unstakeStartDate ?
+      setAvailableUnstake(parseFloat(stakedAmount))
     :
       setAvailableUnstake(0)
-  }, [currentDate, unstakeAmount, unstakeStartDate]);
+  }, [currentDate, stakedAmount, unstakeStartDate]);
 
   return (
     <>
-      <span className="info-label">{unstakeAmount ? t("invest.panel-right.tabset.unstake.notification-label-one", {unstakeAmount: cutNumber(parseFloat(unstakeAmount), 6), unstakeStartDate: unstakeStartDate}) : t("invest.panel-right.tabset.unstake.notification-label-one-error")}</span>
+      {/* <span className="info-label">{stakedAmount ? t("invest.panel-right.tabset.unstake.notification-label-one", {stakedAmount: cutNumber(parseFloat(stakedAmount), 6), unstakeStartDate: unstakeStartDate}) : t("invest.panel-right.tabset.unstake.notification-label-one-error")}</span> */}
+      <span className="info-label">{stakedAmount ? `Your currently have ${cutNumber(parseFloat(stakedAmount), 6)} sMEAN staked which is currently worth ${cutNumber(parseFloat(stakedAmount), 6)} MEAN` : t("invest.panel-right.tabset.unstake.notification-label-one-error")}</span>
       <div className="form-label mt-2">{t("invest.panel-right.tabset.unstake.amount-label")}</div>
       <div className="well">
         <div className="flexible-right mb-1">
@@ -171,7 +218,7 @@ export const UnstakeTabView = () => {
         type="primary"
         shape="round"
         size="large"
-        onClick={handleUnstake}
+        onClick={onTransactionStart}
         disabled={
           !areSendAmountSettingsValid() ||
           // !isVerifiedRecipient ||
@@ -180,6 +227,34 @@ export const UnstakeTabView = () => {
       >
         {availableUnstake <= 0 ? t("invest.panel-right.tabset.unstake.unstake-button-unavailable") : t("invest.panel-right.tabset.unstake.unstake-button-available")} {selectedToken && selectedToken.symbol}
       </Button>
+
+      {/* Transaction execution modal */}
+      <Modal
+        className="mean-modal no-full-screen"
+        maskClosable={false}
+        visible={isTransactionModalVisible}
+        onCancel={closeTransactionModal}
+        afterClose={onAfterTransactionModalClosed}
+        width={330}
+        footer={null}>
+        <div className="transaction-progress"> 
+          <CheckOutlined style={{ fontSize: 48 }} className="icon" />
+          <h4 className="font-bold mb-1 text-uppercase">
+            Operation completed
+          </h4>
+          <p className="operation">
+            {unstakedAmount} sMEAN has been successfully unstaked and you have received {unstakedAmount} MEAN in return.
+          </p>
+          <Button
+            block
+            type="primary"
+            shape="round"
+            size="middle"
+            onClick={closeTransactionModal}>
+            {t('general.cta-close')}
+          </Button>
+        </div>
+      </Modal>
     </>
   )
 }
