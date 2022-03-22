@@ -16,7 +16,7 @@ import { DepositOptions } from '../DepositOptions';
 import { environment } from '../../environments/environment';
 import { CustomCSSProps } from '../../utils/css-custom-props';
 import { useOnlineStatus } from '../../contexts/online-status';
-import { isLocal } from '../../utils/ui';
+import { isDev, isLocal } from '../../utils/ui';
 
 const { SubMenu } = Menu;
 
@@ -126,7 +126,7 @@ export const AppBar = (props: {
       <Menu.Item key="deposits" onClick={showDepositOptionsModal} id="deposits-menu-item">
         <span className="menu-item-text">{t('ui-menus.main-menu.deposits')}</span>
       </Menu.Item>
-      {(isLocal() || isWhitelisted || isInBetaTestingProgram) && (
+      {(isLocal() || (isDev() && (isWhitelisted || isInBetaTestingProgram))) && (
         <Menu.Item key="/invest">
           <Link to="/invest">{t('ui-menus.main-menu.invest.submenu-title')}</Link>
         </Menu.Item>
@@ -247,7 +247,7 @@ export const AppBar = (props: {
                 <li key="deposits" className="mobile-menu-item" onClick={showDepositOptionsModal} style={{'--animation-order': 4} as CustomCSSProps}>
                   <span className="menu-item-text">{t('ui-menus.main-menu.deposits')}</span>
                 </li>
-                {(isLocal() || isInBetaTestingProgram || isWhitelisted) && (
+                {(isLocal() || (isDev() && (isWhitelisted || isInBetaTestingProgram))) && (
                   <li key="invest" className={location.pathname === '/invest' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 4} as CustomCSSProps}>
                     <Link to="/invest">{t('ui-menus.main-menu.invest.submenu-title')}</Link>
                   </li>
