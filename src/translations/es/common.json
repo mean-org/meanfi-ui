@@ -340,6 +340,7 @@
 					"send-amount": {
 						"label-right": "Available to unstake"
 					},
+					"unstake-button-busy": "Unstaking",
 					"unstake-button-available": "Unstake",
 					"unstake-button-unavailable": "No available",
 					"verified-label": "I agree to the Terms & Conditions"

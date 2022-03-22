@@ -351,6 +351,7 @@
 					"send-amount": {
 						"label-right": "موجود برای unstake"
 					},
+					"unstake-button-busy": "Unstaking",
 					"unstake-button-available": "Unstake",
 					"unstake-button-unavailable": "در دسترس نیست",
 					"verified-label": "من با شرایط و قوانین موافق هستم"

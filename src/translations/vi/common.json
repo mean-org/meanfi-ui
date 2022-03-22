@@ -351,6 +351,7 @@
 					"send-amount": {
 						"label-right": "Hủy stake khả dụng"
 					},
+					"unstake-button-busy": "Unstaking",
 					"unstake-button-available": "Hủy stake",
 					"unstake-button-unavailable": "Không khả dụng",
 					"verified-label": "Tôi đồng ý với các Điều khoản & Điều kiện"

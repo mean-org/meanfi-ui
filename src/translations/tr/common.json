@@ -351,6 +351,7 @@
 					"send-amount": {
 						"label-right": "Stakeden çıkarılabilir"
 					},
+					"unstake-button-busy": "Unstaking",
 					"unstake-button-available": "Stakeden çıkar",
 					"unstake-button-unavailable": "Uygun değil",
 					"verified-label": "Şartları & Koşulları kabul ediyorum."

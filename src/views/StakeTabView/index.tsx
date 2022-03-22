@@ -74,11 +74,6 @@ export const StakeTabView = (props: {
   const [periodTime, setPeriodTime] = useState<string>(periods[0].time);
   const [stakeQuote, setStakeQuote] = useState<StakeQuote>();
 
-  // Transaction execution modal
-  const [isTransactionModalVisible, setTransactionModalVisible] = useState(false);
-  const showTransactionModal = useCallback(() => setTransactionModalVisible(true), []);
-  const closeTransactionModal = useCallback(() => setTransactionModalVisible(false), []);
-
   const handleFromCoinAmountChange = (e: any) => {
     const newValue = e.target.value;
     if (newValue === null || newValue === undefined || newValue === "") {
@@ -90,7 +85,28 @@ export const StakeTabView = (props: {
     }
   };
 
-  const isSendAmountValid = (): boolean => {
+  const getStakeButtonLabel = useCallback(() => {
+    return !connected
+      ? t('transactions.validation.not-connected')
+      : isBusy
+        ? `${t("invest.panel-right.tabset.stake.stake-button-busy")} ${selectedToken && selectedToken.symbol}`
+        : !selectedToken || !tokenBalance
+          ? t('transactions.validation.no-balance')
+          : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !parseFloat(fromCoinAmount)
+            ? t('transactions.validation.no-amount')
+            : parseFloat(fromCoinAmount) > tokenBalance
+              ? t('transactions.validation.amount-high')
+              : `${t("invest.panel-right.tabset.stake.stake-button")} ${selectedToken && selectedToken.symbol}`;
+  }, [
+    fromCoinAmount,
+    selectedToken,
+    tokenBalance,
+    connected,
+    isBusy,
+    t,
+  ]);
+
+  const isStakingFormValid = (): boolean => {
     return  connected &&
             selectedToken &&
             tokenBalance &&
@@ -99,23 +115,6 @@ export const StakeTabView = (props: {
             parseFloat(fromCoinAmount) <= tokenBalance
       ? true
       : false;
-  }
-
-  const areSendAmountSettingsValid = (): boolean => {
-    return paymentStartDate && isSendAmountValid() ? true : false;
-  }  
-
-  const onIsVerifiedRecipientChange = (e: any) => {
-    setIsVerifiedRecipient(e.target.checked);
-  }
-
-  const onAfterTransactionModalClosed = () => {
-    const unstakeAmountAfterTransaction = !stakedAmount ? fromCoinAmount : `${parseFloat(stakedAmount) + parseFloat(fromCoinAmount)}`;
-
-    setStakedAmount(unstakeAmountAfterTransaction);
-    setFromCoinAmount("");
-    setIsVerifiedRecipient(false);
-    closeTransactionModal();
   }
 
   const onTransactionStart = useCallback(async () => {
@@ -379,6 +378,10 @@ export const StakeTabView = (props: {
     t,
   ]);
 
+  // const onIsVerifiedRecipientChange = (e: any) => {
+  //   setIsVerifiedRecipient(e.target.checked);
+  // }
+
   // const onChangeValue = (value: number, time: string, rate: number) => {
   //   setPeriodValue(value);
   //   setPeriodTime(time);
@@ -494,44 +497,11 @@ export const StakeTabView = (props: {
         onClick={onTransactionStart}
         disabled={
           isBusy ||
-          !areSendAmountSettingsValid()
+          !isStakingFormValid()
         }>
         {isBusy && (<span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>)}
-        {
-          isBusy
-            ? t("invest.panel-right.tabset.stake.stake-button-busy")
-            : t("invest.panel-right.tabset.stake.stake-button")
-        }
-        {` ${selectedToken && selectedToken.symbol}`}
+        {getStakeButtonLabel()}
       </Button>
-
-      {/* Transaction execution modal */}
-      <Modal
-        className="mean-modal no-full-screen"
-        maskClosable={false}
-        visible={isTransactionModalVisible}
-        onCancel={closeTransactionModal}
-        afterClose={onAfterTransactionModalClosed}
-        width={330}
-        footer={null}>
-        <div className="transaction-progress"> 
-          <CheckOutlined style={{ fontSize: 48 }} className="icon" />
-          <h4 className="font-bold mb-1 text-uppercase">
-            Operation completed
-          </h4>
-          <p className="operation">
-            {fromCoinAmount} MEAN has been staked successfully
-          </p>
-          <Button
-            block
-            type="primary"
-            shape="round"
-            size="middle"
-            onClick={closeTransactionModal}>
-            {t('general.cta-close')}
-          </Button>
-        </div>
-      </Modal>
     </>
   )
 }

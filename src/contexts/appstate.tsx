@@ -1043,24 +1043,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     refreshStreamList
   ]);
 
-  // Auto select a token
-  /*
-  useEffect(() => {
-
-    if (connectionConfig && connectionConfig.tokens && connectionConfig.tokens.length) {
-      updateTokenlist(connectionConfig.tokens);
-      if (!selectedToken) {
-        setSelectedToken(connectionConfig.tokens[0]);
-      }
-    }
-
-    return () => {};
-  }, [
-    connectionConfig,
-    selectedToken
-  ]);
-  */
-
   const refreshTokenBalance = useCallback(async () => {
 
     if (!connection || !publicKey || !tokenList || !accounts || !accounts.tokenAccounts || !accounts.tokenAccounts.length) {
@@ -1199,6 +1181,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(connectionConfig.cluster) && !PINNED_TOKENS.includes(t.symbol))
         .forEach(item => list.push(item));
       // Update the list
+      updateTokenlist(list as TokenInfo[]);
       updateUserTokens(list);
       // consoleOut('AppState -> userTokens:', list);
 

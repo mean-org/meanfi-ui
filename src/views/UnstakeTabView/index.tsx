@@ -1,27 +1,12 @@
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import './style.less';
-// import { ArrowDownOutlined, CheckOutlined, ReloadOutlined } from "@ant-design/icons";
-import { Button, Tooltip, Row, Col, Space, Empty, Spin, Modal } from "antd";
-import moment from 'moment';
-// import Checkbox from "antd/lib/checkbox/Checkbox";
-// import Modal from "antd/lib/modal/Modal";
+import { Button } from "antd";
 import { useTranslation } from 'react-i18next';
-// import { isDesktop } from "react-device-detect";
 import { TokenDisplay } from "../../components/TokenDisplay";
-// import { useConnection, useConnectionConfig } from '../../contexts/connection';
-// import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
 import { cutNumber, formatAmount, formatThousands, getAmountWithSymbol, getTxIxResume, isValidNumber } from "../../utils/utils";
-import { CheckOutlined } from "@ant-design/icons";
-import { StakingClient, UnstakeQuote } from "@mean-dao/staking";
-// import { IconRefresh, IconStats } from "../../Icons";
-// import { IconHelpCircle } from "../../Icons/IconHelpCircle";
-// import useWindowSize from '../../hooks/useWindowResize';
-// import { consoleOut, isLocal, isProd } from "../../utils/ui";
-// import { useNavigate } from "react-router-dom";
-// import { ConfirmOptions } from "@solana/web3.js";
-// import { Provider } from "@project-serum/anchor";
-// import { EnvMintAddresses, StakingClient } from "@mean-dao/staking";
+import { LoadingOutlined } from "@ant-design/icons";
+import { StakingClient } from "@mean-dao/staking";
 import { Transaction } from "@solana/web3.js";
 import { TransactionStatusContext } from "../../contexts/transaction-status";
 import { OperationType, TransactionStatus } from "../../models/enums";
@@ -35,41 +20,29 @@ export const UnstakeTabView = (props: {
   stakeClient: StakingClient;
 }) => {
   const {
-    stakedAmount,
     selectedToken,
     tokenBalance,
     effectiveRate,
     loadingPrices,
     fromCoinAmount,
-    unstakedAmount,
-    paymentStartDate,
-    unstakeStartDate,
     transactionStatus,
-    // isVerifiedRecipient,
-    // setIsVerifiedRecipient,
     setTransactionStatus,
     setFromCoinAmount,
-    setUnstakedAmount,
-    setStakedAmount,
     refreshPrices
   } = useContext(AppStateContext);
   const { enqueueTransactionConfirmation } = useContext(TransactionStatusContext);
   const { t } = useTranslation('common');
   const percentages = [25, 50, 75, 100];
   const [percentageValue, setPercentageValue] = useState<number>(0);
-  const [availableUnstake, setAvailableUnstake] = useState<number>(0);
-  const [unstakeQuote, setUnstakeQuote] = useState<UnstakeQuote>();
   const [meanWorthOfsMean, setMeanWorthOfsMean] = useState<number>(0);
   const [isBusy, setIsBusy] = useState(false);
   const { connected, wallet } = useWallet();
   const connection = useConnection();
-  
-  const currentDate = moment().format("LL");
 
   const onChangeValue = (value: number) => {
     setPercentageValue(value);
   };  
-  
+
   const handleFromCoinAmountChange = (e: any) => {
     const newValue = e.target.value;
     if (newValue === null || newValue === undefined || newValue === "") {
@@ -81,39 +54,34 @@ export const UnstakeTabView = (props: {
     }
   };
 
-  // const onIsVerifiedRecipientChange = (e: any) => {
-  //   setIsVerifiedRecipient(e.target.checked);
-  // }
+  const getUnstakeButtonLabel = useCallback(() => {
+    return !connected
+      ? t('transactions.validation.not-connected')
+      : isBusy
+        ? `${t("invest.panel-right.tabset.unstake.unstake-button-busy")} ${selectedToken && selectedToken.symbol}`
+        : !selectedToken || !tokenBalance
+          ? `${t("invest.panel-right.tabset.unstake.unstake-button-unavailable")} ${selectedToken && selectedToken.symbol}`
+          : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !parseFloat(fromCoinAmount)
+            ? t('transactions.validation.no-amount')
+            : parseFloat(fromCoinAmount) > tokenBalance
+              ? t('transactions.validation.amount-high')
+              : `${t("invest.panel-right.tabset.unstake.unstake-button-available")} ${selectedToken && selectedToken.symbol}`;
+  }, [
+    fromCoinAmount,
+    selectedToken,
+    tokenBalance,
+    connected,
+    isBusy,
+    t,
+  ]);
 
-  const isSendAmountValid = (): boolean => {
+  const isUnstakingFormValid = (): boolean => {
     return  fromCoinAmount &&
             parseFloat(fromCoinAmount) > 0 &&
-            parseFloat(fromCoinAmount) <= parseFloat(stakedAmount)
+            parseFloat(fromCoinAmount) <= tokenBalance
       ? true
       : false;
   }
-
-  const areSendAmountSettingsValid = (): boolean => {
-    return paymentStartDate && isSendAmountValid() ? true : false;
-  }
-
-  // Transaction execution modal
-  const [isTransactionModalVisible, setTransactionModalVisible] = useState(false);
-  const showTransactionModal = useCallback(() => setTransactionModalVisible(true), []);
-  const closeTransactionModal = useCallback(() => setTransactionModalVisible(false), []);
-
-  // const onTransactionStart = useCallback(async () => {
-  //   showTransactionModal();
-
-  //   const newStakedAmount = (parseFloat(stakedAmount) - parseFloat(unstakedAmount)).toString();
-
-  //   setStakedAmount(newStakedAmount);
-  //   setFromCoinAmount('');
-
-  // // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [
-  //   showTransactionModal
-  // ]);
 
   const onTransactionStart = useCallback(async () => {
     let transaction: Transaction;
@@ -144,11 +112,11 @@ export const UnstakeTabView = (props: {
         });
 
         return await props.stakeClient
-          .stakeTransaction(
+          .unstakeTransaction(
             uiAmount // uiAmount
           )
           .then((value) => {
-            consoleOut("stakeTransaction returned transaction:", value);
+            consoleOut("unstakeTransaction returned transaction:", value);
             // Stage 1 completed - The transaction is created and returned
             setTransactionStatus({
               lastOperation: TransactionStatus.InitTransactionSuccess,
@@ -162,7 +130,7 @@ export const UnstakeTabView = (props: {
             return true;
           })
           .catch((error) => {
-            console.error("stakeTransaction init error:", error);
+            console.error("unstakeTransaction init error:", error);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.InitTransactionFailure,
@@ -171,7 +139,7 @@ export const UnstakeTabView = (props: {
               action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
               result: `${error}`,
             });
-            customLogger.logError("Stake transaction failed", {
+            customLogger.logError("Unstake transaction failed", {
               transcript: transactionLog,
             });
             return false;
@@ -181,7 +149,7 @@ export const UnstakeTabView = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: "Cannot start transaction! Wallet not found!",
         });
-        customLogger.logError("Stake transaction failed", {
+        customLogger.logError("Unstake transaction failed", {
           transcript: transactionLog,
         });
         return false;
@@ -218,7 +186,7 @@ export const UnstakeTabView = (props: {
                   error: `${error}`,
                 },
               });
-              customLogger.logError("Stake transaction failed", {
+              customLogger.logError("Unstake transaction failed", {
                 transcript: transactionLog,
               });
               return false;
@@ -250,7 +218,7 @@ export const UnstakeTabView = (props: {
                 error: `${error}`,
               },
             });
-            customLogger.logError("Stake transaction failed", {
+            customLogger.logError("Unstake transaction failed", {
               transcript: transactionLog,
             });
             return false;
@@ -265,7 +233,7 @@ export const UnstakeTabView = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: "Cannot sign transaction! Wallet not found!",
         });
-        customLogger.logError("Stake transaction failed", {
+        customLogger.logError("Unstake transaction failed", {
           transcript: transactionLog,
         });
         return false;
@@ -303,7 +271,7 @@ export const UnstakeTabView = (props: {
               ),
               result: { error, encodedTx },
             });
-            customLogger.logError("Stake transaction failed", {
+            customLogger.logError("Unstake transaction failed", {
               transcript: transactionLog,
             });
             return false;
@@ -317,7 +285,7 @@ export const UnstakeTabView = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: "Cannot send transaction! Wallet not found!",
         });
-        customLogger.logError("Stake transaction failed", {
+        customLogger.logError("Unstake transaction failed", {
           transcript: transactionLog,
         });
         return false;
@@ -376,31 +344,22 @@ export const UnstakeTabView = (props: {
     t,
   ]);
 
-  const onAfterTransactionModalClosed = () => {
-    // const unstakeAmountAfterTransaction = !stakedAmount ? fromCoinAmount : `${parseFloat(stakedAmount) + parseFloat(fromCoinAmount)}`;
+  // useEffect(() => {
+  //   if (!props.stakeClient) {
+  //     return;
+  //   }
 
-    // setStakedAmount(unstakeAmountAfterTransaction);
-    setFromCoinAmount("");
-    closeTransactionModal();
-  }
-
-  useEffect(() => {
-    if (!props.stakeClient) {
-      return;
-    }
-
-    props.stakeClient.getUnstakeQuote(parseFloat(stakedAmount)).then((value: any) => {
-      setUnstakeQuote(value.meanOutUiAmount);
+  //   props.stakeClient.getUnstakeQuote(tokenBalance).then((value: any) => {
+  //     setUnstakeQuote(value.meanOutUiAmount);
       
-    }).catch((error: any) => {
-      console.error(error);
-    });
+  //   }).catch((error: any) => {
+  //     console.error(error);
+  //   });
     
-  }, [
-    props.stakeClient,
-    stakedAmount,
-    tokenBalance
-  ]);
+  // }, [
+  //   props.stakeClient,
+  //   tokenBalance
+  // ]);
 
   useEffect(() => {
     const getMeanQuote = async (sMEAN: number) => {
@@ -433,23 +392,12 @@ export const UnstakeTabView = (props: {
   ]);
 
   useEffect(() => {
-    const percentageFromCoinAmount = parseFloat(stakedAmount) > 0 ? `${(parseFloat(stakedAmount)*percentageValue/100)}` : '';
+    const percentageFromCoinAmount = tokenBalance > 0 ? `${(tokenBalance*percentageValue/100)}` : '';
 
     setFromCoinAmount(percentageFromCoinAmount);
 
-    setUnstakedAmount(percentageFromCoinAmount);
-
-    // setFromCoinAmount(formatAmount(parseFloat(percentageFromCoinAmount), 6).toString());
-
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [percentageValue]);
-
-  useEffect(() => {
-    parseFloat(stakedAmount) > 0 && currentDate === unstakeStartDate ?
-      setAvailableUnstake(parseFloat(stakedAmount))
-    :
-      setAvailableUnstake(0)
-  }, [currentDate, stakedAmount, unstakeStartDate]);
 
   return (
     <>
@@ -461,7 +409,7 @@ export const UnstakeTabView = (props: {
           <div className="token-group">
             {percentages.map((percentage, index) => (
               <div key={index} className="mb-1 d-flex flex-column align-items-center">
-                <div className={`token-max simplelink ${availableUnstake !== 0 ? "active" : "disabled"}`} onClick={() => onChangeValue(percentage)}>{percentage}%</div>
+                <div className={`token-max simplelink ${tokenBalance !== 0 ? "active" : "disabled"}`} onClick={() => onChangeValue(percentage)}>{percentage}%</div>
               </div>
             ))}
           </div>
@@ -503,7 +451,6 @@ export const UnstakeTabView = (props: {
                   : "0"
               }`}
             </span>
-            {/* <span>{formatAmount(availableUnstake, 6)}</span> */}
           </div>
           <div className="right inner-label">
             <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
@@ -535,41 +482,12 @@ export const UnstakeTabView = (props: {
         size="large"
         onClick={onTransactionStart}
         disabled={
-          !areSendAmountSettingsValid() ||
-          // !isVerifiedRecipient ||
-          availableUnstake <= 0
-        }
-      >
-        {availableUnstake <= 0 ? t("invest.panel-right.tabset.unstake.unstake-button-unavailable") : t("invest.panel-right.tabset.unstake.unstake-button-available")} {selectedToken && selectedToken.symbol}
+          isBusy ||
+          !isUnstakingFormValid()
+        }>
+        {isBusy && (<span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>)}
+        {getUnstakeButtonLabel()}
       </Button>
-
-      {/* Transaction execution modal */}
-      <Modal
-        className="mean-modal no-full-screen"
-        maskClosable={false}
-        visible={isTransactionModalVisible}
-        onCancel={closeTransactionModal}
-        afterClose={onAfterTransactionModalClosed}
-        width={330}
-        footer={null}>
-        <div className="transaction-progress"> 
-          <CheckOutlined style={{ fontSize: 48 }} className="icon" />
-          <h4 className="font-bold mb-1 text-uppercase">
-            Operation completed
-          </h4>
-          <p className="operation">
-            {unstakedAmount} sMEAN has been successfully unstaked and you have received {unstakedAmount} MEAN in return.
-          </p>
-          <Button
-            block
-            type="primary"
-            shape="round"
-            size="middle"
-            onClick={closeTransactionModal}>
-            {t('general.cta-close')}
-          </Button>
-        </div>
-      </Modal>
     </>
   )
 }
