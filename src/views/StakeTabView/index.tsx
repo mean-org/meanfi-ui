@@ -1,7 +1,7 @@
 import { useCallback, useContext, useEffect, useState } from "react";
 import './style.less';
-import { CheckOutlined, LoadingOutlined,  } from "@ant-design/icons";
-import { Button, Modal } from "antd";
+import { CheckOutlined, InfoCircleOutlined, LoadingOutlined,  } from "@ant-design/icons";
+import { Button, Modal, Spin } from "antd";
 import moment from 'moment';
 import { useTranslation } from 'react-i18next';
 import { TokenDisplay } from "../../components/TokenDisplay";
@@ -13,10 +13,12 @@ import { StakeQuote, StakingClient } from "@mean-dao/staking";
 import { Transaction } from "@solana/web3.js";
 import { TransactionStatusContext } from "../../contexts/transaction-status";
 import { OperationType, TransactionStatus } from "../../models/enums";
-import { consoleOut, getTransactionStatusForLogs } from "../../utils/ui";
+import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs } from "../../utils/ui";
 import { customLogger } from "../..";
 import { useConnection } from "../../contexts/connection";
 import { notify } from "../../utils/notifications";
+
+const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const StakeTabView = (props: {
   stakeClient: StakingClient;
@@ -30,6 +32,7 @@ export const StakeTabView = (props: {
     fromCoinAmount,
     paymentStartDate,
     transactionStatus,
+    refreshTokenBalance,
     setIsVerifiedRecipient,
     setTransactionStatus,
     setUnstakeStartDate,
@@ -73,6 +76,36 @@ export const StakeTabView = (props: {
   const [periodValue, setPeriodValue] = useState<number>(periods[0].value);
   const [periodTime, setPeriodTime] = useState<string>(periods[0].time);
   const [stakeQuote, setStakeQuote] = useState<StakeQuote>();
+
+  ///////////////////////
+  //  EVENTS & MODALS  //
+  ///////////////////////
+
+  // Common transaction execution modal
+  const [isTransactionExecutionModalVisible, setTransactionExecutionModalVisibility] = useState(false);
+  const showTransactionExecutionModal = useCallback(() => setTransactionExecutionModalVisibility(true), []);
+  const hideTransactionExecutionModal = useCallback(() => setTransactionExecutionModalVisibility(false), []);
+
+  const refreshPage = () => {
+    hideTransactionExecutionModal();
+    window.location.reload();
+  }
+
+  // Transaction execution (Applies to all transactions)
+  const isSuccess = (): boolean => {
+    return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
+  }
+ 
+  const isError = (): boolean => {
+    return  transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ||
+            transactionStatus.currentOperation === TransactionStatus.InitTransactionFailure ||
+            transactionStatus.currentOperation === TransactionStatus.SignTransactionFailure ||
+            transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ||
+            transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure ||
+            transactionStatus.currentOperation === TransactionStatus.FeatureTemporarilyDisabled
+            ? true
+            : false;
+  }
 
   const handleFromCoinAmountChange = (e: any) => {
     const newValue = e.target.value;
@@ -226,8 +259,8 @@ export const StakeTabView = (props: {
               return false;
             }
             setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransactionSuccess,
-              currentOperation: TransactionStatus.SendTransaction,
+              lastOperation: TransactionStatus.SignTransaction,
+              currentOperation: TransactionStatus.SignTransactionSuccess,
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(
@@ -281,8 +314,8 @@ export const StakeTabView = (props: {
           .then((sig: any) => {
             consoleOut("sendEncodedTransaction returned a signature:", sig);
             setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.ConfirmTransaction,
+              lastOperation: TransactionStatus.SignTransactionSuccess,
+              currentOperation: TransactionStatus.SendTransactionSuccess,
             });
             signature = sig;
             transactionLog.push({
@@ -296,7 +329,7 @@ export const StakeTabView = (props: {
           .catch((error: any) => {
             console.error(error);
             setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransaction,
+              lastOperation: TransactionStatus.SignTransactionSuccess,
               currentOperation: TransactionStatus.SendTransactionFailure,
             });
             transactionLog.push({
@@ -327,6 +360,7 @@ export const StakeTabView = (props: {
     };
 
     if (wallet && selectedToken) {
+      showTransactionExecutionModal();
       setIsBusy(true);
       const create = await createTx();
       consoleOut("created:", create);
@@ -337,6 +371,10 @@ export const StakeTabView = (props: {
           const sent = await sendTx();
           consoleOut("sent:", sent);
           if (sent) {
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.TransactionFinished,
+            });
             enqueueTransactionConfirmation({
               signature: signature,
               operationType: OperationType.Stake,
@@ -349,6 +387,7 @@ export const StakeTabView = (props: {
               )} ${selectedToken.symbol}`,
             });
             setIsBusy(false);
+            // hideTransactionExecutionModal();
             setFromCoinAmount("");
           } else {
             notify({
@@ -372,10 +411,12 @@ export const StakeTabView = (props: {
     fromCoinAmount,
     props.stakeClient,
     transactionStatus.currentOperation,
+    hideTransactionExecutionModal,
+    showTransactionExecutionModal,
     enqueueTransactionConfirmation,
     setTransactionStatus,
     setFromCoinAmount,
-    t,
+    t
   ]);
 
   // const onIsVerifiedRecipientChange = (e: any) => {
@@ -502,6 +543,100 @@ export const StakeTabView = (props: {
         {isBusy && (<span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>)}
         {getStakeButtonLabel()}
       </Button>
+
+      {/* Common transaction execution modal */}
+      <Modal
+        className="mean-modal no-full-screen"
+        maskClosable={false}
+        visible={isTransactionExecutionModalVisible}
+        title={getTransactionModalTitle(transactionStatus, isBusy, t)}
+        onCancel={hideTransactionExecutionModal}
+        width={360}
+        footer={null}>
+        <div className="transaction-progress">
+          {isBusy ? (
+            <>
+              <Spin indicator={bigLoadingIcon} className="icon" />
+              <h4 className="font-bold mb-1">
+                {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
+              </h4>
+              <div className="info-label">Staking {fromCoinAmount} MEAN</div>
+              {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
+                <div className="indication">
+                  {t('transactions.status.instructions')}
+                </div>
+              )}
+            </>
+          ) : isSuccess() ? (
+            <>
+              <CheckOutlined style={{ fontSize: 48 }} className="icon" />
+              <h4 className="font-bold mb-1 text-uppercase">
+                {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
+              </h4>
+              <p className="operation">{t('transactions.status.tx-generic-operation-success')}</p>
+              <Button
+                block
+                type="primary"
+                shape="round"
+                size="middle"
+                onClick={() => hideTransactionExecutionModal()}>
+                {t('general.cta-finish')}
+              </Button>
+            </>
+          ) : isError() ? (
+            <>
+              <InfoCircleOutlined style={{ fontSize: 48 }} className="icon" />
+              {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
+                <h4 className="font-bold mb-3">
+                  {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
+                </h4>
+              ) : (
+                <h4 className="font-bold mb-3">
+                  {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
+                </h4>
+              )}
+              {transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ? (
+                <div className="row two-col-ctas mt-3">
+                  <div className="col-6">
+                    <Button
+                      block
+                      type="text"
+                      shape="round"
+                      size="middle"
+                      onClick={() => hideTransactionExecutionModal()}>
+                      {t('general.retry')}
+                    </Button>
+                  </div>
+                  <div className="col-6">
+                    <Button
+                      block
+                      type="primary"
+                      shape="round"
+                      size="middle"
+                      onClick={() => refreshPage()}>
+                      {t('general.refresh')}
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  block
+                  type="primary"
+                  shape="round"
+                  size="middle"
+                  onClick={hideTransactionExecutionModal}>
+                  {t('general.cta-close')}
+                </Button>
+              )}
+            </>
+          ) : (
+            <>
+              <Spin indicator={bigLoadingIcon} className="icon" />
+              <h4 className="font-bold mb-4 text-uppercase">{t('transactions.status.tx-wait')}...</h4>
+            </>
+          )}
+        </div>
+      </Modal>
     </>
   )
 }
