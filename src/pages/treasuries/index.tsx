@@ -1232,7 +1232,7 @@ export const TreasuriesView = () => {
       if (v2.version && v2.version >= 2) {
         const isMultisig = isMultisigTreasury();
         if (isMultisig && multisigAccounts) {
-          return multisigAccounts.find(m => m.authority.toBase58() === v2.treasurer) ? true : false;
+          return multisigAccounts.find(m => m.authority.equals(new PublicKey(v2.treasurer as string))) ? true : false;
         }
         return v2.treasurer === publicKey.toBase58() ? true : false;
       }
@@ -5623,8 +5623,7 @@ export const TreasuriesView = () => {
                               disabled={
                                 isTxInProgress() ||
                                 !isTreasurer() ||
-                                isAnythingLoading() ||
-                                !isTreasuryFunded()
+                                isAnythingLoading()
                               }
                             />
                           </Tooltip>
@@ -5639,8 +5638,7 @@ export const TreasuriesView = () => {
                                 isTxInProgress() ||
                                 (treasuryStreams && treasuryStreams.length > 0) ||
                                 !isTreasurer() ||
-                                isAnythingLoading() ||
-                                !isTreasuryFunded()
+                                isAnythingLoading()
                               }
                             />
                           </Tooltip>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useContext, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AppStateContext } from "../../contexts/appstate";
@@ -9,7 +9,12 @@ import { PreFooter } from "../../components/PreFooter";
 type SwapOption = "one-time" | "recurring";
 
 export const TransfersView = () => {
-  const { setContract } = useContext(AppStateContext);
+  const {
+    tokenList,
+    selectedToken,
+    setSelectedToken,
+    setContract,
+  } = useContext(AppStateContext);
   const { t } = useTranslation('common');
   const [currentTab, setCurrentTab] = useState<SwapOption>("one-time");
 
@@ -29,6 +34,20 @@ export const TransfersView = () => {
       setContract('Repeating Payment');
     }
   }
+
+  // Auto select a token
+  useEffect(() => {
+
+    if (tokenList && !selectedToken) {
+      setSelectedToken(tokenList[0]);
+    }
+
+    return () => { };
+  }, [
+    tokenList,
+    selectedToken,
+    setSelectedToken
+  ]);
 
   return (
     <>
