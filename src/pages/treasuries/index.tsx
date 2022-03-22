@@ -5627,7 +5627,8 @@ export const TreasuriesView = () => {
                               }
                             />
                           </Tooltip>
-                          <Tooltip placement="bottom" title={t('treasuries.treasury-detail.cta-close')}>
+                          {/* TODO: Make this available back when we have the associated token not being a problem for deletion */}
+                          {/* <Tooltip placement="bottom" title={t('treasuries.treasury-detail.cta-close')}>
                             <Button
                               type="default"
                               shape="circle"
@@ -5641,7 +5642,7 @@ export const TreasuriesView = () => {
                                 isAnythingLoading()
                               }
                             />
-                          </Tooltip>
+                          </Tooltip> */}
                         </span>
                       </div>
                     )}
