@@ -5628,22 +5628,23 @@ export const TreasuriesView = () => {
                             />
                           </Tooltip>
                           {/* TODO: Make this available back when we have the associated token not being a problem for deletion */}
-                          <Tooltip placement="bottom" title={t('treasuries.treasury-detail.cta-close')}>
-                            <Button
-                              type="default"
-                              shape="circle"
-                              size="middle"
-                              icon={<IconTrash className="mean-svg-icons" />}
-                              onClick={showCloseTreasuryModal}
-                              disabled={
-                                isTxInProgress() ||
-                                (treasuryStreams && treasuryStreams.length > 0) ||
-                                !isTreasurer() ||
-                                isAnythingLoading() ||
-                                !isTreasuryFunded()
-                              }
-                            />
-                          </Tooltip>
+                          {isTreasuryFunded() && (
+                            <Tooltip placement="bottom" title={t('treasuries.treasury-detail.cta-close')}>
+                              <Button
+                                type="default"
+                                shape="circle"
+                                size="middle"
+                                icon={<IconTrash className="mean-svg-icons" />}
+                                onClick={showCloseTreasuryModal}
+                                disabled={
+                                  isTxInProgress() ||
+                                  (treasuryStreams && treasuryStreams.length > 0) ||
+                                  !isTreasurer() ||
+                                  isAnythingLoading()
+                                }
+                              />
+                            </Tooltip>
+                          )}
                         </span>
                       </div>
                     )}
