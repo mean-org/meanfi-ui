@@ -91,6 +91,11 @@ export const StakeTabView = (props: {
     window.location.reload();
   }
 
+  const onCloseTransactionExecutionModal = () => {
+    setFromCoinAmount("");
+    hideTransactionExecutionModal();
+  }
+
   // Transaction execution (Applies to all transactions)
   const isSuccess = (): boolean => {
     return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
@@ -380,15 +385,18 @@ export const StakeTabView = (props: {
               operationType: OperationType.Stake,
               finality: "confirmed",
               txInfoFetchStatus: "fetching",
-              completedTitle: "Confirming transaction",
+              loadingTitle: "Confirming transaction",
+              loadingMessage: `Staking ${formatThousands(
+                parseFloat(fromCoinAmount),
+                selectedToken.decimals
+              )} ${selectedToken.symbol}`,
+              completedTitle: "Transaction confirmed",
               completedMessage: `Successfully staked ${formatThousands(
                 parseFloat(fromCoinAmount),
                 selectedToken.decimals
               )} ${selectedToken.symbol}`,
             });
             setIsBusy(false);
-            // hideTransactionExecutionModal();
-            setFromCoinAmount("");
           } else {
             notify({
               message: t("notifications.error-title"),
@@ -411,11 +419,9 @@ export const StakeTabView = (props: {
     fromCoinAmount,
     props.stakeClient,
     transactionStatus.currentOperation,
-    hideTransactionExecutionModal,
     showTransactionExecutionModal,
     enqueueTransactionConfirmation,
     setTransactionStatus,
-    setFromCoinAmount,
     t
   ]);
 
@@ -560,7 +566,7 @@ export const StakeTabView = (props: {
               <h4 className="font-bold mb-1">
                 {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
               </h4>
-              <div className="info-label">Staking {fromCoinAmount} MEAN</div>
+              <div className="info-label">Staking {formatThousands(parseFloat(fromCoinAmount), 6)} MEAN</div>
               {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
                 <div className="indication">
                   {t('transactions.status.instructions')}
@@ -573,13 +579,15 @@ export const StakeTabView = (props: {
               <h4 className="font-bold mb-1 text-uppercase">
                 {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
               </h4>
-              <p className="operation">{t('transactions.status.tx-generic-operation-success')}</p>
+              <p className="operation">
+                {formatThousands(parseFloat(fromCoinAmount), 6)} MEAN has been staked successfully
+              </p>
               <Button
                 block
                 type="primary"
                 shape="round"
                 size="middle"
-                onClick={() => hideTransactionExecutionModal()}>
+                onClick={onCloseTransactionExecutionModal}>
                 {t('general.cta-finish')}
               </Button>
             </>
@@ -603,7 +611,7 @@ export const StakeTabView = (props: {
                       type="text"
                       shape="round"
                       size="middle"
-                      onClick={() => hideTransactionExecutionModal()}>
+                      onClick={onCloseTransactionExecutionModal}>
                       {t('general.retry')}
                     </Button>
                   </div>
@@ -624,7 +632,7 @@ export const StakeTabView = (props: {
                   type="primary"
                   shape="round"
                   size="middle"
-                  onClick={hideTransactionExecutionModal}>
+                  onClick={onCloseTransactionExecutionModal}>
                   {t('general.cta-close')}
                 </Button>
               )}

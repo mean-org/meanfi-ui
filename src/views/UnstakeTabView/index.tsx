@@ -45,15 +45,20 @@ export const UnstakeTabView = (props: {
   //  EVENTS & MODALS  //
   ///////////////////////
 
+  // Common transaction execution modal
+  const [isTransactionExecutionModalVisible, setTransactionExecutionModalVisibility] = useState(false);
+  const showTransactionExecutionModal = useCallback(() => setTransactionExecutionModalVisibility(true), []);
+  const hideTransactionExecutionModal = useCallback(() => setTransactionExecutionModalVisibility(false), []);
+
   const refreshPage = () => {
     hideTransactionExecutionModal();
     window.location.reload();
   }
 
-  // Common transaction execution modal
-  const [isTransactionExecutionModalVisible, setTransactionExecutionModalVisibility] = useState(false);
-  const showTransactionExecutionModal = useCallback(() => setTransactionExecutionModalVisibility(true), []);
-  const hideTransactionExecutionModal = useCallback(() => setTransactionExecutionModalVisibility(false), []);
+  const onCloseTransactionExecutionModal = () => {
+    setFromCoinAmount("");
+    hideTransactionExecutionModal();
+  }
 
    // Transaction execution (Applies to all transactions) 
    const isSuccess = (): boolean => {
@@ -224,8 +229,8 @@ export const UnstakeTabView = (props: {
               return false;
             }
             setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransactionSuccess,
-              currentOperation: TransactionStatus.SendTransaction,
+              lastOperation: TransactionStatus.SendTransaction,
+              currentOperation: TransactionStatus.SignTransactionSuccess,
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(
@@ -279,8 +284,8 @@ export const UnstakeTabView = (props: {
           .then((sig: any) => {
             consoleOut("sendEncodedTransaction returned a signature:", sig);
             setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.ConfirmTransaction,
+              lastOperation: TransactionStatus.SignTransactionSuccess,
+              currentOperation: TransactionStatus.SendTransactionSuccess,
             });
             signature = sig;
             transactionLog.push({
@@ -294,7 +299,7 @@ export const UnstakeTabView = (props: {
           .catch((error: any) => {
             console.error(error);
             setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransaction,
+              lastOperation: TransactionStatus.SignTransactionSuccess,
               currentOperation: TransactionStatus.SendTransactionFailure,
             });
             transactionLog.push({
@@ -336,20 +341,27 @@ export const UnstakeTabView = (props: {
           const sent = await sendTx();
           consoleOut("sent:", sent);
           if (sent) {
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.TransactionFinished,
+            });
             enqueueTransactionConfirmation({
               signature: signature,
-              operationType: OperationType.Stake,
+              operationType: OperationType.Unstake,
               finality: "confirmed",
               txInfoFetchStatus: "fetching",
-              completedTitle: "Confirming transaction",
-              completedMessage: `Successfully staked ${formatThousands(
+              loadingTitle: "Confirming transaction",
+              loadingMessage: `Unstaking ${formatThousands(
+                parseFloat(fromCoinAmount),
+                selectedToken.decimals
+              )} ${selectedToken.symbol}`,
+              completedTitle: "Transaction confirmed",
+              completedMessage: `Successfully unstaked ${formatThousands(
                 parseFloat(fromCoinAmount),
                 selectedToken.decimals
               )} ${selectedToken.symbol}`,
             });
             setIsBusy(false);
-            // hideTransactionExecutionModal();
-            setFromCoinAmount("");
           } else {
             notify({
               message: t("notifications.error-title"),
@@ -372,11 +384,9 @@ export const UnstakeTabView = (props: {
     fromCoinAmount,
     props.stakeClient,
     transactionStatus.currentOperation,
-    hideTransactionExecutionModal,
     showTransactionExecutionModal,
     enqueueTransactionConfirmation,
     setTransactionStatus,
-    setFromCoinAmount,
     t
   ]);
 
@@ -421,7 +431,7 @@ export const UnstakeTabView = (props: {
   return (
     <>
       {/* <span className="info-label">{stakedAmount ? t("invest.panel-right.tabset.unstake.notification-label-one", {stakedAmount: cutNumber(parseFloat(stakedAmount), 6), unstakeStartDate: unstakeStartDate}) : t("invest.panel-right.tabset.unstake.notification-label-one-error")}</span> */}
-      <span className="info-label">{tokenBalance ? `You currently have ${cutNumber(tokenBalance, 6)} sMEAN staked which is currently worth ${cutNumber(meanWorthOfsMean, 6)} MEAN` : t("invest.panel-right.tabset.unstake.notification-label-one-error")}</span>
+      <span className="info-label">{tokenBalance ? `You currently have ${cutNumber(tokenBalance, 6)} sMEAN staked which is currently worth ${cutNumber(meanWorthOfsMean, 6)} MEAN.` : t("invest.panel-right.tabset.unstake.notification-label-one-error")}</span>
       <div className="form-label mt-2">{t("invest.panel-right.tabset.unstake.amount-label")}</div>
       <div className="well">
         <div className="flexible-right mb-1">
@@ -524,7 +534,7 @@ export const UnstakeTabView = (props: {
               <h4 className="font-bold mb-1">
                 {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
               </h4>
-              <div className="info-label">Unstaking {fromCoinAmount} sMEAN</div>
+              <div className="info-label">Unstaking {formatThousands(parseFloat(fromCoinAmount), 6)} sMEAN</div>
               {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
                 <div className="indication">
                   {t('transactions.status.instructions')}
@@ -537,13 +547,15 @@ export const UnstakeTabView = (props: {
               <h4 className="font-bold mb-1 text-uppercase">
                 {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
               </h4>
-              <p className="operation">{t('transactions.status.tx-generic-operation-success')}</p>
+              <p className="operation">
+                {formatThousands(parseFloat(fromCoinAmount), 6)} sMEAN has been successfully unstaked and you have received {formatThousands(parseFloat(fromCoinAmount), 6)} MEAN in return.
+              </p>
               <Button
                 block
                 type="primary"
                 shape="round"
                 size="middle"
-                onClick={() => hideTransactionExecutionModal()}>
+                onClick={onCloseTransactionExecutionModal}>
                 {t('general.cta-finish')}
               </Button>
             </>
@@ -567,7 +579,7 @@ export const UnstakeTabView = (props: {
                       type="text"
                       shape="round"
                       size="middle"
-                      onClick={() => hideTransactionExecutionModal()}>
+                      onClick={onCloseTransactionExecutionModal}>
                       {t('general.retry')}
                     </Button>
                   </div>
@@ -588,7 +600,7 @@ export const UnstakeTabView = (props: {
                   type="primary"
                   shape="round"
                   size="middle"
-                  onClick={hideTransactionExecutionModal}>
+                  onClick={onCloseTransactionExecutionModal}>
                   {t('general.cta-close')}
                 </Button>
               )}
