@@ -420,7 +420,7 @@
 			"token-address-placeholder": "Nhập vào địa chỉ token"
 		},
 		"multisig-account-detail": {
-			"address": "Thẩm quyền",
+			"address": "Deposit Address",
 			"authority": "Thẩm quyền",
 			"copy-id-title": "MULTISIG ID",
 			"created-on": "Ngày tạo",
@@ -429,11 +429,11 @@
 			"cta-mints": "Đúc ({{itemCount}})",
 			"cta-no-mints": "Đúc",
 			"cta-no-programs": "Chương trình",
-			"cta-no-treasuries": "Kho bạc",
+			"cta-no-treasuries": "Streaming Treasuries",
 			"cta-no-assets": "Vaults",
 			"cta-programs": "Chương trình ({{itemCount}})",
 			"cta-transfer": "Chuyển khoản các token",
-			"cta-treasuries": "Kho bạc ({{itemCount}})",
+			"cta-treasuries": "Streaming Treasuries ({{itemCount}})",
 			"cta-upgrade-program": "Nâng cấp chương trình",
 			"cta-assets": "Vaults ({{itemCount}})",
 			"multisig-address-label": "Địa chỉ",
@@ -1032,7 +1032,7 @@
 			},
 			"main-cta": "Tạo",
 			"main-cta-busy": "Đang tạo kho bạc",
-			"modal-title": "Tạo kho bạc",
+			"modal-title": "Create Streaming Treasury",
 			"multisig-selector-label": "Tài khoản multisig",
 			"multisig-treasury-created-info": "Để hoàn thành thiết lập kho bạc, những người ký Multisig khác cần phải phê duyệt nó.",
 			"multisig-treasury-created-instructions": "Vui lòng yêu cầu người dùng khác ký vào giao dịch tạo kho bạc này",
@@ -1040,7 +1040,7 @@
 			"success-message": "Kho bạc mới của bạn đã được tạo thành công",
 			"treasury-name-input-empty": "Nhập tên kho bạc",
 			"treasury-name-input-label": "Tên kho bạc",
-			"treasury-name-placeholder": "Nhập vào tên kho bạc của bạn",
+			"treasury-name-placeholder": "Type a name for your streaming treasuries",
 			"treasury-type-options": {
 				"treasury-type-locked-description": "Với một kho bạc bị khóa, bạn có thể tạo các stream hoạt động giống như một hợp đồng vesting cho các khoản phân bổ dành riêng cho nhà đầu tư. Các hợp đồng này thường có ngày kết thúc cố định.",
 				"treasury-type-locked-name": "Kho bạc Money Streaming bị khoá",
@@ -1058,7 +1058,7 @@
 			"treasuryid-placeholder": "Treasury ID tạo bởi Mean finance"
 		},
 		"refresh-tooltip": "Nhấn để làm mới danh sách kho bạc",
-		"screen-title": "Kho bạc",
+		"screen-title": "Streaming Treasuries",
 		"treasury-detail": {
 			"associated-token": "Mã thông báo được liên kết",
 			"created-on": "Ngày tạo",
@@ -1071,7 +1071,7 @@
 			"no-treasury-loaded": "Tạo hoặc tra cứu kho bạc để xem chi tiết",
 			"no-treasury-selected": "Vui lòng chọn hoặc tra cứu kho bạc để xem chi tiết",
 			"number-of-streams": "Số lượng stream",
-			"treasury-address-label": "Địa chỉ",
+			"treasury-address-label": "Treasury Address",
 			"treasury-name-label": "Tên kho bạc",
 			"unallocated-treasury-balance": "Số dư Kho bạc chưa phân bổ"
 		},
