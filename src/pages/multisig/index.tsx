@@ -4232,7 +4232,7 @@ export const MultisigView = () => {
               <Col span={12}>
                 <div className="transaction-detail-row">
                   <span className="info-label">
-                    {t('multisig.multisig-account-detail.authority')}
+                    {t('multisig.multisig-account-detail.address')}
                   </span>
                 </div>
                 <div className="transaction-detail-row">

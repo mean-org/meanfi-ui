@@ -420,7 +420,7 @@
 			"token-address-placeholder": "Tokenların adresini girin"
 		},
 		"multisig-account-detail": {
-			"address": "Yetki",
+			"address": "Deposit Address",
 			"authority": "Yetki",
 			"copy-id-title": "Çoklu-İmza ID",
 			"created-on": "... da oluşturuldu",
@@ -429,11 +429,11 @@
 			"cta-mints": "Mintler ({{itemCount}})",
 			"cta-no-mints": "Mintler",
 			"cta-no-programs": "Programlar",
-			"cta-no-treasuries": "Hazineler",
+			"cta-no-treasuries": "Streaming Treasuries",
 			"cta-no-assets": "Kasalar",
 			"cta-programs": "Programlar ({{itemCount}})",
 			"cta-transfer": "Tokenları transfer et",
-			"cta-treasuries": "({{itemCount}}) Hazine",
+			"cta-treasuries": "Streaming Treasuries ({{itemCount}})",
 			"cta-upgrade-program": "Programı düzenle",
 			"cta-assets": "({{itemCount}}) Kasalar",
 			"multisig-address-label": "Adres",
@@ -1032,7 +1032,7 @@
 			},
 			"main-cta": "Oluştur",
 			"main-cta-busy": "Hazine oluşturuluyor",
-			"modal-title": "Hazine oluştur",
+			"modal-title": "Create Streaming Treasury",
 			"multisig-selector-label": "Çoklu-İmza hesabı",
 			"multisig-treasury-created-info": "Hazine kurulumunu tamamlamak için diğer Çoklu-İmza kullanıcılarının da onayı gerekiyor",
 			"multisig-treasury-created-instructions": "Bu hazine oluşturma işlemi için, lütfen, diğer kullanıcıların da imzalamasını isteyin.",
@@ -1040,7 +1040,7 @@
 			"success-message": "Yeni hazineniz başarıyla oluşturuldu.",
 			"treasury-name-input-empty": "Hazine ismini girin",
 			"treasury-name-input-label": "Hazine ismi",
-			"treasury-name-placeholder": "Hazineniz için bir isim yazın",
+			"treasury-name-placeholder": "Type a name for your streaming treasuries",
 			"treasury-type-options": {
 				"treasury-type-locked-description": "Kilitli bir hazine ile, yatırımcılar için gerekli olanlar gibi, ayrılmış tahsisler için hakediş sözleşmesi gibi davranan aktarımları oluşturabilirsiniz. Genellikle sabit bir bitiş tarihleri ​​vardır.",
 				"treasury-type-locked-name": "Kilitli Para Aktarımı Hazinesi",
@@ -1058,7 +1058,7 @@
 			"treasuryid-placeholder": "Mean Finance tarafından oluşturulan Hazine ID'si"
 		},
 		"refresh-tooltip": "Hazine listesini yenilemek için tıklayın",
-		"screen-title": "Hazineler",
+		"screen-title": "Streaming Treasuries",
 		"treasury-detail": {
 			"associated-token": "İlişkili Token",
 			"created-on": "... 'da oluşturuldu",
@@ -1071,7 +1071,7 @@
 			"no-treasury-loaded": "Detaylarını görmek için bir aktarım oluşturun ya da arayın",
 			"no-treasury-selected": "Ayrıntıları görüntülemek için lütfen bir hazine seçin veya arayın",
 			"number-of-streams": "Aktarım sayısı",
-			"treasury-address-label": "Adres",
+			"treasury-address-label": "Treasury Address",
 			"treasury-name-label": "Hazine adı",
 			"unallocated-treasury-balance": "Tahsis edilmemiş hazine bakiyesi"
 		},

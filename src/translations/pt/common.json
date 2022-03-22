@@ -416,19 +416,19 @@
 			"token-address-placeholder": "Digite o endereço do token"
 		},
 		"multisig-account-detail": {
-			"address": "Autoridade",
+			"address": "Deposit Address",
 			"authority": "Autoridade",
 			"copy-id-title": "ID MULTIIG",
 			"created-on": "Criado em",
 			"cta-create-asset": "Criar cofre",
 			"cta-mint": "Hortelã",
 			"cta-no-programs": "Programas",
-			"cta-no-treasuries": "Tesouros",
+			"cta-no-treasuries": "Streaming Treasuries",
 			"cta-no-assets": "Cofres",
 			"cta-no-mints": "Mints",
 			"cta-programs": "Programas ({{itemCount}})",
 			"cta-transfer": "Transferir tokens",
-			"cta-treasuries": "Tesouros ({{itemCount}})",
+			"cta-treasuries": "Streaming Treasuries ({{itemCount}})",
 			"cta-upgrade-program": "Programa de atualização",
 			"cta-assets": "Cofres ({{itemCount}})",
 			"cta-mints": "Mints ({{itemCount}})",
@@ -1027,7 +1027,7 @@
 			},
 			"main-cta": "Crio",
 			"main-cta-busy": "Criando tesouraria",
-			"modal-title": "Criar tesouraria",
+			"modal-title": "Create Streaming Treasury",
 			"multisig-selector-label": "Conta multisig",
 			"multisig-treasury-created-info": "Para concluir a configuração da tesouraria, os outros signatários da Multisig precisam aprová-la.",
 			"multisig-treasury-created-instructions": "Peça aos outros usuários que assinem esta transação de criação de tesouraria.",
@@ -1035,7 +1035,7 @@
 			"success-message": "Sua nova tesouraria foi criada com sucesso.",
 			"treasury-name-input-empty": "Digite o nome do Tesouro",
 			"treasury-name-input-label": "Nome do Tesouro",
-			"treasury-name-placeholder": "Digite um nome para sua tesouraria",
+			"treasury-name-placeholder": "Type a name for your streaming treasuries",
 			"treasury-type-options": {
 				"treasury-type-locked-description": "Com uma tesouraria bloqueada, você pode criar fluxos que funcionam como um contrato de aquisição para alocações reservadas, como as necessárias para investidores.  Eles geralmente têm uma data de término fixa.",
 				"treasury-type-locked-name": "Tesouro de fluxo de dinheiro bloqueado",
@@ -1053,7 +1053,7 @@
 			"treasuryid-placeholder": "ID do Tesouro criado pela Mean Finance"
 		},
 		"refresh-tooltip": "Clique para atualizar a lista de tesouros",
-		"screen-title": "Tesouros",
+		"screen-title": "Streaming Treasuries",
 		"treasury-detail": {
 			"associated-token": "Token associado",
 			"created-on": "Criado em",
@@ -1067,7 +1067,7 @@
 			"no-treasury-loaded": "Crie ou pesquise uma tesouraria para visualizar detalhes",
 			"no-treasury-selected": "Por favor, selecione ou procure uma tesouraria para ver os detalhes",
 			"number-of-streams": "Número de streams",
-			"treasury-address-label": "Endereço",
+			"treasury-address-label": "Treasury Address",
 			"treasury-name-label": "Nome do Tesouro"
 		},
 		"treasury-detail-heading": "Detalhes do Tesouro",

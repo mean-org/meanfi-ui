@@ -420,7 +420,7 @@
 			"token-address-placeholder": "토큰 주소를 입력하세요"
 		},
 		"multisig-account-detail": {
-			"address": "권한",
+			"address": "Deposit Address",
 			"authority": "권한",
 			"copy-id-title": "다중서명 계정",
 			"created-on": "~에 작성되다",
@@ -431,10 +431,10 @@
 			"cta-no-assets": "Vaults",
 			"cta-no-mints": "Mints",
 			"cta-no-programs": "Programs",
-			"cta-no-treasuries": "트레저리",
+			"cta-no-treasuries": "Streaming Treasuries",
 			"cta-programs": "Programs ({{itemCount}})",
 			"cta-transfer": "토큰 전송",
-			"cta-treasuries": "트레저리({{itemCount}})",
+			"cta-treasuries": "Streaming Treasuries ({{itemCount}})",
 			"cta-upgrade-program": "프로그램 업그레이드",
 			"multisig-address-label": "주소",
 			"multisig-label-label": "다중서명 이름",
@@ -1043,7 +1043,7 @@
 			},
 			"main-cta": "생성하다",
 			"main-cta-busy": "트레저리 생성",
-			"modal-title": "트레저리 생성",
+			"modal-title": "Create Streaming Treasury",
 			"multisig-selector-label": "다중 서명 계정",
 			"multisig-treasury-created-info": "트레저리 설정을 완료하려면 다른 다중서명 서명자가 승인해야 합니다.",
 			"multisig-treasury-created-instructions": "이 트레저리 생성 트랜잭션에 서명하도록 다른 사용자에게 요청하십시오.",
@@ -1051,7 +1051,7 @@
 			"success-message": "당신의 트레저리가 성공적으로 생성되었습니다.",
 			"treasury-name-input-empty": "트레저리 이름 입력",
 			"treasury-name-input-label": "트레저리 이름",
-			"treasury-name-placeholder": "트레저리 이름 입력",
+			"treasury-name-placeholder": "Type a name for your streaming treasuries",
 			"treasury-type-options": {
 				"treasury-type-locked-description": "잠긴 트레저리를 사용하면 투자자에게 필요한 것과 같은 예약 할당에 대한 베스팅 계약처럼 작동하는 스트림을 생성할 수 있습니다. 일반적으로 종료 날짜가 정해져 있습니다.",
 				"treasury-type-locked-name": "잠긴 머니 스트리밍 트레저리",
@@ -1069,7 +1069,7 @@
 			"treasuryid-placeholder": "Mean Finance에 의해 만든 트레저리 ID"
 		},
 		"refresh-tooltip": "금고 목록을 새로 고치려면 클릭하십시오.",
-		"screen-title": "트레저리",
+		"screen-title": "Streaming Treasuries",
 		"treasury-detail": {
 			"associated-token": "관련 토큰",
 			"created-on": "생성하다",
@@ -1082,7 +1082,7 @@
 			"no-treasury-loaded": "트레저리를 생성하거나 조회하여 세부 정보를 봅니다.",
 			"no-treasury-selected": "세부 정보를 보려면 트레저리를 선택하거나 조회하세요.",
 			"number-of-streams": "스트림 수",
-			"treasury-address-label": "주소",
+			"treasury-address-label": "Treasury Address",
 			"treasury-name-label": "트레저리 이름",
 			"unallocated-treasury-balance": "Unallocated Treasury Balance"
 		},

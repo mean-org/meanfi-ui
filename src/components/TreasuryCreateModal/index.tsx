@@ -1,6 +1,6 @@
 import React, { useCallback, useContext, useEffect } from 'react';
 import { useState } from 'react';
-import { Modal, Button, Spin, Radio, Select } from 'antd';
+import { Modal, Button, Spin, Select } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { TREASURY_TYPE_OPTIONS } from '../../constants/treasury-type-options';
