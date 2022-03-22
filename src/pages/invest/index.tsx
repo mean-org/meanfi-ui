@@ -43,6 +43,7 @@ export const InvestView = () => {
     setDtailsPanelOpen,
     setFromCoinAmount,
     setSelectedToken,
+    setSelectedTokenBalance
   } = useContext(AppStateContext);
   const navigate = useNavigate();
   const connection = useConnection();
@@ -106,7 +107,7 @@ export const InvestView = () => {
       symbol1: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg",
       symbol2: "",
       title: t("invest.panel-left.invest-stake-tab-title"),
-      rateAmount: "52.09",
+      rateAmount: `${stakePoolInfo ? (stakePoolInfo.apy * 100).toFixed(2) : "0"}`,
       interval: "APY"
     },
     {
@@ -273,12 +274,17 @@ export const InvestView = () => {
 
   const onTabChange = useCallback((option: SwapOption) => {
     if (meanAddresses) {
+      setSelectedTokenBalance(0);
+
       if (option === "stake") {
         const token = MEAN_TOKEN_LIST.find(t => t.address === meanAddresses.mean.toBase58());
 
         if (token) {
           consoleOut("MEAN token", token);
-          setSelectedToken(token);
+
+          setTimeout(() => { 
+            setSelectedToken(token);   
+           }, 50);
         } else {
           consoleOut("MEAN not available in the token list, please add");
         }
@@ -288,10 +294,10 @@ export const InvestView = () => {
 
         if (token) {
           consoleOut("sMEAN token", token);
-          setSelectedToken(token);
-          setTimeout(() => {
-            refreshTokenBalance();
-          }, 50);
+
+          setTimeout(() => { 
+            setSelectedToken(token);   
+           }, 50);
         } else {
           consoleOut("sMEAN not available in the token list, please add");
         }
