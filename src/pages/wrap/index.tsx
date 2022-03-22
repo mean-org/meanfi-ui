@@ -381,8 +381,8 @@ export const WrapView = () => {
               operationType: OperationType.Wrap,
               finality: "confirmed",
               txInfoFetchStatus: "fetching",
-              notificationTitle: 'Confirming transaction',
-              notificationMessage: 'Transaction confirmed!'
+              completedTitle: 'Confirming transaction',
+              completedMessage: 'Transaction confirmed!'
             });
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransactionSuccess,

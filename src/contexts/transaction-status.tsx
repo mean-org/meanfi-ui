@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useContext } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { TransactionConfirmationStatus } from "@solana/web3.js";
 import { useConnection } from "./connection";
 import { fetchTransactionStatus } from "../utils/transactions";
@@ -17,8 +17,10 @@ export interface TransactionStatusInfo {
   finality: TransactionConfirmationStatus;
   operationType: OperationType;
   txInfoFetchStatus: TxStatus;
-  notificationTitle: string;
-  notificationMessage: string;
+  loadingTitle?: string;
+  loadingMessage?: string;
+  completedTitle: string;
+  completedMessage: string;
 }
 
 const txStatusCache = new Map<string, TransactionStatusInfo>();
@@ -232,8 +234,20 @@ const TransactionStatusProvider: React.FC = ({ children }) => {
   const loadingMessageContent = useCallback((data: TransactionStatusInfo) => {
     return (
       <>
-        <div className="font-size-100 font-bold">{data.notificationTitle}</div>
-        <div className="font-size-85">{t('transactions.status.tx-confirmation-status-wait')}</div>
+        <div className="font-size-100 font-bold">
+          {
+            data.loadingTitle
+              ? data.loadingTitle
+              : t('transactions.status.tx-confirm')
+          }
+        </div>
+        <div className="font-size-85">
+          {
+            data.loadingMessage
+              ? data.loadingMessage
+              : `${t('transactions.status.tx-confirmation-status-wait')} (${OperationType[data.operationType]})`
+          }
+        </div>
         <div className="font-size-85">
           <a className="secondary-link"
               href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${data.signature}`}
@@ -249,11 +263,11 @@ const TransactionStatusProvider: React.FC = ({ children }) => {
   const customMessageContent = useCallback((data: TransactionStatusInfo) => {
     return (
       <>
-        <div className="font-size-100 font-bold">{data.notificationTitle}</div>
+        <div className="font-size-100 font-bold">{data.completedTitle}</div>
         <div className="font-size-85">
           {
-            data.notificationMessage
-              ? data.notificationMessage
+            data.completedMessage
+              ? data.completedMessage
               : OperationType[data.operationType]
           }
         </div>

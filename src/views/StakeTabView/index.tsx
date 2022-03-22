@@ -380,8 +380,8 @@ export const StakeTabView = (props: {
               operationType: OperationType.Stake,
               finality: "confirmed",
               txInfoFetchStatus: "fetching",
-              notificationTitle: "Confirming transaction",
-              notificationMessage: `Successfully staked ${formatThousands(
+              completedTitle: "Confirming transaction",
+              completedMessage: `Successfully staked ${formatThousands(
                 parseFloat(fromCoinAmount),
                 selectedToken.decimals
               )} ${selectedToken.symbol}`,

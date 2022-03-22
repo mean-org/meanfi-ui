@@ -1187,8 +1187,8 @@ export const JupiterExchangePlayground = (props: {
                             operationType: OperationType.Unwrap,
                             finality: "confirmed",
                             txInfoFetchStatus: "fetching",
-                            notificationTitle: 'Confirming transaction',
-                            notificationMessage: `Successfully unwrapped ${formatThousands(wSolBalance, sol.decimals)} SOL`
+                            completedTitle: 'Confirming transaction',
+                            completedMessage: `Successfully unwrapped ${formatThousands(wSolBalance, sol.decimals)} SOL`
                         });
                         setIsUnwrapping(false);
                         setInputAmount(0);

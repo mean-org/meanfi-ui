@@ -1,6 +1,6 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import './style.less';
-import { ArrowDownOutlined, CheckOutlined, ReloadOutlined } from "@ant-design/icons";
+import { ArrowDownOutlined, CheckOutlined, ReloadOutlined, WarningFilled } from "@ant-design/icons";
 import { Button, Tooltip, Row, Col, Space, Empty, Spin } from "antd";
 import moment from 'moment';
 import Checkbox from "antd/lib/checkbox/Checkbox";
@@ -16,7 +16,7 @@ import { cutNumber, formatAmount, formatThousands, getAmountWithSymbol, isValidN
 import { IconRefresh, IconStats } from "../../Icons";
 import { IconHelpCircle } from "../../Icons/IconHelpCircle";
 import useWindowSize from '../../hooks/useWindowResize';
-import { consoleOut, isLocal, isProd } from "../../utils/ui";
+import { consoleOut, isDev, isLocal, isProd } from "../../utils/ui";
 import { useNavigate } from "react-router-dom";
 import { ConfirmOptions, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { Provider } from "@project-serum/anchor";
@@ -68,18 +68,20 @@ export const InvestView = () => {
   const [pageInitialized, setPageInitialized] = useState<boolean>(false);
   const [stakePoolInfo, setStakePoolInfo] = useState<StakePoolInfo>();
 
-  // If there is no connected wallet or the connected wallet is not whitelisted
-  // when the App is run NOT in local mode then redirect user to /accounts
+  const userHasAccess = useMemo(() => {
+
+    return isLocal() || (isDev() && (isWhitelisted || isInBetaTestingProgram))
+      ? true
+      : false;
+
+  }, [isInBetaTestingProgram, isWhitelisted]);
+
+  // TODO: Make it NOT available in prod. Remove when releasing
   useEffect(() => {
-    if (!isLocal() && (!publicKey || !isWhitelisted || !isInBetaTestingProgram)) {
+    if (isProd()) {
       navigate('/accounts');
     }
-  }, [
-    publicKey,
-    isWhitelisted,
-    isInBetaTestingProgram,
-    navigate,
-  ]);
+  }, [navigate]);
 
   // Keep account balance updated
   useEffect(() => {
@@ -312,8 +314,8 @@ export const InvestView = () => {
 
   }, [
     meanAddresses,
+    setSelectedTokenBalance,
     setIsVerifiedRecipient,
-    refreshTokenBalance,
     setFromCoinAmount,
     setSelectedToken,
   ]);
@@ -402,6 +404,33 @@ export const InvestView = () => {
     </>
   );
 
+  if (!userHasAccess) {
+    return (
+      <>
+        <div className="container main-container">
+          <div className="interaction-area">
+            <div className="title-and-subtitle w-75 h-100">
+              <div className="title">
+                <IconStats className="mean-svg-icons" />
+                <div>{t('invest.title')}</div>
+              </div>
+              <div className="subtitle text-center">
+                {t('invest.subtitle')}
+              </div>
+              <div className="w-50 h-100 p-5 text-center flex-column flex-center">
+                <div className="text-center mb-2">
+                  <WarningFilled style={{ fontSize: 48 }} className="icon fg-warning" />
+                </div>
+                <h3>The content you are accessing is not available at this time or you don't have access permission</h3>
+              </div>
+            </div>
+          </div>
+        </div>
+        <PreFooter />
+      </>
+    );
+  }
+
   return (
     <>
       <div className="container main-container">
@@ -412,7 +441,7 @@ export const InvestView = () => {
               <div>{t('invest.title')}</div>
             </div>
             <div className="subtitle text-center">
-            {t('invest.subtitle')}
+              {t('invest.subtitle')}
             </div>
           </div>
           <div className={`meanfi-two-panel-layout invest-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
