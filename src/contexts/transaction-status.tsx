@@ -330,8 +330,7 @@ const TransactionStatusProvider: React.FC = ({ children }) => {
       message.success({
         content: customMessageContent(data),
         key,
-        // duration: 0,
-        duration: 3,
+        duration: 4,
         rootPrefixCls: 'mean-alert',
         className: 'custom-message'
       });

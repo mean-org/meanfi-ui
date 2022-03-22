@@ -1044,6 +1044,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   ]);
 
   // Auto select a token
+  /*
   useEffect(() => {
 
     if (connectionConfig && connectionConfig.tokens && connectionConfig.tokens.length) {
@@ -1058,6 +1059,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     connectionConfig,
     selectedToken
   ]);
+  */
 
   const refreshTokenBalance = useCallback(async () => {
 
@@ -1194,6 +1196,8 @@ const AppStateProvider: React.FC = ({ children }) => {
       list.push(sol);
       MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(connectionConfig.cluster) && PINNED_TOKENS.includes(t.symbol))
         .forEach(item => list.push(Object.assign({}, item, { isMeanSupportedToken: true })));
+      MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(connectionConfig.cluster) && !PINNED_TOKENS.includes(t.symbol))
+        .forEach(item => list.push(item));
       // Update the list
       updateUserTokens(list);
       // consoleOut('AppState -> userTokens:', list);
