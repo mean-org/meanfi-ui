@@ -20,7 +20,7 @@ import { consoleOut, isLocal, isProd } from "../../utils/ui";
 import { useNavigate } from "react-router-dom";
 import { ConfirmOptions, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { Provider } from "@project-serum/anchor";
-import { EnvMintAddresses, StakePoolInfo, StakingClient } from "@mean-dao/staking";
+import { Env, StakePoolInfo, StakingClient } from "@mean-dao/staking";
 import { StakeTabView } from "../../views/StakeTabView";
 import { UnstakeTabView } from "../../views/UnstakeTabView";
 import { MEAN_TOKEN_LIST } from "../../constants/token-list";
@@ -38,6 +38,7 @@ export const InvestView = () => {
     unstakeStartDate,
     detailsPanelOpen,
     stakingMultiplier,
+    isInBetaTestingProgram,
     setIsVerifiedRecipient,
     refreshTokenBalance,
     setDtailsPanelOpen,
@@ -63,20 +64,21 @@ export const InvestView = () => {
   const [raydiumInfo, setRaydiumInfo] = useState<any>([]);
   const [orcaInfo, setOrcaInfo] = useState<any>([]);
   const [maxRadiumAprValue, setMaxRadiumAprValue] = useState<number>(0);
-  const [meanAddresses, setMeanAddresses] = useState<EnvMintAddresses>();
+  const [meanAddresses, setMeanAddresses] = useState<Env>();
   const [pageInitialized, setPageInitialized] = useState<boolean>(false);
   const [stakePoolInfo, setStakePoolInfo] = useState<StakePoolInfo>();
 
   // If there is no connected wallet or the connected wallet is not whitelisted
   // when the App is run NOT in local mode then redirect user to /accounts
   useEffect(() => {
-    if (!isLocal() && (!publicKey || !isWhitelisted)) {
+    if (!isLocal() && (!publicKey || !isWhitelisted || !isInBetaTestingProgram)) {
       navigate('/accounts');
     }
   }, [
     publicKey,
     isWhitelisted,
-    navigate
+    isInBetaTestingProgram,
+    navigate,
   ]);
 
   // Keep account balance updated

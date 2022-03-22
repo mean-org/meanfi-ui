@@ -34,6 +34,7 @@ export const AppBar = (props: {
     isWhitelisted,
     detailsPanelOpen,
     addAccountPanelOpen,
+    isInBetaTestingProgram,
     isDepositOptionsModalVisible,
     refreshStreamList,
     setDtailsPanelOpen,
@@ -125,12 +126,12 @@ export const AppBar = (props: {
       <Menu.Item key="deposits" onClick={showDepositOptionsModal} id="deposits-menu-item">
         <span className="menu-item-text">{t('ui-menus.main-menu.deposits')}</span>
       </Menu.Item>
-      {(isLocal() || isWhitelisted) && (
+      {(isLocal() || isWhitelisted || isInBetaTestingProgram) && (
         <Menu.Item key="/invest">
           <Link to="/invest">{t('ui-menus.main-menu.invest.submenu-title')}</Link>
         </Menu.Item>
       )}
-      {/* {(isWhitelisted || isLocal()) && (
+      {/* {(isLocal() || isWhitelisted || isInBetaTestingProgram) && (
         <SubMenu key="invest" title={t('ui-menus.main-menu.invest.submenu-title')}>
           <Menu.Item key="/staking">
             <Link to="/staking">{t('ui-menus.main-menu.invest.staking')}</Link>
@@ -246,17 +247,17 @@ export const AppBar = (props: {
                 <li key="deposits" className="mobile-menu-item" onClick={showDepositOptionsModal} style={{'--animation-order': 4} as CustomCSSProps}>
                   <span className="menu-item-text">{t('ui-menus.main-menu.deposits')}</span>
                 </li>
-                {(isWhitelisted || isLocal()) && (
+                {(isLocal() || isInBetaTestingProgram || isWhitelisted) && (
                   <li key="invest" className={location.pathname === '/invest' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 4} as CustomCSSProps}>
                     <Link to="/invest">{t('ui-menus.main-menu.invest.submenu-title')}</Link>
                   </li>
                 )}
-                {/* {(isWhitelisted || isLocal()) && (
+                {/* {(isLocal() || isInBetaTestingProgram || isWhitelisted) && (
                   <li key="staking" className={location.pathname === '/staking' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 4} as CustomCSSProps}>
                     <Link to="/staking">{t('ui-menus.main-menu.invest.staking')}</Link>
                   </li>
                 )}
-                {(isWhitelisted || isLocal()) && (
+                {(isLocal() || isInBetaTestingProgram || isWhitelisted) && (
                   <li key="pol-bonds" className={location.pathname === '/pol-bonds' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 4} as CustomCSSProps}>
                     <Link to="/pol-bonds">{t('ui-menus.main-menu.invest.pol-bonds')}</Link>
                   </li>

@@ -7,7 +7,8 @@ import {
   PRICE_REFRESH_TIMEOUT,
   STREAMING_PAYMENT_CONTRACTS,
   STREAMS_REFRESH_TIMEOUT,
-  TRANSACTIONS_PER_PAGE
+  TRANSACTIONS_PER_PAGE,
+  BETA_TESTING_PROGRAM_WHITELIST
 } from "../constants";
 import { ContractDefinition } from "../models/contract-definition";
 import { DdcaFrequencyOption } from "../models/ddca-models";
@@ -47,6 +48,7 @@ export interface TransactionStatusInfo {
 interface AppStateConfig {
   theme: string | undefined;
   isWhitelisted: boolean;
+  isInBetaTestingProgram: boolean;
   detailsPanelOpen: boolean;
   isDepositOptionsModalVisible: boolean;
   tokenList: TokenInfo[];
@@ -172,6 +174,7 @@ interface AppStateConfig {
 const contextDefaultValues: AppStateConfig = {
   theme: undefined,
   isWhitelisted: false,
+  isInBetaTestingProgram: false,
   detailsPanelOpen: false,
   isDepositOptionsModalVisible: false,
   tokenList: [],
@@ -308,6 +311,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const connectionConfig = useConnectionConfig();
   const accounts = useAccountsContext();
   const [isWhitelisted, setIsWhitelisted] = useState(contextDefaultValues.isWhitelisted);
+  const [isInBetaTestingProgram, setIsInBetaTestingProgram] = useState(contextDefaultValues.isInBetaTestingProgram);
   const [streamProgramAddress, setStreamProgramAddress] = useState('');
   const [streamV2ProgramAddress, setStreamV2ProgramAddress] = useState('');
   const {
@@ -420,6 +424,27 @@ const AppStateProvider: React.FC = ({ children }) => {
     applyTheme(theme);
     return () => {};
   }, [theme, updateTheme]);
+
+  // Update isInBetaTestingProgram
+  useEffect(() => {
+    const setIsInBetaTestingProgram = () => {
+      if (!publicKey) {
+        setIsWhitelisted(false);
+      } else {
+        const user = BETA_TESTING_PROGRAM_WHITELIST.some(a => a === publicKey.toBase58());
+        setIsWhitelisted(user);
+      }
+    }
+
+    setIsInBetaTestingProgram();
+    return () => {};
+  }, [
+    publicKey
+  ]);
+
+  useEffect(() => {
+    consoleOut('isInBetaTestingProgram:', isInBetaTestingProgram, 'blue');
+  }, [isInBetaTestingProgram]);
 
   // Update isWhitelisted
   useEffect(() => {
@@ -1234,6 +1259,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       value={{
         theme,
         isWhitelisted,
+        isInBetaTestingProgram,
         detailsPanelOpen,
         shouldLoadTokens,
         isDepositOptionsModalVisible,
