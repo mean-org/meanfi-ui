@@ -1186,9 +1186,9 @@
 			"services": {
 				"custody": "Custody",
 				"faucet": "Faucet",
-				"multisig": "Multisig",
+				"multisig": "Safes & Multisig",
 				"submenu-title": "Services",
-				"treasuries": "Treasuries & Payroll",
+				"treasuries": "Streaming Treasuries",
 				"wallet-guide": "Wallet Guide",
 				"wrap": "Wrap"
 			},

@@ -1186,9 +1186,9 @@
 			"services": {
 				"custody": "보관",
 				"faucet": "Faucet",
-				"multisig": "다중서명",
+				"multisig": "Safes & Multisig",
 				"submenu-title": "서비스",
-				"treasuries": "금고 및 급여",
+				"treasuries": "Streaming Treasuries",
 				"wallet-guide": "지갑 가이드",
 				"wrap": "랩"
 			},

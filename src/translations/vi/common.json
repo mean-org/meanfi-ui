@@ -1175,9 +1175,9 @@
 			"services": {
 				"custody": "Lưu ký",
 				"faucet": "Faucet",
-				"multisig": "Multisig",
+				"multisig": "Safes & Multisig",
 				"submenu-title": "Dịch vụ",
-				"treasuries": "Kho bạc & Lương bổng",
+				"treasuries": "Streaming Treasuries",
 				"wallet-guide": "Hướng dẫn Ví",
 				"wrap": "Wrap"
 			},

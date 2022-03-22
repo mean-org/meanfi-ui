@@ -1175,9 +1175,9 @@
 			"services": {
 				"custody": "حضانت",
 				"faucet": "فاست",
-				"multisig": "Multisig",
+				"multisig": "Safes & Multisig",
 				"submenu-title": "خدمات",
-				"treasuries": "Treasuries و حقوق ودستمزد",
+				"treasuries": "Streaming Treasuries",
 				"wallet-guide": "راهنمای کیف پول",
 				"wrap": "رپ(Wrap) کردن"
 			},

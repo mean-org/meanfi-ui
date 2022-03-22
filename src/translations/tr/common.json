@@ -1175,9 +1175,9 @@
 			"services": {
 				"custody": "Velayet",
 				"faucet": "Faucet",
-				"multisig": "Çoklu-imza",
+				"multisig": "Safes & Multisig",
 				"submenu-title": "Hizmetler",
-				"treasuries": "Hazine ve Bordro",
+				"treasuries": "Streaming Treasuries",
 				"wallet-guide": "Cüzdan Rehberi",
 				"wrap": "Wrap"
 			},

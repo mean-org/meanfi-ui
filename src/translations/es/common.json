@@ -1168,9 +1168,9 @@
 			"services": {
 				"custody": "Custody",
 				"faucet": "Faucet",
-				"multisig": "Multisig",
+				"multisig": "Safes & Multisig",
 				"submenu-title": "Servicios",
-				"treasuries": "Tesorería & Nómina de sueldos",
+				"treasuries": "Streaming Treasuries",
 				"wallet-guide": "Guía de Billeteras",
 				"wrap": "Wrap"
 			},

@@ -1166,9 +1166,9 @@
 			"services": {
 				"custody": "Garde",
 				"faucet": "Robinet",
-				"multisig": "Multisig",
+				"multisig": "Safes & Multisig",
 				"submenu-title": "Prestations de service",
-				"treasuries": "Trésorerie et paie",
+				"treasuries": "Streaming Treasuries",
 				"wallet-guide": "Guide du portefeuille",
 				"wrap": "Envelopper"
 			},
