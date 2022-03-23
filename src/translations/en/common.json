@@ -555,7 +555,7 @@
 		},
 		"pending-transactions": "pending transactions",
 		"refresh-tooltip": "Click to refresh the list of multisig accounts",
-		"screen-title": "Multisig accounts",
+		"screen-title": "Safes & Multisig",
 		"set-program-authority": {
 			"main-cta": "Set Authority",
 			"main-cta-busy": "Setting Authority",

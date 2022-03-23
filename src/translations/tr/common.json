@@ -548,7 +548,7 @@
 		},
 		"pending-transactions": "süren işlem",
 		"refresh-tooltip": "Çoklu-İmza hesaplarını güncellemek için tıklayın",
-		"screen-title": "Çoklu-İmza hesapları",
+		"screen-title": "Safes & Multisig",
 		"set-program-authority": {
 			"main-cta": "Yetkileri ayarla",
 			"main-cta-busy": "Yetkiler ayarlanıyor",

@@ -544,7 +544,7 @@
 		},
 		"pending-transactions": "transações pendentes",
 		"refresh-tooltip": "Clique para atualizar a lista de contas multisig",
-		"screen-title": "Contas multisig",
+		"screen-title": "Safes & Multisig",
 		"set-program-authority": {
 			"main-cta": "Definir autoridade",
 			"main-cta-busy": "Autoridade de configuração",

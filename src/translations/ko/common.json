@@ -555,7 +555,7 @@
 		},
 		"pending-transactions": "보류중인 거래",
 		"refresh-tooltip": "다중서명 계정 목록을 새로 고치려면 클릭하십시오.",
-		"screen-title": "다중서명 계정",
+		"screen-title": "Safes & Multisig",
 		"set-program-authority": {
 			"main-cta": "권한 설정",
 			"main-cta-busy": "권한 설정",

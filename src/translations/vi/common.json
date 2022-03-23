@@ -548,7 +548,7 @@
 		},
 		"pending-transactions": "giao dịch đang chờ xử lý",
 		"refresh-tooltip": "Nhấn để làm mới danh sách tài khoản multisig",
-		"screen-title": "Tài khoản multisig",
+		"screen-title": "Safes & Multisig",
 		"set-program-authority": {
 			"main-cta": "Thiết lập thẩm quyền",
 			"main-cta-busy": "Đang thiết lập thẩm quyền",

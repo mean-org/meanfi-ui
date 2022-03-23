@@ -548,7 +548,7 @@
 		},
 		"pending-transactions": "تراکنش های معلق",
 		"refresh-tooltip": "برای بازخوانی لیست اکانت های Multisig کلیک کنید",
-		"screen-title": "حساب های Multisig",
+		"screen-title": "Safes & Multisig",
 		"set-program-authority": {
 			"main-cta": "تنظیم اختیارات",
 			"main-cta-busy": "تنظیم کردن اختیارات",
