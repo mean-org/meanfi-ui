@@ -1942,14 +1942,10 @@ export const TreasuryStreamCreateModal = (props: {
                   <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-cliff-release')}  </strong> {cliffRelease ? (`${cutNumber(parseFloat(cliffRelease), 6)} ${selectedToken && selectedToken.name} (on commencement)`) : "--"}
                 </Col>
                 <Col span={24}>
-<<<<<<< HEAD
-                  <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-release-rate')}  </strong> {(cliffRelease && lockPeriodAmount && selectedToken && lockPeriodFrequency) ? (`${paymentRateAmount} ${selectedToken.name} / ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`) : "--"}
-=======
                   <strong>Amount to be streamed:  </strong> {(cliffRelease && lockPeriodAmount && selectedToken && lockPeriodFrequency) ? (`${parseFloat(fromCoinAmount) - parseFloat(cliffRelease)} ${selectedToken.name} over ${lockPeriodAmount} ${getLockPeriodOptionLabel(lockPeriodFrequency, t)}`) : "--"}
                 </Col>
                 <Col span={24}>
                   <strong>Release rate:  </strong> {(cliffRelease && lockPeriodAmount && selectedToken && lockPeriodFrequency) ? (`${paymentRateAmount} ${selectedToken.name} / ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`) : "--"}
->>>>>>> hotfix/v0.12.1
                 </Col>
               </Row>
 
