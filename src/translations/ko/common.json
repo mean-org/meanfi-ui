@@ -1051,7 +1051,8 @@
 			"success-message": "당신의 트레저리가 성공적으로 생성되었습니다.",
 			"treasury-name-input-empty": "트레저리 이름 입력",
 			"treasury-name-input-label": "트레저리 이름",
-			"treasury-name-placeholder": "Type a name for your streaming treasuries",
+			"treasury-name-placeholder": "Type a name for your streaming treasury",
+			"treasury-token-label": "Token to be streamed",
 			"treasury-type-options": {
 				"treasury-type-locked-description": "잠긴 트레저리를 사용하면 투자자에게 필요한 것과 같은 예약 할당에 대한 베스팅 계약처럼 작동하는 스트림을 생성할 수 있습니다. 일반적으로 종료 날짜가 정해져 있습니다.",
 				"treasury-type-locked-name": "잠긴 머니 스트리밍 트레저리",

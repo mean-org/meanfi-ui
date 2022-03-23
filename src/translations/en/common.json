@@ -1051,7 +1051,8 @@
 			"success-message": "Your new treasury was created successfully.",
 			"treasury-name-input-empty": "Enter Treasury name",
 			"treasury-name-input-label": "Treasury name",
-			"treasury-name-placeholder": "Type a name for your streaming treasuries",
+			"treasury-name-placeholder": "Type a name for your streaming treasury",
+			"treasury-token-label": "Token to be streamed",
 			"treasury-type-options": {
 				"treasury-type-locked-description": "With a locked treasury you can create streams that act like a vesting contract for reserved allocations, like the ones needed for investors. They usually have a fixed end date.",
 				"treasury-type-locked-name": "Locked Money Streaming Treasury",
