@@ -370,7 +370,7 @@
 	},
 	"multisig": {
 		"add-participant-cta": "افزودن مشارکت کننده",
-		"back-to-multisig-accounts-cta": "بازگشت به حساب های Multisig",
+		"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
 		"create-multisig": {
 			"main-cta": "ساختن",
 			"main-cta-busy": "ساختن حساب Multisig",
@@ -453,7 +453,7 @@
 		},
 		"multisig-detail-heading": "جزئیات حساب Multisig",
 		"multisig-mints": {
-			"back-to-multisig-accounts-cta": "بازگشت به حساب های Multisig",
+			"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
 			"change-mint-authority-modal-title": "تنظیم اختیارات مینت",
 			"create-mint-modal-title": "ایجاد مینت",
 			"cta-change-mint-authority": "انتقال مالکیت",
@@ -526,7 +526,7 @@
 			"back-to-treasuries": "بازگشت به treasuries"
 		},
 		"multisig-assets": {
-			"back-to-multisig-accounts-cta": "بازگشت به حساب های Multisig",
+			"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
 			"cta-change-multisig-authority": "تغییر مالکیت treasury",
 			"cta-change-multisig-authority-busy": "تغییر Multisig",
 			"cta-close": "treasury را ببند",
@@ -548,7 +548,7 @@
 		},
 		"pending-transactions": "تراکنش های معلق",
 		"refresh-tooltip": "برای بازخوانی لیست اکانت های Multisig کلیک کنید",
-		"screen-title": "حساب های Multisig",
+		"screen-title": "Safes & Multisig",
 		"set-program-authority": {
 			"main-cta": "تنظیم اختیارات",
 			"main-cta-busy": "تنظیم کردن اختیارات",
@@ -1176,9 +1176,9 @@
 			"services": {
 				"custody": "حضانت",
 				"faucet": "فاست",
-				"multisig": "Multisig",
+				"multisig": "Safes & Multisig",
 				"submenu-title": "خدمات",
-				"treasuries": "Treasuries و حقوق ودستمزد",
+				"treasuries": "Streaming Treasuries",
 				"wallet-guide": "راهنمای کیف پول",
 				"wrap": "رپ(Wrap) کردن"
 			},

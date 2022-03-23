@@ -366,7 +366,7 @@
 	},
 	"multisig": {
 		"add-participant-cta": "Adicionar participante",
-		"back-to-multisig-accounts-cta": "Voltar para contas Multisig",
+		"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
 		"create-multisig": {
 			"main-cta": "Crio",
 			"main-cta-busy": "Criando multisig",
@@ -449,7 +449,7 @@
 		},
 		"multisig-detail-heading": "Detalhes da conta multisig",
 		"multisig-mints": {
-			"back-to-multisig-accounts-cta": "Back to Multisig accounts",
+			"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
 			"change-mint-authority-modal-title": "Set Mint Authority",
 			"create-mint-modal-title": "Create mint",
 			"cta-change-mint-authority": "Transfer Ownership",
@@ -522,7 +522,7 @@
 			"back-to-treasuries": "Back to treasuries"
 		},
 		"multisig-assets": {
-			"back-to-multisig-accounts-cta": "Voltar para contas Multisig",
+			"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
 			"cta-change-multisig-authority": "Transferir propriedade",
 			"cta-change-multisig-authority-busy": "Mudando o Multisig",
 			"cta-close": "Fechar cofre",
@@ -544,7 +544,7 @@
 		},
 		"pending-transactions": "transações pendentes",
 		"refresh-tooltip": "Clique para atualizar a lista de contas multisig",
-		"screen-title": "Contas multisig",
+		"screen-title": "Safes & Multisig",
 		"set-program-authority": {
 			"main-cta": "Definir autoridade",
 			"main-cta-busy": "Autoridade de configuração",
@@ -1169,9 +1169,9 @@
 			"services": {
 				"custody": "Custódio",
 				"faucet": "Torneiro",
-				"multisig": "Multisig",
+				"multisig": "Safes & Multisig",
 				"submenu-title": "Serviços",
-				"treasuries": "Tesouros e folha de pagamento",
+				"treasuries": "Streaming Treasuries",
 				"wallet-guide": "Guia da carteira",
 				"wrap": "Enrolar"
 			},

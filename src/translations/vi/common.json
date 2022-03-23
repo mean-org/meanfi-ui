@@ -370,7 +370,7 @@
 	},
 	"multisig": {
 		"add-participant-cta": "Thêm người tham gia",
-		"back-to-multisig-accounts-cta": "Quay về danh sách tài khoản Multisig",
+		"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
 		"create-multisig": {
 			"main-cta": "Tạo",
 			"main-cta-busy": "Đang tạo multisig",
@@ -453,7 +453,7 @@
 		},
 		"multisig-detail-heading": "Chi tiết tài khoản multisig",
 		"multisig-mints": {
-			"back-to-multisig-accounts-cta": "Quay về danh sách tài khoản Multisig",
+			"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
 			"change-mint-authority-modal-title": "Thiết lập quyền hạn Mint",
 			"create-mint-modal-title": "Tạo mint",
 			"cta-change-mint-authority": "Chuyển quyền sở hữu",
@@ -526,7 +526,7 @@
 			"back-to-treasuries": "Quay về danh sách kho bạc"
 		},
 		"multisig-assets": {
-			"back-to-multisig-accounts-cta": "Quay về danh sách tài khoản Multisig",
+			"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
 			"cta-change-multisig-authority": "Chuyển quyền sở hữu",
 			"cta-change-multisig-authority-busy": "Đang thay đổi Multisig",
 			"cta-close": "Đóng vault",
@@ -548,7 +548,7 @@
 		},
 		"pending-transactions": "giao dịch đang chờ xử lý",
 		"refresh-tooltip": "Nhấn để làm mới danh sách tài khoản multisig",
-		"screen-title": "Tài khoản multisig",
+		"screen-title": "Safes & Multisig",
 		"set-program-authority": {
 			"main-cta": "Thiết lập thẩm quyền",
 			"main-cta-busy": "Đang thiết lập thẩm quyền",
@@ -1176,9 +1176,9 @@
 			"services": {
 				"custody": "Lưu ký",
 				"faucet": "Faucet",
-				"multisig": "Multisig",
+				"multisig": "Safes & Multisig",
 				"submenu-title": "Dịch vụ",
-				"treasuries": "Kho bạc & Lương bổng",
+				"treasuries": "Streaming Treasuries",
 				"wallet-guide": "Hướng dẫn Ví",
 				"wrap": "Wrap"
 			},
