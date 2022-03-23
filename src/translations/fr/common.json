@@ -1033,7 +1033,8 @@
 			"success-message": "Votre nouvelle trésorerie a été créée avec succès.",
 			"treasury-name-input-empty": "Entrez le nom du Trésor",
 			"treasury-name-input-label": "Nom du Trésor",
-			"treasury-name-placeholder": "Type a name for your streaming treasuries",
+			"treasury-name-placeholder": "Type a name for your streaming treasury",
+			"treasury-token-label": "Token to be streamed",
 			"treasury-type-options": {
 				"treasury-type-locked-description": "Avec une trésorerie verrouillée, vous pouvez créer des flux qui agissent comme un contrat d'acquisition pour les allocations réservées, comme celles nécessaires aux investisseurs.  Ils ont généralement une date de fin fixe.",
 				"treasury-type-locked-name": "Trésorerie en streaming d'argent verrouillé",

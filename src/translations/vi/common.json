@@ -1040,7 +1040,8 @@
 			"success-message": "Kho bạc mới của bạn đã được tạo thành công",
 			"treasury-name-input-empty": "Nhập tên kho bạc",
 			"treasury-name-input-label": "Tên kho bạc",
-			"treasury-name-placeholder": "Type a name for your streaming treasuries",
+			"treasury-name-placeholder": "Type a name for your streaming treasury",
+			"treasury-token-label": "Token to be streamed",
 			"treasury-type-options": {
 				"treasury-type-locked-description": "Với một kho bạc bị khóa, bạn có thể tạo các stream hoạt động giống như một hợp đồng vesting cho các khoản phân bổ dành riêng cho nhà đầu tư. Các hợp đồng này thường có ngày kết thúc cố định.",
 				"treasury-type-locked-name": "Kho bạc Money Streaming bị khoá",

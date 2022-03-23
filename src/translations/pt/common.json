@@ -1035,7 +1035,8 @@
 			"success-message": "Sua nova tesouraria foi criada com sucesso.",
 			"treasury-name-input-empty": "Digite o nome do Tesouro",
 			"treasury-name-input-label": "Nome do Tesouro",
-			"treasury-name-placeholder": "Type a name for your streaming treasuries",
+			"treasury-name-placeholder": "Type a name for your streaming treasury",
+			"treasury-token-label": "Token to be streamed",
 			"treasury-type-options": {
 				"treasury-type-locked-description": "Com uma tesouraria bloqueada, você pode criar fluxos que funcionam como um contrato de aquisição para alocações reservadas, como as necessárias para investidores.  Eles geralmente têm uma data de término fixa.",
 				"treasury-type-locked-name": "Tesouro de fluxo de dinheiro bloqueado",

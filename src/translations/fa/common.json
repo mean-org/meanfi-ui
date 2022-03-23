@@ -1040,7 +1040,8 @@
 			"success-message": "treasury  جدید شما با موفقیت ایجاد شد.",
 			"treasury-name-input-empty": "نام treasury  را وارد کنید",
 			"treasury-name-input-label": "نام treasury",
-			"treasury-name-placeholder": "Type a name for your streaming treasuries",
+			"treasury-name-placeholder": "Type a name for your streaming treasury",
+			"treasury-token-label": "Token to be streamed",
 			"treasury-type-options": {
 				"treasury-type-locked-description": "با یک treasury قفل شده می‌توانید استریم هایی ایجاد کنید که مانند قراردادهای سرمایه‌گذاری برای تخصیص‌های رزرو شده عمل می‌کنند، مانند مواردی که برای سرمایه‌گذاران لازم است. آنها معمولا تاریخ پایان ثابتی دارند.",
 				"treasury-type-locked-name": "treasury  مانی استریمینگ قفل شده",

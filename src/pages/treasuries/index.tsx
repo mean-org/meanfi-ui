@@ -653,6 +653,20 @@ export const TreasuriesView = () => {
     refreshUserBalances
   ]);
 
+  // Auto select a token
+  useEffect(() => {
+
+    if (tokenList && !selectedToken) {
+      setSelectedToken(tokenList.find(t => t.symbol === 'MEAN'));
+    }
+
+    return () => { };
+  }, [
+    tokenList,
+    selectedToken,
+    setSelectedToken
+  ]);
+
   const readAllMultisigV2Accounts = useCallback(async (wallet: PublicKey) => { // V2
 
     let accounts: any[] = [];
@@ -2111,7 +2125,7 @@ export const TreasuriesView = () => {
 
     const createTx = async () => {
 
-      if (!connection || !wallet || !publicKey || !msp || !treasuryOption) {
+      if (!connection || !wallet || !publicKey || !msp || !treasuryOption || !selectedToken) {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
@@ -2127,6 +2141,9 @@ export const TreasuriesView = () => {
         lastOperation: TransactionStatus.TransactionStart,
         currentOperation: TransactionStatus.InitTransaction
       });
+
+      // TODO: Yansel, associatedToken is ready to be added to the createTreasury Tx
+      const associatedToken = new PublicKey(selectedToken.address);
 
       // Create a transaction
       const payload = {
@@ -5691,6 +5708,14 @@ export const TreasuriesView = () => {
           transactionFees={transactionFees}
           handleOk={onAcceptCreateTreasury}
           handleClose={closeCreateTreasuryModal}
+          userBalances={userBalances}
+          associatedToken={
+            treasuryDetails
+              ? (treasuryDetails as Treasury).version && (treasuryDetails as Treasury).version >= 2
+                ? (treasuryDetails as Treasury).associatedToken as string
+                : (treasuryDetails as TreasuryInfo).associatedTokenAddress as string
+              : ''
+          }
           isBusy={isBusy}
           selectedMultisig={selectedMultisig}
           multisigAccounts={multisigAccounts || []}

@@ -1040,7 +1040,8 @@
 			"success-message": "Yeni hazineniz başarıyla oluşturuldu.",
 			"treasury-name-input-empty": "Hazine ismini girin",
 			"treasury-name-input-label": "Hazine ismi",
-			"treasury-name-placeholder": "Type a name for your streaming treasuries",
+			"treasury-name-placeholder": "Type a name for your streaming treasury",
+			"treasury-token-label": "Token to be streamed",
 			"treasury-type-options": {
 				"treasury-type-locked-description": "Kilitli bir hazine ile, yatırımcılar için gerekli olanlar gibi, ayrılmış tahsisler için hakediş sözleşmesi gibi davranan aktarımları oluşturabilirsiniz. Genellikle sabit bir bitiş tarihleri ​​vardır.",
 				"treasury-type-locked-name": "Kilitli Para Aktarımı Hazinesi",
