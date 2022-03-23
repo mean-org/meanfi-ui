@@ -1030,8 +1030,8 @@
 				"months": "months",
 				"years": "years"
 			},
-			"main-cta": "راه اندازی",
-			"main-cta-busy": "ایجاد treasury",
+			"main-cta": "Create streaming treasury",
+			"main-cta-busy": "Creating treasury",
 			"modal-title": "Create Streaming Treasury",
 			"multisig-selector-label": "حساب Multisig",
 			"multisig-treasury-created-info": "برای تکمیل تنظیم treasury ، سایر امضاکنندگان Multisig باید آن را تأیید کنند.",

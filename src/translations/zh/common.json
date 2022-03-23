@@ -993,7 +993,7 @@
 		"close-treasury-confirmation": "Are you sure you want to close the treasury?",
 		"create-new-treasury-cta": "Create treasury",
 		"create-treasury": {
-			"main-cta": "Create",
+			"main-cta": "Create streaming treasury",
 			"main-cta-busy": "Creating treasury",
 			"modal-title": "Create Streaming Treasury",
 			"multisig-treasury-switch-label": "Is this treasury for a Multisig account?",

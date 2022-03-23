@@ -1041,8 +1041,8 @@
 				"weeks": "weeks",
 				"years": "years"
 			},
-			"main-cta": "생성하다",
-			"main-cta-busy": "트레저리 생성",
+			"main-cta": "Create streaming treasury",
+			"main-cta-busy": "Creating treasury",
 			"modal-title": "Create Streaming Treasury",
 			"multisig-selector-label": "다중 서명 계정",
 			"multisig-treasury-created-info": "트레저리 설정을 완료하려면 다른 다중서명 서명자가 승인해야 합니다.",
