@@ -1513,14 +1513,9 @@ export const MultisigAssetsView = () => {
       const mint = MintLayout.decode(Buffer.from(mintInfo.data));
       let toAddress = new PublicKey(data.to);
       let toAccountInfo = await connection.getAccountInfo(toAddress);
-
-      if (!toAccountInfo) { 
-        throw Error("Invalid to token account");
-      }
-
       let ixs: TransactionInstruction[] = [];
 
-      if (!toAccountInfo.owner.equals(TOKEN_PROGRAM_ID)) {
+      if (!toAccountInfo || !toAccountInfo.owner.equals(TOKEN_PROGRAM_ID)) {
 
         const toAccountATA = await Token.getAssociatedTokenAddress(
           ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -1546,15 +1541,6 @@ export const MultisigAssetsView = () => {
         }
 
         toAddress = toAccountATA;
-      }
-
-      if(toAccountInfo.owner.equals(TOKEN_PROGRAM_ID) && toAccountInfo.data.length === AccountLayout.span) {
-        const toAccount = AccountLayout.decode(Buffer.from(toAccountInfo.data));
-        const mintAddress = new PublicKey(Buffer.from(toAccount.mint));
-
-        if (!mintAddress.equals(fromMintAddress)) {
-          throw Error("Invalid to token account mint");
-        }
       }
 
       const transaction = Keypair.generate();
