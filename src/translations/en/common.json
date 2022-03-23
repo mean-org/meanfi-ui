@@ -388,7 +388,7 @@
 			"multisig-duplicate-participants": "Found duplicate participants, please review.",
 			"multisig-label-input-empty": "Enter a multisig name",
 			"multisig-label-input-label": "Multisig name",
-			"multisig-label-placeholder": "Type a name for your multisig account",
+			"multisig-label-placeholder": "Type a name for your multisig",
 			"multisig-no-participants": "No participants added yet",
 			"multisig-participants": "Valid signers ({{numParticipants}} of {{maxParticipants}})",
 			"multisig-participants-warning-message": "It is not recommended to create a Multisig with the same number of participants as required signatures",
@@ -551,7 +551,7 @@
 			"your-status": "Your Status:"
 		},
 		"multisig-treasuries": {
-			"back-to-treasuries": "Back to treasuries"
+			"back-to-treasuries": "Back to Streaming Treasuries"
 		},
 		"pending-transactions": "pending transactions",
 		"refresh-tooltip": "Click to refresh the list of multisig accounts",
