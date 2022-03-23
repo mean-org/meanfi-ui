@@ -25,7 +25,6 @@ import {
   MultisigProgramsView,
   MultisigMintsView,
   MultisigTreasuryStreams,
-  JupiterExchangeTestingPage
 } from "./pages";
 
 import { ServiceUnavailableView } from "./pages/service-unavailable";
@@ -56,7 +55,6 @@ export function AppRoutes() {
                       <Route path="/faucet" element={<FaucetView />} />
                       <Route path="/transfers" element={<TransfersView />} />
                       <Route path="/payroll" element={<PayrollView />} />
-                      <Route path="/jupiter-exchange-testing" element={<JupiterExchangeTestingPage />} />
                       <Route path="/exchange" element={<SwapView />} />
                       {(isProd() || isLocal()) && (
                         <Route path="/exchange-dcas" element={<ExchangeDcasView />} />

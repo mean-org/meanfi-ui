@@ -9,7 +9,7 @@ import {
 } from "@solana/web3.js";
 import { WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { Button, Col, Modal, Row, Spin } from "antd";
-import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber } from "../../utils/utils";
+import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber } from "../../utils/utils";
 import { AppStateContext } from "../../contexts/appstate";
 import { OperationType, TransactionStatus } from "../../models/enums";
 import { calculateActionFees, wrapSol } from '@mean-dao/money-streaming/lib/utils';
@@ -364,7 +364,7 @@ export const WrapView = () => {
       }
     };
 
-    if (wallet) {
+    if (wallet && selectedToken) {
       showTransactionModal();
       const create = await createTx();
       consoleOut("created:", create);
@@ -381,8 +381,10 @@ export const WrapView = () => {
               operationType: OperationType.Wrap,
               finality: "confirmed",
               txInfoFetchStatus: "fetching",
-              completedTitle: 'Confirming transaction',
-              completedMessage: 'Transaction confirmed!'
+              loadingTitle: 'Confirming transaction',
+              loadingMessage: `Wrap ${formatThousands(parseFloat(wrapAmount as string), selectedToken.decimals)} SOL`,
+              completedTitle: 'Transaction confirmed',
+              completedMessage: `Wrapped ${formatThousands(parseFloat(wrapAmount as string), selectedToken.decimals)} SOL`
             });
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransactionSuccess,
