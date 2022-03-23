@@ -2067,6 +2067,7 @@ export const TreasuriesView = () => {
         return await msp.createTreasury(
           new PublicKey(data.treasurer),                    // treasurer
           new PublicKey(data.treasurer),                    // treasurer
+          new PublicKey(data.associatedTokenAddress),       // associatedToken
           data.label,                                       // label
           treasuryType                                      // type
         );
@@ -2082,6 +2083,7 @@ export const TreasuriesView = () => {
       const createTreasuryTx = await msp.createTreasury(
         publicKey,                                        // payer
         multisig.authority,                               // treasurer
+        new PublicKey(data.associatedTokenAddress),       // associatedToken
         data.label,                                       // label
         treasuryType,                                     // type
         true,                                             // solFeePayedByTreasury = true
@@ -2142,9 +2144,6 @@ export const TreasuriesView = () => {
         currentOperation: TransactionStatus.InitTransaction
       });
 
-      // TODO: Yansel, associatedToken is ready to be added to the createTreasury Tx
-      const associatedToken = new PublicKey(selectedToken.address);
-
       // Create a transaction
       const payload = {
         treasurer: publicKey.toBase58(),                                                                  // treasurer
@@ -2152,7 +2151,8 @@ export const TreasuriesView = () => {
         type: createOptions.treasuryType === TreasuryType.Open         // type
           ? 'Open'
           : 'Lock',
-        multisig: createOptions.multisigId                                                                // multisig
+        multisig: createOptions.multisigId,
+        associatedTokenAddress: selectedToken.address                                                                // multisig
       };
 
       consoleOut('payload:', payload);
