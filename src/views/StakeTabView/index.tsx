@@ -35,7 +35,7 @@ export const StakeTabView = (props: {
     refreshTokenBalance,
     setIsVerifiedRecipient,
     setTransactionStatus,
-    setUnstakeStartDate,
+    // setUnstakeStartDate,
     setFromCoinAmount,
     setStakedAmount,
     refreshPrices,
@@ -451,11 +451,11 @@ export const StakeTabView = (props: {
     stakedAmount
   ]);
 
-  useEffect(() => {
-    const unstakeStartDateUpdate = moment().add(periodValue, periodValue === 1 ? "year" : periodValue === 4 ? "years" : "days").format("LL")
+  // useEffect(() => {
+  //   const unstakeStartDateUpdate = moment().add(periodValue, periodValue === 1 ? "year" : periodValue === 4 ? "years" : "days").format("LL")
 
-    setUnstakeStartDate(unstakeStartDateUpdate);
-  }, [periodTime, periodValue, setUnstakeStartDate]);
+  //   setUnstakeStartDate(unstakeStartDateUpdate);
+  // }, [periodTime, periodValue, setUnstakeStartDate]);
 
   return (
     <>

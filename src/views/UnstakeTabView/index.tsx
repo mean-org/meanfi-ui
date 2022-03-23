@@ -392,9 +392,7 @@ export const UnstakeTabView = (props: {
 
   useEffect(() => {
     const getMeanQuote = async (sMEAN: number) => {
-      if (!props.stakeClient) {
-        return 0;
-      }
+      if (!props.stakeClient) { return 0; }
 
       try {
         const result = await props.stakeClient.getUnstakeQuote(sMEAN);
@@ -407,12 +405,14 @@ export const UnstakeTabView = (props: {
 
     if (selectedToken && selectedToken.symbol === "sMEAN") {
       console.log("Token Balance", tokenBalance);
-      
-      getMeanQuote(tokenBalance).then((value) => {
-        console.log("Mean Quote", value);
-        
-        setMeanWorthOfsMean(value);
-      })
+      if (tokenBalance > 0) {
+        getMeanQuote(tokenBalance).then((value) => {
+          console.log("Mean Quote", value);
+          setMeanWorthOfsMean(value);
+        })
+      } else {
+        setMeanWorthOfsMean(0);
+      }
     }
   }, [
     props.stakeClient, 
