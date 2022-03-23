@@ -388,7 +388,7 @@
 			"multisig-duplicate-participants": "중복 참가자를 찾았습니다. 검토하십시오.",
 			"multisig-label-input-empty": "Multisig 이름 입력",
 			"multisig-label-input-label": "다중서명 이름",
-			"multisig-label-placeholder": "다중서명 계정 이름 입력",
+			"multisig-label-placeholder": "Type a name for your multisig",
 			"multisig-no-participants": "아직 추가된 참가자가 없습니다.",
 			"multisig-participants": "유효한 서명자({{maxParticipants}}명 중 {{numParticipants}}명)",
 			"multisig-participants-warning-message": "It is not recommended to create a Multisig with the same number of participants as required signatures",

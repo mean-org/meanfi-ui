@@ -375,7 +375,7 @@
 			"multisig-duplicate-participants": "Participants en double trouvés, veuillez vérifier.",
 			"multisig-label-input-empty": "Entrez un nom multisig",
 			"multisig-label-input-label": "Nom multisignature",
-			"multisig-label-placeholder": "Tapez un nom pour votre compte multisig",
+			"multisig-label-placeholder": "Tapez un nom pour votre multisig",
 			"multisig-no-participants": "Aucun participant ajouté pour le moment",
 			"multisig-participants": "Signataires valides ({{numParticipants}} sur {{maxParticipants}})",
 			"multisig-participants-warning message": "Il n'est pas recommandé de créer un Multisig avec le même nombre de participants que de signatures requises",
