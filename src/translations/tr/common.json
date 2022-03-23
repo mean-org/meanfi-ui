@@ -370,7 +370,7 @@
 	},
 	"multisig": {
 		"add-participant-cta": "Katılımcı ekle",
-		"back-to-multisig-accounts-cta": "Çoklu-imzalı hesaplara geri dön.",
+		"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
 		"create-multisig": {
 			"main-cta": "Yarat",
 			"main-cta-busy": "Çoklu-İmza yaratılıyor",
@@ -453,7 +453,7 @@
 		},
 		"multisig-detail-heading": "Çoklu-İmza hesap detayları",
 		"multisig-mints": {
-			"back-to-multisig-accounts-cta": "Çoklu-İmza hesaplarına geri dön",
+			"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
 			"change-mint-authority-modal-title": "Mint otoritesini ayarla",
 			"create-mint-modal-title": "Mint oluştur",
 			"cta-change-mint-authority": "Sahipliği transfer et",
@@ -526,7 +526,7 @@
 			"back-to-treasuries": "Hazinelere geri dön"
 		},
 		"multisig-assets": {
-			"back-to-multisig-accounts-cta": "Çoklu-İmza hesaplarına geri dön",
+			"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
 			"cta-change-multisig-authority": "Sahipliği transfer et",
 			"cta-change-multisig-authority-busy": "Çoklu-İmza'yı değiştir",
 			"cta-close": "Kasayı kapat",

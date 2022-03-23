@@ -370,7 +370,7 @@
 	},
 	"multisig": {
 		"add-participant-cta": "참가자 추가",
-		"back-to-multisig-accounts-cta": "다중서명 계정으로 돌아가기",
+		"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
 		"create-asset": {
 			"main-cta": "Create",
 			"main-cta-busy": "Creating vault",
@@ -453,7 +453,7 @@
 		},
 		"multisig-assets": {
 			"asset-detail-heading": "Vault details",
-			"back-to-multisig-accounts-cta": "Back to Multisig accounts",
+			"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
 			"cta-change-multisig-authority": "Change Vault Ownership",
 			"cta-change-multisig-authority-busy": "Changing Multisig",
 			"cta-close": "Close vault",
@@ -481,7 +481,7 @@
 		},
 		"multisig-detail-heading": "다중서명 계좌 세부사항",
 		"multisig-mints": {
-			"back-to-multisig-accounts-cta": "Back to Multisig accounts",
+			"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
 			"change-mint-authority-modal-title": "Set Mint Authority",
 			"create-mint-modal-title": "Create mint",
 			"cta-change-mint-authority": "Transfer Ownership",
