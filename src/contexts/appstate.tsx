@@ -319,7 +319,54 @@ const AppStateProvider: React.FC = ({ children }) => {
     fetchTxInfoStatus,
     clearTransactionStatusContext,
   } = useContext(TransactionStatusContext);
-
+  const today = new Date().toLocaleDateString("en-US");
+  const [theme, updateTheme] = useLocalStorageState("theme");
+  const [detailsPanelOpen, updateDetailsPanelOpen] = useState(contextDefaultValues.detailsPanelOpen);
+  const [shouldLoadTokens, updateShouldLoadTokens] = useState(contextDefaultValues.shouldLoadTokens);
+  const [contract, setSelectedContract] = useState<ContractDefinition | undefined>();
+  const [contractName, setContractName] = useLocalStorageState("contractName");
+  const [ddcaOption, updateDdcaOption] = useState<DdcaFrequencyOption | undefined>();
+  const [treasuryOption, updateTreasuryOption] = useState<TreasuryTypeOption | undefined>(contextDefaultValues.treasuryOption);
+  const [ddcaOptionName, setDdcaOptionName] = useState<string>('');
+  const [recipientAddress, updateRecipientAddress] = useState<string>(contextDefaultValues.recipientAddress);
+  const [recipientNote, updateRecipientNote] = useState<string>(contextDefaultValues.recipientNote);
+  const [paymentStartDate, updatePaymentStartDate] = useState<string | undefined>(today);
+  const [fromCoinAmount, updateFromCoinAmount] = useState<string>(contextDefaultValues.fromCoinAmount);
+  const [paymentRateAmount, updatePaymentRateAmount] = useState<string>(contextDefaultValues.paymentRateAmount);
+  const [lockPeriodAmount, updateLockPeriodAmount] = useState<string>(contextDefaultValues.lockPeriodAmount);
+  const [paymentRateFrequency, updatePaymentRateFrequency] = useState<PaymentRateType>(PaymentRateType.PerMonth);
+  const [lockPeriodFrequency, updateLockPeriodFrequency] = useState<PaymentRateType>(PaymentRateType.PerMonth);
+  const [timeSheetRequirement, updateTimeSheetRequirement] = useState<TimesheetRequirementOption>(TimesheetRequirementOption.NotRequired);
+  const [isVerifiedRecipient, setIsVerifiedRecipient] = useState<boolean>(contextDefaultValues.isVerifiedRecipient);
+  const [isAllocationReserved, setIsAllocationReserved] = useState<boolean>(contextDefaultValues.isAllocationReserved);
+  const [transactionStatus, updateTransactionStatus] = useState<TransactionStatusInfo>(contextDefaultValues.transactionStatus);
+  const [previousWalletConnectState, updatePreviousWalletConnectState] = useState<boolean>(connected);
+  const [tokenList, updateTokenlist] = useState<TokenInfo[]>([]);
+  const [loadingStreams, updateLoadingStreams] = useState(false);
+  const [loadingStreamActivity, setLoadingStreamActivity] = useState(contextDefaultValues.loadingStreamActivity);
+  const [streamActivity, setStreamActivity] = useState<StreamActivity[]>([]);
+  const [hasMoreStreamActivity, setHasMoreStreamActivity] = useState<boolean>(contextDefaultValues.hasMoreStreamActivity);
+  const [customStreamDocked, setCustomStreamDocked] = useState(contextDefaultValues.customStreamDocked);
+  const [diagnosisInfo, setDiagnosisInfo] = useState<AccountDetails | undefined>(contextDefaultValues.diagnosisInfo);
+  const [streamListv1, setStreamListv1] = useState<StreamInfo[] | undefined>();
+  const [streamListv2, setStreamListv2] = useState<Stream[] | undefined>();
+  const [streamList, setStreamList] = useState<Array<StreamInfo | Stream> | undefined>();
+  const [selectedStream, updateSelectedStream] = useState<Stream | StreamInfo | undefined>();
+  const [streamDetail, updateStreamDetail] = useState<Stream | StreamInfo | undefined>();
+  const [activeStream, setActiveStream] = useState<Stream | StreamInfo | undefined>();
+  const [highLightableStreamId, setHighLightableStreamId] = useState<string | undefined>(contextDefaultValues.highLightableStreamId);
+  const [highLightableMultisigId, setHighLightableMultisigId] = useState<string | undefined>(contextDefaultValues.highLightableMultisigId);
+  const [selectedToken, updateSelectedToken] = useState<TokenInfo>();
+  const [tokenBalance, updateTokenBalance] = useState<number>(contextDefaultValues.tokenBalance);
+  const [stakingMultiplier, updateStakingMultiplier] = useState<number>(contextDefaultValues.stakingMultiplier);
+  const [coinPrices, setCoinPrices] = useState<any>(null);
+  const [loadingPrices, setLoadingPrices] = useState<boolean>(contextDefaultValues.loadingPrices);
+  const [effectiveRate, updateEffectiveRate] = useState<number>(contextDefaultValues.effectiveRate);
+  const [shouldLoadCoinPrices, setShouldLoadCoinPrices] = useState(true);
+  const [shouldUpdateToken, setShouldUpdateToken] = useState<boolean>(true);
+  const [stakedAmount, updateStakedAmount] = useState<string>(contextDefaultValues.stakedAmount);
+  const [unstakedAmount, updatedUnstakeAmount] = useState<string>(contextDefaultValues.unstakedAmount);
+  const [unstakeStartDate, updateUnstakeStartDate] = useState<string | undefined>(today);
   const streamProgramAddressFromConfig = appConfig.getConfig().streamProgramAddress;
   const streamV2ProgramAddressFromConfig = appConfig.getConfig().streamV2ProgramAddress;
 
@@ -356,52 +403,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     streamV2ProgramAddressFromConfig
   ]);
 
-  const today = new Date().toLocaleDateString("en-US");
-  const [theme, updateTheme] = useLocalStorageState("theme");
-  const [detailsPanelOpen, updateDetailsPanelOpen] = useState(contextDefaultValues.detailsPanelOpen);
-  const [shouldLoadTokens, updateShouldLoadTokens] = useState(contextDefaultValues.shouldLoadTokens);
-
-  const [contract, setSelectedContract] = useState<ContractDefinition | undefined>();
-  const [contractName, setContractName] = useLocalStorageState("contractName");
-
-  const [ddcaOption, updateDdcaOption] = useState<DdcaFrequencyOption | undefined>();
-  const [treasuryOption, updateTreasuryOption] = useState<TreasuryTypeOption | undefined>(contextDefaultValues.treasuryOption);
-  const [ddcaOptionName, setDdcaOptionName] = useState<string>('');
-
-  const [recipientAddress, updateRecipientAddress] = useState<string>(contextDefaultValues.recipientAddress);
-  const [recipientNote, updateRecipientNote] = useState<string>(contextDefaultValues.recipientNote);
-  const [paymentStartDate, updatePaymentStartDate] = useState<string | undefined>(today);
-  const [fromCoinAmount, updateFromCoinAmount] = useState<string>(contextDefaultValues.fromCoinAmount);
-  const [paymentRateAmount, updatePaymentRateAmount] = useState<string>(contextDefaultValues.paymentRateAmount);
-  const [lockPeriodAmount, updateLockPeriodAmount] = useState<string>(contextDefaultValues.lockPeriodAmount);
-  const [paymentRateFrequency, updatePaymentRateFrequency] = useState<PaymentRateType>(PaymentRateType.PerMonth);
-  const [lockPeriodFrequency, updateLockPeriodFrequency] = useState<PaymentRateType>(PaymentRateType.PerMonth);
-  const [timeSheetRequirement, updateTimeSheetRequirement] = useState<TimesheetRequirementOption>(TimesheetRequirementOption.NotRequired);
-  const [isVerifiedRecipient, setIsVerifiedRecipient] = useState<boolean>(contextDefaultValues.isVerifiedRecipient);
-  const [isAllocationReserved, setIsAllocationReserved] = useState<boolean>(contextDefaultValues.isAllocationReserved);
-  const [transactionStatus, updateTransactionStatus] = useState<TransactionStatusInfo>(contextDefaultValues.transactionStatus);
-  const [previousWalletConnectState, updatePreviousWalletConnectState] = useState<boolean>(connected);
-  const [tokenList, updateTokenlist] = useState<TokenInfo[]>([]);
-  const [loadingStreams, updateLoadingStreams] = useState(false);
-  const [loadingStreamActivity, setLoadingStreamActivity] = useState(contextDefaultValues.loadingStreamActivity);
-  const [streamActivity, setStreamActivity] = useState<StreamActivity[]>([]);
-  const [hasMoreStreamActivity, setHasMoreStreamActivity] = useState<boolean>(contextDefaultValues.hasMoreStreamActivity);
-  const [customStreamDocked, setCustomStreamDocked] = useState(contextDefaultValues.customStreamDocked);
-  const [diagnosisInfo, setDiagnosisInfo] = useState<AccountDetails | undefined>(contextDefaultValues.diagnosisInfo);
-
-  const [streamListv1, setStreamListv1] = useState<StreamInfo[] | undefined>();
-  const [streamListv2, setStreamListv2] = useState<Stream[] | undefined>();
-  const [streamList, setStreamList] = useState<Array<StreamInfo | Stream> | undefined>();
-  const [selectedStream, updateSelectedStream] = useState<Stream | StreamInfo | undefined>();
-  const [streamDetail, updateStreamDetail] = useState<Stream | StreamInfo | undefined>();
-  const [activeStream, setActiveStream] = useState<Stream | StreamInfo | undefined>();
-  const [highLightableStreamId, setHighLightableStreamId] = useState<string | undefined>(contextDefaultValues.highLightableStreamId);
-  const [highLightableMultisigId, setHighLightableMultisigId] = useState<string | undefined>(contextDefaultValues.highLightableMultisigId);
-
-  const [stakedAmount, updateStakedAmount] = useState<string>(contextDefaultValues.stakedAmount);
-  const [unstakedAmount, updatedUnstakeAmount] = useState<string>(contextDefaultValues.unstakedAmount);
-  const [unstakeStartDate, updateUnstakeStartDate] = useState<string | undefined>(today);
-
   const setTheme = (name: string) => {
     updateTheme(name);
   }
@@ -427,16 +428,16 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   // Update isInBetaTestingProgram
   useEffect(() => {
-    const setIsInBetaTestingProgram = () => {
+    const isUserInBetaTestingProgram = () => {
       if (!publicKey) {
         setIsWhitelisted(false);
       } else {
         const user = BETA_TESTING_PROGRAM_WHITELIST.some(a => a === publicKey.toBase58());
-        setIsWhitelisted(user);
+        setIsInBetaTestingProgram(user);
       }
     }
 
-    setIsInBetaTestingProgram();
+    isUserInBetaTestingProgram();
     return () => {};
   }, [
     publicKey
@@ -762,15 +763,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     }
   }, []);
 
-  const [selectedToken, updateSelectedToken] = useState<TokenInfo>();
-  const [tokenBalance, updateTokenBalance] = useState<number>(contextDefaultValues.tokenBalance);
-  const [stakingMultiplier, updateStakingMultiplier] = useState<number>(contextDefaultValues.stakingMultiplier);
-  const [coinPrices, setCoinPrices] = useState<any>(null);
-  const [loadingPrices, setLoadingPrices] = useState<boolean>(contextDefaultValues.loadingPrices);
-  const [effectiveRate, updateEffectiveRate] = useState<number>(contextDefaultValues.effectiveRate);
-  const [shouldLoadCoinPrices, setShouldLoadCoinPrices] = useState(true);
-  const [shouldUpdateToken, setShouldUpdateToken] = useState<boolean>(true);
-
   const setSelectedToken = (token: TokenInfo | undefined) => {
     updateSelectedToken(token);
     setShouldUpdateToken(true);
@@ -797,7 +789,14 @@ const AppStateProvider: React.FC = ({ children }) => {
   const getCoinPrices = useCallback(async () => {
     try {
       const prices = await getPrices();
-      if (prices) {
+      /**
+       * Returns the prices object when succeeds
+       * or this object when fails { "success": "false", "msg": "error text" }
+       */
+      if (!prices || prices.msg) {
+        setCoinPrices(null);
+        updateEffectiveRate(0);
+      } else {
         consoleOut("Coin prices:", prices, 'blue');
         setCoinPrices(prices);
         if (selectedToken) {
@@ -807,12 +806,11 @@ const AppStateProvider: React.FC = ({ children }) => {
             prices[symbol] ? prices[symbol] : 0
           );
         }
-      } else {
-        setCoinPrices(null);
       }
       setLoadingPrices(false);
     } catch (error) {
       setCoinPrices(null);
+      updateEffectiveRate(0);
       setLoadingPrices(false);
     }
   },[selectedToken]);
