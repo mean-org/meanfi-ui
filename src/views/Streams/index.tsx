@@ -4377,11 +4377,11 @@ export const Streams = () => {
 
   const menu = (
     <Menu>
-      {/* {isTreasurer() && (
-        <Menu.Item key="1" onClick={() => {}}>
+      {isTreasurer() && (
+        <Menu.Item key="1" onClick={showCloseStreamModal}>
           <span className="menu-item-text">{t('streams.stream-detail.close-money-stream-menu-item')}</span>
         </Menu.Item>
-      )} */}
+      )}
       {(streamDetail && isInboundStream(streamDetail) && streamDetail.version >= 2) && (
         <Menu.Item key="2" onClick={showTransferStreamModal}>
           <span className="menu-item-text">{t('streams.stream-detail.transfer-money-stream-menu-item')}</span>
@@ -5552,7 +5552,7 @@ export const Streams = () => {
                               : t('streams.stream-detail.add-funds-cta')
                       }
                     </Button>
-                    {(getTreasuryType() === "open") && (
+                    {/* {(getTreasuryType() === "open") && (
                       <span className="icon-button-container">
                         {getStreamStatus(stream) === "Running" && (
                           <Tooltip placement="bottom" title={t("streams.pause-stream-tooltip")}>
@@ -5594,8 +5594,8 @@ export const Streams = () => {
                           </Button>
                         </Tooltip>
                       </span>
-                    )}
-                    {/* {fetchTxInfoStatus !== "fetching" && (
+                    )} */}
+                    {fetchTxInfoStatus !== "fetching" && (
                       <Dropdown overlay={menu} trigger={["click"]}>
                         <Button
                           shape="round"
@@ -5606,7 +5606,7 @@ export const Streams = () => {
                           icon={<EllipsisOutlined />}>
                         </Button>
                       </Dropdown>
-                    )} */}
+                    )}
                   </div>
                 </div>
               </Spin>
@@ -5813,7 +5813,7 @@ export const Streams = () => {
             {connected && streamDetail ? (
               <>
                 {/* Top action icons */}
-                {isUnderDevelopment() && (
+                {/* {isUnderDevelopment() && (
                   <div className="float-top-right">
                     <span className="icon-button-container secondary-button">
                       <Tooltip placement="bottom" title={t('streams.edit-stream.edit-stream-tooltip')}>
@@ -5838,7 +5838,7 @@ export const Streams = () => {
                       </Tooltip>
                     </span>
                   </div>
-                )}
+                )} */}
 
               {isInboundStream(streamDetail)
                 ? streamDetail.version < 2
