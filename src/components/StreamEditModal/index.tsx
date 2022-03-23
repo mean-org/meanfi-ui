@@ -16,6 +16,7 @@ import { isError } from "../../utils/transactions";
 import { StreamInfo } from '@mean-dao/money-streaming/lib/types';
 import { Stream } from "@mean-dao/msp";
 import { BN } from "bn.js";
+import { NATIVE_SOL } from "../../utils/tokens";
 
 export const StreamEditModal = (props: {
   handleClose: any;
@@ -233,6 +234,11 @@ export const StreamEditModal = (props: {
     <>
       {(filteredTokenList && filteredTokenList.length > 0) && (
         filteredTokenList.map((token, index) => {
+
+          if (token.address === NATIVE_SOL.address) {
+            return null;
+          }
+
           const onClick = function () {
             setSelectedToken(token);
             consoleOut("token selected:", token.symbol, 'blue');

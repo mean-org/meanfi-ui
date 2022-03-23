@@ -370,7 +370,7 @@
 	},
 	"multisig": {
 		"add-participant-cta": "참가자 추가",
-		"back-to-multisig-accounts-cta": "다중서명 계정으로 돌아가기",
+		"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
 		"create-asset": {
 			"main-cta": "Create",
 			"main-cta-busy": "Creating vault",
@@ -388,7 +388,7 @@
 			"multisig-duplicate-participants": "중복 참가자를 찾았습니다. 검토하십시오.",
 			"multisig-label-input-empty": "Multisig 이름 입력",
 			"multisig-label-input-label": "다중서명 이름",
-			"multisig-label-placeholder": "다중서명 계정 이름 입력",
+			"multisig-label-placeholder": "Type a name for your multisig",
 			"multisig-no-participants": "아직 추가된 참가자가 없습니다.",
 			"multisig-participants": "유효한 서명자({{maxParticipants}}명 중 {{numParticipants}}명)",
 			"multisig-participants-warning-message": "It is not recommended to create a Multisig with the same number of participants as required signatures",
@@ -420,7 +420,7 @@
 			"token-address-placeholder": "토큰 주소를 입력하세요"
 		},
 		"multisig-account-detail": {
-			"address": "권한",
+			"address": "Deposit Address",
 			"authority": "권한",
 			"copy-id-title": "다중서명 계정",
 			"created-on": "~에 작성되다",
@@ -431,10 +431,10 @@
 			"cta-no-assets": "Vaults",
 			"cta-no-mints": "Mints",
 			"cta-no-programs": "Programs",
-			"cta-no-treasuries": "트레저리",
+			"cta-no-treasuries": "Streaming Treasuries",
 			"cta-programs": "Programs ({{itemCount}})",
 			"cta-transfer": "토큰 전송",
-			"cta-treasuries": "트레저리({{itemCount}})",
+			"cta-treasuries": "Streaming Treasuries ({{itemCount}})",
 			"cta-upgrade-program": "프로그램 업그레이드",
 			"multisig-address-label": "주소",
 			"multisig-label-label": "다중서명 이름",
@@ -453,7 +453,7 @@
 		},
 		"multisig-assets": {
 			"asset-detail-heading": "Vault details",
-			"back-to-multisig-accounts-cta": "Back to Multisig accounts",
+			"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
 			"cta-change-multisig-authority": "Change Vault Ownership",
 			"cta-change-multisig-authority-busy": "Changing Multisig",
 			"cta-close": "Close vault",
@@ -481,7 +481,7 @@
 		},
 		"multisig-detail-heading": "다중서명 계좌 세부사항",
 		"multisig-mints": {
-			"back-to-multisig-accounts-cta": "Back to Multisig accounts",
+			"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
 			"change-mint-authority-modal-title": "Set Mint Authority",
 			"create-mint-modal-title": "Create mint",
 			"cta-change-mint-authority": "Transfer Ownership",
@@ -551,11 +551,11 @@
 			"your-status": "Your Status:"
 		},
 		"multisig-treasuries": {
-			"back-to-treasuries": "Back to treasuries"
+			"back-to-treasuries": "Back to Streaming Treasuries"
 		},
 		"pending-transactions": "보류중인 거래",
 		"refresh-tooltip": "다중서명 계정 목록을 새로 고치려면 클릭하십시오.",
-		"screen-title": "다중서명 계정",
+		"screen-title": "Safes & Multisig",
 		"set-program-authority": {
 			"main-cta": "권한 설정",
 			"main-cta-busy": "권한 설정",
@@ -1020,7 +1020,7 @@
 			"main-cta-busy": "트레저리 자금 추가",
 			"main-cta-fund-stream": "Fund Money Stream",
 			"main-cta-fund-stream-busy": "Funding Stream",
-			"modal-title": "트레저리로 펀드 추가",
+			"modal-title": "Add funds to the Streaming Treasury",
 			"modal-title-fund-stream": "Add funds to a Money Stream",
 			"money-stream-to-topup-label": "Money Stream to top up",
 			"search-streams-placeholder": "이름 또는 주소로 스트림 검색",
@@ -1041,9 +1041,9 @@
 				"weeks": "weeks",
 				"years": "years"
 			},
-			"main-cta": "생성하다",
-			"main-cta-busy": "트레저리 생성",
-			"modal-title": "트레저리 생성",
+			"main-cta": "Create streaming treasury",
+			"main-cta-busy": "Creating treasury",
+			"modal-title": "Create Streaming Treasury",
 			"multisig-selector-label": "다중 서명 계정",
 			"multisig-treasury-created-info": "트레저리 설정을 완료하려면 다른 다중서명 서명자가 승인해야 합니다.",
 			"multisig-treasury-created-instructions": "이 트레저리 생성 트랜잭션에 서명하도록 다른 사용자에게 요청하십시오.",
@@ -1051,7 +1051,8 @@
 			"success-message": "당신의 트레저리가 성공적으로 생성되었습니다.",
 			"treasury-name-input-empty": "트레저리 이름 입력",
 			"treasury-name-input-label": "트레저리 이름",
-			"treasury-name-placeholder": "트레저리 이름 입력",
+			"treasury-name-placeholder": "Type a name for your streaming treasury",
+			"treasury-token-label": "Token to be streamed",
 			"treasury-type-options": {
 				"treasury-type-locked-description": "잠긴 트레저리를 사용하면 투자자에게 필요한 것과 같은 예약 할당에 대한 베스팅 계약처럼 작동하는 스트림을 생성할 수 있습니다. 일반적으로 종료 날짜가 정해져 있습니다.",
 				"treasury-type-locked-name": "잠긴 머니 스트리밍 트레저리",
@@ -1069,7 +1070,7 @@
 			"treasuryid-placeholder": "Mean Finance에 의해 만든 트레저리 ID"
 		},
 		"refresh-tooltip": "금고 목록을 새로 고치려면 클릭하십시오.",
-		"screen-title": "트레저리",
+		"screen-title": "Streaming Treasuries",
 		"treasury-detail": {
 			"associated-token": "관련 토큰",
 			"created-on": "생성하다",
@@ -1082,7 +1083,7 @@
 			"no-treasury-loaded": "트레저리를 생성하거나 조회하여 세부 정보를 봅니다.",
 			"no-treasury-selected": "세부 정보를 보려면 트레저리를 선택하거나 조회하세요.",
 			"number-of-streams": "스트림 수",
-			"treasury-address-label": "주소",
+			"treasury-address-label": "Treasury Address",
 			"treasury-name-label": "트레저리 이름",
 			"unallocated-treasury-balance": "Unallocated Treasury Balance"
 		},
@@ -1186,9 +1187,9 @@
 			"services": {
 				"custody": "보관",
 				"faucet": "Faucet",
-				"multisig": "다중서명",
+				"multisig": "Safes & Multisig",
 				"submenu-title": "서비스",
-				"treasuries": "금고 및 급여",
+				"treasuries": "Streaming Treasuries",
 				"wallet-guide": "지갑 가이드",
 				"wrap": "랩"
 			},

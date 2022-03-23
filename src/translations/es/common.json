@@ -366,7 +366,7 @@
 	},
 	"multisig": {
 		"add-participant-cta": "Add participant",
-		"back-to-multisig-accounts-cta": "Back to Multisig accounts",
+		"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
 		"create-multisig": {
 			"main-cta": "Create",
 			"main-cta-busy": "Creating multisig",
@@ -375,7 +375,7 @@
 			"multisig-duplicate-participants": "Found duplicate participants, please review.",
 			"multisig-label-input-empty": "Enter a multisig name",
 			"multisig-label-input-label": "Multisig name",
-			"multisig-label-placeholder": "Type a name for your multisig account",
+			"multisig-label-placeholder": "Type a name for your multisig",
 			"multisig-no-participants": "No participans added yet",
 			"multisig-participants": "Valid signers ({{numParticipants}} of {{maxParticipants}})",
 			"multisig-participants-warning message": "It is not recommended to create a Multisig with the same number of participants as required signatures",
@@ -411,19 +411,19 @@
 			"token-address-placeholder": "Enter the address of the token"
 		},
 		"multisig-account-detail": {
-			"address": "Authority",
+			"address": "Deposit Address",
 			"authority": "Authority",
 			"copy-id-title": "MULTISIG ID",
 			"created-on": "Created on",
 			"cta-create-asset": "Create vault",
 			"cta-mint": "Mint",
 			"cta-no-programs": "Programs",
-			"cta-no-treasuries": "Treasuries",
+			"cta-no-treasuries": "Streaming Treasuries",
 			"cta-no-assets": "Vaults",
 			"cta-no-mints": "Mints",
 			"cta-programs": "Programs ({{itemCount}})",
 			"cta-transfer": "Transfer Tokens",
-			"cta-treasuries": "Treasuries ({{itemCount}})",
+			"cta-treasuries": "Streaming Treasuries ({{itemCount}})",
 			"cta-upgrade-program": "Upgrade Program",
 			"cta-assets": "Vaults ({{itemCount}})",
 			"cta-mints": "Mints ({{itemCount}})",
@@ -454,10 +454,10 @@
 			"screen-title-no-programs": "Programs"
 		},
 		"multisig-treasuries": {
-			"back-to-treasuries": "Back to treasuries"
+			"back-to-treasuries": "Back to Streaming Treasuries"
 		},
 		"multisig-assets": {
-			"back-to-multisig-accounts-cta": "Back to Multisig accounts",
+			"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
 			"cta-change-multisig-authority": "Change Vault Ownership",
 			"cta-change-multisig-authority-busy": "Changing Multisig",
 			"cta-close": "Close vault",
@@ -479,7 +479,7 @@
 		},
 		"multisig-detail-heading": "Multisig account details",
 		"multisig-mints": {
-			"back-to-multisig-accounts-cta": "Back to Multisig accounts",
+			"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
 			"change-mint-authority-modal-title": "Set Mint Authority",
 			"create-mint-modal-title": "Create mint",
 			"cta-change-mint-authority": "Transfer Ownership",
@@ -539,7 +539,7 @@
 		},
 		"pending-transactions": "pending transactions",
 		"refresh-tooltip": "Click to refresh the list of multisig accounts",
-		"screen-title": "Multisig accounts",
+		"screen-title": "Safes & Multisig",
 		"transfer-authority": {
 			"main-cta": "Set authority",
 			"main-cta-busy": "Setting authority",
@@ -1004,7 +1004,7 @@
 			"main-cta-busy": "Funding treasury",
 			"main-cta-fund-stream": "Fund Money Stream",
 			"main-cta-fund-stream-busy": "Funding Stream",
-			"modal-title": "Add funds to the Treasury",
+			"modal-title": "Add funds to the Streaming Treasury",
 			"modal-title-fund-stream": "Add funds to a Money Stream",
 			"money-stream-to-topup-label": "Money Stream to top up",
 			"search-streams-placeholder": "Search stream by name or address",
@@ -1025,9 +1025,9 @@
 				"months": "months",
 				"years": "years"
 			},
-			"main-cta": "Create",
+			"main-cta": "Create streaming treasury",
 			"main-cta-busy": "Creating treasury",
-			"modal-title": "Create treasury",
+			"modal-title": "Create Streaming Treasury",
 			"multisig-selector-label": "Multisig account",
 			"multisig-treasury-created-info": "To complete the treasury setup, the other Multisig signers need to approve it.",
 			"multisig-treasury-created-instructions": "Please ask the other users to sign this treasury creation transaction.",
@@ -1035,7 +1035,8 @@
 			"success-message": "Your new treasury was created successfully.",
 			"treasury-name-input-empty": "Enter Treasury name",
 			"treasury-name-input-label": "Treasury name",
-			"treasury-name-placeholder": "Type a name for your treasury",
+			"treasury-name-placeholder": "Type a name for your streaming treasury",
+			"treasury-token-label": "Token to be streamed",
 			"treasury-type-options": {
 				"treasury-type-locked-description": "With a locked treasury you can create streams that act like a vesting contract for reserved allocations, like the ones needed for investors. They usually have a fixed end date.",
 				"treasury-type-locked-name": "Locked Money Streaming Treasury",
@@ -1053,7 +1054,7 @@
 			"treasuryid-placeholder": "Treasury ID created by Mean Finance"
 		},
 		"refresh-tooltip": "Click to refresh the list of treasuries",
-		"screen-title": "Treasuries",
+		"screen-title": "Streaming Treasuries",
 		"treasury-detail": {
 			"associated-token": "Associated Token",
 			"created-on": "Created on",
@@ -1066,7 +1067,7 @@
 			"no-treasury-loaded": "Create or lookup a treasury to view details",
 			"no-treasury-selected": "Please select or lookup a treasury to view details",
 			"number-of-streams": "Number of streams",
-			"treasury-address-label": "Address",
+			"treasury-address-label": "Treasury Address",
 			"treasury-name-label": "Treasury name",
 			"unallocated-treasury-balance": "Unallocated Treasury Balance"
 		},
@@ -1168,9 +1169,9 @@
 			"services": {
 				"custody": "Custody",
 				"faucet": "Faucet",
-				"multisig": "Multisig",
+				"multisig": "Safes & Multisig",
 				"submenu-title": "Servicios",
-				"treasuries": "Tesorería & Nómina de sueldos",
+				"treasuries": "Streaming Treasuries",
 				"wallet-guide": "Guía de Billeteras",
 				"wrap": "Wrap"
 			},

@@ -63,6 +63,7 @@ import { MSP, MSP_ACTIONS as MSP_ACTIONS_V2, TransactionFees, calculateActionFee
 import { AppUsageEvent, SegmentStreamRPTransferData } from '../../utils/segment-service';
 import { segmentAnalytics } from '../../App';
 import dateFormat from 'dateformat';
+import { NATIVE_SOL } from '../../utils/tokens';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -1114,6 +1115,11 @@ export const RepeatingPayment = () => {
     <>
       {(filteredTokenList && filteredTokenList.length > 0) && (
         filteredTokenList.map((token, index) => {
+
+          if (token.address === NATIVE_SOL.address) {
+            return null;
+          }
+
           const onClick = function () {
             setSelectedToken(token);
             consoleOut("token selected:", token.symbol, 'blue');

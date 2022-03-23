@@ -44,6 +44,7 @@ import { calculateActionFees, MSP, MSP_ACTIONS, TransactionFees } from '@mean-da
 import { segmentAnalytics } from '../../App';
 import { AppUsageEvent, SegmentStreamOTPTransferData } from '../../utils/segment-service';
 import dateFormat from 'dateformat';
+import { NATIVE_SOL } from '../../utils/tokens';
 
 const { Option } = Select;
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -883,6 +884,11 @@ export const OneTimePayment = () => {
     <>
       {(filteredTokenList && filteredTokenList.length > 0) && (
         filteredTokenList.map((token, index) => {
+
+          if (token.address === NATIVE_SOL.address) {
+            return null;
+          }
+
           const onClick = function () {
             setSelectedToken(token);
             consoleOut("token selected:", token.symbol, 'blue');

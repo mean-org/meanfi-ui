@@ -19,7 +19,7 @@ import { Identicon } from '../../components/Identicon';
 import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, getTxIxResume, makeDecimal, shortenAddress } from '../../utils/utils';
 import { MultisigV2, MultisigParticipant, MultisigTransaction, MultisigTransactionStatus, MultisigVault, Multisig } from '../../models/multisig';
 import { TransactionFees } from '@mean-dao/msp';
-import { MultisigCreateVaultModal } from '../../components/MultisigCreateVaultModal';
+import { MultisigCreateAssetModal } from '../../components/MultisigCreateVaultModal';
 import { useNativeAccount } from '../../contexts/accounts';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { ACCOUNT_LAYOUT } from '../../utils/layouts';
@@ -3865,7 +3865,7 @@ export const MultisigAssetsView = () => {
 
       </div>
 
-      <MultisigCreateVaultModal
+      <MultisigCreateAssetModal
         handleOk={onAcceptCreateVault}
         handleClose={() => setIsCreateVaultModalVisible(false)}
         isVisible={isCreateVaultModalVisible}

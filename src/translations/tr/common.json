@@ -370,7 +370,7 @@
 	},
 	"multisig": {
 		"add-participant-cta": "Katılımcı ekle",
-		"back-to-multisig-accounts-cta": "Çoklu-imzalı hesaplara geri dön.",
+		"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
 		"create-multisig": {
 			"main-cta": "Yarat",
 			"main-cta-busy": "Çoklu-İmza yaratılıyor",
@@ -379,7 +379,7 @@
 			"multisig-duplicate-participants": "İkileyen katılımcılar bulundu, lütfen göz atın.",
 			"multisig-label-input-empty": "Çoklu-İmza ismi girin",
 			"multisig-label-input-label": "Çoklu-İmza ismi",
-			"multisig-label-placeholder": "Çoklu-İmza hesabınız için bir ad yazın",
+			"multisig-label-placeholder": "Type a name for your multisig",
 			"multisig-no-participants": "Şuana kadar katılımcı eklenmedi",
 			"multisig-participants": "({{maxParticipants}} katılımcıdan, {{numParticipants}} tanesi imzaladı)",
 			"multisig-participants-warning-message": "Aynı sayıda üyenin imzasını gerektiren bir başka çoklu-imza oluşturmak tavsiye edilmez",
@@ -420,7 +420,7 @@
 			"token-address-placeholder": "Tokenların adresini girin"
 		},
 		"multisig-account-detail": {
-			"address": "Yetki",
+			"address": "Deposit Address",
 			"authority": "Yetki",
 			"copy-id-title": "Çoklu-İmza ID",
 			"created-on": "... da oluşturuldu",
@@ -429,11 +429,11 @@
 			"cta-mints": "Mintler ({{itemCount}})",
 			"cta-no-mints": "Mintler",
 			"cta-no-programs": "Programlar",
-			"cta-no-treasuries": "Hazineler",
+			"cta-no-treasuries": "Streaming Treasuries",
 			"cta-no-assets": "Kasalar",
 			"cta-programs": "Programlar ({{itemCount}})",
 			"cta-transfer": "Tokenları transfer et",
-			"cta-treasuries": "({{itemCount}}) Hazine",
+			"cta-treasuries": "Streaming Treasuries ({{itemCount}})",
 			"cta-upgrade-program": "Programı düzenle",
 			"cta-assets": "({{itemCount}}) Kasalar",
 			"multisig-address-label": "Adres",
@@ -453,7 +453,7 @@
 		},
 		"multisig-detail-heading": "Çoklu-İmza hesap detayları",
 		"multisig-mints": {
-			"back-to-multisig-accounts-cta": "Çoklu-İmza hesaplarına geri dön",
+			"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
 			"change-mint-authority-modal-title": "Mint otoritesini ayarla",
 			"create-mint-modal-title": "Mint oluştur",
 			"cta-change-mint-authority": "Sahipliği transfer et",
@@ -523,10 +523,10 @@
 			"not-signed": "Not Signed"
 		},
 		"multisig-treasuries": {
-			"back-to-treasuries": "Hazinelere geri dön"
+			"back-to-treasuries": "Back to Streaming Treasuries"
 		},
 		"multisig-assets": {
-			"back-to-multisig-accounts-cta": "Çoklu-İmza hesaplarına geri dön",
+			"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
 			"cta-change-multisig-authority": "Sahipliği transfer et",
 			"cta-change-multisig-authority-busy": "Çoklu-İmza'yı değiştir",
 			"cta-close": "Kasayı kapat",
@@ -548,7 +548,7 @@
 		},
 		"pending-transactions": "süren işlem",
 		"refresh-tooltip": "Çoklu-İmza hesaplarını güncellemek için tıklayın",
-		"screen-title": "Çoklu-İmza hesapları",
+		"screen-title": "Safes & Multisig",
 		"set-program-authority": {
 			"main-cta": "Yetkileri ayarla",
 			"main-cta-busy": "Yetkiler ayarlanıyor",
@@ -1009,7 +1009,7 @@
 			"main-cta-busy": "Fonlama hazinesi",
 			"main-cta-fund-stream": "Para aktarımını fonla",
 			"main-cta-fund-stream-busy": "Aktarımı fonla",
-			"modal-title": "Hazineye fon ekleyin",
+			"modal-title": "Add funds to the Streaming Treasury",
 			"modal-title-fund-stream": "Para aktarımına fon ekle",
 			"money-stream-to-topup-label": "Para Aktarımını tamamla",
 			"search-streams-placeholder": "İsimle ve ya adresle aktarım arayın",
@@ -1030,9 +1030,9 @@
 				"months": "months",
 				"years": "years"
 			},
-			"main-cta": "Oluştur",
-			"main-cta-busy": "Hazine oluşturuluyor",
-			"modal-title": "Hazine oluştur",
+			"main-cta": "Create streaming treasury",
+			"main-cta-busy": "Creating treasury",
+			"modal-title": "Create Streaming Treasury",
 			"multisig-selector-label": "Çoklu-İmza hesabı",
 			"multisig-treasury-created-info": "Hazine kurulumunu tamamlamak için diğer Çoklu-İmza kullanıcılarının da onayı gerekiyor",
 			"multisig-treasury-created-instructions": "Bu hazine oluşturma işlemi için, lütfen, diğer kullanıcıların da imzalamasını isteyin.",
@@ -1040,7 +1040,8 @@
 			"success-message": "Yeni hazineniz başarıyla oluşturuldu.",
 			"treasury-name-input-empty": "Hazine ismini girin",
 			"treasury-name-input-label": "Hazine ismi",
-			"treasury-name-placeholder": "Hazineniz için bir isim yazın",
+			"treasury-name-placeholder": "Type a name for your streaming treasury",
+			"treasury-token-label": "Token to be streamed",
 			"treasury-type-options": {
 				"treasury-type-locked-description": "Kilitli bir hazine ile, yatırımcılar için gerekli olanlar gibi, ayrılmış tahsisler için hakediş sözleşmesi gibi davranan aktarımları oluşturabilirsiniz. Genellikle sabit bir bitiş tarihleri ​​vardır.",
 				"treasury-type-locked-name": "Kilitli Para Aktarımı Hazinesi",
@@ -1058,7 +1059,7 @@
 			"treasuryid-placeholder": "Mean Finance tarafından oluşturulan Hazine ID'si"
 		},
 		"refresh-tooltip": "Hazine listesini yenilemek için tıklayın",
-		"screen-title": "Hazineler",
+		"screen-title": "Streaming Treasuries",
 		"treasury-detail": {
 			"associated-token": "İlişkili Token",
 			"created-on": "... 'da oluşturuldu",
@@ -1071,7 +1072,7 @@
 			"no-treasury-loaded": "Detaylarını görmek için bir aktarım oluşturun ya da arayın",
 			"no-treasury-selected": "Ayrıntıları görüntülemek için lütfen bir hazine seçin veya arayın",
 			"number-of-streams": "Aktarım sayısı",
-			"treasury-address-label": "Adres",
+			"treasury-address-label": "Treasury Address",
 			"treasury-name-label": "Hazine adı",
 			"unallocated-treasury-balance": "Tahsis edilmemiş hazine bakiyesi"
 		},
@@ -1175,9 +1176,9 @@
 			"services": {
 				"custody": "Velayet",
 				"faucet": "Faucet",
-				"multisig": "Çoklu-imza",
+				"multisig": "Safes & Multisig",
 				"submenu-title": "Hizmetler",
-				"treasuries": "Hazine ve Bordro",
+				"treasuries": "Streaming Treasuries",
 				"wallet-guide": "Cüzdan Rehberi",
 				"wrap": "Wrap"
 			},

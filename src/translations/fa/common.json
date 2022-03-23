@@ -370,7 +370,7 @@
 	},
 	"multisig": {
 		"add-participant-cta": "افزودن مشارکت کننده",
-		"back-to-multisig-accounts-cta": "بازگشت به حساب های Multisig",
+		"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
 		"create-multisig": {
 			"main-cta": "ساختن",
 			"main-cta-busy": "ساختن حساب Multisig",
@@ -379,7 +379,7 @@
 			"multisig-duplicate-participants": "مشارکت کنندگان تکراری پیدا شد، لطفا بررسی کنید.",
 			"multisig-label-input-empty": "اسم یک حساب Multisig را وارد کنید",
 			"multisig-label-input-label": "اسم حساب Multisig",
-			"multisig-label-placeholder": "یک نام برای حساب Multisig خود تایپ کنید",
+			"multisig-label-placeholder": "Type a name for your multisig",
 			"multisig-no-participants": "هنوز هیچ مشارکت کننده ای اضافه نشده است",
 			"multisig-participants": "امضاکنندگان معتبر ({{numParticipants}} از {{maxParticipants}})",
 			"multisig-participants-warning-message": "توصیه نمی شود که یک حساب Multisig با تعداد شرکت کنندگان به اندازه امضاهای مورد نیاز ایجاد کنید",
@@ -420,7 +420,7 @@
 			"token-address-placeholder": "آدرس توکن را وارد کنید"
 		},
 		"multisig-account-detail": {
-			"address": "اختیارات",
+			"address": "Deposit Address",
 			"authority": "اختیارات",
 			"copy-id-title": "MULTISIG ID (آیدی حساب Multisig)",
 			"created-on": "ایجاد شده در",
@@ -429,11 +429,11 @@
 			"cta-mints": "مینت ها ({{itemCount}})",
 			"cta-no-mints": "مینت ها",
 			"cta-no-programs": "برنامه ها",
-			"cta-no-treasuries": "Treasuries",
+			"cta-no-treasuries": "Streaming Treasuries",
 			"cta-no-assets": "خزانه ها",
 			"cta-programs": "برنامه ها ({{itemCount}})",
 			"cta-transfer": "انتقال توکن ها",
-			"cta-treasuries": "Treasuries ({{itemCount}})",
+			"cta-treasuries": "Streaming Treasuries ({{itemCount}})",
 			"cta-upgrade-program": "برنامه ارتقا",
 			"cta-assets": "خزانه‌ها ({{itemCount}})",
 			"multisig-address-label": "آدرس",
@@ -453,7 +453,7 @@
 		},
 		"multisig-detail-heading": "جزئیات حساب Multisig",
 		"multisig-mints": {
-			"back-to-multisig-accounts-cta": "بازگشت به حساب های Multisig",
+			"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
 			"change-mint-authority-modal-title": "تنظیم اختیارات مینت",
 			"create-mint-modal-title": "ایجاد مینت",
 			"cta-change-mint-authority": "انتقال مالکیت",
@@ -523,10 +523,10 @@
 			"not-signed": "Not Signed"
 		},
 		"multisig-treasuries": {
-			"back-to-treasuries": "بازگشت به treasuries"
+			"back-to-treasuries": "Back to Streaming Treasuries"
 		},
 		"multisig-assets": {
-			"back-to-multisig-accounts-cta": "بازگشت به حساب های Multisig",
+			"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
 			"cta-change-multisig-authority": "تغییر مالکیت treasury",
 			"cta-change-multisig-authority-busy": "تغییر Multisig",
 			"cta-close": "treasury را ببند",
@@ -548,7 +548,7 @@
 		},
 		"pending-transactions": "تراکنش های معلق",
 		"refresh-tooltip": "برای بازخوانی لیست اکانت های Multisig کلیک کنید",
-		"screen-title": "حساب های Multisig",
+		"screen-title": "Safes & Multisig",
 		"set-program-authority": {
 			"main-cta": "تنظیم اختیارات",
 			"main-cta-busy": "تنظیم کردن اختیارات",
@@ -1009,7 +1009,7 @@
 			"main-cta-busy": "تامین مالی خزانه",
 			"main-cta-fund-stream": "سرمایه مانی استریم",
 			"main-cta-fund-stream-busy": "وجوه استریم",
-			"modal-title": "اضافه کردن وجوه به Treasury",
+			"modal-title": "Add funds to the Streaming Treasury",
 			"modal-title-fund-stream": "اضافه کردن وجوه به یک مانی استریم",
 			"money-stream-to-topup-label": "مانی استریم برای شارژ",
 			"search-streams-placeholder": "استریم را بر اساس نام یا آدرس جستجو کنید",
@@ -1030,9 +1030,9 @@
 				"months": "months",
 				"years": "years"
 			},
-			"main-cta": "راه اندازی",
-			"main-cta-busy": "ایجاد treasury",
-			"modal-title": "treasury  ایجاد کنید",
+			"main-cta": "Create streaming treasury",
+			"main-cta-busy": "Creating treasury",
+			"modal-title": "Create Streaming Treasury",
 			"multisig-selector-label": "حساب Multisig",
 			"multisig-treasury-created-info": "برای تکمیل تنظیم treasury ، سایر امضاکنندگان Multisig باید آن را تأیید کنند.",
 			"multisig-treasury-created-instructions": "لطفاً از سایر کاربران بخواهید که این معامله ایجاد treasury  را امضا کنند.",
@@ -1040,7 +1040,8 @@
 			"success-message": "treasury  جدید شما با موفقیت ایجاد شد.",
 			"treasury-name-input-empty": "نام treasury  را وارد کنید",
 			"treasury-name-input-label": "نام treasury",
-			"treasury-name-placeholder": "یک نام برای treasury خود تایپ کنید",
+			"treasury-name-placeholder": "Type a name for your streaming treasury",
+			"treasury-token-label": "Token to be streamed",
 			"treasury-type-options": {
 				"treasury-type-locked-description": "با یک treasury قفل شده می‌توانید استریم هایی ایجاد کنید که مانند قراردادهای سرمایه‌گذاری برای تخصیص‌های رزرو شده عمل می‌کنند، مانند مواردی که برای سرمایه‌گذاران لازم است. آنها معمولا تاریخ پایان ثابتی دارند.",
 				"treasury-type-locked-name": "treasury  مانی استریمینگ قفل شده",
@@ -1058,7 +1059,7 @@
 			"treasuryid-placeholder": "شناسه treasury ایجاد شده توسط Mean Finance"
 		},
 		"refresh-tooltip": "برای بازخوانی لیست treasury ها کلیک کنید",
-		"screen-title": "treasury ها",
+		"screen-title": "Streaming Treasuries",
 		"treasury-detail": {
 			"associated-token": "توکن مرتبط",
 			"created-on": "ایجاد شده در",
@@ -1071,7 +1072,7 @@
 			"no-treasury-loaded": "برای مشاهده جزئیات یک treasury ایجاد کنید یا جستجو کنید",
 			"no-treasury-selected": "لطفاً برای مشاهده جزئیات، treasury را انتخاب یا جستجو کنید",
 			"number-of-streams": "تعداد استریم ها",
-			"treasury-address-label": "آدرس",
+			"treasury-address-label": "Treasury Address",
 			"treasury-name-label": "نام treasury",
 			"unallocated-treasury-balance": "موجودی treasury تخصیص نیافته"
 		},
@@ -1175,9 +1176,9 @@
 			"services": {
 				"custody": "حضانت",
 				"faucet": "فاست",
-				"multisig": "Multisig",
+				"multisig": "Safes & Multisig",
 				"submenu-title": "خدمات",
-				"treasuries": "Treasuries و حقوق ودستمزد",
+				"treasuries": "Streaming Treasuries",
 				"wallet-guide": "راهنمای کیف پول",
 				"wrap": "رپ(Wrap) کردن"
 			},

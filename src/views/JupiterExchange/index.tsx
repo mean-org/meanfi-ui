@@ -661,6 +661,12 @@ export const JupiterExchange = (props: {
             });
         }
 
+        if (!inputAmount) {
+            setRoutes([]);
+            setSelectedRoute(undefined);
+            return;
+        }
+
         setRefreshing(true);
         getRoutes()
             .then(response => {
