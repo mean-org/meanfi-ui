@@ -54,7 +54,7 @@ import useWindowSize from '../../hooks/useWindowResize';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { notify, openNotification } from '../../utils/notifications';
-import { IconBank, IconClock, IconExternalLink, IconRefresh, IconShieldOutline, IconSort, IconTrash } from '../../Icons';
+import { IconBank, IconClock, IconRefresh, IconShieldOutline, IconTrash } from '../../Icons';
 import { TreasuryOpenModal } from '../../components/TreasuryOpenModal';
 import { MSP_ACTIONS, StreamInfo, STREAM_STATE, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { TreasuryCreateModal } from '../../components/TreasuryCreateModal';
@@ -97,7 +97,6 @@ import { MultisigParticipant, MultisigV2 } from '../../models/multisig';
 import { Program, Provider } from '@project-serum/anchor';
 import { TreasuryCreateOptions } from '../../models/treasuries';
 import { customLogger } from '../..';
-
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
