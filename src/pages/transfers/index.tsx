@@ -39,7 +39,7 @@ export const TransfersView = () => {
   useEffect(() => {
 
     if (tokenList && !selectedToken) {
-      setSelectedToken(tokenList[0]);
+      setSelectedToken(tokenList.find(t => t.symbol === 'MEAN'));
     }
 
     return () => { };

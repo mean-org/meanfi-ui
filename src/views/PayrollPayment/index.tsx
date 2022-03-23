@@ -58,6 +58,7 @@ import { TokenDisplay } from '../../components/TokenDisplay';
 import { TextInput } from '../../components/TextInput';
 import { TokenListItem } from '../../components/TokenListItem';
 import { calculateActionFees, MSP, MSP_ACTIONS, TransactionFees } from '@mean-dao/msp';
+import { NATIVE_SOL } from '../../utils/tokens';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -915,6 +916,11 @@ export const PayrollPayment = () => {
     <>
       {(filteredTokenList && filteredTokenList.length > 0) && (
         filteredTokenList.map((token, index) => {
+
+          if (token.address === NATIVE_SOL.address) {
+            return null;
+          }
+
           const onClick = function () {
             setSelectedToken(token);
             consoleOut("token selected:", token.symbol, 'blue');
