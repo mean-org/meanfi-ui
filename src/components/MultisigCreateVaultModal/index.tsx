@@ -4,7 +4,7 @@ import { Modal, Button, Select, Divider, Input, Spin } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
 import { TokenInfo } from '@solana/spl-token-registry';
-import { getTokenByMintAddress } from '../../utils/tokens';
+import { getTokenByMintAddress, NATIVE_SOL } from '../../utils/tokens';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { TokenDisplay } from '../TokenDisplay';
 import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
@@ -21,7 +21,7 @@ import { useConnection } from '../../contexts/connection';
 const { Option } = Select;
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
-export const MultisigCreateVaultModal = (props: {
+export const MultisigCreateAssetModal = (props: {
   handleClose: any;
   handleOk: any;
   isVisible: boolean;
@@ -211,6 +211,9 @@ export const MultisigCreateVaultModal = (props: {
                             </div>
                           )}>
                           {tokenList.map((option: TokenInfo) => {
+                            if (option.address === NATIVE_SOL.address) {
+                              return null;
+                            }
                             return (
                               <Option key={option.address} value={option.address}>
                                 <div className="option-container">

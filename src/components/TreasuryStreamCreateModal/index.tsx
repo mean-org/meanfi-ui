@@ -30,7 +30,7 @@ import {
   PaymentRateTypeOption,
   LockPeriodTypeOption,
 } from '../../utils/ui';
-import { getTokenByMintAddress } from '../../utils/tokens';
+import { getTokenByMintAddress, NATIVE_SOL } from '../../utils/tokens';
 import { LoadingOutlined } from '@ant-design/icons';
 import { TokenDisplay } from '../TokenDisplay';
 import { IconCaretDown, IconEdit, IconHelpCircle, IconWarning } from '../../Icons';
@@ -1324,6 +1324,9 @@ export const TreasuryStreamCreateModal = (props: {
                   {(selectedToken && tokenList) && (
                     <Select className={`token-selector-dropdown ${props.associatedToken ? 'click-disabled' : ''}`} value={selectedToken.address} onChange={onTokenChange} bordered={false} showArrow={false}>
                       {tokenList.map((option) => {
+                        if (option.address === NATIVE_SOL.address) {
+                          return null;
+                        }
                         return (
                           <Option key={option.address} value={option.address}>
                             <div className="option-container">
@@ -1590,6 +1593,9 @@ export const TreasuryStreamCreateModal = (props: {
                       {(selectedToken && tokenList) && (
                         <Select className={`token-selector-dropdown ${props.associatedToken ? 'click-disabled' : ''}`} value={selectedToken.address} onChange={onTokenChange} bordered={false} showArrow={false}>
                           {tokenList.map((option) => {
+                            if (option.address === NATIVE_SOL.address) {
+                              return null;
+                            }
                             return (
                               <Option key={option.address} value={option.address}>
                                 <div className="option-container">

@@ -18,6 +18,7 @@ import { IconCheckedBox } from '../../Icons';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { notify } from '../../utils/notifications';
 import { TokenDisplay } from '../TokenDisplay';
+import { NATIVE_SOL } from '../../utils/tokens';
 
 const { Option } = Select;
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -324,6 +325,9 @@ export const TreasuryCreateModal = (props: {
                           </div>
                         )}>
                         {tokenList.map((option) => {
+                          if (option.address === NATIVE_SOL.address) {
+                            return null;
+                          }
                           return (
                             <Option key={option.address} value={option.address}>
                               <div className="option-container">
