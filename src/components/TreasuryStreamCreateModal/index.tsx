@@ -652,7 +652,7 @@ export const TreasuryStreamCreateModal = (props: {
       setPaymentStartDate(today);
       setLockPeriodAmount("");
       setLockPeriodFrequency(PaymentRateType.PerMonth);
-    }, 50);
+    });
     setTransactionStatus({
       lastOperation: TransactionStatus.Iddle,
       currentOperation: TransactionStatus.Iddle
@@ -946,6 +946,7 @@ export const TreasuryStreamCreateModal = (props: {
       const now = new Date();
       const parsedDate = Date.parse(paymentStartDate as string);
       const startUtc = new Date(parsedDate);
+      const cliffAmount = toTokenAmount(parseFloat(cliffRelease as string), selectedToken.decimals);
       startUtc.setHours(now.getHours());
       startUtc.setMinutes(now.getMinutes());
       startUtc.setSeconds(now.getSeconds());
@@ -955,6 +956,7 @@ export const TreasuryStreamCreateModal = (props: {
       consoleOut('fromParsedDate.toLocaleString()', startUtc.toLocaleString(), 'crimson');
       consoleOut('fromParsedDate.toISOString()', startUtc.toISOString(), 'crimson');
       consoleOut('fromParsedDate.toUTCString()', startUtc.toUTCString(), 'crimson');
+      consoleOut('paymentRateFrequency', lockPeriodFrequency, 'crimson');
 
       // Create a transaction
       const data = {
@@ -965,10 +967,10 @@ export const TreasuryStreamCreateModal = (props: {
         associatedToken: associatedToken.toBase58(),                                // associatedToken
         allocationAssigned: amount,                                                 // allocationAssigned
         rateAmount: rateAmount,                                                     // rateAmount
-        rateIntervalInSeconds: getRateIntervalInSeconds(paymentRateFrequency),      // rateIntervalInSeconds
+        rateIntervalInSeconds: getRateIntervalInSeconds(lockPeriodFrequency),       // rateIntervalInSeconds
         startUtc: startUtc,                                                         // startUtc
-        cliffVestAmount: undefined,                                                 // cliffVestAmount
-        cliffVestPercent: undefined,                                                // cliffVestPercent
+        cliffVestAmount: cliffAmount,                                               // cliffVestAmount
+        cliffVestPercent: 0,                                                        // cliffVestPercent
         feePayedByTreasurer: isFeePaidByTreasurer                                   // feePayedByTreasurer
       };
 
