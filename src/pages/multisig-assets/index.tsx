@@ -3423,7 +3423,15 @@ export const MultisigAssetsView = () => {
           <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} />
         </span>
         <span className="info-data">
-          {formatThousands(makeDecimal(amount, token.decimals || decimals), token.decimals || decimals)}
+          {
+            formatThousands(
+              makeDecimal(amount, token.decimals || decimals),
+              token.decimals || decimals,
+              token.decimals || decimals
+            )
+          }
+          {' '}
+          {token.symbol}
         </span>
       </>
     );
@@ -3604,7 +3612,7 @@ export const MultisigAssetsView = () => {
               <Col span={12}>
                 <div className="transaction-detail-row">
                   <span className="info-label">
-                    Multisig Authority
+                    Deposit Address
                   </span>
                 </div>
                 <div className="transaction-detail-row">

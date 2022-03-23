@@ -89,6 +89,7 @@ export const MultisigCreateAssetModal = (props: {
     }
 
     const timeout = setTimeout(() => {
+      consoleOut('tokenList:', tokenList, 'blue');
       setToken(tokenList[0]);
     });
 

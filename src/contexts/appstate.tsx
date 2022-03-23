@@ -1203,8 +1203,9 @@ const AppStateProvider: React.FC = ({ children }) => {
         .forEach(item => list.push(Object.assign({}, item, { isMeanSupportedToken: true })));
       MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(connectionConfig.cluster) && !PINNED_TOKENS.includes(t.symbol))
         .forEach(item => list.push(item));
+      // Save the MeanFi list
+      updateTokenlist(list.filter(t => t.address !== NATIVE_SOL.address) as TokenInfo[]);
       // Update the list
-      updateTokenlist(list as TokenInfo[]);
       updateUserTokens(list);
       // consoleOut('AppState -> userTokens:', list);
 
