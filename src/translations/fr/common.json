@@ -1025,8 +1025,8 @@
 				"months": "months",
 				"years": "years"
 			},
-			"main-cta": "Créer",
-			"main-cta-busy": "Création de trésorerie",
+			"main-cta": "Create streaming treasury",
+			"main-cta-busy": "Creating treasury",
 			"modal-title": "Create Streaming Treasury",
 			"multisig-selector-label": "Compte multisignature",
 			"multisig-treasury-switch-label": "Cette trésorerie est-elle pour un compte Multisig ?",

@@ -1030,8 +1030,8 @@
 				"months": "months",
 				"years": "years"
 			},
-			"main-cta": "Tạo",
-			"main-cta-busy": "Đang tạo kho bạc",
+			"main-cta": "Create streaming treasury",
+			"main-cta-busy": "Creating treasury",
 			"modal-title": "Create Streaming Treasury",
 			"multisig-selector-label": "Tài khoản multisig",
 			"multisig-treasury-created-info": "Để hoàn thành thiết lập kho bạc, những người ký Multisig khác cần phải phê duyệt nó.",
