@@ -30,6 +30,7 @@ type SwapOption = "stake" | "unstake";
 
 export const InvestView = () => {
   const {
+    tokenList,
     stakedAmount,
     isWhitelisted,
     selectedToken,
@@ -168,6 +169,19 @@ export const InvestView = () => {
     cluster,
     endpoint,
     publicKey
+  ]);
+
+  // Select MEAN token
+  useEffect(() => {
+
+    if (tokenList) {
+      setSelectedToken(tokenList.find(t => t.symbol === 'MEAN'));
+    }
+
+    return () => { };
+  }, [
+    tokenList,
+    setSelectedToken
   ]);
 
   // Get tokens from staking client
