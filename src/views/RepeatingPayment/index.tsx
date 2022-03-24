@@ -283,7 +283,18 @@ export const RepeatingPayment = () => {
   };
 
   const handleFromCoinAmountChange = (e: any) => {
-    const newValue = e.target.value;
+
+    let newValue = e.target.value;
+    if (!newValue) { return; }
+
+    const splitted = newValue.toString().split('.');
+    const left = splitted[0];
+    if (left.length > 1) {
+      const number = splitted[0] - 0;
+      splitted[0] = `${number}`;
+      newValue = splitted.join('.');
+    }
+
     if (newValue === null || newValue === undefined || newValue === "") {
       setFromCoinAmount("");
     } else if (newValue === '.') {
@@ -325,7 +336,18 @@ export const RepeatingPayment = () => {
   }
 
   const handlePaymentRateAmountChange = (e: any) => {
-    const newValue = e.target.value;
+
+    let newValue = e.target.value;
+    if (!newValue) { return; }
+
+    const splitted = newValue.toString().split('.');
+    const left = splitted[0];
+    if (left.length > 1) {
+      const number = splitted[0] - 0;
+      splitted[0] = `${number}`;
+      newValue = splitted.join('.');
+    }
+
     if (newValue === null || newValue === undefined || newValue === "") {
       setPaymentRateAmount("");
     } else if (newValue === '.') {

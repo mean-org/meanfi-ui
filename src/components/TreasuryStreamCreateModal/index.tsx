@@ -545,7 +545,14 @@ export const TreasuryStreamCreateModal = (props: {
   }
 
   const handlePaymentRateAmountChange = (e: any) => {
-    const newValue = e.target.value;
+    let newValue = e.target.value;
+    const splitted = newValue.toString().split('.');
+    const left = splitted[0];
+    if (left.length > 1) {
+      const number = splitted[0] - 0;
+      splitted[0] = `${number}`;
+      newValue = splitted.join('.');
+    }
     if (newValue === null || newValue === undefined || newValue === "") {
       setPaymentRateAmount("");
     } else if (newValue === '.') {
@@ -585,7 +592,14 @@ export const TreasuryStreamCreateModal = (props: {
   }
 
   const handleFromCoinAmountChange = (e: any) => {
-    const newValue = e.target.value;
+    let newValue = e.target.value;
+    const splitted = newValue.toString().split('.');
+    const left = splitted[0];
+    if (left.length > 1) {
+      const number = splitted[0] - 0;
+      splitted[0] = `${number}`;
+      newValue = splitted.join('.');
+    }
     if (newValue === null || newValue === undefined || newValue === "") {
       setFromCoinAmount("");
       setTokenAmount(new BN(0));
@@ -598,7 +612,14 @@ export const TreasuryStreamCreateModal = (props: {
   };
 
   const handleCliffReleaseAmountChange = (e: any) => {
-    const newValue = e.target.value;
+    let newValue = e.target.value;
+    const splitted = newValue.toString().split('.');
+    const left = splitted[0];
+    if (left.length > 1) {
+      const number = splitted[0] - 0;
+      splitted[0] = `${number}`;
+      newValue = splitted.join('.');
+    }
     if (newValue === null || newValue === undefined || newValue === "") {
       setCliffRelease("");
     } else if (newValue === '.') {
