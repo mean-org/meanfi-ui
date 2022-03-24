@@ -127,6 +127,13 @@ export const LANGUAGES: Language[] = [
         flag: '/assets/flags/kr.svg',
         locale: 'ko-KR'
     },
+    // {
+    //     code: 'ru',
+    //     isoName: 'Russian',
+    //     name: 'Russian',
+    //     flag: '/assets/flags/ru.svg',
+    //     locale: 'ru-RU'
+    // },
 ];
 
 export const DAO_CORE_TEAM_WHITELIST = [
