@@ -1,7 +1,7 @@
 import { Idl } from "@project-serum/anchor";
 
 const idl: Idl = {
-  version: "0.10.0",
+  version: "0.11.0",
   name: "mean_multisig",
   instructions: [
     {
@@ -16,6 +16,11 @@ const idl: Idl = {
           "name": "multisig",
           "isMut": true,
           "isSigner": true
+        },
+        {
+          "name": "multisigOpsAccount",
+          "isMut": true,
+          "isSigner": false
         },
         {
           "name": "systemProgram",
@@ -96,6 +101,16 @@ const idl: Idl = {
           "name": "proposer",
           "isMut": true,
           "isSigner": true
+        },
+        {
+          "name": "multisigOpsAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
         }
       ],
       "args": [

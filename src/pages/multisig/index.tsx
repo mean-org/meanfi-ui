@@ -60,7 +60,7 @@ import { useNativeAccount } from '../../contexts/accounts';
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
 import { AccountLayout, MintLayout, TOKEN_PROGRAM_ID, u64 } from '@solana/spl-token';
 import { useNavigate } from 'react-router-dom';
-import { Multisig, MultisigV2, MultisigParticipant, MultisigTransaction, MultisigTransactionStatus, MultisigMint } from '../../models/multisig';
+import { Multisig, MultisigV2, MultisigParticipant, MultisigTransaction, MultisigTransactionStatus, MultisigMint, MEAN_MULTISIG_OPS } from '../../models/multisig';
 import { MultisigCreateModal } from '../../components/MultisigCreateModal';
 import './style.less';
 
@@ -334,6 +334,7 @@ export const MultisigView = () => {
           accounts: {
             proposer: publicKey as PublicKey,
             multisig: multisig.publicKey,
+            multisigOpsAccount: MEAN_MULTISIG_OPS,
             systemProgram: SystemProgram.programId
           },
           signers: [wallet as any, multisig]
@@ -736,6 +737,8 @@ export const MultisigView = () => {
             multisig: selectedMultisig.id,
             transaction: transaction.publicKey,
             proposer: publicKey as PublicKey,
+            multisigOpsAccount: MEAN_MULTISIG_OPS,
+            systemProgram: SystemProgram.programId
           },
           preInstructions: [createIx],
           signers: [transaction, wallet as any],
@@ -2023,7 +2026,9 @@ export const MultisigView = () => {
           accounts: {
             multisig: selectedMultisig.id,
             transaction: transaction.publicKey,
-            proposer: publicKey
+            proposer: publicKey,
+            multisigOpsAccount: MEAN_MULTISIG_OPS,
+            systemProgram: SystemProgram.programId
           },
           preInstructions: [createIx],
           signers: [transaction],
@@ -2357,7 +2362,9 @@ export const MultisigView = () => {
           accounts: {
             multisig: selectedMultisig.id,
             transaction: transaction.publicKey,
-            proposer: publicKey
+            proposer: publicKey,
+            multisigOpsAccount: MEAN_MULTISIG_OPS,
+            systemProgram: SystemProgram.programId
           },          
           preInstructions: [upgradeIdlTx],
           signers: [transaction],
@@ -2708,7 +2715,9 @@ export const MultisigView = () => {
           accounts: {
             multisig: selectedMultisig.id,
             transaction: transaction.publicKey,
-            proposer: publicKey
+            proposer: publicKey,
+            multisigOpsAccount: MEAN_MULTISIG_OPS,
+            systemProgram: SystemProgram.programId
           },
           preInstructions: [createIx],
           signers: [transaction]

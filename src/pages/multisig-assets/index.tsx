@@ -17,7 +17,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { consoleOut, copyText, delay, getReadableDate, getShortDate, getTransactionOperationDescription, getTransactionStatusForLogs, isDev, isLocal } from '../../utils/ui';
 import { Identicon } from '../../components/Identicon';
 import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, getTxIxResume, makeDecimal, shortenAddress } from '../../utils/utils';
-import { MultisigV2, MultisigParticipant, MultisigTransaction, MultisigTransactionStatus, MultisigVault, Multisig } from '../../models/multisig';
+import { MultisigV2, MultisigParticipant, MultisigTransaction, MultisigTransactionStatus, MultisigVault, Multisig, MEAN_MULTISIG_OPS } from '../../models/multisig';
 import { TransactionFees } from '@mean-dao/msp';
 import { MultisigCreateAssetModal } from '../../components/MultisigCreateVaultModal';
 import { useNativeAccount } from '../../contexts/accounts';
@@ -1574,7 +1574,8 @@ export const MultisigAssetsView = () => {
             multisig: selectedMultisig,
             transaction: transaction.publicKey,
             proposer: publicKey,
-            rent: SYSVAR_RENT_PUBKEY
+            multisigOpsAccount: MEAN_MULTISIG_OPS,
+            systemProgram: SystemProgram.programId
           },
           signers: [transaction],
           instructions: ixs,
@@ -1912,7 +1913,9 @@ export const MultisigAssetsView = () => {
           accounts: {
             multisig: selectedMultisig.id,
             transaction: transaction.publicKey,
-            proposer: publicKey
+            proposer: publicKey,
+            multisigOpsAccount: MEAN_MULTISIG_OPS,
+            systemProgram: SystemProgram.programId
           },
           preInstructions: [createIx],
           signers: [transaction]
@@ -2240,7 +2243,9 @@ export const MultisigAssetsView = () => {
           accounts: {
             multisig: selectedMultisig.id,
             transaction: transaction.publicKey,
-            proposer: publicKey
+            proposer: publicKey,
+            multisigOpsAccount: MEAN_MULTISIG_OPS,
+            systemProgram: SystemProgram.programId
           },
           preInstructions: [createIx],
           signers: [transaction]

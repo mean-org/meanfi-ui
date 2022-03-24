@@ -17,7 +17,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { consoleOut, copyText, delay, getReadableDate, getShortDate, getTransactionOperationDescription, getTransactionStatusForLogs, isDev, isLocal } from '../../utils/ui';
 import { Identicon } from '../../components/Identicon';
 import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress, toUiAmount } from '../../utils/utils';
-import { MultisigV2, MultisigParticipant, MultisigTransaction, MultisigTransactionStatus, Multisig, CreateMintPayload, MultisigMint, SetMintAuthPayload } from '../../models/multisig';
+import { MultisigV2, MultisigParticipant, MultisigTransaction, MultisigTransactionStatus, Multisig, CreateMintPayload, MultisigMint, SetMintAuthPayload, MEAN_MULTISIG_OPS } from '../../models/multisig';
 import { TransactionFees } from '@mean-dao/msp';
 import { useNativeAccount } from '../../contexts/accounts';
 import { OperationType, TransactionStatus } from '../../models/enums';
@@ -1145,7 +1145,9 @@ export const MultisigMintsView = () => {
           accounts: {
             multisig: new PublicKey(data.multisig),
             transaction: transaction.publicKey,
-            proposer: publicKey
+            proposer: publicKey,
+            multisigOpsAccount: MEAN_MULTISIG_OPS,
+            systemProgram: SystemProgram.programId
           },
           preInstructions: [createIx],
           signers: [transaction]
@@ -1820,7 +1822,9 @@ export const MultisigMintsView = () => {
           accounts: {
             multisig: selectedMultisig.id,
             transaction: transaction.publicKey,
-            proposer: publicKey
+            proposer: publicKey,
+            multisigOpsAccount: MEAN_MULTISIG_OPS,
+            systemProgram: SystemProgram.programId
           },
           instructions: ixs,
           signers: [transaction]

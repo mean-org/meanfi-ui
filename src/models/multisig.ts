@@ -1,6 +1,8 @@
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { OperationType } from "./enums";
 
+export const MEAN_MULTISIG_OPS = new PublicKey("3TD6SWY9M1mLY2kZWJNavPLhwXvcRsWdnZLRaMzERJBw");
+
 export enum MultisigTransactionStatus {
   // No enough signatures
   Pending = 0,
