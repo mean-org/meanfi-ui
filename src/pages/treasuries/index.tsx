@@ -3301,7 +3301,7 @@ export const TreasuriesView = () => {
     resetTransactionStatus
   ]);
   const hideCloseStreamModal = useCallback(() => setIsCloseStreamModalVisibility(false), []);
-  const onAcceptCloseStream = (closeTreasury: boolean) => {
+  const onAcceptCloseStream = (closeTreasury: any) => {
     hideCloseStreamModal();
     onExecuteCloseStreamTransaction(closeTreasury);
   };
@@ -3327,7 +3327,7 @@ export const TreasuriesView = () => {
     resetTransactionStatus();
   }
 
-  const onExecuteCloseStreamTransaction = async (closeTreasury: boolean) => {
+  const onExecuteCloseStreamTransaction = async (closeTreasury: any) => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
@@ -3351,7 +3351,7 @@ export const TreasuriesView = () => {
         const data = {
           stream: streamPublicKey.toBase58(),                     // stream
           initializer: wallet.publicKey.toBase58(),               // initializer
-          closeTreasury                                           // closeTreasury
+          closeTreasury: closeTreasury.closeTreasuryOption        // closeTreasury
         }
         consoleOut('data:', data);
 
@@ -3511,8 +3511,8 @@ export const TreasuriesView = () => {
 
       const data = {
         stream: streamPublicKey.toBase58(),                     // stream
-        payer: publicKey.toBase58(),                      // initializer
-        closeTreasury                                           // closeTreasury
+        payer: publicKey.toBase58(),                            // initializer
+        closeTreasury: closeTreasury.closeTreasuryOption        // closeTreasury
       }
 
       consoleOut('data:', data);
