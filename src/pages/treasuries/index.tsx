@@ -51,7 +51,7 @@ import {
 } from '../../constants';
 import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
-import { OperationType, TransactionStatus } from '../../models/enums';
+import { OperationType, PaymentRateType, TransactionStatus } from '../../models/enums';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { notify, openNotification } from '../../utils/notifications';
 import { IconBank, IconClock, IconRefresh, IconShieldOutline, IconTrash } from '../../Icons';
@@ -112,6 +112,7 @@ export const TreasuriesView = () => {
     treasuryOption,
     detailsPanelOpen,
     transactionStatus,
+    lockPeriodFrequency,
     streamProgramAddress,
     highLightableStreamId,
     streamV2ProgramAddress,
@@ -5487,18 +5488,8 @@ export const TreasuriesView = () => {
         <div className="debug-bar">
           <span className="ml-1">loadingTreasuries:</span><span className="ml-1 font-bold fg-dark-active">{loadingTreasuries ? 'true' : 'false'}</span>
           <span className="ml-1">isBusy:</span><span className="ml-1 font-bold fg-dark-active">{isBusy ? 'true' : 'false'}</span>
-          <span className="ml-1">retryOperationPayload:</span><span className="ml-1 font-bold fg-dark-active">{retryOperationPayload ? 'true' : 'false'}</span>
           <span className="ml-1">highLightableStreamId:</span><span className="ml-1 font-bold fg-dark-active">{highLightableStreamId || '-'}</span>
-          {(transactionStatus.lastOperation !== undefined) && (
-            <>
-            <span className="ml-1">lastOperation:</span><span className="ml-1 font-bold fg-dark-active">{TransactionStatus[transactionStatus.lastOperation]}</span>
-            </>
-          )}
-          {(transactionStatus.currentOperation !== undefined) && (
-            <>
-            <span className="ml-1">currentOperation:</span><span className="ml-1 font-bold fg-dark-active">{TransactionStatus[transactionStatus.currentOperation]}</span>
-            </>
-          )}
+          <span className="ml-1">lockPeriodFrequency:</span><span className="ml-1 font-bold fg-dark-active">{PaymentRateType[lockPeriodFrequency]}</span>
         </div>
       )} */}
 
