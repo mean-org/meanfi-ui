@@ -652,7 +652,7 @@ export const TreasuryStreamCreateModal = (props: {
       setPaymentStartDate(today);
       setLockPeriodAmount("");
       setLockPeriodFrequency(PaymentRateType.PerMonth);
-    }, 50);
+    });
     setTransactionStatus({
       lastOperation: TransactionStatus.Iddle,
       currentOperation: TransactionStatus.Iddle
@@ -946,6 +946,7 @@ export const TreasuryStreamCreateModal = (props: {
       const now = new Date();
       const parsedDate = Date.parse(paymentStartDate as string);
       const startUtc = new Date(parsedDate);
+      const cliffAmount = toTokenAmount(parseFloat(cliffRelease as string), selectedToken.decimals);
       startUtc.setHours(now.getHours());
       startUtc.setMinutes(now.getMinutes());
       startUtc.setSeconds(now.getSeconds());
@@ -955,6 +956,7 @@ export const TreasuryStreamCreateModal = (props: {
       consoleOut('fromParsedDate.toLocaleString()', startUtc.toLocaleString(), 'crimson');
       consoleOut('fromParsedDate.toISOString()', startUtc.toISOString(), 'crimson');
       consoleOut('fromParsedDate.toUTCString()', startUtc.toUTCString(), 'crimson');
+      consoleOut('paymentRateFrequency', lockPeriodFrequency, 'crimson');
 
       // Create a transaction
       const data = {
@@ -965,10 +967,10 @@ export const TreasuryStreamCreateModal = (props: {
         associatedToken: associatedToken.toBase58(),                                // associatedToken
         allocationAssigned: amount,                                                 // allocationAssigned
         rateAmount: rateAmount,                                                     // rateAmount
-        rateIntervalInSeconds: getRateIntervalInSeconds(paymentRateFrequency),      // rateIntervalInSeconds
+        rateIntervalInSeconds: getRateIntervalInSeconds(lockPeriodFrequency),       // rateIntervalInSeconds
         startUtc: startUtc,                                                         // startUtc
-        cliffVestAmount: undefined,                                                 // cliffVestAmount
-        cliffVestPercent: undefined,                                                // cliffVestPercent
+        cliffVestAmount: cliffAmount,                                               // cliffVestAmount
+        cliffVestPercent: 0,                                                        // cliffVestPercent
         feePayedByTreasurer: isFeePaidByTreasurer                                   // feePayedByTreasurer
       };
 
@@ -1803,7 +1805,7 @@ export const TreasuryStreamCreateModal = (props: {
                         min={0}
                         max={12}
                         maxLength={2}
-                        value={parseFloat(lockPeriodAmount)}
+                        value={lockPeriodAmount}
                       />
                     </div>
                   </div>
@@ -1942,14 +1944,10 @@ export const TreasuryStreamCreateModal = (props: {
                   <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-cliff-release')}  </strong> {cliffRelease ? (`${cutNumber(parseFloat(cliffRelease), 6)} ${selectedToken && selectedToken.name} (on commencement)`) : "--"}
                 </Col>
                 <Col span={24}>
-<<<<<<< HEAD
-                  <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-release-rate')}  </strong> {(cliffRelease && lockPeriodAmount && selectedToken && lockPeriodFrequency) ? (`${paymentRateAmount} ${selectedToken.name} / ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`) : "--"}
-=======
                   <strong>Amount to be streamed:  </strong> {(cliffRelease && lockPeriodAmount && selectedToken && lockPeriodFrequency) ? (`${parseFloat(fromCoinAmount) - parseFloat(cliffRelease)} ${selectedToken.name} over ${lockPeriodAmount} ${getLockPeriodOptionLabel(lockPeriodFrequency, t)}`) : "--"}
                 </Col>
                 <Col span={24}>
                   <strong>Release rate:  </strong> {(cliffRelease && lockPeriodAmount && selectedToken && lockPeriodFrequency) ? (`${paymentRateAmount} ${selectedToken.name} / ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`) : "--"}
->>>>>>> hotfix/v0.12.1
                 </Col>
               </Row>
 
