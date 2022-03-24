@@ -930,7 +930,6 @@ export const JupiterExchange = (props: {
     const handleSwapFromAmountChange = useCallback((e: any) => {
 
         let newValue = e.target.value;
-        if (!newValue) { return; }
 
         const splitted = newValue.toString().split('.');
         const left = splitted[0];

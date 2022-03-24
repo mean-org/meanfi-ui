@@ -34,7 +34,7 @@ export const MultisigTransferTokensModal = (props: {
   const { t } = useTranslation('common');
   const connection = useConnection();
   const { publicKey } = useWallet();
-  const { transactionStatus } = useContext(AppStateContext);
+  const { transactionStatus, selectedToken } = useContext(AppStateContext);
 
   const [fromVault, setFromVault] = useState<MultisigVault>();
   const [fromMint, setFromMint] = useState<any>();
@@ -126,14 +126,23 @@ export const MultisigTransferTokensModal = (props: {
   }
 
   const onMintAmountChange = (e: any) => {
+
     let newValue = e.target.value;
+
+    const decimals = selectedToken ? selectedToken.decimals : 0;
     const splitted = newValue.toString().split('.');
     const left = splitted[0];
     if (left.length > 1) {
       const number = splitted[0] - 0;
       splitted[0] = `${number}`;
       newValue = splitted.join('.');
+    } else if (decimals && splitted[1]) {
+      if (splitted[1].length > decimals) {
+        splitted[1] = splitted[1].slice(0, -1);
+        newValue = splitted.join('.');
+      }
     }
+
     if (newValue === null || newValue === undefined || newValue === "") {
       setAmount('');
     } else if (isValidNumber(newValue)) {
