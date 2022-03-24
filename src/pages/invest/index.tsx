@@ -381,31 +381,33 @@ export const InvestView = () => {
     if (meanAddresses) {
       setSelectedTokenBalance(0);
 
-      if (option === "stake") {
-        const token = MEAN_TOKEN_LIST.find(t => t.address === meanAddresses.mean.toBase58());
+      const unstakedToken = MEAN_TOKEN_LIST.find(t => t.address === meanAddresses.mean.toBase58());
+      const stakedToken = MEAN_TOKEN_LIST.find(t => t.address === meanAddresses.sMean.toBase58());
 
-        if (token) {
-          consoleOut("MEAN token", token);
+      if (option === "stake") {
+
+        if (unstakedToken) {
+          consoleOut("MEAN token", unstakedToken);
 
           setTimeout(() => { 
-            setSelectedToken(token);   
+            setSelectedToken(unstakedToken);   
            }, 50);
         } else {
           consoleOut("MEAN not available in the token list, please add");
         }
 
       } else {
-        const token = MEAN_TOKEN_LIST.find(t => t.address === meanAddresses.sMean.toBase58());
 
-        if (token) {
-          consoleOut("sMEAN token", token);
+        if (stakedToken) {
+          consoleOut("sMEAN token", stakedToken);
 
           setTimeout(() => { 
-            setSelectedToken(token);   
+            setSelectedToken(stakedToken);   
            }, 50);
         } else {
           consoleOut("sMEAN not available in the token list, please add");
         }
+
       }
 
       setCurrentTab(option);
