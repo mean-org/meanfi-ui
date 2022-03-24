@@ -1811,7 +1811,7 @@ export const TreasuryStreamCreateModal = (props: {
                         min={0}
                         max={12}
                         maxLength={2}
-                        value={parseFloat(lockPeriodAmount)}
+                        value={lockPeriodAmount}
                       />
                     </div>
                   </div>
