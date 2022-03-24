@@ -51,10 +51,10 @@ import {
 } from '../../constants';
 import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
-import { OperationType, TransactionStatus } from '../../models/enums';
+import { OperationType, PaymentRateType, TransactionStatus } from '../../models/enums';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { notify, openNotification } from '../../utils/notifications';
-import { IconBank, IconClock, IconExternalLink, IconRefresh, IconShieldOutline, IconSort, IconTrash } from '../../Icons';
+import { IconBank, IconClock, IconRefresh, IconShieldOutline, IconTrash } from '../../Icons';
 import { TreasuryOpenModal } from '../../components/TreasuryOpenModal';
 import { MSP_ACTIONS, StreamInfo, STREAM_STATE, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { TreasuryCreateModal } from '../../components/TreasuryCreateModal';
@@ -98,7 +98,6 @@ import { Program, Provider } from '@project-serum/anchor';
 import { TreasuryCreateOptions } from '../../models/treasuries';
 import { customLogger } from '../..';
 
-
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const TreasuriesView = () => {
@@ -113,6 +112,7 @@ export const TreasuriesView = () => {
     treasuryOption,
     detailsPanelOpen,
     transactionStatus,
+    lockPeriodFrequency,
     streamProgramAddress,
     highLightableStreamId,
     streamV2ProgramAddress,
@@ -3012,7 +3012,7 @@ export const TreasuriesView = () => {
 
       let closeTreasury = await msp.closeTreasury(
         publicKey,                                                // payer
-        publicKey,                          // TODO: This should come from the UI         
+        multisig.authority,                         // TODO: This should come from the UI        
         new PublicKey(data.treasury),                             // treasury
       );
 
@@ -3301,7 +3301,7 @@ export const TreasuriesView = () => {
     resetTransactionStatus
   ]);
   const hideCloseStreamModal = useCallback(() => setIsCloseStreamModalVisibility(false), []);
-  const onAcceptCloseStream = (closeTreasury: boolean) => {
+  const onAcceptCloseStream = (closeTreasury: any) => {
     hideCloseStreamModal();
     onExecuteCloseStreamTransaction(closeTreasury);
   };
@@ -3327,7 +3327,7 @@ export const TreasuriesView = () => {
     resetTransactionStatus();
   }
 
-  const onExecuteCloseStreamTransaction = async (closeTreasury: boolean) => {
+  const onExecuteCloseStreamTransaction = async (closeTreasury: any) => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
@@ -3351,7 +3351,7 @@ export const TreasuriesView = () => {
         const data = {
           stream: streamPublicKey.toBase58(),                     // stream
           initializer: wallet.publicKey.toBase58(),               // initializer
-          closeTreasury                                           // closeTreasury
+          closeTreasury: closeTreasury.closeTreasuryOption        // closeTreasury
         }
         consoleOut('data:', data);
 
@@ -3511,8 +3511,8 @@ export const TreasuriesView = () => {
 
       const data = {
         stream: streamPublicKey.toBase58(),                     // stream
-        payer: publicKey.toBase58(),                      // initializer
-        closeTreasury                                           // closeTreasury
+        payer: publicKey.toBase58(),                            // initializer
+        closeTreasury: closeTreasury.closeTreasuryOption        // closeTreasury
       }
 
       consoleOut('data:', data);
@@ -5488,18 +5488,8 @@ export const TreasuriesView = () => {
         <div className="debug-bar">
           <span className="ml-1">loadingTreasuries:</span><span className="ml-1 font-bold fg-dark-active">{loadingTreasuries ? 'true' : 'false'}</span>
           <span className="ml-1">isBusy:</span><span className="ml-1 font-bold fg-dark-active">{isBusy ? 'true' : 'false'}</span>
-          <span className="ml-1">retryOperationPayload:</span><span className="ml-1 font-bold fg-dark-active">{retryOperationPayload ? 'true' : 'false'}</span>
           <span className="ml-1">highLightableStreamId:</span><span className="ml-1 font-bold fg-dark-active">{highLightableStreamId || '-'}</span>
-          {(transactionStatus.lastOperation !== undefined) && (
-            <>
-            <span className="ml-1">lastOperation:</span><span className="ml-1 font-bold fg-dark-active">{TransactionStatus[transactionStatus.lastOperation]}</span>
-            </>
-          )}
-          {(transactionStatus.currentOperation !== undefined) && (
-            <>
-            <span className="ml-1">currentOperation:</span><span className="ml-1 font-bold fg-dark-active">{TransactionStatus[transactionStatus.currentOperation]}</span>
-            </>
-          )}
+          <span className="ml-1">lockPeriodFrequency:</span><span className="ml-1 font-bold fg-dark-active">{PaymentRateType[lockPeriodFrequency]}</span>
         </div>
       )} */}
 

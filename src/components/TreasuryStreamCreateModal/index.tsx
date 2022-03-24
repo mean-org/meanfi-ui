@@ -545,7 +545,14 @@ export const TreasuryStreamCreateModal = (props: {
   }
 
   const handlePaymentRateAmountChange = (e: any) => {
-    const newValue = e.target.value;
+    let newValue = e.target.value;
+    const splitted = newValue.toString().split('.');
+    const left = splitted[0];
+    if (left.length > 1) {
+      const number = splitted[0] - 0;
+      splitted[0] = `${number}`;
+      newValue = splitted.join('.');
+    }
     if (newValue === null || newValue === undefined || newValue === "") {
       setPaymentRateAmount("");
     } else if (newValue === '.') {
@@ -585,7 +592,23 @@ export const TreasuryStreamCreateModal = (props: {
   }
 
   const handleFromCoinAmountChange = (e: any) => {
-    const newValue = e.target.value;
+
+    let newValue = e.target.value;
+
+    const decimals = selectedToken ? selectedToken.decimals : 0;
+    const splitted = newValue.toString().split('.');
+    const left = splitted[0];
+    if (left.length > 1) {
+      const number = splitted[0] - 0;
+      splitted[0] = `${number}`;
+      newValue = splitted.join('.');
+    } else if (decimals && splitted[1]) {
+      if (splitted[1].length > decimals) {
+        splitted[1] = splitted[1].slice(0, -1);
+        newValue = splitted.join('.');
+      }
+    }
+
     if (newValue === null || newValue === undefined || newValue === "") {
       setFromCoinAmount("");
       setTokenAmount(new BN(0));
@@ -598,7 +621,23 @@ export const TreasuryStreamCreateModal = (props: {
   };
 
   const handleCliffReleaseAmountChange = (e: any) => {
-    const newValue = e.target.value;
+
+    let newValue = e.target.value;
+
+    const decimals = selectedToken ? selectedToken.decimals : 0;
+    const splitted = newValue.toString().split('.');
+    const left = splitted[0];
+    if (left.length > 1) {
+      const number = splitted[0] - 0;
+      splitted[0] = `${number}`;
+      newValue = splitted.join('.');
+    } else if (decimals && splitted[1]) {
+      if (splitted[1].length > decimals) {
+        splitted[1] = splitted[1].slice(0, -1);
+        newValue = splitted.join('.');
+      }
+    }
+
     if (newValue === null || newValue === undefined || newValue === "") {
       setCliffRelease("");
     } else if (newValue === '.') {
@@ -1950,10 +1989,24 @@ export const TreasuryStreamCreateModal = (props: {
                   <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-cliff-release')}  </strong> {cliffRelease ? (`${cutNumber(parseFloat(cliffRelease), 6)} ${selectedToken && selectedToken.name} (on commencement)`) : "--"}
                 </Col>
                 <Col span={24}>
-                  <strong>Amount to be streamed:  </strong> {(cliffRelease && lockPeriodAmount && selectedToken && lockPeriodFrequency) ? (`${parseFloat(fromCoinAmount) - parseFloat(cliffRelease)} ${selectedToken.name} over ${lockPeriodAmount} ${getLockPeriodOptionLabel(lockPeriodFrequency, t)}`) : "--"}
+                  <strong>Amount to be streamed: </strong>
+                  <span>
+                  {
+                    (cliffRelease && lockPeriodAmount && selectedToken)
+                      ? (`${parseFloat(fromCoinAmount) - parseFloat(cliffRelease)} ${selectedToken.name} over ${lockPeriodAmount} ${getLockPeriodOptionLabel(lockPeriodFrequency, t)}`)
+                      : "--"
+                  }
+                  </span>
                 </Col>
                 <Col span={24}>
-                  <strong>Release rate:  </strong> {(cliffRelease && lockPeriodAmount && selectedToken && lockPeriodFrequency) ? (`${paymentRateAmount} ${selectedToken.name} / ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`) : "--"}
+                  <strong>Release rate: </strong>
+                  <span>
+                    {
+                      (cliffRelease && lockPeriodAmount && selectedToken)
+                        ? (`${paymentRateAmount} ${selectedToken.name} / ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`)
+                        : "--"
+                    }
+                  </span>
                 </Col>
               </Row>
 
@@ -2046,27 +2099,27 @@ export const TreasuryStreamCreateModal = (props: {
       </div>
       <div className={currentStep === 2 ? "contract-wrapper panel3 show" : "contract-wrapper panel3 hide"}>
         <Button
-            className="main-cta"
-            block
-            type="primary"
-            shape="round"
-            size="large"
-            onClick={onTransactionStart}
-            disabled={
-              !publicKey ||
-              !isMemoValid() ||
-              !isValidAddress(recipientAddress) ||
-              (!selectedToken || unallocatedBalance.toNumber() === 0) ||
-              (!fromCoinAmount || parseFloat(fromCoinAmount) === 0) ||
-              (!lockPeriodAmount || parseFloat(lockPeriodAmount) === 0) ||
-              !cliffRelease ||
-              (parseFloat(cliffRelease) > makeDecimal(unallocatedBalance, selectedToken.decimals)) ||
-              !arePaymentSettingsValid() ||
-              !areSendAmountSettingsValid() ||
-              !isVerifiedRecipient
-            }>
-            {getTransactionStartButtonLabelInLocked()}
-          </Button>
+          className="main-cta"
+          block
+          type="primary"
+          shape="round"
+          size="large"
+          onClick={onTransactionStart}
+          disabled={
+            !publicKey ||
+            !isMemoValid() ||
+            !isValidAddress(recipientAddress) ||
+            (!selectedToken || unallocatedBalance.toNumber() === 0) ||
+            (!fromCoinAmount || parseFloat(fromCoinAmount) === 0) ||
+            (!lockPeriodAmount || parseFloat(lockPeriodAmount) === 0) ||
+            !cliffRelease ||
+            (parseFloat(cliffRelease) > makeDecimal(unallocatedBalance, selectedToken.decimals)) ||
+            !arePaymentSettingsValid() ||
+            !areSendAmountSettingsValid() ||
+            !isVerifiedRecipient
+          }>
+          {getTransactionStartButtonLabelInLocked()}
+        </Button>
       </div>
     </Modal>
   );

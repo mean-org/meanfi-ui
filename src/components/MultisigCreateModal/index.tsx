@@ -119,7 +119,14 @@ export const MultisigCreateModal = (props: {
   }
 
   const onThresholdInputValueChange = (e: any) => {
-    const newValue = e.target.value;
+    let newValue = e.target.value;
+    const splitted = newValue.toString().split('.');
+    const left = splitted[0];
+    if (left.length > 1) {
+      const number = splitted[0] - 0;
+      splitted[0] = `${number}`;
+      newValue = splitted.join('.');
+    }
     if (newValue === null || newValue === undefined || newValue === "") {
       setMultisigThreshold(0);
     } else if (isValidNumber(newValue)) {

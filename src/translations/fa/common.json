@@ -1074,7 +1074,7 @@
 			"number-of-streams": "تعداد استریم ها",
 			"treasury-address-label": "Treasury Address",
 			"treasury-name-label": "نام treasury",
-			"unallocated-treasury-balance": "موجودی treasury تخصیص نیافته"
+			"unallocated-treasury-balance": "Unallocated Streaming Treasury Balance"
 		},
 		"treasury-detail-heading": "جزئیات treasury",
 		"treasury-list": {
@@ -1127,7 +1127,7 @@
 			"multiple-address-list": "Multiple address list",
 			"multiple-address-question-mark-tooltip": "Please provide a csv text file with one address per line in the following format: \n MEMO or STREAM NAME, WALLET ADDRESS. \n\n Here is an example of how it should look: \n Epoch 1, FrdFf3EqcGuytTweLvoELBt29WrAGVYjrh4585A2bTAZ \n\n Before you submit the file, please make sure the recipient addresses are correct and do not belong to an exchange.",
 			"message-warning": "The list of recipients you submitted included your own wallet address. This is not possible and this address has been removed from the imported list.",
-			"no-streams": "این treasury هیچ استریم فعالی ندارد",
+			"no-streams": "This streaming treasury has no active streams",
 			"option-close-stream": "بستن",
 			"option-explorer-link": "مشاهده در سولانا اکسپلورر",
 			"option-pause-stream": "وقفه",
