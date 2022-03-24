@@ -461,11 +461,12 @@ export const UnstakeTabView = (props: {
         </div>
         <div className="flex-fixed-left">
           <div className="left">
-            <span className="add-on simplelink">
+            <span className="add-on">
               {selectedToken && (
                 <TokenDisplay onClick={() => {}}
                   mintAddress={selectedToken.address}
                   name={selectedToken.name}
+                  className="click-disabled"
                 />
               )}
             </span>
