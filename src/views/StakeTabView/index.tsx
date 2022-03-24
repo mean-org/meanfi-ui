@@ -17,17 +17,18 @@ import { consoleOut, getTransactionModalTitle, getTransactionOperationDescriptio
 import { customLogger } from "../..";
 import { useConnection } from "../../contexts/connection";
 import { notify } from "../../utils/notifications";
+import { TokenInfo } from "@solana/spl-token-registry";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const StakeTabView = (props: {
   stakeClient: StakingClient;
+  tokenBalance: number;
+  selectedToken: TokenInfo | undefined;
 }) => {
   const {
+    coinPrices,
     stakedAmount,
-    tokenBalance,
-    selectedToken,
-    effectiveRate,
     loadingPrices,
     fromCoinAmount,
     paymentStartDate,
@@ -116,7 +117,7 @@ export const StakeTabView = (props: {
 
     let newValue = e.target.value;
 
-    const decimals = selectedToken ? selectedToken.decimals : 0;
+    const decimals = props.selectedToken ? props.selectedToken.decimals : 0;
     const splitted = newValue.toString().split('.');
     const left = splitted[0];
     if (left.length > 1) {
@@ -139,22 +140,32 @@ export const StakeTabView = (props: {
     }
   };
 
+  const getPricePerToken = useCallback((token: TokenInfo): number => {
+    if (!token || !token.symbol) { return 0; }
+    const tokenSymbol = token.symbol.toUpperCase();
+    const symbol = tokenSymbol[0] === 'W' ? tokenSymbol.slice(1) : tokenSymbol;
+
+    return coinPrices && coinPrices[symbol]
+      ? coinPrices[symbol]
+      : 0;
+  }, [coinPrices])
+
   const getStakeButtonLabel = useCallback(() => {
     return !connected
       ? t('transactions.validation.not-connected')
       : isBusy
-        ? `${t("invest.panel-right.tabset.stake.stake-button-busy")} ${selectedToken && selectedToken.symbol}`
-        : !selectedToken || !tokenBalance
+        ? `${t("invest.panel-right.tabset.stake.stake-button-busy")} ${props.selectedToken && props.selectedToken.symbol}`
+        : !props.selectedToken || !props.tokenBalance
           ? t('transactions.validation.no-balance')
           : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !parseFloat(fromCoinAmount)
             ? t('transactions.validation.no-amount')
-            : parseFloat(fromCoinAmount) > tokenBalance
+            : parseFloat(fromCoinAmount) > props.tokenBalance
               ? t('transactions.validation.amount-high')
-              : `${t("invest.panel-right.tabset.stake.stake-button")} ${selectedToken && selectedToken.symbol}`;
+              : `${t("invest.panel-right.tabset.stake.stake-button")} ${props.selectedToken && props.selectedToken.symbol}`;
   }, [
     fromCoinAmount,
-    selectedToken,
-    tokenBalance,
+    props.selectedToken,
+    props.tokenBalance,
     connected,
     isBusy,
     t,
@@ -162,11 +173,11 @@ export const StakeTabView = (props: {
 
   const isStakingFormValid = (): boolean => {
     return  connected &&
-            selectedToken &&
-            tokenBalance &&
+            props.selectedToken &&
+            props.tokenBalance &&
             fromCoinAmount &&
             parseFloat(fromCoinAmount) > 0 &&
-            parseFloat(fromCoinAmount) <= tokenBalance
+            parseFloat(fromCoinAmount) <= props.tokenBalance
       ? true
       : false;
   }
@@ -380,7 +391,7 @@ export const StakeTabView = (props: {
       }
     };
 
-    if (wallet && selectedToken) {
+    if (wallet && props.selectedToken) {
       showTransactionExecutionModal();
       setIsBusy(true);
       const create = await createTx();
@@ -404,13 +415,13 @@ export const StakeTabView = (props: {
               loadingTitle: "Confirming transaction",
               loadingMessage: `Staking ${formatThousands(
                 parseFloat(fromCoinAmount),
-                selectedToken.decimals
-              )} ${selectedToken.symbol}`,
+                props.selectedToken.decimals
+              )} ${props.selectedToken.symbol}`,
               completedTitle: "Transaction confirmed",
               completedMessage: `Successfully staked ${formatThousands(
                 parseFloat(fromCoinAmount),
-                selectedToken.decimals
-              )} ${selectedToken.symbol}`,
+                props.selectedToken.decimals
+              )} ${props.selectedToken.symbol}`,
             });
             setIsBusy(false);
           } else {
@@ -431,7 +442,7 @@ export const StakeTabView = (props: {
   }, [
     wallet,
     connection,
-    selectedToken,
+    props.selectedToken,
     fromCoinAmount,
     props.stakeClient,
     transactionStatus.currentOperation,
@@ -480,10 +491,10 @@ export const StakeTabView = (props: {
         <div className="flex-fixed-left">
           <div className="left">
             <span className="add-on">
-              {selectedToken && (
+              {props.selectedToken && (
                 <TokenDisplay onClick={() => {}}
-                  mintAddress={selectedToken.address}
-                  name={selectedToken.name}
+                  mintAddress={props.selectedToken.address}
+                  name={props.selectedToken.name}
                   className="click-disabled"
                 />
               )}
@@ -511,16 +522,16 @@ export const StakeTabView = (props: {
           <div className="left inner-label">
             <span>{t('transactions.send-amount.label-right')}:</span>
             <span>
-              {`${tokenBalance && selectedToken
-                  ? getAmountWithSymbol(tokenBalance, selectedToken?.address, true)
+              {`${props.tokenBalance && props.selectedToken
+                  ? getAmountWithSymbol(props.tokenBalance, props.selectedToken?.address, true)
                   : "0"
               }`}
             </span>
           </div>
           <div className="right inner-label">
             <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
-              ~${fromCoinAmount && effectiveRate
-                ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
+              ~${fromCoinAmount && props.selectedToken
+                ? formatAmount(parseFloat(fromCoinAmount) * getPricePerToken(props.selectedToken), 2)
                 : "0.00"}
             </span>
           </div>
