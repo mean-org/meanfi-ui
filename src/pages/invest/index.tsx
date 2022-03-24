@@ -617,7 +617,11 @@ export const InvestView = () => {
 
                             {/* Tab unstake */}
                             {currentTab === "unstake" && (
-                              <UnstakeTabView stakeClient={stakeClient} />
+                              <UnstakeTabView
+                                stakeClient={stakeClient}
+                                selectedToken={stakingPair?.stakedToken}
+                                tokenBalance={meanBalance}
+                              />
                             )}
                           </div>
                         )}
