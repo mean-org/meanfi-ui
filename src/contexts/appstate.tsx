@@ -720,8 +720,10 @@ const AppStateProvider: React.FC = ({ children }) => {
             }
             updateStreamDetail(detail);
             setActiveStream(detail);
-            const token = getTokenByMintAddress(detail.associatedToken as string);
-            setSelectedToken(token);
+            if (location.pathname.startsWith('/accounts')) {
+              const token = getTokenByMintAddress(detail.associatedToken as string);
+              setSelectedToken(token);
+            }
           }
         })
         .catch((error: any) => {
@@ -991,8 +993,10 @@ const AppStateProvider: React.FC = ({ children }) => {
                       if (detail) {
                         updateStreamDetail(detail);
                         setActiveStream(detail);
-                        const token = getTokenByMintAddress(detail.associatedToken as string);
-                        setSelectedToken(token);
+                        if (location.pathname.startsWith('/accounts')) {
+                          const token = getTokenByMintAddress(detail.associatedToken as string);
+                          setSelectedToken(token);
+                        }
                         setTimeout(() => {
                           setStreamActivity([]);
                           setHasMoreStreamActivity(true);
@@ -1005,8 +1009,10 @@ const AppStateProvider: React.FC = ({ children }) => {
                   if (item) {
                     updateStreamDetail(item);
                     setActiveStream(item);
-                    const token = getTokenByMintAddress(item.associatedToken as string);
-                    setSelectedToken(token);
+                    if (location.pathname.startsWith('/accounts')) {
+                      const token = getTokenByMintAddress(item.associatedToken as string);
+                      setSelectedToken(token);
+                    }
                     setTimeout(() => {
                       setStreamActivity([]);
                       setHasMoreStreamActivity(true);
@@ -1040,6 +1046,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     loadingStreams,
     selectedStream,
     lastSentTxStatus,
+    location.pathname,
     fetchTxInfoStatus,
     customStreamDocked,
     highLightableStreamId,
