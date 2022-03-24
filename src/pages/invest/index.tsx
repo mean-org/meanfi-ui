@@ -5,7 +5,7 @@ import { Button, Tooltip, Row, Col, Empty, Spin } from "antd";
 import { useTranslation } from 'react-i18next';
 import { isDesktop } from "react-device-detect";
 import { PreFooter } from "../../components/PreFooter";
-import { useConnection, useConnectionConfig } from '../../contexts/connection';
+import { getNetworkIdByCluster, useConnection, useConnectionConfig } from '../../contexts/connection';
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
 import { cutNumber, findATokenAddress, formatThousands } from "../../utils/utils";
@@ -18,9 +18,9 @@ import { ConfirmOptions, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { Env, StakePoolInfo, StakingClient } from "@mean-dao/staking";
 import { StakeTabView } from "../../views/StakeTabView";
 import { UnstakeTabView } from "../../views/UnstakeTabView";
-import { MEAN_TOKEN_LIST } from "../../constants/token-list";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
 import { TokenInfo } from "@solana/spl-token-registry";
+import { MEAN_TOKEN_LIST } from "../../constants/token-list";
 
 type SwapOption = "stake" | "unstake";
 
@@ -31,7 +31,6 @@ type StakingPair = {
 
 export const InvestView = () => {
   const {
-    tokenList,
     coinPrices,
     stakedAmount,
     isWhitelisted,
@@ -39,14 +38,12 @@ export const InvestView = () => {
     detailsPanelOpen,
     isInBetaTestingProgram,
     setIsVerifiedRecipient,
-    refreshTokenBalance,
     setDtailsPanelOpen,
     setFromCoinAmount,
-    setSelectedToken,
-    setSelectedTokenBalance
   } = useContext(AppStateContext);
   const navigate = useNavigate();
   const connection = useConnection();
+  const connectionConfig = useConnectionConfig();
   const { cluster, endpoint } = useConnectionConfig();
   const { connected, publicKey } = useWallet();
   const { account } = useNativeAccount();
@@ -55,7 +52,6 @@ export const InvestView = () => {
   const { width } = useWindowSize();
   const [isSmallUpScreen, setIsSmallUpScreen] = useState(isDesktop);
   const [nativeBalance, setNativeBalance] = useState(0);
-  const [sMeanBalance, setSmeanBalance] = useState<number>(0);
   const [meanPrice, setMeanPrice] = useState<number>(0);
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [currentTab, setCurrentTab] = useState<SwapOption>("stake");
@@ -64,10 +60,14 @@ export const InvestView = () => {
   const [raydiumInfo, setRaydiumInfo] = useState<any>([]);
   const [orcaInfo, setOrcaInfo] = useState<any>([]);
   const [maxRadiumAprValue, setMaxRadiumAprValue] = useState<number>(0);
-  const [meanAddresses, setMeanAddresses] = useState<Env>();
   const [pageInitialized, setPageInitialized] = useState<boolean>(false);
   const [stakePoolInfo, setStakePoolInfo] = useState<StakePoolInfo>();
+
+  // Tokens and balances
+  const [meanAddresses, setMeanAddresses] = useState<Env>();
   const [stakingPair, setStakingPair] = useState<StakingPair | undefined>(undefined);
+  const [sMeanBalance, setSmeanBalance] = useState<number>(0);
+  const [meanBalance, setMeanBalance] = useState<number>(0);
 
   const userHasAccess = useMemo(() => {
 
@@ -86,6 +86,42 @@ export const InvestView = () => {
       navigate('/accounts');
     }
   }, [navigate]);
+
+  const refreshMeanBalance = useCallback(async () => {
+
+    if (!connection || !publicKey || !accounts || !accounts.tokenAccounts || !accounts.tokenAccounts.length) {
+      return;
+    }
+
+    const getTokenAccountBalanceByAddress = async (tokenMintAddress: PublicKey | undefined | null): Promise<number> => {
+      if (!tokenMintAddress) return 0;
+      try {
+        const tokenAmount = (await connection.getTokenAccountBalance(tokenMintAddress)).value;
+        return tokenAmount.uiAmount || 0;
+      } catch (error) {
+        console.error(error);
+        throw(error);
+      }
+    }
+
+    let balance = 0;
+
+    if (!stakingPair || !stakingPair.unstakedToken) {
+      setMeanBalance(balance);
+      return;
+    }
+
+    const meanTokenPk = new PublicKey(stakingPair.unstakedToken.address);
+    const meanTokenAddress = await findATokenAddress(publicKey, meanTokenPk);
+    balance = await getTokenAccountBalanceByAddress(meanTokenAddress);
+    setMeanBalance(balance);
+
+  }, [
+    accounts,
+    publicKey,
+    connection,
+    stakingPair,
+  ]);
 
   const refreshStakedMeanBalance = useCallback(async () => {
 
@@ -111,9 +147,9 @@ export const InvestView = () => {
       return;
     }
 
-    const tokenPk = new PublicKey(stakingPair.stakedToken.address);
-    const selectedTokenAddress = await findATokenAddress(publicKey, tokenPk);
-    balance = await getTokenAccountBalanceByAddress(selectedTokenAddress);
+    const sMeanTokenPk = new PublicKey(stakingPair.stakedToken.address);
+    const smeanTokenAddress = await findATokenAddress(publicKey, sMeanTokenPk);
+    balance = await getTokenAccountBalanceByAddress(smeanTokenAddress);
     setSmeanBalance(balance);
 
   }, [
@@ -131,8 +167,8 @@ export const InvestView = () => {
     }
 
     if (account?.lamports !== previousBalance || !nativeBalance) {
-      // Refresh token balance
-      refreshTokenBalance();
+      // Refresh token balances
+      refreshMeanBalance();
       refreshStakedMeanBalance();
       setNativeBalance(getAccountBalance());
       // Update previous balance
@@ -142,7 +178,7 @@ export const InvestView = () => {
     account,
     nativeBalance,
     previousBalance,
-    refreshTokenBalance,
+    refreshMeanBalance,
     refreshStakedMeanBalance,
   ]);
 
@@ -243,23 +279,7 @@ export const InvestView = () => {
     publicKey
   ]);
 
-  // Select MEAN token
-  useEffect(() => {
-
-    if (tokenList && !pageInitialized) {
-      const mean = tokenList.find(t => t.symbol === 'MEAN');
-      setSelectedToken(mean);
-      consoleOut('token preset:', mean?.name, 'blue');
-    }
-
-    return () => { };
-  }, [
-    tokenList,
-    pageInitialized,
-    setSelectedToken,
-  ]);
-
-  // Get token addresses from staking client and preset tokens
+  // Get token addresses from staking client and save tokens
   useEffect(() => {
     if (!stakeClient) { return; }
 
@@ -268,40 +288,23 @@ export const InvestView = () => {
 
       setMeanAddresses(meanAddress);
 
-      const unstakedToken = MEAN_TOKEN_LIST.find(t => t.address === meanAddress.mean.toBase58());
-      const stakedToken = MEAN_TOKEN_LIST.find(t => t.address === meanAddress.sMean.toBase58());
+      const tokenList = MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(connectionConfig.cluster))
+      const unstakedToken = tokenList.find(t => t.address === meanAddress.mean.toBase58());
+      const stakedToken = tokenList.find(t => t.address === meanAddress.sMean.toBase58());
+
+      consoleOut('unstakedToken', unstakedToken, 'blue');
+      consoleOut('stakedToken', stakedToken, 'blue');
 
       setStakingPair({
         unstakedToken,
         stakedToken
       });
 
-      if (currentTab === "stake") {
-
-        if (unstakedToken) {
-          consoleOut("MEAN token", unstakedToken);
-          setSelectedToken(unstakedToken);
-        } else {
-          consoleOut("MEAN not available in the token list, please add");
-        }
-
-      } else {
-
-        if (stakedToken) {
-          consoleOut("sMEAN token", stakedToken);
-          setSelectedToken(stakedToken);
-        } else {
-          consoleOut("sMEAN not available in the token list, please add");
-        }
-
-      }
     }
   }, [
     stakeClient,
     pageInitialized,
-    currentTab,
-    fromCoinAmount,
-    setSelectedToken
+    connectionConfig.cluster
   ]);
 
   // Get staking pool info from staking client
@@ -322,7 +325,6 @@ export const InvestView = () => {
     stakeClient,
     fromCoinAmount,
     pageInitialized,
-    setSelectedToken
   ]);
 
   // Get Orca pool info
@@ -378,47 +380,13 @@ export const InvestView = () => {
   const [selectedInvest, setSelectedInvest] = useState<any>(investItems[0]);
 
   const onTabChange = useCallback((option: SwapOption) => {
-    if (meanAddresses) {
-      setSelectedTokenBalance(0);
-
-      if (option === "stake") {
-        const token = MEAN_TOKEN_LIST.find(t => t.address === meanAddresses.mean.toBase58());
-
-        if (token) {
-          consoleOut("MEAN token", token);
-
-          setTimeout(() => { 
-            setSelectedToken(token);   
-           }, 50);
-        } else {
-          consoleOut("MEAN not available in the token list, please add");
-        }
-
-      } else {
-        const token = MEAN_TOKEN_LIST.find(t => t.address === meanAddresses.sMean.toBase58());
-
-        if (token) {
-          consoleOut("sMEAN token", token);
-
-          setTimeout(() => { 
-            setSelectedToken(token);   
-           }, 50);
-        } else {
-          consoleOut("sMEAN not available in the token list, please add");
-        }
-      }
-
-      setCurrentTab(option);
-      setFromCoinAmount('');
-      setIsVerifiedRecipient(false);
-    }
+    setCurrentTab(option);
+    setFromCoinAmount('');
+    setIsVerifiedRecipient(false);
 
   }, [
-    meanAddresses,
-    setSelectedTokenBalance,
-    setIsVerifiedRecipient,
     setFromCoinAmount,
-    setSelectedToken,
+    setIsVerifiedRecipient,
   ]);
 
   // Withdraw funds modal
@@ -640,7 +608,11 @@ export const InvestView = () => {
 
                             {/* Tab Stake */}
                             {currentTab === "stake" && (
-                              <StakeTabView stakeClient={stakeClient} />
+                              <StakeTabView
+                                stakeClient={stakeClient}
+                                selectedToken={stakingPair?.unstakedToken}
+                                tokenBalance={meanBalance}
+                              />
                             )}
 
                             {/* Tab unstake */}
