@@ -746,6 +746,8 @@
 			"add-funds-cta": "Recarregar (adicionar fundos)",
 			"amount-funded-date": "financiado em",
 			"cancel-scheduled-transfer": "Cancelar transferência",
+			"close-stream-cta": "Close Stream",
+			"close-stream-cta-tooltip": "Close stream is available when Stream runs out of funds",
 			"close-money-stream-menu-item": "Fechar fluxo de dinheiro",
 			"cta-disabled-closing": "Fechando fluxo de dinheiro...",
 			"cta-disabled-creating": "Criar fluxo em andamento...",

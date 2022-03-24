@@ -757,6 +757,8 @@
 			"add-funds-cta": "Top up (add funds)",
 			"amount-funded-date": "funded on",
 			"cancel-scheduled-transfer": "Cancel transfer",
+			"close-stream-cta": "Close Stream",
+			"close-stream-cta-tooltip": "Close stream is available when Stream runs out of funds",
 			"close-money-stream-menu-item": "Close money stream",
 			"cta-disabled-closing": "Closing money stream...",
 			"cta-disabled-creating": "Create stream in progress...",

@@ -757,6 +757,8 @@
 			"add-funds-cta": "충전(자금 추가)",
 			"amount-funded-date": "에 자금 지원",
 			"cancel-scheduled-transfer": "전송 취소",
+			"close-stream-cta": "Close Stream",
+			"close-stream-cta-tooltip": "Close stream is available when Stream runs out of funds",
 			"close-money-stream-menu-item": "머니스트림 종료",
 			"cta-disabled-closing": "머니스트림 종료",
 			"cta-disabled-creating": "스트림 생성 진행 중...",

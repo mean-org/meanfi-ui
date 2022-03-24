@@ -750,6 +750,8 @@
 			"add-funds-cta": "شارژ (افزودن وجوه)",
 			"amount-funded-date": "تامین مالی شده است",
 			"cancel-scheduled-transfer": "لغو انتقال",
+			"close-stream-cta": "Close Stream",
+			"close-stream-cta-tooltip": "Close stream is available when Stream runs out of funds",
 			"close-money-stream-menu-item": "بستن money stream",
 			"cta-disabled-closing": "بستن money stream...",
 			"cta-disabled-creating": "ایجاد stream در حال انجام...",

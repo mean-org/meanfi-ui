@@ -750,6 +750,8 @@
 			"add-funds-cta": "Doldur (para ekle)",
 			"amount-funded-date": "fonlanan",
 			"cancel-scheduled-transfer": "Aktarımı iptal et",
+			"close-stream-cta": "Close Stream",
+			"close-stream-cta-tooltip": "Close stream is available when Stream runs out of funds",
 			"close-money-stream-menu-item": "Para aktarımını kapat",
 			"cta-disabled-closing": "Para aktarımı kapatılıyor...",
 			"cta-disabled-creating": "Aktarım oluşturma devam ediyor...",

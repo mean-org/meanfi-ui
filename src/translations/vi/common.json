@@ -750,6 +750,8 @@
 			"add-funds-cta": "Nạp tiền",
 			"amount-funded-date": "Đã nạp vào",
 			"cancel-scheduled-transfer": "Huỷ chuyển khoản",
+			"close-stream-cta": "Close Stream",
+			"close-stream-cta-tooltip": "Close stream is available when Stream runs out of funds",
 			"close-money-stream-menu-item": "Đóng money stream",
 			"cta-disabled-closing": "Đang đóng money stream...",
 			"cta-disabled-creating": "Đang tạo stream...",
