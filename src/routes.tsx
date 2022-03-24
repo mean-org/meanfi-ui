@@ -24,7 +24,7 @@ import {
   MultisigAssetsView,
   MultisigProgramsView,
   MultisigMintsView,
-  MultisigTreasuryStreams
+  MultisigTreasuryStreams,
 } from "./pages";
 
 import { ServiceUnavailableView } from "./pages/service-unavailable";

@@ -1,6 +1,6 @@
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import './style.less';
-import { ArrowDownOutlined, CheckOutlined, ReloadOutlined } from "@ant-design/icons";
+import { ArrowDownOutlined, CheckOutlined, ReloadOutlined, WarningFilled } from "@ant-design/icons";
 import { Button, Tooltip, Row, Col, Space, Empty, Spin } from "antd";
 import moment from 'moment';
 import Checkbox from "antd/lib/checkbox/Checkbox";
@@ -9,39 +9,54 @@ import { useTranslation } from 'react-i18next';
 import { isDesktop } from "react-device-detect";
 import { TokenDisplay } from "../../components/TokenDisplay";
 import { PreFooter } from "../../components/PreFooter";
-import { useConnection } from '../../contexts/connection';
+import { useConnection, useConnectionConfig } from '../../contexts/connection';
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
 import { cutNumber, formatAmount, formatThousands, getAmountWithSymbol, isValidNumber } from "../../utils/utils";
 import { IconRefresh, IconStats } from "../../Icons";
 import { IconHelpCircle } from "../../Icons/IconHelpCircle";
 import useWindowSize from '../../hooks/useWindowResize';
-import { consoleOut, isLocal } from "../../utils/ui";
+import { consoleOut, isDev, isLocal, isProd } from "../../utils/ui";
 import { useNavigate } from "react-router-dom";
+import { ConfirmOptions, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { Provider } from "@project-serum/anchor";
+import { Env, StakePoolInfo, StakingClient } from "@mean-dao/staking";
+import { StakeTabView } from "../../views/StakeTabView";
+import { UnstakeTabView } from "../../views/UnstakeTabView";
+import { MEAN_TOKEN_LIST } from "../../constants/token-list";
+import { useNativeAccount } from "../../contexts/accounts";
 
 type SwapOption = "stake" | "unstake";
 
 export const InvestView = () => {
   const {
-    userTokens,
-    selectedToken,
-    unstakeAmount,
+    stakedAmount,
     isWhitelisted,
+    selectedToken,
+    fromCoinAmount,
+    unstakedAmount,
     unstakeStartDate,
     detailsPanelOpen,
     stakingMultiplier,
+    isInBetaTestingProgram,
     setIsVerifiedRecipient,
+    refreshTokenBalance,
     setDtailsPanelOpen,
     setFromCoinAmount,
     setSelectedToken,
+    setSelectedTokenBalance
   } = useContext(AppStateContext);
   const navigate = useNavigate();
   const connection = useConnection();
+  const { cluster, endpoint } = useConnectionConfig();
   const { connected, publicKey } = useWallet();
+  const { account } = useNativeAccount();
   const { t } = useTranslation('common');
   const { width } = useWindowSize();
   const [isSmallUpScreen, setIsSmallUpScreen] = useState(isDesktop);
-
+  const [nativeBalance, setNativeBalance] = useState(0);
+  const [userBalances, setUserBalances] = useState<any>();
+  const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [currentTab, setCurrentTab] = useState<SwapOption>("stake");
   const [stakingRewards, setStakingRewards] = useState<number>(0);
   // const [selectedInvest, setSelectedInvest] = useState<any>(undefined);
@@ -49,77 +64,171 @@ export const InvestView = () => {
   const [raydiumInfo, setRaydiumInfo] = useState<any>([]);
   const [orcaInfo, setOrcaInfo] = useState<any>([]);
   const [maxRadiumAprValue, setMaxRadiumAprValue] = useState<number>(0);
+  const [meanAddresses, setMeanAddresses] = useState<Env>();
+  const [pageInitialized, setPageInitialized] = useState<boolean>(false);
+  const [stakePoolInfo, setStakePoolInfo] = useState<StakePoolInfo>();
 
-  // If there is no connected wallet or the connected wallet is not whitelisted
-  // when the App is run NOT in local mode then redirect user to /accounts
+  const userHasAccess = useMemo(() => {
+
+    return isLocal() || (isDev() && (isWhitelisted || isInBetaTestingProgram))
+      ? true
+      : false;
+
+  }, [isInBetaTestingProgram, isWhitelisted]);
+
+  // TODO: Make it NOT available in prod. Remove when releasing
   useEffect(() => {
-    if (!isLocal() && (!publicKey || !isWhitelisted)) {
+    if (isProd()) {
       navigate('/accounts');
     }
+  }, [navigate]);
+
+  // Keep account balance updated
+  useEffect(() => {
+
+    const getAccountBalance = (): number => {
+      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
+    }
+
+    if (account?.lamports !== previousBalance || !nativeBalance) {
+      // Refresh token balance
+      refreshTokenBalance();
+      setNativeBalance(getAccountBalance());
+      // Update previous balance
+      setPreviousBalance(account?.lamports);
+    }
   }, [
-    publicKey,
-    isWhitelisted,
-    navigate
+    account,
+    nativeBalance,
+    previousBalance,
+    refreshTokenBalance
   ]);
 
   const investItems = [
     {
       id: 0,
-      name: "MEAN",
+      name: "Stake",
       symbol1: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg",
       symbol2: "",
-      title: "Stake MEAN",
-      rateAmount: "52.09",
-      interval: "APR"
+      title: t("invest.panel-left.invest-stake-tab-title"),
+      rateAmount: `${stakePoolInfo ? (stakePoolInfo.apy * 100).toFixed(2) : "0"}`,
+      interval: "APY"
     },
     {
       id: 1,
-      name: "Test",
+      name: "Liquidity",
       symbol1: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R/logo.png",
       symbol2: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE/logo.png",
-      title: "MEAN Liquidity Pools and Farms",
-      rateAmount: `Up to ${maxRadiumAprValue}`,
-      interval: "APR/APY 7D"
-    }
-  ];
-
-  const stakingStats = [
-    {
-      label: t("invest.panel-right.stats.staking-apr"),
-      value: "52.09%"
-    },
-    {
-      label: t("invest.panel-right.stats.total-value-locked"),
-      value: "$7.64M"
-    },
-    {
-      label: t("invest.panel-right.stats.total-mean-rewards"),
-      value: "$108,730"
+      title: t("invest.panel-left.invest-liquidity-tab-title"),
+      rateAmount: `${t("invest.panel-left.liquidity-value-label")} ${maxRadiumAprValue}`,
+      interval: "APR/APY"
     }
   ];
 
   const stakingData = [
     {
-      label: "My Staked MEAN",
-      value: unstakeAmount ? cutNumber(parseFloat(unstakeAmount), 6) : 0
+      label: t("invest.panel-right.staking-data.label-my-staked"),
+      value: stakedAmount ? cutNumber(parseFloat(stakedAmount), 6) : 0
     },
     // {
-    //   label: "Avg. Locked Yield",
+    //   label: t("invest.panel-right.staking-data.label-avg"),
     //   value: `${annualPercentageYield}%`
     // },
     // {
-    //   label: "Staking Lock Boost",
+    //   label: t("invest.panel-right.staking-data.label-boost"),
     //   value: `${stakingMultiplier}x boost`
     // },
     // {
-    //   label: "My Locked eMEAN",
+    //   label: t("invest.panel-right.staking-data.label-locked"),
     //   value: "1,000"
     // },
     // {
-    //   label: "My xMEAN Balance",
+    //   label: t("invest.panel-right.staking-data.label-balance"),
     //   value: "20,805.1232"
     // },
   ];
+
+  // Create and cache Staking client instance
+  const stakeClient = useMemo(() => {
+
+    const opts: ConfirmOptions = {
+      preflightCommitment: "confirmed",
+      commitment: "confirmed",
+    };
+
+    return new StakingClient(
+      cluster,
+      endpoint,
+      publicKey,
+      opts,
+      isProd() ? false : true
+    )
+
+  }, [
+    cluster,
+    endpoint,
+    publicKey
+  ]);
+
+  // Get tokens from staking client
+  useEffect(() => {
+    if (!stakeClient) {
+      return;
+    }
+
+    if (!pageInitialized) {
+      const meanAddress = stakeClient.getMintAddresses();
+
+      setMeanAddresses(meanAddress);
+
+      if (currentTab === "stake") {
+        const token = MEAN_TOKEN_LIST.find(t => t.address === meanAddress.mean.toBase58());
+
+        if (token) {
+          consoleOut("MEAN token", token);
+          setSelectedToken(token);
+        } else {
+          consoleOut("MEAN not available in the token list, please add");
+        }
+
+      } else {
+        const token = MEAN_TOKEN_LIST.find(t => t.address === meanAddress.sMean.toBase58());
+
+        if (token) {
+          consoleOut("sMEAN token", token);
+          setSelectedToken(token);
+        } else {
+          consoleOut("sMEAN not available in the token list, please add");
+        }
+      }
+    }
+  }, [
+    stakeClient,
+    pageInitialized,
+    currentTab,
+    fromCoinAmount,
+    setSelectedToken
+  ]);
+
+  // Get staking pool info from staking client
+  useEffect(() => {
+    if (!stakeClient) {
+      return;
+    }
+
+    stakeClient.getStakePoolInfo().then((value) => {
+      setStakePoolInfo(value);
+    }).catch((error) => {
+      console.error(error);
+    });
+
+  }, [
+    stakeClient,
+    pageInitialized,
+    currentTab,
+    fromCoinAmount,
+    setSelectedToken
+  ]);
 
   useEffect(() => {
     if (!connection) { return; }
@@ -163,15 +272,53 @@ export const InvestView = () => {
         })
       })();
 
-  }, [connection]);  
+  }, [connection]);
 
   const [selectedInvest, setSelectedInvest] = useState<any>(investItems[0]);
 
-  const onTabChange = (option: SwapOption) => {
-    setCurrentTab(option);
-    setFromCoinAmount('');
-    setIsVerifiedRecipient(false);
-  }
+  const onTabChange = useCallback((option: SwapOption) => {
+    if (meanAddresses) {
+      setSelectedTokenBalance(0);
+
+      if (option === "stake") {
+        const token = MEAN_TOKEN_LIST.find(t => t.address === meanAddresses.mean.toBase58());
+
+        if (token) {
+          consoleOut("MEAN token", token);
+
+          setTimeout(() => { 
+            setSelectedToken(token);   
+           }, 50);
+        } else {
+          consoleOut("MEAN not available in the token list, please add");
+        }
+
+      } else {
+        const token = MEAN_TOKEN_LIST.find(t => t.address === meanAddresses.sMean.toBase58());
+
+        if (token) {
+          consoleOut("sMEAN token", token);
+
+          setTimeout(() => { 
+            setSelectedToken(token);   
+           }, 50);
+        } else {
+          consoleOut("sMEAN not available in the token list, please add");
+        }
+      }
+
+      setCurrentTab(option);
+      setFromCoinAmount('');
+      setIsVerifiedRecipient(false);
+    }
+
+  }, [
+    meanAddresses,
+    setSelectedTokenBalance,
+    setIsVerifiedRecipient,
+    setFromCoinAmount,
+    setSelectedToken,
+  ]);
 
   // Withdraw funds modal
   const [isWithdrawModalVisible, setIsWithdrawModalVisible] = useState(false);
@@ -189,26 +336,9 @@ export const InvestView = () => {
     closeWithdrawModal();
   }
 
-  // Get MEAN token info
   useEffect(() => {
-    if (!connection) { return; }
-
-    (async () => {
-      const token = userTokens.find(t => t.symbol === 'MEAN');
-      if (!token) { return; }
-
-      setSelectedToken(token);
-    })();
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    connection,
-    userTokens
-  ]);
-
-  useEffect(() => {
-    setStakingRewards(parseFloat(unstakeAmount) * annualPercentageYield / 100);
-  }, [unstakeAmount]);  
+    setStakingRewards(parseFloat(stakedAmount) * annualPercentageYield / 100);
+  }, [stakedAmount]);  
 
   // Detect when entering small screen mode
   useEffect(() => {
@@ -219,6 +349,16 @@ export const InvestView = () => {
     width,
     isSmallUpScreen,
     detailsPanelOpen,
+  ]);
+
+  // Set when a page is initialized
+  useEffect(() => {
+    if (!pageInitialized && stakeClient) {
+      setPageInitialized(true);
+    }
+  }, [
+    pageInitialized,
+    stakeClient
   ]);
 
   const renderInvestOptions = (
@@ -264,6 +404,33 @@ export const InvestView = () => {
     </>
   );
 
+  if (!userHasAccess) {
+    return (
+      <>
+        <div className="container main-container">
+          <div className="interaction-area">
+            <div className="title-and-subtitle w-75 h-100">
+              <div className="title">
+                <IconStats className="mean-svg-icons" />
+                <div>{t('invest.title')}</div>
+              </div>
+              <div className="subtitle text-center">
+                {t('invest.subtitle')}
+              </div>
+              <div className="w-50 h-100 p-5 text-center flex-column flex-center">
+                <div className="text-center mb-2">
+                  <WarningFilled style={{ fontSize: 48 }} className="icon fg-warning" />
+                </div>
+                <h3>The content you are accessing is not available at this time or you don't have access permission</h3>
+              </div>
+            </div>
+          </div>
+        </div>
+        <PreFooter />
+      </>
+    );
+  }
+
   return (
     <>
       <div className="container main-container">
@@ -274,7 +441,7 @@ export const InvestView = () => {
               <div>{t('invest.title')}</div>
             </div>
             <div className="subtitle text-center">
-            {t('invest.subtitle')}
+              {t('invest.subtitle')}
             </div>
           </div>
           <div className={`meanfi-two-panel-layout invest-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
@@ -327,14 +494,35 @@ export const InvestView = () => {
                     <div className="invest-fields-container pt-2">
                       <div className="mb-3">
                         <Row>
-                          {stakingStats.map((stat, index) => (
-                            <Col key={index} span={8}>
-                              <div className="info-label">
-                                {stat.label}
-                              </div>
-                              <div className="transaction-detail-row">{stat.value}</div>
-                            </Col>
-                          ))}
+                          <Col span={8}>
+                            <div className="info-label icon-label justify-content-center">
+                              {t("invest.panel-right.stats.staking-apy")}
+                              <Tooltip placement="top" title={t("invest.panel-right.stats.staking-apy-tooltip")}>
+                                <span>
+                                  <IconHelpCircle className="mean-svg-icons" />
+                                </span>
+                              </Tooltip>
+                            </div>
+                            <div className="transaction-detail-row">
+                              {stakePoolInfo ? (stakePoolInfo.apy * 100).toFixed(2) : "0"}%
+                            </div>
+                          </Col>
+                          <Col span={8}>
+                            <div className="info-label">
+                              {t("invest.panel-right.stats.total-value-locked")}
+                            </div>
+                            <div className="transaction-detail-row">
+                              ${stakePoolInfo ? formatThousands(stakePoolInfo.tvl, 2) : "0"}
+                            </div>
+                          </Col>
+                          <Col span={8}>
+                            <div className="info-label">
+                              {t("invest.panel-right.stats.total-mean-rewards")}
+                            </div>
+                            <div className="transaction-detail-row">
+                              ${stakePoolInfo ? formatThousands(stakePoolInfo.totalMeanRewards, 2) : "0"}
+                            </div>
+                          </Col>
                         </Row>
                       </div>
                     </div>
@@ -342,26 +530,28 @@ export const InvestView = () => {
                     <Row gutter={[8, 8]} className="d-flex justify-content-center">
                       {/* Tabset */}
                       <Col xs={24} sm={12} md={24} lg={12} className="column-width">
-                        <div className="place-transaction-box mb-3">
-                          <div className="button-tabset-container">
-                            <div className={`tab-button ${currentTab === "stake" ? 'active' : ''}`} onClick={() => onTabChange("stake")}>
-                              {t('invest.panel-right.tabset.stake.name')}
+                        {meanAddresses && (
+                          <div className="place-transaction-box mb-3">
+                            <div className="button-tabset-container">
+                              <div className={`tab-button ${currentTab === "stake" ? 'active' : ''}`} onClick={() => onTabChange("stake")}>
+                                {t('invest.panel-right.tabset.stake.name')}
+                              </div>
+                              <div className={`tab-button ${currentTab === "unstake" ? 'active' : ''}`} onClick={() => onTabChange("unstake")}>
+                                {t('invest.panel-right.tabset.unstake.name')}
+                              </div>
                             </div>
-                            <div className={`tab-button ${currentTab === "unstake" ? 'active' : ''}`} onClick={() => onTabChange("unstake")}>
-                              {t('invest.panel-right.tabset.unstake.name')}
-                            </div>
+
+                            {/* Tab Stake */}
+                            {currentTab === "stake" && (
+                              <StakeTabView stakeClient={stakeClient} />
+                            )}
+
+                            {/* Tab unstake */}
+                            {currentTab === "unstake" && (
+                              <UnstakeTabView stakeClient={stakeClient} />
+                            )}
                           </div>
-
-                          {/* Tab Stake */}
-                          {currentTab === "stake" && (
-                            <StakeTabView />
-                          )}
-
-                          {/* Tab unstake */}
-                          {currentTab === "unstake" && (
-                            <UnstakeTabView />
-                          )}
-                        </div>
+                        )}
                       </Col>
 
                       {/* Staking data */}
@@ -379,7 +569,7 @@ export const InvestView = () => {
                                 </Col>
                               </>
                             ))}
-                            <span className="mt-2">{t("invest.panel-right.staking-data.text-one", {unstakeStartDate: unstakeStartDate})}</span>
+                            {/* <span className="mt-2">{t("invest.panel-right.staking-data.text-one", {unstakeStartDate: unstakeStartDate})}</span> */}
 
                             <span className="mt-1"><i>{t("invest.panel-right.staking-data.text-two")}</i></span>
                             {/* <Col span={24} className="d-flex flex-column justify-content-end align-items-end mt-1">
@@ -467,12 +657,12 @@ export const InvestView = () => {
                     <div className="stats-row">
                       <div className="item-list-header compact"><div className="header-row">
                         <div className="std-table-cell responsive-cell text-left
-                        ">Platform</div>
-                        <div className="std-table-cell responsive-cell pr-1 text-left">LP Pair</div>
-                        <div className="std-table-cell responsive-cell pr-2 text-right">Liquidity</div>
-                        <div className="std-table-cell responsive-cell pr-2 text-right">Vol (24hrs)</div>
-                        <div className="std-table-cell responsive-cell pr-2 text-right">APR/APY 7D</div>
-                        <div className="std-table-cell responsive-cell pl-1 text-center invest-col">Invest</div>
+                        ">{t("invest.panel-right.liquidity-pool.column-platform")}</div>
+                        <div className="std-table-cell responsive-cell pr-1 text-left">{t("invest.panel-right.liquidity-pool.column-lppair")}</div>
+                        <div className="std-table-cell responsive-cell pr-2 text-right">{t("invest.panel-right.liquidity-pool.column-liquidity")}</div>
+                        <div className="std-table-cell responsive-cell pr-2 text-right">{t("invest.panel-right.liquidity-pool.column-volume")}</div>
+                        <div className="std-table-cell responsive-cell pr-2 text-right">{t("invest.panel-right.liquidity-pool.column-apr/apy")}</div>
+                        <div className="std-table-cell responsive-cell pl-1 text-center invest-col">{t("invest.panel-right.liquidity-pool.column-invest")}</div>
                         </div>
                       </div>
 
@@ -559,401 +749,3 @@ export const InvestView = () => {
     </>
   );
 };
-
-export const StakeTabView = () => {
-  const {
-    selectedToken,
-    tokenBalance,
-    effectiveRate,
-    loadingPrices,
-    fromCoinAmount,
-    isVerifiedRecipient,
-    paymentStartDate,
-    unstakeAmount,
-    unstakeStartDate,
-    refreshPrices,
-    setFromCoinAmount,
-    setIsVerifiedRecipient,
-    setUnstakeAmount,
-    setUnstakeStartDate,
-    setStakingMultiplier
-  } = useContext(AppStateContext);
-  const { connected } = useWallet();
-  const { t } = useTranslation('common');
-  const periods = [
-    {
-      value: 7,
-      time: t("invest.panel-right.tabset.stake.days"),
-      multiplier: 1
-    },
-    {
-      value: 30,
-      time: t("invest.panel-right.tabset.stake.days"),
-      multiplier: 1.1
-    },
-    {
-      value: 90,
-      time: t("invest.panel-right.tabset.stake.days"),
-      multiplier: 1.2
-    },
-    {
-      value: 1,
-      time: t("invest.panel-right.tabset.stake.year"),
-      multiplier: 2.0
-    },
-    {
-      value: 4,
-      time: t("invest.panel-right.tabset.stake.years"),
-      multiplier: 4.0
-    },
-  ];
-
-  const [periodValue, setPeriodValue] = useState<number>(periods[0].value);
-  const [periodTime, setPeriodTime] = useState<string>(periods[0].time);
-
-  // Transaction execution modal
-  const [isTransactionModalVisible, setTransactionModalVisible] = useState(false);
-  const showTransactionModal = useCallback(() => setTransactionModalVisible(true), []);
-  const closeTransactionModal = useCallback(() => setTransactionModalVisible(false), []);
-
-  const handleFromCoinAmountChange = (e: any) => {
-    const newValue = e.target.value;
-    if (newValue === null || newValue === undefined || newValue === "") {
-      setFromCoinAmount("");
-    } else if (newValue === '.') {
-      setFromCoinAmount(".");
-    } else if (isValidNumber(newValue)) {
-      setFromCoinAmount(newValue);
-    }
-  };
-
-  const isSendAmountValid = (): boolean => {
-    return  connected &&
-            selectedToken &&
-            tokenBalance &&
-            fromCoinAmount &&
-            parseFloat(fromCoinAmount) > 0 &&
-            parseFloat(fromCoinAmount) <= tokenBalance
-      ? true
-      : false;
-  }
-
-  const areSendAmountSettingsValid = (): boolean => {
-    return paymentStartDate && isSendAmountValid() ? true : false;
-  }  
-
-  const onIsVerifiedRecipientChange = (e: any) => {
-    setIsVerifiedRecipient(e.target.checked);
-  }
-
-  const onAfterTransactionModalClosed = () => {
-    const unstakeAmountAfterTransaction = !unstakeAmount ? fromCoinAmount : `${parseFloat(unstakeAmount) + parseFloat(fromCoinAmount)}`;
-
-    setUnstakeAmount(unstakeAmountAfterTransaction);
-    setFromCoinAmount("");
-    setIsVerifiedRecipient(false);
-    closeTransactionModal();
-  }
-
-  const onTransactionStart = useCallback(async () => {
-    showTransactionModal();
-  }, [
-    showTransactionModal
-  ]);
-
-  const onChangeValue = (value: number, time: string, rate: number) => {
-    setPeriodValue(value);
-    setPeriodTime(time);
-    setStakingMultiplier(rate);
-  }
-
-  useEffect(() => {
-    const unstakeStartDateUpdate = moment().add(periodValue, periodValue === 1 ? "year" : periodValue === 4 ? "years" : "days").format("LL")
-
-    setUnstakeStartDate(unstakeStartDateUpdate);
-  }, [periodTime, periodValue, setUnstakeStartDate]);
-  
-  return (
-    <>
-      <div className="form-label">{t("invest.panel-right.tabset.stake.amount-label")}</div>
-      <div className="well">
-        <div className="flex-fixed-left">
-          <div className="left">
-            <span className="add-on simplelink">
-              {selectedToken && (
-                <TokenDisplay onClick={() => {}}
-                  mintAddress={selectedToken.address}
-                  name={selectedToken.name}
-                />
-              )}
-            </span>
-          </div>
-          <div className="right">
-            <input
-              className="general-text-input text-right"
-              inputMode="decimal"
-              autoComplete="off"
-              autoCorrect="off"
-              type="text"
-              onChange={handleFromCoinAmountChange}
-              pattern="^[0-9]*[.,]?[0-9]*$"
-              placeholder="0.0"
-              minLength={1}
-              maxLength={79}
-              spellCheck="false"
-              value={fromCoinAmount}
-            />
-          </div>
-        </div>
-        <div className="flex-fixed-right">
-          <div className="left inner-label">
-            <span>{t('transactions.send-amount.label-right')}:</span>
-            <span>
-              {`${tokenBalance && selectedToken
-                  ? getAmountWithSymbol(tokenBalance, selectedToken?.address, true)
-                  : "0"
-              }`}
-            </span>
-          </div>
-          <div className="right inner-label">
-            <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
-              ~${fromCoinAmount && effectiveRate
-                ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
-                : "0.00"}
-            </span>
-          </div>
-        </div>
-      </div>
-    
-      {/* Periods */}
-      <span className="info-label">{t("invest.panel-right.tabset.stake.period-label")}</span>
-      <div className="flexible-left mb-1 mt-2">
-        <div className="left token-group">
-          {periods.map((period, index) => (
-            <div key={index} className="mb-1 d-flex flex-column align-items-center">
-              <div className={`token-max simplelink ${period.value === 7 ? "active" : "disabled"}`} onClick={() => onChangeValue(period.value, period.time, period.multiplier)}>{period.value} {period.time}</div>
-              <span>{`${period.multiplier}x`}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-      <span className="info-label">{t("invest.panel-right.tabset.stake.notification-label", { periodValue: periodValue, periodTime: periodTime, unstakeStartDate: unstakeStartDate })}</span>
-
-      {/* Confirm that have read the terms and conditions */}
-      <div className="mt-2 d-flex confirm-terms">
-        <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>{t("invest.panel-right.tabset.stake.verified-label")}</Checkbox>
-        <Tooltip placement="top" title={t("invest.panel-right.tabset.stake.terms-and-conditions-tooltip")}>
-          <span>
-            <IconHelpCircle className="mean-svg-icons" />
-          </span>
-        </Tooltip>
-      </div>
-
-      {/* Action button */}
-      <Button
-        className="main-cta mt-2"
-        block
-        type="primary"
-        shape="round"
-        size="large"
-        onClick={onTransactionStart}
-        disabled={
-          !areSendAmountSettingsValid() ||
-          !isVerifiedRecipient}
-      >
-        {t("invest.panel-right.tabset.stake.stake-button")} {selectedToken && selectedToken.name}
-      </Button>
-
-      {/* Transaction execution modal */}
-      <Modal
-        className="mean-modal no-full-screen"
-        maskClosable={false}
-        visible={isTransactionModalVisible}
-        onCancel={closeTransactionModal}
-        afterClose={onAfterTransactionModalClosed}
-        width={330}
-        footer={null}>
-        <div className="transaction-progress"> 
-          <CheckOutlined style={{ fontSize: 48 }} className="icon" />
-          <h4 className="font-bold mb-1 text-uppercase">
-            Operation completed
-          </h4>
-          <p className="operation">
-            {fromCoinAmount} {selectedToken && selectedToken.name} has been stake successfully
-          </p>
-          <Button
-            block
-            type="primary"
-            shape="round"
-            size="middle"
-            onClick={closeTransactionModal}>
-            {t('general.cta-close')}
-          </Button>
-        </div>
-      </Modal>
-    </>
-  )
-}
-
-export const UnstakeTabView = () => {
-  const {
-    selectedToken,
-    effectiveRate,
-    loadingPrices,
-    fromCoinAmount,
-    // isVerifiedRecipient,
-    paymentStartDate,
-    unstakeStartDate,
-    unstakeAmount,
-    refreshPrices,
-    setFromCoinAmount,
-    setUnstakeAmount
-    // setIsVerifiedRecipient
-  } = useContext(AppStateContext);
-  const { t } = useTranslation('common');
-  const percentages = [25, 50, 75, 100];
-  const [percentageValue, setPercentageValue] = useState<number>(0);
-  const [availableUnstake, setAvailableUnstake] = useState<number>(0);
-
-  const currentDate = moment().format("LL");
-
-  const onChangeValue = (value: number) => {
-    setPercentageValue(value);
-  };
-  
-  const handleFromCoinAmountChange = (e: any) => {
-    const newValue = e.target.value;
-    if (newValue === null || newValue === undefined || newValue === "") {
-      setFromCoinAmount("");
-    } else if (newValue === '.') {
-      setFromCoinAmount(".");
-    } else if (isValidNumber(newValue)) {
-      setFromCoinAmount(newValue);
-    }
-  };
-
-  // const onIsVerifiedRecipientChange = (e: any) => {
-  //   setIsVerifiedRecipient(e.target.checked);
-  // }
-
-  const isSendAmountValid = (): boolean => {
-    return  fromCoinAmount &&
-            parseFloat(fromCoinAmount) > 0 &&
-            parseFloat(fromCoinAmount) <= parseFloat(unstakeAmount)
-      ? true
-      : false;
-  }
-
-  const areSendAmountSettingsValid = (): boolean => {
-    return paymentStartDate && isSendAmountValid() ? true : false;
-  }
-
-  const handleUnstake = () => {
-    const newUnstakeAmount = (parseFloat(unstakeAmount) - parseFloat(fromCoinAmount)).toString();
-
-    setUnstakeAmount(newUnstakeAmount);
-    setFromCoinAmount('');
-  }
-
-  useEffect(() => {
-    const percentageFromCoinAmount = parseFloat(unstakeAmount) > 0 ? `${(parseFloat(unstakeAmount)*percentageValue/100)}` : '';
-
-    setFromCoinAmount(percentageFromCoinAmount);
-    // setFromCoinAmount(formatAmount(parseFloat(percentageFromCoinAmount), 6).toString());
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [percentageValue]);
-
-  useEffect(() => {
-    parseFloat(unstakeAmount) > 0 && currentDate === unstakeStartDate ?
-      setAvailableUnstake(parseFloat(unstakeAmount))
-    :
-      setAvailableUnstake(0)
-  }, [currentDate, unstakeAmount, unstakeStartDate]);
-
-  return (
-    <>
-      <span className="info-label">{unstakeAmount ? t("invest.panel-right.tabset.unstake.notification-label-one", {unstakeAmount: cutNumber(parseFloat(unstakeAmount), 6), unstakeStartDate: unstakeStartDate}) : t("invest.panel-right.tabset.unstake.notification-label-one-error")}</span>
-      <div className="form-label mt-2">{t("invest.panel-right.tabset.unstake.amount-label")}</div>
-      <div className="well">
-        <div className="flexible-right mb-1">
-          <div className="token-group">
-            {percentages.map((percentage, index) => (
-              <div key={index} className="mb-1 d-flex flex-column align-items-center">
-                <div className={`token-max simplelink ${availableUnstake !== 0 ? "active" : "disabled"}`} onClick={() => onChangeValue(percentage)}>{percentage}%</div>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="flex-fixed-left">
-          <div className="left">
-            <span className="add-on simplelink">
-              {selectedToken && (
-                <TokenDisplay onClick={() => {}}
-                  mintAddress={selectedToken.address}
-                  name={selectedToken.name}
-                />
-              )}
-            </span>
-          </div>
-          <div className="right">
-            <input
-              className="general-text-input text-right"
-              inputMode="decimal"
-              autoComplete="off"
-              autoCorrect="off"
-              type="text"
-              onChange={handleFromCoinAmountChange}
-              pattern="^[0-9]*[.,]?[0-9]*$"
-              placeholder="0.0"
-              minLength={1}
-              maxLength={79}
-              spellCheck="false"
-              value={fromCoinAmount}
-            />
-          </div>
-        </div>
-        <div className="flex-fixed-right">
-          <div className="left inner-label">
-            <span>{t('invest.panel-right.tabset.unstake.send-amount.label-right')}:</span>
-            <span>{formatAmount(availableUnstake, 6)}</span>
-          </div>
-          <div className="right inner-label">
-            <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
-              ~${fromCoinAmount && effectiveRate
-                ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
-                : "0.00"}
-            </span>
-          </div>
-        </div>
-      </div>
-      <span className="info-label">{t("invest.panel-right.tabset.unstake.notification-label-two")}</span>
-      
-      {/* Confirm that have read the terms and conditions */}
-      {/* <div className="mt-2 confirm-terms">
-        <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>{t("invest.panel-right.tabset.unstake.verified-label")}</Checkbox>
-        <Tooltip placement="top" title={t("invest.panel-right.tabset.unstake.terms-and-conditions-tooltip")}>
-          <span>
-            <IconHelpCircle className="mean-svg-icons" />
-          </span>
-        </Tooltip>
-      </div> */}
-
-      {/* Action button */}
-      <Button
-        className="main-cta mt-2"
-        block
-        type="primary"
-        shape="round"
-        size="large"
-        onClick={handleUnstake}
-        disabled={
-          !areSendAmountSettingsValid() ||
-          // !isVerifiedRecipient ||
-          availableUnstake <= 0
-        }
-      >
-        {availableUnstake <= 0 ? t("invest.panel-right.tabset.unstake.unstake-button-unavailable") : t("invest.panel-right.tabset.unstake.unstake-button-available")} {selectedToken && selectedToken.name}
-      </Button>
-    </>
-  )
-}

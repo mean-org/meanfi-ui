@@ -203,6 +203,20 @@
 			"primary-cta": "Confirmer",
 			"secondary-cta": "Retour"
 		},
+		"exchange-dcas": {
+			"detail-panel-word-one": "Buying",
+			"detail-panel-word-two": "worth of",
+			"detail-panel-word-three": "every",
+			"withdraw": "Withdraw",
+			"cancel-withdraw-everything": "Cancel and withdraw everything",
+			"total-deposits": "Total deposits",
+			"total-left": "Total left (will run out by",
+			"exchanged-for": "Exchanged for (avg rate 1",
+			"next-scheduled-exchange": "Next scheduled exchange",
+			"deposited": "Deposited",
+			"rate-amount": "Every",
+			"exchange-details": "Exchange details"
+		},
 		"screen-title": "Achats récurrents",
 		"setup-close-warning": "Fermeture sans clic.  Commencer ignorera votre premier achat.  Fermer quand même ?",
 		"streams-ddcas": "Cliquez pour actualiser les achats récurrents"
@@ -278,45 +292,69 @@
 		"subtitle": "The easiest way to grow your money stash",
 		"screen-title": "Invest Options",
 		"refresh-tooltip": "Refresh invest data",
+		"panel-left": {
+			"invest-stake-tab-title": "Stake MEAN",
+			"invest-liquidity-tab-title": "MEAN Liquidity Pools",
+			"liquidity-value-label": "Up to",
+			"no-invest-options": "No invest options available",
+			"not-connected": "Please connect your wallet to see your invest options"
+		},
 		"panel-right": {
 			"title": "Stake MEAN to Earn MEAN Rewards",
 			"first-text": "MEAN staking rewards include emission incentives plus a share of the protocol revenues, and can be boosted using locking periods. When you stake your MEAN, you get sMEAN in return.",
 			"second-text": "Simply holding your sMEAN is all that is required to continuously grow your MEAN stash. You don't need to harvest the rewards with MEAN staking. When you unstake your sMEAN, you will receive the rewards earned in the form of additional MEAN on top of the amount staked.",
 			"stats": {
-				"staking-apr": "Staking APR",
+				"staking-apy": "Staking APY",
+				"staking-apy-tooltip": "The APY associated with sMEAN is a representation of the price of sMEAN over a 365 day period.",
 				"total-value-locked": "Total Value Locked",
 				"total-mean-rewards": "Total MEAN Rewards"
 			},
+			"liquidity-pool": {
+				"title": "MEAN Liquidity Pools",
+				"text-one": "MEAN Liquidity Pools are currently available on Orca and Raydium with multiple pools including MEAN/SOL, MEAN/RAY and MEAN/USDC.",
+				"text-two": "Before you add funds to a pool, be sure to read and accept the risks associated with investing in a liquidity pool.",
+				"refresh-tooltip": "Refresh liquidity data",
+				"column-platform": "Platform",
+				"column-lppair": "LP Pair",
+				"column-liquidity": "Liquidity",
+				"column-volume": "Vol (24hrs)",
+				"column-apr/apy": "APR/APY",
+				"column-invest": "Invest"
+			},
 			"tabset": {
 				"stake": {
-					"name": "Stake",
 					"amount-label": "Amount to stake",
-					"period-label": "How long do you want to stake for?",
 					"days": "days",
-					"year": "year",
-					"years": "years",
 					"notification-label": "Staking period of {{periodValue}} {{periodTime}} will lock your Tokens until {{unstakeStartDate}}.",
-					"verified-label": "I agree to the Terms & Conditions",
 					"terms-and-conditions-tooltip": "Your tokens will be locked for the period of time selected and you will not be able to unstake them before the staking period ends. When you stake additional tokens to an existing contract, the staking period will be extended to the new end date for ALL of the tokens locked.",
-					"stake-button": "Stake"
+					"verified-label": "I agree to the Terms & Conditions",
+					"year": "year",
+					"years": "years"
 				},
 				"unstake": {
-					"name": "Unstake",
-					"notification-label-one": "Your currently have {{unstakeAmount}} MEAN staked which is currently locked until {{unstakeStartDate}}",
-					"notification-label-one-error": "You don't have any MEAN staked",
 					"amount-label": "Amount to unstake",
-					"notification-label-two": "Unstaking will withdraw the specified amount of unlocked MEAN tokens to your wallet",
-					"verified-label": "I agree to the Terms & Conditions",
-					"unstake-button-available": "Unstake",
-					"unstake-button-unavailable": "No available",
+					"name": "Unstake",
+					"notification-label-one": "Your currently have {{stakedAmount}} sMEAN staked which is currently locked until {{unstakeStartDate}}",
+					"notification-label-one-error": "Your currently do not have any sMEAN.",
+					"notification-label-two": "Unstaking will withdraw the specified amount of unlocked sMEAN tokens to your wallet",
 					"send-amount": {
 						"label-right": "Available to unstake"
-					}
+					},
+					"unstake-button-busy": "Unstaking",
+					"unstake-button-available": "Unstake",
+					"unstake-button-unavailable": "No available",
+					"verified-label": "I agree to the Terms & Conditions"
 				}
 			},
 			"staking-data": {
+				"title": "Your Current Stake:",
+				"label-my-staked": "My Staked MEAN",
+				"label-avg": "Avg. Locked Yield",
+				"label-boost": "Staking Lock Boost",
+				"label-locked": "My Locked eMEAN",
+				"label-balance": "My xMEAN Balance",
 				"text-one": "MEAN tokens locked till {{unstakeStartDate}}",
-				"text-two": "Additional locking boost periods are coming soon! Only 7 days locking is currently available.",
+				"text-two": "Locking boost periods are coming soon to earn even more MEAN!",
 				"withdraw-button": "Withdraw Funds"
 			}
 		}
@@ -431,7 +469,11 @@
 			"screen-title": "Mints - {{multisigName}} ({{itemCount}})",
 			"screen-title-no-mints": "Mints",
 			"selected-mint-label": "Selected Mint",
-			"success-message": "New mint authority set successfully."
+			"success-message": "New mint authority set successfully.",
+			"multisig-authority": "Multisig Authority",
+			"decimals": "decimals:",
+			"supply": "supply",
+			"mint-address": "MINT ADDRESS:"
 		},
 		"multisig-programs": {
 			"cta-create-program": "Créer un programme",
@@ -455,7 +497,26 @@
 			"modal-title": "Récapitulatif des transactions",
 			"no-transactions": "Ce compte multisig n'a aucune transaction",
 			"tx-operation-failure": "L'opération {{operation}} a échoué",
-			"tx-operation-success": "L'opération {{operation}} a réussi"
+			"tx-operation-success": "L'opération {{operation}} a réussi",
+			"tx-operation-pending-one": "A transaction on this Multisig is now ready for execution. Please tell the person who initiated this transaction to execute it.",
+			"tx-operation-pending-two": "A Transaction on this Multisig is ready for",
+			"proposed-action": "Proposed Action:",
+			"submitted-on": "Submitted on:",
+			"initiator": "Initiator:",
+			"initiator-transaction": "This transaction was submitted by",
+			"transaction-required": "This transaction required",
+			"transaction-has": "This transaction has",
+			"transaction-awaiting": "A Transaction on this Multisig is awaiting",
+			"address": "Address:",
+			"approval": "approval.",
+			"your-status": "Your Status:",
+			"signers-to-approve": "signers to approve it in order to be executed.",
+			"signed": "Signed.",
+			"signed-so-far": "Signed so far.",
+			"explain-failure": "Explain failure condition if specific",
+			"ready-for-execution": "This transaction is now ready for execution. Please tell the person who initiated this transaction to execute it.",
+			"treasury-closed-warning": "When a treasury is closed, all funds left over will be deposited to the initiator's wallet. Please confirm this is acceptable before you sign.",
+			"not-signed": "Not Signed"
 		},
 		"multisig-treasuries": {
 			"back-to-treasuries": "Back to treasuries"
@@ -543,6 +604,7 @@
 		"error-ledger-title": "Erreur de grand livre",
 		"error-loading-streamid-message": "Impossible de trouver ou de charger le flux avec l'ID {{streamId}}",
 		"error-loading-treasuryid-message": "Impossible de trouver ou d'ouvrir la trésorerie avec l'ID {{Treasury Id}}",
+		"error-sending-transaction": "Error submitting the transaction, please try again.",
 		"error-title": "Erreur",
 		"friend-referral-completed": "Parrainage d'ami terminé",
 		"invalid-publickey-message": "Clé publique invalide.  Veuillez vérifier l'entrée",
@@ -570,6 +632,11 @@
 	"payroll": {
 		"screen-subtitle": "Configurer la paie de vos employés",
 		"screen-title": "Paie"
+	},
+	"page-not-found": {
+		"title": "Page not found (404) - Mean Finance",
+		"message": "Page not found",
+		"button": "Go Home"
 	},
 	"pre-footer": {
 		"made-with": "Made with ",
@@ -633,8 +700,26 @@
 		"lookup-stream-cta-tooltip": "Rechercher un flux",
 		"pause-stream-confirmation": "La suspension du flux arrêtera le transfert d'argent du trésor ({{treasury}}) au bénéficiaire ({{beneficiary}}).",
 		"pause-stream-cta": "Pause",
+		"edit-stream": {
+			"modal-title": "Edit Money Stream",
+			"edit-stream-tooltip": "Edit money stream",
+			"name-input-label": "Stream name",
+			"name-input-placeholder": "Type a name for your stream",
+			"name-input-hint": "What is this stream being sent for?",
+			"send-amount-input-label": "Amount to Send",
+			"frequency-input-label": "Frequency",
+			"frequency-input-hint": "How often will this amount be sent?",
+			"main-cta": "Update stream",
+			"main-cta-busy": "Updating stream"
+		},
 		"pause-stream-modal-title": "Suspendre le flux",
+		"pause-stream-tooltip": "Suspendre le flux",
+		"locked-stream-modal-title": "Locked Money Stream",
+		"locked-stream-tooltip": "This Stream is Locked",
+		"resume-stream-modal-title": "Resume stream",
+		"resume-stream-tooltip": "Resume Stream",
 		"refresh-tooltip": "Cliquez pour actualiser les flux",
+		"locked-stream-message": "You cannot close or top up a stream from a locked treasury",
 		"resume-stream-confirmation": "Reprendre le flux d'argent du trésor ({{treasury}}) au bénéficiaire ({{beneficiary}}).",
 		"resume-stream-cta": "Continuer",
 		"screen-title": "Flux d'argent",
@@ -845,6 +930,8 @@
 			"exchange-on": "Echange sur",
 			"hla-transaction-fee": "Frais d'agrégateur",
 			"min-recommended-amount": "Montant minimum recommandé",
+			"minimum-received": "Minimum received",
+			"minimum-sol-for-transaction": "Minimum SOL required",
 			"network-transaction-fee": "Frais de réseau",
 			"price-impact": "Incidence sur les prix",
 			"protocol-transaction-fee": "{{protocol}} frais de LP",
@@ -994,6 +1081,24 @@
 		},
 		"treasury-streams": {
 			"add-stream-modal-title": "Ajouter un flux à la trésorerie",
+			"add-stream-locked": {
+				"modal-title": "Add a locked money stream",
+				"panel1-name": "Recipient's info",
+				"panel2-name": "Vesting terms",
+				"panel2-summary": "Specify the vesting terms for {{recipientNote}} below. You will be sending {{fromCoinAmount}} {{selectedTokenName}} to {{recipientShortenAddress}} using these terms and schedule.",
+				"panel2-lock-period-label": "Lock period",
+				"panel2-commencement-date-label": "Commencement date",
+				"panel2-cliff-release-label": "Cliff release (on commencement)",
+				"panel2-cliff-release-inner-label": "What amount is released on commencement?",
+				"panel3-name": "Recipient's info",
+				"panel3-text-one": "Confirm the terms for",
+				"panel3-sending": "Sending:",
+				"panel3-to-address": "To Address:",
+				"panel3-starting-on": "Starting on:",
+				"panel3-cliff-release": "Cliff release:",
+				"panel3-release-rate": "Release rate:",
+				"panel3-warning-message": "IMPORTANT: This is a locked money stream, and once started, you cannot cancel, pause or change its details. Verify all information before proceeding."
+			},
 			"allocate-funds-label": "Allouer des fonds",
 			"allocation-reserved-label": "Cette allocation est entièrement RÉSERVÉE",
 			"available-unallocated-balance-label": "Solde non alloué disponible",

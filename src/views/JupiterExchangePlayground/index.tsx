@@ -37,7 +37,7 @@ import { notify } from "../../utils/notifications";
 export const COMMON_EXCHANGE_TOKENS = ['USDC', 'USDT', 'MEAN', 'SOL'];
 const MINIMUM_REQUIRED_SOL_BALANCE = 0.05;
 
-export const JupiterExchange = (props: {
+export const JupiterExchangePlayground = (props: {
     queryFromMint: string | null;
     queryToMint: string | null;
     connection: Connection;

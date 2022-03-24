@@ -1558,7 +1558,7 @@ export const TreasuriesView = () => {
   ////////////////
 
   const refreshPage = () => {
-    hideCloseStreamTransactionModal();
+    hideTransactionExecutionModal();
     window.location.reload();
   }
 
@@ -3289,14 +3289,14 @@ export const TreasuriesView = () => {
     onExecuteCloseStreamTransaction(closeTreasury);
   };
 
-  // Close stream Transaction execution modal
-  const [isCloseStreamTransactionModalVisible, setCloseStreamTransactionModalVisibility] = useState(false);
-  const showCloseStreamTransactionModal = useCallback(() => setCloseStreamTransactionModalVisibility(true), []);
-  const hideCloseStreamTransactionModal = useCallback(() => setCloseStreamTransactionModalVisibility(false), []);
+  // Common reusable transaction execution modal
+  const [isTransactionExecutionModalVisible, setTransactionExecutionModalVisibility] = useState(false);
+  const showTransactionExecutionModal = useCallback(() => setTransactionExecutionModalVisibility(true), []);
+  const hideTransactionExecutionModal = useCallback(() => setTransactionExecutionModalVisibility(false), []);
 
   const onCloseStreamTransactionFinished = () => {
     resetTransactionStatus();
-    hideCloseStreamTransactionModal();
+    hideTransactionExecutionModal();
     refreshTokenBalance();
   };
 
@@ -3305,7 +3305,7 @@ export const TreasuriesView = () => {
       setTransactionCancelled(true);
     }
     if (isSuccess()) {
-      hideCloseStreamTransactionModal();
+      hideTransactionExecutionModal();
     }
     resetTransactionStatus();
   }
@@ -3675,7 +3675,7 @@ export const TreasuriesView = () => {
     }
 
     if (wallet && highlightedStream) {
-      showCloseStreamTransactionModal();
+      showTransactionExecutionModal();
       let created: boolean;
       if (highlightedStream.version < 2) {
         created = await createTxV1();
@@ -3736,7 +3736,7 @@ export const TreasuriesView = () => {
 
   const onPauseStreamTransactionFinished = () => {
     resetTransactionStatus();
-    hideCloseStreamTransactionModal();
+    hideTransactionExecutionModal();
     refreshTokenBalance();
   };
 
@@ -4100,7 +4100,7 @@ export const TreasuriesView = () => {
     }
 
     if (wallet && highlightedStream) {
-      showCloseStreamTransactionModal();
+      showTransactionExecutionModal();
       let created: boolean;
       if (highlightedStream.version < 2) {
         created = await createTxV1();
@@ -4161,7 +4161,7 @@ export const TreasuriesView = () => {
 
   const onResumeStreamTransactionFinished = () => {
     resetTransactionStatus();
-    hideCloseStreamTransactionModal();
+    hideTransactionExecutionModal();
     refreshTokenBalance();
   };
 
@@ -4523,7 +4523,7 @@ export const TreasuriesView = () => {
     }
 
     if (wallet && highlightedStream) {
-      showCloseStreamTransactionModal();
+      showTransactionExecutionModal();
       let created: boolean;
       if (highlightedStream.version < 2) {
         created = await createTxV1();
@@ -5826,10 +5826,10 @@ export const TreasuriesView = () => {
       <Modal
         className="mean-modal no-full-screen"
         maskClosable={false}
-        visible={isCloseStreamTransactionModalVisible}
+        visible={isTransactionExecutionModalVisible}
         afterClose={onAfterCloseStreamTransactionModalClosed}
         title={getTransactionModalTitle(transactionStatus, isBusy, t)}
-        onCancel={hideCloseStreamTransactionModal}
+        onCancel={hideTransactionExecutionModal}
         width={360}
         footer={null}>
         <div className="transaction-progress">
@@ -5861,7 +5861,7 @@ export const TreasuriesView = () => {
                     ? onResumeStreamTransactionFinished()
                     : lastSentTxOperationType === OperationType.StreamClose
                       ? onCloseStreamTransactionFinished()
-                      : hideCloseStreamTransactionModal()}>
+                      : hideTransactionExecutionModal()}>
                 {t('general.cta-finish')}
               </Button>
             </>
@@ -5900,7 +5900,7 @@ export const TreasuriesView = () => {
                           ? onExecuteResumeStreamTransaction()
                           : ongoingOperation === OperationType.StreamClose
                             ? onExecuteCloseStreamTransaction(retryOperationPayload)
-                            : hideCloseStreamTransactionModal()}>
+                            : hideTransactionExecutionModal()}>
                       {t('general.retry')}
                     </Button>
                   </div>
@@ -5921,7 +5921,7 @@ export const TreasuriesView = () => {
                   type="primary"
                   shape="round"
                   size="middle"
-                  onClick={hideCloseStreamTransactionModal}>
+                  onClick={hideTransactionExecutionModal}>
                   {t('general.cta-close')}
                 </Button>
               )}

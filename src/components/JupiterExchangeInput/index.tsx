@@ -20,6 +20,7 @@ export const JupiterExchangeInput = (props: {
   readonly?: boolean;
   debounceTime?: number;
   className?: string;
+  hint?: string;
 }) => {
     const { t } = useTranslation("common");
     const {
@@ -133,6 +134,9 @@ export const JupiterExchangeInput = (props: {
                 </div>
             </div>
 
+            {props.hint && (
+                <div className="form-field-hint">{props.hint}</div>
+            )}
         </div>
         </>
     );

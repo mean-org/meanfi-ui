@@ -203,6 +203,20 @@
 			"primary-cta": "Onayla",
 			"secondary-cta": "Geri"
 		},
+		"exchange-dcas": {
+			"detail-panel-word-one": "Buying",
+			"detail-panel-word-two": "worth of",
+			"detail-panel-word-three": "every",
+			"withdraw": "Withdraw",
+			"cancel-withdraw-everything": "Cancel and withdraw everything",
+			"total-deposits": "Total deposits",
+			"total-left": "Total left (will run out by",
+			"exchanged-for": "Exchanged for (avg rate 1",
+			"next-scheduled-exchange": "Next scheduled exchange",
+			"deposited": "Deposited",
+			"rate-amount": "Every",
+			"exchange-details": "Exchange details"
+		},
 		"screen-title": "Tekrarlayan satın alma",
 		"setup-close-warning": "Tıklamadan kapanır. Başlangıç ilk satın alma işlemini atlayacak. Yine de kapansın mı?",
 		"streams-ddcas": "Tekrarlayan satın almayı güncellemek için tıkla"
@@ -275,6 +289,9 @@
 	},
 	"invest": {
 		"panel-left": {
+			"invest-stake-tab-title": "Stake MEAN",
+			"invest-liquidity-tab-title": "MEAN Liquidity Pools",
+			"liquidity-value-label": "Up to",
 			"no-invest-options": "Uygun yatırım seçeneği yok",
 			"not-connected": "Seçeneklerinizi görmek için cüzdanınızı bağlayın"
 		},
@@ -283,13 +300,32 @@
 			"first-text": "MEAN staking rewards include emission incentives plus a share of the protocol revenues, and can be boosted using locking periods. When you stake your MEAN, you get sMEAN in return.",
 			"second-text": "Simply holding your sMEAN is all that is required to continuously grow your MEAN stash. You don't need to harvest the rewards with MEAN staking. When you unstake your sMEAN, you will receive the rewards earned in the form of additional MEAN on top of the amount staked.",
 			"staking-data": {
+				"title": "Your Current Stake:",
+				"label-my-staked": "My Staked MEAN",
+				"label-avg": "Avg. Locked Yield",
+				"label-boost": "Staking Lock Boost",
+				"label-locked": "My Locked eMEAN",
+				"label-balance": "My xMEAN Balance",
 				"text-one": "MEAN tokenları {{unstakeStartDate}} kadar kilitli",
-				"text-two": "Additional locking boost periods are coming soon! Only 7 days locking is currently available.",
+				"text-two": "Locking boost periods are coming soon to earn even more MEAN!",
 				"withdraw-button": "Fonları Çek"
+			},
+			"liquidity-pool": {
+				"title": "MEAN Liquidity Pools",
+				"text-one": "MEAN Liquidity Pools are currently available on Orca and Raydium with multiple pools including MEAN/SOL, MEAN/RAY and MEAN/USDC.",
+				"text-two": "Before you add funds to a pool, be sure to read and accept the risks associated with investing in a liquidity pool.",
+				"refresh-tooltip": "Refresh liquidity data",
+				"column-platform": "Platform",
+				"column-lppair": "LP Pair",
+				"column-liquidity": "Liquidity",
+				"column-volume": "Vol (24hrs)",
+				"column-apr/apy": "APR/APY",
+				"column-invest": "Invest"
 			},
 			"stats": {
 				"total-mean-rewards": "Total MEAN Rewards",
-				"staking-apr": "Staking APR",
+				"staking-apy": "Staking APY",
+				"staking-apy-tooltip": "The APY associated with sMEAN is a representation of the price of sMEAN over a 365 day period.",
 				"total-value-locked": "Toplam Kilitli Değer"
 			},
 			"tabset": {
@@ -300,6 +336,7 @@
 					"notification-label": "Staking period of {{periodValue}} {{periodTime}} will lock your Tokens until {{unstakeStartDate}}.",
 					"period-label": "Ne kadar süre boyunca stake etmek istiyorsunuz?",
 					"stake-button": "Stake",
+					"stake-button-busy": "Staking",
 					"terms-and-conditions-tooltip": "Tokenlarınız seçilen süre boyunca kilitlenir ve stake dönemi sona ermeden geri alamazsınız. Mevcut kontrata ek tokenlar stake ettiğinizde, kilitli stake süresi TÜM tokenlar için yeni bitiş tarihine kadar uzatılacaktır.",
 					"verified-label": "Şartları & Koşulları kabul ediyorum.",
 					"year": "yıl",
@@ -308,12 +345,13 @@
 				"unstake": {
 					"amount-label": "Stakeden çıkarılacak miktar",
 					"name": "Stakeden çıkar",
-					"notification-label-one": "Şu ana kadar {{unstakeAmount}} MEAN stake edildi bu tokenlar {{unstakeStartDate}} kadar kilitli kalacak.",
-					"notification-label-one-error": "Hiç stake edilmiş MEAN yok",
-					"notification-label-two": "Unstake, belirtilen miktarda kilidi açılmış MEAN tokenı cüzdanınıza çekecektir.",
+					"notification-label-one": "Şu ana kadar {{stakedAmount}} sMEAN stake edildi bu tokenlar {{unstakeStartDate}} kadar kilitli kalacak.",
+					"notification-label-one-error": "Hiç stake edilmiş sMEAN yok",
+					"notification-label-two": "Unstake, belirtilen miktarda kilidi açılmış sMEAN tokenı cüzdanınıza çekecektir.",
 					"send-amount": {
 						"label-right": "Stakeden çıkarılabilir"
 					},
+					"unstake-button-busy": "Unstaking",
 					"unstake-button-available": "Stakeden çıkar",
 					"unstake-button-unavailable": "Uygun değil",
 					"verified-label": "Şartları & Koşulları kabul ediyorum."
@@ -435,7 +473,11 @@
 			"screen-title": "Mintler - {{multisigName}} ({{itemCount}})",
 			"screen-title-no-mints": "Mintler",
 			"selected-mint-label": "Seçilmiş mint",
-			"success-message": "Yeni mint yetkisi başarıyla ayarlandı"
+			"success-message": "Yeni mint yetkisi başarıyla ayarlandı",
+			"multisig-authority": "Multisig Authority",
+			"decimals": "decimals:",
+			"supply": "supply",
+			"mint-address": "MINT ADDRESS:"
 		},
 		"multisig-programs": {
 			"cta-create-program": "Program oluştur",
@@ -459,7 +501,26 @@
 			"modal-title": "İşlem özeti",
 			"no-transactions": "Bu çoklu-imza hesabının işlemi yok",
 			"tx-operation-failure": "{{operation}} iÅ lemi baÅ arÄ±sÄ±z oldu",
-			"tx-operation-success": "{{operation}} iÅ lemi baÅ arÄ±lÄ± oldu"
+			"tx-operation-success": "{{operation}} iÅ lemi baÅ arÄ±lÄ± oldu",
+			"tx-operation-pending-one": "A transaction on this Multisig is now ready for execution. Please tell the person who initiated this transaction to execute it.",
+			"tx-operation-pending-two": "A Transaction on this Multisig is ready for",
+			"proposed-action": "Proposed Action:",
+			"submitted-on": "Submitted on:",
+			"initiator": "Initiator:",
+			"initiator-transaction": "This transaction was submitted by",
+			"transaction-required": "This transaction required",
+			"transaction-has": "This transaction has",
+			"transaction-awaiting": "A Transaction on this Multisig is awaiting",
+			"address": "Address:",
+			"approval": "approval.",
+			"your-status": "Your Status:",
+			"signers-to-approve": "signers to approve it in order to be executed.",
+			"signed": "Signed.",
+			"signed-so-far": "Signed so far.",
+			"explain-failure": "Explain failure condition if specific",
+			"ready-for-execution": "This transaction is now ready for execution. Please tell the person who initiated this transaction to execute it.",
+			"treasury-closed-warning": "When a treasury is closed, all funds left over will be deposited to the initiator's wallet. Please confirm this is acceptable before you sign.",
+			"not-signed": "Not Signed"
 		},
 		"multisig-treasuries": {
 			"back-to-treasuries": "Hazinelere geri dön"
@@ -547,6 +608,7 @@
 		"error-ledger-title": "Ledger hatası",
 		"error-loading-streamid-message": "{{streamId}} ID'si ile aktarım bulunamadı ya da yüklenemedi",
 		"error-loading-treasuryid-message": "{{treasuryId}} ile hazine bulunamadı ya da açılamadı",
+		"error-sending-transaction": "Error submitting the transaction, please try again.",
 		"error-title": "Hata",
 		"friend-referral-completed": "Arkadaşa referans olma tamamlandı",
 		"invalid-publickey-message": "Geçersiz görünür anahtar. Lütfen yazdığınızı kontrol edin",
@@ -574,6 +636,11 @@
 	"payroll": {
 		"screen-subtitle": "Çalışanlarınız için ödeme planı ayarlayın",
 		"screen-title": "Ödeme planı"
+	},
+	"page-not-found": {
+		"title": "Page not found (404) - Mean Finance",
+		"message": "Page not found",
+		"button": "Go Home"
 	},
 	"pre-footer": {
 		"made-with": "Beraber yapıldı",
@@ -637,8 +704,26 @@
 		"lookup-stream-cta-tooltip": "Akış Arama",
 		"pause-stream-confirmation": "Akışın duraklatılması hazineden ({{treasury}}) yararlanıcıya ({{beneficiary}}) para aktarımını durduracaktır.",
 		"pause-stream-cta": "Duraklat",
+		"edit-stream": {
+			"modal-title": "Edit Money Stream",
+			"edit-stream-tooltip": "Edit money stream",
+			"name-input-label": "Stream name",
+			"name-input-placeholder": "Type a name for your stream",
+			"name-input-hint": "What is this stream being sent for?",
+			"send-amount-input-label": "Amount to Send",
+			"frequency-input-label": "Frequency",
+			"frequency-input-hint": "How often will this amount be sent?",
+			"main-cta": "Update stream",
+			"main-cta-busy": "Updating stream"
+		},
 		"pause-stream-modal-title": "Aktarımı duraklat",
+		"pause-stream-tooltip": "Aktarımı duraklat",
+		"locked-stream-modal-title": "Locked Money Stream",
+		"locked-stream-tooltip": "This Stream is Locked",
+		"resume-stream-modal-title": "Resume stream",
+		"resume-stream-tooltip": "Resume Stream",
 		"refresh-tooltip": "Aktarımları yenilemek için tıkla",
+		"locked-stream-message": "You cannot close or top up a stream from a locked treasury",
 		"resume-stream-confirmation": "Hazineden ({{treasury}}) yararlanıcıya ({{beneficiary}}) para aktarımını sürdürün.",
 		"resume-stream-cta": "Devam et",
 		"screen-title": "Para Aktarımları",
@@ -849,6 +934,8 @@
 			"exchange-on": "... 'da Alım-Satım",
 			"hla-transaction-fee": "Toplayıcı ücreti",
 			"min-recommended-amount": "Önerilen minimum miktar",
+			"minimum-received": "Minimum received",
+			"minimum-sol-for-transaction": "Minimum SOL required",
 			"network-transaction-fee": "Ağ ücreti",
 			"price-impact": "Fiyat etkisi",
 			"protocol-transaction-fee": "{{protocol}} LP ücreti",
@@ -1001,6 +1088,24 @@
 		"treasury-refresh-tooltip": "Hazine bilgisini güncelle",
 		"treasury-streams": {
 			"add-stream-modal-title": "Hazineye aktarım ekle",
+			"add-stream-locked": {
+				"modal-title": "Add a locked money stream",
+				"panel1-name": "Recipient's info",
+				"panel2-name": "Vesting terms",
+				"panel2-summary": "Specify the vesting terms for {{recipientNote}} below. You will be sending {{fromCoinAmount}} {{selectedTokenName}} to {{recipientShortenAddress}} using these terms and schedule.",
+				"panel2-lock-period-label": "Lock period",
+				"panel2-commencement-date-label": "Commencement date",
+				"panel2-cliff-release-label": "Cliff release (on commencement)",
+				"panel2-cliff-release-inner-label": "What amount is released on commencement?",
+				"panel3-name": "Recipient's info",
+				"panel3-text-one": "Confirm the terms for",
+				"panel3-sending": "Sending:",
+				"panel3-to-address": "To Address:",
+				"panel3-starting-on": "Starting on:",
+				"panel3-cliff-release": "Cliff release:",
+				"panel3-release-rate": "Release rate:",
+				"panel3-warning-message": "IMPORTANT: This is a locked money stream, and once started, you cannot cancel, pause or change its details. Verify all information before proceeding."
+			},
 			"allocate-funds-label": "Fon tahsis et",
 			"allocation-reserved-label": "Bu tahsis tamamen AYRILMIŞTIR",
 			"available-unallocated-balance-label": "Kullanılabilir Ayrılmamış Bakiye",
