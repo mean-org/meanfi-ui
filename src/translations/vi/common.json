@@ -398,7 +398,7 @@
 			"modal-title": "Tạo một Multisig Vault",
 			"no-token": "Chọn mã thông báo",
 			"success-message": "Multisig vault của bạn đã được tạo thành công",
-			"token-label": "Từ Tài khoản",
+			"token-label": "Amount to transfer",
 			"token-placeholder": "Nhập địa chỉ mint của mã thông báo"
 		},
 		"crud-multisig": {
@@ -532,7 +532,7 @@
 			"cta-close": "Đóng vault",
 			"cta-close-busy": "Đang đóng vault",
 			"cta-create-asset-busy": "Đang tạo vault",
-			"cta-transfer": "Khởi tạo rút tiền",
+			"cta-transfer": "Propose Funds Transfer",
 			"cta-transfer-busy": "Đang khởi tạo yêu cầu rút tiền",
 			"delete-asset": {
 				"explanatory-paragraph": "By submitting this request, you will sign the transaction and approve it as one of the Multisig signers. Before the asset is deleted, the other Multisig members need to approve it.",
@@ -541,8 +541,8 @@
 				"selected-asset-label": "Asset selected",
 				"warning-message": "Only empty assets can be deleted. To delete an asset you need to first transfer all funds to another account."
 			},
-			"explanatory-paragraph": "Bằng cách gửi yêu cầu này, bạn sẽ ký giao dịch và chấp thuận nó với tư cách là một trong những người ký Multisig. Trước khi tiền có thể được gửi, các thành viên Multisig khác cần phải phê duyệt nó.",
-			"main-cta": "Ký yêu cầu chuyển tiền",
+			"explanatory-paragraph": "By submitting this proposal, you will sign the transaction and approve it as one of the Multisig signers. Before the funds are sent, the other Multisig members need to approve it.",
+			"main-cta": "Sign transfer proposal",
 			"no-transactions": "Vault này không có giao dịch nào",
 			"no-asset-loaded": "Không có vault nào được nạp",
 			"no-assets": "Không có vault khả dụng",
@@ -577,7 +577,7 @@
 		"transfer-tokens": {
 			"main-cta": "Bắt đầu yêu cầu",
 			"main-cta-busy": "Đang bắt đầu yêu cầu",
-			"modal-title": "Yêu cầu chuyển khoản",
+			"modal-title": "Initiate Transfer Proposal",
 			"source-address-label": "Chuyển khoản từ",
 			"source-address-placeholder": "Nhập địa chỉ tài khoản nguồn",
 			"success-message": "Token đã được chuyển khoản thành công",

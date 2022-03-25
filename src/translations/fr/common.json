@@ -394,7 +394,7 @@
 			"modal-title": "Créer un coffre-fort multisig",
 			"no-token": "Sélectionnez le jeton",
 			"success-message": "Votre coffre-fort multisig a été créé avec succès",
-			"token-label": "Du compte",
+			"token-label": "Amount to transfer",
 			"token-placeholder": "Entrez l'adresse mint de jeton"
 		},
 		"crud-multisig": {
@@ -528,7 +528,7 @@
 			"cta-close": "Fermer le coffre-fort",
 			"cta-close-busy": "Voûte de fermeture",
 			"cta-create-asset-busy": "Création d'un coffre-fort",
-			"cta-transfer": "Lancer le retrait",
+			"cta-transfer": "Propose Funds Transfer",
 			"cta-transfer-busy": "Initier une demande de retrait",
 			"delete-asset": {
 				"explanatory-paragraph": "By submitting this request, you will sign the transaction and approve it as one of the Multisig signers. Before the asset is deleted, the other Multisig members need to approve it.",
@@ -546,8 +546,8 @@
 			"screen-title-no-assets": "coffres",
 			"validation-amount-high": "Le montant dépasse le solde du coffre",
 			"asset-detail-heading": "Détails du coffre-fort",
-			"explanatory-paragraph": "By submitting this request, you will sign the transaction and approve it as one of the Multisig signers. Before the funds can be sent, the other Multisig members need to approve it.",
-			"main-cta": "Sign Funds Transfer Request"
+			"explanatory-paragraph": "By submitting this proposal, you will sign the transaction and approve it as one of the Multisig signers. Before the funds are sent, the other Multisig members need to approve it.",
+			"main-cta": "Sign transfer proposal"
 		},
 		"pending-transactions": "opérations en attente",
 		"refresh-tooltip": "Cliquez pour actualiser la liste des comptes multisig",
@@ -573,7 +573,7 @@
 		"transfer-tokens": {
 			"main-cta": "Démarrer la demande",
 			"main-cta-busy": "Demande de démarrage",
-			"modal-title": "Initier une demande de retrait",
+			"modal-title": "Initiate Transfer Proposal",
 			"source-address-label": "Transfert à partir de",
 			"source-address-placeholder": "Entrez l'adresse du compte source",
 			"success-message": "Jetons transférés avec succès.",

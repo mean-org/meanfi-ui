@@ -377,7 +377,7 @@
 			"modal-title": "Create a Multisig Asset",
 			"no-token": "Select token",
 			"success-message": "Your multisig asset was created successfully",
-			"token-label": "From Account",
+			"token-label": "Amount to transfer",
 			"token-placeholder": "Enter the address of the token mint"
 		},
 		"create-multisig": {
@@ -459,7 +459,7 @@
 			"cta-close": "Close asset",
 			"cta-close-busy": "Closing asset",
 			"cta-create-asset-busy": "Creating asset",
-			"cta-transfer": "Request Funds Transfer",
+			"cta-transfer": "Propose Funds Transfer",
 			"cta-transfer-busy": "Initiating Withdrawal Request",
 			"delete-asset": {
 				"explanatory-paragraph": "By submitting this request, you will sign the transaction and approve it as one of the Multisig signers. Before the asset is deleted, the other Multisig members need to approve it.",
@@ -468,8 +468,8 @@
 				"selected-asset-label": "Asset selected",
 				"warning-message": "Only empty assets can be deleted. To delete an asset you need to first transfer all funds to another account."
 			},
-			"explanatory-paragraph": "By submitting this request, you will sign the transaction and approve it as one of the Multisig signers. Before the funds can be sent, the other Multisig members need to approve it.",
-			"main-cta": "Sign Funds Transfer Request",
+			"explanatory-paragraph": "By submitting this proposal, you will sign the transaction and approve it as one of the Multisig signers. Before the funds are sent, the other Multisig members need to approve it.",
+			"main-cta": "Sign transfer proposal",
 			"no-asset-loaded": "No asset loaded",
 			"no-assets": "No assets available",
 			"no-transactions": "No transactions for this asset",
@@ -524,7 +524,7 @@
 			"column-created-on": "Created on",
 			"column-current-signatures": "Sig",
 			"column-my-status": "My Status",
-			"column-operation": "Operation",
+			"column-operation": "Proposal",
 			"column-pending-signatures": "Signatures",
 			"column-program-id": "Program",
 			"explain-failure": "Explain failure condition if specific",
@@ -577,7 +577,7 @@
 		"transfer-tokens": {
 			"main-cta": "Start Request",
 			"main-cta-busy": "Starting Request",
-			"modal-title": "Initiate Withdrawal Request",
+			"modal-title": "Initiate Transfer Proposal",
 			"source-address-label": "Transfer from",
 			"source-address-placeholder": "Enter the address of the source account",
 			"success-message": "Tokens transferred successfully.",

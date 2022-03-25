@@ -1,4 +1,5 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
+import './style.less';
 import { Modal, Button, Spin, Select } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
@@ -8,7 +9,7 @@ import { consoleOut, getTransactionOperationDescription, isValidAddress } from '
 import { isError } from '../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TransactionFees } from '@mean-dao/money-streaming';
-import { getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, isValidNumber, shortenAddress, toUiAmount } from '../../utils/utils';
+import { formatAmount, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, isValidNumber, shortenAddress, toUiAmount } from '../../utils/utils';
 import { useConnection } from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
 import { PublicKey } from '@solana/web3.js';
@@ -17,6 +18,8 @@ import { MultisigVault } from '../../models/multisig';
 import { FALLBACK_COIN_IMAGE } from '../../constants';
 import { Identicon } from '../Identicon';
 import { BN } from 'bn.js';
+import { TokenDisplay } from '../TokenDisplay';
+import { DebounceInput } from 'react-debounce-input';
 
 const { Option } = Select;
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -34,7 +37,13 @@ export const MultisigTransferTokensModal = (props: {
   const { t } = useTranslation('common');
   const connection = useConnection();
   const { publicKey } = useWallet();
-  const { transactionStatus, selectedToken } = useContext(AppStateContext);
+  const {
+    transactionStatus,
+    selectedToken,
+    loadingPrices,
+    effectiveRate,
+    refreshPrices
+  } = useContext(AppStateContext);
 
   const [fromVault, setFromVault] = useState<MultisigVault>();
   const [fromMint, setFromMint] = useState<any>();
@@ -181,70 +190,127 @@ export const MultisigTransferTokensModal = (props: {
 
         {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
           <>
-            {/* Transfer from */}
+            {/* Amount to transfer */}
             <div className="mb-3">
               <div className="form-label">{t('multisig.create-asset.token-label')}</div>
-              <div className={`well ${props.isBusy ? 'disabled' : ''}`}>
-                <div className="flex-fixed-left">
-                  <div className="left">
-                    <span className="add-on">
-                      {props.assets && props.assets.length > 0 && fromVault && fromMint && (
-                        <Select className={`token-selector-dropdown auto-height`} value={fromVault.address.toBase58()}
-                            style={{width:400, maxWidth:'none'}}
-                            onChange={onVaultChanged} bordered={false} showArrow={false}
-                            dropdownRender={menu => (
-                            <div>{menu}</div>
-                          )}>
-                          {props.assets.map((option: MultisigVault) => {
-                            const token = getTokenByMintAddress(option.mint.toBase58());
-                            const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
-                              event.currentTarget.src = FALLBACK_COIN_IMAGE;
-                              event.currentTarget.className = "error";
-                            };
-                            return (
-                              <Option key={option.address.toBase58()} value={option.address.toBase58()}>
-                                <div className="option-container">
-                                  <div className="transaction-list-row w-100">
-                                    <div className="icon-cell">
-                                      <div className="token-icon">
-                                        {token && token.logoURI ? (
-                                          <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
-                                        ) : (
-                                          <Identicon address={option.mint.toBase58()} style={{
-                                            width: "28px",
-                                            display: "inline-flex",
-                                            height: "26px",
-                                            overflow: "hidden",
-                                            borderRadius: "50%"
-                                          }} />
-                                        )}
+                <div className={`well ${props.isBusy ? 'disabled' : ''}`}>
+                  {props.assets && props.assets.length > 0 && fromVault && fromMint && (
+                    <>
+                      <div className="info-label mb-0">
+                        <div className="subtitle text-truncate">{shortenAddress(fromVault.address.toBase58(), 8)}</div>
+                      </div>
+
+                      <div className="flex-fixed-left transfer-proposal-select mt-0">
+                      <div className="left">
+                        <span className="add-on">
+                          {props.assets && props.assets.length > 0 && fromVault && fromMint && (
+                            <Select className={`token-selector-dropdown auto-height`} value={fromVault.address.toBase58()}
+                                style={{width:"100%", maxWidth:'none'}}
+                                onChange={onVaultChanged} bordered={false} showArrow={false}
+                                dropdownRender={menu => (
+                                <div>{menu}</div>
+                              )}>
+                              {props.assets.map((option: MultisigVault) => {
+                                const token = getTokenByMintAddress(option.mint.toBase58());
+                                const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+                                  event.currentTarget.src = FALLBACK_COIN_IMAGE;
+                                  event.currentTarget.className = "error";
+                                };
+                                return (
+                                  <Option key={option.address.toBase58()} value={option.address.toBase58()}>
+                                    <div className="option-container">
+                                      <div className="transaction-list-row w-100">
+                                        <div className="icon-cell">
+                                          <div className="token-icon">
+                                            {token && token.logoURI ? (
+                                              <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
+                                            ) : (
+                                              <Identicon address={option.mint.toBase58()} style={{
+                                                width: "28px",
+                                                display: "inline-flex",
+                                                height: "26px",
+                                                overflow: "hidden",
+                                                borderRadius: "50%"
+                                              }} />
+                                            )}
+                                          </div>
+                                        </div>
+                                        <div className="description-cell">
+                                          <div className="title text-truncate">{token ? token.symbol : `Unknown token [${shortenAddress(option.mint.toBase58(), 6)}]`}</div>
+                                        </div>
+                                        <div className="rate-cell">
+                                          <div className="rate-amount text-uppercase">
+                                            {getTokenAmountAndSymbolByTokenAddress(
+                                              toUiAmount(new BN(option.amount), token?.decimals || 6),
+                                              token ? token.address as string : '',
+                                              true
+                                            )}
+                                          </div>
+                                        </div>
                                       </div>
                                     </div>
-                                    <div className="description-cell">
-                                      <div className="title text-truncate">{token ? token.symbol : `Unknown token [${shortenAddress(option.mint.toBase58(), 6)}]`}</div>
-                                      <div className="subtitle text-truncate">{shortenAddress(option.address.toBase58(), 8)}</div>
-                                    </div>
-                                    <div className="rate-cell">
-                                      <div className="rate-amount text-uppercase">
-                                        {getTokenAmountAndSymbolByTokenAddress(
-                                          toUiAmount(new BN(option.amount), token?.decimals || 6),
-                                          token ? token.address as string : '',
-                                          true
-                                        )}
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              </Option>
-                            );
-                          })}
-                        </Select>
-                      )}
-                    </span>
-                  </div>
-                </div>
+                                  </Option>
+                                );
+                              })}
+                            </Select>
+                          )}
+                        </span>
+                      </div>
+                      <div className="right">
+                        <DebounceInput
+                          className="general-text-input text-right"
+                          inputMode="decimal"
+                          autoComplete="off"
+                          autoCorrect="off"
+                          type="text"
+                          onChange={onMintAmountChange}
+                          pattern="^[0-9]*[.,]?[0-9]*$"
+                          placeholder="0.0"
+                          minLength={1}
+                          maxLength={79}
+                          debounceTimeout={400}
+                          spellCheck="false"
+                          value={amount}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex-fixed-right">
+                      <div className="left inner-label">
+                        <span>{t('transactions.send-amount.label-right')}:</span>
+                          <span>
+                            {getTokenAmountAndSymbolByTokenAddress(
+                              toUiAmount(new BN(fromVault.amount), fromVault?.decimals || 6),
+                              fromVault ? fromVault.address.toBase58() as string : '',
+                              true
+                            )}
+                        </span>
+                      </div>
+
+                      <div className="right inner-label">
+                        <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
+                          ~${amount && effectiveRate
+                            ? formatAmount(parseFloat(amount) * effectiveRate, 2)
+                            : "0.00"}
+                        </span>
+                      </div>
+                    </div>
+                    {(fromVault && fromMint) && (
+                      <>
+                      {
+                        +amount > toUiAmount(fromVault.amount, fromMint.decimals || 6) ? (
+                          <span className="form-field-error">
+                            {t('multisig.multisig-assets.validation-amount-high')}
+                          </span>
+                        ) : (null)
+                      }
+                      </>
+                    )}
+                  </>
+                )}
               </div>
             </div>
+
             {/* Transfer to */}
             <div className="form-label">{t('multisig.transfer-tokens.transfer-to-label')}</div>
             <div className="well">
@@ -264,34 +330,7 @@ export const MultisigTransferTokensModal = (props: {
                 </span>
               )}
             </div>
-            {/* amount */}
-            <div className="form-label">{t('multisig.transfer-tokens.transfer-amount-label')}</div>
-            <div className="well">
-              <input
-                className="general-text-input"
-                inputMode="decimal"
-                autoComplete="off"
-                autoCorrect="off"
-                type="text"
-                onChange={onMintAmountChange}
-                pattern="^[0-9]*$"
-                placeholder={t('multisig.transfer-tokens.transfer-amount-placeholder')}
-                minLength={1}
-                spellCheck="false"
-                value={amount}
-              />
-              {(fromVault && fromMint) && (
-                <>
-                {
-                  +amount > toUiAmount(fromVault.amount, fromMint.decimals || 6) ? (
-                    <span className="form-field-error">
-                      {t('multisig.multisig-assets.validation-amount-high')}
-                    </span>
-                  ) : (null)
-                }
-                </>
-              )}
-            </div>
+
             {/* explanatory paragraph */}
             <p>{t("multisig.multisig-assets.explanatory-paragraph")}</p>
           </>

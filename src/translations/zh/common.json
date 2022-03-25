@@ -373,7 +373,7 @@
 			"modal-title": "Create a Multisig Vault",
 			"no-token": "Select token",
 			"success-message": "Your multisig vault was created successfully",
-			"token-label": "From Account",
+			"token-label": "Amount to transfer",
 			"token-placeholder": "Enter the address of the token mint"
 		},
 		"lookup-multisig-account-cta-tooltip": "Lookup a multisig account",
@@ -502,7 +502,7 @@
 			"cta-close": "Close vault",
 			"cta-close-busy": "Closing vault",
 			"cta-create-asset-busy": "Creating vault",
-			"cta-transfer": "Request Funds Transfer",
+			"cta-transfer": "Propose Funds Transfer",
 			"cta-transfer-busy": "Initiating Withdrawal Request",
 			"delete-asset": {
 				"explanatory-paragraph": "By submitting this request, you will sign the transaction and approve it as one of the Multisig signers. Before the asset is deleted, the other Multisig members need to approve it.",
@@ -520,8 +520,8 @@
 			"screen-title-no-assets": "Vaults",
 			"validation-amount-high": "Amount exceeds the vault balance",
 			"asset-detail-heading": "Vault details",
-			"explanatory-paragraph": "By submitting this request, you will sign the transaction and approve it as one of the Multisig signers. Before the funds can be sent, the other Multisig members need to approve it.",
-			"main-cta": "Sign Funds Transfer Request"
+			"explanatory-paragraph": "By submitting this proposal, you will sign the transaction and approve it as one of the Multisig signers. Before the funds are sent, the other Multisig members need to approve it.",
+			"main-cta": "Sign transfer proposal"
 		},
 		"pending-transactions": "pending transactions",
 		"refresh-tooltip": "Click to refresh the list of multisig accounts",
@@ -540,7 +540,7 @@
 		"transfer-tokens": {
 			"main-cta": "Start Request",
 			"main-cta-busy": "Starting Request",
-			"modal-title": "Initiate Withdrawal Request",
+			"modal-title": "Initiate Transfer Proposal",
 			"source-address-label": "Transfer from",
 			"source-address-placeholder": "Enter the address of the source account",
 			"success-message": "Tokens transferred successfully.",

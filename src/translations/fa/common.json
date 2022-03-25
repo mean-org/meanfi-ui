@@ -398,7 +398,7 @@
 			"modal-title": "یک خزانه حساب Multisig ایجاد کنید",
 			"no-token": "توکن را انتخاب کنید",
 			"success-message": "خزانه حساب Multisig شما با موفقیت ایجاد شد",
-			"token-label": "از حساب",
+			"token-label": "Amount to transfer",
 			"token-placeholder": "آدرس مینت کردن توکن را وارد کنید"
 		},
 		"crud-multisig": {
@@ -532,7 +532,7 @@
 			"cta-close": "treasury را ببند",
 			"cta-close-busy": "بسته شدن treasury",
 			"cta-create-asset-busy": "ایجاد treasury",
-			"cta-transfer": "درخواست انتقال وجه",
+			"cta-transfer": "Propose Funds Transfer",
 			"cta-transfer-busy": "شروع درخواست برداشت",
 			"delete-asset": {
 				"explanatory-paragraph": "By submitting this request, you will sign the transaction and approve it as one of the Multisig signers. Before the asset is deleted, the other Multisig members need to approve it.",
@@ -541,8 +541,8 @@
 				"selected-asset-label": "Asset selected",
 				"warning-message": "Only empty assets can be deleted. To delete an asset you need to first transfer all funds to another account."
 			},
-			"explanatory-paragraph": "با ارسال این درخواست، معامله را امضا کرده و آن را به عنوان یکی از امضاکنندگان Multisig تایید می‌کنید. قبل از ارسال وجوه، سایر اعضای Multisig باید آن را تأیید کنند.",
-			"main-cta": "درخواست انتقال وجه را امضا کنید",
+			"explanatory-paragraph": "By submitting this proposal, you will sign the transaction and approve it as one of the Multisig signers. Before the funds are sent, the other Multisig members need to approve it.",
+			"main-cta": "Sign transfer proposal",
 			"no-transactions": "هیچ تراکنشی برای این خزانه وجود ندارد",
 			"no-asset-loaded": "خزانه بارگذاری نشده است",
 			"no-assets": "هیچ خزانه ای در دسترس نیست",
@@ -577,7 +577,7 @@
 		"transfer-tokens": {
 			"main-cta": "شروع درخواست",
 			"main-cta-busy": "شروع کردن درخواست",
-			"modal-title": "درخواست انتقال وجه ارسال کنید",
+			"modal-title": "Initiate Transfer Proposal",
 			"source-address-label": "انتقال از",
 			"source-address-placeholder": "آدرس اکانت منبع را وارد کنید",
 			"success-message": "توکن ها با موفقیت منتقل شدند.",

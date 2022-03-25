@@ -377,7 +377,7 @@
 			"modal-title": "Create a Multisig Vault",
 			"no-token": "Select token",
 			"success-message": "Your multisig vault was created successfully",
-			"token-label": "From Account",
+			"token-label": "Amount to transfer",
 			"token-placeholder": "Enter the address of the token mint"
 		},
 		"create-multisig": {
@@ -459,7 +459,7 @@
 			"cta-close": "Close vault",
 			"cta-close-busy": "Closing vault",
 			"cta-create-asset-busy": "Creating vault",
-			"cta-transfer": "Request Funds Transfer",
+			"cta-transfer": "Propose Funds Transfer",
 			"cta-transfer-busy": "Initiating Withdrawal Request",
 			"delete-asset": {
 				"explanatory-paragraph": "By submitting this request, you will sign the transaction and approve it as one of the Multisig signers. Before the asset is deleted, the other Multisig members need to approve it.",
@@ -468,8 +468,8 @@
 				"selected-asset-label": "Asset selected",
 				"warning-message": "Only empty assets can be deleted. To delete an asset you need to first transfer all funds to another account."
 			},
-			"explanatory-paragraph": "By submitting this request, you will sign the transaction and approve it as one of the Multisig signers. Before the funds can be sent, the other Multisig members need to approve it.",
-			"main-cta": "Sign Funds Transfer Request",
+			"explanatory-paragraph": "By submitting this proposal, you will sign the transaction and approve it as one of the Multisig signers. Before the funds are sent, the other Multisig members need to approve it.",
+			"main-cta": "Sign transfer proposal",
 			"no-asset-loaded": "No vault loaded",
 			"no-assets": "No vaults available",
 			"no-transactions": "No transactions for this vault",
@@ -577,7 +577,7 @@
 		"transfer-tokens": {
 			"main-cta": "시작 요청",
 			"main-cta-busy": "시작 요청",
-			"modal-title": "출금 요청을 시작하다",
+			"modal-title": "Initiate Transfer Proposal",
 			"source-address-label": "에서 전송",
 			"source-address-placeholder": "원 계정의 주소를 입력하십시오",
 			"success-message": "토큰이 성공적으로 전송되었습니다.",

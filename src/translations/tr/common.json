@@ -398,7 +398,7 @@
 			"modal-title": "Çoklu-İmza kasası oluştur",
 			"no-token": "Token seç",
 			"success-message": "Çoklu-İmza kasanız başarıyla oluşturuldu",
-			"token-label": "Gönderen hesap",
+			"token-label": "Amount to transfer",
 			"token-placeholder": "Mintlemek için bir token adresi girin"
 		},
 		"crud-multisig": {
@@ -532,7 +532,7 @@
 			"cta-close": "Kasayı kapat",
 			"cta-close-busy": "Kasa kapanıyor",
 			"cta-create-asset-busy": "Kasa oluşturuluyor",
-			"cta-transfer": "Çekme işlemini başlat",
+			"cta-transfer": "Propose Funds Transfer",
 			"cta-transfer-busy": "Çekme işlemi talebi başlatılıyor",
 			"delete-asset": {
 				"explanatory-paragraph": "By submitting this request, you will sign the transaction and approve it as one of the Multisig signers. Before the asset is deleted, the other Multisig members need to approve it.",
@@ -541,8 +541,8 @@
 				"selected-asset-label": "Asset selected",
 				"warning-message": "Only empty assets can be deleted. To delete an asset you need to first transfer all funds to another account."
 			},
-			"explanatory-paragraph": "Bu talebi göndererek, işlemi imzalayacak ve Çoklu-İmza yetkililerinden biri olarak onaylayacaksınız. Paranın gönderilebilmesi için diğer Çoklu-İmza üyelerinin bunu onaylaması gerekir.",
-			"main-cta": "Fon transfer isteğini imzala",
+			"explanatory-paragraph": "By submitting this proposal, you will sign the transaction and approve it as one of the Multisig signers. Before the funds are sent, the other Multisig members need to approve it.",
+			"main-cta": "Sign transfer proposal",
 			"no-transactions": "Bu kasa için işlem yok",
 			"no-asset-loaded": "Kasa yüklenemedi",
 			"no-assets": "Mevcut kasa yok",
@@ -577,7 +577,7 @@
 		"transfer-tokens": {
 			"main-cta": "Talep etmeye başla",
 			"main-cta-busy": "Talep etmeye başlanıyor",
-			"modal-title": "Çekme Talebine Başla",
+			"modal-title": "Initiate Transfer Proposal",
 			"source-address-label": "Hesaptan transfer ediliyor",
 			"source-address-placeholder": "Kaynak hesabın adresini girin",
 			"success-message": "Tokenlar başarıyla transfer edildi",

@@ -394,7 +394,7 @@
 			"modal-title": "Criar um cofre multisig",
 			"no-token": "Selecionar token",
 			"success-message": "Seu cofre multisig foi criado com sucesso",
-			"token-label": "Da conta",
+			"token-label": "Amount to transfer",
 			"token-placeholder": "Digite o endereço da mint do token"
 		},
 		"crud-multisig": {
@@ -528,7 +528,7 @@
 			"cta-close": "Fechar cofre",
 			"cta-close-busy": "Fechando cofre",
 			"cta-create-asset-busy": "Criando cofre",
-			"cta-transfer": "Iniciar Retirada",
+			"cta-transfer": "Propose Funds Transfer",
 			"cta-transfer-busy": "Iniciando a Solicitação de Retirada",
 			"delete-asset": {
 				"explanatory-paragraph": "By submitting this request, you will sign the transaction and approve it as one of the Multisig signers. Before the asset is deleted, the other Multisig members need to approve it.",
@@ -546,8 +546,8 @@
 			"screen-title-no-assets": "Cofres",
 			"validation-amount-high": "O valor excede o saldo do cofre",
 			"asset-detail-heading": "Detalhes do cofre",
-			"explanatory-paragraph": "By submitting this request, you will sign the transaction and approve it as one of the Multisig signers. Before the funds can be sent, the other Multisig members need to approve it.",
-			"main-cta": "Sign Funds Transfer Request"
+			"explanatory-paragraph": "By submitting this proposal, you will sign the transaction and approve it as one of the Multisig signers. Before the funds are sent, the other Multisig members need to approve it.",
+			"main-cta": "Sign transfer proposal"
 		},
 		"pending-transactions": "transações pendentes",
 		"refresh-tooltip": "Clique para atualizar a lista de contas multisig",
@@ -573,7 +573,7 @@
 		"transfer-tokens": {
 			"main-cta": "Iniciar solicitação",
 			"main-cta-busy": "Solicitação inicial",
-			"modal-title": "Iniciar solicitação de retirada",
+			"modal-title": "Initiate Transfer Proposal",
 			"source-address-label": "Transferir de",
 			"source-address-placeholder": "Digite o endereço da conta de origem",
 			"success-message": "Tokens transferidos com sucesso.",
