@@ -60,6 +60,8 @@ export const InvestView = () => {
   const [raydiumInfo, setRaydiumInfo] = useState<any>([]);
   const [orcaInfo, setOrcaInfo] = useState<any>([]);
   const [maxRadiumAprValue, setMaxRadiumAprValue] = useState<number>(0);
+  const [maxOrcaAprValue, setMaxOrcaAprValue] = useState<number>(0);
+  const [maxAprValue, setMaxAprValue] = useState<number>(0);
   const [pageInitialized, setPageInitialized] = useState<boolean>(false);
   const [stakePoolInfo, setStakePoolInfo] = useState<StakePoolInfo>();
 
@@ -286,7 +288,7 @@ export const InvestView = () => {
       symbol1: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R/logo.png",
       symbol2: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE/logo.png",
       title: t("invest.panel-left.invest-liquidity-tab-title"),
-      rateAmount: `${t("invest.panel-left.liquidity-value-label")} ${maxRadiumAprValue}`,
+      rateAmount: `${t("invest.panel-left.liquidity-value-label")} ${maxAprValue ? maxAprValue.toFixed(2) : "0"}`,
       interval: "APR/APY"
     }
   ];
@@ -339,23 +341,7 @@ export const InvestView = () => {
   useEffect(() => {
     if (!connection) { return; }
 
-    (async () => {
-      fetch('https://api.orca.so/pools')
-        .then((res) => res.json())
-        .then((data) => {
-          const orcaData = data.find((item: any) => item.name2 === "MEAN/USDC");
-
-          if (!Array.isArray(orcaData)) {
-            setOrcaInfo([orcaData]);
-          } else {
-            setOrcaInfo(orcaData);
-          }
-        })
-        .catch((error) => {
-          consoleOut(error);
-        })
-    })();
-
+    const timer = setTimeout(() => {
     (async () => {
       // fetch('https://api.raydium.io/pairs') - old version
       fetch('https://api.raydium.io/v2/main/pairs')
@@ -381,9 +367,51 @@ export const InvestView = () => {
         .catch((error) => {
           consoleOut(error);
         })
-      })();
+    })();
 
+    (async () => {
+      fetch('https://api.orca.so/pools')
+        .then((res) => res.json())
+        .then((data) => {
+          const orcaData = data.find((item: any) => item.name2 === "MEAN/USDC");
+
+          if (!Array.isArray(orcaData)) {
+            setOrcaInfo([orcaData]);
+
+            let maxOrcaApr = orcaInfo.map((item: any) => {
+              let properties = item.apy_7d;
+  
+              return properties;
+            });
+
+            setMaxOrcaAprValue(Math.max(...maxOrcaApr) * 100);
+
+          } else {
+            setOrcaInfo(orcaData);
+            setMaxOrcaAprValue(orcaInfo.apy_7d * 100);
+          }
+        })
+        .catch((error) => {
+          consoleOut(error);
+        })
+    })();
+
+  }, 5000);
+
+  return () => {
+    clearTimeout(timer);
+  }   
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [connection]);
+  
+  useEffect(() => {
+    setMaxAprValue(Math.max(maxOrcaAprValue, maxRadiumAprValue));
+  }, [
+    maxOrcaAprValue,
+    maxRadiumAprValue
+  ]);
+  console.log(maxAprValue);
 
   const [selectedInvest, setSelectedInvest] = useState<any>(investItems[0]);
 
@@ -745,7 +773,7 @@ export const InvestView = () => {
                                 <span>{raydium.volume24h > 0 ? `$${formatThousands(raydium.volume24h)}` : "--"}</span>
                               </div>
                               <div className="std-table-cell responsive-cell pr-1 text-right">
-                                <span>{raydium.apr7d > 0 ? `${cutNumber(raydium.apr7d, 2)}%` : "--"}</span>
+                                <span>{raydium.apr7d > 0 ? `${raydium.apr7d.toFixed(2)}%` : "--"}</span>
                               </div>
                               <div className="std-table-cell responsive-cell pl-1 text-center invest-col">
                                 <span role="img" aria-label="arrow-up" className="anticon anticon-arrow-up mean-svg-icons outgoing upright">
@@ -774,7 +802,7 @@ export const InvestView = () => {
                                 <span>{orca.volume_24h > 0 ? `$${formatThousands(orca.volume_24h)}` : "--"}</span>
                               </div>
                               <div className="std-table-cell responsive-cell pr-1 text-right">
-                                <span>{orca.apy_7d > 0 ? `${cutNumber(orca.apy_7d * 100, 2)}% APY` : "--"}</span>
+                                <span>{orca.apy_7d > 0 ? `${(orca.apy_7d * 100).toFixed(2)}% APY` : "--"}</span>
                               </div>
                               <div className="std-table-cell responsive-cell pl-1 text-center invest-col">
                                 <span role="img" aria-label="arrow-up" className="anticon anticon-arrow-up mean-svg-icons outgoing upright">
