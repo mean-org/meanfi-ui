@@ -421,10 +421,9 @@ export const UnstakeTabView = (props: {
     }
 
     if (props.selectedToken && props.selectedToken.symbol === "sMEAN") {
-      console.log("Token Balance", props.tokenBalance);
       if (props.tokenBalance > 0) {
         getMeanQuote(props.tokenBalance).then((value) => {
-          console.log("Mean Quote", value);
+          console.log(`Mean Quote for ${formatThousands(props.tokenBalance, props.selectedToken?.decimals)} sMEAN`, value);
           setMeanWorthOfsMean(value);
         })
       } else {
