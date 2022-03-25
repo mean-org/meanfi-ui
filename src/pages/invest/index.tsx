@@ -1,75 +1,79 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import './style.less';
-import { ArrowDownOutlined, CheckOutlined, ReloadOutlined, WarningFilled } from "@ant-design/icons";
-import { Button, Tooltip, Row, Col, Space, Empty, Spin } from "antd";
-import moment from 'moment';
-import Checkbox from "antd/lib/checkbox/Checkbox";
-import Modal from "antd/lib/modal/Modal";
+import { ReloadOutlined, WarningFilled } from "@ant-design/icons";
+import { Button, Tooltip, Row, Col, Empty, Spin } from "antd";
 import { useTranslation } from 'react-i18next';
 import { isDesktop } from "react-device-detect";
-import { TokenDisplay } from "../../components/TokenDisplay";
 import { PreFooter } from "../../components/PreFooter";
-import { useConnection, useConnectionConfig } from '../../contexts/connection';
+import { getNetworkIdByCluster, useConnection, useConnectionConfig } from '../../contexts/connection';
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
-import { cutNumber, formatAmount, formatThousands, getAmountWithSymbol, isValidNumber } from "../../utils/utils";
+import { cutNumber, findATokenAddress, formatThousands } from "../../utils/utils";
 import { IconRefresh, IconStats } from "../../Icons";
 import { IconHelpCircle } from "../../Icons/IconHelpCircle";
 import useWindowSize from '../../hooks/useWindowResize';
 import { consoleOut, isDev, isLocal, isProd } from "../../utils/ui";
 import { useNavigate } from "react-router-dom";
-import { ConfirmOptions, LAMPORTS_PER_SOL } from "@solana/web3.js";
-import { Provider } from "@project-serum/anchor";
+import { ConfirmOptions, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { Env, StakePoolInfo, StakingClient } from "@mean-dao/staking";
 import { StakeTabView } from "../../views/StakeTabView";
 import { UnstakeTabView } from "../../views/UnstakeTabView";
+import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
+import { TokenInfo } from "@solana/spl-token-registry";
 import { MEAN_TOKEN_LIST } from "../../constants/token-list";
-import { useNativeAccount } from "../../contexts/accounts";
 
 type SwapOption = "stake" | "unstake";
 
+type StakingPair = {
+  unstakedToken: TokenInfo | undefined;
+  stakedToken: TokenInfo | undefined;
+}
+
 export const InvestView = () => {
   const {
+    coinPrices,
     stakedAmount,
     isWhitelisted,
-    selectedToken,
     fromCoinAmount,
-    unstakedAmount,
-    unstakeStartDate,
     detailsPanelOpen,
-    stakingMultiplier,
     isInBetaTestingProgram,
     setIsVerifiedRecipient,
-    refreshTokenBalance,
     setDtailsPanelOpen,
     setFromCoinAmount,
-    setSelectedToken,
-    setSelectedTokenBalance
   } = useContext(AppStateContext);
   const navigate = useNavigate();
   const connection = useConnection();
+  const connectionConfig = useConnectionConfig();
   const { cluster, endpoint } = useConnectionConfig();
   const { connected, publicKey } = useWallet();
   const { account } = useNativeAccount();
+  const accounts = useAccountsContext();
   const { t } = useTranslation('common');
   const { width } = useWindowSize();
   const [isSmallUpScreen, setIsSmallUpScreen] = useState(isDesktop);
   const [nativeBalance, setNativeBalance] = useState(0);
-  const [userBalances, setUserBalances] = useState<any>();
+  const [meanPrice, setMeanPrice] = useState<number>(0);
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [currentTab, setCurrentTab] = useState<SwapOption>("stake");
   const [stakingRewards, setStakingRewards] = useState<number>(0);
-  // const [selectedInvest, setSelectedInvest] = useState<any>(undefined);
   const annualPercentageYield = 5;
   const [raydiumInfo, setRaydiumInfo] = useState<any>([]);
   const [orcaInfo, setOrcaInfo] = useState<any>([]);
   const [maxRadiumAprValue, setMaxRadiumAprValue] = useState<number>(0);
-  const [meanAddresses, setMeanAddresses] = useState<Env>();
   const [pageInitialized, setPageInitialized] = useState<boolean>(false);
   const [stakePoolInfo, setStakePoolInfo] = useState<StakePoolInfo>();
 
+  // Tokens and balances
+  const [meanAddresses, setMeanAddresses] = useState<Env>();
+  const [stakingPair, setStakingPair] = useState<StakingPair | undefined>(undefined);
+  const [sMeanBalance, setSmeanBalance] = useState<number>(0);
+  const [meanBalance, setMeanBalance] = useState<number>(0);
+
   const userHasAccess = useMemo(() => {
 
+    // return isWhitelisted || isInBetaTestingProgram
+    //   ? true
+    //   : false;
     return isLocal() || (isDev() && (isWhitelisted || isInBetaTestingProgram))
       ? true
       : false;
@@ -83,6 +87,78 @@ export const InvestView = () => {
     }
   }, [navigate]);
 
+  const refreshMeanBalance = useCallback(async () => {
+
+    if (!connection || !publicKey || !accounts || !accounts.tokenAccounts || !accounts.tokenAccounts.length) {
+      return;
+    }
+
+    const getTokenAccountBalanceByAddress = async (tokenMintAddress: PublicKey | undefined | null): Promise<number> => {
+      if (!tokenMintAddress) return 0;
+      try {
+        const tokenAmount = (await connection.getTokenAccountBalance(tokenMintAddress)).value;
+        return tokenAmount.uiAmount || 0;
+      } catch (error) {
+        console.error(error);
+        throw(error);
+      }
+    }
+
+    let balance = 0;
+
+    if (!stakingPair || !stakingPair.unstakedToken) {
+      setMeanBalance(balance);
+      return;
+    }
+
+    const meanTokenPk = new PublicKey(stakingPair.unstakedToken.address);
+    const meanTokenAddress = await findATokenAddress(publicKey, meanTokenPk);
+    balance = await getTokenAccountBalanceByAddress(meanTokenAddress);
+    setMeanBalance(balance);
+
+  }, [
+    accounts,
+    publicKey,
+    connection,
+    stakingPair,
+  ]);
+
+  const refreshStakedMeanBalance = useCallback(async () => {
+
+    if (!connection || !publicKey || !accounts || !accounts.tokenAccounts || !accounts.tokenAccounts.length) {
+      return;
+    }
+
+    const getTokenAccountBalanceByAddress = async (tokenMintAddress: PublicKey | undefined | null): Promise<number> => {
+      if (!tokenMintAddress) return 0;
+      try {
+        const tokenAmount = (await connection.getTokenAccountBalance(tokenMintAddress)).value;
+        return tokenAmount.uiAmount || 0;
+      } catch (error) {
+        console.error(error);
+        throw(error);
+      }
+    }
+
+    let balance = 0;
+
+    if (!stakingPair || !stakingPair.stakedToken) {
+      setSmeanBalance(balance);
+      return;
+    }
+
+    const sMeanTokenPk = new PublicKey(stakingPair.stakedToken.address);
+    const smeanTokenAddress = await findATokenAddress(publicKey, sMeanTokenPk);
+    balance = await getTokenAccountBalanceByAddress(smeanTokenAddress);
+    setSmeanBalance(balance);
+
+  }, [
+    accounts,
+    publicKey,
+    connection,
+    stakingPair,
+  ]);
+
   // Keep account balance updated
   useEffect(() => {
 
@@ -91,8 +167,9 @@ export const InvestView = () => {
     }
 
     if (account?.lamports !== previousBalance || !nativeBalance) {
-      // Refresh token balance
-      refreshTokenBalance();
+      // Refresh token balances
+      refreshMeanBalance();
+      refreshStakedMeanBalance();
       setNativeBalance(getAccountBalance());
       // Update previous balance
       setPreviousBalance(account?.lamports);
@@ -101,7 +178,38 @@ export const InvestView = () => {
     account,
     nativeBalance,
     previousBalance,
-    refreshTokenBalance
+    refreshMeanBalance,
+    refreshStakedMeanBalance,
+  ]);
+
+  // Keep MEAN price updated
+  useEffect(() => {
+
+    if (coinPrices && stakingPair && stakingPair.unstakedToken) {
+      const symbol = stakingPair.unstakedToken.symbol.toUpperCase();
+      const price = coinPrices && coinPrices[symbol] ? coinPrices[symbol] : 0;
+      setMeanPrice(price);
+    } else {
+      setMeanPrice(0);
+    }
+
+  }, [coinPrices, stakingPair]);
+
+  // Keep sMEAN balance updated
+  useEffect(() => {
+    if (!publicKey || !accounts || !accounts.tokenAccounts || !accounts.tokenAccounts.length) {
+      return;
+    }
+
+    if (stakingPair && stakingPair.unstakedToken) {
+      refreshStakedMeanBalance();
+    }
+
+  }, [
+    accounts,
+    publicKey,
+    stakingPair,
+    refreshStakedMeanBalance,
   ]);
 
   const investItems = [
@@ -125,10 +233,11 @@ export const InvestView = () => {
     }
   ];
 
-  const stakingData = [
+  const stakingData = useMemo(() => [
     {
       label: t("invest.panel-right.staking-data.label-my-staked"),
-      value: stakedAmount ? cutNumber(parseFloat(stakedAmount), 6) : 0
+      value: stakingPair && stakingPair.unstakedToken && sMeanBalance
+        ? formatThousands(sMeanBalance, stakingPair.unstakedToken.decimals) : "0"
     },
     // {
     //   label: t("invest.panel-right.staking-data.label-avg"),
@@ -146,7 +255,7 @@ export const InvestView = () => {
     //   label: t("invest.panel-right.staking-data.label-balance"),
     //   value: "20,805.1232"
     // },
-  ];
+  ], [sMeanBalance, stakingPair, t]);
 
   // Create and cache Staking client instance
   const stakeClient = useMemo(() => {
@@ -170,66 +279,54 @@ export const InvestView = () => {
     publicKey
   ]);
 
-  // Get tokens from staking client
+  // Get token addresses from staking client and save tokens
   useEffect(() => {
-    if (!stakeClient) {
-      return;
-    }
+    if (!stakeClient) { return; }
 
     if (!pageInitialized) {
       const meanAddress = stakeClient.getMintAddresses();
 
       setMeanAddresses(meanAddress);
 
-      if (currentTab === "stake") {
-        const token = MEAN_TOKEN_LIST.find(t => t.address === meanAddress.mean.toBase58());
+      const tokenList = MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(connectionConfig.cluster))
+      const unstakedToken = tokenList.find(t => t.address === meanAddress.mean.toBase58());
+      const stakedToken = tokenList.find(t => t.address === meanAddress.sMean.toBase58());
 
-        if (token) {
-          consoleOut("MEAN token", token);
-          setSelectedToken(token);
-        } else {
-          consoleOut("MEAN not available in the token list, please add");
-        }
+      consoleOut('unstakedToken', unstakedToken, 'blue');
+      consoleOut('stakedToken', stakedToken, 'blue');
 
-      } else {
-        const token = MEAN_TOKEN_LIST.find(t => t.address === meanAddress.sMean.toBase58());
+      setStakingPair({
+        unstakedToken,
+        stakedToken
+      });
 
-        if (token) {
-          consoleOut("sMEAN token", token);
-          setSelectedToken(token);
-        } else {
-          consoleOut("sMEAN not available in the token list, please add");
-        }
-      }
     }
   }, [
     stakeClient,
     pageInitialized,
-    currentTab,
-    fromCoinAmount,
-    setSelectedToken
+    connectionConfig.cluster
   ]);
-
   // Get staking pool info from staking client
   useEffect(() => {
     if (!stakeClient) {
       return;
     }
 
-    stakeClient.getStakePoolInfo().then((value) => {
+    stakeClient.getStakePoolInfo(meanPrice).then((value) => {
       setStakePoolInfo(value);
     }).catch((error) => {
       console.error(error);
     });
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    stakeClient,
-    pageInitialized,
     currentTab,
+    stakeClient,
     fromCoinAmount,
-    setSelectedToken
+    pageInitialized,
   ]);
 
+  // Get Orca pool info
   useEffect(() => {
     if (!connection) { return; }
 
@@ -255,17 +352,22 @@ export const InvestView = () => {
       fetch('https://api.raydium.io/v2/main/pairs')
         .then((res) => res.json())
         .then((data) => {
-          const raydiumData = data.filter((item: any) => item.name.substr(0, 4) === "MEAN");
-
-          let maxRadiumApr = raydiumData.map((item: any) => {
-            let properties = item.apr7d;
-
-            return properties;
-          });
-
-          setMaxRadiumAprValue(Math.max(...maxRadiumApr));
-
-          setRaydiumInfo(raydiumData);
+          if (!data || data.msg) {
+            setRaydiumInfo(undefined);
+            setMaxRadiumAprValue(0);
+          } else {
+            const raydiumData = data.filter((item: any) => item.name.substr(0, 4) === "MEAN");
+  
+            let maxRadiumApr = raydiumData.map((item: any) => {
+              let properties = item.apr7d;
+  
+              return properties;
+            });
+  
+            setMaxRadiumAprValue(Math.max(...maxRadiumApr));
+  
+            setRaydiumInfo(raydiumData);
+          }
         })
         .catch((error) => {
           consoleOut(error);
@@ -277,47 +379,13 @@ export const InvestView = () => {
   const [selectedInvest, setSelectedInvest] = useState<any>(investItems[0]);
 
   const onTabChange = useCallback((option: SwapOption) => {
-    if (meanAddresses) {
-      setSelectedTokenBalance(0);
-
-      if (option === "stake") {
-        const token = MEAN_TOKEN_LIST.find(t => t.address === meanAddresses.mean.toBase58());
-
-        if (token) {
-          consoleOut("MEAN token", token);
-
-          setTimeout(() => { 
-            setSelectedToken(token);   
-           }, 50);
-        } else {
-          consoleOut("MEAN not available in the token list, please add");
-        }
-
-      } else {
-        const token = MEAN_TOKEN_LIST.find(t => t.address === meanAddresses.sMean.toBase58());
-
-        if (token) {
-          consoleOut("sMEAN token", token);
-
-          setTimeout(() => { 
-            setSelectedToken(token);   
-           }, 50);
-        } else {
-          consoleOut("sMEAN not available in the token list, please add");
-        }
-      }
-
-      setCurrentTab(option);
-      setFromCoinAmount('');
-      setIsVerifiedRecipient(false);
-    }
+    setCurrentTab(option);
+    setFromCoinAmount('');
+    setIsVerifiedRecipient(false);
 
   }, [
-    meanAddresses,
-    setSelectedTokenBalance,
-    setIsVerifiedRecipient,
     setFromCoinAmount,
-    setSelectedToken,
+    setIsVerifiedRecipient,
   ]);
 
   // Withdraw funds modal
@@ -336,6 +404,7 @@ export const InvestView = () => {
     closeWithdrawModal();
   }
 
+  // Keep staking rewards updated
   useEffect(() => {
     setStakingRewards(parseFloat(stakedAmount) * annualPercentageYield / 100);
   }, [stakedAmount]);  
@@ -354,11 +423,13 @@ export const InvestView = () => {
   // Set when a page is initialized
   useEffect(() => {
     if (!pageInitialized && stakeClient) {
+      refreshStakedMeanBalance();
       setPageInitialized(true);
     }
   }, [
+    stakeClient,
     pageInitialized,
-    stakeClient
+    refreshStakedMeanBalance
   ]);
 
   const renderInvestOptions = (
@@ -477,13 +548,6 @@ export const InvestView = () => {
               <div className="inner-container">
                 {selectedInvest.id === 0 && (
                   <>
-                    {/* Background animation */}
-                    {/* {stakingRewards > 0 && (
-                      <div className="staking-background">
-                        <img className="inbound" src="/assets/incoming-crypto.svg" alt="" />
-                      </div>
-                    )} */}
-
                     {/* Staking paragraphs */}
                     <h2>{t("invest.panel-right.title")}</h2>
                     <p>{t("invest.panel-right.first-text")}</p>
@@ -543,12 +607,20 @@ export const InvestView = () => {
 
                             {/* Tab Stake */}
                             {currentTab === "stake" && (
-                              <StakeTabView stakeClient={stakeClient} />
+                              <StakeTabView
+                                stakeClient={stakeClient}
+                                selectedToken={stakingPair?.unstakedToken}
+                                tokenBalance={meanBalance}
+                              />
                             )}
 
                             {/* Tab unstake */}
                             {currentTab === "unstake" && (
-                              <UnstakeTabView stakeClient={stakeClient} />
+                              <UnstakeTabView
+                                stakeClient={stakeClient}
+                                selectedToken={stakingPair?.stakedToken}
+                                tokenBalance={sMeanBalance}
+                              />
                             )}
                           </div>
                         )}
@@ -558,19 +630,18 @@ export const InvestView = () => {
                       <Col xs={24} sm={12} md={24} lg={12} className="column-width">
                         <div className="staking-data">
                           <h3>{t("invest.panel-right.staking-data.title")}</h3>
+                          {stakingData.map((data, index) => (
+                            <Row key={`${index}`}>
+                              <Col span={12}>
+                                <span>{data.label}</span>
+                              </Col>
+                              <Col span={12}>
+                                <span className="staking-number">{data.value}</span>
+                              </Col>
+                            </Row>
+                          ))}
                           <Row>
-                            {stakingData.map((data, index) => (
-                              <>
-                                <Col key={index} span={12}>
-                                  <span>{data.label}</span>
-                                </Col>
-                                <Col span={12}>
-                                  <span className="staking-number">{data.value}</span>
-                                </Col>
-                              </>
-                            ))}
                             {/* <span className="mt-2">{t("invest.panel-right.staking-data.text-one", {unstakeStartDate: unstakeStartDate})}</span> */}
-
                             <span className="mt-1"><i>{t("invest.panel-right.staking-data.text-two")}</i></span>
                             {/* <Col span={24} className="d-flex flex-column justify-content-end align-items-end mt-1">
                               <div className="transaction-detail-row">
@@ -584,7 +655,6 @@ export const InvestView = () => {
                                 </span>
                               </div>
                             </Col> */}
-
                             {/* Withdraw button */}
                             {/* <Col span={24} className="d-flex flex-column justify-content-end align-items-end mt-1">
                               <Space size="middle">
@@ -600,30 +670,6 @@ export const InvestView = () => {
                                 </Button>
                               </Space>
                             </Col> */}
-
-                            {/* Withdraw funds transaction execution modal */}
-                            <Modal
-                              className="mean-modal no-full-screen"
-                              maskClosable={false}
-                              visible={isWithdrawModalVisible}
-                              onCancel={closeWithdrawModal}
-                              afterClose={onAfterWithdrawModalClosed}
-                              width={330}
-                              footer={null}>
-                              <div className="transaction-progress">
-                                <CheckOutlined style={{ fontSize: 48 }} className="icon" />
-                                <h4 className="font-bold mb-1 text-uppercase">Withdraw Funds</h4>
-                                <p className="operation">{t('transactions.status.tx-withdraw-operation-success')}</p>
-                                <Button
-                                  block
-                                  type="primary"
-                                  shape="round"
-                                  size="middle"
-                                  onClick={closeWithdrawModal}>
-                                  {t('general.cta-close')}
-                                </Button>
-                              </div>
-                            </Modal>
                           </Row>
                         </div>
                       </Col>
@@ -745,6 +791,29 @@ export const InvestView = () => {
           </div>
         </div>
       </div>
+      {/* Withdraw funds transaction execution modal */}
+      {/* <Modal
+        className="mean-modal no-full-screen"
+        maskClosable={false}
+        visible={isWithdrawModalVisible}
+        onCancel={closeWithdrawModal}
+        afterClose={onAfterWithdrawModalClosed}
+        width={330}
+        footer={null}>
+        <div className="transaction-progress">
+          <CheckOutlined style={{ fontSize: 48 }} className="icon" />
+          <h4 className="font-bold mb-1 text-uppercase">Withdraw Funds</h4>
+          <p className="operation">{t('transactions.status.tx-withdraw-operation-success')}</p>
+          <Button
+            block
+            type="primary"
+            shape="round"
+            size="middle"
+            onClick={closeWithdrawModal}>
+            {t('general.cta-close')}
+          </Button>
+        </div>
+      </Modal> */}
       <PreFooter />
     </>
   );

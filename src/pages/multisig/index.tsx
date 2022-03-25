@@ -4232,7 +4232,7 @@ export const MultisigView = () => {
               <Col span={12}>
                 <div className="transaction-detail-row">
                   <span className="info-label">
-                    {t('multisig.multisig-account-detail.authority')}
+                    {t('multisig.multisig-account-detail.address')}
                   </span>
                 </div>
                 <div className="transaction-detail-row">
@@ -4785,7 +4785,7 @@ export const MultisigView = () => {
                     {isTreasuryOperation() && !isUserTheProposer() ? (
                       <h3 className="text-center">{t('multisig.multisig-transactions.tx-operation-pending-one')}</h3>
                     ) : (
-                      <h3 className="text-center">{t('multisig.multisig-transactions.tx-operation-pending-two')}{isUserTheProposer() ? 'your execution' : 'execution'}.</h3>
+                      <h3 className="text-center">{t('multisig.multisig-transactions.tx-operation-pending-two')} {isUserTheProposer() ? 'your execution' : 'execution'}.</h3>
                     )}
                     <Divider className="mt-2" />
                     <div className="mb-2">{t('multisig.multisig-transactions.proposed-action')} {getOperationName(highlightedMultisigTx.operation)}</div>

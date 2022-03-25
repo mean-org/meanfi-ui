@@ -366,7 +366,7 @@
 	},
 	"multisig": {
 		"add-participant-cta": "Adicionar participante",
-		"back-to-multisig-accounts-cta": "Voltar para contas Multisig",
+		"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
 		"create-multisig": {
 			"main-cta": "Crio",
 			"main-cta-busy": "Criando multisig",
@@ -375,7 +375,7 @@
 			"multisig-duplicate-participants": "Encontrou participantes duplicados, revise.",
 			"multisig-label-input-empty": "Digite um nome multisig",
 			"multisig-label-input-label": "Nome multisig",
-			"multisig-label-placeholder": "Digite um nome para sua conta multisig",
+			"multisig-label-placeholder": "Digite um nome para sua multisig",
 			"multisig-no-participants": "Nenhum participante adicionado ainda",
 			"multisig-participants": "Signatários válidos ({{numParticipants}} de {{maxParticipants}})",
 			"multisig-participants-warning message": "Não é recomendado criar um Multisig com o mesmo número de participantes que as assinaturas necessárias",
@@ -416,19 +416,19 @@
 			"token-address-placeholder": "Digite o endereço do token"
 		},
 		"multisig-account-detail": {
-			"address": "Autoridade",
+			"address": "Deposit Address",
 			"authority": "Autoridade",
 			"copy-id-title": "ID MULTIIG",
 			"created-on": "Criado em",
 			"cta-create-asset": "Criar cofre",
 			"cta-mint": "Hortelã",
 			"cta-no-programs": "Programas",
-			"cta-no-treasuries": "Tesouros",
+			"cta-no-treasuries": "Streaming Treasuries",
 			"cta-no-assets": "Cofres",
 			"cta-no-mints": "Mints",
 			"cta-programs": "Programas ({{itemCount}})",
 			"cta-transfer": "Transferir tokens",
-			"cta-treasuries": "Tesouros ({{itemCount}})",
+			"cta-treasuries": "Streaming Treasuries ({{itemCount}})",
 			"cta-upgrade-program": "Programa de atualização",
 			"cta-assets": "Cofres ({{itemCount}})",
 			"cta-mints": "Mints ({{itemCount}})",
@@ -449,7 +449,7 @@
 		},
 		"multisig-detail-heading": "Detalhes da conta multisig",
 		"multisig-mints": {
-			"back-to-multisig-accounts-cta": "Back to Multisig accounts",
+			"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
 			"change-mint-authority-modal-title": "Set Mint Authority",
 			"create-mint-modal-title": "Create mint",
 			"cta-change-mint-authority": "Transfer Ownership",
@@ -519,10 +519,10 @@
 			"not-signed": "Not Signed"
 		},
 		"multisig-treasuries": {
-			"back-to-treasuries": "Back to treasuries"
+			"back-to-treasuries": "Back to Streaming Treasuries"
 		},
 		"multisig-assets": {
-			"back-to-multisig-accounts-cta": "Voltar para contas Multisig",
+			"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
 			"cta-change-multisig-authority": "Transferir propriedade",
 			"cta-change-multisig-authority-busy": "Mudando o Multisig",
 			"cta-close": "Fechar cofre",
@@ -544,7 +544,7 @@
 		},
 		"pending-transactions": "transações pendentes",
 		"refresh-tooltip": "Clique para atualizar a lista de contas multisig",
-		"screen-title": "Contas multisig",
+		"screen-title": "Safes & Multisig",
 		"set-program-authority": {
 			"main-cta": "Definir autoridade",
 			"main-cta-busy": "Autoridade de configuração",
@@ -1004,7 +1004,7 @@
 			"main-cta-busy": "Tesouraria de financiamento",
 			"main-cta-fund-stream": "Fund Money Stream",
 			"main-cta-fund-stream-busy": "Funding Stream",
-			"modal-title": "Adicionar fundos ao Tesouro",
+			"modal-title": "Add funds to the Streaming Treasury",
 			"modal-title-fund-stream": "Add funds to a Money Stream",
 			"money-stream-to-topup-label": "Money Stream to top up",
 			"search-streams-placeholder": "Pesquisar stream por nome ou endereço",
@@ -1025,9 +1025,9 @@
 				"months": "months",
 				"years": "years"
 			},
-			"main-cta": "Crio",
-			"main-cta-busy": "Criando tesouraria",
-			"modal-title": "Criar tesouraria",
+			"main-cta": "Create streaming treasury",
+			"main-cta-busy": "Creating treasury",
+			"modal-title": "Create Streaming Treasury",
 			"multisig-selector-label": "Conta multisig",
 			"multisig-treasury-created-info": "Para concluir a configuração da tesouraria, os outros signatários da Multisig precisam aprová-la.",
 			"multisig-treasury-created-instructions": "Peça aos outros usuários que assinem esta transação de criação de tesouraria.",
@@ -1035,7 +1035,8 @@
 			"success-message": "Sua nova tesouraria foi criada com sucesso.",
 			"treasury-name-input-empty": "Digite o nome do Tesouro",
 			"treasury-name-input-label": "Nome do Tesouro",
-			"treasury-name-placeholder": "Digite um nome para sua tesouraria",
+			"treasury-name-placeholder": "Type a name for your streaming treasury",
+			"treasury-token-label": "Token to be streamed",
 			"treasury-type-options": {
 				"treasury-type-locked-description": "Com uma tesouraria bloqueada, você pode criar fluxos que funcionam como um contrato de aquisição para alocações reservadas, como as necessárias para investidores.  Eles geralmente têm uma data de término fixa.",
 				"treasury-type-locked-name": "Tesouro de fluxo de dinheiro bloqueado",
@@ -1053,7 +1054,7 @@
 			"treasuryid-placeholder": "ID do Tesouro criado pela Mean Finance"
 		},
 		"refresh-tooltip": "Clique para atualizar a lista de tesouros",
-		"screen-title": "Tesouros",
+		"screen-title": "Streaming Treasuries",
 		"treasury-detail": {
 			"associated-token": "Token associado",
 			"created-on": "Criado em",
@@ -1062,12 +1063,12 @@
 			"cta-close": "Fechar tesouraria",
 			"cta-close-busy": "Tesouraria de fechamento",
 			"cta-withdraw-multisig-treasury": "Retirar fundos",
-			"unallocated-treasury-balance": "Unallocated Treasury Balance",
+			"unallocated-treasury-balance": "Unallocated Streaming Treasury Balance",
 			"multisig-tx-headsup": "Transações Pendentes de Aprovação ou Execução para esta Tesouraria",
 			"no-treasury-loaded": "Crie ou pesquise uma tesouraria para visualizar detalhes",
 			"no-treasury-selected": "Por favor, selecione ou procure uma tesouraria para ver os detalhes",
 			"number-of-streams": "Número de streams",
-			"treasury-address-label": "Endereço",
+			"treasury-address-label": "Treasury Address",
 			"treasury-name-label": "Nome do Tesouro"
 		},
 		"treasury-detail-heading": "Detalhes do Tesouro",
@@ -1120,7 +1121,7 @@
 			"multiple-address-list": "Multiple address list",
 			"multiple-address-question-mark-tooltip": "Please provide a csv text file with one address per line in the following format: \n MEMO or STREAM NAME, WALLET ADDRESS. \n\n Here is an example of how it should look: \n Epoch 1, FrdFf3EqcGuytTweLvoELBt29WrAGVYjrh4585A2bTAZ \n\n Before you submit the file, please make sure the recipient addresses are correct and do not belong to an exchange.",
 			"message-warning": "The list of recipients you submitted included your own wallet address. This is not possible and this address has been removed from the imported list.",
-			"no-streams": "Este tesouro não tem fluxos ativos",
+			"no-streams": "This streaming treasury has no active streams",
 			"option-close-stream": "Fechar",
 			"option-explorer-link": "Ver no Solana Explorer",
 			"option-pause-stream": "Pausa",
@@ -1168,9 +1169,9 @@
 			"services": {
 				"custody": "Custódio",
 				"faucet": "Torneiro",
-				"multisig": "Multisig",
+				"multisig": "Safes & Multisig",
 				"submenu-title": "Serviços",
-				"treasuries": "Tesouros e folha de pagamento",
+				"treasuries": "Streaming Treasuries",
 				"wallet-guide": "Guia da carteira",
 				"wrap": "Enrolar"
 			},

@@ -51,10 +51,10 @@ import {
 } from '../../constants';
 import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
-import { OperationType, TransactionStatus } from '../../models/enums';
+import { OperationType, PaymentRateType, TransactionStatus } from '../../models/enums';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { notify, openNotification } from '../../utils/notifications';
-import { IconBank, IconClock, IconExternalLink, IconRefresh, IconSort, IconTrash } from '../../Icons';
+import { IconBank, IconClock, IconRefresh, IconShieldOutline, IconTrash } from '../../Icons';
 import { TreasuryOpenModal } from '../../components/TreasuryOpenModal';
 import { MSP_ACTIONS, StreamInfo, STREAM_STATE, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { TreasuryCreateModal } from '../../components/TreasuryCreateModal';
@@ -98,7 +98,6 @@ import { Program, Provider } from '@project-serum/anchor';
 import { TreasuryCreateOptions } from '../../models/treasuries';
 import { customLogger } from '../..';
 
-
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const TreasuriesView = () => {
@@ -113,6 +112,7 @@ export const TreasuriesView = () => {
     treasuryOption,
     detailsPanelOpen,
     transactionStatus,
+    lockPeriodFrequency,
     streamProgramAddress,
     highLightableStreamId,
     streamV2ProgramAddress,
@@ -651,6 +651,20 @@ export const TreasuriesView = () => {
     publicKey,
     connection,
     refreshUserBalances
+  ]);
+
+  // Auto select a token
+  useEffect(() => {
+
+    if (tokenList && !selectedToken) {
+      setSelectedToken(tokenList.find(t => t.symbol === 'MEAN'));
+    }
+
+    return () => { };
+  }, [
+    tokenList,
+    selectedToken,
+    setSelectedToken
   ]);
 
   const readAllMultisigV2Accounts = useCallback(async (wallet: PublicKey) => { // V2
@@ -1232,7 +1246,7 @@ export const TreasuriesView = () => {
       if (v2.version && v2.version >= 2) {
         const isMultisig = isMultisigTreasury();
         if (isMultisig && multisigAccounts) {
-          return multisigAccounts.find(m => m.authority.toBase58() === v2.treasurer) ? true : false;
+          return multisigAccounts.find(m => m.authority.equals(new PublicKey(v2.treasurer as string))) ? true : false;
         }
         return v2.treasurer === publicKey.toBase58() ? true : false;
       }
@@ -2053,6 +2067,7 @@ export const TreasuriesView = () => {
         return await msp.createTreasury(
           new PublicKey(data.treasurer),                    // treasurer
           new PublicKey(data.treasurer),                    // treasurer
+          new PublicKey(data.associatedTokenAddress),       // associatedToken
           data.label,                                       // label
           treasuryType                                      // type
         );
@@ -2068,6 +2083,7 @@ export const TreasuriesView = () => {
       const createTreasuryTx = await msp.createTreasury(
         publicKey,                                        // payer
         multisig.authority,                               // treasurer
+        new PublicKey(data.associatedTokenAddress),       // associatedToken
         data.label,                                       // label
         treasuryType,                                     // type
         true,                                             // solFeePayedByTreasury = true
@@ -2111,7 +2127,7 @@ export const TreasuriesView = () => {
 
     const createTx = async () => {
 
-      if (!connection || !wallet || !publicKey || !msp || !treasuryOption) {
+      if (!connection || !wallet || !publicKey || !msp || !treasuryOption || !selectedToken) {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
@@ -2135,7 +2151,8 @@ export const TreasuriesView = () => {
         type: createOptions.treasuryType === TreasuryType.Open         // type
           ? 'Open'
           : 'Lock',
-        multisig: createOptions.multisigId                                                                // multisig
+        multisig: createOptions.multisigId,
+        associatedTokenAddress: selectedToken.address                                                                // multisig
       };
 
       consoleOut('payload:', payload);
@@ -2995,7 +3012,7 @@ export const TreasuriesView = () => {
 
       let closeTreasury = await msp.closeTreasury(
         publicKey,                                                // payer
-        publicKey,                          // TODO: This should come from the UI         
+        multisig.authority,                         // TODO: This should come from the UI        
         new PublicKey(data.treasury),                             // treasury
       );
 
@@ -3284,7 +3301,7 @@ export const TreasuriesView = () => {
     resetTransactionStatus
   ]);
   const hideCloseStreamModal = useCallback(() => setIsCloseStreamModalVisibility(false), []);
-  const onAcceptCloseStream = (closeTreasury: boolean) => {
+  const onAcceptCloseStream = (closeTreasury: any) => {
     hideCloseStreamModal();
     onExecuteCloseStreamTransaction(closeTreasury);
   };
@@ -3310,7 +3327,7 @@ export const TreasuriesView = () => {
     resetTransactionStatus();
   }
 
-  const onExecuteCloseStreamTransaction = async (closeTreasury: boolean) => {
+  const onExecuteCloseStreamTransaction = async (closeTreasury: any) => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
@@ -3334,7 +3351,7 @@ export const TreasuriesView = () => {
         const data = {
           stream: streamPublicKey.toBase58(),                     // stream
           initializer: wallet.publicKey.toBase58(),               // initializer
-          closeTreasury                                           // closeTreasury
+          closeTreasury: closeTreasury.closeTreasuryOption        // closeTreasury
         }
         consoleOut('data:', data);
 
@@ -3494,8 +3511,8 @@ export const TreasuriesView = () => {
 
       const data = {
         stream: streamPublicKey.toBase58(),                     // stream
-        payer: publicKey.toBase58(),                      // initializer
-        closeTreasury                                           // closeTreasury
+        payer: publicKey.toBase58(),                            // initializer
+        closeTreasury: closeTreasury.closeTreasuryOption        // closeTreasury
       }
 
       consoleOut('data:', data);
@@ -5147,32 +5164,17 @@ export const TreasuriesView = () => {
             <Row>
               <Col span={12}>
                 <div className="info-label text-truncate">
-                  {t('treasuries.treasury-detail.number-of-streams')}
+                  {t('treasuries.treasury-detail.treasury-address-label')}
                 </div>
                 <div className="transaction-detail-row">
                   <span className="info-icon">
-                    <IconSort className="mean-svg-icons" />
+                    <IconShieldOutline className="mean-svg-icons" />
                   </span>
-                  <span className="info-data flex-row wrap align-items-center">
-                    <span className="mr-1">{formatThousands(isNewTreasury ? v2.totalStreams : v1.streamsAmount)}</span>
-                    {(v1.streamsAmount > 0 || v2.totalStreams > 0) && (
-                      <>
-                        {streamStats && streamStats.total > 0 && (
-                          <>
-                          {streamStats.scheduled > 0 && (
-                            <div className="badge mr-1 medium font-bold info">{formatThousands(streamStats.scheduled)} {t('treasuries.treasury-streams.status-scheduled')}</div>
-                          )}
-                          {streamStats.running > 0 && (
-                            <div className="badge mr-1 medium font-bold success">{formatThousands(streamStats.running)} {t('treasuries.treasury-streams.status-running')}</div>
-                          )}
-                          {streamStats.stopped > 0 && (
-                            <div className="badge medium font-bold error">{formatThousands(streamStats.stopped)} {t('treasuries.treasury-streams.status-stopped')}</div>
-                          )}
-                          </>
-                        )}
-                      </>
-                    )}
-                  </span>
+                  <div onClick={() => copyAddressToClipboard(treasuryDetails.id)} 
+                       className="info-data flex-row wrap align-items-center simplelink underline-on-hover"
+                       style={{cursor: 'pointer', fontSize: '1.1rem'}}>
+                    {shortenAddress(treasuryDetails.id as string, 8)}
+                  </div>
                 </div>
               </Col>
               <Col span={12}>
@@ -5482,24 +5484,14 @@ export const TreasuriesView = () => {
 
   return (
     <>
-      {isLocal() && (
+      {/* {isLocal() && (
         <div className="debug-bar">
           <span className="ml-1">loadingTreasuries:</span><span className="ml-1 font-bold fg-dark-active">{loadingTreasuries ? 'true' : 'false'}</span>
           <span className="ml-1">isBusy:</span><span className="ml-1 font-bold fg-dark-active">{isBusy ? 'true' : 'false'}</span>
-          <span className="ml-1">retryOperationPayload:</span><span className="ml-1 font-bold fg-dark-active">{retryOperationPayload ? 'true' : 'false'}</span>
           <span className="ml-1">highLightableStreamId:</span><span className="ml-1 font-bold fg-dark-active">{highLightableStreamId || '-'}</span>
-          {(transactionStatus.lastOperation !== undefined) && (
-            <>
-            <span className="ml-1">lastOperation:</span><span className="ml-1 font-bold fg-dark-active">{TransactionStatus[transactionStatus.lastOperation]}</span>
-            </>
-          )}
-          {(transactionStatus.currentOperation !== undefined) && (
-            <>
-            <span className="ml-1">currentOperation:</span><span className="ml-1 font-bold fg-dark-active">{TransactionStatus[transactionStatus.currentOperation]}</span>
-            </>
-          )}
+          <span className="ml-1">lockPeriodFrequency:</span><span className="ml-1 font-bold fg-dark-active">{PaymentRateType[lockPeriodFrequency]}</span>
         </div>
-      )}
+      )} */}
 
       <div className="container main-container">
 
@@ -5623,27 +5615,28 @@ export const TreasuriesView = () => {
                               disabled={
                                 isTxInProgress() ||
                                 !isTreasurer() ||
-                                isAnythingLoading() ||
-                                !isTreasuryFunded()
+                                isAnythingLoading()
                               }
                             />
                           </Tooltip>
-                          <Tooltip placement="bottom" title={t('treasuries.treasury-detail.cta-close')}>
-                            <Button
-                              type="default"
-                              shape="circle"
-                              size="middle"
-                              icon={<IconTrash className="mean-svg-icons" />}
-                              onClick={showCloseTreasuryModal}
-                              disabled={
-                                isTxInProgress() ||
-                                (treasuryStreams && treasuryStreams.length > 0) ||
-                                !isTreasurer() ||
-                                isAnythingLoading() ||
-                                !isTreasuryFunded()
-                              }
-                            />
-                          </Tooltip>
+                          {/* TODO: Make this available back when we have the associated token not being a problem for deletion */}
+                          {isTreasuryFunded() && (
+                            <Tooltip placement="bottom" title={t('treasuries.treasury-detail.cta-close')}>
+                              <Button
+                                type="default"
+                                shape="circle"
+                                size="middle"
+                                icon={<IconTrash className="mean-svg-icons" />}
+                                onClick={showCloseTreasuryModal}
+                                disabled={
+                                  isTxInProgress() ||
+                                  (treasuryStreams && treasuryStreams.length > 0) ||
+                                  !isTreasurer() ||
+                                  isAnythingLoading()
+                                }
+                              />
+                            </Tooltip>
+                          )}
                         </span>
                       </div>
                     )}
@@ -5676,15 +5669,6 @@ export const TreasuriesView = () => {
                         </>
                       )}
                     </div>
-                    {treasuryDetails && (
-                      <div className="stream-share-ctas">
-                        <span className="copy-cta" onClick={() => copyAddressToClipboard(treasuryDetails.id)}>TREASURY ID: {treasuryDetails.id}</span>
-                        <a className="explorer-cta" target="_blank" rel="noopener noreferrer"
-                          href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${treasuryDetails.id}${getSolanaExplorerClusterParam()}`}>
-                          <IconExternalLink className="mean-svg-icons" />
-                        </a>
-                      </div>
-                    )}
                   </>
                 ) : (
                   <div className="h-100 flex-center">
@@ -5714,6 +5698,14 @@ export const TreasuriesView = () => {
           transactionFees={transactionFees}
           handleOk={onAcceptCreateTreasury}
           handleClose={closeCreateTreasuryModal}
+          userBalances={userBalances}
+          associatedToken={
+            treasuryDetails
+              ? (treasuryDetails as Treasury).version && (treasuryDetails as Treasury).version >= 2
+                ? (treasuryDetails as Treasury).associatedToken as string
+                : (treasuryDetails as TreasuryInfo).associatedTokenAddress as string
+              : ''
+          }
           isBusy={isBusy}
           selectedMultisig={selectedMultisig}
           multisigAccounts={multisigAccounts || []}

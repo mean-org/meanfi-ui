@@ -4,7 +4,7 @@ import { Modal, Button, Select, Divider, Input, Spin } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
 import { TokenInfo } from '@solana/spl-token-registry';
-import { getTokenByMintAddress } from '../../utils/tokens';
+import { getTokenByMintAddress, NATIVE_SOL } from '../../utils/tokens';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { TokenDisplay } from '../TokenDisplay';
 import {
@@ -629,7 +629,23 @@ export const TreasuryAddFundsModal = (props: {
   // }
 
   const handleAmountChange = (e: any) => {
-    const newValue = e.target.value;
+
+    let newValue = e.target.value;
+
+    const decimals = selectedToken ? selectedToken.decimals : 0;
+    const splitted = newValue.toString().split('.');
+    const left = splitted[0];
+    if (left.length > 1) {
+      const number = splitted[0] - 0;
+      splitted[0] = `${number}`;
+      newValue = splitted.join('.');
+    } else if (decimals && splitted[1]) {
+      if (splitted[1].length > decimals) {
+        splitted[1] = splitted[1].slice(0, -1);
+        newValue = splitted.join('.');
+      }
+    }
+
     if (newValue === null || newValue === undefined || newValue === "") {
       setTopupAmount("");
       setTokenAmount(0);
@@ -811,6 +827,9 @@ export const TreasuryAddFundsModal = (props: {
                             </div>
                           )}>
                           {tokenList.map((option) => {
+                            if (option.address === NATIVE_SOL.address) {
+                              return null;
+                            }
                             return (
                               <Option key={option.address} value={option.address}>
                                 <div className="option-container">

@@ -1,7 +1,7 @@
 import { useCallback, useContext, useEffect, useState } from "react";
 import './style.less';
-import { CheckOutlined, LoadingOutlined,  } from "@ant-design/icons";
-import { Button, Modal } from "antd";
+import { CheckOutlined, InfoCircleOutlined, LoadingOutlined,  } from "@ant-design/icons";
+import { Button, Modal, Spin } from "antd";
 import moment from 'moment';
 import { useTranslation } from 'react-i18next';
 import { TokenDisplay } from "../../components/TokenDisplay";
@@ -13,26 +13,30 @@ import { StakeQuote, StakingClient } from "@mean-dao/staking";
 import { Transaction } from "@solana/web3.js";
 import { TransactionStatusContext } from "../../contexts/transaction-status";
 import { OperationType, TransactionStatus } from "../../models/enums";
-import { consoleOut, getTransactionStatusForLogs } from "../../utils/ui";
+import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs } from "../../utils/ui";
 import { customLogger } from "../..";
 import { useConnection } from "../../contexts/connection";
 import { notify } from "../../utils/notifications";
+import { TokenInfo } from "@solana/spl-token-registry";
+
+const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const StakeTabView = (props: {
   stakeClient: StakingClient;
+  tokenBalance: number;
+  selectedToken: TokenInfo | undefined;
 }) => {
   const {
+    coinPrices,
     stakedAmount,
-    tokenBalance,
-    selectedToken,
-    effectiveRate,
     loadingPrices,
     fromCoinAmount,
     paymentStartDate,
     transactionStatus,
+    refreshTokenBalance,
     setIsVerifiedRecipient,
     setTransactionStatus,
-    setUnstakeStartDate,
+    // setUnstakeStartDate,
     setFromCoinAmount,
     setStakedAmount,
     refreshPrices,
@@ -74,8 +78,59 @@ export const StakeTabView = (props: {
   const [periodTime, setPeriodTime] = useState<string>(periods[0].time);
   const [stakeQuote, setStakeQuote] = useState<StakeQuote>();
 
+  ///////////////////////
+  //  EVENTS & MODALS  //
+  ///////////////////////
+
+  // Common transaction execution modal
+  const [isTransactionExecutionModalVisible, setTransactionExecutionModalVisibility] = useState(false);
+  const showTransactionExecutionModal = useCallback(() => setTransactionExecutionModalVisibility(true), []);
+  const hideTransactionExecutionModal = useCallback(() => setTransactionExecutionModalVisibility(false), []);
+
+  const refreshPage = () => {
+    hideTransactionExecutionModal();
+    window.location.reload();
+  }
+
+  const onCloseTransactionExecutionModal = () => {
+    setFromCoinAmount("");
+    hideTransactionExecutionModal();
+  }
+
+  // Transaction execution (Applies to all transactions)
+  const isSuccess = (): boolean => {
+    return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
+  }
+ 
+  const isError = (): boolean => {
+    return  transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ||
+            transactionStatus.currentOperation === TransactionStatus.InitTransactionFailure ||
+            transactionStatus.currentOperation === TransactionStatus.SignTransactionFailure ||
+            transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ||
+            transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure ||
+            transactionStatus.currentOperation === TransactionStatus.FeatureTemporarilyDisabled
+            ? true
+            : false;
+  }
+
   const handleFromCoinAmountChange = (e: any) => {
-    const newValue = e.target.value;
+
+    let newValue = e.target.value;
+
+    const decimals = props.selectedToken ? props.selectedToken.decimals : 0;
+    const splitted = newValue.toString().split('.');
+    const left = splitted[0];
+    if (left.length > 1) {
+      const number = splitted[0] - 0;
+      splitted[0] = `${number}`;
+      newValue = splitted.join('.');
+    } else if (decimals && splitted[1]) {
+      if (splitted[1].length > decimals) {
+        splitted[1] = splitted[1].slice(0, -1);
+        newValue = splitted.join('.');
+      }
+    }
+
     if (newValue === null || newValue === undefined || newValue === "") {
       setFromCoinAmount("");
     } else if (newValue === '.') {
@@ -85,22 +140,32 @@ export const StakeTabView = (props: {
     }
   };
 
+  const getPricePerToken = useCallback((token: TokenInfo): number => {
+    if (!token || !token.symbol) { return 0; }
+    const tokenSymbol = token.symbol.toUpperCase();
+    const symbol = tokenSymbol[0] === 'W' ? tokenSymbol.slice(1) : tokenSymbol;
+
+    return coinPrices && coinPrices[symbol]
+      ? coinPrices[symbol]
+      : 0;
+  }, [coinPrices])
+
   const getStakeButtonLabel = useCallback(() => {
     return !connected
       ? t('transactions.validation.not-connected')
       : isBusy
-        ? `${t("invest.panel-right.tabset.stake.stake-button-busy")} ${selectedToken && selectedToken.symbol}`
-        : !selectedToken || !tokenBalance
+        ? `${t("invest.panel-right.tabset.stake.stake-button-busy")} ${props.selectedToken && props.selectedToken.symbol}`
+        : !props.selectedToken || !props.tokenBalance
           ? t('transactions.validation.no-balance')
           : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !parseFloat(fromCoinAmount)
             ? t('transactions.validation.no-amount')
-            : parseFloat(fromCoinAmount) > tokenBalance
+            : parseFloat(fromCoinAmount) > props.tokenBalance
               ? t('transactions.validation.amount-high')
-              : `${t("invest.panel-right.tabset.stake.stake-button")} ${selectedToken && selectedToken.symbol}`;
+              : `${t("invest.panel-right.tabset.stake.stake-button")} ${props.selectedToken && props.selectedToken.symbol}`;
   }, [
     fromCoinAmount,
-    selectedToken,
-    tokenBalance,
+    props.selectedToken,
+    props.tokenBalance,
     connected,
     isBusy,
     t,
@@ -108,11 +173,11 @@ export const StakeTabView = (props: {
 
   const isStakingFormValid = (): boolean => {
     return  connected &&
-            selectedToken &&
-            tokenBalance &&
+            props.selectedToken &&
+            props.tokenBalance &&
             fromCoinAmount &&
             parseFloat(fromCoinAmount) > 0 &&
-            parseFloat(fromCoinAmount) <= tokenBalance
+            parseFloat(fromCoinAmount) <= props.tokenBalance
       ? true
       : false;
   }
@@ -226,8 +291,8 @@ export const StakeTabView = (props: {
               return false;
             }
             setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransactionSuccess,
-              currentOperation: TransactionStatus.SendTransaction,
+              lastOperation: TransactionStatus.SignTransaction,
+              currentOperation: TransactionStatus.SignTransactionSuccess,
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(
@@ -281,8 +346,8 @@ export const StakeTabView = (props: {
           .then((sig: any) => {
             consoleOut("sendEncodedTransaction returned a signature:", sig);
             setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.ConfirmTransaction,
+              lastOperation: TransactionStatus.SignTransactionSuccess,
+              currentOperation: TransactionStatus.SendTransactionSuccess,
             });
             signature = sig;
             transactionLog.push({
@@ -296,7 +361,7 @@ export const StakeTabView = (props: {
           .catch((error: any) => {
             console.error(error);
             setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransaction,
+              lastOperation: TransactionStatus.SignTransactionSuccess,
               currentOperation: TransactionStatus.SendTransactionFailure,
             });
             transactionLog.push({
@@ -326,7 +391,8 @@ export const StakeTabView = (props: {
       }
     };
 
-    if (wallet && selectedToken) {
+    if (wallet && props.selectedToken) {
+      showTransactionExecutionModal();
       setIsBusy(true);
       const create = await createTx();
       consoleOut("created:", create);
@@ -337,19 +403,27 @@ export const StakeTabView = (props: {
           const sent = await sendTx();
           consoleOut("sent:", sent);
           if (sent) {
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.TransactionFinished,
+            });
             enqueueTransactionConfirmation({
               signature: signature,
               operationType: OperationType.Stake,
               finality: "confirmed",
               txInfoFetchStatus: "fetching",
-              completedTitle: "Confirming transaction",
+              loadingTitle: "Confirming transaction",
+              loadingMessage: `Staking ${formatThousands(
+                parseFloat(fromCoinAmount),
+                props.selectedToken.decimals
+              )} ${props.selectedToken.symbol}`,
+              completedTitle: "Transaction confirmed",
               completedMessage: `Successfully staked ${formatThousands(
                 parseFloat(fromCoinAmount),
-                selectedToken.decimals
-              )} ${selectedToken.symbol}`,
+                props.selectedToken.decimals
+              )} ${props.selectedToken.symbol}`,
             });
             setIsBusy(false);
-            setFromCoinAmount("");
           } else {
             notify({
               message: t("notifications.error-title"),
@@ -368,14 +442,14 @@ export const StakeTabView = (props: {
   }, [
     wallet,
     connection,
-    selectedToken,
+    props.selectedToken,
     fromCoinAmount,
     props.stakeClient,
     transactionStatus.currentOperation,
+    showTransactionExecutionModal,
     enqueueTransactionConfirmation,
     setTransactionStatus,
-    setFromCoinAmount,
-    t,
+    t
   ]);
 
   // const onIsVerifiedRecipientChange = (e: any) => {
@@ -404,11 +478,11 @@ export const StakeTabView = (props: {
     stakedAmount
   ]);
 
-  useEffect(() => {
-    const unstakeStartDateUpdate = moment().add(periodValue, periodValue === 1 ? "year" : periodValue === 4 ? "years" : "days").format("LL")
+  // useEffect(() => {
+  //   const unstakeStartDateUpdate = moment().add(periodValue, periodValue === 1 ? "year" : periodValue === 4 ? "years" : "days").format("LL")
 
-    setUnstakeStartDate(unstakeStartDateUpdate);
-  }, [periodTime, periodValue, setUnstakeStartDate]);
+  //   setUnstakeStartDate(unstakeStartDateUpdate);
+  // }, [periodTime, periodValue, setUnstakeStartDate]);
 
   return (
     <>
@@ -416,11 +490,12 @@ export const StakeTabView = (props: {
       <div className="well">
         <div className="flex-fixed-left">
           <div className="left">
-            <span className="add-on simplelink">
-              {selectedToken && (
+            <span className="add-on">
+              {props.selectedToken && (
                 <TokenDisplay onClick={() => {}}
-                  mintAddress={selectedToken.address}
-                  name={selectedToken.name}
+                  mintAddress={props.selectedToken.address}
+                  name={props.selectedToken.name}
+                  className="click-disabled"
                 />
               )}
             </span>
@@ -447,16 +522,16 @@ export const StakeTabView = (props: {
           <div className="left inner-label">
             <span>{t('transactions.send-amount.label-right')}:</span>
             <span>
-              {`${tokenBalance && selectedToken
-                  ? getAmountWithSymbol(tokenBalance, selectedToken?.address, true)
+              {`${props.tokenBalance && props.selectedToken
+                  ? getAmountWithSymbol(props.tokenBalance, props.selectedToken?.address, true)
                   : "0"
               }`}
             </span>
           </div>
           <div className="right inner-label">
             <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
-              ~${fromCoinAmount && effectiveRate
-                ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
+              ~${fromCoinAmount && props.selectedToken
+                ? formatAmount(parseFloat(fromCoinAmount) * getPricePerToken(props.selectedToken), 2)
                 : "0.00"}
             </span>
           </div>
@@ -502,6 +577,102 @@ export const StakeTabView = (props: {
         {isBusy && (<span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>)}
         {getStakeButtonLabel()}
       </Button>
+
+      {/* Common transaction execution modal */}
+      <Modal
+        className="mean-modal no-full-screen"
+        maskClosable={false}
+        visible={isTransactionExecutionModalVisible}
+        title={getTransactionModalTitle(transactionStatus, isBusy, t)}
+        onCancel={hideTransactionExecutionModal}
+        width={360}
+        footer={null}>
+        <div className="transaction-progress">
+          {isBusy ? (
+            <>
+              <Spin indicator={bigLoadingIcon} className="icon" />
+              <h4 className="font-bold mb-1">
+                {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
+              </h4>
+              <div className="info-label">Staking {formatThousands(parseFloat(fromCoinAmount), 6)} MEAN</div>
+              {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
+                <div className="indication">
+                  {t('transactions.status.instructions')}
+                </div>
+              )}
+            </>
+          ) : isSuccess() ? (
+            <>
+              <CheckOutlined style={{ fontSize: 48 }} className="icon" />
+              <h4 className="font-bold mb-1 text-uppercase">
+                {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
+              </h4>
+              <p className="operation">
+                {formatThousands(parseFloat(fromCoinAmount), 6)} MEAN has been staked successfully
+              </p>
+              <Button
+                block
+                type="primary"
+                shape="round"
+                size="middle"
+                onClick={onCloseTransactionExecutionModal}>
+                {t('general.cta-finish')}
+              </Button>
+            </>
+          ) : isError() ? (
+            <>
+              <InfoCircleOutlined style={{ fontSize: 48 }} className="icon" />
+              {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
+                <h4 className="font-bold mb-3">
+                  {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
+                </h4>
+              ) : (
+                <h4 className="font-bold mb-3">
+                  {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
+                </h4>
+              )}
+              {transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ? (
+                <div className="row two-col-ctas mt-3">
+                  <div className="col-6">
+                    <Button
+                      block
+                      type="text"
+                      shape="round"
+                      size="middle"
+                      onClick={onCloseTransactionExecutionModal}>
+                      {t('general.retry')}
+                    </Button>
+                  </div>
+                  <div className="col-6">
+                    <Button
+                      block
+                      type="primary"
+                      shape="round"
+                      size="middle"
+                      onClick={() => refreshPage()}>
+                      {t('general.refresh')}
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  block
+                  type="primary"
+                  shape="round"
+                  size="middle"
+                  onClick={onCloseTransactionExecutionModal}>
+                  {t('general.cta-close')}
+                </Button>
+              )}
+            </>
+          ) : (
+            <>
+              <Spin indicator={bigLoadingIcon} className="icon" />
+              <h4 className="font-bold mb-4 text-uppercase">{t('transactions.status.tx-wait')}...</h4>
+            </>
+          )}
+        </div>
+      </Modal>
     </>
   )
 }

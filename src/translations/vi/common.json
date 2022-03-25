@@ -370,7 +370,7 @@
 	},
 	"multisig": {
 		"add-participant-cta": "Thêm người tham gia",
-		"back-to-multisig-accounts-cta": "Quay về danh sách tài khoản Multisig",
+		"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
 		"create-multisig": {
 			"main-cta": "Tạo",
 			"main-cta-busy": "Đang tạo multisig",
@@ -379,7 +379,7 @@
 			"multisig-duplicate-participants": "Phát hiện người tham gia bị trùng, vui lòng kiểm tra lại",
 			"multisig-label-input-empty": "Nhập tên multisig",
 			"multisig-label-input-label": "Tên multisig",
-			"multisig-label-placeholder": "Nhập tên cho tài khoản multisig của bạn",
+			"multisig-label-placeholder": "Type a name for your multisig",
 			"multisig-no-participants": "Chưa có người tham gia nào",
 			"multisig-participants": "Người ký hợp lệ ({{numParticipants}} trên {{maxParticipants}})",
 			"multisig-participants-warning-message": "It is not recommended to create a Multisig with the same number of participants as required signatures",
@@ -420,7 +420,7 @@
 			"token-address-placeholder": "Nhập vào địa chỉ token"
 		},
 		"multisig-account-detail": {
-			"address": "Thẩm quyền",
+			"address": "Deposit Address",
 			"authority": "Thẩm quyền",
 			"copy-id-title": "MULTISIG ID",
 			"created-on": "Ngày tạo",
@@ -429,11 +429,11 @@
 			"cta-mints": "Đúc ({{itemCount}})",
 			"cta-no-mints": "Đúc",
 			"cta-no-programs": "Chương trình",
-			"cta-no-treasuries": "Kho bạc",
+			"cta-no-treasuries": "Streaming Treasuries",
 			"cta-no-assets": "Vaults",
 			"cta-programs": "Chương trình ({{itemCount}})",
 			"cta-transfer": "Chuyển khoản các token",
-			"cta-treasuries": "Kho bạc ({{itemCount}})",
+			"cta-treasuries": "Streaming Treasuries ({{itemCount}})",
 			"cta-upgrade-program": "Nâng cấp chương trình",
 			"cta-assets": "Vaults ({{itemCount}})",
 			"multisig-address-label": "Địa chỉ",
@@ -453,7 +453,7 @@
 		},
 		"multisig-detail-heading": "Chi tiết tài khoản multisig",
 		"multisig-mints": {
-			"back-to-multisig-accounts-cta": "Quay về danh sách tài khoản Multisig",
+			"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
 			"change-mint-authority-modal-title": "Thiết lập quyền hạn Mint",
 			"create-mint-modal-title": "Tạo mint",
 			"cta-change-mint-authority": "Chuyển quyền sở hữu",
@@ -523,10 +523,10 @@
 			"not-signed": "Not Signed"
 		},
 		"multisig-treasuries": {
-			"back-to-treasuries": "Quay về danh sách kho bạc"
+			"back-to-treasuries": "Back to Streaming Treasuries"
 		},
 		"multisig-assets": {
-			"back-to-multisig-accounts-cta": "Quay về danh sách tài khoản Multisig",
+			"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
 			"cta-change-multisig-authority": "Chuyển quyền sở hữu",
 			"cta-change-multisig-authority-busy": "Đang thay đổi Multisig",
 			"cta-close": "Đóng vault",
@@ -548,7 +548,7 @@
 		},
 		"pending-transactions": "giao dịch đang chờ xử lý",
 		"refresh-tooltip": "Nhấn để làm mới danh sách tài khoản multisig",
-		"screen-title": "Tài khoản multisig",
+		"screen-title": "Safes & Multisig",
 		"set-program-authority": {
 			"main-cta": "Thiết lập thẩm quyền",
 			"main-cta-busy": "Đang thiết lập thẩm quyền",
@@ -1009,7 +1009,7 @@
 			"main-cta-busy": "Đang nạp tiền",
 			"main-cta-fund-stream": "Nạp tiền",
 			"main-cta-fund-stream-busy": "Đang nạp tiền",
-			"modal-title": "Nạp tiền vào Kho bạc",
+			"modal-title": "Add funds to the Streaming Treasury",
 			"modal-title-fund-stream": "Nạp tiền vào Money stream",
 			"money-stream-to-topup-label": "Money Stream to top up",
 			"search-streams-placeholder": "Tìm stream theo tên và địa chỉ",
@@ -1030,9 +1030,9 @@
 				"months": "months",
 				"years": "years"
 			},
-			"main-cta": "Tạo",
-			"main-cta-busy": "Đang tạo kho bạc",
-			"modal-title": "Tạo kho bạc",
+			"main-cta": "Create streaming treasury",
+			"main-cta-busy": "Creating treasury",
+			"modal-title": "Create Streaming Treasury",
 			"multisig-selector-label": "Tài khoản multisig",
 			"multisig-treasury-created-info": "Để hoàn thành thiết lập kho bạc, những người ký Multisig khác cần phải phê duyệt nó.",
 			"multisig-treasury-created-instructions": "Vui lòng yêu cầu người dùng khác ký vào giao dịch tạo kho bạc này",
@@ -1040,7 +1040,8 @@
 			"success-message": "Kho bạc mới của bạn đã được tạo thành công",
 			"treasury-name-input-empty": "Nhập tên kho bạc",
 			"treasury-name-input-label": "Tên kho bạc",
-			"treasury-name-placeholder": "Nhập vào tên kho bạc của bạn",
+			"treasury-name-placeholder": "Type a name for your streaming treasury",
+			"treasury-token-label": "Token to be streamed",
 			"treasury-type-options": {
 				"treasury-type-locked-description": "Với một kho bạc bị khóa, bạn có thể tạo các stream hoạt động giống như một hợp đồng vesting cho các khoản phân bổ dành riêng cho nhà đầu tư. Các hợp đồng này thường có ngày kết thúc cố định.",
 				"treasury-type-locked-name": "Kho bạc Money Streaming bị khoá",
@@ -1058,7 +1059,7 @@
 			"treasuryid-placeholder": "Treasury ID tạo bởi Mean finance"
 		},
 		"refresh-tooltip": "Nhấn để làm mới danh sách kho bạc",
-		"screen-title": "Kho bạc",
+		"screen-title": "Streaming Treasuries",
 		"treasury-detail": {
 			"associated-token": "Mã thông báo được liên kết",
 			"created-on": "Ngày tạo",
@@ -1071,9 +1072,9 @@
 			"no-treasury-loaded": "Tạo hoặc tra cứu kho bạc để xem chi tiết",
 			"no-treasury-selected": "Vui lòng chọn hoặc tra cứu kho bạc để xem chi tiết",
 			"number-of-streams": "Số lượng stream",
-			"treasury-address-label": "Địa chỉ",
+			"treasury-address-label": "Treasury Address",
 			"treasury-name-label": "Tên kho bạc",
-			"unallocated-treasury-balance": "Số dư Kho bạc chưa phân bổ"
+			"unallocated-treasury-balance": "Unallocated Streaming Treasury Balance"
 		},
 		"treasury-detail-heading": "Chi tiết kho bạc",
 		"treasury-list": {
@@ -1126,7 +1127,7 @@
 			"multiple-address-list": "Multiple address list",
 			"multiple-address-question-mark-tooltip": "Please provide a csv text file with one address per line in the following format: \n MEMO or STREAM NAME, WALLET ADDRESS. \n\n Here is an example of how it should look: \n Epoch 1, FrdFf3EqcGuytTweLvoELBt29WrAGVYjrh4585A2bTAZ \n\n Before you submit the file, please make sure the recipient addresses are correct and do not belong to an exchange.",
 			"message-warning": "The list of recipients you submitted included your own wallet address. This is not possible and this address has been removed from the imported list.",
-			"no-streams": "Kho bạc này không có stream nào hoạt động",
+			"no-streams": "This streaming treasury has no active streams",
 			"option-close-stream": "Đóng",
 			"option-explorer-link": "Xem trên Solana Explorer",
 			"option-pause-stream": "Tạm dừng",
@@ -1175,9 +1176,9 @@
 			"services": {
 				"custody": "Lưu ký",
 				"faucet": "Faucet",
-				"multisig": "Multisig",
+				"multisig": "Safes & Multisig",
 				"submenu-title": "Dịch vụ",
-				"treasuries": "Kho bạc & Lương bổng",
+				"treasuries": "Streaming Treasuries",
 				"wallet-guide": "Hướng dẫn Ví",
 				"wrap": "Wrap"
 			},

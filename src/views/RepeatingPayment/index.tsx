@@ -63,6 +63,7 @@ import { MSP, MSP_ACTIONS as MSP_ACTIONS_V2, TransactionFees, calculateActionFee
 import { AppUsageEvent, SegmentStreamRPTransferData } from '../../utils/segment-service';
 import { segmentAnalytics } from '../../App';
 import dateFormat from 'dateformat';
+import { NATIVE_SOL } from '../../utils/tokens';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -282,7 +283,23 @@ export const RepeatingPayment = () => {
   };
 
   const handleFromCoinAmountChange = (e: any) => {
-    const newValue = e.target.value;
+
+    let newValue = e.target.value;
+
+    const decimals = selectedToken ? selectedToken.decimals : 0;
+    const splitted = newValue.toString().split('.');
+    const left = splitted[0];
+    if (left.length > 1) {
+      const number = splitted[0] - 0;
+      splitted[0] = `${number}`;
+      newValue = splitted.join('.');
+    } else if (decimals && splitted[1]) {
+      if (splitted[1].length > decimals) {
+        splitted[1] = splitted[1].slice(0, -1);
+        newValue = splitted.join('.');
+      }
+    }
+
     if (newValue === null || newValue === undefined || newValue === "") {
       setFromCoinAmount("");
     } else if (newValue === '.') {
@@ -324,7 +341,23 @@ export const RepeatingPayment = () => {
   }
 
   const handlePaymentRateAmountChange = (e: any) => {
-    const newValue = e.target.value;
+
+    let newValue = e.target.value;
+
+    const decimals = selectedToken ? selectedToken.decimals : 0;
+    const splitted = newValue.toString().split('.');
+    const left = splitted[0];
+    if (left.length > 1) {
+      const number = splitted[0] - 0;
+      splitted[0] = `${number}`;
+      newValue = splitted.join('.');
+    } else if (decimals && splitted[1]) {
+      if (splitted[1].length > decimals) {
+        splitted[1] = splitted[1].slice(0, -1);
+        newValue = splitted.join('.');
+      }
+    }
+
     if (newValue === null || newValue === undefined || newValue === "") {
       setPaymentRateAmount("");
     } else if (newValue === '.') {
@@ -1114,6 +1147,11 @@ export const RepeatingPayment = () => {
     <>
       {(filteredTokenList && filteredTokenList.length > 0) && (
         filteredTokenList.map((token, index) => {
+
+          if (token.address === NATIVE_SOL.address) {
+            return null;
+          }
+
           const onClick = function () {
             setSelectedToken(token);
             consoleOut("token selected:", token.symbol, 'blue');
