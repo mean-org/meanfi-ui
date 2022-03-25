@@ -87,176 +87,6 @@ export const InvestView = () => {
     }
   }, [navigate]);
 
-  const refreshMeanBalance = useCallback(async () => {
-
-    if (!connection || !publicKey || !accounts || !accounts.tokenAccounts || !accounts.tokenAccounts.length) {
-      return;
-    }
-
-    const getTokenAccountBalanceByAddress = async (tokenMintAddress: PublicKey | undefined | null): Promise<number> => {
-      if (!tokenMintAddress) return 0;
-      try {
-        const tokenAmount = (await connection.getTokenAccountBalance(tokenMintAddress)).value;
-        return tokenAmount.uiAmount || 0;
-      } catch (error) {
-        console.error(error);
-        throw(error);
-      }
-    }
-
-    let balance = 0;
-
-    if (!stakingPair || !stakingPair.unstakedToken) {
-      setMeanBalance(balance);
-      return;
-    }
-
-    const meanTokenPk = new PublicKey(stakingPair.unstakedToken.address);
-    const meanTokenAddress = await findATokenAddress(publicKey, meanTokenPk);
-    balance = await getTokenAccountBalanceByAddress(meanTokenAddress);
-    setMeanBalance(balance);
-
-  }, [
-    accounts,
-    publicKey,
-    connection,
-    stakingPair,
-  ]);
-
-  const refreshStakedMeanBalance = useCallback(async () => {
-
-    if (!connection || !publicKey || !accounts || !accounts.tokenAccounts || !accounts.tokenAccounts.length) {
-      return;
-    }
-
-    const getTokenAccountBalanceByAddress = async (tokenMintAddress: PublicKey | undefined | null): Promise<number> => {
-      if (!tokenMintAddress) return 0;
-      try {
-        const tokenAmount = (await connection.getTokenAccountBalance(tokenMintAddress)).value;
-        return tokenAmount.uiAmount || 0;
-      } catch (error) {
-        console.error(error);
-        throw(error);
-      }
-    }
-
-    let balance = 0;
-
-    if (!stakingPair || !stakingPair.stakedToken) {
-      setSmeanBalance(balance);
-      return;
-    }
-
-    const sMeanTokenPk = new PublicKey(stakingPair.stakedToken.address);
-    const smeanTokenAddress = await findATokenAddress(publicKey, sMeanTokenPk);
-    balance = await getTokenAccountBalanceByAddress(smeanTokenAddress);
-    setSmeanBalance(balance);
-
-  }, [
-    accounts,
-    publicKey,
-    connection,
-    stakingPair,
-  ]);
-
-  // Keep account balance updated
-  useEffect(() => {
-
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
-    if (account?.lamports !== previousBalance || !nativeBalance) {
-      // Refresh token balances
-      refreshMeanBalance();
-      refreshStakedMeanBalance();
-      setNativeBalance(getAccountBalance());
-      // Update previous balance
-      setPreviousBalance(account?.lamports);
-    }
-  }, [
-    account,
-    nativeBalance,
-    previousBalance,
-    refreshMeanBalance,
-    refreshStakedMeanBalance,
-  ]);
-
-  // Keep MEAN price updated
-  useEffect(() => {
-
-    if (coinPrices && stakingPair && stakingPair.unstakedToken) {
-      const symbol = stakingPair.unstakedToken.symbol.toUpperCase();
-      const price = coinPrices && coinPrices[symbol] ? coinPrices[symbol] : 0;
-      setMeanPrice(price);
-    } else {
-      setMeanPrice(0);
-    }
-
-  }, [coinPrices, stakingPair]);
-
-  // Keep sMEAN balance updated
-  useEffect(() => {
-    if (!publicKey || !accounts || !accounts.tokenAccounts || !accounts.tokenAccounts.length) {
-      return;
-    }
-
-    if (stakingPair && stakingPair.unstakedToken) {
-      refreshStakedMeanBalance();
-    }
-
-  }, [
-    accounts,
-    publicKey,
-    stakingPair,
-    refreshStakedMeanBalance,
-  ]);
-
-  const investItems = [
-    {
-      id: 0,
-      name: "Stake",
-      symbol1: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg",
-      symbol2: "",
-      title: t("invest.panel-left.invest-stake-tab-title"),
-      rateAmount: `${stakePoolInfo ? (stakePoolInfo.apy * 100).toFixed(2) : "0"}`,
-      interval: "APY"
-    },
-    {
-      id: 1,
-      name: "Liquidity",
-      symbol1: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R/logo.png",
-      symbol2: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE/logo.png",
-      title: t("invest.panel-left.invest-liquidity-tab-title"),
-      rateAmount: `${t("invest.panel-left.liquidity-value-label")} ${maxRadiumAprValue}`,
-      interval: "APR/APY"
-    }
-  ];
-
-  const stakingData = useMemo(() => [
-    {
-      label: t("invest.panel-right.staking-data.label-my-staked"),
-      value: stakingPair && stakingPair.unstakedToken && sMeanBalance
-        ? formatThousands(sMeanBalance, stakingPair.unstakedToken.decimals) : "0"
-    },
-    // {
-    //   label: t("invest.panel-right.staking-data.label-avg"),
-    //   value: `${annualPercentageYield}%`
-    // },
-    // {
-    //   label: t("invest.panel-right.staking-data.label-boost"),
-    //   value: `${stakingMultiplier}x boost`
-    // },
-    // {
-    //   label: t("invest.panel-right.staking-data.label-locked"),
-    //   value: "1,000"
-    // },
-    // {
-    //   label: t("invest.panel-right.staking-data.label-balance"),
-    //   value: "20,805.1232"
-    // },
-  ], [sMeanBalance, stakingPair, t]);
-
   // Create and cache Staking client instance
   const stakeClient = useMemo(() => {
 
@@ -306,6 +136,185 @@ export const InvestView = () => {
     pageInitialized,
     connectionConfig.cluster
   ]);
+
+  const getTokenAccountBalanceByAddress = useCallback(async (tokenMintAddress: PublicKey | undefined | null): Promise<number> => {
+    if (!connection || !tokenMintAddress) return 0;
+    try {
+      const tokenAmount = (await connection.getTokenAccountBalance(tokenMintAddress)).value;
+      return tokenAmount.uiAmount || 0;
+    } catch (error) {
+      console.error(error);
+      throw(error);
+    }
+  }, [connection]);
+
+  const refreshMeanBalance = useCallback(async () => {
+
+    if (!connection || !publicKey || !accounts || !accounts.tokenAccounts || !accounts.tokenAccounts.length) {
+      return;
+    }
+
+    let balance = 0;
+
+    if (!stakingPair || !stakingPair.unstakedToken) {
+      setMeanBalance(balance);
+      return;
+    }
+
+    const meanTokenPk = new PublicKey(stakingPair.unstakedToken.address);
+    const meanTokenAddress = await findATokenAddress(publicKey, meanTokenPk);
+    balance = await getTokenAccountBalanceByAddress(meanTokenAddress);
+    setMeanBalance(balance);
+
+  }, [
+    accounts,
+    publicKey,
+    connection,
+    stakingPair,
+    getTokenAccountBalanceByAddress
+  ]);
+
+  const refreshStakedMeanBalance = useCallback(async () => {
+
+    if (!connection || !publicKey || !accounts || !accounts.tokenAccounts || !accounts.tokenAccounts.length) {
+      return;
+    }
+
+    let balance = 0;
+
+    if (!stakingPair || !stakingPair.stakedToken) {
+      setSmeanBalance(balance);
+      return;
+    }
+
+    const sMeanTokenPk = new PublicKey(stakingPair.stakedToken.address);
+    const smeanTokenAddress = await findATokenAddress(publicKey, sMeanTokenPk);
+    balance = await getTokenAccountBalanceByAddress(smeanTokenAddress);
+    setSmeanBalance(balance);
+
+  }, [
+    accounts,
+    publicKey,
+    connection,
+    stakingPair,
+    getTokenAccountBalanceByAddress
+  ]);
+
+  // Keep account balance updated
+  useEffect(() => {
+
+    const getAccountBalance = (): number => {
+      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
+    }
+
+    if (account?.lamports !== previousBalance || !nativeBalance) {
+      // Refresh token balances
+      // refreshMeanBalance();
+      // refreshStakedMeanBalance();
+      setNativeBalance(getAccountBalance());
+      // Update previous balance
+      setPreviousBalance(account?.lamports);
+    }
+  }, [
+    account,
+    nativeBalance,
+    previousBalance,
+    // refreshMeanBalance,
+    // refreshStakedMeanBalance,
+  ]);
+
+  // Keep MEAN price updated
+  useEffect(() => {
+
+    if (coinPrices && stakingPair && stakingPair.unstakedToken) {
+      const symbol = stakingPair.unstakedToken.symbol.toUpperCase();
+      const price = coinPrices && coinPrices[symbol] ? coinPrices[symbol] : 0;
+      setMeanPrice(price);
+    } else {
+      setMeanPrice(0);
+    }
+
+  }, [coinPrices, stakingPair]);
+
+  // Keep MEAN balance updated
+  useEffect(() => {
+    if (!publicKey || !accounts || !accounts.tokenAccounts || !accounts.tokenAccounts.length) {
+      return;
+    }
+
+    if (stakingPair && stakingPair.unstakedToken) {
+      refreshMeanBalance();
+    }
+
+  }, [
+    accounts,
+    publicKey,
+    stakingPair,
+    refreshMeanBalance,
+  ]);
+
+  // Keep sMEAN balance updated
+  useEffect(() => {
+    if (!publicKey || !accounts || !accounts.tokenAccounts || !accounts.tokenAccounts.length) {
+      return;
+    }
+
+    if (stakingPair && stakingPair.stakedToken) {
+      refreshStakedMeanBalance();
+    }
+
+  }, [
+    accounts,
+    publicKey,
+    stakingPair,
+    refreshStakedMeanBalance,
+  ]);
+
+  const investItems = [
+    {
+      id: 0,
+      name: "Stake",
+      symbol1: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg",
+      symbol2: "",
+      title: t("invest.panel-left.invest-stake-tab-title"),
+      rateAmount: `${stakePoolInfo ? (stakePoolInfo.apy * 100).toFixed(2) : "0"}`,
+      interval: "APY"
+    },
+    {
+      id: 1,
+      name: "Liquidity",
+      symbol1: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R/logo.png",
+      symbol2: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE/logo.png",
+      title: t("invest.panel-left.invest-liquidity-tab-title"),
+      rateAmount: `${t("invest.panel-left.liquidity-value-label")} ${maxRadiumAprValue}`,
+      interval: "APR/APY"
+    }
+  ];
+
+  const stakingData = useMemo(() => [
+    {
+      label: t("invest.panel-right.staking-data.label-my-staked"),
+      value: stakingPair && stakingPair.stakedToken && sMeanBalance
+        ? formatThousands(sMeanBalance, stakingPair.stakedToken.decimals) : "0"
+    },
+    // {
+    //   label: t("invest.panel-right.staking-data.label-avg"),
+    //   value: `${annualPercentageYield}%`
+    // },
+    // {
+    //   label: t("invest.panel-right.staking-data.label-boost"),
+    //   value: `${stakingMultiplier}x boost`
+    // },
+    // {
+    //   label: t("invest.panel-right.staking-data.label-locked"),
+    //   value: "1,000"
+    // },
+    // {
+    //   label: t("invest.panel-right.staking-data.label-balance"),
+    //   value: "20,805.1232"
+    // },
+  ], [sMeanBalance, stakingPair, t]);
+
   // Get staking pool info from staking client
   useEffect(() => {
     if (!stakeClient) {
