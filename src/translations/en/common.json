@@ -463,7 +463,7 @@
 			"cta-transfer-busy": "Initiating Withdrawal Request",
 			"delete-asset": {
 				"explanatory-paragraph": "By submitting this request, you will sign the transaction and approve it as one of the Multisig signers. Before the asset is deleted, the other Multisig members need to approve it.",
-				"main-cta": "Submit Delete Request",
+				"main-cta": "Submit delete proposal",
 				"modal-title": "Delete a Multisig Asset",
 				"selected-asset-label": "Asset selected",
 				"warning-message": "Only empty assets can be deleted. To delete an asset you need to first transfer all funds to another account."
@@ -531,8 +531,8 @@
 			"initiator": "Initiator:",
 			"initiator-transaction": "This transaction was submitted by",
 			"loading-transactions": "Loading transactions",
-			"modal-title": "Transaction summary",
-			"no-transactions": "This multisig account has no transactions",
+			"modal-title": "Proposal summary",
+			"no-transactions": "This multisig asset has no transactions",
 			"not-signed": "Not Signed",
 			"proposed-action": "Proposed Action:",
 			"ready-for-execution": "This transaction is now ready for execution. Please tell the person who initiated this transaction to execute it.",
@@ -540,7 +540,7 @@
 			"signed-so-far": "Signed so far.",
 			"signers-to-approve": "signers to approve it in order to be executed.",
 			"submitted-on": "Submitted on:",
-			"transaction-awaiting": "A Transaction on this Multisig is awaiting",
+			"transaction-awaiting": "A proposal for this multisig is awaiting",
 			"transaction-has": "This transaction has",
 			"transaction-requires": "This transaction requires",
 			"treasury-closed-warning": "When a treasury is closed, all funds left over will be deposited to the initiator's wallet. Please confirm this is acceptable before you sign.",
@@ -588,7 +588,7 @@
 		},
 		"update-multisig": {
 			"edit-not-allowed-message": "You can not edit the Multisig without first completing or canceling all pending transactions.",
-			"main-cta": "Save changes",
+			"main-cta": "Propose changes",
 			"main-cta-busy": "Saving changes",
 			"modal-title": "Edit multisig",
 			"success-message": "Your changes to the multisig account were saved!"
@@ -1122,7 +1122,7 @@
 			"add-stream-modal-title": "Add stream to the treasury",
 			"allocate-funds-label": "Allocate funds",
 			"allocation-reserved-label": "This allocation is fully RESERVED",
-			"available-unallocated-balance-label": "Available Unallocated Balance",
+			"available-unallocated-balance-label": "Unallocated Balance",
 			"busy-pausing": "Stopping stream",
 			"busy-resuming": "Resuming stream",
 			"close-stream-also-closes-treasury-label": "Also close the treasury",

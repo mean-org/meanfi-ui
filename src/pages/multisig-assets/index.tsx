@@ -3615,27 +3615,24 @@ export const MultisigAssetsView = () => {
                     Deposit Address
                   </span>
                 </div>
+
+                {/* <div className="transaction-detail-row">
+                  <span className="info-icon">
+                    <IconShieldOutline className="mean-svg-icons" />
+                  </span>
+                  <div onClick={() => copyAddressToClipboard(selectedMultisig.authority)} 
+                       className="info-data flex-row wrap align-items-center simplelink underline-on-hover"
+                       style={{cursor: 'pointer', fontSize: '1.1rem'}}>
+                    {shortenAddress(selectedMultisig.authority.toBase58(), 8)}
+                  </div>
+                </div> */}
+
                 <div className="transaction-detail-row">
                   <span className="info-icon">
                     <IconShieldOutline className="mean-svg-icons" />
                   </span>
-                  <Link to="/multisig" className="info-data flex-row wrap align-items-center simplelink underline-on-hover"
-                    onClick={e => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setHighLightableMultisigId(selectedVault.owner.toBase58());
-                      navigate('/multisig');
-                    }}>
-                    {shortenAddress(selectedVault.owner.toBase58(), 6)}
-                  </Link>
-                  <div className="icon-button-container">
-                    <Button
-                      type="default"
-                      shape="circle"
-                      size="middle"
-                      icon={<CopyOutlined />}
-                      onClick={() => copyAddressToClipboard(selectedVault.owner.toBase58())}
-                    />
+                  <div onClick={() => copyAddressToClipboard(selectedVault.owner.toBase58())} className="info-data flex-row wrap align-items-center simplelink underline-on-hover" style={{cursor: 'pointer', fontSize: '1.1rem'}}>
+                    {shortenAddress(selectedVault.owner.toBase58(), 8)}
                   </div>
                 </div>
               </Col>
