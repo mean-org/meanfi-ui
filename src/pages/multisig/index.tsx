@@ -3033,19 +3033,19 @@ export const MultisigView = () => {
 
   },[]);
 
-  const getTransactionUserStatusActionClass = useCallback((mtx: MultisigTransaction) => {
+  // const getTransactionUserStatusActionClass = useCallback((mtx: MultisigTransaction) => {
 
-    if (mtx.executedOn) {
-      return "";
-    } else if (mtx.didSigned === undefined) {
-      return "fg-red";
-    } else if (mtx.didSigned === false) {
-      return theme === 'light' ? "fg-light-orange font-bold" : "fg-yellow font-bold";
-    } else {
-      return theme === 'light' ? "fg-green" : "fg-success"
-    }
+  //   if (mtx.executedOn) {
+  //     return "";
+  //   } else if (mtx.didSigned === undefined) {
+  //     return "fg-red";
+  //   } else if (mtx.didSigned === false) {
+  //     return theme === 'light' ? "fg-light-orange font-bold" : "fg-warning font-bold";
+  //   } else {
+  //     return theme === 'light' ? "fg-green" : "fg-success"
+  //   }
 
-  },[theme]);
+  // },[theme]);
 
   const getTransactionStatusClass = useCallback((mtx: MultisigTransaction) => {
 
@@ -4011,7 +4011,7 @@ export const MultisigView = () => {
     } else if (mtx.didSigned === undefined) {
       return "fg-red";
     } else if (mtx.didSigned === false) {
-      return theme === 'light' ? "fg-light-orange" : "fg-yellow";
+      return theme === 'light' ? "fg-light-orange" : "fg-warning";
     } else {
       return theme === 'light' ? "fg-green" : "fg-success"
     }
@@ -4085,7 +4085,7 @@ export const MultisigView = () => {
                   <div className="font-size-75 text-monospace">{item.address}</div>
                 </div>
                 <div className="right pl-2">
-                  <div><span className={theme === 'light' ? "fg-light-orange font-bold" : "fg-yellow font-bold"}>Not Signed</span></div>
+                  <div><span className={theme === 'light' ? "fg-light-orange font-bold" : "fg-warning font-bold"}>Not Signed</span></div>
                 </div>
               </div>
             </div>
@@ -4145,7 +4145,7 @@ export const MultisigView = () => {
                       <span className="align-middle">{getShortDate(item.createdOn.toString(), isCanvasTight() ? false : true)}</span>
                     </div>
                     <div className="std-table-cell fixed-width-90">
-                      <span className={`align-middle ${getTransactionUserStatusActionClass(item)}`}>{getTransactionUserStatusAction(item)}</span>
+                      <span className={`align-middle`}>{getTransactionUserStatusAction(item)}</span>
                     </div>
                     <div className="std-table-cell fixed-width-34">
                       {
@@ -4799,7 +4799,7 @@ export const MultisigView = () => {
                   </>
                 ) : isTxPendingApproval() ? (
                   <>
-                    <h3 className="text-center">{t('multisig.multisig-transactions.transaction-awaiting')} {getTransactionUserStatusAction(highlightedMultisigTx) === "Signed" ? 'for' : 'your'} {t('multisig.multisig-transactions.approval')}</h3>
+                    <h3 className="text-center">{t('multisig.multisig-transactions.transaction-awaiting')} {t('multisig.multisig-transactions.approval')}</h3>
                     <Divider className="mt-2" />
                     <div className="mb-2">{t('multisig.multisig-transactions.proposed-action')} {getOperationName(highlightedMultisigTx.operation)}</div>
                     {
@@ -4914,7 +4914,7 @@ export const MultisigView = () => {
 
           </div>
 
-          {/* A Crross-fading panel shown when busy */}
+          {/* A Cross-fading panel shown when busy */}
           <div className={isBusy ? "panel2 show"  : "panel2 hide"}>          
             {transactionStatus.currentOperation !== TransactionStatus.Iddle && (
               <div className="transaction-progress">

@@ -498,8 +498,8 @@
 			"column-pending-signatures": "İmzalar",
 			"column-program-id": "Program",
 			"loading-transactions": "İşlem yükleniyor",
-			"modal-title": "İşlem özeti",
-			"no-transactions": "Bu çoklu-imza hesabının işlemi yok",
+			"modal-title": "Proposal summary",
+			"no-transactions": "This multisig asset has no transactions",
 			"tx-operation-failure": "{{operation}} iÅ lemi baÅ arÄ±sÄ±z oldu",
 			"tx-operation-success": "{{operation}} iÅ lemi baÅ arÄ±lÄ± oldu",
 			"tx-operation-pending-one": "A transaction on this Multisig is now ready for execution. Please tell the person who initiated this transaction to execute it.",
@@ -534,6 +534,13 @@
 			"cta-create-asset-busy": "Kasa oluşturuluyor",
 			"cta-transfer": "Çekme işlemini başlat",
 			"cta-transfer-busy": "Çekme işlemi talebi başlatılıyor",
+			"delete-asset": {
+				"explanatory-paragraph": "By submitting this request, you will sign the transaction and approve it as one of the Multisig signers. Before the asset is deleted, the other Multisig members need to approve it.",
+				"main-cta": "Submit delete proposal",
+				"modal-title": "Delete a Multisig Asset",
+				"selected-asset-label": "Asset selected",
+				"warning-message": "Only empty assets can be deleted. To delete an asset you need to first transfer all funds to another account."
+			},
 			"explanatory-paragraph": "Bu talebi göndererek, işlemi imzalayacak ve Çoklu-İmza yetkililerinden biri olarak onaylayacaksınız. Paranın gönderilebilmesi için diğer Çoklu-İmza üyelerinin bunu onaylaması gerekir.",
 			"main-cta": "Fon transfer isteğini imzala",
 			"no-transactions": "Bu kasa için işlem yok",
@@ -581,7 +588,7 @@
 		},
 		"update-multisig": {
 			"edit-not-allowed-message": "Bir Multisig'de imzalayanları değiştirdiğinizde, bekleyen tüm işlemler GEÇERSİZ olacaktır. Devam etmeden önce, tamamlanması gereken önemli bir işlem olmadığından emin olun.",
-			"main-cta": "Değişiklikleri kaydet",
+			"main-cta": "Propose changes",
 			"main-cta-busy": "Değişiklikler kaydediliyor",
 			"modal-title": "Çoklu-İmza'yı düzenle",
 			"success-message": "Çoklu-İmza hesabındaki değişikleriniz başarıyla kaydedildi !"
@@ -750,6 +757,8 @@
 			"add-funds-cta": "Doldur (para ekle)",
 			"amount-funded-date": "fonlanan",
 			"cancel-scheduled-transfer": "Aktarımı iptal et",
+			"close-stream-cta": "Close Stream",
+			"close-stream-cta-tooltip": "Close stream is available when Stream runs out of funds",
 			"close-money-stream-menu-item": "Para aktarımını kapat",
 			"cta-disabled-closing": "Para aktarımı kapatılıyor...",
 			"cta-disabled-creating": "Aktarım oluşturma devam ediyor...",
@@ -1105,11 +1114,11 @@
 				"panel3-starting-on": "Starting on:",
 				"panel3-cliff-release": "Cliff release:",
 				"panel3-release-rate": "Release rate:",
-				"panel3-warning-message": "IMPORTANT: This is a locked money stream, and once started, you cannot cancel, pause or change its details. Verify all information before proceeding."
+				"panel3-warning-message": "IMPORTANT: This is a locked money stream. You cannot cancel, pause or change its details once it is started. Verify all information before proceeding."
 			},
 			"allocate-funds-label": "Fon tahsis et",
 			"allocation-reserved-label": "Bu tahsis tamamen AYRILMIŞTIR",
-			"available-unallocated-balance-label": "Kullanılabilir Ayrılmamış Bakiye",
+			"available-unallocated-balance-label": "Unallocated Balance",
 			"busy-pausing": "Aktarım durduruluyor",
 			"busy-resuming": "Aktarım devam ettiriliyor",
 			"close-stream-also-closes-treasury-label": "Hazineyi de kapat",

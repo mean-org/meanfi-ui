@@ -498,8 +498,8 @@
 			"column-pending-signatures": "امضا ها",
 			"column-program-id": "برنامه",
 			"loading-transactions": "در حال بارگیری تراکنش ها",
-			"modal-title": "خلاصه تراکنش",
-			"no-transactions": "این حساب Multisig هیچ تراکنشی ندارد",
+			"modal-title": "Proposal summary",
+			"no-transactions": "This multisig asset has no transactions",
 			"tx-operation-failure": "عملیات {{operation}} ناموفق بود",
 			"tx-operation-success": "عملیات {{operation}} با موفقیت انجام شد",
 			"tx-operation-pending-one": "A transaction on this Multisig is now ready for execution. Please tell the person who initiated this transaction to execute it.",
@@ -534,6 +534,13 @@
 			"cta-create-asset-busy": "ایجاد treasury",
 			"cta-transfer": "درخواست انتقال وجه",
 			"cta-transfer-busy": "شروع درخواست برداشت",
+			"delete-asset": {
+				"explanatory-paragraph": "By submitting this request, you will sign the transaction and approve it as one of the Multisig signers. Before the asset is deleted, the other Multisig members need to approve it.",
+				"main-cta": "Submit delete proposal",
+				"modal-title": "Delete a Multisig Asset",
+				"selected-asset-label": "Asset selected",
+				"warning-message": "Only empty assets can be deleted. To delete an asset you need to first transfer all funds to another account."
+			},
 			"explanatory-paragraph": "با ارسال این درخواست، معامله را امضا کرده و آن را به عنوان یکی از امضاکنندگان Multisig تایید می‌کنید. قبل از ارسال وجوه، سایر اعضای Multisig باید آن را تأیید کنند.",
 			"main-cta": "درخواست انتقال وجه را امضا کنید",
 			"no-transactions": "هیچ تراکنشی برای این خزانه وجود ندارد",
@@ -581,7 +588,7 @@
 		},
 		"update-multisig": {
 			"edit-not-allowed-message": "وقتی امضاکنندگان را در Multisig تغییر می‌دهید، تمام تراکنش‌های معلق باطل می‌شوند. قبل از ادامه، مطمئن شوید که هیچ تراکنش مهمی وجود ندارد که لازم باشد ابتدا انجام شود.",
-			"main-cta": "ذخیره تغییرات",
+			"main-cta": "Propose changes",
 			"main-cta-busy": "ذخیره سازی تغییرات",
 			"modal-title": "ویرایش multisig",
 			"success-message": "تغییرات شما در حساب multisig ذخیره شد!"
@@ -750,6 +757,8 @@
 			"add-funds-cta": "شارژ (افزودن وجوه)",
 			"amount-funded-date": "تامین مالی شده است",
 			"cancel-scheduled-transfer": "لغو انتقال",
+			"close-stream-cta": "Close Stream",
+			"close-stream-cta-tooltip": "Close stream is available when Stream runs out of funds",
 			"close-money-stream-menu-item": "بستن money stream",
 			"cta-disabled-closing": "بستن money stream...",
 			"cta-disabled-creating": "ایجاد stream در حال انجام...",
@@ -1105,11 +1114,11 @@
 				"panel3-starting-on": "Starting on:",
 				"panel3-cliff-release": "Cliff release:",
 				"panel3-release-rate": "Release rate:",
-				"panel3-warning-message": "IMPORTANT: This is a locked money stream, and once started, you cannot cancel, pause or change its details. Verify all information before proceeding."
+				"panel3-warning-message": "IMPORTANT: This is a locked money stream. You cannot cancel, pause or change its details once it is started. Verify all information before proceeding."
 			},
 			"allocate-funds-label": "تخصیص بودجه",
 			"allocation-reserved-label": "این تخصیص کاملاً رزرو شده است",
-			"available-unallocated-balance-label": "موجودی تخصیص نیافته موجود",
+			"available-unallocated-balance-label": "Unallocated Balance",
 			"busy-pausing": "توقف استریم",
 			"busy-resuming": "از سرگیری استریم",
 			"close-stream-also-closes-treasury-label": "treasury را هم ببندید",

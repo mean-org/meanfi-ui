@@ -494,8 +494,8 @@
 			"column-pending-signatures": "Signatures",
 			"column-program-id": "Programme",
 			"loading-transactions": "Chargement des opérations",
-			"modal-title": "Récapitulatif des transactions",
-			"no-transactions": "Ce compte multisig n'a aucune transaction",
+			"modal-title": "Proposal summary",
+			"no-transactions": "This multisig asset has no transactions",
 			"tx-operation-failure": "L'opération {{operation}} a échoué",
 			"tx-operation-success": "L'opération {{operation}} a réussi",
 			"tx-operation-pending-one": "A transaction on this Multisig is now ready for execution. Please tell the person who initiated this transaction to execute it.",
@@ -530,6 +530,13 @@
 			"cta-create-asset-busy": "Création d'un coffre-fort",
 			"cta-transfer": "Lancer le retrait",
 			"cta-transfer-busy": "Initier une demande de retrait",
+			"delete-asset": {
+				"explanatory-paragraph": "By submitting this request, you will sign the transaction and approve it as one of the Multisig signers. Before the asset is deleted, the other Multisig members need to approve it.",
+				"main-cta": "Submit delete proposal",
+				"modal-title": "Delete a Multisig Asset",
+				"selected-asset-label": "Asset selected",
+				"warning-message": "Only empty assets can be deleted. To delete an asset you need to first transfer all funds to another account."
+			},
 			"no-transactions": "Aucune transaction pour ce coffre",
 			"no-asset-loaded": "Aucun coffre-fort chargé",
 			"no-assets": "Aucun coffre-fort disponible",
@@ -577,7 +584,7 @@
 		},
 		"update-multisig": {
 			"edit-not-allowed-message": "Lorsque vous modifiez les signataires sur un Multisig, toutes les transactions en attente seront ANNULÉES. Avant de continuer, assurez-vous qu'aucune transaction importante ne doit être effectuée en premier.",
-			"main-cta": "Sauvegarder les modifications",
+			"main-cta": "Propose changes",
 			"main-cta-busy": "Enregistrer les modifications",
 			"modal-title": "Modifier la signature multiple",
 			"success-message": "Vos modifications apportées au compte multisig ont été enregistrées !"
@@ -746,6 +753,8 @@
 			"add-funds-cta": "Recharger (ajouter des fonds)",
 			"amount-funded-date": "financé sur",
 			"cancel-scheduled-transfer": "Annuler le transfert",
+			"close-stream-cta": "Close Stream",
+			"close-stream-cta-tooltip": "Close stream is available when Stream runs out of funds",
 			"close-money-stream-menu-item": "Fermer le flux d'argent",
 			"cta-disabled-closing": "Clôture du flux d'argent...",
 			"cta-disabled-creating": "Création du flux en cours...",
@@ -1098,11 +1107,11 @@
 				"panel3-starting-on": "Starting on:",
 				"panel3-cliff-release": "Cliff release:",
 				"panel3-release-rate": "Release rate:",
-				"panel3-warning-message": "IMPORTANT: This is a locked money stream, and once started, you cannot cancel, pause or change its details. Verify all information before proceeding."
+				"panel3-warning-message": "IMPORTANT: This is a locked money stream. You cannot cancel, pause or change its details once it is started. Verify all information before proceeding."
 			},
 			"allocate-funds-label": "Allouer des fonds",
 			"allocation-reserved-label": "Cette allocation est entièrement RÉSERVÉE",
-			"available-unallocated-balance-label": "Solde non alloué disponible",
+			"available-unallocated-balance-label": "Unallocated Balance",
 			"busy-pausing": "Arrêt du flux",
 			"busy-resuming": "Reprise du flux",
 			"close-stream-also-closes-treasury-label": "Fermez aussi la trésorerie",

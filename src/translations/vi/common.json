@@ -498,8 +498,8 @@
 			"column-pending-signatures": "Chữ ký",
 			"column-program-id": "Chương trình",
 			"loading-transactions": "Đang tải giao dịch",
-			"modal-title": "Tóm tắt giao dịch",
-			"no-transactions": "Tài khoản multisig không có giao dịch nào",
+			"modal-title": "Proposal summary",
+			"no-transactions": "This multisig asset has no transactions",
 			"tx-operation-failure": "Thao tác {{operation}} không thành công",
 			"tx-operation-success": "Thao tác {{operation}} thành công",
 			"tx-operation-pending-one": "A transaction on this Multisig is now ready for execution. Please tell the person who initiated this transaction to execute it.",
@@ -534,6 +534,13 @@
 			"cta-create-asset-busy": "Đang tạo vault",
 			"cta-transfer": "Khởi tạo rút tiền",
 			"cta-transfer-busy": "Đang khởi tạo yêu cầu rút tiền",
+			"delete-asset": {
+				"explanatory-paragraph": "By submitting this request, you will sign the transaction and approve it as one of the Multisig signers. Before the asset is deleted, the other Multisig members need to approve it.",
+				"main-cta": "Submit delete proposal",
+				"modal-title": "Delete a Multisig Asset",
+				"selected-asset-label": "Asset selected",
+				"warning-message": "Only empty assets can be deleted. To delete an asset you need to first transfer all funds to another account."
+			},
 			"explanatory-paragraph": "Bằng cách gửi yêu cầu này, bạn sẽ ký giao dịch và chấp thuận nó với tư cách là một trong những người ký Multisig. Trước khi tiền có thể được gửi, các thành viên Multisig khác cần phải phê duyệt nó.",
 			"main-cta": "Ký yêu cầu chuyển tiền",
 			"no-transactions": "Vault này không có giao dịch nào",
@@ -581,7 +588,7 @@
 		},
 		"update-multisig": {
 			"edit-not-allowed-message": "Bạn không thể chỉnh sửa tài khoản Multisig. Vui lòng hoàn thành hoặc huỷ bỏ tất cả giao dịch đang chờ xử lý trước tiên.",
-			"main-cta": "Lưu thay đổi",
+			"main-cta": "Propose changes",
 			"main-cta-busy": "Đang lưu thay đổi",
 			"modal-title": "Chỉnh sửa multisig",
 			"success-message": "Các thay đổi của bạn đối với tài khoản multisig đã được lưu!"
@@ -750,6 +757,8 @@
 			"add-funds-cta": "Nạp tiền",
 			"amount-funded-date": "Đã nạp vào",
 			"cancel-scheduled-transfer": "Huỷ chuyển khoản",
+			"close-stream-cta": "Close Stream",
+			"close-stream-cta-tooltip": "Close stream is available when Stream runs out of funds",
 			"close-money-stream-menu-item": "Đóng money stream",
 			"cta-disabled-closing": "Đang đóng money stream...",
 			"cta-disabled-creating": "Đang tạo stream...",
@@ -1105,11 +1114,11 @@
 				"panel3-starting-on": "Starting on:",
 				"panel3-cliff-release": "Cliff release:",
 				"panel3-release-rate": "Release rate:",
-				"panel3-warning-message": "IMPORTANT: This is a locked money stream, and once started, you cannot cancel, pause or change its details. Verify all information before proceeding."
+				"panel3-warning-message": "IMPORTANT: This is a locked money stream. You cannot cancel, pause or change its details once it is started. Verify all information before proceeding."
 			},
 			"allocate-funds-label": "Phân bổ quỹ",
 			"allocation-reserved-label": "Phân bổ này đã được ĐẶT CHỖ đầy đủ",
-			"available-unallocated-balance-label": "Số dư có sẵn chưa phân bổ",
+			"available-unallocated-balance-label": "Unallocated Balance",
 			"busy-pausing": "Đang dừng stream",
 			"busy-resuming": "Đang tiếp tục chạy stream",
 			"close-stream-also-closes-treasury-label": "Đóng kho bạc",
