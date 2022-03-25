@@ -1117,7 +1117,7 @@
 				"panel3-starting-on": "Starting on:",
 				"panel3-text-one": "Confirm the terms for",
 				"panel3-to-address": "To Address:",
-				"panel3-warning-message": "IMPORTANT: This is a locked money stream, and once started, you cannot cancel, pause or change its details. Verify all information before proceeding."
+				"panel3-warning-message": "IMPORTANT: This is a locked money stream. You cannot cancel, pause or change its details once it is started. Verify all information before proceeding."
 			},
 			"add-stream-modal-title": "Add stream to the treasury",
 			"allocate-funds-label": "Allocate funds",

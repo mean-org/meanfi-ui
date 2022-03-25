@@ -1114,7 +1114,7 @@
 				"panel3-starting-on": "Starting on:",
 				"panel3-cliff-release": "Cliff release:",
 				"panel3-release-rate": "Release rate:",
-				"panel3-warning-message": "IMPORTANT: This is a locked money stream, and once started, you cannot cancel, pause or change its details. Verify all information before proceeding."
+				"panel3-warning-message": "IMPORTANT: This is a locked money stream. You cannot cancel, pause or change its details once it is started. Verify all information before proceeding."
 			},
 			"allocate-funds-label": "Phân bổ quỹ",
 			"allocation-reserved-label": "Phân bổ này đã được ĐẶT CHỖ đầy đủ",
