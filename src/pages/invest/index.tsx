@@ -306,7 +306,6 @@ export const InvestView = () => {
     pageInitialized,
     connectionConfig.cluster
   ]);
-
   // Get staking pool info from staking client
   useEffect(() => {
     if (!stakeClient) {
@@ -617,7 +616,11 @@ export const InvestView = () => {
 
                             {/* Tab unstake */}
                             {currentTab === "unstake" && (
-                              <UnstakeTabView stakeClient={stakeClient} />
+                              <UnstakeTabView
+                                stakeClient={stakeClient}
+                                selectedToken={stakingPair?.stakedToken}
+                                tokenBalance={sMeanBalance}
+                              />
                             )}
                           </div>
                         )}
