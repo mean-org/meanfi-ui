@@ -2,7 +2,7 @@ import React, { useCallback, useContext, useEffect, useMemo, useState } from 're
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { PreFooter } from "../../components/PreFooter";
 import { getTokenBySymbol, TokenInfo } from '../../utils/tokens';
-import { consoleOut, isLocal, isProd } from '../../utils/ui';
+import { consoleOut, isProd } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
 import { DdcaClient } from '@mean-dao/ddca';
 import { AppStateContext } from '../../contexts/appstate';
@@ -12,9 +12,8 @@ import { Connection } from '@solana/web3.js';
 import { useTranslation } from 'react-i18next';
 import { IconExchange } from '../../Icons';
 import { JupiterExchange, RecurringExchange, } from '../../views';
-import { JupiterExchangePlayground } from '../../views/JupiterExchangePlayground';
 
-type SwapOption = "one-time" | "recurring" | "playground";
+type SwapOption = "one-time" | "recurring";
 
 export const SwapView = () => {
   const location = useLocation();
@@ -157,11 +156,6 @@ export const SwapView = () => {
               <div className={`tab-button ${currentTab === "recurring" ? 'active' : ''}`} onClick={() => onTabChange("recurring")}>
                 {t('swap.tabset.recurring')}
               </div>
-              {isLocal() && (
-                <div className={`tab-button ${currentTab === "playground" ? 'active' : ''}`} onClick={() => onTabChange("playground")}>
-                  PLAYGROUND
-                </div>
-              )}
             </div>
             {/* One time exchange */}
             {
@@ -182,16 +176,6 @@ export const SwapView = () => {
                   queryFromMint={queryFromMint}
                   queryToMint={queryToMint}
                   onRefreshRequested={() => setLoadingRecurringBuys(false)}
-                />
-              )
-            }
-            {/* Exchange playground */}
-            {
-              currentTab === "playground" && (
-                <JupiterExchangePlayground
-                  connection={connection}
-                  queryFromMint={queryFromMint}
-                  queryToMint={queryToMint}
                 />
               )
             }

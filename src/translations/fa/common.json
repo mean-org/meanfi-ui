@@ -818,6 +818,7 @@
 	"swap": {
 		"exchange-warning": "صرافی Mean فقط در دسترس است",
 		"frequency-label": "فرکانس",
+		"getting-routes": "Getting routes",
 		"input-label-destination": "معاوضه به (est.)",
 		"input-label-source": "معاوضه از",
 		"insufficient-liquidity": "نقدینگی ناکافی برای این ترید",
