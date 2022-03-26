@@ -233,7 +233,7 @@ export const AppBar = (props: {
           <input type="checkbox" id="overlay-input" />
           <label htmlFor="overlay-input" id="overlay-button"><span></span></label>
           <div id="overlay">
-            <div className="h-100 w-100 flex-center vertical-scroll">
+            <div className="h-100 w-100 flex-column align-items-center vertical-scroll">
               <ul onClick={dismissMenu}>
                 <li key="/accounts" className={location.pathname === '/accounts' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 1} as CustomCSSProps}>
                   <Link to="/accounts">{t('ui-menus.main-menu.accounts')}</Link>
