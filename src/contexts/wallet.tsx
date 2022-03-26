@@ -35,7 +35,7 @@ export const WALLET_PROVIDERS = [
     adapter: SolflareWalletAdapter,
     adapterParams: undefined,
     hideOnDesktop: isDesktop && !isSafari ? false : true,
-    hideOnMobile: true,
+    hideOnMobile: false,
     isWebWallet: false
   },
   {
