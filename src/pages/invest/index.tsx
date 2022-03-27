@@ -64,6 +64,8 @@ export const InvestView = () => {
   const [maxAprValue, setMaxAprValue] = useState<number>(0);
   const [pageInitialized, setPageInitialized] = useState<boolean>(false);
   const [stakePoolInfo, setStakePoolInfo] = useState<StakePoolInfo>();
+  const [shouldRefreshLpData, setShouldRefreshLpData] = useState(true);
+  const [refreshingPoolInfo, setRefreshingPoolInfo] = useState(false);
 
   // Tokens and balances
   const [meanAddresses, setMeanAddresses] = useState<Env>();
@@ -211,8 +213,6 @@ export const InvestView = () => {
 
     if (account?.lamports !== previousBalance || !nativeBalance) {
       // Refresh token balances
-      // refreshMeanBalance();
-      // refreshStakedMeanBalance();
       setNativeBalance(getAccountBalance());
       // Update previous balance
       setPreviousBalance(account?.lamports);
@@ -221,8 +221,6 @@ export const InvestView = () => {
     account,
     nativeBalance,
     previousBalance,
-    // refreshMeanBalance,
-    // refreshStakedMeanBalance,
   ]);
 
   // Keep MEAN price updated
@@ -272,7 +270,7 @@ export const InvestView = () => {
     refreshStakedMeanBalance,
   ]);
 
-  const investItems = [
+  const investItems = useMemo(() => [
     {
       id: 0,
       name: "Stake",
@@ -291,7 +289,11 @@ export const InvestView = () => {
       rateAmount: `${t("invest.panel-left.liquidity-value-label")} ${maxAprValue ? maxAprValue.toFixed(2) : "0"}`,
       interval: "APR/APY"
     }
-  ];
+  ], [
+    t,
+    maxAprValue,
+    stakePoolInfo,
+  ]);
 
   const stakingData = useMemo(() => [
     {
@@ -337,81 +339,133 @@ export const InvestView = () => {
     pageInitialized,
   ]);
 
+  // Get raydium pool info
+  const getRaydiumPoolInfo = useCallback(async () => {
+
+    consoleOut('fetch Raydium Pool info', 'STARTED', 'orange');
+    try {
+      try {
+        const res = await fetch('https://api.raydium.io/v2/main/pairs');
+        const data = await res.json();
+        if (!data || data.msg) {
+          setRaydiumInfo([]);
+          setMaxRadiumAprValue(0);
+        } else {
+          const raydiumData = data.filter((item: any) => item.name.substr(0, 4) === "MEAN");
+
+          let maxRadiumApr = raydiumData.map((item_1: any) => {
+            let properties = item_1.apr7d;
+
+            return properties;
+          });
+
+          setMaxRadiumAprValue(Math.max(...maxRadiumApr));
+          setRaydiumInfo(raydiumData);
+        }
+      } catch (error) {
+        consoleOut(error);
+      }
+    } finally {
+      return consoleOut('fetch Raydium Pool info', 'FINISHED', 'orange');
+    }
+
+  }, []);
+
   // Get Orca pool info
-  useEffect(() => {
-    if (!connection) { return; }
+  const getOrcaPoolInfo = useCallback(async () => {
 
-    const timer = setTimeout(() => {
-    (async () => {
-      // fetch('https://api.raydium.io/pairs') - old version
-      fetch('https://api.raydium.io/v2/main/pairs')
-        .then((res) => res.json())
-        .then((data) => {
-          if (!data || data.msg) {
-            setRaydiumInfo(undefined);
-            setMaxRadiumAprValue(0);
-          } else {
-            const raydiumData = data.filter((item: any) => item.name.substr(0, 4) === "MEAN");
-  
-            let maxRadiumApr = raydiumData.map((item: any) => {
-              let properties = item.apr7d;
-  
-              return properties;
-            });
-  
-            setMaxRadiumAprValue(Math.max(...maxRadiumApr));
-  
-            setRaydiumInfo(raydiumData);
-          }
-        })
-        .catch((error) => {
-          consoleOut(error);
-        })
-    })();
+    consoleOut('fetch Orca Pool info', 'STARTED', 'orange');
+    try {
+      try {
+        const res = await fetch('https://api.orca.so/pools');
+        const data = await res.json();
+        // Should update if got data
+        if (data) {
+          if (!Array.isArray(data)) {
+            // Treat data as a single element
+            const orcaData = [data];
 
-    (async () => {
-      fetch('https://api.orca.so/pools')
-        .then((res) => res.json())
-        .then((data) => {
-          const orcaData = data.find((item: any) => item.name2 === "MEAN/USDC");
-
-          if (!Array.isArray(orcaData)) {
-            setOrcaInfo([orcaData]);
-
-            let maxOrcaApr = orcaInfo.map((item: any) => {
+            let maxOrcaApr = orcaData.map((item: any) => {
               let properties = item.apy_7d;
-  
               return properties;
             });
+            const maxApr = Math.max(...maxOrcaApr) * 100;
 
-            setMaxOrcaAprValue(Math.max(...maxOrcaApr) * 100);
+            setOrcaInfo(orcaData);
+            setMaxOrcaAprValue(maxApr);
+            consoleOut('maxOrcaAprValue:', maxApr, 'info');
+            consoleOut('orcaInfo:', orcaData, 'info');
 
           } else {
-            setOrcaInfo(orcaData);
-            setMaxOrcaAprValue(orcaInfo.apy_7d * 100);
+            // Treat data as an array and update if pair data found
+            const orcaData_1 = data.filter((item_1: any) => item_1.name2 === "MEAN/USDC");
+            if (orcaData_1 && orcaData_1.length > 0) {
+              setOrcaInfo(orcaData_1);
+              let maxOrcaApr_1 = orcaData_1.map((item_2: any) => {
+                let properties_1 = item_2.apy_7d;
+                return properties_1;
+              });
+              const maxApr_1 = Math.max(...maxOrcaApr_1) * 100;
+              setMaxOrcaAprValue(maxApr_1);
+              consoleOut('maxOrcaAprValue:', maxApr_1, 'info');
+              consoleOut('orcaInfo:', orcaData_1, 'info');
+            }
           }
-        })
-        .catch((error) => {
-          consoleOut(error);
-        })
+        }
+      } catch (error) {
+        consoleOut(error);
+      }
+    } finally {
+      return consoleOut('fetch Orca Pool info', 'FINISHED', 'orange');
+    }
+
+  }, []);
+
+  // Refresh pools info
+  useEffect(() => {
+    if (!connection || !shouldRefreshLpData) { return; }
+
+    setTimeout(() => {
+      setShouldRefreshLpData(false);
+      setRefreshingPoolInfo(true);
+    });
+
+    consoleOut('Updating pools info...', '', 'blue');
+    (async () => {
+      await Promise.all([
+        getRaydiumPoolInfo(),
+        getOrcaPoolInfo()
+      ])
+      .then(() => setRefreshingPoolInfo(false));
     })();
 
-  }, 5000);
+  }, [
+    connection,
+    shouldRefreshLpData,
+    getRaydiumPoolInfo,
+    getOrcaPoolInfo,
+  ]);
 
-  return () => {
-    clearTimeout(timer);
-  }   
+  // Timeout to refresh Pools info
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShouldRefreshLpData(true);
+    }, 30000);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connection]);
+    return () => {
+      clearTimeout(timer);
+    }
+
+  });
   
   useEffect(() => {
-    setMaxAprValue(Math.max(maxOrcaAprValue, maxRadiumAprValue));
+    const maxApr = Math.max(maxOrcaAprValue, maxRadiumAprValue);
+    consoleOut('maxAprValue:', maxApr, 'blue');
+    setMaxAprValue(maxApr);
   }, [
     maxOrcaAprValue,
     maxRadiumAprValue
   ]);
-  console.log(maxAprValue);
 
   const [selectedInvest, setSelectedInvest] = useState<any>(investItems[0]);
 
@@ -731,7 +785,7 @@ export const InvestView = () => {
                             shape="circle"
                             size="middle"
                             icon={<IconRefresh className="mean-svg-icons" />}
-                            onClick={() => {}}
+                            onClick={() => setShouldRefreshLpData(true)}
                           />
                         </Tooltip>
                       </span>
@@ -750,69 +804,71 @@ export const InvestView = () => {
                       </div>
 
                       <div className="transaction-list-data-wrapper vertical-scroll">
-                        <div className="activity-list h-100">
-                          <div className="item-list-body compact">
-                            {raydiumInfo.map((raydium: any) => (
-                              <a key={raydium.ammId} className="item-list-row" target="_blank" rel="noopener noreferrer" 
-                              href={`https://raydium.io/liquidity/add/?coin0=MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD&coin1=${raydium.name.slice(5) === "SOL" ? "sol&fixed" : raydium.name.slice(5) === "RAY" ? "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R&fixed" : "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&fixed"}=coin0&ammId=${raydium.ammId}`}>
-                              <div className="std-table-cell responsive-cell pl-0">
-                                <div className="icon-cell pr-1 d-inline-block">
-                                  <div className="token-icon">
-                                    <img alt="Raydium" width="20" height="20" src="https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R/logo.png" />
+                        <Spin spinning={refreshingPoolInfo}>
+                          <div className="activity-list h-100">
+                            <div className="item-list-body compact">
+                              {raydiumInfo.map((raydium: any) => (
+                                <a key={raydium.ammId} className="item-list-row" target="_blank" rel="noopener noreferrer" 
+                                href={`https://raydium.io/liquidity/add/?coin0=MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD&coin1=${raydium.name.slice(5) === "SOL" ? "sol&fixed" : raydium.name.slice(5) === "RAY" ? "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R&fixed" : "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&fixed"}=coin0&ammId=${raydium.ammId}`}>
+                                <div className="std-table-cell responsive-cell pl-0">
+                                  <div className="icon-cell pr-1 d-inline-block">
+                                    <div className="token-icon">
+                                      <img alt="Raydium" width="20" height="20" src="https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R/logo.png" />
+                                    </div>
                                   </div>
+                                  <span>Raydium</span>
                                 </div>
-                                <span>Raydium</span>
-                              </div>
-                              <div className="std-table-cell responsive-cell pr-1">
-                                <span>{raydium.name.replace(/-/g, "/")}</span>
-                              </div>
-                              <div className="std-table-cell responsive-cell pr-1 text-right">
-                                <span>{raydium.liquidity > 0 ? `$${formatThousands(raydium.liquidity)}` : "--"}</span>
-                              </div>
-                              <div className="std-table-cell responsive-cell pr-1 text-right">
-                                <span>{raydium.volume24h > 0 ? `$${formatThousands(raydium.volume24h)}` : "--"}</span>
-                              </div>
-                              <div className="std-table-cell responsive-cell pr-1 text-right">
-                                <span>{raydium.apr7d > 0 ? `${raydium.apr7d.toFixed(2)}%` : "--"}</span>
-                              </div>
-                              <div className="std-table-cell responsive-cell pl-1 text-center invest-col">
-                                <span role="img" aria-label="arrow-up" className="anticon anticon-arrow-up mean-svg-icons outgoing upright">
-                                  <svg viewBox="64 64 896 896" focusable="false" data-icon="arrow-up" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M868 545.5L536.1 163a31.96 31.96 0 00-48.3 0L156 545.5a7.97 7.97 0 006 13.2h81c4.6 0 9-2 12.1-5.5L474 300.9V864c0 4.4 3.6 8 8 8h60c4.4 0 8-3.6 8-8V300.9l218.9 252.3c3 3.5 7.4 5.5 12.1 5.5h81c6.8 0 10.5-8 6-13.2z"></path></svg>
-                                </span>
-                              </div>
-                              </a>
-                            ))}
-                            {orcaInfo.map((orca: any) => (
-                              <a key={orca.name2} className="item-list-row" target="_blank" rel="noopener noreferrer" href="https://www.orca.so/pools">
-                              <div className="std-table-cell responsive-cell pl-0">
-                                <div className="icon-cell pr-1 d-inline-block">
-                                  <div className="token-icon">
-                                    <img alt="Raydium" width="20" height="20" src="https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE/logo.png" />
+                                <div className="std-table-cell responsive-cell pr-1">
+                                  <span>{raydium.name.replace(/-/g, "/")}</span>
+                                </div>
+                                <div className="std-table-cell responsive-cell pr-1 text-right">
+                                  <span>{raydium.liquidity > 0 ? `$${formatThousands(raydium.liquidity)}` : "--"}</span>
+                                </div>
+                                <div className="std-table-cell responsive-cell pr-1 text-right">
+                                  <span>{raydium.volume24h > 0 ? `$${formatThousands(raydium.volume24h)}` : "--"}</span>
+                                </div>
+                                <div className="std-table-cell responsive-cell pr-1 text-right">
+                                  <span>{raydium.apr7d > 0 ? `${raydium.apr7d.toFixed(2)}%` : "--"}</span>
+                                </div>
+                                <div className="std-table-cell responsive-cell pl-1 text-center invest-col">
+                                  <span role="img" aria-label="arrow-up" className="anticon anticon-arrow-up mean-svg-icons outgoing upright">
+                                    <svg viewBox="64 64 896 896" focusable="false" data-icon="arrow-up" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M868 545.5L536.1 163a31.96 31.96 0 00-48.3 0L156 545.5a7.97 7.97 0 006 13.2h81c4.6 0 9-2 12.1-5.5L474 300.9V864c0 4.4 3.6 8 8 8h60c4.4 0 8-3.6 8-8V300.9l218.9 252.3c3 3.5 7.4 5.5 12.1 5.5h81c6.8 0 10.5-8 6-13.2z"></path></svg>
+                                  </span>
+                                </div>
+                                </a>
+                              ))}
+                              {orcaInfo.map((orca: any) => (
+                                <a key={orca.name2} className="item-list-row" target="_blank" rel="noopener noreferrer" href="https://www.orca.so/pools">
+                                <div className="std-table-cell responsive-cell pl-0">
+                                  <div className="icon-cell pr-1 d-inline-block">
+                                    <div className="token-icon">
+                                      <img alt="Raydium" width="20" height="20" src="https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE/logo.png" />
+                                    </div>
                                   </div>
+                                  <span>Orca</span>
                                 </div>
-                                <span>Orca</span>
-                              </div>
-                              <div className="std-table-cell responsive-cell pr-1">
-                                <span>{orca.name2}</span>
-                              </div>
-                              <div className="std-table-cell responsive-cell pr-1 text-right">
-                                <span>{orca.liquidity > 0 ? `$${formatThousands(orca.liquidity)}` : "--"}</span>
-                              </div>
-                              <div className="std-table-cell responsive-cell pr-1 text-right">
-                                <span>{orca.volume_24h > 0 ? `$${formatThousands(orca.volume_24h)}` : "--"}</span>
-                              </div>
-                              <div className="std-table-cell responsive-cell pr-1 text-right">
-                                <span>{orca.apy_7d > 0 ? `${(orca.apy_7d * 100).toFixed(2)}% APY` : "--"}</span>
-                              </div>
-                              <div className="std-table-cell responsive-cell pl-1 text-center invest-col">
-                                <span role="img" aria-label="arrow-up" className="anticon anticon-arrow-up mean-svg-icons outgoing upright">
-                                  <svg viewBox="64 64 896 896" focusable="false" data-icon="arrow-up" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M868 545.5L536.1 163a31.96 31.96 0 00-48.3 0L156 545.5a7.97 7.97 0 006 13.2h81c4.6 0 9-2 12.1-5.5L474 300.9V864c0 4.4 3.6 8 8 8h60c4.4 0 8-3.6 8-8V300.9l218.9 252.3c3 3.5 7.4 5.5 12.1 5.5h81c6.8 0 10.5-8 6-13.2z"></path></svg>
-                                </span>
-                              </div>
-                              </a>
-                            ))}
+                                <div className="std-table-cell responsive-cell pr-1">
+                                  <span>{orca.name2}</span>
+                                </div>
+                                <div className="std-table-cell responsive-cell pr-1 text-right">
+                                  <span>{orca.liquidity > 0 ? `$${formatThousands(orca.liquidity)}` : "--"}</span>
+                                </div>
+                                <div className="std-table-cell responsive-cell pr-1 text-right">
+                                  <span>{orca.volume_24h > 0 ? `$${formatThousands(orca.volume_24h)}` : "--"}</span>
+                                </div>
+                                <div className="std-table-cell responsive-cell pr-1 text-right">
+                                  <span>{orca.apy_7d > 0 ? `${(orca.apy_7d * 100).toFixed(2)}% APY` : "--"}</span>
+                                </div>
+                                <div className="std-table-cell responsive-cell pl-1 text-center invest-col">
+                                  <span role="img" aria-label="arrow-up" className="anticon anticon-arrow-up mean-svg-icons outgoing upright">
+                                    <svg viewBox="64 64 896 896" focusable="false" data-icon="arrow-up" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M868 545.5L536.1 163a31.96 31.96 0 00-48.3 0L156 545.5a7.97 7.97 0 006 13.2h81c4.6 0 9-2 12.1-5.5L474 300.9V864c0 4.4 3.6 8 8 8h60c4.4 0 8-3.6 8-8V300.9l218.9 252.3c3 3.5 7.4 5.5 12.1 5.5h81c6.8 0 10.5-8 6-13.2z"></path></svg>
+                                  </span>
+                                </div>
+                                </a>
+                              ))}
+                            </div>
                           </div>
-                        </div>
+                        </Spin>
                       </div>
                     </div>
                   </>
