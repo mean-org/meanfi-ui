@@ -19,7 +19,7 @@ import { Identicon } from '../../components/Identicon';
 import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, getTxIxResume, makeDecimal, shortenAddress } from '../../utils/utils';
 import { MultisigV2, MultisigParticipant, MultisigTransaction, MultisigTransactionStatus, MultisigVault, Multisig } from '../../models/multisig';
 import { TransactionFees } from '@mean-dao/msp';
-import { MultisigCreateAssetModal } from '../../components/MultisigCreateVaultModal';
+import { MultisigCreateAssetModal } from '../../components/MultisigCreateAssetModal';
 import { useNativeAccount } from '../../contexts/accounts';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { ACCOUNT_LAYOUT } from '../../utils/layouts';
@@ -1092,20 +1092,20 @@ export const MultisigAssetsView = () => {
   },[resetTransactionStatus]);
 
   // Create asset modal
-  const [isCreateVaultModalVisible, setIsCreateVaultModalVisible] = useState(false);
-  const onShowCreateVaultModal = useCallback(() => {
-    setIsCreateVaultModalVisible(true);
+  const [isCreateAssetModalVisible, setIsCreateAssetModalVisible] = useState(false);
+  const onShowCreateAssetModal = useCallback(() => {
+    setIsCreateAssetModalVisible(true);
     const fees = {
       blockchainFee: 0.000005,
       mspFlatFee: 0.000010,
       mspPercentFee: 0
     };
+    resetTransactionStatus();
     setTransactionFees(fees);
-  },[]);
+  },[resetTransactionStatus]);
 
-  const onVaultCreated = useCallback(() => {
+  const onAssetCreated = useCallback(() => {
 
-    // refreshVaults();
     resetTransactionStatus();
     notify({
       description: t('multisig.create-asset.success-message'),
@@ -1117,7 +1117,7 @@ export const MultisigAssetsView = () => {
     resetTransactionStatus
   ]);
 
-  const onExecuteCreateVaultTx = useCallback(async (data: any) => {
+  const onExecuteCreateAssetTx = useCallback(async (data: any) => {
 
     let transaction: Transaction;
     let signedTransaction: Transaction;
@@ -1129,7 +1129,7 @@ export const MultisigAssetsView = () => {
     setTransactionCancelled(false);
     setIsBusy(true);
 
-    const createVault = async (data: any) => {
+    const createAsset = async (data: any) => {
 
       if (!multisigAddress || !publicKey || !data || !data.token) { return null; }
 
@@ -1251,7 +1251,7 @@ export const MultisigAssetsView = () => {
           return false;
         }
 
-        return await createVault(data)
+        return await createAsset(data)
           .then(value => {
             if (!value) { return false; }
             consoleOut('createVault returned transaction:', value);
@@ -1414,8 +1414,8 @@ export const MultisigAssetsView = () => {
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.TransactionFinished
             });
-            onVaultCreated();
-            setIsCreateVaultModalVisible(false);
+            onAssetCreated();
+            setIsCreateAssetModalVisible(false);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -1427,7 +1427,7 @@ export const MultisigAssetsView = () => {
     multisigClient.programId,
     multisigClient.provider.connection,
     nativeBalance,
-    onVaultCreated,
+    onAssetCreated,
     publicKey,
     multisigAddress,
     setTransactionStatus,
@@ -1440,9 +1440,9 @@ export const MultisigAssetsView = () => {
   ]);
 
   const onAcceptCreateVault = useCallback((params: any) => {
-    onExecuteCreateVaultTx(params);
+    onExecuteCreateAssetTx(params);
   },[
-    onExecuteCreateVaultTx
+    onExecuteCreateAssetTx
   ]);
 
   // Transfer token modal
@@ -3806,7 +3806,7 @@ export const MultisigAssetsView = () => {
                       type="primary"
                       shape="round"
                       disabled={!publicKey || !selectedMultisig}
-                      onClick={onShowCreateVaultModal}>
+                      onClick={onShowCreateAssetModal}>
                       {publicKey
                         ? t('multisig.multisig-account-detail.cta-create-asset')
                         : t('transactions.validation.not-connected')
@@ -3891,8 +3891,8 @@ export const MultisigAssetsView = () => {
 
       <MultisigCreateAssetModal
         handleOk={onAcceptCreateVault}
-        handleClose={() => setIsCreateVaultModalVisible(false)}
-        isVisible={isCreateVaultModalVisible}
+        handleClose={() => setIsCreateAssetModalVisible(false)}
+        isVisible={isCreateAssetModalVisible}
         nativeBalance={nativeBalance}
         transactionFees={transactionFees}
         isBusy={isBusy}
