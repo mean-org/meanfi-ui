@@ -243,7 +243,6 @@
 	},
 	"faucet": {
 		"current-sol-balance": "Số dư SOL hiện tại",
-		"current-wsol-balance": "Số dự wSOL hiện tại",
 		"fund-cta": "Cho tôi SOL",
 		"funding-amount": "Tài khoản của bạn sẽ được cấp",
 		"not-connected": "Ví của bạn chưa được kết nối, vui lòng kết nối ví",
@@ -251,6 +250,10 @@
 		"wrap-sol-cta-toggle": "Wrap một vài SOL",
 		"wrap-transaction-fee": "Phí giao dịch wrap",
 		"wrapped-amount": "Số lượng đã wrap"
+	},
+	"unwrap": {
+		"current-wsol-balance": "Số dự wSOL hiện tại",
+		"label-input-amount": "Enter amount to unwrap"
 	},
 	"general": {
 		"cta-change": "Thay đổi",
@@ -1195,7 +1198,8 @@
 				"submenu-title": "Dịch vụ",
 				"treasuries": "Streaming Treasuries",
 				"wallet-guide": "Hướng dẫn Ví",
-				"wrap": "Wrap"
+				"wrap": "Wrap",
+				"unwrap": "Unwrap"
 			},
 			"stats": "Thống kê",
 			"swap": "Giao dịch",

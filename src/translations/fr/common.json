@@ -243,7 +243,6 @@
 	},
 	"faucet": {
 		"current-sol-balance": "Solde SOL actuel",
-		"current-wsol-balance": "Solde actuel du SOL encapsulé",
 		"fund-cta": "Donnez-moi SOL",
 		"funding-amount": "Votre compte sera financé avec",
 		"not-connected": "Votre portefeuille n'est pas connecté, veuillez connecter votre portefeuille",
@@ -251,6 +250,10 @@
 		"wrap-sol-cta-toggle": "Enveloppez du SOL",
 		"wrap-transaction-fee": "Frais de transaction d'emballage",
 		"wrapped-amount": "Montant emballé"
+	},
+	"unwrap": {
+		"current-wsol-balance": "Solde actuel du SOL encapsulé",
+		"label-input-amount": "Enter amount to unwrap"
 	},
 	"general": {
 		"cta-change": "Changer",
@@ -1186,7 +1189,8 @@
 				"submenu-title": "Prestations de service",
 				"treasuries": "Streaming Treasuries",
 				"wallet-guide": "Guide du portefeuille",
-				"wrap": "Envelopper"
+				"wrap": "Envelopper",
+				"unwrap": "Unwrap"
 			},
 			"stats": "Statistiques",
 			"swap": "Échange",

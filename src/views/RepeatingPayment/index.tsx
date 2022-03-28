@@ -753,7 +753,7 @@ export const RepeatingPayment = () => {
         }
 
         // Init a streaming operation
-        const moneyStream = new MoneyStreaming(endpoint, streamProgramAddress, "finalized");
+        const moneyStream = new MoneyStreaming(endpoint, streamProgramAddress, "confirmed");
 
         return await moneyStream.createStream(
           publicKey,                                                  // wallet
@@ -899,7 +899,7 @@ export const RepeatingPayment = () => {
         }
 
         // Init a streaming operation
-        const msp = new MSP(endpoint, streamV2ProgramAddress, "finalized");
+        const msp = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
 
         return await msp.streamPayment(
           publicKey,                                                  // treasurer
@@ -1085,7 +1085,7 @@ export const RepeatingPayment = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.StreamCreate);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamCreate);
             setIsBusy(false);
             handleGoToStreamsClick();
           } else { setIsBusy(false); }

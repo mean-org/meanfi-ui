@@ -243,7 +243,6 @@
 	},
 	"faucet": {
 		"current-sol-balance": "Current SOL balance",
-		"current-wsol-balance": "Current Wrapped SOL balance",
 		"fund-cta": "Give me SOL",
 		"funding-amount": "Your account will be funded with",
 		"not-connected": "Your wallet is not connected, please connect your wallet",
@@ -251,6 +250,10 @@
 		"wrap-sol-cta-toggle": "Wrap some SOL",
 		"wrap-transaction-fee": "Wrap transaction fee",
 		"wrapped-amount": "Wrapped amount"
+	},
+	"unwrap": {
+		"current-wsol-balance": "Current Wrapped SOL balance",
+		"label-input-amount": "Enter amount to unwrap"
 	},
 	"general": {
 		"cta-change": "Change",
@@ -1199,7 +1202,8 @@
 				"submenu-title": "Services",
 				"treasuries": "Streaming Treasuries",
 				"wallet-guide": "Wallet Guide",
-				"wrap": "Wrap"
+				"wrap": "Wrap",
+				"unwrap": "Unwrap"
 			},
 			"stats": "Stats",
 			"swap": "Exchange",

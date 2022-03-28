@@ -243,7 +243,6 @@
 	},
 	"faucet": {
 		"current-sol-balance": "موجودی SOL فعلی",
-		"current-wsol-balance": "موجودی Wrapped SOL فعلی",
 		"fund-cta": "SOL به من بده",
 		"funding-amount": "حساب شما تامین مالی خواهد شد با",
 		"not-connected": "کیف پول شما متصل نیست، لطفا کیف پول خود را وصل کنید",
@@ -251,6 +250,10 @@
 		"wrap-sol-cta-toggle": "مقداری SOL را  Wrap کنید",
 		"wrap-transaction-fee": "کارمزد تراکن Wrap",
 		"wrapped-amount": "میزان Wrap شده"
+	},
+	"unwrap": {
+		"current-wsol-balance": "موجودی Wrapped SOL فعلی",
+		"label-input-amount": "Enter amount to unwrap"
 	},
 	"general": {
 		"cta-change": "تغییر",
@@ -1195,7 +1198,8 @@
 				"submenu-title": "خدمات",
 				"treasuries": "Streaming Treasuries",
 				"wallet-guide": "راهنمای کیف پول",
-				"wrap": "رپ(Wrap) کردن"
+				"wrap": "رپ(Wrap) کردن",
+				"unwrap": "Unwrap"
 			},
 			"stats": "آمار",
 			"swap": "مبادله",

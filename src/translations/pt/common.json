@@ -243,7 +243,6 @@
 	},
 	"faucet": {
 		"current-sol-balance": "Saldo SOL atual",
-		"current-wsol-balance": "Saldo SOL Atual Envolvido",
 		"fund-cta": "Me dê SOL",
 		"funding-amount": "Sua conta será financiada com",
 		"not-connected": "Sua carteira não está conectada, conecte sua carteira",
@@ -251,6 +250,10 @@
 		"wrap-sol-cta-toggle": "Enrole um pouco de SOL",
 		"wrap-transaction-fee": "Taxa de transação de wrap",
 		"wrapped-amount": "Valor envolvido"
+	},
+	"unwrap": {
+		"current-wsol-balance": "Saldo SOL Atual Envolvido",
+		"label-input-amount": "Enter amount to unwrap"
 	},
 	"general": {
 		"cta-change": "Mudar",
@@ -1188,7 +1191,8 @@
 				"submenu-title": "Serviços",
 				"treasuries": "Streaming Treasuries",
 				"wallet-guide": "Guia da carteira",
-				"wrap": "Enrolar"
+				"wrap": "Enrolar",
+				"unwrap": "Unwrap"
 			},
 			"stats": "Estatísticos",
 			"swap": "Troca",

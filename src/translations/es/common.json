@@ -243,14 +243,17 @@
 	},
 	"faucet": {
 		"current-sol-balance": "Saldo de SOL actual",
-		"current-wsol-balance": "Saldo de wSOL actual ",
 		"fund-cta": "Obtenga SOL",
 		"funding-amount": "Su cuenta tendrá el saldo de",
 		"not-connected": "Su billetera no está conectada, conecte su billetera",
 		"wrap-sol-cta": "WRAP",
 		"wrap-sol-cta-toggle": "Wrap some SOL",
-		"wrap-transaction-fee": "Cargos for hacer Wrap",
+		"wrap-transaction-fee": "Cargos por hacer Wrap",
 		"wrapped-amount": "Wrapped amount"
+	},
+	"unwrap": {
+		"current-wsol-balance": "Saldo de wSOL actual",
+		"label-input-amount": "Enter amount to unwrap"
 	},
 	"general": {
 		"cta-change": "Cambiar",
@@ -1188,7 +1191,8 @@
 				"submenu-title": "Servicios",
 				"treasuries": "Streaming Treasuries",
 				"wallet-guide": "Guía de Billeteras",
-				"wrap": "Wrap"
+				"wrap": "Wrap",
+				"unwrap": "Unwrap"
 			},
 			"stats": "Estadísticas",
 			"swap": "Intercambiar",

@@ -1791,7 +1791,7 @@ export const OneTimeExchange = (props: {
               </div>
               <div className="token-description">
                 <div className="token-symbol">{token.symbol}</div>
-                <div className="token-name">{token.name}</div>
+                <div className="token-name m-0">{token.name}</div>
               </div>
               {
                 connected && userBalances && mintList[token.address] && userBalances[token.address] > 0 && (
@@ -1856,7 +1856,7 @@ export const OneTimeExchange = (props: {
               </div>
               <div className="token-description">
                 <div className="token-symbol">{token.symbol}</div>
-                <div className="token-name">{token.name}</div>
+                <div className="token-name m-0">{token.name}</div>
               </div>
               {
                 connected && userBalances && mintList[token.address] && userBalances[token.address] > 0 && (

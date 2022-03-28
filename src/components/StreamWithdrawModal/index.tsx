@@ -86,7 +86,7 @@ export const StreamWithdrawModal = (props: {
           setMaxAmount(max);
           setLoadingData(true);
           try {
-            const ms = new MoneyStreaming(endpoint, streamProgramAddress, "finalized");
+            const ms = new MoneyStreaming(endpoint, streamProgramAddress, "confirmed");
             getStreamDetails(v1.id as string, ms);
           } catch (error) {
             notify({
@@ -104,7 +104,7 @@ export const StreamWithdrawModal = (props: {
           setMaxAmount(max);
           setLoadingData(true);
           try {
-            const msp = new MSP(endpoint, streamV2ProgramAddress, "finalized");
+            const msp = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
             getStreamDetails(v2.id as string, msp);
           } catch (error) {
             notify({

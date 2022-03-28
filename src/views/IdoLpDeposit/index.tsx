@@ -278,7 +278,7 @@ export const IdoLpDeposit = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.IdoDeposit);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.IdoDeposit);
             setDepositAmount("");
             setIsBusy(false);
             setTransactionStatus({

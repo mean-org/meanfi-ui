@@ -382,7 +382,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const ms = useMemo(() => new MoneyStreaming(
     connectionConfig.endpoint,
     streamProgramAddressFromConfig,
-    "finalized"
+    "confirmed"
   ), [
     connectionConfig.endpoint,
     streamProgramAddressFromConfig
@@ -394,7 +394,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       return new MSP(
         connectionConfig.endpoint,
         streamV2ProgramAddressFromConfig,
-        "finalized"
+        "confirmed"
       );
     }
   }, [
@@ -651,14 +651,15 @@ const AppStateProvider: React.FC = ({ children }) => {
           .then(value => {
             consoleOut('activity:', value);
             setStreamActivity(value);
-            setLoadingStreamActivity(false);
           })
           .catch(err => {
             console.error(err);
             setStreamActivity([]);
-            setLoadingStreamActivity(false);
           })
-          .finally(() => setHasMoreStreamActivity(false));
+          .finally(() => {
+            setHasMoreStreamActivity(false);
+            setLoadingStreamActivity(false);
+          });
 
       } else {
         const before = clearHistory
@@ -683,14 +684,13 @@ const AppStateProvider: React.FC = ({ children }) => {
               setHasMoreStreamActivity(false);
             }
             setStreamActivity(activities);
-            setLoadingStreamActivity(false);
           })
           .catch(err => {
             console.error(err);
             setStreamActivity([]);
             setHasMoreStreamActivity(false);
-            setLoadingStreamActivity(false);
-          });  
+          })
+          .finally(() => setLoadingStreamActivity(false));
       }
     }
 
@@ -710,14 +710,9 @@ const AppStateProvider: React.FC = ({ children }) => {
         .then((detail: Stream | StreamInfo) => {
           consoleOut('detail:', detail, 'blue');
           if (detail) {
-            if (detail.id !== streamDetail?.id) {
-              setTimeout(() => {
-                setStreamActivity([]);
-                setHasMoreStreamActivity(true);
-                setLoadingStreamActivity(true);
-              });
-              getStreamActivity(detail.id as string, detail.version, true);
-            }
+            setStreamActivity([]);
+            setHasMoreStreamActivity(true);
+            getStreamActivity(detail.id as string, detail.version, true);
             updateStreamDetail(detail);
             setActiveStream(detail);
             if (location.pathname.startsWith('/accounts')) {

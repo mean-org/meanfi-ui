@@ -235,8 +235,8 @@ export const TreasuriesView = () => {
   const multisigClient = useMemo(() => {
 
     const opts: ConfirmOptions = {
-      preflightCommitment: "finalized",
-      commitment: "finalized",
+      preflightCommitment: "confirmed",
+      commitment: "confirmed",
     };
 
     const provider = new Provider(connection, wallet as any, opts);
@@ -256,7 +256,7 @@ export const TreasuriesView = () => {
   const ms = useMemo(() => new MoneyStreaming(
     connectionConfig.endpoint,
     streamProgramAddress,
-    "finalized"
+    "confirmed"
   ), [
     connectionConfig.endpoint,
     streamProgramAddress
@@ -269,7 +269,7 @@ export const TreasuriesView = () => {
       return new MSP(
         connectionConfig.endpoint,
         streamV2ProgramAddress,
-        "finalized"
+        "confirmed"
       );
     }
   }, [
@@ -1797,7 +1797,7 @@ export const TreasuriesView = () => {
       );
 
       tx.feePayer = publicKey;
-      let { blockhash } = await connection.getRecentBlockhash("finalized");
+      let { blockhash } = await connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
       tx.partialSign(...txSigners);
 
@@ -2012,7 +2012,7 @@ export const TreasuriesView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.TreasuryRefreshBalance);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.TreasuryRefreshBalance);
             setIsBusy(false);
             onRefreshTreasuryBalanceTransactionFinished();
             setOngoingOperation(undefined);
@@ -2118,7 +2118,7 @@ export const TreasuriesView = () => {
       );
 
       tx.feePayer = publicKey;
-      let { blockhash } = await connection.getRecentBlockhash("finalized");
+      let { blockhash } = await connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
       tx.partialSign(...txSigners);
 
@@ -2341,7 +2341,7 @@ export const TreasuriesView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.TreasuryCreate);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.TreasuryCreate);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -2598,7 +2598,7 @@ export const TreasuriesView = () => {
       );
 
       tx.feePayer = publicKey;
-      let { blockhash } = await connection.getRecentBlockhash("finalized");
+      let { blockhash } = await connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
       tx.partialSign(...txSigners);
 
@@ -2830,7 +2830,7 @@ export const TreasuriesView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.TreasuryAddFunds);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.TreasuryAddFunds);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -3045,7 +3045,7 @@ export const TreasuriesView = () => {
       );
 
       tx.feePayer = publicKey;
-      let { blockhash } = await connection.getRecentBlockhash("finalized");
+      let { blockhash } = await connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
       tx.partialSign(...txSigners);
 
@@ -3264,7 +3264,7 @@ export const TreasuriesView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.TreasuryClose);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.TreasuryClose);
             setIsBusy(false);
             onCloseTreasuryTransactionFinished();
             setOngoingOperation(undefined);
@@ -3486,7 +3486,7 @@ export const TreasuriesView = () => {
       );
 
       tx.feePayer = publicKey;
-      let { blockhash } = await connection.getRecentBlockhash("finalized");
+      let { blockhash } = await connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
       tx.partialSign(...txSigners);
 
@@ -3708,7 +3708,7 @@ export const TreasuriesView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.StreamClose);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamClose);
             setIsBusy(false);
             onCloseStreamTransactionFinished();
             setOngoingOperation(undefined);
@@ -3911,7 +3911,7 @@ export const TreasuriesView = () => {
       );
 
       tx.feePayer = publicKey;
-      let { blockhash } = await connection.getRecentBlockhash("finalized");
+      let { blockhash } = await connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
       tx.partialSign(...txSigners);
 
@@ -4133,7 +4133,7 @@ export const TreasuriesView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.StreamPause);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamPause);
             setIsBusy(false);
             onCloseStreamTransactionFinished();
             setOngoingOperation(undefined);
@@ -4336,7 +4336,7 @@ export const TreasuriesView = () => {
       );
 
       tx.feePayer = publicKey;
-      let { blockhash } = await connection.getRecentBlockhash("finalized");
+      let { blockhash } = await connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
       tx.partialSign(...txSigners);
 
@@ -4556,7 +4556,7 @@ export const TreasuriesView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.StreamResume);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamResume);
             setIsBusy(false);
             onResumeStreamTransactionFinished();
             setOngoingOperation(undefined);
@@ -4691,7 +4691,7 @@ export const TreasuriesView = () => {
       );
 
       tx.feePayer = publicKey;
-      let { blockhash } = await connection.getRecentBlockhash("finalized");
+      let { blockhash } = await connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
       tx.partialSign(...txSigners);
 
@@ -4928,7 +4928,7 @@ export const TreasuriesView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.TreasuryWithdraw);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.TreasuryWithdraw);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,

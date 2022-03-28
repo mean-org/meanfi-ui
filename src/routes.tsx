@@ -36,6 +36,7 @@ import { IdoLpView } from "./pages/ido-lp";
 // import { StakingView } from "./pages/staking";
 // import { PolBondsView } from "./pages/pol-bonds";
 import { InvestView } from "./pages/invest";
+import { UnwrapView } from "./pages/unwrap";
 
 export function AppRoutes() {
 
@@ -61,6 +62,7 @@ export function AppRoutes() {
                         <Route path="/exchange-dcas" element={<ExchangeDcasView />} />
                       )}
                       <Route path="/wrap" element={<WrapView />} />
+                      <Route path="/unwrap" element={<UnwrapView />} />
                       {isLocal() && (
                         <Route path="/playground" element={<PlaygroundView />} />
                       )}

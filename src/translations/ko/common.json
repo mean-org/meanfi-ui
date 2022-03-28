@@ -243,7 +243,6 @@
 	},
 	"faucet": {
 		"current-sol-balance": "현재 SOL 잔액",
-		"current-wsol-balance": "현재 WSOL 잔액",
 		"fund-cta": "SOL 주세요",
 		"funding-amount": "귀하의 계정에 자금이 조달됩니다",
 		"not-connected": "지갑이 연결되지 않았습니다. 지갑을 연결해 주세요.",
@@ -251,6 +250,10 @@
 		"wrap-sol-cta-toggle": "SOL 랩핑하기",
 		"wrap-transaction-fee": "랩핑 거래 수수료",
 		"wrapped-amount": "랩핑된 금액"
+	},
+	"unwrap": {
+		"current-wsol-balance": "현재 WSOL 잔액",
+		"label-input-amount": "Enter amount to unwrap"
 	},
 	"general": {
 		"cta-change": "변경",
@@ -1199,7 +1202,8 @@
 				"submenu-title": "서비스",
 				"treasuries": "Streaming Treasuries",
 				"wallet-guide": "지갑 가이드",
-				"wrap": "랩"
+				"wrap": "랩",
+				"unwrap": "Unwrap"
 			},
 			"stats": "통계",
 			"swap": "교환",

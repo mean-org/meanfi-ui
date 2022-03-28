@@ -149,7 +149,7 @@ export const AccountsView = () => {
   const ms = useMemo(() => new MoneyStreaming(
     endpoint,
     streamProgramAddress,
-    "finalized"
+    "confirmed"
   ), [
     endpoint,
     streamProgramAddress
@@ -161,7 +161,7 @@ export const AccountsView = () => {
       return new MSP(
         endpoint,
         streamV2ProgramAddress,
-        "finalized"
+        "confirmed"
       );
     }
     return undefined;

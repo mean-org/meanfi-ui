@@ -29,7 +29,7 @@ export const TokenListItem = (props: {
       </div>
       <div className="token-description">
         <div className="token-symbol">{token && token.symbol ? token.symbol : shortenAddress(mintAddress)}</div>
-        <div className="token-name">{name ? name : token && token.name ? token.name : shortenAddress(mintAddress)}</div>
+        <div className="token-name m-0">{name ? name : token && token.name ? token.name : shortenAddress(mintAddress)}</div>
       </div>
       {balance > 0 && (
         <div className="token-balance">

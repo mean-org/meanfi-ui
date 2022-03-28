@@ -501,7 +501,7 @@ export const OneTimePayment = () => {
       if (!endpoint || !streamV2ProgramAddress) { return null; }
       
       // Init a streaming operation
-      const msp = new MSP(endpoint, streamV2ProgramAddress, "finalized");
+      const msp = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
 
       if (!isScheduledPayment()) {
         return await msp.transfer(
@@ -785,7 +785,7 @@ export const OneTimePayment = () => {
 
     const confirmTx = async (): Promise<boolean> => {
       return await connection
-        .confirmTransaction(signature, "finalized")
+        .confirmTransaction(signature, "confirmed")
         .then(result => {
           consoleOut('confirmTransaction result:', result);
           if (result && result.value && !result.value.err) {
@@ -843,7 +843,7 @@ export const OneTimePayment = () => {
           if (sent && !transactionCancelled) {
             if (isScheduledPayment()) {
               consoleOut('Send Tx to confirmation queue:', signature);
-              startFetchTxSignatureInfo(signature, "finalized", OperationType.Transfer);
+              startFetchTxSignatureInfo(signature, "confirmed", OperationType.Transfer);
               setIsBusy(false);
               handleGoToStreamsClick();
             } else {

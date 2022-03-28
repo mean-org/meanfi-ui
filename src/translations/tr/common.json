@@ -243,7 +243,6 @@
 	},
 	"faucet": {
 		"current-sol-balance": "Anlık SOL bakiyesi",
-		"current-wsol-balance": "Anlık Wrapped SOL bakiyesi",
 		"fund-cta": "Bana SOL ver",
 		"funding-amount": "Hesabınız ..... ile fonlanacak",
 		"not-connected": "Cüzdanınız bağlı değil, lütfen cüzdanınızı bağlayın",
@@ -251,6 +250,10 @@
 		"wrap-sol-cta-toggle": "Biraz SOL Wrapla",
 		"wrap-transaction-fee": "İşlem ücretini wrapla",
 		"wrapped-amount": "Wraplanmış miktar"
+	},
+	"unwrap": {
+		"current-wsol-balance": "Anlık Wrapped SOL bakiyesi",
+		"label-input-amount": "Enter amount to unwrap"
 	},
 	"general": {
 		"cta-change": "Değiştir",
@@ -1195,7 +1198,8 @@
 				"submenu-title": "Hizmetler",
 				"treasuries": "Streaming Treasuries",
 				"wallet-guide": "Cüzdan Rehberi",
-				"wrap": "Wrap"
+				"wrap": "Wrap",
+				"unwrap": "Unwrap"
 			},
 			"stats": "İstatistikler",
 			"swap": "Alım-Satım",

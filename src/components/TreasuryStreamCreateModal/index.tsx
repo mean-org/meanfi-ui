@@ -837,7 +837,7 @@ export const TreasuryStreamCreateModal = (props: {
     const createStreams = async (data: any) => {
 
       consoleOut('Starting create streams using MSP V2...', '', 'blue');
-      const msp = new MSP(endpoint, streamV2ProgramAddress, "finalized");
+      const msp = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
 
       if (!props.isMultisigTreasury) {
 
@@ -947,7 +947,7 @@ export const TreasuryStreamCreateModal = (props: {
         );
 
         tx.feePayer = publicKey;
-        let { blockhash } = await props.multisigClient.provider.connection.getRecentBlockhash("finalized");
+        let { blockhash } = await props.multisigClient.provider.connection.getRecentBlockhash("confirmed");
         tx.recentBlockhash = blockhash;
         tx.partialSign(transaction);
         txs.push(tx);
@@ -1225,7 +1225,7 @@ export const TreasuryStreamCreateModal = (props: {
           if (sent && !transactionCancelled) {
             consoleOut('Send Txs to confirmation queue:', signatures);
             signatures.forEach(s => {
-              startFetchTxSignatureInfo(s, "finalized", OperationType.TreasuryStreamCreate);
+              startFetchTxSignatureInfo(s, "confirmed", OperationType.TreasuryStreamCreate);
             });
             setIsBusy(false);
             props.handleOk();

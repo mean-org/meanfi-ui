@@ -3,7 +3,7 @@ import { TransactionConfirmationStatus } from "@solana/web3.js";
 import { useConnection } from "./connection";
 import { fetchTransactionStatus } from "../utils/transactions";
 import { consoleOut, delay } from "../utils/ui";
-import { OperationType } from "../models/enums";
+import { EventType, OperationType } from "../models/enums";
 import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION, TRANSACTION_STATUS_RETRY, TRANSACTION_STATUS_RETRY_TIMEOUT } from "../constants";
 import { message } from "antd";
 import { useTranslation } from "react-i18next";
@@ -22,6 +22,43 @@ export interface TransactionStatusInfo {
   completedTitle: string;
   completedMessage: string;
 }
+
+type Listener = (value: any) => void;
+
+type MapListener = Record<string, Listener[]>;
+
+class EventEmitter {
+
+  private mapListener: MapListener = {};
+
+   public on(eventName: string, listener: Listener): void {
+      const listeners = this.eventExists(eventName)
+         ? this.mapListener[eventName]
+         : [];
+
+      this.mapListener[eventName] = [...listeners, listener];
+   }
+
+   public emit(eventName: string, value: any): void {
+      if (this.eventExists(eventName)) {
+         const listeners = this.mapListener[eventName];
+         listeners.forEach(listener => listener(value));
+      }
+   }
+
+   public off(eventName: string, listener: Listener): void {
+      if (this.eventExists(eventName)) {
+         const listeners = this.mapListener[eventName];
+         this.mapListener[eventName] = listeners.filter(l => l !== listener);
+      }
+   }
+
+   private eventExists(eventName: string): boolean {
+      return eventName in this.mapListener;
+   }
+}
+
+export const confirmationEvents = new EventEmitter();
 
 const txStatusCache = new Map<string, TransactionStatusInfo>();
 
@@ -348,6 +385,7 @@ const TransactionStatusProvider: React.FC = ({ children }) => {
         rootPrefixCls: 'mean-alert',
         className: 'custom-message'
       });
+      confirmationEvents.emit(EventType.TxConfirmSuccess, data.signature);
       rebuildHistoryFromCache();
     } else {
       transactionStatusCache.update(
@@ -363,6 +401,7 @@ const TransactionStatusProvider: React.FC = ({ children }) => {
       //   className: 'custom-message'
       // });
       message.destroy();
+      confirmationEvents.emit(EventType.TxConfirmTimeout, data.signature);
       rebuildHistoryFromCache();
     }
   }, [

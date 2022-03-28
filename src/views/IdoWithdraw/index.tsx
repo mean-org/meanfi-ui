@@ -290,7 +290,7 @@ export const IdoWithdraw = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.IdoWithdraw);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.IdoWithdraw);
             setWithdrawAmount("");
             setIsBusy(false);
             setTransactionStatus({

@@ -1041,7 +1041,7 @@ export const JupiterExchange = (props: {
                     wSolBalance                 // amount
                 )
                     .then((value) => {
-                        consoleOut("wrapSol returned transaction:", value);
+                        consoleOut("unwrapSol returned transaction:", value);
                         // Stage 1 completed - The transaction is created and returned
                         setTransactionStatus({
                             lastOperation: TransactionStatus.InitTransactionSuccess,
@@ -1055,7 +1055,7 @@ export const JupiterExchange = (props: {
                         return true;
                     })
                     .catch((error) => {
-                        console.error("wrapSol transaction init error:", error);
+                        console.error("unwrapSol transaction init error:", error);
                         setTransactionStatus({
                             lastOperation: transactionStatus.currentOperation,
                             currentOperation: TransactionStatus.InitTransactionFailure,
@@ -1450,7 +1450,7 @@ export const JupiterExchange = (props: {
                                 </div>
                                 <div className="token-description">
                                     <div className="token-symbol">{token.address === WRAPPED_SOL_MINT_ADDRESS ? 'SOL' : token.symbol}</div>
-                                    <div className="token-name">{token.name}</div>
+                                    <div className="token-name m-0">{token.name}</div>
                                 </div>
                                 <div className="token-balance">
                                     {
@@ -1521,7 +1521,7 @@ export const JupiterExchange = (props: {
                                 </div>
                                 <div className="token-description">
                                     <div className="token-symbol">{token.address === WRAPPED_SOL_MINT_ADDRESS ? 'SOL' : token.symbol}</div>
-                                    <div className="token-name">{token.name}</div>
+                                    <div className="token-name m-0">{token.name}</div>
                                 </div>
                                 <div className="token-balance">
                                     {

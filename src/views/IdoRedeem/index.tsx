@@ -327,7 +327,7 @@ export const IdoRedeem = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.IdoClaim);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.IdoClaim);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
