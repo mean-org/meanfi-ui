@@ -3759,7 +3759,7 @@ export const MultisigAssetsView = () => {
                           if (selectedMultisig) {
                             setHighLightableMultisigId(selectedMultisig.authority.toBase58());
                           }
-                          navigate('/multisig');
+                          navigate('/multisig/');
                         }}
                       />
                     </Tooltip>

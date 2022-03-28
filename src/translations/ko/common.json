@@ -528,13 +528,15 @@
 			"column-pending-signatures": "서명",
 			"column-program-id": "프로그램",
 			"explain-failure": "Explain failure condition if specific",
-			"initiator": "Initiator:",
+			"proposed-by": "Proposed by:",
 			"initiator-transaction": "This transaction was submitted by",
+			"missing-signature": "To execute this proposal, {{missingSignature}} more signature is needed.",
+			"missing-signatures": "To execute this proposal, {{missingSignature}} more signatures are needed.",
 			"loading-transactions": "거래 불러오는 중",
 			"modal-title": "Proposal summary",
 			"no-transactions": "This multisig asset has no transactions",
-			"not-signed": "Not Signed",
-			"proposed-action": "Proposed Action:",
+			"not-signed": "Not signed",
+			"proposed-action": "Proposed action:",
 			"ready-for-execution": "This transaction is now ready for execution. Please tell the person who initiated this transaction to execute it.",
 			"signed": "Signed.",
 			"signed-so-far": "Signed so far.",
@@ -546,9 +548,12 @@
 			"treasury-closed-warning": "When a treasury is closed, all funds left over will be deposited to the initiator's wallet. Please confirm this is acceptable before you sign.",
 			"tx-operation-failure": "작동{{operation}}실패",
 			"tx-operation-pending-one": "A transaction on this Multisig is now ready for execution. Please tell the person who initiated this transaction to execute it.",
-			"tx-operation-pending-two": "A Transaction on this Multisig is ready for",
+			"tx-operation-pending-two": "A transaction on this Multisig is ready for",
 			"tx-operation-success": "작동{{operation}}성공",
-			"your-status": "Your Status:"
+			"tx-operation-voided": "This pending transaction has been VOIDED due to the Multisig being edited.",
+			"tx-operation-rejected": "This transaction has been rejected.",
+			"tx-operation-executed": "This transaction has already been executed",
+			"your-status": "Your status:"
 		},
 		"multisig-treasuries": {
 			"back-to-treasuries": "Back to Streaming Treasuries"

@@ -4788,20 +4788,37 @@ export const MultisigView = () => {
                       <h3 className="text-center">{t('multisig.multisig-transactions.tx-operation-pending-two')} {isUserTheProposer() ? 'your execution' : 'execution'}.</h3>
                     )}
                     <Divider className="mt-2" />
-                    <div className="mb-2">{t('multisig.multisig-transactions.proposed-action')} {getOperationName(highlightedMultisigTx.operation)}</div>
-                    <div className="mb-2">{t('multisig.multisig-transactions.submitted-on')} {getReadableDate(highlightedMultisigTx.createdOn.toString(), true)}</div>
-                    <div className="mb-2">{t('multisig.multisig-transactions.initiator')} {t('multisig.multisig-transactions.initiator-transaction')} {getTxInitiator(highlightedMultisigTx)?.name}<br/>{t('multisig.multisig-transactions.address')} <code>{getTxInitiator(highlightedMultisigTx)?.address}</code></div>
-                    <div className="mb-2">{t('multisig.multisig-transactions.transaction-requires')} {selectedMultisig.threshold}/{selectedMultisig.owners.length} {t('multisig.multisig-transactions.signers-to-approve')} {getTxSignedCount(highlightedMultisigTx)} {t('multisig.multisig-transactions.signed')}</div>
+                    <Row>
+                      <Col span={12} className="mb-2">
+                        <span className="info-label">{t('multisig.multisig-transactions.proposed-action')}</span><br />
+                        <span>{getOperationName(highlightedMultisigTx.operation)}</span>
+                      </Col>
+                      <Col span={12} className="mb-2 text-right">
+                        <span className="info-label">{t('multisig.multisig-transactions.submitted-on')}</span><br />
+                        <span>{getReadableDate(highlightedMultisigTx.createdOn.toString(), true)}</span>
+                      </Col>
+                    </Row>
+                    <div className="mb-2">{t('multisig.multisig-transactions.proposed-by')} {getTxInitiator(highlightedMultisigTx)?.name}<br/><code>{getTxInitiator(highlightedMultisigTx)?.address}</code></div>
                     <div className="mb-2">
                       <span className="mr-1">{t('multisig.multisig-transactions.your-status')}</span>
                       <span className={`font-bold ${getTxUserStatusClass(highlightedMultisigTx)}`}>{getTransactionUserStatusAction(highlightedMultisigTx, true)}</span>
                     </div>
+                    <div className="mb-2">{t('multisig.multisig-transactions.transaction-requires')} {selectedMultisig.threshold}/{selectedMultisig.owners.length} {t('multisig.multisig-transactions.signers-to-approve')} {getTxSignedCount(highlightedMultisigTx)} {t('multisig.multisig-transactions.signed')}</div>
                   </>
                 ) : isTxPendingApproval() ? (
                   <>
                     <h3 className="text-center">{t('multisig.multisig-transactions.transaction-awaiting')} {t('multisig.multisig-transactions.approval')}</h3>
                     <Divider className="mt-2" />
-                    <div className="mb-2">{t('multisig.multisig-transactions.proposed-action')} {getOperationName(highlightedMultisigTx.operation)}</div>
+                    <Row>
+                      <Col span={12} className="mb-2">
+                        <span className="info-label">{t('multisig.multisig-transactions.proposed-action')}</span><br />
+                        <span>{getOperationName(highlightedMultisigTx.operation)}</span>
+                      </Col>
+                      <Col span={12} className="mb-2 text-right">
+                        <span className="info-label">{t('multisig.multisig-transactions.submitted-on')}</span><br />
+                        <span>{getReadableDate(highlightedMultisigTx.createdOn.toString(), true)}</span>
+                      </Col>
+                    </Row>
                     {
                       highlightedMultisigTx.operation === OperationType.TreasuryClose && (
                         <div className="mb-2 fg-yellow">
@@ -4809,13 +4826,12 @@ export const MultisigView = () => {
                         </div>
                       )
                     }
-                    <div className="mb-2">{t('multisig.multisig-transactions.submitted-on')} {getReadableDate(highlightedMultisigTx.createdOn.toString(), true)}</div>
-                    <div className="mb-2">{t('multisig.multisig-transactions.initiator')} {t('multisig.multisig-transactions.initiator-transaction')} {getTxInitiator(highlightedMultisigTx)?.name}<br/>{t('multisig.multisig-transactions.address')} <code>{getTxInitiator(highlightedMultisigTx)?.address}</code></div>
-                    <div className="mb-2">{t('multisig.multisig-transactions.transaction-requires')} {selectedMultisig.threshold}/{selectedMultisig.owners.length} {t('multisig.multisig-transactions.signers-to-approve')} {getTxSignedCount(highlightedMultisigTx)} {t('multisig.multisig-transactions.signed-so-far')}</div>
+                    <div className="mb-2">{t('multisig.multisig-transactions.proposed-by')} {getTxInitiator(highlightedMultisigTx)?.name}<br/><code>{getTxInitiator(highlightedMultisigTx)?.address}</code></div>
                     <div className="mb-2">
                       <span className="mr-1">{t('multisig.multisig-transactions.your-status')}</span>
                       <span className={`font-bold ${getTxUserStatusClass(highlightedMultisigTx)}`}>{getTransactionUserStatusAction(highlightedMultisigTx, true)}</span>
                     </div>
+                    <div className="mb-2">{(selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)) > 1 ? t('multisig.multisig-transactions.missing-signatures', {missingSignature: selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)}) : t('multisig.multisig-transactions.missing-signature', {missingSignature: selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)})}</div>
                     {getTransactionUserStatusAction(highlightedMultisigTx) === "Signed" && (
                       <div className="mb1">
                         {txPendingSigners(highlightedMultisigTx)}
@@ -4825,16 +4841,24 @@ export const MultisigView = () => {
                 ) : (
                   <>
                     {isTxVoided() ? (
-                      <h3 className="text-center">This pending transaction has been VOIDED due to the Multisig being edited.{isUserTxInitiator() ? ' Please cancel it below to remove it from the list.' : ''}</h3>
+                      <h3 className="text-center">{t('multisig.multisig-transactions.tx-operation-voided')} {isUserTxInitiator() ? ' Please cancel it below to remove it from the list.' : ''}</h3>
                     ) : isTxRejected() ? (
-                      <h3 className="text-center">This transaction has been rejected.</h3>
+                      <h3 className="text-center">{t('multisig.multisig-transactions.tx-operation-rejected')}</h3>
                       ) : (
-                      <h3 className="text-center">This transaction has already been executed.</h3>
+                      <h3 className="text-center">{t('multisig.multisig-transactions.tx-operation-executed')}</h3>
                     )}
                     <Divider className="mt-2" />
-                    <div className="mb-2">{t('multisig.multisig-transactions.proposed-action')} {getOperationName(highlightedMultisigTx.operation)}</div>
-                    <div className="mb-2">{t('multisig.multisig-transactions.submitted-on')} {getReadableDate(highlightedMultisigTx.createdOn.toString(), true)}</div>
-                    <div className="mb-2">{t('multisig.multisig-transactions.initiator')} {t('multisig.multisig-transactions.initiator-transaction')} {getTxInitiator(highlightedMultisigTx)?.name}<br/>{t('multisig.multisig-transactions.address')} <code>{getTxInitiator(highlightedMultisigTx)?.address}</code></div>
+                    <Row>
+                      <Col span={12} className="mb-2">
+                        <span className="info-label">{t('multisig.multisig-transactions.proposed-action')}</span><br />
+                        <span>{getOperationName(highlightedMultisigTx.operation)}</span>
+                      </Col>
+                      <Col span={12} className="mb-2 text-right">
+                        <span className="info-label">{t('multisig.multisig-transactions.submitted-on')}</span><br />
+                        <span>{getReadableDate(highlightedMultisigTx.createdOn.toString(), true)}</span>
+                      </Col>
+                    </Row>
+                    <div className="mb-2">{t('multisig.multisig-transactions.proposed-by')} {getTxInitiator(highlightedMultisigTx)?.name}<br/><code>{getTxInitiator(highlightedMultisigTx)?.address}</code></div>
                     <div className="mb-2">{t('multisig.multisig-transactions.transaction-requires')} {selectedMultisig.threshold}/{selectedMultisig.owners.length} {t('multisig.multisig-transactions.signers-to-approve')} {getTxSignedCount(highlightedMultisigTx)} {t('multisig.multisig-transactions.signed')}</div>
                   </>
                 )}
@@ -4857,7 +4881,7 @@ export const MultisigView = () => {
                   <>
                     <h3 className="text-center mt-3">{t('multisig.multisig-transactions.ready-for-execution')}</h3>
                     <Divider className="mt-2" />
-                    <div className="mb-2">{t('multisig.multisig-transactions.initiator')} {getTxInitiator(highlightedMultisigTx)?.name}<br/>{t('multisig.multisig-transactions.address')} <code>{getTxInitiator(highlightedMultisigTx)?.address}</code></div>
+                    <div className="mb-2">{t('multisig.multisig-transactions.proposed-by')} {getTxInitiator(highlightedMultisigTx)?.name}<br/>{t('multisig.multisig-transactions.address')} <code>{getTxInitiator(highlightedMultisigTx)?.address}</code></div>
                   </>
                 )}
               </>
