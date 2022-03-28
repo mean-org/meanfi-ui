@@ -25,6 +25,7 @@ import {
   MultisigProgramsView,
   MultisigMintsView,
   MultisigTreasuryStreams,
+  StakingRewardsView,
 } from "./pages";
 
 import { ServiceUnavailableView } from "./pages/service-unavailable";
@@ -70,6 +71,7 @@ export function AppRoutes() {
                       <Route path="/invest" element={<InvestView />} />
                       {/* <Route path="/pol-bonds" element={<PolBondsView />} /> */}
                       {/* <Route path="/staking" element={<StakingView />} /> */}
+                      <Route path="/staking-rewards" element={<StakingRewardsView />} />
                       <Route path="/stats" element={<StatsView />} />
                       <Route path="/custody" element={<CustodyView />} />
                       <Route path="/treasuries" element={<TreasuriesView />} />

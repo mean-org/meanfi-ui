@@ -146,9 +146,14 @@ export const AppContextMenu = () => {
         </a>
       </Menu.Item>
       {isLocal() && (
-        <Menu.Item key="/playground">
-          <Link to="/playground">Playground</Link>
-        </Menu.Item>
+        <>
+          <Menu.Item key="/playground">
+            <Link to="/playground">Playground</Link>
+          </Menu.Item>
+          <Menu.Item key="/staking-rewards">
+            <Link to="/staking-rewards">Staking rewards</Link>
+          </Menu.Item>
+        </>
       )}
     </Menu>
   );
