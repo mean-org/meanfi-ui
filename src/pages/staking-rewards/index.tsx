@@ -6,7 +6,7 @@ import { PreFooter } from "../../components/PreFooter";
 import { getNetworkIdByCluster, useConnection, useConnectionConfig } from '../../contexts/connection';
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
-import { findATokenAddress } from "../../utils/utils";
+import { findATokenAddress, formatThousands } from "../../utils/utils";
 import { IconStats } from "../../Icons";
 import useWindowSize from '../../hooks/useWindowResize';
 import { consoleOut, isDev, isLocal, isProd } from "../../utils/ui";
@@ -54,10 +54,15 @@ export const StakingRewardsView = () => {
   const [shouldRefreshLpData, setShouldRefreshLpData] = useState(true);
   const [refreshingPoolInfo, setRefreshingPoolInfo] = useState(false);
   const annualPercentageYield = 5;
-
   // Tokens and balances
   const [meanToken, setMeanToken] = useState<TokenInfo>();
   const [meanBalance, setMeanBalance] = useState<number>(0);
+  const [meanStakingVaultBalance, setMeanStakingVaultBalance] = useState<number>(0);
+
+  // MEAN Staking Vault address
+  const meanStakingVault = useMemo(() => {
+    return appConfig.getConfig().meanStakingVault;
+  }, []);
 
   // Access rights
   const userHasAccess = useMemo(() => {
@@ -80,6 +85,10 @@ export const StakingRewardsView = () => {
     return true;
 
   }, [publicKey]);
+
+  /////////////////
+  //  Callbacks  //
+  /////////////////
 
   const getTokenAccountBalanceByAddress = useCallback(async (tokenMintAddress: PublicKey | undefined | null): Promise<number> => {
     if (!connection || !tokenMintAddress) return 0;
@@ -118,6 +127,10 @@ export const StakingRewardsView = () => {
     getTokenAccountBalanceByAddress
   ]);
 
+  /////////////////
+  //   Effects   //
+  /////////////////
+
   // Preset MEAN token
   useEffect(() => {
     if (!connection) { return; }
@@ -136,7 +149,7 @@ export const StakingRewardsView = () => {
     connectionConfig.cluster
   ]);
 
-  // Keep account balance updated
+  // Keep native account balance updated
   useEffect(() => {
 
     const getAccountBalance = (): number => {
@@ -185,6 +198,18 @@ export const StakingRewardsView = () => {
     refreshMeanBalance,
   ]);
 
+  useEffect(() => {
+    (async () => {
+      const tokenAccount = new PublicKey(meanStakingVault);
+      let tokenAmount = await connection.getTokenAccountBalance(tokenAccount);
+      setMeanStakingVaultBalance(tokenAmount.value.uiAmount as number);
+      consoleOut(`amount:`, tokenAmount.value, 'blue')
+    })();
+  }, [
+    connection,
+    meanStakingVault,
+  ]);
+
   // Set when a page is initialized
   useEffect(() => {
     if (!pageInitialized && meanToken) {
@@ -195,7 +220,11 @@ export const StakingRewardsView = () => {
     pageInitialized,
   ]);
 
-  if (!userHasAccess) {
+  /////////////////
+  //  Rendering  //
+  /////////////////
+
+  if (!publicKey || !userHasAccess) {
     return (
       <>
         <div className="container main-container">
@@ -206,13 +235,13 @@ export const StakingRewardsView = () => {
                 <div>{t('invest.title')}</div>
               </div>
               <div className="subtitle text-center">
-                {t('invest.subtitle')}
+                Staking Rewards &amp; History
               </div>
               <div className="w-50 h-100 p-5 text-center flex-column flex-center">
                 <div className="text-center mb-2">
                   <WarningFilled style={{ fontSize: 48 }} className="icon fg-warning" />
                 </div>
-                {publicKey ? (
+                {!publicKey ? (
                   <h3>Please connect your wallet to setup rewards</h3>
                 ) : (
                   <h3>The content you are accessing is not available at this time or you don't have access permission</h3>
@@ -225,6 +254,25 @@ export const StakingRewardsView = () => {
       </>
     );
   }
+
+  const renderStakingRewardsVaultBalance = (
+    <>
+      <div className="well disabled">
+        <div className="flex-fixed-right">
+          <div className="left inner-label">{t('unwrap.current-wsol-balance')}:</div>
+          <div className="right">&nbsp;</div>
+        </div>
+        <div className="flex-fixed-right">
+          <div className="left static-data-field">
+            {
+              formatThousands(meanStakingVaultBalance, meanToken?.decimals || 6)
+            }
+          </div>
+          <div className="right">&nbsp;</div>
+        </div>
+      </div>
+    </>
+  );
 
   return (
     <>
@@ -240,7 +288,7 @@ export const StakingRewardsView = () => {
             </div>
           </div>
           <div className="place-transaction-box mb-3">
-            Content goes here
+            {renderStakingRewardsVaultBalance}
           </div>
           <div className="mb-3">
             History table here

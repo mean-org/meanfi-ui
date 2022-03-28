@@ -529,7 +529,7 @@ export const UnwrapView = () => {
                     <div className="right">&nbsp;</div>
                   </div>
                   <div className="flex-fixed-right">
-                    <div className="left static-data-field">{formatThousands(wSolBalance, 9)}</div>
+                    <div className="left static-data-field">{formatThousands(wSolBalance, wSol?.decimals || 9)}</div>
                     <div className="right">&nbsp;</div>
                   </div>
                 </div>

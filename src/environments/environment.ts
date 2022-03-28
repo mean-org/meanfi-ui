@@ -20,6 +20,7 @@ export interface AppConfig {
     exchangeFeeAccountOwner: string;
     exchangeFlatFee: number;
     stakingRewardsAcl: string[];
+    meanStakingVault: string;
 }
 
 export class AppConfigService {
@@ -44,7 +45,8 @@ export class AppConfigService {
             idoAirdropTreasurerAddress: '9KYCrkB4LLC3HxLEPqE2PJpvYoDLszgWPKNVWp74uhC5',
             exchangeFeeAccountOwner: 'CLazQV1BhSrxfgRHko4sC8GYBU3DoHcX4xxRZd12Kohr',
             exchangeFlatFee: 0.25,
-            stakingRewardsAcl: []
+            stakingRewardsAcl: [],
+            meanStakingVault: ''
         },
         // dev and local will have same config
         development: {
@@ -66,7 +68,8 @@ export class AppConfigService {
             idoAirdropTreasurerAddress: 'GYHuK9gPVPJm7VqgFX7wKQ93U9rPCwKqjzLh32P1Ed4G',
             exchangeFeeAccountOwner: 'CLazQV1BhSrxfgRHko4sC8GYBU3DoHcX4xxRZd12Kohr',
             exchangeFlatFee: 0.25,
-            stakingRewardsAcl: []
+            stakingRewardsAcl: [],
+            meanStakingVault: 'EaGj1rHR8HmfYPMDZiEU2qqntbqmZVtWNsmVviw31EiD'
         },
         local: {
             appUrl: 'http://localhost:3000',
@@ -87,7 +90,8 @@ export class AppConfigService {
             idoAirdropTreasurerAddress: 'GYHuK9gPVPJm7VqgFX7wKQ93U9rPCwKqjzLh32P1Ed4G',
             exchangeFeeAccountOwner: 'CLazQV1BhSrxfgRHko4sC8GYBU3DoHcX4xxRZd12Kohr',
             exchangeFlatFee: 0.25,
-            stakingRewardsAcl: []
+            stakingRewardsAcl: [],
+            meanStakingVault: 'EaGj1rHR8HmfYPMDZiEU2qqntbqmZVtWNsmVviw31EiD'
         },
     };
 
