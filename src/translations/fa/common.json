@@ -294,7 +294,7 @@
 		"panel-left": {
 			"invest-stake-tab-title": "Stake MEAN",
 			"invest-liquidity-tab-title": "MEAN Liquidity Pools",
-			"liquidity-value-label": "Up to",
+			"up-to-value-label": "Up to",
 			"no-invest-options": "هیچ گزینه سرمایه گذاری در دسترس نیست",
 			"not-connected": "لطفاً کیف پول خود را وصل کنید تا گزینه های سرمایه گذاری خود را ببینید"
 		},
@@ -306,13 +306,13 @@
 				"title": "MEAN Liquidity Pools",
 				"text-one": "MEAN Liquidity Pools are currently available on Orca and Raydium with multiple pools including MEAN/SOL, MEAN/RAY and MEAN/USDC.",
 				"text-two": "Before you add funds to a pool, be sure to read and accept the risks associated with investing in a liquidity pool.",
-				"refresh-tooltip": "Refresh liquidity data",
-				"column-platform": "Platform",
-				"column-lppair": "LP Pair",
-				"column-liquidity": "Liquidity",
-				"column-volume": "Vol (24hrs)",
-				"column-apr/apy": "APR/APY",
-				"column-invest": "Invest"
+				"refresh-tooltip": "Refresh liquidity data"
+			},
+			"staking-sol": {
+				"title": "Liquid SOL Staking",
+				"text-one": "Liquid SOL staking is currently available with three providers on Solana. These are Lido (stSOL), Marinade (mSOL) and Socean (scnSOL).",
+				"text-two": "Before you stake your SOL, be sure to read and accept the risks associated when staking with one of these providers.",
+				"refresh-tooltip": "Refresh staking data"
 			},
 			"staking-data": {
 				"title": "Your Current Stake:",
@@ -330,6 +330,17 @@
 				"staking-apy": "Staking APY",
 				"staking-apy-tooltip": "The APY associated with sMEAN is a representation of the price of sMEAN over a 365 day period.",
 				"total-value-locked": "ارزش کل قفل شده است"
+			},
+			"table-data": {
+				"column-apr/apy": "APR/APY",
+				"column-invest": "Invest",
+				"column-liquidity": "Liquidity",
+				"column-lppair": "LP Pair",
+				"column-platform": "Platform",
+				"column-volume": "Vol (24hrs)",
+				"column-token": "Token",
+				"column-total-staked": "Total staked",
+				"column-stake": "Stake"
 			},
 			"tabset": {
 				"stake": {

@@ -294,25 +294,26 @@
 		"panel-left": {
 			"invest-liquidity-tab-title": "MEAN Liquidity Pools",
 			"invest-stake-tab-title": "Stake MEAN",
-			"liquidity-value-label": "Up to",
+			"invest-stake-sol-tab-title": "Stake SOL",
+			"up-to-value-label": "Up to",
 			"no-invest-options": "No invest options available",
 			"not-connected": "Please connect your wallet to see your invest options"
 		},
 		"panel-right": {
 			"first-text": "MEAN staking rewards include emission incentives plus a share of the protocol revenues, and can be boosted using locking periods. When you stake your MEAN, you get sMEAN in return.",
 			"liquidity-pool": {
-				"column-apr/apy": "APR/APY",
-				"column-invest": "Invest",
-				"column-liquidity": "Liquidity",
-				"column-lppair": "LP Pair",
-				"column-platform": "Platform",
-				"column-volume": "Vol (24hrs)",
 				"refresh-tooltip": "Refresh liquidity data",
 				"text-one": "MEAN Liquidity Pools are currently available on Orca and Raydium with multiple pools including MEAN/SOL, MEAN/RAY and MEAN/USDC.",
 				"text-two": "Before you add funds to a pool, be sure to read and accept the risks associated with investing in a liquidity pool.",
 				"title": "MEAN Liquidity Pools"
 			},
 			"second-text": "Simply holding your sMEAN is all that is required to continuously grow your MEAN stash. You don't need to harvest the rewards with MEAN staking. When you unstake your sMEAN, you will receive the rewards earned in the form of additional MEAN on top of the amount staked.",
+			"staking-sol": {
+				"title": "Liquid SOL Staking",
+				"text-one": "Liquid SOL staking is currently available with three providers on Solana. These are Lido (stSOL), Marinade (mSOL) and Socean (scnSOL).",
+				"text-two": "Before you stake your SOL, be sure to read and accept the risks associated when staking with one of these providers.",
+				"refresh-tooltip": "Refresh staking data"
+			},
 			"staking-data": {
 				"label-avg": "Avg. Locked Yield",
 				"label-balance": "My xMEAN Balance",
@@ -329,6 +330,17 @@
 				"staking-apy-tooltip": "The APY associated with sMEAN is a representation of the price of sMEAN over a 365 day period.",
 				"total-mean-rewards": "Total MEAN Rewards",
 				"total-value-locked": "Total Value Locked"
+			},
+			"table-data": {
+				"column-apr/apy": "APR/APY",
+				"column-invest": "Invest",
+				"column-liquidity": "Liquidity",
+				"column-lppair": "LP Pair",
+				"column-platform": "Platform",
+				"column-volume": "Vol (24hrs)",
+				"column-token": "Token",
+				"column-total-staked": "Total staked",
+				"column-stake": "Stake"
 			},
 			"tabset": {
 				"stake": {

@@ -298,7 +298,7 @@
 		"panel-left": {
 			"invest-stake-tab-title": "Stake MEAN",
 			"invest-liquidity-tab-title": "MEAN Liquidity Pools",
-			"liquidity-value-label": "Up to",
+			"up-to-value-label": "Up to",
 			"no-invest-options": "No invest options available",
 			"not-connected": "Please connect your wallet to see your invest options"
 		},
@@ -316,13 +316,18 @@
 				"title": "MEAN Liquidity Pools",
 				"text-one": "MEAN Liquidity Pools are currently available on Orca and Raydium with multiple pools including MEAN/SOL, MEAN/RAY and MEAN/USDC.",
 				"text-two": "Before you add funds to a pool, be sure to read and accept the risks associated with investing in a liquidity pool.",
-				"refresh-tooltip": "Refresh liquidity data",
-				"column-platform": "Platform",
-				"column-lppair": "LP Pair",
-				"column-liquidity": "Liquidity",
-				"column-volume": "Vol (24hrs)",
+				"refresh-tooltip": "Refresh liquidity data"
+			},
+			"table-data": {
 				"column-apr/apy": "APR/APY",
-				"column-invest": "Invest"
+				"column-invest": "Invest",
+				"column-liquidity": "Liquidity",
+				"column-lppair": "LP Pair",
+				"column-platform": "Platform",
+				"column-volume": "Vol (24hrs)",
+				"column-token": "Token",
+				"column-total-staked": "Total staked",
+				"column-stake": "Stake"
 			},
 			"tabset": {
 				"stake": {
@@ -348,6 +353,12 @@
 					"unstake-button-unavailable": "No available",
 					"verified-label": "I agree to the Terms & Conditions"
 				}
+			},
+			"staking-sol": {
+				"title": "Liquid SOL Staking",
+				"text-one": "Liquid SOL staking is currently available with three providers on Solana. These are Lido (stSOL), Marinade (mSOL) and Socean (scnSOL).",
+				"text-two": "Before you stake your SOL, be sure to read and accept the risks associated when staking with one of these providers.",
+				"refresh-tooltip": "Refresh staking data"
 			},
 			"staking-data": {
 				"title": "Your Current Stake:",

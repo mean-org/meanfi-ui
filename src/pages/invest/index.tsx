@@ -63,6 +63,8 @@ export const InvestView = () => {
   const [orcaInfo, setOrcaInfo] = useState<any>([]);
   const [maxRadiumAprValue, setMaxRadiumAprValue] = useState<number>(0);
   const [maxOrcaAprValue, setMaxOrcaAprValue] = useState<number>(0);
+  const [marinadeApyValue, setMarinadeApyValue] = useState<number>(0);
+  const [marinadeTotalStakedValue, setMarinadeTotalStakedValue] = useState<number>(0);
   const [maxAprValue, setMaxAprValue] = useState<number>(0);
   const [pageInitialized, setPageInitialized] = useState<boolean>(false);
   const [stakePoolInfo, setStakePoolInfo] = useState<StakePoolInfo>();
@@ -288,7 +290,16 @@ export const InvestView = () => {
       symbol1: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R/logo.png",
       symbol2: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE/logo.png",
       title: t("invest.panel-left.invest-liquidity-tab-title"),
-      rateAmount: `${t("invest.panel-left.liquidity-value-label")} ${maxAprValue ? maxAprValue.toFixed(2) : "0"}`,
+      rateAmount: `${t("invest.panel-left.up-to-value-label")} ${maxAprValue ? maxAprValue.toFixed(2) : "0"}`,
+      interval: "APR/APY"
+    },
+    {
+      id: 2,
+      name: "Stake Sol",
+      symbol1: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
+      symbol2: "",
+      title: t("invest.panel-left.invest-stake-sol-tab-title"),
+      rateAmount: `${t("invest.panel-left.up-to-value-label")} 3.74`,
       interval: "APR/APY"
     }
   ], [
@@ -423,6 +434,54 @@ export const InvestView = () => {
 
   }, []);
 
+  // Get Marinade apy info
+  const getMarinadeApyInfo = useCallback(async () => {
+
+    consoleOut('fetch Marinade Apy info', 'STARTED', 'orange');
+    try {
+      try {
+        const res = await fetch('https://api.marinade.finance/msol/apy/7d');
+        const data = await res.json();
+        // Should update if got data
+        if (data) {
+            const marinadeApy = data.value;
+
+            setMarinadeApyValue(marinadeApy);
+            consoleOut('marinadeApy:', marinadeApy, 'info');
+        }
+      } catch (error) {
+        consoleOut(error);
+      }
+    } finally {
+      return consoleOut('fetch Marinade Apy info', 'FINISHED', 'orange');
+    }
+
+  }, []);
+
+  // Get Marinade apy info
+  const getMarinadeTotalStakedInfo = useCallback(async () => {
+
+    consoleOut('fetch Marinade Total Staked info', 'STARTED', 'orange');
+    try {
+      try {
+        const res = await fetch('https://api.marinade.finance/tlv');
+        const data = await res.json();
+        // Should update if got data
+        if (data) {
+            const marinadeTotalStaked = data.staked_sol;
+
+            setMarinadeTotalStakedValue(marinadeTotalStaked);
+            consoleOut('marinadeTotalStaked:', marinadeTotalStaked, 'info');
+        }
+      } catch (error) {
+        consoleOut(error);
+      }
+    } finally {
+      return consoleOut('fetch Marinade Total Staked info', 'FINISHED', 'orange');
+    }
+
+  }, []);
+
   // Refresh pools info
   useEffect(() => {
     if (!connection || !shouldRefreshLpData) { return; }
@@ -436,7 +495,9 @@ export const InvestView = () => {
     (async () => {
       await Promise.all([
         getRaydiumPoolInfo(),
-        getOrcaPoolInfo()
+        getOrcaPoolInfo(),
+        getMarinadeApyInfo(),
+        getMarinadeTotalStakedInfo()
       ])
       .then(() => setRefreshingPoolInfo(false));
     })();
@@ -446,6 +507,8 @@ export const InvestView = () => {
     shouldRefreshLpData,
     getRaydiumPoolInfo,
     getOrcaPoolInfo,
+    getMarinadeApyInfo,
+    getMarinadeTotalStakedInfo
   ]);
 
   // Timeout to refresh Pools info
@@ -796,12 +859,12 @@ export const InvestView = () => {
                     <div className="stats-row">
                       <div className="item-list-header compact"><div className="header-row">
                         <div className="std-table-cell responsive-cell text-left
-                        ">{t("invest.panel-right.liquidity-pool.column-platform")}</div>
-                        <div className="std-table-cell responsive-cell pr-1 text-left">{t("invest.panel-right.liquidity-pool.column-lppair")}</div>
-                        <div className="std-table-cell responsive-cell pr-2 text-right">{t("invest.panel-right.liquidity-pool.column-liquidity")}</div>
-                        <div className="std-table-cell responsive-cell pr-2 text-right">{t("invest.panel-right.liquidity-pool.column-volume")}</div>
-                        <div className="std-table-cell responsive-cell pr-2 text-right">{t("invest.panel-right.liquidity-pool.column-apr/apy")}</div>
-                        <div className="std-table-cell responsive-cell pl-1 text-center invest-col">{t("invest.panel-right.liquidity-pool.column-invest")}</div>
+                        ">{t("invest.panel-right.table-data.column-platform")}</div>
+                        <div className="std-table-cell responsive-cell pr-1 text-left">{t("invest.panel-right.table-data.column-lppair")}</div>
+                        <div className="std-table-cell responsive-cell pr-2 text-right">{t("invest.panel-right.table-data.column-liquidity")}</div>
+                        <div className="std-table-cell responsive-cell pr-2 text-right">{t("invest.panel-right.table-data.column-volume")}</div>
+                        <div className="std-table-cell responsive-cell pr-2 text-right">{t("invest.panel-right.table-data.column-apr/apy")}</div>
+                        <div className="std-table-cell responsive-cell pl-1 text-center invest-col">{t("invest.panel-right.table-data.column-invest")}</div>
                         </div>
                       </div>
 
@@ -844,7 +907,7 @@ export const InvestView = () => {
                                 <div className="std-table-cell responsive-cell pl-0">
                                   <div className="icon-cell pr-1 d-inline-block">
                                     <div className="token-icon">
-                                      <img alt="Raydium" width="20" height="20" src="https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE/logo.png" />
+                                      <img alt="Orca" width="20" height="20" src="https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE/logo.png" />
                                     </div>
                                   </div>
                                   <span>Orca</span>
@@ -868,6 +931,137 @@ export const InvestView = () => {
                                 </div>
                                 </a>
                               ))}
+                            </div>
+                          </div>
+                        </Spin>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Staking SOL */}
+                {selectedInvest.id === 2 && (
+                  <>
+                    <h2>{t("invest.panel-right.staking-sol.title")}</h2>
+
+                    <p>{t("invest.panel-right.staking-sol.text-one")}</p>
+
+                    <p>{t("invest.panel-right.staking-sol.text-two")}</p>
+
+                    <div className="float-top-right">
+                      <span className="icon-button-container secondary-button">
+                        <Tooltip placement="bottom" title={t("invest.panel-right.staking-sol.refresh-tooltip")}>
+                          <Button
+                            type="default"
+                            shape="circle"
+                            size="middle"
+                            icon={<IconRefresh className="mean-svg-icons" />}
+                            onClick={() => setShouldRefreshLpData(true)}
+                          />
+                        </Tooltip>
+                      </span>
+                    </div>
+
+                    <div className="stats-row">
+                      <div className="item-list-header compact"><div className="header-row">
+                        <div className="std-table-cell responsive-cell text-left
+                        ">{t("invest.panel-right.table-data.column-platform")}</div>
+                        <div className="std-table-cell responsive-cell pr-2 text-left">{t("invest.panel-right.table-data.column-token")}</div>
+                        <div className="std-table-cell responsive-cell pr-2 text-left">{t("invest.panel-right.table-data.column-total-staked")}</div>
+                        <div className="std-table-cell responsive-cell pr-2 text-center">{t("invest.panel-right.table-data.column-apr/apy")}</div>
+                        <div className="std-table-cell responsive-cell pl-1 text-center invest-col">{t("invest.panel-right.table-data.column-stake")}</div>
+                        </div>
+                      </div>
+
+                      <div className="transaction-list-data-wrapper vertical-scroll">
+                        <Spin spinning={refreshingPoolInfo}>
+                          <div className="activity-list h-100">
+                            <div className="item-list-body compact">
+
+                              {/* Socean */}
+                              <div>
+                                <a className="item-list-row" target="_blank" rel="noopener noreferrer" href="https://www.socean.fi/app/stake">
+                                  <div className="std-table-cell responsive-cell pl-0">
+                                    <div className="icon-cell pr-1 d-inline-block">
+                                      <div className="token-icon">
+                                        <img alt="Socean" width="20" height="20" src="https://www.socean.fi/static/media/scnSOL_blackCircle.14ca2915.png" />
+                                      </div>
+                                    </div>
+                                    <span>Socean</span>
+                                  </div>
+                                  <div className="std-table-cell responsive-cell pr-1">
+                                    <span>scnSOL</span>
+                                  </div>
+                                  <div className="std-table-cell responsive-cell pr-1 text-left">
+                                    {/* <span>{orca.volume_24h > 0 ? `$${formatThousands(orca.volume_24h)}` : "--"}</span> */}
+                                  </div>
+                                  <div className="std-table-cell responsive-cell pr-1 text-left">
+                                    {/* <span>{orca.apy_7d > 0 ? `${(orca.apy_7d * 100).toFixed(2)}% APY` : "--"}</span> */}
+                                  </div>
+                                  <div className="std-table-cell responsive-cell pl-1 text-center invest-col">
+                                    <span role="img" aria-label="arrow-up" className="anticon anticon-arrow-up mean-svg-icons outgoing upright">
+                                      <svg viewBox="64 64 896 896" focusable="false" data-icon="arrow-up" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M868 545.5L536.1 163a31.96 31.96 0 00-48.3 0L156 545.5a7.97 7.97 0 006 13.2h81c4.6 0 9-2 12.1-5.5L474 300.9V864c0 4.4 3.6 8 8 8h60c4.4 0 8-3.6 8-8V300.9l218.9 252.3c3 3.5 7.4 5.5 12.1 5.5h81c6.8 0 10.5-8 6-13.2z"></path></svg>
+                                    </span>
+                                  </div>
+                                </a>
+                              </div>
+
+                              {/* Marinade */}
+                              <div>
+                                <a className="item-list-row" target="_blank" rel="noopener noreferrer" href="https://marinade.finance/app/staking">
+                                  <div className="std-table-cell responsive-cell pl-0">
+                                    <div className="icon-cell pr-1 d-inline-block">
+                                      <div className="token-icon">
+                                        <img alt="Marinade" width="20" height="20" src="https://s2.coinmarketcap.com/static/img/coins/64x64/11461.png" />
+                                      </div>
+                                    </div>
+                                    <span>Marinade</span>
+                                  </div>
+                                  <div className="std-table-cell responsive-cell pr-1">
+                                    <span>mSOL</span>
+                                  </div>
+                                  <div className="std-table-cell responsive-cell pr-1 text-left">
+                                    <span>{marinadeTotalStakedValue > 0 ? `${formatThousands(marinadeTotalStakedValue)} SOL` : "--"}</span>
+                                  </div>
+                                  <div className="std-table-cell responsive-cell pr-1 text-center">
+                                    <span>{marinadeApyValue > 0 ? `${(marinadeApyValue * 100).toFixed(2)}%` : "--"}</span>
+                                  </div>
+                                  <div className="std-table-cell responsive-cell pl-1 text-center invest-col">
+                                    <span role="img" aria-label="arrow-up" className="anticon anticon-arrow-up mean-svg-icons outgoing upright">
+                                      <svg viewBox="64 64 896 896" focusable="false" data-icon="arrow-up" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M868 545.5L536.1 163a31.96 31.96 0 00-48.3 0L156 545.5a7.97 7.97 0 006 13.2h81c4.6 0 9-2 12.1-5.5L474 300.9V864c0 4.4 3.6 8 8 8h60c4.4 0 8-3.6 8-8V300.9l218.9 252.3c3 3.5 7.4 5.5 12.1 5.5h81c6.8 0 10.5-8 6-13.2z"></path></svg>
+                                    </span>
+                                  </div>
+                                </a>
+                              </div>
+
+                              {/* Lido */}
+                              <div>
+                                <a className="item-list-row" target="_blank" rel="noopener noreferrer" href="https://solana.lido.fi/">
+                                  <div className="std-table-cell responsive-cell pl-0">
+                                    <div className="icon-cell pr-1 d-inline-block">
+                                      <div className="token-icon">
+                                        <img alt="Lido" width="20" height="20" src="https://www.orca.so/static/media/stSOL.9fd59818.png" />
+                                      </div>
+                                    </div>
+                                    <span>Lido</span>
+                                  </div>
+                                  <div className="std-table-cell responsive-cell pr-1">
+                                    <span>stSOL</span>
+                                  </div>
+                                  <div className="std-table-cell responsive-cell pr-1 text-left">
+                                    {/* <span>{orca.volume_24h > 0 ? `$${formatThousands(orca.volume_24h)}` : "--"}</span> */}
+                                  </div>
+                                  <div className="std-table-cell responsive-cell pr-1 text-left">
+                                    {/* <span>{orca.apy_7d > 0 ? `${(orca.apy_7d * 100).toFixed(2)}% APY` : "--"}</span> */}
+                                  </div>
+                                  <div className="std-table-cell responsive-cell pl-1 text-center invest-col">
+                                    <span role="img" aria-label="arrow-up" className="anticon anticon-arrow-up mean-svg-icons outgoing upright">
+                                      <svg viewBox="64 64 896 896" focusable="false" data-icon="arrow-up" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M868 545.5L536.1 163a31.96 31.96 0 00-48.3 0L156 545.5a7.97 7.97 0 006 13.2h81c4.6 0 9-2 12.1-5.5L474 300.9V864c0 4.4 3.6 8 8 8h60c4.4 0 8-3.6 8-8V300.9l218.9 252.3c3 3.5 7.4 5.5 12.1 5.5h81c6.8 0 10.5-8 6-13.2z"></path></svg>
+                                    </span>
+                                  </div>
+                                </a>
+                              </div>
+                
                             </div>
                           </div>
                         </Spin>
