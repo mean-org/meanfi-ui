@@ -3757,7 +3757,7 @@ export const MultisigAssetsView = () => {
                         icon={<ArrowLeftOutlined />}
                         onClick={() => {
                           if (selectedMultisig) {
-                            setHighLightableMultisigId(selectedMultisig.authority.toBase58());
+                            setHighLightableMultisigId(selectedMultisig.id.toBase58());
                           }
                           navigate('/multisig/');
                         }}

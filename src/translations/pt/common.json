@@ -527,17 +527,21 @@
 			"missing-signatures": "To execute this proposal, {{missingSignature}} more signatures are needed.",
 			"transaction-required": "This transaction required",
 			"transaction-has": "This transaction has",
-			"transaction-awaiting": "A Transaction on this Multisig is awaiting",
+			"transaction-awaiting": "A proposal for this multisig is awaiting",
 			"address": "Address:",
 			"approval": "approval.",
 			"your-status": "Your status:",
 			"signers-to-approve": "signers to approve it in order to be executed.",
-			"signed": "Signed.",
+			"signed": "Signed",
 			"signed-so-far": "Signed so far.",
 			"explain-failure": "Explain failure condition if specific",
 			"ready-for-execution": "This transaction is now ready for execution. Please tell the person who initiated this transaction to execute it.",
-			"treasury-closed-warning": "When a treasury is closed, all funds left over will be deposited to the initiator's wallet. Please confirm this is acceptable before you sign.",
-			"not-signed": "Not signed"
+			"treasury-closed-warning": "When a treasury is closed, all funds left over will be deposited back into the multisig safe.",
+			"not-signed": "Not signed",
+			"rejected": "Rejected",
+			"rejected-tx": "You have rejected this transaction",
+			"not-sign-tx": "You did NOT sign this transaction",
+			"not-signed-tx": "You have NOT signed this transaction"
 		},
 		"multisig-treasuries": {
 			"back-to-treasuries": "Back to Streaming Treasuries"
@@ -552,7 +556,7 @@
 			"cta-transfer": "Propose Funds Transfer",
 			"cta-transfer-busy": "Iniciando a Solicitação de Retirada",
 			"delete-asset": {
-				"explanatory-paragraph": "By submitting this request, you will sign the transaction and approve it as one of the Multisig signers. Before the asset is deleted, the other Multisig members need to approve it.",
+				"explanatory-paragraph": "By submitting this proposal, you will sign the transaction and approve it as one of the Multisig signers. Before the asset is deleted, the other Multisig members need to approve it.",
 				"main-cta": "Submit delete proposal",
 				"modal-title": "Delete a Multisig Asset",
 				"selected-asset-label": "Asset selected",

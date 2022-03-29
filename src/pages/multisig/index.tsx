@@ -53,7 +53,7 @@ import useWindowSize from '../../hooks/useWindowResize';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { notify } from '../../utils/notifications';
-import { IconCaretDown, IconClock, IconDocument, IconEdit, IconExternalLink, IconShieldOutline, IconTrash, IconUpdate, IconUserGroup, IconUsers, IconWallet } from '../../Icons';
+import { IconCaretDown, IconClock, IconDocument, IconEdit, IconExternalLink, IconShieldOutline, IconTrash, IconUpdate, IconUserGroup, IconUsers, IconWallet, IconWarning } from '../../Icons';
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import dateFormat from 'dateformat';
 import { useNativeAccount } from '../../contexts/accounts';
@@ -3020,18 +3020,18 @@ export const MultisigView = () => {
     if (mtx.executedOn) {
       return "";
     } else if (mtx.didSigned === undefined) {
-      return longStatus ? "You have rejected this transaction" : "Rejected";
+      return longStatus ? t("multisig.multisig-transactions.rejected-tx") : t("multisig.multisig-transactions.rejected");
     } else if (mtx.didSigned === false) {
       return !longStatus
-        ? "Not Signed"
+        ? t("multisig.multisig-transactions.not-signed")
         : mtx.status === MultisigTransactionStatus.Approved
-          ? "You did NOT sign this transaction"
-          : "You have NOT signed this transaction";
+          ? t("multisig.multisig-transactions.not-sign-tx")
+          : t("multisig.multisig-transactions.not-signed-tx");
     } else {
-      return longStatus ? "You have signed this transaction" : "Signed";
+      return longStatus ? "You have signed this transaction" : t("multisig.multisig-transactions.signed");
     }
 
-  },[]);
+  },[t]);
 
   // const getTransactionUserStatusActionClass = useCallback((mtx: MultisigTransaction) => {
 
@@ -4085,7 +4085,7 @@ export const MultisigView = () => {
                   <div className="font-size-75 text-monospace">{item.address}</div>
                 </div>
                 <div className="right pl-2">
-                  <div><span className={theme === 'light' ? "fg-light-orange font-bold" : "fg-warning font-bold"}>Not Signed</span></div>
+                  <div><span className={theme === 'light' ? "fg-light-orange font-bold" : "fg-warning font-bold"}>{t("multisig.multisig-transactions.not-signed")}</span></div>
                 </div>
               </div>
             </div>
@@ -4821,9 +4821,10 @@ export const MultisigView = () => {
                     </Row>
                     {
                       highlightedMultisigTx.operation === OperationType.TreasuryClose && (
-                        <div className="mb-2 fg-yellow">
+                        <span className="mb-2 fg-warning warning-message icon-label">
+                          <IconWarning className="mean-svg-icons" />
                           {t('multisig.multisig-transactions.treasury-closed-warning')}
-                        </div>
+                        </span>
                       )
                     }
                     <div className="mb-2">{t('multisig.multisig-transactions.proposed-by')} {getTxInitiator(highlightedMultisigTx)?.name}<br/><code>{getTxInitiator(highlightedMultisigTx)?.address}</code></div>
