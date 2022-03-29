@@ -108,12 +108,15 @@ export const StakingRewardsView = () => {
   const getTokenAccountBalanceByAddress = useCallback(async (tokenMintAddress: PublicKey | undefined | null): Promise<number> => {
     if (!connection || !tokenMintAddress) return 0;
     try {
-      const tokenAmount = (await connection.getTokenAccountBalance(tokenMintAddress)).value;
-      return tokenAmount.uiAmount || 0;
+      const tokenAmount = (await connection.getTokenAccountBalance(tokenMintAddress));
+      if (tokenAmount) {
+        const value = tokenAmount.value;
+        return value.uiAmount || 0;
+      }
     } catch (error) {
-      console.error(error);
-      throw(error);
+      consoleOut('Could not find account:', tokenMintAddress.toBase58(), 'red');
     }
+    return 0;
   }, [connection]);
 
   const refreshMeanBalance = useCallback(async () => {
@@ -142,14 +145,20 @@ export const StakingRewardsView = () => {
     getTokenAccountBalanceByAddress
   ]);
 
-  const refreshMeanStakingVaultBalance = useCallback(() => {
-
-    (async () => {
+  const refreshMeanStakingVaultBalance = useCallback(async () => {
+    if (!connection || !meanStakingVault) return 0;
+    let balance = 0;
+    try {
       const tokenAccount = new PublicKey(meanStakingVault);
-      let tokenAmount = await connection.getTokenAccountBalance(tokenAccount);
-      setMeanStakingVaultBalance(tokenAmount.value.uiAmount as number);
-    })();
-
+      const tokenAmount = (await connection.getTokenAccountBalance(tokenAccount));
+      if (tokenAmount) {
+        const value = tokenAmount.value;
+        balance = value.uiAmount || 0;
+      }
+    } catch (error) {
+      consoleOut('Could not find account:', meanStakingVault, 'red');
+    }
+    setMeanStakingVaultBalance(balance);
   }, [connection, meanStakingVault]);
 
   const getTotalMeanAdded = useCallback(() => {
@@ -732,7 +741,7 @@ export const StakingRewardsView = () => {
           </div>
           <div className="right">&nbsp;</div>
         </div>
-        <span className="form-field-hint">User MEAN balance: {meanBalance ? formatThousands(meanBalance, meanToken?.decimals || 6) : '-'}</span>
+        <span className="form-field-hint">User MEAN balance: {meanBalance ? formatThousands(meanBalance, meanToken?.decimals || 6) : '0'}</span>
       </div>
     </>
   );
