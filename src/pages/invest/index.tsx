@@ -359,7 +359,7 @@ export const InvestView = () => {
       href: "https://solana.lido.fi/",
       img: "https://www.orca.so/static/media/stSOL.9fd59818.png",
       totalStaked: "--",
-      apy: "-"
+      apy: "--"
     }
   ], [
     soceanApyValue,

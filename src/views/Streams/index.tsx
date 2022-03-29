@@ -5533,33 +5533,50 @@ export const Streams = () => {
                   )}
 
                   {/* Top up (add funds) button */}
-                  <div className="mt-3 mb-3 withdraw-container">
-                    <Button
-                      block
-                      className="withdraw-cta"
-                      type="text"
-                      shape="round"
-                      size="small"
-                      disabled={
-                        isOtp() ||
-                        fetchTxInfoStatus === "fetching" ||
-                        (getTreasuryType() === "locked" && stream.status === STREAM_STATUS.Running)
-                      }
-                      onClick={(getTreasuryType() === "open") ? showAddFundsModal : showCloseStreamModal}>
-                      {fetchTxInfoStatus === "fetching" && (<LoadingOutlined />)}
-                      {isClosing()
-                        ? t('streams.stream-detail.cta-disabled-closing')
-                        : isCreating()
-                          ? t('streams.stream-detail.cta-disabled-creating')
-                          : isAddingFunds()
-                            ? t('streams.stream-detail.cta-disabled-funding')
-                            : isWithdrawing()
-                              ? t('streams.stream-detail.cta-disabled-withdrawing')
-                              : (getTreasuryType() === "open") 
-                                ? t('streams.stream-detail.add-funds-cta') 
-                                : t('streams.stream-detail.close-stream-cta')
-                      }
-                    </Button>
+                    <Tooltip title={(getTreasuryType() === "locked" && stream.status === STREAM_STATUS.Running) ? t("streams.stream-detail.close-stream-cta-tooltip") : ""}>
+                      <div className="mt-3 mb-3 withdraw-container">
+                        <Button
+                          block
+                          className="withdraw-cta"
+                          type="text"
+                          shape="round"
+                          size="small"
+                          disabled={
+                            isOtp() ||
+                            fetchTxInfoStatus === "fetching" ||
+                            (getTreasuryType() === "locked" && stream.status === STREAM_STATUS.Running)
+                          }
+                          onClick={(getTreasuryType() === "open") ? showAddFundsModal : showCloseStreamModal}>
+                          {fetchTxInfoStatus === "fetching" && (<LoadingOutlined />)}
+                          {isClosing()
+                            ? t('streams.stream-detail.cta-disabled-closing')
+                            : isCreating()
+                              ? t('streams.stream-detail.cta-disabled-creating')
+                              : isAddingFunds()
+                                ? t('streams.stream-detail.cta-disabled-funding')
+                                : isWithdrawing()
+                                  ? t('streams.stream-detail.cta-disabled-withdrawing')
+                                  : (getTreasuryType() === "open") 
+                                    ? t('streams.stream-detail.add-funds-cta') 
+                                    : t('streams.stream-detail.close-stream-cta')
+                          }
+                        </Button>
+                        {(getTreasuryType() === "open") && (
+                          fetchTxInfoStatus !== "fetching" && (
+                            <Dropdown overlay={menu} trigger={["click"]}>
+                              <Button
+                                shape="round"
+                                type="text"
+                                size="small"
+                                className="ant-btn-shaded"
+                                onClick={(e) => e.preventDefault()}
+                                icon={<EllipsisOutlined />}>
+                              </Button>
+                            </Dropdown>
+                          )
+                        )}
+                      </div>
+                    </Tooltip>
                     {/* {(getTreasuryType() === "open") && (
                       <span className="icon-button-container">
                         {getStreamStatus(stream) === "Running" && (
@@ -5603,21 +5620,6 @@ export const Streams = () => {
                         </Tooltip>
                       </span>
                     )} */}
-                    {(getTreasuryType() === "open") && (
-                      fetchTxInfoStatus !== "fetching" && (
-                        <Dropdown overlay={menu} trigger={["click"]}>
-                          <Button
-                            shape="round"
-                            type="text"
-                            size="small"
-                            className="ant-btn-shaded"
-                            onClick={(e) => e.preventDefault()}
-                            icon={<EllipsisOutlined />}>
-                          </Button>
-                        </Dropdown>
-                      )
-                    )}
-                  </div>
                 </div>
               </Spin>
 
