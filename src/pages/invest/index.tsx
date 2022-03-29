@@ -336,6 +336,43 @@ export const InvestView = () => {
     // },
   ], [sMeanBalance, stakingPair, t]);
 
+  const stakingSOLData = useMemo(() => [
+    {
+      name: "Socean",
+      token: "scnSOL",
+      href: "https://www.socean.fi/app/stake",
+      img: "https://www.socean.fi/static/media/scnSOL_blackCircle.14ca2915.png",
+      totalStaked: soceanTotalStakedValue > 0 ? `${formatThousands(soceanTotalStakedValue)} SOL` : "--",
+      apy: soceanApyValue > 0 ? `${soceanApyValue.toFixed(2)}%` : "--"
+    },
+    {
+      name: "Marinade",
+      token: "mSOL",
+      href: "https://marinade.finance/app/staking",
+      img: "https://s2.coinmarketcap.com/static/img/coins/64x64/11461.png",
+      totalStaked: marinadeTotalStakedValue > 0 ? `${formatThousands(marinadeTotalStakedValue)} SOL` : "--",
+      apy: marinadeApyValue > 0 ? `${marinadeApyValue.toFixed(2)}%` : "--"
+    },
+    {
+      name: "Lido",
+      token: "stSOL",
+      href: "https://solana.lido.fi/",
+      img: "https://www.orca.so/static/media/stSOL.9fd59818.png",
+      totalStaked: "--",
+      apy: "-"
+    }
+  ], [
+    soceanApyValue,
+    marinadeApyValue,
+    soceanTotalStakedValue,
+    marinadeTotalStakedValue
+  ]);
+
+  // Keep the list of stake sol platforms sorted in descending order by apy
+  useEffect(() => {
+    stakingSOLData.sort((a, b) => (a.apy < b.apy) ? 1 : -1);
+  }, [stakingSOLData])
+
   // Get staking pool info from staking client
   useEffect(() => {
     if (!stakeClient) {
@@ -1044,91 +1081,34 @@ export const InvestView = () => {
                         <Spin spinning={refreshingPoolInfo}>
                           <div className="activity-list h-100">
                             <div className="item-list-body compact">
-
-                              {/* Socean */}
-                              <div>
-                                <a className="item-list-row" target="_blank" rel="noopener noreferrer" href="https://www.socean.fi/app/stake">
-                                  <div className="std-table-cell responsive-cell pl-0">
-                                    <div className="icon-cell pr-1 d-inline-block">
-                                      <div className="token-icon">
-                                        <img alt="Socean" width="20" height="20" src="https://www.socean.fi/static/media/scnSOL_blackCircle.14ca2915.png" />
+                              {stakingSOLData.map((solData: any, index) => (
+                                <div key={index}>
+                                  <a className="item-list-row" target="_blank" rel="noopener noreferrer" href={solData.href}>
+                                    <div className="std-table-cell responsive-cell pl-0">
+                                      <div className="icon-cell pr-1 d-inline-block">
+                                        <div className="token-icon">
+                                          <img alt={solData.name} width="20" height="20" src={solData.img} />
+                                        </div>
                                       </div>
+                                      <span>{solData.name}</span>
                                     </div>
-                                    <span>Socean</span>
-                                  </div>
-                                  <div className="std-table-cell responsive-cell pr-1">
-                                    <span>scnSOL</span>
-                                  </div>
-                                  <div className="std-table-cell responsive-cell pr-1 text-left">
-                                    <span>{soceanTotalStakedValue > 0 ? `${formatThousands(soceanTotalStakedValue)} SOL` : "--"}</span>
-                                  </div>
-                                  <div className="std-table-cell responsive-cell pr-1 text-center">
-                                    <span>{soceanApyValue > 0 ? `${(soceanApyValue).toFixed(2)}%` : "--"}</span>
-                                  </div>
-                                  <div className="std-table-cell responsive-cell pl-1 text-center invest-col">
-                                    <span role="img" aria-label="arrow-up" className="anticon anticon-arrow-up mean-svg-icons outgoing upright">
-                                      <svg viewBox="64 64 896 896" focusable="false" data-icon="arrow-up" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M868 545.5L536.1 163a31.96 31.96 0 00-48.3 0L156 545.5a7.97 7.97 0 006 13.2h81c4.6 0 9-2 12.1-5.5L474 300.9V864c0 4.4 3.6 8 8 8h60c4.4 0 8-3.6 8-8V300.9l218.9 252.3c3 3.5 7.4 5.5 12.1 5.5h81c6.8 0 10.5-8 6-13.2z"></path></svg>
-                                    </span>
-                                  </div>
-                                </a>
-                              </div>
-
-                              {/* Marinade */}
-                              <div>
-                                <a className="item-list-row" target="_blank" rel="noopener noreferrer" href="https://marinade.finance/app/staking">
-                                  <div className="std-table-cell responsive-cell pl-0">
-                                    <div className="icon-cell pr-1 d-inline-block">
-                                      <div className="token-icon">
-                                        <img alt="Marinade" width="20" height="20" src="https://s2.coinmarketcap.com/static/img/coins/64x64/11461.png" />
-                                      </div>
+                                    <div className="std-table-cell responsive-cell pr-1">
+                                      <span>{solData.token}</span>
                                     </div>
-                                    <span>Marinade</span>
-                                  </div>
-                                  <div className="std-table-cell responsive-cell pr-1">
-                                    <span>mSOL</span>
-                                  </div>
-                                  <div className="std-table-cell responsive-cell pr-1 text-left">
-                                    <span>{marinadeTotalStakedValue > 0 ? `${formatThousands(marinadeTotalStakedValue)} SOL` : "--"}</span>
-                                  </div>
-                                  <div className="std-table-cell responsive-cell pr-1 text-center">
-                                    <span>{marinadeApyValue > 0 ? `${marinadeApyValue.toFixed(2)}%` : "--"}</span>
-                                  </div>
-                                  <div className="std-table-cell responsive-cell pl-1 text-center invest-col">
-                                    <span role="img" aria-label="arrow-up" className="anticon anticon-arrow-up mean-svg-icons outgoing upright">
-                                      <svg viewBox="64 64 896 896" focusable="false" data-icon="arrow-up" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M868 545.5L536.1 163a31.96 31.96 0 00-48.3 0L156 545.5a7.97 7.97 0 006 13.2h81c4.6 0 9-2 12.1-5.5L474 300.9V864c0 4.4 3.6 8 8 8h60c4.4 0 8-3.6 8-8V300.9l218.9 252.3c3 3.5 7.4 5.5 12.1 5.5h81c6.8 0 10.5-8 6-13.2z"></path></svg>
-                                    </span>
-                                  </div>
-                                </a>
-                              </div>
-
-                              {/* Lido */}
-                              <div>
-                                <a className="item-list-row" target="_blank" rel="noopener noreferrer" href="https://solana.lido.fi/">
-                                  <div className="std-table-cell responsive-cell pl-0">
-                                    <div className="icon-cell pr-1 d-inline-block">
-                                      <div className="token-icon">
-                                        <img alt="Lido" width="20" height="20" src="https://www.orca.so/static/media/stSOL.9fd59818.png" />
-                                      </div>
+                                    <div className="std-table-cell responsive-cell pr-1 text-left">
+                                      <span>{solData.totalStaked}</span>
                                     </div>
-                                    <span>Lido</span>
-                                  </div>
-                                  <div className="std-table-cell responsive-cell pr-1">
-                                    <span>stSOL</span>
-                                  </div>
-                                  <div className="std-table-cell responsive-cell pr-1 text-left">
-                                    {/* <span>{orca.volume_24h > 0 ? `$${formatThousands(orca.volume_24h)}` : "--"}</span> */}
-                                  </div>
-                                  <div className="std-table-cell responsive-cell pr-1 text-left">
-                                    {/* <span>{orca.apy_7d > 0 ? `${(orca.apy_7d * 100).toFixed(2)}% APY` : "--"}</span> */}
-                                  </div>
-                                  <div className="std-table-cell responsive-cell pl-1 text-center invest-col">
-                                    <span role="img" aria-label="arrow-up" className="anticon anticon-arrow-up mean-svg-icons outgoing upright">
-                                      <svg viewBox="64 64 896 896" focusable="false" data-icon="arrow-up" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M868 545.5L536.1 163a31.96 31.96 0 00-48.3 0L156 545.5a7.97 7.97 0 006 13.2h81c4.6 0 9-2 12.1-5.5L474 300.9V864c0 4.4 3.6 8 8 8h60c4.4 0 8-3.6 8-8V300.9l218.9 252.3c3 3.5 7.4 5.5 12.1 5.5h81c6.8 0 10.5-8 6-13.2z"></path></svg>
-                                    </span>
-                                  </div>
-                                </a>
-                              </div>
-                
+                                    <div className="std-table-cell responsive-cell pr-1 text-center">
+                                      <span>{solData.apy}</span>
+                                    </div>
+                                    <div className="std-table-cell responsive-cell pl-1 text-center invest-col">
+                                      <span role="img" aria-label="arrow-up" className="anticon anticon-arrow-up mean-svg-icons outgoing upright">
+                                        <svg viewBox="64 64 896 896" focusable="false" data-icon="arrow-up" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M868 545.5L536.1 163a31.96 31.96 0 00-48.3 0L156 545.5a7.97 7.97 0 006 13.2h81c4.6 0 9-2 12.1-5.5L474 300.9V864c0 4.4 3.6 8 8 8h60c4.4 0 8-3.6 8-8V300.9l218.9 252.3c3 3.5 7.4 5.5 12.1 5.5h81c6.8 0 10.5-8 6-13.2z"></path></svg>
+                                      </span>
+                                    </div>
+                                  </a>
+                                </div>
+                              ))}
                             </div>
                           </div>
                         </Spin>
