@@ -281,8 +281,8 @@ export const InvestView = () => {
       symbol1: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg",
       symbol2: "",
       title: t("invest.panel-left.invest-stake-tab-title"),
-      rateAmount: `${stakePoolInfo ? (stakePoolInfo.apy * 100).toFixed(2) : "0"}`,
-      interval: "APY"
+      rateAmount: `${stakePoolInfo ? (stakePoolInfo.apr * 100).toFixed(2) : "0"}`,
+      interval: "APR"
     },
     {
       id: 1,
@@ -724,7 +724,7 @@ export const InvestView = () => {
                               </Tooltip>
                             </div>
                             <div className="transaction-detail-row">
-                              {stakePoolInfo ? (stakePoolInfo.apy * 100).toFixed(2) : "0"}%
+                              {stakePoolInfo ? (stakePoolInfo.apr * 100).toFixed(2) : "0"}%
                             </div>
                           </Col>
                           <Col span={8}>

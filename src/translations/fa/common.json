@@ -326,9 +326,9 @@
 				"withdraw-button": "برداشت وجوه"
 			},
 			"stats": {
-				"total-mean-rewards": "Total MEAN Rewards",
 				"staking-apy": "Staking APY",
 				"staking-apy-tooltip": "The APY associated with sMEAN is a representation of the price of sMEAN over a 365 day period.",
+				"total-mean-rewards": "Total MEAN Rewards",
 				"total-value-locked": "ارزش کل قفل شده است"
 			},
 			"table-data": {
