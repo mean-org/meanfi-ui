@@ -303,7 +303,9 @@
 			"liquidity-pool": {
 				"refresh-tooltip": "Refresh liquidity data",
 				"text-one": "MEAN Liquidity Pools are currently available on Orca and Raydium with multiple pools including MEAN/SOL, MEAN/RAY and MEAN/USDC.",
-				"text-two": "Before you add funds to a pool, be sure to read and accept the risks associated with investing in a liquidity pool.",
+				"text-two": "To invest in a liquidity pool, you need to supply both tokens that make up the pool. For example, when you join the Raydium MEAN/USDC pool both MEAN and USDC tokens are required. For more details, see the adding liquidity guides on",
+				"text-two-divider": "and",
+				"text-three": "Before you add funds to a pool, be sure to read and accept the risks associated with investing in a liquidity pool.",
 				"title": "MEAN Liquidity Pools"
 			},
 			"second-text": "Simply holding your sMEAN is all that is required to continuously grow your MEAN stash. You don't need to harvest the rewards with MEAN staking. When you unstake your sMEAN, you will receive the rewards earned in the form of additional MEAN on top of the amount staked.",
