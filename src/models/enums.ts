@@ -95,6 +95,7 @@ export enum OperationType {
     // Invest
     Stake = 53,
     Unstake = 54,
+    Deposit = 55,
     // IDO
     IdoDeposit = 100,
     IdoWithdraw = 101,

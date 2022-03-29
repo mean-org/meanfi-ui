@@ -1,59 +1,42 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { WarningFilled } from "@ant-design/icons";
 import { useTranslation } from 'react-i18next';
-import { isDesktop } from "react-device-detect";
 import { PreFooter } from "../../components/PreFooter";
 import { getNetworkIdByCluster, useConnection, useConnectionConfig } from '../../contexts/connection';
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
-import { findATokenAddress, formatThousands } from "../../utils/utils";
+import { findATokenAddress, formatThousands, getTxIxResume, isValidNumber, makeInteger } from "../../utils/utils";
 import { IconStats } from "../../Icons";
-import useWindowSize from '../../hooks/useWindowResize';
-import { consoleOut, isDev, isLocal, isProd } from "../../utils/ui";
+import { consoleOut, getTransactionStatusForLogs, isProd } from "../../utils/ui";
 import { useNavigate } from "react-router-dom";
-import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
-import { StakePoolInfo } from "@mean-dao/staking";
+import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
+import { confirmationEvents, TransactionStatusContext } from "../../contexts/transaction-status";
 import { MEAN_TOKEN_LIST } from "../../constants/token-list";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { appConfig } from "../..";
+import { appConfig, customLogger } from "../..";
+import { Button } from "antd";
+import { EventType, OperationType, TransactionStatus } from "../../models/enums";
+import { notify } from "../../utils/notifications";
 
 export const StakingRewardsView = () => {
   const {
-    coinPrices,
-    stakedAmount,
-    isWhitelisted,
-    fromCoinAmount,
-    detailsPanelOpen,
-    isInBetaTestingProgram,
-    setIsVerifiedRecipient,
-    setDtailsPanelOpen,
-    setFromCoinAmount,
+    transactionStatus,
+    setTransactionStatus,
   } = useContext(AppStateContext);
+  const { enqueueTransactionConfirmation } = useContext(TransactionStatusContext);
   const navigate = useNavigate();
   const connection = useConnection();
   const connectionConfig = useConnectionConfig();
-  const { cluster, endpoint } = useConnectionConfig();
-  const { connected, publicKey } = useWallet();
+  const { publicKey, wallet } = useWallet();
   const { account } = useNativeAccount();
   const accounts = useAccountsContext();
   const { t } = useTranslation('common');
-  const { width } = useWindowSize();
-  const [isSmallUpScreen, setIsSmallUpScreen] = useState(isDesktop);
   const [nativeBalance, setNativeBalance] = useState(0);
-  const [meanPrice, setMeanPrice] = useState<number>(0);
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
-  const [stakingRewards, setStakingRewards] = useState<number>(0);
-  const [raydiumInfo, setRaydiumInfo] = useState<any>([]);
-  const [orcaInfo, setOrcaInfo] = useState<any>([]);
-  const [maxRadiumAprValue, setMaxRadiumAprValue] = useState<number>(0);
-  const [maxOrcaAprValue, setMaxOrcaAprValue] = useState<number>(0);
-  const [maxAprValue, setMaxAprValue] = useState<number>(0);
   const [pageInitialized, setPageInitialized] = useState<boolean>(false);
-  const [stakePoolInfo, setStakePoolInfo] = useState<StakePoolInfo>();
-  const [shouldRefreshLpData, setShouldRefreshLpData] = useState(true);
-  const [refreshingPoolInfo, setRefreshingPoolInfo] = useState(false);
-  const annualPercentageYield = 5;
+  const [isDepositing, setIsDepositing] = useState(false);
+  const [aprPercentGoal, setAprPercentGoal] = useState('21');
   // Tokens and balances
   const [meanToken, setMeanToken] = useState<TokenInfo>();
   const [meanBalance, setMeanBalance] = useState<number>(0);
@@ -127,6 +110,43 @@ export const StakingRewardsView = () => {
     getTokenAccountBalanceByAddress
   ]);
 
+  const refreshMeanStakingVaultBalance = useCallback(() => {
+
+    (async () => {
+      const tokenAccount = new PublicKey(meanStakingVault);
+      let tokenAmount = await connection.getTokenAccountBalance(tokenAccount);
+      setMeanStakingVaultBalance(tokenAmount.value.uiAmount as number);
+    })();
+
+  }, [connection, meanStakingVault]);
+
+  const getTotalMeanAdded = useCallback(() => {
+    const apg = parseFloat(aprPercentGoal) || 0;
+    const result = apg ? (meanStakingVaultBalance * (apg / 100)) / 365 : 0;
+    return result;
+  }, [aprPercentGoal, meanStakingVaultBalance]);
+
+  const resetTransactionStatus = useCallback(() => {
+
+    setTransactionStatus({
+      lastOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
+    });
+
+  }, [setTransactionStatus]);
+
+  const onDepositTxConfirmed = useCallback((value: any) => {
+    setIsDepositing(false);
+    resetTransactionStatus();
+    setTimeout(() => {
+      refreshMeanStakingVaultBalance();
+    });
+    consoleOut("onDepositTxConfirmed event executed:", value, 'crimson');
+  }, [
+    refreshMeanStakingVaultBalance,
+    resetTransactionStatus,
+  ]);
+
   /////////////////
   //   Effects   //
   /////////////////
@@ -158,6 +178,7 @@ export const StakingRewardsView = () => {
 
     if (account?.lamports !== previousBalance || !nativeBalance) {
       // Refresh token balances
+      refreshMeanStakingVaultBalance();
       setNativeBalance(getAccountBalance());
       // Update previous balance
       setPreviousBalance(account?.lamports);
@@ -166,20 +187,8 @@ export const StakingRewardsView = () => {
     account,
     nativeBalance,
     previousBalance,
+    refreshMeanStakingVaultBalance
   ]);
-
-  // Keep MEAN price updated
-  useEffect(() => {
-
-    if (coinPrices && meanToken) {
-      const symbol = meanToken.symbol.toUpperCase();
-      const price = coinPrices && coinPrices[symbol] ? coinPrices[symbol] : 0;
-      setMeanPrice(price);
-    } else {
-      setMeanPrice(0);
-    }
-
-  }, [coinPrices, meanToken]);
 
   // Keep MEAN balance updated
   useEffect(() => {
@@ -198,16 +207,17 @@ export const StakingRewardsView = () => {
     refreshMeanBalance,
   ]);
 
+  // Setup event listeners
   useEffect(() => {
-    (async () => {
-      const tokenAccount = new PublicKey(meanStakingVault);
-      let tokenAmount = await connection.getTokenAccountBalance(tokenAccount);
-      setMeanStakingVaultBalance(tokenAmount.value.uiAmount as number);
-      consoleOut(`amount:`, tokenAmount.value, 'blue')
-    })();
+    if (connection && publicKey && !pageInitialized) {
+      confirmationEvents.on(EventType.TxConfirmSuccess, onDepositTxConfirmed);
+      consoleOut('Subscribed to event txConfirmed with:', 'onDepositTxConfirmed', 'blue');
+    }
   }, [
+    publicKey,
     connection,
-    meanStakingVault,
+    pageInitialized,
+    onDepositTxConfirmed,
   ]);
 
   // Set when a page is initialized
@@ -219,6 +229,319 @@ export const StakingRewardsView = () => {
     meanToken,
     pageInitialized,
   ]);
+
+  ///////////////////
+  // Event hanling //
+  ///////////////////
+
+  const onStartDepositTx = async () => {
+    let transaction: Transaction;
+    let signedTransaction: Transaction;
+    let signature: any;
+    let encodedTx: string;
+    const transactionLog: any[] = [];
+
+    const createTx = async (): Promise<boolean> => {
+      if (wallet && meanToken) {
+        setTransactionStatus({
+          lastOperation: TransactionStatus.TransactionStart,
+          currentOperation: TransactionStatus.InitTransaction,
+        });
+
+        const payload = {
+          aprPercentGoal: makeInteger(parseFloat(aprPercentGoal), 2),
+          totalMeanAdded: makeInteger(getTotalMeanAdded(), meanToken.decimals)
+        };
+        consoleOut("data:", payload, "blue");
+
+        // Log input data
+        transactionLog.push({
+          action: getTransactionStatusForLogs(
+            TransactionStatus.TransactionStart
+          ),
+          inputs: payload,
+        });
+
+        transactionLog.push({
+          action: getTransactionStatusForLogs(
+            TransactionStatus.InitTransaction
+          ),
+          result: "",
+        });
+
+        // TODO: Remove later
+        setTransactionStatus({
+          lastOperation: transactionStatus.currentOperation,
+          currentOperation: TransactionStatus.InitTransactionFailure,
+        });
+        return false;
+
+        /*
+        return await unwrapSol(
+          connection, // connection
+          wallet, // wallet
+          Keypair.generate(),
+          amount // amount
+        )
+          .then((value) => {
+            consoleOut("unwrapSol returned transaction:", value);
+            // Stage 1 completed - The transaction is created and returned
+            setTransactionStatus({
+              lastOperation: TransactionStatus.InitTransactionSuccess,
+              currentOperation: TransactionStatus.SignTransaction,
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(
+                TransactionStatus.InitTransactionSuccess
+              ),
+              result: getTxIxResume(value),
+            });
+            transaction = value;
+            return true;
+          })
+          .catch((error) => {
+            console.error("unwrapSol transaction init error:", error);
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.InitTransactionFailure,
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(
+                TransactionStatus.InitTransactionFailure
+              ),
+              result: `${error}`,
+            });
+            customLogger.logError("Deposit transaction failed", {
+              transcript: transactionLog,
+            });
+            return false;
+          });
+        */
+      } else {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: "Cannot start transaction! Wallet not found!",
+        });
+        customLogger.logError("Deposit transaction failed", {
+          transcript: transactionLog,
+        });
+        return false;
+      }
+    };
+
+    const signTx = async (): Promise<boolean> => {
+      if (wallet) {
+        consoleOut("Signing transaction...");
+        return await wallet
+          .signTransaction(transaction)
+          .then((signed: Transaction) => {
+            consoleOut(
+              "signTransaction returned a signed transaction:",
+              signed
+            );
+            signedTransaction = signed;
+            // Try signature verification by serializing the transaction
+            try {
+              encodedTx = signedTransaction.serialize().toString("base64");
+              consoleOut("encodedTx:", encodedTx, "orange");
+            } catch (error) {
+              console.error(error);
+              setTransactionStatus({
+                lastOperation: TransactionStatus.SignTransaction,
+                currentOperation: TransactionStatus.SignTransactionFailure,
+              });
+              transactionLog.push({
+                action: getTransactionStatusForLogs(
+                  TransactionStatus.SignTransactionFailure
+                ),
+                result: {
+                  signer: `${wallet.publicKey.toBase58()}`,
+                  error: `${error}`,
+                },
+              });
+              customLogger.logError("Deposit transaction failed", {
+                transcript: transactionLog,
+              });
+              return false;
+            }
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransactionSuccess,
+              currentOperation: TransactionStatus.SendTransaction,
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(
+                TransactionStatus.SignTransactionSuccess
+              ),
+              result: { signer: wallet.publicKey.toBase58() },
+            });
+            return true;
+          })
+          .catch((error) => {
+            console.error("Signing transaction failed!");
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransaction,
+              currentOperation: TransactionStatus.SignTransactionFailure,
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(
+                TransactionStatus.SignTransactionFailure
+              ),
+              result: {
+                signer: `${wallet.publicKey.toBase58()}`,
+                error: `${error}`,
+              },
+            });
+            customLogger.logError("Deposit transaction failed", {
+              transcript: transactionLog,
+            });
+            return false;
+          });
+      } else {
+        console.error("Cannot sign transaction! Wallet not found!");
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.WalletNotFound,
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: "Cannot sign transaction! Wallet not found!",
+        });
+        customLogger.logError("Deposit transaction failed", {
+          transcript: transactionLog,
+        });
+        return false;
+      }
+    };
+
+    const sendTx = async (): Promise<boolean> => {
+      if (wallet) {
+        return await connection
+          .sendEncodedTransaction(encodedTx)
+          .then((sig) => {
+            consoleOut("sendEncodedTransaction returned a signature:", sig);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.ConfirmTransaction,
+            });
+            signature = sig;
+            transactionLog.push({
+              action: getTransactionStatusForLogs(
+                TransactionStatus.SendTransactionSuccess
+              ),
+              result: `signature: ${signature}`,
+            });
+            return true;
+          })
+          .catch((error) => {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransaction,
+              currentOperation: TransactionStatus.SendTransactionFailure,
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(
+                TransactionStatus.SendTransactionFailure
+              ),
+              result: { error, encodedTx },
+            });
+            customLogger.logError("Deposit transaction failed", {
+              transcript: transactionLog,
+            });
+            return false;
+          });
+      } else {
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SendTransaction,
+          currentOperation: TransactionStatus.WalletNotFound,
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: "Cannot send transaction! Wallet not found!",
+        });
+        customLogger.logError("Deposit transaction failed", {
+          transcript: transactionLog,
+        });
+        return false;
+      }
+    };
+
+    if (wallet && meanToken) {
+      setIsDepositing(true);
+      const create = await createTx();
+      consoleOut("created:", create);
+      if (create) {
+        const sign = await signTx();
+        consoleOut("signed:", sign);
+        if (sign) {
+          const sent = await sendTx();
+          consoleOut("sent:", sent);
+          if (sent) {
+            const depositionMessage = `Depositing ${formatThousands(
+              getTotalMeanAdded(),
+              meanToken.decimals
+            )} ${meanToken.symbol} into the staking vault`;
+            const depositSuccessMessage = `Successfully deposited ${formatThousands(
+              getTotalMeanAdded(),
+              meanToken.decimals
+            )} ${meanToken.symbol} into the staking vault`;
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.Deposit,
+              finality: "confirmed",
+              txInfoFetchStatus: "fetching",
+              loadingTitle: "Confirming transaction",
+              loadingMessage: depositionMessage,
+              completedTitle: "Transaction confirmed",
+              completedMessage: depositSuccessMessage,
+            });
+            setAprPercentGoal('');
+          } else {
+            notify({
+              message: t("notifications.error-title"),
+              description: t("notifications.error-sending-transaction"),
+              type: "error",
+            });
+            setIsDepositing(false);
+          }
+        } else {
+          setIsDepositing(false);
+        }
+      } else {
+        setIsDepositing(false);
+      }
+    }
+  };
+
+  const handleAmountChange = (e: any) => {
+    let newValue = e.target.value;
+    const splitted = newValue.toString().split('.');
+    const left = splitted[0];
+    if (left.length > 1) {
+      const number = splitted[0] - 0;
+      splitted[0] = `${number}`;
+      newValue = splitted.join('.');
+    }
+    if (newValue === null || newValue === undefined || newValue === "") {
+      setAprPercentGoal("");
+    } else if (newValue === '.') {
+      setAprPercentGoal(".");
+    } else if (isValidNumber(newValue)) {
+      setAprPercentGoal(newValue);
+    }
+  };
+
+  // Validation functions
+
+  const isValidInput = (): boolean => {
+    return  aprPercentGoal &&
+            nativeBalance &&
+            meanBalance &&
+            parseFloat(aprPercentGoal) >= 0.01 &&
+            parseFloat(aprPercentGoal) <= 100 &&
+            meanBalance >= getTotalMeanAdded()
+      ? true
+      : false;
+  };
 
   /////////////////
   //  Rendering  //
@@ -259,7 +582,7 @@ export const StakingRewardsView = () => {
     <>
       <div className="well disabled">
         <div className="flex-fixed-right">
-          <div className="left inner-label">{t('unwrap.current-wsol-balance')}:</div>
+          <div className="left inner-label">Total MEAN in Vault</div>
           <div className="right">&nbsp;</div>
         </div>
         <div className="flex-fixed-right">
@@ -270,6 +593,63 @@ export const StakingRewardsView = () => {
           </div>
           <div className="right">&nbsp;</div>
         </div>
+      </div>
+    </>
+  );
+
+  const renderAddFundsToStakingRewardsVault = (
+    <>
+      <div className={`well ${isDepositing ? 'disabled' : ''}`}>
+        <div className="flex-fixed-right">
+          <div className="left inner-label">Enter APR Percent Goal</div>
+          <div className="right">&nbsp;</div>
+        </div>
+        <div className="flex-fixed-right">
+          <div className="left">
+            <input
+              className="general-text-input"
+              inputMode="decimal"
+              autoComplete="off"
+              autoCorrect="off"
+              type="text"
+              onChange={handleAmountChange}
+              pattern="^[0-9]*[.,]?[0-9]*$"
+              placeholder="0.01"
+              minLength={1}
+              maxLength={5}
+              min={0.01}
+              max={100}
+              spellCheck="false"
+              value={aprPercentGoal}
+            />
+          </div>
+          <div className="right">&nbsp;</div>
+        </div>
+        {!aprPercentGoal || parseFloat(aprPercentGoal) < 0.01 || parseFloat(aprPercentGoal) > 100 ? (
+          <span className="form-field-error">Valid values: from 0.01 to 100</span>
+        ) : meanBalance < getTotalMeanAdded() ? (
+          <span className="form-field-error">Insufficient balance for APR Percent Goal</span>
+        ) : (null)}
+      </div>
+    </>
+  );
+
+  const renderTotalMeanAdded = (
+    <>
+      <div className="well disabled">
+        <div className="flex-fixed-right">
+          <div className="left inner-label">Total MEAN to be added</div>
+          <div className="right">&nbsp;</div>
+        </div>
+        <div className="flex-fixed-right">
+          <div className="left static-data-field">
+            {
+              formatThousands(getTotalMeanAdded(), meanToken?.decimals || 6)
+            }
+          </div>
+          <div className="right">&nbsp;</div>
+        </div>
+        <span className="form-field-hint">User MEAN balance: {formatThousands(meanBalance, meanToken?.decimals || 6)}</span>
       </div>
     </>
   );
@@ -289,6 +669,18 @@ export const StakingRewardsView = () => {
           </div>
           <div className="place-transaction-box mb-3">
             {renderStakingRewardsVaultBalance}
+            {renderAddFundsToStakingRewardsVault}
+            {renderTotalMeanAdded}
+            <Button
+              className="main-cta"
+              block
+              type="primary"
+              shape="round"
+              size="large"
+              disabled={!isValidInput() || isDepositing}
+              onClick={onStartDepositTx}>
+              {isDepositing ? 'Funding Vault' : 'Fund Vault'}
+            </Button>
           </div>
           <div className="mb-3">
             History table here
