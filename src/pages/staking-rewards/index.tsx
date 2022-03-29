@@ -8,7 +8,7 @@ import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
 import { findATokenAddress, formatThousands, getTxIxResume, isValidNumber } from "../../utils/utils";
 import { IconStats } from "../../Icons";
-import { consoleOut, getTransactionStatusForLogs, isProd } from "../../utils/ui";
+import { consoleOut, getTransactionStatusForLogs, isLocal, isProd } from "../../utils/ui";
 import { ConfirmOptions, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
 import { confirmationEvents, TransactionStatusContext } from "../../contexts/transaction-status";
@@ -24,6 +24,7 @@ import Moment from "react-moment";
 export const StakingRewardsView = () => {
   const {
     transactionStatus,
+    isInBetaTestingProgram,
     setTransactionStatus,
   } = useContext(AppStateContext);
   const { enqueueTransactionConfirmation } = useContext(TransactionStatusContext);
@@ -57,6 +58,9 @@ export const StakingRewardsView = () => {
     if (!publicKey) { return false; }
 
     const isUserAllowed = () => {
+      if (isProd() && isInBetaTestingProgram) {
+        return true;
+      }
       const acl = appConfig.getConfig().stakingRewardsAcl;
       if (acl && acl.length > 0) {
         return acl.some(a => a === publicKey.toBase58());
@@ -65,13 +69,13 @@ export const StakingRewardsView = () => {
       }
     }
 
-    if (isProd()) {
+    if (!isLocal()) {
       return isUserAllowed();
     }
 
     return true;
 
-  }, [publicKey]);
+  }, [isInBetaTestingProgram, publicKey]);
 
   // Create and cache Staking client instance
   const stakeClient = useMemo(() => {
