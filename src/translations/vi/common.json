@@ -436,7 +436,7 @@
 			"token-address-placeholder": "Nhập vào địa chỉ token"
 		},
 		"multisig-account-detail": {
-			"address": "Deposit Address",
+			"address": "Safe Deposit Address",
 			"authority": "Thẩm quyền",
 			"copy-id-title": "MULTISIG ID",
 			"created-on": "Ngày tạo",

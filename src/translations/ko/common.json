@@ -436,7 +436,7 @@
 			"token-address-placeholder": "토큰 주소를 입력하세요"
 		},
 		"multisig-account-detail": {
-			"address": "Deposit Address",
+			"address": "Safe Deposit Address",
 			"authority": "권한",
 			"copy-id-title": "다중서명 계정",
 			"created-on": "~에 작성되다",

@@ -437,7 +437,7 @@
 			"token-address-placeholder": "Enter the address of the token"
 		},
 		"multisig-account-detail": {
-			"address": "Deposit Address",
+			"address": "Safe Deposit Address",
 			"authority": "Authority",
 			"copy-id-title": "MULTISIG ID",
 			"created-on": "Created on",

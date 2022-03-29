@@ -436,7 +436,7 @@
 			"token-address-placeholder": "Tokenların adresini girin"
 		},
 		"multisig-account-detail": {
-			"address": "Deposit Address",
+			"address": "Safe Deposit Address",
 			"authority": "Yetki",
 			"copy-id-title": "Çoklu-İmza ID",
 			"created-on": "... da oluşturuldu",

@@ -3612,7 +3612,7 @@ export const MultisigAssetsView = () => {
               <Col span={12}>
                 <div className="transaction-detail-row">
                   <span className="info-label">
-                    Deposit Address
+                    {t('multisig.multisig-account-detail.address')}
                   </span>
                 </div>
 

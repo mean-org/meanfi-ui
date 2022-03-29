@@ -432,7 +432,7 @@
 			"token-address-placeholder": "Digite o endereço do token"
 		},
 		"multisig-account-detail": {
-			"address": "Deposit Address",
+			"address": "Safe Deposit Address",
 			"authority": "Autoridade",
 			"copy-id-title": "ID MULTIIG",
 			"created-on": "Criado em",

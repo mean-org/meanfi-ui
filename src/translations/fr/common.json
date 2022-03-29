@@ -432,7 +432,7 @@
 			"token-address-placeholder": "Entrez l'adresse du jeton"
 		},
 		"multisig-account-detail": {
-			"address": "Deposit Address",
+			"address": "Safe Deposit Address",
 			"authority": "Autorité",
 			"copy-id-title": "ID MULTISIG",
 			"created-on": "Créé sur",
