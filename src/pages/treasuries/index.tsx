@@ -5644,9 +5644,9 @@ export const TreasuriesView = () => {
                       <Spin spinning={loadingTreasuries || loadingTreasuryDetails}>
                         {treasuryDetails && (
                           <>
-                            {/* {isMultisigTreasury() && (
+                            {(isMultisigTreasury() && (selectedMultisig && selectedMultisig.pendingTxsAmount > 0)) && (
                               renderMultisigTxReminder()
-                            )} */}
+                            )}
                             {renderTreasuryMeta()}
                             <Divider className="activity-divider" plain></Divider>
                             {(!treasuryDetails.autoClose || (treasuryDetails.autoClose && getTreasuryTotalStreams(treasuryDetails) > 0 )) && (
