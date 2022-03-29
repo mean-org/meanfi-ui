@@ -635,11 +635,16 @@ export const StakingRewardsView = () => {
       <div className="container-max-width-720 my-3">
         <div className="item-list-header compact dark">
           <div className="header-row">
-            <div className="std-table-cell responsive-cell px-2 text-center">Deposited Percentage</div>
-            <div className="std-table-cell responsive-cell px-2 text-center">Deposited Amount</div>
-            <div className="std-table-cell responsive-cell px-2 text-right">Total Staked</div>
-            <div className="std-table-cell responsive-cell px-2 text-center">Total Staked + Rewards</div>
-            <div className="std-table-cell responsive-cell pl-2 text-left">Date</div>
+            <div className="std-table-cell responsive-cell px-2 text-left">Date</div>
+            <div className="std-table-cell responsive-cell px-3 text-right border-left border-right">
+              <span>Total Staked +<br/>Rewards before</span>
+            </div>
+            <div className="std-table-cell responsive-cell px-3 text-right border-right">
+              <span>Deposited<br/>Percentage</span>
+            </div>
+            <div className="std-table-cell responsive-cell px-3 text-right">
+              <span>Deposited<br/>Amount</span>
+            </div>
           </div>
         </div>
 
@@ -652,11 +657,10 @@ export const StakingRewardsView = () => {
                   depositsInfo.depositRecords.length > 0) &&
                   depositsInfo.depositRecords.map((item: DepositRecord, index: number) => (
                     <div key={`${index}`} className="item-list-row">
-                      <div className="std-table-cell responsive-cell pr-3 text-right">{item.depositedPercentage * 100}%</div>
-                      <div className="std-table-cell responsive-cell pr-3 text-right">{formatThousands(item.depositedUiAmount)} MEAN</div>
-                      <div className="std-table-cell responsive-cell px-2 text-right">{formatThousands(item.totalStakeUiAmount)} MEAN</div>
-                      <div className="std-table-cell responsive-cell px-3 text-right">{formatThousands(item.totalStakedPlusRewardsUiAmount)} MEAN</div>
-                      <div className="std-table-cell responsive-cell pl-2 text-left"><Moment className="capitalize-first-letter" date={item.depositedUtc} fromNow /></div>
+                      <div className="std-table-cell responsive-cell px-2 text-left"><Moment className="capitalize-first-letter" date={item.depositedUtc} fromNow /></div>
+                      <div className="std-table-cell responsive-cell px-3 text-right border-left border-right">{formatThousands(item.totalStakedPlusRewardsUiAmount)} MEAN</div>
+                      <div className="std-table-cell responsive-cell px-3 text-right border-right">{item.depositedPercentage * 100}%</div>
+                      <div className="std-table-cell responsive-cell px-3 text-right">{formatThousands(item.depositedUiAmount)} MEAN</div>
                     </div>
                   ))}
               </div>
