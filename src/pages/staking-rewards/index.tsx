@@ -42,10 +42,12 @@ export const StakingRewardsView = () => {
   const [depositsInfo, setDepositsInfo] = useState<DepositsInfo | undefined>(undefined);
   const [refreshingDepositsInfo, setRefreshingDepositsInfo] = useState<boolean>(false);
   const [shouldRefreshDepositsInfo, setShouldRefreshDepositsInfo] = useState(true);
+  const [lastDepositSignature, setLastDepositSignature] = useState('');
   // Tokens and balances
   const [meanToken, setMeanToken] = useState<TokenInfo>();
   const [meanBalance, setMeanBalance] = useState<number | undefined>(undefined);
   const [meanStakingVaultBalance, setMeanStakingVaultBalance] = useState<number>(0);
+  const [canSubscribe, setCanSubscribe] = useState(true);
 
   // MEAN Staking Vault address
   const meanStakingVault = useMemo(() => {
@@ -166,13 +168,17 @@ export const StakingRewardsView = () => {
   }, [setTransactionStatus]);
 
   const onDepositTxConfirmed = useCallback((value: any) => {
-    setIsDepositing(false);
-    resetTransactionStatus();
-    setTimeout(() => {
-      refreshMeanStakingVaultBalance();
-    });
-    consoleOut("onDepositTxConfirmed event executed:", value, 'crimson');
+    if (value === lastDepositSignature) {
+      consoleOut("onDepositTxConfirmed event executed:", value, 'crimson');
+      setIsDepositing(false);
+      resetTransactionStatus();
+      setTimeout(() => {
+        refreshMeanStakingVaultBalance();
+        setShouldRefreshDepositsInfo(true);
+      }, 100);
+    }
   }, [
+    lastDepositSignature,
     refreshMeanStakingVaultBalance,
     resetTransactionStatus,
   ]);
@@ -260,15 +266,18 @@ export const StakingRewardsView = () => {
 
   // Setup event listeners
   useEffect(() => {
-    if (connection && publicKey && !pageInitialized) {
+    if (pageInitialized && canSubscribe) {
+      setTimeout(() => {
+        setCanSubscribe(false);
+      });
       confirmationEvents.on(EventType.TxConfirmSuccess, onDepositTxConfirmed);
       consoleOut('Subscribed to event txConfirmed with:', 'onDepositTxConfirmed', 'blue');
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    publicKey,
-    connection,
+    canSubscribe,
     pageInitialized,
-    onDepositTxConfirmed,
+    // onDepositTxConfirmed
   ]);
 
   // Set when a page is initialized
@@ -512,6 +521,7 @@ export const StakingRewardsView = () => {
           const sent = await sendTx();
           consoleOut("sent:", sent);
           if (sent) {
+            setLastDepositSignature(signature);
             const depositionMessage = `Depositing ${formatThousands(
               getTotalMeanAdded(),
               meanToken.decimals
@@ -619,7 +629,7 @@ export const StakingRewardsView = () => {
       <div className="container-max-width-720 my-3">
         <div className="item-list-header compact dark">
           <div className="header-row">
-            <div className="std-table-cell responsive-cell px-2 text-center fixed-width-100">Deposited Percentage</div>
+            <div className="std-table-cell responsive-cell px-2 text-center">Deposited Percentage</div>
             <div className="std-table-cell responsive-cell px-2 text-center">Deposited Amount</div>
             <div className="std-table-cell responsive-cell px-2 text-right">Total Staked</div>
             <div className="std-table-cell responsive-cell px-2 text-center">Total Staked + Rewards</div>
@@ -636,7 +646,7 @@ export const StakingRewardsView = () => {
                   depositsInfo.depositRecords.length > 0) &&
                   depositsInfo.depositRecords.map((item: DepositRecord, index: number) => (
                     <div key={`${index}`} className="item-list-row">
-                      <div className="std-table-cell responsive-cell pr-3 text-right fixed-width-100">{item.depositedPercentage * 100}%</div>
+                      <div className="std-table-cell responsive-cell pr-3 text-right">{item.depositedPercentage}%</div>
                       <div className="std-table-cell responsive-cell pr-3 text-right">{formatThousands(item.depositedUiAmount)} MEAN</div>
                       <div className="std-table-cell responsive-cell px-2 text-right">{formatThousands(item.totalStakeUiAmount)} MEAN</div>
                       <div className="std-table-cell responsive-cell px-3 text-right">{formatThousands(item.totalStakedPlusRewardsUiAmount)} MEAN</div>
