@@ -21,6 +21,8 @@ import { notify } from "../../utils/notifications";
 import { DepositRecord, DepositsInfo, StakingClient } from "@mean-dao/staking";
 import Moment from "react-moment";
 
+const DEFAULT_APR_PERCENT_GOAL = '21';
+
 export const StakingRewardsView = () => {
   const {
     transactionStatus,
@@ -38,7 +40,7 @@ export const StakingRewardsView = () => {
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [pageInitialized, setPageInitialized] = useState<boolean>(false);
   const [isDepositing, setIsDepositing] = useState(false);
-  const [aprPercentGoal, setAprPercentGoal] = useState('21');
+  const [aprPercentGoal, setAprPercentGoal] = useState(DEFAULT_APR_PERCENT_GOAL);
   const [depositsInfo, setDepositsInfo] = useState<DepositsInfo | undefined>(undefined);
   const [refreshingDepositsInfo, setRefreshingDepositsInfo] = useState<boolean>(false);
   const [shouldRefreshDepositsInfo, setShouldRefreshDepositsInfo] = useState(true);
@@ -108,12 +110,15 @@ export const StakingRewardsView = () => {
   const getTokenAccountBalanceByAddress = useCallback(async (tokenMintAddress: PublicKey | undefined | null): Promise<number> => {
     if (!connection || !tokenMintAddress) return 0;
     try {
-      const tokenAmount = (await connection.getTokenAccountBalance(tokenMintAddress)).value;
-      return tokenAmount.uiAmount || 0;
+      const tokenAmount = (await connection.getTokenAccountBalance(tokenMintAddress));
+      if (tokenAmount) {
+        const value = tokenAmount.value;
+        return value.uiAmount || 0;
+      }
     } catch (error) {
-      console.error(error);
-      throw(error);
+      consoleOut('Could not find account:', tokenMintAddress.toBase58(), 'red');
     }
+    return 0;
   }, [connection]);
 
   const refreshMeanBalance = useCallback(async () => {
@@ -142,14 +147,20 @@ export const StakingRewardsView = () => {
     getTokenAccountBalanceByAddress
   ]);
 
-  const refreshMeanStakingVaultBalance = useCallback(() => {
-
-    (async () => {
+  const refreshMeanStakingVaultBalance = useCallback(async () => {
+    if (!connection || !meanStakingVault) return 0;
+    let balance = 0;
+    try {
       const tokenAccount = new PublicKey(meanStakingVault);
-      let tokenAmount = await connection.getTokenAccountBalance(tokenAccount);
-      setMeanStakingVaultBalance(tokenAmount.value.uiAmount as number);
-    })();
-
+      const tokenAmount = (await connection.getTokenAccountBalance(tokenAccount));
+      if (tokenAmount) {
+        const value = tokenAmount.value;
+        balance = value.uiAmount || 0;
+      }
+    } catch (error) {
+      consoleOut('Could not find account:', meanStakingVault, 'red');
+    }
+    setMeanStakingVaultBalance(balance);
   }, [connection, meanStakingVault]);
 
   const getTotalMeanAdded = useCallback(() => {
@@ -168,17 +179,15 @@ export const StakingRewardsView = () => {
   }, [setTransactionStatus]);
 
   const onDepositTxConfirmed = useCallback((value: any) => {
-    if (value === lastDepositSignature) {
-      consoleOut("onDepositTxConfirmed event executed:", value, 'crimson');
-      setIsDepositing(false);
-      resetTransactionStatus();
-      setTimeout(() => {
-        refreshMeanStakingVaultBalance();
-        setShouldRefreshDepositsInfo(true);
-      }, 100);
-    }
+    consoleOut("onDepositTxConfirmed event executed:", value, 'crimson');
+    setIsDepositing(false);
+    resetTransactionStatus();
+    setTimeout(() => {
+      refreshMeanStakingVaultBalance();
+      setShouldRefreshDepositsInfo(true);
+    }, 100);
+    setLastDepositSignature('');
   }, [
-    lastDepositSignature,
     refreshMeanStakingVaultBalance,
     resetTransactionStatus,
   ]);
@@ -267,17 +276,14 @@ export const StakingRewardsView = () => {
   // Setup event listeners
   useEffect(() => {
     if (pageInitialized && canSubscribe) {
-      setTimeout(() => {
-        setCanSubscribe(false);
-      });
+      setCanSubscribe(false);
       confirmationEvents.on(EventType.TxConfirmSuccess, onDepositTxConfirmed);
       consoleOut('Subscribed to event txConfirmed with:', 'onDepositTxConfirmed', 'blue');
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     canSubscribe,
     pageInitialized,
-    // onDepositTxConfirmed
+    onDepositTxConfirmed
   ]);
 
   // Set when a page is initialized
@@ -308,7 +314,7 @@ export const StakingRewardsView = () => {
           currentOperation: TransactionStatus.InitTransaction,
         });
 
-        const depositPercentage = parseFloat(aprPercentGoal);
+        const depositPercentage = parseFloat(aprPercentGoal) / 100;
         consoleOut("depositPercentage:", depositPercentage, "blue");
 
         // Log input data
@@ -540,7 +546,7 @@ export const StakingRewardsView = () => {
               completedTitle: "Transaction confirmed",
               completedMessage: depositSuccessMessage,
             });
-            setAprPercentGoal('');
+            setAprPercentGoal(DEFAULT_APR_PERCENT_GOAL);
           } else {
             notify({
               message: t("notifications.error-title"),
@@ -629,11 +635,16 @@ export const StakingRewardsView = () => {
       <div className="container-max-width-720 my-3">
         <div className="item-list-header compact dark">
           <div className="header-row">
-            <div className="std-table-cell responsive-cell px-2 text-center">Deposited Percentage</div>
-            <div className="std-table-cell responsive-cell px-2 text-center">Deposited Amount</div>
-            <div className="std-table-cell responsive-cell px-2 text-right">Total Staked</div>
-            <div className="std-table-cell responsive-cell px-2 text-center">Total Staked + Rewards</div>
-            <div className="std-table-cell responsive-cell pl-2 text-left">Date</div>
+            <div className="std-table-cell responsive-cell px-2 text-left">Date</div>
+            <div className="std-table-cell responsive-cell px-3 text-right border-left border-right">
+              <span>Total Staked +<br/>Rewards before</span>
+            </div>
+            <div className="std-table-cell responsive-cell px-3 text-right border-right">
+              <span>Deposited<br/>Percentage</span>
+            </div>
+            <div className="std-table-cell responsive-cell px-3 text-right">
+              <span>Deposited<br/>Amount</span>
+            </div>
           </div>
         </div>
 
@@ -646,11 +657,10 @@ export const StakingRewardsView = () => {
                   depositsInfo.depositRecords.length > 0) &&
                   depositsInfo.depositRecords.map((item: DepositRecord, index: number) => (
                     <div key={`${index}`} className="item-list-row">
-                      <div className="std-table-cell responsive-cell pr-3 text-right">{item.depositedPercentage}%</div>
-                      <div className="std-table-cell responsive-cell pr-3 text-right">{formatThousands(item.depositedUiAmount)} MEAN</div>
-                      <div className="std-table-cell responsive-cell px-2 text-right">{formatThousands(item.totalStakeUiAmount)} MEAN</div>
-                      <div className="std-table-cell responsive-cell px-3 text-right">{formatThousands(item.totalStakedPlusRewardsUiAmount)} MEAN</div>
-                      <div className="std-table-cell responsive-cell pl-2 text-left"><Moment className="capitalize-first-letter" date={item.depositedUtc} fromNow /></div>
+                      <div className="std-table-cell responsive-cell px-2 text-left"><Moment className="capitalize-first-letter" date={item.depositedUtc} fromNow /></div>
+                      <div className="std-table-cell responsive-cell px-3 text-right border-left border-right">{formatThousands(item.totalStakedPlusRewardsUiAmount)} MEAN</div>
+                      <div className="std-table-cell responsive-cell px-3 text-right border-right">{item.depositedPercentage * 100}%</div>
+                      <div className="std-table-cell responsive-cell px-3 text-right">{formatThousands(item.depositedUiAmount)} MEAN</div>
                     </div>
                   ))}
               </div>
@@ -732,13 +742,20 @@ export const StakingRewardsView = () => {
           </div>
           <div className="right">&nbsp;</div>
         </div>
-        <span className="form-field-hint">User MEAN balance: {meanBalance ? formatThousands(meanBalance, meanToken?.decimals || 6) : '-'}</span>
+        <span className="form-field-hint">User MEAN balance: {meanBalance ? formatThousands(meanBalance, meanToken?.decimals || 6) : '0'}</span>
       </div>
     </>
   );
 
   return (
     <>
+      {isLocal() && (
+        <div className="debug-bar">
+          <span className="ml-1">isDepositing:</span><span className="ml-1 font-bold fg-dark-active">{isDepositing ? 'true' : 'false'}</span>
+          <span className="ml-1">lastDepositSignature:</span><span className="ml-1 font-bold fg-dark-active">{lastDepositSignature || '-'}</span>
+        </div>
+      )}
+
       <div className="container main-container">
         <div className="interaction-area">
           <div className="title-and-subtitle">

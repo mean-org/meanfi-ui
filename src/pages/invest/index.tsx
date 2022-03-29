@@ -1,7 +1,7 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import './style.less';
 import { LoadingOutlined, ReloadOutlined, WarningFilled } from "@ant-design/icons";
-import { Button, Tooltip, Row, Col, Empty, Spin } from "antd";
+import { Button, Tooltip, Row, Col, Empty, Spin, Divider } from "antd";
 import { useTranslation } from 'react-i18next';
 import { isDesktop } from "react-device-detect";
 import { PreFooter } from "../../components/PreFooter";
@@ -379,11 +379,13 @@ export const InvestView = () => {
       return;
     }
 
-    stakeClient.getStakePoolInfo(meanPrice).then((value) => {
-      setStakePoolInfo(value);
-    }).catch((error) => {
-      console.error(error);
-    });
+    stakeClient.getStakePoolInfo(meanPrice)
+      .then((value) => {
+        consoleOut('stakePoolInfo:', value, 'blue');
+        setStakePoolInfo(value);
+      }).catch((error) => {
+        console.error(error);
+      });
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -810,7 +812,8 @@ export const InvestView = () => {
                     <h2>{t("invest.panel-right.title")}</h2>
                     <p>{t("invest.panel-right.first-text")}</p>
                     <p className="pb-1">{t("invest.panel-right.second-text")}</p>
-                    <div className="pinned-token-separator"></div>
+                    {/* <div className="pinned-token-separator"></div> */}
+                    <Divider />
 
                     {/* Staking Stats */}
                     <div className="invest-fields-container pt-2">
