@@ -481,7 +481,7 @@ export const InvestView = () => {
     consoleOut('fetch Marinade Apy info', 'STARTED', 'orange');
     try {
       try {
-        const res = await fetch('https://api.marinade.finance/msol/apy/7d');
+        const res = await fetch('https://api.marinade.finance/msol/apy/1y');
         const data = await res.json();
         // Should update if got data
         if (data) {
