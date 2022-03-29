@@ -565,7 +565,7 @@ export const UnstakeTabView = (props: {
                 {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
               </h4>
               <p className="operation">
-                {formatThousands(parseFloat(fromCoinAmount), 6)} sMEAN has been successfully unstaked and you have received {formatThousands(parseFloat(fromCoinAmount), 6)} MEAN in return.
+                {formatThousands(parseFloat(fromCoinAmount), 6)} sMEAN has been successfully unstaked and you have received {formatThousands(meanWorthOfsMean, 6)} MEAN in return.
               </p>
               <Button
                 block
