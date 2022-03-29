@@ -1,14 +1,14 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import './style.less';
 import { WarningFilled } from "@ant-design/icons";
 import { useTranslation } from 'react-i18next';
 import { PreFooter } from "../../components/PreFooter";
 import { getNetworkIdByCluster, useConnection, useConnectionConfig } from '../../contexts/connection';
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
-import { findATokenAddress, formatThousands, getTxIxResume, isValidNumber, makeInteger } from "../../utils/utils";
+import { findATokenAddress, formatThousands, getTxIxResume, isValidNumber } from "../../utils/utils";
 import { IconStats } from "../../Icons";
 import { consoleOut, getTransactionStatusForLogs, isProd } from "../../utils/ui";
-import { useNavigate } from "react-router-dom";
 import { ConfirmOptions, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
 import { confirmationEvents, TransactionStatusContext } from "../../contexts/transaction-status";
@@ -28,7 +28,6 @@ export const StakingRewardsView = () => {
   } = useContext(AppStateContext);
   const { enqueueTransactionConfirmation } = useContext(TransactionStatusContext);
   const { cluster, endpoint } = useConnectionConfig();
-  const navigate = useNavigate();
   const connection = useConnection();
   const { publicKey, wallet } = useWallet();
   const { account } = useNativeAccount();
@@ -555,7 +554,7 @@ export const StakingRewardsView = () => {
       newValue = splitted.join('.');
     }
     if (newValue === null || newValue === undefined || newValue === "") {
-      setAprPercentGoal("");
+      setAprPercentGoal('');
     } else if (newValue === '.') {
       setAprPercentGoal(".");
     } else if (isValidNumber(newValue)) {
@@ -616,12 +615,11 @@ export const StakingRewardsView = () => {
       <div className="container-max-width-720 my-3">
         <div className="item-list-header compact dark">
           <div className="header-row">
-            <div className="std-table-cell responsive-cell px-2 text-left">Column 1</div>
-            <div className="std-table-cell responsive-cell px-2 text-left">Column 2</div>
-            <div className="std-table-cell responsive-cell px-2 text-right">Column 3</div>
-            <div className="std-table-cell responsive-cell px-2 text-right">Column 4</div>
-            <div className="std-table-cell responsive-cell px-2 text-right">Column 5</div>
-            <div className="std-table-cell responsive-cell pl-2 text-left">Column 6</div>
+            <div className="std-table-cell responsive-cell px-2 text-center fixed-width-100">Deposited Percentage</div>
+            <div className="std-table-cell responsive-cell px-2 text-center">Deposited Amount</div>
+            <div className="std-table-cell responsive-cell px-2 text-right">Total Staked</div>
+            <div className="std-table-cell responsive-cell px-2 text-center">Total Staked + Rewards</div>
+            <div className="std-table-cell responsive-cell pl-2 text-left">Date</div>
           </div>
         </div>
 
@@ -634,11 +632,10 @@ export const StakingRewardsView = () => {
                   depositsInfo.depositRecords.length > 0) &&
                   depositsInfo.depositRecords.map((item: DepositRecord, index: number) => (
                     <div key={`${index}`} className="item-list-row">
-                      <div className="std-table-cell responsive-cell px-2 text-left">Column 1</div>
-                      <div className="std-table-cell responsive-cell px-2 text-left">Column 2</div>
-                      <div className="std-table-cell responsive-cell px-2 text-right">Column 3</div>
-                      <div className="std-table-cell responsive-cell px-2 text-right">Column 4</div>
-                      <div className="std-table-cell responsive-cell px-2 text-right">Column 5</div>
+                      <div className="std-table-cell responsive-cell pr-3 text-right fixed-width-100">{item.depositedPercentage * 100}%</div>
+                      <div className="std-table-cell responsive-cell pr-3 text-right">{formatThousands(item.depositedUiAmount)} MEAN</div>
+                      <div className="std-table-cell responsive-cell px-2 text-right">{formatThousands(item.totalStakeUiAmount)} MEAN</div>
+                      <div className="std-table-cell responsive-cell px-3 text-right">{formatThousands(item.totalStakedPlusRewardsUiAmount)} MEAN</div>
                       <div className="std-table-cell responsive-cell pl-2 text-left"><Moment className="capitalize-first-letter" date={item.depositedUtc} fromNow /></div>
                     </div>
                   ))}
