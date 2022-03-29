@@ -65,7 +65,10 @@ export const InvestView = () => {
   const [maxOrcaAprValue, setMaxOrcaAprValue] = useState<number>(0);
   const [marinadeApyValue, setMarinadeApyValue] = useState<number>(0);
   const [marinadeTotalStakedValue, setMarinadeTotalStakedValue] = useState<number>(0);
+  const [soceanApyValue, setSoceanApyValue] = useState<number>(0);
+  const [soceanTotalStakedValue, setSoceanTotalStakedValue] = useState<number>(0);
   const [maxAprValue, setMaxAprValue] = useState<number>(0);
+  const [maxStakeSolApyValue, setMaxStakeSolApyValue] = useState<number>(0);
   const [pageInitialized, setPageInitialized] = useState<boolean>(false);
   const [stakePoolInfo, setStakePoolInfo] = useState<StakePoolInfo>();
   const [shouldRefreshLpData, setShouldRefreshLpData] = useState(true);
@@ -299,13 +302,14 @@ export const InvestView = () => {
       symbol1: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
       symbol2: "",
       title: t("invest.panel-left.invest-stake-sol-tab-title"),
-      rateAmount: `${t("invest.panel-left.up-to-value-label")} 3.74`,
+      rateAmount: `${t("invest.panel-left.up-to-value-label")} ${maxStakeSolApyValue ? maxStakeSolApyValue.toFixed(2) : "0"}`,
       interval: "APR/APY"
     }
   ], [
     t,
     maxAprValue,
     stakePoolInfo,
+    maxStakeSolApyValue
   ]);
 
   const stakingData = useMemo(() => [
@@ -444,7 +448,7 @@ export const InvestView = () => {
         const data = await res.json();
         // Should update if got data
         if (data) {
-            const marinadeApy = data.value;
+            const marinadeApy = data.value * 100;
 
             setMarinadeApyValue(marinadeApy);
             consoleOut('marinadeApy:', marinadeApy, 'info');
@@ -458,7 +462,7 @@ export const InvestView = () => {
 
   }, []);
 
-  // Get Marinade apy info
+  // Get Marinade Total Staked info
   const getMarinadeTotalStakedInfo = useCallback(async () => {
 
     consoleOut('fetch Marinade Total Staked info', 'STARTED', 'orange');
@@ -482,6 +486,54 @@ export const InvestView = () => {
 
   }, []);
 
+  // Get Socean apy info
+  const getSoceanApyInfo = useCallback(async () => {
+
+    consoleOut('fetch Socean Apy info', 'STARTED', 'orange');
+    try {
+      try {
+        const res = await fetch('https://www.socean.fi/api/apy');
+        const data = await res.json();
+        // Should update if got data
+        if (data) {
+            const soceanApy = data;
+
+            setSoceanApyValue(soceanApy);
+            consoleOut('soceanApy:', soceanApy, 'info');
+        }
+      } catch (error) {
+        consoleOut(error);
+      }
+    } finally {
+      return consoleOut('fetch Socean Apy info', 'FINISHED', 'orange');
+    }
+
+  }, []);
+
+  // Get Socean Total Staked info
+  const getSoceanTotalStakedInfo = useCallback(async () => {
+
+    consoleOut('fetch Socean Total Staked info', 'STARTED', 'orange');
+    try {
+      try {
+        const res = await fetch('https://www.socean.fi/api/tvl');
+        const data = await res.json();
+        // Should update if got data
+        if (data) {
+            const soceanTotalStaked = data;
+
+            setSoceanTotalStakedValue(soceanTotalStaked);
+            consoleOut('soceanTotalStaked:', soceanTotalStaked, 'info');
+        }
+      } catch (error) {
+        consoleOut(error);
+      }
+    } finally {
+      return consoleOut('fetch Socean Total Staked info', 'FINISHED', 'orange');
+    }
+
+  }, []);
+
   // Refresh pools info
   useEffect(() => {
     if (!connection || !shouldRefreshLpData) { return; }
@@ -497,7 +549,9 @@ export const InvestView = () => {
         getRaydiumPoolInfo(),
         getOrcaPoolInfo(),
         getMarinadeApyInfo(),
-        getMarinadeTotalStakedInfo()
+        getMarinadeTotalStakedInfo(),
+        getSoceanApyInfo(),
+        getSoceanTotalStakedInfo()
       ])
       .then(() => setRefreshingPoolInfo(false));
     })();
@@ -508,7 +562,9 @@ export const InvestView = () => {
     getRaydiumPoolInfo,
     getOrcaPoolInfo,
     getMarinadeApyInfo,
-    getMarinadeTotalStakedInfo
+    getMarinadeTotalStakedInfo,
+    getSoceanApyInfo,
+    getSoceanTotalStakedInfo
   ]);
 
   // Timeout to refresh Pools info
@@ -530,6 +586,15 @@ export const InvestView = () => {
   }, [
     maxOrcaAprValue,
     maxRadiumAprValue
+  ]);
+
+  useEffect(() => {
+    const maxStakeSolApy = Math.max(soceanApyValue, marinadeApyValue);
+    consoleOut('maxAprValue:', maxStakeSolApy, 'blue');
+    setMaxStakeSolApyValue(maxStakeSolApy);
+  }, [
+    marinadeApyValue,
+    soceanApyValue
   ]);
 
   const [selectedInvest, setSelectedInvest] = useState<any>(investItems[0]);
@@ -840,7 +905,9 @@ export const InvestView = () => {
 
                     <p>{t("invest.panel-right.liquidity-pool.text-one")}</p>
 
-                    <p>{t("invest.panel-right.liquidity-pool.text-two")}</p>
+                    <p>{t("invest.panel-right.liquidity-pool.text-two")} <a href="https://raydium.gitbook.io/raydium/exchange-trade-and-swap/liquidity-pools" target="_blank" rel="noreferrer"> Raydium </a> {t("invest.panel-right.liquidity-pool.text-two-divider")} <a href="https://docs.orca.so/how-to-provide-liquidity-on-orca" target="_blank" rel="noreferrer"> Orca </a>.</p>
+
+                    <p>{t("invest.panel-right.liquidity-pool.text-three")}</p>
 
                     <div className="float-top-right">
                       <span className="icon-button-container secondary-button">
@@ -993,10 +1060,10 @@ export const InvestView = () => {
                                     <span>scnSOL</span>
                                   </div>
                                   <div className="std-table-cell responsive-cell pr-1 text-left">
-                                    {/* <span>{orca.volume_24h > 0 ? `$${formatThousands(orca.volume_24h)}` : "--"}</span> */}
+                                    <span>{soceanTotalStakedValue > 0 ? `${formatThousands(soceanTotalStakedValue)} SOL` : "--"}</span>
                                   </div>
-                                  <div className="std-table-cell responsive-cell pr-1 text-left">
-                                    {/* <span>{orca.apy_7d > 0 ? `${(orca.apy_7d * 100).toFixed(2)}% APY` : "--"}</span> */}
+                                  <div className="std-table-cell responsive-cell pr-1 text-center">
+                                    <span>{soceanApyValue > 0 ? `${(soceanApyValue).toFixed(2)}%` : "--"}</span>
                                   </div>
                                   <div className="std-table-cell responsive-cell pl-1 text-center invest-col">
                                     <span role="img" aria-label="arrow-up" className="anticon anticon-arrow-up mean-svg-icons outgoing upright">
@@ -1024,7 +1091,7 @@ export const InvestView = () => {
                                     <span>{marinadeTotalStakedValue > 0 ? `${formatThousands(marinadeTotalStakedValue)} SOL` : "--"}</span>
                                   </div>
                                   <div className="std-table-cell responsive-cell pr-1 text-center">
-                                    <span>{marinadeApyValue > 0 ? `${(marinadeApyValue * 100).toFixed(2)}%` : "--"}</span>
+                                    <span>{marinadeApyValue > 0 ? `${marinadeApyValue.toFixed(2)}%` : "--"}</span>
                                   </div>
                                   <div className="std-table-cell responsive-cell pl-1 text-center invest-col">
                                     <span role="img" aria-label="arrow-up" className="anticon anticon-arrow-up mean-svg-icons outgoing upright">
