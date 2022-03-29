@@ -21,6 +21,8 @@ import { notify } from "../../utils/notifications";
 import { DepositRecord, DepositsInfo, StakingClient } from "@mean-dao/staking";
 import Moment from "react-moment";
 
+const DEFAULT_APR_PERCENT_GOAL = '21';
+
 export const StakingRewardsView = () => {
   const {
     transactionStatus,
@@ -38,7 +40,7 @@ export const StakingRewardsView = () => {
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [pageInitialized, setPageInitialized] = useState<boolean>(false);
   const [isDepositing, setIsDepositing] = useState(false);
-  const [aprPercentGoal, setAprPercentGoal] = useState('21');
+  const [aprPercentGoal, setAprPercentGoal] = useState(DEFAULT_APR_PERCENT_GOAL);
   const [depositsInfo, setDepositsInfo] = useState<DepositsInfo | undefined>(undefined);
   const [refreshingDepositsInfo, setRefreshingDepositsInfo] = useState<boolean>(false);
   const [shouldRefreshDepositsInfo, setShouldRefreshDepositsInfo] = useState(true);
@@ -177,17 +179,15 @@ export const StakingRewardsView = () => {
   }, [setTransactionStatus]);
 
   const onDepositTxConfirmed = useCallback((value: any) => {
-    if (value === lastDepositSignature) {
-      consoleOut("onDepositTxConfirmed event executed:", value, 'crimson');
-      setIsDepositing(false);
-      resetTransactionStatus();
-      setTimeout(() => {
-        refreshMeanStakingVaultBalance();
-        setShouldRefreshDepositsInfo(true);
-      }, 100);
-    }
+    consoleOut("onDepositTxConfirmed event executed:", value, 'crimson');
+    setIsDepositing(false);
+    resetTransactionStatus();
+    setTimeout(() => {
+      refreshMeanStakingVaultBalance();
+      setShouldRefreshDepositsInfo(true);
+    }, 100);
+    setLastDepositSignature('');
   }, [
-    lastDepositSignature,
     refreshMeanStakingVaultBalance,
     resetTransactionStatus,
   ]);
@@ -276,17 +276,14 @@ export const StakingRewardsView = () => {
   // Setup event listeners
   useEffect(() => {
     if (pageInitialized && canSubscribe) {
-      setTimeout(() => {
-        setCanSubscribe(false);
-      });
+      setCanSubscribe(false);
       confirmationEvents.on(EventType.TxConfirmSuccess, onDepositTxConfirmed);
       consoleOut('Subscribed to event txConfirmed with:', 'onDepositTxConfirmed', 'blue');
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     canSubscribe,
     pageInitialized,
-    // onDepositTxConfirmed
+    onDepositTxConfirmed
   ]);
 
   // Set when a page is initialized
@@ -317,7 +314,7 @@ export const StakingRewardsView = () => {
           currentOperation: TransactionStatus.InitTransaction,
         });
 
-        const depositPercentage = parseFloat(aprPercentGoal);
+        const depositPercentage = parseFloat(aprPercentGoal) / 100;
         consoleOut("depositPercentage:", depositPercentage, "blue");
 
         // Log input data
@@ -549,7 +546,7 @@ export const StakingRewardsView = () => {
               completedTitle: "Transaction confirmed",
               completedMessage: depositSuccessMessage,
             });
-            setAprPercentGoal('');
+            setAprPercentGoal(DEFAULT_APR_PERCENT_GOAL);
           } else {
             notify({
               message: t("notifications.error-title"),
@@ -655,7 +652,7 @@ export const StakingRewardsView = () => {
                   depositsInfo.depositRecords.length > 0) &&
                   depositsInfo.depositRecords.map((item: DepositRecord, index: number) => (
                     <div key={`${index}`} className="item-list-row">
-                      <div className="std-table-cell responsive-cell pr-3 text-right">{item.depositedPercentage}%</div>
+                      <div className="std-table-cell responsive-cell pr-3 text-right">{item.depositedPercentage * 100}%</div>
                       <div className="std-table-cell responsive-cell pr-3 text-right">{formatThousands(item.depositedUiAmount)} MEAN</div>
                       <div className="std-table-cell responsive-cell px-2 text-right">{formatThousands(item.totalStakeUiAmount)} MEAN</div>
                       <div className="std-table-cell responsive-cell px-3 text-right">{formatThousands(item.totalStakedPlusRewardsUiAmount)} MEAN</div>
@@ -748,6 +745,13 @@ export const StakingRewardsView = () => {
 
   return (
     <>
+      {isLocal() && (
+        <div className="debug-bar">
+          <span className="ml-1">isDepositing:</span><span className="ml-1 font-bold fg-dark-active">{isDepositing ? 'true' : 'false'}</span>
+          <span className="ml-1">lastDepositSignature:</span><span className="ml-1 font-bold fg-dark-active">{lastDepositSignature || '-'}</span>
+        </div>
+      )}
+
       <div className="container main-container">
         <div className="interaction-area">
           <div className="title-and-subtitle">
