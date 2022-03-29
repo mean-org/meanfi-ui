@@ -9,7 +9,7 @@ import { findATokenAddress, formatThousands, getTxIxResume, isValidNumber, makeI
 import { IconStats } from "../../Icons";
 import { consoleOut, getTransactionStatusForLogs, isProd } from "../../utils/ui";
 import { useNavigate } from "react-router-dom";
-import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
+import { ConfirmOptions, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
 import { confirmationEvents, TransactionStatusContext } from "../../contexts/transaction-status";
 import { MEAN_TOKEN_LIST } from "../../constants/token-list";
@@ -18,6 +18,7 @@ import { appConfig, customLogger } from "../..";
 import { Button } from "antd";
 import { EventType, OperationType, TransactionStatus } from "../../models/enums";
 import { notify } from "../../utils/notifications";
+import { StakingClient } from "@mean-dao/staking";
 
 export const StakingRewardsView = () => {
   const {
@@ -25,9 +26,9 @@ export const StakingRewardsView = () => {
     setTransactionStatus,
   } = useContext(AppStateContext);
   const { enqueueTransactionConfirmation } = useContext(TransactionStatusContext);
+  const { cluster, endpoint } = useConnectionConfig();
   const navigate = useNavigate();
   const connection = useConnection();
-  const connectionConfig = useConnectionConfig();
   const { publicKey, wallet } = useWallet();
   const { account } = useNativeAccount();
   const accounts = useAccountsContext();
@@ -39,7 +40,7 @@ export const StakingRewardsView = () => {
   const [aprPercentGoal, setAprPercentGoal] = useState('21');
   // Tokens and balances
   const [meanToken, setMeanToken] = useState<TokenInfo>();
-  const [meanBalance, setMeanBalance] = useState<number>(0);
+  const [meanBalance, setMeanBalance] = useState<number | undefined>(undefined);
   const [meanStakingVaultBalance, setMeanStakingVaultBalance] = useState<number>(0);
 
   // MEAN Staking Vault address
@@ -68,6 +69,28 @@ export const StakingRewardsView = () => {
     return true;
 
   }, [publicKey]);
+
+  // Create and cache Staking client instance
+  const stakeClient = useMemo(() => {
+
+    const opts: ConfirmOptions = {
+      preflightCommitment: "confirmed",
+      commitment: "confirmed",
+    };
+
+    return new StakingClient(
+      cluster,
+      endpoint,
+      publicKey,
+      opts,
+      isProd() ? false : true
+    )
+
+  }, [
+    cluster,
+    endpoint,
+    publicKey
+  ]);
 
   /////////////////
   //  Callbacks  //
@@ -156,7 +179,7 @@ export const StakingRewardsView = () => {
     if (!connection) { return; }
 
     if (!pageInitialized) {
-      const tokenList = MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(connectionConfig.cluster))
+      const tokenList = MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(cluster))
       const token = tokenList.find(t => t.symbol === 'MEAN');
 
       consoleOut('MEAN token', token, 'blue');
@@ -166,7 +189,7 @@ export const StakingRewardsView = () => {
   }, [
     connection,
     pageInitialized,
-    connectionConfig.cluster
+    cluster
   ]);
 
   // Keep native account balance updated
@@ -242,15 +265,15 @@ export const StakingRewardsView = () => {
     const transactionLog: any[] = [];
 
     const createTx = async (): Promise<boolean> => {
-      if (wallet && meanToken) {
+      if (wallet && stakeClient && meanToken) {
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
           currentOperation: TransactionStatus.InitTransaction,
         });
 
         const payload = {
-          aprPercentGoal: makeInteger(parseFloat(aprPercentGoal), 2),
-          totalMeanAdded: makeInteger(getTotalMeanAdded(), meanToken.decimals)
+          depositPercentage: makeInteger(parseFloat(aprPercentGoal), 2).toNumber(),
+          totalMeanAdded: makeInteger(getTotalMeanAdded(), meanToken.decimals).toNumber()
         };
         consoleOut("data:", payload, "blue");
 
@@ -269,54 +292,42 @@ export const StakingRewardsView = () => {
           result: "",
         });
 
-        // TODO: Remove later
-        setTransactionStatus({
-          lastOperation: transactionStatus.currentOperation,
-          currentOperation: TransactionStatus.InitTransactionFailure,
-        });
-        return false;
-
-        /*
-        return await unwrapSol(
-          connection, // connection
-          wallet, // wallet
-          Keypair.generate(),
-          amount // amount
+        return await stakeClient.depositTransaction(
+          payload.depositPercentage             // depositPercentage
         )
-          .then((value) => {
-            consoleOut("unwrapSol returned transaction:", value);
-            // Stage 1 completed - The transaction is created and returned
-            setTransactionStatus({
-              lastOperation: TransactionStatus.InitTransactionSuccess,
-              currentOperation: TransactionStatus.SignTransaction,
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.InitTransactionSuccess
-              ),
-              result: getTxIxResume(value),
-            });
-            transaction = value;
-            return true;
-          })
-          .catch((error) => {
-            console.error("unwrapSol transaction init error:", error);
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.InitTransactionFailure,
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.InitTransactionFailure
-              ),
-              result: `${error}`,
-            });
-            customLogger.logError("Deposit transaction failed", {
-              transcript: transactionLog,
-            });
-            return false;
+        .then((value) => {
+          consoleOut("depositTransaction returned transaction:", value);
+          // Stage 1 completed - The transaction is created and returned
+          setTransactionStatus({
+            lastOperation: TransactionStatus.InitTransactionSuccess,
+            currentOperation: TransactionStatus.SignTransaction,
           });
-        */
+          transactionLog.push({
+            action: getTransactionStatusForLogs(
+              TransactionStatus.InitTransactionSuccess
+            ),
+            result: getTxIxResume(value),
+          });
+          transaction = value;
+          return true;
+        })
+        .catch((error) => {
+          console.error("depositTransaction init error:", error);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.InitTransactionFailure,
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(
+              TransactionStatus.InitTransactionFailure
+            ),
+            result: `${error}`,
+          });
+          customLogger.logError("Deposit transaction failed", {
+            transcript: transactionLog,
+          });
+          return false;
+        });
       } else {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
@@ -627,7 +638,7 @@ export const StakingRewardsView = () => {
         </div>
         {!aprPercentGoal || parseFloat(aprPercentGoal) < 0.01 || parseFloat(aprPercentGoal) > 100 ? (
           <span className="form-field-error">Valid values: from 0.01 to 100</span>
-        ) : meanBalance < getTotalMeanAdded() ? (
+        ) : meanStakingVaultBalance && meanBalance !== undefined && meanBalance < getTotalMeanAdded() ? (
           <span className="form-field-error">Insufficient balance for APR Percent Goal</span>
         ) : (null)}
       </div>
@@ -649,7 +660,7 @@ export const StakingRewardsView = () => {
           </div>
           <div className="right">&nbsp;</div>
         </div>
-        <span className="form-field-hint">User MEAN balance: {formatThousands(meanBalance, meanToken?.decimals || 6)}</span>
+        <span className="form-field-hint">User MEAN balance: {meanBalance ? formatThousands(meanBalance, meanToken?.decimals || 6) : '-'}</span>
       </div>
     </>
   );
