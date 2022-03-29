@@ -15,10 +15,11 @@ import { confirmationEvents, TransactionStatusContext } from "../../contexts/tra
 import { MEAN_TOKEN_LIST } from "../../constants/token-list";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { appConfig, customLogger } from "../..";
-import { Button } from "antd";
+import { Button, Spin } from "antd";
 import { EventType, OperationType, TransactionStatus } from "../../models/enums";
 import { notify } from "../../utils/notifications";
-import { StakingClient } from "@mean-dao/staking";
+import { DepositRecord, DepositsInfo, StakingClient } from "@mean-dao/staking";
+import Moment from "react-moment";
 
 export const StakingRewardsView = () => {
   const {
@@ -38,6 +39,9 @@ export const StakingRewardsView = () => {
   const [pageInitialized, setPageInitialized] = useState<boolean>(false);
   const [isDepositing, setIsDepositing] = useState(false);
   const [aprPercentGoal, setAprPercentGoal] = useState('21');
+  const [depositsInfo, setDepositsInfo] = useState<DepositsInfo | undefined>(undefined);
+  const [refreshingDepositsInfo, setRefreshingDepositsInfo] = useState<boolean>(false);
+  const [shouldRefreshDepositsInfo, setShouldRefreshDepositsInfo] = useState(true);
   // Tokens and balances
   const [meanToken, setMeanToken] = useState<TokenInfo>();
   const [meanBalance, setMeanBalance] = useState<number | undefined>(undefined);
@@ -230,6 +234,27 @@ export const StakingRewardsView = () => {
     refreshMeanBalance,
   ]);
 
+  // Refresh deposits info
+  useEffect(() => {
+    if (!connection || !shouldRefreshDepositsInfo) { return; }
+
+    setTimeout(() => {
+      setShouldRefreshDepositsInfo(false);
+      setRefreshingDepositsInfo(true);
+    });
+
+    consoleOut('Refreshing deposits info...', '', 'blue');
+    (async () => {
+      await stakeClient.getDepositsInfo()
+        .then(deposits => {
+          consoleOut('deposits:', deposits, 'blue');
+          setDepositsInfo(deposits);
+        })
+        .finally(() => setRefreshingDepositsInfo(false));
+    })();
+
+  }, [connection, shouldRefreshDepositsInfo, stakeClient]);
+
   // Setup event listeners
   useEffect(() => {
     if (connection && publicKey && !pageInitialized) {
@@ -271,18 +296,15 @@ export const StakingRewardsView = () => {
           currentOperation: TransactionStatus.InitTransaction,
         });
 
-        const payload = {
-          depositPercentage: makeInteger(parseFloat(aprPercentGoal), 2).toNumber(),
-          totalMeanAdded: makeInteger(getTotalMeanAdded(), meanToken.decimals).toNumber()
-        };
-        consoleOut("data:", payload, "blue");
+        const depositPercentage = parseFloat(aprPercentGoal);
+        consoleOut("depositPercentage:", depositPercentage, "blue");
 
         // Log input data
         transactionLog.push({
           action: getTransactionStatusForLogs(
             TransactionStatus.TransactionStart
           ),
-          inputs: payload,
+          inputs: `depositPercentage: ${depositPercentage}%`,
         });
 
         transactionLog.push({
@@ -293,7 +315,7 @@ export const StakingRewardsView = () => {
         });
 
         return await stakeClient.depositTransaction(
-          payload.depositPercentage             // depositPercentage
+          depositPercentage             // depositPercentage
         )
         .then((value) => {
           consoleOut("depositTransaction returned transaction:", value);
@@ -589,6 +611,45 @@ export const StakingRewardsView = () => {
     );
   }
 
+  const renderDepositHistory = (
+    <>
+      <div className="container-max-width-720 my-3">
+        <div className="item-list-header compact dark">
+          <div className="header-row">
+            <div className="std-table-cell responsive-cell px-2 text-left">Column 1</div>
+            <div className="std-table-cell responsive-cell px-2 text-left">Column 2</div>
+            <div className="std-table-cell responsive-cell px-2 text-right">Column 3</div>
+            <div className="std-table-cell responsive-cell px-2 text-right">Column 4</div>
+            <div className="std-table-cell responsive-cell px-2 text-right">Column 5</div>
+            <div className="std-table-cell responsive-cell pl-2 text-left">Column 6</div>
+          </div>
+        </div>
+
+        <div className="transaction-list-data-wrapper vertical-scroll">
+          <Spin spinning={refreshingDepositsInfo}>
+            <div className="activity-list h-100">
+              <div className="item-list-body compact">
+                {(depositsInfo &&
+                  depositsInfo.depositRecords &&
+                  depositsInfo.depositRecords.length > 0) &&
+                  depositsInfo.depositRecords.map((item: DepositRecord, index: number) => (
+                    <div key={`${index}`} className="item-list-row">
+                      <div className="std-table-cell responsive-cell px-2 text-left">Column 1</div>
+                      <div className="std-table-cell responsive-cell px-2 text-left">Column 2</div>
+                      <div className="std-table-cell responsive-cell px-2 text-right">Column 3</div>
+                      <div className="std-table-cell responsive-cell px-2 text-right">Column 4</div>
+                      <div className="std-table-cell responsive-cell px-2 text-right">Column 5</div>
+                      <div className="std-table-cell responsive-cell pl-2 text-left"><Moment className="capitalize-first-letter" date={item.depositedUtc} fromNow /></div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          </Spin>
+        </div>
+      </div>
+    </>
+  );
+
   const renderStakingRewardsVaultBalance = (
     <>
       <div className="well disabled">
@@ -693,8 +754,13 @@ export const StakingRewardsView = () => {
               {isDepositing ? 'Funding Vault' : 'Fund Vault'}
             </Button>
           </div>
+          <div className="title-and-subtitle">
+            <div className="subtitle text-center">
+              Deposit history
+            </div>
+          </div>
           <div className="mb-3">
-            History table here
+            {renderDepositHistory}
           </div>
         </div>
       </div>
