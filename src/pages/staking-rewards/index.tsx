@@ -1,14 +1,14 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import './style.less';
 import { WarningFilled } from "@ant-design/icons";
 import { useTranslation } from 'react-i18next';
 import { PreFooter } from "../../components/PreFooter";
 import { getNetworkIdByCluster, useConnection, useConnectionConfig } from '../../contexts/connection';
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
-import { findATokenAddress, formatThousands, getTxIxResume, isValidNumber, makeInteger } from "../../utils/utils";
+import { findATokenAddress, formatThousands, getTxIxResume, isValidNumber } from "../../utils/utils";
 import { IconStats } from "../../Icons";
-import { consoleOut, getTransactionStatusForLogs, isProd } from "../../utils/ui";
-import { useNavigate } from "react-router-dom";
+import { consoleOut, getTransactionStatusForLogs, isLocal, isProd } from "../../utils/ui";
 import { ConfirmOptions, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
 import { confirmationEvents, TransactionStatusContext } from "../../contexts/transaction-status";
@@ -24,11 +24,11 @@ import Moment from "react-moment";
 export const StakingRewardsView = () => {
   const {
     transactionStatus,
+    isInBetaTestingProgram,
     setTransactionStatus,
   } = useContext(AppStateContext);
   const { enqueueTransactionConfirmation } = useContext(TransactionStatusContext);
   const { cluster, endpoint } = useConnectionConfig();
-  const navigate = useNavigate();
   const connection = useConnection();
   const { publicKey, wallet } = useWallet();
   const { account } = useNativeAccount();
@@ -42,10 +42,12 @@ export const StakingRewardsView = () => {
   const [depositsInfo, setDepositsInfo] = useState<DepositsInfo | undefined>(undefined);
   const [refreshingDepositsInfo, setRefreshingDepositsInfo] = useState<boolean>(false);
   const [shouldRefreshDepositsInfo, setShouldRefreshDepositsInfo] = useState(true);
+  const [lastDepositSignature, setLastDepositSignature] = useState('');
   // Tokens and balances
   const [meanToken, setMeanToken] = useState<TokenInfo>();
   const [meanBalance, setMeanBalance] = useState<number | undefined>(undefined);
   const [meanStakingVaultBalance, setMeanStakingVaultBalance] = useState<number>(0);
+  const [canSubscribe, setCanSubscribe] = useState(true);
 
   // MEAN Staking Vault address
   const meanStakingVault = useMemo(() => {
@@ -58,6 +60,9 @@ export const StakingRewardsView = () => {
     if (!publicKey) { return false; }
 
     const isUserAllowed = () => {
+      if (isProd() && isInBetaTestingProgram) {
+        return true;
+      }
       const acl = appConfig.getConfig().stakingRewardsAcl;
       if (acl && acl.length > 0) {
         return acl.some(a => a === publicKey.toBase58());
@@ -66,13 +71,13 @@ export const StakingRewardsView = () => {
       }
     }
 
-    if (isProd()) {
+    if (!isLocal()) {
       return isUserAllowed();
     }
 
     return true;
 
-  }, [publicKey]);
+  }, [isInBetaTestingProgram, publicKey]);
 
   // Create and cache Staking client instance
   const stakeClient = useMemo(() => {
@@ -163,13 +168,17 @@ export const StakingRewardsView = () => {
   }, [setTransactionStatus]);
 
   const onDepositTxConfirmed = useCallback((value: any) => {
-    setIsDepositing(false);
-    resetTransactionStatus();
-    setTimeout(() => {
-      refreshMeanStakingVaultBalance();
-    });
-    consoleOut("onDepositTxConfirmed event executed:", value, 'crimson');
+    if (value === lastDepositSignature) {
+      consoleOut("onDepositTxConfirmed event executed:", value, 'crimson');
+      setIsDepositing(false);
+      resetTransactionStatus();
+      setTimeout(() => {
+        refreshMeanStakingVaultBalance();
+        setShouldRefreshDepositsInfo(true);
+      }, 100);
+    }
   }, [
+    lastDepositSignature,
     refreshMeanStakingVaultBalance,
     resetTransactionStatus,
   ]);
@@ -257,15 +266,18 @@ export const StakingRewardsView = () => {
 
   // Setup event listeners
   useEffect(() => {
-    if (connection && publicKey && !pageInitialized) {
+    if (pageInitialized && canSubscribe) {
+      setTimeout(() => {
+        setCanSubscribe(false);
+      });
       confirmationEvents.on(EventType.TxConfirmSuccess, onDepositTxConfirmed);
       consoleOut('Subscribed to event txConfirmed with:', 'onDepositTxConfirmed', 'blue');
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    publicKey,
-    connection,
+    canSubscribe,
     pageInitialized,
-    onDepositTxConfirmed,
+    // onDepositTxConfirmed
   ]);
 
   // Set when a page is initialized
@@ -509,6 +521,7 @@ export const StakingRewardsView = () => {
           const sent = await sendTx();
           consoleOut("sent:", sent);
           if (sent) {
+            setLastDepositSignature(signature);
             const depositionMessage = `Depositing ${formatThousands(
               getTotalMeanAdded(),
               meanToken.decimals
@@ -555,7 +568,7 @@ export const StakingRewardsView = () => {
       newValue = splitted.join('.');
     }
     if (newValue === null || newValue === undefined || newValue === "") {
-      setAprPercentGoal("");
+      setAprPercentGoal('');
     } else if (newValue === '.') {
       setAprPercentGoal(".");
     } else if (isValidNumber(newValue)) {
@@ -616,12 +629,11 @@ export const StakingRewardsView = () => {
       <div className="container-max-width-720 my-3">
         <div className="item-list-header compact dark">
           <div className="header-row">
-            <div className="std-table-cell responsive-cell px-2 text-left">Column 1</div>
-            <div className="std-table-cell responsive-cell px-2 text-left">Column 2</div>
-            <div className="std-table-cell responsive-cell px-2 text-right">Column 3</div>
-            <div className="std-table-cell responsive-cell px-2 text-right">Column 4</div>
-            <div className="std-table-cell responsive-cell px-2 text-right">Column 5</div>
-            <div className="std-table-cell responsive-cell pl-2 text-left">Column 6</div>
+            <div className="std-table-cell responsive-cell px-2 text-center">Deposited Percentage</div>
+            <div className="std-table-cell responsive-cell px-2 text-center">Deposited Amount</div>
+            <div className="std-table-cell responsive-cell px-2 text-right">Total Staked</div>
+            <div className="std-table-cell responsive-cell px-2 text-center">Total Staked + Rewards</div>
+            <div className="std-table-cell responsive-cell pl-2 text-left">Date</div>
           </div>
         </div>
 
@@ -634,11 +646,10 @@ export const StakingRewardsView = () => {
                   depositsInfo.depositRecords.length > 0) &&
                   depositsInfo.depositRecords.map((item: DepositRecord, index: number) => (
                     <div key={`${index}`} className="item-list-row">
-                      <div className="std-table-cell responsive-cell px-2 text-left">Column 1</div>
-                      <div className="std-table-cell responsive-cell px-2 text-left">Column 2</div>
-                      <div className="std-table-cell responsive-cell px-2 text-right">Column 3</div>
-                      <div className="std-table-cell responsive-cell px-2 text-right">Column 4</div>
-                      <div className="std-table-cell responsive-cell px-2 text-right">Column 5</div>
+                      <div className="std-table-cell responsive-cell pr-3 text-right">{item.depositedPercentage}%</div>
+                      <div className="std-table-cell responsive-cell pr-3 text-right">{formatThousands(item.depositedUiAmount)} MEAN</div>
+                      <div className="std-table-cell responsive-cell px-2 text-right">{formatThousands(item.totalStakeUiAmount)} MEAN</div>
+                      <div className="std-table-cell responsive-cell px-3 text-right">{formatThousands(item.totalStakedPlusRewardsUiAmount)} MEAN</div>
                       <div className="std-table-cell responsive-cell pl-2 text-left"><Moment className="capitalize-first-letter" date={item.depositedUtc} fromNow /></div>
                     </div>
                   ))}
