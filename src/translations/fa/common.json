@@ -629,6 +629,7 @@
 	"notifications": {
 		"account-address-copied-message": "آدرس حساب با موفقیت کپی شد",
 		"account-address-not-copied-message": "آدرس حساب کپی نشد",
+		"check-transaction-in-explorer": "Check your transaction here",
 		"create-money-stream-completed": "money stream شما ایجاد شده است",
 		"create-money-stream-completed-wait-for-confirm": "پس از تایید تراکنش باید در لیست نشان داده شود.",
 		"error-cannot-faucet-mainnet-message": "در شبکه اصلی نمی توان فاست زد",

@@ -21,13 +21,10 @@ export function notify({
   }
   (notification as any)[type]({
     key,
-    message: <span style={{ color: "black" }}>{message}</span>,
+    message: <span>{message}</span>,
     description: (
-      <span style={{ color: "black", opacity: 0.5 }}>{description}</span>
+      <span>{description}</span>
     ),
     placement,
-    style: {
-      backgroundColor: "white",
-    },
   });
 }

@@ -5,9 +5,10 @@ import { fetchTransactionStatus } from "../utils/transactions";
 import { consoleOut, delay } from "../utils/ui";
 import { EventType, OperationType } from "../models/enums";
 import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION, TRANSACTION_STATUS_RETRY, TRANSACTION_STATUS_RETRY_TIMEOUT } from "../constants";
-import { message } from "antd";
 import { useTranslation } from "react-i18next";
 import { shortenAddress } from "../utils/utils";
+import { openNotification } from "../components/Notifications";
+import { notification } from "antd";
 
 export type TxStatus = "fetching" | "fetched" | "error";
 const key = 'updatable';
@@ -159,7 +160,13 @@ const TransactionStatusProvider: React.FC = ({ children }) => {
     setLastSentTxStatus(undefined);
     setLastSentTxOperationType(type);
     setFetchingTxStatus(undefined);
-    message.loading({ content: t('transactions.status.tx-confirmation-status-wait'), key, duration: 0, className: 'custom-message' });
+    openNotification({
+      key,
+      type: "info",
+      title: t('transactions.status.tx-confirm'),
+      duration: 0,
+      description: t('transactions.status.tx-confirmation-status-wait')
+    });
   }
 
   const clearTransactionStatusContext = () => {
@@ -213,25 +220,6 @@ const TransactionStatusProvider: React.FC = ({ children }) => {
     lastSentTxSignature
   ]);
 
-  const warningMessage = (
-    <>
-    <span>
-      {t(
-        'transactions.status.tx-confirmation-status-timeout',
-        {timeout: `${TRANSACTION_STATUS_RETRY_TIMEOUT / 1000}${t('general.seconds')}`}
-      )}. {t('transactions.status.tx-confirm-failure-check')}.
-    </span>
-    <div>
-      <a className="secondary-link"
-          href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${lastSentTxSignature}`}
-          target="_blank"
-          rel="noopener noreferrer">
-          {shortenAddress(lastSentTxSignature, 8)}
-      </a>
-    </div>
-    </>
-  );
-
   useEffect(() => {
     if (!lastSentTxSignature || lastSentTxStatus === finality || fetchTxInfoStatus !== undefined) { return; }
 
@@ -241,11 +229,26 @@ const TransactionStatusProvider: React.FC = ({ children }) => {
       const result = await getTxStatus();
       if (result === finality) {
         setFetchingTxStatus("fetched");
-        message.success({ content: t('transactions.status.tx-confirmation-status-confirmed'), key, duration: 3, className: 'custom-message' });
+        openNotification({
+          key,
+          type: "success",
+          title: t('transactions.status.tx-confirmation-status-confirmed'),
+          duration: 4,
+          description: (
+            <>
+              <span className="mr-1">{t('notifications.check-transaction-in-explorer')}</span>
+              <a className="secondary-link"
+                  href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${lastSentTxSignature}`}
+                  target="_blank"
+                  rel="noopener noreferrer">
+                  {shortenAddress(lastSentTxSignature, 8)}
+              </a>
+            </>
+          )
+        });
       } else {
         setFetchingTxStatus("error");
-        // message.warning({ content: warningMessage, key, duration: 5, className: 'custom-message' });
-        message.destroy();
+        notification.close(key);
       }
       consoleOut('Total confirmation time (s):', ((new Date().getTime()) - txTimestampAdded) / 1000,'blue');
     })();
@@ -266,58 +269,6 @@ const TransactionStatusProvider: React.FC = ({ children }) => {
     const history = Array.from(txStatusCache.values());
     setConfirmationHistory(history);
     consoleOut('confirmationHistory:', history, 'orange');
-  }, []);
-
-  const loadingMessageContent = useCallback((data: TransactionStatusInfo) => {
-    return (
-      <>
-        <div className="font-size-100 font-bold">
-          {
-            data.loadingTitle
-              ? data.loadingTitle
-              : t('transactions.status.tx-confirm')
-          }
-        </div>
-        <div className="font-size-85">
-          {
-            data.loadingMessage
-              ? data.loadingMessage
-              : `${t('transactions.status.tx-confirmation-status-wait')} (${OperationType[data.operationType]})`
-          }
-        </div>
-        <div className="font-size-85">
-          <a className="secondary-link"
-              href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${data.signature}`}
-              target="_blank"
-              rel="noopener noreferrer">
-              {shortenAddress(data.signature, 8)}
-          </a>
-        </div>
-      </>
-    );
-  }, [t]);
-
-  const customMessageContent = useCallback((data: TransactionStatusInfo) => {
-    return (
-      <>
-        <div className="font-size-100 font-bold">{data.completedTitle}</div>
-        <div className="font-size-85">
-          {
-            data.completedMessage
-              ? data.completedMessage
-              : OperationType[data.operationType]
-          }
-        </div>
-        <div className="font-size-85">
-          <a className="secondary-link"
-              href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${data.signature}`}
-              target="_blank"
-              rel="noopener noreferrer">
-              {shortenAddress(data.signature, 8)}
-          </a>
-        </div>
-      </>
-    );
   }, []);
 
   const fetchTxStatus = useCallback(async (
@@ -363,11 +314,31 @@ const TransactionStatusProvider: React.FC = ({ children }) => {
   const enqueueTransactionConfirmation = useCallback(async (data: TransactionStatusInfo) => {
     const now = new Date().getTime();
     transactionStatusCache.add(data.signature, data);
-    message.loading({
-      content: loadingMessageContent(data),
-      key,
+    openNotification({
+      key: data.signature,
+      type: "info",
+      title: data.loadingTitle ? data.loadingTitle : t('transactions.status.tx-confirm'),
       duration: 0,
-      className: 'custom-message'
+      description: (
+        <>
+          <span className="mr-1">
+            {
+              data.loadingMessage
+                ? data.loadingMessage
+                : `${t('transactions.status.tx-confirmation-status-wait')} (${OperationType[data.operationType]})`
+            }
+          </span>
+          <div>
+            <span className="mr-1">{t('notifications.check-transaction-in-explorer')}</span>
+            <a className="secondary-link"
+                href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${data.signature}`}
+                target="_blank"
+                rel="noopener noreferrer">
+                {shortenAddress(data.signature, 8)}
+            </a>
+          </div>
+        </>
+      )
     });
     rebuildHistoryFromCache();
     const result = await fetchTxStatus(data.signature, data.finality, now);
@@ -378,12 +349,31 @@ const TransactionStatusProvider: React.FC = ({ children }) => {
           txInfoFetchStatus: "fetched"
         })
       );
-      message.success({
-        content: customMessageContent(data),
-        key,
+      openNotification({
+        key: data.signature,
+        type: "success",
+        title: data.completedTitle,
         duration: 4,
-        rootPrefixCls: 'mean-alert',
-        className: 'custom-message'
+        description: (
+          <>
+            <span className="mr-1">
+              {
+                data.completedMessage
+                  ? data.completedMessage
+                  : OperationType[data.operationType]
+              }
+            </span>
+            <div>
+              <span className="mr-1">{t('notifications.check-transaction-in-explorer')}</span>
+              <a className="secondary-link"
+                  href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${data.signature}`}
+                  target="_blank"
+                  rel="noopener noreferrer">
+                  {shortenAddress(data.signature, 8)}
+              </a>
+            </div>
+          </>
+        )
       });
       confirmationEvents.emit(EventType.TxConfirmSuccess, data.signature);
       rebuildHistoryFromCache();
@@ -394,20 +384,13 @@ const TransactionStatusProvider: React.FC = ({ children }) => {
           txInfoFetchStatus: "error"
         })
       );
-      // message.warning({
-      //   content: warningMessage,
-      //   key,
-      //   duration: 5,
-      //   className: 'custom-message'
-      // });
-      message.destroy();
+      notification.close(data.signature);
       confirmationEvents.emit(EventType.TxConfirmTimeout, data.signature);
       rebuildHistoryFromCache();
     }
   }, [
+    t,
     fetchTxStatus,
-    customMessageContent,
-    loadingMessageContent,
     rebuildHistoryFromCache
   ]);
 
