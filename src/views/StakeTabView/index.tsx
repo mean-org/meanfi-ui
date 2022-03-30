@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { TokenDisplay } from "../../components/TokenDisplay";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
-import { formatAmount, formatThousands, getAmountWithSymbol, getTxIxResume, isValidNumber } from "../../utils/utils";
+import { cutNumber, formatAmount, formatThousands, getAmountWithSymbol, getTxIxResume, isValidNumber } from "../../utils/utils";
 import { DebounceInput } from "react-debounce-input";
 import { StakeQuote, StakingClient } from "@mean-dao/staking";
 import { Transaction } from "@solana/web3.js";
@@ -76,7 +76,7 @@ export const StakeTabView = (props: {
 
   const [periodValue, setPeriodValue] = useState<number>(periods[0].value);
   const [periodTime, setPeriodTime] = useState<string>(periods[0].time);
-  const [stakeQuote, setStakeQuote] = useState<StakeQuote>();
+  const [stakeQuote, setStakeQuote] = useState<number>(0);
 
   ///////////////////////
   //  EVENTS & MODALS  //
@@ -467,15 +467,17 @@ export const StakeTabView = (props: {
       return;
     }
 
-    props.stakeClient.getStakeQuote(parseFloat(stakedAmount)).then((value: any) => {
-      setStakeQuote(value.meanInUiAmount);
+    props.stakeClient.getStakeQuote(parseFloat(fromCoinAmount)).then((value: StakeQuote) => {
+      consoleOut('stakeQuote:', value, 'blue');
+      setStakeQuote(value.sMeanOutUiAmount);
+      consoleOut(`Quote for ${formatThousands(parseFloat(fromCoinAmount), 6)} MEAN`, `${formatThousands(value.sMeanOutUiAmount, 6)} sMEAN`, 'blue');
     }).catch((error: any) => {
       console.error(error);
     });
 
   }, [
     props.stakeClient,
-    stakedAmount
+    fromCoinAmount
   ]);
 
   // useEffect(() => {
@@ -487,7 +489,7 @@ export const StakeTabView = (props: {
   return (
     <>
       <div className="form-label">{t("invest.panel-right.tabset.stake.amount-label")}</div>
-      <div className="well">
+      <div className="well mb-1">
         <div className="flex-fixed-left">
           <div className="left">
             <span className="add-on">
@@ -537,7 +539,15 @@ export const StakeTabView = (props: {
           </div>
         </div>
       </div>
-    
+
+      <div className="mb-2">
+        {(fromCoinAmount && parseFloat(fromCoinAmount) > 0 && stakeQuote > 0) && (
+          <span className="form-field-hint pl-2">
+            {`Amount staked ≈ ${cutNumber(stakeQuote, 6)} sMEAN.`}
+          </span>
+        )}
+      </div>
+
       {/* Periods */}
       {/* <span className="info-label">{t("invest.panel-right.tabset.stake.period-label")}</span>
       <div className="flexible-left mb-1 mt-2">
