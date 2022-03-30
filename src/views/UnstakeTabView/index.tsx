@@ -38,6 +38,7 @@ export const UnstakeTabView = (props: {
   const percentages = [25, 50, 75, 100];
   const [percentageValue, setPercentageValue] = useState<number>(0);
   const [meanWorthOfsMean, setMeanWorthOfsMean] = useState<number>(0);
+  const [unstakeMessage, setUnstakeMessage] = useState<string>();
   const [isBusy, setIsBusy] = useState(false);
   const { connected, wallet } = useWallet();
   const connection = useConnection();
@@ -420,11 +421,27 @@ export const UnstakeTabView = (props: {
       }
     }
 
+    const getsMeanQuote = async (sMEAN: number) => {
+      if (!props.stakeClient) { return 0; }
+
+      try {
+        const result = await props.stakeClient.getStakeQuote(sMEAN);
+        return result.sMeanOutUiAmount;
+      } catch (error) {
+        console.error(error);
+        return 0;
+      }
+    }
+
     if (props.selectedToken && props.selectedToken.symbol === "sMEAN") {
       if (props.tokenBalance > 0) {
         getMeanQuote(props.tokenBalance).then((value) => {
           console.log(`Mean Quote for ${formatThousands(props.tokenBalance, props.selectedToken?.decimals)} sMEAN`, value);
           setMeanWorthOfsMean(value);
+        })
+        getsMeanQuote(props.tokenBalance).then((value) => {
+          console.log(`sMean Quote for ${formatThousands(props.tokenBalance, props.selectedToken?.decimals)} sMEAN`, value);
+          // setMeanWorthOfsMean(value);
         })
       } else {
         setMeanWorthOfsMean(0);
@@ -443,6 +460,14 @@ export const UnstakeTabView = (props: {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [percentageValue]);
+
+  useEffect(() => {
+    const successMessage = t("invest.panel-right.tabset.unstake.success-transaction-message", {sMeanValue: formatThousands(parseFloat(fromCoinAmount), 6), meanValue: formatThousands(meanWorthOfsMean, 6)});
+
+    setUnstakeMessage(successMessage);
+    
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fromCoinAmount, t]);
 
   return (
     <>
@@ -565,7 +590,7 @@ export const UnstakeTabView = (props: {
                 {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
               </h4>
               <p className="operation">
-                {formatThousands(parseFloat(fromCoinAmount), 6)} sMEAN has been successfully unstaked and you have received {formatThousands(meanWorthOfsMean, 6)} MEAN in return.
+                {unstakeMessage}
               </p>
               <Button
                 block

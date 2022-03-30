@@ -353,7 +353,8 @@
 					"unstake-button-busy": "Unstaking",
 					"unstake-button-available": "Unstake",
 					"unstake-button-unavailable": "No available",
-					"verified-label": "I agree to the Terms & Conditions"
+					"verified-label": "I agree to the Terms & Conditions",
+					"success-transaction-message": "{{sMeanValue}} sMEAN has been successfully unstaked and you have received {{meanValue}} MEAN in return."
 				}
 			},
 			"staking-sol": {

@@ -370,7 +370,8 @@
 					"unstake-button-busy": "Unstaking",
 					"unstake-button-available": "Stakeden çıkar",
 					"unstake-button-unavailable": "Uygun değil",
-					"verified-label": "Şartları & Koşulları kabul ediyorum."
+					"verified-label": "Şartları & Koşulları kabul ediyorum.",
+					"success-transaction-message": "{{sMeanValue}} sMEAN has been successfully unstaked and you have received {{meanValue}} MEAN in return."
 				}
 			}
 		},
