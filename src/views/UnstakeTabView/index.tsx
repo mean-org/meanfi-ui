@@ -35,8 +35,8 @@ export const UnstakeTabView = (props: {
   } = useContext(AppStateContext);
   const { enqueueTransactionConfirmation } = useContext(TransactionStatusContext);
   const { t } = useTranslation('common');
-  const percentages = [25, 50, 75, 100];
-  const [percentageValue, setPercentageValue] = useState<number>(0);
+  const percentages = ["25", "50", "75", "100"];
+  const [percentageValue, setPercentageValue] = useState<string>('');
   const [meanWorthOfsMean, setMeanWorthOfsMean] = useState<number>(0);
   const [unstakeMessage, setUnstakeMessage] = useState<string>();
   const [isBusy, setIsBusy] = useState(false);
@@ -59,6 +59,7 @@ export const UnstakeTabView = (props: {
 
   const onCloseTransactionExecutionModal = () => {
     setFromCoinAmount("");
+    setPercentageValue("");
     hideTransactionExecutionModal();
   }
 
@@ -78,7 +79,7 @@ export const UnstakeTabView = (props: {
              : false;
   }
 
-  const onChangeValue = (value: number) => {
+  const onChangeValue = (value: string) => {
     setPercentageValue(value);
   };  
 
@@ -421,27 +422,11 @@ export const UnstakeTabView = (props: {
       }
     }
 
-    const getsMeanQuote = async (sMEAN: number) => {
-      if (!props.stakeClient) { return 0; }
-
-      try {
-        const result = await props.stakeClient.getStakeQuote(sMEAN);
-        return result.sMeanOutUiAmount;
-      } catch (error) {
-        console.error(error);
-        return 0;
-      }
-    }
-
     if (props.selectedToken && props.selectedToken.symbol === "sMEAN") {
       if (props.tokenBalance > 0) {
         getMeanQuote(props.tokenBalance).then((value) => {
           consoleOut(`Quote for ${formatThousands(props.tokenBalance, props.selectedToken?.decimals)} sMEAN`, `${formatThousands(value, props.selectedToken?.decimals)} MEAN`, 'blue');
           setMeanWorthOfsMean(value);
-        })
-        getsMeanQuote(props.tokenBalance).then((value) => {
-          console.log(`sMean Quote for ${formatThousands(props.tokenBalance, props.selectedToken?.decimals)} sMEAN`, value);
-          // setMeanWorthOfsMean(value);
         })
       } else {
         setMeanWorthOfsMean(0);
@@ -454,9 +439,12 @@ export const UnstakeTabView = (props: {
   ]);
 
   useEffect(() => {
-    const percentageFromCoinAmount = props.tokenBalance > 0 ? `${(props.tokenBalance*percentageValue/100)}` : '';
+    const percentageFromCoinAmount = props.tokenBalance > 0 ? `${(props.tokenBalance*parseFloat(percentageValue)/100)}` : '';
 
-    setFromCoinAmount(percentageFromCoinAmount);
+    if (percentageValue) {
+      setFromCoinAmount(percentageFromCoinAmount);
+      setPercentageValue("");
+    }
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [percentageValue]);
@@ -467,7 +455,7 @@ export const UnstakeTabView = (props: {
     setUnstakeMessage(successMessage);
     
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fromCoinAmount, t]);
+}, [meanWorthOfsMean]);
 
   return (
     <>
