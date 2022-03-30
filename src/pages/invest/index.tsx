@@ -233,13 +233,13 @@ export const InvestView = () => {
   // Keep MEAN price updated
   useEffect(() => {
 
+    let price = 0;
     if (coinPrices && stakingPair && stakingPair.unstakedToken) {
       const symbol = stakingPair.unstakedToken.symbol.toUpperCase();
-      const price = coinPrices && coinPrices[symbol] ? coinPrices[symbol] : 0;
-      setMeanPrice(price);
-    } else {
-      setMeanPrice(0);
+      price = coinPrices && coinPrices[symbol] ? coinPrices[symbol] : 0;
     }
+    consoleOut('meanPrice:', price, 'crimson');
+    setMeanPrice(price);
 
   }, [coinPrices, stakingPair]);
 
@@ -375,54 +375,42 @@ export const InvestView = () => {
 
   // Get staking pool info from staking client
   useEffect(() => {
-    if (!stakeClient) {
-      return;
+
+    if (stakeClient && meanPrice) {
+      stakeClient.getStakePoolInfo(meanPrice)
+        .then((value) => {
+          consoleOut('stakePoolInfo:', value, 'crimson');
+          setStakePoolInfo(value);
+        }).catch((error) => {
+          console.error(error);
+        });
     }
 
-    stakeClient.getStakePoolInfo(meanPrice)
-      .then((value) => {
-        consoleOut('stakePoolInfo:', value, 'blue');
-        setStakePoolInfo(value);
-      }).catch((error) => {
-        console.error(error);
-      });
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    currentTab,
-    stakeClient,
-    fromCoinAmount,
-    pageInitialized,
-  ]);
+  }, [meanPrice, stakeClient]);
 
   // Get raydium pool info
   const getRaydiumPoolInfo = useCallback(async () => {
 
-    consoleOut('fetch Raydium Pool info', 'STARTED', 'orange');
     try {
-      try {
-        const res = await fetch('https://api.raydium.io/v2/main/pairs');
-        const data = await res.json();
-        if (!data || data.msg) {
-          setRaydiumInfo([]);
-          setMaxRadiumAprValue(0);
-        } else {
-          const raydiumData = data.filter((item: any) => item.name.substr(0, 4) === "MEAN");
+      const res = await fetch('https://api.raydium.io/v2/main/pairs');
+      const data = await res.json();
+      if (!data || data.msg) {
+        setRaydiumInfo([]);
+        setMaxRadiumAprValue(0);
+      } else {
+        const raydiumData = data.filter((item: any) => item.name.substr(0, 4) === "MEAN");
 
-          let maxRadiumApr = raydiumData.map((item_1: any) => {
-            let properties = item_1.apr7d;
+        let maxRadiumApr = raydiumData.map((item_1: any) => {
+          let properties = item_1.apr7d;
 
-            return properties;
-          });
+          return properties;
+        });
 
-          setMaxRadiumAprValue(Math.max(...maxRadiumApr));
-          setRaydiumInfo(raydiumData);
-        }
-      } catch (error) {
-        consoleOut(error);
+        setMaxRadiumAprValue(Math.max(...maxRadiumApr));
+        setRaydiumInfo(raydiumData);
       }
-    } finally {
-      return consoleOut('fetch Raydium Pool info', 'FINISHED', 'orange');
+    } catch (error) {
+      console.error(error);
     }
 
   }, []);
@@ -430,49 +418,40 @@ export const InvestView = () => {
   // Get Orca pool info
   const getOrcaPoolInfo = useCallback(async () => {
 
-    consoleOut('fetch Orca Pool info', 'STARTED', 'orange');
     try {
-      try {
-        const res = await fetch('https://api.orca.so/pools');
-        const data = await res.json();
-        // Should update if got data
-        if (data) {
-          if (!Array.isArray(data)) {
-            // Treat data as a single element
-            const orcaData = [data];
+      const res = await fetch('https://api.orca.so/pools');
+      const data = await res.json();
+      // Should update if got data
+      if (data) {
+        if (!Array.isArray(data)) {
+          // Treat data as a single element
+          const orcaData = [data];
 
-            let maxOrcaApr = orcaData.map((item: any) => {
-              let properties = item.apy_7d;
-              return properties;
+          let maxOrcaApr = orcaData.map((item: any) => {
+            let properties = item.apy_7d;
+            return properties;
+          });
+          const maxApr = Math.max(...maxOrcaApr) * 100;
+
+          setOrcaInfo(orcaData);
+          setMaxOrcaAprValue(maxApr);
+
+        } else {
+          // Treat data as an array and update if pair data found
+          const orcaData_1 = data.filter((item_1: any) => item_1.name2 === "MEAN/USDC");
+          if (orcaData_1 && orcaData_1.length > 0) {
+            setOrcaInfo(orcaData_1);
+            let maxOrcaApr_1 = orcaData_1.map((item_2: any) => {
+              let properties_1 = item_2.apy_7d;
+              return properties_1;
             });
-            const maxApr = Math.max(...maxOrcaApr) * 100;
-
-            setOrcaInfo(orcaData);
-            setMaxOrcaAprValue(maxApr);
-            consoleOut('maxOrcaAprValue:', maxApr, 'info');
-            consoleOut('orcaInfo:', orcaData, 'info');
-
-          } else {
-            // Treat data as an array and update if pair data found
-            const orcaData_1 = data.filter((item_1: any) => item_1.name2 === "MEAN/USDC");
-            if (orcaData_1 && orcaData_1.length > 0) {
-              setOrcaInfo(orcaData_1);
-              let maxOrcaApr_1 = orcaData_1.map((item_2: any) => {
-                let properties_1 = item_2.apy_7d;
-                return properties_1;
-              });
-              const maxApr_1 = Math.max(...maxOrcaApr_1) * 100;
-              setMaxOrcaAprValue(maxApr_1);
-              consoleOut('maxOrcaAprValue:', maxApr_1, 'info');
-              consoleOut('orcaInfo:', orcaData_1, 'info');
-            }
+            const maxApr_1 = Math.max(...maxOrcaApr_1) * 100;
+            setMaxOrcaAprValue(maxApr_1);
           }
         }
-      } catch (error) {
-        consoleOut(error);
       }
-    } finally {
-      return consoleOut('fetch Orca Pool info', 'FINISHED', 'orange');
+    } catch (error) {
+      console.error(error);
     }
 
   }, []);
@@ -480,23 +459,16 @@ export const InvestView = () => {
   // Get Marinade apy info
   const getMarinadeApyInfo = useCallback(async () => {
 
-    consoleOut('fetch Marinade Apy info', 'STARTED', 'orange');
     try {
-      try {
-        const res = await fetch('https://api.marinade.finance/msol/apy/1y');
-        const data = await res.json();
-        // Should update if got data
-        if (data) {
-            const marinadeApy = data.value * 100;
-
-            setMarinadeApyValue(marinadeApy);
-            consoleOut('marinadeApy:', marinadeApy, 'info');
-        }
-      } catch (error) {
-        consoleOut(error);
+      const res = await fetch('https://api.marinade.finance/msol/apy/1y');
+      const data = await res.json();
+      // Should update if got data
+      if (data) {
+          const marinadeApy = data.value * 100;
+          setMarinadeApyValue(marinadeApy);
       }
-    } finally {
-      return consoleOut('fetch Marinade Apy info', 'FINISHED', 'orange');
+    } catch (error) {
+      console.error(error);
     }
 
   }, []);
@@ -504,23 +476,17 @@ export const InvestView = () => {
   // Get Marinade Total Staked info
   const getMarinadeTotalStakedInfo = useCallback(async () => {
 
-    consoleOut('fetch Marinade Total Staked info', 'STARTED', 'orange');
     try {
-      try {
-        const res = await fetch('https://api.marinade.finance/tlv');
-        const data = await res.json();
-        // Should update if got data
-        if (data) {
-            const marinadeTotalStaked = data.staked_sol;
+      const res = await fetch('https://api.marinade.finance/tlv');
+      const data = await res.json();
+      // Should update if got data
+      if (data) {
+          const marinadeTotalStaked = data.staked_sol;
 
-            setMarinadeTotalStakedValue(marinadeTotalStaked);
-            consoleOut('marinadeTotalStaked:', marinadeTotalStaked, 'info');
-        }
-      } catch (error) {
-        consoleOut(error);
+          setMarinadeTotalStakedValue(marinadeTotalStaked);
       }
-    } finally {
-      return consoleOut('fetch Marinade Total Staked info', 'FINISHED', 'orange');
+    } catch (error) {
+      console.error(error);
     }
 
   }, []);
@@ -528,23 +494,17 @@ export const InvestView = () => {
   // Get Socean apy info
   const getSoceanApyInfo = useCallback(async () => {
 
-    consoleOut('fetch Socean Apy info', 'STARTED', 'orange');
     try {
-      try {
-        const res = await fetch('https://www.socean.fi/api/apy');
-        const data = await res.json();
-        // Should update if got data
-        if (data) {
-            const soceanApy = data;
+      const res = await fetch('https://www.socean.fi/api/apy');
+      const data = await res.json();
+      // Should update if got data
+      if (data) {
+          const soceanApy = data;
 
-            setSoceanApyValue(soceanApy);
-            consoleOut('soceanApy:', soceanApy, 'info');
-        }
-      } catch (error) {
-        consoleOut(error);
+          setSoceanApyValue(soceanApy);
       }
-    } finally {
-      return consoleOut('fetch Socean Apy info', 'FINISHED', 'orange');
+    } catch (error) {
+      console.error(error);
     }
 
   }, []);
@@ -552,26 +512,37 @@ export const InvestView = () => {
   // Get Socean Total Staked info
   const getSoceanTotalStakedInfo = useCallback(async () => {
 
-    consoleOut('fetch Socean Total Staked info', 'STARTED', 'orange');
     try {
-      try {
-        const res = await fetch('https://www.socean.fi/api/tvl');
-        const data = await res.json();
-        // Should update if got data
-        if (data) {
-            const soceanTotalStaked = data;
+      const res = await fetch('https://www.socean.fi/api/tvl');
+      const data = await res.json();
+      // Should update if got data
+      if (data) {
+          const soceanTotalStaked = data;
 
-            setSoceanTotalStakedValue(soceanTotalStaked);
-            consoleOut('soceanTotalStaked:', soceanTotalStaked, 'info');
-        }
-      } catch (error) {
-        consoleOut(error);
+          setSoceanTotalStakedValue(soceanTotalStaked);
       }
-    } finally {
-      return consoleOut('fetch Socean Total Staked info', 'FINISHED', 'orange');
+    } catch (error) {
+      console.error(error);
     }
 
   }, []);
+
+  // Log all pool info in one place
+  const logAllPoolInfo = useCallback(() => {
+
+    consoleOut('maxOrcaAprValue:', maxOrcaAprValue, 'info');
+    consoleOut('orcaInfo:', orcaInfo, 'info');
+
+    consoleOut('maxRadiumAprValue:', maxRadiumAprValue, 'info');
+    consoleOut('raydiumInfo:', raydiumInfo, 'info');
+
+    consoleOut('marinadeApyValue:', marinadeApyValue, 'info');
+    consoleOut('marinadeTotalStakedValue:', marinadeTotalStakedValue, 'info');
+
+    consoleOut('soceanApyValue:', soceanApyValue, 'info');
+    consoleOut('soceanTotalStakedValue:', soceanTotalStakedValue, 'info');
+
+  }, [marinadeApyValue, marinadeTotalStakedValue, maxOrcaAprValue, maxRadiumAprValue, orcaInfo, raydiumInfo, soceanApyValue, soceanTotalStakedValue]);
 
   // Refresh pools info
   useEffect(() => {
@@ -592,18 +563,24 @@ export const InvestView = () => {
         getSoceanApyInfo(),
         getSoceanTotalStakedInfo()
       ])
-      .then(() => setRefreshingPoolInfo(false));
+      .then(() => {
+        setRefreshingPoolInfo(false);
+        setTimeout(() => {
+          logAllPoolInfo();
+        }, 100);
+      });
     })();
 
   }, [
     connection,
     shouldRefreshLpData,
-    getRaydiumPoolInfo,
-    getOrcaPoolInfo,
-    getMarinadeApyInfo,
     getMarinadeTotalStakedInfo,
+    getSoceanTotalStakedInfo,
+    getRaydiumPoolInfo,
+    getMarinadeApyInfo,
     getSoceanApyInfo,
-    getSoceanTotalStakedInfo
+    getOrcaPoolInfo,
+    logAllPoolInfo,
   ]);
 
   // Timeout to refresh Pools info
@@ -829,7 +806,12 @@ export const InvestView = () => {
                               </Tooltip>
                             </div>
                             <div className="transaction-detail-row">
-                              {stakePoolInfo ? (stakePoolInfo.apr * 100).toFixed(2) : "0"}%
+                              {(!stakePoolInfo || stakePoolInfo.apr === 0) && (
+                                <span>Calculating</span>
+                              )}
+                              {stakePoolInfo && stakePoolInfo.apr > 0 && (
+                                <span>{(stakePoolInfo.apr * 100).toFixed(2)}%</span>
+                              )}
                             </div>
                           </Col>
                           <Col span={8}>

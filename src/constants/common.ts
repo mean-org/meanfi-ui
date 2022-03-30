@@ -148,6 +148,9 @@ export const DAO_CORE_TEAM_WHITELIST = [
     'GV1ikmCUjXjy8wTtNXGd6Cnnid31HX4JfCrTKCgW3kfS', // K7
     'G91856C8jV9LdSpFKZb1SQ27ZfA72hn5q2vfjvJMLqX2', // K7
     '9gB9rcJiaKq6iXcJn8AqD5xoxTr3ZLPHpFGWRaVx99jH', // TAB trader
+    '4esXsAJjoExvhPZf1EMvDaajJeCTm72EYt3aurn3fFUG', // J
+    'EjchiDcivSQnC282UF4d751JDd7vMb2VCFrQaNeUAjwz', // J
+    'c8fLDB5oFSwGnwAV1LGQqaadHt2WbvWv7o79YnnUWxd',  // J
 ];
 
 export const BETA_TESTING_PROGRAM_WHITELIST = [
