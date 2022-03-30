@@ -225,10 +225,10 @@ export const JupiterExchangeOutput = (props: {
 
               })}
             </div>
-            <div className="fg-secondary-60 pl-1">
-              {props.routes.length > 2 && (
+            <div className="flex-fixed-left align-items-center pl-1">
+              {props.routes.length > 2 ? (
                 <span
-                  className={props.isBusy ? 'no-pointer' : 'simplelink underline-on-hover'}
+                  className={`left fg-secondary-60 ${props.isBusy ? 'no-pointer' : 'simplelink underline-on-hover'}`}
                   onClick={() => {
                     if (!props.isBusy) {
                       props.onToggleShowFullRouteList();
@@ -236,7 +236,10 @@ export const JupiterExchangeOutput = (props: {
                   }}>
                   {props.showAllRoutes ? 'Show less' : 'Show more'}
                 </span>
+              ) : (
+                <div className="left">&nbsp;</div>
               )}
+              <div className="right text-right font-size-75 fg-secondary-50">Powered by Jupiter</div>
             </div>
           </>
         )}

@@ -311,7 +311,7 @@
 				"label-balance": "My xMEAN Balance",
 				"label-boost": "Staking Lock Boost",
 				"label-locked": "My Locked eMEAN",
-				"label-my-staked": "My Staked MEAN",
+				"label-my-staked": "My available sMEAN balance",
 				"text-one": "MEAN tokens locked till {{unstakeStartDate}}",
 				"text-two": "Locking boost periods are coming soon to earn even more MEAN!",
 				"title": "Your Current Stake:",
@@ -433,7 +433,7 @@
 			"token-address-placeholder": "Enter the address of the token"
 		},
 		"multisig-account-detail": {
-			"address": "Deposit Address",
+			"address": "Safe Deposit Address",
 			"authority": "Authority",
 			"copy-id-title": "MULTISIG ID",
 			"created-on": "Created on",

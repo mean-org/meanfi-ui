@@ -4365,33 +4365,35 @@ export const MultisigView = () => {
           </Button>
 
           {/* Mints */}
-          <Button
-            type="default"
-            shape="round"
-            size="small"
-            className="thin-stroke"
-            disabled={isTxInProgress() || loadingMultisigAccounts}
-            onClick={() => {
-              if (selectedMultisig) {
-                const url = `/multisig-mints?multisig=${selectedMultisig.id.toBase58()}`;
-                navigate(url);
-              }
-            }}>
-            <span>
-              {t('multisig.multisig-account-detail.cta-no-mints')}
-            </span>
-            {/* {multisigMints && multisigMints.length > 0 ? (
-              <span>
-                {t('multisig.multisig-account-detail.cta-mints', {
-                  itemCount: multisigMints.length
-                })}
-              </span>
-              ) : (
+          {isUnderDevelopment() && (
+            <Button
+              type="default"
+              shape="round"
+              size="small"
+              className="thin-stroke"
+              disabled={isTxInProgress() || loadingMultisigAccounts}
+              onClick={() => {
+                if (selectedMultisig) {
+                  const url = `/multisig-mints?multisig=${selectedMultisig.id.toBase58()}`;
+                  navigate(url);
+                }
+              }}>
               <span>
                 {t('multisig.multisig-account-detail.cta-no-mints')}
               </span>
-            )} */}
-          </Button>
+              {/* {multisigMints && multisigMints.length > 0 ? (
+                <span>
+                  {t('multisig.multisig-account-detail.cta-mints', {
+                    itemCount: multisigMints.length
+                  })}
+                </span>
+                ) : (
+                <span>
+                  {t('multisig.multisig-account-detail.cta-no-mints')}
+                </span>
+              )} */}
+            </Button>
+          )}
 
           {/* Data */}
           {isUnderDevelopment() && (

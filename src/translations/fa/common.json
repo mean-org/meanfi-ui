@@ -307,11 +307,10 @@
 			},
 			"second-text": "به سادگی نگه داشتن sMEAN تنها چیزی است که برای رشد مداوم MEAN ذخیره شما لازم است. شما نیازی به برداشت پاداش با MEAN staking ندارید. هنگامی که sMEAN خود را unstake می کنید، پاداش های به دست آمده را در قالب MEAN اضافی در بالای مبلغ استیک شده دریافت خواهید کرد.",
 			"staking-data": {
-				"label-avg": "میانگین بازده قفل شده",
-				"label-balance": "موجودی xMEAN من",
+				"label-my-staked": "My available sMEAN balance",
+				"label-avg": "Avg. Locked Yield",
 				"label-boost": "Staking Lock Boost",
 				"label-locked": "eMEAN قفل شده من",
-				"label-my-staked": "Mean استیک شده من",
 				"text-one": "MEAN توکن‌ها تا {{unstakeStartDate}} قفل هستند",
 				"text-two": "دوره‌های Locking boost به زودی می‌آیند تا MEAN بیشتری کسب کنید!",
 				"title": "استیک فعلی شما:",
@@ -433,7 +432,7 @@
 			"token-address-placeholder": "آدرس توکن را وارد کنید"
 		},
 		"multisig-account-detail": {
-			"address": "اختیارات",
+			"address": "Safe Deposit Address",
 			"authority": "اختیارات",
 			"copy-id-title": "MULTISIG ID (آیدی حساب Multisig)",
 			"created-on": "ایجاد شده در",

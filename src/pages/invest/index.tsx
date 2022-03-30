@@ -67,6 +67,8 @@ export const InvestView = () => {
   const [marinadeTotalStakedValue, setMarinadeTotalStakedValue] = useState<number>(0);
   const [soceanApyValue, setSoceanApyValue] = useState<number>(0);
   const [soceanTotalStakedValue, setSoceanTotalStakedValue] = useState<number>(0);
+  const [lidoAprValue, setLidoAprValue] = useState<number>(0);
+  const [lidoTotalStakedValue, setLidoTotalStakedValue] = useState<number>(0);
   const [maxAprValue, setMaxAprValue] = useState<number>(0);
   const [maxStakeSolApyValue, setMaxStakeSolApyValue] = useState<number>(0);
   const [pageInitialized, setPageInitialized] = useState<boolean>(false);
@@ -302,7 +304,7 @@ export const InvestView = () => {
       symbol1: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
       symbol2: "",
       title: t("invest.panel-left.invest-stake-sol-tab-title"),
-      rateAmount: `${t("invest.panel-left.up-to-value-label")} ${maxStakeSolApyValue ? maxStakeSolApyValue.toFixed(2) : "0"}`,
+      rateAmount: `${t("invest.panel-left.up-to-value-label")} ${maxStakeSolApyValue ? cutNumber(maxStakeSolApyValue, 2) : "0"}`,
       interval: "APR/APY"
     }
   ], [
@@ -343,7 +345,7 @@ export const InvestView = () => {
       href: "https://www.socean.fi/app/stake",
       img: "https://www.socean.fi/static/media/scnSOL_blackCircle.14ca2915.png",
       totalStaked: soceanTotalStakedValue > 0 ? `${formatThousands(soceanTotalStakedValue)} SOL` : "--",
-      apy: soceanApyValue > 0 ? `${soceanApyValue.toFixed(2)}%` : "--"
+      apy: soceanApyValue > 0 ? `${cutNumber(soceanApyValue, 2)}%` : "--"
     },
     {
       name: "Marinade",
@@ -351,19 +353,21 @@ export const InvestView = () => {
       href: "https://marinade.finance/app/staking",
       img: "https://s2.coinmarketcap.com/static/img/coins/64x64/11461.png",
       totalStaked: marinadeTotalStakedValue > 0 ? `${formatThousands(marinadeTotalStakedValue)} SOL` : "--",
-      apy: marinadeApyValue > 0 ? `${marinadeApyValue.toFixed(2)}%` : "--"
+      apy: marinadeApyValue > 0 ? `${cutNumber(marinadeApyValue, 2)}%` : "--"
     },
     {
       name: "Lido",
       token: "stSOL",
       href: "https://solana.lido.fi/",
       img: "https://www.orca.so/static/media/stSOL.9fd59818.png",
-      totalStaked: "--",
-      apy: "--"
+      totalStaked: lidoTotalStakedValue > 0 ? `${formatThousands(lidoTotalStakedValue)} SOL` : "--",
+      apy: lidoAprValue > 0 ? `${cutNumber(lidoAprValue, 2)}%` : "--"
     }
   ], [
+    lidoAprValue,
     soceanApyValue,
     marinadeApyValue,
+    lidoTotalStakedValue,
     soceanTotalStakedValue,
     marinadeTotalStakedValue
   ]);
@@ -527,6 +531,28 @@ export const InvestView = () => {
 
   }, []);
 
+  // Get Lido APR and Total Staked info
+  const getLidoInfo = useCallback(async () => {
+
+    try {
+      const res = await fetch('https://solana.lido.fi/api/stats');
+      const data = await res.json();
+      // Should update if got data
+      if (data) {
+          const lidoInfo = data;
+
+          const lidoApr = lidoInfo.apr;
+          const lidoTotalStaked = lidoInfo.totalStaked.sol;          
+          
+          setLidoAprValue(lidoApr);
+          setLidoTotalStakedValue(lidoTotalStaked);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+
+  }, []);
+
   // Log all pool info in one place
   const logAllPoolInfo = useCallback(() => {
 
@@ -561,7 +587,8 @@ export const InvestView = () => {
         getMarinadeApyInfo(),
         getMarinadeTotalStakedInfo(),
         getSoceanApyInfo(),
-        getSoceanTotalStakedInfo()
+        getSoceanTotalStakedInfo(),
+        getLidoInfo()
       ])
       .then(() => {
         setRefreshingPoolInfo(false);
@@ -580,7 +607,8 @@ export const InvestView = () => {
     getMarinadeApyInfo,
     getSoceanApyInfo,
     getOrcaPoolInfo,
-    logAllPoolInfo,
+    getLidoInfo,
+    logAllPoolInfo
   ]);
 
   // Timeout to refresh Pools info

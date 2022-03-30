@@ -310,7 +310,7 @@
 			},
 			"staking-data": {
 				"title": "Your Current Stake:",
-				"label-my-staked": "My Staked MEAN",
+				"label-my-staked": "My available sMEAN balance",
 				"label-avg": "Avg. Locked Yield",
 				"label-boost": "Staking Lock Boost",
 				"label-locked": "My Locked eMEAN",
@@ -436,7 +436,7 @@
 			"token-address-placeholder": "Nhập vào địa chỉ token"
 		},
 		"multisig-account-detail": {
-			"address": "Deposit Address",
+			"address": "Safe Deposit Address",
 			"authority": "Thẩm quyền",
 			"copy-id-title": "MULTISIG ID",
 			"created-on": "Ngày tạo",
