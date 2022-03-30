@@ -342,9 +342,9 @@ export const JupiterExchange = (props: {
 
             const newList: any = {};
 
+            // First add those with balance
             if (publicKey && userBalances) {
 
-                // First add those with balance
                 for (const token of tokenList) {
                     let mint = JSON.parse(JSON.stringify(token));
                     if (mint.logoURI && token.address !== sol.address && userBalances[token.address] > 0) {
@@ -352,31 +352,22 @@ export const JupiterExchange = (props: {
                     }
                 }
 
-                // Then add tokens from pinned list not already in the dictionary
-                MEAN_TOKEN_LIST.filter(t => t.chainId === 101 && PINNED_TOKENS.includes(t.symbol))
-                    .forEach(item => {
-                        if (!newList[item.address]) {
-                            newList[item.address] = item;
-                        }
-                    });
+            }
 
-                // Add all other tokens
-                tokenList.forEach(item => {
+            // Then add tokens from pinned list not already in the dictionary
+            MEAN_TOKEN_LIST.filter(t => t.chainId === 101 && PINNED_TOKENS.includes(t.symbol))
+                .forEach(item => {
                     if (!newList[item.address]) {
                         newList[item.address] = item;
                     }
                 });
 
-            } else {
-
-                for (let info of tokenList) {
-                    let mint = JSON.parse(JSON.stringify(info));
-                    if (mint.logoURI) {
-                        newList[mint.address] = mint;
-                    }
+            // Add all other tokens
+            tokenList.forEach(item => {
+                if (!newList[item.address]) {
+                    newList[item.address] = item;
                 }
-
-            }
+            });
 
             setMintList(newList);
             setShowFromMintList(newList);
@@ -1735,14 +1726,6 @@ export const JupiterExchange = (props: {
                         onToggleShowFullRouteList={onShowLpListToggled}
                     />
 
-                )}
-
-                {/* Powered by Jupiter */}
-                {isExchangeValid() && (
-                    <div className="flexible-left pr-2 mb-1">
-                        <div className="left">&nbsp;</div>
-                        <div className="right font-size-75 fg-secondary-50">Powered by Jupiter</div>
-                    </div>
                 )}
 
                 {/* Action button */}
