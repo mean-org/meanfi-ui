@@ -1035,29 +1035,23 @@ footer.ant-layout-footer {
 }
 
 // Notification icons
-.ant-notification-notice-with-icon {
-  .ant-notification-notice-close {
-    top: 10px;
-    right: 12px;
-  }
-  .ant-notification-notice-icon {
-    margin-left: 0;
-    left: 24px;
-    &.ant-notification-notice-icon-info {
-      color: var(--color-notify-info);
+.ant-notification {
+  .ant-notification-notice {
+    padding: 16px;
+    background-color: var(--color-section-contrast);
+    border-radius: var(--custom-border-radius);
+    color: var(--color-secondary-alpha-80);
+    .ant-notification-notice-content {
+      .ant-notification-notice-with-icon {
+        .ant-notification-notice-message {
+          color: var(--color-secondary-alpha-85);
+          font-weight: 600;
+        }
+      }
     }
-    &.ant-notification-notice-icon-success {
-      color: var(--color-notify-success);
+    .ant-notification-notice-close {
+      color: inherit;
     }
-    &.ant-notification-notice-icon-warning {
-      color: var(--color-notify-warning);
-    }
-    &.ant-notification-notice-icon-error {
-      color: var(--color-notify-error);
-    }
-  }
-  .ant-notification-notice-description {
-    margin-left: 40px;
   }
 }
 
@@ -1604,13 +1598,6 @@ em {
   }
 }
 
-.ant-notification {
-  a {
-    color: blue;
-    text-decoration: underline;
-    cursor: pointer;
-  }
-}
 .ant-timeline {
   color: inherit;
   .ant-timeline-item {

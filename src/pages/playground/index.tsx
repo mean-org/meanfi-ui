@@ -40,6 +40,7 @@ import {
 import { IconCopy, IconExternalLink, IconTrash } from "../../Icons";
 import { useNavigate } from "react-router-dom";
 import { openNotification } from "../../components/Notifications";
+import { IconType } from "antd/lib/notification";
 
 const { Panel } = Collapse;
 const { Option } = Select;
@@ -150,39 +151,39 @@ export const PlaygroundView = () => {
     }
   }, [selectedMint, userTokens]);
 
-  const getTopJupiterTokensByVolume = useCallback(() => {
-    fetch('https://cache.jup.ag/stats/month')
-      .then(res => {
-        if (res.status >= 400) {
-          throw new Error("Bad response from server");
-        }
-        return res.json();
-      })
-      .then(data => {
-        // Only get tokens with volume for more than 1000 USD a month
-        const tokens = data.lastXTopTokens.filter((s: TokenVolume) => s.amount >= 1000) as TokenVolume[];
-        const topTokens: BasicTokenInfo[] = [];
-        if (tokens && tokens.length > 0) {
-          tokens.forEach(element => {
-            const token = splTokenList.find(t => t.symbol === element.symbol);
-            if (token) {
-              topTokens.push({
-                name: token.name,
-                symbol: token.symbol,
-                address: token.address,
-                decimals: token.decimals
-              });
-            }
-          });
-          consoleOut('Tokens with volume over 1000 USD:', tokens.length, 'crimson');
-          consoleOut('Added to list of top tokens:', topTokens.length, 'crimson');
-          consoleOut('topTokens:', topTokens, 'crimson');
-        }
-      })
-      .catch(err => {
-        console.error(err);
-      });
-  }, [splTokenList]);
+  // const getTopJupiterTokensByVolume = useCallback(() => {
+  //   fetch('https://cache.jup.ag/stats/month')
+  //     .then(res => {
+  //       if (res.status >= 400) {
+  //         throw new Error("Bad response from server");
+  //       }
+  //       return res.json();
+  //     })
+  //     .then(data => {
+  //       // Only get tokens with volume for more than 1000 USD a month
+  //       const tokens = data.lastXTopTokens.filter((s: TokenVolume) => s.amount >= 1000) as TokenVolume[];
+  //       const topTokens: BasicTokenInfo[] = [];
+  //       if (tokens && tokens.length > 0) {
+  //         tokens.forEach(element => {
+  //           const token = splTokenList.find(t => t.symbol === element.symbol);
+  //           if (token) {
+  //             topTokens.push({
+  //               name: token.name,
+  //               symbol: token.symbol,
+  //               address: token.address,
+  //               decimals: token.decimals
+  //             });
+  //           }
+  //         });
+  //         consoleOut('Tokens with volume over 1000 USD:', tokens.length, 'crimson');
+  //         consoleOut('Added to list of top tokens:', topTokens.length, 'crimson');
+  //         consoleOut('topTokens:', topTokens, 'crimson');
+  //       }
+  //     })
+  //     .catch(err => {
+  //       console.error(err);
+  //     });
+  // }, [splTokenList]);
 
   const resetTransactionStatus = () => {
     setTransactionStatus({
@@ -353,6 +354,75 @@ export const PlaygroundView = () => {
     message.destroy();
   };
 
+  const notificationTwo = () => {
+    consoleOut("Notification is closing...");
+    openNotification({
+      type: "info",
+      description: t(
+        "treasuries.create-treasury.multisig-treasury-created-instructions"
+      ),
+      duration: null,
+    });
+    navigate("/custody");
+  };
+
+  const sequentialMessagesAndNavigate = () => {
+    openNotification({
+      type: "info",
+      description: t(
+        "treasuries.create-treasury.multisig-treasury-created-info"
+      ),
+      handleClose: notificationTwo,
+    });
+  };
+
+  const stackedMessagesAndNavigate = async () => {
+    openNotification({
+      type: "info",
+      description: t(
+        "treasuries.create-treasury.multisig-treasury-created-info"
+      ),
+      duration: 10,
+    });
+    await delay(1500);
+    openNotification({
+      type: "info",
+      description: t(
+        "treasuries.create-treasury.multisig-treasury-created-instructions"
+      ),
+      duration: null,
+    });
+    navigate("/custody");
+  };
+
+  const reuseNotification = (key?: string) => {
+    openNotification({
+      key,
+      type: "info",
+      title: 'Mission assigned',
+      duration: 0,
+      description: <span>Your objective is to wait for 5 seconds</span>
+    });
+    setTimeout(() => {
+      openNotification({
+        key,
+        type: "success",
+        title: 'Mission updated',
+        duration: 3,
+        description: <span>Objective completed!</span>,
+      });
+    }, 5000);
+  };
+
+  const showNotificationByType = (type: IconType) => {
+    openNotification({
+      type,
+      title: 'Notification Title',
+      duration: 0,
+      description: <span>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Natus, ullam perspiciatis accusamus, sunt ipsum asperiores similique cupiditate autem veniam explicabo earum voluptates!</span>
+    });
+  };
+
   const renderDemoNumberFormatting = (
     <>
       <div className="tabset-heading">Number formatting</div>
@@ -508,15 +578,43 @@ export const PlaygroundView = () => {
         <Space>
           <span
             className="flat-button stroked"
-            onClick={() => sequentialMessagesAndNavigate()}
-          >
+            onClick={() => sequentialMessagesAndNavigate()}>
             <span>Sequential messages on Navigate</span>
           </span>
           <span
             className="flat-button stroked"
-            onClick={() => stackedMessagesAndNavigate()}
-          >
+            onClick={() => stackedMessagesAndNavigate()}>
             <span>Stacked messages on Navigate</span>
+          </span>
+        </Space>
+      </div>
+      <div className="tabset-heading">Test openNotification</div>
+      <div className="text-left mb-3">
+        <Space>
+          <span
+            className="flat-button stroked"
+            onClick={() => reuseNotification('pepito')}>
+            <span>Reusable</span>
+          </span>
+          <span
+            className="flat-button stroked"
+            onClick={() => showNotificationByType("info")}>
+            <span>Info</span>
+          </span>
+          <span
+            className="flat-button stroked"
+            onClick={() => showNotificationByType("success")}>
+            <span>Success</span>
+          </span>
+          <span
+            className="flat-button stroked"
+            onClick={() => showNotificationByType("warning")}>
+            <span>Warning</span>
+          </span>
+          <span
+            className="flat-button stroked"
+            onClick={() => showNotificationByType("error")}>
+            <span>Error</span>
           </span>
         </Space>
       </div>
@@ -712,47 +810,6 @@ export const PlaygroundView = () => {
     }
   };
 
-  const notificationTwo = () => {
-    consoleOut("Notification is closing...");
-    openNotification({
-      type: "info",
-      description: t(
-        "treasuries.create-treasury.multisig-treasury-created-instructions"
-      ),
-      duration: null,
-    });
-    navigate("/custody");
-  };
-
-  const sequentialMessagesAndNavigate = () => {
-    openNotification({
-      type: "info",
-      description: t(
-        "treasuries.create-treasury.multisig-treasury-created-info"
-      ),
-      handleClose: notificationTwo,
-    });
-  };
-
-  const stackedMessagesAndNavigate = async () => {
-    openNotification({
-      type: "info",
-      description: t(
-        "treasuries.create-treasury.multisig-treasury-created-info"
-      ),
-      duration: 10,
-    });
-    await delay(1500);
-    openNotification({
-      type: "info",
-      description: t(
-        "treasuries.create-treasury.multisig-treasury-created-instructions"
-      ),
-      duration: null,
-    });
-    navigate("/custody");
-  };
-
   return (
     <>
       <section>
@@ -776,7 +833,7 @@ export const PlaygroundView = () => {
               </div>
             </div>
             {renderTab()}
-            <span className="secondary-link" onClick={getTopJupiterTokensByVolume}>Read list of top Jupiter tokens in volume over 1,000 USD</span>
+            {/* <span className="secondary-link" onClick={getTopJupiterTokensByVolume}>Read list of top Jupiter tokens in volume over 1,000 USD</span> */}
           </div>
         </div>
       </section>

@@ -6,15 +6,15 @@ export const openNotification = (props: {
     title?: string;
     description: JSX.Element;
     duration?: number | null | undefined;
+    key?: string;
 }) => {
-    const { type, title, description, duration, handleClose } = props;
-    const key = `open${Date.now()}`;
+    const { type, title, description, duration, handleClose, key } = props;
     notification.open({
         key,
         type: type || "info",
-        message: <span style={{ color: "black" }}>{title}</span>,
+        message: <span>{title}</span>,
         description: (
-            <span style={{ color: "black", opacity: 0.5 }}>{description}</span>
+            <span>{description}</span>
         ),
         duration: duration,
         placement: "bottomLeft",
