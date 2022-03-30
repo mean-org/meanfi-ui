@@ -38,7 +38,7 @@ export const UnstakeTabView = (props: {
   const percentages = ["25", "50", "75", "100"];
   const [percentageValue, setPercentageValue] = useState<string>('');
   const [meanWorthOfsMean, setMeanWorthOfsMean] = useState<number>(0);
-  const [unstakeMessage, setUnstakeMessage] = useState<string>();
+  const [unstakeMeanValue, setUnstakeMeanValue] = useState<string>();
   const [isBusy, setIsBusy] = useState(false);
   const { connected, wallet } = useWallet();
   const connection = useConnection();
@@ -428,6 +428,10 @@ export const UnstakeTabView = (props: {
           consoleOut(`Quote for ${formatThousands(props.tokenBalance, props.selectedToken?.decimals)} sMEAN`, `${formatThousands(value, props.selectedToken?.decimals)} MEAN`, 'blue');
           setMeanWorthOfsMean(value);
         })
+
+        getMeanQuote(parseFloat(fromCoinAmount)).then((value) => {
+          setUnstakeMeanValue(value.toString());
+        })
       } else {
         setMeanWorthOfsMean(0);
       }
@@ -435,7 +439,8 @@ export const UnstakeTabView = (props: {
   }, [
     props.stakeClient, 
     props.selectedToken, 
-    props.tokenBalance
+    props.tokenBalance,
+    fromCoinAmount
   ]);
 
   useEffect(() => {
@@ -448,14 +453,6 @@ export const UnstakeTabView = (props: {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [percentageValue]);
-
-  useEffect(() => {
-    const successMessage = t("invest.panel-right.tabset.unstake.success-transaction-message", {sMeanValue: formatThousands(parseFloat(fromCoinAmount), 6), meanValue: formatThousands(meanWorthOfsMean, 6)});
-
-    setUnstakeMessage(successMessage);
-    
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [meanWorthOfsMean]);
 
   return (
     <>
@@ -584,7 +581,9 @@ export const UnstakeTabView = (props: {
                 {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
               </h4>
               <p className="operation">
-                {unstakeMessage}
+                {unstakeMeanValue && (
+                  t("invest.panel-right.tabset.unstake.success-transaction-message", {sMeanValue: formatThousands(parseFloat(fromCoinAmount), 6), meanValue: formatThousands(parseFloat(unstakeMeanValue), 6)})
+                )}
               </p>
               <Button
                 block
