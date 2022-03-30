@@ -365,7 +365,8 @@
 					"unstake-button-available": "Unstake",
 					"unstake-button-busy": "Unstaking",
 					"unstake-button-unavailable": "در دسترس نیست",
-					"verified-label": "من با شرایط و قوانین موافق هستم"
+					"verified-label": "من با شرایط و قوانین موافق هستم",
+					"success-transaction-message": "{{sMeanValue}} sMEAN has been successfully unstaked and you have received {{meanValue}} MEAN in return."
 				}
 			},
 			"title": "برای به دست آوردن جوایز MEAN،  توکن MEAN را استیک کنید"
