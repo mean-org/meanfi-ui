@@ -9,7 +9,7 @@ export const TRANSACTION_STATUS_RETRY = 3 * 1000;            // Retry fetch tran
 export const TRANSACTION_STATUS_RETRY_TIMEOUT = 30 * 1000;   // Max timeout for trying fetch
 export const PERFORMANCE_SAMPLE_INTERVAL = 30 * 1000;
 export const PERFORMANCE_SAMPLE_INTERVAL_FAST = 15 * 1000;
-export const PERFORMANCE_THRESHOLD = 1100;  // Min TPS to show the top bar (1100 but can be changed)
+export const PERFORMANCE_THRESHOLD = 1400;  // Min TPS to show the top bar (1100 but can be changed)
 
 export const MIN_SLIPPAGE_VALUE = 0.1;
 export const DEFAULT_SLIPPAGE_PERCENT = 1;
