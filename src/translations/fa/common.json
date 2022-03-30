@@ -243,7 +243,6 @@
 	},
 	"faucet": {
 		"current-sol-balance": "موجودی SOL فعلی",
-		"current-wsol-balance": "موجودی Wrapped SOL فعلی",
 		"fund-cta": "SOL به من بده",
 		"funding-amount": "حساب شما تامین مالی خواهد شد با",
 		"not-connected": "کیف پول شما متصل نیست، لطفا کیف پول خود را وصل کنید",
@@ -251,6 +250,10 @@
 		"wrap-sol-cta-toggle": "مقداری SOL را  Wrap کنید",
 		"wrap-transaction-fee": "کارمزد تراکن Wrap",
 		"wrapped-amount": "میزان Wrap شده"
+	},
+	"unwrap": {
+		"current-wsol-balance": "موجودی Wrapped SOL فعلی",
+		"label-input-amount": "Enter amount to unwrap"
 	},
 	"general": {
 		"cta-change": "تغییر",
@@ -291,7 +294,7 @@
 		"panel-left": {
 			"invest-stake-tab-title": "Stake MEAN",
 			"invest-liquidity-tab-title": "MEAN Liquidity Pools",
-			"liquidity-value-label": "Up to",
+			"up-to-value-label": "Up to",
 			"no-invest-options": "هیچ گزینه سرمایه گذاری در دسترس نیست",
 			"not-connected": "لطفاً کیف پول خود را وصل کنید تا گزینه های سرمایه گذاری خود را ببینید"
 		},
@@ -302,14 +305,16 @@
 			"liquidity-pool": {
 				"title": "MEAN Liquidity Pools",
 				"text-one": "MEAN Liquidity Pools are currently available on Orca and Raydium with multiple pools including MEAN/SOL, MEAN/RAY and MEAN/USDC.",
-				"text-two": "Before you add funds to a pool, be sure to read and accept the risks associated with investing in a liquidity pool.",
-				"refresh-tooltip": "Refresh liquidity data",
-				"column-platform": "Platform",
-				"column-lppair": "LP Pair",
-				"column-liquidity": "Liquidity",
-				"column-volume": "Vol (24hrs)",
-				"column-apr/apy": "APR/APY",
-				"column-invest": "Invest"
+				"text-two": "To invest in a liquidity pool, you need to supply both tokens that make up the pool. For example, when you join the Raydium MEAN/USDC pool both MEAN and USDC tokens are required. For more details, see the adding liquidity guides on",
+				"text-two-divider": "and",
+				"text-three": "Before you add funds to a pool, be sure to read and accept the risks associated with investing in a liquidity pool.",
+				"refresh-tooltip": "Refresh liquidity data"
+			},
+			"staking-sol": {
+				"title": "Liquid SOL Staking",
+				"text-one": "Liquid SOL staking is currently available with three providers on Solana. These are Lido (stSOL), Marinade (mSOL) and Socean (scnSOL).",
+				"text-two": "Before you stake your SOL, be sure to read and accept the risks associated when staking with one of these providers.",
+				"refresh-tooltip": "Refresh staking data"
 			},
 			"staking-data": {
 				"title": "Your Current Stake:",
@@ -323,10 +328,21 @@
 				"withdraw-button": "برداشت وجوه"
 			},
 			"stats": {
-				"total-mean-rewards": "Total MEAN Rewards",
 				"staking-apy": "Staking APY",
 				"staking-apy-tooltip": "The APY associated with sMEAN is a representation of the price of sMEAN over a 365 day period.",
+				"total-mean-rewards": "Total MEAN Rewards",
 				"total-value-locked": "ارزش کل قفل شده است"
+			},
+			"table-data": {
+				"column-apr/apy": "APR/APY",
+				"column-invest": "Invest",
+				"column-liquidity": "Liquidity",
+				"column-lppair": "LP Pair",
+				"column-platform": "Platform",
+				"column-volume": "Vol (24hrs)",
+				"column-token": "Token",
+				"column-total-staked": "Total staked",
+				"column-stake": "Stake"
 			},
 			"tabset": {
 				"stake": {
@@ -370,7 +386,7 @@
 	},
 	"multisig": {
 		"add-participant-cta": "افزودن مشارکت کننده",
-		"back-to-multisig-accounts-cta": "بازگشت به حساب های Multisig",
+		"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
 		"create-multisig": {
 			"main-cta": "ساختن",
 			"main-cta-busy": "ساختن حساب Multisig",
@@ -379,7 +395,7 @@
 			"multisig-duplicate-participants": "مشارکت کنندگان تکراری پیدا شد، لطفا بررسی کنید.",
 			"multisig-label-input-empty": "اسم یک حساب Multisig را وارد کنید",
 			"multisig-label-input-label": "اسم حساب Multisig",
-			"multisig-label-placeholder": "یک نام برای حساب Multisig خود تایپ کنید",
+			"multisig-label-placeholder": "Type a name for your multisig",
 			"multisig-no-participants": "هنوز هیچ مشارکت کننده ای اضافه نشده است",
 			"multisig-participants": "امضاکنندگان معتبر ({{numParticipants}} از {{maxParticipants}})",
 			"multisig-participants-warning-message": "توصیه نمی شود که یک حساب Multisig با تعداد شرکت کنندگان به اندازه امضاهای مورد نیاز ایجاد کنید",
@@ -398,7 +414,7 @@
 			"modal-title": "یک خزانه حساب Multisig ایجاد کنید",
 			"no-token": "توکن را انتخاب کنید",
 			"success-message": "خزانه حساب Multisig شما با موفقیت ایجاد شد",
-			"token-label": "از حساب",
+			"token-label": "Amount to transfer",
 			"token-placeholder": "آدرس مینت کردن توکن را وارد کنید"
 		},
 		"crud-multisig": {
@@ -420,7 +436,7 @@
 			"token-address-placeholder": "آدرس توکن را وارد کنید"
 		},
 		"multisig-account-detail": {
-			"address": "اختیارات",
+			"address": "Deposit Address",
 			"authority": "اختیارات",
 			"copy-id-title": "MULTISIG ID (آیدی حساب Multisig)",
 			"created-on": "ایجاد شده در",
@@ -429,11 +445,11 @@
 			"cta-mints": "مینت ها ({{itemCount}})",
 			"cta-no-mints": "مینت ها",
 			"cta-no-programs": "برنامه ها",
-			"cta-no-treasuries": "Treasuries",
+			"cta-no-treasuries": "Streaming Treasuries",
 			"cta-no-assets": "خزانه ها",
 			"cta-programs": "برنامه ها ({{itemCount}})",
 			"cta-transfer": "انتقال توکن ها",
-			"cta-treasuries": "Treasuries ({{itemCount}})",
+			"cta-treasuries": "Streaming Treasuries ({{itemCount}})",
 			"cta-upgrade-program": "برنامه ارتقا",
 			"cta-assets": "خزانه‌ها ({{itemCount}})",
 			"multisig-address-label": "آدرس",
@@ -453,7 +469,7 @@
 		},
 		"multisig-detail-heading": "جزئیات حساب Multisig",
 		"multisig-mints": {
-			"back-to-multisig-accounts-cta": "بازگشت به حساب های Multisig",
+			"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
 			"change-mint-authority-modal-title": "تنظیم اختیارات مینت",
 			"create-mint-modal-title": "ایجاد مینت",
 			"cta-change-mint-authority": "انتقال مالکیت",
@@ -498,44 +514,60 @@
 			"column-pending-signatures": "امضا ها",
 			"column-program-id": "برنامه",
 			"loading-transactions": "در حال بارگیری تراکنش ها",
-			"modal-title": "خلاصه تراکنش",
-			"no-transactions": "این حساب Multisig هیچ تراکنشی ندارد",
+			"modal-title": "Proposal summary",
+			"no-transactions": "This multisig asset has no transactions",
 			"tx-operation-failure": "عملیات {{operation}} ناموفق بود",
 			"tx-operation-success": "عملیات {{operation}} با موفقیت انجام شد",
 			"tx-operation-pending-one": "A transaction on this Multisig is now ready for execution. Please tell the person who initiated this transaction to execute it.",
-			"tx-operation-pending-two": "A Transaction on this Multisig is ready for",
-			"proposed-action": "Proposed Action:",
+			"tx-operation-pending-two": "A transaction on this Multisig is ready for",
+			"tx-operation-voided": "This pending transaction has been VOIDED due to the Multisig being edited.",
+			"tx-operation-rejected": "This transaction has been rejected.",
+			"tx-operation-executed": "This transaction has already been executed",
+			"proposed-action": "Proposed action:",
 			"submitted-on": "Submitted on:",
-			"initiator": "Initiator:",
+			"proposed-by": "Proposed by:",
 			"initiator-transaction": "This transaction was submitted by",
+			"missing-signature": "To execute this proposal, {{missingSignature}} more signature is needed.",
+			"missing-signatures": "To execute this proposal, {{missingSignature}} more signatures are needed.",
 			"transaction-required": "This transaction required",
 			"transaction-has": "This transaction has",
-			"transaction-awaiting": "A Transaction on this Multisig is awaiting",
+			"transaction-awaiting": "A proposal for this multisig is awaiting",
 			"address": "Address:",
 			"approval": "approval.",
-			"your-status": "Your Status:",
+			"your-status": "Your status:",
 			"signers-to-approve": "signers to approve it in order to be executed.",
-			"signed": "Signed.",
+			"signed": "Signed",
 			"signed-so-far": "Signed so far.",
 			"explain-failure": "Explain failure condition if specific",
 			"ready-for-execution": "This transaction is now ready for execution. Please tell the person who initiated this transaction to execute it.",
-			"treasury-closed-warning": "When a treasury is closed, all funds left over will be deposited to the initiator's wallet. Please confirm this is acceptable before you sign.",
-			"not-signed": "Not Signed"
+			"treasury-closed-warning": "When a treasury is closed, all funds left over will be deposited back into the multisig safe.",
+			"not-signed": "Not signed",
+			"rejected": "Rejected",
+			"rejected-tx": "You have rejected this transaction",
+			"not-sign-tx": "You did NOT sign this transaction",
+			"not-signed-tx": "You have NOT signed this transaction"
 		},
 		"multisig-treasuries": {
-			"back-to-treasuries": "بازگشت به treasuries"
+			"back-to-treasuries": "Back to Streaming Treasuries"
 		},
 		"multisig-assets": {
-			"back-to-multisig-accounts-cta": "بازگشت به حساب های Multisig",
+			"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
 			"cta-change-multisig-authority": "تغییر مالکیت treasury",
 			"cta-change-multisig-authority-busy": "تغییر Multisig",
 			"cta-close": "treasury را ببند",
 			"cta-close-busy": "بسته شدن treasury",
 			"cta-create-asset-busy": "ایجاد treasury",
-			"cta-transfer": "درخواست انتقال وجه",
+			"cta-transfer": "Propose Funds Transfer",
 			"cta-transfer-busy": "شروع درخواست برداشت",
-			"explanatory-paragraph": "با ارسال این درخواست، معامله را امضا کرده و آن را به عنوان یکی از امضاکنندگان Multisig تایید می‌کنید. قبل از ارسال وجوه، سایر اعضای Multisig باید آن را تأیید کنند.",
-			"main-cta": "درخواست انتقال وجه را امضا کنید",
+			"delete-asset": {
+				"explanatory-paragraph": "By submitting this proposal, you will sign the transaction and approve it as one of the Multisig signers. Before the asset is deleted, the other Multisig members need to approve it.",
+				"main-cta": "Submit delete proposal",
+				"modal-title": "Delete a Multisig Asset",
+				"selected-asset-label": "Asset selected",
+				"warning-message": "Only empty assets can be deleted. To delete an asset you need to first transfer all funds to another account."
+			},
+			"explanatory-paragraph": "By submitting this proposal, you will sign the transaction and approve it as one of the Multisig signers. Before the funds are sent, the other Multisig members need to approve it.",
+			"main-cta": "Sign transfer proposal",
 			"no-transactions": "هیچ تراکنشی برای این خزانه وجود ندارد",
 			"no-asset-loaded": "خزانه بارگذاری نشده است",
 			"no-assets": "هیچ خزانه ای در دسترس نیست",
@@ -548,7 +580,7 @@
 		},
 		"pending-transactions": "تراکنش های معلق",
 		"refresh-tooltip": "برای بازخوانی لیست اکانت های Multisig کلیک کنید",
-		"screen-title": "حساب های Multisig",
+		"screen-title": "Safes & Multisig",
 		"set-program-authority": {
 			"main-cta": "تنظیم اختیارات",
 			"main-cta-busy": "تنظیم کردن اختیارات",
@@ -570,7 +602,7 @@
 		"transfer-tokens": {
 			"main-cta": "شروع درخواست",
 			"main-cta-busy": "شروع کردن درخواست",
-			"modal-title": "درخواست انتقال وجه ارسال کنید",
+			"modal-title": "Initiate Transfer Proposal",
 			"source-address-label": "انتقال از",
 			"source-address-placeholder": "آدرس اکانت منبع را وارد کنید",
 			"success-message": "توکن ها با موفقیت منتقل شدند.",
@@ -581,7 +613,7 @@
 		},
 		"update-multisig": {
 			"edit-not-allowed-message": "وقتی امضاکنندگان را در Multisig تغییر می‌دهید، تمام تراکنش‌های معلق باطل می‌شوند. قبل از ادامه، مطمئن شوید که هیچ تراکنش مهمی وجود ندارد که لازم باشد ابتدا انجام شود.",
-			"main-cta": "ذخیره تغییرات",
+			"main-cta": "Propose changes",
 			"main-cta-busy": "ذخیره سازی تغییرات",
 			"modal-title": "ویرایش multisig",
 			"success-message": "تغییرات شما در حساب multisig ذخیره شد!"
@@ -750,6 +782,8 @@
 			"add-funds-cta": "شارژ (افزودن وجوه)",
 			"amount-funded-date": "تامین مالی شده است",
 			"cancel-scheduled-transfer": "لغو انتقال",
+			"close-stream-cta": "Close Stream",
+			"close-stream-cta-tooltip": "Close stream is available when Stream runs out of funds",
 			"close-money-stream-menu-item": "بستن money stream",
 			"cta-disabled-closing": "بستن money stream...",
 			"cta-disabled-creating": "ایجاد stream در حال انجام...",
@@ -809,6 +843,7 @@
 	"swap": {
 		"exchange-warning": "صرافی Mean فقط در دسترس است",
 		"frequency-label": "فرکانس",
+		"getting-routes": "Getting routes",
 		"input-label-destination": "معاوضه به (est.)",
 		"input-label-source": "معاوضه از",
 		"insufficient-liquidity": "نقدینگی ناکافی برای این ترید",
@@ -1009,7 +1044,7 @@
 			"main-cta-busy": "تامین مالی خزانه",
 			"main-cta-fund-stream": "سرمایه مانی استریم",
 			"main-cta-fund-stream-busy": "وجوه استریم",
-			"modal-title": "اضافه کردن وجوه به Treasury",
+			"modal-title": "Add funds to the Streaming Treasury",
 			"modal-title-fund-stream": "اضافه کردن وجوه به یک مانی استریم",
 			"money-stream-to-topup-label": "مانی استریم برای شارژ",
 			"search-streams-placeholder": "استریم را بر اساس نام یا آدرس جستجو کنید",
@@ -1030,9 +1065,9 @@
 				"months": "months",
 				"years": "years"
 			},
-			"main-cta": "راه اندازی",
-			"main-cta-busy": "ایجاد treasury",
-			"modal-title": "treasury  ایجاد کنید",
+			"main-cta": "Create streaming treasury",
+			"main-cta-busy": "Creating treasury",
+			"modal-title": "Create Streaming Treasury",
 			"multisig-selector-label": "حساب Multisig",
 			"multisig-treasury-created-info": "برای تکمیل تنظیم treasury ، سایر امضاکنندگان Multisig باید آن را تأیید کنند.",
 			"multisig-treasury-created-instructions": "لطفاً از سایر کاربران بخواهید که این معامله ایجاد treasury  را امضا کنند.",
@@ -1040,7 +1075,8 @@
 			"success-message": "treasury  جدید شما با موفقیت ایجاد شد.",
 			"treasury-name-input-empty": "نام treasury  را وارد کنید",
 			"treasury-name-input-label": "نام treasury",
-			"treasury-name-placeholder": "یک نام برای treasury خود تایپ کنید",
+			"treasury-name-placeholder": "Type a name for your streaming treasury",
+			"treasury-token-label": "Token to be streamed",
 			"treasury-type-options": {
 				"treasury-type-locked-description": "با یک treasury قفل شده می‌توانید استریم هایی ایجاد کنید که مانند قراردادهای سرمایه‌گذاری برای تخصیص‌های رزرو شده عمل می‌کنند، مانند مواردی که برای سرمایه‌گذاران لازم است. آنها معمولا تاریخ پایان ثابتی دارند.",
 				"treasury-type-locked-name": "treasury  مانی استریمینگ قفل شده",
@@ -1058,7 +1094,7 @@
 			"treasuryid-placeholder": "شناسه treasury ایجاد شده توسط Mean Finance"
 		},
 		"refresh-tooltip": "برای بازخوانی لیست treasury ها کلیک کنید",
-		"screen-title": "treasury ها",
+		"screen-title": "Streaming Treasuries",
 		"treasury-detail": {
 			"associated-token": "توکن مرتبط",
 			"created-on": "ایجاد شده در",
@@ -1071,9 +1107,9 @@
 			"no-treasury-loaded": "برای مشاهده جزئیات یک treasury ایجاد کنید یا جستجو کنید",
 			"no-treasury-selected": "لطفاً برای مشاهده جزئیات، treasury را انتخاب یا جستجو کنید",
 			"number-of-streams": "تعداد استریم ها",
-			"treasury-address-label": "آدرس",
+			"treasury-address-label": "Treasury Address",
 			"treasury-name-label": "نام treasury",
-			"unallocated-treasury-balance": "موجودی treasury تخصیص نیافته"
+			"unallocated-treasury-balance": "Unallocated Streaming Treasury Balance"
 		},
 		"treasury-detail-heading": "جزئیات treasury",
 		"treasury-list": {
@@ -1104,11 +1140,11 @@
 				"panel3-starting-on": "Starting on:",
 				"panel3-cliff-release": "Cliff release:",
 				"panel3-release-rate": "Release rate:",
-				"panel3-warning-message": "IMPORTANT: This is a locked money stream, and once started, you cannot cancel, pause or change its details. Verify all information before proceeding."
+				"panel3-warning-message": "IMPORTANT: This is a locked money stream. You cannot cancel, pause or change its details once it is started. Verify all information before proceeding."
 			},
 			"allocate-funds-label": "تخصیص بودجه",
 			"allocation-reserved-label": "این تخصیص کاملاً رزرو شده است",
-			"available-unallocated-balance-label": "موجودی تخصیص نیافته موجود",
+			"available-unallocated-balance-label": "Unallocated Balance",
 			"busy-pausing": "توقف استریم",
 			"busy-resuming": "از سرگیری استریم",
 			"close-stream-also-closes-treasury-label": "treasury را هم ببندید",
@@ -1126,7 +1162,7 @@
 			"multiple-address-list": "Multiple address list",
 			"multiple-address-question-mark-tooltip": "Please provide a csv text file with one address per line in the following format: \n MEMO or STREAM NAME, WALLET ADDRESS. \n\n Here is an example of how it should look: \n Epoch 1, FrdFf3EqcGuytTweLvoELBt29WrAGVYjrh4585A2bTAZ \n\n Before you submit the file, please make sure the recipient addresses are correct and do not belong to an exchange.",
 			"message-warning": "The list of recipients you submitted included your own wallet address. This is not possible and this address has been removed from the imported list.",
-			"no-streams": "این treasury هیچ استریم فعالی ندارد",
+			"no-streams": "This streaming treasury has no active streams",
 			"option-close-stream": "بستن",
 			"option-explorer-link": "مشاهده در سولانا اکسپلورر",
 			"option-pause-stream": "وقفه",
@@ -1175,11 +1211,12 @@
 			"services": {
 				"custody": "حضانت",
 				"faucet": "فاست",
-				"multisig": "Multisig",
+				"multisig": "Safes & Multisig",
 				"submenu-title": "خدمات",
-				"treasuries": "Treasuries و حقوق ودستمزد",
+				"treasuries": "Streaming Treasuries",
 				"wallet-guide": "راهنمای کیف پول",
-				"wrap": "رپ(Wrap) کردن"
+				"wrap": "رپ(Wrap) کردن",
+				"unwrap": "Unwrap"
 			},
 			"stats": "آمار",
 			"swap": "مبادله",

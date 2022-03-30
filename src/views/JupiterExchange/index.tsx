@@ -63,7 +63,7 @@ export const JupiterExchange = (props: {
     const [fromMint, setFromMint] = useState<string | undefined>();
     const [toMint, setToMint] = useState<string | undefined>(undefined);
     const [paramsProcessed, setParamsProcessed] = useState(false);
-    const [refreshing, setRefreshing] = useState(false);
+    const [refreshingRoutes, setRefreshingRoutes] = useState(false);
     const [jupiter, setJupiter] = useState<Jupiter | undefined>(undefined);
     const [slippage, setSlippage] = useLocalStorage('slippage', DEFAULT_SLIPPAGE_PERCENT);
     const [fromAmount, setFromAmount] = useState("");
@@ -647,7 +647,7 @@ export const JupiterExchange = (props: {
     const refreshRoutes = useCallback(() => {
 
         if (!jupiter || !inputToken || !outputToken || !slippage) {
-            setRefreshing(false);
+            setRefreshingRoutes(false);
             return;
         }
 
@@ -661,7 +661,13 @@ export const JupiterExchange = (props: {
             });
         }
 
-        setRefreshing(true);
+        if (!inputAmount) {
+            setRoutes([]);
+            setSelectedRoute(undefined);
+            return;
+        }
+
+        setRefreshingRoutes(true);
         getRoutes()
             .then(response => {
                 const routes = response ? response.routesInfos : [];
@@ -677,7 +683,7 @@ export const JupiterExchange = (props: {
                 setRoutes(filteredRoutes);
             })
             .catch(error => console.error(error))
-            .finally(() => setRefreshing(false));
+            .finally(() => setRefreshingRoutes(false));
     }, [
         jupiter,
         slippage,
@@ -690,11 +696,11 @@ export const JupiterExchange = (props: {
     useEffect(() => {
 
         if (!jupiter || !inputToken || !outputToken || !slippage) {
-            setRefreshing(false);
+            setRefreshingRoutes(false);
             return;
         }
 
-        setRefreshing(true);
+        setRefreshingRoutes(true);
         refreshRoutes();
     }, [
         jupiter,
@@ -755,7 +761,9 @@ export const JupiterExchange = (props: {
                 });
             } else if (inputAmount > getMaxAllowedSwapAmount()) {
                 label = t('transactions.validation.amount-low');
-            } else if (inputAmount > 0 && !selectedRoute) {
+            } else if (inputAmount > 0 && !selectedRoute && refreshingRoutes) {
+                label = t('swap.getting-routes');
+            } else if (inputAmount > 0 && !selectedRoute && !refreshingRoutes) {
                 label = t('transactions.validation.exchange-unavailable');
             } else {
                 label = t('transactions.validation.valid-approve');
@@ -779,8 +787,9 @@ export const JupiterExchange = (props: {
         inputAmount,
         minInAmount,
         selectedRoute,
+        refreshingRoutes,
+        getMaxAllowedSwapAmount,
         isInAmountTooLow,
-        getMaxAllowedSwapAmount
     ]);
 
     // Updates the token list everytime is filtered
@@ -923,11 +932,15 @@ export const JupiterExchange = (props: {
 
     const handleSwapFromAmountChange = useCallback((e: any) => {
 
-        const input = e.target;
+        let newValue = e.target.value;
 
-        if (!input) { return; }
-
-        const newValue = input.value;
+        const splitted = newValue.toString().split('.');
+        const left = splitted[0];
+        if (left.length > 1) {
+          const number = splitted[0] - 0;
+          splitted[0] = `${number}`;
+          newValue = splitted.join('.');
+        }
 
         if (newValue === null || newValue === undefined || newValue === "") {
             setFromAmount('');
@@ -973,7 +986,7 @@ export const JupiterExchange = (props: {
             timer = setInterval(() => {
                 if (!isBusy) {
                     consoleOut(`Trigger refresh routes after ${EXCHANGE_ROUTES_REFRESH_TIMEOUT / 1000} seconds`);
-                    setRefreshing(true);
+                    setRefreshingRoutes(true);
                     refreshRoutes();
                 }
             }, EXCHANGE_ROUTES_REFRESH_TIMEOUT);
@@ -1028,7 +1041,7 @@ export const JupiterExchange = (props: {
                     wSolBalance                 // amount
                 )
                     .then((value) => {
-                        consoleOut("wrapSol returned transaction:", value);
+                        consoleOut("unwrapSol returned transaction:", value);
                         // Stage 1 completed - The transaction is created and returned
                         setTransactionStatus({
                             lastOperation: TransactionStatus.InitTransactionSuccess,
@@ -1042,7 +1055,7 @@ export const JupiterExchange = (props: {
                         return true;
                     })
                     .catch((error) => {
-                        console.error("wrapSol transaction init error:", error);
+                        console.error("unwrapSol transaction init error:", error);
                         setTransactionStatus({
                             lastOperation: transactionStatus.currentOperation,
                             currentOperation: TransactionStatus.InitTransactionFailure,
@@ -1302,25 +1315,25 @@ export const JupiterExchange = (props: {
         return fromMint && toMint && selectedRoute ? (
             <>
                 {
-                    !refreshing && inputAmount && feeInfo && feeInfo.minimumSOLForTransaction === feeInfo.signatureFee && infoRow(
+                    !refreshingRoutes && inputAmount && feeInfo && feeInfo.minimumSOLForTransaction === feeInfo.signatureFee && infoRow(
                         t('transactions.transaction-info.network-transaction-fee'),
                         `${toUiAmount(new BN(feeInfo.signatureFee), sol.decimals)} SOL`
                     )
                 }
                 {
-                    !refreshing && inputAmount && feeInfo && feeInfo.minimumSOLForTransaction > feeInfo.signatureFee && infoRow(
+                    !refreshingRoutes && inputAmount && feeInfo && feeInfo.minimumSOLForTransaction > feeInfo.signatureFee && infoRow(
                         t('transactions.transaction-info.minimum-sol-for-transaction'),
                         `${toUiAmount(new BN(feeInfo.minimumSOLForTransaction), sol.decimals)} SOL`
                     )
                 }
                 {
-                    !refreshing && inputAmount && slippage && infoRow(
+                    !refreshingRoutes && inputAmount && slippage && infoRow(
                         t('transactions.transaction-info.slippage'),
                         `${slippage.toFixed(2)}%`
                     )
                 }
                 {
-                    !refreshing && inputAmount && selectedRoute && infoRow(
+                    !refreshingRoutes && inputAmount && selectedRoute && infoRow(
                         t('transactions.transaction-info.price-impact'),
                         selectedRoute.priceImpactPct * 100 < 0.1
                             ? '0.1%'
@@ -1329,7 +1342,7 @@ export const JupiterExchange = (props: {
                     )
                 }
                 {
-                    !refreshing && inputAmount && outputToken && infoRow(
+                    !refreshingRoutes && inputAmount && outputToken && infoRow(
                         t('transactions.transaction-info.minimum-received'),
                         `${formatThousands(
                             selectedRoute?.outAmountWithSlippage /
@@ -1437,7 +1450,7 @@ export const JupiterExchange = (props: {
                                 </div>
                                 <div className="token-description">
                                     <div className="token-symbol">{token.address === WRAPPED_SOL_MINT_ADDRESS ? 'SOL' : token.symbol}</div>
-                                    <div className="token-name">{token.name}</div>
+                                    <div className="token-name m-0">{token.name}</div>
                                 </div>
                                 <div className="token-balance">
                                     {
@@ -1508,7 +1521,7 @@ export const JupiterExchange = (props: {
                                 </div>
                                 <div className="token-description">
                                     <div className="token-symbol">{token.address === WRAPPED_SOL_MINT_ADDRESS ? 'SOL' : token.symbol}</div>
-                                    <div className="token-name">{token.name}</div>
+                                    <div className="token-name m-0">{token.name}</div>
                                 </div>
                                 <div className="token-balance">
                                     {
@@ -1653,7 +1666,7 @@ export const JupiterExchange = (props: {
                                         )}
                                         {/* Refresh routes */}
                                         <span className="icon-button-container">
-                                            {refreshing || isBusy ? (
+                                            {refreshingRoutes || isBusy ? (
                                                 <span className="icon-container"><SyncOutlined spin /></span>
                                             ) : (
                                                 <Tooltip placement="bottom" title="Refresh routes">
@@ -1663,7 +1676,7 @@ export const JupiterExchange = (props: {
                                                         size="small"
                                                         icon={<ReloadOutlined />}
                                                         onClick={() => {
-                                                            setRefreshing(true);
+                                                            setRefreshingRoutes(true);
                                                             refreshRoutes();
                                                         }}
                                                     />
@@ -1720,7 +1733,7 @@ export const JupiterExchange = (props: {
                             consoleOut('onSelectedRoute:', route, 'blue');
                             setSelectedRoute(route);
                         }}
-                        isBusy={isBusy || refreshing}
+                        isBusy={isBusy || refreshingRoutes}
                         showAllRoutes={showFullRoutesList}
                         onToggleShowFullRouteList={onShowLpListToggled}
                     />
@@ -1746,7 +1759,7 @@ export const JupiterExchange = (props: {
                     disabled={
                         !isExchangeValid() ||
                         !isProd() ||
-                        refreshing
+                        refreshingRoutes
                     }>
                     {isBusy && (
                         <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>

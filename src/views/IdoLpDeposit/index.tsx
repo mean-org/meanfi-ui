@@ -39,7 +39,14 @@ export const IdoLpDeposit = (props: {
   const [isBusy, setIsBusy] = useState(false);
 
   const handleAmountChange = (e: any) => {
-    const newValue = e.target.value;
+    let newValue = e.target.value;
+    const splitted = newValue.toString().split('.');
+    const left = splitted[0];
+    if (left.length > 1) {
+      const number = splitted[0] - 0;
+      splitted[0] = `${number}`;
+      newValue = splitted.join('.');
+    }
     if (newValue === null || newValue === undefined || newValue === "") {
       setDepositAmount("");
     } else if (isValidNumber(newValue)) {
@@ -271,7 +278,7 @@ export const IdoLpDeposit = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.IdoDeposit);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.IdoDeposit);
             setDepositAmount("");
             setIsBusy(false);
             setTransactionStatus({

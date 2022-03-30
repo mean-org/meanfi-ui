@@ -436,7 +436,7 @@ export const ExchangeDcasView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.DdcaClose);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.DdcaClose);
             setIsBusy(false);
             // Give time for several renders so startFetchTxSignatureInfo can update TransactionStatusContext
             await delay(250);
@@ -716,7 +716,7 @@ export const ExchangeDcasView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.DdcaWithdraw);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.DdcaWithdraw);
             setIsBusy(false);
             // Give time for several renders so startFetchTxSignatureInfo can update TransactionStatusContext
             await delay(250);

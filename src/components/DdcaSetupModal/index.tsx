@@ -507,7 +507,7 @@ export const DdcaSetupModal = (props: {
     const confirmTx = async (): Promise<boolean> => {
 
       return await props.connection
-        .confirmTransaction(signature, "finalized")
+        .confirmTransaction(signature, "confirmed")
         .then(result => {
           consoleOut('confirmTransaction result:', result);
           if (result && result.value && !result.value.err) {
@@ -768,7 +768,7 @@ export const DdcaSetupModal = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.DdcaCreate);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.DdcaCreate);
             onFinishedSwapTx();
           } else { onFinishedSwapTx(); }
         } else { onFinishedSwapTx(); }

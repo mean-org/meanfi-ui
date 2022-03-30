@@ -226,7 +226,7 @@ export const AirdropRedeem = (props: {
           return false;
         }
 
-        const msp = new MSP(endpoint, streamV2ProgramAddress, "finalized");
+        const msp = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
 
         consoleOut('Starting withdraw using MSP V2...', '', 'blue');
         // Create a transaction
@@ -402,7 +402,7 @@ export const AirdropRedeem = (props: {
 
     const confirmTx = async (): Promise<boolean> => {
       return await props.connection
-        .confirmTransaction(signature, "finalized")
+        .confirmTransaction(signature, "confirmed")
         .then(result => {
           consoleOut('confirmTransaction result:', result);
           if (result && result.value && !result.value.err) {

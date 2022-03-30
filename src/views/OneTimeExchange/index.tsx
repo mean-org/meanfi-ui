@@ -1053,11 +1053,15 @@ export const OneTimeExchange = (props: {
   // Event handling
   const handleSwapFromAmountChange = useCallback((e: any) => {
 
-    const input = e.target;
+    let newValue = e.target.value;
 
-    if (!input) { return; }
-
-    const newValue = input.value;
+    const splitted = newValue.toString().split('.');
+    const left = splitted[0];
+    if (left.length > 1) {
+      const number = splitted[0] - 0;
+      splitted[0] = `${number}`;
+      newValue = splitted.join('.');
+    }
 
     if (newValue === null || newValue === undefined || newValue === "") {
       setFromAmount('');
@@ -1787,7 +1791,7 @@ export const OneTimeExchange = (props: {
               </div>
               <div className="token-description">
                 <div className="token-symbol">{token.symbol}</div>
-                <div className="token-name">{token.name}</div>
+                <div className="token-name m-0">{token.name}</div>
               </div>
               {
                 connected && userBalances && mintList[token.address] && userBalances[token.address] > 0 && (
@@ -1852,7 +1856,7 @@ export const OneTimeExchange = (props: {
               </div>
               <div className="token-description">
                 <div className="token-symbol">{token.symbol}</div>
-                <div className="token-name">{token.name}</div>
+                <div className="token-name m-0">{token.name}</div>
               </div>
               {
                 connected && userBalances && mintList[token.address] && userBalances[token.address] > 0 && (

@@ -490,7 +490,7 @@ export const DdcaAddFundsModal = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.DdcaAddFunds);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.DdcaAddFunds);
             onFinishedAddFundsTx();
           } else { onFinishedAddFundsTx(); }
         } else { onFinishedAddFundsTx(); }

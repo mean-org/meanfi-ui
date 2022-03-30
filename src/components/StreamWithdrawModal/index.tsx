@@ -86,7 +86,7 @@ export const StreamWithdrawModal = (props: {
           setMaxAmount(max);
           setLoadingData(true);
           try {
-            const ms = new MoneyStreaming(endpoint, streamProgramAddress, "finalized");
+            const ms = new MoneyStreaming(endpoint, streamProgramAddress, "confirmed");
             getStreamDetails(v1.id as string, ms);
           } catch (error) {
             notify({
@@ -104,7 +104,7 @@ export const StreamWithdrawModal = (props: {
           setMaxAmount(max);
           setLoadingData(true);
           try {
-            const msp = new MSP(endpoint, streamV2ProgramAddress, "finalized");
+            const msp = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
             getStreamDetails(v2.id as string, msp);
           } catch (error) {
             notify({
@@ -194,7 +194,14 @@ export const StreamWithdrawModal = (props: {
   }
 
   const handleWithdrawAmountChange = (e: any) => {
-    const newValue = e.target.value;
+    let newValue = e.target.value;
+    const splitted = newValue.toString().split('.');
+    const left = splitted[0];
+    if (left.length > 1) {
+      const number = splitted[0] - 0;
+      splitted[0] = `${number}`;
+      newValue = splitted.join('.');
+    }
     if (newValue === null || newValue === undefined || newValue === "") {
       setValue("");
     } else if (newValue === '.') {

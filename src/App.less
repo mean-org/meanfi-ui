@@ -1837,6 +1837,9 @@ main section {
   &:first-of-type {
     margin-top: var(--main-navigation-bar-height);
   }
+  &:last-of-type {
+    margin-bottom: var(--footer-bar-height);
+  }
   .heading-section {
     padding: 2rem 0 0;
   }
@@ -3666,6 +3669,18 @@ main section {
         font-size: 0.64rem;
         vertical-align: bottom;
         padding: 0px 0px 0px 4px;
+      }
+    }
+  }
+  &.dark {
+    .header-row {
+      height: 26px;
+      .std-table-cell {
+        vertical-align: middle;
+        font-size: 0.75rem !important;
+        color: var(--color-secondary-alpha-70);
+        background-color: var(--color-section);
+        padding: 0px 0px 0px 8px;
       }
     }
   }

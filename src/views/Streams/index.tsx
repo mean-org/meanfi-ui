@@ -195,7 +195,7 @@ export const Streams = () => {
   const ms = useMemo(() => new MoneyStreaming(
     endpoint,
     streamProgramAddress,
-    "finalized"
+    "confirmed"
   ), [
     endpoint,
     streamProgramAddress
@@ -207,7 +207,7 @@ export const Streams = () => {
       return new MSP(
         endpoint,
         streamV2ProgramAddress,
-        "finalized"
+        "confirmed"
       );
     }
   }, [
@@ -975,7 +975,7 @@ export const Streams = () => {
       );
 
       tx.feePayer = publicKey;
-      let { blockhash } = await connection.getRecentBlockhash("finalized");
+      let { blockhash } = await connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
       tx.partialSign(...txSigners);
 
@@ -1197,7 +1197,7 @@ export const Streams = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.StreamPause);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamPause);
             setOngoingOperation(undefined);
             onPauseStreamTransactionFinished();
           } else { setIsBusy(false); }
@@ -1428,7 +1428,7 @@ export const Streams = () => {
       );
 
       tx.feePayer = publicKey;
-      let { blockhash } = await connection.getRecentBlockhash("finalized");
+      let { blockhash } = await connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
       tx.partialSign(...txSigners);
 
@@ -1648,7 +1648,7 @@ export const Streams = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.StreamResume);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamResume);
             setOngoingOperation(undefined);
             onResumeStreamTransactionFinished();
           } else { setIsBusy(false); }
@@ -1801,7 +1801,7 @@ export const Streams = () => {
   //     );
 
   //     tx.feePayer = publicKey;
-  //     const { blockhash } = await connection.getRecentBlockhash("finalized");
+  //     const { blockhash } = await connection.getRecentBlockhash("confirmed");
   //     tx.recentBlockhash = blockhash;
   //     tx.partialSign(...[transaction]);
 
@@ -2021,7 +2021,7 @@ export const Streams = () => {
   //         consoleOut('sent:', sent);
   //         if (sent && !transactionCancelled) {
   //           consoleOut('Send Tx to confirmation queue:', signature);
-  //           startFetchTxSignatureInfo(signature, "finalized", OperationType.EditMultisig);
+  //           startFetchTxSignatureInfo(signature, "confirmed", OperationType.EditMultisig);
   //           setIsBusy(false);
   //           setTransactionStatus({
   //             lastOperation: transactionStatus.currentOperation,
@@ -2082,8 +2082,8 @@ export const Streams = () => {
   const multisigClient = useMemo(() => {
 
     const opts: ConfirmOptions = {
-      preflightCommitment: "finalized",
-      commitment: "finalized",
+      preflightCommitment: "confirmed",
+      commitment: "confirmed",
     };
 
     const provider = new Provider(connection, wallet as any, opts);
@@ -2377,7 +2377,7 @@ export const Streams = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.StreamTransferBeneficiary);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamTransferBeneficiary);
             setIsBusy(false);
             onTransferStreamTransactionFinished();
           } else { setIsBusy(false); }
@@ -2904,7 +2904,7 @@ export const Streams = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.StreamAddFunds);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamAddFunds);
             setIsBusy(false);
             onAddFundsTransactionFinished();
           } else { setIsBusy(false); }
@@ -3730,7 +3730,7 @@ export const Streams = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.StreamWithdraw);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamWithdraw);
             setIsBusy(false);
             onWithdrawFundsTransactionFinished();
           } else { setIsBusy(false); }
@@ -4124,7 +4124,7 @@ export const Streams = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.StreamClose);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamClose);
             setIsBusy(false);
             onCloseStreamTransactionFinished();
           } else { setIsBusy(false); }
@@ -4377,11 +4377,11 @@ export const Streams = () => {
 
   const menu = (
     <Menu>
-      {/* {isTreasurer() && (
-        <Menu.Item key="1" onClick={() => {}}>
+      {isTreasurer() && (
+        <Menu.Item key="1" onClick={showCloseStreamModal}>
           <span className="menu-item-text">{t('streams.stream-detail.close-money-stream-menu-item')}</span>
         </Menu.Item>
-      )} */}
+      )}
       {(streamDetail && isInboundStream(streamDetail) && streamDetail.version >= 2) && (
         <Menu.Item key="2" onClick={showTransferStreamModal}>
           <span className="menu-item-text">{t('streams.stream-detail.transfer-money-stream-menu-item')}</span>
@@ -5255,9 +5255,10 @@ export const Streams = () => {
                           size="small"
                           disabled={
                             isOtp() ||
-                            fetchTxInfoStatus === "fetching"
+                            fetchTxInfoStatus === "fetching" ||
+                            (getTreasuryType() === "locked" && (stream && stream.state === STREAM_STATE.Running))
                           }
-                          onClick={showAddFundsModal}>
+                          onClick={(getTreasuryType() === "open") ? showAddFundsModal : showCloseStreamModal}>
                           {fetchTxInfoStatus === "fetching" && (<LoadingOutlined />)}
                           {isClosing()
                             ? t('streams.stream-detail.cta-disabled-closing')
@@ -5267,20 +5268,24 @@ export const Streams = () => {
                                 ? t('streams.stream-detail.cta-disabled-funding')
                                 : isWithdrawing()
                                   ? t('streams.stream-detail.cta-disabled-withdrawing')
-                                  : t('streams.stream-detail.add-funds-cta')
+                                  : (getTreasuryType() === "open") 
+                                    ? t('streams.stream-detail.add-funds-cta') 
+                                    : t('streams.stream-detail.close-stream-cta')
                           }
                         </Button>
-                        {fetchTxInfoStatus !== "fetching" && (
-                          <Dropdown overlay={menu} trigger={["click"]}>
-                            <Button
-                              shape="round"
-                              type="text"
-                              size="small"
-                              className="ant-btn-shaded"
-                              onClick={(e) => e.preventDefault()}
-                              icon={<EllipsisOutlined />}>
-                            </Button>
-                          </Dropdown>
+                        {(getTreasuryType() === "open") && (
+                          fetchTxInfoStatus !== "fetching" && (
+                            <Dropdown overlay={menu} trigger={["click"]}>
+                              <Button
+                                shape="round"
+                                type="text"
+                                size="small"
+                                className="ant-btn-shaded"
+                                onClick={(e) => e.preventDefault()}
+                                icon={<EllipsisOutlined />}>
+                              </Button>
+                            </Dropdown>
+                          )
                         )}
                       </>
                     )}
@@ -5528,31 +5533,51 @@ export const Streams = () => {
                   )}
 
                   {/* Top up (add funds) button */}
-                  <div className="mt-3 mb-3 withdraw-container">
-                    <Button
-                      block
-                      className="withdraw-cta"
-                      type="text"
-                      shape="round"
-                      size="small"
-                      disabled={
-                        isOtp() ||
-                        fetchTxInfoStatus === "fetching"
-                      }
-                      onClick={showAddFundsModal}>
-                      {fetchTxInfoStatus === "fetching" && (<LoadingOutlined />)}
-                      {isClosing()
-                        ? t('streams.stream-detail.cta-disabled-closing')
-                        : isCreating()
-                          ? t('streams.stream-detail.cta-disabled-creating')
-                          : isAddingFunds()
-                            ? t('streams.stream-detail.cta-disabled-funding')
-                            : isWithdrawing()
-                              ? t('streams.stream-detail.cta-disabled-withdrawing')
-                              : t('streams.stream-detail.add-funds-cta')
-                      }
-                    </Button>
-                    {(getTreasuryType() === "open") && (
+                    <Tooltip title={(getTreasuryType() === "locked" && stream.status === STREAM_STATUS.Running) ? t("streams.stream-detail.close-stream-cta-tooltip") : ""}>
+                      <div className="mt-3 mb-3 withdraw-container">
+                        <Button
+                          block
+                          className="withdraw-cta"
+                          type="text"
+                          shape="round"
+                          size="small"
+                          disabled={
+                            isOtp() ||
+                            fetchTxInfoStatus === "fetching" ||
+                            (getTreasuryType() === "locked" && stream.status === STREAM_STATUS.Running)
+                          }
+                          onClick={(getTreasuryType() === "open") ? showAddFundsModal : showCloseStreamModal}>
+                          {fetchTxInfoStatus === "fetching" && (<LoadingOutlined />)}
+                          {isClosing()
+                            ? t('streams.stream-detail.cta-disabled-closing')
+                            : isCreating()
+                              ? t('streams.stream-detail.cta-disabled-creating')
+                              : isAddingFunds()
+                                ? t('streams.stream-detail.cta-disabled-funding')
+                                : isWithdrawing()
+                                  ? t('streams.stream-detail.cta-disabled-withdrawing')
+                                  : (getTreasuryType() === "open") 
+                                    ? t('streams.stream-detail.add-funds-cta') 
+                                    : t('streams.stream-detail.close-stream-cta')
+                          }
+                        </Button>
+                        {(getTreasuryType() === "open") && (
+                          fetchTxInfoStatus !== "fetching" && (
+                            <Dropdown overlay={menu} trigger={["click"]}>
+                              <Button
+                                shape="round"
+                                type="text"
+                                size="small"
+                                className="ant-btn-shaded"
+                                onClick={(e) => e.preventDefault()}
+                                icon={<EllipsisOutlined />}>
+                              </Button>
+                            </Dropdown>
+                          )
+                        )}
+                      </div>
+                    </Tooltip>
+                    {/* {(getTreasuryType() === "open") && (
                       <span className="icon-button-container">
                         {getStreamStatus(stream) === "Running" && (
                           <Tooltip placement="bottom" title={t("streams.pause-stream-tooltip")}>
@@ -5594,20 +5619,7 @@ export const Streams = () => {
                           </Button>
                         </Tooltip>
                       </span>
-                    )}
-                    {/* {fetchTxInfoStatus !== "fetching" && (
-                      <Dropdown overlay={menu} trigger={["click"]}>
-                        <Button
-                          shape="round"
-                          type="text"
-                          size="small"
-                          className="ant-btn-shaded"
-                          onClick={(e) => e.preventDefault()}
-                          icon={<EllipsisOutlined />}>
-                        </Button>
-                      </Dropdown>
                     )} */}
-                  </div>
                 </div>
               </Spin>
 
@@ -5813,7 +5825,7 @@ export const Streams = () => {
             {connected && streamDetail ? (
               <>
                 {/* Top action icons */}
-                {isUnderDevelopment() && (
+                {/* {isUnderDevelopment() && (
                   <div className="float-top-right">
                     <span className="icon-button-container secondary-button">
                       <Tooltip placement="bottom" title={t('streams.edit-stream.edit-stream-tooltip')}>
@@ -5838,7 +5850,7 @@ export const Streams = () => {
                       </Tooltip>
                     </span>
                   </div>
-                )}
+                )} */}
 
               {isInboundStream(streamDetail)
                 ? streamDetail.version < 2
