@@ -251,10 +251,6 @@
 		"wrap-transaction-fee": "Wrap transaction fee",
 		"wrapped-amount": "Wrapped amount"
 	},
-	"unwrap": {
-		"current-wsol-balance": "Current Wrapped SOL balance",
-		"label-input-amount": "Enter amount to unwrap"
-	},
 	"general": {
 		"cta-change": "Change",
 		"cta-close": "Close",
@@ -293,29 +289,23 @@
 	"invest": {
 		"panel-left": {
 			"invest-liquidity-tab-title": "MEAN Liquidity Pools",
-			"invest-stake-tab-title": "Stake MEAN",
 			"invest-stake-sol-tab-title": "Stake SOL",
-			"up-to-value-label": "Up to",
+			"invest-stake-tab-title": "Stake MEAN",
 			"no-invest-options": "No invest options available",
-			"not-connected": "Please connect your wallet to see your invest options"
+			"not-connected": "Please connect your wallet to see your invest options",
+			"up-to-value-label": "Up to"
 		},
 		"panel-right": {
 			"first-text": "MEAN staking rewards include emission incentives plus a share of the protocol revenues, and can be boosted using locking periods. When you stake your MEAN, you get sMEAN in return.",
 			"liquidity-pool": {
 				"refresh-tooltip": "Refresh liquidity data",
 				"text-one": "MEAN Liquidity Pools are currently available on Orca and Raydium with multiple pools including MEAN/SOL, MEAN/RAY and MEAN/USDC.",
+				"text-three": "Before you add funds to a pool, be sure to read and accept the risks associated with investing in a liquidity pool.",
 				"text-two": "To invest in a liquidity pool, you need to supply both tokens that make up the pool. For example, when you join the Raydium MEAN/USDC pool both MEAN and USDC tokens are required. For more details, see the adding liquidity guides on",
 				"text-two-divider": "and",
-				"text-three": "Before you add funds to a pool, be sure to read and accept the risks associated with investing in a liquidity pool.",
 				"title": "MEAN Liquidity Pools"
 			},
 			"second-text": "Simply holding your sMEAN is all that is required to continuously grow your MEAN stash. You don't need to harvest the rewards with MEAN staking. When you unstake your sMEAN, you will receive the rewards earned in the form of additional MEAN on top of the amount staked.",
-			"staking-sol": {
-				"title": "Liquid SOL Staking",
-				"text-one": "Liquid SOL staking is currently available with three providers on Solana. These are Lido (stSOL), Marinade (mSOL) and Socean (scnSOL).",
-				"text-two": "Before you stake your SOL, be sure to read and accept the risks associated when staking with one of these providers.",
-				"refresh-tooltip": "Refresh staking data"
-			},
 			"staking-data": {
 				"label-avg": "Avg. Locked Yield",
 				"label-balance": "My xMEAN Balance",
@@ -326,6 +316,12 @@
 				"text-two": "Locking boost periods are coming soon to earn even more MEAN!",
 				"title": "Your Current Stake:",
 				"withdraw-button": "Withdraw Rewards"
+			},
+			"staking-sol": {
+				"refresh-tooltip": "Refresh staking data",
+				"text-one": "Liquid SOL staking is currently available with three providers on Solana. These are Lido (stSOL), Marinade (mSOL) and Socean (scnSOL).",
+				"text-two": "Before you stake your SOL, be sure to read and accept the risks associated when staking with one of these providers.",
+				"title": "Liquid SOL Staking"
 			},
 			"stats": {
 				"staking-apy": "Staking APR",
@@ -339,10 +335,10 @@
 				"column-liquidity": "Liquidity",
 				"column-lppair": "LP Pair",
 				"column-platform": "Platform",
-				"column-volume": "Vol (24hrs)",
+				"column-stake": "Stake",
 				"column-token": "Token",
 				"column-total-staked": "Total staked",
-				"column-stake": "Stake"
+				"column-volume": "Vol (24hrs)"
 			},
 			"tabset": {
 				"stake": {
@@ -367,8 +363,8 @@
 					"send-amount": {
 						"label-right": "Available to unstake"
 					},
-					"unstake-button-busy": "Unstaking",
 					"unstake-button-available": "Unstake",
+					"unstake-button-busy": "Unstaking",
 					"unstake-button-unavailable": "No available",
 					"verified-label": "I agree to the Terms & Conditions"
 				}
@@ -545,16 +541,20 @@
 			"column-pending-signatures": "Signatures",
 			"column-program-id": "Program",
 			"explain-failure": "Explain failure condition if specific",
-			"proposed-by": "Proposed by:",
 			"initiator-transaction": "This transaction was submitted by",
+			"loading-transactions": "Loading transactions",
 			"missing-signature": "To execute this proposal, {{missingSignature}} more signature is needed.",
 			"missing-signatures": "To execute this proposal, {{missingSignature}} more signatures are needed.",
-			"loading-transactions": "Loading transactions",
 			"modal-title": "Proposal summary",
 			"no-transactions": "This multisig asset has no transactions",
+			"not-sign-tx": "You did NOT sign this transaction",
 			"not-signed": "Not signed",
+			"not-signed-tx": "You have NOT signed this transaction",
 			"proposed-action": "Proposed action:",
+			"proposed-by": "Proposed by:",
 			"ready-for-execution": "This transaction is now ready for execution. Please tell the person who initiated this transaction to execute it.",
+			"rejected": "Rejected",
+			"rejected-tx": "You have rejected this transaction",
 			"signed": "Signed",
 			"signed-so-far": "Signed so far.",
 			"signers-to-approve": "signers to approve it in order to be executed.",
@@ -563,18 +563,14 @@
 			"transaction-has": "This transaction has",
 			"transaction-requires": "This transaction requires",
 			"treasury-closed-warning": "When a treasury is closed, all funds left over will be deposited back into the multisig safe.",
+			"tx-operation-executed": "This transaction has already been executed",
 			"tx-operation-failure": "Operation {{operation}} failed",
 			"tx-operation-pending-one": "A transaction on this Multisig is now ready for execution. Please tell the person who initiated this transaction to execute it.",
 			"tx-operation-pending-two": "A transaction on this Multisig is ready for",
+			"tx-operation-rejected": "This transaction has been rejected.",
 			"tx-operation-success": "Operation {{operation}} succeeded",
 			"tx-operation-voided": "This pending transaction has been VOIDED due to the Multisig being edited.",
-			"tx-operation-rejected": "This transaction has been rejected.",
-			"tx-operation-executed": "This transaction has already been executed",
-			"your-status": "Your status:",
-			"rejected": "Rejected",
-			"rejected-tx": "You have rejected this transaction",
-			"not-sign-tx": "You did NOT sign this transaction",
-			"not-signed-tx": "You have NOT signed this transaction"
+			"your-status": "Your status:"
 		},
 		"multisig-treasuries": {
 			"back-to-treasuries": "Back to Streaming Treasuries"
@@ -783,9 +779,9 @@
 			"add-funds-cta": "Top up (add funds)",
 			"amount-funded-date": "funded on",
 			"cancel-scheduled-transfer": "Cancel transfer",
+			"close-money-stream-menu-item": "Close money stream",
 			"close-stream-cta": "Close Stream",
 			"close-stream-cta-tooltip": "Close stream is available when Stream runs out of funds",
-			"close-money-stream-menu-item": "Close money stream",
 			"cta-disabled-closing": "Closing money stream...",
 			"cta-disabled-creating": "Create stream in progress...",
 			"cta-disabled-funding": "Add funds in progress...",
@@ -1219,14 +1215,18 @@
 				"multisig": "Safes & Multisig",
 				"submenu-title": "Services",
 				"treasuries": "Streaming Treasuries",
+				"unwrap": "Unwrap",
 				"wallet-guide": "Wallet Guide",
-				"wrap": "Wrap",
-				"unwrap": "Unwrap"
+				"wrap": "Wrap"
 			},
 			"stats": "Stats",
 			"swap": "Exchange",
 			"transfers": "Transfers"
 		}
+	},
+	"unwrap": {
+		"current-wsol-balance": "Current Wrapped SOL balance",
+		"label-input-amount": "Enter amount to unwrap"
 	},
 	"wallet-selector": {
 		"more-options-collapsed": "Show more options",
