@@ -816,7 +816,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   useEffect(() => {
     let coinTimer: any;
 
-    if (shouldLoadCoinPrices && selectedToken) {
+    if (shouldLoadCoinPrices) {
       setShouldLoadCoinPrices(false);
       setLoadingPrices(true);
       getCoinPrices();
@@ -836,7 +836,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     };
   }, [
     coinPrices,
-    selectedToken,
     shouldLoadCoinPrices,
     getCoinPrices
   ]);
