@@ -633,6 +633,7 @@
 	"notifications": {
 		"account-address-copied-message": "계좌 주소가 성공적으로 복사됨",
 		"account-address-not-copied-message": "계정 주소를 복사할 수 없습니다",
+		"check-transaction-in-explorer": "Check your transaction here",
 		"create-money-stream-completed": "머니스트림이 생성되었습니다.",
 		"create-money-stream-completed-wait-for-confirm": "거래가 확인되면 목록에 표시되어야 합니다.",
 		"error-cannot-faucet-mainnet-message": "메인넷에서 faucet 사용불가",

@@ -633,6 +633,7 @@
 	"notifications": {
 		"account-address-copied-message": "Hesap adresi başarıyla kopyalandı",
 		"account-address-not-copied-message": "Hesap adresi kopyalanamıyor",
+		"check-transaction-in-explorer": "Check your transaction here",
 		"create-money-stream-completed": "Para-aktarımınız oluşturuldu",
 		"create-money-stream-completed-wait-for-confirm": "İşlem onaylandıktan sonra listede gözükecek",
 		"error-cannot-faucet-mainnet-message": "Musluk mainnetde çalışmıyor",
