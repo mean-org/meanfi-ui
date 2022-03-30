@@ -39,7 +39,7 @@ import {
 } from "../../utils/utils";
 import { IconCopy, IconExternalLink, IconTrash } from "../../Icons";
 import { useNavigate } from "react-router-dom";
-import { openNotification } from "../../utils/notifications";
+import { openNotification } from "../../components/Notifications";
 
 const { Panel } = Collapse;
 const { Option } = Select;
