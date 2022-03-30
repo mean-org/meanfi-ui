@@ -1438,7 +1438,7 @@ export const JupiterExchange = (props: {
                                 </div>
                                 <div className="token-description">
                                     <div className="token-symbol">{token.address === WRAPPED_SOL_MINT_ADDRESS ? 'SOL' : token.symbol}</div>
-                                    <div className="token-name">{token.name}</div>
+                                    <div className="token-name">{token.address === WRAPPED_SOL_MINT_ADDRESS ? 'Solana' : token.name}</div>
                                 </div>
                                 <div className="token-balance">
                                     {
@@ -1509,7 +1509,7 @@ export const JupiterExchange = (props: {
                                 </div>
                                 <div className="token-description">
                                     <div className="token-symbol">{token.address === WRAPPED_SOL_MINT_ADDRESS ? 'SOL' : token.symbol}</div>
-                                    <div className="token-name">{token.name}</div>
+                                    <div className="token-name">{token.address === WRAPPED_SOL_MINT_ADDRESS ? 'Solana' : token.name}</div>
                                 </div>
                                 <div className="token-balance">
                                     {
