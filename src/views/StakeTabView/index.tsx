@@ -467,13 +467,15 @@ export const StakeTabView = (props: {
       return;
     }
 
-    props.stakeClient.getStakeQuote(parseFloat(fromCoinAmount)).then((value: StakeQuote) => {
-      consoleOut('stakeQuote:', value, 'blue');
-      setStakeQuote(value.sMeanOutUiAmount);
-      consoleOut(`Quote for ${formatThousands(parseFloat(fromCoinAmount), 6)} MEAN`, `${formatThousands(value.sMeanOutUiAmount, 6)} sMEAN`, 'blue');
-    }).catch((error: any) => {
-      console.error(error);
-    });
+    if (parseFloat(fromCoinAmount) > 0) {
+      props.stakeClient.getStakeQuote(parseFloat(fromCoinAmount)).then((value: StakeQuote) => {
+        consoleOut('stakeQuote:', value, 'blue');
+        setStakeQuote(value.sMeanOutUiAmount);
+        consoleOut(`Quote for ${formatThousands(parseFloat(fromCoinAmount), 6)} MEAN`, `${formatThousands(value.sMeanOutUiAmount, 6)} sMEAN`, 'blue');
+      }).catch((error: any) => {
+        console.error(error);
+      });
+    }
 
   }, [
     props.stakeClient,
