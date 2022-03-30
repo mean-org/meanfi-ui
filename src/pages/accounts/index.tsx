@@ -39,7 +39,8 @@ import {
   EMOJIS,
   TRANSACTIONS_PER_PAGE,
   ACCOUNTS_LOW_BALANCE_LIMIT,
-  FALLBACK_COIN_IMAGE
+  FALLBACK_COIN_IMAGE,
+  WRAPPED_SOL_MINT_ADDRESS
 } from '../../constants';
 import { QrScannerModal } from '../../components/QrScannerModal';
 import { Helmet } from "react-helmet";
@@ -1031,7 +1032,7 @@ export const AccountsView = () => {
           {publicKey ? (
             <div className="subtitle text-truncate">{isOwnedTokenAccount && !asset.isAta && asset.name !== 'Unknown Token' ? t('account-area.non-ata-label') : asset.name}</div>
             ) : (
-            <div className="subtitle text-truncate">{asset.name}</div>
+            <div className="subtitle text-truncate">{asset.address === WRAPPED_SOL_MINT_ADDRESS ? 'Wrapped SOL' : asset.name}</div>
           )}
         </div>
         <div className="rate-cell">
