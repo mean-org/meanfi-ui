@@ -840,10 +840,9 @@
 	"swap": {
 		"exchange-warning": "صرافی Mean فقط در دسترس است",
 		"frequency-label": "فرکانس",
-		"getting-routes": "Getting routes",
 		"input-label-destination": "معاوضه به (est.)",
 		"input-label-source": "معاوضه از",
-		"insufficient-liquidity": "نقدینگی ناکافی برای این ترید",
+		"getting-routes": "Finding the best route and price",
 		"pools-and-routes": "استخرها و مسیرها",
 		"routes-best-price-label": "بهترین قیمت",
 		"screen-subtitle": "سریع ترین و ساده ترین راه برای مبادله دو توکن",

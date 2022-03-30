@@ -841,11 +841,10 @@
 	"swap": {
 		"exchange-warning": "Mean Exchange is only available on",
 		"frequency-label": "Frequency",
-		"getting-routes": "Getting routes",
 		"input-label-destination": "Exchange to (est.)",
 		"input-label-source": "Exchange from",
 		"insufficient-liquidity": "Insufficient liquidity for this trade",
-		"pools-and-routes": "Pools and routes",
+		"getting-routes": "Finding the best route and price",
 		"routes-best-price-label": "Best price",
 		"screen-subtitle": "Fastest and easiest way to swap two tokens",
 		"screen-title": "Exchange",

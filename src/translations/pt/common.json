@@ -839,7 +839,7 @@
 	"swap": {
 		"exchange-warning": "Mean Exchange só está disponível em",
 		"frequency-label": "Frequência",
-		"getting-routes": "Getting routes",
+		"getting-routes": "Finding the best route and price",
 		"input-label-destination": "Troca para (est.)",
 		"input-label-source": "Troca de",
 		"insufficient-liquidity": "Liquidez insuficiente para esta negociação",
