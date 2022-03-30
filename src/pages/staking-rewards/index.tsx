@@ -651,7 +651,7 @@ export const StakingRewardsView = () => {
         <div className="transaction-list-data-wrapper vertical-scroll">
           <Spin spinning={refreshingDepositsInfo}>
             <div className="activity-list h-100">
-              <div className="item-list-body compact">
+              <div className="item-list-body compact dark">
                 {(depositsInfo &&
                   depositsInfo.depositRecords &&
                   depositsInfo.depositRecords.length > 0) &&
