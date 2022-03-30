@@ -844,7 +844,7 @@
 	"swap": {
 		"exchange-warning": "Sàn giao dịch Mean chỉ khả dụng trên",
 		"frequency-label": "Tần suất",
-		"getting-routes": "Getting routes",
+		"getting-routes": "Finding the best route and price",
 		"input-label-destination": "Trao đổi thành (est.)",
 		"input-label-source": "Trao đổi từ",
 		"insufficient-liquidity": "Không đủ thanh khoản do giao dịch này",

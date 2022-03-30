@@ -436,7 +436,7 @@ export const UnstakeTabView = (props: {
     if (props.selectedToken && props.selectedToken.symbol === "sMEAN") {
       if (props.tokenBalance > 0) {
         getMeanQuote(props.tokenBalance).then((value) => {
-          console.log(`Mean Quote for ${formatThousands(props.tokenBalance, props.selectedToken?.decimals)} sMEAN`, value);
+          consoleOut(`Quote for ${formatThousands(props.tokenBalance, props.selectedToken?.decimals)} sMEAN`, `${formatThousands(value, props.selectedToken?.decimals)} MEAN`, 'blue');
           setMeanWorthOfsMean(value);
         })
         getsMeanQuote(props.tokenBalance).then((value) => {
@@ -472,7 +472,13 @@ export const UnstakeTabView = (props: {
   return (
     <>
       {/* <span className="info-label">{stakedAmount ? t("invest.panel-right.tabset.unstake.notification-label-one", {stakedAmount: cutNumber(parseFloat(stakedAmount), 6), unstakeStartDate: unstakeStartDate}) : t("invest.panel-right.tabset.unstake.notification-label-one-error")}</span> */}
-      <span className="info-label">{props.tokenBalance ? `You currently have ${cutNumber(props.tokenBalance, 6)} sMEAN staked which is currently worth ${cutNumber(meanWorthOfsMean, 6)} MEAN.` : t("invest.panel-right.tabset.unstake.notification-label-one-error")}</span>
+      <span className="info-label">
+        {
+          props.tokenBalance
+            ? `You currently have ${cutNumber(props.tokenBalance, 6)} sMEAN staked which is currently worth ${cutNumber(meanWorthOfsMean, 6)} MEAN.`
+            : t("invest.panel-right.tabset.unstake.notification-label-one-error")
+        }
+      </span>
       <div className="form-label mt-2">{t("invest.panel-right.tabset.unstake.amount-label")}</div>
       <div className="well">
         <div className="flexible-right mb-1">

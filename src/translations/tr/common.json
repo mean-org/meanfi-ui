@@ -844,7 +844,7 @@
 	"swap": {
 		"exchange-warning": "Mean Exchange yalnızca şurada kullanılabilir:",
 		"frequency-label": "Sıklık",
-		"getting-routes": "Getting routes",
+		"getting-routes": "Finding the best route and price",
 		"input-label-destination": "Değişim (tahmini)",
 		"input-label-source": "....dan alım-satım",
 		"insufficient-liquidity": "Bu ticaret için yetersiz likidite",

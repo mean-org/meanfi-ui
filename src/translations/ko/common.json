@@ -845,7 +845,7 @@
 	"swap": {
 		"exchange-warning": "MEAN 교환은 다음에서만 사용할 수 있습니다.",
 		"frequency-label": "빈번히",
-		"getting-routes": "Getting routes",
+		"getting-routes": "Finding the best route and price",
 		"input-label-destination": "(추정)으로 교환",
 		"input-label-source": "다음에서 교환",
 		"insufficient-liquidity": "이 거래에 대한 유동성 부족",
