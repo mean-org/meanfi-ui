@@ -18,7 +18,6 @@ import {
   Divider,
   Form,
   InputNumber,
-  message,
   Modal,
   Select,
   Space,
@@ -117,13 +116,10 @@ export const PlaygroundView = () => {
   const navigate = useNavigate();
   const {
     userTokens,
-    splTokenList,
     transactionStatus,
     setTransactionStatus
   } = useContext(AppStateContext);
-  const [selectedMint, setSelectedMint] = useState<
-    UserTokenAccount | undefined
-  >(undefined);
+  const [selectedMint, setSelectedMint] = useState<UserTokenAccount | undefined>(undefined);
   const [isBusy, setIsBusy] = useState(false);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isTransactionModalVisible, setTransactionModalVisibility] =
@@ -342,18 +338,6 @@ export const PlaygroundView = () => {
     setCurrentPanelItem(loadedItem);
   }
 
-  const showMessage = () => {
-    message.success({
-      duration: 0,
-      content: "This is a prompt message with custom className and style",
-      className: "custom-message",
-    });
-  };
-
-  const closeMessage = () => {
-    message.destroy();
-  };
-
   const notificationTwo = () => {
     consoleOut("Notification is closing...");
     openNotification({
@@ -420,6 +404,14 @@ export const PlaygroundView = () => {
       title: 'Notification Title',
       duration: 0,
       description: <span>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Natus, ullam perspiciatis accusamus, sunt ipsum asperiores similique cupiditate autem veniam explicabo earum voluptates!</span>
+    });
+  };
+
+  const interestingCase = () => {
+    openNotification({
+      type: "info",
+      description: t("treasuries.create-treasury.multisig-treasury-created-info"),
+      duration: 0
     });
   };
 
@@ -589,6 +581,11 @@ export const PlaygroundView = () => {
             className="flat-button stroked"
             onClick={() => stackedMessagesAndNavigate()}>
             <span>Stacked messages → Navigate</span>
+          </span>
+          <span
+            className="flat-button stroked"
+            onClick={() => interestingCase()}>
+            <span>Without title</span>
           </span>
         </Space>
       </div>
