@@ -787,7 +787,9 @@ export const InvestView = () => {
                           shape="circle"
                           size="small"
                           icon={<ReloadOutlined />}
-                          onClick={() => {}}
+                          onClick={() => {
+                            refreshStakePoolInfo(getMeanPrice());
+                          }}
                         />
                       </span>
                     </span>
@@ -854,42 +856,43 @@ export const InvestView = () => {
                       </div>
                     </div>
 
-                    <Row gutter={[8, 8]} className="d-flex justify-content-center">
-                      {/* Tabset */}
-                      <Col xs={24} sm={12} md={24} lg={12} className="column-width">
-                        {meanAddresses && (
-                          <div className="place-transaction-box mb-3">
-                            <div className="button-tabset-container">
-                              <div className={`tab-button ${currentTab === "stake" ? 'active' : ''}`} onClick={() => onTabChange("stake")}>
-                                {t('invest.panel-right.tabset.stake.name')}
-                              </div>
-                              <div className={`tab-button ${currentTab === "unstake" ? 'active' : ''}`} onClick={() => onTabChange("unstake")}>
-                                {t('invest.panel-right.tabset.unstake.name')}
-                              </div>
+                    <div className="flex flex-center">
+                      {meanAddresses && (
+                        <div className="place-transaction-box mb-3">
+                          <div className="button-tabset-container">
+                            <div className={`tab-button ${currentTab === "stake" ? 'active' : ''}`} onClick={() => onTabChange("stake")}>
+                              {t('invest.panel-right.tabset.stake.name')}
                             </div>
-
-                            {/* Tab Stake */}
-                            {currentTab === "stake" && (
-                              <StakeTabView
-                                stakeClient={stakeClient}
-                                selectedToken={stakingPair?.unstakedToken}
-                                tokenBalance={meanBalance}
-                              />
-                            )}
-
-                            {/* Tab unstake */}
-                            {currentTab === "unstake" && (
-                              <UnstakeTabView
-                                stakeClient={stakeClient}
-                                selectedToken={stakingPair?.stakedToken}
-                                tokenBalance={sMeanBalance}
-                              />
-                            )}
+                            <div className={`tab-button ${currentTab === "unstake" ? 'active' : ''}`} onClick={() => onTabChange("unstake")}>
+                              {t('invest.panel-right.tabset.unstake.name')}
+                            </div>
                           </div>
-                        )}
-                      </Col>
 
-                      {/* Staking data */}
+                          {/* Tab Stake */}
+                          {currentTab === "stake" && (
+                            <StakeTabView
+                              stakeClient={stakeClient}
+                              selectedToken={stakingPair?.unstakedToken}
+                              meanBalance={meanBalance}
+                              smeanBalance={sMeanBalance}
+                            />
+                          )}
+
+                          {/* Tab unstake */}
+                          {currentTab === "unstake" && (
+                            <UnstakeTabView
+                              stakeClient={stakeClient}
+                              selectedToken={stakingPair?.stakedToken}
+                              tokenBalance={sMeanBalance}
+                            />
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* <Row gutter={[8, 8]} className="d-flex justify-content-center">
+                      <Col xs={24} sm={12} md={24} lg={12} className="column-width">
+                      </Col>
                       <Col xs={24} sm={12} md={24} lg={12} className="column-width">
                         <div className="staking-data">
                           <h3>{t("invest.panel-right.staking-data.title")}</h3>
@@ -904,39 +907,11 @@ export const InvestView = () => {
                             </Row>
                           ))}
                           <Row>
-                            {/* <span className="mt-2">{t("invest.panel-right.staking-data.text-one", {unstakeStartDate: unstakeStartDate})}</span> */}
                             <span className="mt-1"><i>{t("invest.panel-right.staking-data.text-two")}</i></span>
-                            {/* <Col span={24} className="d-flex flex-column justify-content-end align-items-end mt-1">
-                              <div className="transaction-detail-row">
-                                <span className="info-icon">
-                                  {stakingRewards > 0 && (
-                                    <span role="img" aria-label="arrow-down" className="anticon anticon-arrow-down mean-svg-icons success bounce">
-                                    <ArrowDownOutlined className="mean-svg-icons" />
-                                    </span>
-                                  )}
-                                  <span className="staking-value mb-2 mt-1">{!stakingRewards ? 0 : cutNumber(stakingRewards, 6)} {selectedToken && selectedToken.name}</span>
-                                </span>
-                              </div>
-                            </Col> */}
-                            {/* Withdraw button */}
-                            {/* <Col span={24} className="d-flex flex-column justify-content-end align-items-end mt-1">
-                              <Space size="middle">
-                                <Button
-                                  type="default"
-                                  shape="round"
-                                  size="small"
-                                  className="thin-stroke"
-                                  onClick={onWithdrawModalStart}
-                                  disabled={!stakingRewards || stakingRewards === 0}
-                                >
-                                  {t("invest.panel-right.staking-data.withdraw-button")}
-                                </Button>
-                              </Space>
-                            </Col> */}
                           </Row>
                         </div>
                       </Col>
-                    </Row>
+                    </Row> */}
                   </>
                 )}
                 

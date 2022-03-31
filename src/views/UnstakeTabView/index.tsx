@@ -460,14 +460,15 @@ export const UnstakeTabView = (props: {
 
   return (
     <>
-      {/* <span className="info-label">{stakedAmount ? t("invest.panel-right.tabset.unstake.notification-label-one", {stakedAmount: cutNumber(parseFloat(stakedAmount), 6), unstakeStartDate: unstakeStartDate}) : t("invest.panel-right.tabset.unstake.notification-label-one-error")}</span> */}
-      <span className="info-label">
-        {
-          props.tokenBalance
-            ? `You currently have ${cutNumber(props.tokenBalance, 6)} sMEAN staked which is currently worth ${cutNumber(meanWorthOfsMean, 6)} MEAN.`
-            : t("invest.panel-right.tabset.unstake.notification-label-one-error")
-        }
-      </span>
+      <div className="mb-2 px-1">
+        <span className="info-label">
+          {
+            props.tokenBalance
+              ? `You currently have ${cutNumber(props.tokenBalance, 6)} sMEAN staked which is currently worth ${cutNumber(meanWorthOfsMean, 6)} MEAN.`
+              : t("invest.panel-right.tabset.unstake.notification-label-one-error")
+          }
+        </span>
+      </div>
       <div className="form-label mt-2">{t("invest.panel-right.tabset.unstake.amount-label")}</div>
       <div className="well">
         <div className="flexible-right mb-1">

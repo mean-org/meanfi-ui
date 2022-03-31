@@ -23,7 +23,8 @@ const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const StakeTabView = (props: {
   stakeClient: StakingClient;
-  tokenBalance: number;
+  meanBalance: number;
+  smeanBalance: number;
   selectedToken: TokenInfo | undefined;
 }) => {
   const {
@@ -77,6 +78,7 @@ export const StakeTabView = (props: {
   const [periodValue, setPeriodValue] = useState<number>(periods[0].value);
   const [periodTime, setPeriodTime] = useState<string>(periods[0].time);
   const [stakeQuote, setStakeQuote] = useState<number>(0);
+  const [meanWorthOfsMean, setMeanWorthOfsMean] = useState<number>(0);
 
   ///////////////////////
   //  EVENTS & MODALS  //
@@ -156,17 +158,17 @@ export const StakeTabView = (props: {
       ? t('transactions.validation.not-connected')
       : isBusy
         ? `${t("invest.panel-right.tabset.stake.stake-button-busy")} ${props.selectedToken && props.selectedToken.symbol}`
-        : !props.selectedToken || !props.tokenBalance
+        : !props.selectedToken || !props.meanBalance
           ? t('transactions.validation.no-balance')
           : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !parseFloat(fromCoinAmount)
             ? t('transactions.validation.no-amount')
-            : parseFloat(fromCoinAmount) > props.tokenBalance
+            : parseFloat(fromCoinAmount) > props.meanBalance
               ? t('transactions.validation.amount-high')
               : `${t("invest.panel-right.tabset.stake.stake-button")} ${props.selectedToken && props.selectedToken.symbol}`;
   }, [
     fromCoinAmount,
     props.selectedToken,
-    props.tokenBalance,
+    props.meanBalance,
     connected,
     isBusy,
     t,
@@ -175,10 +177,10 @@ export const StakeTabView = (props: {
   const isStakingFormValid = (): boolean => {
     return  connected &&
             props.selectedToken &&
-            props.tokenBalance &&
+            props.meanBalance &&
             fromCoinAmount &&
             parseFloat(fromCoinAmount) > 0 &&
-            parseFloat(fromCoinAmount) <= props.tokenBalance
+            parseFloat(fromCoinAmount) <= props.meanBalance
       ? true
       : false;
   }
@@ -453,16 +455,7 @@ export const StakeTabView = (props: {
     t
   ]);
 
-  // const onIsVerifiedRecipientChange = (e: any) => {
-  //   setIsVerifiedRecipient(e.target.checked);
-  // }
-
-  // const onChangeValue = (value: number, time: string, rate: number) => {
-  //   setPeriodValue(value);
-  //   setPeriodTime(time);
-  //   setStakingMultiplier(rate);
-  // }
-
+  // Stake quote
   useEffect(() => {
     if (!props.stakeClient) {
       return;
@@ -483,14 +476,50 @@ export const StakeTabView = (props: {
     fromCoinAmount
   ]);
 
-  // useEffect(() => {
-  //   const unstakeStartDateUpdate = moment().add(periodValue, periodValue === 1 ? "year" : periodValue === 4 ? "years" : "days").format("LL")
+  // Unstake quote
+  useEffect(() => {
+    const getMeanQuote = async (sMEAN: number) => {
+      if (!props.stakeClient) { return 0; }
 
-  //   setUnstakeStartDate(unstakeStartDateUpdate);
-  // }, [periodTime, periodValue, setUnstakeStartDate]);
+      try {
+        const result = await props.stakeClient.getUnstakeQuote(sMEAN);
+        consoleOut('quote raw value:', result, 'blue');
+        return result.meanOutUiAmount;
+      } catch (error) {
+        console.error(error);
+        return 0;
+      }
+    }
+
+    if (props.selectedToken) {
+      if (props.smeanBalance > 0) {
+        getMeanQuote(props.smeanBalance).then((value) => {
+          consoleOut(`Quote for ${formatThousands(props.smeanBalance, props.selectedToken?.decimals)} sMEAN`, `${formatThousands(value, props.selectedToken?.decimals)} MEAN`, 'blue');
+          setMeanWorthOfsMean(value);
+        })
+      } else {
+        setMeanWorthOfsMean(0);
+      }
+    }
+  }, [
+    props.stakeClient, 
+    props.selectedToken, 
+    props.smeanBalance,
+    fromCoinAmount
+  ]);
+
 
   return (
     <>
+      <div className="mb-2 px-1">
+        <span className="info-label">
+          {
+            props.smeanBalance
+              ? `You currently have ${cutNumber(props.smeanBalance, 6)} sMEAN staked which is currently worth ${cutNumber(meanWorthOfsMean, 6)} MEAN.`
+              : t("invest.panel-right.tabset.unstake.notification-label-one-error")
+          }
+        </span>
+      </div>
       <div className="form-label">{t("invest.panel-right.tabset.stake.amount-label")}</div>
       <div className="well mb-1">
         <div className="flex-fixed-left">
@@ -527,8 +556,8 @@ export const StakeTabView = (props: {
           <div className="left inner-label">
             <span>{t('transactions.send-amount.label-right')}:</span>
             <span>
-              {`${props.tokenBalance && props.selectedToken
-                  ? getAmountWithSymbol(props.tokenBalance, props.selectedToken?.address, true)
+              {`${props.meanBalance && props.selectedToken
+                  ? getAmountWithSymbol(props.meanBalance, props.selectedToken?.address, true)
                   : "0"
               }`}
             </span>
