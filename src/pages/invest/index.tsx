@@ -835,7 +835,7 @@ export const InvestView = () => {
                               {t("invest.panel-right.stats.total-mean-rewards")}
                             </div>
                             <div className="transaction-detail-row">
-                              ${stakePoolInfo ? formatThousands(stakePoolInfo.totalMeanRewards, 2) : "0"}
+                              {(stakePoolInfo && stakePoolInfo.totalMeanAmount.uiAmount) ? formatThousands(stakePoolInfo.totalMeanAmount.uiAmount, 0) : "0"}
                             </div>
                           </Col>
                         </Row>
