@@ -126,11 +126,9 @@ export const AppBar = (props: {
       <Menu.Item key="deposits" onClick={showDepositOptionsModal} id="deposits-menu-item">
         <span className="menu-item-text">{t('ui-menus.main-menu.deposits')}</span>
       </Menu.Item>
-      {(isLocal() || (isDev() && (isWhitelisted || isInBetaTestingProgram))) && (
-        <Menu.Item key="/invest">
-          <Link to="/invest">{t('ui-menus.main-menu.invest.submenu-title')}</Link>
-        </Menu.Item>
-      )}
+      <Menu.Item key="/invest">
+        <Link to="/invest">{t('ui-menus.main-menu.invest.submenu-title')}</Link>
+      </Menu.Item>
       {/* {(isLocal() || isWhitelisted || isInBetaTestingProgram) && (
         <SubMenu key="invest" title={t('ui-menus.main-menu.invest.submenu-title')}>
           <Menu.Item key="/staking">
