@@ -141,15 +141,16 @@ export const MultisigTransferTokensModal = (props: {
     const decimals = selectedToken ? selectedToken.decimals : 0;
     const splitted = newValue.toString().split('.');
     const left = splitted[0];
-    if (left.length > 1) {
-      const number = splitted[0] - 0;
-      splitted[0] = `${number}`;
-      newValue = splitted.join('.');
-    } else if (decimals && splitted[1]) {
+
+    if (decimals && splitted[1]) {
       if (splitted[1].length > decimals) {
         splitted[1] = splitted[1].slice(0, -1);
         newValue = splitted.join('.');
       }
+    } else if (left.length > 1) {
+      const number = splitted[0] - 0;
+      splitted[0] = `${number}`;
+      newValue = splitted.join('.');
     }
 
     if (newValue === null || newValue === undefined || newValue === "") {

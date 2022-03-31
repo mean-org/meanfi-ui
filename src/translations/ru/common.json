@@ -955,10 +955,10 @@
 		},
 		"validation": {
 			"address-validation": "Not a valid address format",
-			"amount-high": "Amount exceeds your balance",
-			"amount-low": "Not enough balance",
+			"amount-high": "Amount exceeded",
+			"amount-low": "Low balance",
 			"amount-lt-fee": "Amount has to be greater than the transaction fee",
-			"amount-sol-high": "Amount exceeds your SOL balance",
+			"amount-sol-high": "Insufficient SOL",
 			"amount-withdraw-high": "Amount is greater than the available funds",
 			"cannot-use-own-account-as-treasury": "Cannot use your account as treasury id",
 			"exchange-unavailable": "Exchange unavailable",
@@ -978,7 +978,7 @@
 			"no-recipient": "No recipient",
 			"no-valid-date": "Set a valid date",
 			"not-connected": "Connect your wallet",
-			"payment-rate-high": "Payment rate exceeds your balance",
+			"payment-rate-high": "Payment exceeded",
 			"select-address-list": "Select address list",
 			"select-recipient": "Select recipient",
 			"select-stream": "Select a stream",
@@ -988,7 +988,7 @@
 			"valid-ddca-review": "Review",
 			"valid-start-funding": "Start funding",
 			"valid-start-withdrawal": "Start withdrawal",
-			"verified-recipient-unchecked": "Recipient verification unchecked"
+			"verified-recipient-unchecked": "Recipient Unchecked"
 		}
 	},
 	"transfer-stream": {

@@ -983,10 +983,10 @@
 		},
 		"validation": {
 			"address-validation": "Geçerli bir adres biçimi değil",
-			"amount-high": "Tutar, bakiyenizi aşıyor",
-			"amount-low": "Yeterli bakiye yok",
+			"amount-high": "Amount exceeded",
+			"amount-low": "Low balance",
 			"amount-lt-fee": "Tutar işlem ücretinden fazla olmalıdır",
-			"amount-sol-high": "Tutar, SOL bakiyenizi aşıyor",
+			"amount-sol-high": "Insufficient SOL",
 			"amount-withdraw-high": "Tutar mevcut fonlardan daha fazla",
 			"cannot-use-own-account-as-treasury": "Hesabınızı hazine kimliği olarak kullanamazsınız",
 			"exchange-unavailable": "Alım-Satım mevcut değil",
@@ -1004,7 +1004,7 @@
 			"no-recipient": "Alıcı yok",
 			"no-valid-date": "Geçerli bir tarih belirleyin",
 			"not-connected": "Cüzdanını bağla",
-			"payment-rate-high": "Ödeme oranı bakiyenizi aşıyor",
+			"payment-rate-high": "Payment exceeded",
 			"select-recipient": "Alıcı seçin",
 			"select-stream": "Bir aktarım seçin",
 			"valid-address-required": "Geçerli bir solana adresi gerekli",
@@ -1013,7 +1013,7 @@
 			"valid-ddca-review": "Gözden geçirmek",
 			"valid-start-funding": "Fonlamaya başlayın",
 			"valid-start-withdrawal": "Para çekme işlemini başlat",
-			"verified-recipient-unchecked": "Alıcı doğrulaması işaretlenmemiş"
+			"verified-recipient-unchecked": "Recipient Unchecked"
 		}
 	},
 	"transfer-stream": {
