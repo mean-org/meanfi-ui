@@ -979,10 +979,10 @@
 		},
 		"validation": {
 			"address-validation": "Pas un format d'adresse valide",
-			"amount-high": "Le montant dépasse votre solde",
-			"amount-low": "Pas assez d'équilibre",
+			"amount-high": "Amount exceeded",
+			"amount-low": "Low balance",
 			"amount-lt-fee": "Le montant doit être supérieur aux frais de transaction",
-			"amount-sol-high": "Le montant dépasse votre solde SOL",
+			"amount-sol-high": "Insufficient SOL",
 			"amount-withdraw-high": "Le montant est supérieur aux fonds disponibles",
 			"cannot-use-own-account-as-treasury": "Impossible d'utiliser votre compte comme identifiant de trésorerie",
 			"exchange-unavailable": "Échange indisponible",
@@ -999,7 +999,7 @@
 			"no-recipient": "Aucun destinataire",
 			"no-valid-date": "Définir une date valide",
 			"not-connected": "Connectez votre portefeuille",
-			"payment-rate-high": "Le taux de paiement dépasse votre solde",
+			"payment-rate-high": "Payment exceeded",
 			"select-recipient": "Sélectionnez le destinataire",
 			"select-stream": "Sélectionnez un flux",
 			"valid-address-required": "Une adresse solana valide est requise",
@@ -1008,7 +1008,7 @@
 			"valid-ddca-review": "Passer en revue",
 			"valid-start-funding": "Commencer le financement",
 			"valid-start-withdrawal": "Commencer le retrait",
-			"verified-recipient-unchecked": "Vérification du destinataire décochée"
+			"verified-recipient-unchecked": "Recipient Unchecked"
 		}
 	},
 	"transfer-stream": {

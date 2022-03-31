@@ -225,11 +225,18 @@ export const UnwrapView = () => {
     let newValue = e.target.value;
     const splitted = newValue.toString().split('.');
     const left = splitted[0];
-    if (left.length > 1) {
+
+    if (wSol && splitted[1]) {
+      if (splitted[1].length > wSol.decimals) {
+        splitted[1] = splitted[1].slice(0, -1);
+        newValue = splitted.join('.');
+      }
+    } else if (left.length > 1) {
       const number = splitted[0] - 0;
       splitted[0] = `${number}`;
       newValue = splitted.join('.');
     }
+
     if (newValue === null || newValue === undefined || newValue === "") {
       setUnwrapAmount("");
     } else if (newValue === '.') {

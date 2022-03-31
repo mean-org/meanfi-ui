@@ -984,10 +984,10 @@
 		},
 		"validation": {
 			"address-validation": "유효한 주소 형식이 아닙니다.",
-			"amount-high": "금액이 잔액을 초과합니다.",
-			"amount-low": "잔액이 부족합니다",
+			"amount-high": "Amount exceeded",
+			"amount-low": "Low balance",
 			"amount-lt-fee": "금액은 거래 수수료보다 커야 합니다.",
-			"amount-sol-high": "금액이 SOL 잔액을 초과합니다.",
+			"amount-sol-high": "Insufficient SOL",
 			"amount-withdraw-high": "금액이 사용 가능한 자금보다 큽니다.",
 			"cannot-use-own-account-as-treasury": "귀하의 계정을 트레저리 ID로 사용할 수 없습니다.",
 			"exchange-unavailable": "교환 불가",
@@ -1007,7 +1007,7 @@
 			"no-recipient": "받는 사람 없음",
 			"no-valid-date": "유효한 날짜를 설정하십시오",
 			"not-connected": "지갑 연결",
-			"payment-rate-high": "지불 비율이 잔액을 초과합니다.",
+			"payment-rate-high": "Payment exceeded",
 			"select-address-list": "Select address list",
 			"select-recipient": "수신자 선택",
 			"select-stream": "스트림 선택",
@@ -1017,7 +1017,7 @@
 			"valid-ddca-review": "검토",
 			"valid-start-funding": "펀딩 시작",
 			"valid-start-withdrawal": "출금 시작",
-			"verified-recipient-unchecked": "수신자 확인이 선택되지 않음"
+			"verified-recipient-unchecked": "Recipient Unchecked"
 		}
 	},
 	"transfer-stream": {

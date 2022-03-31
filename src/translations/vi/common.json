@@ -983,10 +983,10 @@
 		},
 		"validation": {
 			"address-validation": "Không phải là địa chỉ hợp lệ",
-			"amount-high": "Số lượng vượt quá số dư của bạn",
-			"amount-low": "Không đủ số dư",
+			"amount-high": "Amount exceeded",
+			"amount-low": "Low balance",
 			"amount-lt-fee": "Số lượng phải lớn phí giao dịch",
-			"amount-sol-high": "Số lượng vượt quá số dư SOL của bạn",
+			"amount-sol-high": "Insufficient SOL",
 			"amount-withdraw-high": "Số lượng lớn hơn số tiền khả dụng",
 			"cannot-use-own-account-as-treasury": "Tài khoản ví của bạn không phải là treasury id",
 			"exchange-unavailable": "Giao dịch không khả dụng",
@@ -1004,7 +1004,7 @@
 			"no-recipient": "Không có người nhận",
 			"no-valid-date": "Thiết lập một ngày hợp lệ",
 			"not-connected": "Kết nối ví của bạn",
-			"payment-rate-high": "Tỷ lệ thanh toán vượt quá số dư của bạn",
+			"payment-rate-high": "Payment exceeded",
 			"select-recipient": "Chọn người nhận",
 			"select-stream": "Chọn một stream",
 			"valid-address-required": "Một địa chỉ solana hợp lệ là bắt buộc",
@@ -1013,7 +1013,7 @@
 			"valid-ddca-review": "Xem lại",
 			"valid-start-funding": "Bắt đầu cấp tiền",
 			"valid-start-withdrawal": "Bắt đầu rút tiền",
-			"verified-recipient-unchecked": "Đã bỏ chọn xác minh người nhận"
+			"verified-recipient-unchecked": "Recipient Unchecked"
 		}
 	},
 	"transfer-stream": {

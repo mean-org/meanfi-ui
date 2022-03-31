@@ -979,10 +979,10 @@
 		},
 		"validation": {
 			"address-validation": "فرمت آدرس معتبر نیست",
-			"amount-high": "مقدار از موجودی شما بیشتر است",
-			"amount-low": "موجودی کافی نیست",
+			"amount-high": "Amount exceeded",
+			"amount-low": "Low balance",
 			"amount-lt-fee": "مبلغ باید بیشتر از فی تراکنش باشد",
-			"amount-sol-high": "مبلغ از موجودی SOL شما بیشتر است",
+			"amount-sol-high": "Insufficient SOL",
 			"amount-withdraw-high": "مبلغ بیشتر از وجوه موجود است",
 			"cannot-use-own-account-as-treasury": "نمی توان از حساب خود به عنوان treasury id استفاده کرد",
 			"exchange-unavailable": "مبادله در دسترس نیست",
@@ -1002,7 +1002,7 @@
 			"no-recipient": "بدون گیرنده",
 			"no-valid-date": "یک تاریخ معتبر تنظیم کنید",
 			"not-connected": "کیف پول خود را وصل کنید",
-			"payment-rate-high": "نرخ پرداخت از موجودی شما بیشتر است",
+			"payment-rate-high": "Payment exceeded",
 			"select-address-list": "لیست آدرس را انتخاب کنید",
 			"select-recipient": "گیرنده را انتخاب کنید",
 			"select-stream": "یک stream را انتخاب کنید",
@@ -1012,7 +1012,7 @@
 			"valid-ddca-review": "بررسی",
 			"valid-start-funding": "شروع به تامین مالی کنید",
 			"valid-start-withdrawal": "شروع به برداشت",
-			"verified-recipient-unchecked": "تأیید گیرنده چک نشده است"
+			"verified-recipient-unchecked": "Recipient Unchecked"
 		}
 	},
 	"transfer-stream": {
