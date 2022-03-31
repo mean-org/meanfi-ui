@@ -5526,7 +5526,7 @@ export const Streams = () => {
                   )}
 
                   {/* Top up (add funds) button */}
-                    {/* <Tooltip title={(getTreasuryType() === "locked" && stream.status === STREAM_STATUS.Running) ? t("streams.stream-detail.close-stream-cta-tooltip") : ""}> */}
+                    <Tooltip title={(getTreasuryType() === "locked" && stream.status === STREAM_STATUS.Running) ? t("streams.stream-detail.close-stream-cta-tooltip") : ""}>
                       <div className="mt-3 mb-3 withdraw-container">
                         <Button
                           block
@@ -5569,7 +5569,7 @@ export const Streams = () => {
                           )
                         )}
                       </div>
-                    {/* </Tooltip> */}
+                    </Tooltip>
                     {/* {(getTreasuryType() === "open") && (
                       <span className="icon-button-container">
                         {getStreamStatus(stream) === "Running" && (
