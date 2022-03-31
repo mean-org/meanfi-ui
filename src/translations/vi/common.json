@@ -330,7 +330,7 @@
 			"stats": {
 				"staking-apy": "Staking APY",
 				"staking-apy-tooltip": "The APY associated with sMEAN is a representation of the price of sMEAN over a 365 day period.",
-				"total-mean-rewards": "Total MEAN Rewards",
+				"total-mean-rewards": "Total MEAN Staked",
 				"total-value-locked": "Tổng tài sản bị khóa"
 			},
 			"table-data": {
