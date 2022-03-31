@@ -299,7 +299,7 @@
 			"not-connected": "Please connect your wallet to see your invest options"
 		},
 		"panel-right": {
-			"first-text": "MEAN staking rewards include emission incentives plus a share of the protocol revenues, and can be boosted using locking periods. When you stake your MEAN, you get sMEAN in return.",
+			"first-text": "MEAN staking rewards include emission incentives plus a share of the protocol revenues, and can be boosted using locking periods. When you stake your MEAN, you get sMEAN (staked MEAN) in return.",
 			"liquidity-pool": {
 				"refresh-tooltip": "Refresh liquidity data",
 				"text-one": "MEAN Liquidity Pools are currently available on Orca and Raydium with multiple pools including MEAN/SOL, MEAN/RAY and MEAN/USDC.",
