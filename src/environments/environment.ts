@@ -45,7 +45,9 @@ export class AppConfigService {
             idoAirdropTreasurerAddress: '9KYCrkB4LLC3HxLEPqE2PJpvYoDLszgWPKNVWp74uhC5',
             exchangeFeeAccountOwner: 'CLazQV1BhSrxfgRHko4sC8GYBU3DoHcX4xxRZd12Kohr',
             exchangeFlatFee: 0.25,
-            stakingRewardsAcl: [],
+            stakingRewardsAcl: [
+                'EWHAwQfAGuBG23tU13s38qdzSpyD7PrJd5zpnG6271mM'
+            ],
             meanStakingVault: 'GMG74Wi8Mj4KpS6qxUgcofBSNMa8qkqtVgtUc3g5sPpF'
         },
         development: {

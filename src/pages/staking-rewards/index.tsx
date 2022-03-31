@@ -25,6 +25,7 @@ const DEFAULT_APR_PERCENT_GOAL = '21';
 
 export const StakingRewardsView = () => {
   const {
+    isWhitelisted,
     transactionStatus,
     isInBetaTestingProgram,
     setTransactionStatus,
@@ -56,30 +57,31 @@ export const StakingRewardsView = () => {
     return appConfig.getConfig().meanStakingVault;
   }, []);
 
+  const canDepositRewards = useMemo(() => {
+    const acl = appConfig.getConfig().stakingRewardsAcl;
+    if (publicKey && acl && acl.length > 0) {
+      return acl.some(a => a === publicKey.toBase58());
+    } else {
+      return false;
+    }
+  }, [publicKey]);
+
   // Access rights
   const userHasAccess = useMemo(() => {
 
     if (!publicKey) { return false; }
 
     const isUserAllowed = () => {
-      if (isProd() && isInBetaTestingProgram) {
+      if (isWhitelisted) {
         return true;
       }
-      const acl = appConfig.getConfig().stakingRewardsAcl;
-      if (acl && acl.length > 0) {
-        return acl.some(a => a === publicKey.toBase58());
-      } else {
-        return true;
-      }
+
+      return canDepositRewards;
     }
 
-    if (!isLocal()) {
-      return isUserAllowed();
-    }
+    return isUserAllowed();
 
-    return true;
-
-  }, [isInBetaTestingProgram, publicKey]);
+  }, [canDepositRewards, isWhitelisted, publicKey]);
 
   // Create and cache Staking client instance
   const stakeClient = useMemo(() => {
@@ -606,37 +608,6 @@ export const StakingRewardsView = () => {
   //  Rendering  //
   /////////////////
 
-  if (!publicKey || !userHasAccess) {
-    return (
-      <>
-        <div className="container main-container">
-          <div className="interaction-area">
-            <div className="title-and-subtitle w-75 h-100">
-              <div className="title">
-                <IconStats className="mean-svg-icons" />
-                <div>{t('invest.title')}</div>
-              </div>
-              <div className="subtitle text-center">
-                Staking Rewards &amp; History
-              </div>
-              <div className="w-50 h-100 p-5 text-center flex-column flex-center">
-                <div className="text-center mb-2">
-                  <WarningFilled style={{ fontSize: 48 }} className="icon fg-warning" />
-                </div>
-                {!publicKey ? (
-                  <h3>Please connect your wallet to setup rewards</h3>
-                ) : (
-                  <h3>The content you are accessing is not available at this time or you don't have access permission</h3>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-        <PreFooter />
-      </>
-    );
-  }
-
   const renderDepositHistory = (
     <>
       <div className="container-max-width-720 my-3">
@@ -754,14 +725,45 @@ export const StakingRewardsView = () => {
     </>
   );
 
+  if (!publicKey || !userHasAccess) {
+    return (
+      <>
+        <div className="container main-container">
+          <div className="interaction-area">
+            <div className="title-and-subtitle w-75 h-100">
+              <div className="title">
+                <IconStats className="mean-svg-icons" />
+                <div>{t('invest.title')}</div>
+              </div>
+              <div className="subtitle text-center">
+                Staking Rewards &amp; History
+              </div>
+              <div className="w-50 h-100 p-5 text-center flex-column flex-center">
+                <div className="text-center mb-2">
+                  <WarningFilled style={{ fontSize: 48 }} className="icon fg-warning" />
+                </div>
+                {!publicKey ? (
+                  <h3>Please connect your wallet to setup rewards</h3>
+                ) : (
+                  <h3>The content you are accessing is not available at this time or you don't have access permission</h3>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+        <PreFooter />
+      </>
+    );
+  }
+
   return (
     <>
-      {isLocal() && (
+      {/* {isLocal() && (
         <div className="debug-bar">
           <span className="ml-1">isDepositing:</span><span className="ml-1 font-bold fg-dark-active">{isDepositing ? 'true' : 'false'}</span>
           <span className="ml-1">lastDepositSignature:</span><span className="ml-1 font-bold fg-dark-active">{lastDepositSignature || '-'}</span>
         </div>
-      )}
+      )} */}
 
       <div className="container main-container">
         <div className="interaction-area">
@@ -784,7 +786,7 @@ export const StakingRewardsView = () => {
               type="primary"
               shape="round"
               size="large"
-              disabled={!isValidInput() || isDepositing}
+              disabled={!isValidInput() || isDepositing || !canDepositRewards}
               onClick={onStartDepositTx}>
               {isDepositing ? 'Funding Vault' : 'Fund Vault'}
             </Button>
