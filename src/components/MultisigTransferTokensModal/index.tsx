@@ -206,11 +206,13 @@ export const MultisigTransferTokensModal = (props: {
                         <span className="add-on">
                           {props.assets && props.assets.length > 0 && fromVault && fromMint && (
                             <Select className={`token-selector-dropdown auto-height`} value={fromVault.address.toBase58()}
-                                style={{width:"100%", maxWidth:'none'}}
-                                onChange={onVaultChanged} bordered={false} showArrow={false}
-                                dropdownRender={menu => (
-                                <div>{menu}</div>
-                              )}>
+                              style={{width:"100%", maxWidth:'none'}}
+                              onChange={onVaultChanged}
+                              bordered={false}
+                              showArrow={false}
+                              dropdownRender={menu => (
+                              <div>{menu}</div>
+                            )}>
                               {props.assets.map((option: MultisigVault) => {
                                 const token = getTokenByMintAddress(option.mint.toBase58());
                                 const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
@@ -237,7 +239,7 @@ export const MultisigTransferTokensModal = (props: {
                                           </div>
                                         </div>
                                         <div className="description-cell">
-                                          <div className="title text-truncate">{token ? token.symbol : `Unknown token [${shortenAddress(option.mint.toBase58(), 6)}]`}</div>
+                                          <div className="title text-truncate">{token ? token.symbol : `${shortenAddress(option.mint.toBase58(), 4)}`}</div>
                                         </div>
                                         <div className="rate-cell">
                                           <div className="rate-amount text-uppercase">
