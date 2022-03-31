@@ -216,6 +216,8 @@ export const UnstakeTabView = (props: {
     const signTx = async (): Promise<boolean> => {
       if (wallet) {
         consoleOut("Signing transaction...");
+        const miamia = transaction.serialize({ verifySignatures: false, requireAllSignatures: false }).toString("base64");
+        consoleOut("encodedTx before sending:", miamia, "orange");
         return await wallet
           .signTransaction(transaction)
           .then((signed: Transaction) => {
