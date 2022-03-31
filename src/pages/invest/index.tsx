@@ -21,6 +21,8 @@ import { UnstakeTabView } from "../../views/UnstakeTabView";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { MEAN_TOKEN_LIST } from "../../constants/token-list";
+import { confirmationEvents } from "../../contexts/transaction-status";
+import { EventType } from "../../models/enums";
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -75,6 +77,7 @@ export const InvestView = () => {
   const [stakePoolInfo, setStakePoolInfo] = useState<StakePoolInfo>();
   const [shouldRefreshLpData, setShouldRefreshLpData] = useState(true);
   const [refreshingPoolInfo, setRefreshingPoolInfo] = useState(false);
+  const [canSubscribe, setCanSubscribe] = useState(true);
 
   // Tokens and balances
   const [meanAddresses, setMeanAddresses] = useState<Env>();
@@ -92,13 +95,6 @@ export const InvestView = () => {
       : false;
 
   }, [isInBetaTestingProgram, isWhitelisted]);
-
-  // TODO: Make it NOT available in prod. Remove when releasing
-  useEffect(() => {
-    if (isProd()) {
-      navigate('/accounts');
-    }
-  }, [navigate]);
 
   // Create and cache Staking client instance
   const stakeClient = useMemo(() => {
@@ -122,42 +118,26 @@ export const InvestView = () => {
     publicKey
   ]);
 
-  // Get token addresses from staking client and save tokens
+  // TODO: Make it NOT available in prod. Remove when releasing
   useEffect(() => {
-    if (!stakeClient) { return; }
-
-    if (!pageInitialized) {
-      const meanAddress = stakeClient.getMintAddresses();
-
-      setMeanAddresses(meanAddress);
-
-      const tokenList = MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(connectionConfig.cluster))
-      const unstakedToken = tokenList.find(t => t.address === meanAddress.mean.toBase58());
-      const stakedToken = tokenList.find(t => t.address === meanAddress.sMean.toBase58());
-
-      consoleOut('unstakedToken', unstakedToken, 'blue');
-      consoleOut('stakedToken', stakedToken, 'blue');
-
-      setStakingPair({
-        unstakedToken,
-        stakedToken
-      });
-
+    if (isProd()) {
+      navigate('/accounts');
     }
-  }, [
-    stakeClient,
-    pageInitialized,
-    connectionConfig.cluster
-  ]);
+  }, [navigate]);
 
-  const getTokenAccountBalanceByAddress = useCallback(async (tokenMintAddress: PublicKey | undefined | null): Promise<number> => {
-    if (!connection || !tokenMintAddress) return 0;
+
+  /////////////////
+  //  Callbacks  //
+  /////////////////
+
+  const getTokenAccountBalanceByAddress = useCallback(async (tokenAddress: PublicKey | undefined | null): Promise<number> => {
+    if (!connection || !tokenAddress) return 0;
     try {
-      const tokenAmount = (await connection.getTokenAccountBalance(tokenMintAddress)).value;
+      const tokenAmount = (await connection.getTokenAccountBalance(tokenAddress)).value;
       return tokenAmount.uiAmount || 0;
     } catch (error) {
-      console.error(error);
-      throw(error);
+      consoleOut('getTokenAccountBalance failed for:', tokenAddress.toBase58(), 'red');
+      return 0;
     }
   }, [connection]);
 
@@ -174,10 +154,15 @@ export const InvestView = () => {
       return;
     }
 
-    const meanTokenPk = new PublicKey(stakingPair.unstakedToken.address);
-    const meanTokenAddress = await findATokenAddress(publicKey, meanTokenPk);
-    balance = await getTokenAccountBalanceByAddress(meanTokenAddress);
-    setMeanBalance(balance);
+    try {
+      const meanTokenPk = new PublicKey(stakingPair.unstakedToken.address);
+      const meanTokenAddress = await findATokenAddress(publicKey, meanTokenPk);
+      balance = await getTokenAccountBalanceByAddress(meanTokenAddress);
+      consoleOut('MEAN balance:', balance, 'blue');
+      setMeanBalance(balance);
+    } catch (error) {
+      setMeanBalance(balance);
+    }
 
   }, [
     accounts,
@@ -203,6 +188,7 @@ export const InvestView = () => {
     const sMeanTokenPk = new PublicKey(stakingPair.stakedToken.address);
     const smeanTokenAddress = await findATokenAddress(publicKey, sMeanTokenPk);
     balance = await getTokenAccountBalanceByAddress(smeanTokenAddress);
+    consoleOut('sMEAN balance:', balance, 'blue');
     setSmeanBalance(balance);
 
   }, [
@@ -211,72 +197,6 @@ export const InvestView = () => {
     connection,
     stakingPair,
     getTokenAccountBalanceByAddress
-  ]);
-
-  // Keep account balance updated
-  useEffect(() => {
-
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
-    if (account?.lamports !== previousBalance || !nativeBalance) {
-      // Refresh token balances
-      setNativeBalance(getAccountBalance());
-      // Update previous balance
-      setPreviousBalance(account?.lamports);
-    }
-  }, [
-    account,
-    nativeBalance,
-    previousBalance,
-  ]);
-
-  // Keep MEAN price updated
-  useEffect(() => {
-
-    let price = 0;
-    if (coinPrices && stakingPair && stakingPair.unstakedToken) {
-      const symbol = stakingPair.unstakedToken.symbol.toUpperCase();
-      price = coinPrices && coinPrices[symbol] ? coinPrices[symbol] : 0;
-    }
-    consoleOut('meanPrice:', price, 'crimson');
-    setMeanPrice(price);
-
-  }, [coinPrices, stakingPair]);
-
-  // Keep MEAN balance updated
-  useEffect(() => {
-    if (!publicKey || !accounts || !accounts.tokenAccounts || !accounts.tokenAccounts.length) {
-      return;
-    }
-
-    if (stakingPair && stakingPair.unstakedToken) {
-      refreshMeanBalance();
-    }
-
-  }, [
-    accounts,
-    publicKey,
-    stakingPair,
-    refreshMeanBalance,
-  ]);
-
-  // Keep sMEAN balance updated
-  useEffect(() => {
-    if (!publicKey || !accounts || !accounts.tokenAccounts || !accounts.tokenAccounts.length) {
-      return;
-    }
-
-    if (stakingPair && stakingPair.stakedToken) {
-      refreshStakedMeanBalance();
-    }
-
-  }, [
-    accounts,
-    publicKey,
-    stakingPair,
-    refreshStakedMeanBalance,
   ]);
 
   const investItems = useMemo(() => [
@@ -372,25 +292,25 @@ export const InvestView = () => {
     marinadeTotalStakedValue
   ]);
 
-  // Keep the list of stake sol platforms sorted in descending order by apy
-  useEffect(() => {
-    stakingSOLData.sort((a, b) => (a.apy < b.apy) ? 1 : -1);
-  }, [stakingSOLData])
+  const refreshStakePoolInfo = useCallback(() => {
 
-  // Get staking pool info from staking client
-  useEffect(() => {
+    if (!stakeClient || !meanPrice) { return; }
 
-    if (stakeClient && meanPrice) {
-      stakeClient.getStakePoolInfo(meanPrice)
-        .then((value) => {
-          consoleOut('stakePoolInfo:', value, 'crimson');
-          setStakePoolInfo(value);
-        }).catch((error) => {
-          console.error(error);
-        });
-    }
+    stakeClient.getStakePoolInfo(meanPrice)
+    .then((value) => {
+      consoleOut('stakePoolInfo:', value, 'crimson');
+      setStakePoolInfo(value);
+    }).catch((error) => {
+      console.error('getStakePoolInfo error:', error);
+    });
 
   }, [meanPrice, stakeClient]);
+
+  // If any Stake/Unstake Tx finished and confirmed refresh the StakePoolInfo
+  const onStakeTxConfirmed = useCallback((value: any) => {
+    consoleOut("onStakeTxConfirmed event executed:", value, 'crimson');
+    refreshStakePoolInfo();
+  }, [refreshStakePoolInfo]);
 
   // Get raydium pool info
   const getRaydiumPoolInfo = useCallback(async () => {
@@ -414,7 +334,7 @@ export const InvestView = () => {
         setRaydiumInfo(raydiumData);
       }
     } catch (error) {
-      console.error(error);
+      console.error('getRaydiumPoolInfo error:', error);
     }
 
   }, []);
@@ -455,7 +375,7 @@ export const InvestView = () => {
         }
       }
     } catch (error) {
-      console.error(error);
+      console.error('getOrcaPoolInfo error:', error);
     }
 
   }, []);
@@ -472,7 +392,7 @@ export const InvestView = () => {
           setMarinadeApyValue(marinadeApy);
       }
     } catch (error) {
-      console.error(error);
+      console.error('getMarinadeApyInfo error:', error);
     }
 
   }, []);
@@ -490,7 +410,7 @@ export const InvestView = () => {
           setMarinadeTotalStakedValue(marinadeTotalStaked);
       }
     } catch (error) {
-      console.error(error);
+      console.error('getMarinadeTotalStakedInfo error:', error);
     }
 
   }, []);
@@ -508,7 +428,7 @@ export const InvestView = () => {
           setSoceanApyValue(soceanApy);
       }
     } catch (error) {
-      console.error(error);
+      console.error('getSoceanApyInfo error:', error);
     }
 
   }, []);
@@ -526,7 +446,7 @@ export const InvestView = () => {
           setSoceanTotalStakedValue(soceanTotalStaked);
       }
     } catch (error) {
-      console.error(error);
+      console.error('getSoceanTotalStakedInfo error:', error);
     }
 
   }, []);
@@ -548,7 +468,7 @@ export const InvestView = () => {
           setLidoTotalStakedValue(lidoTotalStaked);
       }
     } catch (error) {
-      console.error(error);
+      console.error('getLidoInfo error:', error);
     }
 
   }, []);
@@ -569,6 +489,105 @@ export const InvestView = () => {
     consoleOut('soceanTotalStakedValue:', soceanTotalStakedValue, 'info');
 
   }, [marinadeApyValue, marinadeTotalStakedValue, maxOrcaAprValue, maxRadiumAprValue, orcaInfo, raydiumInfo, soceanApyValue, soceanTotalStakedValue]);
+
+
+  /////////////////
+  //   Effects   //
+  /////////////////
+
+  // Get token addresses from staking client and save tokens
+  useEffect(() => {
+    if (!stakeClient) { return; }
+
+    if (!pageInitialized) {
+      const meanAddress = stakeClient.getMintAddresses();
+
+      setMeanAddresses(meanAddress);
+
+      const tokenList = MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(connectionConfig.cluster))
+      const unstakedToken = tokenList.find(t => t.address === meanAddress.mean.toBase58());
+      const stakedToken = tokenList.find(t => t.address === meanAddress.sMean.toBase58());
+
+      consoleOut('unstakedToken', unstakedToken, 'blue');
+      consoleOut('stakedToken', stakedToken, 'blue');
+
+      setStakingPair({
+        unstakedToken,
+        stakedToken
+      });
+
+    }
+  }, [
+    stakeClient,
+    pageInitialized,
+    connectionConfig.cluster
+  ]);
+
+  // Keep account balance updated
+  useEffect(() => {
+
+    const getAccountBalance = (): number => {
+      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
+    }
+
+    if (account?.lamports !== previousBalance || !nativeBalance) {
+      // Refresh token balances
+      setNativeBalance(getAccountBalance());
+      // Update previous balance
+      setPreviousBalance(account?.lamports);
+    }
+  }, [
+    account,
+    nativeBalance,
+    previousBalance,
+  ]);
+
+  // Keep MEAN price updated
+  useEffect(() => {
+
+    let price = 0;
+    if (coinPrices && stakingPair && stakingPair.unstakedToken) {
+      const symbol = stakingPair.unstakedToken.symbol.toUpperCase();
+      price = coinPrices && coinPrices[symbol] ? coinPrices[symbol] : 0;
+    }
+    consoleOut('meanPrice:', price, 'crimson');
+    setMeanPrice(price);
+
+  }, [coinPrices, stakingPair]);
+
+  // Keep MEAN balance updated
+  useEffect(() => {
+    if (!publicKey || !accounts || !accounts.tokenAccounts || !accounts.tokenAccounts.length) {
+      return;
+    }
+
+    if (stakingPair && stakingPair.unstakedToken) {
+      refreshMeanBalance();
+    }
+
+  }, [
+    accounts,
+    publicKey,
+    stakingPair,
+    refreshMeanBalance,
+  ]);
+
+  // Keep sMEAN balance updated
+  useEffect(() => {
+    if (!publicKey || !accounts || !accounts.tokenAccounts || !accounts.tokenAccounts.length) {
+      return;
+    }
+
+    if (stakingPair && stakingPair.stakedToken) {
+      refreshStakedMeanBalance();
+    }
+
+  }, [
+    accounts,
+    publicKey,
+    stakingPair,
+    refreshStakedMeanBalance,
+  ]);
 
   // Refresh pools info
   useEffect(() => {
@@ -622,7 +641,25 @@ export const InvestView = () => {
     }
 
   });
-  
+
+  // Keep the list of stake sol platforms sorted in descending order by apy
+  useEffect(() => {
+    stakingSOLData.sort((a, b) => (a.apy < b.apy) ? 1 : -1);
+  }, [stakingSOLData])
+
+  // Get staking pool info from staking client
+  useEffect(() => {
+
+    if (stakeClient && meanPrice) {
+      refreshStakePoolInfo();
+    }
+
+  }, [
+    meanPrice,
+    stakeClient,
+    refreshStakePoolInfo
+  ]);
+
   useEffect(() => {
     const maxApr = Math.max(maxOrcaAprValue, maxRadiumAprValue);
     consoleOut('maxAprValue:', maxApr, 'blue');
@@ -685,16 +722,27 @@ export const InvestView = () => {
     detailsPanelOpen,
   ]);
 
+  // Setup event listeners
+  useEffect(() => {
+    if (pageInitialized && canSubscribe) {
+      setCanSubscribe(false);
+      confirmationEvents.on(EventType.TxConfirmSuccess, onStakeTxConfirmed);
+      consoleOut('Subscribed to event txConfirmed with:', 'onStakeTxConfirmed', 'blue');
+    }
+  }, [
+    canSubscribe,
+    pageInitialized,
+    onStakeTxConfirmed
+  ]);
+
   // Set when a page is initialized
   useEffect(() => {
     if (!pageInitialized && stakeClient) {
-      refreshStakedMeanBalance();
       setPageInitialized(true);
     }
   }, [
     stakeClient,
     pageInitialized,
-    refreshStakedMeanBalance
   ]);
 
   const renderInvestOptions = (

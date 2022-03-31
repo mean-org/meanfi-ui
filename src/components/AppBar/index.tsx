@@ -252,11 +252,9 @@ export const AppBar = (props: {
                 <li key="deposits" className="mobile-menu-item" onClick={showDepositOptionsModal} style={{'--animation-order': 4} as CustomCSSProps}>
                   <span className="menu-item-text">{t('ui-menus.main-menu.deposits')}</span>
                 </li>
-                {(isLocal() || (isDev() && (isWhitelisted || isInBetaTestingProgram))) && (
-                  <li key="invest" className={location.pathname === '/invest' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 4} as CustomCSSProps}>
-                    <Link to="/invest">{t('ui-menus.main-menu.invest.submenu-title')}</Link>
-                  </li>
-                )}
+                <li key="invest" className={location.pathname === '/invest' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 4} as CustomCSSProps}>
+                  <Link to="/invest">{t('ui-menus.main-menu.invest.submenu-title')}</Link>
+                </li>
                 {/* {(isLocal() || isInBetaTestingProgram || isWhitelisted) && (
                   <li key="staking" className={location.pathname === '/staking' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 4} as CustomCSSProps}>
                     <Link to="/staking">{t('ui-menus.main-menu.invest.staking')}</Link>

@@ -416,6 +416,7 @@ export const UnstakeTabView = (props: {
 
       try {
         const result = await props.stakeClient.getUnstakeQuote(sMEAN);
+        consoleOut('quote raw value:', result, 'blue');
         return result.meanOutUiAmount;
       } catch (error) {
         console.error(error);
