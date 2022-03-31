@@ -54,7 +54,7 @@ import useWindowSize from '../../hooks/useWindowResize';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { notify } from '../../utils/notifications';
-import { IconBank, IconClock, IconRefresh, IconShieldOutline, IconTrash } from '../../Icons';
+import { IconBank, IconClock, IconShieldOutline, IconTrash } from '../../Icons';
 import { TreasuryOpenModal } from '../../components/TreasuryOpenModal';
 import { MSP_ACTIONS, StreamInfo, STREAM_STATE, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { TreasuryCreateModal } from '../../components/TreasuryCreateModal';
@@ -5611,7 +5611,7 @@ export const TreasuriesView = () => {
                               type="default"
                               shape="circle"
                               size="middle"
-                              icon={<IconRefresh className="mean-svg-icons" />}
+                              icon={<ReloadOutlined className="mean-svg-icons" />}
                               onClick={() => onExecuteRefreshTreasuryBalance()}
                               disabled={
                                 isTxInProgress() ||

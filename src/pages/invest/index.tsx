@@ -1,6 +1,6 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import './style.less';
-import { LoadingOutlined, ReloadOutlined, WarningFilled } from "@ant-design/icons";
+import { ReloadOutlined } from "@ant-design/icons";
 import { Button, Tooltip, Row, Col, Empty, Spin, Divider } from "antd";
 import { useTranslation } from 'react-i18next';
 import { isDesktop } from "react-device-detect";
@@ -9,11 +9,10 @@ import { getNetworkIdByCluster, useConnection, useConnectionConfig } from '../..
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
 import { cutNumber, findATokenAddress, formatThousands } from "../../utils/utils";
-import { IconRefresh, IconStats } from "../../Icons";
+import { IconStats } from "../../Icons";
 import { IconHelpCircle } from "../../Icons/IconHelpCircle";
 import useWindowSize from '../../hooks/useWindowResize';
-import { consoleOut, isDev, isLocal, isProd } from "../../utils/ui";
-import { useNavigate } from "react-router-dom";
+import { consoleOut, isProd } from "../../utils/ui";
 import { ConfirmOptions, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { Env, StakePoolInfo, StakingClient } from "@mean-dao/staking";
 import { StakeTabView } from "../../views/StakeTabView";
@@ -23,8 +22,6 @@ import { TokenInfo } from "@solana/spl-token-registry";
 import { MEAN_TOKEN_LIST } from "../../constants/token-list";
 import { confirmationEvents } from "../../contexts/transaction-status";
 import { EventType } from "../../models/enums";
-
-const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 type SwapOption = "stake" | "unstake";
 
@@ -37,15 +34,11 @@ export const InvestView = () => {
   const {
     coinPrices,
     stakedAmount,
-    isWhitelisted,
-    fromCoinAmount,
     detailsPanelOpen,
-    isInBetaTestingProgram,
     setIsVerifiedRecipient,
     setDtailsPanelOpen,
     setFromCoinAmount,
   } = useContext(AppStateContext);
-  const navigate = useNavigate();
   const connection = useConnection();
   const connectionConfig = useConnectionConfig();
   const { cluster, endpoint } = useConnectionConfig();
@@ -85,17 +78,6 @@ export const InvestView = () => {
   const [sMeanBalance, setSmeanBalance] = useState<number>(0);
   const [meanBalance, setMeanBalance] = useState<number>(0);
 
-  const userHasAccess = useMemo(() => {
-
-    // return isWhitelisted || isInBetaTestingProgram
-    //   ? true
-    //   : false;
-    return isLocal() || (isDev() && (isWhitelisted || isInBetaTestingProgram))
-      ? true
-      : false;
-
-  }, [isInBetaTestingProgram, isWhitelisted]);
-
   // Create and cache Staking client instance
   const stakeClient = useMemo(() => {
 
@@ -117,13 +99,6 @@ export const InvestView = () => {
     endpoint,
     publicKey
   ]);
-
-  // TODO: Make it NOT available in prod. Remove when releasing
-  useEffect(() => {
-    if (isProd()) {
-      navigate('/accounts');
-    }
-  }, [navigate]);
 
 
   /////////////////
@@ -690,22 +665,6 @@ export const InvestView = () => {
     setIsVerifiedRecipient,
   ]);
 
-  // Withdraw funds modal
-  const [isWithdrawModalVisible, setIsWithdrawModalVisible] = useState(false);
-  const showWithdrawModal = useCallback(() => setIsWithdrawModalVisible(true), []);
-  const closeWithdrawModal = useCallback(() => setIsWithdrawModalVisible(false), []);
-
-  const onWithdrawModalStart = useCallback(async () => {
-    showWithdrawModal();
-  }, [
-    showWithdrawModal
-  ]);
-
-  const onAfterWithdrawModalClosed = () => {
-    setStakingRewards(0);
-    closeWithdrawModal();
-  }
-
   // Keep staking rewards updated
   useEffect(() => {
     setStakingRewards(parseFloat(stakedAmount) * annualPercentageYield / 100);
@@ -787,33 +746,6 @@ export const InvestView = () => {
       )}
     </>
   );
-
-  if (!userHasAccess) {
-    return (
-      <>
-        <div className="container main-container">
-          <div className="interaction-area">
-            <div className="title-and-subtitle w-75 h-100">
-              <div className="title">
-                <IconStats className="mean-svg-icons" />
-                <div>{t('invest.title')}</div>
-              </div>
-              <div className="subtitle text-center">
-                {t('invest.subtitle')}
-              </div>
-              <div className="w-50 h-100 p-5 text-center flex-column flex-center">
-                <div className="text-center mb-2">
-                  <WarningFilled style={{ fontSize: 48 }} className="icon fg-warning" />
-                </div>
-                <h3>The content you are accessing is not available at this time or you don't have access permission</h3>
-              </div>
-            </div>
-          </div>
-        </div>
-        <PreFooter />
-      </>
-    );
-  }
 
   return (
     <>
@@ -1014,7 +946,7 @@ export const InvestView = () => {
                             type="default"
                             shape="circle"
                             size="middle"
-                            icon={<IconRefresh className="mean-svg-icons" />}
+                            icon={<ReloadOutlined className="mean-svg-icons" />}
                             onClick={() => setShouldRefreshLpData(true)}
                           />
                         </Tooltip>
@@ -1120,7 +1052,7 @@ export const InvestView = () => {
                             type="default"
                             shape="circle"
                             size="middle"
-                            icon={<IconRefresh className="mean-svg-icons" />}
+                            icon={<ReloadOutlined className="mean-svg-icons" />}
                             onClick={() => setShouldRefreshLpData(true)}
                           />
                         </Tooltip>
@@ -1188,29 +1120,6 @@ export const InvestView = () => {
           </div>
         </div>
       </div>
-      {/* Withdraw funds transaction execution modal */}
-      {/* <Modal
-        className="mean-modal no-full-screen"
-        maskClosable={false}
-        visible={isWithdrawModalVisible}
-        onCancel={closeWithdrawModal}
-        afterClose={onAfterWithdrawModalClosed}
-        width={330}
-        footer={null}>
-        <div className="transaction-progress">
-          <CheckOutlined style={{ fontSize: 48 }} className="icon" />
-          <h4 className="font-bold mb-1 text-uppercase">Withdraw Funds</h4>
-          <p className="operation">{t('transactions.status.tx-withdraw-operation-success')}</p>
-          <Button
-            block
-            type="primary"
-            shape="round"
-            size="middle"
-            onClick={closeWithdrawModal}>
-            {t('general.cta-close')}
-          </Button>
-        </div>
-      </Modal> */}
       <PreFooter />
     </>
   );
