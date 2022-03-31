@@ -46,9 +46,8 @@ export class AppConfigService {
             exchangeFeeAccountOwner: 'CLazQV1BhSrxfgRHko4sC8GYBU3DoHcX4xxRZd12Kohr',
             exchangeFlatFee: 0.25,
             stakingRewardsAcl: [],
-            meanStakingVault: ''
+            meanStakingVault: 'GMG74Wi8Mj4KpS6qxUgcofBSNMa8qkqtVgtUc3g5sPpF'
         },
-        // dev and local will have same config
         development: {
             appUrl: 'https://app-dev.meanfi.com',
             apiUrl: 'https://tempo-api-dev.meanops.com',
