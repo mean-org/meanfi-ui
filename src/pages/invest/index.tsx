@@ -100,6 +100,18 @@ export const InvestView = () => {
     publicKey
   ]);
 
+  // Keep MEAN price updated
+  useEffect(() => {
+
+    if (coinPrices) {
+      const symbol = "MEAN";
+      const price = coinPrices && coinPrices[symbol] ? coinPrices[symbol] : 0;
+      consoleOut('meanPrice:', price, 'crimson');
+      console.log('coinPrices:', coinPrices);
+      setMeanPrice(price);
+    }
+
+  }, [coinPrices]);
 
   /////////////////
   //  Callbacks  //
@@ -267,25 +279,41 @@ export const InvestView = () => {
     marinadeTotalStakedValue
   ]);
 
-  const refreshStakePoolInfo = useCallback(() => {
+  const getMeanPrice = useCallback(() => {
 
-    if (!stakeClient || !meanPrice) { return; }
+    const symbol = "MEAN";
+    const price = coinPrices && coinPrices[symbol] ? coinPrices[symbol] as number : 0;
+    consoleOut('meanPrice:', price, 'orange');
+    console.log('coinPrices:', coinPrices);
 
-    stakeClient.getStakePoolInfo(meanPrice)
-    .then((value) => {
-      consoleOut('stakePoolInfo:', value, 'crimson');
-      setStakePoolInfo(value);
-    }).catch((error) => {
-      console.error('getStakePoolInfo error:', error);
-    });
+    return price;
+  }, [coinPrices]);
 
-  }, [meanPrice, stakeClient]);
+  const refreshStakePoolInfo = useCallback((price: number) => {
+
+    if (stakeClient && price) {
+      consoleOut('calling getStakePoolInfo...', '', 'blue');
+      stakeClient.getStakePoolInfo(price)
+      .then((value) => {
+        consoleOut('stakePoolInfo:', value, 'crimson');
+        setStakePoolInfo(value);
+      }).catch((error) => {
+        console.error('getStakePoolInfo error:', error);
+      });
+    }
+
+  }, [stakeClient]);
 
   // If any Stake/Unstake Tx finished and confirmed refresh the StakePoolInfo
   const onStakeTxConfirmed = useCallback((value: any) => {
     consoleOut("onStakeTxConfirmed event executed:", value, 'crimson');
-    refreshStakePoolInfo();
-  }, [refreshStakePoolInfo]);
+    const price = getMeanPrice();
+    if (stakeClient && price) {
+      consoleOut('calling getStakePoolInfo...', '', 'orange');
+      refreshStakePoolInfo(price);
+      consoleOut('After calling refreshStakePoolInfo()', '', 'orange');
+    }
+  }, [getMeanPrice, refreshStakePoolInfo, stakeClient]);
 
   // Get raydium pool info
   const getRaydiumPoolInfo = useCallback(async () => {
@@ -517,19 +545,6 @@ export const InvestView = () => {
     previousBalance,
   ]);
 
-  // Keep MEAN price updated
-  useEffect(() => {
-
-    let price = 0;
-    if (coinPrices && stakingPair && stakingPair.unstakedToken) {
-      const symbol = stakingPair.unstakedToken.symbol.toUpperCase();
-      price = coinPrices && coinPrices[symbol] ? coinPrices[symbol] : 0;
-    }
-    consoleOut('meanPrice:', price, 'crimson');
-    setMeanPrice(price);
-
-  }, [coinPrices, stakingPair]);
-
   // Keep MEAN balance updated
   useEffect(() => {
     if (!publicKey || !accounts || !accounts.tokenAccounts || !accounts.tokenAccounts.length) {
@@ -625,15 +640,12 @@ export const InvestView = () => {
   // Get staking pool info from staking client
   useEffect(() => {
 
-    if (stakeClient && meanPrice) {
-      refreshStakePoolInfo();
+    const price = getMeanPrice();
+    if (stakeClient && price) {
+      refreshStakePoolInfo(price);
     }
 
-  }, [
-    meanPrice,
-    stakeClient,
-    refreshStakePoolInfo
-  ]);
+  }, [stakeClient, refreshStakePoolInfo, getMeanPrice]);
 
   useEffect(() => {
     const maxApr = Math.max(maxOrcaAprValue, maxRadiumAprValue);
