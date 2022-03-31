@@ -296,7 +296,7 @@
 			"up-to-value-label": "Up to"
 		},
 		"panel-right": {
-			"first-text": "MEAN staking rewards include emission incentives plus a share of the protocol revenues, and can be boosted using locking periods. When you stake your MEAN, you get sMEAN in return.",
+			"first-text": "MEAN staking rewards include emission incentives plus a share of the protocol revenues, and can be boosted using locking periods. When you stake your MEAN, you get sMEAN (staked MEAN) in return.",
 			"liquidity-pool": {
 				"refresh-tooltip": "رفرش کردن داده های نقدینگی",
 				"text-one": "استخرهای MEAN Liquidity در حال حاضر در Orca و Raydium با چندین استخر از جمله MEAN/SOL، MEAN/RAY و MEAN/USDC در دسترس هستند.",

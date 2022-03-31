@@ -296,7 +296,7 @@
 			"not-connected": "Please connect your wallet to see your invest options"
 		},
 		"panel-right": {
-			"first-text": "MEAN staking rewards include emission incentives plus a share of the protocol revenues, and can be boosted using locking periods. When you stake your MEAN, you get sMEAN in return.",
+			"first-text": "MEAN staking rewards include emission incentives plus a share of the protocol revenues, and can be boosted using locking periods. When you stake your MEAN, you get sMEAN (staked MEAN) in return.",
 			"liquidity-pool": {
 				"column-apr/apy": "APR/APY",
 				"column-invest": "Invest",
