@@ -325,7 +325,7 @@
 			"stats": {
 				"staking-apy": "Staking APY",
 				"staking-apy-tooltip": "APY مرتبط با sMEAN نمایشی از قیمت sMEAN در یک دوره 365 روزه است.",
-				"total-mean-rewards": "مجموع جوایز MEAN",
+				"total-mean-rewards": "Total MEAN Staked",
 				"total-value-locked": "ارزش کل قفل شده است"
 			},
 			"table-data": {
