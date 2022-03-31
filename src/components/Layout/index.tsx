@@ -11,7 +11,6 @@ import { BackButton } from "../BackButton";
 import { useTranslation } from "react-i18next";
 import { useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
-import { notify } from "../../utils/notifications";
 import { consoleOut, isLocal, isProd, isValidAddress } from "../../utils/ui";
 import ReactGA from 'react-ga';
 import { InfluxDB, Point } from '@influxdata/influxdb-client';
@@ -25,6 +24,7 @@ import useOnlineStatus from "../../contexts/online-status";
 import { AccountDetails } from "../../models";
 import { segmentAnalytics } from "../../App";
 import { AppUsageEvent } from "../../utils/segment-service";
+import { openNotification } from "../Notifications";
 
 const { Header, Content, Footer } = Layout;
 
@@ -303,10 +303,10 @@ export const AppLayout = React.memo((props: any) => {
         setNeedRefresh(true);
         setStreamList([]);
         refreshTokenBalance();
-        notify({
-          message: t('notifications.wallet-connection-event-title'),
+        openNotification({
+          type: "info",
+          title: t('notifications.wallet-connection-event-title'),
           description: t('notifications.wallet-disconnect-message'),
-          type: 'info'
         });
         // Send identity to Segment if no wallew connection
         if (!publicKey) {
@@ -347,16 +347,16 @@ export const AppLayout = React.memo((props: any) => {
       if (address && isValidAddress(address)) {
         consoleOut('Referral address:', address, 'green');
         setReferralAddress(address);
-        notify({
-          message: t('notifications.friend-referral-completed'),
+        openNotification({
+          title: t('notifications.friend-referral-completed'),
           description: t('referrals.address-processed'),
           type: "info"
         });
         navigate('/');
       } else {
         consoleOut('Invalid address', '', 'red');
-        notify({
-          message: t('notifications.error-title'),
+        openNotification({
+          title: t('notifications.error-title'),
           description: t('referrals.address-invalid'),
           type: "error"
         });
