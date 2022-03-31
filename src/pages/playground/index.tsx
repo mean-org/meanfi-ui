@@ -44,7 +44,7 @@ import { IconType } from "antd/lib/notification";
 
 const { Panel } = Collapse;
 const { Option } = Select;
-type TabOption = "first-tab" | "second-tab" | "misc-tab";
+type TabOption = "first-tab" | "second-tab" | "demo-notifications" | "misc-tab";
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 interface TokenVolume {
@@ -572,30 +572,41 @@ export const PlaygroundView = () => {
           );
         })}
       </Collapse>
+    </>
+  );
 
-      <div className="tabset-heading">Notifications and navigation</div>
+  const renderDemoNotifications = (
+    <>
+      <div className="tabset-heading">Notify and navigate</div>
       <div className="text-left mb-3">
         <Space>
           <span
             className="flat-button stroked"
             onClick={() => sequentialMessagesAndNavigate()}>
-            <span>Sequential messages on Navigate</span>
+            <span>Sequential messages → Navigate</span>
           </span>
           <span
             className="flat-button stroked"
             onClick={() => stackedMessagesAndNavigate()}>
-            <span>Stacked messages on Navigate</span>
+            <span>Stacked messages → Navigate</span>
           </span>
         </Space>
       </div>
-      <div className="tabset-heading">Test openNotification</div>
+
+      <div className="tabset-heading">Test Updatable Notifications</div>
       <div className="text-left mb-3">
         <Space>
           <span
             className="flat-button stroked"
             onClick={() => reuseNotification('pepito')}>
-            <span>Reusable</span>
+            <span>See mission status</span>
           </span>
+        </Space>
+      </div>
+
+      <div className="tabset-heading">Test Standalone Notifications</div>
+      <div className="text-left mb-3">
+        <Space>
           <span
             className="flat-button stroked"
             onClick={() => showNotificationByType("info")}>
@@ -618,36 +629,13 @@ export const PlaygroundView = () => {
           </span>
         </Space>
       </div>
+
     </>
   );
 
   const renderMiscTab = (
     <>
       <div className="tabset-heading">Miscelaneous features</div>
-      <div className="text-left mb-3">
-        <Space>
-          <Button
-            type="default"
-            shape="round"
-            size="small"
-            className="thin-stroke"
-            onClick={showMessage}
-          >
-            Show custom message
-          </Button>
-          <Button
-            type="default"
-            shape="round"
-            size="small"
-            className="thin-stroke"
-            onClick={closeMessage}
-          >
-            Destroy message
-          </Button>
-        </Space>
-      </div>
-
-      <Divider />
 
       <h3>Primary, Secondary and Terciary buttons</h3>
       <div className="row mb-2">
@@ -803,6 +791,8 @@ export const PlaygroundView = () => {
         return renderDemoNumberFormatting;
       case "second-tab":
         return renderDemoTxWorkflow;
+      case "demo-notifications":
+        return renderDemoNotifications;
       case "misc-tab":
         return renderMiscTab;
       default:
@@ -825,6 +815,11 @@ export const PlaygroundView = () => {
                 className={`tab-button ${currentTab === "second-tab" ? "active" : ""}`}
                 onClick={() => setCurrentTab("second-tab")}>
                 Demo 2
+              </div>
+              <div
+                className={`tab-button ${currentTab === "demo-notifications" ? "active" : ""}`}
+                onClick={() => setCurrentTab("demo-notifications")}>
+                Demo 3
               </div>
               <div
                 className={`tab-button ${currentTab === "misc-tab" ? "active" : ""}`}
