@@ -486,6 +486,14 @@ export const StakeTabView = (props: {
     canFetchStakeQuote,
   ]);
 
+  const pasteHandler = (e: any) => {
+    const getClipBoardData = e.clipboardData.getData('Text');
+    const replaceCommaToDot = getClipBoardData.replace(",", "")
+    const onlyNumbersAndDot = replaceCommaToDot.replace(/[^.\d]/g, '');
+
+    setFromCoinAmount(onlyNumbersAndDot.trim());
+  }
+
   // Unstake quote
   useEffect(() => {
     const getMeanQuote = async (sMEAN: number) => {
@@ -568,6 +576,7 @@ export const StakeTabView = (props: {
               minLength={1}
               maxLength={79}
               spellCheck="false"
+              onPaste={pasteHandler}
               value={fromCoinAmount}
             />
           </div>
