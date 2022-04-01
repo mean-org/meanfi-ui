@@ -20,7 +20,7 @@ import { TokenInfo } from "@solana/spl-token-registry";
 import { INPUT_DEBOUNCE_TIME } from "../../constants";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
-let filterTimeout: any;
+let inputDebounceTimeout: any;
 
 export const StakeTabView = (props: {
   stakeClient: StakingClient;
@@ -143,8 +143,8 @@ export const StakeTabView = (props: {
     } else if (isValidNumber(newValue)) {
       setFromCoinAmount(newValue);
       // Debouncing
-      clearTimeout(filterTimeout);
-      filterTimeout = setTimeout(() => {
+      clearTimeout(inputDebounceTimeout);
+      inputDebounceTimeout = setTimeout(() => {
         consoleOut('input ====>', newValue, 'orange');
         setCanFetchStakeQuote(true);
       }, INPUT_DEBOUNCE_TIME);

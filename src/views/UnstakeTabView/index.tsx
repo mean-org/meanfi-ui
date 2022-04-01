@@ -6,7 +6,7 @@ import { TokenDisplay } from "../../components/TokenDisplay";
 import { AppStateContext } from "../../contexts/appstate";
 import { cutNumber, formatAmount, formatThousands, getAmountWithSymbol, getTxIxResume, isValidNumber } from "../../utils/utils";
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from "@ant-design/icons";
-import { StakingClient } from "@mean-dao/staking";
+import { StakingClient, UnstakeQuote } from "@mean-dao/staking";
 import { Transaction } from "@solana/web3.js";
 import { TransactionStatusContext } from "../../contexts/transaction-status";
 import { OperationType, TransactionStatus } from "../../models/enums";
@@ -16,8 +16,10 @@ import { useConnection } from "../../contexts/connection";
 import { notify } from "../../utils/notifications";
 import { useWallet } from "../../contexts/wallet";
 import { TokenInfo } from "@solana/spl-token-registry";
+import { INPUT_DEBOUNCE_TIME } from "../../constants";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
+let inputDebounceTimeout: any;
 
 export const UnstakeTabView = (props: {
   stakeClient: StakingClient;
@@ -39,6 +41,7 @@ export const UnstakeTabView = (props: {
   const [percentageValue, setPercentageValue] = useState<string>('');
   const [meanWorthOfsMean, setMeanWorthOfsMean] = useState<number>(0);
   const [unstakeMeanValue, setUnstakeMeanValue] = useState<string>();
+  const [canFetchUnstakeQuote, setCanFetchUnstakeQuote] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
   const { connected, wallet } = useWallet();
   const connection = useConnection();
@@ -108,6 +111,12 @@ export const UnstakeTabView = (props: {
       setFromCoinAmount(".");
     } else if (isValidNumber(newValue)) {
       setFromCoinAmount(newValue);
+      // Debouncing
+      clearTimeout(inputDebounceTimeout);
+      inputDebounceTimeout = setTimeout(() => {
+        consoleOut('input ====>', newValue, 'orange');
+        setCanFetchUnstakeQuote(true);
+      }, INPUT_DEBOUNCE_TIME);
     }
   };
 
@@ -412,7 +421,9 @@ export const UnstakeTabView = (props: {
     t
   ]);
 
+  // Unstake quote - For full unstaked balance
   useEffect(() => {
+
     const getMeanQuote = async (sMEAN: number) => {
       if (!props.stakeClient) { return 0; }
 
@@ -431,10 +442,6 @@ export const UnstakeTabView = (props: {
           consoleOut(`Quote for ${formatThousands(props.tokenBalance, props.selectedToken?.decimals)} sMEAN`, `${formatThousands(value, props.selectedToken?.decimals)} MEAN`, 'blue');
           setMeanWorthOfsMean(value);
         })
-
-        getMeanQuote(parseFloat(fromCoinAmount)).then((value) => {
-          setUnstakeMeanValue(value.toString());
-        })
       } else {
         setMeanWorthOfsMean(0);
       }
@@ -444,6 +451,31 @@ export const UnstakeTabView = (props: {
     props.selectedToken, 
     props.tokenBalance,
     fromCoinAmount
+  ]);
+
+  // Stake quote - For input amount
+  useEffect(() => {
+    if (!props.stakeClient) {
+      return;
+    }
+
+    if (parseFloat(fromCoinAmount) > 0 && canFetchUnstakeQuote) {
+      setCanFetchUnstakeQuote(false);
+
+      props.stakeClient.getUnstakeQuote(parseFloat(fromCoinAmount)).then((value: UnstakeQuote) => {
+        consoleOut('unStakeQuote:', value, 'blue');
+        setUnstakeMeanValue(value.meanOutUiAmount.toString());
+        consoleOut(`Quote for ${formatThousands(parseFloat(fromCoinAmount), props.selectedToken?.decimals)} sMEAN`, `${formatThousands(value.meanOutUiAmount, props.selectedToken?.decimals)} MEAN`, 'blue');
+      }).catch((error: any) => {
+        console.error(error);
+      });
+    }
+
+  }, [
+    fromCoinAmount,
+    props.stakeClient,
+    canFetchUnstakeQuote,
+    props.selectedToken,
   ]);
 
   useEffect(() => {
