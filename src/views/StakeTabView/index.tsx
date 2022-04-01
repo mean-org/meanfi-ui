@@ -8,7 +8,6 @@ import { TokenDisplay } from "../../components/TokenDisplay";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
 import { cutNumber, formatAmount, formatThousands, getAmountWithSymbol, getTxIxResume, isValidNumber } from "../../utils/utils";
-import { DebounceInput } from "react-debounce-input";
 import { StakeQuote, StakingClient } from "@mean-dao/staking";
 import { Transaction } from "@solana/web3.js";
 import { TransactionStatusContext } from "../../contexts/transaction-status";
@@ -546,7 +545,7 @@ export const StakeTabView = (props: {
             </span>
           </div>
           <div className="right">
-            <DebounceInput
+            <input
               className="general-text-input text-right"
               inputMode="decimal"
               autoComplete="off"
@@ -557,7 +556,6 @@ export const StakeTabView = (props: {
               placeholder="0.0"
               minLength={1}
               maxLength={79}
-              debounceTimeout={400}
               spellCheck="false"
               value={fromCoinAmount}
             />
