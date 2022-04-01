@@ -1,6 +1,6 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import './style.less';
-import { ReloadOutlined } from "@ant-design/icons";
+import { InfoCircleOutlined, ReloadOutlined } from "@ant-design/icons";
 import { Button, Tooltip, Row, Col, Empty, Spin, Divider } from "antd";
 import { useTranslation } from 'react-i18next';
 import { isDesktop } from "react-device-detect";
@@ -22,6 +22,7 @@ import { TokenInfo } from "@solana/spl-token-registry";
 import { MEAN_TOKEN_LIST } from "../../constants/token-list";
 import { confirmationEvents } from "../../contexts/transaction-status";
 import { EventType } from "../../models/enums";
+import { InfoIcon } from "../../components/InfoIcon";
 
 type SwapOption = "stake" | "unstake";
 
@@ -819,13 +820,11 @@ export const InvestView = () => {
                       <div className="mb-3">
                         <Row>
                           <Col span={8}>
-                            <div className="info-label icon-label justify-content-center">
-                              {t("invest.panel-right.stats.staking-apy")}
-                              <Tooltip placement="top" title={t("invest.panel-right.stats.staking-apy-tooltip")}>
-                                <span>
-                                  <IconHelpCircle className="mean-svg-icons" />
-                                </span>
-                              </Tooltip>
+                            <div className="info-label icon-label justify-content-center align-items-center">
+                              <span>{t("invest.panel-right.stats.staking-apy")}</span>
+                              <InfoIcon content={t("invest.panel-right.stats.staking-apy-tooltip")} placement="top">
+                                <IconHelpCircle className="mean-svg-icons" />
+                              </InfoIcon>
                             </div>
                             <div className="transaction-detail-row">
                               {(!stakePoolInfo || stakePoolInfo.apr === 0) && (
@@ -837,7 +836,7 @@ export const InvestView = () => {
                             </div>
                           </Col>
                           <Col span={8}>
-                            <div className="info-label">
+                            <div className="info-label icon-label justify-content-center align-items-center">
                               {t("invest.panel-right.stats.total-value-locked")}
                             </div>
                             <div className="transaction-detail-row">
@@ -845,7 +844,7 @@ export const InvestView = () => {
                             </div>
                           </Col>
                           <Col span={8}>
-                            <div className="info-label">
+                            <div className="info-label icon-label justify-content-center align-items-center">
                               {t("invest.panel-right.stats.total-mean-rewards")}
                             </div>
                             <div className="transaction-detail-row">
