@@ -212,3 +212,7 @@ export const BETA_TESTING_PROGRAM_WHITELIST = [
 // REAL DATES
 export const IDO_START_DATE = { year: 2021, month: 11, day: 22, hour: 15, minute: 0, second: 0 };
 export const IDO_FETCH_FREQUENCY = 5 * 60 * 1000;       // IDO data fetch polling interval
+
+export const NO_FEES = {
+    blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
+}

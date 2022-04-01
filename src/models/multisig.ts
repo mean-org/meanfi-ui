@@ -1,3 +1,4 @@
+import { TransactionFees } from "@mean-dao/msp";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { OperationType } from "./enums";
 
@@ -106,3 +107,9 @@ export type SetMintAuthPayload = {
   mint: string;
   newAuthority: number;
 }
+
+export const CREATE_MULTISIG_FEES: TransactionFees = {
+  blockchainFee: 0.000005,
+  mspFlatFee: 0.02,
+  mspPercentFee: 0
+};

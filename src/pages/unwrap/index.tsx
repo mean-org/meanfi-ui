@@ -7,7 +7,7 @@ import {
   LAMPORTS_PER_SOL,
   Transaction,
 } from "@solana/web3.js";
-import { WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
+import { NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { Button } from "antd";
 import { cutNumber, formatThousands, getTxIxResume, isValidNumber, toUiAmount } from "../../utils/utils";
 import { AppStateContext } from "../../contexts/appstate";
@@ -48,11 +48,7 @@ export const UnwrapView = () => {
   const [nativeBalance, setNativeBalance] = useState(0);
   const [feeAmount, setFeeAmount] = useState<number | null>(null);
   const [wSolBalance, setWsolBalance] = useState(0);
-  const [transactionFees, setTransactionFees] = useState<TransactionFees>({
-    blockchainFee: 0,
-    mspFlatFee: 0,
-    mspPercentFee: 0,
-  });
+  const [transactionFees, setTransactionFees] = useState<TransactionFees>(NO_FEES);
   const [pageInitialized, setPageInitialized] = useState<boolean>(false);
 
   // Get wSOL token info

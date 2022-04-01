@@ -398,6 +398,7 @@
 			"token-placeholder": "Enter the address of the token mint"
 		},
 		"create-multisig": {
+			"fee-info-label": "The fee to create this multisig is",
 			"main-cta": "생성하다",
 			"main-cta-busy": "다중서명 생성 중",
 			"modal-title": "다중서명 생성하기",

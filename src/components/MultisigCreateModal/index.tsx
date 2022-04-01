@@ -1,15 +1,15 @@
 import React, { useContext, useEffect } from 'react';
 import { useState } from 'react';
-import { Modal, Button, Spin, Tooltip } from 'antd';
+import { Modal, Button, Spin, Tooltip, Row, Col } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { AppStateContext } from '../../contexts/appstate';
 import { TransactionStatus } from '../../models/enums';
-import { consoleOut, getTransactionOperationDescription, isValidAddress } from '../../utils/ui';
+import { getTransactionOperationDescription, isValidAddress } from '../../utils/ui';
 import { isError } from '../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TransactionFees } from '@mean-dao/money-streaming';
-import { getTokenAmountAndSymbolByTokenAddress, isValidNumber } from '../../utils/utils';
+import { formatThousands, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from '../../utils/utils';
 import { MultisigParticipants } from '../MultisigParticipants';
 import { MultisigParticipant, MultisigV2 } from '../../models/multisig';
 import { useWallet } from '../../contexts/wallet';
@@ -132,10 +132,16 @@ export const MultisigCreateModal = (props: {
     } else if (isValidNumber(newValue)) {
       setMultisigThreshold(+newValue);
     }
-  }
+  }  
 
-  console.log(multisigOwners[+multisigThreshold - 1]);
-  
+  const infoRow = (caption: string, value: string) => {
+    return (
+      <Row>
+        <Col span={14} className="text-right pr-1">{caption}</Col>
+        <Col span={10} className="text-left pl-1 fg-secondary-70">{value}</Col>
+      </Row>
+    );
+  }
 
   return (
     <Modal
@@ -231,6 +237,15 @@ export const MultisigCreateModal = (props: {
                 {t('multisig.create-multisig.multisig-participants-warning-message')}
               </span>
             )}
+            {/* Fee info */}
+            {props.transactionFees && props.transactionFees.mspFlatFee && (
+              <div className="p-2 mt-2">
+                {infoRow(
+                  t('multisig.create-multisig.fee-info-label') + ':',
+                  `${formatThousands(props.transactionFees.mspFlatFee, 9)} SOL`
+                )}
+              </div>
+            )}
           </>
         ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
           <>
@@ -267,26 +282,25 @@ export const MultisigCreateModal = (props: {
 
       </div>
 
-      <div 
-        className={
+      <div className={
           props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle 
             ? "panel2 show" 
             : "panel2 hide"
           }>          
         {props.isBusy && transactionStatus !== TransactionStatus.Iddle && (
-        <div className="transaction-progress">
-          <Spin indicator={bigLoadingIcon} className="icon mt-0" />
-          <h4 className="font-bold mb-1">
-            {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
-          </h4>
-          {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
-            <div className="indication">{t('transactions.status.instructions')}</div>
-          )}
-        </div>
+          <div className="transaction-progress">
+            <Spin indicator={bigLoadingIcon} className="icon mt-0" />
+            <h4 className="font-bold mb-1">
+              {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
+            </h4>
+            {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
+              <div className="indication">{t('transactions.status.instructions')}</div>
+            )}
+          </div>
         )}
       </div>
 
-      <div className="row two-col-ctas mt-3 transaction-progress">
+      <div className="row two-col-ctas mt-3 transaction-progress p-0">
         <div className="col-6">
           <Button
             block
