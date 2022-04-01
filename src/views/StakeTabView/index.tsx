@@ -532,6 +532,16 @@ export const StakeTabView = (props: {
                   className="click-disabled"
                 />
               )}
+              {props.selectedToken && props.meanBalance ? (
+                <div className="token-max simplelink" onClick={() =>
+                    setFromCoinAmount(
+                      props.meanBalance.toFixed(props.selectedToken?.decimals || 6)
+                    )
+                  }>
+                  MAX
+                </div>
+              ) : null}
+
             </span>
           </div>
           <div className="right">
