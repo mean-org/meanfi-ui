@@ -177,6 +177,18 @@ export const MultisigTransferTokensModal = (props: {
     window.location.reload();
   }
 
+  // Handler paste clipboard data
+  const pasteHandler = (e: any) => {
+    const getClipBoardData = e.clipboardData.getData('Text');
+    const replaceCommaToDot = getClipBoardData.replace(",", "")
+    const onlyNumbersAndDot = replaceCommaToDot.replace(/[^.\d]/g, '');
+
+    console.log(onlyNumbersAndDot);
+    
+
+    setAmount(onlyNumbersAndDot.trim());
+  }
+
   return (
     <Modal
       className="mean-modal simple-modal"
@@ -260,7 +272,7 @@ export const MultisigTransferTokensModal = (props: {
                         </span>
                       </div>
                       <div className="right">
-                        <DebounceInput
+                        <input
                           className="general-text-input text-right"
                           inputMode="decimal"
                           autoComplete="off"
@@ -271,8 +283,8 @@ export const MultisigTransferTokensModal = (props: {
                           placeholder="0.0"
                           minLength={1}
                           maxLength={79}
-                          debounceTimeout={400}
                           spellCheck="false"
+                          onPaste={pasteHandler}
                           value={amount}
                         />
                       </div>
@@ -316,7 +328,7 @@ export const MultisigTransferTokensModal = (props: {
 
             {/* Transfer to */}
             <div className="form-label">{t('multisig.transfer-tokens.transfer-to-label')}</div>
-            <div className="well">
+            <div className="well transfer-proposal-address">
               <input id="mint-to-field"
                 className="general-text-input"
                 autoComplete="on"
