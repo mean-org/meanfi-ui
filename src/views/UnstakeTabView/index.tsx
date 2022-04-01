@@ -412,6 +412,15 @@ export const UnstakeTabView = (props: {
     t
   ]);
 
+  // Handler paste clipboard data
+  const pasteHandler = (e: any) => {
+    const getClipBoardData = e.clipboardData.getData('Text');
+    const replaceCommaToDot = getClipBoardData.replace(",", "")
+    const onlyNumbersAndDot = replaceCommaToDot.replace(/[^.\d]/g, '');
+
+    setFromCoinAmount(onlyNumbersAndDot.trim());
+  }
+
   useEffect(() => {
     const getMeanQuote = async (sMEAN: number) => {
       if (!props.stakeClient) { return 0; }
@@ -506,6 +515,7 @@ export const UnstakeTabView = (props: {
               minLength={1}
               maxLength={79}
               spellCheck="false"
+              onPaste={pasteHandler}
               value={fromCoinAmount}
             />
           </div>
