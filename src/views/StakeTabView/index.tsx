@@ -17,8 +17,10 @@ import { customLogger } from "../..";
 import { useConnection } from "../../contexts/connection";
 import { notify } from "../../utils/notifications";
 import { TokenInfo } from "@solana/spl-token-registry";
+import { INPUT_DEBOUNCE_TIME } from "../../constants";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
+let filterTimeout: any;
 
 export const StakeTabView = (props: {
   stakeClient: StakingClient;
@@ -77,6 +79,7 @@ export const StakeTabView = (props: {
   const [periodValue, setPeriodValue] = useState<number>(periods[0].value);
   const [periodTime, setPeriodTime] = useState<string>(periods[0].time);
   const [stakeQuote, setStakeQuote] = useState<number>(0);
+  const [canFetchStakeQuote, setCanFetchStakeQuote] = useState(false);
   const [meanWorthOfsMean, setMeanWorthOfsMean] = useState<number>(0);
 
   ///////////////////////
@@ -139,6 +142,12 @@ export const StakeTabView = (props: {
       setFromCoinAmount(".");
     } else if (isValidNumber(newValue)) {
       setFromCoinAmount(newValue);
+      // Debouncing
+      clearTimeout(filterTimeout);
+      filterTimeout = setTimeout(() => {
+        consoleOut('input ====>', newValue, 'orange');
+        setCanFetchStakeQuote(true);
+      }, INPUT_DEBOUNCE_TIME);
     }
   };
 
@@ -460,7 +469,8 @@ export const StakeTabView = (props: {
       return;
     }
 
-    if (parseFloat(fromCoinAmount) > 0) {
+    if (parseFloat(fromCoinAmount) > 0 && canFetchStakeQuote) {
+      setCanFetchStakeQuote(false);
       props.stakeClient.getStakeQuote(parseFloat(fromCoinAmount)).then((value: StakeQuote) => {
         consoleOut('stakeQuote:', value, 'blue');
         setStakeQuote(value.sMeanOutUiAmount);
@@ -471,8 +481,9 @@ export const StakeTabView = (props: {
     }
 
   }, [
+    fromCoinAmount,
     props.stakeClient,
-    fromCoinAmount
+    canFetchStakeQuote,
   ]);
 
   // Unstake quote
