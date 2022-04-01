@@ -418,7 +418,6 @@ export const UnstakeTabView = (props: {
 
       try {
         const result = await props.stakeClient.getUnstakeQuote(sMEAN);
-        consoleOut('quote raw value:', result, 'blue');
         return result.meanOutUiAmount;
       } catch (error) {
         console.error(error);
@@ -464,7 +463,9 @@ export const UnstakeTabView = (props: {
         <span className="info-label">
           {
             props.tokenBalance
-              ? `You currently have ${cutNumber(props.tokenBalance, 6)} sMEAN staked which is currently worth ${cutNumber(meanWorthOfsMean, 6)} MEAN.`
+              ? (
+                <span>You have {cutNumber(props.tokenBalance, 6)} sMEAN staked{meanWorthOfsMean ? ` which is currently worth ${cutNumber(meanWorthOfsMean, 6)} MEAN.` : '.'}</span>
+              )
               : t("invest.panel-right.tabset.unstake.notification-label-one-error")
           }
         </span>
