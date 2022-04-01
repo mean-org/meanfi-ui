@@ -23,6 +23,7 @@ import { MEAN_TOKEN_LIST } from "../../constants/token-list";
 import { confirmationEvents } from "../../contexts/transaction-status";
 import { EventType } from "../../models/enums";
 import { InfoIcon } from "../../components/InfoIcon";
+import { ONE_MINUTE_REFRESH_TIMEOUT } from "../../constants";
 
 type SwapOption = "stake" | "unstake";
 
@@ -69,6 +70,7 @@ export const InvestView = () => {
   const [maxStakeSolApyValue, setMaxStakeSolApyValue] = useState<number>(0);
   const [pageInitialized, setPageInitialized] = useState<boolean>(false);
   const [stakePoolInfo, setStakePoolInfo] = useState<StakePoolInfo>();
+  const [shouldRefreshStakePoolInfo, setShouldRefreshStakePoolInfo] = useState(true);
   const [refreshingStakePoolInfo, setRefreshingStakePoolInfo] = useState(false);
 
   const [shouldRefreshLpData, setShouldRefreshLpData] = useState(true);
@@ -80,6 +82,7 @@ export const InvestView = () => {
   const [stakingPair, setStakingPair] = useState<StakingPair | undefined>(undefined);
   const [sMeanBalance, setSmeanBalance] = useState<number>(0);
   const [meanBalance, setMeanBalance] = useState<number>(0);
+  const [lastTimestamp, setLastTimestamp] = useState(Date.now());
 
   // Create and cache Staking client instance
   const stakeClient = useMemo(() => {
@@ -640,10 +643,6 @@ export const InvestView = () => {
 
   });
 
-  useEffect(() => {
-    // ONE_MINUTE_REFRESH_TIMEOUT;
-  }, []);
-
   // Keep the list of stake sol platforms sorted in descending order by apy
   useEffect(() => {
     stakingSOLData.sort((a, b) => (a.apy < b.apy) ? 1 : -1);
@@ -652,12 +651,17 @@ export const InvestView = () => {
   // Get staking pool info from staking client
   useEffect(() => {
 
+    if (!stakeClient) { return; }
+
     const price = getMeanPrice();
-    if (stakeClient && price) {
+    if (shouldRefreshStakePoolInfo && price) {
+      setTimeout(() => {
+        setShouldRefreshStakePoolInfo(false);
+      });
       refreshStakePoolInfo(price);
     }
 
-  }, [stakeClient, refreshStakePoolInfo, getMeanPrice]);
+  }, [stakeClient, refreshStakePoolInfo, getMeanPrice, shouldRefreshStakePoolInfo]);
 
   useEffect(() => {
     const maxApr = Math.max(maxOrcaAprValue, maxRadiumAprValue);
@@ -692,7 +696,21 @@ export const InvestView = () => {
   // Keep staking rewards updated
   useEffect(() => {
     setStakingRewards(parseFloat(stakedAmount) * annualPercentageYield / 100);
-  }, [stakedAmount]);  
+  }, [stakedAmount]);
+
+  useEffect(() => {
+
+    const interval = setInterval(() => {
+      const now = Date.now();
+      setLastTimestamp(now);
+      setShouldRefreshStakePoolInfo(true);
+      consoleOut('Autorefresh stake pool info after:', `${(now - lastTimestamp) / 1000}s`);
+    }, ONE_MINUTE_REFRESH_TIMEOUT);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [lastTimestamp]);
 
   // Detect when entering small screen mode
   useEffect(() => {
