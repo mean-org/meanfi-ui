@@ -486,6 +486,7 @@ export const StakeTabView = (props: {
     canFetchStakeQuote,
   ]);
 
+  // Handler paste clipboard data
   const pasteHandler = (e: any) => {
     const getClipBoardData = e.clipboardData.getData('Text');
     const replaceCommaToDot = getClipBoardData.replace(",", "")
