@@ -40,13 +40,16 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: 'sMEAN',
         name: 'Staked MEAN',
         decimals: 6,
-        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg',
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/sMEANebFMnd9uTYpyntGzBmTmzEukRFwCjEcnXT2E8z/logo.svg',
         extensions: {
             discord: 'https://discord.meanfi.com/',
             medium: 'https://meandao.medium.com',
             twitter: 'https://twitter.com/meanfinance',
             website: 'https://www.meanfi.com/',
         },
+        tags: [
+            'stake',
+        ],
     },
     {
         chainId: 103,
@@ -68,13 +71,16 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: 'sMEAN',
         name: 'Staked MEAN',
         decimals: 6,
-        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg',
+        logoURI: '/assets/smean-token.svg',
         extensions: {
             discord: 'https://discord.meanfi.com/',
             medium: 'https://meandao.medium.com',
             twitter: 'https://twitter.com/meanfinance',
             website: 'https://www.meanfi.com/',
         },
+        tags: [
+            'stake',
+        ],
     },
     {
         chainId: 101,

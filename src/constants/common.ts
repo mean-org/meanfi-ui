@@ -2,6 +2,7 @@ import { Language } from "../models/languages";
 
 export const TRANSACTIONS_PER_PAGE = 15;
 export const ACCOUNTS_LOW_BALANCE_LIMIT = 0.1; // Minimum balance to start showing user account tokens in /accounts
+export const ONE_MINUTE_REFRESH_TIMEOUT = 60 * 1000;
 export const EXCHANGE_ROUTES_REFRESH_TIMEOUT = 60 * 1000;
 export const PRICE_REFRESH_TIMEOUT = 10 * 60 * 1000;
 export const STREAMS_REFRESH_TIMEOUT = 5 * 60 * 1000;

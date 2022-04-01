@@ -9,7 +9,7 @@ import { getNetworkIdByCluster, useConnection, useConnectionConfig } from '../..
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
 import { cutNumber, findATokenAddress, formatThousands } from "../../utils/utils";
-import { IconStats } from "../../Icons";
+import { IconLoading, IconStats } from "../../Icons";
 import { IconHelpCircle } from "../../Icons/IconHelpCircle";
 import useWindowSize from '../../hooks/useWindowResize';
 import { consoleOut, isProd } from "../../utils/ui";
@@ -69,6 +69,8 @@ export const InvestView = () => {
   const [maxStakeSolApyValue, setMaxStakeSolApyValue] = useState<number>(0);
   const [pageInitialized, setPageInitialized] = useState<boolean>(false);
   const [stakePoolInfo, setStakePoolInfo] = useState<StakePoolInfo>();
+  const [refreshingStakePoolInfo, setRefreshingStakePoolInfo] = useState(false);
+
   const [shouldRefreshLpData, setShouldRefreshLpData] = useState(true);
   const [refreshingPoolInfo, setRefreshingPoolInfo] = useState(false);
   const [canSubscribe, setCanSubscribe] = useState(true);
@@ -293,14 +295,19 @@ export const InvestView = () => {
   const refreshStakePoolInfo = useCallback((price: number) => {
 
     if (stakeClient && price) {
+      setTimeout(() => {
+        setRefreshingStakePoolInfo(true);
+      });
       consoleOut('calling getStakePoolInfo...', '', 'blue');
       stakeClient.getStakePoolInfo(price)
       .then((value) => {
         consoleOut('stakePoolInfo:', value, 'crimson');
         setStakePoolInfo(value);
-      }).catch((error) => {
+      })
+      .catch((error) => {
         console.error('getStakePoolInfo error:', error);
-      });
+      })
+      .finally(() => setRefreshingStakePoolInfo(false));
     }
 
   }, [stakeClient]);
@@ -633,6 +640,10 @@ export const InvestView = () => {
 
   });
 
+  useEffect(() => {
+    // ONE_MINUTE_REFRESH_TIMEOUT;
+  }, []);
+
   // Keep the list of stake sol platforms sorted in descending order by apy
   useEffect(() => {
     stakingSOLData.sort((a, b) => (a.apy < b.apy) ? 1 : -1);
@@ -827,10 +838,9 @@ export const InvestView = () => {
                               </InfoIcon>
                             </div>
                             <div className="transaction-detail-row">
-                              {(!stakePoolInfo || stakePoolInfo.apr === 0) && (
-                                <span>Calculating</span>
-                              )}
-                              {stakePoolInfo && stakePoolInfo.apr > 0 && (
+                              {refreshingStakePoolInfo || (!stakePoolInfo || stakePoolInfo.apr === 0) ? (
+                                <IconLoading className="mean-svg-icons"/>
+                              ) : (
                                 <span>{(stakePoolInfo.apr * 100).toFixed(2)}%</span>
                               )}
                             </div>
@@ -840,7 +850,11 @@ export const InvestView = () => {
                               {t("invest.panel-right.stats.total-value-locked")}
                             </div>
                             <div className="transaction-detail-row">
-                              ${stakePoolInfo ? formatThousands(stakePoolInfo.tvl, 2) : "0"}
+                              {refreshingStakePoolInfo || (!stakePoolInfo || stakePoolInfo.tvl === 0) ? (
+                                <IconLoading className="mean-svg-icons"/>
+                              ) : (
+                                <span>${formatThousands(stakePoolInfo.tvl, 2)}</span>
+                              )}
                             </div>
                           </Col>
                           <Col span={8}>
@@ -848,7 +862,11 @@ export const InvestView = () => {
                               {t("invest.panel-right.stats.total-mean-rewards")}
                             </div>
                             <div className="transaction-detail-row">
-                              {(stakePoolInfo && stakePoolInfo.totalMeanAmount.uiAmount) ? formatThousands(stakePoolInfo.totalMeanAmount.uiAmount, 0) : "0"}
+                              {refreshingStakePoolInfo || (!stakePoolInfo || stakePoolInfo.totalMeanAmount.uiAmount === 0) ? (
+                                <IconLoading className="mean-svg-icons"/>
+                              ) : (
+                                <span>${formatThousands(stakePoolInfo.totalMeanAmount.uiAmount || 0, 0)}</span>
+                              )}
                             </div>
                           </Col>
                         </Row>
@@ -913,7 +931,7 @@ export const InvestView = () => {
                     </Row> */}
                   </>
                 )}
-                
+
                 {/* Mean Liquidity Pools & Farms */}
                 {selectedInvest.id === 1 && (
                   <>
