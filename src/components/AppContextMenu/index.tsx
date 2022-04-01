@@ -26,6 +26,7 @@ export const AppContextMenu = () => {
   const { connected } = useWallet();
   const {
     theme,
+    isWhitelisted,
     setTheme,
   } = useContext(AppStateContext);
 
@@ -145,10 +146,18 @@ export const AppContextMenu = () => {
           <span className="menu-item-text">{t('ui-menus.app-context-menu.help-support')}</span>
         </a>
       </Menu.Item>
-      {isLocal() && (
-        <Menu.Item key="/playground">
-          <Link to="/playground">Playground</Link>
-        </Menu.Item>
+      {(isLocal() || isWhitelisted) && (
+        <>
+          <Menu.Divider />
+          <Menu.Item key="/playground">
+            <IconCodeBlock className="mean-svg-icons" />
+            <Link to="/playground">Playground</Link>
+          </Menu.Item>
+          <Menu.Item key="/staking-rewards">
+            <IconCodeBlock className="mean-svg-icons" />
+            <Link to="/staking-rewards">Staking rewards</Link>
+          </Menu.Item>
+        </>
       )}
     </Menu>
   );

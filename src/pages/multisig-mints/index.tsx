@@ -102,8 +102,8 @@ export const MultisigMintsView = () => {
   const multisigClient = useMemo(() => {
 
     const opts: ConfirmOptions = {
-      preflightCommitment: "finalized",
-      commitment: "finalized",
+      preflightCommitment: "confirmed",
+      commitment: "confirmed",
     };
 
     const provider = new Provider(connection, wallet as any, opts);
@@ -1155,7 +1155,7 @@ export const MultisigMintsView = () => {
       );
   
       tx.feePayer = publicKey;
-      const { blockhash } = await connection.getRecentBlockhash("finalized");
+      const { blockhash } = await connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
 
       tx.partialSign(transaction);
@@ -1377,7 +1377,7 @@ export const MultisigMintsView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.SetMintAuthority);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.SetMintAuthority);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -1483,7 +1483,7 @@ export const MultisigMintsView = () => {
       ]);
   
       tx.feePayer = publicKey;
-      const { blockhash } = await connection.getRecentBlockhash("finalized");
+      const { blockhash } = await connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
       tx.partialSign(...[mintKeypair]);
   
@@ -1702,7 +1702,7 @@ export const MultisigMintsView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.CreateMint);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.CreateMint);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -1832,7 +1832,7 @@ export const MultisigMintsView = () => {
       );
   
       tx.feePayer = publicKey;
-      const { blockhash } = await connection.getRecentBlockhash("finalized");
+      const { blockhash } = await connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
       tx.partialSign(...[transaction]);
   
@@ -2052,7 +2052,7 @@ export const MultisigMintsView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.MintTokens);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.MintTokens);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -2120,7 +2120,7 @@ export const MultisigMintsView = () => {
       );
   
       tx.feePayer = publicKey;
-      const { blockhash } = await connection.getRecentBlockhash("finalized");
+      const { blockhash } = await connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
   
       return tx;
@@ -2332,7 +2332,7 @@ export const MultisigMintsView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.ApproveTransaction);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.ApproveTransaction);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -2414,7 +2414,7 @@ export const MultisigMintsView = () => {
       );
   
       tx.feePayer = publicKey;
-      const { blockhash } = await multisigClient.provider.connection.getRecentBlockhash("finalized");
+      const { blockhash } = await multisigClient.provider.connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
       
       if (txSigners.length) {
@@ -2632,7 +2632,7 @@ export const MultisigMintsView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.ExecuteTransaction);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.ExecuteTransaction);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -2702,7 +2702,7 @@ export const MultisigMintsView = () => {
       );
 
       tx.feePayer = publicKey;
-      const { blockhash } = await connection.getRecentBlockhash("finalized");
+      const { blockhash } = await connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
 
       return tx;
@@ -2930,7 +2930,7 @@ export const MultisigMintsView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.CancelTransaction);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.CancelTransaction);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,

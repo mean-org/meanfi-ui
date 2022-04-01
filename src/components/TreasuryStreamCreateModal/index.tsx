@@ -547,13 +547,22 @@ export const TreasuryStreamCreateModal = (props: {
 
   const handlePaymentRateAmountChange = (e: any) => {
     let newValue = e.target.value;
+
+    const decimals = selectedToken ? selectedToken.decimals : 0;
     const splitted = newValue.toString().split('.');
     const left = splitted[0];
-    if (left.length > 1) {
+
+    if (decimals && splitted[1]) {
+      if (splitted[1].length > decimals) {
+        splitted[1] = splitted[1].slice(0, -1);
+        newValue = splitted.join('.');
+      }
+    } else if (left.length > 1) {
       const number = splitted[0] - 0;
       splitted[0] = `${number}`;
       newValue = splitted.join('.');
     }
+
     if (newValue === null || newValue === undefined || newValue === "") {
       setPaymentRateAmount("");
     } else if (newValue === '.') {
@@ -599,15 +608,16 @@ export const TreasuryStreamCreateModal = (props: {
     const decimals = selectedToken ? selectedToken.decimals : 0;
     const splitted = newValue.toString().split('.');
     const left = splitted[0];
-    if (left.length > 1) {
-      const number = splitted[0] - 0;
-      splitted[0] = `${number}`;
-      newValue = splitted.join('.');
-    } else if (decimals && splitted[1]) {
+
+    if (decimals && splitted[1]) {
       if (splitted[1].length > decimals) {
         splitted[1] = splitted[1].slice(0, -1);
         newValue = splitted.join('.');
       }
+    } else if (left.length > 1) {
+      const number = splitted[0] - 0;
+      splitted[0] = `${number}`;
+      newValue = splitted.join('.');
     }
 
     if (newValue === null || newValue === undefined || newValue === "") {
@@ -628,15 +638,16 @@ export const TreasuryStreamCreateModal = (props: {
     const decimals = selectedToken ? selectedToken.decimals : 0;
     const splitted = newValue.toString().split('.');
     const left = splitted[0];
-    if (left.length > 1) {
-      const number = splitted[0] - 0;
-      splitted[0] = `${number}`;
-      newValue = splitted.join('.');
-    } else if (decimals && splitted[1]) {
+
+    if (decimals && splitted[1]) {
       if (splitted[1].length > decimals) {
         splitted[1] = splitted[1].slice(0, -1);
         newValue = splitted.join('.');
       }
+    } else if (left.length > 1) {
+      const number = splitted[0] - 0;
+      splitted[0] = `${number}`;
+      newValue = splitted.join('.');
     }
 
     if (newValue === null || newValue === undefined || newValue === "") {
@@ -838,7 +849,7 @@ export const TreasuryStreamCreateModal = (props: {
     const createStreams = async (data: any) => {
 
       consoleOut('Starting create streams using MSP V2...', '', 'blue');
-      const msp = new MSP(endpoint, streamV2ProgramAddress, "finalized");
+      const msp = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
 
       if (!props.isMultisigTreasury) {
 
@@ -950,7 +961,7 @@ export const TreasuryStreamCreateModal = (props: {
         );
 
         tx.feePayer = publicKey;
-        let { blockhash } = await props.multisigClient.provider.connection.getRecentBlockhash("finalized");
+        let { blockhash } = await props.multisigClient.provider.connection.getRecentBlockhash("confirmed");
         tx.recentBlockhash = blockhash;
         tx.partialSign(transaction);
         txs.push(tx);
@@ -1228,7 +1239,7 @@ export const TreasuryStreamCreateModal = (props: {
           if (sent && !transactionCancelled) {
             consoleOut('Send Txs to confirmation queue:', signatures);
             signatures.forEach(s => {
-              startFetchTxSignatureInfo(s, "finalized", OperationType.TreasuryStreamCreate);
+              startFetchTxSignatureInfo(s, "confirmed", OperationType.TreasuryStreamCreate);
             });
             setIsBusy(false);
             props.handleOk();

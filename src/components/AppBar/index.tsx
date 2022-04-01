@@ -126,11 +126,9 @@ export const AppBar = (props: {
       <Menu.Item key="deposits" onClick={showDepositOptionsModal} id="deposits-menu-item">
         <span className="menu-item-text">{t('ui-menus.main-menu.deposits')}</span>
       </Menu.Item>
-      {(isLocal() || (isDev() && (isWhitelisted || isInBetaTestingProgram))) && (
-        <Menu.Item key="/invest">
-          <Link to="/invest">{t('ui-menus.main-menu.invest.submenu-title')}</Link>
-        </Menu.Item>
-      )}
+      <Menu.Item key="/invest">
+        <Link to="/invest">{t('ui-menus.main-menu.invest.submenu-title')}</Link>
+      </Menu.Item>
       {/* {(isLocal() || isWhitelisted || isInBetaTestingProgram) && (
         <SubMenu key="invest" title={t('ui-menus.main-menu.invest.submenu-title')}>
           <Menu.Item key="/staking">
@@ -162,9 +160,14 @@ export const AppBar = (props: {
           </Menu.Item>
         )}
         {(!isProd() || isLocal()) && (
-          <Menu.Item key="/wrap">
-            <Link to="/wrap">{t('ui-menus.main-menu.services.wrap')}</Link>
-          </Menu.Item>
+          <>
+            <Menu.Item key="/wrap">
+              <Link to="/wrap">{t('ui-menus.main-menu.services.wrap')}</Link>
+            </Menu.Item>
+            <Menu.Item key="/unwrap">
+              <Link to="/unwrap">{t('ui-menus.main-menu.services.unwrap')}</Link>
+            </Menu.Item>
+          </>
         )}
       </SubMenu>
       {(isLocal() || isWhitelisted) && (
@@ -233,7 +236,7 @@ export const AppBar = (props: {
           <input type="checkbox" id="overlay-input" />
           <label htmlFor="overlay-input" id="overlay-button"><span></span></label>
           <div id="overlay">
-            <div className="h-100 w-100 flex-center vertical-scroll">
+            <div className="h-100 w-100 flex-column align-items-center vertical-scroll">
               <ul onClick={dismissMenu}>
                 <li key="/accounts" className={location.pathname === '/accounts' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 1} as CustomCSSProps}>
                   <Link to="/accounts">{t('ui-menus.main-menu.accounts')}</Link>
@@ -247,11 +250,9 @@ export const AppBar = (props: {
                 <li key="deposits" className="mobile-menu-item" onClick={showDepositOptionsModal} style={{'--animation-order': 4} as CustomCSSProps}>
                   <span className="menu-item-text">{t('ui-menus.main-menu.deposits')}</span>
                 </li>
-                {(isLocal() || (isDev() && (isWhitelisted || isInBetaTestingProgram))) && (
-                  <li key="invest" className={location.pathname === '/invest' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 4} as CustomCSSProps}>
-                    <Link to="/invest">{t('ui-menus.main-menu.invest.submenu-title')}</Link>
-                  </li>
-                )}
+                <li key="invest" className={location.pathname === '/invest' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 4} as CustomCSSProps}>
+                  <Link to="/invest">{t('ui-menus.main-menu.invest.submenu-title')}</Link>
+                </li>
                 {/* {(isLocal() || isInBetaTestingProgram || isWhitelisted) && (
                   <li key="staking" className={location.pathname === '/staking' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 4} as CustomCSSProps}>
                     <Link to="/staking">{t('ui-menus.main-menu.invest.staking')}</Link>
@@ -277,9 +278,14 @@ export const AppBar = (props: {
                   </li>
                 )}
                 {(!isProd() || isLocal()) && (
-                  <li key="/wrap" className={location.pathname === '/wrap' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 9} as CustomCSSProps}>
-                    <Link to="/wrap">{t('ui-menus.main-menu.services.wrap')}</Link>
-                  </li>
+                  <>
+                    <li key="/wrap" className={location.pathname === '/wrap' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 9} as CustomCSSProps}>
+                      <Link to="/wrap">{t('ui-menus.main-menu.services.wrap')}</Link>
+                    </li>
+                    <li key="/unwrap" className={location.pathname === '/unwrap' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 9} as CustomCSSProps}>
+                      <Link to="/unwrap">{t('ui-menus.main-menu.services.unwrap')}</Link>
+                    </li>
+                  </>
                 )}
                 <li key="wallet-guide" className="mobile-menu-item" style={{'--animation-order': isProd() ? 8 : 10} as CustomCSSProps}>
                   <a href={SOLANA_WALLET_GUIDE} target="_blank" rel="noopener noreferrer">

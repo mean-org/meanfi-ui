@@ -243,6 +243,7 @@
 	},
 	"faucet": {
 		"current-sol-balance": "Current SOL balance",
+		"current-wsol-balance": "Current Wrapped SOL balance",
 		"fund-cta": "Give me SOL",
 		"funding-amount": "Your account will be funded with",
 		"not-connected": "Your wallet is not connected, please connect your wallet",
@@ -289,20 +290,23 @@
 	"invest": {
 		"panel-left": {
 			"invest-liquidity-tab-title": "MEAN Liquidity Pools",
-			"invest-stake-sol-tab-title": "Stake SOL",
 			"invest-stake-tab-title": "Stake MEAN",
+			"liquidity-value-label": "Up to",
 			"no-invest-options": "No invest options available",
-			"not-connected": "Please connect your wallet to see your invest options",
-			"up-to-value-label": "Up to"
+			"not-connected": "Please connect your wallet to see your invest options"
 		},
 		"panel-right": {
 			"first-text": "MEAN staking rewards include emission incentives plus a share of the protocol revenues, and can be boosted using locking periods. When you stake your MEAN, you get sMEAN (staked MEAN) in return.",
 			"liquidity-pool": {
+				"column-apr/apy": "APR/APY",
+				"column-invest": "Invest",
+				"column-liquidity": "Liquidity",
+				"column-lppair": "LP Pair",
+				"column-platform": "Platform",
+				"column-volume": "Vol (24hrs)",
 				"refresh-tooltip": "Refresh liquidity data",
 				"text-one": "MEAN Liquidity Pools are currently available on Orca and Raydium with multiple pools including MEAN/SOL, MEAN/RAY and MEAN/USDC.",
-				"text-three": "Before you add funds to a pool, be sure to read and accept the risks associated with investing in a liquidity pool.",
-				"text-two": "To invest in a liquidity pool, you need to supply both tokens that make up the pool. For example, when you join the Raydium MEAN/USDC pool both MEAN and USDC tokens are required. For more details, see the adding liquidity guides on",
-				"text-two-divider": "and",
+				"text-two": "Before you add funds to a pool, be sure to read and accept the risks associated with investing in a liquidity pool.",
 				"title": "MEAN Liquidity Pools"
 			},
 			"second-text": "Simply holding your sMEAN is all that is required to continuously grow your MEAN stash. You don't need to harvest the rewards with MEAN staking. When you unstake your sMEAN, you will receive the rewards earned in the form of additional MEAN on top of the amount staked.",
@@ -311,34 +315,17 @@
 				"label-balance": "My xMEAN Balance",
 				"label-boost": "Staking Lock Boost",
 				"label-locked": "My Locked eMEAN",
-				"label-my-staked": "My available sMEAN balance",
+				"label-my-staked": "My Staked MEAN",
 				"text-one": "MEAN tokens locked till {{unstakeStartDate}}",
 				"text-two": "Locking boost periods are coming soon to earn even more MEAN!",
 				"title": "Your Current Stake:",
 				"withdraw-button": "Withdraw Rewards"
 			},
-			"staking-sol": {
-				"refresh-tooltip": "Refresh staking data",
-				"text-one": "Liquid SOL staking is currently available with three providers on Solana. These are Lido (stSOL), Marinade (mSOL) and Socean (scnSOL).",
-				"text-two": "Before you stake your SOL, be sure to read and accept the risks associated when staking with one of these providers.",
-				"title": "Liquid SOL Staking"
-			},
 			"stats": {
-				"staking-apy": "Staking APR",
-				"staking-apy-tooltip": "The APR associated with sMEAN is a representation of the price of sMEAN over a 365 day period.",
+				"staking-apy": "Staking APY",
+				"staking-apy-tooltip": "The APY associated with sMEAN is a representation of the price of sMEAN over a 365 day period.",
 				"total-mean-rewards": "Total MEAN Staked",
 				"total-value-locked": "Total Value Locked"
-			},
-			"table-data": {
-				"column-apr/apy": "APR/APY",
-				"column-invest": "Invest",
-				"column-liquidity": "Liquidity",
-				"column-lppair": "LP Pair",
-				"column-platform": "Platform",
-				"column-stake": "Stake",
-				"column-token": "Token",
-				"column-total-staked": "Total staked",
-				"column-volume": "Vol (24hrs)"
 			},
 			"tabset": {
 				"stake": {
@@ -363,11 +350,10 @@
 					"send-amount": {
 						"label-right": "Available to unstake"
 					},
-					"unstake-button-available": "Unstake",
 					"unstake-button-busy": "Unstaking",
+					"unstake-button-available": "Unstake",
 					"unstake-button-unavailable": "No available",
-					"verified-label": "I agree to the Terms & Conditions",
-					"success-transaction-message": "{{sMeanValue}} sMEAN has been successfully unstaked and you have received {{meanValue}} MEAN in return."
+					"verified-label": "I agree to the Terms & Conditions"
 				}
 			},
 			"title": "Stake MEAN to Earn MEAN Rewards"
@@ -384,14 +370,14 @@
 	},
 	"multisig": {
 		"add-participant-cta": "Add participant",
-		"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
+		"back-to-multisig-accounts-cta": "Back to Multisig accounts",
 		"create-asset": {
 			"main-cta": "Create",
 			"main-cta-busy": "Creating asset",
 			"modal-title": "Create a Multisig Asset",
 			"no-token": "Select token",
 			"success-message": "Your multisig asset was created successfully",
-			"token-label": "Amount to transfer",
+			"token-label": "From Account",
 			"token-placeholder": "Enter the address of the token mint"
 		},
 		"create-multisig": {
@@ -402,7 +388,7 @@
 			"multisig-duplicate-participants": "Found duplicate participants, please review.",
 			"multisig-label-input-empty": "Enter a multisig name",
 			"multisig-label-input-label": "Multisig name",
-			"multisig-label-placeholder": "Type a name for your multisig",
+			"multisig-label-placeholder": "Type a name for your multisig account",
 			"multisig-no-participants": "No participants added yet",
 			"multisig-participants": "Valid signers ({{numParticipants}} of {{maxParticipants}})",
 			"multisig-participants-warning-message": "It is not recommended to create a Multisig with the same number of participants as required signatures",
@@ -434,7 +420,7 @@
 			"token-address-placeholder": "Enter the address of the token"
 		},
 		"multisig-account-detail": {
-			"address": "Safe Deposit Address",
+			"address": "Authority",
 			"authority": "Authority",
 			"copy-id-title": "MULTISIG ID",
 			"created-on": "Created on",
@@ -445,10 +431,10 @@
 			"cta-no-assets": "Assets",
 			"cta-no-mints": "Mints",
 			"cta-no-programs": "Programs",
-			"cta-no-treasuries": "Streaming Treasuries",
+			"cta-no-treasuries": "Treasuries",
 			"cta-programs": "Programs ({{itemCount}})",
 			"cta-transfer": "Transfer Tokens",
-			"cta-treasuries": "Streaming Treasuries ({{itemCount}})",
+			"cta-treasuries": "Treasuries ({{itemCount}})",
 			"cta-upgrade-program": "Upgrade Program",
 			"multisig-address-label": "Address",
 			"multisig-label-label": "Multisig name",
@@ -467,23 +453,23 @@
 		},
 		"multisig-assets": {
 			"asset-detail-heading": "Asset details",
-			"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
+			"back-to-multisig-accounts-cta": "Back to Multisig accounts",
 			"cta-change-multisig-authority": "Change Asset Ownership",
 			"cta-change-multisig-authority-busy": "Changing Multisig",
 			"cta-close": "Close asset",
 			"cta-close-busy": "Closing asset",
 			"cta-create-asset-busy": "Creating asset",
-			"cta-transfer": "Propose Funds Transfer",
+			"cta-transfer": "Request Funds Transfer",
 			"cta-transfer-busy": "Initiating Withdrawal Request",
 			"delete-asset": {
-				"explanatory-paragraph": "By submitting this proposal, you will sign the transaction and approve it as one of the Multisig signers. Before the asset is deleted, the other Multisig members need to approve it.",
-				"main-cta": "Submit delete proposal",
+				"explanatory-paragraph": "By submitting this request, you will sign the transaction and approve it as one of the Multisig signers. Before the asset is deleted, the other Multisig members need to approve it.",
+				"main-cta": "Submit Delete Request",
 				"modal-title": "Delete a Multisig Asset",
 				"selected-asset-label": "Asset selected",
 				"warning-message": "Only empty assets can be deleted. To delete an asset you need to first transfer all funds to another account."
 			},
-			"explanatory-paragraph": "By submitting this proposal, you will sign the transaction and approve it as one of the Multisig signers. Before the funds are sent, the other Multisig members need to approve it.",
-			"main-cta": "Sign transfer proposal",
+			"explanatory-paragraph": "By submitting this request, you will sign the transaction and approve it as one of the Multisig signers. Before the funds can be sent, the other Multisig members need to approve it.",
+			"main-cta": "Sign Funds Transfer Request",
 			"no-asset-loaded": "No asset loaded",
 			"no-assets": "No assets available",
 			"no-transactions": "No transactions for this asset",
@@ -495,7 +481,7 @@
 		},
 		"multisig-detail-heading": "Multisig account details",
 		"multisig-mints": {
-			"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
+			"back-to-multisig-accounts-cta": "Back to Multisig accounts",
 			"change-mint-authority-modal-title": "Set Mint Authority",
 			"create-mint-modal-title": "Create mint",
 			"cta-change-mint-authority": "Transfer Ownership",
@@ -538,47 +524,38 @@
 			"column-created-on": "Created on",
 			"column-current-signatures": "Sig",
 			"column-my-status": "My Status",
-			"column-operation": "Proposal",
+			"column-operation": "Operation",
 			"column-pending-signatures": "Signatures",
 			"column-program-id": "Program",
 			"explain-failure": "Explain failure condition if specific",
+			"initiator": "Initiator:",
 			"initiator-transaction": "This transaction was submitted by",
 			"loading-transactions": "Loading transactions",
-			"missing-signature": "To execute this proposal, {{missingSignature}} more signature is needed.",
-			"missing-signatures": "To execute this proposal, {{missingSignature}} more signatures are needed.",
-			"modal-title": "Proposal summary",
-			"no-transactions": "This multisig asset has no transactions",
-			"not-sign-tx": "You did NOT sign this transaction",
-			"not-signed": "Not signed",
-			"not-signed-tx": "You have NOT signed this transaction",
-			"proposed-action": "Proposed action:",
-			"proposed-by": "Proposed by:",
+			"modal-title": "Transaction summary",
+			"no-transactions": "This multisig account has no transactions",
+			"not-signed": "Not Signed",
+			"proposed-action": "Proposed Action:",
 			"ready-for-execution": "This transaction is now ready for execution. Please tell the person who initiated this transaction to execute it.",
-			"rejected": "Rejected",
-			"rejected-tx": "You have rejected this transaction",
-			"signed": "Signed",
+			"signed": "Signed.",
 			"signed-so-far": "Signed so far.",
 			"signers-to-approve": "signers to approve it in order to be executed.",
 			"submitted-on": "Submitted on:",
-			"transaction-awaiting": "A proposal for this multisig is awaiting",
+			"transaction-awaiting": "A Transaction on this Multisig is awaiting",
 			"transaction-has": "This transaction has",
 			"transaction-requires": "This transaction requires",
-			"treasury-closed-warning": "When a treasury is closed, all funds left over will be deposited back into the multisig safe.",
-			"tx-operation-executed": "This transaction has already been executed",
+			"treasury-closed-warning": "When a treasury is closed, all funds left over will be deposited to the initiator's wallet. Please confirm this is acceptable before you sign.",
 			"tx-operation-failure": "Operation {{operation}} failed",
 			"tx-operation-pending-one": "A transaction on this Multisig is now ready for execution. Please tell the person who initiated this transaction to execute it.",
-			"tx-operation-pending-two": "A transaction on this Multisig is ready for",
-			"tx-operation-rejected": "This transaction has been rejected.",
+			"tx-operation-pending-two": "A Transaction on this Multisig is ready for",
 			"tx-operation-success": "Operation {{operation}} succeeded",
-			"tx-operation-voided": "This pending transaction has been VOIDED due to the Multisig being edited.",
-			"your-status": "Your status:"
+			"your-status": "Your Status:"
 		},
 		"multisig-treasuries": {
-			"back-to-treasuries": "Back to Streaming Treasuries"
+			"back-to-treasuries": "Back to treasuries"
 		},
 		"pending-transactions": "pending transactions",
 		"refresh-tooltip": "Click to refresh the list of multisig accounts",
-		"screen-title": "Safes & Multisig",
+		"screen-title": "Multisig accounts",
 		"set-program-authority": {
 			"main-cta": "Set Authority",
 			"main-cta-busy": "Setting Authority",
@@ -600,7 +577,7 @@
 		"transfer-tokens": {
 			"main-cta": "Start Request",
 			"main-cta-busy": "Starting Request",
-			"modal-title": "Initiate Transfer Proposal",
+			"modal-title": "Initiate Withdrawal Request",
 			"source-address-label": "Transfer from",
 			"source-address-placeholder": "Enter the address of the source account",
 			"success-message": "Tokens transferred successfully.",
@@ -611,7 +588,7 @@
 		},
 		"update-multisig": {
 			"edit-not-allowed-message": "You can not edit the Multisig without first completing or canceling all pending transactions.",
-			"main-cta": "Propose changes",
+			"main-cta": "Save changes",
 			"main-cta-busy": "Saving changes",
 			"modal-title": "Edit multisig",
 			"success-message": "Your changes to the multisig account were saved!"
@@ -782,8 +759,6 @@
 			"amount-funded-date": "funded on",
 			"cancel-scheduled-transfer": "Cancel transfer",
 			"close-money-stream-menu-item": "Close money stream",
-			"close-stream-cta": "Close Stream",
-			"close-stream-cta-tooltip": "Close stream is available when Stream runs out of funds",
 			"cta-disabled-closing": "Closing money stream...",
 			"cta-disabled-creating": "Create stream in progress...",
 			"cta-disabled-funding": "Add funds in progress...",
@@ -846,7 +821,7 @@
 		"input-label-destination": "Exchange to (est.)",
 		"input-label-source": "Exchange from",
 		"insufficient-liquidity": "Insufficient liquidity for this trade",
-		"getting-routes": "Finding the best route and price",
+		"pools-and-routes": "Pools and routes",
 		"routes-best-price-label": "Best price",
 		"screen-subtitle": "Fastest and easiest way to swap two tokens",
 		"screen-title": "Exchange",
@@ -1046,7 +1021,7 @@
 			"main-cta-busy": "Funding treasury",
 			"main-cta-fund-stream": "Fund Money Stream",
 			"main-cta-fund-stream-busy": "Funding Stream",
-			"modal-title": "Add funds to the Streaming Treasury",
+			"modal-title": "Add funds to the Treasury",
 			"modal-title-fund-stream": "Add funds to a Money Stream",
 			"money-stream-to-topup-label": "Money Stream to top up",
 			"search-streams-placeholder": "Search stream by name or address",
@@ -1067,9 +1042,9 @@
 				"weeks": "weeks",
 				"years": "years"
 			},
-			"main-cta": "Create streaming treasury",
+			"main-cta": "Create",
 			"main-cta-busy": "Creating treasury",
-			"modal-title": "Create Streaming Treasury",
+			"modal-title": "Create treasury",
 			"multisig-selector-label": "Multisig account",
 			"multisig-treasury-created-info": "To complete the treasury setup, the other Multisig signers need to approve it.",
 			"multisig-treasury-created-instructions": "Please ask the other users to sign this treasury creation transaction.",
@@ -1077,8 +1052,7 @@
 			"success-message": "Your new treasury was created successfully.",
 			"treasury-name-input-empty": "Enter Treasury name",
 			"treasury-name-input-label": "Treasury name",
-			"treasury-name-placeholder": "Type a name for your streaming treasury",
-			"treasury-token-label": "Token to be streamed",
+			"treasury-name-placeholder": "Type a name for your treasury",
 			"treasury-type-options": {
 				"treasury-type-locked-description": "With a locked treasury you can create streams that act like a vesting contract for reserved allocations, like the ones needed for investors. They usually have a fixed end date.",
 				"treasury-type-locked-name": "Locked Money Streaming Treasury",
@@ -1096,7 +1070,7 @@
 			"treasuryid-placeholder": "Treasury ID created by Mean Finance"
 		},
 		"refresh-tooltip": "Click to refresh the list of treasuries",
-		"screen-title": "Streaming Treasuries",
+		"screen-title": "Treasuries",
 		"treasury-detail": {
 			"associated-token": "Associated Token",
 			"created-on": "Created on",
@@ -1109,9 +1083,9 @@
 			"no-treasury-loaded": "Create or lookup a treasury to view details",
 			"no-treasury-selected": "Please select or lookup a treasury to view details",
 			"number-of-streams": "Number of streams",
-			"treasury-address-label": "Treasury Address",
+			"treasury-address-label": "Address",
 			"treasury-name-label": "Treasury name",
-			"unallocated-treasury-balance": "Unallocated Streaming Treasury Balance"
+			"unallocated-treasury-balance": "Unallocated Treasury Balance"
 		},
 		"treasury-detail-heading": "Treasury details",
 		"treasury-list": {
@@ -1141,12 +1115,12 @@
 				"panel3-starting-on": "Starting on:",
 				"panel3-text-one": "Confirm the terms for",
 				"panel3-to-address": "To Address:",
-				"panel3-warning-message": "IMPORTANT: This is a locked money stream. You cannot cancel, pause or change its details once it is started. Verify all information before proceeding."
+				"panel3-warning-message": "IMPORTANT: This is a locked money stream, and once started, you cannot cancel, pause or change its details. Verify all information before proceeding."
 			},
 			"add-stream-modal-title": "Add stream to the treasury",
 			"allocate-funds-label": "Allocate funds",
 			"allocation-reserved-label": "This allocation is fully RESERVED",
-			"available-unallocated-balance-label": "Unallocated Balance",
+			"available-unallocated-balance-label": "Available Unallocated Balance",
 			"busy-pausing": "Stopping stream",
 			"busy-resuming": "Resuming stream",
 			"close-stream-also-closes-treasury-label": "Also close the treasury",
@@ -1164,7 +1138,7 @@
 			"minimum-allocation-advice": "You must set a minimum allocation for this Money Stream up to the unallocated balance available in the Treasury.",
 			"multiple-address-list": "Multiple address list",
 			"multiple-address-question-mark-tooltip": "Please provide a csv text file with one address per line in the following format: \n MEMO or STREAM NAME, WALLET ADDRESS. \n\n Here is an example of how it should look: \n Epoch 1, FrdFf3EqcGuytTweLvoELBt29WrAGVYjrh4585A2bTAZ \n\n Before you submit the file, please make sure the recipient addresses are correct and do not belong to an exchange.",
-			"no-streams": "This streaming treasury has no active streams",
+			"no-streams": "This treasury has no active streams",
 			"option-close-stream": "Close",
 			"option-explorer-link": "View on Solana Explorer",
 			"option-pause-stream": "Pause",
@@ -1213,10 +1187,9 @@
 			"services": {
 				"custody": "Custody",
 				"faucet": "Faucet",
-				"multisig": "Safes & Multisig",
+				"multisig": "Multisig",
 				"submenu-title": "Services",
-				"treasuries": "Streaming Treasuries",
-				"unwrap": "Unwrap",
+				"treasuries": "Treasuries & Payroll",
 				"wallet-guide": "Wallet Guide",
 				"wrap": "Wrap"
 			},
@@ -1224,10 +1197,6 @@
 			"swap": "Exchange",
 			"transfers": "Transfers"
 		}
-	},
-	"unwrap": {
-		"current-wsol-balance": "Current Wrapped SOL balance",
-		"label-input-amount": "Enter amount to unwrap"
 	},
 	"wallet-selector": {
 		"more-options-collapsed": "Show more options",
@@ -1248,3 +1217,4 @@
 		"modal-title": "Withdraw funds"
 	}
 }
+

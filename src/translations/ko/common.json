@@ -243,7 +243,6 @@
 	},
 	"faucet": {
 		"current-sol-balance": "현재 SOL 잔액",
-		"current-wsol-balance": "현재 WSOL 잔액",
 		"fund-cta": "SOL 주세요",
 		"funding-amount": "귀하의 계정에 자금이 조달됩니다",
 		"not-connected": "지갑이 연결되지 않았습니다. 지갑을 연결해 주세요.",
@@ -251,6 +250,10 @@
 		"wrap-sol-cta-toggle": "SOL 랩핑하기",
 		"wrap-transaction-fee": "랩핑 거래 수수료",
 		"wrapped-amount": "랩핑된 금액"
+	},
+	"unwrap": {
+		"current-wsol-balance": "현재 WSOL 잔액",
+		"label-input-amount": "Enter amount to unwrap"
 	},
 	"general": {
 		"cta-change": "변경",
@@ -291,31 +294,33 @@
 		"panel-left": {
 			"invest-liquidity-tab-title": "MEAN Liquidity Pools",
 			"invest-stake-tab-title": "Stake MEAN",
-			"liquidity-value-label": "Up to",
+			"up-to-value-label": "Up to",
 			"no-invest-options": "No invest options available",
 			"not-connected": "Please connect your wallet to see your invest options"
 		},
 		"panel-right": {
-			"first-text": "MEAN staking rewards include emission incentives plus a share of the protocol revenues, and can be boosted using locking periods. When you stake your MEAN, you get sMEAN in return.",
+			"first-text": "MEAN staking rewards include emission incentives plus a share of the protocol revenues, and can be boosted using locking periods. When you stake your MEAN, you get sMEAN (staked MEAN) in return.",
 			"liquidity-pool": {
-				"column-apr/apy": "APR/APY",
-				"column-invest": "Invest",
-				"column-liquidity": "Liquidity",
-				"column-lppair": "LP Pair",
-				"column-platform": "Platform",
-				"column-volume": "Vol (24hrs)",
 				"refresh-tooltip": "Refresh liquidity data",
 				"text-one": "MEAN Liquidity Pools are currently available on Orca and Raydium with multiple pools including MEAN/SOL, MEAN/RAY and MEAN/USDC.",
-				"text-two": "Before you add funds to a pool, be sure to read and accept the risks associated with investing in a liquidity pool.",
+				"text-two": "To invest in a liquidity pool, you need to supply both tokens that make up the pool. For example, when you join the Raydium MEAN/USDC pool both MEAN and USDC tokens are required. For more details, see the adding liquidity guides on",
+				"text-two-divider": "and",
+				"text-three": "Before you add funds to a pool, be sure to read and accept the risks associated with investing in a liquidity pool.",
 				"title": "MEAN Liquidity Pools"
 			},
 			"second-text": "Simply holding your sMEAN is all that is required to continuously grow your MEAN stash. You don't need to harvest the rewards with MEAN staking. When you unstake your sMEAN, you will receive the rewards earned in the form of additional MEAN on top of the amount staked.",
+			"staking-sol": {
+				"title": "Liquid SOL Staking",
+				"text-one": "Liquid SOL staking is currently available with three providers on Solana. These are Lido (stSOL), Marinade (mSOL) and Socean (scnSOL).",
+				"text-two": "Before you stake your SOL, be sure to read and accept the risks associated when staking with one of these providers.",
+				"refresh-tooltip": "Refresh staking data"
+			},
 			"staking-data": {
 				"label-avg": "Avg. Locked Yield",
 				"label-balance": "My xMEAN Balance",
 				"label-boost": "Staking Lock Boost",
 				"label-locked": "My Locked eMEAN",
-				"label-my-staked": "My Staked MEAN",
+				"label-my-staked": "My available sMEAN balance",
 				"text-one": "MEAN tokens locked till {{unstakeStartDate}}",
 				"text-two": "Locking boost periods are coming soon to earn even more MEAN!",
 				"title": "Your Current Stake:",
@@ -324,8 +329,19 @@
 			"stats": {
 				"staking-apy": "Staking APY",
 				"staking-apy-tooltip": "The APY associated with sMEAN is a representation of the price of sMEAN over a 365 day period.",
-				"total-mean-rewards": "Total MEAN Rewards",
+				"total-mean-rewards": "Total MEAN Staked",
 				"total-value-locked": "Total Value Locked"
+			},
+			"table-data": {
+				"column-apr/apy": "APR/APY",
+				"column-invest": "Invest",
+				"column-liquidity": "Liquidity",
+				"column-lppair": "LP Pair",
+				"column-platform": "Platform",
+				"column-volume": "Vol (24hrs)",
+				"column-token": "Token",
+				"column-total-staked": "Total staked",
+				"column-stake": "Stake"
 			},
 			"tabset": {
 				"stake": {
@@ -345,7 +361,7 @@
 					"amount-label": "Amount to unstake",
 					"name": "Unstake",
 					"notification-label-one": "Your currently have {{stakedAmount}} sMEAN staked which is currently locked until {{unstakeStartDate}}",
-					"notification-label-one-error": "Your currently do not have any sMEAN.",
+					"notification-label-one-error": "You currently don't have any sMEAN.",
 					"notification-label-two": "Unstaking will withdraw the specified amount of unlocked sMEAN tokens to your wallet",
 					"send-amount": {
 						"label-right": "Available to unstake"
@@ -353,7 +369,8 @@
 					"unstake-button-busy": "Unstaking",
 					"unstake-button-available": "Unstake",
 					"unstake-button-unavailable": "No available",
-					"verified-label": "I agree to the Terms & Conditions"
+					"verified-label": "I agree to the Terms & Conditions",
+					"success-transaction-message": "{{sMeanValue}} sMEAN has been successfully unstaked and you have received {{meanValue}} MEAN in return."
 				}
 			},
 			"title": "Stake MEAN to Earn MEAN Rewards"
@@ -377,7 +394,7 @@
 			"modal-title": "Create a Multisig Vault",
 			"no-token": "Select token",
 			"success-message": "Your multisig vault was created successfully",
-			"token-label": "From Account",
+			"token-label": "Amount to transfer",
 			"token-placeholder": "Enter the address of the token mint"
 		},
 		"create-multisig": {
@@ -420,7 +437,7 @@
 			"token-address-placeholder": "토큰 주소를 입력하세요"
 		},
 		"multisig-account-detail": {
-			"address": "Deposit Address",
+			"address": "Safe Deposit Address",
 			"authority": "권한",
 			"copy-id-title": "다중서명 계정",
 			"created-on": "~에 작성되다",
@@ -459,17 +476,17 @@
 			"cta-close": "Close vault",
 			"cta-close-busy": "Closing vault",
 			"cta-create-asset-busy": "Creating vault",
-			"cta-transfer": "Request Funds Transfer",
+			"cta-transfer": "Propose Funds Transfer",
 			"cta-transfer-busy": "Initiating Withdrawal Request",
 			"delete-asset": {
-				"explanatory-paragraph": "By submitting this request, you will sign the transaction and approve it as one of the Multisig signers. Before the asset is deleted, the other Multisig members need to approve it.",
-				"main-cta": "Submit Delete Request",
+				"explanatory-paragraph": "By submitting this proposal, you will sign the transaction and approve it as one of the Multisig signers. Before the asset is deleted, the other Multisig members need to approve it.",
+				"main-cta": "Submit delete proposal",
 				"modal-title": "Delete a Multisig Asset",
 				"selected-asset-label": "Asset selected",
 				"warning-message": "Only empty assets can be deleted. To delete an asset you need to first transfer all funds to another account."
 			},
-			"explanatory-paragraph": "By submitting this request, you will sign the transaction and approve it as one of the Multisig signers. Before the funds can be sent, the other Multisig members need to approve it.",
-			"main-cta": "Sign Funds Transfer Request",
+			"explanatory-paragraph": "By submitting this proposal, you will sign the transaction and approve it as one of the Multisig signers. Before the funds are sent, the other Multisig members need to approve it.",
+			"main-cta": "Sign transfer proposal",
 			"no-asset-loaded": "No vault loaded",
 			"no-assets": "No vaults available",
 			"no-transactions": "No transactions for this vault",
@@ -528,27 +545,36 @@
 			"column-pending-signatures": "서명",
 			"column-program-id": "프로그램",
 			"explain-failure": "Explain failure condition if specific",
-			"initiator": "Initiator:",
+			"proposed-by": "Proposed by:",
 			"initiator-transaction": "This transaction was submitted by",
+			"missing-signature": "To execute this proposal, {{missingSignature}} more signature is needed.",
+			"missing-signatures": "To execute this proposal, {{missingSignature}} more signatures are needed.",
 			"loading-transactions": "거래 불러오는 중",
-			"modal-title": "거래 요약",
-			"no-transactions": "이 멀티시그 계정은 거래내역이 없습니다",
-			"not-signed": "Not Signed",
-			"proposed-action": "Proposed Action:",
+			"modal-title": "Proposal summary",
+			"no-transactions": "This multisig asset has no transactions",
+			"not-signed": "Not signed",
+			"proposed-action": "Proposed action:",
 			"ready-for-execution": "This transaction is now ready for execution. Please tell the person who initiated this transaction to execute it.",
-			"signed": "Signed.",
+			"signed": "Signed",
 			"signed-so-far": "Signed so far.",
 			"signers-to-approve": "signers to approve it in order to be executed.",
 			"submitted-on": "Submitted on:",
-			"transaction-awaiting": "A Transaction on this Multisig is awaiting",
+			"transaction-awaiting": "A proposal for this multisig is awaiting",
 			"transaction-has": "This transaction has",
 			"transaction-requires": "This transaction requires",
-			"treasury-closed-warning": "When a treasury is closed, all funds left over will be deposited to the initiator's wallet. Please confirm this is acceptable before you sign.",
+			"treasury-closed-warning": "When a treasury is closed, all funds left over will be deposited back into the multisig safe.",
 			"tx-operation-failure": "작동{{operation}}실패",
 			"tx-operation-pending-one": "A transaction on this Multisig is now ready for execution. Please tell the person who initiated this transaction to execute it.",
-			"tx-operation-pending-two": "A Transaction on this Multisig is ready for",
+			"tx-operation-pending-two": "A transaction on this Multisig is ready for",
 			"tx-operation-success": "작동{{operation}}성공",
-			"your-status": "Your Status:"
+			"tx-operation-voided": "This pending transaction has been VOIDED due to the Multisig being edited.",
+			"tx-operation-rejected": "This transaction has been rejected.",
+			"tx-operation-executed": "This transaction has already been executed",
+			"your-status": "Your status:",
+			"rejected": "Rejected",
+			"rejected-tx": "You have rejected this transaction",
+			"not-sign-tx": "You did NOT sign this transaction",
+			"not-signed-tx": "You have NOT signed this transaction"
 		},
 		"multisig-treasuries": {
 			"back-to-treasuries": "Back to Streaming Treasuries"
@@ -577,7 +603,7 @@
 		"transfer-tokens": {
 			"main-cta": "시작 요청",
 			"main-cta-busy": "시작 요청",
-			"modal-title": "출금 요청을 시작하다",
+			"modal-title": "Initiate Transfer Proposal",
 			"source-address-label": "에서 전송",
 			"source-address-placeholder": "원 계정의 주소를 입력하십시오",
 			"success-message": "토큰이 성공적으로 전송되었습니다.",
@@ -588,7 +614,7 @@
 		},
 		"update-multisig": {
 			"edit-not-allowed-message": "보류 중인 모든 거래를 먼저 완료하거나 취소하지 않고는 다중 서명을 편집할 수 없습니다.",
-			"main-cta": "변경된 내용 저장",
+			"main-cta": "Propose changes",
 			"main-cta-busy": "변경된 내용 저장",
 			"modal-title": "다중서명 수정",
 			"success-message": "다중서명 계정에 대한 변경 사항이 저장되었습니다!"
@@ -607,6 +633,7 @@
 	"notifications": {
 		"account-address-copied-message": "계좌 주소가 성공적으로 복사됨",
 		"account-address-not-copied-message": "계정 주소를 복사할 수 없습니다",
+		"check-transaction-in-explorer": "Check your transaction here",
 		"create-money-stream-completed": "머니스트림이 생성되었습니다.",
 		"create-money-stream-completed-wait-for-confirm": "거래가 확인되면 목록에 표시되어야 합니다.",
 		"error-cannot-faucet-mainnet-message": "메인넷에서 faucet 사용불가",
@@ -757,6 +784,8 @@
 			"add-funds-cta": "충전(자금 추가)",
 			"amount-funded-date": "에 자금 지원",
 			"cancel-scheduled-transfer": "전송 취소",
+			"close-stream-cta": "Close Stream",
+			"close-stream-cta-tooltip": "Close stream is available when Stream runs out of funds",
 			"close-money-stream-menu-item": "머니스트림 종료",
 			"cta-disabled-closing": "머니스트림 종료",
 			"cta-disabled-creating": "스트림 생성 진행 중...",
@@ -817,6 +846,7 @@
 	"swap": {
 		"exchange-warning": "MEAN 교환은 다음에서만 사용할 수 있습니다.",
 		"frequency-label": "빈번히",
+		"getting-routes": "Finding the best route and price",
 		"input-label-destination": "(추정)으로 교환",
 		"input-label-source": "다음에서 교환",
 		"insufficient-liquidity": "이 거래에 대한 유동성 부족",
@@ -954,10 +984,10 @@
 		},
 		"validation": {
 			"address-validation": "유효한 주소 형식이 아닙니다.",
-			"amount-high": "금액이 잔액을 초과합니다.",
-			"amount-low": "잔액이 부족합니다",
+			"amount-high": "Amount exceeded",
+			"amount-low": "Low balance",
 			"amount-lt-fee": "금액은 거래 수수료보다 커야 합니다.",
-			"amount-sol-high": "금액이 SOL 잔액을 초과합니다.",
+			"amount-sol-high": "Insufficient SOL",
 			"amount-withdraw-high": "금액이 사용 가능한 자금보다 큽니다.",
 			"cannot-use-own-account-as-treasury": "귀하의 계정을 트레저리 ID로 사용할 수 없습니다.",
 			"exchange-unavailable": "교환 불가",
@@ -977,7 +1007,7 @@
 			"no-recipient": "받는 사람 없음",
 			"no-valid-date": "유효한 날짜를 설정하십시오",
 			"not-connected": "지갑 연결",
-			"payment-rate-high": "지불 비율이 잔액을 초과합니다.",
+			"payment-rate-high": "Payment exceeded",
 			"select-address-list": "Select address list",
 			"select-recipient": "수신자 선택",
 			"select-stream": "스트림 선택",
@@ -987,7 +1017,7 @@
 			"valid-ddca-review": "검토",
 			"valid-start-funding": "펀딩 시작",
 			"valid-start-withdrawal": "출금 시작",
-			"verified-recipient-unchecked": "수신자 확인이 선택되지 않음"
+			"verified-recipient-unchecked": "Recipient Unchecked"
 		}
 	},
 	"transfer-stream": {
@@ -1115,12 +1145,12 @@
 				"panel3-starting-on": "Starting on:",
 				"panel3-text-one": "Confirm the terms for",
 				"panel3-to-address": "To Address:",
-				"panel3-warning-message": "IMPORTANT: This is a locked money stream, and once started, you cannot cancel, pause or change its details. Verify all information before proceeding."
+				"panel3-warning-message": "IMPORTANT: This is a locked money stream. You cannot cancel, pause or change its details once it is started. Verify all information before proceeding."
 			},
 			"add-stream-modal-title": "트레저리에 스트림 추가",
 			"allocate-funds-label": "자금 할당",
 			"allocation-reserved-label": "이 할당은 완전히 예약되었습니다.",
-			"available-unallocated-balance-label": "사용 가능한 미할당 잔액",
+			"available-unallocated-balance-label": "Unallocated Balance",
 			"busy-pausing": "스트림 중지",
 			"busy-resuming": "스트림 재개",
 			"close-stream-also-closes-treasury-label": "트레저리도 닫기",
@@ -1191,7 +1221,8 @@
 				"submenu-title": "서비스",
 				"treasuries": "Streaming Treasuries",
 				"wallet-guide": "지갑 가이드",
-				"wrap": "랩"
+				"wrap": "랩",
+				"unwrap": "Unwrap"
 			},
 			"stats": "통계",
 			"swap": "교환",

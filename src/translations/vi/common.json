@@ -243,7 +243,6 @@
 	},
 	"faucet": {
 		"current-sol-balance": "Số dư SOL hiện tại",
-		"current-wsol-balance": "Số dự wSOL hiện tại",
 		"fund-cta": "Cho tôi SOL",
 		"funding-amount": "Tài khoản của bạn sẽ được cấp",
 		"not-connected": "Ví của bạn chưa được kết nối, vui lòng kết nối ví",
@@ -251,6 +250,10 @@
 		"wrap-sol-cta-toggle": "Wrap một vài SOL",
 		"wrap-transaction-fee": "Phí giao dịch wrap",
 		"wrapped-amount": "Số lượng đã wrap"
+	},
+	"unwrap": {
+		"current-wsol-balance": "Số dự wSOL hiện tại",
+		"label-input-amount": "Enter amount to unwrap"
 	},
 	"general": {
 		"cta-change": "Thay đổi",
@@ -291,17 +294,23 @@
 		"panel-left": {
 			"invest-stake-tab-title": "Stake MEAN",
 			"invest-liquidity-tab-title": "MEAN Liquidity Pools",
-			"liquidity-value-label": "Up to",
+			"up-to-value-label": "Up to",
 			"no-invest-options": "Không có tùy chọn đầu tư khả dụng",
 			"not-connected": "Vui lòng kết nối ví của bạn để thấy tùy chọn đầu tư"
 		},
 		"panel-right": {
 			"title": "Stake MEAN to Earn MEAN Rewards",
-			"first-text": "MEAN staking rewards include emission incentives plus a share of the protocol revenues, and can be boosted using locking periods. When you stake your MEAN, you get sMEAN in return.",
+			"first-text": "MEAN staking rewards include emission incentives plus a share of the protocol revenues, and can be boosted using locking periods. When you stake your MEAN, you get sMEAN (staked MEAN) in return.",
 			"second-text": "Simply holding your sMEAN is all that is required to continuously grow your MEAN stash. You don't need to harvest the rewards with MEAN staking. When you unstake your sMEAN, you will receive the rewards earned in the form of additional MEAN on top of the amount staked.",
+			"staking-sol": {
+				"title": "Liquid SOL Staking",
+				"text-one": "Liquid SOL staking is currently available with three providers on Solana. These are Lido (stSOL), Marinade (mSOL) and Socean (scnSOL).",
+				"text-two": "Before you stake your SOL, be sure to read and accept the risks associated when staking with one of these providers.",
+				"refresh-tooltip": "Refresh staking data"
+			},
 			"staking-data": {
 				"title": "Your Current Stake:",
-				"label-my-staked": "My Staked MEAN",
+				"label-my-staked": "My available sMEAN balance",
 				"label-avg": "Avg. Locked Yield",
 				"label-boost": "Staking Lock Boost",
 				"label-locked": "My Locked eMEAN",
@@ -313,20 +322,27 @@
 			"liquidity-pool": {
 				"title": "MEAN Liquidity Pools",
 				"text-one": "MEAN Liquidity Pools are currently available on Orca and Raydium with multiple pools including MEAN/SOL, MEAN/RAY and MEAN/USDC.",
-				"text-two": "Before you add funds to a pool, be sure to read and accept the risks associated with investing in a liquidity pool.",
-				"refresh-tooltip": "Refresh liquidity data",
-				"column-platform": "Platform",
-				"column-lppair": "LP Pair",
-				"column-liquidity": "Liquidity",
-				"column-volume": "Vol (24hrs)",
-				"column-apr/apy": "APR/APY",
-				"column-invest": "Invest"
+				"text-two": "To invest in a liquidity pool, you need to supply both tokens that make up the pool. For example, when you join the Raydium MEAN/USDC pool both MEAN and USDC tokens are required. For more details, see the adding liquidity guides on",
+				"text-two-divider": "and",
+				"text-three": "Before you add funds to a pool, be sure to read and accept the risks associated with investing in a liquidity pool.",
+				"refresh-tooltip": "Refresh liquidity data"
 			},
 			"stats": {
-				"total-mean-rewards": "Total MEAN Rewards",
 				"staking-apy": "Staking APY",
 				"staking-apy-tooltip": "The APY associated with sMEAN is a representation of the price of sMEAN over a 365 day period.",
+				"total-mean-rewards": "Total MEAN Staked",
 				"total-value-locked": "Tổng tài sản bị khóa"
+			},
+			"table-data": {
+				"column-apr/apy": "APR/APY",
+				"column-invest": "Invest",
+				"column-liquidity": "Liquidity",
+				"column-lppair": "LP Pair",
+				"column-platform": "Platform",
+				"column-volume": "Vol (24hrs)",
+				"column-token": "Token",
+				"column-total-staked": "Total staked",
+				"column-stake": "Stake"
 			},
 			"tabset": {
 				"stake": {
@@ -354,7 +370,8 @@
 					"unstake-button-busy": "Unstaking",
 					"unstake-button-available": "Hủy stake",
 					"unstake-button-unavailable": "Không khả dụng",
-					"verified-label": "Tôi đồng ý với các Điều khoản & Điều kiện"
+					"verified-label": "Tôi đồng ý với các Điều khoản & Điều kiện",
+					"success-transaction-message": "{{sMeanValue}} sMEAN has been successfully unstaked and you have received {{meanValue}} MEAN in return."
 				}
 			}
 		},
@@ -398,7 +415,7 @@
 			"modal-title": "Tạo một Multisig Vault",
 			"no-token": "Chọn mã thông báo",
 			"success-message": "Multisig vault của bạn đã được tạo thành công",
-			"token-label": "Từ Tài khoản",
+			"token-label": "Amount to transfer",
 			"token-placeholder": "Nhập địa chỉ mint của mã thông báo"
 		},
 		"crud-multisig": {
@@ -420,7 +437,7 @@
 			"token-address-placeholder": "Nhập vào địa chỉ token"
 		},
 		"multisig-account-detail": {
-			"address": "Deposit Address",
+			"address": "Safe Deposit Address",
 			"authority": "Thẩm quyền",
 			"copy-id-title": "MULTISIG ID",
 			"created-on": "Ngày tạo",
@@ -498,29 +515,38 @@
 			"column-pending-signatures": "Chữ ký",
 			"column-program-id": "Chương trình",
 			"loading-transactions": "Đang tải giao dịch",
-			"modal-title": "Tóm tắt giao dịch",
-			"no-transactions": "Tài khoản multisig không có giao dịch nào",
+			"modal-title": "Proposal summary",
+			"no-transactions": "This multisig asset has no transactions",
 			"tx-operation-failure": "Thao tác {{operation}} không thành công",
 			"tx-operation-success": "Thao tác {{operation}} thành công",
 			"tx-operation-pending-one": "A transaction on this Multisig is now ready for execution. Please tell the person who initiated this transaction to execute it.",
-			"tx-operation-pending-two": "A Transaction on this Multisig is ready for",
-			"proposed-action": "Proposed Action:",
+			"tx-operation-pending-two": "A transaction on this Multisig is ready for",
+			"tx-operation-voided": "This pending transaction has been VOIDED due to the Multisig being edited.",
+			"tx-operation-rejected": "This transaction has been rejected.",
+			"tx-operation-executed": "This transaction has already been executed",
+			"proposed-action": "Proposed action:",
 			"submitted-on": "Submitted on:",
-			"initiator": "Initiator:",
+			"proposed-by": "Proposed by:",
 			"initiator-transaction": "This transaction was submitted by",
+			"missing-signature": "To execute this proposal, {{missingSignature}} more signature is needed.",
+			"missing-signatures": "To execute this proposal, {{missingSignature}} more signatures are needed.",
 			"transaction-required": "This transaction required",
 			"transaction-has": "This transaction has",
-			"transaction-awaiting": "A Transaction on this Multisig is awaiting",
+			"transaction-awaiting": "A proposal for this multisig is awaiting",
 			"address": "Address:",
 			"approval": "approval.",
-			"your-status": "Your Status:",
+			"your-status": "Your status:",
 			"signers-to-approve": "signers to approve it in order to be executed.",
-			"signed": "Signed.",
+			"signed": "Signed",
 			"signed-so-far": "Signed so far.",
 			"explain-failure": "Explain failure condition if specific",
 			"ready-for-execution": "This transaction is now ready for execution. Please tell the person who initiated this transaction to execute it.",
-			"treasury-closed-warning": "When a treasury is closed, all funds left over will be deposited to the initiator's wallet. Please confirm this is acceptable before you sign.",
-			"not-signed": "Not Signed"
+			"treasury-closed-warning": "When a treasury is closed, all funds left over will be deposited back into the multisig safe.",
+			"not-signed": "Not signed",
+			"rejected": "Rejected",
+			"rejected-tx": "You have rejected this transaction",
+			"not-sign-tx": "You did NOT sign this transaction",
+			"not-signed-tx": "You have NOT signed this transaction"
 		},
 		"multisig-treasuries": {
 			"back-to-treasuries": "Back to Streaming Treasuries"
@@ -532,10 +558,17 @@
 			"cta-close": "Đóng vault",
 			"cta-close-busy": "Đang đóng vault",
 			"cta-create-asset-busy": "Đang tạo vault",
-			"cta-transfer": "Khởi tạo rút tiền",
+			"cta-transfer": "Propose Funds Transfer",
 			"cta-transfer-busy": "Đang khởi tạo yêu cầu rút tiền",
-			"explanatory-paragraph": "Bằng cách gửi yêu cầu này, bạn sẽ ký giao dịch và chấp thuận nó với tư cách là một trong những người ký Multisig. Trước khi tiền có thể được gửi, các thành viên Multisig khác cần phải phê duyệt nó.",
-			"main-cta": "Ký yêu cầu chuyển tiền",
+			"delete-asset": {
+				"explanatory-paragraph": "By submitting this proposal, you will sign the transaction and approve it as one of the Multisig signers. Before the asset is deleted, the other Multisig members need to approve it.",
+				"main-cta": "Submit delete proposal",
+				"modal-title": "Delete a Multisig Asset",
+				"selected-asset-label": "Asset selected",
+				"warning-message": "Only empty assets can be deleted. To delete an asset you need to first transfer all funds to another account."
+			},
+			"explanatory-paragraph": "By submitting this proposal, you will sign the transaction and approve it as one of the Multisig signers. Before the funds are sent, the other Multisig members need to approve it.",
+			"main-cta": "Sign transfer proposal",
 			"no-transactions": "Vault này không có giao dịch nào",
 			"no-asset-loaded": "Không có vault nào được nạp",
 			"no-assets": "Không có vault khả dụng",
@@ -570,7 +603,7 @@
 		"transfer-tokens": {
 			"main-cta": "Bắt đầu yêu cầu",
 			"main-cta-busy": "Đang bắt đầu yêu cầu",
-			"modal-title": "Yêu cầu chuyển khoản",
+			"modal-title": "Initiate Transfer Proposal",
 			"source-address-label": "Chuyển khoản từ",
 			"source-address-placeholder": "Nhập địa chỉ tài khoản nguồn",
 			"success-message": "Token đã được chuyển khoản thành công",
@@ -581,7 +614,7 @@
 		},
 		"update-multisig": {
 			"edit-not-allowed-message": "Bạn không thể chỉnh sửa tài khoản Multisig. Vui lòng hoàn thành hoặc huỷ bỏ tất cả giao dịch đang chờ xử lý trước tiên.",
-			"main-cta": "Lưu thay đổi",
+			"main-cta": "Propose changes",
 			"main-cta-busy": "Đang lưu thay đổi",
 			"modal-title": "Chỉnh sửa multisig",
 			"success-message": "Các thay đổi của bạn đối với tài khoản multisig đã được lưu!"
@@ -600,6 +633,7 @@
 	"notifications": {
 		"account-address-copied-message": "Địa chỉ tài khoản sao chép thành công",
 		"account-address-not-copied-message": "Không thể sao chép địa chỉ tài khoản",
+		"check-transaction-in-explorer": "Check your transaction here",
 		"create-money-stream-completed": "Money stream của bạn đã được tạo",
 		"create-money-stream-completed-wait-for-confirm": "Giao dịch sau khi được xác nhận sẽ hiển thị ở danh sách",
 		"error-cannot-faucet-mainnet-message": "Không thể faucet ở mainnet",
@@ -750,6 +784,8 @@
 			"add-funds-cta": "Nạp tiền",
 			"amount-funded-date": "Đã nạp vào",
 			"cancel-scheduled-transfer": "Huỷ chuyển khoản",
+			"close-stream-cta": "Close Stream",
+			"close-stream-cta-tooltip": "Close stream is available when Stream runs out of funds",
 			"close-money-stream-menu-item": "Đóng money stream",
 			"cta-disabled-closing": "Đang đóng money stream...",
 			"cta-disabled-creating": "Đang tạo stream...",
@@ -809,6 +845,7 @@
 	"swap": {
 		"exchange-warning": "Sàn giao dịch Mean chỉ khả dụng trên",
 		"frequency-label": "Tần suất",
+		"getting-routes": "Finding the best route and price",
 		"input-label-destination": "Trao đổi thành (est.)",
 		"input-label-source": "Trao đổi từ",
 		"insufficient-liquidity": "Không đủ thanh khoản do giao dịch này",
@@ -946,10 +983,10 @@
 		},
 		"validation": {
 			"address-validation": "Không phải là địa chỉ hợp lệ",
-			"amount-high": "Số lượng vượt quá số dư của bạn",
-			"amount-low": "Không đủ số dư",
+			"amount-high": "Amount exceeded",
+			"amount-low": "Low balance",
 			"amount-lt-fee": "Số lượng phải lớn phí giao dịch",
-			"amount-sol-high": "Số lượng vượt quá số dư SOL của bạn",
+			"amount-sol-high": "Insufficient SOL",
 			"amount-withdraw-high": "Số lượng lớn hơn số tiền khả dụng",
 			"cannot-use-own-account-as-treasury": "Tài khoản ví của bạn không phải là treasury id",
 			"exchange-unavailable": "Giao dịch không khả dụng",
@@ -967,7 +1004,7 @@
 			"no-recipient": "Không có người nhận",
 			"no-valid-date": "Thiết lập một ngày hợp lệ",
 			"not-connected": "Kết nối ví của bạn",
-			"payment-rate-high": "Tỷ lệ thanh toán vượt quá số dư của bạn",
+			"payment-rate-high": "Payment exceeded",
 			"select-recipient": "Chọn người nhận",
 			"select-stream": "Chọn một stream",
 			"valid-address-required": "Một địa chỉ solana hợp lệ là bắt buộc",
@@ -976,7 +1013,7 @@
 			"valid-ddca-review": "Xem lại",
 			"valid-start-funding": "Bắt đầu cấp tiền",
 			"valid-start-withdrawal": "Bắt đầu rút tiền",
-			"verified-recipient-unchecked": "Đã bỏ chọn xác minh người nhận"
+			"verified-recipient-unchecked": "Recipient Unchecked"
 		}
 	},
 	"transfer-stream": {
@@ -1105,11 +1142,11 @@
 				"panel3-starting-on": "Starting on:",
 				"panel3-cliff-release": "Cliff release:",
 				"panel3-release-rate": "Release rate:",
-				"panel3-warning-message": "IMPORTANT: This is a locked money stream, and once started, you cannot cancel, pause or change its details. Verify all information before proceeding."
+				"panel3-warning-message": "IMPORTANT: This is a locked money stream. You cannot cancel, pause or change its details once it is started. Verify all information before proceeding."
 			},
 			"allocate-funds-label": "Phân bổ quỹ",
 			"allocation-reserved-label": "Phân bổ này đã được ĐẶT CHỖ đầy đủ",
-			"available-unallocated-balance-label": "Số dư có sẵn chưa phân bổ",
+			"available-unallocated-balance-label": "Unallocated Balance",
 			"busy-pausing": "Đang dừng stream",
 			"busy-resuming": "Đang tiếp tục chạy stream",
 			"close-stream-also-closes-treasury-label": "Đóng kho bạc",
@@ -1180,7 +1217,8 @@
 				"submenu-title": "Dịch vụ",
 				"treasuries": "Streaming Treasuries",
 				"wallet-guide": "Hướng dẫn Ví",
-				"wrap": "Wrap"
+				"wrap": "Wrap",
+				"unwrap": "Unwrap"
 			},
 			"stats": "Thống kê",
 			"swap": "Giao dịch",

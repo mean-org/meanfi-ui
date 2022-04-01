@@ -258,7 +258,7 @@ export const IdoLpWithdraw = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.IdoLpClaim);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.IdoLpClaim);
             setWithdrawAmount("");
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -469,7 +469,7 @@ export const IdoLpWithdraw = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.IdoCollectFunds);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.IdoCollectFunds);
             setWithdrawAmount("");
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnection } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
@@ -28,7 +28,6 @@ import {
   getTxFeeAmount,
   getTxPercentFeeAmount
 } from "../../utils/ui";
-import { TokenInfo } from "@solana/spl-token-registry";
 import { useTranslation } from "react-i18next";
 import { PreFooter } from "../../components/PreFooter";
 import { useNativeAccount } from "../../contexts/accounts";
@@ -43,9 +42,7 @@ export const WrapView = () => {
   const { publicKey, wallet } = useWallet();
   const {
     tokenList,
-    selectedToken,
     transactionStatus,
-    setSelectedToken,
     refreshTokenBalance,
     setTransactionStatus,
   } = useContext(AppStateContext);
@@ -63,6 +60,12 @@ export const WrapView = () => {
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
 
+  // Get wSOL token info
+  const wSol = useMemo(() => {
+    return tokenList.find(t => t.address === WRAPPED_SOL_MINT_ADDRESS);
+  }, [tokenList]);
+
+  // Keep account balance updated
   useEffect(() => {
 
     const getAccountBalance = (): number => {
@@ -88,19 +91,6 @@ export const WrapView = () => {
   const [isTransactionModalVisible, setTransactionModalVisibility] = useState(false);
   const showTransactionModal = useCallback(() => setTransactionModalVisibility(true), []);
   const hideTransactionModal = useCallback(() => setTransactionModalVisibility(false), []);
-
-  useEffect(() => {
-    if (tokenList && selectedToken) {
-      const myToken = tokenList.filter(
-        (t) => t.address === WRAPPED_SOL_MINT_ADDRESS
-      )[0];
-      if (selectedToken.address === WRAPPED_SOL_MINT_ADDRESS) {
-        refreshTokenBalance();
-      } else {
-        setSelectedToken(myToken as TokenInfo);
-      }
-    }
-  }, [tokenList, selectedToken, setSelectedToken, refreshTokenBalance]);
 
   // Get fees
   useEffect(() => {
@@ -364,7 +354,7 @@ export const WrapView = () => {
       }
     };
 
-    if (wallet && selectedToken) {
+    if (wallet && wSol) {
       showTransactionModal();
       const create = await createTx();
       consoleOut("created:", create);
@@ -382,9 +372,9 @@ export const WrapView = () => {
               finality: "confirmed",
               txInfoFetchStatus: "fetching",
               loadingTitle: 'Confirming transaction',
-              loadingMessage: `Wrap ${formatThousands(parseFloat(wrapAmount as string), selectedToken.decimals)} SOL`,
+              loadingMessage: `Wrap ${formatThousands(parseFloat(wrapAmount as string), wSol.decimals)} ${wSol.symbol}`,
               completedTitle: 'Transaction confirmed',
-              completedMessage: `Wrapped ${formatThousands(parseFloat(wrapAmount as string), selectedToken.decimals)} SOL`
+              completedMessage: `Wrapped ${formatThousands(parseFloat(wrapAmount as string), wSol.decimals)} ${wSol.symbol}`
             });
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransactionSuccess,
@@ -407,11 +397,18 @@ export const WrapView = () => {
     let newValue = e.target.value;
     const splitted = newValue.toString().split('.');
     const left = splitted[0];
-    if (left.length > 1) {
+
+    if (wSol && splitted[1]) {
+      if (splitted[1].length > wSol.decimals) {
+        splitted[1] = splitted[1].slice(0, -1);
+        newValue = splitted.join('.');
+      }
+    } else if (left.length > 1) {
       const number = splitted[0] - 0;
       splitted[0] = `${number}`;
       newValue = splitted.join('.');
     }
+
     if (newValue === null || newValue === undefined || newValue === "") {
       setValue("");
     } else if (newValue === '.') {
@@ -492,15 +489,16 @@ export const WrapView = () => {
                       {getMaxPossibleAmount() > 0 && (
                         <div className="token-max simplelink"
                           onClick={() => {
-                            setValue(getMaxPossibleAmount().toFixed(selectedToken?.decimals));
+                            setValue(getMaxPossibleAmount().toFixed(wSol?.decimals));
                           }}>
                           MAX
                         </div>
                       )}
-                      {selectedToken && (
+                      {wSol && (
                         <TokenDisplay onClick={() => {}}
-                          mintAddress={selectedToken.address}
-                          name={selectedToken.name}
+                          mintAddress={wSol.address}
+                          symbol="SOL"
+                          name={wSol.name}
                           showName={false}
                           showCaretDown={false}
                         />

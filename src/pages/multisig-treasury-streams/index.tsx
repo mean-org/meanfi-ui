@@ -143,14 +143,14 @@ export const MultisigTreasuryStreams = () => {
 
     // Create and cache Money Streaming Program instance
     const ms = useMemo(
-        () => new MoneyStreaming(endpoint, streamProgramAddress, "finalized"),
+        () => new MoneyStreaming(endpoint, streamProgramAddress, "confirmed"),
         [endpoint, streamProgramAddress]
     );
 
     const msp = useMemo(() => {
         if (publicKey) {
             console.log("New MSP from streams");
-            return new MSP(endpoint, streamV2ProgramAddress, "finalized");
+            return new MSP(endpoint, streamV2ProgramAddress, "confirmed");
         }
     }, [publicKey, endpoint, streamV2ProgramAddress]);
 

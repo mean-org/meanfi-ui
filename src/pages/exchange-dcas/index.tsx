@@ -28,8 +28,8 @@ import {
   VERBOSE_DATE_FORMAT,
   VERBOSE_DATE_TIME_FORMAT
 } from '../../constants';
-import { IconClock, IconExchange, IconExternalLink, IconRefresh } from '../../Icons';
-import { ArrowDownOutlined, ArrowUpOutlined, CheckOutlined, EllipsisOutlined, LoadingOutlined, WarningOutlined } from '@ant-design/icons';
+import { IconClock, IconExchange, IconExternalLink } from '../../Icons';
+import { ArrowDownOutlined, ArrowUpOutlined, CheckOutlined, EllipsisOutlined, LoadingOutlined, ReloadOutlined, WarningOutlined } from '@ant-design/icons';
 import { notify } from '../../utils/notifications';
 import { calculateActionFees, DdcaAccount, DdcaActivity, DdcaClient, DdcaDetails, DDCA_ACTIONS, TransactionFees } from '@mean-dao/ddca';
 import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
@@ -436,7 +436,7 @@ export const ExchangeDcasView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.DdcaClose);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.DdcaClose);
             setIsBusy(false);
             // Give time for several renders so startFetchTxSignatureInfo can update TransactionStatusContext
             await delay(250);
@@ -716,7 +716,7 @@ export const ExchangeDcasView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.DdcaWithdraw);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.DdcaWithdraw);
             setIsBusy(false);
             // Give time for several renders so startFetchTxSignatureInfo can update TransactionStatusContext
             await delay(250);
@@ -1506,7 +1506,7 @@ export const ExchangeDcasView = () => {
                     <Spin size="small" />
                     <span className="transaction-legend">
                       (<span>{formatThousands(recurringBuys.length || 0)}</span>)
-                      <IconRefresh className="mean-svg-icons"/>
+                      <ReloadOutlined className="mean-svg-icons"/>
                     </span>
                   </div>
                 </Tooltip>

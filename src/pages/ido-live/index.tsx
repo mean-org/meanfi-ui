@@ -159,7 +159,7 @@ export const IdoLiveView = () => {
   const ms = useMemo(() => new MoneyStreaming(
     connectionConfig.endpoint,
     streamProgramAddress,
-    "finalized"
+    "confirmed"
   ), [
     connectionConfig.endpoint,
     streamProgramAddress

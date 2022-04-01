@@ -731,7 +731,7 @@ export const PayrollPayment = () => {
 
       // Init a streaming operation
       console.log('PayrollPayment -> wallet.publicKey', wallet.publicKey.toBase58());
-      const msp = new MSP(endpoint, streamV2ProgramAddress, "finalized");
+      const msp = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
 
       return await msp.streamPayment(
         publicKey,                                                  // wallet
@@ -893,7 +893,7 @@ export const PayrollPayment = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.StreamCreate);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamCreate);
             setIsBusy(false);
             handleGoToStreamsClick();
           } else { setIsBusy(false); }

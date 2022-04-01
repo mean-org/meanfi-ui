@@ -1,10 +1,12 @@
 import React, { useState } from "react";
-import { Button, Popover } from "antd";
+import { Button, Popover, Tooltip } from "antd";
 import { useTranslation } from "react-i18next";
-import { CloseOutlined } from "@ant-design/icons";
+import { CloseOutlined, CopyOutlined } from "@ant-design/icons";
 import { shortenAddress } from "../../utils/utils";
 import "./style.less";
 import { MultisigParticipant } from "../../models/multisig";
+import { copyText } from "../../utils/ui";
+import { notify } from "../../utils/notifications";
 
 export const MultisigOwnersView = (props: {
   participants: MultisigParticipant[];
@@ -17,6 +19,20 @@ export const MultisigOwnersView = (props: {
   const handlePopoverVisibleChange = (visibleChange: boolean) => {
     setPopoverVisible(visibleChange);
   };
+
+  const onCopyAddress = (address: any) => {
+    if (address && copyText(address)) {
+      notify({
+        description: t('notifications.account-address-copied-message'),
+        type: "info"
+      });
+    } else {
+      notify({
+        description: t('notifications.account-address-not-copied-message'),
+        type: "error"
+      });
+    }
+  }
 
   const titleContent = (
     <div className="flexible-left">
@@ -38,9 +54,20 @@ export const MultisigOwnersView = (props: {
       <div className="cebra-list">
       {props.participants.map((item, index) => {
         return (
-          <div key={`${index}`} className="cebra-list-item flex-fixed-right">
+          <div key={`${index}`} className="cebra-list-item flex-fixed-right align-items-center">
             <div className="left">{item.name || `Owner ${index + 1}`}</div>
             <div className="right text-monospace">{shortenAddress(item.address, 6)}</div>
+            <span className="icon-button-container">
+              <Tooltip placement="bottom" title={t('assets.account-address-copy-cta')}>
+                <Button
+                  type="default"
+                  shape="circle"
+                  size="middle"
+                  icon={<CopyOutlined />}
+                  onClick={() => onCopyAddress(item.address)}
+                />
+              </Tooltip>
+            </span>
           </div>
         );
       })}

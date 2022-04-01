@@ -2,6 +2,7 @@ import { Language } from "../models/languages";
 
 export const TRANSACTIONS_PER_PAGE = 15;
 export const ACCOUNTS_LOW_BALANCE_LIMIT = 0.1; // Minimum balance to start showing user account tokens in /accounts
+export const ONE_MINUTE_REFRESH_TIMEOUT = 60 * 1000;
 export const EXCHANGE_ROUTES_REFRESH_TIMEOUT = 60 * 1000;
 export const PRICE_REFRESH_TIMEOUT = 10 * 60 * 1000;
 export const STREAMS_REFRESH_TIMEOUT = 5 * 60 * 1000;
@@ -9,7 +10,8 @@ export const TRANSACTION_STATUS_RETRY = 3 * 1000;            // Retry fetch tran
 export const TRANSACTION_STATUS_RETRY_TIMEOUT = 30 * 1000;   // Max timeout for trying fetch
 export const PERFORMANCE_SAMPLE_INTERVAL = 30 * 1000;
 export const PERFORMANCE_SAMPLE_INTERVAL_FAST = 15 * 1000;
-export const PERFORMANCE_THRESHOLD = 1100;  // Min TPS to show the top bar (1100 but can be changed)
+export const PERFORMANCE_THRESHOLD = 1400;  // Min TPS to show the top bar (1100 but can be changed)
+export const INPUT_DEBOUNCE_TIME = 400;
 
 export const MIN_SLIPPAGE_VALUE = 0.1;
 export const DEFAULT_SLIPPAGE_PERCENT = 1;
@@ -127,6 +129,13 @@ export const LANGUAGES: Language[] = [
         flag: '/assets/flags/kr.svg',
         locale: 'ko-KR'
     },
+    // {
+    //     code: 'ru',
+    //     isoName: 'Russian',
+    //     name: 'Russian',
+    //     flag: '/assets/flags/ru.svg',
+    //     locale: 'ru-RU'
+    // },
 ];
 
 export const DAO_CORE_TEAM_WHITELIST = [
@@ -138,7 +147,7 @@ export const DAO_CORE_TEAM_WHITELIST = [
     'CmbwXRT5z5aCxCzATqm5aZr7XpTh2AN7ToG35csw7YV',  // Moe
     'GFefRR6EASXvnphnJApp2PRH1wF1B5pJijKBZGFzq1x1', // YAF
     'FkRtTexEwLtYerHRKUku7ZZJx1VuTqxwGF636nAuer3B', // YAF
-    'FfdFf3EqcCuytTdeLvoELBh29WrAGVRjrm4595A2bRAR', // YGF
+    'F4KjjnrM2hr8MasEDAYoGSBWbn3wzz1rrdGtkRkoaMKc', // YGF
     'DA5hKdQLFQpMM95M1KwbRHnjQbvkvMEPUfaULjjrMPWw', // MT
     '9PLqBWNkjegBdz4UD5LYSswWVXfxMf8hUsK2R9b3Lj23', // AMA
     'YxddwEVL4oQBqW8HAeeV4a2PHBC8qhfk1TMKbt2j7A6',  // AMA
@@ -148,6 +157,9 @@ export const DAO_CORE_TEAM_WHITELIST = [
     'GV1ikmCUjXjy8wTtNXGd6Cnnid31HX4JfCrTKCgW3kfS', // K7
     'G91856C8jV9LdSpFKZb1SQ27ZfA72hn5q2vfjvJMLqX2', // K7
     '9gB9rcJiaKq6iXcJn8AqD5xoxTr3ZLPHpFGWRaVx99jH', // TAB trader
+    '4esXsAJjoExvhPZf1EMvDaajJeCTm72EYt3aurn3fFUG', // J
+    'EjchiDcivSQnC282UF4d751JDd7vMb2VCFrQaNeUAjwz', // J
+    'c8fLDB5oFSwGnwAV1LGQqaadHt2WbvWv7o79YnnUWxd',  // J
 ];
 
 export const BETA_TESTING_PROGRAM_WHITELIST = [

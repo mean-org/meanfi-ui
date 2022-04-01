@@ -45,15 +45,16 @@ export const IdoDeposit = (props: {
     const decimals = selectedToken ? selectedToken.decimals : 0;
     const splitted = newValue.toString().split('.');
     const left = splitted[0];
-    if (left.length > 1) {
-      const number = splitted[0] - 0;
-      splitted[0] = `${number}`;
-      newValue = splitted.join('.');
-    } else if (decimals && splitted[1]) {
+
+    if (decimals && splitted[1]) {
       if (splitted[1].length > decimals) {
         splitted[1] = splitted[1].slice(0, -1);
         newValue = splitted.join('.');
       }
+    } else if (left.length > 1) {
+      const number = splitted[0] - 0;
+      splitted[0] = `${number}`;
+      newValue = splitted.join('.');
     }
 
     if (newValue === null || newValue === undefined || newValue === "") {
@@ -292,7 +293,7 @@ export const IdoDeposit = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.IdoDeposit);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.IdoDeposit);
             setDepositAmount("");
             setIsBusy(false);
             setTransactionStatus({

@@ -243,7 +243,6 @@
 	},
 	"faucet": {
 		"current-sol-balance": "Solde SOL actuel",
-		"current-wsol-balance": "Solde actuel du SOL encapsulé",
 		"fund-cta": "Donnez-moi SOL",
 		"funding-amount": "Votre compte sera financé avec",
 		"not-connected": "Votre portefeuille n'est pas connecté, veuillez connecter votre portefeuille",
@@ -251,6 +250,10 @@
 		"wrap-sol-cta-toggle": "Enveloppez du SOL",
 		"wrap-transaction-fee": "Frais de transaction d'emballage",
 		"wrapped-amount": "Montant emballé"
+	},
+	"unwrap": {
+		"current-wsol-balance": "Solde actuel du SOL encapsulé",
+		"label-input-amount": "Enter amount to unwrap"
 	},
 	"general": {
 		"cta-change": "Changer",
@@ -295,31 +298,38 @@
 		"panel-left": {
 			"invest-stake-tab-title": "Stake MEAN",
 			"invest-liquidity-tab-title": "MEAN Liquidity Pools",
-			"liquidity-value-label": "Up to",
+			"up-to-value-label": "Up to",
 			"no-invest-options": "No invest options available",
 			"not-connected": "Please connect your wallet to see your invest options"
 		},
 		"panel-right": {
 			"title": "Stake MEAN to Earn MEAN Rewards",
-			"first-text": "MEAN staking rewards include emission incentives plus a share of the protocol revenues, and can be boosted using locking periods. When you stake your MEAN, you get sMEAN in return.",
+			"first-text": "MEAN staking rewards include emission incentives plus a share of the protocol revenues, and can be boosted using locking periods. When you stake your MEAN, you get sMEAN (staked MEAN) in return.",
 			"second-text": "Simply holding your sMEAN is all that is required to continuously grow your MEAN stash. You don't need to harvest the rewards with MEAN staking. When you unstake your sMEAN, you will receive the rewards earned in the form of additional MEAN on top of the amount staked.",
 			"stats": {
 				"staking-apy": "Staking APY",
 				"staking-apy-tooltip": "The APY associated with sMEAN is a representation of the price of sMEAN over a 365 day period.",
-				"total-value-locked": "Total Value Locked",
-				"total-mean-rewards": "Total MEAN Rewards"
+				"total-mean-rewards": "Total MEAN Staked",
+				"total-value-locked": "Total Value Locked"
 			},
 			"liquidity-pool": {
 				"title": "MEAN Liquidity Pools",
 				"text-one": "MEAN Liquidity Pools are currently available on Orca and Raydium with multiple pools including MEAN/SOL, MEAN/RAY and MEAN/USDC.",
-				"text-two": "Before you add funds to a pool, be sure to read and accept the risks associated with investing in a liquidity pool.",
-				"refresh-tooltip": "Refresh liquidity data",
-				"column-platform": "Platform",
-				"column-lppair": "LP Pair",
-				"column-liquidity": "Liquidity",
-				"column-volume": "Vol (24hrs)",
+				"text-two": "To invest in a liquidity pool, you need to supply both tokens that make up the pool. For example, when you join the Raydium MEAN/USDC pool both MEAN and USDC tokens are required. For more details, see the adding liquidity guides on",
+				"text-two-divider": "and",
+				"text-three": "Before you add funds to a pool, be sure to read and accept the risks associated with investing in a liquidity pool.",
+				"refresh-tooltip": "Refresh liquidity data"
+			},
+			"table-data": {
 				"column-apr/apy": "APR/APY",
-				"column-invest": "Invest"
+				"column-invest": "Invest",
+				"column-liquidity": "Liquidity",
+				"column-lppair": "LP Pair",
+				"column-platform": "Platform",
+				"column-volume": "Vol (24hrs)",
+				"column-token": "Token",
+				"column-total-staked": "Total staked",
+				"column-stake": "Stake"
 			},
 			"tabset": {
 				"stake": {
@@ -335,7 +345,7 @@
 					"amount-label": "Amount to unstake",
 					"name": "Unstake",
 					"notification-label-one": "Your currently have {{stakedAmount}} sMEAN staked which is currently locked until {{unstakeStartDate}}",
-					"notification-label-one-error": "Your currently do not have any sMEAN.",
+					"notification-label-one-error": "You currently don't have any sMEAN.",
 					"notification-label-two": "Unstaking will withdraw the specified amount of unlocked sMEAN tokens to your wallet",
 					"send-amount": {
 						"label-right": "Available to unstake"
@@ -343,12 +353,19 @@
 					"unstake-button-busy": "Unstaking",
 					"unstake-button-available": "Unstake",
 					"unstake-button-unavailable": "No available",
-					"verified-label": "I agree to the Terms & Conditions"
+					"verified-label": "I agree to the Terms & Conditions",
+					"success-transaction-message": "{{sMeanValue}} sMEAN has been successfully unstaked and you have received {{meanValue}} MEAN in return."
 				}
+			},
+			"staking-sol": {
+				"title": "Liquid SOL Staking",
+				"text-one": "Liquid SOL staking is currently available with three providers on Solana. These are Lido (stSOL), Marinade (mSOL) and Socean (scnSOL).",
+				"text-two": "Before you stake your SOL, be sure to read and accept the risks associated when staking with one of these providers.",
+				"refresh-tooltip": "Refresh staking data"
 			},
 			"staking-data": {
 				"title": "Your Current Stake:",
-				"label-my-staked": "My Staked MEAN",
+				"label-my-staked": "My available sMEAN balance",
 				"label-avg": "Avg. Locked Yield",
 				"label-boost": "Staking Lock Boost",
 				"label-locked": "My Locked eMEAN",
@@ -394,7 +411,7 @@
 			"modal-title": "Créer un coffre-fort multisig",
 			"no-token": "Sélectionnez le jeton",
 			"success-message": "Votre coffre-fort multisig a été créé avec succès",
-			"token-label": "Du compte",
+			"token-label": "Amount to transfer",
 			"token-placeholder": "Entrez l'adresse mint de jeton"
 		},
 		"crud-multisig": {
@@ -416,7 +433,7 @@
 			"token-address-placeholder": "Entrez l'adresse du jeton"
 		},
 		"multisig-account-detail": {
-			"address": "Deposit Address",
+			"address": "Safe Deposit Address",
 			"authority": "Autorité",
 			"copy-id-title": "ID MULTISIG",
 			"created-on": "Créé sur",
@@ -494,29 +511,38 @@
 			"column-pending-signatures": "Signatures",
 			"column-program-id": "Programme",
 			"loading-transactions": "Chargement des opérations",
-			"modal-title": "Récapitulatif des transactions",
-			"no-transactions": "Ce compte multisig n'a aucune transaction",
+			"modal-title": "Proposal summary",
+			"no-transactions": "This multisig asset has no transactions",
 			"tx-operation-failure": "L'opération {{operation}} a échoué",
 			"tx-operation-success": "L'opération {{operation}} a réussi",
 			"tx-operation-pending-one": "A transaction on this Multisig is now ready for execution. Please tell the person who initiated this transaction to execute it.",
-			"tx-operation-pending-two": "A Transaction on this Multisig is ready for",
-			"proposed-action": "Proposed Action:",
+			"tx-operation-pending-two": "A transaction on this Multisig is ready for",
+			"tx-operation-voided": "This pending transaction has been VOIDED due to the Multisig being edited.",
+			"tx-operation-rejected": "This transaction has been rejected.",
+			"tx-operation-executed": "This transaction has already been executed",
+			"proposed-action": "Proposed action:",
 			"submitted-on": "Submitted on:",
-			"initiator": "Initiator:",
+			"proposed-by": "Proposed by:",
 			"initiator-transaction": "This transaction was submitted by",
+			"missing-signature": "To execute this proposal, {{missingSignature}} more signature is needed.",
+			"missing-signatures": "To execute this proposal, {{missingSignature}} more signatures are needed.",
 			"transaction-required": "This transaction required",
 			"transaction-has": "This transaction has",
-			"transaction-awaiting": "A Transaction on this Multisig is awaiting",
+			"transaction-awaiting": "A proposal for this multisig is awaiting",
 			"address": "Address:",
 			"approval": "approval.",
-			"your-status": "Your Status:",
+			"your-status": "Your status:",
 			"signers-to-approve": "signers to approve it in order to be executed.",
-			"signed": "Signed.",
+			"signed": "Signed",
 			"signed-so-far": "Signed so far.",
 			"explain-failure": "Explain failure condition if specific",
 			"ready-for-execution": "This transaction is now ready for execution. Please tell the person who initiated this transaction to execute it.",
-			"treasury-closed-warning": "When a treasury is closed, all funds left over will be deposited to the initiator's wallet. Please confirm this is acceptable before you sign.",
-			"not-signed": "Not Signed"
+			"treasury-closed-warning": "When a treasury is closed, all funds left over will be deposited back into the multisig safe.",
+			"not-signed": "Not signed",
+			"rejected": "Rejected",
+			"rejected-tx": "You have rejected this transaction",
+			"not-sign-tx": "You did NOT sign this transaction",
+			"not-signed-tx": "You have NOT signed this transaction"
 		},
 		"multisig-treasuries": {
 			"back-to-treasuries": "Back to Streaming Treasuries"
@@ -528,8 +554,15 @@
 			"cta-close": "Fermer le coffre-fort",
 			"cta-close-busy": "Voûte de fermeture",
 			"cta-create-asset-busy": "Création d'un coffre-fort",
-			"cta-transfer": "Lancer le retrait",
+			"cta-transfer": "Propose Funds Transfer",
 			"cta-transfer-busy": "Initier une demande de retrait",
+			"delete-asset": {
+				"explanatory-paragraph": "By submitting this proposal, you will sign the transaction and approve it as one of the Multisig signers. Before the asset is deleted, the other Multisig members need to approve it.",
+				"main-cta": "Submit delete proposal",
+				"modal-title": "Delete a Multisig Asset",
+				"selected-asset-label": "Asset selected",
+				"warning-message": "Only empty assets can be deleted. To delete an asset you need to first transfer all funds to another account."
+			},
 			"no-transactions": "Aucune transaction pour ce coffre",
 			"no-asset-loaded": "Aucun coffre-fort chargé",
 			"no-assets": "Aucun coffre-fort disponible",
@@ -539,8 +572,8 @@
 			"screen-title-no-assets": "coffres",
 			"validation-amount-high": "Le montant dépasse le solde du coffre",
 			"asset-detail-heading": "Détails du coffre-fort",
-			"explanatory-paragraph": "By submitting this request, you will sign the transaction and approve it as one of the Multisig signers. Before the funds can be sent, the other Multisig members need to approve it.",
-			"main-cta": "Sign Funds Transfer Request"
+			"explanatory-paragraph": "By submitting this proposal, you will sign the transaction and approve it as one of the Multisig signers. Before the funds are sent, the other Multisig members need to approve it.",
+			"main-cta": "Sign transfer proposal"
 		},
 		"pending-transactions": "opérations en attente",
 		"refresh-tooltip": "Cliquez pour actualiser la liste des comptes multisig",
@@ -566,7 +599,7 @@
 		"transfer-tokens": {
 			"main-cta": "Démarrer la demande",
 			"main-cta-busy": "Demande de démarrage",
-			"modal-title": "Initier une demande de retrait",
+			"modal-title": "Initiate Transfer Proposal",
 			"source-address-label": "Transfert à partir de",
 			"source-address-placeholder": "Entrez l'adresse du compte source",
 			"success-message": "Jetons transférés avec succès.",
@@ -577,7 +610,7 @@
 		},
 		"update-multisig": {
 			"edit-not-allowed-message": "Lorsque vous modifiez les signataires sur un Multisig, toutes les transactions en attente seront ANNULÉES. Avant de continuer, assurez-vous qu'aucune transaction importante ne doit être effectuée en premier.",
-			"main-cta": "Sauvegarder les modifications",
+			"main-cta": "Propose changes",
 			"main-cta-busy": "Enregistrer les modifications",
 			"modal-title": "Modifier la signature multiple",
 			"success-message": "Vos modifications apportées au compte multisig ont été enregistrées !"
@@ -596,6 +629,7 @@
 	"notifications": {
 		"account-address-copied-message": "Adresse du compte copiée avec succès",
 		"account-address-not-copied-message": "Impossible de copier l'adresse du compte",
+		"check-transaction-in-explorer": "Check your transaction here",
 		"create-money-stream-completed": "Votre flux d'argent est créé",
 		"create-money-stream-completed-wait-for-confirm": "Une fois la transaction confirmée, elle devrait apparaître dans la liste.",
 		"error-cannot-faucet-mainnet-message": "Impossible d'exploiter le réseau principal",
@@ -746,6 +780,8 @@
 			"add-funds-cta": "Recharger (ajouter des fonds)",
 			"amount-funded-date": "financé sur",
 			"cancel-scheduled-transfer": "Annuler le transfert",
+			"close-stream-cta": "Close Stream",
+			"close-stream-cta-tooltip": "Close stream is available when Stream runs out of funds",
 			"close-money-stream-menu-item": "Fermer le flux d'argent",
 			"cta-disabled-closing": "Clôture du flux d'argent...",
 			"cta-disabled-creating": "Création du flux en cours...",
@@ -805,6 +841,7 @@
 	"swap": {
 		"exchange-warning": "Mean Exchange n'est disponible que sur",
 		"frequency-label": "La fréquence",
+		"getting-routes": "Finding the best route and price",
 		"input-label-destination": "Échange à (est.)",
 		"input-label-source": "Échange de",
 		"insufficient-liquidity": "Liquidité insuffisante pour ce trade",
@@ -942,10 +979,10 @@
 		},
 		"validation": {
 			"address-validation": "Pas un format d'adresse valide",
-			"amount-high": "Le montant dépasse votre solde",
-			"amount-low": "Pas assez d'équilibre",
+			"amount-high": "Amount exceeded",
+			"amount-low": "Low balance",
 			"amount-lt-fee": "Le montant doit être supérieur aux frais de transaction",
-			"amount-sol-high": "Le montant dépasse votre solde SOL",
+			"amount-sol-high": "Insufficient SOL",
 			"amount-withdraw-high": "Le montant est supérieur aux fonds disponibles",
 			"cannot-use-own-account-as-treasury": "Impossible d'utiliser votre compte comme identifiant de trésorerie",
 			"exchange-unavailable": "Échange indisponible",
@@ -962,7 +999,7 @@
 			"no-recipient": "Aucun destinataire",
 			"no-valid-date": "Définir une date valide",
 			"not-connected": "Connectez votre portefeuille",
-			"payment-rate-high": "Le taux de paiement dépasse votre solde",
+			"payment-rate-high": "Payment exceeded",
 			"select-recipient": "Sélectionnez le destinataire",
 			"select-stream": "Sélectionnez un flux",
 			"valid-address-required": "Une adresse solana valide est requise",
@@ -971,7 +1008,7 @@
 			"valid-ddca-review": "Passer en revue",
 			"valid-start-funding": "Commencer le financement",
 			"valid-start-withdrawal": "Commencer le retrait",
-			"verified-recipient-unchecked": "Vérification du destinataire décochée"
+			"verified-recipient-unchecked": "Recipient Unchecked"
 		}
 	},
 	"transfer-stream": {
@@ -1098,11 +1135,11 @@
 				"panel3-starting-on": "Starting on:",
 				"panel3-cliff-release": "Cliff release:",
 				"panel3-release-rate": "Release rate:",
-				"panel3-warning-message": "IMPORTANT: This is a locked money stream, and once started, you cannot cancel, pause or change its details. Verify all information before proceeding."
+				"panel3-warning-message": "IMPORTANT: This is a locked money stream. You cannot cancel, pause or change its details once it is started. Verify all information before proceeding."
 			},
 			"allocate-funds-label": "Allouer des fonds",
 			"allocation-reserved-label": "Cette allocation est entièrement RÉSERVÉE",
-			"available-unallocated-balance-label": "Solde non alloué disponible",
+			"available-unallocated-balance-label": "Unallocated Balance",
 			"busy-pausing": "Arrêt du flux",
 			"busy-resuming": "Reprise du flux",
 			"close-stream-also-closes-treasury-label": "Fermez aussi la trésorerie",
@@ -1171,7 +1208,8 @@
 				"submenu-title": "Prestations de service",
 				"treasuries": "Streaming Treasuries",
 				"wallet-guide": "Guide du portefeuille",
-				"wrap": "Envelopper"
+				"wrap": "Envelopper",
+				"unwrap": "Unwrap"
 			},
 			"stats": "Statistiques",
 			"swap": "Échange",

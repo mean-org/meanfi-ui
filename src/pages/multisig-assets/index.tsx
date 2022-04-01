@@ -19,7 +19,7 @@ import { Identicon } from '../../components/Identicon';
 import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, getTxIxResume, makeDecimal, shortenAddress } from '../../utils/utils';
 import { MultisigV2, MultisigParticipant, MultisigTransaction, MultisigTransactionStatus, MultisigVault, Multisig, MEAN_MULTISIG_OPS } from '../../models/multisig';
 import { TransactionFees } from '@mean-dao/msp';
-import { MultisigCreateAssetModal } from '../../components/MultisigCreateVaultModal';
+import { MultisigCreateAssetModal } from '../../components/MultisigCreateAssetModal';
 import { useNativeAccount } from '../../contexts/accounts';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { ACCOUNT_LAYOUT } from '../../utils/layouts';
@@ -97,8 +97,8 @@ export const MultisigAssetsView = () => {
   const multisigClient = useMemo(() => {
 
     const opts: ConfirmOptions = {
-      preflightCommitment: "finalized",
-      commitment: "finalized",
+      preflightCommitment: "confirmed",
+      commitment: "confirmed",
     };
 
     const provider = new Provider(connection, wallet as any, opts);
@@ -1092,20 +1092,20 @@ export const MultisigAssetsView = () => {
   },[resetTransactionStatus]);
 
   // Create asset modal
-  const [isCreateVaultModalVisible, setIsCreateVaultModalVisible] = useState(false);
-  const onShowCreateVaultModal = useCallback(() => {
-    setIsCreateVaultModalVisible(true);
+  const [isCreateAssetModalVisible, setIsCreateAssetModalVisible] = useState(false);
+  const onShowCreateAssetModal = useCallback(() => {
+    setIsCreateAssetModalVisible(true);
     const fees = {
       blockchainFee: 0.000005,
       mspFlatFee: 0.000010,
       mspPercentFee: 0
     };
+    resetTransactionStatus();
     setTransactionFees(fees);
-  },[]);
+  },[resetTransactionStatus]);
 
-  const onVaultCreated = useCallback(() => {
+  const onAssetCreated = useCallback(() => {
 
-    // refreshVaults();
     resetTransactionStatus();
     notify({
       description: t('multisig.create-asset.success-message'),
@@ -1117,7 +1117,7 @@ export const MultisigAssetsView = () => {
     resetTransactionStatus
   ]);
 
-  const onExecuteCreateVaultTx = useCallback(async (data: any) => {
+  const onExecuteCreateAssetTx = useCallback(async (data: any) => {
 
     let transaction: Transaction;
     let signedTransaction: Transaction;
@@ -1129,7 +1129,7 @@ export const MultisigAssetsView = () => {
     setTransactionCancelled(false);
     setIsBusy(true);
 
-    const createVault = async (data: any) => {
+    const createAsset = async (data: any) => {
 
       if (!multisigAddress || !publicKey || !data || !data.token) { return null; }
 
@@ -1190,7 +1190,7 @@ export const MultisigAssetsView = () => {
 
       let tx = new Transaction().add(...ixs);
       tx.feePayer = publicKey;
-      const { blockhash } = await multisigClient.provider.connection.getRecentBlockhash("finalized");
+      const { blockhash } = await multisigClient.provider.connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
 
       if (signers.length) {
@@ -1251,7 +1251,7 @@ export const MultisigAssetsView = () => {
           return false;
         }
 
-        return await createVault(data)
+        return await createAsset(data)
           .then(value => {
             if (!value) { return false; }
             consoleOut('createVault returned transaction:', value);
@@ -1408,14 +1408,14 @@ export const MultisigAssetsView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.CreateAsset);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.CreateAsset);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.TransactionFinished
             });
-            onVaultCreated();
-            setIsCreateVaultModalVisible(false);
+            onAssetCreated();
+            setIsCreateAssetModalVisible(false);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -1427,7 +1427,7 @@ export const MultisigAssetsView = () => {
     multisigClient.programId,
     multisigClient.provider.connection,
     nativeBalance,
-    onVaultCreated,
+    onAssetCreated,
     publicKey,
     multisigAddress,
     setTransactionStatus,
@@ -1440,9 +1440,9 @@ export const MultisigAssetsView = () => {
   ]);
 
   const onAcceptCreateVault = useCallback((params: any) => {
-    onExecuteCreateVaultTx(params);
+    onExecuteCreateAssetTx(params);
   },[
-    onExecuteCreateVaultTx
+    onExecuteCreateAssetTx
   ]);
 
   // Transfer token modal
@@ -1802,7 +1802,7 @@ export const MultisigAssetsView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.TransferTokens);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.TransferTokens);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -1923,7 +1923,7 @@ export const MultisigAssetsView = () => {
       );
 
       tx.feePayer = publicKey;
-      const { blockhash } = await connection.getRecentBlockhash("finalized");
+      const { blockhash } = await connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
       tx.partialSign(...[transaction]);
 
@@ -2139,7 +2139,7 @@ export const MultisigAssetsView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.SetAssetAuthority);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.SetAssetAuthority);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -2253,7 +2253,7 @@ export const MultisigAssetsView = () => {
       );
 
       tx.feePayer = publicKey;
-      const { blockhash } = await connection.getRecentBlockhash("finalized");
+      const { blockhash } = await connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
       tx.partialSign(...[transaction]);
 
@@ -2468,7 +2468,7 @@ export const MultisigAssetsView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.DeleteAsset);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.DeleteAsset);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -2533,7 +2533,7 @@ export const MultisigAssetsView = () => {
       );
   
       tx.feePayer = publicKey;
-      const { blockhash } = await connection.getRecentBlockhash("finalized");
+      const { blockhash } = await connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
   
       return tx;
@@ -2745,7 +2745,7 @@ export const MultisigAssetsView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.ApproveTransaction);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.ApproveTransaction);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -2827,7 +2827,7 @@ export const MultisigAssetsView = () => {
       );
   
       tx.feePayer = publicKey;
-      const { blockhash } = await multisigClient.provider.connection.getRecentBlockhash("finalized");
+      const { blockhash } = await multisigClient.provider.connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
       
       if (txSigners.length) {
@@ -3045,7 +3045,7 @@ export const MultisigAssetsView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.ExecuteTransaction);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.ExecuteTransaction);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -3115,7 +3115,7 @@ export const MultisigAssetsView = () => {
       );
 
       tx.feePayer = publicKey;
-      const { blockhash } = await connection.getRecentBlockhash("finalized");
+      const { blockhash } = await connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
 
       return tx;
@@ -3343,7 +3343,7 @@ export const MultisigAssetsView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.CancelTransaction);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.CancelTransaction);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -3617,30 +3617,27 @@ export const MultisigAssetsView = () => {
               <Col span={12}>
                 <div className="transaction-detail-row">
                   <span className="info-label">
-                    Deposit Address
+                    {t('multisig.multisig-account-detail.address')}
                   </span>
                 </div>
+
+                {/* <div className="transaction-detail-row">
+                  <span className="info-icon">
+                    <IconShieldOutline className="mean-svg-icons" />
+                  </span>
+                  <div onClick={() => copyAddressToClipboard(selectedMultisig.authority)} 
+                       className="info-data flex-row wrap align-items-center simplelink underline-on-hover"
+                       style={{cursor: 'pointer', fontSize: '1.1rem'}}>
+                    {shortenAddress(selectedMultisig.authority.toBase58(), 8)}
+                  </div>
+                </div> */}
+
                 <div className="transaction-detail-row">
                   <span className="info-icon">
                     <IconShieldOutline className="mean-svg-icons" />
                   </span>
-                  <Link to="/multisig" className="info-data flex-row wrap align-items-center simplelink underline-on-hover"
-                    onClick={e => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setHighLightableMultisigId(selectedVault.owner.toBase58());
-                      navigate('/multisig');
-                    }}>
-                    {shortenAddress(selectedVault.owner.toBase58(), 6)}
-                  </Link>
-                  <div className="icon-button-container">
-                    <Button
-                      type="default"
-                      shape="circle"
-                      size="middle"
-                      icon={<CopyOutlined />}
-                      onClick={() => copyAddressToClipboard(selectedVault.owner.toBase58())}
-                    />
+                  <div onClick={() => copyAddressToClipboard(selectedVault.owner.toBase58())} className="info-data flex-row wrap align-items-center simplelink underline-on-hover" style={{cursor: 'pointer', fontSize: '1.1rem'}}>
+                    {shortenAddress(selectedVault.owner.toBase58(), 8)}
                   </div>
                 </div>
               </Col>
@@ -3765,9 +3762,9 @@ export const MultisigAssetsView = () => {
                         icon={<ArrowLeftOutlined />}
                         onClick={() => {
                           if (selectedMultisig) {
-                            setHighLightableMultisigId(selectedMultisig.authority.toBase58());
+                            setHighLightableMultisigId(selectedMultisig.id.toBase58());
                           }
-                          navigate('/multisig');
+                          navigate('/multisig/');
                         }}
                       />
                     </Tooltip>
@@ -3814,7 +3811,7 @@ export const MultisigAssetsView = () => {
                       type="primary"
                       shape="round"
                       disabled={!publicKey || !selectedMultisig}
-                      onClick={onShowCreateVaultModal}>
+                      onClick={onShowCreateAssetModal}>
                       {publicKey
                         ? t('multisig.multisig-account-detail.cta-create-asset')
                         : t('transactions.validation.not-connected')
@@ -3899,8 +3896,8 @@ export const MultisigAssetsView = () => {
 
       <MultisigCreateAssetModal
         handleOk={onAcceptCreateVault}
-        handleClose={() => setIsCreateVaultModalVisible(false)}
-        isVisible={isCreateVaultModalVisible}
+        handleClose={() => setIsCreateAssetModalVisible(false)}
+        isVisible={isCreateAssetModalVisible}
         nativeBalance={nativeBalance}
         transactionFees={transactionFees}
         isBusy={isBusy}

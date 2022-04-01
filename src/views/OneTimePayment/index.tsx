@@ -267,15 +267,16 @@ export const OneTimePayment = () => {
     const decimals = selectedToken ? selectedToken.decimals : 0;
     const splitted = newValue.toString().split('.');
     const left = splitted[0];
-    if (left.length > 1) {
-      const number = splitted[0] - 0;
-      splitted[0] = `${number}`;
-      newValue = splitted.join('.');
-    } else if (decimals && splitted[1]) {
+
+    if (decimals && splitted[1]) {
       if (splitted[1].length > decimals) {
         splitted[1] = splitted[1].slice(0, -1);
         newValue = splitted.join('.');
       }
+    } else if (left.length > 1) {
+      const number = splitted[0] - 0;
+      splitted[0] = `${number}`;
+      newValue = splitted.join('.');
     }
 
     if (newValue === null || newValue === undefined || newValue === "") {
@@ -501,7 +502,7 @@ export const OneTimePayment = () => {
       if (!endpoint || !streamV2ProgramAddress) { return null; }
       
       // Init a streaming operation
-      const msp = new MSP(endpoint, streamV2ProgramAddress, "finalized");
+      const msp = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
 
       if (!isScheduledPayment()) {
         return await msp.transfer(
@@ -785,7 +786,7 @@ export const OneTimePayment = () => {
 
     const confirmTx = async (): Promise<boolean> => {
       return await connection
-        .confirmTransaction(signature, "finalized")
+        .confirmTransaction(signature, "confirmed")
         .then(result => {
           consoleOut('confirmTransaction result:', result);
           if (result && result.value && !result.value.err) {
@@ -843,7 +844,7 @@ export const OneTimePayment = () => {
           if (sent && !transactionCancelled) {
             if (isScheduledPayment()) {
               consoleOut('Send Tx to confirmation queue:', signature);
-              startFetchTxSignatureInfo(signature, "finalized", OperationType.Transfer);
+              startFetchTxSignatureInfo(signature, "confirmed", OperationType.Transfer);
               setIsBusy(false);
               handleGoToStreamsClick();
             } else {
