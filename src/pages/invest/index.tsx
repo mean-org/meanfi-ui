@@ -883,7 +883,7 @@ export const InvestView = () => {
                               {refreshingStakePoolInfo || (!stakePoolInfo || stakePoolInfo.totalMeanAmount.uiAmount === 0) ? (
                                 <IconLoading className="mean-svg-icons"/>
                               ) : (
-                                <span>${formatThousands(stakePoolInfo.totalMeanAmount.uiAmount || 0, 0)}</span>
+                                <span>{formatThousands(stakePoolInfo.totalMeanAmount.uiAmount || 0, 0)}</span>
                               )}
                             </div>
                           </Col>

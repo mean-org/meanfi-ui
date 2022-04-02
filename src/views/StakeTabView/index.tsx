@@ -602,10 +602,10 @@ export const StakeTabView = (props: {
         </div>
       </div>
 
-      <div className="mb-2">
+      <div className="mb-2 text-right">
         {(fromCoinAmount && parseFloat(fromCoinAmount) > 0 && stakeQuote > 0) && (
-          <span className="form-field-hint pl-2">
-            {`Amount staked ≈ ${cutNumber(stakeQuote, 6)} sMEAN.`}
+          <span className="form-field-hint pr-1">
+            {`1 MEAN ≈ ${cutNumber(stakeQuote, 6)} sMEAN`}
           </span>
         )}
       </div>
