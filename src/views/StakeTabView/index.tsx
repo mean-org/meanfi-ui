@@ -79,7 +79,7 @@ export const StakeTabView = (props: {
   const [periodValue, setPeriodValue] = useState<number>(periods[0].value);
   const [periodTime, setPeriodTime] = useState<string>(periods[0].time);
   const [stakeQuote, setStakeQuote] = useState<number>(0);
-  const [canFetchStakeQuote, setCanFetchStakeQuote] = useState(false);
+  const [canFetchStakeQuote, setCanFetchStakeQuote] = useState(true);
   const [meanWorthOfsMean, setMeanWorthOfsMean] = useState<number>(0);
 
   ///////////////////////
@@ -143,11 +143,11 @@ export const StakeTabView = (props: {
     } else if (isValidNumber(newValue)) {
       setFromCoinAmount(newValue);
       // Debouncing
-      clearTimeout(inputDebounceTimeout);
-      inputDebounceTimeout = setTimeout(() => {
-        consoleOut('input ====>', newValue, 'orange');
-        setCanFetchStakeQuote(true);
-      }, INPUT_DEBOUNCE_TIME);
+      // clearTimeout(inputDebounceTimeout);
+      // inputDebounceTimeout = setTimeout(() => {
+      //   consoleOut('input ====>', newValue, 'orange');
+      //   setCanFetchStakeQuote(true);
+      // }, INPUT_DEBOUNCE_TIME);
     }
   };
 
@@ -469,9 +469,9 @@ export const StakeTabView = (props: {
       return;
     }
 
-    if (parseFloat(fromCoinAmount) > 0 && canFetchStakeQuote) {
-      setCanFetchStakeQuote(false);
-      props.stakeClient.getStakeQuote(parseFloat(fromCoinAmount)).then((value: StakeQuote) => {
+    if (canFetchStakeQuote) {
+      // setCanFetchStakeQuote(false);
+      props.stakeClient.getStakeQuote(1).then((value: StakeQuote) => {
         consoleOut('stakeQuote:', value, 'blue');
         setStakeQuote(value.sMeanOutUiAmount);
         consoleOut(`Quote for ${formatThousands(parseFloat(fromCoinAmount), 6)} MEAN`, `${formatThousands(value.sMeanOutUiAmount, 6)} sMEAN`, 'blue');
@@ -479,6 +479,16 @@ export const StakeTabView = (props: {
         console.error(error);
       });
     }
+    // if (parseFloat(fromCoinAmount) > 0 && canFetchStakeQuote) {
+    //   setCanFetchStakeQuote(false);
+    //   props.stakeClient.getStakeQuote(parseFloat(fromCoinAmount)).then((value: StakeQuote) => {
+    //     consoleOut('stakeQuote:', value, 'blue');
+    //     setStakeQuote(value.sMeanOutUiAmount);
+    //     consoleOut(`Quote for ${formatThousands(parseFloat(fromCoinAmount), 6)} MEAN`, `${formatThousands(value.sMeanOutUiAmount, 6)} sMEAN`, 'blue');
+    //   }).catch((error: any) => {
+    //     console.error(error);
+    //   });
+    // }
 
   }, [
     fromCoinAmount,
@@ -603,11 +613,16 @@ export const StakeTabView = (props: {
       </div>
 
       <div className="mb-2 text-right">
-        {(fromCoinAmount && parseFloat(fromCoinAmount) > 0 && stakeQuote > 0) && (
+        {(stakeQuote > 0) && (
           <span className="form-field-hint pr-1">
             {`1 MEAN ≈ ${cutNumber(stakeQuote, 6)} sMEAN`}
           </span>
         )}
+        {/* {(fromCoinAmount && parseFloat(fromCoinAmount) > 0 && stakeQuote > 0) && (
+          <span className="form-field-hint pr-1">
+            {`1 MEAN ≈ ${cutNumber(stakeQuote, 6)} sMEAN`}
+          </span>
+        )} */}
       </div>
 
       {/* Periods */}

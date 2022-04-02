@@ -559,6 +559,7 @@ export const InvestView = () => {
   // Keep MEAN balance updated
   useEffect(() => {
     if (!publicKey || !accounts || !accounts.tokenAccounts || !accounts.tokenAccounts.length) {
+      setMeanBalance(0);
       return;
     }
 
