@@ -300,7 +300,7 @@
 		},
 		"panel-right": {
 			"title": "Stake MEAN to Earn MEAN Rewards",
-			"first-text": "MEAN staking rewards include emission incentives plus a share of the protocol revenues, and can be boosted using locking periods. When you stake your MEAN, you get sMEAN in return.",
+			"first-text": "MEAN staking rewards include emission incentives plus a share of the protocol revenues, and can be boosted using locking periods. When you stake your MEAN, you get sMEAN (staked MEAN) in return.",
 			"second-text": "Simply holding your sMEAN is all that is required to continuously grow your MEAN stash. You don't need to harvest the rewards with MEAN staking. When you unstake your sMEAN, you will receive the rewards earned in the form of additional MEAN on top of the amount staked.",
 			"staking-sol": {
 				"title": "Liquid SOL Staking",
@@ -310,7 +310,7 @@
 			},
 			"staking-data": {
 				"title": "Your Current Stake:",
-				"label-my-staked": "My Staked MEAN",
+				"label-my-staked": "My available sMEAN balance",
 				"label-avg": "Avg. Locked Yield",
 				"label-boost": "Staking Lock Boost",
 				"label-locked": "My Locked eMEAN",
@@ -330,7 +330,7 @@
 			"stats": {
 				"staking-apy": "Staking APY",
 				"staking-apy-tooltip": "The APY associated with sMEAN is a representation of the price of sMEAN over a 365 day period.",
-				"total-mean-rewards": "Total MEAN Rewards",
+				"total-mean-rewards": "Total MEAN Staked",
 				"total-value-locked": "Tổng tài sản bị khóa"
 			},
 			"table-data": {
@@ -370,7 +370,8 @@
 					"unstake-button-busy": "Unstaking",
 					"unstake-button-available": "Hủy stake",
 					"unstake-button-unavailable": "Không khả dụng",
-					"verified-label": "Tôi đồng ý với các Điều khoản & Điều kiện"
+					"verified-label": "Tôi đồng ý với các Điều khoản & Điều kiện",
+					"success-transaction-message": "{{sMeanValue}} sMEAN has been successfully unstaked and you have received {{meanValue}} MEAN in return."
 				}
 			}
 		},
@@ -388,6 +389,7 @@
 		"add-participant-cta": "Thêm người tham gia",
 		"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
 		"create-multisig": {
+			"fee-info-label": "The fee to create this multisig is",
 			"main-cta": "Tạo",
 			"main-cta-busy": "Đang tạo multisig",
 			"modal-title": "Tạo multisig",
@@ -436,7 +438,7 @@
 			"token-address-placeholder": "Nhập vào địa chỉ token"
 		},
 		"multisig-account-detail": {
-			"address": "Deposit Address",
+			"address": "Safe Deposit Address",
 			"authority": "Thẩm quyền",
 			"copy-id-title": "MULTISIG ID",
 			"created-on": "Ngày tạo",
@@ -632,6 +634,7 @@
 	"notifications": {
 		"account-address-copied-message": "Địa chỉ tài khoản sao chép thành công",
 		"account-address-not-copied-message": "Không thể sao chép địa chỉ tài khoản",
+		"check-transaction-in-explorer": "Check your transaction here",
 		"create-money-stream-completed": "Money stream của bạn đã được tạo",
 		"create-money-stream-completed-wait-for-confirm": "Giao dịch sau khi được xác nhận sẽ hiển thị ở danh sách",
 		"error-cannot-faucet-mainnet-message": "Không thể faucet ở mainnet",
@@ -843,7 +846,7 @@
 	"swap": {
 		"exchange-warning": "Sàn giao dịch Mean chỉ khả dụng trên",
 		"frequency-label": "Tần suất",
-		"getting-routes": "Getting routes",
+		"getting-routes": "Finding the best route and price",
 		"input-label-destination": "Trao đổi thành (est.)",
 		"input-label-source": "Trao đổi từ",
 		"insufficient-liquidity": "Không đủ thanh khoản do giao dịch này",
@@ -981,10 +984,10 @@
 		},
 		"validation": {
 			"address-validation": "Không phải là địa chỉ hợp lệ",
-			"amount-high": "Số lượng vượt quá số dư của bạn",
-			"amount-low": "Không đủ số dư",
+			"amount-high": "Amount exceeded",
+			"amount-low": "Low balance",
 			"amount-lt-fee": "Số lượng phải lớn phí giao dịch",
-			"amount-sol-high": "Số lượng vượt quá số dư SOL của bạn",
+			"amount-sol-high": "Insufficient SOL",
 			"amount-withdraw-high": "Số lượng lớn hơn số tiền khả dụng",
 			"cannot-use-own-account-as-treasury": "Tài khoản ví của bạn không phải là treasury id",
 			"exchange-unavailable": "Giao dịch không khả dụng",
@@ -1002,7 +1005,7 @@
 			"no-recipient": "Không có người nhận",
 			"no-valid-date": "Thiết lập một ngày hợp lệ",
 			"not-connected": "Kết nối ví của bạn",
-			"payment-rate-high": "Tỷ lệ thanh toán vượt quá số dư của bạn",
+			"payment-rate-high": "Payment exceeded",
 			"select-recipient": "Chọn người nhận",
 			"select-stream": "Chọn một stream",
 			"valid-address-required": "Một địa chỉ solana hợp lệ là bắt buộc",
@@ -1011,7 +1014,7 @@
 			"valid-ddca-review": "Xem lại",
 			"valid-start-funding": "Bắt đầu cấp tiền",
 			"valid-start-withdrawal": "Bắt đầu rút tiền",
-			"verified-recipient-unchecked": "Đã bỏ chọn xác minh người nhận"
+			"verified-recipient-unchecked": "Recipient Unchecked"
 		}
 	},
 	"transfer-stream": {

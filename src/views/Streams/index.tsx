@@ -18,16 +18,10 @@ import {
   IconBank,
   IconBox,
   IconClock,
-  IconEdit,
   IconExternalLink,
-  IconLock,
-  IconPause,
-  IconPlay,
-  IconRefresh,
   IconShare,
   IconSwitchRunning,
   IconSwitchStopped,
-  IconTrash,
   IconUpload,
 } from "../../Icons";
 import { AppStateContext } from "../../contexts/appstate";
@@ -62,6 +56,7 @@ import { StreamOpenModal } from '../../components/StreamOpenModal';
 import { StreamWithdrawModal } from '../../components/StreamWithdrawModal';
 import {
   FALLBACK_COIN_IMAGE,
+  NO_FEES,
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
   SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
 } from "../../constants";
@@ -173,9 +168,7 @@ export const Streams = () => {
   const [nativeBalance, setNativeBalance] = useState(0);
   const [lastStreamTransferAddress, setLastStreamTransferAddress] = useState('');
   const [oldSelectedToken, setOldSelectedToken] = useState<TokenInfo>();
-  const [transactionFees, setTransactionFees] = useState<TransactionFees>({
-    blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
-  });
+  const [transactionFees, setTransactionFees] = useState<TransactionFees>(NO_FEES);
   const [withdrawTransactionFees, setWithdrawTransactionFees] = useState<TransactionFees>({
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
   });
@@ -4857,7 +4850,6 @@ export const Streams = () => {
                     <Row className="mb-3">
                       <Col span={24}>
                         <div className="info-label">
-                          {/* TODO: Check this condition */}
                           {stream.allocationAssigned
                             ? t('streams.stream-detail.label-reserved-allocation')
                             : t('streams.stream-detail.label-your-allocation')
@@ -5749,7 +5741,7 @@ export const Streams = () => {
                 <Spin size="small" />
                 {customStreamDocked ? (
                   <span className="transaction-legend neutral">
-                    <IconRefresh className="mean-svg-icons"/>
+                    <ReloadOutlined className="mean-svg-icons"/>
                   </span>
                 ) : (
                   <>

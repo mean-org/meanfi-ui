@@ -300,7 +300,7 @@
 		},
 		"panel-right": {
 			"title": "Stake MEAN to Earn MEAN Rewards",
-			"first-text": "MEAN staking rewards include emission incentives plus a share of the protocol revenues, and can be boosted using locking periods. When you stake your MEAN, you get sMEAN in return.",
+			"first-text": "MEAN staking rewards include emission incentives plus a share of the protocol revenues, and can be boosted using locking periods. When you stake your MEAN, you get sMEAN (staked MEAN) in return.",
 			"second-text": "Simply holding your sMEAN is all that is required to continuously grow your MEAN stash. You don't need to harvest the rewards with MEAN staking. When you unstake your sMEAN, you will receive the rewards earned in the form of additional MEAN on top of the amount staked.",
 			"staking-sol": {
 				"title": "Liquid SOL Staking",
@@ -310,7 +310,7 @@
 			},
 			"staking-data": {
 				"title": "Your Current Stake:",
-				"label-my-staked": "My Staked MEAN",
+				"label-my-staked": "My available sMEAN balance",
 				"label-avg": "Avg. Locked Yield",
 				"label-boost": "Staking Lock Boost",
 				"label-locked": "My Locked eMEAN",
@@ -330,7 +330,7 @@
 			"stats": {
 				"staking-apy": "Staking APY",
 				"staking-apy-tooltip": "The APY associated with sMEAN is a representation of the price of sMEAN over a 365 day period.",
-				"total-mean-rewards": "Total MEAN Rewards",
+				"total-mean-rewards": "Total MEAN Staked",
 				"total-value-locked": "Toplam Kilitli Değer"
 			},
 			"table-data": {
@@ -370,7 +370,8 @@
 					"unstake-button-busy": "Unstaking",
 					"unstake-button-available": "Stakeden çıkar",
 					"unstake-button-unavailable": "Uygun değil",
-					"verified-label": "Şartları & Koşulları kabul ediyorum."
+					"verified-label": "Şartları & Koşulları kabul ediyorum.",
+					"success-transaction-message": "{{sMeanValue}} sMEAN has been successfully unstaked and you have received {{meanValue}} MEAN in return."
 				}
 			}
 		},
@@ -388,6 +389,7 @@
 		"add-participant-cta": "Katılımcı ekle",
 		"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
 		"create-multisig": {
+			"fee-info-label": "The fee to create this multisig is",
 			"main-cta": "Yarat",
 			"main-cta-busy": "Çoklu-İmza yaratılıyor",
 			"modal-title": "Çoklu-İmza yarat",
@@ -436,7 +438,7 @@
 			"token-address-placeholder": "Tokenların adresini girin"
 		},
 		"multisig-account-detail": {
-			"address": "Deposit Address",
+			"address": "Safe Deposit Address",
 			"authority": "Yetki",
 			"copy-id-title": "Çoklu-İmza ID",
 			"created-on": "... da oluşturuldu",
@@ -632,6 +634,7 @@
 	"notifications": {
 		"account-address-copied-message": "Hesap adresi başarıyla kopyalandı",
 		"account-address-not-copied-message": "Hesap adresi kopyalanamıyor",
+		"check-transaction-in-explorer": "Check your transaction here",
 		"create-money-stream-completed": "Para-aktarımınız oluşturuldu",
 		"create-money-stream-completed-wait-for-confirm": "İşlem onaylandıktan sonra listede gözükecek",
 		"error-cannot-faucet-mainnet-message": "Musluk mainnetde çalışmıyor",
@@ -843,7 +846,7 @@
 	"swap": {
 		"exchange-warning": "Mean Exchange yalnızca şurada kullanılabilir:",
 		"frequency-label": "Sıklık",
-		"getting-routes": "Getting routes",
+		"getting-routes": "Finding the best route and price",
 		"input-label-destination": "Değişim (tahmini)",
 		"input-label-source": "....dan alım-satım",
 		"insufficient-liquidity": "Bu ticaret için yetersiz likidite",
@@ -981,10 +984,10 @@
 		},
 		"validation": {
 			"address-validation": "Geçerli bir adres biçimi değil",
-			"amount-high": "Tutar, bakiyenizi aşıyor",
-			"amount-low": "Yeterli bakiye yok",
+			"amount-high": "Amount exceeded",
+			"amount-low": "Low balance",
 			"amount-lt-fee": "Tutar işlem ücretinden fazla olmalıdır",
-			"amount-sol-high": "Tutar, SOL bakiyenizi aşıyor",
+			"amount-sol-high": "Insufficient SOL",
 			"amount-withdraw-high": "Tutar mevcut fonlardan daha fazla",
 			"cannot-use-own-account-as-treasury": "Hesabınızı hazine kimliği olarak kullanamazsınız",
 			"exchange-unavailable": "Alım-Satım mevcut değil",
@@ -1002,7 +1005,7 @@
 			"no-recipient": "Alıcı yok",
 			"no-valid-date": "Geçerli bir tarih belirleyin",
 			"not-connected": "Cüzdanını bağla",
-			"payment-rate-high": "Ödeme oranı bakiyenizi aşıyor",
+			"payment-rate-high": "Payment exceeded",
 			"select-recipient": "Alıcı seçin",
 			"select-stream": "Bir aktarım seçin",
 			"valid-address-required": "Geçerli bir solana adresi gerekli",
@@ -1011,7 +1014,7 @@
 			"valid-ddca-review": "Gözden geçirmek",
 			"valid-start-funding": "Fonlamaya başlayın",
 			"valid-start-withdrawal": "Para çekme işlemini başlat",
-			"verified-recipient-unchecked": "Alıcı doğrulaması işaretlenmemiş"
+			"verified-recipient-unchecked": "Recipient Unchecked"
 		}
 	},
 	"transfer-stream": {

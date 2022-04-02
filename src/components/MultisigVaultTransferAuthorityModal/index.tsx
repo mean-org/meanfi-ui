@@ -273,7 +273,7 @@ export const MultisigVaultTransferAuthorityModal = (props: {
         )}
       </div>
 
-      <div className="row two-col-ctas mt-3 transaction-progress">
+      <div className="row two-col-ctas mt-3 transaction-progress p-0">
         <div className="col-6">
           <Button
             block

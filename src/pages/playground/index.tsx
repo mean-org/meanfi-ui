@@ -18,7 +18,6 @@ import {
   Divider,
   Form,
   InputNumber,
-  message,
   Modal,
   Select,
   Space,
@@ -39,11 +38,12 @@ import {
 } from "../../utils/utils";
 import { IconCopy, IconExternalLink, IconTrash } from "../../Icons";
 import { useNavigate } from "react-router-dom";
-import { openNotification } from "../../utils/notifications";
+import { openNotification } from "../../components/Notifications";
+import { IconType } from "antd/lib/notification";
 
 const { Panel } = Collapse;
 const { Option } = Select;
-type TabOption = "first-tab" | "second-tab" | "misc-tab";
+type TabOption = "first-tab" | "second-tab" | "demo-notifications" | "misc-tab";
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 interface TokenVolume {
@@ -116,13 +116,10 @@ export const PlaygroundView = () => {
   const navigate = useNavigate();
   const {
     userTokens,
-    splTokenList,
     transactionStatus,
     setTransactionStatus
   } = useContext(AppStateContext);
-  const [selectedMint, setSelectedMint] = useState<
-    UserTokenAccount | undefined
-  >(undefined);
+  const [selectedMint, setSelectedMint] = useState<UserTokenAccount | undefined>(undefined);
   const [isBusy, setIsBusy] = useState(false);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isTransactionModalVisible, setTransactionModalVisibility] =
@@ -150,39 +147,39 @@ export const PlaygroundView = () => {
     }
   }, [selectedMint, userTokens]);
 
-  const getTopJupiterTokensByVolume = useCallback(() => {
-    fetch('https://cache.jup.ag/stats/month')
-      .then(res => {
-        if (res.status >= 400) {
-          throw new Error("Bad response from server");
-        }
-        return res.json();
-      })
-      .then(data => {
-        // Only get tokens with volume for more than 1000 USD a month
-        const tokens = data.lastXTopTokens.filter((s: TokenVolume) => s.amount >= 1000) as TokenVolume[];
-        const topTokens: BasicTokenInfo[] = [];
-        if (tokens && tokens.length > 0) {
-          tokens.forEach(element => {
-            const token = splTokenList.find(t => t.symbol === element.symbol);
-            if (token) {
-              topTokens.push({
-                name: token.name,
-                symbol: token.symbol,
-                address: token.address,
-                decimals: token.decimals
-              });
-            }
-          });
-          consoleOut('Tokens with volume over 1000 USD:', tokens.length, 'crimson');
-          consoleOut('Added to list of top tokens:', topTokens.length, 'crimson');
-          consoleOut('topTokens:', topTokens, 'crimson');
-        }
-      })
-      .catch(err => {
-        console.error(err);
-      });
-  }, [splTokenList]);
+  // const getTopJupiterTokensByVolume = useCallback(() => {
+  //   fetch('https://cache.jup.ag/stats/month')
+  //     .then(res => {
+  //       if (res.status >= 400) {
+  //         throw new Error("Bad response from server");
+  //       }
+  //       return res.json();
+  //     })
+  //     .then(data => {
+  //       // Only get tokens with volume for more than 1000 USD a month
+  //       const tokens = data.lastXTopTokens.filter((s: TokenVolume) => s.amount >= 1000) as TokenVolume[];
+  //       const topTokens: BasicTokenInfo[] = [];
+  //       if (tokens && tokens.length > 0) {
+  //         tokens.forEach(element => {
+  //           const token = splTokenList.find(t => t.symbol === element.symbol);
+  //           if (token) {
+  //             topTokens.push({
+  //               name: token.name,
+  //               symbol: token.symbol,
+  //               address: token.address,
+  //               decimals: token.decimals
+  //             });
+  //           }
+  //         });
+  //         consoleOut('Tokens with volume over 1000 USD:', tokens.length, 'crimson');
+  //         consoleOut('Added to list of top tokens:', topTokens.length, 'crimson');
+  //         consoleOut('topTokens:', topTokens, 'crimson');
+  //       }
+  //     })
+  //     .catch(err => {
+  //       console.error(err);
+  //     });
+  // }, [splTokenList]);
 
   const resetTransactionStatus = () => {
     setTransactionStatus({
@@ -341,16 +338,81 @@ export const PlaygroundView = () => {
     setCurrentPanelItem(loadedItem);
   }
 
-  const showMessage = () => {
-    message.success({
-      duration: 0,
-      content: "This is a prompt message with custom className and style",
-      className: "custom-message",
+  const notificationTwo = () => {
+    consoleOut("Notification is closing...");
+    openNotification({
+      type: "info",
+      description: t(
+        "treasuries.create-treasury.multisig-treasury-created-instructions"
+      ),
+      duration: null,
+    });
+    navigate("/custody");
+  };
+
+  const sequentialMessagesAndNavigate = () => {
+    openNotification({
+      type: "info",
+      description: t(
+        "treasuries.create-treasury.multisig-treasury-created-info"
+      ),
+      handleClose: notificationTwo,
     });
   };
 
-  const closeMessage = () => {
-    message.destroy();
+  const stackedMessagesAndNavigate = async () => {
+    openNotification({
+      type: "info",
+      description: t(
+        "treasuries.create-treasury.multisig-treasury-created-info"
+      ),
+      duration: 10,
+    });
+    await delay(1500);
+    openNotification({
+      type: "info",
+      description: t(
+        "treasuries.create-treasury.multisig-treasury-created-instructions"
+      ),
+      duration: null,
+    });
+    navigate("/custody");
+  };
+
+  const reuseNotification = (key?: string) => {
+    openNotification({
+      key,
+      type: "info",
+      title: 'Mission assigned',
+      duration: 0,
+      description: <span>Your objective is to wait for 5 seconds</span>
+    });
+    setTimeout(() => {
+      openNotification({
+        key,
+        type: "success",
+        title: 'Mission updated',
+        duration: 3,
+        description: <span>Objective completed!</span>,
+      });
+    }, 5000);
+  };
+
+  const showNotificationByType = (type: IconType) => {
+    openNotification({
+      type,
+      title: 'Notification Title',
+      duration: 0,
+      description: <span>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Natus, ullam perspiciatis accusamus, sunt ipsum asperiores similique cupiditate autem veniam explicabo earum voluptates!</span>
+    });
+  };
+
+  const interestingCase = () => {
+    openNotification({
+      type: "info",
+      description: t("treasuries.create-treasury.multisig-treasury-created-info"),
+      duration: 0
+    });
   };
 
   const renderDemoNumberFormatting = (
@@ -502,54 +564,75 @@ export const PlaygroundView = () => {
           );
         })}
       </Collapse>
+    </>
+  );
 
-      <div className="tabset-heading">Notifications and navigation</div>
+  const renderDemoNotifications = (
+    <>
+      <div className="tabset-heading">Notify and navigate</div>
       <div className="text-left mb-3">
         <Space>
           <span
             className="flat-button stroked"
-            onClick={() => sequentialMessagesAndNavigate()}
-          >
-            <span>Sequential messages on Navigate</span>
+            onClick={() => sequentialMessagesAndNavigate()}>
+            <span>Sequential messages → Navigate</span>
           </span>
           <span
             className="flat-button stroked"
-            onClick={() => stackedMessagesAndNavigate()}
-          >
-            <span>Stacked messages on Navigate</span>
+            onClick={() => stackedMessagesAndNavigate()}>
+            <span>Stacked messages → Navigate</span>
+          </span>
+          <span
+            className="flat-button stroked"
+            onClick={() => interestingCase()}>
+            <span>Without title</span>
           </span>
         </Space>
       </div>
+
+      <div className="tabset-heading">Test Updatable Notifications</div>
+      <div className="text-left mb-3">
+        <Space>
+          <span
+            className="flat-button stroked"
+            onClick={() => reuseNotification('pepito')}>
+            <span>See mission status</span>
+          </span>
+        </Space>
+      </div>
+
+      <div className="tabset-heading">Test Standalone Notifications</div>
+      <div className="text-left mb-3">
+        <Space>
+          <span
+            className="flat-button stroked"
+            onClick={() => showNotificationByType("info")}>
+            <span>Info</span>
+          </span>
+          <span
+            className="flat-button stroked"
+            onClick={() => showNotificationByType("success")}>
+            <span>Success</span>
+          </span>
+          <span
+            className="flat-button stroked"
+            onClick={() => showNotificationByType("warning")}>
+            <span>Warning</span>
+          </span>
+          <span
+            className="flat-button stroked"
+            onClick={() => showNotificationByType("error")}>
+            <span>Error</span>
+          </span>
+        </Space>
+      </div>
+
     </>
   );
 
   const renderMiscTab = (
     <>
       <div className="tabset-heading">Miscelaneous features</div>
-      <div className="text-left mb-3">
-        <Space>
-          <Button
-            type="default"
-            shape="round"
-            size="small"
-            className="thin-stroke"
-            onClick={showMessage}
-          >
-            Show custom message
-          </Button>
-          <Button
-            type="default"
-            shape="round"
-            size="small"
-            className="thin-stroke"
-            onClick={closeMessage}
-          >
-            Destroy message
-          </Button>
-        </Space>
-      </div>
-
-      <Divider />
 
       <h3>Primary, Secondary and Terciary buttons</h3>
       <div className="row mb-2">
@@ -705,52 +788,13 @@ export const PlaygroundView = () => {
         return renderDemoNumberFormatting;
       case "second-tab":
         return renderDemoTxWorkflow;
+      case "demo-notifications":
+        return renderDemoNotifications;
       case "misc-tab":
         return renderMiscTab;
       default:
         return null;
     }
-  };
-
-  const notificationTwo = () => {
-    consoleOut("Notification is closing...");
-    openNotification({
-      type: "info",
-      description: t(
-        "treasuries.create-treasury.multisig-treasury-created-instructions"
-      ),
-      duration: null,
-    });
-    navigate("/custody");
-  };
-
-  const sequentialMessagesAndNavigate = () => {
-    openNotification({
-      type: "info",
-      description: t(
-        "treasuries.create-treasury.multisig-treasury-created-info"
-      ),
-      handleClose: notificationTwo,
-    });
-  };
-
-  const stackedMessagesAndNavigate = async () => {
-    openNotification({
-      type: "info",
-      description: t(
-        "treasuries.create-treasury.multisig-treasury-created-info"
-      ),
-      duration: 10,
-    });
-    await delay(1500);
-    openNotification({
-      type: "info",
-      description: t(
-        "treasuries.create-treasury.multisig-treasury-created-instructions"
-      ),
-      duration: null,
-    });
-    navigate("/custody");
   };
 
   return (
@@ -770,13 +814,18 @@ export const PlaygroundView = () => {
                 Demo 2
               </div>
               <div
+                className={`tab-button ${currentTab === "demo-notifications" ? "active" : ""}`}
+                onClick={() => setCurrentTab("demo-notifications")}>
+                Demo 3
+              </div>
+              <div
                 className={`tab-button ${currentTab === "misc-tab" ? "active" : ""}`}
                 onClick={() => setCurrentTab("misc-tab")}>
                 Misc
               </div>
             </div>
             {renderTab()}
-            <span className="secondary-link" onClick={getTopJupiterTokensByVolume}>Read list of top Jupiter tokens in volume over 1,000 USD</span>
+            {/* <span className="secondary-link" onClick={getTopJupiterTokensByVolume}>Read list of top Jupiter tokens in volume over 1,000 USD</span> */}
           </div>
         </div>
       </section>
