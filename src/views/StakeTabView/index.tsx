@@ -8,7 +8,6 @@ import { TokenDisplay } from "../../components/TokenDisplay";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
 import { cutNumber, formatAmount, formatThousands, getAmountWithSymbol, getTxIxResume, isValidNumber } from "../../utils/utils";
-import { DebounceInput } from "react-debounce-input";
 import { StakeQuote, StakingClient } from "@mean-dao/staking";
 import { Transaction } from "@solana/web3.js";
 import { TransactionStatusContext } from "../../contexts/transaction-status";
@@ -18,12 +17,15 @@ import { customLogger } from "../..";
 import { useConnection } from "../../contexts/connection";
 import { notify } from "../../utils/notifications";
 import { TokenInfo } from "@solana/spl-token-registry";
+import { INPUT_DEBOUNCE_TIME } from "../../constants";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
+let inputDebounceTimeout: any;
 
 export const StakeTabView = (props: {
   stakeClient: StakingClient;
-  tokenBalance: number;
+  meanBalance: number;
+  smeanBalance: number;
   selectedToken: TokenInfo | undefined;
 }) => {
   const {
@@ -77,6 +79,8 @@ export const StakeTabView = (props: {
   const [periodValue, setPeriodValue] = useState<number>(periods[0].value);
   const [periodTime, setPeriodTime] = useState<string>(periods[0].time);
   const [stakeQuote, setStakeQuote] = useState<number>(0);
+  const [canFetchStakeQuote, setCanFetchStakeQuote] = useState(false);
+  const [meanWorthOfsMean, setMeanWorthOfsMean] = useState<number>(0);
 
   ///////////////////////
   //  EVENTS & MODALS  //
@@ -138,6 +142,12 @@ export const StakeTabView = (props: {
       setFromCoinAmount(".");
     } else if (isValidNumber(newValue)) {
       setFromCoinAmount(newValue);
+      // Debouncing
+      clearTimeout(inputDebounceTimeout);
+      inputDebounceTimeout = setTimeout(() => {
+        consoleOut('input ====>', newValue, 'orange');
+        setCanFetchStakeQuote(true);
+      }, INPUT_DEBOUNCE_TIME);
     }
   };
 
@@ -156,17 +166,17 @@ export const StakeTabView = (props: {
       ? t('transactions.validation.not-connected')
       : isBusy
         ? `${t("invest.panel-right.tabset.stake.stake-button-busy")} ${props.selectedToken && props.selectedToken.symbol}`
-        : !props.selectedToken || !props.tokenBalance
+        : !props.selectedToken || !props.meanBalance
           ? t('transactions.validation.no-balance')
           : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !parseFloat(fromCoinAmount)
             ? t('transactions.validation.no-amount')
-            : parseFloat(fromCoinAmount) > props.tokenBalance
+            : parseFloat(fromCoinAmount) > props.meanBalance
               ? t('transactions.validation.amount-high')
               : `${t("invest.panel-right.tabset.stake.stake-button")} ${props.selectedToken && props.selectedToken.symbol}`;
   }, [
     fromCoinAmount,
     props.selectedToken,
-    props.tokenBalance,
+    props.meanBalance,
     connected,
     isBusy,
     t,
@@ -175,10 +185,10 @@ export const StakeTabView = (props: {
   const isStakingFormValid = (): boolean => {
     return  connected &&
             props.selectedToken &&
-            props.tokenBalance &&
+            props.meanBalance &&
             fromCoinAmount &&
             parseFloat(fromCoinAmount) > 0 &&
-            parseFloat(fromCoinAmount) <= props.tokenBalance
+            parseFloat(fromCoinAmount) <= props.meanBalance
       ? true
       : false;
   }
@@ -453,22 +463,14 @@ export const StakeTabView = (props: {
     t
   ]);
 
-  // const onIsVerifiedRecipientChange = (e: any) => {
-  //   setIsVerifiedRecipient(e.target.checked);
-  // }
-
-  // const onChangeValue = (value: number, time: string, rate: number) => {
-  //   setPeriodValue(value);
-  //   setPeriodTime(time);
-  //   setStakingMultiplier(rate);
-  // }
-
+  // Stake quote
   useEffect(() => {
     if (!props.stakeClient) {
       return;
     }
 
-    if (parseFloat(fromCoinAmount) > 0) {
+    if (parseFloat(fromCoinAmount) > 0 && canFetchStakeQuote) {
+      setCanFetchStakeQuote(false);
       props.stakeClient.getStakeQuote(parseFloat(fromCoinAmount)).then((value: StakeQuote) => {
         consoleOut('stakeQuote:', value, 'blue');
         setStakeQuote(value.sMeanOutUiAmount);
@@ -479,18 +481,65 @@ export const StakeTabView = (props: {
     }
 
   }, [
+    fromCoinAmount,
     props.stakeClient,
+    canFetchStakeQuote,
+  ]);
+
+  // Handler paste clipboard data
+  const pasteHandler = (e: any) => {
+    const getClipBoardData = e.clipboardData.getData('Text');
+    const replaceCommaToDot = getClipBoardData.replace(",", "")
+    const onlyNumbersAndDot = replaceCommaToDot.replace(/[^.\d]/g, '');
+
+    setFromCoinAmount(onlyNumbersAndDot.trim());
+  }
+
+  // Unstake quote
+  useEffect(() => {
+    const getMeanQuote = async (sMEAN: number) => {
+      if (!props.stakeClient) { return 0; }
+
+      try {
+        const result = await props.stakeClient.getUnstakeQuote(sMEAN);
+        return result.meanOutUiAmount;
+      } catch (error) {
+        console.error(error);
+        return 0;
+      }
+    }
+
+    if (props.selectedToken) {
+      if (props.smeanBalance > 0) {
+        getMeanQuote(props.smeanBalance).then((value) => {
+          consoleOut(`Quote for ${formatThousands(props.smeanBalance, props.selectedToken?.decimals)} sMEAN`, `${formatThousands(value, props.selectedToken?.decimals)} MEAN`, 'blue');
+          setMeanWorthOfsMean(value);
+        })
+      } else {
+        setMeanWorthOfsMean(0);
+      }
+    }
+  }, [
+    props.stakeClient, 
+    props.selectedToken, 
+    props.smeanBalance,
     fromCoinAmount
   ]);
 
-  // useEffect(() => {
-  //   const unstakeStartDateUpdate = moment().add(periodValue, periodValue === 1 ? "year" : periodValue === 4 ? "years" : "days").format("LL")
-
-  //   setUnstakeStartDate(unstakeStartDateUpdate);
-  // }, [periodTime, periodValue, setUnstakeStartDate]);
 
   return (
     <>
+      <div className="mb-2 px-1">
+        <span className="info-label">
+          {
+            props.smeanBalance
+              ? (
+                <span>You have {cutNumber(props.smeanBalance, 6)} sMEAN staked{meanWorthOfsMean ? ` which is currently worth ${cutNumber(meanWorthOfsMean, 6)} MEAN.` : '.'}</span>
+              )
+              : t("invest.panel-right.tabset.unstake.notification-label-one-error")
+          }
+        </span>
+      </div>
       <div className="form-label">{t("invest.panel-right.tabset.stake.amount-label")}</div>
       <div className="well mb-1">
         <div className="flex-fixed-left">
@@ -503,10 +552,20 @@ export const StakeTabView = (props: {
                   className="click-disabled"
                 />
               )}
+              {props.selectedToken && props.meanBalance ? (
+                <div className="token-max simplelink" onClick={() =>
+                    setFromCoinAmount(
+                      props.meanBalance.toFixed(props.selectedToken?.decimals || 6)
+                    )
+                  }>
+                  MAX
+                </div>
+              ) : null}
+
             </span>
           </div>
           <div className="right">
-            <DebounceInput
+            <input
               className="general-text-input text-right"
               inputMode="decimal"
               autoComplete="off"
@@ -517,8 +576,8 @@ export const StakeTabView = (props: {
               placeholder="0.0"
               minLength={1}
               maxLength={79}
-              debounceTimeout={400}
               spellCheck="false"
+              onPaste={pasteHandler}
               value={fromCoinAmount}
             />
           </div>
@@ -527,8 +586,8 @@ export const StakeTabView = (props: {
           <div className="left inner-label">
             <span>{t('transactions.send-amount.label-right')}:</span>
             <span>
-              {`${props.tokenBalance && props.selectedToken
-                  ? getAmountWithSymbol(props.tokenBalance, props.selectedToken?.address, true)
+              {`${props.meanBalance && props.selectedToken
+                  ? getAmountWithSymbol(props.meanBalance, props.selectedToken?.address, true)
                   : "0"
               }`}
             </span>

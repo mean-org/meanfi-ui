@@ -42,7 +42,7 @@ import { DATEPICKER_FORMAT } from '../../constants';
 import { Identicon } from '../Identicon';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
-import { Connection, Keypair, PublicKey, Transaction } from '@solana/web3.js';
+import { Connection, Keypair, PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
 import { customLogger } from '../..';
 import { Beneficiary, Constants as MSPV2Constants, MSP, StreamBeneficiary, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
 import { TreasuryInfo } from '@mean-dao/money-streaming';
@@ -50,6 +50,7 @@ import { useConnectionConfig } from '../../contexts/connection';
 import { Idl, Program } from '@project-serum/anchor';
 import { BN } from 'bn.js';
 import { u64 } from '@solana/spl-token';
+import { MEAN_MULTISIG_OPS } from '../../models/multisig';
 
 const { Option } = Select;
 
@@ -951,6 +952,8 @@ export const TreasuryStreamCreateModal = (props: {
               multisig: props.multisigAddress,
               transaction: transaction.publicKey,
               proposer: publicKey,
+              multisigOpsAccount: MEAN_MULTISIG_OPS,
+              systemProgram: SystemProgram.programId
             },
             preInstructions: [createIx],
             signers: [transaction],

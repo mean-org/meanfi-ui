@@ -2,6 +2,7 @@ import { Language } from "../models/languages";
 
 export const TRANSACTIONS_PER_PAGE = 15;
 export const ACCOUNTS_LOW_BALANCE_LIMIT = 0.1; // Minimum balance to start showing user account tokens in /accounts
+export const ONE_MINUTE_REFRESH_TIMEOUT = 60 * 1000;
 export const EXCHANGE_ROUTES_REFRESH_TIMEOUT = 60 * 1000;
 export const PRICE_REFRESH_TIMEOUT = 10 * 60 * 1000;
 export const STREAMS_REFRESH_TIMEOUT = 5 * 60 * 1000;
@@ -10,6 +11,7 @@ export const TRANSACTION_STATUS_RETRY_TIMEOUT = 30 * 1000;   // Max timeout for 
 export const PERFORMANCE_SAMPLE_INTERVAL = 30 * 1000;
 export const PERFORMANCE_SAMPLE_INTERVAL_FAST = 15 * 1000;
 export const PERFORMANCE_THRESHOLD = 1400;  // Min TPS to show the top bar (1100 but can be changed)
+export const INPUT_DEBOUNCE_TIME = 400;
 
 export const MIN_SLIPPAGE_VALUE = 0.1;
 export const DEFAULT_SLIPPAGE_PERCENT = 1;
@@ -210,3 +212,7 @@ export const BETA_TESTING_PROGRAM_WHITELIST = [
 // REAL DATES
 export const IDO_START_DATE = { year: 2021, month: 11, day: 22, hour: 15, minute: 0, second: 0 };
 export const IDO_FETCH_FREQUENCY = 5 * 60 * 1000;       // IDO data fetch polling interval
+
+export const NO_FEES = {
+    blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
+}
