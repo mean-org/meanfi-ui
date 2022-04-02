@@ -138,7 +138,7 @@ export const MultisigCreateModal = (props: {
     return (
       <Row>
         <Col span={14} className="text-right pr-1">{caption}</Col>
-        <Col span={10} className="text-left pl-1 fg-secondary-70">{value}</Col>
+        <Col span={10} className="text-left fg-secondary-70">{value}</Col>
       </Row>
     );
   }
@@ -241,7 +241,7 @@ export const MultisigCreateModal = (props: {
             {props.transactionFees && props.transactionFees.mspFlatFee && (
               <div className="p-2 mt-2">
                 {infoRow(
-                  t('multisig.create-multisig.fee-info-label') + ':',
+                  t('multisig.create-multisig.fee-info-label') + ' ≈',
                   `${formatThousands(props.transactionFees.mspFlatFee, 9)} SOL`
                 )}
               </div>
