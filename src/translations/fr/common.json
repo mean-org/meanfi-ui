@@ -42,12 +42,12 @@
 		"loading-error": "Impossible de charger les transactions.  Veuillez recharger la page.",
 		"merge-accounts-cta": "Fusionner des comptes",
 		"merge-accounts-link": "Fusionner des comptes de jeton",
-		"no-asset-selected": "Aucun élément sélectionné.  Veuillez en choisir un à gauche !",
+		"no-asset-selected": "Aucun élément sélectionné.  Veuillez en choisir un à gauche !",
 		"no-balance": {
 			"cta1": "Acheter/Dépôt {{tokenSymbol}}",
-			"cta2": "Échange",
+			"cta2": "Échanger",
 			"line1": "Il semble que votre compte {{tokenSymbol}} soit plutôt vide.",
-			"line2": "Que voulez-vous faire à ce sujet ?",
+			"line2": "Que voulez-vous faire à ce sujet ?",
 			"line3": "Ou scannez le code QR pour recevoir des fonds",
 			"line4": "Cette adresse ne peut être utilisée que pour recevoir",
 			"line5": "Jetons SOL et SPL sur Solana."
@@ -61,9 +61,9 @@
 		"cant-close-message": "Vous ne pouvez pas fermer un flux à partir d'une trésorerie verrouillée",
 		"cant-topup-message": "Vous ne pouvez pas recharger un flux à partir d'une trésorerie verrouillée",
 		"context-beneficiary": "La fermeture d'un flux enverra le montant acquis sur votre compte ({{beneficiary}}) et arrêtera immédiatement le flux d'argent.",
+		"context-treasurer-aditional-message": "Les montants ci-dessus ne sont exacts que pour les flux en pause et terminés. Pour les flux en direct, les montants seront déterminés au moment où le flux est fermé.",
 		"context-treasurer-multiple-beneficiaries": "La fermeture d'un flux arrêtera le flux d'argent, enverra le montant acquis au bénéficiaire ({{beneficiary}}) et restituera les montants non acquis à la trésorerie d'origine ({{treasury}}).",
-		"context-treasurer-single-beneficiary": "La fermeture d'un flux arrêtera le flux d'argent, enverra le montant acquis au bénéficiaire ({{beneficiary}}) et restituera le montant non acquis au contributeur.",
-		"context-treasurer-aditional-message": "The above amounts are only accurate for paused and ended streams. For live steams, the amounts will be determined the moment the stream is closed.",
+		"context-treasurer-single-beneficiary": "Closing a stream will stop the money flow, send the vested amount to the beneficiary ({{beneficiary}}), and return the unvested amount back to the contributor.",
 		"loading-treasury-message": "Analyse du flux",
 		"modal-title": "Fermer le flux",
 		"primary-cta": "Fermer le flux",
@@ -78,12 +78,12 @@
 			"name": "Fonds de dons"
 		},
 		"fundraising": {
-			"description": "Vous cherchez à lever des fonds pour vos semences, séries, ICO, DAICO, tours privés ?  Ne cherchez pas plus loin qu'un contrat de collecte de fonds.",
+			"description": "Vous cherchez à lever des fonds pour vos semences, séries, ICO, DAICO, tours privés?  Ne cherchez pas plus loin qu'un contrat de collecte de fonds.",
 			"name": "Collecte de fonds"
 		},
 		"modal-title": "Sélectionnez le type de transfert",
 		"otp": {
-			"description": "Envoyez de l'argent ou planifiez un paiement à une autre personne une seule fois.  Utilisez cette option pour payer tout ce que vous voulez.",
+			"description": "Envoyez de l'argent ou planifiez un paiement à une autre personne une seule fois. Utilisez cette option pour payer tout ce que vous voulez.",
 			"name": "Paiement unique"
 		},
 		"payroll": {
@@ -100,7 +100,7 @@
 			"name": "Vente immobilière (entiercement)"
 		},
 		"rent-collection": {
-			"description": "Configurez la collecte des loyers pour vos locataires.  Soyez payé en temps réel pour chaque minute qu'ils occupent votre propriété.",
+			"description": "Configurez la collecte des loyers pour vos locataires. Soyez payé en temps réel pour chaque minute qu'ils occupent votre propriété.",
 			"name": "Recouvrement des loyers"
 		},
 		"repeating": {
@@ -108,39 +108,39 @@
 			"name": "Paiement répété"
 		},
 		"setup-everything": {
-			"description": "Recommandé pour les professionnels qui souhaitent mettre en place un contrat avec des conditions uniques, peu utilisées.",
+			"description": "Recommandé pour les professionnels qui souhaitent établir un contrat avec des conditions uniques, peu utilisées.",
 			"name": "Tout configurer (avancé)"
 		},
 		"subscription": {
-			"description": "Configurez un contrat d'abonnement SaaS pour les paiements d'adhésion réguliers.  Pensez à Netflix ou à votre abonnement mensuel au Gym Club.",
+			"description": "Configurez un contrat d'abonnement SaaS pour les paiements d'adhésion réguliers. Pensez à Netflix ou à votre abonnement mensuel au Gym Club.",
 			"name": "Abonnement"
 		}
 	},
 	"custody": {
-		"heading": "Crypto Asset Custody",
-		"subheading": "The most advanced digital asset platform, for secure crypto custody, trading, staking, governance, and more.",
-		"custody-button": "Apply to MeanFi Custody",
+		"custody-button": "Appliquer à MeanFi Custody",
 		"first-container": {
-			"title-one": "Safeguard your investments",
-			"text-one": "We provide secure custody solutions for institutions and individuals alike so they can safely invest in crypto assets.",
-			"title-two": "Trade, borrow, and earn rewards",
-			"text-two": "With MeanFi Trading, access multiple venues through one onboarding. Borrow crypto or USD against crypto collateral, or lend and earn returns on assets under custody.",
-			"title-three": "Onboarding and Support",
-			"text-three": "Dedicated Support Team that guides you during the onboard process and help you resolve any challenge."
+			"text-one": "Nous fournissons des solutions de garde sécurisées aux institutions et aux particuliers afin qu'ils puissent investir en toute sécurité dans des actifs cryptographiques.",
+			"text-three": "Une équipe d'assistance dédiée qui vous guide tout au long du processus d'intégration et vous aide à résoudre tout défi.",
+			"text-two": "Avec MeanFi Trading, accédez à plusieurs sites via une seule intégration. Empruntez des cryptos ou des USD contre des garanties cryptographiques, ou prêtez et gagnez des rendements sur les actifs sous garde.",
+			"title-one": "Sécurisez vos investissements",
+			"title-three": "Intégration et assistance",
+			"title-two": "Échangez, empruntez et gagnez des récompenses"
 		},
+		"heading": "Conservation des actifs cryptographiques",
 		"second-container": {
-			"title": "WHY MEANFI CUSTODY",
-			"text": "We're a team of engineers, designers, and crypto experts who believe that the future is digital assets. However, with no way to securely store them right now we feel like our hands are tied behind our back. So we decided to build MeanFi Custody so that you can finally make your money work for you!"
+			"text": "Nous sommes une équipe d'ingénieurs, de concepteurs et d'experts en cryptographie qui croient que l'avenir est aux actifs numériques.  Cependant, sans aucun moyen de les stocker en toute sécurité pour le moment, nous avons l'impression que nos mains sont liées derrière notre dos.  Nous avons donc décidé de construire MeanFi Custody afin que vous puissiez enfin faire travailler votre argent pour vous !",
+			"title": "POURQUOI MEANFI GARDE"
 		},
+		"subheading": "La plate-forme d'actifs numériques la plus avancée, pour la conservation sécurisée des cryptos, le trading, le jalonnement, la gouvernance, etc.",
 		"third-container": {
-			"title": "Supported Assets",
-			"text": "MeanFi supports assets that meet our standards of quality and safety. Our list includes USDC, USDT, SOL, DAI, and more. We are always looking to grow our portfolio with new Assets. To learn more about our roadmap, please get in touch."
+			"text": "MeanFi prend en charge les actifs qui répondent à nos normes de qualité et de sécurité.  Notre liste comprend USDC, USDT, SOL, DAI, et plus encore.  Nous cherchons toujours à développer notre portefeuille avec de nouveaux actifs.  Pour en savoir plus sur notre feuille de route, veuillez nous contacter.",
+			"title": "Actifs pris en charge"
 		}
 	},
 	"ddca-selector": {
-		"modal-title": "Répéter cet échange ?",
+		"modal-title": "Répéter cet échange ?",
 		"ote": {
-			"description": "Échangez maintenant.  Une fois.",
+			"description": "Échangez maintenant. Une fois.",
 			"name": "Échange unique"
 		},
 		"repeating-daily": {
@@ -165,12 +165,12 @@
 		}
 	},
 	"ddca-setup-modal": {
-		"cta-label-deposit": "Dépôt",
+		"cta-label-deposit": "Déposer",
 		"cta-label-depositing": "Dépôt...",
-		"cta-label-vault-created": "Approuvé",
+		"cta-label-vault-created": "Approuvée",
 		"headline": "Achetez pour <strong>{{fromTokenAmount}}</strong> une valeur de <strong>{{toTokenSymbol}}</strong> {{recurrencePeriod}} pour <strong>{{totalPeriod}}</strong>, à partir d'aujourd'hui.",
 		"help": {
-			"help-item-01": "Vous déposerez {{fromTokenAmount}} dans votre coffre-fort personnel.",
+			"help-item-01": "Vous déposerez {{fromTokenAmount}} dans votre coffre personnel.",
 			"help-item-01-topup": "Déposez un {{fromTokenAmount}} supplémentaire dans votre coffre-fort personnel.",
 			"help-item-02": "Le coffre utilise le dépôt pour effectuer les échanges {{recurrencePeriod}}.",
 			"help-item-03": "Lorsque vous êtes prêt, récupérez votre nouveau {{toTokenSymbol}} dans le coffre-fort.",
@@ -187,7 +187,7 @@
 	"ddcas": {
 		"activity": {
 			"action-deposit": "{{fromAmount}} déposé",
-			"action-exchange": "Échange de {{fromAmount}} contre {{toAmount}}",
+			"action-exchange": "Échange {{fromAmount}} contre {{toAmount}}",
 			"action-withdraw": "Retrait de {{toAmount}}"
 		},
 		"add-funds": {
@@ -199,47 +199,47 @@
 		"add-funds-cta-disabled-funding": "Ajouter des fonds en cours...",
 		"add-funds-cta-disabled-withdrawing": "Retrait en cours...",
 		"close-ddca": {
-			"modal-title": "Es-tu sûr?",
+			"modal-title": "Êtes-vous sûr?",
 			"primary-cta": "Confirmer",
 			"secondary-cta": "Retour"
 		},
 		"exchange-dcas": {
-			"detail-panel-word-one": "Buying",
-			"detail-panel-word-two": "worth of",
-			"detail-panel-word-three": "every",
-			"withdraw": "Withdraw",
-			"cancel-withdraw-everything": "Cancel and withdraw everything",
-			"total-deposits": "Total deposits",
-			"total-left": "Total left (will run out by",
-			"exchanged-for": "Exchanged for (avg rate 1",
-			"next-scheduled-exchange": "Next scheduled exchange",
-			"deposited": "Deposited",
-			"rate-amount": "Every",
-			"exchange-details": "Exchange details"
+			"cancel-withdraw-everything": "Annuler et tout retirer",
+			"deposited": "Déposé",
+			"detail-panel-word-one": "Achat",
+			"detail-panel-word-three": "tous",
+			"detail-panel-word-two": "valeur de",
+			"exchange-details": "Détails de l'échange",
+			"exchanged-for": "Échangé contre (taux moyen 1",
+			"next-scheduled-exchange": "Prochain échange programmé",
+			"rate-amount": "Tous",
+			"total-deposits": "Dépôts totaux",
+			"total-left": "Le total restant sera épuisé de",
+			"withdraw": "Retirer"
 		},
 		"screen-title": "Achats récurrents",
-		"setup-close-warning": "Fermeture sans clic.  Commencer ignorera votre premier achat.  Fermer quand même ?",
+		"setup-close-warning": "Fermeture sans clic. Commencer ignorera votre premier achat. Fermer quand même ?",
 		"streams-ddcas": "Cliquez pour actualiser les achats récurrents"
 	},
 	"deposits": {
 		"address-share-disclaimer": "Cette adresse ne peut être utilisée que pour recevoir des jetons SOL et SPL sur Solana.",
 		"back-to-deposit-options": "Retour aux options de dépôt",
 		"ftx-cta-label-enabled": "Dépôt de FTX",
-		"heading": "Déposez depuis votre carte, compte bancaire ou depuis une autre Blockchain directement dans votre portefeuille Solana.\n Sélectionnez l'une des options ci-dessous",
+		"heading": "Déposez depuis votre carte, compte bancaire ou depuis une autre Blockchain directement dans votre portefeuille Solana.",
 		"modal-title": "Options de dépôt",
 		"move-from-ethereum-cta-label": "Déplacer des actifs d'Ethereum",
 		"move-from-polygon-cta-label": "Déplacer les actifs de Polygon",
 		"move-from-renbridge-cta-label": "Transférez vos Bitcoins",
 		"not-connected": "Veuillez d'abord connecter votre portefeuille",
 		"operation-cta-label-disabled": "Portefeuille non connecté",
-		"renbridge-cta-warning": "Les cartes de crédit et de débit Chase Bank (US) ne fonctionneront pas pour acheter de la crypto.  Toutes les autres banques sont OK !",
+		"renbridge-cta-warning": "Les cartes de crédit et de débit Chase Bank (US) ne fonctionneront pas pour acheter de la crypto. Toutes les autres banques sont OK !",
 		"send-from-wallet-cta-label": "Envoyer depuis Wallet/Exchange",
 		"transak-cta-label": "Acheter avec une carte de débit/crédit"
 	},
 	"error-screens": {
 		"network-status": "Vérifier l'état du réseau",
 		"report-problem": "Signaler un problème",
-		"service-unavailable-message": "Il semble qu'il y ait une congestion sur le réseau en ce moment.  S'il vous plait attendez quelques minutes et réessayez."
+		"service-unavailable-message": "Il semble qu'il y ait une congestion sur le réseau en ce moment. S'il vous plait attendez quelques minutes et réessayez."
 	},
 	"faucet": {
 		"current-sol-balance": "Solde SOL actuel",
@@ -251,17 +251,13 @@
 		"wrap-transaction-fee": "Frais de transaction d'emballage",
 		"wrapped-amount": "Montant emballé"
 	},
-	"unwrap": {
-		"current-wsol-balance": "Solde actuel du SOL encapsulé",
-		"label-input-amount": "Enter amount to unwrap"
-	},
 	"general": {
 		"cta-change": "Changer",
 		"cta-close": "Fermer",
 		"cta-copy": "Copie",
 		"cta-finish": "Finir",
-		"cta-try-again": "Essayer à nouveau",
 		"cta-load-more": "Charger plus",
+		"cta-try-again": "Réessayer",
 		"day": "journée",
 		"days": "jours",
 		"finished": "Fini",
@@ -279,7 +275,7 @@
 		"reload-cta": "Réessayez maintenant",
 		"reload-cta-disabled": "Vous pouvez réessayer dans",
 		"retry": "Retenter",
-		"seconds": "seconds",
+		"seconds": "secondes",
 		"start": "Démarrer",
 		"starting": "Départ",
 		"stepper-label": "Étape {{step}} sur {{steps}}",
@@ -291,34 +287,47 @@
 		"you": "vous"
 	},
 	"invest": {
-		"title": "Invest",
-		"subtitle": "The easiest way to grow your money stash",
-		"screen-title": "Invest Options",
-		"refresh-tooltip": "Refresh invest data",
 		"panel-left": {
-			"invest-stake-tab-title": "Stake MEAN",
-			"invest-liquidity-tab-title": "MEAN Liquidity Pools",
-			"up-to-value-label": "Up to",
-			"no-invest-options": "No invest options available",
-			"not-connected": "Please connect your wallet to see your invest options"
+			"invest-liquidity-tab-title": "Pools de liquidité MEAN",
+			"invest-stake-sol-tab-title": "Stake SOL",
+			"invest-stake-tab-title": "pieu MEAN",
+			"no-invest-options": "Aucune option d'investissement disponible",
+			"not-connected": "Veuillez connecter votre portefeuille pour voir vos options d'investissement",
+			"up-to-value-label": "Up to"
 		},
 		"panel-right": {
-			"title": "Stake MEAN to Earn MEAN Rewards",
-			"first-text": "MEAN staking rewards include emission incentives plus a share of the protocol revenues, and can be boosted using locking periods. When you stake your MEAN, you get sMEAN in return.",
-			"second-text": "Simply holding your sMEAN is all that is required to continuously grow your MEAN stash. You don't need to harvest the rewards with MEAN staking. When you unstake your sMEAN, you will receive the rewards earned in the form of additional MEAN on top of the amount staked.",
-			"stats": {
-				"staking-apy": "Staking APY",
-				"staking-apy-tooltip": "The APY associated with sMEAN is a representation of the price of sMEAN over a 365 day period.",
-				"total-mean-rewards": "Total MEAN Rewards",
-				"total-value-locked": "Total Value Locked"
-			},
+			"first-text": "Les récompenses de jalonnement MEAN comprennent des incitations à l'émission plus une part des revenus du protocole, et peuvent être augmentées à l'aide de périodes de verrouillage.  Lorsque vous misez votre MEAN, vous obtenez sMEAN en retour.",
 			"liquidity-pool": {
-				"title": "MEAN Liquidity Pools",
-				"text-one": "MEAN Liquidity Pools are currently available on Orca and Raydium with multiple pools including MEAN/SOL, MEAN/RAY and MEAN/USDC.",
+				"refresh-tooltip": "Actualiser les données de liquidité",
+				"text-one": "Les pools de liquidités MEAN sont actuellement disponibles sur Orca et Raydium avec plusieurs pools, notamment MEAN/SOL, MEAN/RAY et MEAN/USDC.",
+				"text-three": "Avant d'ajouter des fonds à un pool, assurez-vous de lire et d'accepter les risques associés à l'investissement dans un pool de liquidités.",
 				"text-two": "To invest in a liquidity pool, you need to supply both tokens that make up the pool. For example, when you join the Raydium MEAN/USDC pool both MEAN and USDC tokens are required. For more details, see the adding liquidity guides on",
 				"text-two-divider": "and",
-				"text-three": "Before you add funds to a pool, be sure to read and accept the risks associated with investing in a liquidity pool.",
-				"refresh-tooltip": "Refresh liquidity data"
+				"title": "Pools de liquidité MEAN"
+			},
+			"second-text": "Le simple fait de tenir votre sMEAN est tout ce qui est nécessaire pour faire croître continuellement votre réserve MEAN.  Vous n'avez pas besoin de récolter les récompenses avec le jalonnement MEAN.  Lorsque vous retirez votre sMEAN, vous recevrez les récompenses gagnées sous la forme de MEAN supplémentaires en plus du montant misé.",
+			"staking-data": {
+				"label-avg": "Moy.  Rendement verrouillé",
+				"label-balance": "Mon solde xMEAN",
+				"label-boost": "Boost de verrouillage de jalonnement",
+				"label-locked": "Ma eMEAN verrouillée",
+				"label-my-staked": "Ma MEAN mise en jeu",
+				"text-one": "Jetons MEAN verrouillés jusqu'au {{unstakeStartDate}}",
+				"text-two": "Les périodes de boost de verrouillage arrivent bientôt pour gagner encore plus de MEAN !",
+				"title": "Votre mise actuelle :",
+				"withdraw-button": "Withdraw FundsRetirer des récompenses"
+			},
+			"staking-sol": {
+				"refresh-tooltip": "Refresh staking data",
+				"text-one": "Liquid SOL staking is currently available with three providers on Solana. These are Lido (stSOL), Marinade (mSOL) and Socean (scnSOL).",
+				"text-two": "Before you stake your SOL, be sure to read and accept the risks associated when staking with one of these providers.",
+				"title": "Liquid SOL Staking"
+			},
+			"stats": {
+				"staking-apy": "Jalonnement APY",
+				"staking-apy-tooltip": "L'APY associé à sMEAN est une représentation du prix de sMEAN sur une période de 365 jours.",
+				"total-mean-rewards": "Récompenses MEAN totales",
+				"total-value-locked": "Valeur totale verrouillée"
 			},
 			"table-data": {
 				"column-apr/apy": "APR/APY",
@@ -326,54 +335,46 @@
 				"column-liquidity": "Liquidity",
 				"column-lppair": "LP Pair",
 				"column-platform": "Platform",
-				"column-volume": "Vol (24hrs)",
+				"column-stake": "Stake",
 				"column-token": "Token",
 				"column-total-staked": "Total staked",
-				"column-stake": "Stake"
+				"column-volume": "Vol (24hrs)"
 			},
 			"tabset": {
 				"stake": {
-					"amount-label": "Amount to stake",
-					"days": "days",
-					"notification-label": "Staking period of {{periodValue}} {{periodTime}} will lock your Tokens until {{unstakeStartDate}}.",
-					"terms-and-conditions-tooltip": "Your tokens will be locked for the period of time selected and you will not be able to unstake them before the staking period ends. When you stake additional tokens to an existing contract, the staking period will be extended to the new end date for ALL of the tokens locked.",
-					"verified-label": "I agree to the Terms & Conditions",
-					"year": "year",
-					"years": "years"
+					"amount-label": "Montant à miser",
+					"days": "journées",
+					"name": "Miser",
+					"notification-label": "La période de jalonnement de {{periodValue}} {{periodTime}} verrouillera vos jetons jusqu'au {{unstakeStartDate}}.",
+					"period-label": "Combien de temps voulez-vous miser ?",
+					"stake-button": "Miser",
+					"stake-button-busy": "Staking",
+					"terms-and-conditions-tooltip": "Vos jetons seront verrouillés pendant la période de temps sélectionnée et vous ne pourrez pas les retirer avant la fin de la période de jalonnement.  Lorsque vous misez des jetons supplémentaires sur un contrat existant, la période de mise sera prolongée jusqu'à la nouvelle date de fin pour TOUS les jetons verrouillés.",
+					"verified-label": "J'accepte les termes et conditions",
+					"year": "an",
+					"years": "ans"
 				},
 				"unstake": {
-					"amount-label": "Amount to unstake",
-					"name": "Unstake",
-					"notification-label-one": "Your currently have {{stakedAmount}} sMEAN staked which is currently locked until {{unstakeStartDate}}",
-					"notification-label-one-error": "Your currently do not have any sMEAN.",
-					"notification-label-two": "Unstaking will withdraw the specified amount of unlocked sMEAN tokens to your wallet",
+					"amount-label": "Montant à Décoller",
+					"name": "Décoller",
+					"notification-label-one": "Vous avez actuellement {{stakedAmount}} sMEAN jalonné qui est actuellement verrouillé jusqu'au {{unstakeStartDate}}",
+					"notification-label-one-error": "Vous n'avez pas de sMEAN jalonné",
+					"notification-label-two": "Le désengagement retirera le montant spécifié de jetons sMEAN déverrouillés dans votre portefeuille",
 					"send-amount": {
-						"label-right": "Available to unstake"
+						"label-right": "Disponible pour retirer"
 					},
+					"unstake-button-available": "Décoller",
 					"unstake-button-busy": "Unstaking",
-					"unstake-button-available": "Unstake",
-					"unstake-button-unavailable": "No available",
-					"verified-label": "I agree to the Terms & Conditions"
+					"unstake-button-unavailable": "Indisponible",
+					"verified-label": "J'accepte les termes et conditions"
 				}
 			},
-			"staking-sol": {
-				"title": "Liquid SOL Staking",
-				"text-one": "Liquid SOL staking is currently available with three providers on Solana. These are Lido (stSOL), Marinade (mSOL) and Socean (scnSOL).",
-				"text-two": "Before you stake your SOL, be sure to read and accept the risks associated when staking with one of these providers.",
-				"refresh-tooltip": "Refresh staking data"
-			},
-			"staking-data": {
-				"title": "Your Current Stake:",
-				"label-my-staked": "My available sMEAN balance",
-				"label-avg": "Avg. Locked Yield",
-				"label-boost": "Staking Lock Boost",
-				"label-locked": "My Locked eMEAN",
-				"label-balance": "My xMEAN Balance",
-				"text-one": "MEAN tokens locked till {{unstakeStartDate}}",
-				"text-two": "Locking boost periods are coming soon to earn even more MEAN!",
-				"withdraw-button": "Withdraw Funds"
-			}
-		}
+			"title": "Misez MEAN pour gagner des récompenses MEAN"
+		},
+		"refresh-tooltip": "Actualiser les données d'investissement",
+		"screen-title": "Options d'investissement",
+		"subtitle": "Le moyen le plus simple de faire fructifier votre réserve d'argent",
+		"title": "Investir"
 	},
 	"language-selector": {
 		"modal-title": "Sélecteur de langue",
@@ -382,37 +383,37 @@
 	},
 	"multisig": {
 		"add-participant-cta": "Ajouter un participant",
-		"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
+		"back-to-multisig-accounts-cta": "Retour aux comptes Multisig",
+		"create-asset": {
+			"main-cta": "Créer",
+			"main-cta-busy": "Création d'actif",
+			"modal-title": "Créer un actif multisig",
+			"no-token": "Sélectionnez le jeton",
+			"success-message": "Votre actif multisig a été créé avec succès",
+			"token-label": "Du compte",
+			"token-placeholder": "Entrez l'adresse mint de jeton"
+		},
 		"create-multisig": {
 			"main-cta": "Créer",
 			"main-cta-busy": "Création de plusieurs signatures",
 			"modal-title": "Créer plusieurs signatures",
-			"multisig-address-used-as-participant": "Cannot use a multisig address as participant",
+			"multisig-address-used-as-participant": "Impossible d'utiliser une adresse multisig comme participant",
 			"multisig-duplicate-participants": "Participants en double trouvés, veuillez vérifier.",
 			"multisig-label-input-empty": "Entrez un nom multisig",
 			"multisig-label-input-label": "Nom multisignature",
-			"multisig-label-placeholder": "Tapez un nom pour votre multisig",
+			"multisig-label-placeholder": "Tapez un nom pour votre compte multisig",
 			"multisig-no-participants": "Aucun participant ajouté pour le moment",
 			"multisig-participants": "Signataires valides ({{numParticipants}} sur {{maxParticipants}})",
-			"multisig-participants-warning message": "Il n'est pas recommandé de créer un Multisig avec le même nombre de participants que de signatures requises",
+			"multisig-participants-warning-message": "Il n'est pas recommandé de créer un Multisig avec le même nombre de participants que de signatures requises",
 			"multisig-threshold-input-empty": "Saisissez une valeur minimale requise pour les signatures",
 			"multisig-threshold-input-label": "Signatures minimales requises",
 			"multisig-threshold-input-max": "Le nombre maximum de signatures est de 10",
 			"multisig-threshold-input-max-warn": "Nombre maximum de signatures atteint (10)",
 			"multisig-threshold-placeholder": "Tapez un minimum de signatures requises pour votre compte multisig",
-			"multisig-threshold-question-mark-tooltip": "As best practice, always have more multisig signers than the minimum required signers. A 2-of-3 multisig is the most basic setup where 2 of the 3 participants are required to execute a transaction.",
+			"multisig-threshold-question-mark-tooltip": "Comme meilleure pratique, ayez toujours plus de signataires multisig que le minimum de signataires requis. Un multisig 2 sur 3 est la configuration la plus basique où 2 des 3 participants sont nécessaires pour exécuter une transaction.",
 			"success-message": "Votre nouveau compte multisig a été créé avec succès."
 		},
 		"create-new-multisig-account-cta": "Créer plusieurs signatures",
-		"create-asset": {
-			"main-cta": "Créer",
-			"main-cta-busy": "Création d'un coffre-fort",
-			"modal-title": "Créer un coffre-fort multisig",
-			"no-token": "Sélectionnez le jeton",
-			"success-message": "Votre coffre-fort multisig a été créé avec succès",
-			"token-label": "Amount to transfer",
-			"token-placeholder": "Entrez l'adresse mint de jeton"
-		},
 		"crud-multisig": {
 			"delete-multisig": "Supprimer plusieurs signatures",
 			"edit-multisig": "Modifier la signature multiple",
@@ -423,73 +424,101 @@
 			"main-cta": "Jetons de mint",
 			"main-cta-busy": "Mintting de jetons",
 			"mint-amount-label": "Montant",
-			"mint-amount-placeholder": "Entrez le nombre de jetons à mint",
+			"mint-amount-placeholder": "Entrez le nombre de jetons à frapper",
 			"mint-to-label": "Mint à",
 			"mint-to-placeholder": "Entrez l'adresse du compte de destination",
 			"modal-title": "Jetons de mint",
-			"success-message": "Vos jetons ont été minted avec succès.",
+			"success-message": "Vos jetons ont été frappés avec succès.",
 			"token-address-label": "Adresse du jeton",
 			"token-address-placeholder": "Entrez l'adresse du jeton"
 		},
 		"multisig-account-detail": {
-			"address": "Safe Deposit Address",
+			"address": "Autorité",
 			"authority": "Autorité",
 			"copy-id-title": "ID MULTISIG",
 			"created-on": "Créé sur",
-			"cta-create-asset": "Créer un coffre",
+			"cta-assets": "Coffres ({{itemCount}})",
+			"cta-create-asset": "Créer un actif",
 			"cta-mint": "Mint",
-			"cta-no-programs": "Programs",
-			"cta-no-treasuries": "Streaming Treasuries",
+			"cta-mints": "Mints ({{itemCount}})",
 			"cta-no-assets": "coffres",
 			"cta-no-mints": "Mints",
-			"cta-programs": "Programs ({{itemCount}})",
+			"cta-no-programs": "Programmes",
+			"cta-no-treasuries": "Trésors",
+			"cta-programs": "Programmes ({{itemCount}})",
 			"cta-transfer": "Jetons de transfert",
-			"cta-treasuries": "Streaming Treasuries ({{itemCount}})",
+			"cta-treasuries": "Bons du Trésor ({{itemCount}})",
 			"cta-upgrade-program": "Programme de mise à niveau",
-			"cta-assets": "Coffres ({{itemCount}})",
-			"cta-mints": "Mints ({{itemCount}})",
 			"multisig-address-label": "Adresse",
 			"multisig-label-label": "Nom multisignature",
-			"multisig-owners": "Les propriétaires",
+			"multisig-owners": "Propriétaires",
 			"multisig-participants": "Propriétaires actuels de Multisig",
+			"multisig-tx-approve-busy": "Approbation de la transaction",
+			"multisig-tx-execute-busy": "Exécution de la transaction",
 			"no-multisig-loaded": "Créez ou sélectionnez un compte multisig pour afficher les détails",
 			"no-multisig-selected": "Veuillez sélectionner un compte multisig pour afficher les détails",
-			"required-signatures": "Signatures requises",
-			"multisig-tx-approve-busy": "Approving transaction",
-			"multisig-tx-execute-busy": "Executing transaction"
+			"required-signatures": "Signatures requises"
 		},
 		"multisig-accounts": {
 			"no-accounts": "Aucun compte multisig disponible",
 			"not-connected": "Veuillez connecter votre portefeuille pour voir vos comptes multisig",
 			"pending-transactions": "{{txs}} transactions en attente"
 		},
+		"multisig-assets": {
+			"asset-detail-heading": "Détails de l'actif",
+			"back-to-multisig-accounts-cta": "Retour aux comptes Multisig",
+			"cta-change-multisig-authority": "Modifier la propriété de l'actif",
+			"cta-change-multisig-authority-busy": "Modification de la multisignature",
+			"cta-close": "Fermer le coffre-fort",
+			"cta-close-busy": "Actif de clôture",
+			"cta-create-asset-busy": "Création d'actif",
+			"cta-transfer": "Lancer le retrait",
+			"cta-transfer-busy": "Initier une demande de retrait",
+			"delete-asset": {
+				"explanatory-paragraph": "En soumettant cette demande, vous signerez la transaction et l'approuverez en tant que l'un des signataires Multisig.  Avant que l'actif ne soit supprimé, les autres membres Multisig doivent l'approuver.",
+				"main-cta": "Envoyer une demande de suppression",
+				"modal-title": "Supprimer un actif multisig",
+				"selected-asset-label": "Actif sélectionné",
+				"warning-message": "Seuls les actifs vides peuvent être supprimés.  Pour supprimer un actif, vous devez d'abord transférer tous les fonds vers un autre compte."
+			},
+			"explanatory-paragraph": "En soumettant cette demande, vous signerez la transaction et l'approuverez en tant que l'un des signataires Multisig.  Avant que les fonds puissent être envoyés, les autres membres Multisig doivent l'approuver.",
+			"main-cta": "Signer la demande de transfert de fonds",
+			"no-asset-loaded": "Aucun élément chargé",
+			"no-assets": "Aucun coffre-fort disponible",
+			"no-transactions": "Aucune transaction pour ce coffre",
+			"not-connected": "Veuillez connecter votre portefeuille pour voir les coffres",
+			"refresh-tooltip": "Cliquez pour actualiser la liste des coffres",
+			"screen-title": "Coffres - {{multisigName}} ({{itemCount}})",
+			"screen-title-no-assets": "coffres",
+			"validation-amount-high": "Le montant dépasse le solde de l'actif"
+		},
 		"multisig-detail-heading": "Détails du compte multisig",
 		"multisig-mints": {
-			"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
-			"change-mint-authority-modal-title": "Set Mint Authority",
-			"create-mint-modal-title": "Create mint",
-			"cta-change-mint-authority": "Transfer Ownership",
-			"cta-change-mint-authority-busy": "Changing Multisig",
-			"cta-create-mint": "Create mint",
-			"cta-create-mint-busy": "Creating mint",
-			"cta-mint-token": "Mint Tokens",
-			"cta-mint-token-busy": "Minting Tokens",
-			"mint-amount-label": "Select mint decimals",
-			"mint-detail-heading": "Mint details",
-			"multisig-already-owns-the-mint": "Selected multisig is already authority for this vault",
-			"no-mint": "No mint loaded",
-			"no-mints": "No mints available",
-			"no-transactions": "No transactions for this mint",
-			"not-connected": "Please connect your wallet to see mints",
-			"refresh-tooltip": "Click to refresh the list of mints",
+			"back-to-multisig-accounts-cta": "Retour aux comptes Multisig",
+			"change-mint-authority-modal-title": "Définir l'autorité de la menthe",
+			"create-mint-modal-title": "Créer de la menthe",
+			"cta-change-mint-authority": "Transfert de propriété",
+			"cta-change-mint-authority-busy": "Modification de la multisignature",
+			"cta-create-mint": "Créer de la menthe",
+			"cta-create-mint-busy": "Créer de la menthe",
+			"cta-mint-token": "Jetons de menthe",
+			"cta-mint-token-busy": "Frappe de jetons",
+			"decimals": "décimales :",
+			"mint-address": "ADRESSE MINT :",
+			"mint-amount-label": "Sélectionnez les décimales d'atelier",
+			"mint-detail-heading": "Détails neufs",
+			"multisig-already-owns-the-mint": "Selected multisig is already authority for this vaultLe multisig sélectionné fait déjà autorité pour cette menthe",
+			"multisig-authority": "Autorité multisig",
+			"no-mint": "Pas de menthe chargée",
+			"no-mints": "Pas de menthes disponibles",
+			"no-transactions": "Aucune transaction pour cet atelier",
+			"not-connected": "Veuillez connecter votre portefeuille pour voir les mints",
+			"refresh-tooltip": "Cliquez pour rafraîchir la liste des monnaies",
 			"screen-title": "Mints - {{multisigName}} ({{itemCount}})",
 			"screen-title-no-mints": "Mints",
-			"selected-mint-label": "Selected Mint",
-			"success-message": "New mint authority set successfully.",
-			"multisig-authority": "Multisig Authority",
-			"decimals": "decimals:",
-			"supply": "supply",
-			"mint-address": "MINT ADDRESS:"
+			"selected-mint-label": "Mint Sélectionnée",
+			"success-message": "Nouvelle autorité de mint définie avec succès.",
+			"supply": "fournir"
 		},
 		"multisig-programs": {
 			"cta-create-program": "Créer un programme",
@@ -499,84 +528,56 @@
 			"not-connected": "Veuillez connecter votre portefeuille pour voir les programmes",
 			"program-detail-heading": "Détails du programme",
 			"refresh-tooltip": "Cliquez pour actualiser la liste des programmes",
-			"screen-title": "Programmes - {{multisigName}} ({{programsCount}})",
+			"screen-title": "Programmes - {{multisigName}} ({{programCount}})",
 			"screen-title-no-programs": "Programmes"
 		},
 		"multisig-transactions": {
+			"address": "Adresse:",
+			"approval": "approbation.",
 			"column-created-on": "Créé sur",
-			"column-current-signatures": "Sig",
+			"column-current-signatures": "Signer",
 			"column-my-status": "Mon statut",
 			"column-operation": "Opération",
 			"column-pending-signatures": "Signatures",
 			"column-program-id": "Programme",
-			"loading-transactions": "Chargement des opérations",
-			"modal-title": "Proposal summary",
-			"no-transactions": "This multisig asset has no transactions",
-			"tx-operation-failure": "L'opération {{operation}} a échoué",
-			"tx-operation-success": "L'opération {{operation}} a réussi",
-			"tx-operation-pending-one": "A transaction on this Multisig is now ready for execution. Please tell the person who initiated this transaction to execute it.",
-			"tx-operation-pending-two": "A transaction on this Multisig is ready for",
-			"tx-operation-voided": "This pending transaction has been VOIDED due to the Multisig being edited.",
-			"tx-operation-rejected": "This transaction has been rejected.",
-			"tx-operation-executed": "This transaction has already been executed",
-			"proposed-action": "Proposed action:",
-			"submitted-on": "Submitted on:",
-			"proposed-by": "Proposed by:",
-			"initiator-transaction": "This transaction was submitted by",
+			"explain-failure": "Expliquer la condition de défaillance si spécifique",
+			"initiator-transaction": "Cette transaction a été soumise par",
+			"loading-transactions": "Chargement des transactions",
 			"missing-signature": "To execute this proposal, {{missingSignature}} more signature is needed.",
 			"missing-signatures": "To execute this proposal, {{missingSignature}} more signatures are needed.",
-			"transaction-required": "This transaction required",
-			"transaction-has": "This transaction has",
-			"transaction-awaiting": "A proposal for this multisig is awaiting",
-			"address": "Address:",
-			"approval": "approval.",
-			"your-status": "Your status:",
-			"signers-to-approve": "signers to approve it in order to be executed.",
-			"signed": "Signed",
-			"signed-so-far": "Signed so far.",
-			"explain-failure": "Explain failure condition if specific",
-			"ready-for-execution": "This transaction is now ready for execution. Please tell the person who initiated this transaction to execute it.",
-			"treasury-closed-warning": "When a treasury is closed, all funds left over will be deposited back into the multisig safe.",
-			"not-signed": "Not signed",
+			"modal-title": "Récapitulatif des transactions",
+			"no-transactions": "Ce compte multisig n'a aucune transaction",
+			"not-sign-tx": "You did NOT sign this transaction",
+			"not-signed": "Pas signé",
+			"not-signed-tx": "You have NOT signed this transaction",
+			"proposed-action": "Action proposée :",
+			"proposed-by": "Proposed by:",
+			"ready-for-execution": "Cette transaction est maintenant prête à être exécutée.  Veuillez dire à la personne qui a initié cette transaction de l'exécuter.",
 			"rejected": "Rejected",
 			"rejected-tx": "You have rejected this transaction",
-			"not-sign-tx": "You did NOT sign this transaction",
-			"not-signed-tx": "You have NOT signed this transaction"
+			"signed": "Signé.",
+			"signed-so-far": "Signé pour l'instant.",
+			"signers-to-approve": "signataires de l'approuver afin qu'il soit exécuté.",
+			"submitted-on": "Soumis le :",
+			"transaction-awaiting": "Une transaction sur ce Multisig est en attente",
+			"transaction-has": "Cette transaction a",
+			"transaction-requires": "Cette opération nécessite",
+			"treasury-closed-warning": "Lorsqu'une trésorerie est fermée, tous les fonds restants seront déposés dans le portefeuille de l'initiateur.  Veuillez confirmer que cela est acceptable avant de signer.",
+			"tx-operation-executed": "This transaction has already been executed",
+			"tx-operation-failure": "L'opération {{operation}} a échoué",
+			"tx-operation-pending-one": "Une transaction sur ce Multisig est maintenant prête à être exécutée. Veuillez dire à la personne qui a initié cette transaction de l'exécuter.",
+			"tx-operation-pending-two": "Une transaction sur ce Multisig est prête pour",
+			"tx-operation-rejected": "This transaction has been rejected.",
+			"tx-operation-success": "L'opération {{operation}} a réussi",
+			"tx-operation-voided": "This pending transaction has been VOIDED due to the Multisig being edited.",
+			"your-status": "Votre statut:"
 		},
 		"multisig-treasuries": {
-			"back-to-treasuries": "Back to Streaming Treasuries"
-		},
-		"multisig-assets": {
-			"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
-			"cta-change-multisig-authority": "Transfert de propriété",
-			"cta-change-multisig-authority-busy": "Modification de la multisignature",
-			"cta-close": "Fermer le coffre-fort",
-			"cta-close-busy": "Voûte de fermeture",
-			"cta-create-asset-busy": "Création d'un coffre-fort",
-			"cta-transfer": "Propose Funds Transfer",
-			"cta-transfer-busy": "Initier une demande de retrait",
-			"delete-asset": {
-				"explanatory-paragraph": "By submitting this proposal, you will sign the transaction and approve it as one of the Multisig signers. Before the asset is deleted, the other Multisig members need to approve it.",
-				"main-cta": "Submit delete proposal",
-				"modal-title": "Delete a Multisig Asset",
-				"selected-asset-label": "Asset selected",
-				"warning-message": "Only empty assets can be deleted. To delete an asset you need to first transfer all funds to another account."
-			},
-			"no-transactions": "Aucune transaction pour ce coffre",
-			"no-asset-loaded": "Aucun coffre-fort chargé",
-			"no-assets": "Aucun coffre-fort disponible",
-			"not-connected": "Veuillez connecter votre portefeuille pour voir les coffres",
-			"refresh-tooltip": "Cliquez pour actualiser la liste des coffres",
-			"screen-title": "Coffres - {{multisigName}} ({{itemCount}})",
-			"screen-title-no-assets": "coffres",
-			"validation-amount-high": "Le montant dépasse le solde du coffre",
-			"asset-detail-heading": "Détails du coffre-fort",
-			"explanatory-paragraph": "By submitting this proposal, you will sign the transaction and approve it as one of the Multisig signers. Before the funds are sent, the other Multisig members need to approve it.",
-			"main-cta": "Sign transfer proposal"
+			"back-to-treasuries": "Retour aux trésoreries"
 		},
 		"pending-transactions": "opérations en attente",
 		"refresh-tooltip": "Cliquez pour actualiser la liste des comptes multisig",
-		"screen-title": "Safes & Multisig",
+		"screen-title": "Comptes multisignatures",
 		"set-program-authority": {
 			"main-cta": "Définir l'autorité",
 			"main-cta-busy": "Autorité de réglage",
@@ -585,20 +586,20 @@
 			"new-authority-input-placeholder": "Adresse de la nouvelle autorité de mise à niveau du programme"
 		},
 		"transfer-authority": {
+			"asset-auth-destination-address-disclaimer": "Je confirme que la nouvelle adresse d'autorité ci-dessus saisie ou sélectionnée est une adresse de compte multisig et NON une adresse de portefeuille ordinaire. Je reconnais que si je fournis une adresse non Multisig, cela entraînera une perte permanente de l'actif et de ses fonds.",
 			"main-cta": "Définir l'autorité",
 			"main-cta-busy": "Autorité de réglage",
 			"modal-title": "Transfert de propriété",
-			"multisig-already-owns-the-asset": "Le multisig sélectionné est déjà autorisé pour ce coffre",
+			"multisig-already-owns-the-asset": "Le multisig sélectionné est déjà autorisé pour cet actif",
 			"multisig-selector-label": "Nouvelle autorité (multisig)",
 			"multisig-selector-placeholder": "Sélectionnez ou entrez une adresse multisig",
-			"selected-asset-label": "Coffre sélectionné",
-			"success-message": "Nouvelle autorité de coffre définie avec succès.",
-			"asset-auth-destination-address-disclaimer": "I confirm the above New Authority Address entered or selected is a Multisig Account address and NOT a regular wallet address. I acknowledge that if I provide a non Multisig address, it will cause a permanent loss of the vault and its funds."
+			"selected-asset-label": "Actif sélectionné",
+			"success-message": "Nouvelle autorité d'actif définie avec succès."
 		},
 		"transfer-tokens": {
 			"main-cta": "Démarrer la demande",
 			"main-cta-busy": "Demande de démarrage",
-			"modal-title": "Initiate Transfer Proposal",
+			"modal-title": "Initier une demande de retrait",
 			"source-address-label": "Transfert à partir de",
 			"source-address-placeholder": "Entrez l'adresse du compte source",
 			"success-message": "Jetons transférés avec succès.",
@@ -609,10 +610,10 @@
 		},
 		"update-multisig": {
 			"edit-not-allowed-message": "Lorsque vous modifiez les signataires sur un Multisig, toutes les transactions en attente seront ANNULÉES. Avant de continuer, assurez-vous qu'aucune transaction importante ne doit être effectuée en premier.",
-			"main-cta": "Propose changes",
+			"main-cta": "Sauvegarder les modifications",
 			"main-cta-busy": "Enregistrer les modifications",
 			"modal-title": "Modifier la signature multiple",
-			"success-message": "Vos modifications apportées au compte multisig ont été enregistrées !"
+			"success-message": "Vos modifications apportées au compte multisig ont été enregistrées !"
 		},
 		"upgrade-program": {
 			"buffer-account-label": "Nouveau tampon de programme",
@@ -635,13 +636,13 @@
 		"error-creating-vault-message": "Impossible de créer le coffre-fort, veuillez réessayer plus tard",
 		"error-ledger-title": "Erreur de grand livre",
 		"error-loading-streamid-message": "Impossible de trouver ou de charger le flux avec l'ID {{streamId}}",
-		"error-loading-treasuryid-message": "Impossible de trouver ou d'ouvrir la trésorerie avec l'ID {{Treasury Id}}",
+		"error-loading-treasuryid-message": "Impossible de trouver ou d'ouvrir la trésorerie avec l'ID {{treasuryId}}",
 		"error-sending-transaction": "Error submitting the transaction, please try again.",
 		"error-title": "Erreur",
-		"friend-referral-completed": "Parrainage d'ami terminé",
-		"invalid-publickey-message": "Clé publique invalide.  Veuillez vérifier l'entrée",
+		"friend-referral-completed": "Parrainage d'ami terminÃ©",
+		"invalid-publickey-message": "Clé publique invalide. Veuillez vérifier l'entrée",
 		"invalid-streamid-message": "ID de flux non valide",
-		"network-connection-down": "Pas de connexion réseau.  L'application est HORS LIGNE !",
+		"network-connection-down": "Pas de connexion réseau. L'application est HORS LIGNE !",
 		"network-connection-good": "La connexion réseau est bonne",
 		"network-connection-poor": "La qualité de la connexion réseau est très mauvaise",
 		"network-performance-low": "Le réseau Solana connaît des performances dégradées. Les transactions peuvent ne pas être envoyées ou confirmées.",
@@ -661,18 +662,18 @@
 		"streamid-open-cta": "Flux ouvert",
 		"streamid-placeholder": "ID de flux créé par Mean Finance"
 	},
+	"page-not-found": {
+		"button": "Rentrer chez soi",
+		"message": "Page non trouvée",
+		"title": "Page introuvable (404) - Mean Finance"
+	},
 	"payroll": {
 		"screen-subtitle": "Configurer la paie de vos employés",
 		"screen-title": "Paie"
 	},
-	"page-not-found": {
-		"title": "Page not found (404) - Mean Finance",
-		"message": "Page not found",
-		"button": "Go Home"
-	},
 	"pre-footer": {
-		"made-with": "Made with ",
-		"on-solana": " on Solana"
+		"made-with": "Fabriqué avec",
+		"on-solana": "sur Solana"
 	},
 	"referrals": {
 		"address-invalid": "L'adresse de référence n'est pas une adresse solana valide",
@@ -689,11 +690,11 @@
 			"circulating-supply-title": "Alimentation en circulation",
 			"holders-title": "Titulaires",
 			"market-cap-title": "Capitalisation boursière",
-			"token-circulating-suppply": "La quantité de pièces qui circulent sur le marché et qui sont entre les mains du public.  C'est analogue aux actions qui coulent en bourse",
-			"token-fully_dilluted_market_cap": "La valeur marchande totale de l'offre en circulation d'une crypto-monnaie.  Il est analogue à la capitalisation flottante en bourse.  Capitalisation boursière = prix actuel x offre en circulation",
+			"token-circulating-suppply": "La quantité de pièces qui circulent sur le marché et qui sont entre les mains du public. C'est analogue aux actions qui coulent en bourse",
+			"token-fully_dilluted_market_cap": "La valeur marchande totale de l'offre en circulation d'une crypto-monnaie. Il est analogue à la capitalisation flottante en bourse. Capitalisation boursière = prix actuel x offre en circulation",
 			"token-holders": "Passionnés dénotant une approche à long terme de l'investissement en crypto-monnaie",
 			"token-total-money-streams": "Nombre total de paiements continus dans le temps qui ont été créés par le programme Money Streaming",
-			"token-total-supply": "Le nombre de pièces qui ont déjà été créées, moins les pièces qui ont été brûlées.  Il est analogue aux actions en circulation sur le marché boursier",
+			"token-total-supply": "Le nombre de pièces qui ont déjà été créées, moins les pièces qui ont été brûlées. Il est analogue aux actions en circulation sur le marché boursier",
 			"token-total-value-locked": "Le nombre d'actifs qui sont actuellement jalonnés dans un protocole spécifique",
 			"token-total-volume": "Une mesure de la quantité d'une crypto-monnaie qui a été échangée au cours des dernières 24 heures",
 			"total-money-streams-title": "Total des flux d'argent",
@@ -722,38 +723,38 @@
 	},
 	"streams": {
 		"add-funds": {
-			"amount-label": "Amount",
-			"treasury-money-stream-title": "Treasury Funded Money Stream",
-			"treasury-money-stream-description": "As this stream was funded from a treasury, the funds being added will be allocated from the Treasury's available balance.",
-			"modal-title": "Add funds"
+			"amount-label": "Montant",
+			"modal-title": "Ajouter des fonds",
+			"treasury-money-stream-description": "Étant donné que ce flux a été financé à partir d'un Trésor, les fonds ajoutés seront alloués à partir du solde disponible du Trésor.",
+			"treasury-money-stream-title": "Flux d'argent financé par le Trésor"
 		},
 		"back-to-my-streams-cta": "Retour aux flux d'argent",
 		"create-new-stream-cta": "Nouveau transfert",
+		"edit-stream": {
+			"edit-stream-tooltip": "Modifier le flux d'argent",
+			"frequency-input-hint": "À quelle fréquence ce montant sera-t-il envoyé ?",
+			"frequency-input-label": "La fréquence",
+			"main-cta": "Mettre à jour le flux",
+			"main-cta-busy": "Flux de mise à jour",
+			"modal-title": "Modifier le flux d'argent",
+			"name-input-hint": "Pourquoi ce flux est-il envoyé ?",
+			"name-input-label": "Nom du flux",
+			"name-input-placeholder": "Tapez un nom pour votre flux",
+			"send-amount-input-label": "Montant à envoyer"
+		},
+		"locked-stream-message": "Vous ne pouvez pas fermer ou recharger un flux à partir d'une trésorerie verrouillée",
+		"locked-stream-modal-title": "Flux d'argent verrouillé",
+		"locked-stream-tooltip": "Ce flux est verrouillé",
 		"lookup-stream-cta-tooltip": "Rechercher un flux",
 		"pause-stream-confirmation": "La suspension du flux arrêtera le transfert d'argent du trésor ({{treasury}}) au bénéficiaire ({{beneficiary}}).",
 		"pause-stream-cta": "Pause",
-		"edit-stream": {
-			"modal-title": "Edit Money Stream",
-			"edit-stream-tooltip": "Edit money stream",
-			"name-input-label": "Stream name",
-			"name-input-placeholder": "Type a name for your stream",
-			"name-input-hint": "What is this stream being sent for?",
-			"send-amount-input-label": "Amount to Send",
-			"frequency-input-label": "Frequency",
-			"frequency-input-hint": "How often will this amount be sent?",
-			"main-cta": "Update stream",
-			"main-cta-busy": "Updating stream"
-		},
 		"pause-stream-modal-title": "Suspendre le flux",
 		"pause-stream-tooltip": "Suspendre le flux",
-		"locked-stream-modal-title": "Locked Money Stream",
-		"locked-stream-tooltip": "This Stream is Locked",
-		"resume-stream-modal-title": "Resume stream",
-		"resume-stream-tooltip": "Resume Stream",
 		"refresh-tooltip": "Cliquez pour actualiser les flux",
-		"locked-stream-message": "You cannot close or top up a stream from a locked treasury",
 		"resume-stream-confirmation": "Reprendre le flux d'argent du trésor ({{treasury}}) au bénéficiaire ({{beneficiary}}).",
 		"resume-stream-cta": "Continuer",
+		"resume-stream-modal-title": "Reprendre le flux",
+		"resume-stream-tooltip": "Reprendre le flux",
 		"screen-title": "Flux d'argent",
 		"status": {
 			"scheduled": "À partir du {{date}}",
@@ -765,23 +766,23 @@
 			"streaming": "Diffusion"
 		},
 		"stream-activity": {
-			"action-deposit": "Dépôt",
+			"action-deposit": "Déposer",
 			"action-withdraw": "Retirer",
 			"heading": "Activité",
 			"label-action": "action",
 			"label-amount": "Montant",
 			"label-date": "Date",
-			"loading-activity": "Loading stream activity",
+			"loading-activity": "Chargement de l'activité du flux",
 			"no-activity": "Aucune activité à ce jour"
 		},
 		"stream-detail": {
 			"add-funds-cta": "Recharger (ajouter des fonds)",
 			"amount-funded-date": "financé sur",
 			"cancel-scheduled-transfer": "Annuler le transfert",
+			"close-money-stream-menu-item": "Fermer le flux d'argent",
 			"close-stream-cta": "Close Stream",
 			"close-stream-cta-tooltip": "Close stream is available when Stream runs out of funds",
-			"close-money-stream-menu-item": "Fermer le flux d'argent",
-			"cta-disabled-closing": "Clôture du flux d'argent...",
+			"cta-disabled-closing": "Clôture du flux d'argent…",
 			"cta-disabled-creating": "Création du flux en cours...",
 			"cta-disabled-funding": "Ajouter des fonds en cours...",
 			"cta-disabled-withdrawing": "Retrait en cours...",
@@ -799,9 +800,10 @@
 			"label-sending-to": "Envoi à",
 			"label-sent-to": "Envoyé à",
 			"label-start-date-default": "Date de début",
-			"label-start-date-scheduled": "Scheduled to start on",
+			"label-start-date-scheduled": "Début prévu le",
 			"label-start-date-scheduled-otp": "Livraison planifiée",
 			"label-start-date-started": "A débuté",
+			"label-status": "Statut",
 			"label-their-allocation": "Leur attribution",
 			"label-total-deposits": "Montant total que vous avez déposé depuis le début du stream",
 			"label-total-withdrawals": "Montant total que vous avez retiré depuis le début du stream",
@@ -810,6 +812,7 @@
 			"transfer-money-stream-menu-item": "Transfert de propriété",
 			"withdraw-funds-cta": "Retirer des fonds"
 		},
+		"stream-interval": "changement net",
 		"stream-list": {
 			"no-streams": "Aucun flux disponible",
 			"not-connected": "Veuillez connecter votre portefeuille pour voir vos flux d'argent",
@@ -833,8 +836,7 @@
 			"title-sending-to": "Envoi à"
 		},
 		"stream-stats-incoming": "Entrant",
-		"stream-stats-outgoing": "Sortant",
-		"stream-interval": "net-change"
+		"stream-stats-outgoing": "Sortant"
 	},
 	"swap": {
 		"exchange-warning": "Mean Exchange n'est disponible que sur",
@@ -846,12 +848,12 @@
 		"pools-and-routes": "Bassins et parcours",
 		"routes-best-price-label": "Meilleur prix",
 		"screen-subtitle": "Le moyen le plus rapide et le plus simple d'échanger deux jetons",
-		"screen-title": "Échange",
+		"screen-title": "Échanger",
 		"show-routes": "Afficher les options de routage",
 		"slippage-tolerance": "Tolérance de glissement",
 		"tabset": {
 			"one-time": "Une fois",
-			"recurring": "Récurrent"
+			"recurring": "Récurrente"
 		},
 		"token-select-destination": "Sélectionnez le jeton",
 		"token-select-source": "Sélectionnez le jeton",
@@ -893,7 +895,7 @@
 			"qr-scan-title": "Obtenir l'adresse à partir du code QR",
 			"recipient-is-own-account": "Impossible d'envoyer vers votre propre compte"
 		},
-		"resume": "Résumé",
+		"resume": "Sommaire",
 		"send-amount": {
 			"label": "Envoyer",
 			"label-amount": "Ajouter des fonds",
@@ -918,8 +920,8 @@
 			"stream-started-pre": "Votre flux d'argent pour",
 			"tx-add-funds-operation": "Volet de financement avec",
 			"tx-add-funds-operation-success": "Fonds ajoutés avec succès",
-			"tx-close-operation": "Fermer l'opération de flux",
-			"tx-close-operation-success": "Flux fermé avec succès",
+			"tx-close-operation": "Fermer l'opÃ©ration de flux",
+			"tx-close-operation-success": "Fermer l'opération de flux",
 			"tx-close-vault-operation": "Opération de fermeture du coffre-fort",
 			"tx-close-vault-operation-success": "Vault fermé avec succès",
 			"tx-completed": "Opération terminée",
@@ -935,8 +937,8 @@
 			"tx-init-failure": "Impossible d'initialiser la transaction",
 			"tx-rejected": "Transaction rejetée",
 			"tx-send": "Opération d'envoi",
-			"tx-send-failure": "Votre transaction n'a pas été soumise.  Veuillez actualiser la page et réessayer.",
-			"tx-send-failure-smallamount": "Échec de la soumission de la transaction.  Montant du swap trop petit",
+			"tx-send-failure": "Votre transaction n'a pas été soumise. Veuillez actualiser la page et réessayer.",
+			"tx-send-failure-smallamount": "Échec de la soumission de la transaction. Montant du swap trop petit",
 			"tx-send-operation": "Envoi en cours",
 			"tx-send-operation-success": "a été envoyé avec succès",
 			"tx-sign": "En attente de confirmation",
@@ -965,8 +967,8 @@
 			"exchange-on": "Echange sur",
 			"hla-transaction-fee": "Frais d'agrégateur",
 			"min-recommended-amount": "Montant minimum recommandé",
-			"minimum-received": "Minimum received",
-			"minimum-sol-for-transaction": "Minimum SOL required",
+			"minimum-received": "Minimum reçu",
+			"minimum-sol-for-transaction": "SOL minimum requis",
 			"network-transaction-fee": "Frais de réseau",
 			"price-impact": "Incidence sur les prix",
 			"protocol-transaction-fee": "{{protocol}} frais de LP",
@@ -986,11 +988,14 @@
 			"exchange-unavailable": "Échange indisponible",
 			"insufficient-amount-needed": "Besoin d'au moins {{amount}} {{symbol}} pour échanger",
 			"insufficient-balance-needed": "Besoin d'au moins {{balance}} SOL",
+			"invalid-account": "Impossible d'utiliser une adresse Multisig comme compte de destination",
 			"invalid-amount": "Montant invalide",
 			"invalid-exchange": "Sélectionnez le jeton",
 			"invalid-solana-address": "Adresse solana invalide",
 			"minimum-repeating-buy-amount": "Vous avez besoin d'un minimum de {{fromTokenAmount}} pour commencer cet achat répété",
 			"minimum-swap-amount": "Montant minimum requis pour échanger {{mintAmount}} {{fromMint}}",
+			"multi-recipient-invalid-addresses": "{{amountInvalidAddresses}} éléments de votre liste n'ont pas de format d'adresse valide",
+			"multi-recipient-invalid-list": "Votre csv n'a pas d'adresses valides",
 			"no-amount": "Entrer le montant",
 			"no-balance": "Pas de solde",
 			"no-payment-rate": "Ajouter un taux de paiement",
@@ -998,6 +1003,7 @@
 			"no-valid-date": "Définir une date valide",
 			"not-connected": "Connectez votre portefeuille",
 			"payment-rate-high": "Le taux de paiement dépasse votre solde",
+			"select-address-list": "Sélectionnez la liste d'adresses",
 			"select-recipient": "Sélectionnez le destinataire",
 			"select-stream": "Sélectionnez un flux",
 			"valid-address-required": "Une adresse solana valide est requise",
@@ -1014,10 +1020,10 @@
 		"destination-is-own-account": "Le transfert de flux vers vous-même n'est pas autorisé",
 		"label-streamid-input": "Nouveau propriétaire du flux",
 		"modal-title": "Flux de transfert",
+		"streamid-checkbox": "Je suis sûr que l'adresse du destinataire n'appartient pas à un échange.",
 		"streamid-empty": "Adresse manquante",
 		"streamid-open-cta": "Transfert",
-		"streamid-placeholder": "Nouvelle adresse de portefeuille bénéficiaire",
-		"streamid-checkbox": "I'm sure the recipient address doesn't belong to an exchange."
+		"streamid-placeholder": "Nouvelle adresse de portefeuille bénéficiaire"
 	},
 	"transfers": {
 		"screen-subtitle": "Envoyez de l'argent à n'importe qui dans le monde plus rapidement",
@@ -1026,8 +1032,8 @@
 	},
 	"treasuries": {
 		"add-funds": {
-			"allocation-amount-label": "How Much Do You Want to Allocate?",
-			"allocation-heading": "To top up an existing stream, the funds being added will be allocated from the Treasury's available balance.",
+			"allocation-amount-label": "Combien voulez-vous allouer ?",
+			"allocation-heading": "Pour compléter un flux existant, les fonds ajoutés seront alloués à partir du solde disponible du Trésor.",
 			"allocation-label": "Comment souhaitez-vous allouer ces fonds ?",
 			"allocation-option-evenly": "Répartir uniformément sur tous les flux d'argent",
 			"allocation-option-none": "Ne pas allouer (laisser dans les réserves)",
@@ -1037,38 +1043,40 @@
 			"label": "Ajouter des fonds",
 			"main-cta": "Trésorerie du fonds",
 			"main-cta-busy": "Trésorerie de financement",
-			"main-cta-fund-stream": "Fund Money Stream",
-			"main-cta-fund-stream-busy": "Funding Stream",
-			"modal-title": "Add funds to the Streaming Treasury",
-			"modal-title-fund-stream": "Add funds to a Money Stream",
-			"money-stream-to-topup-label": "Money Stream to top up",
+			"main-cta-fund-stream": "Financer le flux d'argent",
+			"main-cta-fund-stream-busy": "Volet de financement",
+			"modal-title": "Ajouter des fonds au Trésor",
+			"modal-title-fund-stream": "Ajouter des fonds à un flux d'argent",
+			"money-stream-to-topup-label": "Money Stream pour recharger",
 			"search-streams-placeholder": "Rechercher un flux par nom ou adresse",
 			"success-message": "Votre trésorerie a été financée avec succès."
 		},
 		"back-to-treasuries-cta": "Retour aux bons du Trésor",
-		"close-treasury-confirmation": "Êtes-vous sûr de vouloir fermer la trésorerie ?",
+		"close-treasury-confirmation": "Êtes-vous sûr de vouloir fermer la trésorerie ?",
 		"create-new-treasury-cta": "Créer une trésorerie",
 		"create-treasury": {
 			"create-multisig-cta": "Initier la trésorerie",
 			"create-multisig-cta-busy": "Trésorerie initiatique",
-			"create-multisig-treasury-success": "Initier la demande de trésorerie soumise pour approbation Multisig.",
+			"create-multisig-treasury-success": "Vous avez signé avec succès la demande de trésorerie Initiate.",
 			"lock-period": {
+				"days": "journées",
+				"hours": "les heures",
 				"minutes": "minutes",
-				"hours": "hours",
-				"days": "days",
-				"weeks": "weeks",
-				"months": "months",
-				"years": "years"
+				"months": "mois",
+				"weeks": "semaines",
+				"years": "ans"
 			},
-			"main-cta": "Create streaming treasury",
-			"main-cta-busy": "Creating treasury",
-			"modal-title": "Create Streaming Treasury",
+			"main-cta": "Créer",
+			"main-cta-busy": "Création de trésorerie",
+			"modal-title": "Créer une trésorerie",
 			"multisig-selector-label": "Compte multisignature",
-			"multisig-treasury-switch-label": "Cette trésorerie est-elle pour un compte Multisig ?",
+			"multisig-treasury-created-info": "Pour terminer la configuration de la trésorerie, les autres signataires Multisig doivent l'approuver.",
+			"multisig-treasury-created-instructions": "Veuillez demander aux autres utilisateurs de signer cette opération de création de trésorerie.",
+			"multisig-treasury-switch-label": "Cette trésorerie est-elle pour un compte Multisig ?",
 			"success-message": "Votre nouvelle trésorerie a été créée avec succès.",
 			"treasury-name-input-empty": "Entrez le nom du Trésor",
 			"treasury-name-input-label": "Nom du Trésor",
-			"treasury-name-placeholder": "Type a name for your streaming treasury",
+			"treasury-name-placeholder": "Tapez un nom pour votre trésorerie",
 			"treasury-token-label": "Token to be streamed",
 			"treasury-type-options": {
 				"treasury-type-locked-description": "Avec une trésorerie verrouillée, vous pouvez créer des flux qui agissent comme un contrat d'acquisition pour les allocations réservées, comme celles nécessaires aux investisseurs.  Ils ont généralement une date de fin fixe.",
@@ -1087,7 +1095,7 @@
 			"treasuryid-placeholder": "ID de trésorerie créé par Mean Finance"
 		},
 		"refresh-tooltip": "Cliquez pour rafraîchir la liste des trésoreries",
-		"screen-title": "Streaming Treasuries",
+		"screen-title": "Trésors",
 		"treasury-detail": {
 			"associated-token": "Jeton associé",
 			"created-on": "Créé sur",
@@ -1096,65 +1104,66 @@
 			"cta-close": "Fermer la trésorerie",
 			"cta-close-busy": "Trésorerie de clôture",
 			"cta-withdraw-multisig-treasury": "Retirer des fonds",
-			"unallocated-treasury-balance": "Unallocated Streaming Treasury Balance",
 			"multisig-tx-headsup": "Transactions en attente d'approbation ou d'exécution pour cette trésorerie",
 			"no-treasury-loaded": "Créer ou rechercher une trésorerie pour afficher les détails",
 			"no-treasury-selected": "Veuillez sélectionner ou rechercher une trésorerie pour afficher les détails",
 			"number-of-streams": "Nombre de flux",
-			"treasury-address-label": "Treasury Address",
-			"treasury-name-label": "Nom du Trésor"
+			"treasury-address-label": "Adresse",
+			"treasury-name-label": "Nom du Trésor",
+			"unallocated-treasury-balance": "Solde de trésorerie non affecté"
 		},
 		"treasury-detail-heading": "Détails du Trésor",
-		"treasury-refresh-tooltip": "Refresh treasury data",
 		"treasury-list": {
-			"multisig-treasury-heading": "Multisig Treasuries - {{treasuryName}}",
-			"multisig-treasury-help": "Below is a list of all the treasuries that are connected to this Multsig",
-			"multisig-treasuries-view-all-cta": "Show All Treasuries",
+			"multisig-treasuries-view-all-cta": "Afficher tous les bons du Trésor",
+			"multisig-treasury-heading": "Trésoreries multisignatures - {{treasuryName}}",
+			"multisig-treasury-help": "Vous trouverez ci-dessous une liste de tous les trésors qui sont connectés à ce Multisig",
 			"multisig-treasury-label": "Trésorerie multisig",
 			"no-treasuries": "Aucune trésorerie disponible",
 			"not-connected": "Veuillez connecter votre portefeuille pour voir vos trésoreries",
 			"total-streams-label": "ruisseaux"
 		},
+		"treasury-refresh-tooltip": "Actualiser les données de trésorerie",
 		"treasury-streams": {
-			"add-stream-modal-title": "Ajouter un flux à la trésorerie",
 			"add-stream-locked": {
-				"modal-title": "Add a locked money stream",
-				"panel1-name": "Recipient's info",
-				"panel2-name": "Vesting terms",
-				"panel2-summary": "Specify the vesting terms for {{recipientNote}} below. You will be sending {{fromCoinAmount}} {{selectedTokenName}} to {{recipientShortenAddress}} using these terms and schedule.",
-				"panel2-lock-period-label": "Lock period",
-				"panel2-commencement-date-label": "Commencement date",
-				"panel2-cliff-release-label": "Cliff release (on commencement)",
-				"panel2-cliff-release-inner-label": "What amount is released on commencement?",
-				"panel3-name": "Recipient's info",
-				"panel3-text-one": "Confirm the terms for",
-				"panel3-sending": "Sending:",
-				"panel3-to-address": "To Address:",
-				"panel3-starting-on": "Starting on:",
-				"panel3-cliff-release": "Cliff release:",
-				"panel3-release-rate": "Release rate:",
-				"panel3-warning-message": "IMPORTANT: This is a locked money stream. You cannot cancel, pause or change its details once it is started. Verify all information before proceeding."
+				"modal-title": "Ajouter un flux d'argent verrouillé",
+				"panel1-name": "Coordonnées du destinataire",
+				"panel2-cliff-release-inner-label": "Quel montant est débloqué au début ?",
+				"panel2-cliff-release-label": "Libération de la falaise (au début)",
+				"panel2-commencement-date-label": "Date de début",
+				"panel2-lock-period-label": "Période de verrouillage",
+				"panel2-name": "Conditions d'acquisition",
+				"panel2-summary": "Spécifiez les conditions d'acquisition pour {{recipientNote}} ci-dessous.  Vous enverrez {{fromCoinAmount}} {{selectedTokenName}} à {{recipientShortenAddress}} en utilisant ces conditions et ce calendrier.",
+				"panel3-cliff-release": "Libération de falaise :",
+				"panel3-name": "Coordonnées du destinataire",
+				"panel3-release-rate": "Taux de diffusion :",
+				"panel3-sending": "Envoi en cours:",
+				"panel3-starting-on": "À partir de:",
+				"panel3-text-one": "Confirmez les conditions de",
+				"panel3-to-address": "Adresser:",
+				"panel3-warning-message": "IMPORTANT : Il s'agit d'un flux d'argent verrouillé, et une fois lancé, vous ne pouvez pas annuler, mettre en pause ou modifier ses détails.  Vérifiez toutes les informations avant de continuer."
 			},
+			"add-stream-modal-title": "Ajouter un flux à la trésorerie",
 			"allocate-funds-label": "Allouer des fonds",
 			"allocation-reserved-label": "Cette allocation est entièrement RÉSERVÉE",
-			"available-unallocated-balance-label": "Unallocated Balance",
-			"busy-pausing": "Arrêt du flux",
+			"available-unallocated-balance-label": "Solde non alloué disponible",
+			"busy-pausing": "ArrÃªt du flux",
 			"busy-resuming": "Reprise du flux",
 			"close-stream-also-closes-treasury-label": "Fermez aussi la trésorerie",
 			"column-activity": "Flux d'argent",
 			"column-description": "La description",
 			"column-destination": "Destination",
-			"column-rate": "Taux",
 			"column-funds-left": "Fonds restants",
+			"column-rate": "Taux",
 			"create-stream-main-cta": "Créer un flux",
 			"create-stream-main-cta-busy": "Création de flux",
+			"create-treasury-switch-label": "Voulez-vous créer plusieurs flux avec les mêmes paramètres ?",
 			"fee-payed-by-treasurer": "Je veux payer des frais pour ce flux au lieu du bénéficiaire",
 			"loading-streams": "Chargement des flux",
+			"message-warning": "La liste des destinataires que vous avez soumise comprenait votre propre adresse de portefeuille. Ce n'est pas possible et cette adresse a été supprimée de la liste importée.",
 			"minimum-allocation-advice": "Vous devez définir une allocation minimale pour ce flux d'argent jusqu'au solde non alloué disponible dans le Trésor.",
-			"multiple-address-list": "Multiple address list",
-			"multiple-address-question-mark-tooltip": "Please provide a csv text file with one address per line in the following format: \n MEMO or STREAM NAME, WALLET ADDRESS. \n\n Here is an example of how it should look: \n Epoch 1, FrdFf3EqcGuytTweLvoELBt29WrAGVYjrh4585A2bTAZ \n\n Before you submit the file, please make sure the recipient addresses are correct and do not belong to an exchange.",
-			"message-warning": "The list of recipients you submitted included your own wallet address. This is not possible and this address has been removed from the imported list.",
-			"no-streams": "This streaming treasury has no active streams",
+			"multiple-address-list": "Liste d'adresses multiples",
+			"multiple-address-question-mark-tooltip": "Veuillez fournir un fichier texte CSV avec une adresse par ligne au format suivant :",
+			"no-streams": "Cette trésorerie n'a pas de flux actifs",
 			"option-close-stream": "Fermer",
 			"option-explorer-link": "Voir sur Solana Explorer",
 			"option-pause-stream": "Pause",
@@ -1167,6 +1176,7 @@
 	"ui-language": {
 		"en": "Anglais",
 		"es": "Espagnol",
+		"fa": "Persan",
 		"fr": "Français",
 		"ko": "Coréen",
 		"pt": "Portugais",
@@ -1187,7 +1197,7 @@
 			"switch-language": "Langue",
 			"switch-theme": "Basculer vers",
 			"theme-dark": "Mode sombre",
-			"theme-light": "Mode lumière",
+			"theme-light": "Mode lumiÃ¨re",
 			"twitter": "Twitter"
 		},
 		"main-menu": {
@@ -1202,17 +1212,21 @@
 			"services": {
 				"custody": "Garde",
 				"faucet": "Robinet",
-				"multisig": "Safes & Multisig",
+				"multisig": "Multisig",
 				"submenu-title": "Prestations de service",
-				"treasuries": "Streaming Treasuries",
+				"treasuries": "Trésorerie et paie",
+				"unwrap": "Unwrap",
 				"wallet-guide": "Guide du portefeuille",
-				"wrap": "Envelopper",
-				"unwrap": "Unwrap"
+				"wrap": "Envelopper"
 			},
 			"stats": "Statistiques",
-			"swap": "Échange",
+			"swap": "Échanger",
 			"transfers": "Transferts"
 		}
+	},
+	"unwrap": {
+		"current-wsol-balance": "Solde actuel du SOL encapsulé",
+		"label-input-amount": "Enter amount to unwrap"
 	},
 	"wallet-selector": {
 		"more-options-collapsed": "Afficher plus d'options",
@@ -1220,9 +1234,16 @@
 		"primary-action": "Sélectionner"
 	},
 	"withdraw-funds": {
+		"button-title": "Retirer des fonds",
 		"label-available-amount": "Fonds disponibles pour retrait maintenant",
 		"label-input-amount": "Entrez le montant à retirer",
 		"label-input-right": "Par préréglage en pourcentage",
+		"modal": {
+			"main-cta": "Retirer des fonds",
+			"selected-treasury-label": "Du compte du Trésor",
+			"title": "Retirer des fonds du Trésor",
+			"verified-label": "Je suis sûr que l'adresse du destinataire n'appartient pas à un échange"
+		},
 		"modal-title": "Retirer des fonds"
 	}
 }
