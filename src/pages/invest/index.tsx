@@ -1,6 +1,6 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import './style.less';
-import { InfoCircleOutlined, ReloadOutlined } from "@ant-design/icons";
+import { ReloadOutlined } from "@ant-design/icons";
 import { Button, Tooltip, Row, Col, Empty, Spin, Divider } from "antd";
 import { useTranslation } from 'react-i18next';
 import { isDesktop } from "react-device-detect";
@@ -774,7 +774,13 @@ export const InvestView = () => {
                 <div className="title">{item.title}</div>
               </div>
               <div className="rate-cell w-50">
-                <div className="rate-amount" style={{minWidth: "fit-content !important"}}>{item.rateAmount}%</div>
+                <div className="rate-amount" style={{minWidth: "fit-content !important"}}>
+                  {
+                    item.name === 'Stake' && item.rateAmount === "0"
+                      ? <IconLoading className="mean-svg-icons"/>
+                      : `${item.rateAmount}%`
+                  }
+                </div>
                 <div className="interval">{item.interval}</div>
               </div>
             </div>
