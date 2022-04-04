@@ -569,7 +569,10 @@
 			"rejected": "Rejected",
 			"rejected-tx": "You have rejected this transaction",
 			"not-sign-tx": "You did NOT sign this transaction",
-			"not-signed-tx": "You have NOT signed this transaction"
+			"not-signed-tx": "You have NOT signed this transaction",
+			"tx-operation-cancel": "Please cancel it below to remove it from the list.",
+			"your-execution": "your execution",
+			"execution": "execution"
 		},
 		"pending-transactions": "pending transactions",
 		"refresh-tooltip": "Click to refresh the list of multisig accounts",

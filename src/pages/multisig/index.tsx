@@ -4800,7 +4800,7 @@ export const MultisigView = () => {
                     {isTreasuryOperation() && !isUserTheProposer() ? (
                       <h3 className="text-center">{t('multisig.multisig-transactions.tx-operation-pending-one')}</h3>
                     ) : (
-                      <h3 className="text-center">{t('multisig.multisig-transactions.tx-operation-pending-two')} {isUserTheProposer() ? 'your execution' : 'execution'}.</h3>
+                      <h3 className="text-center">{t('multisig.multisig-transactions.tx-operation-pending-two')} {isUserTheProposer() ? t('multisig.multisig-transactions.your-execution') : t('multisig.multisig-transactions.execution')}.</h3>
                     )}
                     <Divider className="mt-2" />
                     <Row>
@@ -4857,7 +4857,7 @@ export const MultisigView = () => {
                 ) : (
                   <>
                     {isTxVoided() ? (
-                      <h3 className="text-center">{t('multisig.multisig-transactions.tx-operation-voided')} {isUserTxInitiator() ? ' Please cancel it below to remove it from the list.' : ''}</h3>
+                      <h3 className="text-center">{t('multisig.multisig-transactions.tx-operation-voided')} {isUserTxInitiator() ? t('multisig.multisig-transactions.tx-operation-cancel') : ''}</h3>
                     ) : isTxRejected() ? (
                       <h3 className="text-center">{t('multisig.multisig-transactions.tx-operation-rejected')}</h3>
                       ) : (

@@ -570,6 +570,9 @@
 			"tx-operation-pending-two": "تراکنش در این Multisig آماده است",
 			"tx-operation-rejected": "This transaction has been rejected.",
 			"tx-operation-success": "عملیات {{operation}} با موفقیت انجام شد",
+			"tx-operation-cancel": "Please cancel it below to remove it from the list.",
+			"your-execution": "your execution",
+			"execution": "execution",
 			"tx-operation-voided": "This pending transaction has been VOIDED due to the Multisig being edited.",
 			"your-status": "وضعیت شما:"
 		},

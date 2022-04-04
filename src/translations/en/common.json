@@ -572,7 +572,10 @@
 			"tx-operation-rejected": "This transaction has been rejected.",
 			"tx-operation-success": "Operation {{operation}} succeeded",
 			"tx-operation-voided": "This pending transaction has been VOIDED due to the Multisig being edited.",
-			"your-status": "Your status:"
+			"tx-operation-cancel": "Please cancel it below to remove it from the list.",
+			"your-status": "Your status:",
+			"your-execution": "your execution",
+			"execution": "execution"
 		},
 		"multisig-treasuries": {
 			"back-to-treasuries": "Back to Streaming Treasuries"
