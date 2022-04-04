@@ -515,6 +515,14 @@ export const StakeTabView = (props: {
     setFetchingStakeQuote(true);
   }
 
+  const getMaxDecimalsForValue = (value: number) => {
+    return value < 5
+      ? 6
+      : value >= 5 && value < 100
+        ? 4
+        : 2;
+  }
+
   // Unstake quote
   useEffect(() => {
     const getMeanQuote = async (sMEAN: number) => {
@@ -635,8 +643,8 @@ export const StakeTabView = (props: {
         {
           (!fetchingStakeQuote && fromCoinAmount && parseFloat(fromCoinAmount) > 0 && parseFloat(fromCoinAmount) <= props.meanBalance && stakeQuote > 0) &&
             infoRow(
-              `${formatThousands(parseFloat(fromCoinAmount), 2)} MEAN ≈`,
-              `${formatThousands(stakeQuote, 2)} sMEAN`
+              `${formatThousands(parseFloat(fromCoinAmount), getMaxDecimalsForValue(parseFloat(fromCoinAmount)))} MEAN ≈`,
+              `${formatThousands(stakeQuote, getMaxDecimalsForValue(stakeQuote))} sMEAN`
             )
         }
         {
