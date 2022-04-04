@@ -304,12 +304,12 @@
 		},
 		"panel-right": {
 			"title": "Stake MEAN to Earn MEAN Rewards",
-			"first-text": "MEAN staking rewards include emission incentives plus a share of the protocol revenues, and can be boosted using locking periods. When you stake your MEAN, you get sMEAN in return.",
+			"first-text": "MEAN staking rewards include emission incentives plus a share of the protocol revenues, and can be boosted using locking periods. When you stake your MEAN, you get sMEAN (staked MEAN) in return.",
 			"second-text": "Simply holding your sMEAN is all that is required to continuously grow your MEAN stash. You don't need to harvest the rewards with MEAN staking. When you unstake your sMEAN, you will receive the rewards earned in the form of additional MEAN on top of the amount staked.",
 			"stats": {
 				"staking-apy": "Staking APY",
 				"staking-apy-tooltip": "The APY associated with sMEAN is a representation of the price of sMEAN over a 365 day period.",
-				"total-mean-rewards": "Total MEAN Rewards",
+				"total-mean-rewards": "Total MEAN Staked",
 				"total-value-locked": "Total Value Locked"
 			},
 			"table-data": {
@@ -337,7 +337,7 @@
 					"amount-label": "Amount to unstake",
 					"name": "Unstake",
 					"notification-label-one": "Your currently have {{stakedAmount}} sMEAN staked which is currently locked until {{unstakeStartDate}}",
-					"notification-label-one-error": "Your currently do not have any sMEAN.",
+					"notification-label-one-error": "You currently don't have any sMEAN.",
 					"notification-label-two": "Unstaking will withdraw the specified amount of unlocked sMEAN tokens to your wallet",
 					"send-amount": {
 						"label-right": "Available to unstake"
@@ -345,7 +345,8 @@
 					"unstake-button-busy": "Unstaking",
 					"unstake-button-available": "Unstake",
 					"unstake-button-unavailable": "No available",
-					"verified-label": "I agree to the Terms & Conditions"
+					"verified-label": "I agree to the Terms & Conditions",
+					"success-transaction-message": "{{sMeanValue}} sMEAN has been successfully unstaked and you have received {{meanValue}} MEAN in return."
 				}
 			},
 			"liquidity-pool": {
@@ -384,6 +385,7 @@
 		"add-participant-cta": "Adicionar participante",
 		"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
 		"create-multisig": {
+			"fee-info-label": "The fee to create this multisig is",
 			"main-cta": "Crio",
 			"main-cta-busy": "Criando multisig",
 			"modal-title": "Criar multisig",
@@ -608,7 +610,7 @@
 			"transfer-to-placeholder": "Digite o endereço da conta de destino"
 		},
 		"update-multisig": {
-			"edit-not-allowed-message": "Você não pode editar o Multisig sem antes concluir ou cancelar todas as transações pendentes.",
+			"edit-not-allowed-message": "When you change the signers on a Multisig, all pending transactions will be VOIDED. Before you proceed, make sure there are no important transactions needing to be completed first.",
 			"main-cta": "Propose changes",
 			"main-cta-busy": "Salvando alterações",
 			"modal-title": "Editar multisig",
@@ -628,6 +630,7 @@
 	"notifications": {
 		"account-address-copied-message": "Endereço da conta copiado com sucesso",
 		"account-address-not-copied-message": "Não foi possível copiar o endereço da conta",
+		"check-transaction-in-explorer": "Check your transaction here",
 		"create-money-stream-completed": "Seu fluxo de dinheiro foi criado",
 		"create-money-stream-completed-wait-for-confirm": "Depois que a transação for confirmada, ela deverá aparecer na lista.",
 		"error-cannot-faucet-mainnet-message": "Não é possível faucet na mainnet",
@@ -839,7 +842,7 @@
 	"swap": {
 		"exchange-warning": "Mean Exchange só está disponível em",
 		"frequency-label": "Frequência",
-		"getting-routes": "Getting routes",
+		"getting-routes": "Finding the best route and price",
 		"input-label-destination": "Troca para (est.)",
 		"input-label-source": "Troca de",
 		"insufficient-liquidity": "Liquidez insuficiente para esta negociação",
@@ -977,10 +980,10 @@
 		},
 		"validation": {
 			"address-validation": "Não é um formato de endereço válido",
-			"amount-high": "O valor excede o seu saldo",
-			"amount-low": "Não há equilíbrio suficiente",
+			"amount-high": "Amount exceeded",
+			"amount-low": "Low balance",
 			"amount-lt-fee": "O valor deve ser maior que a taxa de transação",
-			"amount-sol-high": "O valor excede seu saldo SOL",
+			"amount-sol-high": "Insufficient SOL",
 			"amount-withdraw-high": "O valor é maior do que os fundos disponíveis",
 			"cannot-use-own-account-as-treasury": "Não é possível usar sua conta como ID de tesouraria",
 			"exchange-unavailable": "Troca indisponível",
@@ -997,7 +1000,7 @@
 			"no-recipient": "Sem destinatário",
 			"no-valid-date": "Defina uma data válida",
 			"not-connected": "Conecte sua carteira",
-			"payment-rate-high": "A taxa de pagamento excede seu saldo",
+			"payment-rate-high": "Payment exceeded",
 			"select-recipient": "Selecionar destinatário",
 			"select-stream": "Selecione um fluxo",
 			"valid-address-required": "É necessário um endereço de solana válido",
@@ -1006,7 +1009,7 @@
 			"valid-ddca-review": "Análise",
 			"valid-start-funding": "Iniciar financiamento",
 			"valid-start-withdrawal": "Iniciar retirada",
-			"verified-recipient-unchecked": "Verificação do destinatário desmarcada"
+			"verified-recipient-unchecked": "Recipient Unchecked"
 		}
 	},
 	"transfer-stream": {

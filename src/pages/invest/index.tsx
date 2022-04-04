@@ -1,6 +1,6 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import './style.less';
-import { LoadingOutlined, ReloadOutlined, WarningFilled } from "@ant-design/icons";
+import { InfoCircleOutlined, ReloadOutlined } from "@ant-design/icons";
 import { Button, Tooltip, Row, Col, Empty, Spin, Divider } from "antd";
 import { useTranslation } from 'react-i18next';
 import { isDesktop } from "react-device-detect";
@@ -9,11 +9,10 @@ import { getNetworkIdByCluster, useConnection, useConnectionConfig } from '../..
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
 import { cutNumber, findATokenAddress, formatThousands } from "../../utils/utils";
-import { IconRefresh, IconStats } from "../../Icons";
+import { IconLoading, IconStats } from "../../Icons";
 import { IconHelpCircle } from "../../Icons/IconHelpCircle";
 import useWindowSize from '../../hooks/useWindowResize';
-import { consoleOut, isDev, isLocal, isProd } from "../../utils/ui";
-import { useNavigate } from "react-router-dom";
+import { consoleOut, isProd } from "../../utils/ui";
 import { ConfirmOptions, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { Env, StakePoolInfo, StakingClient } from "@mean-dao/staking";
 import { StakeTabView } from "../../views/StakeTabView";
@@ -21,8 +20,10 @@ import { UnstakeTabView } from "../../views/UnstakeTabView";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { MEAN_TOKEN_LIST } from "../../constants/token-list";
-
-const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
+import { confirmationEvents } from "../../contexts/transaction-status";
+import { EventType } from "../../models/enums";
+import { InfoIcon } from "../../components/InfoIcon";
+import { ONE_MINUTE_REFRESH_TIMEOUT } from "../../constants";
 
 type SwapOption = "stake" | "unstake";
 
@@ -35,15 +36,11 @@ export const InvestView = () => {
   const {
     coinPrices,
     stakedAmount,
-    isWhitelisted,
-    fromCoinAmount,
     detailsPanelOpen,
-    isInBetaTestingProgram,
     setIsVerifiedRecipient,
     setDtailsPanelOpen,
     setFromCoinAmount,
   } = useContext(AppStateContext);
-  const navigate = useNavigate();
   const connection = useConnection();
   const connectionConfig = useConnectionConfig();
   const { cluster, endpoint } = useConnectionConfig();
@@ -73,32 +70,19 @@ export const InvestView = () => {
   const [maxStakeSolApyValue, setMaxStakeSolApyValue] = useState<number>(0);
   const [pageInitialized, setPageInitialized] = useState<boolean>(false);
   const [stakePoolInfo, setStakePoolInfo] = useState<StakePoolInfo>();
+  const [shouldRefreshStakePoolInfo, setShouldRefreshStakePoolInfo] = useState(true);
+  const [refreshingStakePoolInfo, setRefreshingStakePoolInfo] = useState(false);
+
   const [shouldRefreshLpData, setShouldRefreshLpData] = useState(true);
   const [refreshingPoolInfo, setRefreshingPoolInfo] = useState(false);
+  const [canSubscribe, setCanSubscribe] = useState(true);
 
   // Tokens and balances
   const [meanAddresses, setMeanAddresses] = useState<Env>();
   const [stakingPair, setStakingPair] = useState<StakingPair | undefined>(undefined);
   const [sMeanBalance, setSmeanBalance] = useState<number>(0);
   const [meanBalance, setMeanBalance] = useState<number>(0);
-
-  const userHasAccess = useMemo(() => {
-
-    // return isWhitelisted || isInBetaTestingProgram
-    //   ? true
-    //   : false;
-    return isLocal() || (isDev() && (isWhitelisted || isInBetaTestingProgram))
-      ? true
-      : false;
-
-  }, [isInBetaTestingProgram, isWhitelisted]);
-
-  // TODO: Make it NOT available in prod. Remove when releasing
-  useEffect(() => {
-    if (isProd()) {
-      navigate('/accounts');
-    }
-  }, [navigate]);
+  const [lastTimestamp, setLastTimestamp] = useState(Date.now());
 
   // Create and cache Staking client instance
   const stakeClient = useMemo(() => {
@@ -122,42 +106,31 @@ export const InvestView = () => {
     publicKey
   ]);
 
-  // Get token addresses from staking client and save tokens
+  // Keep MEAN price updated
   useEffect(() => {
-    if (!stakeClient) { return; }
 
-    if (!pageInitialized) {
-      const meanAddress = stakeClient.getMintAddresses();
-
-      setMeanAddresses(meanAddress);
-
-      const tokenList = MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(connectionConfig.cluster))
-      const unstakedToken = tokenList.find(t => t.address === meanAddress.mean.toBase58());
-      const stakedToken = tokenList.find(t => t.address === meanAddress.sMean.toBase58());
-
-      consoleOut('unstakedToken', unstakedToken, 'blue');
-      consoleOut('stakedToken', stakedToken, 'blue');
-
-      setStakingPair({
-        unstakedToken,
-        stakedToken
-      });
-
+    if (coinPrices) {
+      const symbol = "MEAN";
+      const price = coinPrices && coinPrices[symbol] ? coinPrices[symbol] : 0;
+      consoleOut('meanPrice:', price, 'crimson');
+      console.log('coinPrices:', coinPrices);
+      setMeanPrice(price);
     }
-  }, [
-    stakeClient,
-    pageInitialized,
-    connectionConfig.cluster
-  ]);
 
-  const getTokenAccountBalanceByAddress = useCallback(async (tokenMintAddress: PublicKey | undefined | null): Promise<number> => {
-    if (!connection || !tokenMintAddress) return 0;
+  }, [coinPrices]);
+
+  /////////////////
+  //  Callbacks  //
+  /////////////////
+
+  const getTokenAccountBalanceByAddress = useCallback(async (tokenAddress: PublicKey | undefined | null): Promise<number> => {
+    if (!connection || !tokenAddress) return 0;
     try {
-      const tokenAmount = (await connection.getTokenAccountBalance(tokenMintAddress)).value;
+      const tokenAmount = (await connection.getTokenAccountBalance(tokenAddress)).value;
       return tokenAmount.uiAmount || 0;
     } catch (error) {
-      console.error(error);
-      throw(error);
+      consoleOut('getTokenAccountBalance failed for:', tokenAddress.toBase58(), 'red');
+      return 0;
     }
   }, [connection]);
 
@@ -174,10 +147,15 @@ export const InvestView = () => {
       return;
     }
 
-    const meanTokenPk = new PublicKey(stakingPair.unstakedToken.address);
-    const meanTokenAddress = await findATokenAddress(publicKey, meanTokenPk);
-    balance = await getTokenAccountBalanceByAddress(meanTokenAddress);
-    setMeanBalance(balance);
+    try {
+      const meanTokenPk = new PublicKey(stakingPair.unstakedToken.address);
+      const meanTokenAddress = await findATokenAddress(publicKey, meanTokenPk);
+      balance = await getTokenAccountBalanceByAddress(meanTokenAddress);
+      consoleOut('MEAN balance:', balance, 'blue');
+      setMeanBalance(balance);
+    } catch (error) {
+      setMeanBalance(balance);
+    }
 
   }, [
     accounts,
@@ -203,6 +181,7 @@ export const InvestView = () => {
     const sMeanTokenPk = new PublicKey(stakingPair.stakedToken.address);
     const smeanTokenAddress = await findATokenAddress(publicKey, sMeanTokenPk);
     balance = await getTokenAccountBalanceByAddress(smeanTokenAddress);
+    consoleOut('sMEAN balance:', balance, 'blue');
     setSmeanBalance(balance);
 
   }, [
@@ -211,72 +190,6 @@ export const InvestView = () => {
     connection,
     stakingPair,
     getTokenAccountBalanceByAddress
-  ]);
-
-  // Keep account balance updated
-  useEffect(() => {
-
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
-    if (account?.lamports !== previousBalance || !nativeBalance) {
-      // Refresh token balances
-      setNativeBalance(getAccountBalance());
-      // Update previous balance
-      setPreviousBalance(account?.lamports);
-    }
-  }, [
-    account,
-    nativeBalance,
-    previousBalance,
-  ]);
-
-  // Keep MEAN price updated
-  useEffect(() => {
-
-    let price = 0;
-    if (coinPrices && stakingPair && stakingPair.unstakedToken) {
-      const symbol = stakingPair.unstakedToken.symbol.toUpperCase();
-      price = coinPrices && coinPrices[symbol] ? coinPrices[symbol] : 0;
-    }
-    consoleOut('meanPrice:', price, 'crimson');
-    setMeanPrice(price);
-
-  }, [coinPrices, stakingPair]);
-
-  // Keep MEAN balance updated
-  useEffect(() => {
-    if (!publicKey || !accounts || !accounts.tokenAccounts || !accounts.tokenAccounts.length) {
-      return;
-    }
-
-    if (stakingPair && stakingPair.unstakedToken) {
-      refreshMeanBalance();
-    }
-
-  }, [
-    accounts,
-    publicKey,
-    stakingPair,
-    refreshMeanBalance,
-  ]);
-
-  // Keep sMEAN balance updated
-  useEffect(() => {
-    if (!publicKey || !accounts || !accounts.tokenAccounts || !accounts.tokenAccounts.length) {
-      return;
-    }
-
-    if (stakingPair && stakingPair.stakedToken) {
-      refreshStakedMeanBalance();
-    }
-
-  }, [
-    accounts,
-    publicKey,
-    stakingPair,
-    refreshStakedMeanBalance,
   ]);
 
   const investItems = useMemo(() => [
@@ -372,25 +285,46 @@ export const InvestView = () => {
     marinadeTotalStakedValue
   ]);
 
-  // Keep the list of stake sol platforms sorted in descending order by apy
-  useEffect(() => {
-    stakingSOLData.sort((a, b) => (a.apy < b.apy) ? 1 : -1);
-  }, [stakingSOLData])
+  const getMeanPrice = useCallback(() => {
 
-  // Get staking pool info from staking client
-  useEffect(() => {
+    const symbol = "MEAN";
+    const price = coinPrices && coinPrices[symbol] ? coinPrices[symbol] as number : 0;
+    consoleOut('meanPrice:', price, 'orange');
+    console.log('coinPrices:', coinPrices);
 
-    if (stakeClient && meanPrice) {
-      stakeClient.getStakePoolInfo(meanPrice)
-        .then((value) => {
-          consoleOut('stakePoolInfo:', value, 'crimson');
-          setStakePoolInfo(value);
-        }).catch((error) => {
-          console.error(error);
-        });
+    return price;
+  }, [coinPrices]);
+
+  const refreshStakePoolInfo = useCallback((price: number) => {
+
+    if (stakeClient && price) {
+      setTimeout(() => {
+        setRefreshingStakePoolInfo(true);
+      });
+      consoleOut('calling getStakePoolInfo...', '', 'blue');
+      stakeClient.getStakePoolInfo(price)
+      .then((value) => {
+        consoleOut('stakePoolInfo:', value, 'crimson');
+        setStakePoolInfo(value);
+      })
+      .catch((error) => {
+        console.error('getStakePoolInfo error:', error);
+      })
+      .finally(() => setRefreshingStakePoolInfo(false));
     }
 
-  }, [meanPrice, stakeClient]);
+  }, [stakeClient]);
+
+  // If any Stake/Unstake Tx finished and confirmed refresh the StakePoolInfo
+  const onStakeTxConfirmed = useCallback((value: any) => {
+    consoleOut("onStakeTxConfirmed event executed:", value, 'crimson');
+    const price = getMeanPrice();
+    if (stakeClient && price) {
+      consoleOut('calling getStakePoolInfo...', '', 'orange');
+      refreshStakePoolInfo(price);
+      consoleOut('After calling refreshStakePoolInfo()', '', 'orange');
+    }
+  }, [getMeanPrice, refreshStakePoolInfo, stakeClient]);
 
   // Get raydium pool info
   const getRaydiumPoolInfo = useCallback(async () => {
@@ -414,7 +348,7 @@ export const InvestView = () => {
         setRaydiumInfo(raydiumData);
       }
     } catch (error) {
-      console.error(error);
+      console.error('getRaydiumPoolInfo error:', error);
     }
 
   }, []);
@@ -455,7 +389,7 @@ export const InvestView = () => {
         }
       }
     } catch (error) {
-      console.error(error);
+      console.error('getOrcaPoolInfo error:', error);
     }
 
   }, []);
@@ -472,7 +406,7 @@ export const InvestView = () => {
           setMarinadeApyValue(marinadeApy);
       }
     } catch (error) {
-      console.error(error);
+      console.error('getMarinadeApyInfo error:', error);
     }
 
   }, []);
@@ -490,7 +424,7 @@ export const InvestView = () => {
           setMarinadeTotalStakedValue(marinadeTotalStaked);
       }
     } catch (error) {
-      console.error(error);
+      console.error('getMarinadeTotalStakedInfo error:', error);
     }
 
   }, []);
@@ -508,7 +442,7 @@ export const InvestView = () => {
           setSoceanApyValue(soceanApy);
       }
     } catch (error) {
-      console.error(error);
+      console.error('getSoceanApyInfo error:', error);
     }
 
   }, []);
@@ -526,7 +460,7 @@ export const InvestView = () => {
           setSoceanTotalStakedValue(soceanTotalStaked);
       }
     } catch (error) {
-      console.error(error);
+      console.error('getSoceanTotalStakedInfo error:', error);
     }
 
   }, []);
@@ -548,7 +482,7 @@ export const InvestView = () => {
           setLidoTotalStakedValue(lidoTotalStaked);
       }
     } catch (error) {
-      console.error(error);
+      console.error('getLidoInfo error:', error);
     }
 
   }, []);
@@ -569,6 +503,92 @@ export const InvestView = () => {
     consoleOut('soceanTotalStakedValue:', soceanTotalStakedValue, 'info');
 
   }, [marinadeApyValue, marinadeTotalStakedValue, maxOrcaAprValue, maxRadiumAprValue, orcaInfo, raydiumInfo, soceanApyValue, soceanTotalStakedValue]);
+
+
+  /////////////////
+  //   Effects   //
+  /////////////////
+
+  // Get token addresses from staking client and save tokens
+  useEffect(() => {
+    if (!stakeClient) { return; }
+
+    if (!pageInitialized) {
+      const meanAddress = stakeClient.getMintAddresses();
+
+      setMeanAddresses(meanAddress);
+
+      const tokenList = MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(connectionConfig.cluster))
+      const unstakedToken = tokenList.find(t => t.address === meanAddress.mean.toBase58());
+      const stakedToken = tokenList.find(t => t.address === meanAddress.sMean.toBase58());
+
+      consoleOut('unstakedToken', unstakedToken, 'blue');
+      consoleOut('stakedToken', stakedToken, 'blue');
+
+      setStakingPair({
+        unstakedToken,
+        stakedToken
+      });
+
+    }
+  }, [
+    stakeClient,
+    pageInitialized,
+    connectionConfig.cluster
+  ]);
+
+  // Keep account balance updated
+  useEffect(() => {
+
+    const getAccountBalance = (): number => {
+      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
+    }
+
+    if (account?.lamports !== previousBalance || !nativeBalance) {
+      // Refresh token balances
+      setNativeBalance(getAccountBalance());
+      // Update previous balance
+      setPreviousBalance(account?.lamports);
+    }
+  }, [
+    account,
+    nativeBalance,
+    previousBalance,
+  ]);
+
+  // Keep MEAN balance updated
+  useEffect(() => {
+    if (!publicKey || !accounts || !accounts.tokenAccounts || !accounts.tokenAccounts.length) {
+      return;
+    }
+
+    if (stakingPair && stakingPair.unstakedToken) {
+      refreshMeanBalance();
+    }
+
+  }, [
+    accounts,
+    publicKey,
+    stakingPair,
+    refreshMeanBalance,
+  ]);
+
+  // Keep sMEAN balance updated
+  useEffect(() => {
+    if (!publicKey || !accounts || !accounts.tokenAccounts || !accounts.tokenAccounts.length) {
+      return;
+    }
+
+    if (stakingPair && stakingPair.stakedToken) {
+      refreshStakedMeanBalance();
+    }
+
+  }, [
+    accounts,
+    publicKey,
+    stakingPair,
+    refreshStakedMeanBalance,
+  ]);
 
   // Refresh pools info
   useEffect(() => {
@@ -622,7 +642,27 @@ export const InvestView = () => {
     }
 
   });
-  
+
+  // Keep the list of stake sol platforms sorted in descending order by apy
+  useEffect(() => {
+    stakingSOLData.sort((a, b) => (a.apy < b.apy) ? 1 : -1);
+  }, [stakingSOLData])
+
+  // Get staking pool info from staking client
+  useEffect(() => {
+
+    if (!stakeClient) { return; }
+
+    const price = getMeanPrice();
+    if (shouldRefreshStakePoolInfo && price) {
+      setTimeout(() => {
+        setShouldRefreshStakePoolInfo(false);
+      });
+      refreshStakePoolInfo(price);
+    }
+
+  }, [stakeClient, refreshStakePoolInfo, getMeanPrice, shouldRefreshStakePoolInfo]);
+
   useEffect(() => {
     const maxApr = Math.max(maxOrcaAprValue, maxRadiumAprValue);
     consoleOut('maxAprValue:', maxApr, 'blue');
@@ -653,26 +693,24 @@ export const InvestView = () => {
     setIsVerifiedRecipient,
   ]);
 
-  // Withdraw funds modal
-  const [isWithdrawModalVisible, setIsWithdrawModalVisible] = useState(false);
-  const showWithdrawModal = useCallback(() => setIsWithdrawModalVisible(true), []);
-  const closeWithdrawModal = useCallback(() => setIsWithdrawModalVisible(false), []);
-
-  const onWithdrawModalStart = useCallback(async () => {
-    showWithdrawModal();
-  }, [
-    showWithdrawModal
-  ]);
-
-  const onAfterWithdrawModalClosed = () => {
-    setStakingRewards(0);
-    closeWithdrawModal();
-  }
-
   // Keep staking rewards updated
   useEffect(() => {
     setStakingRewards(parseFloat(stakedAmount) * annualPercentageYield / 100);
-  }, [stakedAmount]);  
+  }, [stakedAmount]);
+
+  useEffect(() => {
+
+    const interval = setInterval(() => {
+      const now = Date.now();
+      setLastTimestamp(now);
+      setShouldRefreshStakePoolInfo(true);
+      consoleOut('Autorefresh stake pool info after:', `${(now - lastTimestamp) / 1000}s`);
+    }, ONE_MINUTE_REFRESH_TIMEOUT);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [lastTimestamp]);
 
   // Detect when entering small screen mode
   useEffect(() => {
@@ -685,16 +723,27 @@ export const InvestView = () => {
     detailsPanelOpen,
   ]);
 
+  // Setup event listeners
+  useEffect(() => {
+    if (pageInitialized && canSubscribe) {
+      setCanSubscribe(false);
+      confirmationEvents.on(EventType.TxConfirmSuccess, onStakeTxConfirmed);
+      consoleOut('Subscribed to event txConfirmed with:', 'onStakeTxConfirmed', 'blue');
+    }
+  }, [
+    canSubscribe,
+    pageInitialized,
+    onStakeTxConfirmed
+  ]);
+
   // Set when a page is initialized
   useEffect(() => {
     if (!pageInitialized && stakeClient) {
-      refreshStakedMeanBalance();
       setPageInitialized(true);
     }
   }, [
     stakeClient,
     pageInitialized,
-    refreshStakedMeanBalance
   ]);
 
   const renderInvestOptions = (
@@ -740,33 +789,6 @@ export const InvestView = () => {
     </>
   );
 
-  if (!userHasAccess) {
-    return (
-      <>
-        <div className="container main-container">
-          <div className="interaction-area">
-            <div className="title-and-subtitle w-75 h-100">
-              <div className="title">
-                <IconStats className="mean-svg-icons" />
-                <div>{t('invest.title')}</div>
-              </div>
-              <div className="subtitle text-center">
-                {t('invest.subtitle')}
-              </div>
-              <div className="w-50 h-100 p-5 text-center flex-column flex-center">
-                <div className="text-center mb-2">
-                  <WarningFilled style={{ fontSize: 48 }} className="icon fg-warning" />
-                </div>
-                <h3>The content you are accessing is not available at this time or you don't have access permission</h3>
-              </div>
-            </div>
-          </div>
-        </div>
-        <PreFooter />
-      </>
-    );
-  }
-
   return (
     <>
       <div className="container main-container">
@@ -795,7 +817,9 @@ export const InvestView = () => {
                           shape="circle"
                           size="small"
                           icon={<ReloadOutlined />}
-                          onClick={() => {}}
+                          onClick={() => {
+                            refreshStakePoolInfo(getMeanPrice());
+                          }}
                         />
                       </span>
                     </span>
@@ -825,79 +849,85 @@ export const InvestView = () => {
                       <div className="mb-3">
                         <Row>
                           <Col span={8}>
-                            <div className="info-label icon-label justify-content-center">
-                              {t("invest.panel-right.stats.staking-apy")}
-                              <Tooltip placement="top" title={t("invest.panel-right.stats.staking-apy-tooltip")}>
-                                <span>
-                                  <IconHelpCircle className="mean-svg-icons" />
-                                </span>
-                              </Tooltip>
+                            <div className="info-label icon-label justify-content-center align-items-center">
+                              <span>{t("invest.panel-right.stats.staking-apy")}</span>
+                              <InfoIcon content={t("invest.panel-right.stats.staking-apy-tooltip")} placement="top">
+                                <IconHelpCircle className="mean-svg-icons" />
+                              </InfoIcon>
                             </div>
                             <div className="transaction-detail-row">
-                              {(!stakePoolInfo || stakePoolInfo.apr === 0) && (
-                                <span>Calculating</span>
-                              )}
-                              {stakePoolInfo && stakePoolInfo.apr > 0 && (
+                              {refreshingStakePoolInfo || (!stakePoolInfo || stakePoolInfo.apr === 0) ? (
+                                <IconLoading className="mean-svg-icons"/>
+                              ) : (
                                 <span>{(stakePoolInfo.apr * 100).toFixed(2)}%</span>
                               )}
                             </div>
                           </Col>
                           <Col span={8}>
-                            <div className="info-label">
+                            <div className="info-label icon-label justify-content-center align-items-center">
                               {t("invest.panel-right.stats.total-value-locked")}
                             </div>
                             <div className="transaction-detail-row">
-                              ${stakePoolInfo ? formatThousands(stakePoolInfo.tvl, 2) : "0"}
+                              {refreshingStakePoolInfo || (!stakePoolInfo || stakePoolInfo.tvl === 0) ? (
+                                <IconLoading className="mean-svg-icons"/>
+                              ) : (
+                                <span>${formatThousands(stakePoolInfo.tvl, 2)}</span>
+                              )}
                             </div>
                           </Col>
                           <Col span={8}>
-                            <div className="info-label">
+                            <div className="info-label icon-label justify-content-center align-items-center">
                               {t("invest.panel-right.stats.total-mean-rewards")}
                             </div>
                             <div className="transaction-detail-row">
-                              ${stakePoolInfo ? formatThousands(stakePoolInfo.totalMeanRewards, 2) : "0"}
+                              {refreshingStakePoolInfo || (!stakePoolInfo || stakePoolInfo.totalMeanAmount.uiAmount === 0) ? (
+                                <IconLoading className="mean-svg-icons"/>
+                              ) : (
+                                <span>${formatThousands(stakePoolInfo.totalMeanAmount.uiAmount || 0, 0)}</span>
+                              )}
                             </div>
                           </Col>
                         </Row>
                       </div>
                     </div>
 
-                    <Row gutter={[8, 8]} className="d-flex justify-content-center">
-                      {/* Tabset */}
-                      <Col xs={24} sm={12} md={24} lg={12} className="column-width">
-                        {meanAddresses && (
-                          <div className="place-transaction-box mb-3">
-                            <div className="button-tabset-container">
-                              <div className={`tab-button ${currentTab === "stake" ? 'active' : ''}`} onClick={() => onTabChange("stake")}>
-                                {t('invest.panel-right.tabset.stake.name')}
-                              </div>
-                              <div className={`tab-button ${currentTab === "unstake" ? 'active' : ''}`} onClick={() => onTabChange("unstake")}>
-                                {t('invest.panel-right.tabset.unstake.name')}
-                              </div>
+                    <div className="flex flex-center">
+                      {meanAddresses && (
+                        <div className="place-transaction-box mb-3">
+                          <div className="button-tabset-container">
+                            <div className={`tab-button ${currentTab === "stake" ? 'active' : ''}`} onClick={() => onTabChange("stake")}>
+                              {t('invest.panel-right.tabset.stake.name')}
                             </div>
-
-                            {/* Tab Stake */}
-                            {currentTab === "stake" && (
-                              <StakeTabView
-                                stakeClient={stakeClient}
-                                selectedToken={stakingPair?.unstakedToken}
-                                tokenBalance={meanBalance}
-                              />
-                            )}
-
-                            {/* Tab unstake */}
-                            {currentTab === "unstake" && (
-                              <UnstakeTabView
-                                stakeClient={stakeClient}
-                                selectedToken={stakingPair?.stakedToken}
-                                tokenBalance={sMeanBalance}
-                              />
-                            )}
+                            <div className={`tab-button ${currentTab === "unstake" ? 'active' : ''}`} onClick={() => onTabChange("unstake")}>
+                              {t('invest.panel-right.tabset.unstake.name')}
+                            </div>
                           </div>
-                        )}
-                      </Col>
 
-                      {/* Staking data */}
+                          {/* Tab Stake */}
+                          {currentTab === "stake" && (
+                            <StakeTabView
+                              stakeClient={stakeClient}
+                              selectedToken={stakingPair?.unstakedToken}
+                              meanBalance={meanBalance}
+                              smeanBalance={sMeanBalance}
+                            />
+                          )}
+
+                          {/* Tab unstake */}
+                          {currentTab === "unstake" && (
+                            <UnstakeTabView
+                              stakeClient={stakeClient}
+                              selectedToken={stakingPair?.stakedToken}
+                              tokenBalance={sMeanBalance}
+                            />
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* <Row gutter={[8, 8]} className="d-flex justify-content-center">
+                      <Col xs={24} sm={12} md={24} lg={12} className="column-width">
+                      </Col>
                       <Col xs={24} sm={12} md={24} lg={12} className="column-width">
                         <div className="staking-data">
                           <h3>{t("invest.panel-right.staking-data.title")}</h3>
@@ -912,42 +942,14 @@ export const InvestView = () => {
                             </Row>
                           ))}
                           <Row>
-                            {/* <span className="mt-2">{t("invest.panel-right.staking-data.text-one", {unstakeStartDate: unstakeStartDate})}</span> */}
                             <span className="mt-1"><i>{t("invest.panel-right.staking-data.text-two")}</i></span>
-                            {/* <Col span={24} className="d-flex flex-column justify-content-end align-items-end mt-1">
-                              <div className="transaction-detail-row">
-                                <span className="info-icon">
-                                  {stakingRewards > 0 && (
-                                    <span role="img" aria-label="arrow-down" className="anticon anticon-arrow-down mean-svg-icons success bounce">
-                                    <ArrowDownOutlined className="mean-svg-icons" />
-                                    </span>
-                                  )}
-                                  <span className="staking-value mb-2 mt-1">{!stakingRewards ? 0 : cutNumber(stakingRewards, 6)} {selectedToken && selectedToken.name}</span>
-                                </span>
-                              </div>
-                            </Col> */}
-                            {/* Withdraw button */}
-                            {/* <Col span={24} className="d-flex flex-column justify-content-end align-items-end mt-1">
-                              <Space size="middle">
-                                <Button
-                                  type="default"
-                                  shape="round"
-                                  size="small"
-                                  className="thin-stroke"
-                                  onClick={onWithdrawModalStart}
-                                  disabled={!stakingRewards || stakingRewards === 0}
-                                >
-                                  {t("invest.panel-right.staking-data.withdraw-button")}
-                                </Button>
-                              </Space>
-                            </Col> */}
                           </Row>
                         </div>
                       </Col>
-                    </Row>
+                    </Row> */}
                   </>
                 )}
-                
+
                 {/* Mean Liquidity Pools & Farms */}
                 {selectedInvest.id === 1 && (
                   <>
@@ -966,7 +968,7 @@ export const InvestView = () => {
                             type="default"
                             shape="circle"
                             size="middle"
-                            icon={<IconRefresh className="mean-svg-icons" />}
+                            icon={<ReloadOutlined className="mean-svg-icons" />}
                             onClick={() => setShouldRefreshLpData(true)}
                           />
                         </Tooltip>
@@ -1072,7 +1074,7 @@ export const InvestView = () => {
                             type="default"
                             shape="circle"
                             size="middle"
-                            icon={<IconRefresh className="mean-svg-icons" />}
+                            icon={<ReloadOutlined className="mean-svg-icons" />}
                             onClick={() => setShouldRefreshLpData(true)}
                           />
                         </Tooltip>
@@ -1140,29 +1142,6 @@ export const InvestView = () => {
           </div>
         </div>
       </div>
-      {/* Withdraw funds transaction execution modal */}
-      {/* <Modal
-        className="mean-modal no-full-screen"
-        maskClosable={false}
-        visible={isWithdrawModalVisible}
-        onCancel={closeWithdrawModal}
-        afterClose={onAfterWithdrawModalClosed}
-        width={330}
-        footer={null}>
-        <div className="transaction-progress">
-          <CheckOutlined style={{ fontSize: 48 }} className="icon" />
-          <h4 className="font-bold mb-1 text-uppercase">Withdraw Funds</h4>
-          <p className="operation">{t('transactions.status.tx-withdraw-operation-success')}</p>
-          <Button
-            block
-            type="primary"
-            shape="round"
-            size="middle"
-            onClick={closeWithdrawModal}>
-            {t('general.cta-close')}
-          </Button>
-        </div>
-      </Modal> */}
       <PreFooter />
     </>
   );

@@ -296,7 +296,7 @@
 			"up-to-value-label": "Up to"
 		},
 		"panel-right": {
-			"first-text": "MEAN staking rewards include emission incentives plus a share of the protocol revenues, and can be boosted using locking periods. When you stake your MEAN, you get sMEAN in return.",
+			"first-text": "MEAN staking rewards include emission incentives plus a share of the protocol revenues, and can be boosted using locking periods. When you stake your MEAN, you get sMEAN (staked MEAN) in return.",
 			"liquidity-pool": {
 				"refresh-tooltip": "رفرش کردن داده های نقدینگی",
 				"text-one": "استخرهای MEAN Liquidity در حال حاضر در Orca و Raydium با چندین استخر از جمله MEAN/SOL، MEAN/RAY و MEAN/USDC در دسترس هستند.",
@@ -325,7 +325,7 @@
 			"stats": {
 				"staking-apy": "Staking APY",
 				"staking-apy-tooltip": "APY مرتبط با sMEAN نمایشی از قیمت sMEAN در یک دوره 365 روزه است.",
-				"total-mean-rewards": "مجموع جوایز MEAN",
+				"total-mean-rewards": "Total MEAN Staked",
 				"total-value-locked": "ارزش کل قفل شده است"
 			},
 			"table-data": {
@@ -365,7 +365,8 @@
 					"unstake-button-available": "Unstake",
 					"unstake-button-busy": "Unstaking",
 					"unstake-button-unavailable": "در دسترس نیست",
-					"verified-label": "من با شرایط و قوانین موافق هستم"
+					"verified-label": "من با شرایط و قوانین موافق هستم",
+					"success-transaction-message": "{{sMeanValue}} sMEAN has been successfully unstaked and you have received {{meanValue}} MEAN in return."
 				}
 			},
 			"title": "برای به دست آوردن جوایز MEAN،  توکن MEAN را استیک کنید"
@@ -393,6 +394,7 @@
 			"token-placeholder": "آدرس مینت کردن توکن را وارد کنید"
 		},
 		"create-multisig": {
+			"fee-info-label": "The fee to create this multisig is",
 			"main-cta": "ساختن",
 			"main-cta-busy": "ساختن حساب Multisig",
 			"modal-title": "ساخت حساب Multisig",
@@ -608,7 +610,7 @@
 			"transfer-to-placeholder": "آدرس اکانت مقصد را وارد کنید"
 		},
 		"update-multisig": {
-			"edit-not-allowed-message": "وقتی امضاکنندگان را در Multisig تغییر می‌دهید، تمام تراکنش‌های معلق باطل می‌شوند. قبل از ادامه، مطمئن شوید که هیچ تراکنش مهمی وجود ندارد که لازم باشد ابتدا انجام شود.",
+			"edit-not-allowed-message": "When you change the signers on a Multisig, all pending transactions will be VOIDED. Before you proceed, make sure there are no important transactions needing to be completed first.",
 			"main-cta": "ذخیره تغییرات",
 			"main-cta-busy": "ذخیره سازی تغییرات",
 			"modal-title": "ویرایش multisig",
@@ -628,6 +630,7 @@
 	"notifications": {
 		"account-address-copied-message": "آدرس حساب با موفقیت کپی شد",
 		"account-address-not-copied-message": "آدرس حساب کپی نشد",
+		"check-transaction-in-explorer": "Check your transaction here",
 		"create-money-stream-completed": "money stream شما ایجاد شده است",
 		"create-money-stream-completed-wait-for-confirm": "پس از تایید تراکنش باید در لیست نشان داده شود.",
 		"error-cannot-faucet-mainnet-message": "در شبکه اصلی نمی توان فاست زد",
@@ -840,10 +843,9 @@
 	"swap": {
 		"exchange-warning": "صرافی Mean فقط در دسترس است",
 		"frequency-label": "فرکانس",
-		"getting-routes": "Getting routes",
 		"input-label-destination": "معاوضه به (est.)",
 		"input-label-source": "معاوضه از",
-		"insufficient-liquidity": "نقدینگی ناکافی برای این ترید",
+		"getting-routes": "Finding the best route and price",
 		"pools-and-routes": "استخرها و مسیرها",
 		"routes-best-price-label": "بهترین قیمت",
 		"screen-subtitle": "سریع ترین و ساده ترین راه برای مبادله دو توکن",
@@ -978,10 +980,10 @@
 		},
 		"validation": {
 			"address-validation": "فرمت آدرس معتبر نیست",
-			"amount-high": "مقدار از موجودی شما بیشتر است",
-			"amount-low": "موجودی کافی نیست",
+			"amount-high": "Amount exceeded",
+			"amount-low": "Low balance",
 			"amount-lt-fee": "مبلغ باید بیشتر از فی تراکنش باشد",
-			"amount-sol-high": "مبلغ از موجودی SOL شما بیشتر است",
+			"amount-sol-high": "Insufficient SOL",
 			"amount-withdraw-high": "مبلغ بیشتر از وجوه موجود است",
 			"cannot-use-own-account-as-treasury": "نمی توان از حساب خود به عنوان treasury id استفاده کرد",
 			"exchange-unavailable": "مبادله در دسترس نیست",
@@ -1001,7 +1003,7 @@
 			"no-recipient": "بدون گیرنده",
 			"no-valid-date": "یک تاریخ معتبر تنظیم کنید",
 			"not-connected": "کیف پول خود را وصل کنید",
-			"payment-rate-high": "نرخ پرداخت از موجودی شما بیشتر است",
+			"payment-rate-high": "Payment exceeded",
 			"select-address-list": "لیست آدرس را انتخاب کنید",
 			"select-recipient": "گیرنده را انتخاب کنید",
 			"select-stream": "یک stream را انتخاب کنید",
@@ -1011,7 +1013,7 @@
 			"valid-ddca-review": "بررسی",
 			"valid-start-funding": "شروع به تامین مالی کنید",
 			"valid-start-withdrawal": "شروع به برداشت",
-			"verified-recipient-unchecked": "تأیید گیرنده چک نشده است"
+			"verified-recipient-unchecked": "Recipient Unchecked"
 		}
 	},
 	"transfer-stream": {

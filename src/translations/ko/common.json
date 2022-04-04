@@ -299,7 +299,7 @@
 			"not-connected": "Please connect your wallet to see your invest options"
 		},
 		"panel-right": {
-			"first-text": "MEAN staking rewards include emission incentives plus a share of the protocol revenues, and can be boosted using locking periods. When you stake your MEAN, you get sMEAN in return.",
+			"first-text": "MEAN staking rewards include emission incentives plus a share of the protocol revenues, and can be boosted using locking periods. When you stake your MEAN, you get sMEAN (staked MEAN) in return.",
 			"liquidity-pool": {
 				"refresh-tooltip": "Refresh liquidity data",
 				"text-one": "MEAN Liquidity Pools are currently available on Orca and Raydium with multiple pools including MEAN/SOL, MEAN/RAY and MEAN/USDC.",
@@ -329,7 +329,7 @@
 			"stats": {
 				"staking-apy": "Staking APY",
 				"staking-apy-tooltip": "The APY associated with sMEAN is a representation of the price of sMEAN over a 365 day period.",
-				"total-mean-rewards": "Total MEAN Rewards",
+				"total-mean-rewards": "Total MEAN Staked",
 				"total-value-locked": "Total Value Locked"
 			},
 			"table-data": {
@@ -361,7 +361,7 @@
 					"amount-label": "Amount to unstake",
 					"name": "Unstake",
 					"notification-label-one": "Your currently have {{stakedAmount}} sMEAN staked which is currently locked until {{unstakeStartDate}}",
-					"notification-label-one-error": "Your currently do not have any sMEAN.",
+					"notification-label-one-error": "You currently don't have any sMEAN.",
 					"notification-label-two": "Unstaking will withdraw the specified amount of unlocked sMEAN tokens to your wallet",
 					"send-amount": {
 						"label-right": "Available to unstake"
@@ -369,7 +369,8 @@
 					"unstake-button-busy": "Unstaking",
 					"unstake-button-available": "Unstake",
 					"unstake-button-unavailable": "No available",
-					"verified-label": "I agree to the Terms & Conditions"
+					"verified-label": "I agree to the Terms & Conditions",
+					"success-transaction-message": "{{sMeanValue}} sMEAN has been successfully unstaked and you have received {{meanValue}} MEAN in return."
 				}
 			},
 			"title": "Stake MEAN to Earn MEAN Rewards"
@@ -397,6 +398,7 @@
 			"token-placeholder": "Enter the address of the token mint"
 		},
 		"create-multisig": {
+			"fee-info-label": "The fee to create this multisig is",
 			"main-cta": "생성하다",
 			"main-cta-busy": "다중서명 생성 중",
 			"modal-title": "다중서명 생성하기",
@@ -612,7 +614,7 @@
 			"transfer-to-placeholder": "대상 계정의 주소를 입력하십시오"
 		},
 		"update-multisig": {
-			"edit-not-allowed-message": "보류 중인 모든 거래를 먼저 완료하거나 취소하지 않고는 다중 서명을 편집할 수 없습니다.",
+			"edit-not-allowed-message": "When you change the signers on a Multisig, all pending transactions will be VOIDED. Before you proceed, make sure there are no important transactions needing to be completed first.",
 			"main-cta": "Propose changes",
 			"main-cta-busy": "변경된 내용 저장",
 			"modal-title": "다중서명 수정",
@@ -632,6 +634,7 @@
 	"notifications": {
 		"account-address-copied-message": "계좌 주소가 성공적으로 복사됨",
 		"account-address-not-copied-message": "계정 주소를 복사할 수 없습니다",
+		"check-transaction-in-explorer": "Check your transaction here",
 		"create-money-stream-completed": "머니스트림이 생성되었습니다.",
 		"create-money-stream-completed-wait-for-confirm": "거래가 확인되면 목록에 표시되어야 합니다.",
 		"error-cannot-faucet-mainnet-message": "메인넷에서 faucet 사용불가",
@@ -844,7 +847,7 @@
 	"swap": {
 		"exchange-warning": "MEAN 교환은 다음에서만 사용할 수 있습니다.",
 		"frequency-label": "빈번히",
-		"getting-routes": "Getting routes",
+		"getting-routes": "Finding the best route and price",
 		"input-label-destination": "(추정)으로 교환",
 		"input-label-source": "다음에서 교환",
 		"insufficient-liquidity": "이 거래에 대한 유동성 부족",
@@ -982,10 +985,10 @@
 		},
 		"validation": {
 			"address-validation": "유효한 주소 형식이 아닙니다.",
-			"amount-high": "금액이 잔액을 초과합니다.",
-			"amount-low": "잔액이 부족합니다",
+			"amount-high": "Amount exceeded",
+			"amount-low": "Low balance",
 			"amount-lt-fee": "금액은 거래 수수료보다 커야 합니다.",
-			"amount-sol-high": "금액이 SOL 잔액을 초과합니다.",
+			"amount-sol-high": "Insufficient SOL",
 			"amount-withdraw-high": "금액이 사용 가능한 자금보다 큽니다.",
 			"cannot-use-own-account-as-treasury": "귀하의 계정을 트레저리 ID로 사용할 수 없습니다.",
 			"exchange-unavailable": "교환 불가",
@@ -1005,7 +1008,7 @@
 			"no-recipient": "받는 사람 없음",
 			"no-valid-date": "유효한 날짜를 설정하십시오",
 			"not-connected": "지갑 연결",
-			"payment-rate-high": "지불 비율이 잔액을 초과합니다.",
+			"payment-rate-high": "Payment exceeded",
 			"select-address-list": "Select address list",
 			"select-recipient": "수신자 선택",
 			"select-stream": "스트림 선택",
@@ -1015,7 +1018,7 @@
 			"valid-ddca-review": "검토",
 			"valid-start-funding": "펀딩 시작",
 			"valid-start-withdrawal": "출금 시작",
-			"verified-recipient-unchecked": "수신자 확인이 선택되지 않음"
+			"verified-recipient-unchecked": "Recipient Unchecked"
 		}
 	},
 	"transfer-stream": {

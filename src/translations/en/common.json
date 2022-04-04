@@ -296,7 +296,7 @@
 			"up-to-value-label": "Up to"
 		},
 		"panel-right": {
-			"first-text": "MEAN staking rewards include emission incentives plus a share of the protocol revenues, and can be boosted using locking periods. When you stake your MEAN, you get sMEAN in return.",
+			"first-text": "MEAN staking rewards include emission incentives plus a share of the protocol revenues, and can be boosted using locking periods. When you stake your MEAN, you get sMEAN (staked MEAN) in return.",
 			"liquidity-pool": {
 				"refresh-tooltip": "Refresh liquidity data",
 				"text-one": "MEAN Liquidity Pools are currently available on Orca and Raydium with multiple pools including MEAN/SOL, MEAN/RAY and MEAN/USDC.",
@@ -326,7 +326,7 @@
 			"stats": {
 				"staking-apy": "Staking APR",
 				"staking-apy-tooltip": "The APR associated with sMEAN is a representation of the price of sMEAN over a 365 day period.",
-				"total-mean-rewards": "Total MEAN Rewards",
+				"total-mean-rewards": "Total MEAN Staked",
 				"total-value-locked": "Total Value Locked"
 			},
 			"table-data": {
@@ -358,7 +358,7 @@
 					"amount-label": "Amount to unstake",
 					"name": "Unstake",
 					"notification-label-one": "Your currently have {{stakedAmount}} sMEAN staked which is currently locked until {{unstakeStartDate}}",
-					"notification-label-one-error": "Your currently do not have any sMEAN.",
+					"notification-label-one-error": "You currently don't have any sMEAN.",
 					"notification-label-two": "Unstaking will withdraw the specified amount of unlocked sMEAN tokens to your wallet",
 					"send-amount": {
 						"label-right": "Available to unstake"
@@ -366,7 +366,8 @@
 					"unstake-button-available": "Unstake",
 					"unstake-button-busy": "Unstaking",
 					"unstake-button-unavailable": "No available",
-					"verified-label": "I agree to the Terms & Conditions"
+					"verified-label": "I agree to the Terms & Conditions",
+					"success-transaction-message": "{{sMeanValue}} sMEAN has been successfully unstaked and you have received {{meanValue}} MEAN in return."
 				}
 			},
 			"title": "Stake MEAN to Earn MEAN Rewards"
@@ -394,6 +395,7 @@
 			"token-placeholder": "Enter the address of the token mint"
 		},
 		"create-multisig": {
+			"fee-info-label": "The fee to create this multisig is",
 			"main-cta": "Create",
 			"main-cta-busy": "Creating multisig",
 			"modal-title": "Create multisig",
@@ -609,7 +611,7 @@
 			"transfer-to-placeholder": "Enter the address of the destination account"
 		},
 		"update-multisig": {
-			"edit-not-allowed-message": "You can not edit the Multisig without first completing or canceling all pending transactions.",
+			"edit-not-allowed-message": "When you change the signers on a Multisig, all pending transactions will be VOIDED. Before you proceed, make sure there are no important transactions needing to be completed first.",
 			"main-cta": "Propose changes",
 			"main-cta-busy": "Saving changes",
 			"modal-title": "Edit multisig",
@@ -629,6 +631,7 @@
 	"notifications": {
 		"account-address-copied-message": "Account Address successfully copied",
 		"account-address-not-copied-message": "Could not copy Account Address",
+		"check-transaction-in-explorer": "Check your transaction here",
 		"create-money-stream-completed": "Your money stream is created",
 		"create-money-stream-completed-wait-for-confirm": "After the transaction is confirmed it should show up in the list.",
 		"error-cannot-faucet-mainnet-message": "Cannot faucet in mainnet",
@@ -841,11 +844,10 @@
 	"swap": {
 		"exchange-warning": "Mean Exchange is only available on",
 		"frequency-label": "Frequency",
-		"getting-routes": "Getting routes",
 		"input-label-destination": "Exchange to (est.)",
 		"input-label-source": "Exchange from",
 		"insufficient-liquidity": "Insufficient liquidity for this trade",
-		"pools-and-routes": "Pools and routes",
+		"getting-routes": "Finding the best route and price",
 		"routes-best-price-label": "Best price",
 		"screen-subtitle": "Fastest and easiest way to swap two tokens",
 		"screen-title": "Exchange",
@@ -979,10 +981,10 @@
 		},
 		"validation": {
 			"address-validation": "Not a valid address format",
-			"amount-high": "Amount exceeds your balance",
-			"amount-low": "Not enough balance",
+			"amount-high": "Amount exceeded",
+			"amount-low": "Low balance",
 			"amount-lt-fee": "Amount has to be greater than the transaction fee",
-			"amount-sol-high": "Amount exceeds your SOL balance",
+			"amount-sol-high": "Insufficient SOL",
 			"amount-withdraw-high": "Amount is greater than the available funds",
 			"cannot-use-own-account-as-treasury": "Cannot use your account as treasury id",
 			"exchange-unavailable": "Exchange unavailable",
@@ -1002,7 +1004,7 @@
 			"no-recipient": "No recipient",
 			"no-valid-date": "Set a valid date",
 			"not-connected": "Connect your wallet",
-			"payment-rate-high": "Payment rate exceeds your balance",
+			"payment-rate-high": "Payment exceeded",
 			"select-address-list": "Select address list",
 			"select-recipient": "Select recipient",
 			"select-stream": "Select a stream",
@@ -1012,7 +1014,7 @@
 			"valid-ddca-review": "Review",
 			"valid-start-funding": "Start funding",
 			"valid-start-withdrawal": "Start withdrawal",
-			"verified-recipient-unchecked": "Recipient verification unchecked"
+			"verified-recipient-unchecked": "Recipient Unchecked"
 		}
 	},
 	"transfer-stream": {

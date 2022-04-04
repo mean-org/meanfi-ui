@@ -8,7 +8,7 @@ import {
   InfoCircleOutlined,
   LoadingOutlined, ReloadOutlined, SearchOutlined,
 } from '@ant-design/icons';
-import { ConfirmOptions, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
+import { ConfirmOptions, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction, TransactionInstruction } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
 import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
@@ -45,16 +45,17 @@ import {
 } from '../../utils/ui';
 import {
   FALLBACK_COIN_IMAGE,
+  NO_FEES,
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
   STREAMS_REFRESH_TIMEOUT,
   VERBOSE_DATE_TIME_FORMAT
 } from '../../constants';
 import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
-import { OperationType, PaymentRateType, TransactionStatus } from '../../models/enums';
+import { OperationType, TransactionStatus } from '../../models/enums';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
-import { notify, openNotification } from '../../utils/notifications';
-import { IconBank, IconClock, IconRefresh, IconShieldOutline, IconTrash } from '../../Icons';
+import { notify } from '../../utils/notifications';
+import { IconBank, IconClock, IconShieldOutline, IconTrash } from '../../Icons';
 import { TreasuryOpenModal } from '../../components/TreasuryOpenModal';
 import { MSP_ACTIONS, StreamInfo, STREAM_STATE, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { TreasuryCreateModal } from '../../components/TreasuryCreateModal';
@@ -93,10 +94,11 @@ import BN from 'bn.js';
 import { InfoIcon } from '../../components/InfoIcon';
 import { useLocation, useNavigate } from 'react-router-dom';
 import MultisigIdl from "../../models/mean-multisig-idl";
-import { MultisigParticipant, MultisigV2 } from '../../models/multisig';
+import { MEAN_MULTISIG_OPS, MultisigParticipant, MultisigV2 } from '../../models/multisig';
 import { Program, Provider } from '@project-serum/anchor';
 import { TreasuryCreateOptions } from '../../models/treasuries';
 import { customLogger } from '../..';
+import { openNotification } from '../../components/Notifications';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -171,9 +173,7 @@ export const TreasuriesView = () => {
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
-  const [transactionFees, setTransactionFees] = useState<TransactionFees>({
-    blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
-  });
+  const [transactionFees, setTransactionFees] = useState<TransactionFees>(NO_FEES);
   const [withdrawTransactionFees, setWithdrawTransactionFees] = useState<TransactionFees>({
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
   });
@@ -2111,6 +2111,8 @@ export const TreasuriesView = () => {
             multisig: multisig.id,
             transaction: transaction.publicKey,
             proposer: publicKey as PublicKey,
+            multisigOpsAccount: MEAN_MULTISIG_OPS,
+            systemProgram: SystemProgram.programId
           },
           preInstructions: [createIx],
           signers: txSigners,
@@ -3038,6 +3040,8 @@ export const TreasuriesView = () => {
             multisig: multisig.id,
             transaction: transaction.publicKey,
             proposer: publicKey as PublicKey,
+            multisigOpsAccount: MEAN_MULTISIG_OPS,
+            systemProgram: SystemProgram.programId
           },
           preInstructions: [createIx],
           signers: txSigners,
@@ -3479,6 +3483,8 @@ export const TreasuriesView = () => {
             multisig: multisig.id,
             transaction: transaction.publicKey,
             proposer: publicKey as PublicKey,
+            multisigOpsAccount: MEAN_MULTISIG_OPS,
+            systemProgram: SystemProgram.programId
           },
           preInstructions: [createIx],
           signers: txSigners,
@@ -3904,6 +3910,8 @@ export const TreasuriesView = () => {
             multisig: multisig.id,
             transaction: transaction.publicKey,
             proposer: publicKey as PublicKey,
+            multisigOpsAccount: MEAN_MULTISIG_OPS,
+            systemProgram: SystemProgram.programId
           },
           preInstructions: [createIx],
           signers: txSigners,
@@ -4329,6 +4337,8 @@ export const TreasuriesView = () => {
             multisig: multisig.id,
             transaction: transaction.publicKey,
             proposer: publicKey as PublicKey,
+            multisigOpsAccount: MEAN_MULTISIG_OPS,
+            systemProgram: SystemProgram.programId
           },
           preInstructions: [createIx],
           signers: txSigners,
@@ -4684,6 +4694,8 @@ export const TreasuriesView = () => {
             multisig: multisig.id,
             transaction: transaction.publicKey,
             proposer: publicKey as PublicKey,
+            multisigOpsAccount: MEAN_MULTISIG_OPS,
+            systemProgram: SystemProgram.programId
           },
           preInstructions: [createIx],
           signers: txSigners,
@@ -5610,7 +5622,7 @@ export const TreasuriesView = () => {
                               type="default"
                               shape="circle"
                               size="middle"
-                              icon={<IconRefresh className="mean-svg-icons" />}
+                              icon={<ReloadOutlined className="mean-svg-icons" />}
                               onClick={() => onExecuteRefreshTreasuryBalance()}
                               disabled={
                                 isTxInProgress() ||

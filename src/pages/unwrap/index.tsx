@@ -7,7 +7,7 @@ import {
   LAMPORTS_PER_SOL,
   Transaction,
 } from "@solana/web3.js";
-import { WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
+import { NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { Button } from "antd";
 import { cutNumber, formatThousands, getTxIxResume, isValidNumber, toUiAmount } from "../../utils/utils";
 import { AppStateContext } from "../../contexts/appstate";
@@ -48,11 +48,7 @@ export const UnwrapView = () => {
   const [nativeBalance, setNativeBalance] = useState(0);
   const [feeAmount, setFeeAmount] = useState<number | null>(null);
   const [wSolBalance, setWsolBalance] = useState(0);
-  const [transactionFees, setTransactionFees] = useState<TransactionFees>({
-    blockchainFee: 0,
-    mspFlatFee: 0,
-    mspPercentFee: 0,
-  });
+  const [transactionFees, setTransactionFees] = useState<TransactionFees>(NO_FEES);
   const [pageInitialized, setPageInitialized] = useState<boolean>(false);
 
   // Get wSOL token info
@@ -225,11 +221,18 @@ export const UnwrapView = () => {
     let newValue = e.target.value;
     const splitted = newValue.toString().split('.');
     const left = splitted[0];
-    if (left.length > 1) {
+
+    if (wSol && splitted[1]) {
+      if (splitted[1].length > wSol.decimals) {
+        splitted[1] = splitted[1].slice(0, -1);
+        newValue = splitted.join('.');
+      }
+    } else if (left.length > 1) {
       const number = splitted[0] - 0;
       splitted[0] = `${number}`;
       newValue = splitted.join('.');
     }
+
     if (newValue === null || newValue === undefined || newValue === "") {
       setUnwrapAmount("");
     } else if (newValue === '.') {

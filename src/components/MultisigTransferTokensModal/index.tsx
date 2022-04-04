@@ -141,15 +141,16 @@ export const MultisigTransferTokensModal = (props: {
     const decimals = selectedToken ? selectedToken.decimals : 0;
     const splitted = newValue.toString().split('.');
     const left = splitted[0];
-    if (left.length > 1) {
-      const number = splitted[0] - 0;
-      splitted[0] = `${number}`;
-      newValue = splitted.join('.');
-    } else if (decimals && splitted[1]) {
+
+    if (decimals && splitted[1]) {
       if (splitted[1].length > decimals) {
         splitted[1] = splitted[1].slice(0, -1);
         newValue = splitted.join('.');
       }
+    } else if (left.length > 1) {
+      const number = splitted[0] - 0;
+      splitted[0] = `${number}`;
+      newValue = splitted.join('.');
     }
 
     if (newValue === null || newValue === undefined || newValue === "") {
@@ -174,6 +175,18 @@ export const MultisigTransferTokensModal = (props: {
   const refreshPage = () => {
     props.handleClose();
     window.location.reload();
+  }
+
+  // Handler paste clipboard data
+  const pasteHandler = (e: any) => {
+    const getClipBoardData = e.clipboardData.getData('Text');
+    const replaceCommaToDot = getClipBoardData.replace(",", "")
+    const onlyNumbersAndDot = replaceCommaToDot.replace(/[^.\d]/g, '');
+
+    console.log(onlyNumbersAndDot);
+    
+
+    setAmount(onlyNumbersAndDot.trim());
   }
 
   return (
@@ -205,11 +218,13 @@ export const MultisigTransferTokensModal = (props: {
                         <span className="add-on">
                           {props.assets && props.assets.length > 0 && fromVault && fromMint && (
                             <Select className={`token-selector-dropdown auto-height`} value={fromVault.address.toBase58()}
-                                style={{width:"100%", maxWidth:'none'}}
-                                onChange={onVaultChanged} bordered={false} showArrow={false}
-                                dropdownRender={menu => (
-                                <div>{menu}</div>
-                              )}>
+                              style={{width:"100%", maxWidth:'none'}}
+                              onChange={onVaultChanged}
+                              bordered={false}
+                              showArrow={false}
+                              dropdownRender={menu => (
+                              <div>{menu}</div>
+                            )}>
                               {props.assets.map((option: MultisigVault) => {
                                 const token = getTokenByMintAddress(option.mint.toBase58());
                                 const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
@@ -236,7 +251,7 @@ export const MultisigTransferTokensModal = (props: {
                                           </div>
                                         </div>
                                         <div className="description-cell">
-                                          <div className="title text-truncate">{token ? token.symbol : `Unknown token [${shortenAddress(option.mint.toBase58(), 6)}]`}</div>
+                                          <div className="title text-truncate">{token ? token.symbol : `${shortenAddress(option.mint.toBase58(), 4)}`}</div>
                                         </div>
                                         <div className="rate-cell">
                                           <div className="rate-amount text-uppercase">
@@ -257,7 +272,7 @@ export const MultisigTransferTokensModal = (props: {
                         </span>
                       </div>
                       <div className="right">
-                        <DebounceInput
+                        <input
                           className="general-text-input text-right"
                           inputMode="decimal"
                           autoComplete="off"
@@ -268,8 +283,8 @@ export const MultisigTransferTokensModal = (props: {
                           placeholder="0.0"
                           minLength={1}
                           maxLength={79}
-                          debounceTimeout={400}
                           spellCheck="false"
+                          onPaste={pasteHandler}
                           value={amount}
                         />
                       </div>
@@ -313,7 +328,7 @@ export const MultisigTransferTokensModal = (props: {
 
             {/* Transfer to */}
             <div className="form-label">{t('multisig.transfer-tokens.transfer-to-label')}</div>
-            <div className="well">
+            <div className="well transfer-proposal-address">
               <input id="mint-to-field"
                 className="general-text-input"
                 autoComplete="on"
@@ -388,7 +403,7 @@ export const MultisigTransferTokensModal = (props: {
         )}
       </div>
 
-      <div className="row two-col-ctas mt-3 transaction-progress">
+      <div className="row two-col-ctas mt-3 transaction-progress p-0">
         <div className="col-6">
           <Button
             block

@@ -26,6 +26,7 @@ import { MathWalletAdapter } from "../wallet-adapters/mathwallet";
 import { DownOutlined, UpOutlined } from "@ant-design/icons";
 import { segmentAnalytics } from "../App";
 import { AppUsageEvent } from "../utils/segment-service";
+import { openNotification } from "../components/Notifications";
 
 export const WALLET_PROVIDERS = [
   {
@@ -237,11 +238,11 @@ export function WalletProvider({ children = null as any }) {
                 )}`
               : walletPublicKey;
 
-          notify({
-            message: t('notifications.wallet-connection-event-title'),
-            description: t('notifications.wallet-connect-message', {address: keyToDisplay}),
-            type: 'info'
-          });
+            openNotification({
+              type: "success",
+              title: t('notifications.wallet-connection-event-title'),
+              description: t('notifications.wallet-connect-message', {address: keyToDisplay}),
+            });
         }
       });
 

@@ -394,6 +394,7 @@
 			"token-placeholder": "Entrez l'adresse mint de jeton"
 		},
 		"create-multisig": {
+			"fee-info-label": "The fee to create this multisig is",
 			"main-cta": "Créer",
 			"main-cta-busy": "Création de plusieurs signatures",
 			"modal-title": "Créer plusieurs signatures",
@@ -629,6 +630,7 @@
 	"notifications": {
 		"account-address-copied-message": "Adresse du compte copiée avec succès",
 		"account-address-not-copied-message": "Impossible de copier l'adresse du compte",
+		"check-transaction-in-explorer": "Check your transaction here",
 		"create-money-stream-completed": "Votre flux d'argent est créé",
 		"create-money-stream-completed-wait-for-confirm": "Une fois la transaction confirmée, elle devrait apparaître dans la liste.",
 		"error-cannot-faucet-mainnet-message": "Impossible d'exploiter le réseau principal",
@@ -841,7 +843,7 @@
 	"swap": {
 		"exchange-warning": "Mean Exchange n'est disponible que sur",
 		"frequency-label": "La fréquence",
-		"getting-routes": "Getting routes",
+		"getting-routes": "Finding the best route and price",
 		"input-label-destination": "Échange à (est.)",
 		"input-label-source": "Échange de",
 		"insufficient-liquidity": "Liquidité insuffisante pour ce trade",
@@ -979,10 +981,10 @@
 		},
 		"validation": {
 			"address-validation": "Pas un format d'adresse valide",
-			"amount-high": "Le montant dépasse votre solde",
-			"amount-low": "Pas assez d'équilibre",
+			"amount-high": "Amount exceeded",
+			"amount-low": "Low balance",
 			"amount-lt-fee": "Le montant doit être supérieur aux frais de transaction",
-			"amount-sol-high": "Le montant dépasse votre solde SOL",
+			"amount-sol-high": "Insufficient SOL",
 			"amount-withdraw-high": "Le montant est supérieur aux fonds disponibles",
 			"cannot-use-own-account-as-treasury": "Impossible d'utiliser votre compte comme identifiant de trésorerie",
 			"exchange-unavailable": "Échange indisponible",
@@ -1012,7 +1014,7 @@
 			"valid-ddca-review": "Passer en revue",
 			"valid-start-funding": "Commencer le financement",
 			"valid-start-withdrawal": "Commencer le retrait",
-			"verified-recipient-unchecked": "Vérification du destinataire décochée"
+			"verified-recipient-unchecked": "Recipient Unchecked"
 		}
 	},
 	"transfer-stream": {

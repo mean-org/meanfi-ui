@@ -29,6 +29,7 @@ export { IconInstagram } from "./IconInstagram";
 export { IconKey } from "./IconKey";
 export { IconLinkedin } from "./IconLinkedin";
 export { IconLiveHelp } from "./IconLiveHelp";
+export { IconLoading } from "./IconLoading";
 export { IconLock } from "./IconLock";
 export { IconLogout } from "./IconLogout";
 export { IconMoneyTransfer } from "./IconMoneyTransfer";
