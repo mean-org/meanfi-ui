@@ -614,7 +614,7 @@
 			"transfer-to-placeholder": "대상 계정의 주소를 입력하십시오"
 		},
 		"update-multisig": {
-			"edit-not-allowed-message": "보류 중인 모든 거래를 먼저 완료하거나 취소하지 않고는 다중 서명을 편집할 수 없습니다.",
+			"edit-not-allowed-message": "When you change the signers on a Multisig, all pending transactions will be VOIDED. Before you proceed, make sure there are no important transactions needing to be completed first.",
 			"main-cta": "Propose changes",
 			"main-cta-busy": "변경된 내용 저장",
 			"modal-title": "다중서명 수정",

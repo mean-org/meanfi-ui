@@ -610,7 +610,7 @@
 			"transfer-to-placeholder": "آدرس اکانت مقصد را وارد کنید"
 		},
 		"update-multisig": {
-			"edit-not-allowed-message": "وقتی امضاکنندگان را در Multisig تغییر می‌دهید، تمام تراکنش‌های معلق باطل می‌شوند. قبل از ادامه، مطمئن شوید که هیچ تراکنش مهمی وجود ندارد که لازم باشد ابتدا انجام شود.",
+			"edit-not-allowed-message": "When you change the signers on a Multisig, all pending transactions will be VOIDED. Before you proceed, make sure there are no important transactions needing to be completed first.",
 			"main-cta": "ذخیره تغییرات",
 			"main-cta-busy": "ذخیره سازی تغییرات",
 			"modal-title": "ویرایش multisig",
