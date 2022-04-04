@@ -46,7 +46,7 @@ import {
   isProd
 } from '../../utils/ui';
 
-import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS, VERBOSE_DATE_TIME_FORMAT } from '../../constants';
+import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, VERBOSE_DATE_TIME_FORMAT } from '../../constants';
 
 import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
@@ -60,7 +60,7 @@ import { useNativeAccount } from '../../contexts/accounts';
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
 import { AccountLayout, MintLayout, TOKEN_PROGRAM_ID, u64 } from '@solana/spl-token';
 import { useNavigate } from 'react-router-dom';
-import { Multisig, MultisigV2, MultisigParticipant, MultisigTransaction, MultisigTransactionStatus, MultisigMint } from '../../models/multisig';
+import { Multisig, MultisigV2, MultisigParticipant, MultisigTransaction, MultisigTransactionStatus, MultisigMint, MEAN_MULTISIG_OPS, CREATE_MULTISIG_FEES } from '../../models/multisig';
 import { MultisigCreateModal } from '../../components/MultisigCreateModal';
 import './style.less';
 
@@ -73,7 +73,7 @@ import { encodeInstruction } from '../../models/idl';
 import { MultisigSetProgramAuthModal } from '../../components/MultisigSetProgramAuthModal';
 import { MultisigOwnersView } from '../../components/MultisigOwnersView';
 import { MultisigEditModal } from '../../components/MultisigEditModal';
-import { MSP, Treasury } from '@mean-dao/msp';
+import { calculateActionFees, MSP, MSP_ACTIONS, Treasury } from '@mean-dao/msp';
 import { customLogger } from '../..';
 import { isError } from '../../utils/transactions';
 import { ProgramAccounts } from '../../utils/accounts';
@@ -114,9 +114,7 @@ export const MultisigView = () => {
   // Balance and fees
   const [nativeBalance, setNativeBalance] = useState(0);
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
-  const [transactionFees, setTransactionFees] = useState<TransactionFees>({
-    blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
-  });
+  const [transactionFees, setTransactionFees] = useState<TransactionFees>(NO_FEES);
   // Multisig accounts
   const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(true);
   const [multisigAccounts, setMultisigAccounts] = useState<(MultisigV2 | Multisig)[]>([]);
@@ -193,6 +191,10 @@ export const MultisigView = () => {
     streamV2ProgramAddress
   ]);
 
+  const getTransactionFees = useCallback(async (action: MSP_ACTIONS): Promise<TransactionFees> => {
+    return await calculateActionFees(connection, action);
+  }, [connection]);
+
   const getMultisigVaults = useCallback(async (
     connection: Connection,
     multisig: PublicKey
@@ -252,6 +254,7 @@ export const MultisigView = () => {
       description: t('multisig.create-multisig.success-message'),
       type: "success"
     });
+    setTransactionFees(NO_FEES);
 
   },[
     t,
@@ -334,6 +337,7 @@ export const MultisigView = () => {
           accounts: {
             proposer: publicKey as PublicKey,
             multisig: multisig.publicKey,
+            multisigOpsAccount: MEAN_MULTISIG_OPS,
             systemProgram: SystemProgram.programId
           },
           signers: [wallet as any, multisig]
@@ -594,12 +598,13 @@ export const MultisigView = () => {
 
   const onCreateMultisigClick = useCallback(() => {
 
+    setTransactionFees(CREATE_MULTISIG_FEES);
+    consoleOut('transactionFees:', CREATE_MULTISIG_FEES, 'orange');
+
     resetTransactionStatus();
     setIsCreateMultisigModalVisible(true);
 
-  },[
-    resetTransactionStatus
-  ]);
+  },[resetTransactionStatus]);
 
   const isApprovingMultisigTx = useCallback((): boolean => {
 
@@ -736,6 +741,8 @@ export const MultisigView = () => {
             multisig: selectedMultisig.id,
             transaction: transaction.publicKey,
             proposer: publicKey as PublicKey,
+            multisigOpsAccount: MEAN_MULTISIG_OPS,
+            systemProgram: SystemProgram.programId
           },
           preInstructions: [createIx],
           signers: [transaction, wallet as any],
@@ -2023,7 +2030,9 @@ export const MultisigView = () => {
           accounts: {
             multisig: selectedMultisig.id,
             transaction: transaction.publicKey,
-            proposer: publicKey
+            proposer: publicKey,
+            multisigOpsAccount: MEAN_MULTISIG_OPS,
+            systemProgram: SystemProgram.programId
           },
           preInstructions: [createIx],
           signers: [transaction],
@@ -2357,7 +2366,9 @@ export const MultisigView = () => {
           accounts: {
             multisig: selectedMultisig.id,
             transaction: transaction.publicKey,
-            proposer: publicKey
+            proposer: publicKey,
+            multisigOpsAccount: MEAN_MULTISIG_OPS,
+            systemProgram: SystemProgram.programId
           },          
           preInstructions: [upgradeIdlTx],
           signers: [transaction],
@@ -2708,7 +2719,9 @@ export const MultisigView = () => {
           accounts: {
             multisig: selectedMultisig.id,
             transaction: transaction.publicKey,
-            proposer: publicKey
+            proposer: publicKey,
+            multisigOpsAccount: MEAN_MULTISIG_OPS,
+            systemProgram: SystemProgram.programId
           },
           preInstructions: [createIx],
           signers: [transaction]

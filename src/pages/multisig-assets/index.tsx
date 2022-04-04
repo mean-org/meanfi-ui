@@ -17,7 +17,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { consoleOut, copyText, delay, getReadableDate, getShortDate, getTransactionOperationDescription, getTransactionStatusForLogs, isDev, isLocal } from '../../utils/ui';
 import { Identicon } from '../../components/Identicon';
 import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, getTxIxResume, makeDecimal, shortenAddress } from '../../utils/utils';
-import { MultisigV2, MultisigParticipant, MultisigTransaction, MultisigTransactionStatus, MultisigVault, Multisig } from '../../models/multisig';
+import { MultisigV2, MultisigParticipant, MultisigTransaction, MultisigTransactionStatus, MultisigVault, Multisig, MEAN_MULTISIG_OPS } from '../../models/multisig';
 import { TransactionFees } from '@mean-dao/msp';
 import { MultisigCreateAssetModal } from '../../components/MultisigCreateAssetModal';
 import { useNativeAccount } from '../../contexts/accounts';
@@ -26,7 +26,7 @@ import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { BN } from 'bn.js';
 import { notify } from '../../utils/notifications';
 import { MultisigTransferTokensModal } from '../../components/MultisigTransferTokensModal';
-import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
+import { FALLBACK_COIN_IMAGE, NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
 import { MultisigVaultTransferAuthorityModal } from '../../components/MultisigVaultTransferAuthorityModal';
 import { customLogger } from '../..';
 import useWindowSize from '../../hooks/useWindowResize';
@@ -74,9 +74,7 @@ export const MultisigAssetsView = () => {
   const [loadingVaults, setLoadingVaults] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
-  const [transactionFees, setTransactionFees] = useState<TransactionFees>({
-    blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
-  });
+  const [transactionFees, setTransactionFees] = useState<TransactionFees>(NO_FEES);
   const [selectedMultisig, setSelectedMultisig] = useState<MultisigV2 | Multisig | undefined>(undefined);
   const [multisigPendingTxs, setMultisigPendingTxs] = useState<MultisigTransaction[]>([]);
   const [highlightedMultisigTx, sethHighlightedMultisigTx] = useState<MultisigTransaction | undefined>();
@@ -1574,7 +1572,8 @@ export const MultisigAssetsView = () => {
             multisig: selectedMultisig,
             transaction: transaction.publicKey,
             proposer: publicKey,
-            rent: SYSVAR_RENT_PUBKEY
+            multisigOpsAccount: MEAN_MULTISIG_OPS,
+            systemProgram: SystemProgram.programId
           },
           signers: [transaction],
           instructions: ixs,
@@ -1912,7 +1911,9 @@ export const MultisigAssetsView = () => {
           accounts: {
             multisig: selectedMultisig.id,
             transaction: transaction.publicKey,
-            proposer: publicKey
+            proposer: publicKey,
+            multisigOpsAccount: MEAN_MULTISIG_OPS,
+            systemProgram: SystemProgram.programId
           },
           preInstructions: [createIx],
           signers: [transaction]
@@ -2240,7 +2241,9 @@ export const MultisigAssetsView = () => {
           accounts: {
             multisig: selectedMultisig.id,
             transaction: transaction.publicKey,
-            proposer: publicKey
+            proposer: publicKey,
+            multisigOpsAccount: MEAN_MULTISIG_OPS,
+            systemProgram: SystemProgram.programId
           },
           preInstructions: [createIx],
           signers: [transaction]

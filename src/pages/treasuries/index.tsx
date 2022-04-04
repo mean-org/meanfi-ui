@@ -8,7 +8,7 @@ import {
   InfoCircleOutlined,
   LoadingOutlined, ReloadOutlined, SearchOutlined,
 } from '@ant-design/icons';
-import { ConfirmOptions, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
+import { ConfirmOptions, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction, TransactionInstruction } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
 import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
@@ -45,6 +45,7 @@ import {
 } from '../../utils/ui';
 import {
   FALLBACK_COIN_IMAGE,
+  NO_FEES,
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
   STREAMS_REFRESH_TIMEOUT,
   VERBOSE_DATE_TIME_FORMAT
@@ -93,7 +94,7 @@ import BN from 'bn.js';
 import { InfoIcon } from '../../components/InfoIcon';
 import { useLocation, useNavigate } from 'react-router-dom';
 import MultisigIdl from "../../models/mean-multisig-idl";
-import { MultisigParticipant, MultisigV2 } from '../../models/multisig';
+import { MEAN_MULTISIG_OPS, MultisigParticipant, MultisigV2 } from '../../models/multisig';
 import { Program, Provider } from '@project-serum/anchor';
 import { TreasuryCreateOptions } from '../../models/treasuries';
 import { customLogger } from '../..';
@@ -172,9 +173,7 @@ export const TreasuriesView = () => {
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
-  const [transactionFees, setTransactionFees] = useState<TransactionFees>({
-    blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
-  });
+  const [transactionFees, setTransactionFees] = useState<TransactionFees>(NO_FEES);
   const [withdrawTransactionFees, setWithdrawTransactionFees] = useState<TransactionFees>({
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
   });
@@ -2112,6 +2111,8 @@ export const TreasuriesView = () => {
             multisig: multisig.id,
             transaction: transaction.publicKey,
             proposer: publicKey as PublicKey,
+            multisigOpsAccount: MEAN_MULTISIG_OPS,
+            systemProgram: SystemProgram.programId
           },
           preInstructions: [createIx],
           signers: txSigners,
@@ -3039,6 +3040,8 @@ export const TreasuriesView = () => {
             multisig: multisig.id,
             transaction: transaction.publicKey,
             proposer: publicKey as PublicKey,
+            multisigOpsAccount: MEAN_MULTISIG_OPS,
+            systemProgram: SystemProgram.programId
           },
           preInstructions: [createIx],
           signers: txSigners,
@@ -3480,6 +3483,8 @@ export const TreasuriesView = () => {
             multisig: multisig.id,
             transaction: transaction.publicKey,
             proposer: publicKey as PublicKey,
+            multisigOpsAccount: MEAN_MULTISIG_OPS,
+            systemProgram: SystemProgram.programId
           },
           preInstructions: [createIx],
           signers: txSigners,
@@ -3905,6 +3910,8 @@ export const TreasuriesView = () => {
             multisig: multisig.id,
             transaction: transaction.publicKey,
             proposer: publicKey as PublicKey,
+            multisigOpsAccount: MEAN_MULTISIG_OPS,
+            systemProgram: SystemProgram.programId
           },
           preInstructions: [createIx],
           signers: txSigners,
@@ -4330,6 +4337,8 @@ export const TreasuriesView = () => {
             multisig: multisig.id,
             transaction: transaction.publicKey,
             proposer: publicKey as PublicKey,
+            multisigOpsAccount: MEAN_MULTISIG_OPS,
+            systemProgram: SystemProgram.programId
           },
           preInstructions: [createIx],
           signers: txSigners,
@@ -4685,6 +4694,8 @@ export const TreasuriesView = () => {
             multisig: multisig.id,
             transaction: transaction.publicKey,
             proposer: publicKey as PublicKey,
+            multisigOpsAccount: MEAN_MULTISIG_OPS,
+            systemProgram: SystemProgram.programId
           },
           preInstructions: [createIx],
           signers: txSigners,

@@ -1,6 +1,6 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import './style.less';
-import { ReloadOutlined } from "@ant-design/icons";
+import { InfoCircleOutlined, ReloadOutlined } from "@ant-design/icons";
 import { Button, Tooltip, Row, Col, Empty, Spin, Divider } from "antd";
 import { useTranslation } from 'react-i18next';
 import { isDesktop } from "react-device-detect";
@@ -9,7 +9,7 @@ import { getNetworkIdByCluster, useConnection, useConnectionConfig } from '../..
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
 import { cutNumber, findATokenAddress, formatThousands } from "../../utils/utils";
-import { IconStats } from "../../Icons";
+import { IconLoading, IconStats } from "../../Icons";
 import { IconHelpCircle } from "../../Icons/IconHelpCircle";
 import useWindowSize from '../../hooks/useWindowResize';
 import { consoleOut, isProd } from "../../utils/ui";
@@ -22,6 +22,8 @@ import { TokenInfo } from "@solana/spl-token-registry";
 import { MEAN_TOKEN_LIST } from "../../constants/token-list";
 import { confirmationEvents } from "../../contexts/transaction-status";
 import { EventType } from "../../models/enums";
+import { InfoIcon } from "../../components/InfoIcon";
+import { ONE_MINUTE_REFRESH_TIMEOUT } from "../../constants";
 
 type SwapOption = "stake" | "unstake";
 
@@ -68,6 +70,9 @@ export const InvestView = () => {
   const [maxStakeSolApyValue, setMaxStakeSolApyValue] = useState<number>(0);
   const [pageInitialized, setPageInitialized] = useState<boolean>(false);
   const [stakePoolInfo, setStakePoolInfo] = useState<StakePoolInfo>();
+  const [shouldRefreshStakePoolInfo, setShouldRefreshStakePoolInfo] = useState(true);
+  const [refreshingStakePoolInfo, setRefreshingStakePoolInfo] = useState(false);
+
   const [shouldRefreshLpData, setShouldRefreshLpData] = useState(true);
   const [refreshingPoolInfo, setRefreshingPoolInfo] = useState(false);
   const [canSubscribe, setCanSubscribe] = useState(true);
@@ -77,6 +82,7 @@ export const InvestView = () => {
   const [stakingPair, setStakingPair] = useState<StakingPair | undefined>(undefined);
   const [sMeanBalance, setSmeanBalance] = useState<number>(0);
   const [meanBalance, setMeanBalance] = useState<number>(0);
+  const [lastTimestamp, setLastTimestamp] = useState(Date.now());
 
   // Create and cache Staking client instance
   const stakeClient = useMemo(() => {
@@ -100,6 +106,18 @@ export const InvestView = () => {
     publicKey
   ]);
 
+  // Keep MEAN price updated
+  useEffect(() => {
+
+    if (coinPrices) {
+      const symbol = "MEAN";
+      const price = coinPrices && coinPrices[symbol] ? coinPrices[symbol] : 0;
+      consoleOut('meanPrice:', price, 'crimson');
+      console.log('coinPrices:', coinPrices);
+      setMeanPrice(price);
+    }
+
+  }, [coinPrices]);
 
   /////////////////
   //  Callbacks  //
@@ -267,25 +285,46 @@ export const InvestView = () => {
     marinadeTotalStakedValue
   ]);
 
-  const refreshStakePoolInfo = useCallback(() => {
+  const getMeanPrice = useCallback(() => {
 
-    if (!stakeClient || !meanPrice) { return; }
+    const symbol = "MEAN";
+    const price = coinPrices && coinPrices[symbol] ? coinPrices[symbol] as number : 0;
+    consoleOut('meanPrice:', price, 'orange');
+    console.log('coinPrices:', coinPrices);
 
-    stakeClient.getStakePoolInfo(meanPrice)
-    .then((value) => {
-      consoleOut('stakePoolInfo:', value, 'crimson');
-      setStakePoolInfo(value);
-    }).catch((error) => {
-      console.error('getStakePoolInfo error:', error);
-    });
+    return price;
+  }, [coinPrices]);
 
-  }, [meanPrice, stakeClient]);
+  const refreshStakePoolInfo = useCallback((price: number) => {
+
+    if (stakeClient && price) {
+      setTimeout(() => {
+        setRefreshingStakePoolInfo(true);
+      });
+      consoleOut('calling getStakePoolInfo...', '', 'blue');
+      stakeClient.getStakePoolInfo(price)
+      .then((value) => {
+        consoleOut('stakePoolInfo:', value, 'crimson');
+        setStakePoolInfo(value);
+      })
+      .catch((error) => {
+        console.error('getStakePoolInfo error:', error);
+      })
+      .finally(() => setRefreshingStakePoolInfo(false));
+    }
+
+  }, [stakeClient]);
 
   // If any Stake/Unstake Tx finished and confirmed refresh the StakePoolInfo
   const onStakeTxConfirmed = useCallback((value: any) => {
     consoleOut("onStakeTxConfirmed event executed:", value, 'crimson');
-    refreshStakePoolInfo();
-  }, [refreshStakePoolInfo]);
+    const price = getMeanPrice();
+    if (stakeClient && price) {
+      consoleOut('calling getStakePoolInfo...', '', 'orange');
+      refreshStakePoolInfo(price);
+      consoleOut('After calling refreshStakePoolInfo()', '', 'orange');
+    }
+  }, [getMeanPrice, refreshStakePoolInfo, stakeClient]);
 
   // Get raydium pool info
   const getRaydiumPoolInfo = useCallback(async () => {
@@ -517,19 +556,6 @@ export const InvestView = () => {
     previousBalance,
   ]);
 
-  // Keep MEAN price updated
-  useEffect(() => {
-
-    let price = 0;
-    if (coinPrices && stakingPair && stakingPair.unstakedToken) {
-      const symbol = stakingPair.unstakedToken.symbol.toUpperCase();
-      price = coinPrices && coinPrices[symbol] ? coinPrices[symbol] : 0;
-    }
-    consoleOut('meanPrice:', price, 'crimson');
-    setMeanPrice(price);
-
-  }, [coinPrices, stakingPair]);
-
   // Keep MEAN balance updated
   useEffect(() => {
     if (!publicKey || !accounts || !accounts.tokenAccounts || !accounts.tokenAccounts.length) {
@@ -625,15 +651,17 @@ export const InvestView = () => {
   // Get staking pool info from staking client
   useEffect(() => {
 
-    if (stakeClient && meanPrice) {
-      refreshStakePoolInfo();
+    if (!stakeClient) { return; }
+
+    const price = getMeanPrice();
+    if (shouldRefreshStakePoolInfo && price) {
+      setTimeout(() => {
+        setShouldRefreshStakePoolInfo(false);
+      });
+      refreshStakePoolInfo(price);
     }
 
-  }, [
-    meanPrice,
-    stakeClient,
-    refreshStakePoolInfo
-  ]);
+  }, [stakeClient, refreshStakePoolInfo, getMeanPrice, shouldRefreshStakePoolInfo]);
 
   useEffect(() => {
     const maxApr = Math.max(maxOrcaAprValue, maxRadiumAprValue);
@@ -668,7 +696,21 @@ export const InvestView = () => {
   // Keep staking rewards updated
   useEffect(() => {
     setStakingRewards(parseFloat(stakedAmount) * annualPercentageYield / 100);
-  }, [stakedAmount]);  
+  }, [stakedAmount]);
+
+  useEffect(() => {
+
+    const interval = setInterval(() => {
+      const now = Date.now();
+      setLastTimestamp(now);
+      setShouldRefreshStakePoolInfo(true);
+      consoleOut('Autorefresh stake pool info after:', `${(now - lastTimestamp) / 1000}s`);
+    }, ONE_MINUTE_REFRESH_TIMEOUT);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [lastTimestamp]);
 
   // Detect when entering small screen mode
   useEffect(() => {
@@ -775,7 +817,9 @@ export const InvestView = () => {
                           shape="circle"
                           size="small"
                           icon={<ReloadOutlined />}
-                          onClick={() => {}}
+                          onClick={() => {
+                            refreshStakePoolInfo(getMeanPrice());
+                          }}
                         />
                       </span>
                     </span>
@@ -805,79 +849,85 @@ export const InvestView = () => {
                       <div className="mb-3">
                         <Row>
                           <Col span={8}>
-                            <div className="info-label icon-label justify-content-center">
-                              {t("invest.panel-right.stats.staking-apy")}
-                              <Tooltip placement="top" title={t("invest.panel-right.stats.staking-apy-tooltip")}>
-                                <span>
-                                  <IconHelpCircle className="mean-svg-icons" />
-                                </span>
-                              </Tooltip>
+                            <div className="info-label icon-label justify-content-center align-items-center">
+                              <span>{t("invest.panel-right.stats.staking-apy")}</span>
+                              <InfoIcon content={t("invest.panel-right.stats.staking-apy-tooltip")} placement="top">
+                                <IconHelpCircle className="mean-svg-icons" />
+                              </InfoIcon>
                             </div>
                             <div className="transaction-detail-row">
-                              {(!stakePoolInfo || stakePoolInfo.apr === 0) && (
-                                <span>Calculating</span>
-                              )}
-                              {stakePoolInfo && stakePoolInfo.apr > 0 && (
+                              {refreshingStakePoolInfo || (!stakePoolInfo || stakePoolInfo.apr === 0) ? (
+                                <IconLoading className="mean-svg-icons"/>
+                              ) : (
                                 <span>{(stakePoolInfo.apr * 100).toFixed(2)}%</span>
                               )}
                             </div>
                           </Col>
                           <Col span={8}>
-                            <div className="info-label">
+                            <div className="info-label icon-label justify-content-center align-items-center">
                               {t("invest.panel-right.stats.total-value-locked")}
                             </div>
                             <div className="transaction-detail-row">
-                              ${stakePoolInfo ? formatThousands(stakePoolInfo.tvl, 2) : "0"}
+                              {refreshingStakePoolInfo || (!stakePoolInfo || stakePoolInfo.tvl === 0) ? (
+                                <IconLoading className="mean-svg-icons"/>
+                              ) : (
+                                <span>${formatThousands(stakePoolInfo.tvl, 2)}</span>
+                              )}
                             </div>
                           </Col>
                           <Col span={8}>
-                            <div className="info-label">
+                            <div className="info-label icon-label justify-content-center align-items-center">
                               {t("invest.panel-right.stats.total-mean-rewards")}
                             </div>
                             <div className="transaction-detail-row">
-                              {(stakePoolInfo && stakePoolInfo.totalMeanAmount.uiAmount) ? formatThousands(stakePoolInfo.totalMeanAmount.uiAmount, 0) : "0"}
+                              {refreshingStakePoolInfo || (!stakePoolInfo || stakePoolInfo.totalMeanAmount.uiAmount === 0) ? (
+                                <IconLoading className="mean-svg-icons"/>
+                              ) : (
+                                <span>${formatThousands(stakePoolInfo.totalMeanAmount.uiAmount || 0, 0)}</span>
+                              )}
                             </div>
                           </Col>
                         </Row>
                       </div>
                     </div>
 
-                    <Row gutter={[8, 8]} className="d-flex justify-content-center">
-                      {/* Tabset */}
-                      <Col xs={24} sm={12} md={24} lg={12} className="column-width">
-                        {meanAddresses && (
-                          <div className="place-transaction-box mb-3">
-                            <div className="button-tabset-container">
-                              <div className={`tab-button ${currentTab === "stake" ? 'active' : ''}`} onClick={() => onTabChange("stake")}>
-                                {t('invest.panel-right.tabset.stake.name')}
-                              </div>
-                              <div className={`tab-button ${currentTab === "unstake" ? 'active' : ''}`} onClick={() => onTabChange("unstake")}>
-                                {t('invest.panel-right.tabset.unstake.name')}
-                              </div>
+                    <div className="flex flex-center">
+                      {meanAddresses && (
+                        <div className="place-transaction-box mb-3">
+                          <div className="button-tabset-container">
+                            <div className={`tab-button ${currentTab === "stake" ? 'active' : ''}`} onClick={() => onTabChange("stake")}>
+                              {t('invest.panel-right.tabset.stake.name')}
                             </div>
-
-                            {/* Tab Stake */}
-                            {currentTab === "stake" && (
-                              <StakeTabView
-                                stakeClient={stakeClient}
-                                selectedToken={stakingPair?.unstakedToken}
-                                tokenBalance={meanBalance}
-                              />
-                            )}
-
-                            {/* Tab unstake */}
-                            {currentTab === "unstake" && (
-                              <UnstakeTabView
-                                stakeClient={stakeClient}
-                                selectedToken={stakingPair?.stakedToken}
-                                tokenBalance={sMeanBalance}
-                              />
-                            )}
+                            <div className={`tab-button ${currentTab === "unstake" ? 'active' : ''}`} onClick={() => onTabChange("unstake")}>
+                              {t('invest.panel-right.tabset.unstake.name')}
+                            </div>
                           </div>
-                        )}
-                      </Col>
 
-                      {/* Staking data */}
+                          {/* Tab Stake */}
+                          {currentTab === "stake" && (
+                            <StakeTabView
+                              stakeClient={stakeClient}
+                              selectedToken={stakingPair?.unstakedToken}
+                              meanBalance={meanBalance}
+                              smeanBalance={sMeanBalance}
+                            />
+                          )}
+
+                          {/* Tab unstake */}
+                          {currentTab === "unstake" && (
+                            <UnstakeTabView
+                              stakeClient={stakeClient}
+                              selectedToken={stakingPair?.stakedToken}
+                              tokenBalance={sMeanBalance}
+                            />
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* <Row gutter={[8, 8]} className="d-flex justify-content-center">
+                      <Col xs={24} sm={12} md={24} lg={12} className="column-width">
+                      </Col>
                       <Col xs={24} sm={12} md={24} lg={12} className="column-width">
                         <div className="staking-data">
                           <h3>{t("invest.panel-right.staking-data.title")}</h3>
@@ -892,42 +942,14 @@ export const InvestView = () => {
                             </Row>
                           ))}
                           <Row>
-                            {/* <span className="mt-2">{t("invest.panel-right.staking-data.text-one", {unstakeStartDate: unstakeStartDate})}</span> */}
                             <span className="mt-1"><i>{t("invest.panel-right.staking-data.text-two")}</i></span>
-                            {/* <Col span={24} className="d-flex flex-column justify-content-end align-items-end mt-1">
-                              <div className="transaction-detail-row">
-                                <span className="info-icon">
-                                  {stakingRewards > 0 && (
-                                    <span role="img" aria-label="arrow-down" className="anticon anticon-arrow-down mean-svg-icons success bounce">
-                                    <ArrowDownOutlined className="mean-svg-icons" />
-                                    </span>
-                                  )}
-                                  <span className="staking-value mb-2 mt-1">{!stakingRewards ? 0 : cutNumber(stakingRewards, 6)} {selectedToken && selectedToken.name}</span>
-                                </span>
-                              </div>
-                            </Col> */}
-                            {/* Withdraw button */}
-                            {/* <Col span={24} className="d-flex flex-column justify-content-end align-items-end mt-1">
-                              <Space size="middle">
-                                <Button
-                                  type="default"
-                                  shape="round"
-                                  size="small"
-                                  className="thin-stroke"
-                                  onClick={onWithdrawModalStart}
-                                  disabled={!stakingRewards || stakingRewards === 0}
-                                >
-                                  {t("invest.panel-right.staking-data.withdraw-button")}
-                                </Button>
-                              </Space>
-                            </Col> */}
                           </Row>
                         </div>
                       </Col>
-                    </Row>
+                    </Row> */}
                   </>
                 )}
-                
+
                 {/* Mean Liquidity Pools & Farms */}
                 {selectedInvest.id === 1 && (
                   <>

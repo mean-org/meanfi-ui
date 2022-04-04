@@ -6,7 +6,7 @@ import { TokenDisplay } from "../../components/TokenDisplay";
 import { AppStateContext } from "../../contexts/appstate";
 import { cutNumber, formatAmount, formatThousands, getAmountWithSymbol, getTxIxResume, isValidNumber } from "../../utils/utils";
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from "@ant-design/icons";
-import { StakingClient } from "@mean-dao/staking";
+import { StakingClient, UnstakeQuote } from "@mean-dao/staking";
 import { Transaction } from "@solana/web3.js";
 import { TransactionStatusContext } from "../../contexts/transaction-status";
 import { OperationType, TransactionStatus } from "../../models/enums";
@@ -16,8 +16,10 @@ import { useConnection } from "../../contexts/connection";
 import { notify } from "../../utils/notifications";
 import { useWallet } from "../../contexts/wallet";
 import { TokenInfo } from "@solana/spl-token-registry";
+import { INPUT_DEBOUNCE_TIME } from "../../constants";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
+let inputDebounceTimeout: any;
 
 export const UnstakeTabView = (props: {
   stakeClient: StakingClient;
@@ -39,6 +41,7 @@ export const UnstakeTabView = (props: {
   const [percentageValue, setPercentageValue] = useState<string>('');
   const [meanWorthOfsMean, setMeanWorthOfsMean] = useState<number>(0);
   const [unstakeMeanValue, setUnstakeMeanValue] = useState<string>();
+  const [canFetchUnstakeQuote, setCanFetchUnstakeQuote] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
   const { connected, wallet } = useWallet();
   const connection = useConnection();
@@ -108,6 +111,12 @@ export const UnstakeTabView = (props: {
       setFromCoinAmount(".");
     } else if (isValidNumber(newValue)) {
       setFromCoinAmount(newValue);
+      // Debouncing
+      clearTimeout(inputDebounceTimeout);
+      inputDebounceTimeout = setTimeout(() => {
+        consoleOut('input ====>', newValue, 'orange');
+        setCanFetchUnstakeQuote(true);
+      }, INPUT_DEBOUNCE_TIME);
     }
   };
 
@@ -412,13 +421,23 @@ export const UnstakeTabView = (props: {
     t
   ]);
 
+  // Handler paste clipboard data
+  const pasteHandler = (e: any) => {
+    const getClipBoardData = e.clipboardData.getData('Text');
+    const replaceCommaToDot = getClipBoardData.replace(",", "")
+    const onlyNumbersAndDot = replaceCommaToDot.replace(/[^.\d]/g, '');
+
+    setFromCoinAmount(onlyNumbersAndDot.trim());
+  }
+
+  // Unstake quote - For full unstaked balance
   useEffect(() => {
+
     const getMeanQuote = async (sMEAN: number) => {
       if (!props.stakeClient) { return 0; }
 
       try {
         const result = await props.stakeClient.getUnstakeQuote(sMEAN);
-        consoleOut('quote raw value:', result, 'blue');
         return result.meanOutUiAmount;
       } catch (error) {
         console.error(error);
@@ -432,10 +451,6 @@ export const UnstakeTabView = (props: {
           consoleOut(`Quote for ${formatThousands(props.tokenBalance, props.selectedToken?.decimals)} sMEAN`, `${formatThousands(value, props.selectedToken?.decimals)} MEAN`, 'blue');
           setMeanWorthOfsMean(value);
         })
-
-        getMeanQuote(parseFloat(fromCoinAmount)).then((value) => {
-          setUnstakeMeanValue(value.toString());
-        })
       } else {
         setMeanWorthOfsMean(0);
       }
@@ -447,8 +462,33 @@ export const UnstakeTabView = (props: {
     fromCoinAmount
   ]);
 
+  // Stake quote - For input amount
   useEffect(() => {
-    const percentageFromCoinAmount = props.tokenBalance > 0 ? `${(props.tokenBalance*parseFloat(percentageValue)/100)}` : '';
+    if (!props.stakeClient) {
+      return;
+    }
+
+    if (parseFloat(fromCoinAmount) > 0 && canFetchUnstakeQuote) {
+      setCanFetchUnstakeQuote(false);
+
+      props.stakeClient.getUnstakeQuote(parseFloat(fromCoinAmount)).then((value: UnstakeQuote) => {
+        consoleOut('unStakeQuote:', value, 'blue');
+        setUnstakeMeanValue(value.meanOutUiAmount.toString());
+        consoleOut(`Quote for ${formatThousands(parseFloat(fromCoinAmount), props.selectedToken?.decimals)} sMEAN`, `${formatThousands(value.meanOutUiAmount, props.selectedToken?.decimals)} MEAN`, 'blue');
+      }).catch((error: any) => {
+        console.error(error);
+      });
+    }
+
+  }, [
+    fromCoinAmount,
+    props.stakeClient,
+    canFetchUnstakeQuote,
+    props.selectedToken,
+  ]);
+
+  useEffect(() => {
+    const percentageFromCoinAmount = props.tokenBalance > 0 ? `${(props.tokenBalance*parseFloat(percentageValue)/100).toFixed(props.selectedToken?.decimals || 6)}` : '';
 
     if (percentageValue) {
       setFromCoinAmount(percentageFromCoinAmount);
@@ -460,14 +500,17 @@ export const UnstakeTabView = (props: {
 
   return (
     <>
-      {/* <span className="info-label">{stakedAmount ? t("invest.panel-right.tabset.unstake.notification-label-one", {stakedAmount: cutNumber(parseFloat(stakedAmount), 6), unstakeStartDate: unstakeStartDate}) : t("invest.panel-right.tabset.unstake.notification-label-one-error")}</span> */}
-      <span className="info-label">
-        {
-          props.tokenBalance
-            ? `You currently have ${cutNumber(props.tokenBalance, 6)} sMEAN staked which is currently worth ${cutNumber(meanWorthOfsMean, 6)} MEAN.`
-            : t("invest.panel-right.tabset.unstake.notification-label-one-error")
-        }
-      </span>
+      <div className="mb-2 px-1">
+        <span className="info-label">
+          {
+            props.tokenBalance
+              ? (
+                <span>You have {cutNumber(props.tokenBalance, 6)} sMEAN staked{meanWorthOfsMean ? ` which is currently worth ${cutNumber(meanWorthOfsMean, 6)} MEAN.` : '.'}</span>
+              )
+              : t("invest.panel-right.tabset.unstake.notification-label-one-error")
+          }
+        </span>
+      </div>
       <div className="form-label mt-2">{t("invest.panel-right.tabset.unstake.amount-label")}</div>
       <div className="well">
         <div className="flexible-right mb-1">
@@ -504,6 +547,7 @@ export const UnstakeTabView = (props: {
               minLength={1}
               maxLength={79}
               spellCheck="false"
+              onPaste={pasteHandler}
               value={fromCoinAmount}
             />
           </div>

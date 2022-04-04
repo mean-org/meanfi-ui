@@ -389,6 +389,7 @@
 		"add-participant-cta": "Thêm người tham gia",
 		"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
 		"create-multisig": {
+			"fee-info-label": "The fee to create this multisig is",
 			"main-cta": "Tạo",
 			"main-cta-busy": "Đang tạo multisig",
 			"modal-title": "Tạo multisig",

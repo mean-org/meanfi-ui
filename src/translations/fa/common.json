@@ -394,6 +394,7 @@
 			"token-placeholder": "آدرس مینت کردن توکن را وارد کنید"
 		},
 		"create-multisig": {
+			"fee-info-label": "The fee to create this multisig is",
 			"main-cta": "ساختن",
 			"main-cta-busy": "ساختن حساب Multisig",
 			"modal-title": "ساخت حساب Multisig",
