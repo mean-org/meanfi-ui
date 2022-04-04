@@ -32,14 +32,12 @@ export const StakeTabView = (props: {
     coinPrices,
     stakedAmount,
     loadingPrices,
-    fromCoinAmount,
     paymentStartDate,
     transactionStatus,
     refreshTokenBalance,
     setIsVerifiedRecipient,
     setTransactionStatus,
     // setUnstakeStartDate,
-    setFromCoinAmount,
     setStakedAmount,
     refreshPrices,
   } = useContext(AppStateContext);
@@ -76,6 +74,7 @@ export const StakeTabView = (props: {
     },
   ];
 
+  const [fromCoinAmount, setFromCoinAmount] = useState<string>('');
   const [periodValue, setPeriodValue] = useState<number>(periods[0].value);
   const [periodTime, setPeriodTime] = useState<string>(periods[0].time);
   const [stakeQuote, setStakeQuote] = useState<number>(0);
