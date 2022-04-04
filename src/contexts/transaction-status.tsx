@@ -385,6 +385,7 @@ const TransactionStatusProvider: React.FC = ({ children }) => {
         })
       );
       notification.close(data.signature);
+      // TODO: Add and Info notification if it is asked for
       confirmationEvents.emit(EventType.TxConfirmTimeout, data.signature);
       rebuildHistoryFromCache();
     }
