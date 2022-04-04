@@ -29,15 +29,14 @@ export const UnstakeTabView = (props: {
   const {
     effectiveRate,
     loadingPrices,
-    fromCoinAmount,
     transactionStatus,
     setTransactionStatus,
-    setFromCoinAmount,
     refreshPrices
   } = useContext(AppStateContext);
   const { enqueueTransactionConfirmation } = useContext(TransactionStatusContext);
   const { t } = useTranslation('common');
   const percentages = ["25", "50", "75", "100"];
+  const [fromCoinAmount, setFromCoinAmount] = useState<string>('');
   const [percentageValue, setPercentageValue] = useState<string>('');
   const [meanWorthOfsMean, setMeanWorthOfsMean] = useState<number>(0);
   const [unstakeMeanValue, setUnstakeMeanValue] = useState<string>();
