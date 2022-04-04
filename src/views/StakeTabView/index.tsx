@@ -74,6 +74,7 @@ export const StakeTabView = (props: {
   const [stakeQuote, setStakeQuote] = useState<number>(0);
   const [stakedMeanPrice, setStakedMeanPrice] = useState<number>(0);
   const [canFetchStakeQuote, setCanFetchStakeQuote] = useState(false);
+  const [fetchingStakeQuote, setFetchingStakeQuote] = useState(false);
   const [meanWorthOfsMean, setMeanWorthOfsMean] = useState<number>(0);
 
   ///////////////////////
@@ -144,6 +145,7 @@ export const StakeTabView = (props: {
       setFromCoinAmount(".");
     } else if (isValidNumber(newValue)) {
       setFromCoinAmount(newValue);
+      setFetchingStakeQuote(true);
       // Debouncing
       fetchQuoteFromInput(newValue);
     }
@@ -484,14 +486,17 @@ export const StakeTabView = (props: {
     if (!props.stakeClient) { return; }
 
     if (parseFloat(fromCoinAmount) > 0 && canFetchStakeQuote) {
+      setFetchingStakeQuote(true);
       setCanFetchStakeQuote(false);
       props.stakeClient.getStakeQuote(parseFloat(fromCoinAmount)).then((value: StakeQuote) => {
         consoleOut('stakeQuote:', value, 'blue');
         setStakeQuote(value.sMeanOutUiAmount);
         consoleOut(`Quote for ${formatThousands(parseFloat(fromCoinAmount), 6)} MEAN`, `${formatThousands(value.sMeanOutUiAmount, 6)} sMEAN`, 'blue');
-      }).catch((error: any) => {
+      })
+      .catch((error: any) => {
         console.error(error);
-      });
+      })
+      .finally(() => setFetchingStakeQuote(false));
     }
 
   }, [
@@ -507,6 +512,7 @@ export const StakeTabView = (props: {
     const onlyNumbersAndDot = replaceCommaToDot.replace(/[^.\d]/g, '');
 
     setFromCoinAmount(onlyNumbersAndDot.trim());
+    setFetchingStakeQuote(true);
   }
 
   // Unstake quote
@@ -627,10 +633,10 @@ export const StakeTabView = (props: {
 
       <div className="p-2">
         {
-          (fromCoinAmount && parseFloat(fromCoinAmount) > 0 && stakeQuote > 0) &&
+          (!fetchingStakeQuote && fromCoinAmount && parseFloat(fromCoinAmount) > 0 && parseFloat(fromCoinAmount) <= props.meanBalance && stakeQuote > 0) &&
             infoRow(
-              `${formatThousands(parseFloat(fromCoinAmount), 6)} MEAN ≈`,
-              `${cutNumber(stakeQuote, 6)} sMEAN`
+              `${formatThousands(parseFloat(fromCoinAmount), 2)} MEAN ≈`,
+              `${formatThousands(stakeQuote, 2)} sMEAN`
             )
         }
         {
