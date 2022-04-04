@@ -84,7 +84,7 @@
     "i18next-browser-languagedetector": "^6.1",
     "jazzicon": "^1.5",
     "loggly-jslogger": "2.2.4",
-    "moment": "2.29.1",
+    "moment": "2.29.2",
     "moment-timezone": "0.5.34",
     "mz": "2.7.0",
     "qrcode.react": "1.0.1",
@@ -98,7 +98,7 @@
     "react-ga": "^3.3.0",
     "react-helmet": "^6.1",
     "react-i18next": "^11.15",
-    "react-moment": "1.1.1",
+    "react-moment": "1.1.2",
     "react-router-dom": "^6.0",
     "react-share": "^4.4.0",
     "recharts": "^2.1.8"
