@@ -1,7 +1,7 @@
 import { useCallback, useContext, useEffect, useState } from "react";
 import './style.less';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined,  } from "@ant-design/icons";
-import { Button, Modal, Spin } from "antd";
+import { Button, Col, Divider, Modal, Row, Spin } from "antd";
 import moment from 'moment';
 import { useTranslation } from 'react-i18next';
 import { TokenDisplay } from "../../components/TokenDisplay";
@@ -30,15 +30,9 @@ export const StakeTabView = (props: {
 }) => {
   const {
     coinPrices,
-    stakedAmount,
     loadingPrices,
-    paymentStartDate,
     transactionStatus,
-    refreshTokenBalance,
-    setIsVerifiedRecipient,
     setTransactionStatus,
-    // setUnstakeStartDate,
-    setStakedAmount,
     refreshPrices,
   } = useContext(AppStateContext);
   const { enqueueTransactionConfirmation } = useContext(TransactionStatusContext);
@@ -78,7 +72,8 @@ export const StakeTabView = (props: {
   const [periodValue, setPeriodValue] = useState<number>(periods[0].value);
   const [periodTime, setPeriodTime] = useState<string>(periods[0].time);
   const [stakeQuote, setStakeQuote] = useState<number>(0);
-  const [canFetchStakeQuote, setCanFetchStakeQuote] = useState(true);
+  const [stakedMeanPrice, setStakedMeanPrice] = useState<number>(0);
+  const [canFetchStakeQuote, setCanFetchStakeQuote] = useState(false);
   const [meanWorthOfsMean, setMeanWorthOfsMean] = useState<number>(0);
 
   ///////////////////////
@@ -116,6 +111,14 @@ export const StakeTabView = (props: {
             : false;
   }
 
+  const fetchQuoteFromInput = (value: string) => {
+    clearTimeout(inputDebounceTimeout);
+    inputDebounceTimeout = setTimeout(() => {
+      consoleOut('input ====>', value, 'orange');
+      setCanFetchStakeQuote(true);
+    }, INPUT_DEBOUNCE_TIME);
+  }
+
   const handleFromCoinAmountChange = (e: any) => {
 
     let newValue = e.target.value;
@@ -142,11 +145,7 @@ export const StakeTabView = (props: {
     } else if (isValidNumber(newValue)) {
       setFromCoinAmount(newValue);
       // Debouncing
-      // clearTimeout(inputDebounceTimeout);
-      // inputDebounceTimeout = setTimeout(() => {
-      //   consoleOut('input ====>', newValue, 'orange');
-      //   setCanFetchStakeQuote(true);
-      // }, INPUT_DEBOUNCE_TIME);
+      fetchQuoteFromInput(newValue);
     }
   };
 
@@ -462,15 +461,31 @@ export const StakeTabView = (props: {
     t
   ]);
 
-  // Stake quote
+  // Stake quote for 1 MEAN
   useEffect(() => {
-    if (!props.stakeClient) {
-      return;
-    }
+    if (!props.stakeClient) { return; }
 
-    if (canFetchStakeQuote) {
-      // setCanFetchStakeQuote(false);
-      props.stakeClient.getStakeQuote(1).then((value: StakeQuote) => {
+    props.stakeClient.getStakeQuote(1).then((value: StakeQuote) => {
+      consoleOut('stakeQuote:', value, 'blue');
+      setStakedMeanPrice(value.sMeanOutUiAmount);
+      consoleOut(`Quote for 1 MEAN:`, `${formatThousands(value.sMeanOutUiAmount, 6)} sMEAN`, 'blue');
+    }).catch((error: any) => {
+      console.error(error);
+    });
+
+  }, [
+    fromCoinAmount,
+    props.stakeClient,
+    canFetchStakeQuote,
+  ]);
+
+  // Stake quote for input amount
+  useEffect(() => {
+    if (!props.stakeClient) { return; }
+
+    if (parseFloat(fromCoinAmount) > 0 && canFetchStakeQuote) {
+      setCanFetchStakeQuote(false);
+      props.stakeClient.getStakeQuote(parseFloat(fromCoinAmount)).then((value: StakeQuote) => {
         consoleOut('stakeQuote:', value, 'blue');
         setStakeQuote(value.sMeanOutUiAmount);
         consoleOut(`Quote for ${formatThousands(parseFloat(fromCoinAmount), 6)} MEAN`, `${formatThousands(value.sMeanOutUiAmount, 6)} sMEAN`, 'blue');
@@ -478,16 +493,6 @@ export const StakeTabView = (props: {
         console.error(error);
       });
     }
-    // if (parseFloat(fromCoinAmount) > 0 && canFetchStakeQuote) {
-    //   setCanFetchStakeQuote(false);
-    //   props.stakeClient.getStakeQuote(parseFloat(fromCoinAmount)).then((value: StakeQuote) => {
-    //     consoleOut('stakeQuote:', value, 'blue');
-    //     setStakeQuote(value.sMeanOutUiAmount);
-    //     consoleOut(`Quote for ${formatThousands(parseFloat(fromCoinAmount), 6)} MEAN`, `${formatThousands(value.sMeanOutUiAmount, 6)} sMEAN`, 'blue');
-    //   }).catch((error: any) => {
-    //     console.error(error);
-    //   });
-    // }
 
   }, [
     fromCoinAmount,
@@ -535,6 +540,14 @@ export const StakeTabView = (props: {
     fromCoinAmount
   ]);
 
+  const infoRow = (caption: string, value: string) => {
+    return (
+      <Row>
+        <Col span={12} className="font-size-75 fg-secondary-60 text-right pr-1">{caption}</Col>
+        <Col span={12} className="font-size-75 fg-secondary-60 text-left">{value}</Col>
+      </Row>
+    );
+  }
 
   return (
     <>
@@ -562,11 +575,12 @@ export const StakeTabView = (props: {
                 />
               )}
               {props.selectedToken && props.meanBalance ? (
-                <div className="token-max simplelink" onClick={() =>
-                    setFromCoinAmount(
-                      props.meanBalance.toFixed(props.selectedToken?.decimals || 6)
-                    )
-                  }>
+                <div className="token-max simplelink" onClick={() => {
+                  const newAmount = props.meanBalance.toFixed(props.selectedToken?.decimals || 6);
+                  setFromCoinAmount(newAmount);
+                  // Debouncing
+                  fetchQuoteFromInput(newAmount);
+                }}>
                   MAX
                 </div>
               ) : null}
@@ -611,17 +625,21 @@ export const StakeTabView = (props: {
         </div>
       </div>
 
-      <div className="mb-2 text-right">
-        {(stakeQuote > 0) && (
-          <span className="form-field-hint pr-1">
-            {`1 MEAN ≈ ${cutNumber(stakeQuote, 6)} sMEAN`}
-          </span>
-        )}
-        {/* {(fromCoinAmount && parseFloat(fromCoinAmount) > 0 && stakeQuote > 0) && (
-          <span className="form-field-hint pr-1">
-            {`1 MEAN ≈ ${cutNumber(stakeQuote, 6)} sMEAN`}
-          </span>
-        )} */}
+      <div className="p-2">
+        {
+          (fromCoinAmount && parseFloat(fromCoinAmount) > 0 && stakeQuote > 0) &&
+            infoRow(
+              `${formatThousands(parseFloat(fromCoinAmount), 6)} MEAN ≈`,
+              `${cutNumber(stakeQuote, 6)} sMEAN`
+            )
+        }
+        {
+          stakedMeanPrice > 0 &&
+            infoRow(
+              `1 MEAN ≈`,
+              `${cutNumber(stakedMeanPrice, 6)} sMEAN`
+            )
+        }
       </div>
 
       {/* Periods */}
@@ -650,7 +668,7 @@ export const StakeTabView = (props: {
 
       {/* Action button */}
       <Button
-        className="main-cta mt-2"
+        className="main-cta mt-1"
         block
         type="primary"
         shape="round"
