@@ -572,6 +572,7 @@
 			"tx-operation-success": "L'opération {{operation}} a réussi",
 			"tx-operation-voided": "This pending transaction has been VOIDED due to the Multisig being edited.",
 			"tx-operation-cancel": "Please cancel it below to remove it from the list.",
+			"tx-switch-hide-btn": "Hide cancelled and voided transactions",
 			"your-status": "Votre statut:",
 			"your-execution": "your execution",
 			"execution": "execution"

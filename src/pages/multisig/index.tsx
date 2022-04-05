@@ -32,7 +32,7 @@ import {
   shortenAddress
 } from '../../utils/utils';
 
-import { Button, Col, Divider, Dropdown, Empty, Menu, Modal, Row, Space, Spin, Tooltip } from 'antd';
+import { Button, Col, Divider, Dropdown, Empty, Menu, Modal, Row, Space, Spin, Switch, Tooltip } from 'antd';
 import {
   copyText,
   consoleOut,
@@ -147,6 +147,8 @@ export const MultisigView = () => {
   const [isUpgradeProgramModalVisible, setIsUpgradeProgramModalVisible] = useState(false);
   const [isUpgradeIDLModalVisible, setIsUpgradeIDLModalVisible] = useState(false);
   const [isSetProgramAuthModalVisible, setIsSetProgramAuthModalVisible] = useState(false);
+  const [switchValue, setSwitchValue] = useState(true);
+  const [filteredMultisigTxs, setFilteredMultisigTxs] = useState<MultisigTransaction[]>([]);
 
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
     commitment: "confirmed",
@@ -4083,6 +4085,19 @@ export const MultisigView = () => {
     return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
   }
 
+  // Switch to hide voided transactions
+  const switchHandler = () => {
+    setSwitchValue(!switchValue);
+  }
+
+  useEffect(() => {
+    if (switchValue) {
+      setFilteredMultisigTxs(multisigTxs.filter((txName) => txName.status !== 4));
+    } else {
+      setFilteredMultisigTxs(multisigTxs);
+    }
+  }, [multisigTxs, switchValue]);
+
   ///////////////
   // Rendering //
   ///////////////
@@ -4144,7 +4159,7 @@ export const MultisigView = () => {
         <div className="activity-list-data-wrapper vertical-scroll">
           <div className="activity-list h-100">
             <div className="item-list-body compact">
-              {multisigTxs.map(item => {
+              {filteredMultisigTxs.map(item => {
                 return (
                   <div
                     key={item.id.toBase58()}
@@ -4682,6 +4697,14 @@ export const MultisigView = () => {
                         )}
                         </>
                       )}
+                    </div>
+
+                    {/* Switch handle */}
+                    <div className="thin-bottom-ctas switch-handle">
+                      <Switch size="small" checked={switchValue} onClick={() => switchHandler()} />
+                      <span className="ml-1 simplelink" onClick={() => switchHandler()}>
+                        {t("multisig.multisig-transactions.tx-switch-hide-btn")}
+                      </span>
                     </div>
 
                     {/* Copy address CTA */}

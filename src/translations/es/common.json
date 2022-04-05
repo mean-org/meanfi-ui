@@ -572,7 +572,8 @@
 			"not-signed-tx": "You have NOT signed this transaction",
 			"tx-operation-cancel": "Please cancel it below to remove it from the list.",
 			"your-execution": "your execution",
-			"execution": "execution"
+			"execution": "execution",
+			"tx-switch-hide-btn": "Hide cancelled and voided transactions"
 		},
 		"pending-transactions": "pending transactions",
 		"refresh-tooltip": "Click to refresh the list of multisig accounts",

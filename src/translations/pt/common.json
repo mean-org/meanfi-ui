@@ -545,6 +545,7 @@
 			"not-sign-tx": "You did NOT sign this transaction",
 			"not-signed-tx": "You have NOT signed this transaction",
 			"tx-operation-cancel": "Please cancel it below to remove it from the list.",
+			"tx-switch-hide-btn": "Hide cancelled and voided transactions",
 			"your-execution": "your execution",
 			"execution": "execution"
 		},
