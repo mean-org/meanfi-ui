@@ -1012,6 +1012,7 @@ export const MultisigView = () => {
   // Transaction confirm and execution modal launched from each Tx row
   const [isMultisigActionTransactionModalVisible, setMultisigActionTransactionModalVisible] = useState(false);
   const showMultisigActionTransactionModal = useCallback((tx: MultisigTransaction) => {
+    resetTransactionStatus();
     const fees = {
       blockchainFee: 0.000005,
       mspFlatFee: 0.000010,
@@ -1020,7 +1021,7 @@ export const MultisigView = () => {
     setTransactionFees(fees);
     sethHighlightedMultisigTx(tx);
     setMultisigActionTransactionModalVisible(true);
-  }, []);
+  }, [resetTransactionStatus]);
 
   const onAcceptMultisigActionModal = (item: MultisigTransaction) => {
     consoleOut('onAcceptMultisigActionModal:', item, 'blue');
@@ -1047,6 +1048,7 @@ export const MultisigView = () => {
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
+    resetTransactionStatus();
     setTransactionCancelled(false);
     setRetryOperationPayload(data);
     setIsBusy(true);
@@ -1307,7 +1309,8 @@ export const MultisigView = () => {
     transactionStatus.currentOperation,
     clearTransactionStatusContext,
     startFetchTxSignatureInfo,
-    setTransactionStatus,
+    resetTransactionStatus,
+    setTransactionStatus
   ]);
 
   const onExecuteFinishTx = useCallback(async (data: any) => {
@@ -1319,6 +1322,7 @@ export const MultisigView = () => {
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
+    resetTransactionStatus();
     setTransactionCancelled(false);
     setRetryOperationPayload(data);
     setIsBusy(true);
@@ -1643,8 +1647,9 @@ export const MultisigView = () => {
     transactionStatus.currentOperation,
     startFetchTxSignatureInfo,
     clearTransactionStatusContext,
+    resetTransactionStatus,
     setTransactionStatus,
-    onTxExecuted,
+    onTxExecuted
   ]);
 
   const onExecuteCancelTx = useCallback(async (data: any) => {
@@ -1656,6 +1661,7 @@ export const MultisigView = () => {
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
+    resetTransactionStatus();
     setTransactionCancelled(false);
     setRetryOperationPayload(data);
     setIsBusy(true);
@@ -1928,20 +1934,21 @@ export const MultisigView = () => {
     }
 
   }, [
-    clearTransactionStatusContext, 
-    connection, 
-    multisigClient.transaction, 
-    nativeBalance, 
-    onTxExecuted, 
-    publicKey, 
-    selectedMultisig, 
-    setTransactionStatus, 
-    startFetchTxSignatureInfo, 
-    transactionCancelled, 
+    transactionStatus.currentOperation, 
     transactionFees.blockchainFee, 
     transactionFees.mspFlatFee, 
-    transactionStatus.currentOperation, 
-    wallet
+    multisigClient.transaction, 
+    transactionCancelled, 
+    selectedMultisig, 
+    nativeBalance, 
+    connection, 
+    publicKey, 
+    wallet,
+    onTxExecuted,
+    setTransactionStatus,
+    resetTransactionStatus,
+    startFetchTxSignatureInfo, 
+    clearTransactionStatusContext, 
   ]);
 
   const isMintingToken = useCallback((): boolean => {
