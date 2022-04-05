@@ -11,7 +11,6 @@ import { useConnection, useConnectionConfig } from "../../contexts/connection";
 import { IconCaretDown, IconEdit } from "../../Icons";
 import {
   formatAmount,
-  formatThousands,
   getAmountWithSymbol,
   getTokenAmountAndSymbolByTokenAddress,
   getTxIxResume,
@@ -52,8 +51,7 @@ import { customLogger } from '../..';
 import { StepSelector } from '../../components/StepSelector';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { useNavigate } from 'react-router-dom';
-import { confirmationEvents, TransactionStatusContext } from '../../contexts/transaction-status';
-import { notify } from '../../utils/notifications';
+import { confirmationEvents, TransactionStatusContext, TransactionStatusInfo } from '../../contexts/transaction-status';
 import { TokenDisplay } from '../../components/TokenDisplay';
 import { TextInput } from '../../components/TextInput';
 import { TokenListItem } from '../../components/TokenListItem';
@@ -65,7 +63,6 @@ import { AppUsageEvent, SegmentStreamRPTransferData } from '../../utils/segment-
 import { segmentAnalytics } from '../../App';
 import dateFormat from 'dateformat';
 import { NATIVE_SOL } from '../../utils/tokens';
-import { openNotification } from '../../components/Notifications';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -108,10 +105,6 @@ export const RepeatingPayment = () => {
     setPaymentRateFrequency,
     setSelectedTokenBalance,
   } = useContext(AppStateContext);
-  const {
-    clearTransactionStatusContext,
-    startFetchTxSignatureInfo,
-  } = useContext(TransactionStatusContext);
   const { enqueueTransactionConfirmation } = useContext(TransactionStatusContext);
   const navigate = useNavigate();
   const { t } = useTranslation('common');
@@ -281,15 +274,35 @@ export const RepeatingPayment = () => {
     navigate("/accounts/streams");
   }, [closeTransactionModal, navigate, resetContractValues]);
 
-  // If any CreateStream Tx finished and confirmed, go to Money Streams and show a notification
-  const onRecurringTransferTxConfirmed = useCallback(() => {
-    handleGoToStreamsClick();
-    openNotification({
-      type: "info",
-      title: t('notifications.create-money-stream-completed'),
-      description: t('notifications.create-money-stream-completed-wait-for-confirm')
-    });
-  }, [handleGoToStreamsClick, t]);
+  const recordTxConfirmation = useCallback((signature: string, success = true) => {
+    let event: any;
+    event = success ? AppUsageEvent.TransferRecurringCompleted : AppUsageEvent.TransferRecurringFailed;
+    segmentAnalytics.recordEvent(event, { signature: signature });
+  }, []);
+
+  // Setup event handler for Tx confirmed
+  const onTxConfirmed = useCallback((item: TransactionStatusInfo) => {
+    consoleOut("onTxConfirmed event executed:", item, 'crimson');
+    // If we have the item, record success and remove it from the list
+    if (item) {
+      recordTxConfirmation(item.signature, true);
+      handleGoToStreamsClick();
+    }
+  }, [
+    handleGoToStreamsClick,
+    recordTxConfirmation,
+  ]);
+
+  // Setup event handler for Tx confirmation error
+  const onTxTimedout = useCallback((item: TransactionStatusInfo) => {
+    consoleOut("onTxTimedout event executed:", item, 'crimson');
+    // If we have the item, record failure and remove it from the list
+    if (item) {
+      recordTxConfirmation(item.signature, false);
+    }
+  }, [
+    recordTxConfirmation,
+  ]);
 
   const handleFromCoinAmountChange = (e: any) => {
 
@@ -442,8 +455,10 @@ export const RepeatingPayment = () => {
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'green');
         setUserBalances(undefined);
-        confirmationEvents.off(EventType.TxConfirmSuccess, onRecurringTransferTxConfirmed);
+        confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
         consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
+        confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
+        consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
         setCanSubscribe(true);
       }
     } else if (!connected) {
@@ -459,7 +474,8 @@ export const RepeatingPayment = () => {
     publicKey,
     previousWalletConnectState,
     setSelectedTokenBalance,
-    onRecurringTransferTxConfirmed
+    onTxConfirmed,
+    onTxTimedout,
   ]);
 
   // Reset results when the filter is cleared
@@ -504,13 +520,16 @@ export const RepeatingPayment = () => {
   useEffect(() => {
     if (publicKey && canSubscribe) {
       setCanSubscribe(false);
-      confirmationEvents.on(EventType.TxConfirmSuccess, onRecurringTransferTxConfirmed);
-      consoleOut('Subscribed to event txConfirmed with:', 'onTransferTxConfirmed', 'blue');
+      confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
+      consoleOut('Subscribed to event txConfirmed with:', 'onTxConfirmed', 'blue');
+      confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
+      consoleOut('Subscribed to event txTimedout with:', 'onTxTimedout', 'blue');
     }
   }, [
     publicKey,
     canSubscribe,
-    onRecurringTransferTxConfirmed
+    onTxConfirmed,
+    onTxTimedout,
   ]);
 
   //////////////////
@@ -688,7 +707,6 @@ export const RepeatingPayment = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
     setTransactionCancelled(false);
     setIsBusy(true);
 

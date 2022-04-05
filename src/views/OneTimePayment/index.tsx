@@ -34,8 +34,7 @@ import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { customLogger } from '../..';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
-import { notify } from '../../utils/notifications';
-import { confirmationEvents, TransactionStatusContext } from '../../contexts/transaction-status';
+import { confirmationEvents, TransactionStatusContext, TransactionStatusInfo } from '../../contexts/transaction-status';
 import { useNavigate } from 'react-router-dom';
 import { TokenDisplay } from '../../components/TokenDisplay';
 import { TextInput } from '../../components/TextInput';
@@ -245,32 +244,42 @@ export const OneTimePayment = () => {
 
   const handleGoToStreamsClick = useCallback(() => {
     if (isScheduledPayment()) {
-      notify({
-        message: t('notifications.create-money-stream-completed'),
-        description: t('notifications.create-money-stream-completed-wait-for-confirm'),
-        type: "info"
-      });
       navigate("/accounts/streams");
       resetContractValues();
       setIsVerifiedRecipient(false);
       setSelectedStream(undefined);
       closeTransactionModal();
     }
-  }, [closeTransactionModal, isScheduledPayment, navigate, resetContractValues, setIsVerifiedRecipient, setSelectedStream, t]);
+  }, [closeTransactionModal, isScheduledPayment, navigate, resetContractValues, setIsVerifiedRecipient, setSelectedStream]);
 
-  // If any CreateTransfer Tx finished and confirmed then something...
-  const onTransferTxConfirmed = useCallback((value: any) => {
-    openNotification({
-      type: "info",
-      title: t('notifications.create-money-stream-completed'),
-      description: t('notifications.create-money-stream-completed-wait-for-confirm')
-    });
-    navigate("/accounts/streams");
-    resetContractValues();
-    setIsVerifiedRecipient(false);
-    setSelectedStream(undefined);
-    closeTransactionModal();
-  }, [closeTransactionModal, navigate, resetContractValues, setIsVerifiedRecipient, setSelectedStream, t]);
+  const recordTxConfirmation = useCallback((signature: string, success = true) => {
+    let event: any;
+    event = success ? AppUsageEvent.TransferOTPCompleted : AppUsageEvent.TransferOTPFailed;
+    segmentAnalytics.recordEvent(event, { signature: signature });
+  }, []);
+
+  // Setup event handler for Tx confirmed
+  const onTxConfirmed = useCallback((item: TransactionStatusInfo) => {
+    consoleOut("onTxConfirmed event executed:", item, 'crimson');
+    if (item && item.operationType === OperationType.Transfer) {
+      recordTxConfirmation(item.signature, true);
+      resetContractValues();
+      setIsVerifiedRecipient(false);
+      setSelectedStream(undefined);
+      closeTransactionModal();
+      navigate("/accounts/streams");
+    }
+  }, [closeTransactionModal, navigate, recordTxConfirmation, resetContractValues, setIsVerifiedRecipient, setSelectedStream]);
+
+  // Setup event handler for Tx confirmation error
+  const onTxTimedout = useCallback((item: TransactionStatusInfo) => {
+    consoleOut("onTxTimedout event executed:", item, 'crimson');
+    if (item && item.operationType === OperationType.Transfer) {
+      recordTxConfirmation(item.signature, false);
+    }
+  }, [
+    recordTxConfirmation,
+  ]);
 
   const handleFromCoinAmountChange = (e: any) => {
 
@@ -391,8 +400,10 @@ export const OneTimePayment = () => {
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'green');
         setUserBalances(undefined);
-        confirmationEvents.off(EventType.TxConfirmSuccess, onTransferTxConfirmed);
+        confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
         consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
+        confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
+        consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
         setCanSubscribe(true);
       }
     } else if (!connected) {
@@ -408,7 +419,8 @@ export const OneTimePayment = () => {
     publicKey,
     previousWalletConnectState,
     setSelectedTokenBalance,
-    onTransferTxConfirmed,
+    onTxConfirmed,
+    onTxTimedout,
   ]);
 
   // Reset results when the filter is cleared
@@ -453,13 +465,16 @@ export const OneTimePayment = () => {
   useEffect(() => {
     if (publicKey && canSubscribe) {
       setCanSubscribe(false);
-      confirmationEvents.on(EventType.TxConfirmSuccess, onTransferTxConfirmed);
-      consoleOut('Subscribed to event txConfirmed with:', 'onTransferTxConfirmed', 'blue');
+      confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
+      consoleOut('Subscribed to event txConfirmed with:', 'onTxConfirmed', 'blue');
+      confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
+      consoleOut('Subscribed to event txTimedout with:', 'onTxTimedout', 'blue');
     }
   }, [
     publicKey,
     canSubscribe,
-    onTransferTxConfirmed
+    onTxConfirmed,
+    onTxTimedout,
   ]);
 
   //////////////////
