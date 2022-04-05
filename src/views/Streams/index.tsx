@@ -63,7 +63,6 @@ import {
 import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from "../../contexts/connection";
 import { ConfirmOptions, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { EventType, OperationType, TransactionStatus } from "../../models/enums";
-import { notify } from "../../utils/notifications";
 import { StreamAddFundsModal } from "../../components/StreamAddFundsModal";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { StreamCloseModal } from "../../components/StreamCloseModal";
@@ -110,6 +109,7 @@ import { StreamPauseModal } from "../../components/StreamPauseModal";
 import { StreamResumeModal } from "../../components/StreamResumeModal";
 import { StreamLockedModal } from "../../components/StreamLockedModal";
 import { StreamEditModal } from "../../components/StreamEditModal";
+import { openNotification } from "../../components/Notifications";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -127,6 +127,8 @@ export const Streams = () => {
     streamListv2,
     streamDetail,
     activeStream,
+    tokenBalance,
+    isWhitelisted,
     selectedToken,
     loadingStreams,
     streamsSummary,
@@ -140,8 +142,7 @@ export const Streams = () => {
     hasMoreStreamActivity,
     highLightableStreamId,
     streamV2ProgramAddress,
-    tokenBalance,
-    isWhitelisted,
+    previousWalletConnectState,
     setStreamList,
     openStreamById,
     setStreamDetail,
@@ -315,8 +316,8 @@ export const Streams = () => {
       consoleOut("stream token:", unkToken, 'blue');
       setEffectiveRate(0);
     } else {
-      notify({
-        message: t('notifications.error-title'),
+      openNotification({
+        title: t('notifications.error-title'),
         description: t('transactions.validation.invalid-solana-address'),
         type: "error"
       });
@@ -326,13 +327,6 @@ export const Streams = () => {
     setSelectedToken,
     t,
   ]);
-
-  const isV2Stream = useCallback((): boolean => {
-    if (streamDetail) {
-      return streamDetail.version >= 2 ? true : false;
-    }
-    return false;
-  }, [streamDetail]);
 
   const isInboundStream = useCallback((item: Stream | StreamInfo): boolean => {
     if (item && publicKey) {
@@ -375,12 +369,12 @@ export const Streams = () => {
   const copyAddressToClipboard = useCallback((address: any) => {
 
     if (copyText(address.toString())) {
-      notify({
+      openNotification({
         description: t('notifications.account-address-copied-message'),
         type: "info"
       });
     } else {
-      notify({
+      openNotification({
         description: t('notifications.account-address-not-copied-message'),
         type: "error"
       });
@@ -816,6 +810,34 @@ export const Streams = () => {
     canSubscribe,
     onTxConfirmed,
     onTxTimedout
+  ]);
+
+  // Hook on wallet connect/disconnect
+  useEffect(() => {
+
+    if (previousWalletConnectState !== connected) {
+      if (!previousWalletConnectState && connected && publicKey) {
+        consoleOut('User is connecting...', '', 'green');
+      } else if (previousWalletConnectState && !connected) {
+        consoleOut('User is disconnecting...', '', 'green');
+        confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
+        consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
+        confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
+        consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
+        setCanSubscribe(true);
+      }
+    }
+
+    return () => {
+      clearTimeout();
+    };
+
+  }, [
+    connected,
+    publicKey,
+    previousWalletConnectState,
+    onTxConfirmed,
+    onTxTimedout,
   ]);
 
   const refreshPage = () => {
@@ -1814,19 +1836,6 @@ export const Streams = () => {
     resetTransactionStatus();
     setIsEditStreamModalVisibility(true);
   },[
-    resetTransactionStatus
-  ]);
-
-  const onStreamModified = useCallback(() => {
-    setIsEditStreamModalVisibility(false);
-    resetTransactionStatus();
-    notify({
-      description: t('multisig.update-multisig.success-message'),
-      type: "success"
-    });
-
-  },[
-    t,
     resetTransactionStatus
   ]);
 
