@@ -62,7 +62,7 @@ import {
 } from "../../constants";
 import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from "../../contexts/connection";
 import { ConfirmOptions, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
-import { OperationType, TransactionStatus } from "../../models/enums";
+import { EventType, OperationType, TransactionStatus } from "../../models/enums";
 import { notify } from "../../utils/notifications";
 import { StreamAddFundsModal } from "../../components/StreamAddFundsModal";
 import { TokenInfo } from "@solana/spl-token-registry";
@@ -71,7 +71,7 @@ import { useNativeAccount } from "../../contexts/accounts";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from "../../utils/ids";
-import { TransactionStatusContext } from "../../contexts/transaction-status";
+import { confirmationEvents, TransactionStatusContext, TransactionStatusInfo } from "../../contexts/transaction-status";
 import { Identicon } from "../../components/Identicon";
 import BN from "bn.js";
 import { InfoIcon } from "../../components/InfoIcon";
@@ -96,7 +96,13 @@ import { UserTokenAccount } from "../../models/transactions";
 import { customLogger } from "../..";
 import { StreamTreasuryType } from "../../models/treasuries";
 import { segmentAnalytics } from "../../App";
-import { AppUsageEvent, SegmentStreamAddFundsData, SegmentStreamCloseData, SegmentStreamTransferOwnershipData, SegmentStreamWithdrawData } from "../../utils/segment-service";
+import {
+  AppUsageEvent,
+  SegmentStreamAddFundsData,
+  SegmentStreamCloseData,
+  SegmentStreamTransferOwnershipData,
+  SegmentStreamWithdrawData
+} from "../../utils/segment-service";
 import { Program, Provider } from "@project-serum/anchor";
 import MultisigIdl from "../../models/mean-multisig-idl";
 import { MultisigV2 } from "../../models/multisig";
@@ -156,10 +162,9 @@ export const Streams = () => {
   } = useContext(AppStateContext);
   const {
     fetchTxInfoStatus,
-    lastSentTxSignature,
     lastSentTxOperationType,
-    clearTransactionStatusContext,
-    startFetchTxSignatureInfo,
+    confirmationHistory,
+    enqueueTransactionConfirmation,
   } = useContext(TransactionStatusContext);
 
   const { t } = useTranslation('common');
@@ -174,6 +179,7 @@ export const Streams = () => {
   });
   const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
   const [multisigAccounts, setMultisigAccounts] = useState<MultisigV2[] | undefined>(undefined);
+  const [canSubscribe, setCanSubscribe] = useState(true);
 
   // Treasury related
   const [streamTreasuryType, setStreamTreasuryType] = useState<StreamTreasuryType | undefined>(undefined);
@@ -715,6 +721,103 @@ export const Streams = () => {
   //  EVENTS & MODALS  //
   ///////////////////////
 
+  const recordTxConfirmation = useCallback((signature: string, operation: OperationType, success = true) => {
+    let event: any;
+    switch (operation) {
+      case OperationType.StreamCreate:
+        event = success ? AppUsageEvent.TransferRecurringCompleted : AppUsageEvent.TransferRecurringFailed;
+        segmentAnalytics.recordEvent(event, { signature: signature });
+        break;
+      case OperationType.StreamWithdraw:
+        event = success ? AppUsageEvent.StreamWithdrawalCompleted : AppUsageEvent.StreamWithdrawalFailed;
+        segmentAnalytics.recordEvent(event, { signature: signature });
+        break;
+      case OperationType.StreamClose:
+        event = success ? AppUsageEvent.StreamCloseCompleted : AppUsageEvent.StreamCloseFailed;
+        segmentAnalytics.recordEvent(event, { signature: signature });
+        break;
+      case OperationType.StreamAddFunds:
+        event = success ? AppUsageEvent.StreamTopupCompleted : AppUsageEvent.StreamTopupFailed;
+        segmentAnalytics.recordEvent(event, { signature: signature });
+        break;
+      case OperationType.StreamTransferBeneficiary:
+        event = success ? AppUsageEvent.StreamTransferCompleted : AppUsageEvent.StreamTransferFailed;
+        segmentAnalytics.recordEvent(event, { signature: signature });
+        break;
+      default:
+        break;
+    }
+  }, []);
+
+  // Setup event handler for Tx confirmed
+  const onTxConfirmed = useCallback((item: TransactionStatusInfo) => {
+    consoleOut("onTxConfirmed event executed:", item, 'crimson');
+    // If we have the item, record success and remove it from the list
+    if (item) {
+      recordTxConfirmation(item.signature, item.operationType, true);
+      switch (item.operationType) {
+        case OperationType.StreamWithdraw:
+          refreshStreamList(false);
+          break;
+        case OperationType.StreamClose:
+          if (streamDetail && streamList && streamList.length > 1) {
+            const filteredStreams = streamList.filter(s => s.id !== streamDetail.id);
+            setStreamList(filteredStreams);
+          }
+          refreshStreamList(true);
+          break;
+        case OperationType.StreamTransferBeneficiary:
+        case OperationType.StreamCreate:
+          refreshStreamList(true);
+          break;
+        case OperationType.StreamAddFunds:
+          if (customStreamDocked) {
+            openStreamById(streamDetail?.id as string, false);
+          } else {
+            refreshStreamList(false);
+          }
+          break;
+        default:
+          refreshStreamList(false);
+          break;
+      }
+    }
+  }, [
+    streamList,
+    streamDetail,
+    customStreamDocked,
+    recordTxConfirmation,
+    refreshStreamList,
+    openStreamById,
+    setStreamList,
+  ]);
+
+  // Setup event handler for Tx confirmation error
+  const onTxTimedout = useCallback((item: TransactionStatusInfo) => {
+    consoleOut("onTxTimedout event executed:", item, 'crimson');
+    // If we have the item, record failure and remove it from the list
+    if (item) {
+      recordTxConfirmation(item.signature, item.operationType, false);
+    }
+  }, [
+    recordTxConfirmation,
+  ]);
+
+  // Setup event listeners
+  useEffect(() => {
+    if (canSubscribe) {
+      setCanSubscribe(false);
+      confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
+      consoleOut('Subscribed to event txConfirmed with:', 'onTxConfirmed', 'blue');
+      confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
+      consoleOut('Subscribed to event txTimedout with:', 'onTxTimedout', 'blue');
+    }
+  }, [
+    canSubscribe,
+    onTxConfirmed,
+    onTxTimedout
+  ]);
+
   const refreshPage = () => {
     hideTransactionExecutionModal();
     window.location.reload();
@@ -821,7 +924,6 @@ export const Streams = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.StreamPause);
     setIsBusy(true);
@@ -1176,9 +1278,12 @@ export const Streams = () => {
     if (wallet && streamDetail) {
       showTransactionExecutionModal();
       let created: boolean;
+      let streamName = '';
       if (streamDetail.version < 2) {
+        streamName = (streamDetail as StreamInfo).streamName as string;
         created = await createTxV1();
       } else {
+        streamName = (streamDetail as Stream).name;
         created = await createTxV2();
       }
       consoleOut('created:', created, 'blue');
@@ -1190,7 +1295,16 @@ export const Streams = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamPause);
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.StreamPause,
+              finality: "confirmed",
+              txInfoFetchStatus: "fetching",
+              loadingTitle: "Confirming transaction",
+              loadingMessage: `Pause stream: ${streamName}`,
+              completedTitle: "Transaction confirmed",
+              completedMessage: `Successfully paused stream: ${streamName}`,
+            });
             setOngoingOperation(undefined);
             onPauseStreamTransactionFinished();
           } else { setIsBusy(false); }
@@ -1274,7 +1388,6 @@ export const Streams = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.StreamResume);
     setIsBusy(true);
@@ -1627,9 +1740,12 @@ export const Streams = () => {
     if (wallet && streamDetail) {
       showTransactionExecutionModal();
       let created: boolean;
+      let streamName = '';
       if (streamDetail.version < 2) {
+        streamName = (streamDetail as StreamInfo).streamName as string;
         created = await createTxV1();
       } else {
+        streamName = (streamDetail as Stream).name;
         created = await createTxV2();
       }
       consoleOut('created:', created, 'blue');
@@ -1641,14 +1757,21 @@ export const Streams = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamResume);
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.StreamResume,
+              finality: "confirmed",
+              txInfoFetchStatus: "fetching",
+              loadingTitle: "Confirming transaction",
+              loadingMessage: `Resume stream: ${streamName}`,
+              completedTitle: "Transaction confirmed",
+              completedMessage: `Successfully resumed stream: ${streamName}`,
+            });
             setOngoingOperation(undefined);
             onResumeStreamTransactionFinished();
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
-    } else {
-
     }
   };
 
@@ -1712,342 +1835,6 @@ export const Streams = () => {
     hideEditStreamModal();
     // onExecuteResumeStreamTransaction();
   };
-
-  // const onAcceptEditMultisig = (data: any) => {
-  //   consoleOut('multisig:', data, 'blue');
-  //   onExecuteEditMultisigTx(data);
-  // };
-
-  // const onExecuteEditMultisigTx = useCallback(async (data: any) => {
-
-  //   let transaction: Transaction;
-  //   let signedTransaction: Transaction;
-  //   let signature: any;
-  //   let encodedTx: string;
-  //   const transactionLog: any[] = [];
-
-  //   clearTransactionStatusContext();
-  //   setTransactionCancelled(false);
-  //   setOngoingOperation(OperationType.CreateMultisig);
-  //   setRetryOperationPayload(data);
-  //   setIsBusy(true);
-
-  //   const editMultisig = async (data: any) => {
-
-  //     const [multisigSigner] = await PublicKey.findProgramAddress(
-  //       [selectedMultisig.id.toBuffer()],
-  //       multisigClient.programId
-  //     );
-
-  //     const owners = data.owners.map((p: MultisigParticipant) => {
-  //       return {
-  //         address: new PublicKey(p.address),
-  //         name: p.name
-  //       }
-  //     });
-
-  //     const pid = multisigClient.programId;
-  //     const operation = OperationType.EditMultisig;
-  //     // Edit Multisig
-  //     const ixData = multisigClient.coder.instruction.encode("edit_multisig", {
-  //       owners: owners,
-  //       threshold: new BN(data.threshold),
-  //       label: data.label as any
-  //     });
-
-  //     const ixAccounts = [
-  //       {
-  //         pubkey: selectedMultisig.id,
-  //         isWritable: true,
-  //         isSigner: false,
-  //       },
-  //       {
-  //         pubkey: multisigSigner,
-  //         isWritable: false,
-  //         isSigner: true,
-  //       },
-  //     ];
-
-  //     const transaction = Keypair.generate();
-  //     const txSize = 1000;
-  //     const createIx = await multisigClient.account.transaction.createInstruction(
-  //       transaction,
-  //       txSize
-  //     );
-      
-  //     let tx = multisigClient.transaction.createTransaction(
-  //       pid, 
-  //       operation,
-  //       ixAccounts as any,
-  //       ixData as any,
-  //       new BN(0),
-  //       new BN(0),
-  //       {
-  //         accounts: {
-  //           multisig: selectedMultisig.id,
-  //           transaction: transaction.publicKey,
-  //           proposer: publicKey as PublicKey,
-  //         },
-  //         preInstructions: [createIx],
-  //         signers: [transaction, wallet as any],
-  //       }
-  //     );
-
-  //     tx.feePayer = publicKey;
-  //     const { blockhash } = await connection.getRecentBlockhash("confirmed");
-  //     tx.recentBlockhash = blockhash;
-  //     tx.partialSign(...[transaction]);
-
-  //     return tx;
-  //   };
-
-  //   const createTx = async (): Promise<boolean> => {
-
-  //     if (publicKey && data) {
-  //       consoleOut("Start transaction for create multisig", '', 'blue');
-  //       consoleOut('Wallet address:', publicKey.toBase58());
-
-  //       setTransactionStatus({
-  //         lastOperation: TransactionStatus.TransactionStart,
-  //         currentOperation: TransactionStatus.InitTransaction
-  //       });
-
-  //       // Create a transaction
-  //       const payload = {
-  //         wallet: publicKey.toBase58(),                               // wallet
-  //         label: data.label,                                          // multisig label
-  //         threshold: data.threshold,
-  //         owners: data.owners
-  //       };
-
-  //       consoleOut('data:', payload);
-
-  //       // Log input data
-  //       transactionLog.push({
-  //         action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
-  //         inputs: payload
-  //       });
-
-  //       transactionLog.push({
-  //         action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
-  //         result: ''
-  //       });
-
-  //       // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
-  //       // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-  //       consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
-  //       consoleOut('nativeBalance:', nativeBalance, 'blue');
-
-  //       if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
-  //         setTransactionStatus({
-  //           lastOperation: transactionStatus.currentOperation,
-  //           currentOperation: TransactionStatus.TransactionStartFailure
-  //         });
-  //         transactionLog.push({
-  //           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-  //           result: `Not enough balance (${
-  //             getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
-  //           }) to pay for network fees (${
-  //             getTokenAmountAndSymbolByTokenAddress(
-  //               transactionFees.blockchainFee + transactionFees.mspFlatFee, 
-  //               NATIVE_SOL_MINT.toBase58()
-  //             )
-  //           })`
-  //         });
-  //         customLogger.logWarning('Edit multisig transaction failed', { transcript: transactionLog });
-  //         return false;
-  //       }
-
-  //       return await editMultisig(data)
-  //         .then(value => {
-  //           consoleOut('editMultisig returned transaction:', value);
-  //           setTransactionStatus({
-  //             lastOperation: TransactionStatus.InitTransactionSuccess,
-  //             currentOperation: TransactionStatus.SignTransaction
-  //           });
-  //           transactionLog.push({
-  //             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-  //             result: getTxIxResume(value)
-  //           });
-  //           transaction = value;
-  //           return true;
-  //         })
-  //         .catch(error => {
-  //           console.error('editMultisig error:', error);
-  //           setTransactionStatus({
-  //             lastOperation: transactionStatus.currentOperation,
-  //             currentOperation: TransactionStatus.InitTransactionFailure
-  //           });
-  //           transactionLog.push({
-  //             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
-  //             result: `${error}`
-  //           });
-  //           customLogger.logError('Edit multisig transaction failed', { transcript: transactionLog });
-  //           return false;
-  //         });
-
-  //     } else {
-  //       transactionLog.push({
-  //         action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-  //         result: 'Cannot start transaction! Wallet not found!'
-  //       });
-  //       customLogger.logError('Edit multisig transaction failed', { transcript: transactionLog });
-  //       return false;
-  //     }
-  //   }
-
-  //   const signTx = async (): Promise<boolean> => {
-  //     if (wallet) {
-  //       consoleOut('Signing transaction...');
-  //       return await wallet.signTransaction(transaction)
-  //       .then((signed: Transaction) => {
-  //         consoleOut('signTransaction returned a signed transaction:', signed);
-  //         signedTransaction = signed;
-  //         // Try signature verification by serializing the transaction
-  //         try {
-  //           encodedTx = signedTransaction.serialize().toString('base64');
-  //           consoleOut('encodedTx:', encodedTx, 'orange');
-  //         } catch (error) {
-  //           console.error(error);
-  //           setTransactionStatus({
-  //             lastOperation: TransactionStatus.SignTransaction,
-  //             currentOperation: TransactionStatus.SignTransactionFailure
-  //           });
-  //           transactionLog.push({
-  //             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-  //             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
-  //           });
-  //           customLogger.logError('Edit multisig transaction failed', { transcript: transactionLog });
-  //           return false;
-  //         }
-  //         setTransactionStatus({
-  //           lastOperation: TransactionStatus.SignTransactionSuccess,
-  //           currentOperation: TransactionStatus.SendTransaction
-  //         });
-  //         transactionLog.push({
-  //           action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-  //           result: {signer: wallet.publicKey.toBase58()}
-  //         });
-  //         return true;
-  //       })
-  //       .catch(error => {
-  //         console.error(error);
-  //         setTransactionStatus({
-  //           lastOperation: TransactionStatus.SignTransaction,
-  //           currentOperation: TransactionStatus.SignTransactionFailure
-  //         });
-  //         transactionLog.push({
-  //           action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-  //           result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
-  //         });
-  //         customLogger.logError('Edit multisig transaction failed', { transcript: transactionLog });
-  //         return false;
-  //       });
-  //     } else {
-  //       console.error('Cannot sign transaction! Wallet not found!');
-  //       setTransactionStatus({
-  //         lastOperation: TransactionStatus.SignTransaction,
-  //         currentOperation: TransactionStatus.WalletNotFound
-  //       });
-  //       transactionLog.push({
-  //         action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-  //         result: 'Cannot sign transaction! Wallet not found!'
-  //       });
-  //       customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
-  //       return false;
-  //     }
-  //   }
-
-  //   const sendTx = async (): Promise<boolean> => {
-  //     if (wallet) {
-  //       return await connection
-  //         .sendEncodedTransaction(encodedTx)
-  //         .then(sig => {
-  //           consoleOut('sendEncodedTransaction returned a signature:', sig);
-  //           setTransactionStatus({
-  //             lastOperation: TransactionStatus.SendTransactionSuccess,
-  //             currentOperation: TransactionStatus.ConfirmTransaction
-  //           });
-  //           signature = sig;
-  //           transactionLog.push({
-  //             action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
-  //             result: `signature: ${signature}`
-  //           });
-  //           return true;
-  //         })
-  //         .catch(error => {
-  //           console.error(error);
-  //           setTransactionStatus({
-  //             lastOperation: TransactionStatus.SendTransaction,
-  //             currentOperation: TransactionStatus.SendTransactionFailure
-  //           });
-  //           transactionLog.push({
-  //             action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
-  //             result: { error, encodedTx }
-  //           });
-  //           customLogger.logError('Edit multisig transaction failed', { transcript: transactionLog });
-  //           return false;
-  //         });
-  //     } else {
-  //       console.error('Cannot send transaction! Wallet not found!');
-  //       setTransactionStatus({
-  //         lastOperation: TransactionStatus.SendTransaction,
-  //         currentOperation: TransactionStatus.WalletNotFound
-  //       });
-  //       transactionLog.push({
-  //         action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-  //         result: 'Cannot send transaction! Wallet not found!'
-  //       });
-  //       customLogger.logError('Edit multisig transaction failed', { transcript: transactionLog });
-  //       return false;
-  //     }
-  //   }
-
-  //   if (wallet) {
-  //     const create = await createTx();
-  //     consoleOut('created:', create);
-  //     if (create && !transactionCancelled) {
-  //       const sign = await signTx();
-  //       consoleOut('signed:', sign);
-  //       if (sign && !transactionCancelled) {
-  //         const sent = await sendTx();
-  //         consoleOut('sent:', sent);
-  //         if (sent && !transactionCancelled) {
-  //           consoleOut('Send Tx to confirmation queue:', signature);
-  //           startFetchTxSignatureInfo(signature, "confirmed", OperationType.EditMultisig);
-  //           setIsBusy(false);
-  //           setTransactionStatus({
-  //             lastOperation: transactionStatus.currentOperation,
-  //             currentOperation: TransactionStatus.TransactionFinished
-  //           });
-  //           onMultisigModified();
-  //           setOngoingOperation(undefined);
-  //           setIsEditMultisigModalVisible(false);
-  //         } else { setIsBusy(false); }
-  //       } else { setIsBusy(false); }
-  //     } else { setIsBusy(false); }
-  //   }
-
-  // }, [
-  //   selectedMultisig,
-  //   clearTransactionStatusContext,
-  //   connection,
-  //   multisigClient.account.transaction,
-  //   multisigClient.coder.instruction,
-  //   multisigClient.programId,
-  //   multisigClient.transaction,
-  //   nativeBalance,
-  //   onMultisigModified,
-  //   publicKey,
-  //   setTransactionStatus,
-  //   startFetchTxSignatureInfo,
-  //   transactionCancelled,
-  //   transactionFees.blockchainFee,
-  //   transactionFees.mspFlatFee,
-  //   transactionStatus.currentOperation,
-  //   wallet
-  // ]);
-
 
   const isMultisigTreasury = useCallback((treasury?: any) => {
 
@@ -2135,7 +1922,6 @@ export const Streams = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
     setTransactionCancelled(false);
     setIsBusy(true);
 
@@ -2370,14 +2156,22 @@ export const Streams = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamTransferBeneficiary);
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.StreamTransferBeneficiary,
+              finality: "confirmed",
+              txInfoFetchStatus: "fetching",
+              loadingTitle: "Confirming transaction",
+              loadingMessage: `Transfer stream to: ${shortenAddress(address)}`,
+              completedTitle: "Transaction confirmed",
+              completedMessage: `Stream transferred to: ${shortenAddress(address)}`,
+            });
             setIsBusy(false);
             onTransferStreamTransactionFinished();
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
-
   };
 
   // Add funds modal
@@ -2456,7 +2250,6 @@ export const Streams = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
     setTransactionCancelled(false);
     setIsBusy(true);
 
@@ -2880,7 +2673,8 @@ export const Streams = () => {
       }
     }
 
-    if (wallet && streamDetail) {
+    if (wallet && streamDetail && selectedToken ) {
+      const token = Object.assign({}, selectedToken);
       showAddFundsTransactionModal();
       let created: boolean;
       if (streamDetail.version < 2) {
@@ -2897,14 +2691,28 @@ export const Streams = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamAddFunds);
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.StreamAddFunds,
+              finality: "confirmed",
+              txInfoFetchStatus: "fetching",
+              loadingTitle: "Confirming transaction",
+              loadingMessage: `Fund stream with ${formatThousands(
+                parseFloat(addFundsData.amount),
+                token.decimals
+              )} ${token.symbol}`,
+              completedTitle: "Transaction confirmed",
+              completedMessage: `Stream funded with ${formatThousands(
+                parseFloat(addFundsData.amount),
+                token.decimals
+              )} ${token.symbol}`,
+            });
             setIsBusy(false);
             onAddFundsTransactionFinished();
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
-
   };
 
   // Withdraw funds modal
@@ -3212,94 +3020,6 @@ export const Streams = () => {
     return label;
   }
 
-  const recordTxConfirmationResult = useCallback((operation: OperationType, success = true) => {
-    let event: any;
-    switch (operation) {
-      case OperationType.StreamCreate:
-        event = success ? AppUsageEvent.TransferRecurringCompleted : AppUsageEvent.TransferRecurringFailed;
-        segmentAnalytics.recordEvent(event, { signature: lastSentTxSignature });
-        break;
-      case OperationType.StreamWithdraw:
-        event = success ? AppUsageEvent.StreamWithdrawalCompleted : AppUsageEvent.StreamWithdrawalFailed;
-        segmentAnalytics.recordEvent(event, { signature: lastSentTxSignature });
-        break;
-      case OperationType.StreamClose:
-        event = success ? AppUsageEvent.StreamCloseCompleted : AppUsageEvent.StreamCloseFailed;
-        segmentAnalytics.recordEvent(event, { signature: lastSentTxSignature });
-        break;
-      case OperationType.StreamAddFunds:
-        event = success ? AppUsageEvent.StreamTopupCompleted : AppUsageEvent.StreamTopupFailed;
-        segmentAnalytics.recordEvent(event, { signature: lastSentTxSignature });
-        break;
-      case OperationType.StreamTransferBeneficiary:
-        event = success ? AppUsageEvent.StreamTransferCompleted : AppUsageEvent.StreamTransferFailed;
-        segmentAnalytics.recordEvent(event, { signature: lastSentTxSignature });
-        break;
-      default:
-        break;
-    }
-  }, [lastSentTxSignature]);
-
-  // Handle what to do when pending Tx confirmation reaches finality or on error
-  useEffect(() => {
-    if (!streamDetail) { return; }
-
-    if (lastSentTxSignature) {
-      if (fetchTxInfoStatus === "error") {
-        if (lastSentTxOperationType !== undefined) {
-          recordTxConfirmationResult(lastSentTxOperationType, false);
-        }
-        clearTransactionStatusContext();
-        return;
-      } else if (fetchTxInfoStatus === "fetched") {
-        switch (lastSentTxOperationType) {
-          case OperationType.StreamWithdraw:
-            clearTransactionStatusContext();
-            recordTxConfirmationResult(lastSentTxOperationType);
-            refreshStreamList(false);
-            break;
-          case OperationType.StreamClose:
-            recordTxConfirmationResult(lastSentTxOperationType);
-            if (streamList && streamList.length > 1) {
-              const filteredStreams = streamList.filter(s => s.id !== streamDetail.id);
-              setStreamList(filteredStreams);
-            }
-            refreshStreamList(true);
-            break;
-          case OperationType.StreamTransferBeneficiary:
-          case OperationType.StreamCreate:
-            recordTxConfirmationResult(lastSentTxOperationType);
-            refreshStreamList(true);
-            break;
-          case OperationType.StreamAddFunds:
-            recordTxConfirmationResult(lastSentTxOperationType);
-            clearTransactionStatusContext();
-            if (customStreamDocked) {
-              openStreamById(streamDetail?.id as string, false);
-            } else {
-              refreshStreamList(false);
-            }
-            break;
-          default:
-            refreshStreamList(false);
-            break;
-        }
-      }
-    }
-  }, [
-    streamList,
-    streamDetail,
-    fetchTxInfoStatus,
-    customStreamDocked,
-    lastSentTxSignature,
-    lastSentTxOperationType,
-    clearTransactionStatusContext,
-    recordTxConfirmationResult,
-    refreshStreamList,
-    openStreamById,
-    setStreamList,
-  ]);
-
   // Transaction execution (Applies to all transactions)
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
@@ -3368,7 +3088,6 @@ export const Streams = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
     setTransactionCancelled(false);
     setIsBusy(true);
 
@@ -3706,7 +3425,8 @@ export const Streams = () => {
       }
     }
 
-    if (wallet && streamDetail) {
+    if (wallet && streamDetail && selectedToken) {
+      const token = Object.assign({}, selectedToken);
       showWithdrawFundsTransactionModal();
       let created: boolean;
       if (streamDetail.version < 2) {
@@ -3723,16 +3443,28 @@ export const Streams = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamWithdraw);
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.StreamWithdraw,
+              finality: "confirmed",
+              txInfoFetchStatus: "fetching",
+              loadingTitle: "Confirming transaction",
+              loadingMessage: `Withdraw ${formatThousands(
+                parseFloat(withdrawData.amount),
+                token.decimals
+              )} ${token.symbol}`,
+              completedTitle: "Transaction confirmed",
+              completedMessage: `Successfully withdrawn ${formatThousands(
+                parseFloat(withdrawData.amount),
+                token.decimals
+              )} ${token.symbol}`,
+            });
             setIsBusy(false);
             onWithdrawFundsTransactionFinished();
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
-    } else {
-      consoleOut("No me muestro");
     }
-
   };
 
   // Close stream Transaction execution modal
@@ -3767,7 +3499,6 @@ export const Streams = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
     setTransactionCancelled(false);
     setIsBusy(true);
 
@@ -4103,9 +3834,12 @@ export const Streams = () => {
     if (wallet && streamDetail) {
       showCloseStreamTransactionModal();
       let created: boolean;
+      let streamName = '';
       if (streamDetail.version < 2) {
+        streamName = (streamDetail as StreamInfo).streamName as string;
         created = await createTxV1();
       } else {
+        streamName = (streamDetail as Stream).name;
         created = await createTxV2();
       }
       consoleOut('created:', created, 'blue');
@@ -4117,14 +3851,22 @@ export const Streams = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamClose);
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.StreamClose,
+              finality: "confirmed",
+              txInfoFetchStatus: "fetching",
+              loadingTitle: "Confirming transaction",
+              loadingMessage: `Close stream: ${streamName}`,
+              completedTitle: "Transaction confirmed",
+              completedMessage: `Successfully closed stream: ${streamName}`,
+            });
             setIsBusy(false);
             onCloseStreamTransactionFinished();
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
-
   };
 
   const getStreamClosureMessage = () => {
@@ -5702,7 +5444,6 @@ export const Streams = () => {
     <>
       {/* {isLocal() && (
         <div className="debug-bar">
-          <span className="secondary-link" onClick={() => clearTransactionStatusContext()}>[STOP]</span>
           <span className="ml-1">proggress:</span><span className="ml-1 font-bold fg-dark-active">{fetchTxInfoStatus || '-'}</span>
           <span className="ml-1">status:</span><span className="ml-1 font-bold fg-dark-active">{lastSentTxStatus || '-'}</span>
           <span className="ml-1">lastSentTxSignature:</span><span className="ml-1 font-bold fg-dark-active">{lastSentTxSignature ? shortenAddress(lastSentTxSignature, 8) : '-'}</span>

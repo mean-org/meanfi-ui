@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { TransactionConfirmationStatus } from "@solana/web3.js";
-import { useConnection } from "./connection";
+import { getSolanaExplorerClusterParam, useConnection } from "./connection";
 import { fetchTransactionStatus } from "../utils/transactions";
 import { consoleOut, delay } from "../utils/ui";
 import { EventType, OperationType } from "../models/enums";
@@ -331,7 +331,7 @@ const TransactionStatusProvider: React.FC = ({ children }) => {
           <div>
             <span className="mr-1">{t('notifications.check-transaction-in-explorer')}</span>
             <a className="secondary-link"
-                href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${data.signature}`}
+                href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${data.signature}${getSolanaExplorerClusterParam()}`}
                 target="_blank"
                 rel="noopener noreferrer">
                 {shortenAddress(data.signature, 8)}
@@ -366,7 +366,7 @@ const TransactionStatusProvider: React.FC = ({ children }) => {
             <div>
               <span className="mr-1">{t('notifications.check-transaction-in-explorer')}</span>
               <a className="secondary-link"
-                  href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${data.signature}`}
+                  href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${data.signature}${getSolanaExplorerClusterParam()}`}
                   target="_blank"
                   rel="noopener noreferrer">
                   {shortenAddress(data.signature, 8)}
@@ -375,7 +375,7 @@ const TransactionStatusProvider: React.FC = ({ children }) => {
           </>
         )
       });
-      confirmationEvents.emit(EventType.TxConfirmSuccess, data.signature);
+      confirmationEvents.emit(EventType.TxConfirmSuccess, data);
       rebuildHistoryFromCache();
     } else {
       transactionStatusCache.update(
@@ -386,7 +386,7 @@ const TransactionStatusProvider: React.FC = ({ children }) => {
       );
       notification.close(data.signature);
       // TODO: Add and Info notification if it is asked for
-      confirmationEvents.emit(EventType.TxConfirmTimeout, data.signature);
+      confirmationEvents.emit(EventType.TxConfirmTimeout, data);
       rebuildHistoryFromCache();
     }
   }, [
