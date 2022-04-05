@@ -613,7 +613,7 @@
 			"transfer-to-placeholder": "Entrez l'adresse du compte de destination"
 		},
 		"update-multisig": {
-			"edit-not-allowed-message": "Lorsque vous modifiez les signataires sur un Multisig, toutes les transactions en attente seront ANNULÉES. Avant de continuer, assurez-vous qu'aucune transaction importante ne doit être effectuée en premier.",
+			"edit-not-allowed-message": "Lorsque vous modifiez un Multisig, toutes les transactions en attente seront ANNULÉES. Assurez-vous qu'il n'y a pas de transactions importantes à effectuer.",
 			"main-cta": "Sauvegarder les modifications",
 			"main-cta-busy": "Enregistrer les modifications",
 			"modal-title": "Modifier la signature multiple",

@@ -614,7 +614,7 @@
 			"transfer-to-placeholder": "Hedef hesabın adresini girin"
 		},
 		"update-multisig": {
-			"edit-not-allowed-message": "Bir Multisig'de imzalayanları değiştirdiğinizde, bekleyen tüm işlemler GEÇERSİZ olacaktır. Devam etmeden önce, tamamlanması gereken önemli bir işlem olmadığından emin olun.",
+			"edit-not-allowed-message": "When you edit a Multisig, all pending transactions will be VOIDED. Make sure there are no important transactions needing to be completed.",
 			"main-cta": "Değişiklikleri kaydet",
 			"main-cta-busy": "Değişiklikler kaydediliyor",
 			"modal-title": "Çoklu-İmza'yı düzenle",

@@ -613,7 +613,7 @@
 			"transfer-to-placeholder": "Digite o endereço da conta de destino"
 		},
 		"update-multisig": {
-			"edit-not-allowed-message": "When you change the signers on a Multisig, all pending transactions will be VOIDED. Before you proceed, make sure there are no important transactions needing to be completed first.",
+			"edit-not-allowed-message": "Ao editar um Multisig, todas as transações pendentes serão ANULADAS. Certifique-se de que não há transações importantes que precisem ser concluídas.",
 			"main-cta": "Propose changes",
 			"main-cta-busy": "Salvando alterações",
 			"modal-title": "Editar multisig",
