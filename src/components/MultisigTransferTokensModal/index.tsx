@@ -328,7 +328,7 @@ export const MultisigTransferTokensModal = (props: {
 
             {/* Transfer to */}
             <div className="form-label">{t('multisig.transfer-tokens.transfer-to-label')}</div>
-            <div className="well transfer-proposal-address">
+            <div className="well">
               <input id="mint-to-field"
                 className="general-text-input"
                 autoComplete="on"
