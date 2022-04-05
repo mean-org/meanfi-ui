@@ -2195,6 +2195,7 @@ export const MultisigAssetsView = () => {
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
+    resetTransactionStatus();
     setTransactionCancelled(false);
     setIsBusy(true);
 
