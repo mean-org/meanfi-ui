@@ -380,8 +380,7 @@ export function useWallet() {
       wallet ? wallet.connect() : select();
     },
     disconnect() {
-      wallet?.disconnect();
-      resetWalletProvider();
+      wallet ? wallet.disconnect() : resetWalletProvider();
     },
   };
 }

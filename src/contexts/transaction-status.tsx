@@ -4,7 +4,11 @@ import { getSolanaExplorerClusterParam, useConnection } from "./connection";
 import { fetchTransactionStatus } from "../utils/transactions";
 import { consoleOut, delay } from "../utils/ui";
 import { EventType, OperationType } from "../models/enums";
-import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION, TRANSACTION_STATUS_RETRY, TRANSACTION_STATUS_RETRY_TIMEOUT } from "../constants";
+import {
+  SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
+  TRANSACTION_STATUS_RETRY,
+  TRANSACTION_STATUS_RETRY_TIMEOUT
+} from "../constants";
 import { useTranslation } from "react-i18next";
 import { shortenAddress } from "../utils/utils";
 import { openNotification } from "../components/Notifications";
@@ -22,6 +26,7 @@ export interface TransactionStatusInfo {
   loadingMessage?: string;
   completedTitle: string;
   completedMessage: string;
+  extras?: any;
 }
 
 type Listener = (value: any) => void;
