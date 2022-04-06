@@ -161,13 +161,7 @@ export const Streams = () => {
     setLoadingStreamsSummary,
     setHighLightableStreamId,
   } = useContext(AppStateContext);
-  const {
-    fetchTxInfoStatus,
-    lastSentTxOperationType,
-    confirmationHistory,
-    enqueueTransactionConfirmation,
-  } = useContext(TransactionStatusContext);
-
+  const { enqueueTransactionConfirmation } = useContext(TransactionStatusContext);
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
@@ -724,6 +718,7 @@ export const Streams = () => {
         break;
       case OperationType.StreamWithdraw:
         event = success ? AppUsageEvent.StreamWithdrawalCompleted : AppUsageEvent.StreamWithdrawalFailed;
+        consoleOut('reporting to segmentAnalytics:', event, 'green');
         segmentAnalytics.recordEvent(event, { signature: signature });
         break;
       case OperationType.StreamClose:
@@ -745,43 +740,56 @@ export const Streams = () => {
 
   // Setup event handler for Tx confirmed
   const onTxConfirmed = useCallback((item: TransactionStatusInfo) => {
-    consoleOut("onTxConfirmed event executed:", item, 'crimson');
-    // If we have the item, record success and remove it from the list
-    if (item) {
-      recordTxConfirmation(item.signature, item.operationType, true);
-      switch (item.operationType) {
-        case OperationType.StreamWithdraw:
-          refreshStreamList(false);
-          break;
-        case OperationType.StreamClose:
-          if (streamDetail && streamList && streamList.length > 1) {
-            const filteredStreams = streamList.filter(s => s.id !== streamDetail.id);
-            setStreamList(filteredStreams);
-          }
-          refreshStreamList(true);
-          break;
-        case OperationType.StreamTransferBeneficiary:
-        case OperationType.StreamCreate:
-          refreshStreamList(true);
-          break;
-        case OperationType.StreamAddFunds:
-          if (customStreamDocked) {
-            openStreamById(streamDetail?.id as string, false);
-          } else {
-            refreshStreamList(false);
-          }
-          break;
-        default:
-          refreshStreamList(false);
-          break;
+
+    const softReloadStreams = () => {
+      const streamsRefreshCta = document.getElementById("streams-refresh-noreset-cta");
+      if (streamsRefreshCta) {
+        streamsRefreshCta.click();
       }
+    };
+
+    const hardReloadStreams = () => {
+      const streamsRefreshCta = document.getElementById("streams-refresh-cta");
+      if (streamsRefreshCta) {
+        streamsRefreshCta.click();
+      }
+    };
+
+    consoleOut("onTxConfirmed event handled:", item, 'crimson');
+    recordTxConfirmation(item.signature, item.operationType, true);
+    switch (item.operationType) {
+      case OperationType.StreamWithdraw:
+        softReloadStreams();
+        break;
+      case OperationType.StreamClose:
+        if (streamDetail && streamList && streamList.length > 1) {
+          const filteredStreams = streamList.filter(s => s.id !== streamDetail.id);
+          setStreamList(filteredStreams);
+        }
+        hardReloadStreams();
+        break;
+      case OperationType.StreamTransferBeneficiary:
+        hardReloadStreams();
+        break;
+      case OperationType.StreamCreate:
+        hardReloadStreams();
+        break;
+      case OperationType.StreamAddFunds:
+        if (customStreamDocked) {
+          openStreamById(streamDetail?.id as string, false);
+        } else {
+          softReloadStreams();
+        }
+        break;
+      default:
+        softReloadStreams();
+        break;
     }
   }, [
     streamList,
     streamDetail,
     customStreamDocked,
     recordTxConfirmation,
-    refreshStreamList,
     openStreamById,
     setStreamList,
   ]);
@@ -849,6 +857,23 @@ export const Streams = () => {
   const [isTransactionExecutionModalVisible, setTransactionExecutionModalVisibility] = useState(false);
   const showTransactionExecutionModal = useCallback(() => setTransactionExecutionModalVisibility(true), []);
   const hideTransactionExecutionModal = useCallback(() => setTransactionExecutionModalVisibility(false), []);
+
+  const onCloseStreamTransactionFinished = () => {
+    setIsBusy(false);
+    setCloseStreamTransactionModalVisibility(false);
+    resetTransactionStatus();
+  }
+
+  const onTransactionFinished = useCallback(() => {
+    setIsBusy(false);
+    resetTransactionStatus();
+    hideTransactionExecutionModal();
+    refreshTokenBalance();
+  }, [
+    hideTransactionExecutionModal,
+    refreshTokenBalance,
+    resetTransactionStatus,
+  ]);
 
   // Close stream modal
   const [isCloseStreamModalVisible, setIsCloseStreamModalVisibility] = useState(false);
@@ -927,17 +952,6 @@ export const Streams = () => {
     hidePauseStreamModal();
     onExecutePauseStreamTransaction();
   };
-
-  const onPauseStreamTransactionFinished = useCallback(() => {
-    setIsBusy(false);
-    resetTransactionStatus();
-    hideTransactionExecutionModal();
-    refreshTokenBalance();
-  }, [
-    hideTransactionExecutionModal,
-    refreshTokenBalance,
-    resetTransactionStatus
-  ]);
 
   const onExecutePauseStreamTransaction = async () => {
     let transaction: Transaction;
@@ -1326,9 +1340,10 @@ export const Streams = () => {
               loadingMessage: `Pause stream: ${streamName}`,
               completedTitle: "Transaction confirmed",
               completedMessage: `Successfully paused stream: ${streamName}`,
+              extras: streamDetail.id as string
             });
             setOngoingOperation(undefined);
-            onPauseStreamTransactionFinished();
+            onTransactionFinished();
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -1391,17 +1406,6 @@ export const Streams = () => {
     hideResumeStreamModal();
     onExecuteResumeStreamTransaction();
   };
-
-  const onResumeStreamTransactionFinished = useCallback(() => {
-    setIsBusy(false);
-    resetTransactionStatus();
-    hideTransactionExecutionModal();
-    refreshTokenBalance();
-  }, [
-    hideTransactionExecutionModal,
-    refreshTokenBalance,
-    resetTransactionStatus
-  ]);
 
   const onExecuteResumeStreamTransaction = async () => {
     let transaction: Transaction;
@@ -1788,9 +1792,10 @@ export const Streams = () => {
               loadingMessage: `Resume stream: ${streamName}`,
               completedTitle: "Transaction confirmed",
               completedMessage: `Successfully resumed stream: ${streamName}`,
+              extras: streamDetail.id as string
             });
             setOngoingOperation(undefined);
-            onResumeStreamTransactionFinished();
+            onTransactionFinished();
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -2153,7 +2158,7 @@ export const Streams = () => {
       }
     }
 
-    if (wallet) {
+    if (wallet && streamDetail) {
       showTransferStreamTransactionModal();
       const created = await createTx();
       consoleOut('created:', created, 'blue');
@@ -2174,6 +2179,7 @@ export const Streams = () => {
               loadingMessage: `Transfer stream to: ${shortenAddress(address)}`,
               completedTitle: "Transaction confirmed",
               completedMessage: `Stream transferred to: ${shortenAddress(address)}`,
+              extras: streamDetail.id as string
             });
             setIsBusy(false);
             onTransferStreamTransactionFinished();
@@ -2246,8 +2252,6 @@ export const Streams = () => {
 
   const onAddFundsTransactionFinished = () => {
     resetTransactionStatus();
-    hideWithdrawFundsTransactionModal();
-    hideCloseStreamTransactionModal();
     hideAddFundsTransactionModal();
     refreshTokenBalance();
   };
@@ -2715,6 +2719,7 @@ export const Streams = () => {
                 parseFloat(addFundsData.amount),
                 token.decimals
               )} ${token.symbol}`,
+              extras: streamDetail.id as string
             });
             setIsBusy(false);
             onAddFundsTransactionFinished();
@@ -3058,8 +3063,6 @@ export const Streams = () => {
       setTransactionCancelled(true);
     }
     if (isSuccess()) {
-      hideWithdrawFundsTransactionModal();
-      hideCloseStreamTransactionModal();
       hideAddFundsTransactionModal();
     }
     resetTransactionStatus();
@@ -3073,8 +3076,6 @@ export const Streams = () => {
   const onWithdrawFundsTransactionFinished = () => {
     resetTransactionStatus();
     hideWithdrawFundsTransactionModal();
-    hideCloseStreamTransactionModal();
-    hideAddFundsTransactionModal();
     refreshTokenBalance();
   };
 
@@ -3084,8 +3085,6 @@ export const Streams = () => {
     }
     if (isSuccess()) {
       hideWithdrawFundsTransactionModal();
-      hideCloseStreamTransactionModal();
-      hideAddFundsTransactionModal();
     }
     resetTransactionStatus();
   }
@@ -3467,6 +3466,7 @@ export const Streams = () => {
                 parseFloat(withdrawData.amount),
                 token.decimals
               )} ${token.symbol}`,
+              extras: streamDetail.id as string
             });
             setIsBusy(false);
             onWithdrawFundsTransactionFinished();
@@ -3480,26 +3480,6 @@ export const Streams = () => {
   const [isCloseStreamTransactionModalVisible, setCloseStreamTransactionModalVisibility] = useState(false);
   const showCloseStreamTransactionModal = useCallback(() => setCloseStreamTransactionModalVisibility(true), []);
   const hideCloseStreamTransactionModal = useCallback(() => setCloseStreamTransactionModalVisibility(false), []);
-
-  const onCloseStreamTransactionFinished = () => {
-    resetTransactionStatus();
-    hideWithdrawFundsTransactionModal();
-    hideCloseStreamTransactionModal();
-    hideAddFundsTransactionModal();
-    refreshTokenBalance();
-  };
-
-  const onAfterCloseStreamTransactionModalClosed = () => {
-    if (isBusy) {
-      setTransactionCancelled(true);
-    }
-    if (isSuccess()) {
-      hideWithdrawFundsTransactionModal();
-      hideCloseStreamTransactionModal();
-      hideAddFundsTransactionModal();
-    }
-    resetTransactionStatus();
-  }
 
   const onExecuteCloseStreamTransaction = async (closeTreasuryData: any) => {
     let transaction: Transaction;
@@ -3869,8 +3849,8 @@ export const Streams = () => {
               loadingMessage: `Close stream: ${streamName}`,
               completedTitle: "Transaction confirmed",
               completedMessage: `Successfully closed stream: ${streamName}`,
+              extras: streamDetail.id as string
             });
-            setIsBusy(false);
             onCloseStreamTransactionFinished();
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
@@ -3910,11 +3890,15 @@ export const Streams = () => {
     );
   }
 
-  const onRefreshStreamsClick = () => {
+  const onRefreshStreams = () => {
     // Record user event in Segment Analytics
     segmentAnalytics.recordEvent(AppUsageEvent.StreamRefresh);
     refreshStreamList(true);
     setCustomStreamDocked(false);
+  };
+
+  const onRefreshStreamsNoReset = () => {
+    refreshStreamList(false);
   };
 
   const getRateAmountDisplay = (item: Stream | StreamInfo): string => {
@@ -4017,30 +4001,6 @@ export const Streams = () => {
       }
     }
     return false;
-  }
-
-  const isCreating = (): boolean => {
-    return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.StreamCreate
-            ? true
-            : false;
-  }
-
-  const isClosing = (): boolean => {
-    return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.StreamClose
-            ? true
-            : false;
-  }
-
-  const isWithdrawing = (): boolean => {
-    return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.StreamWithdraw
-            ? true
-            : false;
-  }
-
-  const isAddingFunds = (): boolean => {
-    return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.StreamAddFunds
-            ? true
-            : false;
   }
 
   const hasAllocation = (): boolean => {
@@ -4420,25 +4380,16 @@ export const Streams = () => {
                       shape="round"
                       size="small"
                       disabled={
+                        isBusy ||
                         isScheduledOtp() ||
                         !stream?.escrowVestedAmount ||
-                        publicKey?.toBase58() !== stream?.beneficiaryAddress ||
-                        fetchTxInfoStatus === "fetching"
+                        publicKey?.toBase58() !== stream?.beneficiaryAddress
                       }
                       onClick={showWithdrawModal}>
-                      {fetchTxInfoStatus === "fetching" && (<LoadingOutlined />)}
-                      {isClosing()
-                        ? t('streams.stream-detail.cta-disabled-closing')
-                        : isCreating()
-                          ? t('streams.stream-detail.cta-disabled-creating')
-                          : isAddingFunds()
-                            ? t('streams.stream-detail.cta-disabled-funding')
-                            : isWithdrawing()
-                              ? t('streams.stream-detail.cta-disabled-withdrawing')
-                              : t('streams.stream-detail.withdraw-funds-cta')
-                      }
+                      {isBusy && (<LoadingOutlined />)}
+                      {t('streams.stream-detail.withdraw-funds-cta')}
                     </Button>
-                    {fetchTxInfoStatus !== "fetching" && (
+                    {!isBusy && (
                       <Dropdown overlay={menu} trigger={["click"]}>
                         <Button
                           shape="round"
@@ -4660,25 +4611,16 @@ export const Streams = () => {
                       shape="round"
                       size="small"
                       disabled={
+                        isBusy ||
                         isScheduledOtp() ||
-                          !stream.withdrawableAmount ||
-                          publicKey?.toBase58() !== stream.beneficiary ||
-                          fetchTxInfoStatus === "fetching"
+                        !stream.withdrawableAmount ||
+                        publicKey?.toBase58() !== stream.beneficiary
                       }
                       onClick={showWithdrawModal}>
-                      {fetchTxInfoStatus === "fetching" && (<LoadingOutlined />)}
-                      {isClosing()
-                        ? t('streams.stream-detail.cta-disabled-closing')
-                        : isCreating()
-                          ? t('streams.stream-detail.cta-disabled-creating')
-                          : isAddingFunds()
-                            ? t('streams.stream-detail.cta-disabled-funding')
-                            : isWithdrawing()
-                              ? t('streams.stream-detail.cta-disabled-withdrawing')
-                              : t('streams.stream-detail.withdraw-funds-cta')
-                      }
+                      {isBusy && (<LoadingOutlined />)}
+                      {t('streams.stream-detail.withdraw-funds-cta')}
                     </Button>
-                    {fetchTxInfoStatus !== "fetching" && (
+                    {!isBusy && (
                       <Dropdown overlay={menu} trigger={["click"]}>
                         <Button
                           shape="round"
@@ -4973,19 +4915,10 @@ export const Streams = () => {
                           type="text"
                           shape="round"
                           size="small"
-                          disabled={fetchTxInfoStatus === "fetching"}
+                          disabled={isBusy}
                           onClick={showCloseStreamModal}>
-                          {fetchTxInfoStatus === "fetching" && (<LoadingOutlined />)}
-                          {isClosing()
-                            ? t('streams.stream-detail.cta-disabled-closing')
-                            : isCreating()
-                              ? t('streams.stream-detail.cta-disabled-creating')
-                              : isAddingFunds()
-                                ? t('streams.stream-detail.cta-disabled-funding')
-                                : isWithdrawing()
-                                  ? t('streams.stream-detail.cta-disabled-withdrawing')
-                                  : t('streams.stream-detail.cancel-scheduled-transfer')
-                          }
+                          {isBusy && (<LoadingOutlined />)}
+                          {t('streams.stream-detail.cancel-scheduled-transfer')}
                         </Button>
                       </>
                     ) : (
@@ -4997,27 +4930,19 @@ export const Streams = () => {
                           shape="round"
                           size="small"
                           disabled={
+                            isBusy ||
                             isOtp() ||
-                            fetchTxInfoStatus === "fetching" ||
                             (getTreasuryType() === "locked" && (stream && stream.state === STREAM_STATE.Running))
                           }
                           onClick={(getTreasuryType() === "open") ? showAddFundsModal : showCloseStreamModal}>
-                          {fetchTxInfoStatus === "fetching" && (<LoadingOutlined />)}
-                          {isClosing()
-                            ? t('streams.stream-detail.cta-disabled-closing')
-                            : isCreating()
-                              ? t('streams.stream-detail.cta-disabled-creating')
-                              : isAddingFunds()
-                                ? t('streams.stream-detail.cta-disabled-funding')
-                                : isWithdrawing()
-                                  ? t('streams.stream-detail.cta-disabled-withdrawing')
-                                  : (getTreasuryType() === "open") 
-                                    ? t('streams.stream-detail.add-funds-cta') 
-                                    : t('streams.stream-detail.close-stream-cta')
+                          {isBusy && (<LoadingOutlined />)}
+                          {getTreasuryType() === "open"
+                            ? t('streams.stream-detail.add-funds-cta') 
+                            : t('streams.stream-detail.close-stream-cta')
                           }
                         </Button>
                         {(getTreasuryType() === "open") && (
-                          fetchTxInfoStatus !== "fetching" && (
+                          !isBusy && (
                             <Dropdown overlay={menu} trigger={["click"]}>
                               <Button
                                 shape="round"
@@ -5285,27 +5210,19 @@ export const Streams = () => {
                           shape="round"
                           size="small"
                           disabled={
+                            isBusy ||
                             isOtp() ||
-                            fetchTxInfoStatus === "fetching" ||
                             (getTreasuryType() === "locked" && stream.status === STREAM_STATUS.Running)
                           }
                           onClick={(getTreasuryType() === "open") ? showAddFundsModal : showCloseStreamModal}>
-                          {fetchTxInfoStatus === "fetching" && (<LoadingOutlined />)}
-                          {isClosing()
-                            ? t('streams.stream-detail.cta-disabled-closing')
-                            : isCreating()
-                              ? t('streams.stream-detail.cta-disabled-creating')
-                              : isAddingFunds()
-                                ? t('streams.stream-detail.cta-disabled-funding')
-                                : isWithdrawing()
-                                  ? t('streams.stream-detail.cta-disabled-withdrawing')
-                                  : (getTreasuryType() === "open") 
-                                    ? t('streams.stream-detail.add-funds-cta') 
-                                    : t('streams.stream-detail.close-stream-cta')
+                          {isBusy && (<LoadingOutlined />)}
+                          {getTreasuryType() === "open"
+                            ? t('streams.stream-detail.add-funds-cta') 
+                            : t('streams.stream-detail.close-stream-cta')
                           }
                         </Button>
                         {(getTreasuryType() === "open") && (
-                          fetchTxInfoStatus !== "fetching" && (
+                          !isBusy && (
                             <Dropdown overlay={menu} trigger={["click"]}>
                               <Button
                                 shape="round"
@@ -5432,20 +5349,13 @@ export const Streams = () => {
       })
     ) : (
       <>
-      {isCreating() ? (
-        <div className="h-100 flex-center">
-          <Spin indicator={bigLoadingIcon} />
-        </div>
-      ) : (
         <div className="h-100 flex-center">
           <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{connected
           ? t('streams.stream-list.no-streams')
           : t('streams.stream-list.not-connected')}</p>} />
         </div>
-      )}
       </>
     )}
-
     </>
   );
 
@@ -5487,7 +5397,7 @@ export const Streams = () => {
             )}
             <span className="title">{t('streams.screen-title')}</span>
             <Tooltip placement="bottom" title={t('streams.refresh-tooltip')}>
-              <div className={`transaction-stats ${loadingStreams ? 'click-disabled' : 'simplelink'}`} onClick={onRefreshStreamsClick}>
+              <div id="streams-refresh-cta" className={`transaction-stats ${loadingStreams ? 'click-disabled' : 'simplelink'}`} onClick={onRefreshStreams}>
                 <Spin size="small" />
                 {customStreamDocked ? (
                   <span className="transaction-legend neutral">
@@ -5509,6 +5419,7 @@ export const Streams = () => {
                   </>
                 )}
               </div>
+              <div id="streams-refresh-noreset-cta" onClick={onRefreshStreamsNoReset}></div>
             </Tooltip>
           </div>
           <div className="inner-container">
@@ -5605,17 +5516,11 @@ export const Streams = () => {
               </>
             ) : (
               <>
-              {isCreating() ? (
-                <div className="h-100 flex-center">
-                  <Spin indicator={bigLoadingIcon} />
-                </div>
-              ) : (
                 <div className="h-100 flex-center">
                   <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{connected
                     ? t('streams.stream-detail.no-stream')
                     : t('streams.stream-list.not-connected')}</p>} />
                 </div>
-              )}
               </>
             )}
           </div>
@@ -5884,10 +5789,10 @@ export const Streams = () => {
         <Modal
           className="mean-modal no-full-screen"
           maskClosable={false}
-          afterClose={onAfterCloseStreamTransactionModalClosed}
+          afterClose={onCloseStreamTransactionFinished}
           visible={isCloseStreamTransactionModalVisible}
           title={getTransactionModalTitle(transactionStatus, isBusy, t)}
-          onCancel={hideCloseStreamTransactionModal}
+          onCancel={onCloseStreamTransactionFinished}
           width={330}
           footer={null}>
           <div className="transaction-progress">
@@ -6052,13 +5957,7 @@ export const Streams = () => {
                   type="primary"
                   shape="round"
                   size="middle"
-                  onClick={() => lastSentTxOperationType === OperationType.StreamPause
-                    ? onPauseStreamTransactionFinished()
-                    : lastSentTxOperationType === OperationType.StreamResume
-                      ? onResumeStreamTransactionFinished()
-                      : lastSentTxOperationType === OperationType.StreamClose
-                        ? onCloseStreamTransactionFinished()
-                        : hideTransactionExecutionModal()}>
+                  onClick={onTransactionFinished}>
                   {t('general.cta-finish')}
                 </Button>
               </>
