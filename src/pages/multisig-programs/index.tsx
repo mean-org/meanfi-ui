@@ -3641,9 +3641,10 @@ export const MultisigProgramsView = () => {
           </div>
 
           {/* CTAs shown always - IF DIFFERENT CTAS ARE BEST FOR EACH STAGE, MOVE THEM INSIDE THE PANELS */}
-          <div className="transaction-progress mt-3">
-            <Space size="middle">
+          <div className="row two-col-ctas mt-3 transaction-progress p-0 col-12 no-margin-right-left">
+            <div className={(canShowExecuteButton() || canShowApproveButton() || canShowCancelButton()) ? "col-6 no-padding-left" : "col-12 no-padding-left no-padding-right"}>
               <Button
+                block
                 type="text"
                 shape="round"
                 size="middle"
@@ -3656,12 +3657,15 @@ export const MultisigProgramsView = () => {
                   : t('general.cta-close')
                 }
               </Button>
-              {
-                (canShowExecuteButton() || canShowApproveButton() || canShowCancelButton())
-                &&
-                (
+            </div>
+            {
+              (canShowExecuteButton() || canShowApproveButton() || canShowCancelButton())
+              &&
+              (
+                <div className="col-6 no-padding-right">
                   <Button
                     className={isBusy ? 'inactive' : ''}
+                    block
                     type="primary"
                     shape="round"
                     size="middle"
@@ -3676,11 +3680,10 @@ export const MultisigProgramsView = () => {
                     }}>
                     {getTxApproveMainCtaLabel()}
                   </Button>
-                )
-              }
-            </Space>
+                </div>
+              )
+            }
           </div>
-
         </Modal>
       )}
 

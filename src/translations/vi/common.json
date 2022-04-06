@@ -1008,6 +1008,7 @@
 			"no-payment-rate": "Thêm tỷ lệ thanh toán",
 			"no-recipient": "Không có người nhận",
 			"no-valid-date": "Thiết lập một ngày hợp lệ",
+			"memo-empty": "Memo cannot be empty",
 			"not-connected": "Kết nối ví của bạn",
 			"payment-rate-high": "Payment exceeded",
 			"select-recipient": "Chọn người nhận",

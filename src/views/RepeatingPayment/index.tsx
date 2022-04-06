@@ -585,7 +585,7 @@ export const RepeatingPayment = () => {
           : !paymentStartDate
             ? t('transactions.validation.no-valid-date')
             : !recipientNote
-              ? 'Memo cannot be empty'
+              ? t('transactions.validation.memo-empty')
               : !arePaymentSettingsValid()
                 ? getPaymentSettingsButtonLabel()
                 : t('transactions.validation.valid-continue');
@@ -605,7 +605,7 @@ export const RepeatingPayment = () => {
       : !paymentStartDate
       ? t('transactions.validation.no-valid-date')
       : !recipientNote
-      ? 'Memo cannot be empty'
+      ? t('transactions.validation.memo-empty')
       : !arePaymentSettingsValid()
       ? getPaymentSettingsButtonLabel()
       : !isVerifiedRecipient
@@ -660,7 +660,7 @@ export const RepeatingPayment = () => {
     const formatted = formatAmount(recommendedMinAmount, selectedToken?.decimals, true);
 
     // String to obtain: 0.21 SOL (10%).
-    return `${parseFloat(formatted).toString()} ${selectedToken?.symbol}.`;
+    return `${parseFloat(formatted).toString()} ${selectedToken?.symbol}`;
   }
 
   const getOptionsFromEnum = (value: any): PaymentRateTypeOption[] => {
@@ -1474,7 +1474,7 @@ export const RepeatingPayment = () => {
 
         <div className="mb-3 text-center">
           <div>{t('transactions.transaction-info.add-funds-repeating-payment-advice')}.</div>
-          <div>{t('transactions.transaction-info.min-recommended-amount')}: <span className="fg-red">{getRecommendedFundingAmount()}</span></div>
+          <div>{t('transactions.transaction-info.min-recommended-amount')}: <span className="fg-orange-red">{getRecommendedFundingAmount()}</span></div>
         </div>
 
         {/* Add funds */}

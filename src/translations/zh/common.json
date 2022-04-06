@@ -992,6 +992,7 @@
 			"no-payment-rate": "Add payment rate",
 			"no-recipient": "No recipient",
 			"no-valid-date": "Set a valid date",
+			"memo-empty": "Memo cannot be empty",
 			"not-connected": "Connect your wallet",
 			"payment-rate-high": "Payment exceeded",
 			"select-recipient": "Select recipient",
