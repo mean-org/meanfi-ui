@@ -794,10 +794,18 @@ export const TreasuriesView = () => {
       
       multisigClient.account.transaction
         .all(multisig.id.toBuffer())
-        .then((value) => { 
-          setTreasuryPendingTxs(
-            value ? value.filter(t => t.account.executedOn.toNumber() === 0).length : 0
-          ); 
+        .then((value) => {
+          let pendingTxs = 0;
+          for (let tx of value) {
+            const belongsToTreasury = (tx.account.accounts
+              .findIndex((a: any) => a.pubkey.equals(new PublicKey(treasuryDetails.id))) !== -1 &&
+              tx.account.executedOn.toNumber() === 0
+            );
+            if (belongsToTreasury) {
+              pendingTxs += 1;
+            }
+          }
+          setTreasuryPendingTxs(pendingTxs); 
         });
     });
 
