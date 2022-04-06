@@ -161,7 +161,10 @@ export const Streams = () => {
     setLoadingStreamsSummary,
     setHighLightableStreamId,
   } = useContext(AppStateContext);
-  const { enqueueTransactionConfirmation } = useContext(TransactionStatusContext);
+  const {
+    confirmationHistory,
+    enqueueTransactionConfirmation
+  } = useContext(TransactionStatusContext);
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
@@ -358,6 +361,113 @@ export const Streams = () => {
     }
     return false;
   }
+
+  // confirmationHistory
+  const hasStreamPendingTx = useCallback(() => {
+    if (!streamDetail) { return false; }
+
+    if (confirmationHistory && confirmationHistory.length > 0) {
+      return confirmationHistory.some(h => h.extras === streamDetail.id && h.txInfoFetchStatus === "fetching");
+    }
+
+    return false;
+  }, [confirmationHistory, streamDetail]);
+
+  const recordTxConfirmation = useCallback((signature: string, operation: OperationType, success = true) => {
+    let event: any;
+    switch (operation) {
+      case OperationType.StreamCreate:
+        event = success ? AppUsageEvent.TransferRecurringCompleted : AppUsageEvent.TransferRecurringFailed;
+        segmentAnalytics.recordEvent(event, { signature: signature });
+        break;
+      case OperationType.StreamWithdraw:
+        event = success ? AppUsageEvent.StreamWithdrawalCompleted : AppUsageEvent.StreamWithdrawalFailed;
+        consoleOut('reporting to segmentAnalytics:', event, 'green');
+        segmentAnalytics.recordEvent(event, { signature: signature });
+        break;
+      case OperationType.StreamClose:
+        event = success ? AppUsageEvent.StreamCloseCompleted : AppUsageEvent.StreamCloseFailed;
+        segmentAnalytics.recordEvent(event, { signature: signature });
+        break;
+      case OperationType.StreamAddFunds:
+        event = success ? AppUsageEvent.StreamTopupCompleted : AppUsageEvent.StreamTopupFailed;
+        segmentAnalytics.recordEvent(event, { signature: signature });
+        break;
+      case OperationType.StreamTransferBeneficiary:
+        event = success ? AppUsageEvent.StreamTransferCompleted : AppUsageEvent.StreamTransferFailed;
+        segmentAnalytics.recordEvent(event, { signature: signature });
+        break;
+      default:
+        break;
+    }
+  }, []);
+
+  // Setup event handler for Tx confirmed
+  const onTxConfirmed = useCallback((item: TransactionStatusInfo) => {
+
+    const softReloadStreams = () => {
+      const streamsRefreshCta = document.getElementById("streams-refresh-noreset-cta");
+      if (streamsRefreshCta) {
+        streamsRefreshCta.click();
+      }
+    };
+
+    const hardReloadStreams = () => {
+      const streamsRefreshCta = document.getElementById("streams-refresh-cta");
+      if (streamsRefreshCta) {
+        streamsRefreshCta.click();
+      }
+    };
+
+    consoleOut("onTxConfirmed event handled:", item, 'crimson');
+    recordTxConfirmation(item.signature, item.operationType, true);
+    switch (item.operationType) {
+      case OperationType.StreamWithdraw:
+        softReloadStreams();
+        break;
+      case OperationType.StreamClose:
+        if (streamDetail && streamList && streamList.length > 1) {
+          const filteredStreams = streamList.filter(s => s.id !== streamDetail.id);
+          setStreamList(filteredStreams);
+        }
+        hardReloadStreams();
+        break;
+      case OperationType.StreamTransferBeneficiary:
+        hardReloadStreams();
+        break;
+      case OperationType.StreamCreate:
+        hardReloadStreams();
+        break;
+      case OperationType.StreamAddFunds:
+        if (customStreamDocked) {
+          openStreamById(streamDetail?.id as string, false);
+        } else {
+          softReloadStreams();
+        }
+        break;
+      default:
+        softReloadStreams();
+        break;
+    }
+  }, [
+    streamList,
+    streamDetail,
+    customStreamDocked,
+    recordTxConfirmation,
+    openStreamById,
+    setStreamList,
+  ]);
+
+  // Setup event handler for Tx confirmation error
+  const onTxTimedout = useCallback((item: TransactionStatusInfo) => {
+    consoleOut("onTxTimedout event executed:", item, 'crimson');
+    // If we have the item, record failure and remove it from the list
+    if (item) {
+      recordTxConfirmation(item.signature, item.operationType, false);
+    }
+  }, [
+    recordTxConfirmation,
+  ]);
 
   // Copy address to clipboard
   const copyAddressToClipboard = useCallback((address: any) => {
@@ -705,121 +815,6 @@ export const Streams = () => {
     streamDetail?.associatedToken
   ]);
 
-  ///////////////////////
-  //  EVENTS & MODALS  //
-  ///////////////////////
-
-  const recordTxConfirmation = useCallback((signature: string, operation: OperationType, success = true) => {
-    let event: any;
-    switch (operation) {
-      case OperationType.StreamCreate:
-        event = success ? AppUsageEvent.TransferRecurringCompleted : AppUsageEvent.TransferRecurringFailed;
-        segmentAnalytics.recordEvent(event, { signature: signature });
-        break;
-      case OperationType.StreamWithdraw:
-        event = success ? AppUsageEvent.StreamWithdrawalCompleted : AppUsageEvent.StreamWithdrawalFailed;
-        consoleOut('reporting to segmentAnalytics:', event, 'green');
-        segmentAnalytics.recordEvent(event, { signature: signature });
-        break;
-      case OperationType.StreamClose:
-        event = success ? AppUsageEvent.StreamCloseCompleted : AppUsageEvent.StreamCloseFailed;
-        segmentAnalytics.recordEvent(event, { signature: signature });
-        break;
-      case OperationType.StreamAddFunds:
-        event = success ? AppUsageEvent.StreamTopupCompleted : AppUsageEvent.StreamTopupFailed;
-        segmentAnalytics.recordEvent(event, { signature: signature });
-        break;
-      case OperationType.StreamTransferBeneficiary:
-        event = success ? AppUsageEvent.StreamTransferCompleted : AppUsageEvent.StreamTransferFailed;
-        segmentAnalytics.recordEvent(event, { signature: signature });
-        break;
-      default:
-        break;
-    }
-  }, []);
-
-  // Setup event handler for Tx confirmed
-  const onTxConfirmed = useCallback((item: TransactionStatusInfo) => {
-
-    const softReloadStreams = () => {
-      const streamsRefreshCta = document.getElementById("streams-refresh-noreset-cta");
-      if (streamsRefreshCta) {
-        streamsRefreshCta.click();
-      }
-    };
-
-    const hardReloadStreams = () => {
-      const streamsRefreshCta = document.getElementById("streams-refresh-cta");
-      if (streamsRefreshCta) {
-        streamsRefreshCta.click();
-      }
-    };
-
-    consoleOut("onTxConfirmed event handled:", item, 'crimson');
-    recordTxConfirmation(item.signature, item.operationType, true);
-    switch (item.operationType) {
-      case OperationType.StreamWithdraw:
-        softReloadStreams();
-        break;
-      case OperationType.StreamClose:
-        if (streamDetail && streamList && streamList.length > 1) {
-          const filteredStreams = streamList.filter(s => s.id !== streamDetail.id);
-          setStreamList(filteredStreams);
-        }
-        hardReloadStreams();
-        break;
-      case OperationType.StreamTransferBeneficiary:
-        hardReloadStreams();
-        break;
-      case OperationType.StreamCreate:
-        hardReloadStreams();
-        break;
-      case OperationType.StreamAddFunds:
-        if (customStreamDocked) {
-          openStreamById(streamDetail?.id as string, false);
-        } else {
-          softReloadStreams();
-        }
-        break;
-      default:
-        softReloadStreams();
-        break;
-    }
-  }, [
-    streamList,
-    streamDetail,
-    customStreamDocked,
-    recordTxConfirmation,
-    openStreamById,
-    setStreamList,
-  ]);
-
-  // Setup event handler for Tx confirmation error
-  const onTxTimedout = useCallback((item: TransactionStatusInfo) => {
-    consoleOut("onTxTimedout event executed:", item, 'crimson');
-    // If we have the item, record failure and remove it from the list
-    if (item) {
-      recordTxConfirmation(item.signature, item.operationType, false);
-    }
-  }, [
-    recordTxConfirmation,
-  ]);
-
-  // Setup event listeners
-  useEffect(() => {
-    if (canSubscribe) {
-      setCanSubscribe(false);
-      confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
-      consoleOut('Subscribed to event txConfirmed with:', 'onTxConfirmed', 'blue');
-      confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
-      consoleOut('Subscribed to event txTimedout with:', 'onTxTimedout', 'blue');
-    }
-  }, [
-    canSubscribe,
-    onTxConfirmed,
-    onTxTimedout
-  ]);
-
   // Hook on wallet connect/disconnect
   useEffect(() => {
 
@@ -847,6 +842,25 @@ export const Streams = () => {
     onTxConfirmed,
     onTxTimedout,
   ]);
+
+  // Setup event listeners
+  useEffect(() => {
+    if (canSubscribe) {
+      setCanSubscribe(false);
+      confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
+      consoleOut('Subscribed to event txConfirmed with:', 'onTxConfirmed', 'blue');
+      confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
+      consoleOut('Subscribed to event txTimedout with:', 'onTxTimedout', 'blue');
+    }
+  }, [
+    canSubscribe,
+    onTxConfirmed,
+    onTxTimedout
+  ]);
+
+  //////////////////////
+  // MODALS & ACTIONS //
+  //////////////////////
 
   const refreshPage = () => {
     hideTransactionExecutionModal();
@@ -4381,15 +4395,16 @@ export const Streams = () => {
                       size="small"
                       disabled={
                         isBusy ||
+                        hasStreamPendingTx() ||
                         isScheduledOtp() ||
-                        !stream?.escrowVestedAmount ||
-                        publicKey?.toBase58() !== stream?.beneficiaryAddress
+                        !stream.escrowVestedAmount ||
+                        publicKey?.toBase58() !== stream.beneficiaryAddress
                       }
                       onClick={showWithdrawModal}>
                       {isBusy && (<LoadingOutlined />)}
                       {t('streams.stream-detail.withdraw-funds-cta')}
                     </Button>
-                    {!isBusy && (
+                    {(!isBusy || !hasStreamPendingTx()) && (
                       <Dropdown overlay={menu} trigger={["click"]}>
                         <Button
                           shape="round"
@@ -4612,6 +4627,7 @@ export const Streams = () => {
                       size="small"
                       disabled={
                         isBusy ||
+                        hasStreamPendingTx() ||
                         isScheduledOtp() ||
                         !stream.withdrawableAmount ||
                         publicKey?.toBase58() !== stream.beneficiary
@@ -4620,7 +4636,7 @@ export const Streams = () => {
                       {isBusy && (<LoadingOutlined />)}
                       {t('streams.stream-detail.withdraw-funds-cta')}
                     </Button>
-                    {!isBusy && (
+                    {(!isBusy || !hasStreamPendingTx()) && (
                       <Dropdown overlay={menu} trigger={["click"]}>
                         <Button
                           shape="round"
@@ -4905,7 +4921,6 @@ export const Streams = () => {
                   )}
 
                   {/* Top up (add funds) button */}
-                  {/* Withdraw */}
                   <div className="mt-3 mb-1 withdraw-container">
                     {isOtp() ? (
                       <>
@@ -4915,9 +4930,9 @@ export const Streams = () => {
                           type="text"
                           shape="round"
                           size="small"
-                          disabled={isBusy}
+                          disabled={isBusy || hasStreamPendingTx()}
                           onClick={showCloseStreamModal}>
-                          {isBusy && (<LoadingOutlined />)}
+                          {(isBusy || hasStreamPendingTx()) && (<LoadingOutlined />)}
                           {t('streams.stream-detail.cancel-scheduled-transfer')}
                         </Button>
                       </>
@@ -4931,6 +4946,7 @@ export const Streams = () => {
                           size="small"
                           disabled={
                             isBusy ||
+                            hasStreamPendingTx() ||
                             isOtp() ||
                             (getTreasuryType() === "locked" && (stream && stream.state === STREAM_STATE.Running))
                           }
@@ -4942,7 +4958,7 @@ export const Streams = () => {
                           }
                         </Button>
                         {(getTreasuryType() === "open") && (
-                          !isBusy && (
+                          (!isBusy || !hasStreamPendingTx()) && (
                             <Dropdown overlay={menu} trigger={["click"]}>
                               <Button
                                 shape="round"
@@ -5201,85 +5217,86 @@ export const Streams = () => {
                   )}
 
                   {/* Top up (add funds) button */}
-                    <Tooltip title={(getTreasuryType() === "locked" && stream.status === STREAM_STATUS.Running) ? t("streams.stream-detail.close-stream-cta-tooltip") : ""}>
-                      <div className="mt-3 mb-3 withdraw-container">
-                        <Button
-                          block
-                          className="withdraw-cta"
-                          type="text"
-                          shape="round"
-                          size="small"
-                          disabled={
-                            isBusy ||
-                            isOtp() ||
-                            (getTreasuryType() === "locked" && stream.status === STREAM_STATUS.Running)
-                          }
-                          onClick={(getTreasuryType() === "open") ? showAddFundsModal : showCloseStreamModal}>
-                          {isBusy && (<LoadingOutlined />)}
-                          {getTreasuryType() === "open"
-                            ? t('streams.stream-detail.add-funds-cta') 
-                            : t('streams.stream-detail.close-stream-cta')
-                          }
-                        </Button>
-                        {(getTreasuryType() === "open") && (
-                          !isBusy && (
-                            <Dropdown overlay={menu} trigger={["click"]}>
-                              <Button
-                                shape="round"
-                                type="text"
-                                size="small"
-                                className="ant-btn-shaded"
-                                onClick={(e) => e.preventDefault()}
-                                icon={<EllipsisOutlined />}>
-                              </Button>
-                            </Dropdown>
-                          )
-                        )}
-                      </div>
-                    </Tooltip>
-                    {/* {(getTreasuryType() === "open") && (
-                      <span className="icon-button-container">
-                        {getStreamStatus(stream) === "Running" && (
-                          <Tooltip placement="bottom" title={t("streams.pause-stream-tooltip")}>
+                  <Tooltip title={(getTreasuryType() === "locked" && stream.status === STREAM_STATUS.Running) ? t("streams.stream-detail.close-stream-cta-tooltip") : ""}>
+                    <div className="mt-3 mb-3 withdraw-container">
+                      <Button
+                        block
+                        className="withdraw-cta"
+                        type="text"
+                        shape="round"
+                        size="small"
+                        disabled={
+                          isBusy ||
+                          hasStreamPendingTx() ||
+                          isOtp() ||
+                          (getTreasuryType() === "locked" && stream.status === STREAM_STATUS.Running)
+                        }
+                        onClick={(getTreasuryType() === "open") ? showAddFundsModal : showCloseStreamModal}>
+                        {isBusy && (<LoadingOutlined />)}
+                        {getTreasuryType() === "open"
+                          ? t('streams.stream-detail.add-funds-cta') 
+                          : t('streams.stream-detail.close-stream-cta')
+                        }
+                      </Button>
+                      {(getTreasuryType() === "open") && (
+                        (!isBusy || !hasStreamPendingTx()) && (
+                          <Dropdown overlay={menu} trigger={["click"]}>
                             <Button
                               shape="round"
                               type="text"
                               size="small"
                               className="ant-btn-shaded"
-                              onClick={showPauseStreamModal}
-                              icon={<IconPause className="mean-svg-icons h-100" />}>
+                              onClick={(e) => e.preventDefault()}
+                              icon={<EllipsisOutlined />}>
                             </Button>
-                          </Tooltip>
-                        )}
-                        {(getStreamStatus(stream) === "Stopped" && (stream && stream.fundsLeftInStream > 0)) && (
-                          <Tooltip placement="bottom" title={t("streams.resume-stream-tooltip")}>
-                            <Button
-                              shape="round"
-                              type="text"
-                              size="small"
-                              className="ant-btn-shaded"
-                              onClick={showResumeStreamModal}
-                              icon={<IconPlay className="mean-svg-icons h-100" />}>
-                            </Button>
-                          </Tooltip>
-                        )}
-                      </span>
-                    )}
-                    {(getTreasuryType() === "locked") && (
-                      <span className="icon-button-container">
-                        <Tooltip placement="bottom" title={t("streams.locked-stream-tooltip")}>
+                          </Dropdown>
+                        )
+                      )}
+                    </div>
+                  </Tooltip>
+                  {/* {(getTreasuryType() === "open") && (
+                    <span className="icon-button-container">
+                      {getStreamStatus(stream) === "Running" && (
+                        <Tooltip placement="bottom" title={t("streams.pause-stream-tooltip")}>
                           <Button
                             shape="round"
                             type="text"
                             size="small"
                             className="ant-btn-shaded"
-                            onClick={showLockedStreamModal}
-                            icon={getStreamStatus(stream) === "Running" && 
-                            (<IconLock className="mean-svg-icons" />)}>
+                            onClick={showPauseStreamModal}
+                            icon={<IconPause className="mean-svg-icons h-100" />}>
                           </Button>
                         </Tooltip>
-                      </span>
-                    )} */}
+                      )}
+                      {(getStreamStatus(stream) === "Stopped" && (stream && stream.fundsLeftInStream > 0)) && (
+                        <Tooltip placement="bottom" title={t("streams.resume-stream-tooltip")}>
+                          <Button
+                            shape="round"
+                            type="text"
+                            size="small"
+                            className="ant-btn-shaded"
+                            onClick={showResumeStreamModal}
+                            icon={<IconPlay className="mean-svg-icons h-100" />}>
+                          </Button>
+                        </Tooltip>
+                      )}
+                    </span>
+                  )}
+                  {(getTreasuryType() === "locked") && (
+                    <span className="icon-button-container">
+                      <Tooltip placement="bottom" title={t("streams.locked-stream-tooltip")}>
+                        <Button
+                          shape="round"
+                          type="text"
+                          size="small"
+                          className="ant-btn-shaded"
+                          onClick={showLockedStreamModal}
+                          icon={getStreamStatus(stream) === "Running" && 
+                          (<IconLock className="mean-svg-icons" />)}>
+                        </Button>
+                      </Tooltip>
+                    </span>
+                  )} */}
                 </div>
               </Spin>
 
