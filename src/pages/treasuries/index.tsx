@@ -1790,6 +1790,8 @@ export const TreasuriesView = () => {
             multisig: multisig.id,
             transaction: transaction.publicKey,
             proposer: publicKey as PublicKey,
+            multisigOpsAccount: MEAN_MULTISIG_OPS,
+            systemProgram: SystemProgram.programId
           },
           preInstructions: [createIx],
           signers: txSigners,
