@@ -522,7 +522,7 @@ export const OneTimePayment = () => {
       : !paymentStartDate
       ? t('transactions.validation.no-valid-date')
       : !recipientNote
-      ? 'Memo cannot be empty'
+      ? t('transactions.validation.memo-empty')
       : !isVerifiedRecipient
       ? t('transactions.validation.verified-recipient-unchecked')
       : t('transactions.validation.valid-approve');

@@ -4105,8 +4105,6 @@ export const MultisigView = () => {
       }
       setFilteredMultisigTxs(multisigTxs);
     }
-
-    console.log("multisigTxAmountToHide", multisigTxsAmountToHide);
   }, [multisigTxs, switchValue]);
 
   ///////////////

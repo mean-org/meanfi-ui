@@ -1006,6 +1006,7 @@
 			"no-payment-rate": "اضافه کردن نرخ پرداخت",
 			"no-recipient": "بدون گیرنده",
 			"no-valid-date": "یک تاریخ معتبر تنظیم کنید",
+			"memo-empty": "Memo cannot be empty",
 			"not-connected": "کیف پول خود را وصل کنید",
 			"payment-rate-high": "Payment exceeded",
 			"select-address-list": "لیست آدرس را انتخاب کنید",

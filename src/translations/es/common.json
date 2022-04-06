@@ -1013,6 +1013,7 @@
 			"no-payment-rate": "Agregar tasa de pago",
 			"no-recipient": "Sin destinatario",
 			"no-valid-date": "Establecer una fecha válida",
+			"memo-empty": "Memo cannot be empty",
 			"not-connected": "Conecte su billetera",
 			"payment-rate-high": "Payment exceeded",
 			"select-recipient": "Seleccionar destinatario",

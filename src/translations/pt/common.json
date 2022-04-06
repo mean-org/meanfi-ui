@@ -1003,6 +1003,7 @@
 			"no-payment-rate": "Adicionar taxa de pagamento",
 			"no-recipient": "Sem destinatário",
 			"no-valid-date": "Defina uma data válida",
+			"memo-empty": "Memo cannot be empty",
 			"not-connected": "Conecte sua carteira",
 			"payment-rate-high": "Payment exceeded",
 			"select-recipient": "Selecionar destinatário",

@@ -1007,6 +1007,7 @@
 			"no-payment-rate": "Ajouter un taux de paiement",
 			"no-recipient": "Aucun destinataire",
 			"no-valid-date": "Définir une date valide",
+			"memo-empty": "Memo cannot be empty",
 			"not-connected": "Connectez votre portefeuille",
 			"payment-rate-high": "Le taux de paiement dépasse votre solde",
 			"select-address-list": "Sélectionnez la liste d'adresses",

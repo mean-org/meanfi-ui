@@ -1011,6 +1011,7 @@
 			"no-payment-rate": "결제율 추가",
 			"no-recipient": "받는 사람 없음",
 			"no-valid-date": "유효한 날짜를 설정하십시오",
+			"memo-empty": "Memo cannot be empty",
 			"not-connected": "지갑 연결",
 			"payment-rate-high": "Payment exceeded",
 			"select-address-list": "Select address list",
