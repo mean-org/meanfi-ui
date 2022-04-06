@@ -148,6 +148,7 @@ export const MultisigView = () => {
   const [isUpgradeIDLModalVisible, setIsUpgradeIDLModalVisible] = useState(false);
   const [isSetProgramAuthModalVisible, setIsSetProgramAuthModalVisible] = useState(false);
   const [switchValue, setSwitchValue] = useState(true);
+  const [multisigTxsToHide, setMultisigTxsToHide] = useState<string>("");
   const [filteredMultisigTxs, setFilteredMultisigTxs] = useState<MultisigTransaction[]>([]);
 
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
@@ -4091,11 +4092,21 @@ export const MultisigView = () => {
   }
 
   useEffect(() => {
+    const multisigTxsAmountToHide = (multisigTxs.filter((txName) => txName.status === 4).length);
+
+    const multisigTxsToShow = multisigTxs.filter((txName) => txName.status !== 4);
+
     if (switchValue) {
-      setFilteredMultisigTxs(multisigTxs.filter((txName) => txName.status !== 4));
+      setMultisigTxsToHide(multisigTxsAmountToHide.toString());
+      setFilteredMultisigTxs(multisigTxsToShow);
     } else {
+      if (multisigTxsAmountToHide === 0) {
+        setSwitchValue(false);
+      }
       setFilteredMultisigTxs(multisigTxs);
     }
+
+    console.log("multisigTxAmountToHide", multisigTxsAmountToHide);
   }, [multisigTxs, switchValue]);
 
   ///////////////
@@ -4699,13 +4710,18 @@ export const MultisigView = () => {
                       )}
                     </div>
 
+
                     {/* Switch handle */}
-                    <div className="thin-bottom-ctas switch-handle">
-                      <Switch size="small" checked={switchValue} onClick={() => switchHandler()} />
-                      <span className="ml-1 simplelink" onClick={() => switchHandler()}>
-                        {t("multisig.multisig-transactions.tx-switch-hide-btn")}
-                      </span>
-                    </div>
+                    {isUnderDevelopment() && (
+                      (parseFloat(multisigTxsToHide) > 0) && (
+                        <div className="thin-bottom-ctas switch-handle">
+                          <Switch size="small" checked={switchValue} onClick={() => switchHandler()} />
+                          <span className="ml-1 simplelink" onClick={() => switchHandler()}>
+                            {t("multisig.multisig-transactions.tx-switch-hide-btn")}
+                          </span>
+                        </div>
+                      )
+                    )}
 
                     {/* Copy address CTA */}
                     {/* <div className="stream-share-ctas">
