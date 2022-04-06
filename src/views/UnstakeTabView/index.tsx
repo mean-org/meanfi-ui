@@ -85,6 +85,7 @@ export const UnstakeTabView = (props: {
 
   const onChangeValue = (value: string) => {
     setPercentageValue(value);
+    setCanFetchUnstakeQuote(true);
   };  
 
   const handleFromCoinAmountChange = (e: any) => {
@@ -434,13 +435,14 @@ export const UnstakeTabView = (props: {
   }, [coinPrices]);
 
   // Handler paste clipboard data
-  const pasteHandler = (e: any) => {
+  const pasteHandler = useCallback((e: any) => {
     const getClipBoardData = e.clipboardData.getData('Text');
     const replaceCommaToDot = getClipBoardData.replace(",", "")
     const onlyNumbersAndDot = replaceCommaToDot.replace(/[^.\d]/g, '');
 
     setFromCoinAmount(onlyNumbersAndDot.trim());
-  }
+    setCanFetchUnstakeQuote(true);
+  }, []);
 
   // Unstake quote - For full unstaked balance
   useEffect(() => {
@@ -518,7 +520,6 @@ export const UnstakeTabView = (props: {
    const getUsdAmountForSmeanInput = useCallback(() => {
     if (fromCoinAmount && parseFloat(fromCoinAmount) > 0 && sMeanToMeanRate && meanPrice ) {
       const usdAmount = parseFloat(fromCoinAmount) * sMeanToMeanRate * meanPrice;
-      consoleOut('usdAmount:', usdAmount, 'blue');
       return usdAmount;
     }
     return 0;
