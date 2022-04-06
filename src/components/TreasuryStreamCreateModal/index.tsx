@@ -899,7 +899,7 @@ export const TreasuryStreamCreateModal = (props: {
         );
 
         streams.push({
-          name: beneficiary.streamName,
+          streamName: beneficiary.streamName,
           address: stream,
           beneficiary: new PublicKey(beneficiary.address)
 
