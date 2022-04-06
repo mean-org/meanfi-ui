@@ -426,21 +426,15 @@ export const Streams = () => {
         softReloadStreams();
         break;
       case OperationType.StreamClose:
-        if (streamDetail && streamList && streamList.length > 1) {
-          const filteredStreams = streamList.filter(s => s.id !== streamDetail.id);
-          setStreamList(filteredStreams);
-        }
-        hardReloadStreams();
         break;
       case OperationType.StreamTransferBeneficiary:
-        hardReloadStreams();
         break;
       case OperationType.StreamCreate:
         hardReloadStreams();
         break;
       case OperationType.StreamAddFunds:
         if (customStreamDocked) {
-          openStreamById(streamDetail?.id as string, false);
+          openStreamById(item.extras, false);
         } else {
           softReloadStreams();
         }
@@ -450,12 +444,9 @@ export const Streams = () => {
         break;
     }
   }, [
-    streamList,
-    streamDetail,
     customStreamDocked,
     recordTxConfirmation,
     openStreamById,
-    setStreamList,
   ]);
 
   // Setup event handler for Tx confirmation error
@@ -876,6 +867,19 @@ export const Streams = () => {
     setIsBusy(false);
     setCloseStreamTransactionModalVisibility(false);
     resetTransactionStatus();
+    // TODO: Remove if a code review + UX review and testing find this unnecessary
+    // Try to remove the item from the list to avoid reloading the list
+    if (streamDetail && streamList && streamList.length > 1) {
+      let streamIndex = streamList.findIndex(s => s.id !== streamDetail.id);
+      if (streamIndex > 0) {
+        streamIndex--;
+      } else {
+        streamIndex = 0;
+      }
+      const filteredStreams = streamList.filter(s => s.id !== streamDetail.id);
+      setStreamList(filteredStreams);
+      setSelectedStream(filteredStreams[streamIndex]);
+    }
   }
 
   const onTransactionFinished = useCallback(() => {
@@ -1929,8 +1933,22 @@ export const Streams = () => {
   };
 
   const onTransferStreamTransactionFinished = () => {
-    resetTransactionStatus();
+    setIsBusy(false);
     hideTransferStreamTransactionModal();
+    resetTransactionStatus();
+    // TODO: Remove if a code review + UX review and testing find this unnecessary
+    // Try to remove the item from the list to avoid reloading the list
+    if (streamDetail && streamList && streamList.length > 1) {
+      let streamIndex = streamList.findIndex(s => s.id !== streamDetail.id);
+      if (streamIndex > 0) {
+        streamIndex--;
+      } else {
+        streamIndex = 0;
+      }
+      const filteredStreams = streamList.filter(s => s.id !== streamDetail.id);
+      setStreamList(filteredStreams);
+      setSelectedStream(filteredStreams[streamIndex]);
+    }
   };
 
   const onAfterTransferStreamTransactionModalClosed = () => {
@@ -2195,7 +2213,6 @@ export const Streams = () => {
               completedMessage: `Stream transferred to: ${shortenAddress(address)}`,
               extras: streamDetail.id as string
             });
-            setIsBusy(false);
             onTransferStreamTransactionFinished();
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }

@@ -27,7 +27,7 @@ export const UnstakeTabView = (props: {
   selectedToken: TokenInfo | undefined;
 }) => {
   const {
-    effectiveRate,
+    coinPrices,
     loadingPrices,
     transactionStatus,
     setTransactionStatus,
@@ -41,6 +41,8 @@ export const UnstakeTabView = (props: {
   const [meanWorthOfsMean, setMeanWorthOfsMean] = useState<number>(0);
   const [unstakeMeanValue, setUnstakeMeanValue] = useState<string>();
   const [canFetchUnstakeQuote, setCanFetchUnstakeQuote] = useState(false);
+  const [sMeanToMeanRate, setSMeanToMeanRate] = useState(0);
+  const [meanPrice, setMeanPrice] = useState<number>(0);
   const [isBusy, setIsBusy] = useState(false);
   const { connected, wallet } = useWallet();
   const connection = useConnection();
@@ -83,6 +85,7 @@ export const UnstakeTabView = (props: {
 
   const onChangeValue = (value: string) => {
     setPercentageValue(value);
+    setCanFetchUnstakeQuote(true);
   };  
 
   const handleFromCoinAmountChange = (e: any) => {
@@ -420,14 +423,26 @@ export const UnstakeTabView = (props: {
     t
   ]);
 
+  // Keep MEAN price updated
+  useEffect(() => {
+
+    if (coinPrices) {
+      const symbol = "MEAN";
+      const price = coinPrices && coinPrices[symbol] ? coinPrices[symbol] : 0;
+      setMeanPrice(price);
+    }
+
+  }, [coinPrices]);
+
   // Handler paste clipboard data
-  const pasteHandler = (e: any) => {
+  const pasteHandler = useCallback((e: any) => {
     const getClipBoardData = e.clipboardData.getData('Text');
     const replaceCommaToDot = getClipBoardData.replace(",", "")
     const onlyNumbersAndDot = replaceCommaToDot.replace(/[^.\d]/g, '');
 
     setFromCoinAmount(onlyNumbersAndDot.trim());
-  }
+    setCanFetchUnstakeQuote(true);
+  }, []);
 
   // Unstake quote - For full unstaked balance
   useEffect(() => {
@@ -474,6 +489,7 @@ export const UnstakeTabView = (props: {
         consoleOut('unStakeQuote:', value, 'blue');
         setUnstakeMeanValue(value.meanOutUiAmount.toString());
         consoleOut(`Quote for ${formatThousands(parseFloat(fromCoinAmount), props.selectedToken?.decimals)} sMEAN`, `${formatThousands(value.meanOutUiAmount, props.selectedToken?.decimals)} MEAN`, 'blue');
+        setSMeanToMeanRate(value.sMeanToMeanRateUiAmount);
       }).catch((error: any) => {
         console.error(error);
       });
@@ -496,6 +512,18 @@ export const UnstakeTabView = (props: {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [percentageValue]);
+
+  /**
+   * The UnstakeQuote method returns sMeanToMeanRateUiAmount which is (MEAN/sMEAN rate)
+   * So we calculate the USD Amount relative to the input sMEAN: sMEAN x sMeanToMeanRateUiAmount x MEAN_current_price
+   */
+   const getUsdAmountForSmeanInput = useCallback(() => {
+    if (fromCoinAmount && parseFloat(fromCoinAmount) > 0 && sMeanToMeanRate && meanPrice ) {
+      const usdAmount = parseFloat(fromCoinAmount) * sMeanToMeanRate * meanPrice;
+      return usdAmount;
+    }
+    return 0;
+  }, [fromCoinAmount, meanPrice, sMeanToMeanRate]);
 
   return (
     <>
@@ -563,8 +591,8 @@ export const UnstakeTabView = (props: {
           </div>
           <div className="right inner-label">
             <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
-              ~${fromCoinAmount && effectiveRate
-                ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
+              ~${fromCoinAmount
+                ? formatThousands(getUsdAmountForSmeanInput(), 2, 2)
                 : "0.00"}
             </span>
           </div>
