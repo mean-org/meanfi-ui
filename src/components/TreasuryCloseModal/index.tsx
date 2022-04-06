@@ -63,8 +63,8 @@ export const TreasuryCloseModal = (props: {
       onOk={props.handleOk}
       onCancel={props.handleClose}
       width={360}>
-      <div className="transaction-progress">
-        <ExclamationCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+      <div className="transaction-progress p-0">
+        <ExclamationCircleOutlined style={{ fontSize: 48 }} className="icon mt-0 mb-3" />
         {isError() ? (
           <>
             {props.transactionStatus === TransactionStatus.TransactionStartFailure ? (
@@ -81,40 +81,44 @@ export const TreasuryCloseModal = (props: {
                 }
               </h4>
             ) : (
-              <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(props.transactionStatus)}</h4>
+              <h4 className="font-bold mb-4 text-uppercase">{getTransactionOperationDescription(props.transactionStatus)}</h4>
             )}
           </>
         ) : (
           <>
-            <h4>{props.content}</h4>
+            <h4 className="mb-4">{props.content}</h4>
           </>
         )}
-        <div className="mt-3">
-          <Button
-              className="mr-3"
+        <div className="row two-col-ctas mt-3 p-0 col-12 no-margin-right-left">
+          <div className="col-6 no-padding-left">
+            <Button
+              block
               type="text"
               shape="round"
               onClick={props.handleClose}>
               Cancel
-          </Button>
-          <Button
-            className={props.isBusy ? 'inactive' : ''}
-            type="primary"
-            shape="round"
-            onClick={props.handleOk}>
-            {props.isBusy && (
-              <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
-            )}
-            {props.isBusy
-              ? 'Closing treasury'
-              : isError()
-                ? 'Retry'
-                : 'Close treasury'
-            }
-          </Button>
+            </Button>
+          </div>
+          <div className="col-6 no-padding-right">
+            <Button
+              className={props.isBusy ? 'inactive' : ''}
+              block
+              type="primary"
+              shape="round"
+              onClick={props.handleOk}>
+              {props.isBusy && (
+                <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
+              )}
+              {props.isBusy
+                ? 'Closing treasury'
+                : isError()
+                  ? 'Retry'
+                  : 'Close treasury'
+              }
+            </Button>
+          </div>
         </div>
       </div>
-
     </Modal>
   );
 };
