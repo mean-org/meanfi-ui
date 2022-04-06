@@ -311,6 +311,7 @@ export const MultisigView = () => {
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
+    resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.CreateMultisig);
     setRetryOperationPayload(data);
@@ -596,7 +597,8 @@ export const MultisigView = () => {
     transactionFees.blockchainFee, 
     transactionFees.mspFlatFee, 
     transactionStatus.currentOperation, 
-    wallet
+    wallet,
+    resetTransactionStatus
   ]);
 
   const onCreateMultisigClick = useCallback(() => {
@@ -684,6 +686,7 @@ export const MultisigView = () => {
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
+    resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.CreateMultisig);
     setRetryOperationPayload(data);
@@ -988,23 +991,24 @@ export const MultisigView = () => {
     }
 
   }, [
-    selectedMultisig,
-    clearTransactionStatusContext,
+    wallet,
+    publicKey,
     connection,
+    nativeBalance,
+    selectedMultisig,
+    transactionCancelled,
+    multisigClient.programId,
+    transactionFees.mspFlatFee,
+    multisigClient.transaction,
+    transactionFees.blockchainFee,
+    transactionStatus.currentOperation,
     multisigClient.account.transaction,
     multisigClient.coder.instruction,
-    multisigClient.programId,
-    multisigClient.transaction,
-    nativeBalance,
-    onMultisigModified,
-    publicKey,
-    setTransactionStatus,
+    clearTransactionStatusContext,
     startFetchTxSignatureInfo,
-    transactionCancelled,
-    transactionFees.blockchainFee,
-    transactionFees.mspFlatFee,
-    transactionStatus.currentOperation,
-    wallet
+    resetTransactionStatus,
+    setTransactionStatus,
+    onMultisigModified
   ]);
 
   const onAcceptEditMultisig = (data: any) => {
@@ -5014,9 +5018,10 @@ export const MultisigView = () => {
           </div>
 
           {/* CTAs shown always - IF DIFFERENT CTAS ARE BEST FOR EACH STAGE, MOVE THEM INSIDE THE PANELS */}
-          <div className="transaction-progress mt-3">
-            <Space size="middle" wrap>
+          <div className="row two-col-ctas mt-3 transaction-progress p-0 col-12 no-margin-right-left">
+            <div className={(canShowExecuteButton() || canShowApproveButton() || canShowCancelButton()) ? "col-6 no-padding-left" : "col-12 no-padding-left no-padding-right"}>
               <Button
+                block
                 type="text"
                 shape="round"
                 size="middle"
@@ -5029,12 +5034,15 @@ export const MultisigView = () => {
                   : t('general.cta-close')
                 }
               </Button>
-              {
-                (canShowExecuteButton() || canShowApproveButton() || canShowCancelButton())
-                &&
-                (
+            </div>
+            {
+              (canShowExecuteButton() || canShowApproveButton() || canShowCancelButton())
+              &&
+              (
+                <div className="col-6 no-padding-right">
                   <Button
                     className={isBusy ? 'inactive' : ''}
+                    block
                     type="primary"
                     shape="round"
                     size="middle"
@@ -5049,9 +5057,9 @@ export const MultisigView = () => {
                     }}>
                     {getTxApproveMainCtaLabel()}
                   </Button>
-                )
-              }
-            </Space>
+                </div>
+              )
+            }
           </div>
 
         </Modal>
