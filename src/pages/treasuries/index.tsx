@@ -797,11 +797,13 @@ export const TreasuriesView = () => {
         .then((value) => {
           let pendingTxs = 0;
           for (let tx of value) {
-            const belongsToTreasury = (tx.account.accounts
-              .findIndex((a: any) => a.pubkey.equals(new PublicKey(treasuryDetails.id))) !== -1 &&
-              tx.account.executedOn.toNumber() === 0
+            const isPending = (
+              multisig !== undefined &&
+              tx.account.accounts.findIndex((a: any) => a.pubkey.equals(new PublicKey(treasuryDetails.id))) !== -1 &&
+              tx.account.executedOn.toNumber() === 0 &&
+              multisig.ownerSeqNumber === tx.account.ownerSetSeqno
             );
-            if (belongsToTreasury) {
+            if (isPending) {
               pendingTxs += 1;
             }
           }
