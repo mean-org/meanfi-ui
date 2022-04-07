@@ -1234,5 +1234,8 @@
 		"label-input-amount": "Insira o valor para sacar",
 		"label-input-right": "Por percentual predefinido",
 		"modal-title": "Retirar fundos"
+	},
+	"wrap": {
+		"hint-message": "We recommend having at least 0.05 SOL for any transaction"
 	}
 }

@@ -1252,5 +1252,8 @@
 			"verified-label": "I'm sure the recipient address doesn't belong to an exchange"
 		},
 		"modal-title": "Withdraw funds"
+	},
+	"wrap": {
+		"hint-message": "We recommend having at least 0.05 SOL for any transaction"
 	}
 }

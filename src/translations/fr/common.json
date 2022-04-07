@@ -1252,5 +1252,8 @@
 			"verified-label": "Je suis sûr que l'adresse du destinataire n'appartient pas à un échange"
 		},
 		"modal-title": "Retirer des fonds"
+	},
+	"wrap": {
+		"hint-message": "We recommend having at least 0.05 SOL for any transaction"
 	}
 }

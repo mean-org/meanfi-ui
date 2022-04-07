@@ -1234,5 +1234,8 @@
 		"label-input-amount": "Introduzca la cantidad a retirar",
 		"label-input-right": "Porcentaje automático",
 		"modal-title": "Retirar fondos"
+	},
+	"wrap": {
+		"hint-message": "We recommend having at least 0.05 SOL for any transaction"
 	}
 }

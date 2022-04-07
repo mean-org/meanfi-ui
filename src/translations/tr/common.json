@@ -1253,5 +1253,8 @@
 			"verified-label": "Alıcı adresin bir borsaya ait olmadığından eminim."
 		},
 		"modal-title": "Fonları geri çek"
+	},
+	"wrap": {
+		"hint-message": "We recommend having at least 0.05 SOL for any transaction"
 	}
 }

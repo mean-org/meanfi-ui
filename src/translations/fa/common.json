@@ -1251,5 +1251,8 @@
 			"verified-label": "مطمئنم آدرس گیرنده متعلق به صرافی نیست"
 		},
 		"modal-title": "برداشت وجوه"
+	},
+	"wrap": {
+		"hint-message": "We recommend having at least 0.05 SOL for any transaction"
 	}
 }
