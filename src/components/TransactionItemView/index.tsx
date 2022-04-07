@@ -162,12 +162,6 @@ export const TransactionItemView = (props: {
         );
   }
 
-  const doRelativeDate = (timestamp: number) => {
-    return (
-      <Moment date={timestamp} fromNow /> as JSX.Element
-    );
-  };
-
   const getTransactionItem = () => {
     const signature = props.transaction.signature?.toString();
     const blockTime = props.transaction.parsedTransaction.blockTime;
@@ -191,7 +185,9 @@ export const TransactionItemView = (props: {
         </div>
         <div className="std-table-cell responsive-cell pl-2">
           {
-            blockTime ? doRelativeDate(blockTime * 1000) : (
+            blockTime ? (
+              <Moment date={blockTime * 1000} fromNow />
+            ) : (
               <span>'unavailable'</span>
             )
           }
