@@ -8,9 +8,8 @@ import { getAmountFromLamports, getTokenAmountAndSymbolByTokenAddress, shortenAd
 import { UserTokenAccount } from "../../models/transactions";
 import { NATIVE_SOL } from "../../utils/tokens";
 import { Tooltip } from "antd";
-import Moment from "react-moment";
 import { MappedTransaction } from "../../utils/history";
-import { isLocal } from "../../utils/ui";
+import { isLocal, relativeTimeFromDates } from "../../utils/ui";
 
 export const TransactionItemView = (props: {
   accountAddress: string;
@@ -162,6 +161,11 @@ export const TransactionItemView = (props: {
         );
   }
 
+  const getRelativeDate = (timestamp: number) => {
+    const reference = new Date(timestamp);
+    return relativeTimeFromDates(reference);
+  }
+
   const getTransactionItem = () => {
     const signature = props.transaction.signature?.toString();
     const blockTime = props.transaction.parsedTransaction.blockTime;
@@ -186,7 +190,9 @@ export const TransactionItemView = (props: {
         <div className="std-table-cell responsive-cell pl-2">
           {
             blockTime ? (
-              <Moment date={blockTime * 1000} fromNow />
+              <>
+                {getRelativeDate(blockTime * 1000)}
+              </>
             ) : (
               <span>'unavailable'</span>
             )
