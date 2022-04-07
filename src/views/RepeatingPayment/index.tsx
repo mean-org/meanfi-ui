@@ -620,7 +620,7 @@ export const RepeatingPayment = () => {
       : '';
   }
 
-  const getPaymentRateLabel = (
+  const getPaymentRateLabel = useCallback((
     rate: PaymentRateType,
     amount: string | undefined
   ): string => {
@@ -649,7 +649,7 @@ export const RepeatingPayment = () => {
         break;
     }
     return label;
-  };
+  }, [selectedToken, t]);
 
   const getRecommendedFundingAmount = () => {
     const rateAmount = parseFloat(paymentRateAmount as string);
@@ -1254,16 +1254,6 @@ export const RepeatingPayment = () => {
 
   return (
     <>
-      {(isLocal() || isWhitelisted) && (
-        <div className="debug-bar">
-          <span className="secondary-link" onClick={() => toggleMspClient()}>[Toggle MSP client]</span>
-          <span className="ml-1">MSP client version:</span><span className="ml-1 font-bold fg-dark-active">{mspClientVersion || '-'}</span>
-          {/* <span className="ml-1">status:</span><span className="ml-1 font-bold fg-dark-active">{lastSentTxStatus || '-'}</span>
-          <span className="ml-1">recentlyCreatedVault:</span><span className="ml-1 font-bold fg-dark-active">{recentlyCreatedVault ? shortenAddress(recentlyCreatedVault, 8) : '-'}</span>
-          <span className="ml-1">lastSentTxSignature:</span><span className="ml-1 font-bold fg-dark-active">{lastSentTxSignature ? shortenAddress(lastSentTxSignature, 8) : '-'}</span> */}
-        </div>
-      )}
-
       <StepSelector step={currentStep} steps={2} onValueSelected={onStepperChange} />
 
       <div className={currentStep === 0 ? "contract-wrapper panel1 show" : "contract-wrapper panel1 hide"}>

@@ -13,13 +13,13 @@ import "./style.less";
 import { Button, Col, Collapse, Modal, Row } from "antd";
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "../../constants";
 import { Identicon } from "../Identicon";
-import { notify } from "../../utils/notifications";
 import { copyText } from "../../utils/ui";
 import { getSolanaExplorerClusterParam } from "../../contexts/connection";
 import { useTranslation } from "react-i18next";
 import { AppStateContext } from '../../contexts/appstate';
 import { segmentAnalytics } from '../../App';
 import { AppUsageEvent } from '../../utils/segment-service';
+import { openNotification } from '../Notifications';
 
 const { Panel } = Collapse;
 
@@ -35,25 +35,25 @@ export const AccountDetails = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const showAccount = useCallback(() => setIsModalVisible(true), []);
   const close = useCallback(() => setIsModalVisible(false), []);
-  const { wallet, provider, select, disconnect } = useWallet();
+  const { wallet, provider, select, disconnect, resetWalletProvider } = useWallet();
 
-  const switchWallet = () => {
+  const switchWallet = useCallback(() => {
+    close();
     setTimeout(() => {
       select();
     }, 500);
     // Record user event in Segment Analytics
     segmentAnalytics.recordEvent(AppUsageEvent.WalletChange);
-    close();
-  }
+  }, [close, select]);
 
   const onCopyAddress = () => {
     if (copyText(wallet?.publicKey)) {
-      notify({
+      openNotification({
         description: t('notifications.account-address-copied-message'),
         type: "info"
       });
     } else {
-      notify({
+      openNotification({
         description: t('notifications.account-address-not-copied-message'),
         type: "error"
       });
@@ -62,7 +62,7 @@ export const AccountDetails = () => {
 
   const onCopyDiagnosisInfo = () => {
     if (!diagnosisInfo) {
-      notify({
+      openNotification({
         description: t('account-area.diagnosis-info-not-copied'),
         type: "error"
       });
@@ -70,23 +70,19 @@ export const AccountDetails = () => {
     }
     const debugInfo = `${diagnosisInfo.dateTime}\n${diagnosisInfo.clientInfo}\n${diagnosisInfo.networkInfo}\n${diagnosisInfo.accountInfo}\n${diagnosisInfo.appBuildInfo}`;
     if (copyText(debugInfo)) {
-      notify({
+      openNotification({
         description: t('account-area.diagnosis-info-copied'),
         type: "info"
       });
     } else {
-      notify({
+      openNotification({
         description: t('account-area.diagnosis-info-not-copied'),
         type: "error"
       });
     }
   }
 
-  if (!wallet?.publicKey) {
-    return null;
-  }
-
-  const onDisconnectWallet = () => {
+  const onDisconnectWallet = useCallback(() => {
     setSelectedStream(undefined);
     setStreamList(undefined);
     // Record user event in Segment Analytics
@@ -94,7 +90,11 @@ export const AccountDetails = () => {
     close();
     disconnect();
     // TODO: If we decide to turn OFF wallet autoConnect then next line will be needed
-    // resetWalletProvider();
+    resetWalletProvider();
+  }, [close, disconnect, resetWalletProvider, setSelectedStream, setStreamList]);
+
+  if (!wallet?.publicKey) {
+    return null;
   }
 
   const renderDebugInfo = (

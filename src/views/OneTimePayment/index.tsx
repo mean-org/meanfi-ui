@@ -970,13 +970,6 @@ export const OneTimePayment = () => {
 
   return (
     <>
-      {isLocal() && (
-        <div className="debug-bar">
-          <span className="ml-1">lastOperation:</span><span className="ml-1 font-bold fg-dark-active">{transactionStatus && transactionStatus.lastOperation ? TransactionStatus[transactionStatus.lastOperation] : '-'}</span>
-          <span className="ml-1">currentOperation:</span><span className="ml-1 font-bold fg-dark-active">{transactionStatus && transactionStatus.currentOperation ? TransactionStatus[transactionStatus.currentOperation] : '-'}</span>
-        </div>
-      )}
-
       <div className="contract-wrapper">
 
         {/* Recipient */}
