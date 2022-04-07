@@ -186,7 +186,9 @@ export const TransactionItemView = (props: {
         <div className="std-table-cell responsive-cell pl-2">
           {
             blockTime ? (
-              <Moment date={blockTime * 1000} fromNow />
+              <>
+                <Moment date={blockTime * 1000} fromNow />
+              </>
             ) : (
               <span>'unavailable'</span>
             )
