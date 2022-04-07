@@ -162,6 +162,12 @@ export const TransactionItemView = (props: {
         );
   }
 
+  const doRelativeDate = (timestamp: number) => {
+    return (
+      <Moment date={timestamp} fromNow />
+    );
+  };
+
   const getTransactionItem = () => {
     const signature = props.transaction.signature?.toString();
     const blockTime = props.transaction.parsedTransaction.blockTime;
@@ -185,11 +191,7 @@ export const TransactionItemView = (props: {
         </div>
         <div className="std-table-cell responsive-cell pl-2">
           {
-            blockTime ? (
-              <>
-                <Moment date={blockTime * 1000} fromNow />
-              </>
-            ) : (
+            blockTime ? doRelativeDate(blockTime * 1000) : (
               <span>'unavailable'</span>
             )
           }
@@ -201,22 +203,3 @@ export const TransactionItemView = (props: {
 
   return isTxRenderable ? getTransactionItem() : null;
 };
-
-/*
-var isNativeAccountSelected = selected == SOL;
-var balanceChange = 0;
-
-if(isNativeAccountSelected)
-{
-     balanceChange = postBalance - preBalance;
-}
-
-balanceChange =  postTokenBalance - preTokenBalance;
-
-if (balanceChange > 0) {
-      // this is a incoming tx
-}
-else {
-    // this is outgoing tx
-}
-*/
