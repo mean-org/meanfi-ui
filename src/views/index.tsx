@@ -4,7 +4,6 @@ export { IdoLpDeposit } from "./IdoLpDeposit";
 export { IdoLpWithdraw } from "./IdoLpWithdraw";
 export { IdoRedeem } from "./IdoRedeem";
 export { JupiterExchange } from "./JupiterExchange";
-export { OneTimeExchange } from "./OneTimeExchange";
 export { OneTimePayment } from "./OneTimePayment";
 export { PayrollPayment } from "./PayrollPayment";
 export { RecurringExchange } from "./RecurringExchange";

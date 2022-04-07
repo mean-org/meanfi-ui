@@ -6,7 +6,6 @@ import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
 import { useWallet } from '../../contexts/wallet';
 import { TokenDisplay } from '../TokenDisplay';
 import { toUsCurrency } from '../../utils/ui';
-import { DebounceInput } from 'react-debounce-input';
 
 export const ExchangeInput = (props: {
   token: TokenInfo | undefined;
@@ -18,7 +17,6 @@ export const ExchangeInput = (props: {
   onPriceClick: any;
   onBalanceClick?: any;
   readonly?: boolean;
-  debounceTime?: number;
   className?: string;
 }) => {
     const { t } = useTranslation("common");
@@ -114,7 +112,7 @@ export const ExchangeInput = (props: {
                         </span>
                     </div>
                     <div className="right">
-                        <DebounceInput
+                        <input
                             className="general-text-input text-right"
                             inputMode="decimal"
                             autoComplete="off"
@@ -125,7 +123,6 @@ export const ExchangeInput = (props: {
                             placeholder="0.0"
                             minLength={1}
                             maxLength={79}
-                            debounceTimeout={props.debounceTime || 300}
                             spellCheck="false"
                             readOnly={props.readonly ? true : false}
                             value={props.tokenAmount}
