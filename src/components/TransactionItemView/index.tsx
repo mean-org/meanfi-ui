@@ -164,7 +164,7 @@ export const TransactionItemView = (props: {
 
   const doRelativeDate = (timestamp: number) => {
     return (
-      <Moment date={timestamp} fromNow />
+      <Moment date={timestamp} fromNow /> as JSX.Element
     );
   };
 
