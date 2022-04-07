@@ -4193,7 +4193,7 @@ export const MultisigView = () => {
                       <span className="align-middle">{getShortDate(item.createdOn.toString(), isCanvasTight() ? false : true)}</span>
                     </div>
                     <div className="std-table-cell fixed-width-90">
-                      <span className={`align-middle`}>{getTransactionUserStatusAction(item)}</span>
+                      <span className="align-middle">{getTransactionUserStatusAction(item)}</span>
                     </div>
                     <div className="std-table-cell fixed-width-34">
                       {
