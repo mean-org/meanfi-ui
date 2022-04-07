@@ -4104,9 +4104,6 @@ export const MultisigView = () => {
       setMultisigTxsToHide(multisigTxsAmountToHide.toString());
       setFilteredMultisigTxs(multisigTxsToShow);
     } else {
-      if (multisigTxsAmountToHide === 0) {
-        setSwitchValue(false);
-      }
       setFilteredMultisigTxs(multisigTxs);
     }
   }, [multisigTxs, switchValue]);
@@ -4716,7 +4713,7 @@ export const MultisigView = () => {
                     {/* Switch handle */}
                     {isUnderDevelopment() && (
                       (parseFloat(multisigTxsToHide) > 0) && (
-                        <div className="thin-bottom-ctas switch-handle">
+                        <div className="stream-share-ctas switch-handle">
                           <Switch size="small" checked={switchValue} onClick={() => switchHandler()} />
                           <span className="ml-1 simplelink" onClick={() => switchHandler()}>
                             {t("multisig.multisig-transactions.tx-switch-hide-btn")}
