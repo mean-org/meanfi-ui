@@ -8,7 +8,7 @@ import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
 import { findATokenAddress, formatThousands, getTxIxResume, isValidNumber } from "../../utils/utils";
 import { IconStats } from "../../Icons";
-import { consoleOut, getTransactionStatusForLogs, isLocal, isProd } from "../../utils/ui";
+import { consoleOut, getTransactionStatusForLogs, isProd, relativeTimeFromDates } from "../../utils/ui";
 import { ConfirmOptions, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
 import { confirmationEvents, TransactionStatusContext } from "../../contexts/transaction-status";
@@ -19,7 +19,6 @@ import { Button, Spin } from "antd";
 import { EventType, OperationType, TransactionStatus } from "../../models/enums";
 import { notify } from "../../utils/notifications";
 import { DepositRecord, DepositsInfo, StakingClient } from "@mean-dao/staking";
-import Moment from "react-moment";
 
 const DEFAULT_APR_PERCENT_GOAL = '21';
 
@@ -27,7 +26,6 @@ export const StakingRewardsView = () => {
   const {
     isWhitelisted,
     transactionStatus,
-    isInBetaTestingProgram,
     setTransactionStatus,
   } = useContext(AppStateContext);
   const { enqueueTransactionConfirmation } = useContext(TransactionStatusContext);
@@ -608,6 +606,11 @@ export const StakingRewardsView = () => {
   //  Rendering  //
   /////////////////
 
+  const getRelativeDate = (utcDate: string) => {
+    const reference = new Date(utcDate);
+    return relativeTimeFromDates(reference);
+  }
+
   const renderDepositHistory = (
     <>
       <div className="container-max-width-720 my-3">
@@ -635,7 +638,7 @@ export const StakingRewardsView = () => {
                   depositsInfo.depositRecords.length > 0) &&
                   depositsInfo.depositRecords.map((item: DepositRecord, index: number) => (
                     <div key={`${index}`} className="item-list-row">
-                      <div className="std-table-cell responsive-cell px-2 text-left"><Moment className="capitalize-first-letter" date={item.depositedUtc} fromNow /></div>
+                      <div className="std-table-cell responsive-cell px-2 text-left"><span className="capitalize-first-letter">{getRelativeDate(item.depositedUtc)}</span></div>
                       <div className="std-table-cell responsive-cell px-3 text-right border-left border-right">{formatThousands(item.totalStakedPlusRewardsUiAmount)} MEAN</div>
                       <div className="std-table-cell responsive-cell px-3 text-right border-right">{item.depositedPercentage * 100}%</div>
                       <div className="std-table-cell responsive-cell px-3 text-right">{formatThousands(item.depositedUiAmount)} MEAN</div>
