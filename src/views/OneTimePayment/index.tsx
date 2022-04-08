@@ -185,9 +185,16 @@ export const OneTimePayment = () => {
     }
   }, [connection, otpFees]);
 
-  const getFeeAmount = () => {
+  const isScheduledPayment = useCallback((): boolean => {
+    const now = new Date();
+    const parsedDate = Date.parse(paymentStartDate as string);
+    const fromParsedDate = new Date(parsedDate);
+    return fromParsedDate.getDate() > now.getDate() ? true : false;
+  }, [paymentStartDate]);
+
+  const getFeeAmount = useCallback(() => {
     return isScheduledPayment() ? otpFees.blockchainFee + otpFees.mspFlatFee : otpFees.blockchainFee;
-  }
+  }, [isScheduledPayment, otpFees.blockchainFee, otpFees.mspFlatFee]);
 
   const resetTransactionStatus = useCallback(() => {
 
@@ -227,13 +234,6 @@ export const OneTimePayment = () => {
   const closeTransactionModal = useCallback(() => setTransactionModalVisibility(false), []);
 
   // Event handling
-
-  const isScheduledPayment = useCallback((): boolean => {
-    const now = new Date();
-    const parsedDate = Date.parse(paymentStartDate as string);
-    const fromParsedDate = new Date(parsedDate);
-    return fromParsedDate.getDate() > now.getDate() ? true : false;
-  }, [paymentStartDate]);
 
   const onTransactionModalClosed = () => {
     if (isBusy) {

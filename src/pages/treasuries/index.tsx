@@ -4587,7 +4587,7 @@ export const TreasuriesView = () => {
     refreshUserBalances();
     refreshTokenBalance();
     setIsCreateStreamModalVisibility(true);
-    getTransactionFeesV2(MSP_ACTIONS_V2.createStream).then(value => {
+    getTransactionFeesV2(MSP_ACTIONS_V2.createStreamWithFunds).then(value => {
       setTransactionFees(value);
       consoleOut('transactionFees:', value, 'orange');
     });
