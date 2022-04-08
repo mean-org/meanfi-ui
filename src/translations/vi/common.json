@@ -512,7 +512,7 @@
 			"column-created-on": "Ngày tạo",
 			"column-current-signatures": "Sig",
 			"column-my-status": "Trạng thái của tôi",
-			"column-operation": "Hoạt động",
+			"column-operation": "Transaction",
 			"column-pending-signatures": "Status",
 			"column-program-id": "Chương trình",
 			"loading-transactions": "Đang tải giao dịch",

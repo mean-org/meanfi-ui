@@ -538,7 +538,7 @@
 			"column-created-on": "ایجاد شده در",
 			"column-current-signatures": "امضا",
 			"column-my-status": "وضعیت من",
-			"column-operation": "عملیات",
+			"column-operation": "Transaction",
 			"column-pending-signatures": "Status",
 			"column-program-id": "برنامه",
 			"explain-failure": "در صورت خاص شرایط خرابی را توضیح دهید",

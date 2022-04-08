@@ -508,7 +508,7 @@
 			"column-created-on": "Criado em",
 			"column-current-signatures": "Assine",
 			"column-my-status": "Meu status",
-			"column-operation": "Operação",
+			"column-operation": "Transaction",
 			"column-pending-signatures": "Status",
 			"column-program-id": "Programa",
 			"loading-transactions": "Carregando transações",

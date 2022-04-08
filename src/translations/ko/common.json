@@ -542,7 +542,7 @@
 			"column-created-on": "~에 작성되다",
 			"column-current-signatures": "서명",
 			"column-my-status": "내 상태",
-			"column-operation": "작동",
+			"column-operation": "Transaction",
 			"column-pending-signatures": "Status",
 			"column-program-id": "프로그램",
 			"explain-failure": "Explain failure condition if specific",

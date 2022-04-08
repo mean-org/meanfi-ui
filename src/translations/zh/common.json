@@ -471,7 +471,7 @@
 			"column-created-on": "Created on",
 			"column-current-signatures": "Sig",
 			"column-my-status": "My Status",
-			"column-operation": "Operation",
+			"column-operation": "Transaction",
 			"column-pending-signatures": "Status",
 			"column-program-id": "Program",
 			"loading-transactions": "Loading transactions",

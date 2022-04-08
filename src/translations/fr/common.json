@@ -538,7 +538,7 @@
 			"column-created-on": "Créé sur",
 			"column-current-signatures": "Signer",
 			"column-my-status": "Mon statut",
-			"column-operation": "Opération",
+			"column-operation": "Transaction",
 			"column-pending-signatures": "Status",
 			"column-program-id": "Programme",
 			"explain-failure": "Expliquer la condition de défaillance si spécifique",
