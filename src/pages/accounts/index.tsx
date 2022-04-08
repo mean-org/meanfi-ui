@@ -45,7 +45,6 @@ import {
 import { QrScannerModal } from '../../components/QrScannerModal';
 import { Helmet } from "react-helmet";
 import { IconCopy } from '../../Icons';
-import { notify } from '../../utils/notifications';
 import { fetchAccountHistory, MappedTransaction } from '../../utils/history';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import useLocalStorage from '../../hooks/useLocalStorage';
@@ -53,13 +52,13 @@ import { refreshCachedRpc } from '../../models/connections-hq';
 import { AccountTokenParsedInfo } from '../../models/token';
 import { getTokenByMintAddress } from '../../utils/tokens';
 import { AccountsMergeModal } from '../../components/AccountsMergeModal';
-import { OperationType, TransactionStatus } from '../../models/enums';
+import { TransactionStatus } from '../../models/enums';
 import { Streams } from '../../views';
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
 import { initialSummary, StreamsSummary } from '../../models/streams';
-import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { MSP, Stream, STREAM_STATUS } from '@mean-dao/msp';
 import { StreamInfo, STREAM_STATE } from '@mean-dao/money-streaming';
+import { openNotification } from '../../components/Notifications';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const QRCode = require('qrcode.react');
@@ -106,11 +105,6 @@ export const AccountsView = () => {
     showDepositOptionsModal,
     setCanShowAccountDetails,
   } = useContext(AppStateContext);
-  const {
-    fetchTxInfoStatus,
-    lastSentTxSignature,
-    lastSentTxOperationType,
-  } = useContext(TransactionStatusContext);
 
   const { t } = useTranslation('common');
   const [isFirstLoad, setIsFirstLoad] = useState(true);
@@ -266,12 +260,12 @@ export const AccountsView = () => {
 
   const onCopyAddress = () => {
     if (accountAddress && copyText(accountAddress)) {
-      notify({
+      openNotification({
         description: t('notifications.account-address-copied-message'),
         type: "info"
       });
     } else {
-      notify({
+      openNotification({
         description: t('notifications.account-address-not-copied-message'),
         type: "error"
       });
@@ -890,20 +884,6 @@ export const AccountsView = () => {
     publicKey,
     streamList,
     refreshStreamSummary
-  ]);
-
-  // Handle what to do when new stream is created
-  useEffect(() => {
-    if (lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
-      if (lastSentTxOperationType === OperationType.StreamCreate || lastSentTxOperationType === OperationType.Transfer) {
-        refreshStreamList();
-      }
-    }
-  }, [
-    fetchTxInfoStatus,
-    lastSentTxSignature,
-    lastSentTxOperationType,
-    refreshStreamList,
   ]);
 
   ///////////////

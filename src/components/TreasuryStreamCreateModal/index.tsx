@@ -848,6 +848,7 @@ export const TreasuryStreamCreateModal = (props: {
 
     const createStreams = async (data: any) => {
 
+      consoleOut('Is Multisig Treasury: ', props.isMultisigTreasury, 'blue');
       consoleOut('Starting create streams using MSP V2...', '', 'blue');
       const msp = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
 
@@ -898,7 +899,7 @@ export const TreasuryStreamCreateModal = (props: {
         );
 
         streams.push({
-          name: beneficiary.streamName,
+          streamName: beneficiary.streamName,
           address: stream,
           beneficiary: new PublicKey(beneficiary.address)
 
@@ -929,6 +930,8 @@ export const TreasuryStreamCreateModal = (props: {
 
       let txs: Transaction[] = [];
 
+      console.log('streamsBumps', streamsBumps);
+
       for (let createTx of createStreams) {
         const ixData = Buffer.from(createTx.instructions[0].data);
         const ixAccounts = createTx.instructions[0].keys;
@@ -939,7 +942,10 @@ export const TreasuryStreamCreateModal = (props: {
           txSize
         );
 
+        console.log('accounts meta keys: ', createTx.instructions[0].keys.map((m: any) => m.pubkey.toBase58()));
+
         let streamSeedData = streamsBumps[createTx.instructions[0].keys[7].pubkey.toBase58()];
+        console.log('streamSeedData: ', streamSeedData);
         let tx = props.multisigClient.transaction.createTransaction(
           MSPV2Constants.MSP,
           OperationType.StreamCreate,
@@ -994,7 +1000,7 @@ export const TreasuryStreamCreateModal = (props: {
 
       const associatedToken = new PublicKey(selectedToken?.address as string);
       const treasury = new PublicKey(props.treasuryDetails.id as string);
-      const amount = tokenAmount.div(new BN(beneficiaries.length));
+      const amount = tokenAmount.div(new BN(beneficiaries.length)).toNumber();
       const rateAmount = toTokenAmount(parseFloat(paymentRateAmount as string), selectedToken.decimals);
       const now = new Date();
       const parsedDate = Date.parse(paymentStartDate as string);

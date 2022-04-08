@@ -794,10 +794,20 @@ export const TreasuriesView = () => {
       
       multisigClient.account.transaction
         .all(multisig.id.toBuffer())
-        .then((value) => { 
-          setTreasuryPendingTxs(
-            value ? value.filter(t => t.account.executedOn.toNumber() === 0).length : 0
-          ); 
+        .then((value) => {
+          let pendingTxs = 0;
+          for (let tx of value) {
+            const isPending = (
+              multisig !== undefined &&
+              tx.account.accounts.findIndex((a: any) => a.pubkey.equals(new PublicKey(treasuryDetails.id))) !== -1 &&
+              tx.account.executedOn.toNumber() === 0 &&
+              multisig.ownerSeqNumber === tx.account.ownerSetSeqno
+            );
+            if (isPending) {
+              pendingTxs += 1;
+            }
+          }
+          setTreasuryPendingTxs(pendingTxs); 
         });
     });
 
@@ -911,22 +921,13 @@ export const TreasuriesView = () => {
      */
     const params = new URLSearchParams(location.search);
     if (params.has('treasury')) {
-      if (!treasuryAddress) {
-        consoleOut('Wait for treasuryAddress on next render...', '✓', 'brown');
-        return;
-      }
-      consoleOut('treasuryAddress is available...', '✓', 'brown');
+      if (!treasuryAddress) { return; }
     } else if (params.has('multisig')) {
       if (!multisigAddress) {
-        consoleOut('Wait for multisigAddress on next render...', '✓', 'brown');
         return;
       } else if (!selectedMultisig) {
-        consoleOut('Now wait for selectedMultisig to be available...', '✓', 'brown');
         return;
       }
-      consoleOut('multisigAddress and selectedMultisig are available...', '✓', 'brown');
-    } else {
-      consoleOut('No params passed!', '✓', 'brown');
     }
 
     consoleOut('Calling refreshTreasuries...', '', 'blue');
@@ -1790,6 +1791,8 @@ export const TreasuriesView = () => {
             multisig: multisig.id,
             transaction: transaction.publicKey,
             proposer: publicKey as PublicKey,
+            multisigOpsAccount: MEAN_MULTISIG_OPS,
+            systemProgram: SystemProgram.programId
           },
           preInstructions: [createIx],
           signers: txSigners,

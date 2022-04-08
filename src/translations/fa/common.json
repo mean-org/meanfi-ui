@@ -570,7 +570,11 @@
 			"tx-operation-pending-two": "تراکنش در این Multisig آماده است",
 			"tx-operation-rejected": "This transaction has been rejected.",
 			"tx-operation-success": "عملیات {{operation}} با موفقیت انجام شد",
+			"tx-operation-cancel": "Please cancel it below to remove it from the list.",
+			"your-execution": "your execution",
+			"execution": "execution",
 			"tx-operation-voided": "This pending transaction has been VOIDED due to the Multisig being edited.",
+			"tx-switch-hide-btn": "Hide cancelled and voided transactions",
 			"your-status": "وضعیت شما:"
 		},
 		"multisig-treasuries": {
@@ -610,7 +614,7 @@
 			"transfer-to-placeholder": "آدرس اکانت مقصد را وارد کنید"
 		},
 		"update-multisig": {
-			"edit-not-allowed-message": "وقتی امضاکنندگان را در Multisig تغییر می‌دهید، تمام تراکنش‌های معلق باطل می‌شوند. قبل از ادامه، مطمئن شوید که هیچ تراکنش مهمی وجود ندارد که لازم باشد ابتدا انجام شود.",
+			"edit-not-allowed-message": "When you edit a Multisig, all pending transactions will be VOIDED. Make sure there are no important transactions needing to be completed.",
 			"main-cta": "ذخیره تغییرات",
 			"main-cta-busy": "ذخیره سازی تغییرات",
 			"modal-title": "ویرایش multisig",
@@ -1002,6 +1006,7 @@
 			"no-payment-rate": "اضافه کردن نرخ پرداخت",
 			"no-recipient": "بدون گیرنده",
 			"no-valid-date": "یک تاریخ معتبر تنظیم کنید",
+			"memo-empty": "Memo cannot be empty",
 			"not-connected": "کیف پول خود را وصل کنید",
 			"payment-rate-high": "Payment exceeded",
 			"select-address-list": "لیست آدرس را انتخاب کنید",

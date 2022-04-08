@@ -20,7 +20,7 @@ import {
 } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
-import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
+import { useConnectionConfig } from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
 import { AppStateContext, TransactionStatusInfo } from '../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
@@ -32,7 +32,7 @@ import {
   shortenAddress
 } from '../../utils/utils';
 
-import { Button, Col, Divider, Dropdown, Empty, Menu, Modal, Row, Space, Spin, Tooltip } from 'antd';
+import { Button, Col, Divider, Dropdown, Empty, Menu, Modal, Row, Space, Spin, Switch, Tooltip } from 'antd';
 import {
   copyText,
   consoleOut,
@@ -46,21 +46,21 @@ import {
   isProd
 } from '../../utils/ui';
 
-import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, VERBOSE_DATE_TIME_FORMAT } from '../../constants';
+import { NO_FEES, VERBOSE_DATE_TIME_FORMAT } from '../../constants';
 
 import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { notify } from '../../utils/notifications';
-import { IconCaretDown, IconClock, IconDocument, IconEdit, IconExternalLink, IconShieldOutline, IconTrash, IconUpdate, IconUserGroup, IconUsers, IconWallet, IconWarning } from '../../Icons';
+import { IconCaretDown, IconClock, IconDocument, IconEdit, IconShieldOutline, IconTrash, IconUpdate, IconUserGroup, IconUsers, IconWallet, IconWarning } from '../../Icons';
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import dateFormat from 'dateformat';
 import { useNativeAccount } from '../../contexts/accounts';
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
-import { AccountLayout, MintLayout, TOKEN_PROGRAM_ID, u64 } from '@solana/spl-token';
+import { AccountLayout, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { useNavigate } from 'react-router-dom';
-import { Multisig, MultisigV2, MultisigParticipant, MultisigTransaction, MultisigTransactionStatus, MultisigMint, MEAN_MULTISIG_OPS, CREATE_MULTISIG_FEES } from '../../models/multisig';
+import { Multisig, MultisigV2, MultisigParticipant, MultisigTransaction, MultisigTransactionStatus, MEAN_MULTISIG_OPS, CREATE_MULTISIG_FEES } from '../../models/multisig';
 import { MultisigCreateModal } from '../../components/MultisigCreateModal';
 import './style.less';
 
@@ -118,7 +118,7 @@ export const MultisigView = () => {
   // Multisig accounts
   const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(true);
   const [multisigAccounts, setMultisigAccounts] = useState<(MultisigV2 | Multisig)[]>([]);
-  const [selectedMultisig, setSelectedMultisig] = useState<any>(undefined);
+  const [selectedMultisig, setSelectedMultisig] = useState<MultisigV2 | Multisig | undefined>(undefined);
   // Pending Txs
   const [needRefreshTxs, setNeedRefreshTxs] = useState(true);
   const [loadingMultisigTxs, setLoadingMultisigTxs] = useState(false);
@@ -147,6 +147,9 @@ export const MultisigView = () => {
   const [isUpgradeProgramModalVisible, setIsUpgradeProgramModalVisible] = useState(false);
   const [isUpgradeIDLModalVisible, setIsUpgradeIDLModalVisible] = useState(false);
   const [isSetProgramAuthModalVisible, setIsSetProgramAuthModalVisible] = useState(false);
+  const [switchValue, setSwitchValue] = useState(true);
+  const [multisigTxsToHide, setMultisigTxsToHide] = useState<string>("");
+  const [filteredMultisigTxs, setFilteredMultisigTxs] = useState<MultisigTransaction[]>([]);
 
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
     commitment: "confirmed",
@@ -308,6 +311,7 @@ export const MultisigView = () => {
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
+    resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.CreateMultisig);
     setRetryOperationPayload(data);
@@ -593,7 +597,8 @@ export const MultisigView = () => {
     transactionFees.blockchainFee, 
     transactionFees.mspFlatFee, 
     transactionStatus.currentOperation, 
-    wallet
+    wallet,
+    resetTransactionStatus
   ]);
 
   const onCreateMultisigClick = useCallback(() => {
@@ -681,12 +686,17 @@ export const MultisigView = () => {
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
+    resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.CreateMultisig);
     setRetryOperationPayload(data);
     setIsBusy(true);
 
     const editMultisig = async (data: any) => {
+
+      if (!selectedMultisig) {
+        throw new Error("No selected multisig");
+      }
 
       const [multisigSigner] = await PublicKey.findProgramAddress(
         [selectedMultisig.id.toBuffer()],
@@ -985,23 +995,24 @@ export const MultisigView = () => {
     }
 
   }, [
-    selectedMultisig,
-    clearTransactionStatusContext,
+    wallet,
+    publicKey,
     connection,
+    nativeBalance,
+    selectedMultisig,
+    transactionCancelled,
+    multisigClient.programId,
+    transactionFees.mspFlatFee,
+    multisigClient.transaction,
+    transactionFees.blockchainFee,
+    transactionStatus.currentOperation,
     multisigClient.account.transaction,
     multisigClient.coder.instruction,
-    multisigClient.programId,
-    multisigClient.transaction,
-    nativeBalance,
-    onMultisigModified,
-    publicKey,
-    setTransactionStatus,
+    clearTransactionStatusContext,
     startFetchTxSignatureInfo,
-    transactionCancelled,
-    transactionFees.blockchainFee,
-    transactionFees.mspFlatFee,
-    transactionStatus.currentOperation,
-    wallet
+    resetTransactionStatus,
+    setTransactionStatus,
+    onMultisigModified
   ]);
 
   const onAcceptEditMultisig = (data: any) => {
@@ -1012,6 +1023,7 @@ export const MultisigView = () => {
   // Transaction confirm and execution modal launched from each Tx row
   const [isMultisigActionTransactionModalVisible, setMultisigActionTransactionModalVisible] = useState(false);
   const showMultisigActionTransactionModal = useCallback((tx: MultisigTransaction) => {
+    resetTransactionStatus();
     const fees = {
       blockchainFee: 0.000005,
       mspFlatFee: 0.000010,
@@ -1020,7 +1032,7 @@ export const MultisigView = () => {
     setTransactionFees(fees);
     sethHighlightedMultisigTx(tx);
     setMultisigActionTransactionModalVisible(true);
-  }, []);
+  }, [resetTransactionStatus]);
 
   const onAcceptMultisigActionModal = (item: MultisigTransaction) => {
     consoleOut('onAcceptMultisigActionModal:', item, 'blue');
@@ -1047,6 +1059,7 @@ export const MultisigView = () => {
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
+    resetTransactionStatus();
     setTransactionCancelled(false);
     setRetryOperationPayload(data);
     setIsBusy(true);
@@ -1283,7 +1296,6 @@ export const MultisigView = () => {
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.TransactionFinished
             });
-            // TODO: Translate
             notify({
               description: 'Your signature for the Multisig transaction was successfully recorded.',
               type: "success"
@@ -1307,7 +1319,8 @@ export const MultisigView = () => {
     transactionStatus.currentOperation,
     clearTransactionStatusContext,
     startFetchTxSignatureInfo,
-    setTransactionStatus,
+    resetTransactionStatus,
+    setTransactionStatus
   ]);
 
   const onExecuteFinishTx = useCallback(async (data: any) => {
@@ -1319,6 +1332,7 @@ export const MultisigView = () => {
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
+    resetTransactionStatus();
     setTransactionCancelled(false);
     setRetryOperationPayload(data);
     setIsBusy(true);
@@ -1643,8 +1657,9 @@ export const MultisigView = () => {
     transactionStatus.currentOperation,
     startFetchTxSignatureInfo,
     clearTransactionStatusContext,
+    resetTransactionStatus,
     setTransactionStatus,
-    onTxExecuted,
+    onTxExecuted
   ]);
 
   const onExecuteCancelTx = useCallback(async (data: any) => {
@@ -1656,6 +1671,7 @@ export const MultisigView = () => {
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
+    resetTransactionStatus();
     setTransactionCancelled(false);
     setRetryOperationPayload(data);
     setIsBusy(true);
@@ -1928,20 +1944,21 @@ export const MultisigView = () => {
     }
 
   }, [
-    clearTransactionStatusContext, 
-    connection, 
-    multisigClient.transaction, 
-    nativeBalance, 
-    onTxExecuted, 
-    publicKey, 
-    selectedMultisig, 
-    setTransactionStatus, 
-    startFetchTxSignatureInfo, 
-    transactionCancelled, 
+    transactionStatus.currentOperation, 
     transactionFees.blockchainFee, 
     transactionFees.mspFlatFee, 
-    transactionStatus.currentOperation, 
-    wallet
+    multisigClient.transaction, 
+    transactionCancelled, 
+    selectedMultisig, 
+    nativeBalance, 
+    connection, 
+    publicKey, 
+    wallet,
+    onTxExecuted,
+    setTransactionStatus,
+    resetTransactionStatus,
+    startFetchTxSignatureInfo, 
+    clearTransactionStatusContext, 
   ]);
 
   const isMintingToken = useCallback((): boolean => {
@@ -3592,16 +3609,12 @@ export const MultisigView = () => {
               } else if (selectedMultisig) {
                 // Or re-select the one active
                 item = selectedMultisig.id ? multisigInfoArray.find(m => m.id.equals(selectedMultisig.id)) : undefined;
+              } else {
+                item = multisigInfoArray[0];
               }
               // Now make item active
-              if (item) {
-                setSelectedMultisig(item);
-              } else {
-                setSelectedMultisig(multisigInfoArray[0]);
-              }
-              setTimeout(() => {
-                loadMultisigTxs();
-              }, 100);
+              setSelectedMultisig(item);
+              setNeedRefreshTxs(true);
             } else {
               setSelectedMultisig(undefined);
               setMultisigTxs([]);
@@ -4076,6 +4089,55 @@ export const MultisigView = () => {
     return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
   }
 
+  // Switch to hide voided transactions
+  const switchHandler = () => {
+    setSwitchValue(!switchValue);
+  }
+
+  useEffect(() => {
+    const multisigTxsAmountToHide = (multisigTxs.filter((txName) => txName.status === 4).length);
+
+    const multisigTxsToShow = multisigTxs.filter((txName) => txName.status !== 4);
+
+    if (switchValue) {
+      setMultisigTxsToHide(multisigTxsAmountToHide.toString());
+      setFilteredMultisigTxs(multisigTxsToShow);
+    } else {
+      if (multisigTxsAmountToHide === 0) {
+        setSwitchValue(false);
+      }
+      setFilteredMultisigTxs(multisigTxs);
+    }
+  }, [multisigTxs, switchValue]);
+
+  // Scroll to a given multisig is specified as highLightableMultisigId
+  useEffect(() => {
+    if (loadingMultisigAccounts || !multisigAccounts || multisigAccounts.length === 0 || !highLightableMultisigId || !selectedMultisig) {
+      return;
+    }
+
+    consoleOut('Try to scroll multisig into view...', '', 'green');
+    const timeout = setTimeout(() => {
+      const highlightTarget = document.getElementById(highLightableMultisigId);
+      if (highlightTarget) {
+        consoleOut('Scrolling multisig into view...', '', 'green');
+        highlightTarget.scrollIntoView({ behavior: 'smooth' });
+      }
+      setHighLightableMultisigId(undefined);
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [
+    selectedMultisig,
+    multisigAccounts,
+    loadingMultisigAccounts,
+    highLightableMultisigId,
+    setHighLightableMultisigId,
+  ]);
+
   ///////////////
   // Rendering //
   ///////////////
@@ -4137,7 +4199,7 @@ export const MultisigView = () => {
         <div className="activity-list-data-wrapper vertical-scroll">
           <div className="activity-list h-100">
             <div className="item-list-body compact">
-              {multisigTxs.map(item => {
+              {filteredMultisigTxs.map(item => {
                 return (
                   <div
                     key={item.id.toBase58()}
@@ -4469,12 +4531,13 @@ export const MultisigView = () => {
         };
         return (
           <div 
-            key={`${index + 50}`} 
+            key={`${index + 50}`}
+            id={item.id.toBase58()}
             onClick={onMultisigClick}
             className={
               `transaction-list-row ${
-                selectedMultisig && selectedMultisig.id && selectedMultisig.id.equals(item.id) 
-                  ? 'selected' 
+                selectedMultisig && selectedMultisig.id && selectedMultisig.id.equals(item.id)
+                  ? 'selected'
                   : ''
                 }`
               }>
@@ -4677,6 +4740,19 @@ export const MultisigView = () => {
                       )}
                     </div>
 
+
+                    {/* Switch handle */}
+                    {isUnderDevelopment() && (
+                      (parseFloat(multisigTxsToHide) > 0) && (
+                        <div className="thin-bottom-ctas switch-handle">
+                          <Switch size="small" checked={switchValue} onClick={() => switchHandler()} />
+                          <span className="ml-1 simplelink" onClick={() => switchHandler()}>
+                            {t("multisig.multisig-transactions.tx-switch-hide-btn")}
+                          </span>
+                        </div>
+                      )
+                    )}
+
                     {/* Copy address CTA */}
                     {/* <div className="stream-share-ctas">
                       {selectedMultisig && (
@@ -4800,7 +4876,7 @@ export const MultisigView = () => {
                     {isTreasuryOperation() && !isUserTheProposer() ? (
                       <h3 className="text-center">{t('multisig.multisig-transactions.tx-operation-pending-one')}</h3>
                     ) : (
-                      <h3 className="text-center">{t('multisig.multisig-transactions.tx-operation-pending-two')} {isUserTheProposer() ? 'your execution' : 'execution'}.</h3>
+                      <h3 className="text-center">{t('multisig.multisig-transactions.tx-operation-pending-two')} {isUserTheProposer() ? t('multisig.multisig-transactions.your-execution') : t('multisig.multisig-transactions.execution')}.</h3>
                     )}
                     <Divider className="mt-2" />
                     <Row>
@@ -4857,7 +4933,7 @@ export const MultisigView = () => {
                 ) : (
                   <>
                     {isTxVoided() ? (
-                      <h3 className="text-center">{t('multisig.multisig-transactions.tx-operation-voided')} {isUserTxInitiator() ? ' Please cancel it below to remove it from the list.' : ''}</h3>
+                      <h3 className="text-center">{t('multisig.multisig-transactions.tx-operation-voided')} {isUserTxInitiator() ? t('multisig.multisig-transactions.tx-operation-cancel') : ''}</h3>
                     ) : isTxRejected() ? (
                       <h3 className="text-center">{t('multisig.multisig-transactions.tx-operation-rejected')}</h3>
                       ) : (
@@ -4970,9 +5046,10 @@ export const MultisigView = () => {
           </div>
 
           {/* CTAs shown always - IF DIFFERENT CTAS ARE BEST FOR EACH STAGE, MOVE THEM INSIDE THE PANELS */}
-          <div className="transaction-progress mt-3">
-            <Space size="middle" wrap>
+          <div className="row two-col-ctas mt-3 transaction-progress p-0 col-12 no-margin-right-left">
+            <div className={(canShowExecuteButton() || canShowApproveButton() || canShowCancelButton()) ? "col-6 no-padding-left" : "col-12 no-padding-left no-padding-right"}>
               <Button
+                block
                 type="text"
                 shape="round"
                 size="middle"
@@ -4985,12 +5062,15 @@ export const MultisigView = () => {
                   : t('general.cta-close')
                 }
               </Button>
-              {
-                (canShowExecuteButton() || canShowApproveButton() || canShowCancelButton())
-                &&
-                (
+            </div>
+            {
+              (canShowExecuteButton() || canShowApproveButton() || canShowCancelButton())
+              &&
+              (
+                <div className="col-6 no-padding-right">
                   <Button
                     className={isBusy ? 'inactive' : ''}
+                    block
                     type="primary"
                     shape="round"
                     size="middle"
@@ -5005,9 +5085,9 @@ export const MultisigView = () => {
                     }}>
                     {getTxApproveMainCtaLabel()}
                   </Button>
-                )
-              }
-            </Space>
+                </div>
+              )
+            }
           </div>
 
         </Modal>

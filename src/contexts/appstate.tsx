@@ -316,7 +316,6 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [streamV2ProgramAddress, setStreamV2ProgramAddress] = useState('');
   const {
     lastSentTxStatus,
-    fetchTxInfoStatus,
     clearTransactionStatusContext,
   } = useContext(TransactionStatusContext);
   const today = new Date().toLocaleDateString("en-US");
@@ -555,10 +554,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     setPaymentRateFrequency(PaymentRateType.PerMonth);
     setIsVerifiedRecipient(false);
     setIsAllocationReserved(false);
-    setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle
-    });
   }
 
   const resetStreamsState = () => {
@@ -909,7 +904,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   ]);
 
   const refreshStreamList = useCallback((reset = false) => {
-    if (!publicKey || loadingStreams || fetchTxInfoStatus === "fetching" || customStreamDocked) {
+    if (!publicKey || loadingStreams || customStreamDocked) {
       return;
     }
 
@@ -1041,7 +1036,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     selectedStream,
     lastSentTxStatus,
     location.pathname,
-    fetchTxInfoStatus,
     customStreamDocked,
     highLightableStreamId,
     clearTransactionStatusContext,

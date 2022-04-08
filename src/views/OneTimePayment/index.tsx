@@ -8,10 +8,10 @@ import {
 } from "@ant-design/icons";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnection, useConnectionConfig } from "../../contexts/connection";
-import { formatAmount, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber, toTokenAmount } from "../../utils/utils";
+import { formatAmount, formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber, toTokenAmount } from "../../utils/utils";
 import { DATEPICKER_FORMAT, SIMPLE_DATE_TIME_FORMAT } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
-import { OperationType, TransactionStatus } from "../../models/enums";
+import { EventType, OperationType, TransactionStatus } from "../../models/enums";
 import {
   addMinutes,
   consoleOut,
@@ -20,6 +20,7 @@ import {
   getTransactionModalTitle,
   getTransactionOperationDescription,
   getTransactionStatusForLogs,
+  isLocal,
   isToday,
   isValidAddress
 } from "../../utils/ui";
@@ -34,8 +35,7 @@ import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { customLogger } from '../..';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
-import { notify } from '../../utils/notifications';
-import { TransactionStatusContext } from '../../contexts/transaction-status';
+import { confirmationEvents, TransactionStatusContext, TransactionStatusInfo } from '../../contexts/transaction-status';
 import { useNavigate } from 'react-router-dom';
 import { TokenDisplay } from '../../components/TokenDisplay';
 import { TextInput } from '../../components/TextInput';
@@ -54,7 +54,6 @@ export const OneTimePayment = () => {
   const { endpoint } = useConnectionConfig();
   const { connected, publicKey, wallet } = useWallet();
   const {
-    contract,
     tokenList,
     selectedToken,
     tokenBalance,
@@ -84,10 +83,7 @@ export const OneTimePayment = () => {
     setIsVerifiedRecipient,
     setSelectedTokenBalance,
   } = useContext(AppStateContext);
-  const {
-    clearTransactionStatusContext,
-    startFetchTxSignatureInfo,
-  } = useContext(TransactionStatusContext);
+  const { enqueueTransactionConfirmation } = useContext(TransactionStatusContext);
   const navigate = useNavigate();
   const { t } = useTranslation('common');
   const [isBusy, setIsBusy] = useState(false);
@@ -99,6 +95,7 @@ export const OneTimePayment = () => {
   const [tokenFilter, setTokenFilter] = useState("");
   const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
   const [fixedScheduleValue, setFixedScheduleValue] = useState(0);
+  const [canSubscribe, setCanSubscribe] = useState(true);
 
   useEffect(() => {
 
@@ -192,12 +189,17 @@ export const OneTimePayment = () => {
     return isScheduledPayment() ? otpFees.blockchainFee + otpFees.mspFlatFee : otpFees.blockchainFee;
   }
 
-  const resetTransactionStatus = () => {
+  const resetTransactionStatus = useCallback(() => {
+
+    setIsBusy(false);
     setTransactionStatus({
       lastOperation: TransactionStatus.Iddle,
       currentOperation: TransactionStatus.Iddle
     });
-  }
+
+  }, [
+    setTransactionStatus
+  ]);
 
   // Token selection modal
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
@@ -226,14 +228,14 @@ export const OneTimePayment = () => {
 
   // Event handling
 
-  const isScheduledPayment = (): boolean => {
+  const isScheduledPayment = useCallback((): boolean => {
     const now = new Date();
     const parsedDate = Date.parse(paymentStartDate as string);
     const fromParsedDate = new Date(parsedDate);
     return fromParsedDate.getDate() > now.getDate() ? true : false;
-  }
+  }, [paymentStartDate]);
 
-  const onAfterTransactionModalClosed = () => {
+  const onTransactionModalClosed = () => {
     if (isBusy) {
       setTransactionCancelled(true);
     }
@@ -243,22 +245,37 @@ export const OneTimePayment = () => {
       setIsVerifiedRecipient(false);
     }
     resetTransactionStatus();
+    closeTransactionModal();
   }
 
-  const handleGoToStreamsClick = () => {
-    resetContractValues();
-    setIsVerifiedRecipient(false);
-    setSelectedStream(undefined);
-    closeTransactionModal();
-    if (isScheduledPayment()) {
-      notify({
-        message: t('notifications.create-money-stream-completed'),
-        description: t('notifications.create-money-stream-completed-wait-for-confirm'),
-        type: "info"
-      });
+  const recordTxConfirmation = useCallback((signature: string, success = true) => {
+    let event: any;
+    event = success ? AppUsageEvent.TransferOTPCompleted : AppUsageEvent.TransferOTPFailed;
+    segmentAnalytics.recordEvent(event, { signature: signature });
+  }, []);
+
+  // Setup event handler for Tx confirmed
+  const onTxConfirmed = useCallback((item: TransactionStatusInfo) => {
+    consoleOut("onTxConfirmed event executed:", item, 'crimson');
+    if (item && item.operationType === OperationType.Transfer && item.extras === 'scheduled') {
+      recordTxConfirmation(item.signature, true);
+      resetContractValues();
+      setIsVerifiedRecipient(false);
+      setSelectedStream(undefined);
+      closeTransactionModal();
       navigate("/accounts/streams");
     }
-  };
+  }, [closeTransactionModal, navigate, recordTxConfirmation, resetContractValues, setIsVerifiedRecipient, setSelectedStream]);
+
+  // Setup event handler for Tx confirmation error
+  const onTxTimedout = useCallback((item: TransactionStatusInfo) => {
+    consoleOut("onTxTimedout event executed:", item, 'crimson');
+    if (item && item.operationType === OperationType.Transfer) {
+      recordTxConfirmation(item.signature, false);
+    }
+  }, [
+    recordTxConfirmation,
+  ]);
 
   const handleFromCoinAmountChange = (e: any) => {
 
@@ -379,6 +396,11 @@ export const OneTimePayment = () => {
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'green');
         setUserBalances(undefined);
+        confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
+        consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
+        confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
+        consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
+        setCanSubscribe(true);
       }
     } else if (!connected) {
       setSelectedTokenBalance(0);
@@ -392,7 +414,9 @@ export const OneTimePayment = () => {
     connected,
     publicKey,
     previousWalletConnectState,
-    setSelectedTokenBalance
+    setSelectedTokenBalance,
+    onTxConfirmed,
+    onTxTimedout,
   ]);
 
   // Reset results when the filter is cleared
@@ -432,6 +456,22 @@ export const OneTimePayment = () => {
       window.removeEventListener('resize', resizeListener);
     }
   }, []);
+
+  // Setup event listeners
+  useEffect(() => {
+    if (publicKey && canSubscribe) {
+      setCanSubscribe(false);
+      confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
+      consoleOut('Subscribed to event txConfirmed with:', 'onTxConfirmed', 'blue');
+      confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
+      consoleOut('Subscribed to event txTimedout with:', 'onTxTimedout', 'blue');
+    }
+  }, [
+    publicKey,
+    canSubscribe,
+    onTxConfirmed,
+    onTxTimedout,
+  ]);
 
   //////////////////
   //  Validation  //
@@ -478,7 +518,7 @@ export const OneTimePayment = () => {
       : !paymentStartDate
       ? t('transactions.validation.no-valid-date')
       : !recipientNote
-      ? 'Memo cannot be empty'
+      ? t('transactions.validation.memo-empty')
       : !isVerifiedRecipient
       ? t('transactions.validation.verified-recipient-unchecked')
       : t('transactions.validation.valid-approve');
@@ -486,14 +526,13 @@ export const OneTimePayment = () => {
 
   // Main action
 
-  const onTransactionStart = async () => {
+  const onTransactionStart = useCallback(async () => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
     setTransactionCancelled(false);
     setIsBusy(true);
 
@@ -535,7 +574,6 @@ export const OneTimePayment = () => {
         return false;
       }
 
-      consoleOut("Start transaction for contract type:", contract?.name);
       consoleOut('Wallet address:', wallet?.publicKey?.toBase58());
 
       setTransactionStatus({
@@ -784,54 +822,7 @@ export const OneTimePayment = () => {
       }
     }
 
-    const confirmTx = async (): Promise<boolean> => {
-      return await connection
-        .confirmTransaction(signature, "confirmed")
-        .then(result => {
-          consoleOut('confirmTransaction result:', result);
-          if (result && result.value && !result.value.err) {
-            setTransactionStatus({
-              lastOperation: TransactionStatus.ConfirmTransactionSuccess,
-              currentOperation: TransactionStatus.TransactionFinished
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.TransactionFinished),
-              result: ''
-            });
-            segmentAnalytics.recordEvent(AppUsageEvent.TransferOTPCompleted, {
-              signature
-            });
-            return true;
-          } else {
-            setTransactionStatus({
-              lastOperation: TransactionStatus.ConfirmTransaction,
-              currentOperation: TransactionStatus.ConfirmTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
-              result: signature
-            });
-            customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
-            segmentAnalytics.recordEvent(AppUsageEvent.TransferOTPFailed, { transcript: transactionLog });
-            throw(result?.value?.err || new Error("Could not confirm transaction"));
-          }
-        })
-        .catch(e => {
-          setTransactionStatus({
-            lastOperation: TransactionStatus.ConfirmTransaction,
-            currentOperation: TransactionStatus.ConfirmTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
-            result: signature
-          });
-          customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
-          segmentAnalytics.recordEvent(AppUsageEvent.TransferOTPFailed, { transcript: transactionLog });
-          return false;
-        });
-    }
-
-    if (wallet) {
+    if (wallet && selectedToken) {
       showTransactionModal();
       const created = await createTx();
       consoleOut('created:', created);
@@ -842,24 +833,73 @@ export const OneTimePayment = () => {
           const sent = await sendTx();
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
+            consoleOut('Send Tx to confirmation queue:', signature);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.TransactionFinished
+            });
             if (isScheduledPayment()) {
-              consoleOut('Send Tx to confirmation queue:', signature);
-              startFetchTxSignatureInfo(signature, "confirmed", OperationType.Transfer);
+              enqueueTransactionConfirmation({
+                signature: signature,
+                operationType: OperationType.Transfer,
+                finality: "confirmed",
+                txInfoFetchStatus: "fetching",
+                loadingTitle: "Confirming transaction",
+                loadingMessage: `Schedule transfer for ${formatThousands(
+                  parseFloat(fromCoinAmount),
+                  selectedToken.decimals
+                )} ${selectedToken.symbol}`,
+                completedTitle: "Transaction confirmed",
+                completedMessage: `Transfer successfully Scheduled!`,
+                extras: 'scheduled'
+              });
               setIsBusy(false);
-              handleGoToStreamsClick();
             } else {
-              const confirmed = await confirmTx();
-              consoleOut('confirmed:', confirmed);
-              if (confirmed) {
-                setIsBusy(false);
-              } else { setIsBusy(false); }
+              enqueueTransactionConfirmation({
+                signature: signature,
+                operationType: OperationType.Transfer,
+                finality: "confirmed",
+                txInfoFetchStatus: "fetching",
+                loadingTitle: "Confirming transaction",
+                loadingMessage: `Sending ${formatThousands(
+                  parseFloat(fromCoinAmount),
+                  selectedToken.decimals
+                )} ${selectedToken.symbol}`,
+                completedTitle: "Transaction confirmed",
+                completedMessage: `Successfully sent ${formatThousands(
+                  parseFloat(fromCoinAmount),
+                  selectedToken.decimals
+                )} ${selectedToken.symbol}`,
+              });
+              setIsBusy(false);
             }
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
 
-  };
+  }, [
+    wallet,
+    endpoint,
+    publicKey,
+    connection,
+    recipientNote,
+    isWhitelisted,
+    nativeBalance,
+    selectedToken,
+    fromCoinAmount,
+    paymentStartDate,
+    recipientAddress,
+    fixedScheduleValue,
+    transactionCancelled,
+    streamV2ProgramAddress,
+    transactionStatus.currentOperation,
+    enqueueTransactionConfirmation,
+    setTransactionStatus,
+    showTransactionModal,
+    isScheduledPayment,
+    getFeeAmount,
+  ]);
 
   const onIsVerifiedRecipientChange = (e: any) => {
     setIsVerifiedRecipient(e.target.checked);
@@ -930,12 +970,6 @@ export const OneTimePayment = () => {
 
   return (
     <>
-      {/* {isLocal() && (
-        <div className="debug-bar">
-          <span className="ml-1">tokenFilter:</span><span className="ml-1 font-bold fg-dark-active">{tokenFilter || '-'}</span>
-        </div>
-      )} */}
-
       <div className="contract-wrapper">
 
         {/* Recipient */}
@@ -1199,10 +1233,9 @@ export const OneTimePayment = () => {
       <Modal
         className="mean-modal"
         maskClosable={false}
-        afterClose={onAfterTransactionModalClosed}
         visible={isTransactionModalVisible}
         title={getTransactionModalTitle(transactionStatus, isBusy, t)}
-        onCancel={closeTransactionModal}
+        onCancel={onTransactionModalClosed}
         width={330}
         footer={null}>
         <div className="transaction-progress">
@@ -1225,8 +1258,8 @@ export const OneTimePayment = () => {
                 type="primary"
                 shape="round"
                 size="middle"
-                onClick={isScheduledPayment() ? handleGoToStreamsClick : closeTransactionModal}>
-                {isScheduledPayment() ? t('transactions.status.cta-view-stream') : t('general.cta-close')}
+                onClick={onTransactionModalClosed}>
+                {t('general.cta-close')}
               </Button>
             </>
           ) : isError() ? (

@@ -21,7 +21,7 @@ import {
 import { Identicon } from "../../components/Identicon";
 import { DATEPICKER_FORMAT, SIMPLE_DATE_TIME_FORMAT } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
-import { OperationType, PaymentRateType, TransactionStatus } from "../../models/enums";
+import { EventType, OperationType, PaymentRateType, TransactionStatus } from "../../models/enums";
 import {
   consoleOut,
   disabledDate,
@@ -51,8 +51,7 @@ import { customLogger } from '../..';
 import { StepSelector } from '../../components/StepSelector';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { useNavigate } from 'react-router-dom';
-import { TransactionStatusContext } from '../../contexts/transaction-status';
-import { notify } from '../../utils/notifications';
+import { confirmationEvents, TransactionStatusContext, TransactionStatusInfo } from '../../contexts/transaction-status';
 import { TokenDisplay } from '../../components/TokenDisplay';
 import { TextInput } from '../../components/TextInput';
 import { TokenListItem } from '../../components/TokenListItem';
@@ -72,7 +71,6 @@ export const RepeatingPayment = () => {
   const { endpoint } = useConnectionConfig();
   const { connected, publicKey, wallet } = useWallet();
   const {
-    contract,
     tokenList,
     selectedToken,
     tokenBalance,
@@ -106,10 +104,7 @@ export const RepeatingPayment = () => {
     setPaymentRateFrequency,
     setSelectedTokenBalance,
   } = useContext(AppStateContext);
-  const {
-    clearTransactionStatusContext,
-    startFetchTxSignatureInfo,
-  } = useContext(TransactionStatusContext);
+  const { enqueueTransactionConfirmation } = useContext(TransactionStatusContext);
   const navigate = useNavigate();
   const { t } = useTranslation('common');
   const [isBusy, setIsBusy] = useState(false);
@@ -122,6 +117,7 @@ export const RepeatingPayment = () => {
   const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
   const [mspClientVersion, setMspClientVersion] = useState(2);
+  const [canSubscribe, setCanSubscribe] = useState(true);
 
   useEffect(() => {
 
@@ -260,27 +256,51 @@ export const RepeatingPayment = () => {
 
   // Event handling
 
-  const onAfterTransactionModalClosed = () => {
+  const onTransactionModalClosed = () => {
     if (isBusy) {
       setTransactionCancelled(true);
     }
-    if (isSuccess()) {
-      resetContractValues();
-    }
+    closeTransactionModal();
+    resetContractValues();
     resetTransactionStatus();
   }
 
-  const handleGoToStreamsClick = () => {
+  const handleGoToStreamsClick = useCallback(() => {
     resetContractValues();
     setCurrentStep(0);
     closeTransactionModal();
-    notify({
-      message: t('notifications.create-money-stream-completed'),
-      description: t('notifications.create-money-stream-completed-wait-for-confirm'),
-      type: "info"
-    });
     navigate("/accounts/streams");
-  };
+  }, [closeTransactionModal, navigate, resetContractValues]);
+
+  const recordTxConfirmation = useCallback((signature: string, success = true) => {
+    let event: any;
+    event = success ? AppUsageEvent.TransferRecurringCompleted : AppUsageEvent.TransferRecurringFailed;
+    segmentAnalytics.recordEvent(event, { signature: signature });
+  }, []);
+
+  // Setup event handler for Tx confirmed
+  const onTxConfirmed = useCallback((item: TransactionStatusInfo) => {
+    consoleOut("onTxConfirmed event executed:", item, 'crimson');
+    // If we have the item, record success and remove it from the list
+    if (item) {
+      recordTxConfirmation(item.signature, true);
+      handleGoToStreamsClick();
+    }
+  }, [
+    handleGoToStreamsClick,
+    recordTxConfirmation,
+  ]);
+
+  // Setup event handler for Tx confirmation error
+  const onTxTimedout = useCallback((item: TransactionStatusInfo) => {
+    consoleOut("onTxTimedout event executed:", item, 'crimson');
+    // If we have the item, record failure and remove it from the list
+    if (item) {
+      recordTxConfirmation(item.signature, false);
+    }
+  }, [
+    recordTxConfirmation,
+  ]);
 
   const handleFromCoinAmountChange = (e: any) => {
 
@@ -433,6 +453,11 @@ export const RepeatingPayment = () => {
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'green');
         setUserBalances(undefined);
+        confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
+        consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
+        confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
+        consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
+        setCanSubscribe(true);
       }
     } else if (!connected) {
       setSelectedTokenBalance(0);
@@ -446,7 +471,9 @@ export const RepeatingPayment = () => {
     connected,
     publicKey,
     previousWalletConnectState,
-    setSelectedTokenBalance
+    setSelectedTokenBalance,
+    onTxConfirmed,
+    onTxTimedout,
   ]);
 
   // Reset results when the filter is cleared
@@ -486,6 +513,22 @@ export const RepeatingPayment = () => {
       window.removeEventListener('resize', resizeListener);
     }
   }, []);
+
+  // Setup event listeners
+  useEffect(() => {
+    if (publicKey && canSubscribe) {
+      setCanSubscribe(false);
+      confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
+      consoleOut('Subscribed to event txConfirmed with:', 'onTxConfirmed', 'blue');
+      confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
+      consoleOut('Subscribed to event txTimedout with:', 'onTxTimedout', 'blue');
+    }
+  }, [
+    publicKey,
+    canSubscribe,
+    onTxConfirmed,
+    onTxTimedout,
+  ]);
 
   //////////////////
   //  Validation  //
@@ -540,7 +583,7 @@ export const RepeatingPayment = () => {
           : !paymentStartDate
             ? t('transactions.validation.no-valid-date')
             : !recipientNote
-              ? 'Memo cannot be empty'
+              ? t('transactions.validation.memo-empty')
               : !arePaymentSettingsValid()
                 ? getPaymentSettingsButtonLabel()
                 : t('transactions.validation.valid-continue');
@@ -560,7 +603,7 @@ export const RepeatingPayment = () => {
       : !paymentStartDate
       ? t('transactions.validation.no-valid-date')
       : !recipientNote
-      ? 'Memo cannot be empty'
+      ? t('transactions.validation.memo-empty')
       : !arePaymentSettingsValid()
       ? getPaymentSettingsButtonLabel()
       : !isVerifiedRecipient
@@ -577,7 +620,7 @@ export const RepeatingPayment = () => {
       : '';
   }
 
-  const getPaymentRateLabel = (
+  const getPaymentRateLabel = useCallback((
     rate: PaymentRateType,
     amount: string | undefined
   ): string => {
@@ -606,7 +649,7 @@ export const RepeatingPayment = () => {
         break;
     }
     return label;
-  };
+  }, [selectedToken, t]);
 
   const getRecommendedFundingAmount = () => {
     const rateAmount = parseFloat(paymentRateAmount as string);
@@ -615,7 +658,7 @@ export const RepeatingPayment = () => {
     const formatted = formatAmount(recommendedMinAmount, selectedToken?.decimals, true);
 
     // String to obtain: 0.21 SOL (10%).
-    return `${parseFloat(formatted).toString()} ${selectedToken?.symbol}.`;
+    return `${parseFloat(formatted).toString()} ${selectedToken?.symbol}`;
   }
 
   const getOptionsFromEnum = (value: any): PaymentRateTypeOption[] => {
@@ -655,20 +698,18 @@ export const RepeatingPayment = () => {
 
   // Main action
 
-  const onTransactionStart = async () => {
+  const onTransactionStart = useCallback(async () => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
     setTransactionCancelled(false);
     setIsBusy(true);
 
     const createV1Tx = async (): Promise<boolean> => {
       if (wallet && publicKey && selectedToken) {
-        consoleOut("Start transaction for contract type:", contract?.name);
         consoleOut('Wallet address:', wallet?.publicKey?.toBase58());
 
         setTransactionStatus({
@@ -809,7 +850,6 @@ export const RepeatingPayment = () => {
 
     const createV2Tx = async (): Promise<boolean> => {
       if (wallet && publicKey && selectedToken) {
-        consoleOut("Start transaction for contract type:", contract?.name);
         consoleOut('Wallet address:', wallet?.publicKey?.toBase58());
 
         setTransactionStatus({
@@ -1087,14 +1127,50 @@ export const RepeatingPayment = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamCreate);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.TransactionFinished
+            });
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.StreamCreate,
+              finality: "confirmed",
+              txInfoFetchStatus: "fetching",
+              loadingTitle: "Confirming transaction",
+              loadingMessage: `Sending ${getPaymentRateLabel(paymentRateFrequency, paymentRateAmount)}`,
+              completedTitle: "Transaction confirmed",
+              completedMessage: "Money Stream created successfully"
+            });
             setIsBusy(false);
-            handleGoToStreamsClick();
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
-  };
+  }, [
+    wallet,
+    endpoint,
+    publicKey,
+    connection,
+    nativeBalance,
+    recipientNote,
+    selectedToken,
+    fromCoinAmount,
+    mspClientVersion,
+    recipientAddress,
+    paymentStartDate,
+    paymentRateAmount,
+    paymentRateFrequency,
+    streamProgramAddress,
+    transactionCancelled,
+    streamV2ProgramAddress,
+    repeatingPaymentFees.mspFlatFee,
+    repeatingPaymentFees.blockchainFee,
+    transactionStatus.currentOperation,
+    enqueueTransactionConfirmation,
+    setTransactionStatus,
+    showTransactionModal,
+    getPaymentRateLabel,
+  ]);
 
   const toggleMspClient = () => {
     if (mspClientVersion === 2) {
@@ -1178,16 +1254,6 @@ export const RepeatingPayment = () => {
 
   return (
     <>
-      {(isLocal() || isWhitelisted) && (
-        <div className="debug-bar">
-          <span className="secondary-link" onClick={() => toggleMspClient()}>[Toggle MSP client]</span>
-          <span className="ml-1">MSP client version:</span><span className="ml-1 font-bold fg-dark-active">{mspClientVersion || '-'}</span>
-          {/* <span className="ml-1">status:</span><span className="ml-1 font-bold fg-dark-active">{lastSentTxStatus || '-'}</span>
-          <span className="ml-1">recentlyCreatedVault:</span><span className="ml-1 font-bold fg-dark-active">{recentlyCreatedVault ? shortenAddress(recentlyCreatedVault, 8) : '-'}</span>
-          <span className="ml-1">lastSentTxSignature:</span><span className="ml-1 font-bold fg-dark-active">{lastSentTxSignature ? shortenAddress(lastSentTxSignature, 8) : '-'}</span> */}
-        </div>
-      )}
-
       <StepSelector step={currentStep} steps={2} onValueSelected={onStepperChange} />
 
       <div className={currentStep === 0 ? "contract-wrapper panel1 show" : "contract-wrapper panel1 hide"}>
@@ -1422,7 +1488,7 @@ export const RepeatingPayment = () => {
 
         <div className="mb-3 text-center">
           <div>{t('transactions.transaction-info.add-funds-repeating-payment-advice')}.</div>
-          <div>{t('transactions.transaction-info.min-recommended-amount')}: <span className="fg-red">{getRecommendedFundingAmount()}</span></div>
+          <div>{t('transactions.transaction-info.min-recommended-amount')}: <span className="fg-orange-red">{getRecommendedFundingAmount()}</span></div>
         </div>
 
         {/* Add funds */}
@@ -1578,10 +1644,9 @@ export const RepeatingPayment = () => {
       <Modal
         className="mean-modal"
         maskClosable={false}
-        afterClose={onAfterTransactionModalClosed}
         visible={isTransactionModalVisible}
         title={getTransactionModalTitle(transactionStatus, isBusy, t)}
-        onCancel={closeTransactionModal}
+        onCancel={onTransactionModalClosed}
         width={330}
         footer={null}>
         <div className="transaction-progress">
@@ -1604,7 +1669,7 @@ export const RepeatingPayment = () => {
                 type="primary"
                 shape="round"
                 size="middle"
-                onClick={handleGoToStreamsClick}>
+                onClick={onTransactionModalClosed}>
                 {t('transactions.status.cta-view-stream')}
               </Button>
             </>

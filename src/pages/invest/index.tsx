@@ -964,7 +964,7 @@ export const InvestView = () => {
 
                     <p>{t("invest.panel-right.liquidity-pool.text-one")}</p>
 
-                    <p>{t("invest.panel-right.liquidity-pool.text-two")} <a href="https://raydium.gitbook.io/raydium/exchange-trade-and-swap/liquidity-pools" target="_blank" rel="noreferrer"> Raydium </a> {t("invest.panel-right.liquidity-pool.text-two-divider")} <a href="https://docs.orca.so/how-to-provide-liquidity-on-orca" target="_blank" rel="noreferrer"> Orca </a>.</p>
+                    <p>{t("invest.panel-right.liquidity-pool.text-two")} <a href="https://raydium.gitbook.io/raydium/exchange-trade-and-swap/liquidity-pools" target="_blank" rel="noreferrer" className="fg-orange-red">Raydium</a> {t("invest.panel-right.liquidity-pool.text-two-divider")} <a href="https://docs.orca.so/how-to-provide-liquidity-on-orca" target="_blank" rel="noreferrer" className="fg-orange-red">Orca</a></p>
 
                     <p>{t("invest.panel-right.liquidity-pool.text-three")}</p>
 

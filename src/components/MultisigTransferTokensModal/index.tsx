@@ -9,7 +9,7 @@ import { consoleOut, getTransactionOperationDescription, isValidAddress } from '
 import { isError } from '../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TransactionFees } from '@mean-dao/money-streaming';
-import { formatAmount, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, isValidNumber, shortenAddress, toUiAmount } from '../../utils/utils';
+import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, isValidNumber, shortenAddress, toUiAmount } from '../../utils/utils';
 import { useConnection } from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
 import { PublicKey } from '@solana/web3.js';
@@ -18,8 +18,6 @@ import { MultisigVault } from '../../models/multisig';
 import { FALLBACK_COIN_IMAGE } from '../../constants';
 import { Identicon } from '../Identicon';
 import { BN } from 'bn.js';
-import { TokenDisplay } from '../TokenDisplay';
-import { DebounceInput } from 'react-debounce-input';
 
 const { Option } = Select;
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -177,6 +175,18 @@ export const MultisigTransferTokensModal = (props: {
     window.location.reload();
   }
 
+  // Handler paste clipboard data
+  const pasteHandler = (e: any) => {
+    const getClipBoardData = e.clipboardData.getData('Text');
+    const replaceCommaToDot = getClipBoardData.replace(",", "")
+    const onlyNumbersAndDot = replaceCommaToDot.replace(/[^.\d]/g, '');
+
+    console.log(onlyNumbersAndDot);
+    
+
+    setAmount(onlyNumbersAndDot.trim());
+  }
+
   return (
     <Modal
       className="mean-modal simple-modal"
@@ -260,7 +270,7 @@ export const MultisigTransferTokensModal = (props: {
                         </span>
                       </div>
                       <div className="right">
-                        <DebounceInput
+                        <input
                           className="general-text-input text-right"
                           inputMode="decimal"
                           autoComplete="off"
@@ -271,8 +281,8 @@ export const MultisigTransferTokensModal = (props: {
                           placeholder="0.0"
                           minLength={1}
                           maxLength={79}
-                          debounceTimeout={400}
                           spellCheck="false"
+                          onPaste={pasteHandler}
                           value={amount}
                         />
                       </div>

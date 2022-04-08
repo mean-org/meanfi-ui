@@ -62,8 +62,7 @@ import {
 } from "../../constants";
 import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from "../../contexts/connection";
 import { ConfirmOptions, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
-import { OperationType, TransactionStatus } from "../../models/enums";
-import { notify } from "../../utils/notifications";
+import { EventType, OperationType, TransactionStatus } from "../../models/enums";
 import { StreamAddFundsModal } from "../../components/StreamAddFundsModal";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { StreamCloseModal } from "../../components/StreamCloseModal";
@@ -71,7 +70,7 @@ import { useNativeAccount } from "../../contexts/accounts";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from "../../utils/ids";
-import { TransactionStatusContext } from "../../contexts/transaction-status";
+import { confirmationEvents, TransactionStatusContext, TransactionStatusInfo } from "../../contexts/transaction-status";
 import { Identicon } from "../../components/Identicon";
 import BN from "bn.js";
 import { InfoIcon } from "../../components/InfoIcon";
@@ -96,7 +95,13 @@ import { UserTokenAccount } from "../../models/transactions";
 import { customLogger } from "../..";
 import { StreamTreasuryType } from "../../models/treasuries";
 import { segmentAnalytics } from "../../App";
-import { AppUsageEvent, SegmentStreamAddFundsData, SegmentStreamCloseData, SegmentStreamTransferOwnershipData, SegmentStreamWithdrawData } from "../../utils/segment-service";
+import {
+  AppUsageEvent,
+  SegmentStreamAddFundsData,
+  SegmentStreamCloseData,
+  SegmentStreamTransferOwnershipData,
+  SegmentStreamWithdrawData
+} from "../../utils/segment-service";
 import { Program, Provider } from "@project-serum/anchor";
 import MultisigIdl from "../../models/mean-multisig-idl";
 import { MultisigV2 } from "../../models/multisig";
@@ -104,6 +109,7 @@ import { StreamPauseModal } from "../../components/StreamPauseModal";
 import { StreamResumeModal } from "../../components/StreamResumeModal";
 import { StreamLockedModal } from "../../components/StreamLockedModal";
 import { StreamEditModal } from "../../components/StreamEditModal";
+import { openNotification } from "../../components/Notifications";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -121,6 +127,8 @@ export const Streams = () => {
     streamListv2,
     streamDetail,
     activeStream,
+    tokenBalance,
+    isWhitelisted,
     selectedToken,
     loadingStreams,
     streamsSummary,
@@ -134,8 +142,7 @@ export const Streams = () => {
     hasMoreStreamActivity,
     highLightableStreamId,
     streamV2ProgramAddress,
-    tokenBalance,
-    isWhitelisted,
+    previousWalletConnectState,
     setStreamList,
     openStreamById,
     setStreamDetail,
@@ -155,13 +162,9 @@ export const Streams = () => {
     setHighLightableStreamId,
   } = useContext(AppStateContext);
   const {
-    fetchTxInfoStatus,
-    lastSentTxSignature,
-    lastSentTxOperationType,
-    clearTransactionStatusContext,
-    startFetchTxSignatureInfo,
+    confirmationHistory,
+    enqueueTransactionConfirmation
   } = useContext(TransactionStatusContext);
-
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
@@ -174,6 +177,7 @@ export const Streams = () => {
   });
   const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
   const [multisigAccounts, setMultisigAccounts] = useState<MultisigV2[] | undefined>(undefined);
+  const [canSubscribe, setCanSubscribe] = useState(true);
 
   // Treasury related
   const [streamTreasuryType, setStreamTreasuryType] = useState<StreamTreasuryType | undefined>(undefined);
@@ -309,8 +313,8 @@ export const Streams = () => {
       consoleOut("stream token:", unkToken, 'blue');
       setEffectiveRate(0);
     } else {
-      notify({
-        message: t('notifications.error-title'),
+      openNotification({
+        title: t('notifications.error-title'),
         description: t('transactions.validation.invalid-solana-address'),
         type: "error"
       });
@@ -320,13 +324,6 @@ export const Streams = () => {
     setSelectedToken,
     t,
   ]);
-
-  const isV2Stream = useCallback((): boolean => {
-    if (streamDetail) {
-      return streamDetail.version >= 2 ? true : false;
-    }
-    return false;
-  }, [streamDetail]);
 
   const isInboundStream = useCallback((item: Stream | StreamInfo): boolean => {
     if (item && publicKey) {
@@ -365,16 +362,114 @@ export const Streams = () => {
     return false;
   }
 
+  // confirmationHistory
+  const hasStreamPendingTx = useCallback(() => {
+    if (!streamDetail) { return false; }
+
+    if (confirmationHistory && confirmationHistory.length > 0) {
+      return confirmationHistory.some(h => h.extras === streamDetail.id && h.txInfoFetchStatus === "fetching");
+    }
+
+    return false;
+  }, [confirmationHistory, streamDetail]);
+
+  const recordTxConfirmation = useCallback((signature: string, operation: OperationType, success = true) => {
+    let event: any;
+    switch (operation) {
+      case OperationType.StreamCreate:
+        event = success ? AppUsageEvent.TransferRecurringCompleted : AppUsageEvent.TransferRecurringFailed;
+        segmentAnalytics.recordEvent(event, { signature: signature });
+        break;
+      case OperationType.StreamWithdraw:
+        event = success ? AppUsageEvent.StreamWithdrawalCompleted : AppUsageEvent.StreamWithdrawalFailed;
+        consoleOut('reporting to segmentAnalytics:', event, 'green');
+        segmentAnalytics.recordEvent(event, { signature: signature });
+        break;
+      case OperationType.StreamClose:
+        event = success ? AppUsageEvent.StreamCloseCompleted : AppUsageEvent.StreamCloseFailed;
+        segmentAnalytics.recordEvent(event, { signature: signature });
+        break;
+      case OperationType.StreamAddFunds:
+        event = success ? AppUsageEvent.StreamTopupCompleted : AppUsageEvent.StreamTopupFailed;
+        segmentAnalytics.recordEvent(event, { signature: signature });
+        break;
+      case OperationType.StreamTransferBeneficiary:
+        event = success ? AppUsageEvent.StreamTransferCompleted : AppUsageEvent.StreamTransferFailed;
+        segmentAnalytics.recordEvent(event, { signature: signature });
+        break;
+      default:
+        break;
+    }
+  }, []);
+
+  // Setup event handler for Tx confirmed
+  const onTxConfirmed = useCallback((item: TransactionStatusInfo) => {
+
+    const softReloadStreams = () => {
+      const streamsRefreshCta = document.getElementById("streams-refresh-noreset-cta");
+      if (streamsRefreshCta) {
+        streamsRefreshCta.click();
+      }
+    };
+
+    const hardReloadStreams = () => {
+      const streamsRefreshCta = document.getElementById("streams-refresh-cta");
+      if (streamsRefreshCta) {
+        streamsRefreshCta.click();
+      }
+    };
+
+    consoleOut("onTxConfirmed event handled:", item, 'crimson');
+    recordTxConfirmation(item.signature, item.operationType, true);
+    switch (item.operationType) {
+      case OperationType.StreamWithdraw:
+        softReloadStreams();
+        break;
+      case OperationType.StreamClose:
+        break;
+      case OperationType.StreamTransferBeneficiary:
+        break;
+      case OperationType.StreamCreate:
+        hardReloadStreams();
+        break;
+      case OperationType.StreamAddFunds:
+        if (customStreamDocked) {
+          openStreamById(item.extras, false);
+        } else {
+          softReloadStreams();
+        }
+        break;
+      default:
+        softReloadStreams();
+        break;
+    }
+  }, [
+    customStreamDocked,
+    recordTxConfirmation,
+    openStreamById,
+  ]);
+
+  // Setup event handler for Tx confirmation error
+  const onTxTimedout = useCallback((item: TransactionStatusInfo) => {
+    consoleOut("onTxTimedout event executed:", item, 'crimson');
+    // If we have the item, record failure and remove it from the list
+    if (item) {
+      recordTxConfirmation(item.signature, item.operationType, false);
+    }
+  }, [
+    recordTxConfirmation,
+  ]);
+
   // Copy address to clipboard
   const copyAddressToClipboard = useCallback((address: any) => {
 
     if (copyText(address.toString())) {
-      notify({
+      openNotification({
         description: t('notifications.account-address-copied-message'),
         type: "info"
       });
     } else {
-      notify({
+      openNotification({
         description: t('notifications.account-address-not-copied-message'),
         type: "error"
       });
@@ -711,9 +806,52 @@ export const Streams = () => {
     streamDetail?.associatedToken
   ]);
 
-  ///////////////////////
-  //  EVENTS & MODALS  //
-  ///////////////////////
+  // Hook on wallet connect/disconnect
+  useEffect(() => {
+
+    if (previousWalletConnectState !== connected) {
+      if (!previousWalletConnectState && connected && publicKey) {
+        consoleOut('User is connecting...', '', 'green');
+      } else if (previousWalletConnectState && !connected) {
+        consoleOut('User is disconnecting...', '', 'green');
+        confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
+        consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
+        confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
+        consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
+        setCanSubscribe(true);
+      }
+    }
+
+    return () => {
+      clearTimeout();
+    };
+
+  }, [
+    connected,
+    publicKey,
+    previousWalletConnectState,
+    onTxConfirmed,
+    onTxTimedout,
+  ]);
+
+  // Setup event listeners
+  useEffect(() => {
+    if (canSubscribe) {
+      setCanSubscribe(false);
+      confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
+      consoleOut('Subscribed to event txConfirmed with:', 'onTxConfirmed', 'blue');
+      confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
+      consoleOut('Subscribed to event txTimedout with:', 'onTxTimedout', 'blue');
+    }
+  }, [
+    canSubscribe,
+    onTxConfirmed,
+    onTxTimedout
+  ]);
+
+  //////////////////////
+  // MODALS & ACTIONS //
+  //////////////////////
 
   const refreshPage = () => {
     hideTransactionExecutionModal();
@@ -724,6 +862,36 @@ export const Streams = () => {
   const [isTransactionExecutionModalVisible, setTransactionExecutionModalVisibility] = useState(false);
   const showTransactionExecutionModal = useCallback(() => setTransactionExecutionModalVisibility(true), []);
   const hideTransactionExecutionModal = useCallback(() => setTransactionExecutionModalVisibility(false), []);
+
+  const onCloseStreamTransactionFinished = () => {
+    setIsBusy(false);
+    setCloseStreamTransactionModalVisibility(false);
+    resetTransactionStatus();
+    // TODO: Remove if a code review + UX review and testing find this unnecessary
+    // Try to remove the item from the list to avoid reloading the list
+    if (streamDetail && streamList && streamList.length > 1) {
+      let streamIndex = streamList.findIndex(s => s.id !== streamDetail.id);
+      if (streamIndex > 0) {
+        streamIndex--;
+      } else {
+        streamIndex = 0;
+      }
+      const filteredStreams = streamList.filter(s => s.id !== streamDetail.id);
+      setStreamList(filteredStreams);
+      setSelectedStream(filteredStreams[streamIndex]);
+    }
+  }
+
+  const onTransactionFinished = useCallback(() => {
+    setIsBusy(false);
+    resetTransactionStatus();
+    hideTransactionExecutionModal();
+    refreshTokenBalance();
+  }, [
+    hideTransactionExecutionModal,
+    refreshTokenBalance,
+    resetTransactionStatus,
+  ]);
 
   // Close stream modal
   const [isCloseStreamModalVisible, setIsCloseStreamModalVisibility] = useState(false);
@@ -803,17 +971,6 @@ export const Streams = () => {
     onExecutePauseStreamTransaction();
   };
 
-  const onPauseStreamTransactionFinished = useCallback(() => {
-    setIsBusy(false);
-    resetTransactionStatus();
-    hideTransactionExecutionModal();
-    refreshTokenBalance();
-  }, [
-    hideTransactionExecutionModal,
-    refreshTokenBalance,
-    resetTransactionStatus
-  ]);
-
   const onExecutePauseStreamTransaction = async () => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
@@ -821,7 +978,6 @@ export const Streams = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.StreamPause);
     setIsBusy(true);
@@ -1176,9 +1332,12 @@ export const Streams = () => {
     if (wallet && streamDetail) {
       showTransactionExecutionModal();
       let created: boolean;
+      let streamName = '';
       if (streamDetail.version < 2) {
+        streamName = (streamDetail as StreamInfo).streamName as string;
         created = await createTxV1();
       } else {
+        streamName = (streamDetail as Stream).name;
         created = await createTxV2();
       }
       consoleOut('created:', created, 'blue');
@@ -1190,9 +1349,19 @@ export const Streams = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamPause);
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.StreamPause,
+              finality: "confirmed",
+              txInfoFetchStatus: "fetching",
+              loadingTitle: "Confirming transaction",
+              loadingMessage: `Pause stream: ${streamName}`,
+              completedTitle: "Transaction confirmed",
+              completedMessage: `Successfully paused stream: ${streamName}`,
+              extras: streamDetail.id as string
+            });
             setOngoingOperation(undefined);
-            onPauseStreamTransactionFinished();
+            onTransactionFinished();
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -1256,17 +1425,6 @@ export const Streams = () => {
     onExecuteResumeStreamTransaction();
   };
 
-  const onResumeStreamTransactionFinished = useCallback(() => {
-    setIsBusy(false);
-    resetTransactionStatus();
-    hideTransactionExecutionModal();
-    refreshTokenBalance();
-  }, [
-    hideTransactionExecutionModal,
-    refreshTokenBalance,
-    resetTransactionStatus
-  ]);
-
   const onExecuteResumeStreamTransaction = async () => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
@@ -1274,7 +1432,6 @@ export const Streams = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.StreamResume);
     setIsBusy(true);
@@ -1627,9 +1784,12 @@ export const Streams = () => {
     if (wallet && streamDetail) {
       showTransactionExecutionModal();
       let created: boolean;
+      let streamName = '';
       if (streamDetail.version < 2) {
+        streamName = (streamDetail as StreamInfo).streamName as string;
         created = await createTxV1();
       } else {
+        streamName = (streamDetail as Stream).name;
         created = await createTxV2();
       }
       consoleOut('created:', created, 'blue');
@@ -1641,14 +1801,22 @@ export const Streams = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamResume);
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.StreamResume,
+              finality: "confirmed",
+              txInfoFetchStatus: "fetching",
+              loadingTitle: "Confirming transaction",
+              loadingMessage: `Resume stream: ${streamName}`,
+              completedTitle: "Transaction confirmed",
+              completedMessage: `Successfully resumed stream: ${streamName}`,
+              extras: streamDetail.id as string
+            });
             setOngoingOperation(undefined);
-            onResumeStreamTransactionFinished();
+            onTransactionFinished();
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
-    } else {
-
     }
   };
 
@@ -1694,360 +1862,11 @@ export const Streams = () => {
     resetTransactionStatus
   ]);
 
-  const onStreamModified = useCallback(() => {
-    setIsEditStreamModalVisibility(false);
-    resetTransactionStatus();
-    notify({
-      description: t('multisig.update-multisig.success-message'),
-      type: "success"
-    });
-
-  },[
-    t,
-    resetTransactionStatus
-  ]);
-
   const hideEditStreamModal = useCallback(() => setIsEditStreamModalVisibility(false), []);
   const onAcceptEditStream = () => {
     hideEditStreamModal();
     // onExecuteResumeStreamTransaction();
   };
-
-  // const onAcceptEditMultisig = (data: any) => {
-  //   consoleOut('multisig:', data, 'blue');
-  //   onExecuteEditMultisigTx(data);
-  // };
-
-  // const onExecuteEditMultisigTx = useCallback(async (data: any) => {
-
-  //   let transaction: Transaction;
-  //   let signedTransaction: Transaction;
-  //   let signature: any;
-  //   let encodedTx: string;
-  //   const transactionLog: any[] = [];
-
-  //   clearTransactionStatusContext();
-  //   setTransactionCancelled(false);
-  //   setOngoingOperation(OperationType.CreateMultisig);
-  //   setRetryOperationPayload(data);
-  //   setIsBusy(true);
-
-  //   const editMultisig = async (data: any) => {
-
-  //     const [multisigSigner] = await PublicKey.findProgramAddress(
-  //       [selectedMultisig.id.toBuffer()],
-  //       multisigClient.programId
-  //     );
-
-  //     const owners = data.owners.map((p: MultisigParticipant) => {
-  //       return {
-  //         address: new PublicKey(p.address),
-  //         name: p.name
-  //       }
-  //     });
-
-  //     const pid = multisigClient.programId;
-  //     const operation = OperationType.EditMultisig;
-  //     // Edit Multisig
-  //     const ixData = multisigClient.coder.instruction.encode("edit_multisig", {
-  //       owners: owners,
-  //       threshold: new BN(data.threshold),
-  //       label: data.label as any
-  //     });
-
-  //     const ixAccounts = [
-  //       {
-  //         pubkey: selectedMultisig.id,
-  //         isWritable: true,
-  //         isSigner: false,
-  //       },
-  //       {
-  //         pubkey: multisigSigner,
-  //         isWritable: false,
-  //         isSigner: true,
-  //       },
-  //     ];
-
-  //     const transaction = Keypair.generate();
-  //     const txSize = 1000;
-  //     const createIx = await multisigClient.account.transaction.createInstruction(
-  //       transaction,
-  //       txSize
-  //     );
-      
-  //     let tx = multisigClient.transaction.createTransaction(
-  //       pid, 
-  //       operation,
-  //       ixAccounts as any,
-  //       ixData as any,
-  //       new BN(0),
-  //       new BN(0),
-  //       {
-  //         accounts: {
-  //           multisig: selectedMultisig.id,
-  //           transaction: transaction.publicKey,
-  //           proposer: publicKey as PublicKey,
-  //         },
-  //         preInstructions: [createIx],
-  //         signers: [transaction, wallet as any],
-  //       }
-  //     );
-
-  //     tx.feePayer = publicKey;
-  //     const { blockhash } = await connection.getRecentBlockhash("confirmed");
-  //     tx.recentBlockhash = blockhash;
-  //     tx.partialSign(...[transaction]);
-
-  //     return tx;
-  //   };
-
-  //   const createTx = async (): Promise<boolean> => {
-
-  //     if (publicKey && data) {
-  //       consoleOut("Start transaction for create multisig", '', 'blue');
-  //       consoleOut('Wallet address:', publicKey.toBase58());
-
-  //       setTransactionStatus({
-  //         lastOperation: TransactionStatus.TransactionStart,
-  //         currentOperation: TransactionStatus.InitTransaction
-  //       });
-
-  //       // Create a transaction
-  //       const payload = {
-  //         wallet: publicKey.toBase58(),                               // wallet
-  //         label: data.label,                                          // multisig label
-  //         threshold: data.threshold,
-  //         owners: data.owners
-  //       };
-
-  //       consoleOut('data:', payload);
-
-  //       // Log input data
-  //       transactionLog.push({
-  //         action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
-  //         inputs: payload
-  //       });
-
-  //       transactionLog.push({
-  //         action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
-  //         result: ''
-  //       });
-
-  //       // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
-  //       // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-  //       consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
-  //       consoleOut('nativeBalance:', nativeBalance, 'blue');
-
-  //       if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
-  //         setTransactionStatus({
-  //           lastOperation: transactionStatus.currentOperation,
-  //           currentOperation: TransactionStatus.TransactionStartFailure
-  //         });
-  //         transactionLog.push({
-  //           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-  //           result: `Not enough balance (${
-  //             getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
-  //           }) to pay for network fees (${
-  //             getTokenAmountAndSymbolByTokenAddress(
-  //               transactionFees.blockchainFee + transactionFees.mspFlatFee, 
-  //               NATIVE_SOL_MINT.toBase58()
-  //             )
-  //           })`
-  //         });
-  //         customLogger.logWarning('Edit multisig transaction failed', { transcript: transactionLog });
-  //         return false;
-  //       }
-
-  //       return await editMultisig(data)
-  //         .then(value => {
-  //           consoleOut('editMultisig returned transaction:', value);
-  //           setTransactionStatus({
-  //             lastOperation: TransactionStatus.InitTransactionSuccess,
-  //             currentOperation: TransactionStatus.SignTransaction
-  //           });
-  //           transactionLog.push({
-  //             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-  //             result: getTxIxResume(value)
-  //           });
-  //           transaction = value;
-  //           return true;
-  //         })
-  //         .catch(error => {
-  //           console.error('editMultisig error:', error);
-  //           setTransactionStatus({
-  //             lastOperation: transactionStatus.currentOperation,
-  //             currentOperation: TransactionStatus.InitTransactionFailure
-  //           });
-  //           transactionLog.push({
-  //             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
-  //             result: `${error}`
-  //           });
-  //           customLogger.logError('Edit multisig transaction failed', { transcript: transactionLog });
-  //           return false;
-  //         });
-
-  //     } else {
-  //       transactionLog.push({
-  //         action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-  //         result: 'Cannot start transaction! Wallet not found!'
-  //       });
-  //       customLogger.logError('Edit multisig transaction failed', { transcript: transactionLog });
-  //       return false;
-  //     }
-  //   }
-
-  //   const signTx = async (): Promise<boolean> => {
-  //     if (wallet) {
-  //       consoleOut('Signing transaction...');
-  //       return await wallet.signTransaction(transaction)
-  //       .then((signed: Transaction) => {
-  //         consoleOut('signTransaction returned a signed transaction:', signed);
-  //         signedTransaction = signed;
-  //         // Try signature verification by serializing the transaction
-  //         try {
-  //           encodedTx = signedTransaction.serialize().toString('base64');
-  //           consoleOut('encodedTx:', encodedTx, 'orange');
-  //         } catch (error) {
-  //           console.error(error);
-  //           setTransactionStatus({
-  //             lastOperation: TransactionStatus.SignTransaction,
-  //             currentOperation: TransactionStatus.SignTransactionFailure
-  //           });
-  //           transactionLog.push({
-  //             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-  //             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
-  //           });
-  //           customLogger.logError('Edit multisig transaction failed', { transcript: transactionLog });
-  //           return false;
-  //         }
-  //         setTransactionStatus({
-  //           lastOperation: TransactionStatus.SignTransactionSuccess,
-  //           currentOperation: TransactionStatus.SendTransaction
-  //         });
-  //         transactionLog.push({
-  //           action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-  //           result: {signer: wallet.publicKey.toBase58()}
-  //         });
-  //         return true;
-  //       })
-  //       .catch(error => {
-  //         console.error(error);
-  //         setTransactionStatus({
-  //           lastOperation: TransactionStatus.SignTransaction,
-  //           currentOperation: TransactionStatus.SignTransactionFailure
-  //         });
-  //         transactionLog.push({
-  //           action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-  //           result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
-  //         });
-  //         customLogger.logError('Edit multisig transaction failed', { transcript: transactionLog });
-  //         return false;
-  //       });
-  //     } else {
-  //       console.error('Cannot sign transaction! Wallet not found!');
-  //       setTransactionStatus({
-  //         lastOperation: TransactionStatus.SignTransaction,
-  //         currentOperation: TransactionStatus.WalletNotFound
-  //       });
-  //       transactionLog.push({
-  //         action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-  //         result: 'Cannot sign transaction! Wallet not found!'
-  //       });
-  //       customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
-  //       return false;
-  //     }
-  //   }
-
-  //   const sendTx = async (): Promise<boolean> => {
-  //     if (wallet) {
-  //       return await connection
-  //         .sendEncodedTransaction(encodedTx)
-  //         .then(sig => {
-  //           consoleOut('sendEncodedTransaction returned a signature:', sig);
-  //           setTransactionStatus({
-  //             lastOperation: TransactionStatus.SendTransactionSuccess,
-  //             currentOperation: TransactionStatus.ConfirmTransaction
-  //           });
-  //           signature = sig;
-  //           transactionLog.push({
-  //             action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
-  //             result: `signature: ${signature}`
-  //           });
-  //           return true;
-  //         })
-  //         .catch(error => {
-  //           console.error(error);
-  //           setTransactionStatus({
-  //             lastOperation: TransactionStatus.SendTransaction,
-  //             currentOperation: TransactionStatus.SendTransactionFailure
-  //           });
-  //           transactionLog.push({
-  //             action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
-  //             result: { error, encodedTx }
-  //           });
-  //           customLogger.logError('Edit multisig transaction failed', { transcript: transactionLog });
-  //           return false;
-  //         });
-  //     } else {
-  //       console.error('Cannot send transaction! Wallet not found!');
-  //       setTransactionStatus({
-  //         lastOperation: TransactionStatus.SendTransaction,
-  //         currentOperation: TransactionStatus.WalletNotFound
-  //       });
-  //       transactionLog.push({
-  //         action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-  //         result: 'Cannot send transaction! Wallet not found!'
-  //       });
-  //       customLogger.logError('Edit multisig transaction failed', { transcript: transactionLog });
-  //       return false;
-  //     }
-  //   }
-
-  //   if (wallet) {
-  //     const create = await createTx();
-  //     consoleOut('created:', create);
-  //     if (create && !transactionCancelled) {
-  //       const sign = await signTx();
-  //       consoleOut('signed:', sign);
-  //       if (sign && !transactionCancelled) {
-  //         const sent = await sendTx();
-  //         consoleOut('sent:', sent);
-  //         if (sent && !transactionCancelled) {
-  //           consoleOut('Send Tx to confirmation queue:', signature);
-  //           startFetchTxSignatureInfo(signature, "confirmed", OperationType.EditMultisig);
-  //           setIsBusy(false);
-  //           setTransactionStatus({
-  //             lastOperation: transactionStatus.currentOperation,
-  //             currentOperation: TransactionStatus.TransactionFinished
-  //           });
-  //           onMultisigModified();
-  //           setOngoingOperation(undefined);
-  //           setIsEditMultisigModalVisible(false);
-  //         } else { setIsBusy(false); }
-  //       } else { setIsBusy(false); }
-  //     } else { setIsBusy(false); }
-  //   }
-
-  // }, [
-  //   selectedMultisig,
-  //   clearTransactionStatusContext,
-  //   connection,
-  //   multisigClient.account.transaction,
-  //   multisigClient.coder.instruction,
-  //   multisigClient.programId,
-  //   multisigClient.transaction,
-  //   nativeBalance,
-  //   onMultisigModified,
-  //   publicKey,
-  //   setTransactionStatus,
-  //   startFetchTxSignatureInfo,
-  //   transactionCancelled,
-  //   transactionFees.blockchainFee,
-  //   transactionFees.mspFlatFee,
-  //   transactionStatus.currentOperation,
-  //   wallet
-  // ]);
-
 
   const isMultisigTreasury = useCallback((treasury?: any) => {
 
@@ -2114,8 +1933,22 @@ export const Streams = () => {
   };
 
   const onTransferStreamTransactionFinished = () => {
-    resetTransactionStatus();
+    setIsBusy(false);
     hideTransferStreamTransactionModal();
+    resetTransactionStatus();
+    // TODO: Remove if a code review + UX review and testing find this unnecessary
+    // Try to remove the item from the list to avoid reloading the list
+    if (streamDetail && streamList && streamList.length > 1) {
+      let streamIndex = streamList.findIndex(s => s.id !== streamDetail.id);
+      if (streamIndex > 0) {
+        streamIndex--;
+      } else {
+        streamIndex = 0;
+      }
+      const filteredStreams = streamList.filter(s => s.id !== streamDetail.id);
+      setStreamList(filteredStreams);
+      setSelectedStream(filteredStreams[streamIndex]);
+    }
   };
 
   const onAfterTransferStreamTransactionModalClosed = () => {
@@ -2135,7 +1968,6 @@ export const Streams = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
     setTransactionCancelled(false);
     setIsBusy(true);
 
@@ -2358,7 +2190,7 @@ export const Streams = () => {
       }
     }
 
-    if (wallet) {
+    if (wallet && streamDetail) {
       showTransferStreamTransactionModal();
       const created = await createTx();
       consoleOut('created:', created, 'blue');
@@ -2370,14 +2202,22 @@ export const Streams = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamTransferBeneficiary);
-            setIsBusy(false);
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.StreamTransferBeneficiary,
+              finality: "confirmed",
+              txInfoFetchStatus: "fetching",
+              loadingTitle: "Confirming transaction",
+              loadingMessage: `Transfer stream to: ${shortenAddress(address)}`,
+              completedTitle: "Transaction confirmed",
+              completedMessage: `Stream transferred to: ${shortenAddress(address)}`,
+              extras: streamDetail.id as string
+            });
             onTransferStreamTransactionFinished();
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
-
   };
 
   // Add funds modal
@@ -2443,8 +2283,6 @@ export const Streams = () => {
 
   const onAddFundsTransactionFinished = () => {
     resetTransactionStatus();
-    hideWithdrawFundsTransactionModal();
-    hideCloseStreamTransactionModal();
     hideAddFundsTransactionModal();
     refreshTokenBalance();
   };
@@ -2456,7 +2294,6 @@ export const Streams = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
     setTransactionCancelled(false);
     setIsBusy(true);
 
@@ -2880,7 +2717,8 @@ export const Streams = () => {
       }
     }
 
-    if (wallet && streamDetail) {
+    if (wallet && streamDetail && selectedToken ) {
+      const token = Object.assign({}, selectedToken);
       showAddFundsTransactionModal();
       let created: boolean;
       if (streamDetail.version < 2) {
@@ -2897,14 +2735,29 @@ export const Streams = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamAddFunds);
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.StreamAddFunds,
+              finality: "confirmed",
+              txInfoFetchStatus: "fetching",
+              loadingTitle: "Confirming transaction",
+              loadingMessage: `Fund stream with ${formatThousands(
+                parseFloat(addFundsData.amount),
+                token.decimals
+              )} ${token.symbol}`,
+              completedTitle: "Transaction confirmed",
+              completedMessage: `Stream funded with ${formatThousands(
+                parseFloat(addFundsData.amount),
+                token.decimals
+              )} ${token.symbol}`,
+              extras: streamDetail.id as string
+            });
             setIsBusy(false);
             onAddFundsTransactionFinished();
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
-
   };
 
   // Withdraw funds modal
@@ -3212,94 +3065,6 @@ export const Streams = () => {
     return label;
   }
 
-  const recordTxConfirmationResult = useCallback((operation: OperationType, success = true) => {
-    let event: any;
-    switch (operation) {
-      case OperationType.StreamCreate:
-        event = success ? AppUsageEvent.TransferRecurringCompleted : AppUsageEvent.TransferRecurringFailed;
-        segmentAnalytics.recordEvent(event, { signature: lastSentTxSignature });
-        break;
-      case OperationType.StreamWithdraw:
-        event = success ? AppUsageEvent.StreamWithdrawalCompleted : AppUsageEvent.StreamWithdrawalFailed;
-        segmentAnalytics.recordEvent(event, { signature: lastSentTxSignature });
-        break;
-      case OperationType.StreamClose:
-        event = success ? AppUsageEvent.StreamCloseCompleted : AppUsageEvent.StreamCloseFailed;
-        segmentAnalytics.recordEvent(event, { signature: lastSentTxSignature });
-        break;
-      case OperationType.StreamAddFunds:
-        event = success ? AppUsageEvent.StreamTopupCompleted : AppUsageEvent.StreamTopupFailed;
-        segmentAnalytics.recordEvent(event, { signature: lastSentTxSignature });
-        break;
-      case OperationType.StreamTransferBeneficiary:
-        event = success ? AppUsageEvent.StreamTransferCompleted : AppUsageEvent.StreamTransferFailed;
-        segmentAnalytics.recordEvent(event, { signature: lastSentTxSignature });
-        break;
-      default:
-        break;
-    }
-  }, [lastSentTxSignature]);
-
-  // Handle what to do when pending Tx confirmation reaches finality or on error
-  useEffect(() => {
-    if (!streamDetail) { return; }
-
-    if (lastSentTxSignature) {
-      if (fetchTxInfoStatus === "error") {
-        if (lastSentTxOperationType !== undefined) {
-          recordTxConfirmationResult(lastSentTxOperationType, false);
-        }
-        clearTransactionStatusContext();
-        return;
-      } else if (fetchTxInfoStatus === "fetched") {
-        switch (lastSentTxOperationType) {
-          case OperationType.StreamWithdraw:
-            clearTransactionStatusContext();
-            recordTxConfirmationResult(lastSentTxOperationType);
-            refreshStreamList(false);
-            break;
-          case OperationType.StreamClose:
-            recordTxConfirmationResult(lastSentTxOperationType);
-            if (streamList && streamList.length > 1) {
-              const filteredStreams = streamList.filter(s => s.id !== streamDetail.id);
-              setStreamList(filteredStreams);
-            }
-            refreshStreamList(true);
-            break;
-          case OperationType.StreamTransferBeneficiary:
-          case OperationType.StreamCreate:
-            recordTxConfirmationResult(lastSentTxOperationType);
-            refreshStreamList(true);
-            break;
-          case OperationType.StreamAddFunds:
-            recordTxConfirmationResult(lastSentTxOperationType);
-            clearTransactionStatusContext();
-            if (customStreamDocked) {
-              openStreamById(streamDetail?.id as string, false);
-            } else {
-              refreshStreamList(false);
-            }
-            break;
-          default:
-            refreshStreamList(false);
-            break;
-        }
-      }
-    }
-  }, [
-    streamList,
-    streamDetail,
-    fetchTxInfoStatus,
-    customStreamDocked,
-    lastSentTxSignature,
-    lastSentTxOperationType,
-    clearTransactionStatusContext,
-    recordTxConfirmationResult,
-    refreshStreamList,
-    openStreamById,
-    setStreamList,
-  ]);
-
   // Transaction execution (Applies to all transactions)
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
@@ -3329,8 +3094,6 @@ export const Streams = () => {
       setTransactionCancelled(true);
     }
     if (isSuccess()) {
-      hideWithdrawFundsTransactionModal();
-      hideCloseStreamTransactionModal();
       hideAddFundsTransactionModal();
     }
     resetTransactionStatus();
@@ -3344,8 +3107,6 @@ export const Streams = () => {
   const onWithdrawFundsTransactionFinished = () => {
     resetTransactionStatus();
     hideWithdrawFundsTransactionModal();
-    hideCloseStreamTransactionModal();
-    hideAddFundsTransactionModal();
     refreshTokenBalance();
   };
 
@@ -3355,8 +3116,6 @@ export const Streams = () => {
     }
     if (isSuccess()) {
       hideWithdrawFundsTransactionModal();
-      hideCloseStreamTransactionModal();
-      hideAddFundsTransactionModal();
     }
     resetTransactionStatus();
   }
@@ -3368,7 +3127,6 @@ export const Streams = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
     setTransactionCancelled(false);
     setIsBusy(true);
 
@@ -3706,7 +3464,8 @@ export const Streams = () => {
       }
     }
 
-    if (wallet && streamDetail) {
+    if (wallet && streamDetail && selectedToken) {
+      const token = Object.assign({}, selectedToken);
       showWithdrawFundsTransactionModal();
       let created: boolean;
       if (streamDetail.version < 2) {
@@ -3723,42 +3482,35 @@ export const Streams = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamWithdraw);
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.StreamWithdraw,
+              finality: "confirmed",
+              txInfoFetchStatus: "fetching",
+              loadingTitle: "Confirming transaction",
+              loadingMessage: `Withdraw ${formatThousands(
+                parseFloat(withdrawData.amount),
+                token.decimals
+              )} ${token.symbol}`,
+              completedTitle: "Transaction confirmed",
+              completedMessage: `Successfully withdrawn ${formatThousands(
+                parseFloat(withdrawData.amount),
+                token.decimals
+              )} ${token.symbol}`,
+              extras: streamDetail.id as string
+            });
             setIsBusy(false);
             onWithdrawFundsTransactionFinished();
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
-    } else {
-      consoleOut("No me muestro");
     }
-
   };
 
   // Close stream Transaction execution modal
   const [isCloseStreamTransactionModalVisible, setCloseStreamTransactionModalVisibility] = useState(false);
   const showCloseStreamTransactionModal = useCallback(() => setCloseStreamTransactionModalVisibility(true), []);
   const hideCloseStreamTransactionModal = useCallback(() => setCloseStreamTransactionModalVisibility(false), []);
-
-  const onCloseStreamTransactionFinished = () => {
-    resetTransactionStatus();
-    hideWithdrawFundsTransactionModal();
-    hideCloseStreamTransactionModal();
-    hideAddFundsTransactionModal();
-    refreshTokenBalance();
-  };
-
-  const onAfterCloseStreamTransactionModalClosed = () => {
-    if (isBusy) {
-      setTransactionCancelled(true);
-    }
-    if (isSuccess()) {
-      hideWithdrawFundsTransactionModal();
-      hideCloseStreamTransactionModal();
-      hideAddFundsTransactionModal();
-    }
-    resetTransactionStatus();
-  }
 
   const onExecuteCloseStreamTransaction = async (closeTreasuryData: any) => {
     let transaction: Transaction;
@@ -3767,7 +3519,6 @@ export const Streams = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
     setTransactionCancelled(false);
     setIsBusy(true);
 
@@ -4103,9 +3854,12 @@ export const Streams = () => {
     if (wallet && streamDetail) {
       showCloseStreamTransactionModal();
       let created: boolean;
+      let streamName = '';
       if (streamDetail.version < 2) {
+        streamName = (streamDetail as StreamInfo).streamName as string;
         created = await createTxV1();
       } else {
+        streamName = (streamDetail as Stream).name;
         created = await createTxV2();
       }
       consoleOut('created:', created, 'blue');
@@ -4117,14 +3871,22 @@ export const Streams = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamClose);
-            setIsBusy(false);
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.StreamClose,
+              finality: "confirmed",
+              txInfoFetchStatus: "fetching",
+              loadingTitle: "Confirming transaction",
+              loadingMessage: `Close stream: ${streamName}`,
+              completedTitle: "Transaction confirmed",
+              completedMessage: `Successfully closed stream: ${streamName}`,
+              extras: streamDetail.id as string
+            });
             onCloseStreamTransactionFinished();
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
-
   };
 
   const getStreamClosureMessage = () => {
@@ -4159,11 +3921,15 @@ export const Streams = () => {
     );
   }
 
-  const onRefreshStreamsClick = () => {
+  const onRefreshStreams = () => {
     // Record user event in Segment Analytics
     segmentAnalytics.recordEvent(AppUsageEvent.StreamRefresh);
     refreshStreamList(true);
     setCustomStreamDocked(false);
+  };
+
+  const onRefreshStreamsNoReset = () => {
+    refreshStreamList(false);
   };
 
   const getRateAmountDisplay = (item: Stream | StreamInfo): string => {
@@ -4266,30 +4032,6 @@ export const Streams = () => {
       }
     }
     return false;
-  }
-
-  const isCreating = (): boolean => {
-    return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.StreamCreate
-            ? true
-            : false;
-  }
-
-  const isClosing = (): boolean => {
-    return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.StreamClose
-            ? true
-            : false;
-  }
-
-  const isWithdrawing = (): boolean => {
-    return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.StreamWithdraw
-            ? true
-            : false;
-  }
-
-  const isAddingFunds = (): boolean => {
-    return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.StreamAddFunds
-            ? true
-            : false;
   }
 
   const hasAllocation = (): boolean => {
@@ -4669,25 +4411,17 @@ export const Streams = () => {
                       shape="round"
                       size="small"
                       disabled={
+                        isBusy ||
+                        hasStreamPendingTx() ||
                         isScheduledOtp() ||
-                        !stream?.escrowVestedAmount ||
-                        publicKey?.toBase58() !== stream?.beneficiaryAddress ||
-                        fetchTxInfoStatus === "fetching"
+                        !stream.escrowVestedAmount ||
+                        publicKey?.toBase58() !== stream.beneficiaryAddress
                       }
                       onClick={showWithdrawModal}>
-                      {fetchTxInfoStatus === "fetching" && (<LoadingOutlined />)}
-                      {isClosing()
-                        ? t('streams.stream-detail.cta-disabled-closing')
-                        : isCreating()
-                          ? t('streams.stream-detail.cta-disabled-creating')
-                          : isAddingFunds()
-                            ? t('streams.stream-detail.cta-disabled-funding')
-                            : isWithdrawing()
-                              ? t('streams.stream-detail.cta-disabled-withdrawing')
-                              : t('streams.stream-detail.withdraw-funds-cta')
-                      }
+                      {isBusy && (<LoadingOutlined />)}
+                      {t('streams.stream-detail.withdraw-funds-cta')}
                     </Button>
-                    {fetchTxInfoStatus !== "fetching" && (
+                    {(!isBusy || !hasStreamPendingTx()) && (
                       <Dropdown overlay={menu} trigger={["click"]}>
                         <Button
                           shape="round"
@@ -4909,25 +4643,17 @@ export const Streams = () => {
                       shape="round"
                       size="small"
                       disabled={
+                        isBusy ||
+                        hasStreamPendingTx() ||
                         isScheduledOtp() ||
-                          !stream.withdrawableAmount ||
-                          publicKey?.toBase58() !== stream.beneficiary ||
-                          fetchTxInfoStatus === "fetching"
+                        !stream.withdrawableAmount ||
+                        publicKey?.toBase58() !== stream.beneficiary
                       }
                       onClick={showWithdrawModal}>
-                      {fetchTxInfoStatus === "fetching" && (<LoadingOutlined />)}
-                      {isClosing()
-                        ? t('streams.stream-detail.cta-disabled-closing')
-                        : isCreating()
-                          ? t('streams.stream-detail.cta-disabled-creating')
-                          : isAddingFunds()
-                            ? t('streams.stream-detail.cta-disabled-funding')
-                            : isWithdrawing()
-                              ? t('streams.stream-detail.cta-disabled-withdrawing')
-                              : t('streams.stream-detail.withdraw-funds-cta')
-                      }
+                      {isBusy && (<LoadingOutlined />)}
+                      {t('streams.stream-detail.withdraw-funds-cta')}
                     </Button>
-                    {fetchTxInfoStatus !== "fetching" && (
+                    {(!isBusy || !hasStreamPendingTx()) && (
                       <Dropdown overlay={menu} trigger={["click"]}>
                         <Button
                           shape="round"
@@ -5212,7 +4938,6 @@ export const Streams = () => {
                   )}
 
                   {/* Top up (add funds) button */}
-                  {/* Withdraw */}
                   <div className="mt-3 mb-1 withdraw-container">
                     {isOtp() ? (
                       <>
@@ -5222,19 +4947,10 @@ export const Streams = () => {
                           type="text"
                           shape="round"
                           size="small"
-                          disabled={fetchTxInfoStatus === "fetching"}
+                          disabled={isBusy || hasStreamPendingTx()}
                           onClick={showCloseStreamModal}>
-                          {fetchTxInfoStatus === "fetching" && (<LoadingOutlined />)}
-                          {isClosing()
-                            ? t('streams.stream-detail.cta-disabled-closing')
-                            : isCreating()
-                              ? t('streams.stream-detail.cta-disabled-creating')
-                              : isAddingFunds()
-                                ? t('streams.stream-detail.cta-disabled-funding')
-                                : isWithdrawing()
-                                  ? t('streams.stream-detail.cta-disabled-withdrawing')
-                                  : t('streams.stream-detail.cancel-scheduled-transfer')
-                          }
+                          {(isBusy || hasStreamPendingTx()) && (<LoadingOutlined />)}
+                          {t('streams.stream-detail.cancel-scheduled-transfer')}
                         </Button>
                       </>
                     ) : (
@@ -5246,27 +4962,20 @@ export const Streams = () => {
                           shape="round"
                           size="small"
                           disabled={
+                            isBusy ||
+                            hasStreamPendingTx() ||
                             isOtp() ||
-                            fetchTxInfoStatus === "fetching" ||
                             (getTreasuryType() === "locked" && (stream && stream.state === STREAM_STATE.Running))
                           }
                           onClick={(getTreasuryType() === "open") ? showAddFundsModal : showCloseStreamModal}>
-                          {fetchTxInfoStatus === "fetching" && (<LoadingOutlined />)}
-                          {isClosing()
-                            ? t('streams.stream-detail.cta-disabled-closing')
-                            : isCreating()
-                              ? t('streams.stream-detail.cta-disabled-creating')
-                              : isAddingFunds()
-                                ? t('streams.stream-detail.cta-disabled-funding')
-                                : isWithdrawing()
-                                  ? t('streams.stream-detail.cta-disabled-withdrawing')
-                                  : (getTreasuryType() === "open") 
-                                    ? t('streams.stream-detail.add-funds-cta') 
-                                    : t('streams.stream-detail.close-stream-cta')
+                          {isBusy && (<LoadingOutlined />)}
+                          {getTreasuryType() === "open"
+                            ? t('streams.stream-detail.add-funds-cta') 
+                            : t('streams.stream-detail.close-stream-cta')
                           }
                         </Button>
                         {(getTreasuryType() === "open") && (
-                          fetchTxInfoStatus !== "fetching" && (
+                          (!isBusy || !hasStreamPendingTx()) && (
                             <Dropdown overlay={menu} trigger={["click"]}>
                               <Button
                                 shape="round"
@@ -5525,93 +5234,86 @@ export const Streams = () => {
                   )}
 
                   {/* Top up (add funds) button */}
-                    <Tooltip title={(getTreasuryType() === "locked" && stream.status === STREAM_STATUS.Running) ? t("streams.stream-detail.close-stream-cta-tooltip") : ""}>
-                      <div className="mt-3 mb-3 withdraw-container">
-                        <Button
-                          block
-                          className="withdraw-cta"
-                          type="text"
-                          shape="round"
-                          size="small"
-                          disabled={
-                            isOtp() ||
-                            fetchTxInfoStatus === "fetching" ||
-                            (getTreasuryType() === "locked" && stream.status === STREAM_STATUS.Running)
-                          }
-                          onClick={(getTreasuryType() === "open") ? showAddFundsModal : showCloseStreamModal}>
-                          {fetchTxInfoStatus === "fetching" && (<LoadingOutlined />)}
-                          {isClosing()
-                            ? t('streams.stream-detail.cta-disabled-closing')
-                            : isCreating()
-                              ? t('streams.stream-detail.cta-disabled-creating')
-                              : isAddingFunds()
-                                ? t('streams.stream-detail.cta-disabled-funding')
-                                : isWithdrawing()
-                                  ? t('streams.stream-detail.cta-disabled-withdrawing')
-                                  : (getTreasuryType() === "open") 
-                                    ? t('streams.stream-detail.add-funds-cta') 
-                                    : t('streams.stream-detail.close-stream-cta')
-                          }
-                        </Button>
-                        {(getTreasuryType() === "open") && (
-                          fetchTxInfoStatus !== "fetching" && (
-                            <Dropdown overlay={menu} trigger={["click"]}>
-                              <Button
-                                shape="round"
-                                type="text"
-                                size="small"
-                                className="ant-btn-shaded"
-                                onClick={(e) => e.preventDefault()}
-                                icon={<EllipsisOutlined />}>
-                              </Button>
-                            </Dropdown>
-                          )
-                        )}
-                      </div>
-                    </Tooltip>
-                    {/* {(getTreasuryType() === "open") && (
-                      <span className="icon-button-container">
-                        {getStreamStatus(stream) === "Running" && (
-                          <Tooltip placement="bottom" title={t("streams.pause-stream-tooltip")}>
+                  <Tooltip title={(getTreasuryType() === "locked" && stream.status === STREAM_STATUS.Running) ? t("streams.stream-detail.close-stream-cta-tooltip") : ""}>
+                    <div className="mt-3 mb-3 withdraw-container">
+                      <Button
+                        block
+                        className="withdraw-cta"
+                        type="text"
+                        shape="round"
+                        size="small"
+                        disabled={
+                          isBusy ||
+                          hasStreamPendingTx() ||
+                          isOtp() ||
+                          (getTreasuryType() === "locked" && stream.status === STREAM_STATUS.Running)
+                        }
+                        onClick={(getTreasuryType() === "open") ? showAddFundsModal : showCloseStreamModal}>
+                        {isBusy && (<LoadingOutlined />)}
+                        {getTreasuryType() === "open"
+                          ? t('streams.stream-detail.add-funds-cta') 
+                          : t('streams.stream-detail.close-stream-cta')
+                        }
+                      </Button>
+                      {(getTreasuryType() === "open") && (
+                        (!isBusy || !hasStreamPendingTx()) && (
+                          <Dropdown overlay={menu} trigger={["click"]}>
                             <Button
                               shape="round"
                               type="text"
                               size="small"
                               className="ant-btn-shaded"
-                              onClick={showPauseStreamModal}
-                              icon={<IconPause className="mean-svg-icons h-100" />}>
+                              onClick={(e) => e.preventDefault()}
+                              icon={<EllipsisOutlined />}>
                             </Button>
-                          </Tooltip>
-                        )}
-                        {(getStreamStatus(stream) === "Stopped" && (stream && stream.fundsLeftInStream > 0)) && (
-                          <Tooltip placement="bottom" title={t("streams.resume-stream-tooltip")}>
-                            <Button
-                              shape="round"
-                              type="text"
-                              size="small"
-                              className="ant-btn-shaded"
-                              onClick={showResumeStreamModal}
-                              icon={<IconPlay className="mean-svg-icons h-100" />}>
-                            </Button>
-                          </Tooltip>
-                        )}
-                      </span>
-                    )}
-                    {(getTreasuryType() === "locked") && (
-                      <span className="icon-button-container">
-                        <Tooltip placement="bottom" title={t("streams.locked-stream-tooltip")}>
+                          </Dropdown>
+                        )
+                      )}
+                    </div>
+                  </Tooltip>
+                  {/* {(getTreasuryType() === "open") && (
+                    <span className="icon-button-container">
+                      {getStreamStatus(stream) === "Running" && (
+                        <Tooltip placement="bottom" title={t("streams.pause-stream-tooltip")}>
                           <Button
                             shape="round"
                             type="text"
                             size="small"
                             className="ant-btn-shaded"
-                            onClick={showLockedStreamModal}
-                            icon={getStreamStatus(stream) === "Running" && 
-                            (<IconLock className="mean-svg-icons" />)}>
+                            onClick={showPauseStreamModal}
+                            icon={<IconPause className="mean-svg-icons h-100" />}>
                           </Button>
                         </Tooltip>
-                      </span>
-                    )} */}
+                      )}
+                      {(getStreamStatus(stream) === "Stopped" && (stream && stream.fundsLeftInStream > 0)) && (
+                        <Tooltip placement="bottom" title={t("streams.resume-stream-tooltip")}>
+                          <Button
+                            shape="round"
+                            type="text"
+                            size="small"
+                            className="ant-btn-shaded"
+                            onClick={showResumeStreamModal}
+                            icon={<IconPlay className="mean-svg-icons h-100" />}>
+                          </Button>
+                        </Tooltip>
+                      )}
+                    </span>
+                  )}
+                  {(getTreasuryType() === "locked") && (
+                    <span className="icon-button-container">
+                      <Tooltip placement="bottom" title={t("streams.locked-stream-tooltip")}>
+                        <Button
+                          shape="round"
+                          type="text"
+                          size="small"
+                          className="ant-btn-shaded"
+                          onClick={showLockedStreamModal}
+                          icon={getStreamStatus(stream) === "Running" && 
+                          (<IconLock className="mean-svg-icons" />)}>
+                        </Button>
+                      </Tooltip>
+                    </span>
+                  )} */}
                 </div>
               </Spin>
 
@@ -5681,20 +5383,13 @@ export const Streams = () => {
       })
     ) : (
       <>
-      {isCreating() ? (
-        <div className="h-100 flex-center">
-          <Spin indicator={bigLoadingIcon} />
-        </div>
-      ) : (
         <div className="h-100 flex-center">
           <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{connected
           ? t('streams.stream-list.no-streams')
           : t('streams.stream-list.not-connected')}</p>} />
         </div>
-      )}
       </>
     )}
-
     </>
   );
 
@@ -5702,7 +5397,6 @@ export const Streams = () => {
     <>
       {/* {isLocal() && (
         <div className="debug-bar">
-          <span className="secondary-link" onClick={() => clearTransactionStatusContext()}>[STOP]</span>
           <span className="ml-1">proggress:</span><span className="ml-1 font-bold fg-dark-active">{fetchTxInfoStatus || '-'}</span>
           <span className="ml-1">status:</span><span className="ml-1 font-bold fg-dark-active">{lastSentTxStatus || '-'}</span>
           <span className="ml-1">lastSentTxSignature:</span><span className="ml-1 font-bold fg-dark-active">{lastSentTxSignature ? shortenAddress(lastSentTxSignature, 8) : '-'}</span>
@@ -5737,7 +5431,7 @@ export const Streams = () => {
             )}
             <span className="title">{t('streams.screen-title')}</span>
             <Tooltip placement="bottom" title={t('streams.refresh-tooltip')}>
-              <div className={`transaction-stats ${loadingStreams ? 'click-disabled' : 'simplelink'}`} onClick={onRefreshStreamsClick}>
+              <div id="streams-refresh-cta" className={`transaction-stats ${loadingStreams ? 'click-disabled' : 'simplelink'}`} onClick={onRefreshStreams}>
                 <Spin size="small" />
                 {customStreamDocked ? (
                   <span className="transaction-legend neutral">
@@ -5759,6 +5453,7 @@ export const Streams = () => {
                   </>
                 )}
               </div>
+              <div id="streams-refresh-noreset-cta" onClick={onRefreshStreamsNoReset}></div>
             </Tooltip>
           </div>
           <div className="inner-container">
@@ -5855,17 +5550,11 @@ export const Streams = () => {
               </>
             ) : (
               <>
-              {isCreating() ? (
-                <div className="h-100 flex-center">
-                  <Spin indicator={bigLoadingIcon} />
-                </div>
-              ) : (
                 <div className="h-100 flex-center">
                   <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{connected
                     ? t('streams.stream-detail.no-stream')
                     : t('streams.stream-list.not-connected')}</p>} />
                 </div>
-              )}
               </>
             )}
           </div>
@@ -6134,10 +5823,10 @@ export const Streams = () => {
         <Modal
           className="mean-modal no-full-screen"
           maskClosable={false}
-          afterClose={onAfterCloseStreamTransactionModalClosed}
+          afterClose={onCloseStreamTransactionFinished}
           visible={isCloseStreamTransactionModalVisible}
           title={getTransactionModalTitle(transactionStatus, isBusy, t)}
-          onCancel={hideCloseStreamTransactionModal}
+          onCancel={onCloseStreamTransactionFinished}
           width={330}
           footer={null}>
           <div className="transaction-progress">
@@ -6302,13 +5991,7 @@ export const Streams = () => {
                   type="primary"
                   shape="round"
                   size="middle"
-                  onClick={() => lastSentTxOperationType === OperationType.StreamPause
-                    ? onPauseStreamTransactionFinished()
-                    : lastSentTxOperationType === OperationType.StreamResume
-                      ? onResumeStreamTransactionFinished()
-                      : lastSentTxOperationType === OperationType.StreamClose
-                        ? onCloseStreamTransactionFinished()
-                        : hideTransactionExecutionModal()}>
+                  onClick={onTransactionFinished}>
                   {t('general.cta-finish')}
                 </Button>
               </>
