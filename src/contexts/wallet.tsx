@@ -27,6 +27,7 @@ import { DownOutlined, UpOutlined } from "@ant-design/icons";
 import { segmentAnalytics } from "../App";
 import { AppUsageEvent } from "../utils/segment-service";
 import { openNotification } from "../components/Notifications";
+import { consoleOut } from "../utils/ui";
 
 export const WALLET_PROVIDERS = [
   {
@@ -295,9 +296,13 @@ export function WalletProvider({ children = null as any }) {
         width={400}>
         <div className={`wallet-providers ${walletListExpanded ? 'expanded' : ''}`}>
           {WALLET_PROVIDERS.map((item, index) => {
-            const isInstalled = getIsProviderInstalled(item);
+            // const isInstalled = getIsProviderInstalled(item);
             const onClick = function () {
               if (item.name === WalletName.WalletConnect) { return; }
+              if (item.name === provider?.name) {
+                close();
+                return;
+              }
               if (wallet) {
                 wallet.disconnect();
               }
@@ -312,9 +317,9 @@ export function WalletProvider({ children = null as any }) {
                 setAutoConnect(true);
               }, 1000);
               close();
-              if (!isInstalled && !item.isWebWallet) {
-                window.open(item.url, '_blank');
-              }
+              // if (!isInstalled && !item.isWebWallet) {
+              //   window.open(item.url, '_blank');
+              // }
             };
 
             return (
@@ -377,10 +382,18 @@ export function useWallet() {
     resetWalletProvider,
     publicKey: wallet?.publicKey,
     connect() {
-      wallet ? wallet.connect() : select();
+      if  (wallet) {
+        consoleOut(`Connecting to provider...`, '', 'blue');
+        wallet.connect();
+      } else {
+        consoleOut(`Selecting a wallet...`, '', 'blue');
+        select();
+      }
     },
     disconnect() {
-      wallet ? wallet.disconnect() : resetWalletProvider();
+      consoleOut(`Disconnecting provider...`, '', 'blue');
+      wallet?.disconnect();
+      // wallet ? wallet.disconnect() : resetWalletProvider();
     },
   };
 }

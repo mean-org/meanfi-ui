@@ -36,6 +36,7 @@ import { notify } from "../../utils/notifications";
 
 export const COMMON_EXCHANGE_TOKENS = ['USDC', 'USDT', 'MEAN', 'SOL'];
 const MINIMUM_REQUIRED_SOL_BALANCE = 0.05;
+let inputDebounceTimeout: any;
 
 export const JupiterExchange = (props: {
     queryFromMint: string | null;
@@ -921,6 +922,14 @@ export const JupiterExchange = (props: {
         setSlippage(value);
     };
 
+    const debounceInputOnChange = (value: string) => {
+        clearTimeout(inputDebounceTimeout);
+        inputDebounceTimeout = setTimeout(() => {
+            consoleOut('input ====>', value, 'orange');
+            setInputAmount(parseFloat(value));
+        }, 500);
+    }
+
     const handleSwapFromAmountChange = useCallback((e: any) => {
 
         let newValue = e.target.value;
@@ -941,7 +950,7 @@ export const JupiterExchange = (props: {
             setInputAmount(0);
         } else if (isValidNumber(newValue)) {
             setFromAmount(newValue);
-            setInputAmount(parseFloat(newValue));
+            debounceInputOnChange(newValue);
         }
 
     }, []);
@@ -1599,7 +1608,6 @@ export const JupiterExchange = (props: {
                                 }
                             }
                         }
-                        debounceTime={500}
                         onSelectToken={() => {
                             setSubjectTokenSelection("source");
                             showTokenSelector();
