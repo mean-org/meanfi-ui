@@ -71,7 +71,6 @@ export const RepeatingPayment = () => {
   const { endpoint } = useConnectionConfig();
   const { connected, publicKey, wallet } = useWallet();
   const {
-    contract,
     tokenList,
     selectedToken,
     tokenBalance,
@@ -257,13 +256,12 @@ export const RepeatingPayment = () => {
 
   // Event handling
 
-  const onAfterTransactionModalClosed = () => {
+  const onTransactionModalClosed = () => {
     if (isBusy) {
       setTransactionCancelled(true);
     }
-    if (isSuccess()) {
-      resetContractValues();
-    }
+    closeTransactionModal();
+    resetContractValues();
     resetTransactionStatus();
   }
 
@@ -622,7 +620,7 @@ export const RepeatingPayment = () => {
       : '';
   }
 
-  const getPaymentRateLabel = (
+  const getPaymentRateLabel = useCallback((
     rate: PaymentRateType,
     amount: string | undefined
   ): string => {
@@ -651,7 +649,7 @@ export const RepeatingPayment = () => {
         break;
     }
     return label;
-  };
+  }, [selectedToken, t]);
 
   const getRecommendedFundingAmount = () => {
     const rateAmount = parseFloat(paymentRateAmount as string);
@@ -700,7 +698,7 @@ export const RepeatingPayment = () => {
 
   // Main action
 
-  const onTransactionStart = async () => {
+  const onTransactionStart = useCallback(async () => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
@@ -712,7 +710,6 @@ export const RepeatingPayment = () => {
 
     const createV1Tx = async (): Promise<boolean> => {
       if (wallet && publicKey && selectedToken) {
-        consoleOut("Start transaction for contract type:", contract?.name);
         consoleOut('Wallet address:', wallet?.publicKey?.toBase58());
 
         setTransactionStatus({
@@ -853,7 +850,6 @@ export const RepeatingPayment = () => {
 
     const createV2Tx = async (): Promise<boolean> => {
       if (wallet && publicKey && selectedToken) {
-        consoleOut("Start transaction for contract type:", contract?.name);
         consoleOut('Wallet address:', wallet?.publicKey?.toBase58());
 
         setTransactionStatus({
@@ -1131,6 +1127,10 @@ export const RepeatingPayment = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.TransactionFinished
+            });
             enqueueTransactionConfirmation({
               signature: signature,
               operationType: OperationType.StreamCreate,
@@ -1146,7 +1146,31 @@ export const RepeatingPayment = () => {
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
-  };
+  }, [
+    wallet,
+    endpoint,
+    publicKey,
+    connection,
+    nativeBalance,
+    recipientNote,
+    selectedToken,
+    fromCoinAmount,
+    mspClientVersion,
+    recipientAddress,
+    paymentStartDate,
+    paymentRateAmount,
+    paymentRateFrequency,
+    streamProgramAddress,
+    transactionCancelled,
+    streamV2ProgramAddress,
+    repeatingPaymentFees.mspFlatFee,
+    repeatingPaymentFees.blockchainFee,
+    transactionStatus.currentOperation,
+    enqueueTransactionConfirmation,
+    setTransactionStatus,
+    showTransactionModal,
+    getPaymentRateLabel,
+  ]);
 
   const toggleMspClient = () => {
     if (mspClientVersion === 2) {
@@ -1235,16 +1259,6 @@ export const RepeatingPayment = () => {
 
   return (
     <>
-      {(isLocal() || isWhitelisted) && (
-        <div className="debug-bar">
-          <span className="secondary-link" onClick={() => toggleMspClient()}>[Toggle MSP client]</span>
-          <span className="ml-1">MSP client version:</span><span className="ml-1 font-bold fg-dark-active">{mspClientVersion || '-'}</span>
-          {/* <span className="ml-1">status:</span><span className="ml-1 font-bold fg-dark-active">{lastSentTxStatus || '-'}</span>
-          <span className="ml-1">recentlyCreatedVault:</span><span className="ml-1 font-bold fg-dark-active">{recentlyCreatedVault ? shortenAddress(recentlyCreatedVault, 8) : '-'}</span>
-          <span className="ml-1">lastSentTxSignature:</span><span className="ml-1 font-bold fg-dark-active">{lastSentTxSignature ? shortenAddress(lastSentTxSignature, 8) : '-'}</span> */}
-        </div>
-      )}
-
       <StepSelector step={currentStep} steps={2} onValueSelected={onStepperChange} />
 
       <div className={currentStep === 0 ? "contract-wrapper panel1 show" : "contract-wrapper panel1 hide"}>
@@ -1635,10 +1649,9 @@ export const RepeatingPayment = () => {
       <Modal
         className="mean-modal"
         maskClosable={false}
-        afterClose={onAfterTransactionModalClosed}
         visible={isTransactionModalVisible}
         title={getTransactionModalTitle(transactionStatus, isBusy, t)}
-        onCancel={closeTransactionModal}
+        onCancel={onTransactionModalClosed}
         width={330}
         footer={null}>
         <div className="transaction-progress">
@@ -1661,7 +1674,7 @@ export const RepeatingPayment = () => {
                 type="primary"
                 shape="round"
                 size="middle"
-                onClick={handleGoToStreamsClick}>
+                onClick={onTransactionModalClosed}>
                 {t('transactions.status.cta-view-stream')}
               </Button>
             </>

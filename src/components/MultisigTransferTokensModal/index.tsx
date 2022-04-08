@@ -9,7 +9,7 @@ import { consoleOut, getTransactionOperationDescription, isValidAddress } from '
 import { isError } from '../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TransactionFees } from '@mean-dao/money-streaming';
-import { formatAmount, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, isValidNumber, shortenAddress, toUiAmount } from '../../utils/utils';
+import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, isValidNumber, shortenAddress, toUiAmount } from '../../utils/utils';
 import { useConnection } from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
 import { PublicKey } from '@solana/web3.js';
@@ -18,8 +18,6 @@ import { MultisigVault } from '../../models/multisig';
 import { FALLBACK_COIN_IMAGE } from '../../constants';
 import { Identicon } from '../Identicon';
 import { BN } from 'bn.js';
-import { TokenDisplay } from '../TokenDisplay';
-import { DebounceInput } from 'react-debounce-input';
 
 const { Option } = Select;
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;

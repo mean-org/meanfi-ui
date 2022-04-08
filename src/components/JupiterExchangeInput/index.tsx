@@ -2,7 +2,6 @@ import React, { useContext } from 'react';
 import { TokenInfo } from "@solana/spl-token-registry";
 import { useTranslation } from 'react-i18next';
 import { AppStateContext } from '../../contexts/appstate';
-import { DebounceInput } from 'react-debounce-input';
 import { TokenDisplay } from '../TokenDisplay';
 import { useWallet } from '../../contexts/wallet';
 import { toUsCurrency } from '../../utils/ui';
@@ -18,7 +17,6 @@ export const JupiterExchangeInput = (props: {
   onPriceClick: any;
   onBalanceClick?: any;
   readonly?: boolean;
-  debounceTime?: number;
   className?: string;
   hint?: string;
 }) => {
@@ -115,7 +113,7 @@ export const JupiterExchangeInput = (props: {
                     </span>
                 </div>
                 <div className="right">
-                    <DebounceInput
+                    <input
                         className="general-text-input text-right"
                         inputMode="decimal"
                         autoComplete="off"
@@ -126,7 +124,6 @@ export const JupiterExchangeInput = (props: {
                         placeholder="0.0"
                         minLength={1}
                         maxLength={79}
-                        debounceTimeout={props.debounceTime || 300}
                         spellCheck="false"
                         readOnly={props.readonly ? true : false}
                         value={props.tokenAmount}
