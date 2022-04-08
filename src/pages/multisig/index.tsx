@@ -20,7 +20,7 @@ import {
 } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
-import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
+import { useConnectionConfig } from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
 import { AppStateContext, TransactionStatusInfo } from '../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
@@ -46,21 +46,21 @@ import {
   isProd
 } from '../../utils/ui';
 
-import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, VERBOSE_DATE_TIME_FORMAT } from '../../constants';
+import { NO_FEES, VERBOSE_DATE_TIME_FORMAT } from '../../constants';
 
 import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { notify } from '../../utils/notifications';
-import { IconCaretDown, IconClock, IconDocument, IconEdit, IconExternalLink, IconShieldOutline, IconTrash, IconUpdate, IconUserGroup, IconUsers, IconWallet, IconWarning } from '../../Icons';
+import { IconCaretDown, IconClock, IconDocument, IconEdit, IconShieldOutline, IconTrash, IconUpdate, IconUserGroup, IconUsers, IconWallet, IconWarning } from '../../Icons';
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import dateFormat from 'dateformat';
 import { useNativeAccount } from '../../contexts/accounts';
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
-import { AccountLayout, MintLayout, TOKEN_PROGRAM_ID, u64 } from '@solana/spl-token';
+import { AccountLayout, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { useNavigate } from 'react-router-dom';
-import { Multisig, MultisigV2, MultisigParticipant, MultisigTransaction, MultisigTransactionStatus, MultisigMint, MEAN_MULTISIG_OPS, CREATE_MULTISIG_FEES } from '../../models/multisig';
+import { Multisig, MultisigV2, MultisigParticipant, MultisigTransaction, MultisigTransactionStatus, MEAN_MULTISIG_OPS, CREATE_MULTISIG_FEES } from '../../models/multisig';
 import { MultisigCreateModal } from '../../components/MultisigCreateModal';
 import './style.less';
 
@@ -118,7 +118,7 @@ export const MultisigView = () => {
   // Multisig accounts
   const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(true);
   const [multisigAccounts, setMultisigAccounts] = useState<(MultisigV2 | Multisig)[]>([]);
-  const [selectedMultisig, setSelectedMultisig] = useState<any>(undefined);
+  const [selectedMultisig, setSelectedMultisig] = useState<MultisigV2 | Multisig | undefined>(undefined);
   // Pending Txs
   const [needRefreshTxs, setNeedRefreshTxs] = useState(true);
   const [loadingMultisigTxs, setLoadingMultisigTxs] = useState(false);
@@ -693,6 +693,10 @@ export const MultisigView = () => {
     setIsBusy(true);
 
     const editMultisig = async (data: any) => {
+
+      if (!selectedMultisig) {
+        throw new Error("No selected multisig");
+      }
 
       const [multisigSigner] = await PublicKey.findProgramAddress(
         [selectedMultisig.id.toBuffer()],
@@ -1292,7 +1296,6 @@ export const MultisigView = () => {
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.TransactionFinished
             });
-            // TODO: Translate
             notify({
               description: 'Your signature for the Multisig transaction was successfully recorded.',
               type: "success"
@@ -3606,16 +3609,12 @@ export const MultisigView = () => {
               } else if (selectedMultisig) {
                 // Or re-select the one active
                 item = selectedMultisig.id ? multisigInfoArray.find(m => m.id.equals(selectedMultisig.id)) : undefined;
+              } else {
+                item = multisigInfoArray[0];
               }
               // Now make item active
-              if (item) {
-                setSelectedMultisig(item);
-              } else {
-                setSelectedMultisig(multisigInfoArray[0]);
-              }
-              setTimeout(() => {
-                loadMultisigTxs();
-              }, 100);
+              setSelectedMultisig(item);
+              setNeedRefreshTxs(true);
             } else {
               setSelectedMultisig(undefined);
               setMultisigTxs([]);
@@ -4108,6 +4107,34 @@ export const MultisigView = () => {
     }
   }, [multisigTxs, switchValue]);
 
+  // Scroll to a given multisig is specified as highLightableMultisigId
+  useEffect(() => {
+    if (loadingMultisigAccounts || !multisigAccounts || multisigAccounts.length === 0 || !highLightableMultisigId || !selectedMultisig) {
+      return;
+    }
+
+    consoleOut('Try to scroll multisig into view...', '', 'green');
+    const timeout = setTimeout(() => {
+      const highlightTarget = document.getElementById(highLightableMultisigId);
+      if (highlightTarget) {
+        consoleOut('Scrolling multisig into view...', '', 'green');
+        highlightTarget.scrollIntoView({ behavior: 'smooth' });
+      }
+      setHighLightableMultisigId(undefined);
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [
+    selectedMultisig,
+    multisigAccounts,
+    loadingMultisigAccounts,
+    highLightableMultisigId,
+    setHighLightableMultisigId,
+  ]);
+
   ///////////////
   // Rendering //
   ///////////////
@@ -4501,12 +4528,13 @@ export const MultisigView = () => {
         };
         return (
           <div 
-            key={`${index + 50}`} 
+            key={`${index + 50}`}
+            id={item.id.toBase58()}
             onClick={onMultisigClick}
             className={
               `transaction-list-row ${
-                selectedMultisig && selectedMultisig.id && selectedMultisig.id.equals(item.id) 
-                  ? 'selected' 
+                selectedMultisig && selectedMultisig.id && selectedMultisig.id.equals(item.id)
+                  ? 'selected'
                   : ''
                 }`
               }>
