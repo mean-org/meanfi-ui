@@ -35,6 +35,14 @@ export const TreasuryCloseModal = (props: {
   //   return false;
   // }
 
+  const onAcceptModal = () => {
+    props.handleOk();
+  }
+
+  const onCloseModal = () => {
+    props.handleClose();
+  }
+
   // Preset fee amount
   useEffect(() => {
     if (!feeAmount && props.transactionFees) {
@@ -58,6 +66,7 @@ export const TreasuryCloseModal = (props: {
     <Modal
       className="mean-modal simple-modal"
       title={<div className="modal-title">Close treasury</div>}
+      maskClosable={false}
       footer={null}
       visible={props.isVisible}
       onOk={props.handleOk}
@@ -89,34 +98,41 @@ export const TreasuryCloseModal = (props: {
             <h4 className="mb-4">{props.content}</h4>
           </>
         )}
-        <div className="row two-col-ctas mt-3 p-0 col-12 no-margin-right-left">
-          <div className="col-6 no-padding-left">
+        <div className="row two-col-ctas mt-3 transaction-progress p-0">
+          <div className={!isError() ? "col-6" : "col-12"}>
             <Button
               block
               type="text"
               shape="round"
-              onClick={props.handleClose}>
-              Cancel
-            </Button>
-          </div>
-          <div className="col-6 no-padding-right">
-            <Button
-              className={props.isBusy ? 'inactive' : ''}
-              block
-              type="primary"
-              shape="round"
-              onClick={props.handleOk}>
-              {props.isBusy && (
-                <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
-              )}
-              {props.isBusy
-                ? 'Closing treasury'
-                : isError()
-                  ? 'Retry'
-                  : 'Close treasury'
+              onClick={() => isError()
+                ? onAcceptModal()
+                : onCloseModal()}>
+              {isError()
+                ? t('general.retry')
+                : t('general.cta-close')
               }
             </Button>
           </div>
+          {!isError() && (
+            <div className="col-6">
+              <Button
+                className={props.isBusy ? 'inactive' : ''}
+                block
+                type="primary"
+                shape="round"
+                onClick={props.handleOk}>
+                {props.isBusy && (
+                  <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
+                )}
+                {props.isBusy
+                  ? 'Closing treasury'
+                  : isError()
+                    ? 'Retry'
+                    : 'Close treasury'
+                }
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </Modal>

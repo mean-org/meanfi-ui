@@ -5043,8 +5043,8 @@ export const MultisigView = () => {
           </div>
 
           {/* CTAs shown always - IF DIFFERENT CTAS ARE BEST FOR EACH STAGE, MOVE THEM INSIDE THE PANELS */}
-          <div className="row two-col-ctas mt-3 transaction-progress p-0 col-12 no-margin-right-left">
-            <div className={(canShowExecuteButton() || canShowApproveButton() || canShowCancelButton()) ? "col-6 no-padding-left" : "col-12 no-padding-left no-padding-right"}>
+          <div className="row two-col-ctas mt-3 transaction-progress p-0 no-margin-right-left">
+            <div className={((canShowExecuteButton() || canShowApproveButton() || canShowCancelButton()) && !isError(transactionStatus.currentOperation)) ? "col-6 no-padding-left" : "col-12 no-padding-left no-padding-right"}>
               <Button
                 block
                 type="text"
@@ -5061,7 +5061,7 @@ export const MultisigView = () => {
               </Button>
             </div>
             {
-              (canShowExecuteButton() || canShowApproveButton() || canShowCancelButton())
+              ((canShowExecuteButton() || canShowApproveButton() || canShowCancelButton()) && !isError(transactionStatus.currentOperation))
               &&
               (
                 <div className="col-6 no-padding-right">

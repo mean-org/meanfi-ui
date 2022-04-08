@@ -323,18 +323,18 @@ export const MultisigProgramsView = () => {
     if (mtx.executedOn) {
       return "";
     } else if (mtx.didSigned === undefined) {
-      return longStatus ? "You have rejected this transaction" : "Rejected";
+      return longStatus ? t("multisig.multisig-transactions.rejected-tx") : ("multisig.multisig-transactions.rejected");
     } else if (mtx.didSigned === false) {
       return !longStatus
-        ? "Not Signed"
+        ? t("multisig.multisig-transactions.not-signed")
         : mtx.status === MultisigTransactionStatus.Approved
-          ? "You did NOT sign this transaction"
-          : "You have NOT signed this transaction";
+        ? t("multisig.multisig-transactions.not-sign-tx")
+        : t("multisig.multisig-transactions.not-signed-tx");
     } else {
-      return longStatus ? "You have signed this transaction" : "Signed";
+      return longStatus ? "You have signed this transaction" : t("multisig.multisig-transactions.signed");
     }
 
-  },[]);
+  },[t]);
 
   // const getTransactionUserStatusActionClass = useCallback((mtx: MultisigTransaction) => {
 
@@ -3673,8 +3673,8 @@ export const MultisigProgramsView = () => {
           </div>
 
           {/* CTAs shown always - IF DIFFERENT CTAS ARE BEST FOR EACH STAGE, MOVE THEM INSIDE THE PANELS */}
-          <div className="row two-col-ctas mt-3 transaction-progress p-0 col-12 no-margin-right-left">
-            <div className={(canShowExecuteButton() || canShowApproveButton() || canShowCancelButton()) ? "col-6 no-padding-left" : "col-12 no-padding-left no-padding-right"}>
+          <div className="row two-col-ctas mt-3 transaction-progress p-0 no-margin-right-left">
+            <div className={((canShowExecuteButton() || canShowApproveButton() || canShowCancelButton()) && !isError(transactionStatus.currentOperation)) ? "col-6 no-padding-left" : "col-12 no-padding-left no-padding-right"}>
               <Button
                 block
                 type="text"
@@ -3691,7 +3691,7 @@ export const MultisigProgramsView = () => {
               </Button>
             </div>
             {
-              (canShowExecuteButton() || canShowApproveButton() || canShowCancelButton())
+              ((canShowExecuteButton() || canShowApproveButton() || canShowCancelButton()) && !isError(transactionStatus.currentOperation))
               &&
               (
                 <div className="col-6 no-padding-right">

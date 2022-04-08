@@ -270,6 +270,7 @@ export const TreasuryCreateModal = (props: {
     <Modal
       className="mean-modal simple-modal"
       title={<div className="modal-title">{t('treasuries.create-treasury.modal-title')}</div>}
+      maskClosable={false}
       footer={null}
       visible={props.isVisible}
       onOk={onAcceptModal}
@@ -490,7 +491,7 @@ export const TreasuryCreateModal = (props: {
        */}
       {transactionStatus.currentOperation !== TransactionStatus.TransactionFinished && (
         <div className="row two-col-ctas mt-3 transaction-progress p-0">
-          <div className="col-6">
+          <div className={!isError(transactionStatus.currentOperation) ? "col-6" : "col-12"}>
             <Button
               block
               type="text"
@@ -506,36 +507,38 @@ export const TreasuryCreateModal = (props: {
               }
             </Button>
           </div>
-          <div className="col-6">
-            <Button
-              className={props.isBusy ? 'inactive' : ''}
-              block
-              type="primary"
-              shape="round"
-              size="middle"
-              disabled={!treasuryName}
-              onClick={() => {
-                if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
-                  onAcceptModal();
-                // } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
-                //   onCloseModal();
-                } else {
-                  refreshPage();
+          {!isError(transactionStatus.currentOperation) && (
+            <div className="col-6">
+              <Button
+                className={props.isBusy ? 'inactive' : ''}
+                block
+                type="primary"
+                shape="round"
+                size="middle"
+                disabled={!treasuryName}
+                onClick={() => {
+                  if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+                    onAcceptModal();
+                  // } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
+                  //   onCloseModal();
+                  } else {
+                    refreshPage();
+                  }
+                }}>
+                {/* {props.isBusy && (
+                  <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
+                )} */}
+                {props.isBusy
+                  ? t('treasuries.create-treasury.main-cta-busy')
+                  : transactionStatus.currentOperation === TransactionStatus.Iddle
+                    ? enableMultisigTreasuryOption && props.multisigAccounts.length > 0
+                      ? t('treasuries.create-treasury.create-multisig-cta')
+                      : t('treasuries.create-treasury.main-cta')
+                    : t('general.refresh')
                 }
-              }}>
-              {/* {props.isBusy && (
-                <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
-              )} */}
-              {props.isBusy
-                ? t('treasuries.create-treasury.main-cta-busy')
-                : transactionStatus.currentOperation === TransactionStatus.Iddle
-                  ? enableMultisigTreasuryOption && props.multisigAccounts.length > 0
-                    ? t('treasuries.create-treasury.create-multisig-cta')
-                    : t('treasuries.create-treasury.main-cta')
-                  : t('general.refresh')
-              }
-            </Button>
-          </div>
+              </Button>
+            </div>
+          )}
         </div>
       )}
 

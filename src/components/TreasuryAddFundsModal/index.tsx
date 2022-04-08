@@ -787,6 +787,7 @@ export const TreasuryAddFundsModal = (props: {
           }
         </div>
       }
+      maskClosable={false}
       footer={null}
       visible={props.isVisible}
       onOk={onAcceptModal}
@@ -1039,7 +1040,7 @@ export const TreasuryAddFundsModal = (props: {
        */}
       {transactionStatus.currentOperation !== TransactionStatus.TransactionFinished && (
         <div className="row two-col-ctas mt-3 transaction-progress p-0">
-          <div className="col-6">
+          <div className={!isError(transactionStatus.currentOperation) ? "col-6" : "col-12"}>
             <Button
               block
               type="text"
@@ -1055,31 +1056,33 @@ export const TreasuryAddFundsModal = (props: {
               }
             </Button>
           </div>
-          <div className="col-6">
-            <Button
-              className={props.isBusy ? 'inactive' : ''}
-              block
-              type="primary"
-              shape="round"
-              size="middle"
-              disabled={!isTopupFormValid()}
-              onClick={() => {
-                if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
-                  onAcceptModal();
-                } else {
-                  refreshPage();
+          {!isError(transactionStatus.currentOperation) && (
+            <div className="col-6">
+              <Button
+                className={props.isBusy ? 'inactive' : ''}
+                block
+                type="primary"
+                shape="round"
+                size="middle"
+                disabled={!isTopupFormValid()}
+                onClick={() => {
+                  if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+                    onAcceptModal();
+                  } else {
+                    refreshPage();
+                  }
+                }}>
+                {props.isBusy
+                  ? allocationOption === AllocationType.Specific && highLightableStreamId
+                    ? t('treasuries.add-funds.main-cta-fund-stream-busy')
+                    : t('treasuries.add-funds.main-cta-busy')
+                  : transactionStatus.currentOperation === TransactionStatus.Iddle
+                    ? getTransactionStartButtonLabel()
+                    : t('general.refresh')
                 }
-              }}>
-              {props.isBusy
-                ? allocationOption === AllocationType.Specific && highLightableStreamId
-                  ? t('treasuries.add-funds.main-cta-fund-stream-busy')
-                  : t('treasuries.add-funds.main-cta-busy')
-                : transactionStatus.currentOperation === TransactionStatus.Iddle
-                  ? getTransactionStartButtonLabel()
-                  : t('general.refresh')
-              }
-            </Button>
-          </div>
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </Modal>
