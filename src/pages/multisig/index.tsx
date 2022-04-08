@@ -4220,13 +4220,7 @@ export const MultisigView = () => {
                       <span className="align-middle">{getTransactionUserStatusAction(item)}</span>
                     </div>
                     <div className="std-table-cell fixed-width-34">
-                      {
-                        item.status !== MultisigTransactionStatus.Executed ? (
-                          <span className="align-middle">{`${item.signers.filter(s => s === true).length}/${selectedMultisig.threshold}`}</span>
-                        ) : (
-                          <span className="align-middle">&nbsp;</span>
-                        )
-                      }
+                      <span className="align-middle">{`${item.signers.filter(s => s === true).length}/${selectedMultisig.threshold}`}</span>
                     </div>
                     <div className="std-table-cell text-center fixed-width-120">
                       <span className={`badge small ${getTransactionStatusClass(item)}`} style={{padding: '3px 5px'}}>{getTransactionStatusAction(item)}</span>
