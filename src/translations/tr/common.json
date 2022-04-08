@@ -540,7 +540,7 @@
 			"column-current-signatures": "İmza",
 			"column-my-status": "Durumum",
 			"column-operation": "İşlem",
-			"column-pending-signatures": "İmzalar",
+			"column-pending-signatures": "Status",
 			"column-program-id": "Program",
 			"explain-failure": "Eğer belirliyse hata nedenlerini belirtin",
 			"initiator-transaction": "Bu işlem tarafından gönderildi",

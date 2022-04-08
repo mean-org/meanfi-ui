@@ -513,7 +513,7 @@
 			"column-current-signatures": "Sig",
 			"column-my-status": "Trạng thái của tôi",
 			"column-operation": "Hoạt động",
-			"column-pending-signatures": "Chữ ký",
+			"column-pending-signatures": "Status",
 			"column-program-id": "Chương trình",
 			"loading-transactions": "Đang tải giao dịch",
 			"modal-title": "Proposal summary",

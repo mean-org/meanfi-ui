@@ -543,7 +543,7 @@
 			"column-current-signatures": "서명",
 			"column-my-status": "내 상태",
 			"column-operation": "작동",
-			"column-pending-signatures": "서명",
+			"column-pending-signatures": "Status",
 			"column-program-id": "프로그램",
 			"explain-failure": "Explain failure condition if specific",
 			"proposed-by": "Proposed by:",

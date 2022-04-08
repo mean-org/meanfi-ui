@@ -540,7 +540,7 @@
 			"column-current-signatures": "Sig",
 			"column-my-status": "My Status",
 			"column-operation": "Proposal",
-			"column-pending-signatures": "Signatures",
+			"column-pending-signatures": "Status",
 			"column-program-id": "Program",
 			"explain-failure": "Explain failure condition if specific",
 			"initiator-transaction": "This transaction was submitted by",
