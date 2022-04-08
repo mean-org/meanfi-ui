@@ -520,8 +520,8 @@
 			"no-transactions": "This multisig asset has no transactions",
 			"tx-operation-failure": "Thao tác {{operation}} không thành công",
 			"tx-operation-success": "Thao tác {{operation}} thành công",
-			"tx-operation-pending-one": "A transaction on this Multisig is now ready for execution. Please tell the person who initiated this transaction to execute it.",
-			"tx-operation-pending-two": "A transaction on this Multisig is ready for",
+			"tx-operation-pending-one": "A transaction on this multisig is now ready for execution. Please tell the person who initiated this transaction to execute it.",
+			"tx-operation-pending-two": "A transaction on this multisig is ready for",
 			"tx-operation-voided": "This pending transaction has been VOIDED due to the Multisig being edited.",
 			"tx-operation-rejected": "This transaction has been rejected.",
 			"tx-operation-executed": "This transaction has already been executed",
@@ -1080,7 +1080,7 @@
 			},
 			"main-cta": "Create streaming treasury",
 			"main-cta-busy": "Creating treasury",
-			"modal-title": "Create Streaming Treasury",
+			"modal-title": "Create streaming treasury",
 			"multisig-selector-label": "Tài khoản multisig",
 			"multisig-treasury-created-info": "Để hoàn thành thiết lập kho bạc, những người ký Multisig khác cần phải phê duyệt nó.",
 			"multisig-treasury-created-instructions": "Vui lòng yêu cầu người dùng khác ký vào giao dịch tạo kho bạc này",
@@ -1092,9 +1092,9 @@
 			"treasury-token-label": "Token to be streamed",
 			"treasury-type-options": {
 				"treasury-type-locked-description": "Với một kho bạc bị khóa, bạn có thể tạo các stream hoạt động giống như một hợp đồng vesting cho các khoản phân bổ dành riêng cho nhà đầu tư. Các hợp đồng này thường có ngày kết thúc cố định.",
-				"treasury-type-locked-name": "Kho bạc Money Streaming bị khoá",
+				"treasury-type-locked-name": "Kho bạc money streaming bị khoá",
 				"treasury-type-open-description": "Với một kho bạc không bị khóa, bạn có thể tạo các money stream chạy liên tục. Khi kho bạc hết tiền, tất cả các stream sẽ dừng lại, cho đến khi nó được bổ sung thêm.",
-				"treasury-type-open-name": "Kho bạc Money Streaming không bị khoá"
+				"treasury-type-open-name": "Kho bạc money streaming không bị khoá"
 			}
 		},
 		"lookup-treasury-cta-tooltip": "Tìm kiếm một kho bạc",
@@ -1247,9 +1247,9 @@
 		"label-input-amount": "Nhập số lượng muốn rút",
 		"label-input-right": "Theo phần trăm đặt trước",
 		"modal": {
-			"main-cta": "Withdraw Funds",
+			"main-cta": "Withdraw funds",
 			"selected-treasury-label": "From treasury account",
-			"title": "Withdraw Treasury Funds",
+			"title": "Withdraw treasury funds",
 			"verified-label": "I'm sure the recipient address doesn't belong to an exchange"
 		},
 		"modal-title": "Rút tiền"

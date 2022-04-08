@@ -567,8 +567,8 @@
 			"treasury-closed-warning": "When a treasury is closed, all funds left over will be deposited back into the multisig safe.",
 			"tx-operation-executed": "This transaction has already been executed",
 			"tx-operation-failure": "Operation {{operation}} failed",
-			"tx-operation-pending-one": "A transaction on this Multisig is now ready for execution. Please tell the person who initiated this transaction to execute it.",
-			"tx-operation-pending-two": "A transaction on this Multisig is ready for",
+			"tx-operation-pending-one": "A transaction on this multisig is now ready for execution. Please tell the person who initiated this transaction to execute it.",
+			"tx-operation-pending-two": "A transaction on this multisig is ready for",
 			"tx-operation-rejected": "This transaction has been rejected.",
 			"tx-operation-success": "Operation {{operation}} succeeded",
 			"tx-operation-voided": "This pending transaction has been VOIDED due to the Multisig being edited.",
@@ -1080,7 +1080,7 @@
 			},
 			"main-cta": "Create streaming treasury",
 			"main-cta-busy": "Creating treasury",
-			"modal-title": "Create Streaming Treasury",
+			"modal-title": "Create streaming treasury",
 			"multisig-selector-label": "Multisig account",
 			"multisig-treasury-created-info": "To complete the treasury setup, the other Multisig signers need to approve it.",
 			"multisig-treasury-created-instructions": "Please ask the other users to sign this treasury creation transaction.",
@@ -1092,9 +1092,9 @@
 			"treasury-token-label": "Token to be streamed",
 			"treasury-type-options": {
 				"treasury-type-locked-description": "With a locked treasury you can create streams that act like a vesting contract for reserved allocations, like the ones needed for investors. They usually have a fixed end date.",
-				"treasury-type-locked-name": "Locked Money Streaming Treasury",
+				"treasury-type-locked-name": "Locked money streaming treasury",
 				"treasury-type-open-description": "With an open treasury, you can create money streams that run indefinitely. When the treasury runs out of money all streams stop, until it gets replenished.",
-				"treasury-type-open-name": "Open Money Streaming Treasury"
+				"treasury-type-open-name": "Open money streaming treasury"
 			}
 		},
 		"lookup-treasury-cta-tooltip": "Lookup a treasury",
@@ -1251,9 +1251,9 @@
 		"label-input-amount": "Enter amount to withdraw",
 		"label-input-right": "By percentual preset",
 		"modal": {
-			"main-cta": "Withdraw Funds",
+			"main-cta": "Withdraw funds",
 			"selected-treasury-label": "From treasury account",
-			"title": "Withdraw Treasury Funds",
+			"title": "Withdraw treasury funds",
 			"verified-label": "I'm sure the recipient address doesn't belong to an exchange"
 		},
 		"modal-title": "Withdraw funds"

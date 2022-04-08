@@ -4,7 +4,7 @@ export function getOperationName(op: OperationType) {
 
     switch (op) {
         case OperationType.CreateMint:
-            return "Create Mint";
+            return "Create mint";
         case OperationType.MintTokens:
             return "Mint token";
         case OperationType.TransferTokens:
@@ -14,33 +14,33 @@ export function getOperationName(op: OperationType) {
         case OperationType.UpgradeIDL:
             return "Upgrade IDL";
         case OperationType.SetMultisigAuthority:
-            return "Set Multisig Authority";
+            return "Set multisig authority";
         case OperationType.EditMultisig:
-            return "Edit Multisig";
+            return "Edit multisig";
         case OperationType.TreasuryCreate:
-            return "Create Treasury";
+            return "Create treasury";
         case OperationType.TreasuryClose:
-            return "Close Treasury";
+            return "Close treasury";
         case OperationType.TreasuryRefreshBalance:
-            return "Refresh Treasury Data";
+            return "Refresh treasury data";
         case OperationType.TreasuryWithdraw:
-            return "Withdraw Treasury Funds";
+            return "Withdraw treasury funds";
         case OperationType.DeleteAsset:
-            return "Close Asset";
+            return "Close asset";
         case OperationType.CreateAsset:
-            return "Create Asset";
+            return "Create asset";
         case OperationType.SetAssetAuthority:
-            return "Change Asset Authority";
+            return "Change asset authority";
         case OperationType.StreamCreate:
-            return "Create Stream";
+            return "Create stream";
         case OperationType.StreamClose:
-            return "Close Stream";
+            return "Close stream";
         case OperationType.StreamAddFunds:
-            return "Top Up Stream";
+            return "Top up stream";
         case OperationType.StreamPause:
-            return "Pause Stream";
+            return "Pause stream";
         case OperationType.StreamResume:
-            return "Resume Stream";
+            return "Resume stream";
         default:
             return '';
     }

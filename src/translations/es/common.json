@@ -542,8 +542,8 @@
 			"tx-operation-success": "Operation {{operation}} succeeded",
 			"tx-operation-failure": "Operation {{operation}} failed",
 			"no-transactions": "This multisig asset has no transactions",
-			"tx-operation-pending-one": "A transaction on this Multisig is now ready for execution. Please tell the person who initiated this transaction to execute it.",
-			"tx-operation-pending-two": "A transaction on this Multisig is ready for",
+			"tx-operation-pending-one": "A transaction on this multisig is now ready for execution. Please tell the person who initiated this transaction to execute it.",
+			"tx-operation-pending-two": "A transaction on this multisig is ready for",
 			"tx-operation-voided": "This pending transaction has been VOIDED due to the Multisig being edited.",
 			"tx-operation-rejected": "This transaction has been rejected.",
 			"tx-operation-executed": "This transaction has already been executed",
@@ -1075,7 +1075,7 @@
 			},
 			"main-cta": "Create streaming treasury",
 			"main-cta-busy": "Creating treasury",
-			"modal-title": "Create Streaming Treasury",
+			"modal-title": "Create streaming treasury",
 			"multisig-selector-label": "Multisig account",
 			"multisig-treasury-created-info": "To complete the treasury setup, the other Multisig signers need to approve it.",
 			"multisig-treasury-created-instructions": "Please ask the other users to sign this treasury creation transaction.",
@@ -1087,9 +1087,9 @@
 			"treasury-token-label": "Token to be streamed",
 			"treasury-type-options": {
 				"treasury-type-locked-description": "With a locked treasury you can create streams that act like a vesting contract for reserved allocations, like the ones needed for investors. They usually have a fixed end date.",
-				"treasury-type-locked-name": "Locked Money Streaming Treasury",
+				"treasury-type-locked-name": "Locked money streaming treasury",
 				"treasury-type-open-description": "With an open treasury, you can create money streams that run indefinitely. When the treasury runs out of money all streams stop, until it gets replenished.",
-				"treasury-type-open-name": "Open Money Streaming Treasury"
+				"treasury-type-open-name": "Open money streaming treasury"
 			}
 		},
 		"lookup-treasury-cta-tooltip": "Lookup a treasury",
@@ -1235,10 +1235,17 @@
 		"primary-action": "Seleccionar"
 	},
 	"withdraw-funds": {
+		"button-title": "Withdraw funds",
 		"label-available-amount": "Fondos disponibles para retirar inmediatamente ",
 		"label-input-amount": "Introduzca la cantidad a retirar",
 		"label-input-right": "Porcentaje automático",
-		"modal-title": "Retirar fondos"
+		"modal-title": "Retirar fondos",
+		"modal": {
+			"main-cta": "Withdraw funds",
+			"selected-treasury-label": "From treasury account",
+			"title": "Withdraw treasury funds",
+			"verified-label": "I'm sure the recipient address doesn't belong to an exchange"
+		}
 	},
 	"wrap": {
 		"hint-message": "We recommend having at least 0.05 SOL for any transaction"

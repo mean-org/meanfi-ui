@@ -516,8 +516,8 @@
 			"no-transactions": "This multisig asset has no transactions",
 			"tx-operation-failure": "A operação {{operation}} falhou",
 			"tx-operation-success": "Operação {{operation}} bem-sucedida",
-			"tx-operation-pending-one": "A transaction on this Multisig is now ready for execution. Please tell the person who initiated this transaction to execute it.",
-			"tx-operation-pending-two": "A transaction on this Multisig is ready for",
+			"tx-operation-pending-one": "A transaction on this multisig is now ready for execution. Please tell the person who initiated this transaction to execute it.",
+			"tx-operation-pending-two": "A transaction on this multisig is ready for",
 			"tx-operation-voided": "This pending transaction has been VOIDED due to the Multisig being edited.",
 			"tx-operation-rejected": "This transaction has been rejected.",
 			"tx-operation-executed": "This transaction has already been executed",
@@ -1075,7 +1075,7 @@
 			},
 			"main-cta": "Create streaming treasury",
 			"main-cta-busy": "Creating treasury",
-			"modal-title": "Create Streaming Treasury",
+			"modal-title": "Create streaming treasury",
 			"multisig-selector-label": "Conta multisig",
 			"multisig-treasury-created-info": "Para concluir a configuração da tesouraria, os outros signatários da Multisig precisam aprová-la.",
 			"multisig-treasury-created-instructions": "Peça aos outros usuários que assinem esta transação de criação de tesouraria.",
@@ -1235,10 +1235,17 @@
 		"primary-action": "Selecionar"
 	},
 	"withdraw-funds": {
+		"button-title": "Withdraw funds",
 		"label-available-amount": "Fundos disponíveis para saque agora",
 		"label-input-amount": "Insira o valor para sacar",
 		"label-input-right": "Por percentual predefinido",
-		"modal-title": "Retirar fundos"
+		"modal-title": "Retirar fundos",
+		"modal": {
+			"main-cta": "Withdraw funds",
+			"selected-treasury-label": "From treasury account",
+			"title": "Withdraw treasury funds",
+			"verified-label": "I'm sure the recipient address doesn't belong to an exchange"
+		}
 	},
 	"wrap": {
 		"hint-message": "We recommend having at least 0.05 SOL for any transaction"

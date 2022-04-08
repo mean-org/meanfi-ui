@@ -567,8 +567,8 @@
 			"treasury-closed-warning": "Hazine kapatıldığında kalan tüm varlıklar kurucunun hesabına gider. Lütfen onaylamadan önce bunu kabul ettiğnizin farkında olun.",
 			"tx-operation-executed": "This transaction has already been executed",
 			"tx-operation-failure": "{{operation}} işlemi başarısız oldu",
-			"tx-operation-pending-one": "Bu Çoklu-İmza'da gerçekleştirilmeye hazır bir işlem mevcut. Lütfen bu işlemi başlatana, haber verin.",
-			"tx-operation-pending-two": "Bu Çoklu-İmza'da bir işlem hazır şunun için",
+			"tx-operation-pending-one": "Bu çoklu-İmza'da gerçekleştirilmeye hazır bir işlem mevcut. Lütfen bu işlemi başlatana, haber verin.",
+			"tx-operation-pending-two": "Bu çoklu-İmza'da bir işlem hazır şunun için",
 			"tx-operation-rejected": "This transaction has been rejected.",
 			"tx-operation-success": "{{operation}} işlemi başarılı oldu",
 			"tx-operation-voided": "This pending transaction has been VOIDED due to the Multisig being edited.",
@@ -1093,9 +1093,9 @@
 			"treasury-token-label": "Token to be streamed",
 			"treasury-type-options": {
 				"treasury-type-locked-description": "Kilitli bir hazine ile, yatırımcılar için gerekli olanlar gibi, ayrılmış tahsisler için hakediş sözleşmesi gibi davranan aktarımları oluşturabilirsiniz. Genellikle sabit bir bitiş tarihleri â€‹â€‹vardır.",
-				"treasury-type-locked-name": "Kilitli Para Aktarımı Hazinesi",
+				"treasury-type-locked-name": "Kilitli para aktarımı hazinesi",
 				"treasury-type-open-description": "Açık bir hazine ile süresiz olarak çalışan para aktarımları oluşturabilirsiniz. Hazinenin parası bittiğinde, yenilenene kadar tüm aktarımlar durur.",
-				"treasury-type-open-name": "Para Aktarım Hazinesi Aç"
+				"treasury-type-open-name": "Para aktarım hazinesi aç"
 			}
 		},
 		"lookup-treasury-cta-tooltip": "Hazine ara",

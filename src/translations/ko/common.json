@@ -1084,7 +1084,7 @@
 			},
 			"main-cta": "Create streaming treasury",
 			"main-cta-busy": "Creating treasury",
-			"modal-title": "Create Streaming Treasury",
+			"modal-title": "Create streaming treasury",
 			"multisig-selector-label": "다중 서명 계정",
 			"multisig-treasury-created-info": "트레저리 설정을 완료하려면 다른 다중서명 서명자가 승인해야 합니다.",
 			"multisig-treasury-created-instructions": "이 트레저리 생성 트랜잭션에 서명하도록 다른 사용자에게 요청하십시오.",
@@ -1251,9 +1251,9 @@
 		"label-input-amount": "출금 금액 입력",
 		"label-input-right": "백분율 사전 설정에 따라",
 		"modal": {
-			"main-cta": "Withdraw Funds",
+			"main-cta": "Withdraw funds",
 			"selected-treasury-label": "From treasury account",
-			"title": "Withdraw Treasury Funds",
+			"title": "Withdraw treasury funds",
 			"verified-label": "I'm sure the recipient address doesn't belong to an exchange"
 		},
 		"modal-title": "자금 인출"

@@ -566,8 +566,8 @@
 			"treasury-closed-warning": "Lorsqu'une trésorerie est fermée, tous les fonds restants seront déposés dans le portefeuille de l'initiateur.  Veuillez confirmer que cela est acceptable avant de signer.",
 			"tx-operation-executed": "This transaction has already been executed",
 			"tx-operation-failure": "L'opération {{operation}} a échoué",
-			"tx-operation-pending-one": "Une transaction sur ce Multisig est maintenant prête à être exécutée. Veuillez dire à la personne qui a initié cette transaction de l'exécuter.",
-			"tx-operation-pending-two": "Une transaction sur ce Multisig est prête pour",
+			"tx-operation-pending-one": "Une transaction sur ce multisig est maintenant prête à être exécutée. Veuillez dire à la personne qui a initié cette transaction de l'exécuter.",
+			"tx-operation-pending-two": "Une transaction sur ce multisig est prête pour",
 			"tx-operation-rejected": "This transaction has been rejected.",
 			"tx-operation-success": "L'opération {{operation}} a réussi",
 			"tx-operation-voided": "This pending transaction has been VOIDED due to the Multisig being edited.",
@@ -1094,7 +1094,7 @@
 				"treasury-type-locked-description": "Avec une trésorerie verrouillée, vous pouvez créer des flux qui agissent comme un contrat d'acquisition pour les allocations réservées, comme celles nécessaires aux investisseurs.  Ils ont généralement une date de fin fixe.",
 				"treasury-type-locked-name": "Trésorerie en streaming d'argent verrouillé",
 				"treasury-type-open-description": "Avec une trésorerie ouverte, vous pouvez créer des flux d'argent qui fonctionnent indéfiniment.  Lorsque le Trésor est à court d'argent, tous les flux s'arrêtent jusqu'à ce qu'il soit réapprovisionné.",
-				"treasury-type-open-name": "Trésorerie en streaming Open Money"
+				"treasury-type-open-name": "Open money streaming treasury"
 			}
 		},
 		"lookup-treasury-cta-tooltip": "Rechercher une trésorerie",
@@ -1252,8 +1252,8 @@
 		"label-input-right": "Par préréglage en pourcentage",
 		"modal": {
 			"main-cta": "Retirer des fonds",
-			"selected-treasury-label": "Du compte du Trésor",
-			"title": "Retirer des fonds du Trésor",
+			"selected-treasury-label": "Du compte du trésor",
+			"title": "Retirer des fonds du trésor",
 			"verified-label": "Je suis sûr que l'adresse du destinataire n'appartient pas à un échange"
 		},
 		"modal-title": "Retirer des fonds"
