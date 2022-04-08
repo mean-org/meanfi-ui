@@ -210,7 +210,7 @@ export const RepeatingPayment = () => {
         consoleOut("repeatingPaymentFees:", value, 'orange');
       });
     } else {
-      getTransactionFeesV2(MSP_ACTIONS_V2.closeStream).then(value => {
+      getTransactionFeesV2(MSP_ACTIONS_V2.createStreamWithFunds).then(value => {
         setRepeatingPaymentFees(value);
         consoleOut("repeatingPaymentFees:", value, 'orange');
       });
