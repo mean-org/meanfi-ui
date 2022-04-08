@@ -434,7 +434,7 @@
 			"token-address-placeholder": "Entrez l'adresse du jeton"
 		},
 		"multisig-account-detail": {
-			"address": "Autorité",
+			"address": "Safe deposit address",
 			"authority": "Autorité",
 			"copy-id-title": "ID MULTISIG",
 			"created-on": "Créé sur",
@@ -1057,7 +1057,7 @@
 			"main-cta-busy": "Trésorerie de financement",
 			"main-cta-fund-stream": "Financer le flux d'argent",
 			"main-cta-fund-stream-busy": "Volet de financement",
-			"modal-title": "Ajouter des fonds au Trésor",
+			"modal-title": "Ajouter des fonds au trésor",
 			"modal-title-fund-stream": "Ajouter des fonds à un flux d'argent",
 			"money-stream-to-topup-label": "Money Stream pour recharger",
 			"search-streams-placeholder": "Rechercher un flux par nom ou adresse",
@@ -1122,7 +1122,7 @@
 			"number-of-streams": "Nombre de flux",
 			"treasury-address-label": "Adresse",
 			"treasury-name-label": "Nom du Trésor",
-			"unallocated-treasury-balance": "Solde de trésorerie non affecté"
+			"unallocated-treasury-balance": "Unallocated balance"
 		},
 		"treasury-detail-heading": "Détails du Trésor",
 		"treasury-list": {

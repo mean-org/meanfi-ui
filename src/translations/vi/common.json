@@ -438,7 +438,7 @@
 			"token-address-placeholder": "Nhập vào địa chỉ token"
 		},
 		"multisig-account-detail": {
-			"address": "Safe Deposit Address",
+			"address": "Safe deposit address",
 			"authority": "Thẩm quyền",
 			"copy-id-title": "MULTISIG ID",
 			"created-on": "Ngày tạo",
@@ -1057,7 +1057,7 @@
 			"main-cta-busy": "Đang nạp tiền",
 			"main-cta-fund-stream": "Nạp tiền",
 			"main-cta-fund-stream-busy": "Đang nạp tiền",
-			"modal-title": "Add funds to the Streaming Treasury",
+			"modal-title": "Add funds to the streaming treasury",
 			"modal-title-fund-stream": "Nạp tiền vào Money stream",
 			"money-stream-to-topup-label": "Money Stream to top up",
 			"search-streams-placeholder": "Tìm stream theo tên và địa chỉ",
@@ -1122,7 +1122,7 @@
 			"number-of-streams": "Số lượng stream",
 			"treasury-address-label": "Treasury Address",
 			"treasury-name-label": "Tên kho bạc",
-			"unallocated-treasury-balance": "Unallocated Streaming Treasury Balance"
+			"unallocated-treasury-balance": "Unallocated balance"
 		},
 		"treasury-detail-heading": "Chi tiết kho bạc",
 		"treasury-list": {

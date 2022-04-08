@@ -434,7 +434,7 @@
 			"token-address-placeholder": "Digite o endereço do token"
 		},
 		"multisig-account-detail": {
-			"address": "Safe Deposit Address",
+			"address": "Safe deposit address",
 			"authority": "Autoridade",
 			"copy-id-title": "ID MULTIIG",
 			"created-on": "Criado em",
@@ -1052,7 +1052,7 @@
 			"main-cta-busy": "Tesouraria de financiamento",
 			"main-cta-fund-stream": "Fund Money Stream",
 			"main-cta-fund-stream-busy": "Funding Stream",
-			"modal-title": "Add funds to the Streaming Treasury",
+			"modal-title": "Add funds to the streaming treasury",
 			"modal-title-fund-stream": "Add funds to a Money Stream",
 			"money-stream-to-topup-label": "Money Stream to top up",
 			"search-streams-placeholder": "Pesquisar stream por nome ou endereço",
@@ -1111,8 +1111,8 @@
 			"cta-close": "Fechar tesouraria",
 			"cta-close-busy": "Tesouraria de fechamento",
 			"cta-withdraw-multisig-treasury": "Retirar fundos",
-			"unallocated-treasury-balance": "Unallocated Streaming Treasury Balance",
-			"multisig-tx-headsup": "Transações Pendentes de Aprovação ou Execução para esta Tesouraria",
+			"unallocated-treasury-balance": "Unallocated balance",
+			"multisig-tx-headsup": "Transações pendentes de aprovação ou execução para esta tesouraria",
 			"no-treasury-loaded": "Crie ou pesquise uma tesouraria para visualizar detalhes",
 			"no-treasury-selected": "Por favor, selecione ou procure uma tesouraria para ver os detalhes",
 			"number-of-streams": "Número de streams",

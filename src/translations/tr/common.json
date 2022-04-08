@@ -435,7 +435,7 @@
 			"token-address-placeholder": "Tokenların adresini girin"
 		},
 		"multisig-account-detail": {
-			"address": "Yetki",
+			"address": "Safe deposit address",
 			"authority": "Yetki",
 			"copy-id-title": "Çoklu-İmza ID",
 			"created-on": "Tarafından oluşturuldu",
@@ -805,7 +805,7 @@
 			"label-funds-runout": "tarafından tükenecek",
 			"label-funds-runout-today": "bugün tükenecek",
 			"label-funds-sent": "Alıcıya gönderilen fonlar",
-			"label-payment-rate": "Ödeme Oranı",
+			"label-payment-rate": "Ödeme oranı",
 			"label-received-from": "....'dan Alınan",
 			"label-receiving-from": "....'dan Alınıyor",
 			"label-reserved-allocation": "Ayrılmış Tahsis",
@@ -1123,7 +1123,7 @@
 			"number-of-streams": "Aktarım sayısı",
 			"treasury-address-label": "Adres",
 			"treasury-name-label": "Hazine adı",
-			"unallocated-treasury-balance": "Tahsis edilmemiş hazine bakiyesi"
+			"unallocated-treasury-balance": "Unallocated balance"
 		},
 		"treasury-detail-heading": "Hazine ayrıntıları",
 		"treasury-list": {

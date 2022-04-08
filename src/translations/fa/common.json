@@ -434,7 +434,7 @@
 			"token-address-placeholder": "آدرس توکن را وارد کنید"
 		},
 		"multisig-account-detail": {
-			"address": "Safe Deposit Address",
+			"address": "Safe deposit address",
 			"authority": "اختیارات",
 			"copy-id-title": "MULTISIG ID (آیدی حساب Multisig)",
 			"created-on": "ایجاد شده در",
@@ -1056,7 +1056,7 @@
 			"main-cta-busy": "تامین مالی خزانه",
 			"main-cta-fund-stream": "سرمایه مانی استریم",
 			"main-cta-fund-stream-busy": "وجوه استریم",
-			"modal-title": "اضافه کردن وجوه به Treasury",
+			"modal-title": "اضافه کردن وجوه به treasury",
 			"modal-title-fund-stream": "اضافه کردن وجوه به یک مانی استریم",
 			"money-stream-to-topup-label": "مانی استریم برای شارژ",
 			"search-streams-placeholder": "استریم را بر اساس نام یا آدرس جستجو کنید",
@@ -1121,7 +1121,7 @@
 			"number-of-streams": "تعداد استریم ها",
 			"treasury-address-label": "آدرس",
 			"treasury-name-label": "نام treasury",
-			"unallocated-treasury-balance": "موجودی treasury تخصیص نیافته"
+			"unallocated-treasury-balance": "Unallocated balance"
 		},
 		"treasury-detail-heading": "جزئیات treasury",
 		"treasury-list": {

@@ -429,7 +429,7 @@
 			"token-address-placeholder": "Enter the address of the token"
 		},
 		"multisig-account-detail": {
-			"address": "Safe Deposit Address",
+			"address": "Safe deposit address",
 			"authority": "Authority",
 			"copy-id-title": "MULTISIG ID",
 			"created-on": "Created on",
@@ -1052,7 +1052,7 @@
 			"main-cta-busy": "Funding treasury",
 			"main-cta-fund-stream": "Fund Money Stream",
 			"main-cta-fund-stream-busy": "Funding Stream",
-			"modal-title": "Add funds to the Streaming Treasury",
+			"modal-title": "Add funds to the streaming treasury",
 			"modal-title-fund-stream": "Add funds to a Money Stream",
 			"money-stream-to-topup-label": "Money Stream to top up",
 			"search-streams-placeholder": "Search stream by name or address",
@@ -1111,13 +1111,13 @@
 			"cta-close": "Close treasury",
 			"cta-close-busy": "Closing treasury",
 			"cta-withdraw-multisig-treasury": "Withdraw funds",
-			"multisig-tx-headsup": "Transactions Pending Approval or Execution for this Treasury",
+			"multisig-tx-headsup": "Transactions pending approval or execution for this treasury",
 			"no-treasury-loaded": "Create or lookup a treasury to view details",
 			"no-treasury-selected": "Please select or lookup a treasury to view details",
 			"number-of-streams": "Number of streams",
 			"treasury-address-label": "Treasury Address",
 			"treasury-name-label": "Treasury name",
-			"unallocated-treasury-balance": "Unallocated Streaming Treasury Balance"
+			"unallocated-treasury-balance": "Unallocated balance"
 		},
 		"treasury-detail-heading": "Treasury details",
 		"treasury-refresh-tooltip": "Refresh treasury data",
