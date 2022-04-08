@@ -573,7 +573,12 @@
 			"tx-operation-cancel": "Please cancel it below to remove it from the list.",
 			"your-execution": "your execution",
 			"execution": "execution",
-			"tx-switch-hide-btn": "Hide cancelled and voided transactions"
+			"tx-switch-hide-btn": "Hide cancelled and voided transactions",
+			"tx-pending-approval": "Pending Approval",
+			"tx-pending-execution": "Pending Execution",
+			"tx-completed": "Completed",
+			"tx-voided": "Voided",
+			"tx-rejected": "Rejected"
 		},
 		"pending-transactions": "pending transactions",
 		"refresh-tooltip": "Click to refresh the list of multisig accounts",

@@ -302,24 +302,24 @@ export const MultisigMintsView = () => {
   const getTransactionStatusAction = useCallback((mtx: MultisigTransaction) => {
 
     if (mtx.status === MultisigTransactionStatus.Pending) {
-      return "Pending Approval";
+      return t("multisig.multisig-transactions.tx-pending-approval");
     } 
     
     if (mtx.status === MultisigTransactionStatus.Approved) {
-      return "Pending for Execution";
+      return t("multisig.multisig-transactions.tx-pending-execution");
     }
 
     if (mtx.status === MultisigTransactionStatus.Executed) {
-      return "Completed";
+      return t("multisig.multisig-transactions.tx-completed");
     }
-
+    
     if (mtx.status === MultisigTransactionStatus.Voided) {
-      return "Voided";
+      return t("multisig.multisig-transactions.tx-voided");
     }
 
-    return "Rejected";
+    return t("multisig.multisig-transactions.tx-rejected");
 
-  },[]);
+  },[t]);
 
   const getTransactionUserStatusAction = useCallback((mtx: MultisigTransaction, longStatus = false) => {
 
@@ -355,17 +355,17 @@ export const MultisigMintsView = () => {
 
   const getTransactionStatusClass = useCallback((mtx: MultisigTransaction) => {
 
-    const approvals = mtx.signers.filter((s: boolean) => s === true).length;
+    // const approvals = mtx.signers.filter((s: boolean) => s === true).length;
 
-    if (approvals === 0) {
-      return "warning";
-    } 
+    // if (approvals === 0) {
+    //   return "warning";
+    // } 
     
-    if (mtx.status === MultisigTransactionStatus.Pending) {
-      return "info";
-    } 
+    // if (mtx.status === MultisigTransactionStatus.Pending) {
+    //   return "info";
+    // } 
     
-    if(mtx.status === MultisigTransactionStatus.Approved || mtx.status === MultisigTransactionStatus.Voided) {
+    if(mtx.status === MultisigTransactionStatus.Pending || mtx.status === MultisigTransactionStatus.Approved || mtx.status === MultisigTransactionStatus.Voided) {
       return "error";
     }
 

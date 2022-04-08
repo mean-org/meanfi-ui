@@ -575,6 +575,11 @@
 			"execution": "execution",
 			"tx-operation-voided": "This pending transaction has been VOIDED due to the Multisig being edited.",
 			"tx-switch-hide-btn": "Hide cancelled and voided transactions",
+			"tx-pending-approval": "Pending Approval",
+			"tx-pending-execution": "Pending Execution",
+			"tx-completed": "Completed",
+			"tx-voided": "Voided",
+			"tx-rejected": "Rejected",
 			"your-status": "وضعیت شما:"
 		},
 		"multisig-treasuries": {

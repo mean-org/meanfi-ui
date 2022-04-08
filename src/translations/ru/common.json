@@ -576,7 +576,12 @@
 			"tx-switch-hide-btn": "Hide cancelled and voided transactions",
 			"your-status": "Your status:",
 			"your-execution": "your execution",
-			"execution": "execution"
+			"execution": "execution",
+			"tx-pending-approval": "Pending Approval",
+			"tx-pending-execution": "Pending Execution",
+			"tx-completed": "Completed",
+			"tx-voided": "Voided",
+			"tx-rejected": "Rejected"
 		},
 		"multisig-treasuries": {
 			"back-to-treasuries": "Back to Streaming Treasuries"
