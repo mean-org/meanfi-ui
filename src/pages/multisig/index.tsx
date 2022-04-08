@@ -4885,7 +4885,7 @@ export const MultisigView = () => {
                       <span className="mr-1">{t('multisig.multisig-transactions.your-status')}</span>
                       <span className={`font-bold ${getTxUserStatusClass(highlightedMultisigTx)}`}>{getTransactionUserStatusAction(highlightedMultisigTx, true)}</span>
                     </div>
-                    <div className="mb-2">{t('multisig.multisig-transactions.transaction-requires')} {selectedMultisig.threshold}/{selectedMultisig.owners.length} {t('multisig.multisig-transactions.signers-to-approve')} {getTxSignedCount(highlightedMultisigTx)} {t('multisig.multisig-transactions.signed')}</div>
+                    <div className="mb-2">{t('multisig.multisig-transactions.proposal-ready-to-be-executed')}</div>
                   </>
                 ) : isTxPendingApproval() ? (
                   <>

@@ -556,7 +556,8 @@
 			"tx-pending-execution": "Pending Execution",
 			"tx-completed": "Completed",
 			"tx-voided": "Voided",
-			"tx-rejected": "Rejected"
+			"tx-rejected": "Rejected",
+			"proposal-ready-to-be-executed": "This proposal has received the required number of signatures and is now ready to be executed."
 		},
 		"multisig-treasuries": {
 			"back-to-treasuries": "Back to Streaming Treasuries"
