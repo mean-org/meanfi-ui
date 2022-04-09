@@ -184,6 +184,7 @@ export const MultisigEditModal = (props: {
     <Modal
       className="mean-modal simple-modal"
       title={<div className="modal-title">{t('multisig.update-multisig.modal-title')}</div>}
+      maskClosable={false}
       footer={null}
       visible={props.isVisible}
       onOk={onAcceptModal}
@@ -318,52 +319,55 @@ export const MultisigEditModal = (props: {
         )}
       </div>
 
-      <div className="row two-col-ctas mt-3 transaction-progress p-0">
-        <div className="col-6">
-          <Button
-            block
-            type="text"
-            shape="round"
-            size="middle"
-            className={props.isBusy ? 'inactive' : ''}
-            onClick={() => isError(transactionStatus.currentOperation)
-              ? onAcceptModal()
-              : onCloseModal()}>
-            {isError(transactionStatus.currentOperation)
-              ? t('general.retry')
-              : t('general.cta-close')
-            }
-          </Button>
-        </div>
-        <div className="col-6">
-          <Button
-            className={props.isBusy ? 'inactive' : ''}
-            block
-            type="primary"
-            shape="round"
-            size="middle"
-            disabled={!isFormValid()}
-            onClick={() => {
-              if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
-                onAcceptModal();
-              } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
-                onCloseModal();
-              } else {
-                refreshPage();
+      {!(props.isBusy && transactionStatus !== TransactionStatus.Iddle) && (
+        <div className="row two-col-ctas mt-3 transaction-progress p-0">
+          <div className={!isError(transactionStatus.currentOperation) ? "col-6" : "col-12"}>
+            <Button
+              block
+              type="text"
+              shape="round"
+              size="middle"
+              className={props.isBusy ? 'inactive' : ''}
+              onClick={() => isError(transactionStatus.currentOperation)
+                ? onAcceptModal()
+                : onCloseModal()}>
+              {isError(transactionStatus.currentOperation)
+                ? t('general.retry')
+                : t('general.cta-close')
               }
-            }}>
-            {props.isBusy
-              ? t('multisig.update-multisig.main-cta-busy')
-              : transactionStatus.currentOperation === TransactionStatus.Iddle
-                ? t('multisig.update-multisig.main-cta')
-                : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
-                  ? t('general.cta-finish')
-                  : t('general.refresh')
-            }
-          </Button>
+            </Button>
+          </div>
+          {!isError(transactionStatus.currentOperation) && (
+            <div className="col-6">
+              <Button
+                className={props.isBusy ? 'inactive' : ''}
+                block
+                type="primary"
+                shape="round"
+                size="middle"
+                disabled={!isFormValid()}
+                onClick={() => {
+                  if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+                    onAcceptModal();
+                  } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
+                    onCloseModal();
+                  } else {
+                    refreshPage();
+                  }
+                }}>
+                {props.isBusy
+                  ? t('multisig.update-multisig.main-cta-busy')
+                  : transactionStatus.currentOperation === TransactionStatus.Iddle
+                    ? t('multisig.update-multisig.main-cta')
+                    : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
+                      ? t('general.cta-finish')
+                      : t('general.refresh')
+                }
+              </Button>
+            </div>
+          )}
         </div>
-      </div>
-
+      )}
     </Modal>
   );
 };

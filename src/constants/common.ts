@@ -1,5 +1,7 @@
 import { Language } from "../models/languages";
 
+export const MIN_SOL_BALANCE_REQUIRED = 0.05;
+
 export const TRANSACTIONS_PER_PAGE = 15;
 export const ACCOUNTS_LOW_BALANCE_LIMIT = 0.1; // Minimum balance to start showing user account tokens in /accounts
 export const ONE_MINUTE_REFRESH_TIMEOUT = 60 * 1000;

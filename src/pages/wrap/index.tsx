@@ -7,7 +7,7 @@ import {
   PublicKey,
   Transaction,
 } from "@solana/web3.js";
-import { WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
+import { MIN_SOL_BALANCE_REQUIRED, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { Button, Col, Modal, Row, Spin } from "antd";
 import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber } from "../../utils/utils";
 import { AppStateContext } from "../../contexts/appstate";
@@ -106,8 +106,8 @@ export const WrapView = () => {
   }, [connection, wrapFees]);
 
   const getMaxPossibleAmount = () => {
-    const fee = wrapFees.blockchainFee + getTxPercentFeeAmount(wrapFees, nativeBalance);
-    return nativeBalance - fee;
+    // const fee = wrapFees.blockchainFee + getTxPercentFeeAmount(wrapFees, nativeBalance);
+    return nativeBalance - MIN_SOL_BALANCE_REQUIRED;
   }
 
   const isSuccess = useCallback(() => {
@@ -448,11 +448,10 @@ export const WrapView = () => {
         <div className="interaction-area">
           {publicKey ? (
             <div className="place-transaction-box mt-4 mb-3">
-              <div className="transaction-field mb-3">
-                <div className="transaction-field-row">
-                  <span className="field-label-left">&nbsp;</span>
-                  <span className="field-label-right">
-                    <span>{t('faucet.current-sol-balance')}:</span>
+              <div className="well">
+                <div className="flexible-right mb-1">
+                  <div className="inner-label">
+                    <span>{t('faucet.current-sol-balance')}: </span>
                     <span className="balance-amount">
                       {`${nativeBalance
                           ? getTokenAmountAndSymbolByTokenAddress(
@@ -463,11 +462,10 @@ export const WrapView = () => {
                           : "0"
                       }`}
                     </span>
-                  </span>
+                  </div>
                 </div>
-
-                <div className="transaction-field-row main-row">
-                  <span className="input-left">
+                <div className="flex-fixed-right">
+                  <div className="left">
                     <input
                       id="wrap-amount-field"
                       className="general-text-input"
@@ -483,64 +481,55 @@ export const WrapView = () => {
                       spellCheck="false"
                       value={wrapAmount}
                     />
-                  </span>
-                  <div className="addon-right">
-                    <div className="token-group">
-                      {getMaxPossibleAmount() > 0 && (
-                        <div className="token-max simplelink"
-                          onClick={() => {
-                            setValue(getMaxPossibleAmount().toFixed(wSol?.decimals));
-                          }}>
-                          MAX
-                        </div>
-                      )}
-                      {wSol && (
-                        <TokenDisplay onClick={() => {}}
-                          mintAddress={wSol.address}
-                          symbol="SOL"
-                          name={wSol.name}
-                          showName={false}
-                          showCaretDown={false}
-                        />
-                      )}
-                    </div>
+                  </div>
+                  <div className="right">
+                    <span className="add-on simplelink">
+                      <div className="token-group">
+                        {getMaxPossibleAmount() > 0 && (
+                          <div className="token-max simplelink"
+                            onClick={() => {
+                              setValue(getMaxPossibleAmount().toFixed(wSol?.decimals));
+                            }}>
+                            MAX
+                          </div>
+                        )}
+                        {wSol && (
+                          <TokenDisplay onClick={() => {}}
+                            mintAddress={wSol.address}
+                            symbol="SOL"
+                            name={wSol.name}
+                            showName={false}
+                            showCaretDown={false}
+                          />
+                        )}
+                      </div>
+                    </span>
                   </div>
                 </div>
+
                 <div className="transaction-field-row">
                   <span className="field-label-left">
-                    {nativeBalance <= (wrapFees.blockchainFee + getTxPercentFeeAmount(wrapFees)) ? (
-                      <span className="fg-red">
+                    {/* {nativeBalance <= (wrapFees.blockchainFee + getTxPercentFeeAmount(wrapFees)) ? ( */}
+                    {(parseFloat(wrapAmount) <= MIN_SOL_BALANCE_REQUIRED) ? (
+                      <span className="form-field-error">
                         {t('transactions.validation.amount-low')}
                       </span>
                     ) : parseFloat(wrapAmount) > getMaxPossibleAmount() ? (
-                      <span className="fg-red">
+                      <span className="form-field-error">
                         {t('transactions.validation.amount-sol-high')}
                       </span>
-                    ) : parseFloat(wrapAmount) <= (wrapFees.blockchainFee + getTxPercentFeeAmount(wrapFees, wrapAmount)) ? (
-                      <span className="fg-red">
-                        {t('transactions.validation.amount-lt-fee')}
-                      </span>
+                    // ) : parseFloat(wrapAmount) <= (wrapFees.blockchainFee + getTxPercentFeeAmount(wrapFees, wrapAmount)) ? (
+                    //   <span className="fg-red">
+                    //     {t('transactions.validation.amount-lt-fee')}
+                    //   </span>
                     ) : (
-                      <span>&nbsp;</span>
+                      <div className="form-field-hint">{t("wrap.hint-message")}</div>
                     )}
                   </span>
-                  <span className="field-label-right">&nbsp;</span>
                 </div>
               </div>
-              <div className="p-2 mb-2">
-                {infoRow(
-                  t('faucet.wrap-transaction-fee') + ":",
-                  `${
-                    wrapFees
-                      ? "~" +
-                        getTokenAmountAndSymbolByTokenAddress(
-                          wrapFees.blockchainFee,
-                          WRAPPED_SOL_MINT_ADDRESS,
-                          true
-                        ) + ' SOL'
-                      : "0"
-                  }`
-                )}
+
+              <div>
                 {isValidInput() &&
                   infoRow(
                     t('faucet.wrapped-amount') + ":",
@@ -557,10 +546,12 @@ export const WrapView = () => {
                           )
                         : "0"
                     }`
-                  )}
+                  )
+                }
               </div>
+
               <Button
-                className="main-cta"
+                className="main-cta p-2 mt-2"
                 block
                 type="primary"
                 shape="round"

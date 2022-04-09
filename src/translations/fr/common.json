@@ -434,7 +434,7 @@
 			"token-address-placeholder": "Entrez l'adresse du jeton"
 		},
 		"multisig-account-detail": {
-			"address": "Autorité",
+			"address": "Safe deposit address",
 			"authority": "Autorité",
 			"copy-id-title": "ID MULTISIG",
 			"created-on": "Créé sur",
@@ -538,8 +538,8 @@
 			"column-created-on": "Créé sur",
 			"column-current-signatures": "Signer",
 			"column-my-status": "Mon statut",
-			"column-operation": "Opération",
-			"column-pending-signatures": "Signatures",
+			"column-operation": "Transaction",
+			"column-pending-signatures": "Status",
 			"column-program-id": "Programme",
 			"explain-failure": "Expliquer la condition de défaillance si spécifique",
 			"initiator-transaction": "Cette transaction a été soumise par",
@@ -566,8 +566,8 @@
 			"treasury-closed-warning": "Lorsqu'une trésorerie est fermée, tous les fonds restants seront déposés dans le portefeuille de l'initiateur.  Veuillez confirmer que cela est acceptable avant de signer.",
 			"tx-operation-executed": "This transaction has already been executed",
 			"tx-operation-failure": "L'opération {{operation}} a échoué",
-			"tx-operation-pending-one": "Une transaction sur ce Multisig est maintenant prête à être exécutée. Veuillez dire à la personne qui a initié cette transaction de l'exécuter.",
-			"tx-operation-pending-two": "Une transaction sur ce Multisig est prête pour",
+			"tx-operation-pending-one": "Une transaction sur ce multisig est maintenant prête à être exécutée. Veuillez dire à la personne qui a initié cette transaction de l'exécuter.",
+			"tx-operation-pending-two": "Une transaction sur ce multisig est prête pour",
 			"tx-operation-rejected": "This transaction has been rejected.",
 			"tx-operation-success": "L'opération {{operation}} a réussi",
 			"tx-operation-voided": "This pending transaction has been VOIDED due to the Multisig being edited.",
@@ -575,7 +575,14 @@
 			"tx-switch-hide-btn": "Hide cancelled and voided transactions",
 			"your-status": "Votre statut:",
 			"your-execution": "your execution",
-			"execution": "execution"
+			"execution": "execution",
+			"tx-pending-approval": "Pending Approval",
+			"tx-pending-execution": "Pending Execution",
+			"tx-completed": "Completed",
+			"tx-voided": "Voided",
+			"tx-rejected": "Rejected",
+			"proposal-ready-to-be-executed": "This proposal has received the required number of signatures and is now ready to be executed.",
+			"proposal-voided": "To execute this transaction, {{missingSignature}} more signature is required."
 		},
 		"multisig-treasuries": {
 			"back-to-treasuries": "Retour aux trésoreries"
@@ -1052,7 +1059,7 @@
 			"main-cta-busy": "Trésorerie de financement",
 			"main-cta-fund-stream": "Financer le flux d'argent",
 			"main-cta-fund-stream-busy": "Volet de financement",
-			"modal-title": "Ajouter des fonds au Trésor",
+			"modal-title": "Ajouter des fonds au trésor",
 			"modal-title-fund-stream": "Ajouter des fonds à un flux d'argent",
 			"money-stream-to-topup-label": "Money Stream pour recharger",
 			"search-streams-placeholder": "Rechercher un flux par nom ou adresse",
@@ -1089,7 +1096,7 @@
 				"treasury-type-locked-description": "Avec une trésorerie verrouillée, vous pouvez créer des flux qui agissent comme un contrat d'acquisition pour les allocations réservées, comme celles nécessaires aux investisseurs.  Ils ont généralement une date de fin fixe.",
 				"treasury-type-locked-name": "Trésorerie en streaming d'argent verrouillé",
 				"treasury-type-open-description": "Avec une trésorerie ouverte, vous pouvez créer des flux d'argent qui fonctionnent indéfiniment.  Lorsque le Trésor est à court d'argent, tous les flux s'arrêtent jusqu'à ce qu'il soit réapprovisionné.",
-				"treasury-type-open-name": "Trésorerie en streaming Open Money"
+				"treasury-type-open-name": "Open money streaming treasury"
 			}
 		},
 		"lookup-treasury-cta-tooltip": "Rechercher une trésorerie",
@@ -1117,7 +1124,7 @@
 			"number-of-streams": "Nombre de flux",
 			"treasury-address-label": "Adresse",
 			"treasury-name-label": "Nom du Trésor",
-			"unallocated-treasury-balance": "Solde de trésorerie non affecté"
+			"unallocated-treasury-balance": "Unallocated balance"
 		},
 		"treasury-detail-heading": "Détails du Trésor",
 		"treasury-list": {
@@ -1247,10 +1254,13 @@
 		"label-input-right": "Par préréglage en pourcentage",
 		"modal": {
 			"main-cta": "Retirer des fonds",
-			"selected-treasury-label": "Du compte du Trésor",
-			"title": "Retirer des fonds du Trésor",
+			"selected-treasury-label": "Du compte du trésor",
+			"title": "Retirer des fonds du trésor",
 			"verified-label": "Je suis sûr que l'adresse du destinataire n'appartient pas à un échange"
 		},
 		"modal-title": "Retirer des fonds"
+	},
+	"wrap": {
+		"hint-message": "We recommend having at least 0.05 SOL for any transaction"
 	}
 }

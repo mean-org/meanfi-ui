@@ -1329,6 +1329,7 @@ export const TreasuryStreamCreateModal = (props: {
     <Modal
       className="mean-modal treasury-stream-create-modal"
       title={(treasuryOption && treasuryOption.type === TreasuryType.Open) ? (<div className="modal-title">{t('treasuries.treasury-streams.add-stream-modal-title')}</div>) : (<div className="modal-title">{t('treasuries.treasury-streams.add-stream-locked.modal-title')}</div>)}
+      maskClosable={false}
       footer={null}
       visible={props.isVisible}
       onOk={props.handleOk}
