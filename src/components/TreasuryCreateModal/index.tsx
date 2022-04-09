@@ -499,10 +499,14 @@ export const TreasuryCreateModal = (props: {
               size="middle"
               className={props.isBusy ? 'inactive' : ''}
               onClick={() => isError(transactionStatus.currentOperation)
-                ? onAcceptModal()
+                ? transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure
+                  ? onCloseModal()
+                  : onAcceptModal()
                 : onCloseModal()}>
               {isError(transactionStatus.currentOperation)
-                ? t('general.retry')
+                ? transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure
+                  ? t('general.cta-close')
+                  : t('general.retry')
                 : t('general.cta-close')
               }
             </Button>

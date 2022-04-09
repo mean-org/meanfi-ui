@@ -52,6 +52,8 @@ import { ExchangeOutput } from "../../components/ExchangeOutput";
 import { SABER } from "@mean-dao/hybrid-liquidity-ag/lib/types";
 import { MEAN_TOKEN_LIST } from "../../constants/token-list";
 
+let inputDebounceTimeout: any;
+
 export const RecurringExchange = (props: {
   queryFromMint: string | null;
   queryToMint: string | null;
@@ -1136,6 +1138,14 @@ export const RecurringExchange = (props: {
 
   }, []);
 
+  const debounceInputOnChange = (value: string) => {
+    clearTimeout(inputDebounceTimeout);
+    inputDebounceTimeout = setTimeout(() => {
+      consoleOut('input ====>', value, 'orange');
+      setFromSwapAmount(parseFloat(value));
+    }, 500);
+  }
+
   // Event handling
   const handleSwapFromAmountChange = useCallback((e: any) => {
 
@@ -1163,10 +1173,10 @@ export const RecurringExchange = (props: {
       setFromSwapAmount(0);
     } else if (isValidNumber(newValue)) {
       setFromAmount(newValue);
-      setFromSwapAmount(parseFloat(newValue));
+      debounceInputOnChange(newValue);
     }
 
-  },[]);
+  },[fromMint, mintList]);
 
   const onTokenSearchInputChange = useCallback((e: any) => {
 
@@ -1487,7 +1497,6 @@ export const RecurringExchange = (props: {
               showTokenSelector();
             }}
             onPriceClick={() => refreshPrices()}
-            debounceTime={500}
             className="mb-0"
           />
 

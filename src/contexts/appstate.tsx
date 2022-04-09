@@ -554,10 +554,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     setPaymentRateFrequency(PaymentRateType.PerMonth);
     setIsVerifiedRecipient(false);
     setIsAllocationReserved(false);
-    setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle
-    });
   }
 
   const resetStreamsState = () => {
