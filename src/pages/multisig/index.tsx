@@ -72,12 +72,14 @@ import { MultisigUpgradeIDLModal } from '../../components/MultisigUpgradeIDL';
 import { encodeInstruction } from '../../models/idl';
 import { MultisigSetProgramAuthModal } from '../../components/MultisigSetProgramAuthModal';
 import { MultisigOwnersView } from '../../components/MultisigOwnersView';
+import { MultisigOwnersSigned } from '../../components/MultisigOwnersSigned';
 import { MultisigEditModal } from '../../components/MultisigEditModal';
 import { calculateActionFees, MSP, MSP_ACTIONS, Treasury } from '@mean-dao/msp';
 import { customLogger } from '../..';
 import { isError } from '../../utils/transactions';
 import { ProgramAccounts } from '../../utils/accounts';
 import { getOperationName } from '../../utils/multisig-helpers';
+import { InfoIcon } from '../../components/InfoIcon';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -4167,6 +4169,24 @@ export const MultisigView = () => {
     );
   };
 
+  const getParticipantsThatApprovedTx = useCallback((mtx: MultisigTransaction) => {
+
+    if (!selectedMultisig || !selectedMultisig.owners || selectedMultisig.owners.length === 0) {
+      return [];
+    }
+  
+    let addressess: string[] = [];
+    const participants = selectedMultisig.owners as MultisigParticipant[];
+    participants.forEach((participant: MultisigParticipant, index: number) => {
+      if (mtx.signers[index]) {
+        addressess.push(participant.address);
+      }
+    });
+  
+    return addressess;
+  
+  }, [selectedMultisig]);
+
   const renderMultisigPendingTxs = () => {
 
     if (!selectedMultisig) {
@@ -4910,9 +4930,11 @@ export const MultisigView = () => {
                       )
                     }
                     <div className="mb-2">{t('multisig.multisig-transactions.proposed-by')} {getTxInitiator(highlightedMultisigTx)?.name}<br/><code>{getTxInitiator(highlightedMultisigTx)?.address}</code></div>
-                    <div className="mb-2">
+                    <div className="mb-2 d-flex align-items-center">
                       <span className="mr-1">{t('multisig.multisig-transactions.your-status')}</span>
-                      <span className={`font-bold ${getTxUserStatusClass(highlightedMultisigTx)}`}>{getTransactionUserStatusAction(highlightedMultisigTx, true)}</span>
+                      <span className={`font-bold mr-1 ${getTxUserStatusClass(highlightedMultisigTx)}`}>{getTransactionUserStatusAction(highlightedMultisigTx, true)}</span>
+
+                      {/* <MultisigOwnersSigned className="ml-1" participants={getParticipantsThatApprovedTx(highlightedMultisigTx) || []} /> */}
                     </div>
                     <div className="mb-2">{(selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)) > 1 ? t('multisig.multisig-transactions.missing-signatures', {missingSignature: selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)}) : t('multisig.multisig-transactions.missing-signature', {missingSignature: selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)})}</div>
                     {getTransactionUserStatusAction(highlightedMultisigTx) === "Signed" && (
