@@ -31,6 +31,7 @@ import { MultisigMintTokenModal } from '../../components/MultisigMintTokenModal'
 import { MultisigCreateMintModal } from '../../components/MultisigCreateMintModal';
 import { MultisigTransferMintAuthorityModal } from '../../components/MultisigTransferMintAuthorityModal';
 import { getOperationName } from '../../utils/multisig-helpers';
+import { MultisigOwnersSigned } from '../../components/MultisigOwnersSigned';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -3102,6 +3103,24 @@ export const MultisigMintsView = () => {
     );
   };
 
+  const getParticipantsThatApprovedTx = useCallback((mtx: MultisigTransaction) => {
+
+    if (!selectedMultisig || !selectedMultisig.owners || selectedMultisig.owners.length === 0) {
+      return [];
+    }
+  
+    let addressess: MultisigParticipant[] = [];
+    const participants = selectedMultisig.owners as MultisigParticipant[];
+    participants.forEach((participant: MultisigParticipant, index: number) => {
+      if (mtx.signers[index]) {
+        addressess.push(participant);
+      }
+    });
+  
+    return addressess;
+  
+  }, [selectedMultisig]);
+
   const renderMultisigPendingTxs = () => {
 
     if (!selectedMultisig) {
@@ -3553,6 +3572,7 @@ export const MultisigMintsView = () => {
                     <div className="mb-2">
                       <span className="mr-1">{t('multisig.multisig-transactions.your-status')}</span>
                       <span className={`font-bold ${getTxUserStatusClass(highlightedMultisigTx)}`}>{getTransactionUserStatusAction(highlightedMultisigTx, true)}</span>
+                      <MultisigOwnersSigned className="ml-1" participants={getParticipantsThatApprovedTx(highlightedMultisigTx) || []} />
                     </div>
                     <div className="mb-2">{(selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)) > 1 ? t('multisig.multisig-transactions.missing-signatures', {missingSignature: selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)}) : t('multisig.multisig-transactions.missing-signature', {missingSignature: selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)})}</div>
                     {getTransactionUserStatusAction(highlightedMultisigTx) === "Signed" && (
@@ -3582,7 +3602,7 @@ export const MultisigMintsView = () => {
                       </Col>
                     </Row>
                     <div className="mb-2">{t('multisig.multisig-transactions.proposed-by')} {getTxInitiator(highlightedMultisigTx)?.name}<br/><code>{getTxInitiator(highlightedMultisigTx)?.address}</code></div>
-                    <div className="mb-2">{t('multisig.multisig-transactions.transaction-requires')} {selectedMultisig.threshold}/{selectedMultisig.owners.length} {t('multisig.multisig-transactions.signers-to-approve')} {getTxSignedCount(highlightedMultisigTx)} {t('multisig.multisig-transactions.signed')}</div>
+                    <div className="mb-2">{(selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)) > 1 ? t('multisig.multisig-transactions.proposal-voided', {missingSignature: selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)}) : t('multisig.multisig-transactions.proposal-ready-to-be-executed')}</div>
                   </>
                 )}
               </>

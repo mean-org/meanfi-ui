@@ -578,6 +578,7 @@
 			"tx-pending-approval": "Pending Approval",
 			"tx-pending-execution": "Pending Execution",
 			"proposal-ready-to-be-executed": "This proposal has received the required number of signatures and is now ready to be executed.",
+			"proposal-voided": "To execute this transaction, {{missingSignature}} more signature is required.",
 			"tx-completed": "Completed",
 			"tx-voided": "Voided",
 			"tx-rejected": "Rejected",

@@ -3524,11 +3524,11 @@ export const MultisigAssetsView = () => {
       return [];
     }
   
-    let addressess: string[] = [];
+    let addressess: MultisigParticipant[] = [];
     const participants = selectedMultisig.owners as MultisigParticipant[];
     participants.forEach((participant: MultisigParticipant, index: number) => {
       if (mtx.signers[index]) {
-        addressess.push(participant.address);
+        addressess.push(participant);
       }
     });
   
@@ -4039,7 +4039,7 @@ export const MultisigAssetsView = () => {
                       <span className="mr-1">{t('multisig.multisig-transactions.your-status')}</span>
                       <span className={`font-bold mr-1 ${getTxUserStatusClass(highlightedMultisigTx)}`}>{getTransactionUserStatusAction(highlightedMultisigTx, true)}
                       </span>
-                      <MultisigOwnersSigned className="ml-1" participants={selectedMultisig.owners || []} />
+                      <MultisigOwnersSigned className="ml-1" participants={getParticipantsThatApprovedTx(highlightedMultisigTx) || []} />
                     </div>
                     <div className="mb-2">{(selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)) > 1 ? t('multisig.multisig-transactions.missing-signatures', {missingSignature: selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)}) : t('multisig.multisig-transactions.missing-signature', {missingSignature: selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)})}</div>
                     {getTransactionUserStatusAction(highlightedMultisigTx) === "Signed" && (
@@ -4069,7 +4069,7 @@ export const MultisigAssetsView = () => {
                       </Col>
                     </Row>
                     <div className="mb-2">{t('multisig.multisig-transactions.proposed-by')} {getTxInitiator(highlightedMultisigTx)?.name}<br/><code>{getTxInitiator(highlightedMultisigTx)?.address}</code></div>
-                    <div className="mb-2">{t('multisig.multisig-transactions.transaction-requires')} {selectedMultisig.threshold}/{selectedMultisig.owners.length} {t('multisig.multisig-transactions.signers-to-approve')} {getTxSignedCount(highlightedMultisigTx)} {t('multisig.multisig-transactions.signed')}</div>
+                    <div className="mb-2">{(selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)) > 1 ? t('multisig.multisig-transactions.proposal-voided', {missingSignature: selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)}) : t('multisig.multisig-transactions.proposal-ready-to-be-executed')}</div>
                   </>
                 )}
               </>

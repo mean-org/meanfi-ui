@@ -56,7 +56,7 @@ export const MultisigOwnersSigned = (props: {
   return (
     <>
       <Popover
-        placement="bottom"
+        placement="topRight"
         title={titleContent}
         content={bodyContent}
         visible={popoverVisible}
