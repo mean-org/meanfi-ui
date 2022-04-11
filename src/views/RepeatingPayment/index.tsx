@@ -33,7 +33,6 @@ import {
   getTransactionModalTitle,
   getTransactionOperationDescription,
   getTransactionStatusForLogs,
-  isLocal,
   isToday,
   isValidAddress,
   PaymentRateTypeOption
@@ -76,7 +75,6 @@ export const RepeatingPayment = () => {
     tokenBalance,
     effectiveRate,
     coinPrices,
-    isWhitelisted,
     loadingPrices,
     recipientAddress,
     recipientNote,
@@ -1127,10 +1125,6 @@ export const RepeatingPayment = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.TransactionFinished
-            });
             enqueueTransactionConfirmation({
               signature: signature,
               operationType: OperationType.StreamCreate,
@@ -1141,7 +1135,14 @@ export const RepeatingPayment = () => {
               completedTitle: "Transaction confirmed",
               completedMessage: "Money Stream created successfully"
             });
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.TransactionFinished
+            });
             setIsBusy(false);
+            setTimeout(() => {
+              closeTransactionModal();
+            }, 300);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -1167,6 +1168,7 @@ export const RepeatingPayment = () => {
     repeatingPaymentFees.blockchainFee,
     transactionStatus.currentOperation,
     enqueueTransactionConfirmation,
+    closeTransactionModal,
     setTransactionStatus,
     showTransactionModal,
     getPaymentRateLabel,

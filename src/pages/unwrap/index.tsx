@@ -17,7 +17,6 @@ import { MSP_ACTIONS, TransactionFees } from '@mean-dao/money-streaming/lib/type
 import {
   consoleOut,
   getTransactionStatusForLogs,
-  getTxPercentFeeAmount,
   percentage
 } from "../../utils/ui";
 import { useTranslation } from "react-i18next";

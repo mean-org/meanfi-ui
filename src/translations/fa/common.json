@@ -578,7 +578,7 @@
 			"tx-pending-approval": "Pending Approval",
 			"tx-pending-execution": "Pending Execution",
 			"proposal-ready-to-be-executed": "This proposal has received the required number of signatures and is now ready to be executed.",
-			"proposal-voided": "To execute this transaction, {{missingSignature}} more signature is required.",
+			"proposal-completed": "This proposal has been executed and is now complete.",
 			"tx-completed": "Completed",
 			"tx-voided": "Voided",
 			"tx-rejected": "Rejected",
@@ -825,7 +825,7 @@
 			"transfer-money-stream-menu-item": "انتقال مالکیت",
 			"withdraw-funds-cta": "برداشت وجوه"
 		},
-		"stream-interval": "net-change",
+		"streaming-balance": "balance",
 		"stream-list": {
 			"no-streams": "هیچ streams در دسترس نیست",
 			"not-connected": "لطفاً کیف پول خود را وصل کنید تا money streams خود را ببینید",
@@ -1169,7 +1169,7 @@
 			"column-rate": "نرخ",
 			"create-stream-main-cta": "ایجاد استریم",
 			"create-stream-main-cta-busy": "ایجاد کردن اسریم",
-			"create-treasury-switch-label": "آیا می خواهید چند استریم با تنظیمات یکسان ایجاد کنید؟",
+			"create-multi-recipient-checkbox-label": "آیا می خواهید چند استریم با تنظیمات یکسان ایجاد کنید؟",
 			"fee-payed-by-treasurer": "من می خواهم برای این اسرتریم به جای ذینفع هزینه پرداخت کنم",
 			"loading-streams": "در حال بارگیری استریم ها",
 			"message-warning": "The list of recipients you submitted included your own wallet address. This is not possible and this address has been removed from the imported list.",

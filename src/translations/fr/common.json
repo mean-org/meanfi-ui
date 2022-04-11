@@ -582,7 +582,7 @@
 			"tx-voided": "Voided",
 			"tx-rejected": "Rejected",
 			"proposal-ready-to-be-executed": "This proposal has received the required number of signatures and is now ready to be executed.",
-			"proposal-voided": "To execute this transaction, {{missingSignature}} more signature is required."
+			"proposal-completed": "This proposal has been executed and is now complete."
 		},
 		"multisig-treasuries": {
 			"back-to-treasuries": "Retour aux trésoreries"
@@ -825,7 +825,7 @@
 			"transfer-money-stream-menu-item": "Transfert de propriété",
 			"withdraw-funds-cta": "Retirer des fonds"
 		},
-		"stream-interval": "changement net",
+		"streaming-balance": "balance",
 		"stream-list": {
 			"no-streams": "Aucun flux disponible",
 			"not-connected": "Veuillez connecter votre portefeuille pour voir vos flux d'argent",
@@ -1170,7 +1170,7 @@
 			"column-rate": "Taux",
 			"create-stream-main-cta": "Créer un flux",
 			"create-stream-main-cta-busy": "Création de flux",
-			"create-treasury-switch-label": "Voulez-vous créer plusieurs flux avec les mêmes paramètres ?",
+			"create-multi-recipient-checkbox-label": "Voulez-vous créer plusieurs flux avec les mêmes paramètres ?",
 			"fee-payed-by-treasurer": "Je veux payer des frais pour ce flux au lieu du bénéficiaire",
 			"loading-streams": "Chargement des flux",
 			"message-warning": "La liste des destinataires que vous avez soumise comprenait votre propre adresse de portefeuille. Ce n'est pas possible et cette adresse a été supprimée de la liste importée.",

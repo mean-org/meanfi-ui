@@ -1346,10 +1346,10 @@ export const TreasuryStreamCreateModal = (props: {
             <div className="mb-2 text-uppercase">{t('treasuries.treasury-streams.add-stream-locked.panel1-name')}</div>
           )}
 
-          {/* Create Treasury checkbox */}
-          {(treasuryOption && treasuryOption.type === TreasuryType.Open) && (
+          {/* Create multi-recipient stream checkbox */}
+          {/* {(treasuryOption && treasuryOption.type === TreasuryType.Open) && (
             <div className="mb-2 flex-row align-items-start">
-              <span className="form-label w-auto mb-0">{t('treasuries.treasury-streams.create-treasury-switch-label')}</span>
+              <span className="form-label w-auto mb-0">{t('treasuries.treasury-streams.create-multi-recipient-checkbox-label')}</span>
               <Radio.Group className="ml-2 d-flex" 
                 onChange={onCloseMultipleStreamsChanged} 
                 value={enableMultipleStreamsOption}
@@ -1358,7 +1358,7 @@ export const TreasuryStreamCreateModal = (props: {
                 <Radio value={false}>{t('general.no')}</Radio>
               </Radio.Group>
             </div>
-          )}
+          )} */}
 
           {!enableMultipleStreamsOption && (
             <>

@@ -583,7 +583,7 @@
 			"tx-voided": "Voided",
 			"tx-rejected": "Rejected",
 			"proposal-ready-to-be-executed": "This proposal has received the required number of signatures and is now ready to be executed.",
-			"proposal-voided": "To execute this transaction, {{missingSignature}} more signature is required."
+			"proposal-completed": "This proposal has been executed and is now complete."
 		},
 		"multisig-treasuries": {
 			"back-to-treasuries": "Hazinelere geri dön"
@@ -826,7 +826,7 @@
 			"transfer-money-stream-menu-item": "Sahipliği aktar",
 			"withdraw-funds-cta": "Para çekme"
 		},
-		"stream-interval": "net-değişim",
+		"streaming-balance": "balance",
 		"stream-list": {
 			"no-streams": "Kullanılabilir aktarım yok",
 			"not-connected": "Para aktarımlarınızı görmek için lütfen cüzdanınızı bağlayın",
@@ -1171,7 +1171,7 @@
 			"column-rate": "Oran",
 			"create-stream-main-cta": "Akım oluştur",
 			"create-stream-main-cta-busy": "Aktarım oluşturuluyor",
-			"create-treasury-switch-label": "Aynı ayarlarla başka aktarımlar mı olurşturmak istiyorsunuz?",
+			"create-multi-recipient-checkbox-label": "Aynı ayarlarla başka aktarımlar mı olurşturmak istiyorsunuz?",
 			"fee-payed-by-treasurer": "Bu aktarım için yararlanıcı yerine ücretleri ben ödemek istiyorum",
 			"loading-streams": "Aktarımlar yükleniyor",
 			"message-warning": "Alıcıların adresini gönderdiğiniz liste sizin kendi adresinizide içeriyor bu mümkün olmadığından listeden kaldırıldı.",
