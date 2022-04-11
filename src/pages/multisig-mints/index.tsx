@@ -3540,9 +3540,10 @@ export const MultisigMintsView = () => {
                       </Col>
                     </Row>
                     <div className="mb-2">{t('multisig.multisig-transactions.proposed-by')} {getTxInitiator(highlightedMultisigTx)?.name}<br/><code>{getTxInitiator(highlightedMultisigTx)?.address}</code></div>
-                    <div className="mb-2">
+                    <div className="mb-2 d-flex align-items-center">
                       <span className="mr-1">{t('multisig.multisig-transactions.your-status')}</span>
                       <span className={`font-bold ${getTxUserStatusClass(highlightedMultisigTx)}`}>{getTransactionUserStatusAction(highlightedMultisigTx, true)}</span>
+                      <MultisigOwnersSigned className="ml-1" participants={getParticipantsThatApprovedTx(highlightedMultisigTx) || []} />
                     </div>
                     <div className="mb-2">{t('multisig.multisig-transactions.proposal-ready-to-be-executed')}</div>
                   </>
@@ -3602,7 +3603,18 @@ export const MultisigMintsView = () => {
                       </Col>
                     </Row>
                     <div className="mb-2">{t('multisig.multisig-transactions.proposed-by')} {getTxInitiator(highlightedMultisigTx)?.name}<br/><code>{getTxInitiator(highlightedMultisigTx)?.address}</code></div>
-                    <div className="mb-2">{(selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)) > 1 ? t('multisig.multisig-transactions.proposal-voided', {missingSignature: selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)}) : t('multisig.multisig-transactions.proposal-ready-to-be-executed')}</div>
+                    {(!isTxVoided() && !isTxRejected()) && (
+                      <>
+                        <div className="mb-2 d-flex align-items-center">
+                          <span className="mr-1">{t('multisig.multisig-transactions.your-status')}</span>
+                          <span className={`font-bold mr-1 ${getTxUserStatusClass(highlightedMultisigTx)}`}>{getTransactionUserStatusAction(highlightedMultisigTx, true)}</span>
+                          <MultisigOwnersSigned className="ml-1" participants={getParticipantsThatApprovedTx(highlightedMultisigTx) || []} />
+                        </div>
+                        <div className="mb-2">
+                          {t('multisig.multisig-transactions.proposal-completed')}
+                        </div>
+                      </>
+                    )}
                   </>
                 )}
               </>
