@@ -20,7 +20,6 @@ import {
   getTransactionModalTitle,
   getTransactionOperationDescription,
   getTransactionStatusForLogs,
-  isLocal,
   isToday,
   isValidAddress
 } from "../../utils/ui";
@@ -259,13 +258,12 @@ export const OneTimePayment = () => {
     consoleOut("onTxConfirmed event executed:", item, 'crimson');
     if (item && item.operationType === OperationType.Transfer && item.extras === 'scheduled') {
       recordTxConfirmation(item.signature, true);
-      resetContractValues();
-      setIsVerifiedRecipient(false);
-      setSelectedStream(undefined);
-      closeTransactionModal();
       navigate("/accounts/streams");
     }
-  }, [closeTransactionModal, navigate, recordTxConfirmation, resetContractValues, setIsVerifiedRecipient, setSelectedStream]);
+    resetContractValues();
+    setIsVerifiedRecipient(false);
+    setSelectedStream(undefined);
+  }, [navigate, recordTxConfirmation, resetContractValues, setIsVerifiedRecipient, setSelectedStream]);
 
   // Setup event handler for Tx confirmation error
   const onTxTimedout = useCallback((item: TransactionStatusInfo) => {
@@ -834,10 +832,6 @@ export const OneTimePayment = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.TransactionFinished
-            });
             if (isScheduledPayment()) {
               enqueueTransactionConfirmation({
                 signature: signature,
@@ -853,7 +847,6 @@ export const OneTimePayment = () => {
                 completedMessage: `Transfer successfully Scheduled!`,
                 extras: 'scheduled'
               });
-              setIsBusy(false);
             } else {
               enqueueTransactionConfirmation({
                 signature: signature,
@@ -871,8 +864,15 @@ export const OneTimePayment = () => {
                   selectedToken.decimals
                 )} ${selectedToken.symbol}`,
               });
-              setIsBusy(false);
             }
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.TransactionFinished
+            });
+            setIsBusy(false);
+            setTimeout(() => {
+              closeTransactionModal();
+            }, 300);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -895,6 +895,7 @@ export const OneTimePayment = () => {
     streamV2ProgramAddress,
     transactionStatus.currentOperation,
     enqueueTransactionConfirmation,
+    closeTransactionModal,
     setTransactionStatus,
     showTransactionModal,
     isScheduledPayment,
