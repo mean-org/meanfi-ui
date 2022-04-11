@@ -580,104 +580,115 @@ export const Streams = () => {
     setStreamList,
   ])
 
+  const refreshStreamSummary = useCallback(async () => {
+
+    if (!ms || !msp || !publicKey || (!streamListv1 && !streamListv2) || loadingStreamsSummary) { return; }
+
+    setLoadingStreamsSummary(true);
+
+    let resume: StreamsSummary = {
+      totalNet: 0,
+      incomingAmount: 0,
+      outgoingAmount: 0,
+      totalAmount: 0
+    };
+
+    const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], publicKey);
+    const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], publicKey);
+
+    // consoleOut('=========== Block strat ===========', '', 'orange');
+
+    for (let stream of updatedStreamsv1) {
+
+      const isIncoming = stream.beneficiaryAddress && stream.beneficiaryAddress === publicKey.toBase58()
+        ? true
+        : false;
+
+      if (isIncoming) {
+        resume['incomingAmount'] = resume['incomingAmount'] + 1;
+      } else {
+        resume['outgoingAmount'] = resume['outgoingAmount'] + 1;
+      }
+
+      // Get refreshed data
+      let freshStream = await ms.refreshStream(stream) as StreamInfo;
+      if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
+
+      const asset = getTokenByMintAddress(freshStream.associatedToken as string);
+      const rate = asset ? getPricePerToken(asset as UserTokenAccount) : 0;
+      if (isIncoming) {
+        resume['totalNet'] = resume['totalNet'] + ((freshStream.escrowVestedAmount || 0) * rate);
+      } else {
+        resume['totalNet'] = resume['totalNet'] + ((freshStream.escrowUnvestedAmount || 0) * rate);
+      }
+    }
+
+    resume['totalAmount'] = updatedStreamsv1.length;
+
+    // consoleOut('totalNet v1:', resume['totalNet'], 'blue');
+
+    for (let stream of updatedStreamsv2) {
+
+      const isIncoming = stream.beneficiary && stream.beneficiary === publicKey.toBase58()
+        ? true
+        : false;
+
+      if (isIncoming) {
+        resume['incomingAmount'] = resume['incomingAmount'] + 1;
+      } else {
+        resume['outgoingAmount'] = resume['outgoingAmount'] + 1;
+      }
+
+      // Get refreshed data
+      let freshStream = await msp.refreshStream(stream) as Stream;
+      if (!freshStream || freshStream.status !== STREAM_STATUS.Running) { continue; }
+
+      const asset = getTokenByMintAddress(freshStream.associatedToken as string);
+      const pricePerToken = getPricePerToken(asset as UserTokenAccount);
+      const rate = asset ? (pricePerToken ? pricePerToken : 1) : 1;
+      const decimals = asset ? asset.decimals : 9;
+      // const amount = isIncoming ? freshStream.fundsSentToBeneficiary : freshStream.fundsLeftInStream;
+      const amount = freshStream.remainingAllocationAmount;
+      const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * rate;
+
+      if (isIncoming) {
+        resume['totalNet'] += amountChange;
+      } else {
+        resume['totalNet'] -= amountChange;
+      }
+    }
+
+    resume['totalAmount'] += updatedStreamsv2.length;
+
+    // consoleOut('totalNet:', resume['totalNet'], 'blue');
+    // consoleOut('=========== Block ends ===========', '', 'orange');
+
+    // Update state
+    setLastStreamsSummary(streamsSummary);
+    setStreamsSummary(resume);
+    setLoadingStreamsSummary(false);
+
+  }, [
+    ms, 
+    msp, 
+    publicKey, 
+    streamListv1, 
+    streamListv2, 
+    streamsSummary,
+    loadingStreamsSummary,
+    setLastStreamsSummary, 
+    setLoadingStreamsSummary, 
+    setStreamsSummary,
+    getPricePerToken
+  ]);
+
   // Live data calculation - Stream summary
   useEffect(() => {
 
-    const refreshStreamSummary = async () => {
-
-      if (!msp || !publicKey || (!streamListv1 && !streamListv2) || loadingStreamsSummary) { return; }
-
-      setLoadingStreamsSummary(true);
-
-      let resume: StreamsSummary = {
-        totalNet: 0,
-        incomingAmount: 0,
-        outgoingAmount: 0,
-        totalAmount: 0
-      };
-
-      const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], publicKey);
-      const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], publicKey);
-
-      // consoleOut('=========== Block strat ===========', '', 'orange');
-
-      for (let stream of updatedStreamsv1) {
-
-        const isIncoming = stream.beneficiaryAddress && stream.beneficiaryAddress === publicKey.toBase58()
-          ? true
-          : false;
-
-        if (isIncoming) {
-          resume['incomingAmount'] = resume['incomingAmount'] + 1;
-        } else {
-          resume['outgoingAmount'] = resume['outgoingAmount'] + 1;
-        }
-
-        // Get refreshed data
-        let freshStream = await ms.refreshStream(stream) as StreamInfo;
-        if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
-
-        const asset = getTokenByMintAddress(freshStream.associatedToken as string);
-        const rate = asset ? getPricePerToken(asset as UserTokenAccount) : 0;
-        if (isIncoming) {
-          resume['totalNet'] = resume['totalNet'] + ((freshStream.escrowVestedAmount || 0) * rate);
-        } else {
-          resume['totalNet'] = resume['totalNet'] + ((freshStream.escrowUnvestedAmount || 0) * rate);
-        }
-      }
-
-      resume['totalAmount'] = updatedStreamsv1.length;
-
-      // consoleOut('totalNet v1:', resume['totalNet'], 'blue');
-
-      let streamsUsdNetChange = 0;
-
-      for (let stream of updatedStreamsv2) {
-
-        const isIncoming = stream.beneficiary && stream.beneficiary === publicKey.toBase58()
-          ? true
-          : false;
-
-        if (isIncoming) {
-          resume['incomingAmount'] = resume['incomingAmount'] + 1;
-        } else {
-          resume['outgoingAmount'] = resume['outgoingAmount'] + 1;
-        }
-
-        // Get refreshed data
-        let freshStream = await msp.refreshStream(stream) as Stream;
-        if (!freshStream || freshStream.status !== STREAM_STATUS.Running) { continue; }
-
-        const asset = getTokenByMintAddress(freshStream.associatedToken as string);
-        const rate = asset ? getPricePerToken(asset as UserTokenAccount) : 0;
-        const streamUnitsUsdPerSecond = parseFloat(freshStream.streamUnitsPerSecond.toFixed(asset?.decimals || 9)) * rate;
-        // consoleOut(`rate for 1 ${asset ? asset.symbol : '[' + shortenAddress(freshStream.associatedToken as string, 6) + ']'}`, rate, 'blue');
-        // consoleOut(`streamUnitsPerSecond: ${isIncoming ? '↑' : '↓'}`, freshStream.streamUnitsPerSecond.toFixed(asset?.decimals || 9), 'blue');
-        // consoleOut(`streamUnitsUsdPerSecond: ${isIncoming ? '↑' : '↓'}`, streamUnitsUsdPerSecond, 'blue');
-        if (isIncoming) {
-          streamsUsdNetChange += streamUnitsUsdPerSecond;
-        } else {
-          streamsUsdNetChange -= streamUnitsUsdPerSecond;
-        }
-      }
-
-      resume['totalAmount'] += updatedStreamsv2.length;
-      resume['totalNet'] += streamsUsdNetChange;
-
-      // consoleOut('totalNet:', resume['totalNet'], 'blue');
-      // consoleOut('=========== Block ends ===========', '', 'orange');
-
-      // Update state
-      setLastStreamsSummary(streamsSummary);
-      setStreamsSummary(resume);
-      setLoadingStreamsSummary(false);
-
-    }
+    if (!ms || !msp || !publicKey || !streamList || (!streamListv1 && !streamListv2)) { return; }
 
     const timeout = setTimeout(() => {
-      if (publicKey && streamList) {
-        refreshStreamSummary();
-      }
+      refreshStreamSummary();
     }, 3000);
 
     return () => {
@@ -685,18 +696,19 @@ export const Streams = () => {
     }
 
   }, [
-    ms,
-    msp,
-    publicKey,
-    streamList,
-    streamListv1,
-    streamListv2,
-    streamsSummary,
-    loadingStreamsSummary,
-    setLoadingStreamsSummary,
-    setLastStreamsSummary,
-    setStreamsSummary,
-    getPricePerToken,
+    ms, 
+    msp, 
+    publicKey, 
+    streamList, 
+    streamListv1, 
+    streamListv2, 
+    streamsSummary, 
+    loadingStreamsSummary, 
+    setLoadingStreamsSummary, 
+    setLastStreamsSummary, 
+    setStreamsSummary, 
+    getPricePerToken, 
+    refreshStreamSummary
   ]);
 
   useEffect(() => {
