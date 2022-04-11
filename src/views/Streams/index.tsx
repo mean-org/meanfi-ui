@@ -41,6 +41,7 @@ import {
 import {
   consoleOut,
   copyText,
+  friendlyDisplayDecimalPlaces,
   getFormattedNumberToLocale,
   getIntervalFromSeconds,
   getReadableDate,
@@ -4089,7 +4090,15 @@ export const Streams = () => {
               <span className="rate-amount">--</span>
             ) : (
               <>
-                <div className="rate-amount">${formatThousands(Math.abs(streamsSummary.totalNet), 5)}</div>
+                <div className="rate-amount">$
+                  {
+                    formatThousands(
+                      Math.abs(streamsSummary.totalNet),
+                      friendlyDisplayDecimalPlaces(streamsSummary.totalNet),
+                      friendlyDisplayDecimalPlaces(streamsSummary.totalNet)
+                    )
+                  }
+                </div>
                 <div className="interval">{t('streams.streaming-balance')}</div>
               </>
             )}

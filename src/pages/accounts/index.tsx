@@ -31,7 +31,7 @@ import {
   shortenAddress
 } from '../../utils/utils';
 import { Button, Empty, Result, Space, Spin, Switch, Tooltip } from 'antd';
-import { consoleOut, copyText, isValidAddress } from '../../utils/ui';
+import { consoleOut, copyText, friendlyDisplayDecimalPlaces, isValidAddress } from '../../utils/ui';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import {
   SOLANA_WALLET_GUIDE,
@@ -932,7 +932,15 @@ export const AccountsView = () => {
                 <span className="rate-amount">--</span>
               ) : (
                 <>
-                  <div className="rate-amount">${formatThousands(Math.abs(streamsSummary.totalNet), 5)}</div>
+                  <div className="rate-amount">$
+                    {
+                      formatThousands(
+                        Math.abs(streamsSummary.totalNet),
+                        friendlyDisplayDecimalPlaces(streamsSummary.totalNet),
+                        friendlyDisplayDecimalPlaces(streamsSummary.totalNet)
+                      )
+                    }
+                  </div>
                   <div className="interval">{t('streams.streaming-balance')}</div>
                 </>
               )}
