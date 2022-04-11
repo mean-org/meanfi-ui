@@ -404,7 +404,7 @@ export const AccountsView = () => {
       const rate = asset ? (pricePerToken ? pricePerToken : 1) : 1;
       const decimals = asset ? asset.decimals : 9;
       // const amount = isIncoming ? freshStream.fundsSentToBeneficiary : freshStream.fundsLeftInStream;
-      const amount = freshStream.remainingAllocationAmount;
+      const amount = freshStream.withdrawableAmount;
       const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * rate;
 
       if (isIncoming) {
