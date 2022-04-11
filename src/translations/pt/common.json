@@ -848,7 +848,7 @@
 		},
 		"stream-stats-incoming": "Entrada",
 		"stream-stats-outgoing": "Extrovertido",
-		"stream-interval": "net-change"
+		"streaming-balance": "balance"
 	},
 	"swap": {
 		"exchange-warning": "Mean Exchange só está disponível em",

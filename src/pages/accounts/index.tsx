@@ -933,7 +933,7 @@ export const AccountsView = () => {
               ) : (
                 <>
                   <div className="rate-amount">${formatThousands(Math.abs(streamsSummary.totalNet), 5)}</div>
-                  <div className="interval">{t('streams.stream-interval')}</div>
+                  <div className="interval">{t('streams.streaming-balance')}</div>
                 </>
               )}
             </div>

@@ -826,7 +826,7 @@
 			"transfer-money-stream-menu-item": "Transfer ownership",
 			"withdraw-funds-cta": "Withdraw funds"
 		},
-		"stream-interval": "net-change",
+		"streaming-balance": "balance",
 		"stream-list": {
 			"no-streams": "No streams available",
 			"not-connected": "Please connect your wallet to see your money streams",

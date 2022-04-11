@@ -858,7 +858,7 @@
 		},
 		"stream-stats-incoming": "Incoming",
 		"stream-stats-outgoing": "Outgoing",
-		"stream-interval": "net-change"
+		"streaming-balance": "balance"
 	},
 	"swap": {
 		"exchange-warning": "Mean Exchange solo está disponible en",

@@ -825,7 +825,7 @@
 			"transfer-money-stream-menu-item": "Transfert de propriété",
 			"withdraw-funds-cta": "Retirer des fonds"
 		},
-		"stream-interval": "changement net",
+		"streaming-balance": "balance",
 		"stream-list": {
 			"no-streams": "Aucun flux disponible",
 			"not-connected": "Veuillez connecter votre portefeuille pour voir vos flux d'argent",

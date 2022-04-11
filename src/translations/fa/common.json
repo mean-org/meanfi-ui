@@ -825,7 +825,7 @@
 			"transfer-money-stream-menu-item": "انتقال مالکیت",
 			"withdraw-funds-cta": "برداشت وجوه"
 		},
-		"stream-interval": "net-change",
+		"streaming-balance": "balance",
 		"stream-list": {
 			"no-streams": "هیچ streams در دسترس نیست",
 			"not-connected": "لطفاً کیف پول خود را وصل کنید تا money streams خود را ببینید",

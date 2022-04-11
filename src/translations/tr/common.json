@@ -826,7 +826,7 @@
 			"transfer-money-stream-menu-item": "Sahipliği aktar",
 			"withdraw-funds-cta": "Para çekme"
 		},
-		"stream-interval": "net-değişim",
+		"streaming-balance": "balance",
 		"stream-list": {
 			"no-streams": "Kullanılabilir aktarım yok",
 			"not-connected": "Para aktarımlarınızı görmek için lütfen cüzdanınızı bağlayın",

@@ -828,7 +828,7 @@
 			"transfer-money-stream-menu-item": "Chuyển quyền sở hữu",
 			"withdraw-funds-cta": "Rút tiền"
 		},
-		"stream-interval": "net-change",
+		"streaming-balance": "balance",
 		"stream-list": {
 			"no-streams": "Không có stream nào",
 			"not-connected": "Vui lòng kết nối ví của bạn để xem các money stream của bạn",

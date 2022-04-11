@@ -829,7 +829,7 @@
 			"transfer-money-stream-menu-item": "소유권 이전",
 			"withdraw-funds-cta": "자금 인출"
 		},
-		"stream-interval": "net-change",
+		"streaming-balance": "balance",
 		"stream-list": {
 			"no-streams": "사용 가능한 스트림이 없습니다.",
 			"not-connected": "귀하의 머니스트림을 보려면 지갑을 연결하십시오",
