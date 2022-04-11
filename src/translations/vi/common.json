@@ -1122,7 +1122,7 @@
 			"no-treasury-loaded": "Tạo hoặc tra cứu kho bạc để xem chi tiết",
 			"no-treasury-selected": "Vui lòng chọn hoặc tra cứu kho bạc để xem chi tiết",
 			"number-of-streams": "Số lượng stream",
-			"treasury-address-label": "Treasury Address",
+			"treasury-address-label": "Treasury address",
 			"treasury-name-label": "Tên kho bạc",
 			"unallocated-treasury-balance": "Unallocated balance"
 		},

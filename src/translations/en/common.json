@@ -810,7 +810,7 @@
 			"label-payment-rate": "Payment rate",
 			"label-received-from": "Received from",
 			"label-receiving-from": "Receiving from",
-			"label-reserved-allocation": "Reserved Allocation",
+			"label-reserved-allocation": "Reserved allocation",
 			"label-sending-to": "Sending to",
 			"label-sent-to": "Sent to",
 			"label-start-date-default": "Start Date",
@@ -1111,7 +1111,7 @@
 		"refresh-tooltip": "Click to refresh the list of treasuries",
 		"screen-title": "Streaming Treasuries",
 		"treasury-detail": {
-			"associated-token": "Associated Token",
+			"associated-token": "Associated token",
 			"created-on": "Created on",
 			"cta-add-funds": "Add funds",
 			"cta-add-funds-busy": "Adding funds",
@@ -1122,7 +1122,7 @@
 			"no-treasury-loaded": "Create or lookup a treasury to view details",
 			"no-treasury-selected": "Please select or lookup a treasury to view details",
 			"number-of-streams": "Number of streams",
-			"treasury-address-label": "Treasury Address",
+			"treasury-address-label": "Treasury address",
 			"treasury-name-label": "Treasury name",
 			"unallocated-treasury-balance": "Unallocated balance"
 		},

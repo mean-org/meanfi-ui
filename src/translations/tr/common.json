@@ -810,7 +810,7 @@
 			"label-payment-rate": "Ödeme oranı",
 			"label-received-from": "....'dan Alınan",
 			"label-receiving-from": "....'dan Alınıyor",
-			"label-reserved-allocation": "Ayrılmış Tahsis",
+			"label-reserved-allocation": "Ayrılmış tahsis",
 			"label-sending-to": "....'ya Gönderiliyor",
 			"label-sent-to": "....'ya gönderildi",
 			"label-start-date-default": "Başlangıç tarihi",
@@ -1112,7 +1112,7 @@
 		"refresh-tooltip": "Hazine listesini yenilemek için tıklayın",
 		"screen-title": "Hazineler",
 		"treasury-detail": {
-			"associated-token": "İlişkili Token",
+			"associated-token": "İlişkili token",
 			"created-on": "... 'da oluşturuldu",
 			"cta-add-funds": "Fon ekle",
 			"cta-add-funds-busy": "Fon ekleme",
