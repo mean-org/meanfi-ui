@@ -278,7 +278,7 @@ export const MultisigEditModal = (props: {
           </>
         ) : (
           <>
-            <div className="transaction-progress">
+            <div className="transaction-progress p-0">
               <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">

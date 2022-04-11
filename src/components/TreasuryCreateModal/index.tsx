@@ -443,7 +443,7 @@ export const TreasuryCreateModal = (props: {
           </>
         ) : (
           <>
-            <div className="transaction-progress">
+            <div className="transaction-progress p-0">
               <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
@@ -466,7 +466,6 @@ export const TreasuryCreateModal = (props: {
             </div>
           </>
         )}
-
       </div>
 
       <div className={props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? "panel2 show" : "panel2 hide"}>
@@ -489,7 +488,7 @@ export const TreasuryCreateModal = (props: {
        * and auto-close the modal after 1s. If we chose to NOT auto-close the modal
        * Uncommenting the commented lines below will do it!
        */}
-      {transactionStatus.currentOperation !== TransactionStatus.TransactionFinished && (
+      {!(props.isBusy && transactionStatus !== TransactionStatus.Iddle) && (
         <div className="row two-col-ctas mt-3 transaction-progress p-0">
           <div className={!isError(transactionStatus.currentOperation) ? "col-6" : "col-12"}>
             <Button
@@ -545,7 +544,6 @@ export const TreasuryCreateModal = (props: {
           )}
         </div>
       )}
-
     </Modal>
   );
 };

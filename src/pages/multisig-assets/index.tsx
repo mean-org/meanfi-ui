@@ -4109,7 +4109,7 @@ export const MultisigAssetsView = () => {
               </>
             ) : (
               <>
-                <div className="transaction-progress">
+                <div className="transaction-progress p-0">
                   <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
                   {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                     <>
@@ -4158,49 +4158,51 @@ export const MultisigAssetsView = () => {
           </div>
 
           {/* CTAs shown always - IF DIFFERENT CTAS ARE BEST FOR EACH STAGE, MOVE THEM INSIDE THE PANELS */}
-          <div className="row two-col-ctas mt-3 transaction-progress p-0 no-margin-right-left">
-            <div className={((canShowExecuteButton() || canShowApproveButton() || canShowCancelButton()) && !isError(transactionStatus.currentOperation)) ? "col-6 no-padding-left" : "col-12 no-padding-left no-padding-right"}>
-              <Button
-                block
-                type="text"
-                shape="round"
-                size="middle"
-                className={isBusy ? 'inactive' : ''}
-                onClick={() => isError(transactionStatus.currentOperation)
-                  ? onAcceptMultisigActionModal(highlightedMultisigTx)
-                  : onCloseMultisigActionModal()}>
-                {isError(transactionStatus.currentOperation)
-                  ? t('general.retry')
-                  : t('general.cta-close')
-                }
-              </Button>
+          {!(isBusy && transactionStatus !== TransactionStatus.Iddle) && (
+            <div className="row two-col-ctas mt-3 transaction-progress p-0 no-margin-right-left">
+              <div className={((canShowExecuteButton() || canShowApproveButton() || canShowCancelButton()) && !isError(transactionStatus.currentOperation)) ? "col-6 no-padding-left" : "col-12 no-padding-left no-padding-right"}>
+                <Button
+                  block
+                  type="text"
+                  shape="round"
+                  size="middle"
+                  className={isBusy ? 'inactive' : ''}
+                  onClick={() => isError(transactionStatus.currentOperation)
+                    ? onAcceptMultisigActionModal(highlightedMultisigTx)
+                    : onCloseMultisigActionModal()}>
+                  {isError(transactionStatus.currentOperation)
+                    ? t('general.retry')
+                    : t('general.cta-close')
+                  }
+                </Button>
+              </div>
+              {
+                ((canShowExecuteButton() || canShowApproveButton() || canShowCancelButton()) && !isError(transactionStatus.currentOperation))
+                &&
+                (
+                  <div className="col-6 no-padding-right">
+                    <Button
+                      className={isBusy ? 'inactive' : ''}
+                      block
+                      type="primary"
+                      shape="round"
+                      size="middle"
+                      onClick={() => {
+                        if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+                          onAcceptMultisigActionModal(highlightedMultisigTx);
+                        } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
+                          onCloseMultisigActionModal();
+                        } else {
+                          refreshPage();
+                        }
+                      }}>
+                      {getTxApproveMainCtaLabel()}
+                    </Button>
+                  </div>
+                )
+              }
             </div>
-            {
-              ((canShowExecuteButton() || canShowApproveButton() || canShowCancelButton()) && !isError(transactionStatus.currentOperation))
-              &&
-              (
-                <div className="col-6 no-padding-right">
-                  <Button
-                    className={isBusy ? 'inactive' : ''}
-                    block
-                    type="primary"
-                    shape="round"
-                    size="middle"
-                    onClick={() => {
-                      if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
-                        onAcceptMultisigActionModal(highlightedMultisigTx);
-                      } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
-                        onCloseMultisigActionModal();
-                      } else {
-                        refreshPage();
-                      }
-                    }}>
-                    {getTxApproveMainCtaLabel()}
-                  </Button>
-                </div>
-              )
-            }
-          </div>
+          )}
         </Modal>
       )}
 
