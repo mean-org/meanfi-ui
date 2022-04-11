@@ -809,7 +809,7 @@
 			"label-payment-rate": "Taxa de pagamento",
 			"label-received-from": "Recebido de",
 			"label-receiving-from": "Recebendo de",
-			"label-reserved-allocation": "Alocação Reservada",
+			"label-reserved-allocation": "Alocação reservada",
 			"label-sending-to": "Enviando para",
 			"label-sent-to": "Enviado para",
 			"label-start-date-default": "Data de início",
@@ -1118,7 +1118,7 @@
 			"no-treasury-loaded": "Crie ou pesquise uma tesouraria para visualizar detalhes",
 			"no-treasury-selected": "Por favor, selecione ou procure uma tesouraria para ver os detalhes",
 			"number-of-streams": "Número de streams",
-			"treasury-address-label": "Treasury Address",
+			"treasury-address-label": "Treasury address",
 			"treasury-name-label": "Nome do Tesouro"
 		},
 		"treasury-detail-heading": "Detalhes do Tesouro",
