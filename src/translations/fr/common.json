@@ -1170,7 +1170,7 @@
 			"column-rate": "Taux",
 			"create-stream-main-cta": "Créer un flux",
 			"create-stream-main-cta-busy": "Création de flux",
-			"create-treasury-switch-label": "Voulez-vous créer plusieurs flux avec les mêmes paramètres ?",
+			"create-multi-recipient-checkbox-label": "Voulez-vous créer plusieurs flux avec les mêmes paramètres ?",
 			"fee-payed-by-treasurer": "Je veux payer des frais pour ce flux au lieu du bénéficiaire",
 			"loading-streams": "Chargement des flux",
 			"message-warning": "La liste des destinataires que vous avez soumise comprenait votre propre adresse de portefeuille. Ce n'est pas possible et cette adresse a été supprimée de la liste importée.",

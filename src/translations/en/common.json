@@ -1170,7 +1170,7 @@
 			"column-rate": "Rate",
 			"create-stream-main-cta": "Create stream",
 			"create-stream-main-cta-busy": "Creating stream",
-			"create-treasury-switch-label": "Do you want to create multiple streams with the same settings?",
+			"create-multi-recipient-checkbox-label": "Do you want to create multiple streams with the same settings?",
 			"fee-payed-by-treasurer": "I want to pay fees for this stream instead of the beneficiary",
 			"loading-streams": "Loading streams",
 			"message-warning": "The list of recipients you submitted included your own wallet address. This is not possible and this address has been removed from the imported list.",

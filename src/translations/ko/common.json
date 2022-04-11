@@ -1174,7 +1174,7 @@
 			"column-rate": "비율",
 			"create-stream-main-cta": "스트림 생성",
 			"create-stream-main-cta-busy": "스트림 생성",
-			"create-treasury-switch-label": "Do you want to create multiple streams with the same settings?",
+			"create-multi-recipient-checkbox-label": "Do you want to create multiple streams with the same settings?",
 			"fee-payed-by-treasurer": "수익자 대신 이 스트림에 대한 수수료를 지불하고 싶습니다.",
 			"loading-streams": "스트림 불러오기",
 			"message-warning": "The list of recipients you submitted included your own wallet address. This is not possible and this address has been removed from the imported list.",

@@ -1170,7 +1170,7 @@
 			"column-rate": "Tỉ lệ",
 			"create-stream-main-cta": "Tạo stream",
 			"create-stream-main-cta-busy": "Đang tạo stream",
-			"create-treasury-switch-label": "Do you want to create multiple streams with the same settings?",
+			"create-multi-recipient-checkbox-label": "Do you want to create multiple streams with the same settings?",
 			"fee-payed-by-treasurer": "Tôi muốn trả phí cho stream này thay vì người thụ hưởng",
 			"loading-streams": "Đang tải stream",
 			"minimum-allocation-advice": "Bạn phải đặt mức phân bổ tối thiểu cho Money stream này lên đến số dư chưa phân bổ hiện có trong Kho bạc.",
