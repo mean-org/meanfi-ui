@@ -580,7 +580,7 @@
 			"tx-voided": "Voided",
 			"tx-rejected": "Rejected",
 			"proposal-ready-to-be-executed": "This proposal has received the required number of signatures and is now ready to be executed.",
-			"proposal-voided": "To execute this transaction, {{missingSignature}} more signature is required."
+			"proposal-completed": "This proposal has been executed and is now complete."
 		},
 		"pending-transactions": "pending transactions",
 		"refresh-tooltip": "Click to refresh the list of multisig accounts",
