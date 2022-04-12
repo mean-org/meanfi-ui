@@ -177,6 +177,8 @@ export const TreasuriesView = () => {
   });
   const [minRequiredBalance, setMinRequiredBalance] = useState(0);
 
+  const [needReloadMultisig, setNeedReloadMultisig] = useState(true);
+
   // Enable deep-linking - Parse and save query params as needed
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -837,11 +839,13 @@ export const TreasuriesView = () => {
   // Get the user multisig accounts' list
   useEffect(() => {
 
-    if (!connection || !publicKey || !multisigClient) {
+    if (!connection || !publicKey || !multisigClient || !needReloadMultisig) {
       return;
     }
 
     const timeout = setTimeout(() => {
+
+      setNeedReloadMultisig(false);
 
       readAllMultisigV2Accounts(publicKey)
         .then((allInfo: any) => {
@@ -877,10 +881,11 @@ export const TreasuriesView = () => {
     }
 
   }, [
+    publicKey,
     connection,
     multisigClient,
-    publicKey,
-    readAllMultisigV2Accounts,
+    needReloadMultisig,
+    readAllMultisigV2Accounts
   ]);
 
   // Set selectedMultisig based on the passed-in multisigAddress in query params
@@ -2074,6 +2079,7 @@ export const TreasuriesView = () => {
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
+    resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.TreasuryCreate);
     setRetryOperationPayload(createOptions);
@@ -2381,6 +2387,7 @@ export const TreasuriesView = () => {
               currentOperation: TransactionStatus.TransactionFinished
             });
             onTreasuryCreated(createOptions);
+            setNeedReloadMultisig(true);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -2453,6 +2460,7 @@ export const TreasuriesView = () => {
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
+    resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.TreasuryAddFunds);
     setRetryOperationPayload(params);
@@ -2888,6 +2896,7 @@ export const TreasuriesView = () => {
               currentOperation: TransactionStatus.TransactionFinished
             });
             onAddFundsTransactionFinished();
+            setNeedReloadMultisig(true);
             setOngoingOperation(undefined);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
@@ -2950,6 +2959,7 @@ export const TreasuriesView = () => {
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
+    resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.TreasuryClose);
     setIsBusy(true);
@@ -3338,6 +3348,7 @@ export const TreasuriesView = () => {
             startFetchTxSignatureInfo(signature, "confirmed", OperationType.TreasuryClose);
             setIsBusy(false);
             onCloseTreasuryTransactionFinished();
+            setNeedReloadMultisig(true);
             setOngoingOperation(undefined);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
@@ -3855,6 +3866,7 @@ export const TreasuriesView = () => {
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
+    resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.StreamPause);
     setIsBusy(true);
@@ -4246,6 +4258,7 @@ export const TreasuriesView = () => {
             startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamPause);
             setIsBusy(false);
             onCloseStreamTransactionFinished();
+            setNeedReloadMultisig(true);
             setOngoingOperation(undefined);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
@@ -4300,6 +4313,7 @@ export const TreasuriesView = () => {
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
+    resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.StreamResume);
     setIsBusy(true);
@@ -4689,6 +4703,7 @@ export const TreasuriesView = () => {
             startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamResume);
             setIsBusy(false);
             onResumeStreamTransactionFinished();
+            setNeedReloadMultisig(true);
             setOngoingOperation(undefined);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
@@ -4755,6 +4770,7 @@ export const TreasuriesView = () => {
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
+    resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.TreasuryCreate);
     setRetryOperationPayload(data);
@@ -5065,6 +5081,7 @@ export const TreasuriesView = () => {
               currentOperation: TransactionStatus.TransactionFinished
             });
             onTreasuryFundsTransferred();
+            setNeedReloadMultisig(true);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -5774,7 +5791,7 @@ export const TreasuriesView = () => {
                       <Spin spinning={loadingTreasuries || loadingTreasuryDetails}>
                         {treasuryDetails && (
                           <>
-                            {(isMultisigTreasury() && (selectedMultisig && selectedMultisig.pendingTxsAmount > 0)) && (
+                            {(isMultisigTreasury() && (treasuryPendingTxs > 0)) && (
                               renderMultisigTxReminder()
                             )}
                             {renderTreasuryMeta()}
