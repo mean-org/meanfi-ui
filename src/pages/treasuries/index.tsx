@@ -4721,21 +4721,10 @@ export const TreasuriesView = () => {
 
   const closeCreateStreamModal = useCallback(() => {
     setIsCreateStreamModalVisibility(false);
-    setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle
-    });
-  }, [setTransactionStatus]);
-
-  const onAcceptCreateStream = () => {
-    closeCreateStreamModal();
     resetContractValues();
     refreshTokenBalance();
-    setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle
-    });
-  };
+    resetTransactionStatus();
+  }, [refreshTokenBalance, resetContractValues, resetTransactionStatus]);
 
   // Transfer funds modal
   const [isTransferFundsModalVisible, setIsTransferFundsModalVisible] = useState(false);
@@ -5941,7 +5930,7 @@ export const TreasuriesView = () => {
           }
           connection={connection}
           handleClose={closeCreateStreamModal}
-          handleOk={onAcceptCreateStream}
+          handleOk={closeCreateStreamModal}
           isVisible={isCreateStreamModalVisible}
           nativeBalance={nativeBalance}
           transactionFees={transactionFees}
