@@ -3212,7 +3212,7 @@ export const MultisigProgramsView = () => {
                 </div>
                 <div className="transaction-detail-row">
                   <span className="info-icon token-icon">
-                    <Identicon address={selectedProgram.pubkey} style={{ width: "30", display: "inline-flex" }} />
+                    <Identicon address={selectedProgram.pubkey} style={{ width: "30", height: "30", display: "inline-flex" }} />
                   </span>
                   <span className="info-data">
                     {shortenAddress(selectedProgram.pubkey.toBase58(), 8)}
@@ -3275,7 +3275,7 @@ export const MultisigProgramsView = () => {
             className={`transaction-list-row ${selectedProgram && selectedProgram.pubkey.equals(item.pubkey) ? 'selected' : ''}`}>
             <div className="icon-cell">
               <div className="token-icon">
-                <Identicon address={item.pubkey} style={{ width: "28", display: "inline-flex" }} />
+                <Identicon address={item.pubkey} style={{ width: "30", height: "30", display: "inline-flex" }} />
               </div>
             </div>
             <div className="description-cell">

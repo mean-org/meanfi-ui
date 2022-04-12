@@ -783,6 +783,11 @@ export const TreasuriesView = () => {
     .then(value => {
       setMultisigTxFees(value);
       consoleOut('Multisig transaction fees:', value, 'orange');
+      if (multisigAddress) {
+        const minRequired = value.networkFee + value.multisigFee + value.rentExempt;  // Multisig proposal fees
+        setMinRequiredBalance(minRequired);
+        consoleOut('Min balance required:', minRequired, 'blue');
+      }
     });
   }, [multisigAddress, multisigClient]);
 
@@ -1863,7 +1868,7 @@ export const TreasuriesView = () => {
 
       setMinRequiredBalance(minRequired);
 
-      consoleOut('blockchainFee:', minRequired, 'blue');
+      consoleOut('Min balance required:', minRequired, 'blue');
       consoleOut('nativeBalance:', nativeBalance, 'blue');
 
       if (nativeBalance < minRequired) {
@@ -2202,7 +2207,7 @@ export const TreasuriesView = () => {
 
       setMinRequiredBalance(minRequired);
 
-      consoleOut('blockchainFee:', minRequired, 'blue');
+      consoleOut('Min balance required:', minRequired, 'blue');
       consoleOut('nativeBalance:', nativeBalance, 'blue');
 
       if (nativeBalance < minRequired) {
@@ -2506,7 +2511,7 @@ export const TreasuriesView = () => {
 
         setMinRequiredBalance(minRequired);
 
-        consoleOut('blockchainFee:', minRequired, 'blue');
+        consoleOut('Min balance required:', minRequired, 'blue');
         consoleOut('nativeBalance:', nativeBalance, 'blue');
   
         if (nativeBalance < minRequired) {
@@ -2704,7 +2709,7 @@ export const TreasuriesView = () => {
 
       setMinRequiredBalance(minRequired);
 
-      consoleOut('blockchainFee:', minRequired, 'blue');
+      consoleOut('Min balance required:', minRequired, 'blue');
       consoleOut('nativeBalance:', nativeBalance, 'blue');
 
       if (nativeBalance < minRequired) {
@@ -2989,7 +2994,7 @@ export const TreasuriesView = () => {
 
         setMinRequiredBalance(minRequired);
 
-        consoleOut('blockchainFee:', minRequired, 'blue');
+        consoleOut('Min balance required:', minRequired, 'blue');
         consoleOut('nativeBalance:', nativeBalance, 'blue');
   
         if (nativeBalance < minRequired) {
@@ -3158,7 +3163,7 @@ export const TreasuriesView = () => {
 
       setMinRequiredBalance(minRequired);
 
-      consoleOut('blockchainFee:', minRequired, 'blue');
+      consoleOut('Min balance required:', minRequired, 'blue');
       consoleOut('nativeBalance:', nativeBalance, 'blue');
 
       if (nativeBalance < minRequired) {
@@ -3447,7 +3452,7 @@ export const TreasuriesView = () => {
 
         setMinRequiredBalance(minRequired);
 
-        consoleOut('blockchainFee:', minRequired, 'blue');
+        consoleOut('Min balance required:', minRequired, 'blue');
         consoleOut('nativeBalance:', nativeBalance, 'blue');
   
         if (nativeBalance < minRequired) {
@@ -3620,7 +3625,7 @@ export const TreasuriesView = () => {
 
       setMinRequiredBalance(minRequired);
 
-      consoleOut('blockchainFee:', minRequired, 'blue');
+      consoleOut('Min balance required:', minRequired, 'blue');
       consoleOut('nativeBalance:', nativeBalance, 'blue');
 
       if (nativeBalance < minRequired) {
@@ -3894,7 +3899,7 @@ export const TreasuriesView = () => {
 
         setMinRequiredBalance(minRequired);
 
-        consoleOut('blockchainFee:', minRequired, 'blue');
+        consoleOut('Min balance required:', minRequired, 'blue');
         consoleOut('nativeBalance:', nativeBalance, 'blue');
   
         if (nativeBalance < minRequired) {
@@ -4063,7 +4068,7 @@ export const TreasuriesView = () => {
 
       setMinRequiredBalance(minRequired);
 
-      consoleOut('blockchainFee:', minRequired, 'blue');
+      consoleOut('Min balance required:', minRequired, 'blue');
       consoleOut('nativeBalance:', nativeBalance, 'blue');
 
       if (nativeBalance < minRequired) {
@@ -4339,7 +4344,7 @@ export const TreasuriesView = () => {
 
         setMinRequiredBalance(minRequired);
 
-        consoleOut('blockchainFee:', minRequired, 'blue');
+        consoleOut('Min balance required:', minRequired, 'blue');
         consoleOut('nativeBalance:', nativeBalance, 'blue');
   
         if (nativeBalance < minRequired) {
@@ -4508,7 +4513,7 @@ export const TreasuriesView = () => {
 
       setMinRequiredBalance(minRequired);
 
-      consoleOut('blockchainFee:', minRequired, 'blue');
+      consoleOut('Min balance required:', minRequired, 'blue');
       consoleOut('nativeBalance:', nativeBalance, 'blue');
 
       if (nativeBalance < minRequired) {
@@ -4886,7 +4891,7 @@ export const TreasuriesView = () => {
 
       setMinRequiredBalance(minRequired);
 
-      consoleOut('blockchainFee:', minRequired, 'blue');
+      consoleOut('Min balance required:', minRequired, 'blue');
       consoleOut('nativeBalance:', nativeBalance, 'blue');
 
       if (nativeBalance < minRequired) {
@@ -6064,6 +6069,7 @@ export const TreasuriesView = () => {
           transactionFees={transactionFees}
           treasuryDetails={treasuryDetails}
           multisigAccounts={multisigAccounts}
+          minRequiredBalance={minRequiredBalance}
           handleOk={onAcceptTreasuryTransferFunds}
           handleClose={() => {
             onAfterEveryModalClose();
