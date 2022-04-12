@@ -1,7 +1,5 @@
 import { Idl, Program } from "@project-serum/anchor";
-import { Keypair, PublicKey } from "@solana/web3.js";
-import { BN } from "bn.js";
-import { makeDecimal } from "../utils/utils";
+import { Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { OperationType } from "./enums";
 
 export const MEAN_MULTISIG_OPS = new PublicKey("3TD6SWY9M1mLY2kZWJNavPLhwXvcRsWdnZLRaMzERJBw");
@@ -142,15 +140,13 @@ export const getFees = async (
 
   switch (action) {
     case MULTISIG_ACTIONS.createMultisig: {
-      const re1 = await program.provider.connection.getMinimumBalanceForRentExemption(program.account.multisigV2.size);
       txFees.networkFee = 0.00001;
-      txFees.rentExempt = makeDecimal(new BN(re1), 9);
+      txFees.rentExempt = await program.provider.connection.getMinimumBalanceForRentExemption(program.account.multisigV2.size);
       break;
     }
     case MULTISIG_ACTIONS.createTransaction: {
-      const re2 = await program.provider.connection.getMinimumBalanceForRentExemption(program.account.transaction.size);
       txFees.networkFee = 0.00001;
-      txFees.rentExempt = makeDecimal(new BN(re2), 9);
+      txFees.rentExempt = await program.provider.connection.getMinimumBalanceForRentExemption(program.account.transaction.size);
       break;
     }
     case MULTISIG_ACTIONS.cancelTransaction: {
@@ -162,6 +158,8 @@ export const getFees = async (
       break;
     }
   }
+
+  txFees.rentExempt = txFees.rentExempt / LAMPORTS_PER_SOL;
 
   return txFees;
 };

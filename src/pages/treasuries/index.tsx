@@ -54,7 +54,6 @@ import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
-import { notify } from '../../utils/notifications';
 import { IconBank, IconClock, IconShieldOutline, IconTrash } from '../../Icons';
 import { TreasuryOpenModal } from '../../components/TreasuryOpenModal';
 import { MSP_ACTIONS, StreamInfo, STREAM_STATE, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
@@ -94,7 +93,7 @@ import BN from 'bn.js';
 import { InfoIcon } from '../../components/InfoIcon';
 import { useLocation, useNavigate } from 'react-router-dom';
 import MultisigIdl from "../../models/mean-multisig-idl";
-import { MEAN_MULTISIG_OPS, MultisigParticipant, MultisigV2 } from '../../models/multisig';
+import { getFees, MEAN_MULTISIG_OPS, MultisigParticipant, MultisigTransactionFees, MultisigV2, MULTISIG_ACTIONS, ZERO_FEES } from '../../models/multisig';
 import { Program, Provider } from '@project-serum/anchor';
 import { TreasuryCreateOptions } from '../../models/treasuries';
 import { customLogger } from '../..';
@@ -114,9 +113,7 @@ export const TreasuriesView = () => {
     treasuryOption,
     detailsPanelOpen,
     transactionStatus,
-    lockPeriodFrequency,
     streamProgramAddress,
-    highLightableStreamId,
     streamV2ProgramAddress,
     previousWalletConnectState,
     isWhitelisted,
@@ -174,6 +171,7 @@ export const TreasuriesView = () => {
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
   const [transactionFees, setTransactionFees] = useState<TransactionFees>(NO_FEES);
+  const [multisigTxFees, setMultisigTxFees] = useState<MultisigTransactionFees>(ZERO_FEES);
   const [withdrawTransactionFees, setWithdrawTransactionFees] = useState<TransactionFees>({
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
   });
@@ -391,7 +389,7 @@ export const TreasuriesView = () => {
           if (dock) {
             setTreasuryList([details]);
             setCustomStreamDocked(true);
-            notify({
+            openNotification({
               description: t('notifications.success-loading-treasury-message', {treasuryId: shortenAddress(treasuryId, 10)}),
               type: "success"
             });
@@ -400,8 +398,8 @@ export const TreasuriesView = () => {
           setTreasuryDetails(undefined);
           setTreasuryDetails(undefined);
           if (dock) {
-            notify({
-              message: t('notifications.error-title'),
+            openNotification({
+              title: t('notifications.error-title'),
               description: t('notifications.error-loading-treasuryid-message', {treasuryId: shortenAddress(treasuryId as string, 10)}),
               type: "error"
             });
@@ -411,8 +409,8 @@ export const TreasuriesView = () => {
       .catch((error: any) => {
         console.error(error);
         setTreasuryDetails(undefined);
-        notify({
-          message: t('notifications.error-title'),
+        openNotification({
+          title: t('notifications.error-title'),
           description: t('notifications.error-loading-treasuryid-message', {treasuryId: shortenAddress(treasuryId as string, 10)}),
           type: "error"
         });
@@ -776,6 +774,17 @@ export const TreasuriesView = () => {
     publicKey, 
     treasuryDetails
   ])
+
+  useEffect(() => {
+
+    if (!multisigClient || !multisigAddress) { return; }
+
+    getFees(multisigClient, MULTISIG_ACTIONS.createTransaction)
+    .then(value => {
+      setMultisigTxFees(value);
+      consoleOut('Multisig transaction fees:', value, 'orange');
+    });
+  }, [multisigAddress, multisigClient]);
 
   useEffect(() => {
 
@@ -1556,12 +1565,12 @@ export const TreasuriesView = () => {
   const copyAddressToClipboard = useCallback((address: any) => {
 
     if (copyText(address.toString())) {
-      notify({
+      openNotification({
         description: t('notifications.account-address-copied-message'),
         type: "info"
       });
     } else {
-      notify({
+      openNotification({
         description: t('notifications.account-address-not-copied-message'),
         type: "error"
       });
@@ -1633,6 +1642,7 @@ export const TreasuriesView = () => {
     getTransactionFeesV2,
     resetTransactionStatus
   ]);
+
   const closeCreateTreasuryModal = useCallback(() => {
     setIsCreateTreasuryModalVisibility(false);
     resetTransactionStatus();
@@ -1652,12 +1662,12 @@ export const TreasuriesView = () => {
     consoleOut('retryOperationPayload:', retryOperationPayload, 'blue');
 
     if (createOptions && createOptions.multisigId) {
-      notify({
+      openNotification({
         description: t('treasuries.create-treasury.create-multisig-treasury-success'),
         type: "success"
       });
     } else {
-      notify({
+      openNotification({
         description: t('treasuries.create-treasury.success-message'),
         type: "success"
       });
@@ -1848,7 +1858,7 @@ export const TreasuriesView = () => {
 
       const bf = transactionFees.blockchainFee;       // Blockchain fee
       const ff = transactionFees.mspFlatFee;          // Flat fee (protocol)
-      const mp = 0.03;                                // Multisig proposal
+      const mp = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt;  // Multisig proposal
       const minRequired = isMultisigTreasury() ? mp : bf + ff;
 
       setMinRequiredBalance(minRequired);
@@ -2034,25 +2044,26 @@ export const TreasuriesView = () => {
     }
 
   },[
-    resetTransactionStatus, 
-    clearTransactionStatusContext, 
-    wallet, 
-    connection, 
-    connected, 
-    publicKey, 
-    msp, 
-    treasuryDetails, 
-    isMultisigTreasury, 
-    multisigClient, 
-    multisigAccounts, 
-    setTransactionStatus, 
-    transactionFees.blockchainFee, 
-    transactionFees.mspFlatFee, 
-    nativeBalance, 
-    transactionStatus.currentOperation, 
-    transactionCancelled, 
-    startFetchTxSignatureInfo, 
-    onRefreshTreasuryBalanceTransactionFinished
+    msp,
+    wallet,
+    connected,
+    publicKey,
+    connection,
+    nativeBalance,
+    multisigTxFees,
+    multisigClient,
+    treasuryDetails,
+    multisigAccounts,
+    transactionCancelled,
+    transactionFees.mspFlatFee,
+    transactionFees.blockchainFee,
+    transactionStatus.currentOperation,
+    onRefreshTreasuryBalanceTransactionFinished,
+    clearTransactionStatusContext,
+    startFetchTxSignatureInfo,
+    resetTransactionStatus,
+    setTransactionStatus,
+    isMultisigTreasury,
   ]);
 
   const onExecuteCreateTreasuryTx = async (createOptions: TreasuryCreateOptions) => {
@@ -2162,11 +2173,11 @@ export const TreasuriesView = () => {
       const payload = {
         treasurer: publicKey.toBase58(),                                                                  // treasurer
         label: createOptions.treasuryName,                                                                // label
-        type: createOptions.treasuryType === TreasuryType.Open         // type
+        type: createOptions.treasuryType === TreasuryType.Open                                            // type
           ? 'Open'
           : 'Lock',
-        multisig: createOptions.multisigId,
-        associatedTokenAddress: selectedToken.address                                                                // multisig
+        multisig: createOptions.multisigId,                                                               // multisig
+        associatedTokenAddress: selectedToken.address
       };
 
       consoleOut('payload:', payload);
@@ -2186,8 +2197,8 @@ export const TreasuriesView = () => {
 
       const bf = transactionFees.blockchainFee;       // Blockchain fee
       const ff = transactionFees.mspFlatFee;          // Flat fee (protocol)
-      const mp = 0.03;                                // Multisig proposal
-      const minRequired = isMultisigTreasury() ? mp : bf + ff;
+      const mp = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt;  // Multisig proposal
+      const minRequired = createOptions.multisigId ? mp : bf + ff;
 
       setMinRequiredBalance(minRequired);
 
@@ -2423,7 +2434,7 @@ export const TreasuriesView = () => {
       lastOperation: TransactionStatus.Iddle,
       currentOperation: TransactionStatus.Iddle
     });
-    notify({
+    openNotification({
       description: t('treasuries.add-funds.success-message'),
       type: "success"
     });
@@ -2490,7 +2501,7 @@ export const TreasuriesView = () => {
 
         const bf = transactionFees.blockchainFee;       // Blockchain fee
         const ff = transactionFees.mspFlatFee;          // Flat fee (protocol)
-        const mp = 0.03;                                // Multisig proposal
+        const mp = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt;  // Multisig proposal
         const minRequired = isMultisigTreasury() ? mp : bf + ff;
 
         setMinRequiredBalance(minRequired);
@@ -2688,7 +2699,7 @@ export const TreasuriesView = () => {
 
       const bf = transactionFees.blockchainFee;       // Blockchain fee
       const ff = transactionFees.mspFlatFee;          // Flat fee (protocol)
-      const mp = 0.03;                                // Multisig proposal
+      const mp = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt;  // Multisig proposal
       const minRequired = isMultisigTreasury() ? mp : bf + ff;
 
       setMinRequiredBalance(minRequired);
@@ -2973,7 +2984,7 @@ export const TreasuriesView = () => {
 
         const bf = transactionFees.blockchainFee;       // Blockchain fee
         const ff = transactionFees.mspFlatFee;          // Flat fee (protocol)
-        const mp = 0.03;                                // Multisig proposal
+        const mp = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt;  // Multisig proposal
         const minRequired = isMultisigTreasury() ? mp : bf + ff;
 
         setMinRequiredBalance(minRequired);
@@ -3142,7 +3153,7 @@ export const TreasuriesView = () => {
 
       const bf = transactionFees.blockchainFee;       // Blockchain fee
       const ff = transactionFees.mspFlatFee;          // Flat fee (protocol)
-      const mp = 0.03;                                // Multisig proposal
+      const mp = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt;  // Multisig proposal
       const minRequired = isMultisigTreasury() ? mp : bf + ff;
 
       setMinRequiredBalance(minRequired);
@@ -3431,7 +3442,7 @@ export const TreasuriesView = () => {
 
         const bf = transactionFees.blockchainFee;       // Blockchain fee
         const ff = transactionFees.mspFlatFee;          // Flat fee (protocol)
-        const mp = 0.03;                                // Multisig proposal
+        const mp = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt;  // Multisig proposal
         const minRequired = isMultisigTreasury() ? mp : bf + ff;
 
         setMinRequiredBalance(minRequired);
@@ -3604,7 +3615,7 @@ export const TreasuriesView = () => {
 
       const bf = transactionFees.blockchainFee;       // Blockchain fee
       const ff = transactionFees.mspFlatFee;          // Flat fee (protocol)
-      const mp = 0.03;                                // Multisig proposal
+      const mp = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt;  // Multisig proposal
       const minRequired = isMultisigTreasury() ? mp : bf + ff;
 
       setMinRequiredBalance(minRequired);
@@ -3878,7 +3889,7 @@ export const TreasuriesView = () => {
 
         const bf = transactionFees.blockchainFee;       // Blockchain fee
         const ff = transactionFees.mspFlatFee;          // Flat fee (protocol)
-        const mp = 0.03;                                // Multisig proposal
+        const mp = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt;  // Multisig proposal
         const minRequired = isMultisigTreasury() ? mp : bf + ff;
 
         setMinRequiredBalance(minRequired);
@@ -4047,7 +4058,7 @@ export const TreasuriesView = () => {
 
       const bf = transactionFees.blockchainFee;       // Blockchain fee
       const ff = transactionFees.mspFlatFee;          // Flat fee (protocol)
-      const mp = 0.03;                                // Multisig proposal
+      const mp = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt;  // Multisig proposal
       const minRequired = isMultisigTreasury() ? mp : bf + ff;
 
       setMinRequiredBalance(minRequired);
@@ -4323,7 +4334,7 @@ export const TreasuriesView = () => {
 
         const bf = transactionFees.blockchainFee;       // Blockchain fee
         const ff = transactionFees.mspFlatFee;          // Flat fee (protocol)
-        const mp = 0.03;                                // Multisig proposal
+        const mp = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt;  // Multisig proposal
         const minRequired = isMultisigTreasury() ? mp : bf + ff;
 
         setMinRequiredBalance(minRequired);
@@ -4492,7 +4503,7 @@ export const TreasuriesView = () => {
 
       const bf = transactionFees.blockchainFee;       // Blockchain fee
       const ff = transactionFees.mspFlatFee;          // Flat fee (protocol)
-      const mp = 0.03;                                // Multisig proposal
+      const mp = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt;  // Multisig proposal
       const minRequired = isMultisigTreasury() ? mp : bf + ff;
 
       setMinRequiredBalance(minRequired);
@@ -4880,7 +4891,7 @@ export const TreasuriesView = () => {
 
       const bf = transactionFees.blockchainFee;       // Blockchain fee
       const ff = transactionFees.mspFlatFee;          // Flat fee (protocol)
-      const mp = 0.03;                                // Multisig proposal
+      const mp = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt;  // Multisig proposal
       const minRequired = isMultisigTreasury() ? mp : bf + ff;
 
       setMinRequiredBalance(minRequired);
