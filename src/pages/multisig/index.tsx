@@ -60,7 +60,7 @@ import { useNativeAccount } from '../../contexts/accounts';
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
 import { AccountLayout, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { useNavigate } from 'react-router-dom';
-import { Multisig, MultisigV2, MultisigParticipant, MultisigTransaction, MultisigTransactionStatus, MEAN_MULTISIG_OPS, CREATE_MULTISIG_FEES } from '../../models/multisig';
+import { Multisig, MultisigV2, MultisigParticipant, MultisigTransaction, MultisigTransactionStatus, MEAN_MULTISIG_OPS, CREATE_MULTISIG_FEES, MULTISIG_ACTIONS, getFees } from '../../models/multisig';
 import { MultisigCreateModal } from '../../components/MultisigCreateModal';
 import './style.less';
 
@@ -80,6 +80,7 @@ import { isError } from '../../utils/transactions';
 import { ProgramAccounts } from '../../utils/accounts';
 import { getOperationName } from '../../utils/multisig-helpers';
 import { InfoIcon } from '../../components/InfoIcon';
+import { LAMPORTS_PER_SIGNATURE } from '@jup-ag/core/dist/constants';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -152,7 +153,7 @@ export const MultisigView = () => {
   const [switchValue, setSwitchValue] = useState(true);
   const [multisigTxsToHide, setMultisigTxsToHide] = useState<string>("");
   const [filteredMultisigTxs, setFilteredMultisigTxs] = useState<MultisigTransaction[]>([]);
-
+  
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
     commitment: "confirmed",
     disableRetryOnRateLimit: true
@@ -320,6 +321,9 @@ export const MultisigView = () => {
     setIsBusy(true);
 
     const createMultisig = async (data: any) => {
+
+      // const fees = await getFees(multisigClient, MULTISIG_ACTIONS.createMultisig);
+      // console.log('fees', fees);
 
       const multisig = Keypair.generate();
       const [, nonce] = await PublicKey.findProgramAddress(
