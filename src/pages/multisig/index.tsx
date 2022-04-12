@@ -229,7 +229,7 @@ export const MultisigView = () => {
 
   const refreshPage = useCallback(() => {
     window.location.reload();
-  },[])
+  },[]);
 
   const resetTransactionStatus = useCallback(() => {
 

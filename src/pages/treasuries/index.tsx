@@ -4734,7 +4734,8 @@ export const TreasuriesView = () => {
       setTransactionFees(value);
       consoleOut('transactionFees:', value, 'orange');
     });
-  }, [getTransactionFeesV2]);
+    resetTransactionStatus();
+  }, [getTransactionFeesV2, resetTransactionStatus]);
 
   const onAcceptTreasuryTransferFunds = (params: any) => {
     consoleOut('params', params, 'blue');

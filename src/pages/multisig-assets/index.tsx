@@ -5,15 +5,15 @@ import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { useWallet } from '../../contexts/wallet';
 import { AppStateContext, TransactionStatusInfo } from '../../contexts/appstate';
 import { Button, Col, Divider, Empty, Modal, Row, Space, Spin, Tooltip } from 'antd';
-import { ArrowLeftOutlined, CheckOutlined, CopyOutlined, InfoCircleOutlined, LoadingOutlined, ReloadOutlined } from '@ant-design/icons';
-import { IconDocument, IconExternalLink, IconSafe, IconShieldOutline, IconTrash, IconWarning } from '../../Icons';
+import { ArrowLeftOutlined, CheckOutlined, InfoCircleOutlined, LoadingOutlined, ReloadOutlined } from '@ant-design/icons';
+import { IconExternalLink, IconSafe, IconShieldOutline, IconTrash, IconWarning } from '../../Icons';
 import { PreFooter } from '../../components/PreFooter';
-import { ConfirmOptions, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Signer, SystemProgram, SYSVAR_RENT_PUBKEY, Transaction, TransactionInstruction } from '@solana/web3.js';
+import { ConfirmOptions, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Signer, SystemProgram, Transaction, TransactionInstruction } from '@solana/web3.js';
 import { Program, Provider } from '@project-serum/anchor';
 import MultisigIdl from "../../models/mean-multisig-idl";
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { consoleOut, copyText, delay, getReadableDate, getShortDate, getTransactionOperationDescription, getTransactionStatusForLogs, isDev, isLocal } from '../../utils/ui';
 import { Identicon } from '../../components/Identicon';
 import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, getTxIxResume, makeDecimal, shortenAddress } from '../../utils/utils';
@@ -33,8 +33,6 @@ import useWindowSize from '../../hooks/useWindowResize';
 import { isError } from '../../utils/transactions';
 import { MultisigVaultDeleteModal } from '../../components/MultisigVaultDeleteModal';
 import { getOperationName } from '../../utils/multisig-helpers';
-import { InfoIcon } from "../../components/InfoIcon";
-import { MultisigOwnersView } from '../../components/MultisigOwnersView';
 import { MultisigOwnersSigned } from '../../components/MultisigOwnersSigned';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -1455,8 +1453,9 @@ export const MultisigAssetsView = () => {
       mspFlatFee: 0.000010,
       mspPercentFee: 0
     };
+    resetTransactionStatus();
     setTransactionFees(fees);
-  }, []);
+  }, [resetTransactionStatus]);
 
   const onAcceptTransferToken = (params: any) => {
     consoleOut('params', params, 'blue');
