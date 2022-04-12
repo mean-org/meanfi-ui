@@ -146,7 +146,7 @@ export const getFees = async (
     }
     case MULTISIG_ACTIONS.createTransaction: {
       txFees.networkFee = 0.00001;
-      txFees.rentExempt = await program.provider.connection.getMinimumBalanceForRentExemption(program.account.transaction.size);
+      txFees.rentExempt = await program.provider.connection.getMinimumBalanceForRentExemption(1200);
       break;
     }
     case MULTISIG_ACTIONS.cancelTransaction: {
