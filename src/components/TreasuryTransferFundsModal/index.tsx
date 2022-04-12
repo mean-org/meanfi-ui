@@ -9,7 +9,7 @@ import { consoleOut, getTransactionOperationDescription, isValidAddress } from '
 import { isError } from '../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { StreamInfo, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming';
-import { cutNumber, formatAmount, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, isValidNumber, makeDecimal, makeInteger, shortenAddress, toUiAmount } from '../../utils/utils';
+import { cutNumber, formatAmount, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, isValidNumber, makeDecimal, makeInteger, shortenAddress } from '../../utils/utils';
 import { useWallet } from '../../contexts/wallet';
 import { PublicKey } from '@solana/web3.js';
 import { MultisigV2 } from '../../models/multisig';
@@ -587,10 +587,14 @@ export const TreasuryTransferFundsModal = (props: {
               size="middle"
               className={props.isBusy ? 'inactive' : ''}
               onClick={() => isError(transactionStatus.currentOperation)
-                ? onAcceptWithdrawTreasuryFunds()
+                ? transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure
+                  ? onCloseModal()
+                  : onAcceptWithdrawTreasuryFunds()
                 : onCloseModal()}>
               {isError(transactionStatus.currentOperation)
-                ? t('general.retry')
+                ? transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure
+                  ? t('general.cta-close')
+                  : t('general.retry')
                 : t('general.cta-close')
               }
             </Button>
