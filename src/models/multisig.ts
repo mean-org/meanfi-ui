@@ -1,8 +1,14 @@
-import { TransactionFees } from "@mean-dao/msp";
-import { Keypair, PublicKey } from "@solana/web3.js";
+import { Idl, Program } from "@project-serum/anchor";
+import { Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { OperationType } from "./enums";
 
 export const MEAN_MULTISIG_OPS = new PublicKey("3TD6SWY9M1mLY2kZWJNavPLhwXvcRsWdnZLRaMzERJBw");
+export const LAMPORTS_PER_SIG = 5000;
+export const ZERO_FEES = {
+  multisigFee: 0,
+  networkFee: 0,
+  rentExempt: 0
+} as MultisigTransactionFees;
 
 export enum MultisigTransactionStatus {
   // No enough signatures
@@ -108,8 +114,58 @@ export type SetMintAuthPayload = {
   newAuthority: number;
 }
 
-export const CREATE_MULTISIG_FEES: TransactionFees = {
-  blockchainFee: 0.000005,
-  mspFlatFee: 0.02,
-  mspPercentFee: 0
+export enum MULTISIG_ACTIONS {
+  createMultisig = 1,
+  createTransaction = 2,
+  cancelTransaction = 3
+}
+
+export type MultisigTransactionFees = {
+  networkFee: number,
+  rentExempt: number,
+  multisigFee: number,
+}
+
+export const getFees = async (
+  program: Program<Idl>,
+  action: MULTISIG_ACTIONS
+
+): Promise<MultisigTransactionFees> => {
+
+  let txFees: MultisigTransactionFees = {
+    networkFee: 0.0,
+    rentExempt: 0.0,
+    multisigFee: 0.02,
+  };
+
+  switch (action) {
+    case MULTISIG_ACTIONS.createMultisig: {
+      txFees.networkFee = 0.00001;
+      txFees.rentExempt = await program.provider.connection.getMinimumBalanceForRentExemption(program.account.multisigV2.size);
+      break;
+    }
+    case MULTISIG_ACTIONS.createTransaction: {
+      txFees.networkFee = 0.00001;
+      txFees.rentExempt = await program.provider.connection.getMinimumBalanceForRentExemption(1200);
+      break;
+    }
+    case MULTISIG_ACTIONS.cancelTransaction: {
+      txFees.networkFee = 0.000005;
+      txFees.rentExempt = 0.0;
+      break;
+    }
+    default: {
+      break;
+    }
+  }
+
+  txFees.rentExempt = txFees.rentExempt / LAMPORTS_PER_SOL;
+
+  return txFees;
 };
+
+// const multisigAccSize = multisigClient.account.multisigV2.size;
+// const accRentExempt = connection.getMinimumBalanceForRentExemption(multisigAccSize, "confirmed");
+// const signatures = tx.signatures.length + 1;
+// const meanMultisigFees = 20_000_000;
+// const totalFees = meanMultisigFees + accRentExempt + signatures * LAMPORTS_PER_SIG; 

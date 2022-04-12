@@ -65,12 +65,15 @@ export class LockPeriodTypeOption {
     }
 }
 
-export const formatters = {
-    default: new Intl.NumberFormat(),
-    currency: new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }),
-    whole: new Intl.NumberFormat('en-US', { style: 'decimal', minimumFractionDigits: 0, maximumFractionDigits: 0 }),
-    oneDecimal: new Intl.NumberFormat('en-US', { style: 'decimal', minimumFractionDigits: 1, maximumFractionDigits: 1 }),
-    twoDecimal: new Intl.NumberFormat('en-US', { style: 'decimal', minimumFractionDigits: 2, maximumFractionDigits: 2 })
+export const friendlyDisplayDecimalPlaces = (amount: number) => {
+    const value = Math.abs(amount);
+    if (value < 1000) {
+        return 5;
+    } else if (value >= 1000 && value < 1000000) {
+        return 4;
+    } else {
+        return 2;
+    }
 };
 
 export const twoDigits = (num: number) => String(num).padStart(2, '0')

@@ -40,6 +40,7 @@ import {
 import {
     consoleOut,
     copyText,
+    friendlyDisplayDecimalPlaces,
     getFormattedNumberToLocale,
     getIntervalFromSeconds,
     getReadableDate,
@@ -1156,10 +1157,16 @@ export const MultisigTreasuryStreams = () => {
                                 <span className="rate-amount">--</span>
                             ) : (
                                 <>
-                                    <div className="rate-amount">
-                                        ${formatThousands(Math.abs(streamsSummary.totalNet), 5)}
+                                    <div className="rate-amount">$
+                                        {
+                                            formatThousands(
+                                            Math.abs(streamsSummary.totalNet),
+                                            friendlyDisplayDecimalPlaces(streamsSummary.totalNet),
+                                            friendlyDisplayDecimalPlaces(streamsSummary.totalNet)
+                                            )
+                                        }
                                     </div>
-                                    <div className="interval">net-change</div>
+                                    <div className="interval">{t('streams.streaming-balance')}</div>
                                 </>
                             )}
                         </div>

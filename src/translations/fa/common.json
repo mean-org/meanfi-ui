@@ -434,7 +434,7 @@
 			"token-address-placeholder": "آدرس توکن را وارد کنید"
 		},
 		"multisig-account-detail": {
-			"address": "Safe Deposit Address",
+			"address": "Safe deposit address",
 			"authority": "اختیارات",
 			"copy-id-title": "MULTISIG ID (آیدی حساب Multisig)",
 			"created-on": "ایجاد شده در",
@@ -538,8 +538,8 @@
 			"column-created-on": "ایجاد شده در",
 			"column-current-signatures": "امضا",
 			"column-my-status": "وضعیت من",
-			"column-operation": "عملیات",
-			"column-pending-signatures": "امضا ها",
+			"column-operation": "Transaction",
+			"column-pending-signatures": "Status",
 			"column-program-id": "برنامه",
 			"explain-failure": "در صورت خاص شرایط خرابی را توضیح دهید",
 			"initiator-transaction": "ارسال این معامله توسط",
@@ -566,8 +566,8 @@
 			"treasury-closed-warning": "هنگامی که یک treasury بسته می شود، تمام وجوه باقی مانده به کیف پول آغازگر واریز می شود. لطفاً قبل از امضا تأیید کنید که قابل قبول است.",
 			"tx-operation-executed": "This transaction has already been executed",
 			"tx-operation-failure": "عملیات {{operation}} ناموفق بود",
-			"tx-operation-pending-one": "یک تراکنش در این Multisig اکنون برای اجرا آماده است. لطفاً به فردی که این تراکنش را آغاز کرده است بگویید آن را اجرا کند.",
-			"tx-operation-pending-two": "تراکنش در این Multisig آماده است",
+			"tx-operation-pending-one": "یک تراکنش در این multisig اکنون برای اجرا آماده است. لطفاً به فردی که این تراکنش را آغاز کرده است بگویید آن را اجرا کند.",
+			"tx-operation-pending-two": "تراکنش در این multisig آماده است",
 			"tx-operation-rejected": "This transaction has been rejected.",
 			"tx-operation-success": "عملیات {{operation}} با موفقیت انجام شد",
 			"tx-operation-cancel": "Please cancel it below to remove it from the list.",
@@ -575,6 +575,13 @@
 			"execution": "execution",
 			"tx-operation-voided": "This pending transaction has been VOIDED due to the Multisig being edited.",
 			"tx-switch-hide-btn": "Hide cancelled and voided transactions",
+			"tx-pending-approval": "Pending Approval",
+			"tx-pending-execution": "Pending Execution",
+			"proposal-ready-to-be-executed": "This proposal has received the required number of signatures and is now ready to be executed.",
+			"proposal-completed": "This proposal has been executed and is now complete.",
+			"tx-completed": "Completed",
+			"tx-voided": "Voided",
+			"tx-rejected": "Rejected",
 			"your-status": "وضعیت شما:"
 		},
 		"multisig-treasuries": {
@@ -818,7 +825,7 @@
 			"transfer-money-stream-menu-item": "انتقال مالکیت",
 			"withdraw-funds-cta": "برداشت وجوه"
 		},
-		"stream-interval": "net-change",
+		"streaming-balance": "balance",
 		"stream-list": {
 			"no-streams": "هیچ streams در دسترس نیست",
 			"not-connected": "لطفاً کیف پول خود را وصل کنید تا money streams خود را ببینید",
@@ -1051,7 +1058,7 @@
 			"main-cta-busy": "تامین مالی خزانه",
 			"main-cta-fund-stream": "سرمایه مانی استریم",
 			"main-cta-fund-stream-busy": "وجوه استریم",
-			"modal-title": "اضافه کردن وجوه به Treasury",
+			"modal-title": "اضافه کردن وجوه به treasury",
 			"modal-title-fund-stream": "اضافه کردن وجوه به یک مانی استریم",
 			"money-stream-to-topup-label": "مانی استریم برای شارژ",
 			"search-streams-placeholder": "استریم را بر اساس نام یا آدرس جستجو کنید",
@@ -1116,7 +1123,7 @@
 			"number-of-streams": "تعداد استریم ها",
 			"treasury-address-label": "آدرس",
 			"treasury-name-label": "نام treasury",
-			"unallocated-treasury-balance": "موجودی treasury تخصیص نیافته"
+			"unallocated-treasury-balance": "Unallocated balance"
 		},
 		"treasury-detail-heading": "جزئیات treasury",
 		"treasury-list": {
@@ -1162,7 +1169,7 @@
 			"column-rate": "نرخ",
 			"create-stream-main-cta": "ایجاد استریم",
 			"create-stream-main-cta-busy": "ایجاد کردن اسریم",
-			"create-treasury-switch-label": "آیا می خواهید چند استریم با تنظیمات یکسان ایجاد کنید؟",
+			"create-multi-recipient-checkbox-label": "آیا می خواهید چند استریم با تنظیمات یکسان ایجاد کنید؟",
 			"fee-payed-by-treasurer": "من می خواهم برای این اسرتریم به جای ذینفع هزینه پرداخت کنم",
 			"loading-streams": "در حال بارگیری استریم ها",
 			"message-warning": "The list of recipients you submitted included your own wallet address. This is not possible and this address has been removed from the imported list.",
@@ -1251,5 +1258,8 @@
 			"verified-label": "مطمئنم آدرس گیرنده متعلق به صرافی نیست"
 		},
 		"modal-title": "برداشت وجوه"
+	},
+	"wrap": {
+		"hint-message": "We recommend having at least 0.05 SOL for any transaction"
 	}
 }

@@ -8,10 +8,9 @@ import { TransactionStatus } from '../../models/enums';
 import { getTransactionOperationDescription, isValidAddress } from '../../utils/ui';
 import { isError } from '../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
-import { TransactionFees } from '@mean-dao/money-streaming';
 import { formatThousands, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from '../../utils/utils';
 import { MultisigParticipants } from '../MultisigParticipants';
-import { MultisigParticipant, MultisigV2 } from '../../models/multisig';
+import { MultisigParticipant, MultisigTransactionFees, MultisigV2 } from '../../models/multisig';
 import { useWallet } from '../../contexts/wallet';
 import { MAX_MULTISIG_PARTICIPANTS } from '../../constants';
 import { IconHelpCircle, IconWarning } from '../../Icons';
@@ -24,7 +23,7 @@ export const MultisigCreateModal = (props: {
   isVisible: boolean;
   isBusy: boolean;
   nativeBalance: number;
-  transactionFees: TransactionFees;
+  transactionFees: MultisigTransactionFees;
   multisigAccounts: MultisigV2[];
 }) => {
   const { t } = useTranslation('common');
@@ -147,6 +146,7 @@ export const MultisigCreateModal = (props: {
     <Modal
       className="mean-modal simple-modal"
       title={<div className="modal-title">{t('multisig.create-multisig.modal-title')}</div>}
+      maskClosable={false}
       footer={null}
       visible={props.isVisible}
       onOk={onAcceptModal}
@@ -238,11 +238,11 @@ export const MultisigCreateModal = (props: {
               </span>
             )}
             {/* Fee info */}
-            {props.transactionFees && props.transactionFees.mspFlatFee && (
+            {props.transactionFees && props.transactionFees.multisigFee && (
               <div className="p-2 mt-2">
                 {infoRow(
                   t('multisig.create-multisig.fee-info-label') + ' ≈',
-                  `${formatThousands(props.transactionFees.mspFlatFee, 9)} SOL`
+                  `${formatThousands(props.transactionFees.multisigFee + props.transactionFees.rentExempt, 9)} SOL`
                 )}
               </div>
             )}
@@ -256,7 +256,7 @@ export const MultisigCreateModal = (props: {
           </>
         ) : (
           <>
-            <div className="transaction-progress">
+            <div className="transaction-progress p-0">
               <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
@@ -266,7 +266,7 @@ export const MultisigCreateModal = (props: {
                       NATIVE_SOL_MINT.toBase58()
                     ),
                     feeAmount: getTokenAmountAndSymbolByTokenAddress(
-                      props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee,
+                      props.transactionFees.networkFee + props.transactionFees.multisigFee + props.transactionFees.rentExempt,
                       NATIVE_SOL_MINT.toBase58()
                     )})
                   }
@@ -286,7 +286,7 @@ export const MultisigCreateModal = (props: {
           props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle 
             ? "panel2 show" 
             : "panel2 hide"
-          }>          
+          }>
         {props.isBusy && transactionStatus !== TransactionStatus.Iddle && (
           <div className="transaction-progress">
             <Spin indicator={bigLoadingIcon} className="icon mt-0" />
@@ -300,52 +300,55 @@ export const MultisigCreateModal = (props: {
         )}
       </div>
 
-      <div className="row two-col-ctas mt-3 transaction-progress p-0">
-        <div className="col-6">
-          <Button
-            block
-            type="text"
-            shape="round"
-            size="middle"
-            className={props.isBusy ? 'inactive' : ''}
-            onClick={() => isError(transactionStatus.currentOperation)
-              ? onAcceptModal()
-              : onCloseModal()}>
-            {isError(transactionStatus.currentOperation)
-              ? t('general.retry')
-              : t('general.cta-close')
-            }
-          </Button>
-        </div>
-        <div className="col-6">
-          <Button
-            className={props.isBusy ? 'inactive' : ''}
-            block
-            type="primary"
-            shape="round"
-            size="middle"
-            disabled={!isFormValid()}
-            onClick={() => {
-              if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
-                onAcceptModal();
-              } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
-                onCloseModal();
-              } else {
-                refreshPage();
+      {!(props.isBusy && transactionStatus !== TransactionStatus.Iddle) && (
+        <div className="row two-col-ctas mt-3 transaction-progress p-0">
+          <div className={!isError(transactionStatus.currentOperation) ? "col-6" : "col-12"}>
+            <Button
+              block
+              type="text"
+              shape="round"
+              size="middle"
+              className={props.isBusy ? 'inactive' : ''}
+              onClick={() => isError(transactionStatus.currentOperation)
+                ? onAcceptModal()
+                : onCloseModal()}>
+              {isError(transactionStatus.currentOperation)
+                ? t('general.retry')
+                : t('general.cta-close')
               }
-            }}>
-            {props.isBusy
-              ? t('multisig.create-multisig.main-cta-busy')
-              : transactionStatus.currentOperation === TransactionStatus.Iddle
-                ? t('multisig.create-multisig.main-cta')
-                : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
-                  ? t('general.cta-finish')
-                  : t('general.refresh')
-            }
-          </Button>
+            </Button>
+          </div>
+          {!isError(transactionStatus.currentOperation) && (
+            <div className="col-6">
+              <Button
+                className={props.isBusy ? 'inactive' : ''}
+                block
+                type="primary"
+                shape="round"
+                size="middle"
+                disabled={!isFormValid()}
+                onClick={() => {
+                  if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+                    onAcceptModal();
+                  } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
+                    onCloseModal();
+                  } else {
+                    refreshPage();
+                  }
+                }}>
+                {props.isBusy
+                  ? t('multisig.create-multisig.main-cta-busy')
+                  : transactionStatus.currentOperation === TransactionStatus.Iddle
+                    ? t('multisig.create-multisig.main-cta')
+                    : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
+                      ? t('general.cta-finish')
+                      : t('general.refresh')
+                }
+              </Button>
+            </div>
+          )}
         </div>
-      </div>
-
+      )}
     </Modal>
   );
 };

@@ -438,7 +438,7 @@
 			"token-address-placeholder": "Nhập vào địa chỉ token"
 		},
 		"multisig-account-detail": {
-			"address": "Safe Deposit Address",
+			"address": "Safe deposit address",
 			"authority": "Thẩm quyền",
 			"copy-id-title": "MULTISIG ID",
 			"created-on": "Ngày tạo",
@@ -512,16 +512,16 @@
 			"column-created-on": "Ngày tạo",
 			"column-current-signatures": "Sig",
 			"column-my-status": "Trạng thái của tôi",
-			"column-operation": "Hoạt động",
-			"column-pending-signatures": "Chữ ký",
+			"column-operation": "Transaction",
+			"column-pending-signatures": "Status",
 			"column-program-id": "Chương trình",
 			"loading-transactions": "Đang tải giao dịch",
 			"modal-title": "Proposal summary",
 			"no-transactions": "This multisig asset has no transactions",
 			"tx-operation-failure": "Thao tác {{operation}} không thành công",
 			"tx-operation-success": "Thao tác {{operation}} thành công",
-			"tx-operation-pending-one": "A transaction on this Multisig is now ready for execution. Please tell the person who initiated this transaction to execute it.",
-			"tx-operation-pending-two": "A transaction on this Multisig is ready for",
+			"tx-operation-pending-one": "A transaction on this multisig is now ready for execution. Please tell the person who initiated this transaction to execute it.",
+			"tx-operation-pending-two": "A transaction on this multisig is ready for",
 			"tx-operation-voided": "This pending transaction has been VOIDED due to the Multisig being edited.",
 			"tx-operation-rejected": "This transaction has been rejected.",
 			"tx-operation-executed": "This transaction has already been executed",
@@ -551,7 +551,14 @@
 			"tx-operation-cancel": "Please cancel it below to remove it from the list.",
 			"tx-switch-hide-btn": "Hide cancelled and voided transactions",
 			"your-execution": "your execution",
-			"execution": "execution"
+			"execution": "execution",
+			"tx-pending-approval": "Pending Approval",
+			"tx-pending-execution": "Pending Execution",
+			"tx-completed": "Completed",
+			"tx-voided": "Voided",
+			"tx-rejected": "Rejected",
+			"proposal-ready-to-be-executed": "This proposal has received the required number of signatures and is now ready to be executed.",
+			"proposal-completed": "This proposal has been executed and is now complete."
 		},
 		"multisig-treasuries": {
 			"back-to-treasuries": "Back to Streaming Treasuries"
@@ -821,7 +828,7 @@
 			"transfer-money-stream-menu-item": "Chuyển quyền sở hữu",
 			"withdraw-funds-cta": "Rút tiền"
 		},
-		"stream-interval": "net-change",
+		"streaming-balance": "balance",
 		"stream-list": {
 			"no-streams": "Không có stream nào",
 			"not-connected": "Vui lòng kết nối ví của bạn để xem các money stream của bạn",
@@ -1052,7 +1059,7 @@
 			"main-cta-busy": "Đang nạp tiền",
 			"main-cta-fund-stream": "Nạp tiền",
 			"main-cta-fund-stream-busy": "Đang nạp tiền",
-			"modal-title": "Add funds to the Streaming Treasury",
+			"modal-title": "Add funds to the streaming treasury",
 			"modal-title-fund-stream": "Nạp tiền vào Money stream",
 			"money-stream-to-topup-label": "Money Stream to top up",
 			"search-streams-placeholder": "Tìm stream theo tên và địa chỉ",
@@ -1075,7 +1082,7 @@
 			},
 			"main-cta": "Create streaming treasury",
 			"main-cta-busy": "Creating treasury",
-			"modal-title": "Create Streaming Treasury",
+			"modal-title": "Create streaming treasury",
 			"multisig-selector-label": "Tài khoản multisig",
 			"multisig-treasury-created-info": "Để hoàn thành thiết lập kho bạc, những người ký Multisig khác cần phải phê duyệt nó.",
 			"multisig-treasury-created-instructions": "Vui lòng yêu cầu người dùng khác ký vào giao dịch tạo kho bạc này",
@@ -1087,9 +1094,9 @@
 			"treasury-token-label": "Token to be streamed",
 			"treasury-type-options": {
 				"treasury-type-locked-description": "Với một kho bạc bị khóa, bạn có thể tạo các stream hoạt động giống như một hợp đồng vesting cho các khoản phân bổ dành riêng cho nhà đầu tư. Các hợp đồng này thường có ngày kết thúc cố định.",
-				"treasury-type-locked-name": "Kho bạc Money Streaming bị khoá",
+				"treasury-type-locked-name": "Kho bạc money streaming bị khoá",
 				"treasury-type-open-description": "Với một kho bạc không bị khóa, bạn có thể tạo các money stream chạy liên tục. Khi kho bạc hết tiền, tất cả các stream sẽ dừng lại, cho đến khi nó được bổ sung thêm.",
-				"treasury-type-open-name": "Kho bạc Money Streaming không bị khoá"
+				"treasury-type-open-name": "Kho bạc money streaming không bị khoá"
 			}
 		},
 		"lookup-treasury-cta-tooltip": "Tìm kiếm một kho bạc",
@@ -1115,9 +1122,9 @@
 			"no-treasury-loaded": "Tạo hoặc tra cứu kho bạc để xem chi tiết",
 			"no-treasury-selected": "Vui lòng chọn hoặc tra cứu kho bạc để xem chi tiết",
 			"number-of-streams": "Số lượng stream",
-			"treasury-address-label": "Treasury Address",
+			"treasury-address-label": "Treasury address",
 			"treasury-name-label": "Tên kho bạc",
-			"unallocated-treasury-balance": "Unallocated Streaming Treasury Balance"
+			"unallocated-treasury-balance": "Unallocated balance"
 		},
 		"treasury-detail-heading": "Chi tiết kho bạc",
 		"treasury-list": {
@@ -1163,7 +1170,7 @@
 			"column-rate": "Tỉ lệ",
 			"create-stream-main-cta": "Tạo stream",
 			"create-stream-main-cta-busy": "Đang tạo stream",
-			"create-treasury-switch-label": "Do you want to create multiple streams with the same settings?",
+			"create-multi-recipient-checkbox-label": "Do you want to create multiple streams with the same settings?",
 			"fee-payed-by-treasurer": "Tôi muốn trả phí cho stream này thay vì người thụ hưởng",
 			"loading-streams": "Đang tải stream",
 			"minimum-allocation-advice": "Bạn phải đặt mức phân bổ tối thiểu cho Money stream này lên đến số dư chưa phân bổ hiện có trong Kho bạc.",
@@ -1242,11 +1249,14 @@
 		"label-input-amount": "Nhập số lượng muốn rút",
 		"label-input-right": "Theo phần trăm đặt trước",
 		"modal": {
-			"main-cta": "Withdraw Funds",
+			"main-cta": "Withdraw funds",
 			"selected-treasury-label": "From treasury account",
-			"title": "Withdraw Treasury Funds",
+			"title": "Withdraw treasury funds",
 			"verified-label": "I'm sure the recipient address doesn't belong to an exchange"
 		},
 		"modal-title": "Rút tiền"
+	},
+	"wrap": {
+		"hint-message": "We recommend having at least 0.05 SOL for any transaction"
 	}
 }

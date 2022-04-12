@@ -1329,6 +1329,7 @@ export const TreasuryStreamCreateModal = (props: {
     <Modal
       className="mean-modal treasury-stream-create-modal"
       title={(treasuryOption && treasuryOption.type === TreasuryType.Open) ? (<div className="modal-title">{t('treasuries.treasury-streams.add-stream-modal-title')}</div>) : (<div className="modal-title">{t('treasuries.treasury-streams.add-stream-locked.modal-title')}</div>)}
+      maskClosable={false}
       footer={null}
       visible={props.isVisible}
       onOk={props.handleOk}
@@ -1345,10 +1346,10 @@ export const TreasuryStreamCreateModal = (props: {
             <div className="mb-2 text-uppercase">{t('treasuries.treasury-streams.add-stream-locked.panel1-name')}</div>
           )}
 
-          {/* Create Treasury checkbox */}
-          {(treasuryOption && treasuryOption.type === TreasuryType.Open) && (
+          {/* Create multi-recipient stream checkbox */}
+          {/* {(treasuryOption && treasuryOption.type === TreasuryType.Open) && (
             <div className="mb-2 flex-row align-items-start">
-              <span className="form-label w-auto mb-0">{t('treasuries.treasury-streams.create-treasury-switch-label')}</span>
+              <span className="form-label w-auto mb-0">{t('treasuries.treasury-streams.create-multi-recipient-checkbox-label')}</span>
               <Radio.Group className="ml-2 d-flex" 
                 onChange={onCloseMultipleStreamsChanged} 
                 value={enableMultipleStreamsOption}
@@ -1357,7 +1358,7 @@ export const TreasuryStreamCreateModal = (props: {
                 <Radio value={false}>{t('general.no')}</Radio>
               </Radio.Group>
             </div>
-          )}
+          )} */}
 
           {!enableMultipleStreamsOption && (
             <>
@@ -1575,21 +1576,25 @@ export const TreasuryStreamCreateModal = (props: {
                   </div>
                   <div className="right">
                     <div className="add-on simplelink">
-                      <DatePicker
-                        size="middle"
-                        bordered={false}
-                        className="addon-date-picker"
-                        aria-required={true}
-                        allowClear={false}
-                        disabledDate={disabledDate}
-                        placeholder={t('transactions.send-date.placeholder')}
-                        onChange={(value, date) => handleDateChange(date)}
-                        value={moment(
-                          paymentStartDate,
-                          DATEPICKER_FORMAT
-                        )}
-                        format={DATEPICKER_FORMAT}
-                      />
+                      <>
+                        {
+                          <DatePicker
+                            size="middle"
+                            bordered={false}
+                            className="addon-date-picker"
+                            aria-required={true}
+                            allowClear={false}
+                            disabledDate={disabledDate}
+                            placeholder={t('transactions.send-date.placeholder')}
+                            onChange={(value, date) => handleDateChange(date)}
+                            value={moment(
+                              paymentStartDate,
+                              DATEPICKER_FORMAT
+                            )}
+                            format={DATEPICKER_FORMAT}
+                          />
+                        }
+                      </>
                     </div>
                   </div>
                 </div>
@@ -1901,21 +1906,25 @@ export const TreasuryStreamCreateModal = (props: {
                   </div>
                   <div className="right">
                     <div className="add-on simplelink">
-                      <DatePicker
-                        size="middle"
-                        bordered={false}
-                        className="addon-date-picker"
-                        aria-required={true}
-                        allowClear={false}
-                        disabledDate={disabledDate}
-                        placeholder={t('transactions.send-date.placeholder')}
-                        onChange={(value, date) => handleDateChange(date)}
-                        value={moment(
-                          paymentStartDate,
-                          DATEPICKER_FORMAT
-                        )}
-                        format={DATEPICKER_FORMAT}
-                      />
+                      <>
+                        {
+                          <DatePicker
+                            size="middle"
+                            bordered={false}
+                            className="addon-date-picker"
+                            aria-required={true}
+                            allowClear={false}
+                            disabledDate={disabledDate}
+                            placeholder={t('transactions.send-date.placeholder')}
+                            onChange={(value, date) => handleDateChange(date)}
+                            value={moment(
+                              paymentStartDate,
+                              DATEPICKER_FORMAT
+                            )}
+                            format={DATEPICKER_FORMAT}
+                          />
+                        }
+                      </>
                     </div>
                   </div>
                 </div>

@@ -33,7 +33,6 @@ import {
   getTransactionModalTitle,
   getTransactionOperationDescription,
   getTransactionStatusForLogs,
-  isLocal,
   isToday,
   isValidAddress,
   PaymentRateTypeOption
@@ -76,7 +75,6 @@ export const RepeatingPayment = () => {
     tokenBalance,
     effectiveRate,
     coinPrices,
-    isWhitelisted,
     loadingPrices,
     recipientAddress,
     recipientNote,
@@ -210,7 +208,7 @@ export const RepeatingPayment = () => {
         consoleOut("repeatingPaymentFees:", value, 'orange');
       });
     } else {
-      getTransactionFeesV2(MSP_ACTIONS_V2.closeStream).then(value => {
+      getTransactionFeesV2(MSP_ACTIONS_V2.createStreamWithFunds).then(value => {
         setRepeatingPaymentFees(value);
         consoleOut("repeatingPaymentFees:", value, 'orange');
       });
@@ -1127,10 +1125,6 @@ export const RepeatingPayment = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.TransactionFinished
-            });
             enqueueTransactionConfirmation({
               signature: signature,
               operationType: OperationType.StreamCreate,
@@ -1141,7 +1135,14 @@ export const RepeatingPayment = () => {
               completedTitle: "Transaction confirmed",
               completedMessage: "Money Stream created successfully"
             });
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.TransactionFinished
+            });
             setIsBusy(false);
+            setTimeout(() => {
+              closeTransactionModal();
+            }, 300);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -1167,6 +1168,7 @@ export const RepeatingPayment = () => {
     repeatingPaymentFees.blockchainFee,
     transactionStatus.currentOperation,
     enqueueTransactionConfirmation,
+    closeTransactionModal,
     setTransactionStatus,
     showTransactionModal,
     getPaymentRateLabel,
@@ -1184,9 +1186,14 @@ export const RepeatingPayment = () => {
     setIsVerifiedRecipient(e.target.checked);
   }
 
-  const onGotoExchange = () => {
+  // const onGotoExchange = () => {
+  //   onCloseTokenSelector();
+  //   navigate('/exchange?from=SOL&to=wSOL');
+  // }
+
+  const onGoToWrap = () => {
     onCloseTokenSelector();
-    navigate('/exchange?from=SOL&to=wSOL');
+    navigate('/wrap');
   }
 
   const isSuccess = (): boolean => {
@@ -1609,7 +1616,7 @@ export const RepeatingPayment = () => {
             </div>
             <div className="flex-row align-items-center fg-secondary-60 mb-2 px-1">
               <span>{t('token-selector.looking-for-sol')}</span>&nbsp;
-              <span className="simplelink underline" onClick={onGotoExchange}>{t('token-selector.wrap-sol-first')}</span>
+              <span className="simplelink underline" onClick={onGoToWrap}>{t('token-selector.wrap-sol-first')}</span>
             </div>
             <div className="token-list vertical-scroll">
               {filteredTokenList.length > 0 && renderTokenList}

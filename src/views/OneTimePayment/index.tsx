@@ -20,7 +20,6 @@ import {
   getTransactionModalTitle,
   getTransactionOperationDescription,
   getTransactionStatusForLogs,
-  isLocal,
   isToday,
   isValidAddress
 } from "../../utils/ui";
@@ -185,9 +184,16 @@ export const OneTimePayment = () => {
     }
   }, [connection, otpFees]);
 
-  const getFeeAmount = () => {
+  const isScheduledPayment = useCallback((): boolean => {
+    const now = new Date();
+    const parsedDate = Date.parse(paymentStartDate as string);
+    const fromParsedDate = new Date(parsedDate);
+    return fromParsedDate.getDate() > now.getDate() ? true : false;
+  }, [paymentStartDate]);
+
+  const getFeeAmount = useCallback(() => {
     return isScheduledPayment() ? otpFees.blockchainFee + otpFees.mspFlatFee : otpFees.blockchainFee;
-  }
+  }, [isScheduledPayment, otpFees.blockchainFee, otpFees.mspFlatFee]);
 
   const resetTransactionStatus = useCallback(() => {
 
@@ -228,13 +234,6 @@ export const OneTimePayment = () => {
 
   // Event handling
 
-  const isScheduledPayment = useCallback((): boolean => {
-    const now = new Date();
-    const parsedDate = Date.parse(paymentStartDate as string);
-    const fromParsedDate = new Date(parsedDate);
-    return fromParsedDate.getDate() > now.getDate() ? true : false;
-  }, [paymentStartDate]);
-
   const onTransactionModalClosed = () => {
     if (isBusy) {
       setTransactionCancelled(true);
@@ -259,13 +258,12 @@ export const OneTimePayment = () => {
     consoleOut("onTxConfirmed event executed:", item, 'crimson');
     if (item && item.operationType === OperationType.Transfer && item.extras === 'scheduled') {
       recordTxConfirmation(item.signature, true);
-      resetContractValues();
-      setIsVerifiedRecipient(false);
-      setSelectedStream(undefined);
-      closeTransactionModal();
       navigate("/accounts/streams");
     }
-  }, [closeTransactionModal, navigate, recordTxConfirmation, resetContractValues, setIsVerifiedRecipient, setSelectedStream]);
+    resetContractValues();
+    setIsVerifiedRecipient(false);
+    setSelectedStream(undefined);
+  }, [navigate, recordTxConfirmation, resetContractValues, setIsVerifiedRecipient, setSelectedStream]);
 
   // Setup event handler for Tx confirmation error
   const onTxTimedout = useCallback((item: TransactionStatusInfo) => {
@@ -834,10 +832,6 @@ export const OneTimePayment = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.TransactionFinished
-            });
             if (isScheduledPayment()) {
               enqueueTransactionConfirmation({
                 signature: signature,
@@ -853,7 +847,6 @@ export const OneTimePayment = () => {
                 completedMessage: `Transfer successfully Scheduled!`,
                 extras: 'scheduled'
               });
-              setIsBusy(false);
             } else {
               enqueueTransactionConfirmation({
                 signature: signature,
@@ -871,8 +864,15 @@ export const OneTimePayment = () => {
                   selectedToken.decimals
                 )} ${selectedToken.symbol}`,
               });
-              setIsBusy(false);
             }
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.TransactionFinished
+            });
+            setIsBusy(false);
+            setTimeout(() => {
+              closeTransactionModal();
+            }, 300);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -895,6 +895,7 @@ export const OneTimePayment = () => {
     streamV2ProgramAddress,
     transactionStatus.currentOperation,
     enqueueTransactionConfirmation,
+    closeTransactionModal,
     setTransactionStatus,
     showTransactionModal,
     isScheduledPayment,
@@ -909,9 +910,14 @@ export const OneTimePayment = () => {
     setFixedScheduleValue(value);
   }
 
-  const onGotoExchange = () => {
+  // const onGotoExchange = () => {
+  //   onCloseTokenSelector();
+  //   navigate('/exchange?from=SOL&to=wSOL');
+  // }
+
+  const onGoToWrap = () => {
     onCloseTokenSelector();
-    navigate('/exchange?from=SOL&to=wSOL');
+    navigate('/wrap');
   }
 
   const isSuccess = (): boolean => {
@@ -1190,7 +1196,7 @@ export const OneTimePayment = () => {
             </div>
             <div className="flex-row align-items-center fg-secondary-60 mb-2 px-1">
               <span>{t('token-selector.looking-for-sol')}</span>&nbsp;
-              <span className="simplelink underline" onClick={onGotoExchange}>{t('token-selector.wrap-sol-first')}</span>
+              <span className="simplelink underline" onClick={onGoToWrap}>{t('token-selector.wrap-sol-first')}</span>
             </div>
             <div className="token-list vertical-scroll">
               {filteredTokenList.length > 0 && renderTokenList}
