@@ -3416,7 +3416,7 @@ export const MultisigAssetsView = () => {
       return (
         <>
           <span className="info-icon token-icon">
-            <Identicon address={tokenAddress} style={{ width: "30", display: "inline-flex" }} />
+            <Identicon address={tokenAddress} style={{ width: "30", height: "30", display: "inline-flex" }} />
           </span>
           <span className="info-data">
             {formatThousands(makeDecimal(amount, decimals), decimals)}
@@ -3705,9 +3705,9 @@ export const MultisigAssetsView = () => {
                   <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
                 ) : (
                   <Identicon address={item.mint.toBase58()} style={{
-                    width: "28px",
+                    width: "30",
                     display: "inline-flex",
-                    height: "26px",
+                    height: "30",
                     overflow: "hidden",
                     borderRadius: "50%"
                   }} />

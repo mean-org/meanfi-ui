@@ -1576,21 +1576,23 @@ export const TreasuryStreamCreateModal = (props: {
                   </div>
                   <div className="right">
                     <div className="add-on simplelink">
-                      <DatePicker
-                        size="middle"
-                        bordered={false}
-                        className="addon-date-picker"
-                        aria-required={true}
-                        allowClear={false}
-                        disabledDate={disabledDate}
-                        placeholder={t('transactions.send-date.placeholder')}
-                        onChange={(value, date) => handleDateChange(date)}
-                        value={moment(
-                          paymentStartDate,
-                          DATEPICKER_FORMAT
-                        )}
-                        format={DATEPICKER_FORMAT}
-                      />
+                      <>
+                        <DatePicker
+                          size="middle"
+                          bordered={false}
+                          className="addon-date-picker"
+                          aria-required={true}
+                          allowClear={false}
+                          disabledDate={disabledDate}
+                          placeholder={t('transactions.send-date.placeholder')}
+                          onChange={(value, date) => handleDateChange(date)}
+                          value={moment(
+                            paymentStartDate,
+                            DATEPICKER_FORMAT
+                          )}
+                          format={DATEPICKER_FORMAT}
+                        />
+                      </>
                     </div>
                   </div>
                 </div>
@@ -1902,21 +1904,23 @@ export const TreasuryStreamCreateModal = (props: {
                   </div>
                   <div className="right">
                     <div className="add-on simplelink">
-                      <DatePicker
-                        size="middle"
-                        bordered={false}
-                        className="addon-date-picker"
-                        aria-required={true}
-                        allowClear={false}
-                        disabledDate={disabledDate}
-                        placeholder={t('transactions.send-date.placeholder')}
-                        onChange={(value, date) => handleDateChange(date)}
-                        value={moment(
-                          paymentStartDate,
-                          DATEPICKER_FORMAT
-                        )}
-                        format={DATEPICKER_FORMAT}
-                      />
+                      <>
+                        <DatePicker
+                          size="middle"
+                          bordered={false}
+                          className="addon-date-picker"
+                          aria-required={true}
+                          allowClear={false}
+                          disabledDate={disabledDate}
+                          placeholder={t('transactions.send-date.placeholder')}
+                          onChange={(value, date) => handleDateChange(date)}
+                          value={moment(
+                            paymentStartDate,
+                            DATEPICKER_FORMAT
+                          )}
+                          format={DATEPICKER_FORMAT}
+                        />
+                      </>
                     </div>
                   </div>
                 </div>

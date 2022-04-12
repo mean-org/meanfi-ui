@@ -29,6 +29,7 @@ export const TreasuryTransferFundsModal = (props: {
   isVisible: boolean;
   isBusy: boolean;
   nativeBalance: number;
+  minRequiredBalance: number;
   transactionFees: TransactionFees;
   treasuryDetails: Treasury | TreasuryInfo | undefined;
   multisigAccounts: MultisigV2[] | undefined;
@@ -543,7 +544,7 @@ export const TreasuryTransferFundsModal = (props: {
                       NATIVE_SOL_MINT.toBase58()
                     ),
                     feeAmount: getTokenAmountAndSymbolByTokenAddress(
-                      props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee,
+                      props.minRequiredBalance,
                       NATIVE_SOL_MINT.toBase58()
                     )})
                   }

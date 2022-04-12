@@ -3000,7 +3000,7 @@ export const MultisigMintsView = () => {
       return (
         <>
           <span className="info-icon token-icon">
-            <Identicon address={tokenAddress} style={{ width: "30", display: "inline-flex" }} />
+            <Identicon address={tokenAddress} style={{ width: "30", height: "30", display: "inline-flex" }} />
           </span>
           <span className="info-data">
           {
@@ -3204,7 +3204,7 @@ export const MultisigMintsView = () => {
                 </div>
                 <div className="transaction-detail-row">
                   <span className="info-icon token-icon">
-                    <Identicon address={selectedMint.address} style={{ width: "30", display: "inline-flex" }} />
+                    <Identicon address={selectedMint.address} style={{ width: "30", height: "30", display: "inline-flex" }} />
                   </span>
                   <span className="info-data">
                     {shortenAddress(selectedMint.address.toBase58(), 8)}
@@ -3281,9 +3281,9 @@ export const MultisigMintsView = () => {
             <div className="icon-cell">
               <div className="token-icon">
                 <Identicon address={item.address.toBase58()} style={{
-                  width: "28px",
+                  width: "30",
+                  height: "30",
                   display: "inline-flex",
-                  height: "26px",
                   overflow: "hidden",
                   borderRadius: "50%"
                 }} />

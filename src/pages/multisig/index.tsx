@@ -3438,7 +3438,7 @@ export const MultisigView = () => {
               }>
 
             <div className="icon-cell">
-              <Identicon address={item.id} style={{ width: "30", display: "inline-flex" }} />
+              <Identicon address={item.id} style={{ width: "30", height: "30", display: "inline-flex" }} />
             </div>
             <div className="description-cell">
               {item.label ? (
