@@ -8,10 +8,9 @@ import { TransactionStatus } from '../../models/enums';
 import { getTransactionOperationDescription, isValidAddress } from '../../utils/ui';
 import { isError } from '../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
-import { TransactionFees } from '@mean-dao/money-streaming';
 import { formatThousands, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from '../../utils/utils';
 import { MultisigParticipants } from '../MultisigParticipants';
-import { MultisigParticipant, MultisigV2 } from '../../models/multisig';
+import { MultisigParticipant, MultisigTransactionFees, MultisigV2 } from '../../models/multisig';
 import { useWallet } from '../../contexts/wallet';
 import { MAX_MULTISIG_PARTICIPANTS } from '../../constants';
 import { IconHelpCircle, IconWarning } from '../../Icons';
@@ -24,7 +23,7 @@ export const MultisigCreateModal = (props: {
   isVisible: boolean;
   isBusy: boolean;
   nativeBalance: number;
-  transactionFees: TransactionFees;
+  transactionFees: MultisigTransactionFees;
   multisigAccounts: MultisigV2[];
 }) => {
   const { t } = useTranslation('common');
@@ -239,11 +238,11 @@ export const MultisigCreateModal = (props: {
               </span>
             )}
             {/* Fee info */}
-            {props.transactionFees && props.transactionFees.mspFlatFee && (
+            {props.transactionFees && props.transactionFees.multisigFee && (
               <div className="p-2 mt-2">
                 {infoRow(
                   t('multisig.create-multisig.fee-info-label') + ' ≈',
-                  `${formatThousands(props.transactionFees.mspFlatFee, 9)} SOL`
+                  `${formatThousands(props.transactionFees.multisigFee + props.transactionFees.rentExempt, 9)} SOL`
                 )}
               </div>
             )}
@@ -267,7 +266,7 @@ export const MultisigCreateModal = (props: {
                       NATIVE_SOL_MINT.toBase58()
                     ),
                     feeAmount: getTokenAmountAndSymbolByTokenAddress(
-                      props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee,
+                      props.transactionFees.networkFee + props.transactionFees.multisigFee + props.transactionFees.rentExempt,
                       NATIVE_SOL_MINT.toBase58()
                     )})
                   }

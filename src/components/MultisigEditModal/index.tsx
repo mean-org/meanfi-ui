@@ -8,10 +8,9 @@ import { TransactionStatus } from '../../models/enums';
 import { getTransactionOperationDescription, isValidAddress } from '../../utils/ui';
 import { isError } from '../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
-import { TransactionFees } from '@mean-dao/money-streaming';
 import { getTokenAmountAndSymbolByTokenAddress, isValidNumber } from '../../utils/utils';
 import { MultisigParticipants } from '../MultisigParticipants';
-import { MultisigParticipant, MultisigV2 } from '../../models/multisig';
+import { MultisigParticipant, MultisigTransactionFees, MultisigV2 } from '../../models/multisig';
 import { MAX_MULTISIG_PARTICIPANTS } from '../../constants';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -22,7 +21,7 @@ export const MultisigEditModal = (props: {
   isVisible: boolean;
   isBusy: boolean;
   nativeBalance: number;
-  transactionFees: TransactionFees;
+  transactionFees: MultisigTransactionFees;
   multisigName?: string;
   multisigThreshold?: number;
   multisigAccounts: MultisigV2[];
@@ -288,7 +287,7 @@ export const MultisigEditModal = (props: {
                       NATIVE_SOL_MINT.toBase58()
                     ),
                     feeAmount: getTokenAmountAndSymbolByTokenAddress(
-                      props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee,
+                      props.transactionFees.networkFee + props.transactionFees.multisigFee + props.transactionFees.rentExempt,
                       NATIVE_SOL_MINT.toBase58()
                     )})
                   }

@@ -1,10 +1,16 @@
-import { TransactionFees } from "@mean-dao/msp";
 import { Idl, Program } from "@project-serum/anchor";
-import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
+import { Keypair, PublicKey } from "@solana/web3.js";
+import { BN } from "bn.js";
+import { makeDecimal } from "../utils/utils";
 import { OperationType } from "./enums";
 
 export const MEAN_MULTISIG_OPS = new PublicKey("3TD6SWY9M1mLY2kZWJNavPLhwXvcRsWdnZLRaMzERJBw");
 export const LAMPORTS_PER_SIG = 5000;
+export const ZERO_FEES = {
+  multisigFee: 0,
+  networkFee: 0,
+  rentExempt: 0
+} as MultisigTransactionFees;
 
 export enum MultisigTransactionStatus {
   // No enough signatures
@@ -110,12 +116,6 @@ export type SetMintAuthPayload = {
   newAuthority: number;
 }
 
-export const CREATE_MULTISIG_FEES: TransactionFees = {
-  blockchainFee: 0.000005,
-  mspFlatFee: 0.02,
-  mspPercentFee: 0
-}
-
 export enum MULTISIG_ACTIONS {
   createMultisig = 1,
   createTransaction = 2,
@@ -135,20 +135,22 @@ export const getFees = async (
 ): Promise<MultisigTransactionFees> => {
 
   let txFees: MultisigTransactionFees = {
-      networkFee: 0.0,
-      rentExempt: 0.0,
-      multisigFee: 0.02,
-    };
+    networkFee: 0.0,
+    rentExempt: 0.0,
+    multisigFee: 0.02,
+  };
 
   switch (action) {
     case MULTISIG_ACTIONS.createMultisig: {
+      const re1 = await program.provider.connection.getMinimumBalanceForRentExemption(program.account.multisigV2.size);
       txFees.networkFee = 0.00001;
-      txFees.rentExempt = await program.provider.connection.getMinimumBalanceForRentExemption(program.account.multisigV2.size);
+      txFees.rentExempt = makeDecimal(new BN(re1), 9);
       break;
     }
     case MULTISIG_ACTIONS.createTransaction: {
+      const re2 = await program.provider.connection.getMinimumBalanceForRentExemption(program.account.transaction.size);
       txFees.networkFee = 0.00001;
-      txFees.rentExempt = await program.provider.connection.getMinimumBalanceForRentExemption(program.account.transaction.size);
+      txFees.rentExempt = makeDecimal(new BN(re2), 9);
       break;
     }
     case MULTISIG_ACTIONS.cancelTransaction: {

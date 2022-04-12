@@ -4,7 +4,7 @@ export const openNotification = (props: {
     type?: IconType,
     handleClose?: any;
     title?: string;
-    description: JSX.Element;
+    description: JSX.Element | string;
     duration?: number | null | undefined;
     key?: string;
 }) => {
