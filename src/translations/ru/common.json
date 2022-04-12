@@ -435,7 +435,7 @@
 			"token-address-placeholder": "Enter the address of the token"
 		},
 		"multisig-account-detail": {
-			"address": "Safe Deposit Address",
+			"address": "Safe deposit address",
 			"authority": "Authority",
 			"copy-id-title": "MULTISIG ID",
 			"created-on": "Created on",
@@ -539,8 +539,8 @@
 			"column-created-on": "Created on",
 			"column-current-signatures": "Sig",
 			"column-my-status": "My Status",
-			"column-operation": "Proposal",
-			"column-pending-signatures": "Signatures",
+			"column-operation": "Transaction",
+			"column-pending-signatures": "Status",
 			"column-program-id": "Program",
 			"explain-failure": "Explain failure condition if specific",
 			"initiator-transaction": "This transaction was submitted by",
@@ -567,8 +567,8 @@
 			"treasury-closed-warning": "When a treasury is closed, all funds left over will be deposited back into the multisig safe.",
 			"tx-operation-executed": "This transaction has already been executed",
 			"tx-operation-failure": "Operation {{operation}} failed",
-			"tx-operation-pending-one": "A transaction on this Multisig is now ready for execution. Please tell the person who initiated this transaction to execute it.",
-			"tx-operation-pending-two": "A transaction on this Multisig is ready for",
+			"tx-operation-pending-one": "A transaction on this multisig is now ready for execution. Please tell the person who initiated this transaction to execute it.",
+			"tx-operation-pending-two": "A transaction on this multisig is ready for",
 			"tx-operation-rejected": "This transaction has been rejected.",
 			"tx-operation-success": "Operation {{operation}} succeeded",
 			"tx-operation-voided": "This pending transaction has been VOIDED due to the Multisig being edited.",
@@ -576,7 +576,14 @@
 			"tx-switch-hide-btn": "Hide cancelled and voided transactions",
 			"your-status": "Your status:",
 			"your-execution": "your execution",
-			"execution": "execution"
+			"execution": "execution",
+			"tx-pending-approval": "Pending Approval",
+			"tx-pending-execution": "Pending Execution",
+			"tx-completed": "Completed",
+			"tx-voided": "Voided",
+			"tx-rejected": "Rejected",
+			"proposal-ready-to-be-executed": "This proposal has received the required number of signatures and is now ready to be executed.",
+			"proposal-completed": "This proposal has been executed and is now complete."
 		},
 		"multisig-treasuries": {
 			"back-to-treasuries": "Back to Streaming Treasuries"
@@ -800,10 +807,10 @@
 			"label-funds-runout": "will run out by",
 			"label-funds-runout-today": "will run out today",
 			"label-funds-sent": "Funds sent to recipient",
-			"label-payment-rate": "Payment Rate",
+			"label-payment-rate": "Payment rate",
 			"label-received-from": "Received from",
 			"label-receiving-from": "Receiving from",
-			"label-reserved-allocation": "Reserved Allocation",
+			"label-reserved-allocation": "Reserved allocation",
 			"label-sending-to": "Sending to",
 			"label-sent-to": "Sent to",
 			"label-start-date-default": "Start Date",
@@ -819,7 +826,7 @@
 			"transfer-money-stream-menu-item": "Transfer ownership",
 			"withdraw-funds-cta": "Withdraw funds"
 		},
-		"stream-interval": "net-change",
+		"streaming-balance": "balance",
 		"stream-list": {
 			"no-streams": "No streams available",
 			"not-connected": "Please connect your wallet to see your money streams",
@@ -1052,7 +1059,7 @@
 			"main-cta-busy": "Funding treasury",
 			"main-cta-fund-stream": "Fund Money Stream",
 			"main-cta-fund-stream-busy": "Funding Stream",
-			"modal-title": "Add funds to the Streaming Treasury",
+			"modal-title": "Add funds to the streaming treasury",
 			"modal-title-fund-stream": "Add funds to a Money Stream",
 			"money-stream-to-topup-label": "Money Stream to top up",
 			"search-streams-placeholder": "Search stream by name or address",
@@ -1075,7 +1082,7 @@
 			},
 			"main-cta": "Create streaming treasury",
 			"main-cta-busy": "Creating treasury",
-			"modal-title": "Create Streaming Treasury",
+			"modal-title": "Create streaming treasury",
 			"multisig-selector-label": "Multisig account",
 			"multisig-treasury-created-info": "To complete the treasury setup, the other Multisig signers need to approve it.",
 			"multisig-treasury-created-instructions": "Please ask the other users to sign this treasury creation transaction.",
@@ -1087,9 +1094,9 @@
 			"treasury-token-label": "Token to be streamed",
 			"treasury-type-options": {
 				"treasury-type-locked-description": "With a locked treasury you can create streams that act like a vesting contract for reserved allocations, like the ones needed for investors. They usually have a fixed end date.",
-				"treasury-type-locked-name": "Locked Money Streaming Treasury",
+				"treasury-type-locked-name": "Locked money streaming treasury",
 				"treasury-type-open-description": "With an open treasury, you can create money streams that run indefinitely. When the treasury runs out of money all streams stop, until it gets replenished.",
-				"treasury-type-open-name": "Open Money Streaming Treasury"
+				"treasury-type-open-name": "Open money streaming treasury"
 			}
 		},
 		"lookup-treasury-cta-tooltip": "Lookup a treasury",
@@ -1104,20 +1111,20 @@
 		"refresh-tooltip": "Click to refresh the list of treasuries",
 		"screen-title": "Streaming Treasuries",
 		"treasury-detail": {
-			"associated-token": "Associated Token",
+			"associated-token": "Associated token",
 			"created-on": "Created on",
 			"cta-add-funds": "Add funds",
 			"cta-add-funds-busy": "Adding funds",
 			"cta-close": "Close treasury",
 			"cta-close-busy": "Closing treasury",
 			"cta-withdraw-multisig-treasury": "Withdraw funds",
-			"multisig-tx-headsup": "Transactions Pending Approval or Execution for this Treasury",
+			"multisig-tx-headsup": "Transactions pending approval or execution for this treasury",
 			"no-treasury-loaded": "Create or lookup a treasury to view details",
 			"no-treasury-selected": "Please select or lookup a treasury to view details",
 			"number-of-streams": "Number of streams",
-			"treasury-address-label": "Treasury Address",
+			"treasury-address-label": "Treasury address",
 			"treasury-name-label": "Treasury name",
-			"unallocated-treasury-balance": "Unallocated Streaming Treasury Balance"
+			"unallocated-treasury-balance": "Unallocated balance"
 		},
 		"treasury-detail-heading": "Treasury details",
 		"treasury-list": {
@@ -1163,7 +1170,7 @@
 			"column-rate": "Rate",
 			"create-stream-main-cta": "Create stream",
 			"create-stream-main-cta-busy": "Creating stream",
-			"create-treasury-switch-label": "Do you want to create multiple streams with the same settings?",
+			"create-multi-recipient-checkbox-label": "Do you want to create multiple streams with the same settings?",
 			"fee-payed-by-treasurer": "I want to pay fees for this stream instead of the beneficiary",
 			"loading-streams": "Loading streams",
 			"message-warning": "The list of recipients you submitted included your own wallet address. This is not possible and this address has been removed from the imported list.",
@@ -1246,9 +1253,9 @@
 		"label-input-amount": "Enter amount to withdraw",
 		"label-input-right": "By percentual preset",
 		"modal": {
-			"main-cta": "Withdraw Funds",
+			"main-cta": "Withdraw funds",
 			"selected-treasury-label": "From treasury account",
-			"title": "Withdraw Treasury Funds",
+			"title": "Withdraw treasury funds",
 			"verified-label": "I'm sure the recipient address doesn't belong to an exchange"
 		},
 		"modal-title": "Withdraw funds"

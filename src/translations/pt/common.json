@@ -434,7 +434,7 @@
 			"token-address-placeholder": "Digite o endereço do token"
 		},
 		"multisig-account-detail": {
-			"address": "Safe Deposit Address",
+			"address": "Safe deposit address",
 			"authority": "Autoridade",
 			"copy-id-title": "ID MULTIIG",
 			"created-on": "Criado em",
@@ -508,16 +508,16 @@
 			"column-created-on": "Criado em",
 			"column-current-signatures": "Assine",
 			"column-my-status": "Meu status",
-			"column-operation": "Operação",
-			"column-pending-signatures": "Assinaturas",
+			"column-operation": "Transaction",
+			"column-pending-signatures": "Status",
 			"column-program-id": "Programa",
 			"loading-transactions": "Carregando transações",
 			"modal-title": "Proposal summary",
 			"no-transactions": "This multisig asset has no transactions",
 			"tx-operation-failure": "A operação {{operation}} falhou",
 			"tx-operation-success": "Operação {{operation}} bem-sucedida",
-			"tx-operation-pending-one": "A transaction on this Multisig is now ready for execution. Please tell the person who initiated this transaction to execute it.",
-			"tx-operation-pending-two": "A transaction on this Multisig is ready for",
+			"tx-operation-pending-one": "A transaction on this multisig is now ready for execution. Please tell the person who initiated this transaction to execute it.",
+			"tx-operation-pending-two": "A transaction on this multisig is ready for",
 			"tx-operation-voided": "This pending transaction has been VOIDED due to the Multisig being edited.",
 			"tx-operation-rejected": "This transaction has been rejected.",
 			"tx-operation-executed": "This transaction has already been executed",
@@ -547,7 +547,14 @@
 			"tx-operation-cancel": "Please cancel it below to remove it from the list.",
 			"tx-switch-hide-btn": "Hide cancelled and voided transactions",
 			"your-execution": "your execution",
-			"execution": "execution"
+			"execution": "execution",
+			"tx-pending-approval": "Pending Approval",
+			"tx-pending-execution": "Pending Execution",
+			"tx-completed": "Completed",
+			"tx-voided": "Voided",
+			"tx-rejected": "Rejected",
+			"proposal-ready-to-be-executed": "This proposal has received the required number of signatures and is now ready to be executed.",
+			"proposal-completed": "This proposal has been executed and is now complete."
 		},
 		"multisig-treasuries": {
 			"back-to-treasuries": "Back to Streaming Treasuries"
@@ -802,7 +809,7 @@
 			"label-payment-rate": "Taxa de pagamento",
 			"label-received-from": "Recebido de",
 			"label-receiving-from": "Recebendo de",
-			"label-reserved-allocation": "Alocação Reservada",
+			"label-reserved-allocation": "Alocação reservada",
 			"label-sending-to": "Enviando para",
 			"label-sent-to": "Enviado para",
 			"label-start-date-default": "Data de início",
@@ -841,7 +848,7 @@
 		},
 		"stream-stats-incoming": "Entrada",
 		"stream-stats-outgoing": "Extrovertido",
-		"stream-interval": "net-change"
+		"streaming-balance": "balance"
 	},
 	"swap": {
 		"exchange-warning": "Mean Exchange só está disponível em",
@@ -1047,7 +1054,7 @@
 			"main-cta-busy": "Tesouraria de financiamento",
 			"main-cta-fund-stream": "Fund Money Stream",
 			"main-cta-fund-stream-busy": "Funding Stream",
-			"modal-title": "Add funds to the Streaming Treasury",
+			"modal-title": "Add funds to the streaming treasury",
 			"modal-title-fund-stream": "Add funds to a Money Stream",
 			"money-stream-to-topup-label": "Money Stream to top up",
 			"search-streams-placeholder": "Pesquisar stream por nome ou endereço",
@@ -1070,7 +1077,7 @@
 			},
 			"main-cta": "Create streaming treasury",
 			"main-cta-busy": "Creating treasury",
-			"modal-title": "Create Streaming Treasury",
+			"modal-title": "Create streaming treasury",
 			"multisig-selector-label": "Conta multisig",
 			"multisig-treasury-created-info": "Para concluir a configuração da tesouraria, os outros signatários da Multisig precisam aprová-la.",
 			"multisig-treasury-created-instructions": "Peça aos outros usuários que assinem esta transação de criação de tesouraria.",
@@ -1106,12 +1113,12 @@
 			"cta-close": "Fechar tesouraria",
 			"cta-close-busy": "Tesouraria de fechamento",
 			"cta-withdraw-multisig-treasury": "Retirar fundos",
-			"unallocated-treasury-balance": "Unallocated Streaming Treasury Balance",
-			"multisig-tx-headsup": "Transações Pendentes de Aprovação ou Execução para esta Tesouraria",
+			"unallocated-treasury-balance": "Unallocated balance",
+			"multisig-tx-headsup": "Transações pendentes de aprovação ou execução para esta tesouraria",
 			"no-treasury-loaded": "Crie ou pesquise uma tesouraria para visualizar detalhes",
 			"no-treasury-selected": "Por favor, selecione ou procure uma tesouraria para ver os detalhes",
 			"number-of-streams": "Número de streams",
-			"treasury-address-label": "Treasury Address",
+			"treasury-address-label": "Treasury address",
 			"treasury-name-label": "Nome do Tesouro"
 		},
 		"treasury-detail-heading": "Detalhes do Tesouro",
@@ -1230,10 +1237,17 @@
 		"primary-action": "Selecionar"
 	},
 	"withdraw-funds": {
+		"button-title": "Withdraw funds",
 		"label-available-amount": "Fundos disponíveis para saque agora",
 		"label-input-amount": "Insira o valor para sacar",
 		"label-input-right": "Por percentual predefinido",
-		"modal-title": "Retirar fundos"
+		"modal-title": "Retirar fundos",
+		"modal": {
+			"main-cta": "Withdraw funds",
+			"selected-treasury-label": "From treasury account",
+			"title": "Withdraw treasury funds",
+			"verified-label": "I'm sure the recipient address doesn't belong to an exchange"
+		}
 	},
 	"wrap": {
 		"hint-message": "We recommend having at least 0.05 SOL for any transaction"

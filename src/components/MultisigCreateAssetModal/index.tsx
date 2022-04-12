@@ -33,7 +33,7 @@ export const MultisigCreateAssetModal = (props: {
   const {
     tokenList,
     transactionStatus,
-    
+    setTransactionStatus
   } = useContext(AppStateContext);
 
   const { t } = useTranslation('common');
@@ -115,6 +115,19 @@ export const MultisigCreateAssetModal = (props: {
     props.handleClose();
   }
 
+  const onAfterClose = () => {
+
+    setTimeout(() => {
+      setToken(tokenList[0]);
+
+    }, 50);
+
+    setTransactionStatus({
+        lastOperation: TransactionStatus.Iddle,
+        currentOperation: TransactionStatus.Iddle
+    });
+  }
+
   const refreshPage = () => {
     props.handleClose();
     window.location.reload();
@@ -178,10 +191,12 @@ export const MultisigCreateAssetModal = (props: {
     <Modal
       className="mean-modal simple-modal"
       title={<div className="modal-title">{t('multisig.create-asset.modal-title')}</div>}
+      maskClosable={false}
       footer={null}
       visible={props.isVisible}
       onOk={onAcceptModal}
       onCancel={onCloseModal}
+      afterClose={onAfterClose}
       width={props.isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}>
 
       {/* sdsssd */}
@@ -244,7 +259,7 @@ export const MultisigCreateAssetModal = (props: {
           </>
         ) : (
           <>
-            <div className="transaction-progress">
+            <div className="transaction-progress p-0">
               <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
@@ -267,7 +282,6 @@ export const MultisigCreateAssetModal = (props: {
             </div>
           </>
         )}
-
       </div>
 
       <div className={props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? "panel2 show" : "panel2 hide"}>
@@ -290,9 +304,9 @@ export const MultisigCreateAssetModal = (props: {
        * and auto-close the modal after 1s. If we chose to NOT auto-close the modal
        * Uncommenting the commented lines below will do it!
        */}
-      {transactionStatus.currentOperation !== TransactionStatus.TransactionFinished && (
+      {!(props.isBusy && transactionStatus !== TransactionStatus.Iddle) && (
         <div className="row two-col-ctas mt-3 transaction-progress p-0">
-          <div className="col-6">
+          <div className={!isError(transactionStatus.currentOperation) ? "col-6" : "col-12"}>
             <Button
               block
               type="text"
@@ -308,29 +322,33 @@ export const MultisigCreateAssetModal = (props: {
               }
             </Button>
           </div>
-          <div className="col-6">
-            <Button
-              className={props.isBusy ? 'inactive' : ''}
-              block
-              type="primary"
-              shape="round"
-              size="middle"
-              disabled={!isCreateVaultFormValid()}
-              onClick={() => {
-                if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
-                  onAcceptModal();
-                } else {
-                  refreshPage();
+          {!isError(transactionStatus.currentOperation) && (
+            <div className="col-6">
+              <Button
+                className={props.isBusy ? 'inactive' : ''}
+                block
+                type="primary"
+                shape="round"
+                size="middle"
+                disabled={!isCreateVaultFormValid()}
+                onClick={() => {
+                  if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+                    onAcceptModal();
+                  } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
+                    onCloseModal();
+                  } else {
+                    refreshPage();
+                  }
+                }}>
+                {props.isBusy
+                  ? t('multisig.create-asset.main-cta-busy')
+                  : transactionStatus.currentOperation === TransactionStatus.Iddle
+                  ? getTransactionStartButtonLabel()
+                  : t('general.refresh')
                 }
-              }}>
-              {props.isBusy
-                ? t('multisig.create-asset.main-cta-busy')
-                : transactionStatus.currentOperation === TransactionStatus.Iddle
-                ? getTransactionStartButtonLabel()
-                : t('general.refresh')
-              }
-            </Button>
-          </div>
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </Modal>

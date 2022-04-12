@@ -787,6 +787,7 @@ export const TreasuryAddFundsModal = (props: {
           }
         </div>
       }
+      maskClosable={false}
       footer={null}
       visible={props.isVisible}
       onOk={onAcceptModal}
@@ -991,7 +992,7 @@ export const TreasuryAddFundsModal = (props: {
           </>
         ) : (
           <>
-            <div className="transaction-progress">
+            <div className="transaction-progress p-0">
               <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
@@ -1037,9 +1038,9 @@ export const TreasuryAddFundsModal = (props: {
        * and auto-close the modal after 1s. If we chose to NOT auto-close the modal
        * Uncommenting the commented lines below will do it!
        */}
-      {transactionStatus.currentOperation !== TransactionStatus.TransactionFinished && (
+      {!(props.isBusy && transactionStatus !== TransactionStatus.Iddle) && (
         <div className="row two-col-ctas mt-3 transaction-progress p-0">
-          <div className="col-6">
+          <div className={!isError(transactionStatus.currentOperation) ? "col-6" : "col-12"}>
             <Button
               block
               type="text"
@@ -1055,31 +1056,33 @@ export const TreasuryAddFundsModal = (props: {
               }
             </Button>
           </div>
-          <div className="col-6">
-            <Button
-              className={props.isBusy ? 'inactive' : ''}
-              block
-              type="primary"
-              shape="round"
-              size="middle"
-              disabled={!isTopupFormValid()}
-              onClick={() => {
-                if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
-                  onAcceptModal();
-                } else {
-                  refreshPage();
+          {!isError(transactionStatus.currentOperation) && (
+            <div className="col-6">
+              <Button
+                className={props.isBusy ? 'inactive' : ''}
+                block
+                type="primary"
+                shape="round"
+                size="middle"
+                disabled={!isTopupFormValid()}
+                onClick={() => {
+                  if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+                    onAcceptModal();
+                  } else {
+                    refreshPage();
+                  }
+                }}>
+                {props.isBusy
+                  ? allocationOption === AllocationType.Specific && highLightableStreamId
+                    ? t('treasuries.add-funds.main-cta-fund-stream-busy')
+                    : t('treasuries.add-funds.main-cta-busy')
+                  : transactionStatus.currentOperation === TransactionStatus.Iddle
+                    ? getTransactionStartButtonLabel()
+                    : t('general.refresh')
                 }
-              }}>
-              {props.isBusy
-                ? allocationOption === AllocationType.Specific && highLightableStreamId
-                  ? t('treasuries.add-funds.main-cta-fund-stream-busy')
-                  : t('treasuries.add-funds.main-cta-busy')
-                : transactionStatus.currentOperation === TransactionStatus.Iddle
-                  ? getTransactionStartButtonLabel()
-                  : t('general.refresh')
-              }
-            </Button>
-          </div>
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </Modal>

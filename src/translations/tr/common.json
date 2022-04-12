@@ -435,7 +435,7 @@
 			"token-address-placeholder": "Tokenların adresini girin"
 		},
 		"multisig-account-detail": {
-			"address": "Yetki",
+			"address": "Safe deposit address",
 			"authority": "Yetki",
 			"copy-id-title": "Çoklu-İmza ID",
 			"created-on": "Tarafından oluşturuldu",
@@ -539,8 +539,8 @@
 			"column-created-on": "da oluşturuldu",
 			"column-current-signatures": "İmza",
 			"column-my-status": "Durumum",
-			"column-operation": "İşlem",
-			"column-pending-signatures": "İmzalar",
+			"column-operation": "Transaction",
+			"column-pending-signatures": "Status",
 			"column-program-id": "Program",
 			"explain-failure": "Eğer belirliyse hata nedenlerini belirtin",
 			"initiator-transaction": "Bu işlem tarafından gönderildi",
@@ -567,8 +567,8 @@
 			"treasury-closed-warning": "Hazine kapatıldığında kalan tüm varlıklar kurucunun hesabına gider. Lütfen onaylamadan önce bunu kabul ettiğnizin farkında olun.",
 			"tx-operation-executed": "This transaction has already been executed",
 			"tx-operation-failure": "{{operation}} işlemi başarısız oldu",
-			"tx-operation-pending-one": "Bu Çoklu-İmza'da gerçekleştirilmeye hazır bir işlem mevcut. Lütfen bu işlemi başlatana, haber verin.",
-			"tx-operation-pending-two": "Bu Çoklu-İmza'da bir işlem hazır şunun için",
+			"tx-operation-pending-one": "Bu çoklu-İmza'da gerçekleştirilmeye hazır bir işlem mevcut. Lütfen bu işlemi başlatana, haber verin.",
+			"tx-operation-pending-two": "Bu çoklu-İmza'da bir işlem hazır şunun için",
 			"tx-operation-rejected": "This transaction has been rejected.",
 			"tx-operation-success": "{{operation}} işlemi başarılı oldu",
 			"tx-operation-voided": "This pending transaction has been VOIDED due to the Multisig being edited.",
@@ -576,7 +576,14 @@
 			"tx-operation-cancel": "Please cancel it below to remove it from the list.",
 			"tx-switch-hide-btn": "Hide cancelled and voided transactions",
 			"your-execution": "your execution",
-			"execution": "execution"
+			"execution": "execution",
+			"tx-pending-approval": "Pending Approval",
+			"tx-pending-execution": "Pending Execution",
+			"tx-completed": "Completed",
+			"tx-voided": "Voided",
+			"tx-rejected": "Rejected",
+			"proposal-ready-to-be-executed": "This proposal has received the required number of signatures and is now ready to be executed.",
+			"proposal-completed": "This proposal has been executed and is now complete."
 		},
 		"multisig-treasuries": {
 			"back-to-treasuries": "Hazinelere geri dön"
@@ -800,10 +807,10 @@
 			"label-funds-runout": "tarafından tükenecek",
 			"label-funds-runout-today": "bugün tükenecek",
 			"label-funds-sent": "Alıcıya gönderilen fonlar",
-			"label-payment-rate": "Ödeme Oranı",
+			"label-payment-rate": "Ödeme oranı",
 			"label-received-from": "....'dan Alınan",
 			"label-receiving-from": "....'dan Alınıyor",
-			"label-reserved-allocation": "Ayrılmış Tahsis",
+			"label-reserved-allocation": "Ayrılmış tahsis",
 			"label-sending-to": "....'ya Gönderiliyor",
 			"label-sent-to": "....'ya gönderildi",
 			"label-start-date-default": "Başlangıç tarihi",
@@ -819,7 +826,7 @@
 			"transfer-money-stream-menu-item": "Sahipliği aktar",
 			"withdraw-funds-cta": "Para çekme"
 		},
-		"stream-interval": "net-değişim",
+		"streaming-balance": "balance",
 		"stream-list": {
 			"no-streams": "Kullanılabilir aktarım yok",
 			"not-connected": "Para aktarımlarınızı görmek için lütfen cüzdanınızı bağlayın",
@@ -1088,9 +1095,9 @@
 			"treasury-token-label": "Token to be streamed",
 			"treasury-type-options": {
 				"treasury-type-locked-description": "Kilitli bir hazine ile, yatırımcılar için gerekli olanlar gibi, ayrılmış tahsisler için hakediş sözleşmesi gibi davranan aktarımları oluşturabilirsiniz. Genellikle sabit bir bitiş tarihleri â€‹â€‹vardır.",
-				"treasury-type-locked-name": "Kilitli Para Aktarımı Hazinesi",
+				"treasury-type-locked-name": "Kilitli para aktarımı hazinesi",
 				"treasury-type-open-description": "Açık bir hazine ile süresiz olarak çalışan para aktarımları oluşturabilirsiniz. Hazinenin parası bittiğinde, yenilenene kadar tüm aktarımlar durur.",
-				"treasury-type-open-name": "Para Aktarım Hazinesi Aç"
+				"treasury-type-open-name": "Para aktarım hazinesi aç"
 			}
 		},
 		"lookup-treasury-cta-tooltip": "Hazine ara",
@@ -1105,7 +1112,7 @@
 		"refresh-tooltip": "Hazine listesini yenilemek için tıklayın",
 		"screen-title": "Hazineler",
 		"treasury-detail": {
-			"associated-token": "İlişkili Token",
+			"associated-token": "İlişkili token",
 			"created-on": "... 'da oluşturuldu",
 			"cta-add-funds": "Fon ekle",
 			"cta-add-funds-busy": "Fon ekleme",
@@ -1118,7 +1125,7 @@
 			"number-of-streams": "Aktarım sayısı",
 			"treasury-address-label": "Adres",
 			"treasury-name-label": "Hazine adı",
-			"unallocated-treasury-balance": "Tahsis edilmemiş hazine bakiyesi"
+			"unallocated-treasury-balance": "Unallocated balance"
 		},
 		"treasury-detail-heading": "Hazine ayrıntıları",
 		"treasury-list": {
@@ -1164,7 +1171,7 @@
 			"column-rate": "Oran",
 			"create-stream-main-cta": "Akım oluştur",
 			"create-stream-main-cta-busy": "Aktarım oluşturuluyor",
-			"create-treasury-switch-label": "Aynı ayarlarla başka aktarımlar mı olurşturmak istiyorsunuz?",
+			"create-multi-recipient-checkbox-label": "Aynı ayarlarla başka aktarımlar mı olurşturmak istiyorsunuz?",
 			"fee-payed-by-treasurer": "Bu aktarım için yararlanıcı yerine ücretleri ben ödemek istiyorum",
 			"loading-streams": "Aktarımlar yükleniyor",
 			"message-warning": "Alıcıların adresini gönderdiğiniz liste sizin kendi adresinizide içeriyor bu mümkün olmadığından listeden kaldırıldı.",

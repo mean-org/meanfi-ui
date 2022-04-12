@@ -54,7 +54,6 @@ import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
-import { notify } from '../../utils/notifications';
 import { IconBank, IconClock, IconShieldOutline, IconTrash } from '../../Icons';
 import { TreasuryOpenModal } from '../../components/TreasuryOpenModal';
 import { MSP_ACTIONS, StreamInfo, STREAM_STATE, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
@@ -94,7 +93,7 @@ import BN from 'bn.js';
 import { InfoIcon } from '../../components/InfoIcon';
 import { useLocation, useNavigate } from 'react-router-dom';
 import MultisigIdl from "../../models/mean-multisig-idl";
-import { MEAN_MULTISIG_OPS, MultisigParticipant, MultisigV2 } from '../../models/multisig';
+import { getFees, MEAN_MULTISIG_OPS, MultisigParticipant, MultisigTransactionFees, MultisigV2, MULTISIG_ACTIONS, ZERO_FEES } from '../../models/multisig';
 import { Program, Provider } from '@project-serum/anchor';
 import { TreasuryCreateOptions } from '../../models/treasuries';
 import { customLogger } from '../..';
@@ -114,9 +113,7 @@ export const TreasuriesView = () => {
     treasuryOption,
     detailsPanelOpen,
     transactionStatus,
-    lockPeriodFrequency,
     streamProgramAddress,
-    highLightableStreamId,
     streamV2ProgramAddress,
     previousWalletConnectState,
     isWhitelisted,
@@ -174,9 +171,13 @@ export const TreasuriesView = () => {
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
   const [transactionFees, setTransactionFees] = useState<TransactionFees>(NO_FEES);
+  const [multisigTxFees, setMultisigTxFees] = useState<MultisigTransactionFees>(ZERO_FEES);
   const [withdrawTransactionFees, setWithdrawTransactionFees] = useState<TransactionFees>({
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
   });
+  const [minRequiredBalance, setMinRequiredBalance] = useState(0);
+
+  const [needReloadMultisig, setNeedReloadMultisig] = useState(true);
 
   // Enable deep-linking - Parse and save query params as needed
   useEffect(() => {
@@ -390,7 +391,7 @@ export const TreasuriesView = () => {
           if (dock) {
             setTreasuryList([details]);
             setCustomStreamDocked(true);
-            notify({
+            openNotification({
               description: t('notifications.success-loading-treasury-message', {treasuryId: shortenAddress(treasuryId, 10)}),
               type: "success"
             });
@@ -399,8 +400,8 @@ export const TreasuriesView = () => {
           setTreasuryDetails(undefined);
           setTreasuryDetails(undefined);
           if (dock) {
-            notify({
-              message: t('notifications.error-title'),
+            openNotification({
+              title: t('notifications.error-title'),
               description: t('notifications.error-loading-treasuryid-message', {treasuryId: shortenAddress(treasuryId as string, 10)}),
               type: "error"
             });
@@ -410,8 +411,8 @@ export const TreasuriesView = () => {
       .catch((error: any) => {
         console.error(error);
         setTreasuryDetails(undefined);
-        notify({
-          message: t('notifications.error-title'),
+        openNotification({
+          title: t('notifications.error-title'),
           description: t('notifications.error-loading-treasuryid-message', {treasuryId: shortenAddress(treasuryId as string, 10)}),
           type: "error"
         });
@@ -778,6 +779,22 @@ export const TreasuriesView = () => {
 
   useEffect(() => {
 
+    if (!multisigClient || !multisigAddress) { return; }
+
+    getFees(multisigClient, MULTISIG_ACTIONS.createTransaction)
+    .then(value => {
+      setMultisigTxFees(value);
+      consoleOut('Multisig transaction fees:', value, 'orange');
+      if (multisigAddress) {
+        const minRequired = value.networkFee + value.multisigFee + value.rentExempt;  // Multisig proposal fees
+        setMinRequiredBalance(minRequired);
+        consoleOut('Min balance required:', minRequired, 'blue');
+      }
+    });
+  }, [multisigAddress, multisigClient]);
+
+  useEffect(() => {
+
     if (!isMultisigTreasury() || !treasuryDetails || !connected || !publicKey || !multisigAccounts) {
       setTreasuryPendingTxs(0);
       return;
@@ -827,11 +844,13 @@ export const TreasuriesView = () => {
   // Get the user multisig accounts' list
   useEffect(() => {
 
-    if (!connection || !publicKey || !multisigClient) {
+    if (!connection || !publicKey || !multisigClient || !needReloadMultisig) {
       return;
     }
 
     const timeout = setTimeout(() => {
+
+      setNeedReloadMultisig(false);
 
       readAllMultisigV2Accounts(publicKey)
         .then((allInfo: any) => {
@@ -867,10 +886,11 @@ export const TreasuriesView = () => {
     }
 
   }, [
+    publicKey,
     connection,
     multisigClient,
-    publicKey,
-    readAllMultisigV2Accounts,
+    needReloadMultisig,
+    readAllMultisigV2Accounts
   ]);
 
   // Set selectedMultisig based on the passed-in multisigAddress in query params
@@ -1555,12 +1575,12 @@ export const TreasuriesView = () => {
   const copyAddressToClipboard = useCallback((address: any) => {
 
     if (copyText(address.toString())) {
-      notify({
+      openNotification({
         description: t('notifications.account-address-copied-message'),
         type: "info"
       });
     } else {
-      notify({
+      openNotification({
         description: t('notifications.account-address-not-copied-message'),
         type: "error"
       });
@@ -1632,6 +1652,7 @@ export const TreasuriesView = () => {
     getTransactionFeesV2,
     resetTransactionStatus
   ]);
+
   const closeCreateTreasuryModal = useCallback(() => {
     setIsCreateTreasuryModalVisibility(false);
     resetTransactionStatus();
@@ -1651,12 +1672,12 @@ export const TreasuriesView = () => {
     consoleOut('retryOperationPayload:', retryOperationPayload, 'blue');
 
     if (createOptions && createOptions.multisigId) {
-      notify({
+      openNotification({
         description: t('treasuries.create-treasury.create-multisig-treasury-success'),
         type: "success"
       });
     } else {
-      notify({
+      openNotification({
         description: t('treasuries.create-treasury.success-message'),
         type: "success"
       });
@@ -1844,10 +1865,18 @@ export const TreasuriesView = () => {
 
       // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
       // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-      consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
+
+      const bf = transactionFees.blockchainFee;       // Blockchain fee
+      const ff = transactionFees.mspFlatFee;          // Flat fee (protocol)
+      const mp = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt;  // Multisig proposal
+      const minRequired = isMultisigTreasury() ? mp : bf + ff;
+
+      setMinRequiredBalance(minRequired);
+
+      consoleOut('Min balance required:', minRequired, 'blue');
       consoleOut('nativeBalance:', nativeBalance, 'blue');
 
-      if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
+      if (nativeBalance < minRequired) {
         setTransactionStatus({
           lastOperation: transactionStatus.currentOperation,
           currentOperation: TransactionStatus.TransactionStartFailure
@@ -1857,7 +1886,7 @@ export const TreasuriesView = () => {
           result: `Not enough balance (${
             getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
           }) to pay for network fees (${
-            getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+            getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
           })`
         });
         customLogger.logWarning('Refresh Treasury data transaction failed', { transcript: transactionLog });
@@ -2025,25 +2054,26 @@ export const TreasuriesView = () => {
     }
 
   },[
-    resetTransactionStatus, 
-    clearTransactionStatusContext, 
-    wallet, 
-    connection, 
-    connected, 
-    publicKey, 
-    msp, 
-    treasuryDetails, 
-    isMultisigTreasury, 
-    multisigClient, 
-    multisigAccounts, 
-    setTransactionStatus, 
-    transactionFees.blockchainFee, 
-    transactionFees.mspFlatFee, 
-    nativeBalance, 
-    transactionStatus.currentOperation, 
-    transactionCancelled, 
-    startFetchTxSignatureInfo, 
-    onRefreshTreasuryBalanceTransactionFinished
+    msp,
+    wallet,
+    connected,
+    publicKey,
+    connection,
+    nativeBalance,
+    multisigTxFees,
+    multisigClient,
+    treasuryDetails,
+    multisigAccounts,
+    transactionCancelled,
+    transactionFees.mspFlatFee,
+    transactionFees.blockchainFee,
+    transactionStatus.currentOperation,
+    onRefreshTreasuryBalanceTransactionFinished,
+    clearTransactionStatusContext,
+    startFetchTxSignatureInfo,
+    resetTransactionStatus,
+    setTransactionStatus,
+    isMultisigTreasury,
   ]);
 
   const onExecuteCreateTreasuryTx = async (createOptions: TreasuryCreateOptions) => {
@@ -2054,6 +2084,7 @@ export const TreasuriesView = () => {
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
+    resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.TreasuryCreate);
     setRetryOperationPayload(createOptions);
@@ -2153,11 +2184,11 @@ export const TreasuriesView = () => {
       const payload = {
         treasurer: publicKey.toBase58(),                                                                  // treasurer
         label: createOptions.treasuryName,                                                                // label
-        type: createOptions.treasuryType === TreasuryType.Open         // type
+        type: createOptions.treasuryType === TreasuryType.Open                                            // type
           ? 'Open'
           : 'Lock',
-        multisig: createOptions.multisigId,
-        associatedTokenAddress: selectedToken.address                                                                // multisig
+        multisig: createOptions.multisigId,                                                               // multisig
+        associatedTokenAddress: selectedToken.address
       };
 
       consoleOut('payload:', payload);
@@ -2174,10 +2205,18 @@ export const TreasuriesView = () => {
 
       // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
       // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-      consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
+
+      const bf = transactionFees.blockchainFee;       // Blockchain fee
+      const ff = transactionFees.mspFlatFee;          // Flat fee (protocol)
+      const mp = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt;  // Multisig proposal
+      const minRequired = createOptions.multisigId ? mp : bf + ff;
+
+      setMinRequiredBalance(minRequired);
+
+      consoleOut('Min balance required:', minRequired, 'blue');
       consoleOut('nativeBalance:', nativeBalance, 'blue');
 
-      if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
+      if (nativeBalance < minRequired) {
         setTransactionStatus({
           lastOperation: transactionStatus.currentOperation,
           currentOperation: TransactionStatus.TransactionStartFailure
@@ -2187,7 +2226,7 @@ export const TreasuriesView = () => {
           result: `Not enough balance (${
             getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
           }) to pay for network fees (${
-            getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+            getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
           })`
         });
         customLogger.logWarning('Create Treasury transaction failed', { transcript: transactionLog });
@@ -2353,6 +2392,7 @@ export const TreasuriesView = () => {
               currentOperation: TransactionStatus.TransactionFinished
             });
             onTreasuryCreated(createOptions);
+            setNeedReloadMultisig(true);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -2406,7 +2446,7 @@ export const TreasuriesView = () => {
       lastOperation: TransactionStatus.Iddle,
       currentOperation: TransactionStatus.Iddle
     });
-    notify({
+    openNotification({
       description: t('treasuries.add-funds.success-message'),
       type: "success"
     });
@@ -2425,6 +2465,7 @@ export const TreasuriesView = () => {
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
+    resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.TreasuryAddFunds);
     setRetryOperationPayload(params);
@@ -2470,9 +2511,18 @@ export const TreasuriesView = () => {
 
         // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
+
+        const bf = transactionFees.blockchainFee;       // Blockchain fee
+        const ff = transactionFees.mspFlatFee;          // Flat fee (protocol)
+        const mp = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt;  // Multisig proposal
+        const minRequired = isMultisigTreasury() ? mp : bf + ff;
+
+        setMinRequiredBalance(minRequired);
+
+        consoleOut('Min balance required:', minRequired, 'blue');
         consoleOut('nativeBalance:', nativeBalance, 'blue');
-        if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
+  
+        if (nativeBalance < minRequired) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
@@ -2482,10 +2532,10 @@ export const TreasuriesView = () => {
             result: `Not enough balance (${
               getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+              getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logWarning('Treasury Add funds transaction failed', { transcript: transactionLog });
+            customLogger.logWarning('Treasury Add funds transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -2659,9 +2709,18 @@ export const TreasuriesView = () => {
 
       // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
       // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-      consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
+
+      const bf = transactionFees.blockchainFee;       // Blockchain fee
+      const ff = transactionFees.mspFlatFee;          // Flat fee (protocol)
+      const mp = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt;  // Multisig proposal
+      const minRequired = isMultisigTreasury() ? mp : bf + ff;
+
+      setMinRequiredBalance(minRequired);
+
+      consoleOut('Min balance required:', minRequired, 'blue');
       consoleOut('nativeBalance:', nativeBalance, 'blue');
-      if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
+
+      if (nativeBalance < minRequired) {
         setTransactionStatus({
           lastOperation: transactionStatus.currentOperation,
           currentOperation: TransactionStatus.TransactionStartFailure
@@ -2671,7 +2730,7 @@ export const TreasuriesView = () => {
           result: `Not enough balance (${
             getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
           }) to pay for network fees (${
-            getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+            getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
           })`
         });
         customLogger.logWarning('Treasury Add funds transaction failed', { transcript: transactionLog });
@@ -2842,6 +2901,7 @@ export const TreasuriesView = () => {
               currentOperation: TransactionStatus.TransactionFinished
             });
             onAddFundsTransactionFinished();
+            setNeedReloadMultisig(true);
             setOngoingOperation(undefined);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
@@ -2904,6 +2964,7 @@ export const TreasuriesView = () => {
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
+    resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.TreasuryClose);
     setIsBusy(true);
@@ -2935,9 +2996,18 @@ export const TreasuriesView = () => {
 
         // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
+
+        const bf = transactionFees.blockchainFee;       // Blockchain fee
+        const ff = transactionFees.mspFlatFee;          // Flat fee (protocol)
+        const mp = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt;  // Multisig proposal
+        const minRequired = isMultisigTreasury() ? mp : bf + ff;
+
+        setMinRequiredBalance(minRequired);
+
+        consoleOut('Min balance required:', minRequired, 'blue');
         consoleOut('nativeBalance:', nativeBalance, 'blue');
-        if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
+  
+        if (nativeBalance < minRequired) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
@@ -2947,10 +3017,10 @@ export const TreasuriesView = () => {
             result: `Not enough balance (${
               getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+              getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logWarning('Close Treasury transaction failed', { transcript: transactionLog });
+            customLogger.logWarning('Close Treasury transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -3095,9 +3165,18 @@ export const TreasuriesView = () => {
 
       // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
       // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-      consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
+
+      const bf = transactionFees.blockchainFee;       // Blockchain fee
+      const ff = transactionFees.mspFlatFee;          // Flat fee (protocol)
+      const mp = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt;  // Multisig proposal
+      const minRequired = isMultisigTreasury() ? mp : bf + ff;
+
+      setMinRequiredBalance(minRequired);
+
+      consoleOut('Min balance required:', minRequired, 'blue');
       consoleOut('nativeBalance:', nativeBalance, 'blue');
-      if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
+
+      if (nativeBalance < minRequired) {
         setTransactionStatus({
           lastOperation: transactionStatus.currentOperation,
           currentOperation: TransactionStatus.TransactionStartFailure
@@ -3107,7 +3186,7 @@ export const TreasuriesView = () => {
           result: `Not enough balance (${
             getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
           }) to pay for network fees (${
-            getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+            getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
           })`
         });
         customLogger.logWarning('Close Treasury transaction failed', { transcript: transactionLog });
@@ -3274,6 +3353,7 @@ export const TreasuriesView = () => {
             startFetchTxSignatureInfo(signature, "confirmed", OperationType.TreasuryClose);
             setIsBusy(false);
             onCloseTreasuryTransactionFinished();
+            setNeedReloadMultisig(true);
             setOngoingOperation(undefined);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
@@ -3375,9 +3455,18 @@ export const TreasuriesView = () => {
 
         // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
+
+        const bf = transactionFees.blockchainFee;       // Blockchain fee
+        const ff = transactionFees.mspFlatFee;          // Flat fee (protocol)
+        const mp = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt;  // Multisig proposal
+        const minRequired = isMultisigTreasury() ? mp : bf + ff;
+
+        setMinRequiredBalance(minRequired);
+
+        consoleOut('Min balance required:', minRequired, 'blue');
         consoleOut('nativeBalance:', nativeBalance, 'blue');
-        if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
+  
+        if (nativeBalance < minRequired) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
@@ -3387,10 +3476,10 @@ export const TreasuriesView = () => {
             result: `Not enough balance (${
               getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+              getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
+            customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -3539,10 +3628,18 @@ export const TreasuriesView = () => {
 
       // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
       // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-      consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
+
+      const bf = transactionFees.blockchainFee;       // Blockchain fee
+      const ff = transactionFees.mspFlatFee;          // Flat fee (protocol)
+      const mp = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt;  // Multisig proposal
+      const minRequired = isMultisigTreasury() ? mp : bf + ff;
+
+      setMinRequiredBalance(minRequired);
+
+      consoleOut('Min balance required:', minRequired, 'blue');
       consoleOut('nativeBalance:', nativeBalance, 'blue');
 
-      if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
+      if (nativeBalance < minRequired) {
         setTransactionStatus({
           lastOperation: transactionStatus.currentOperation,
           currentOperation: TransactionStatus.TransactionStartFailure
@@ -3552,7 +3649,7 @@ export const TreasuriesView = () => {
           result: `Not enough balance (${
             getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
           }) to pay for network fees (${
-            getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+            getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
           })`
         });
         customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
@@ -3774,6 +3871,7 @@ export const TreasuriesView = () => {
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
+    resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.StreamPause);
     setIsBusy(true);
@@ -3805,9 +3903,18 @@ export const TreasuriesView = () => {
 
         // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
+
+        const bf = transactionFees.blockchainFee;       // Blockchain fee
+        const ff = transactionFees.mspFlatFee;          // Flat fee (protocol)
+        const mp = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt;  // Multisig proposal
+        const minRequired = isMultisigTreasury() ? mp : bf + ff;
+
+        setMinRequiredBalance(minRequired);
+
+        consoleOut('Min balance required:', minRequired, 'blue');
         consoleOut('nativeBalance:', nativeBalance, 'blue');
-        if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
+  
+        if (nativeBalance < minRequired) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
@@ -3817,10 +3924,10 @@ export const TreasuriesView = () => {
             result: `Not enough balance (${
               getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+              getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logWarning('Pause stream transaction failed', { transcript: transactionLog });
+            customLogger.logWarning('Pause stream transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -3965,9 +4072,18 @@ export const TreasuriesView = () => {
 
       // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
       // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-      consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
+
+      const bf = transactionFees.blockchainFee;       // Blockchain fee
+      const ff = transactionFees.mspFlatFee;          // Flat fee (protocol)
+      const mp = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt;  // Multisig proposal
+      const minRequired = isMultisigTreasury() ? mp : bf + ff;
+
+      setMinRequiredBalance(minRequired);
+
+      consoleOut('Min balance required:', minRequired, 'blue');
       consoleOut('nativeBalance:', nativeBalance, 'blue');
-      if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
+
+      if (nativeBalance < minRequired) {
         setTransactionStatus({
           lastOperation: transactionStatus.currentOperation,
           currentOperation: TransactionStatus.TransactionStartFailure
@@ -3977,7 +4093,7 @@ export const TreasuriesView = () => {
           result: `Not enough balance (${
             getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
           }) to pay for network fees (${
-            getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+            getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
           })`
         });
         customLogger.logWarning('Pause stream transaction failed', { transcript: transactionLog });
@@ -4147,6 +4263,7 @@ export const TreasuriesView = () => {
             startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamPause);
             setIsBusy(false);
             onCloseStreamTransactionFinished();
+            setNeedReloadMultisig(true);
             setOngoingOperation(undefined);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
@@ -4201,6 +4318,7 @@ export const TreasuriesView = () => {
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
+    resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.StreamResume);
     setIsBusy(true);
@@ -4232,9 +4350,18 @@ export const TreasuriesView = () => {
 
         // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
+
+        const bf = transactionFees.blockchainFee;       // Blockchain fee
+        const ff = transactionFees.mspFlatFee;          // Flat fee (protocol)
+        const mp = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt;  // Multisig proposal
+        const minRequired = isMultisigTreasury() ? mp : bf + ff;
+
+        setMinRequiredBalance(minRequired);
+
+        consoleOut('Min balance required:', minRequired, 'blue');
         consoleOut('nativeBalance:', nativeBalance, 'blue');
-        if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
+  
+        if (nativeBalance < minRequired) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
@@ -4244,10 +4371,10 @@ export const TreasuriesView = () => {
             result: `Not enough balance (${
               getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+              getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logWarning('Resume stream transaction failed', { transcript: transactionLog });
+            customLogger.logWarning('Resume stream transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -4392,9 +4519,18 @@ export const TreasuriesView = () => {
 
       // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
       // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-      consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
+
+      const bf = transactionFees.blockchainFee;       // Blockchain fee
+      const ff = transactionFees.mspFlatFee;          // Flat fee (protocol)
+      const mp = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt;  // Multisig proposal
+      const minRequired = isMultisigTreasury() ? mp : bf + ff;
+
+      setMinRequiredBalance(minRequired);
+
+      consoleOut('Min balance required:', minRequired, 'blue');
       consoleOut('nativeBalance:', nativeBalance, 'blue');
-      if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
+
+      if (nativeBalance < minRequired) {
         setTransactionStatus({
           lastOperation: transactionStatus.currentOperation,
           currentOperation: TransactionStatus.TransactionStartFailure
@@ -4404,7 +4540,7 @@ export const TreasuriesView = () => {
           result: `Not enough balance (${
             getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
           }) to pay for network fees (${
-            getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+            getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
           })`
         });
         customLogger.logWarning('Resume stream transaction failed', { transcript: transactionLog });
@@ -4572,6 +4708,7 @@ export const TreasuriesView = () => {
             startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamResume);
             setIsBusy(false);
             onResumeStreamTransactionFinished();
+            setNeedReloadMultisig(true);
             setOngoingOperation(undefined);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
@@ -4587,7 +4724,7 @@ export const TreasuriesView = () => {
     refreshUserBalances();
     refreshTokenBalance();
     setIsCreateStreamModalVisibility(true);
-    getTransactionFeesV2(MSP_ACTIONS_V2.createStream).then(value => {
+    getTransactionFeesV2(MSP_ACTIONS_V2.createStreamWithFunds).then(value => {
       setTransactionFees(value);
       consoleOut('transactionFees:', value, 'orange');
     });
@@ -4604,21 +4741,10 @@ export const TreasuriesView = () => {
 
   const closeCreateStreamModal = useCallback(() => {
     setIsCreateStreamModalVisibility(false);
-    setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle
-    });
-  }, [setTransactionStatus]);
-
-  const onAcceptCreateStream = () => {
-    closeCreateStreamModal();
     resetContractValues();
     refreshTokenBalance();
-    setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle
-    });
-  };
+    resetTransactionStatus();
+  }, [refreshTokenBalance, resetContractValues, resetTransactionStatus]);
 
   // Transfer funds modal
   const [isTransferFundsModalVisible, setIsTransferFundsModalVisible] = useState(false);
@@ -4628,7 +4754,8 @@ export const TreasuriesView = () => {
       setTransactionFees(value);
       consoleOut('transactionFees:', value, 'orange');
     });
-  }, [getTransactionFeesV2]);
+    resetTransactionStatus();
+  }, [getTransactionFeesV2, resetTransactionStatus]);
 
   const onAcceptTreasuryTransferFunds = (params: any) => {
     consoleOut('params', params, 'blue');
@@ -4648,6 +4775,7 @@ export const TreasuriesView = () => {
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
+    resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.TreasuryCreate);
     setRetryOperationPayload(data);
@@ -4771,10 +4899,18 @@ export const TreasuriesView = () => {
 
       // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
       // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-      consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
+
+      const bf = transactionFees.blockchainFee;       // Blockchain fee
+      const ff = transactionFees.mspFlatFee;          // Flat fee (protocol)
+      const mp = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt;  // Multisig proposal
+      const minRequired = isMultisigTreasury() ? mp : bf + ff;
+
+      setMinRequiredBalance(minRequired);
+
+      consoleOut('Min balance required:', minRequired, 'blue');
       consoleOut('nativeBalance:', nativeBalance, 'blue');
 
-      if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
+      if (nativeBalance < minRequired) {
         setTransactionStatus({
           lastOperation: transactionStatus.currentOperation,
           currentOperation: TransactionStatus.TransactionStartFailure
@@ -4784,7 +4920,7 @@ export const TreasuriesView = () => {
           result: `Not enough balance (${
             getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
           }) to pay for network fees (${
-            getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+            getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
           })`
         });
         customLogger.logWarning('Treasury withdraw transaction failed', { transcript: transactionLog });
@@ -4950,6 +5086,7 @@ export const TreasuriesView = () => {
               currentOperation: TransactionStatus.TransactionFinished
             });
             onTreasuryFundsTransferred();
+            setNeedReloadMultisig(true);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -5659,7 +5796,7 @@ export const TreasuriesView = () => {
                       <Spin spinning={loadingTreasuries || loadingTreasuryDetails}>
                         {treasuryDetails && (
                           <>
-                            {(isMultisigTreasury() && (selectedMultisig && selectedMultisig.pendingTxsAmount > 0)) && (
+                            {(isMultisigTreasury() && (treasuryPendingTxs > 0)) && (
                               renderMultisigTxReminder()
                             )}
                             {renderTreasuryMeta()}
@@ -5816,7 +5953,7 @@ export const TreasuriesView = () => {
           }
           connection={connection}
           handleClose={closeCreateStreamModal}
-          handleOk={onAcceptCreateStream}
+          handleOk={closeCreateStreamModal}
           isVisible={isCreateStreamModalVisible}
           nativeBalance={nativeBalance}
           transactionFees={transactionFees}
@@ -5883,7 +6020,7 @@ export const TreasuriesView = () => {
                       NATIVE_SOL_MINT.toBase58()
                     ),
                     feeAmount: getTokenAmountAndSymbolByTokenAddress(
-                      transactionFees.blockchainFee + transactionFees.mspFlatFee,
+                      minRequiredBalance,
                       NATIVE_SOL_MINT.toBase58()
                     )})
                   }
@@ -5949,6 +6086,7 @@ export const TreasuriesView = () => {
           transactionFees={transactionFees}
           treasuryDetails={treasuryDetails}
           multisigAccounts={multisigAccounts}
+          minRequiredBalance={minRequiredBalance}
           handleOk={onAcceptTreasuryTransferFunds}
           handleClose={() => {
             onAfterEveryModalClose();

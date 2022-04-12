@@ -31,7 +31,7 @@ import {
   shortenAddress
 } from '../../utils/utils';
 import { Button, Empty, Result, Space, Spin, Switch, Tooltip } from 'antd';
-import { consoleOut, copyText, isValidAddress } from '../../utils/ui';
+import { consoleOut, copyText, friendlyDisplayDecimalPlaces, isValidAddress } from '../../utils/ui';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import {
   SOLANA_WALLET_GUIDE,
@@ -338,7 +338,7 @@ export const AccountsView = () => {
 
   const refreshStreamSummary = useCallback(async () => {
 
-    if (!msp || !publicKey || (!streamListv1 && !streamListv2) || loadingStreamsSummary) { return; }
+    if (!ms || !msp || !publicKey || (!streamListv1 && !streamListv2) || loadingStreamsSummary) { return; }
 
     setLoadingStreamsSummary(true);
 
@@ -371,20 +371,17 @@ export const AccountsView = () => {
       if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
 
       const asset = getTokenByMintAddress(freshStream.associatedToken as string);
-      const pricePerToken = getPricePerToken(asset as UserTokenAccount);
-      const rate = asset ? (pricePerToken ? pricePerToken : 1) : 1;
-      const decimals = asset ? asset.decimals : 9;
-      const amount = isIncoming ? freshStream.escrowVestedAmount : freshStream.escrowUnvestedAmount;
-      const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * rate;
-
+      const rate = asset ? getPricePerToken(asset as UserTokenAccount) : 0;
       if (isIncoming) {
-        resume['totalNet'] += amountChange;
+        resume['totalNet'] = resume['totalNet'] + ((freshStream.escrowVestedAmount || 0) * rate);
       } else {
-        resume['totalNet'] -= amountChange;
+        resume['totalNet'] = resume['totalNet'] + ((freshStream.escrowUnvestedAmount || 0) * rate);
       }
     }
 
     resume['totalAmount'] = updatedStreamsv1.length;
+
+    // consoleOut('totalNet v1:', resume['totalNet'], 'blue');
 
     for (let stream of updatedStreamsv2) {
 
@@ -406,7 +403,8 @@ export const AccountsView = () => {
       const pricePerToken = getPricePerToken(asset as UserTokenAccount);
       const rate = asset ? (pricePerToken ? pricePerToken : 1) : 1;
       const decimals = asset ? asset.decimals : 9;
-      const amount = isIncoming ? freshStream.fundsSentToBeneficiary : freshStream.fundsLeftInStream;
+      // const amount = isIncoming ? freshStream.fundsSentToBeneficiary : freshStream.fundsLeftInStream;
+      const amount = freshStream.withdrawableAmount;
       const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * rate;
 
       if (isIncoming) {
@@ -417,6 +415,8 @@ export const AccountsView = () => {
     }
 
     resume['totalAmount'] += updatedStreamsv2.length;
+
+    // consoleOut('totalNet:', resume['totalNet'], 'blue');
     // consoleOut('=========== Block ends ===========', '', 'orange');
 
     // Update state
@@ -426,16 +426,16 @@ export const AccountsView = () => {
 
   }, [
     ms, 
-    msp,
+    msp, 
     publicKey, 
     streamListv1, 
     streamListv2, 
-    streamsSummary, 
-    loadingStreamsSummary, 
-    getPricePerToken, 
-    setStreamsSummary, 
+    streamsSummary,
+    loadingStreamsSummary,
     setLastStreamsSummary, 
-    setLoadingStreamsSummary
+    setLoadingStreamsSummary, 
+    setStreamsSummary,
+    getPricePerToken
   ]);
 
   // Filter only useful Txs for the SOL account and return count
@@ -870,10 +870,10 @@ export const AccountsView = () => {
   // Live data calculation
   useEffect(() => {
 
+    if (!ms || !msp || !publicKey || !streamList || (!streamListv1 && !streamListv2)) { return; }
+
     const timeout = setTimeout(() => {
-      if (publicKey && streamList) {
-        refreshStreamSummary();
-      }
+      refreshStreamSummary();
     }, 1000);
 
     return () => {
@@ -881,8 +881,18 @@ export const AccountsView = () => {
     }
 
   }, [
-    publicKey,
-    streamList,
+    ms, 
+    msp, 
+    publicKey, 
+    streamList, 
+    streamListv1, 
+    streamListv2, 
+    streamsSummary, 
+    loadingStreamsSummary, 
+    setLoadingStreamsSummary, 
+    setLastStreamsSummary, 
+    setStreamsSummary, 
+    getPricePerToken, 
     refreshStreamSummary
   ]);
 
@@ -932,8 +942,16 @@ export const AccountsView = () => {
                 <span className="rate-amount">--</span>
               ) : (
                 <>
-                  <div className="rate-amount">${formatThousands(Math.abs(streamsSummary.totalNet), 5)}</div>
-                  <div className="interval">{t('streams.stream-interval')}</div>
+                  <div className="rate-amount">$
+                    {
+                      formatThousands(
+                        Math.abs(streamsSummary.totalNet),
+                        friendlyDisplayDecimalPlaces(streamsSummary.totalNet),
+                        friendlyDisplayDecimalPlaces(streamsSummary.totalNet)
+                      )
+                    }
+                  </div>
+                  <div className="interval">{t('streams.streaming-balance')}</div>
                 </>
               )}
             </div>

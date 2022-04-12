@@ -1,6 +1,6 @@
 {
   "name": "meanfi-ui",
-  "version": "0.13.2",
+  "version": "1.13.3",
   "private": true,
   "scripts": {
     "clean": "rm -rf build/*",
@@ -136,7 +136,7 @@
     "react-git-info": "^2.0.1",
     "react-scripts": "4.0.3",
     "ts-loader": "^9.2.6",
-    "typescript": "~4.5.2"
+    "typescript": "4.5.2"
   },
   "resolutions": {
     "@saberhq/stableswap-sdk": "1.9.0",
