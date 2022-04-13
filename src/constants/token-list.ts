@@ -16,7 +16,7 @@ export const CUSTOM_USDC = {
     },
 }
 
-export const PINNED_TOKENS = ['USDC', 'ETH', 'BTC', 'USDT', 'wSOL', 'MEAN'];
+export const PINNED_TOKENS = ['USDC', 'ETH', 'BTC', 'USDT', 'wSOL', 'SLND', 'MEAN'];
 export const COMMON_EXCHANGE_TOKENS = ['USDC', 'USDT', 'MEAN', 'wSOL'];
 
 export const MEAN_TOKEN_LIST: TokenInfo[] = [
@@ -233,6 +233,314 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
             coingeckoId: 'solana',
         },
     },
+    // Solend
+    {
+        chainId: 101,
+        address: 'SLNDpmoWTVADgEdndyvWzroNL7zSi1dF9PC3xHGtPwp',
+        symbol: 'SLND',
+        name: 'Solend',
+        decimals: 6,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/SLNDpmoWTVADgEdndyvWzroNL7zSi1dF9PC3xHGtPwp/logo.png',
+        tags: [
+            'solend',
+            'lending',
+        ],
+        extensions: {
+            coingeckoId: 'solend',
+            serumV3Usdc: 'F9y9NM83kBMzBmMvNT18mkcFuNAPhNRhx7pnz9EDWwfv',
+            twitter: 'https://twitter.com/solendprotocol',
+            website: 'https://solend.fi',
+        },
+    },
+    {
+        chainId: 101,
+        address: 'D3Cu5urZJhkKyNZQQq2ne6xSfzbXLU4RrywVErMA2vf8',
+        symbol: 'cSLND',
+        name: 'Solend SLND',
+        decimals: 6,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/D3Cu5urZJhkKyNZQQq2ne6xSfzbXLU4RrywVErMA2vf8/logo.png',
+        tags: [
+            'solend',
+            'lending',
+            'collateral-tokens',
+        ],
+        extensions: {
+            website: 'https://solend.fi',
+        },
+    },
+    {
+        chainId: 101,
+        address: '5h6ssFpeDeRbzsEHDbTQNH7nVGgsKrZydxdSTnLm6QdV',
+        symbol: 'cSOL',
+        name: 'Solend SOL',
+        decimals: 9,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/5h6ssFpeDeRbzsEHDbTQNH7nVGgsKrZydxdSTnLm6QdV/logo.png',
+        tags: [
+            'solend',
+            'lending',
+            'collateral-tokens',
+        ],
+        extensions: {
+            website: 'https://solend.fi',
+        },
+    },
+    {
+        chainId: 101,
+        address: '993dVFL2uXWYeoXuEBFXR4BijeXdTv4s6BzsCjJZuwqk',
+        symbol: 'cUSDC',
+        name: 'Solend USDC',
+        decimals: 6,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/993dVFL2uXWYeoXuEBFXR4BijeXdTv4s6BzsCjJZuwqk/logo.png',
+        tags: [
+            'solend',
+            'lending',
+            'collateral-tokens',
+        ],
+        extensions: {
+            website: 'https://solend.fi',
+        },
+    },
+    {
+        chainId: 101,
+        address: 'CPDiKagfozERtJ33p7HHhEfJERjvfk1VAjMXAFLrvrKP',
+        symbol: 'cETH',
+        name: 'Solend ETH',
+        decimals: 6,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/CPDiKagfozERtJ33p7HHhEfJERjvfk1VAjMXAFLrvrKP/logo.png',
+        tags: [
+            'solend',
+            'lending',
+            'collateral-tokens',
+        ],
+        extensions: {
+            website: 'https://solend.fi',
+        },
+    },
+    {
+        chainId: 101,
+        address: 'AppJPZka33cu4DyUenFe9Dc1ZmZ3oQju6mBn9k37bNAa',
+        symbol: 'csoETH',
+        name: 'Solend soETH',
+        decimals: 6,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/AppJPZka33cu4DyUenFe9Dc1ZmZ3oQju6mBn9k37bNAa/logo.png',
+        tags: [
+            'solend',
+            'lending',
+            'collateral-tokens',
+        ],
+        extensions: {
+            website: 'https://solend.fi',
+        },
+    },
+    {
+        chainId: 101,
+        address: 'Gqu3TFmJXfnfSX84kqbZ5u9JjSBVoesaHjfTsaPjRSnZ',
+        symbol: 'cBTC',
+        name: 'Solend BTC',
+        decimals: 6,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/Gqu3TFmJXfnfSX84kqbZ5u9JjSBVoesaHjfTsaPjRSnZ/logo.png',
+        tags: [
+            'solend',
+            'lending',
+            'collateral-tokens',
+        ],
+        extensions: {
+            website: 'https://solend.fi',
+        },
+    },
+    {
+        chainId: 101,
+        address: '4CxGuD2NMr6zM8f18gr6kRhgd748pnmkAhkY1YJtkup1',
+        symbol: 'cSRM',
+        name: 'Solend SRM',
+        decimals: 6,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4CxGuD2NMr6zM8f18gr6kRhgd748pnmkAhkY1YJtkup1/logo.png',
+        tags: [
+            'solend',
+            'lending',
+            'collateral-tokens',
+        ],
+        extensions: {
+            website: 'https://solend.fi',
+        },
+    },
+    {
+        chainId: 101,
+        address: 'BTsbZDV7aCMRJ3VNy9ygV4Q2UeEo9GpR8D6VvmMZzNr8',
+        symbol: 'cUSDT',
+        name: 'Solend USDT',
+        decimals: 6,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/BTsbZDV7aCMRJ3VNy9ygV4Q2UeEo9GpR8D6VvmMZzNr8/logo.png',
+        tags: [
+            'solend',
+            'lending',
+            'collateral-tokens',
+        ],
+        extensions: {
+            website: 'https://solend.fi',
+        },
+    },
+    {
+        chainId: 101,
+        address: '8bDyV3N7ctLKoaSVqUoEwUzw6msS2F65yyNPgAVUisKm',
+        symbol: 'cFTT',
+        name: 'Solend FTT',
+        decimals: 6,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/8bDyV3N7ctLKoaSVqUoEwUzw6msS2F65yyNPgAVUisKm/logo.png',
+        tags: [
+            'solend',
+            'lending',
+            'collateral-tokens',
+        ],
+        extensions: {
+            website: 'https://solend.fi',
+        },
+    },
+    {
+        chainId: 101,
+        address: '2d95ZC8L5XP6xCnaKx8D5U5eX6rKbboBBAwuBLxaFmmJ',
+        symbol: 'cRAY',
+        name: 'Solend RAY',
+        decimals: 6,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/2d95ZC8L5XP6xCnaKx8D5U5eX6rKbboBBAwuBLxaFmmJ/logo.png',
+        tags: [
+            'solend',
+            'lending',
+            'collateral-tokens',
+        ],
+        extensions: {
+            website: 'https://solend.fi',
+        },
+    },
+    {
+        chainId: 101,
+        address: 'Bpm2aBL57uqVhgxutfRVrbtnjDpZLV8PZrRrytV1LgeT',
+        symbol: 'cSBR',
+        name: 'Solend SBR',
+        decimals: 6,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/Bpm2aBL57uqVhgxutfRVrbtnjDpZLV8PZrRrytV1LgeT/logo.png',
+        tags: [
+            'solend',
+            'lending',
+            'collateral-tokens',
+        ],
+        extensions: {
+            website: 'https://solend.fi',
+        },
+    },
+    {
+        chainId: 101,
+        address: 'BsWLxf6hRJnyytKR52kKBiz7qU7BB3SH77mrBxNnYU1G',
+        symbol: 'cMER',
+        name: 'Solend MER',
+        decimals: 6,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/BsWLxf6hRJnyytKR52kKBiz7qU7BB3SH77mrBxNnYU1G/logo.png',
+        tags: [
+            'solend',
+            'lending',
+            'collateral-tokens',
+        ],
+        extensions: {
+            website: 'https://solend.fi',
+        },
+    },
+    {
+        chainId: 101,
+        address: '6XrbsKScacEwpEW5DVNko9t5vW3cim9wktAeT9mmiYHS',
+        symbol: 'cUSDT-USDC',
+        name: 'Solend USDT-USDC',
+        decimals: 6,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/6XrbsKScacEwpEW5DVNko9t5vW3cim9wktAeT9mmiYHS/logo.png',
+        tags: [
+            'solend',
+            'lending',
+            'collateral-tokens',
+        ],
+        extensions: {
+            website: 'https://solend.fi',
+        },
+    },
+    {
+        chainId: 101,
+        address: '4icXEpFVMrcqob6fnd3jZ6KjKrc6cqre6do1f8kKAC1u',
+        symbol: 'cmSOL-SOL',
+        name: 'Solend mSOL-SOL',
+        decimals: 9,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4icXEpFVMrcqob6fnd3jZ6KjKrc6cqre6do1f8kKAC1u/logo.png',
+        tags: [
+            'solend',
+            'lending',
+            'collateral-tokens',
+        ],
+        extensions: {
+            website: 'https://solend.fi',
+        },
+    },
+    {
+        chainId: 101,
+        address: 'QQ6WK86aUCBvNPkGeYBKikk15sUg6aMUEi5PTL6eB4i',
+        symbol: 'cstSOL',
+        name: 'Solend stSOL',
+        decimals: 9,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/QQ6WK86aUCBvNPkGeYBKikk15sUg6aMUEi5PTL6eB4i/logo.png',
+        tags: [
+            'solend',
+            'lending',
+            'collateral-tokens',
+        ],
+        extensions: {
+            website: 'https://solend.fi',
+        },
+    },
+    {
+        chainId: 101,
+        address: 'AFq1sSdevxfqWGcmcz7XpPbfjHevcJY7baZf9RkyrzoR',
+        symbol: 'cscnSOL',
+        name: 'Solend scnSOL',
+        decimals: 9,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/AFq1sSdevxfqWGcmcz7XpPbfjHevcJY7baZf9RkyrzoR/logo.png',
+        tags: [
+            'solend',
+            'lending',
+            'collateral-tokens',
+        ],
+        extensions: {
+            website: 'https://solend.fi',
+        },
+    },
+    {
+        chainId: 101,
+        address: '3JFC4cB56Er45nWVe29Bhnn5GnwQzSmHVf6eUq9ac91h',
+        symbol: 'cmSOL',
+        name: 'Solend mSOL',
+        decimals: 9,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/3JFC4cB56Er45nWVe29Bhnn5GnwQzSmHVf6eUq9ac91h/logo.png',
+        tags: [
+            'solend',
+            'lending',
+            'collateral-tokens',
+        ],
+        extensions: {
+            website: 'https://solend.fi',
+        },
+    },
+    {
+        chainId: 101,
+        address: 'E9LAZYxBVhJr9Cdfi9Tn4GSiJHDWSZDsew5tfgJja6Cu',
+        symbol: 'cORCA',
+        name: 'Solend ORCA',
+        decimals: 6,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/E9LAZYxBVhJr9Cdfi9Tn4GSiJHDWSZDsew5tfgJja6Cu/logo.png',
+        tags: [
+            'solend',
+            'lending',
+            'collateral-tokens',
+        ],
+        extensions: {
+            website: 'https://solend.fi',
+        },
+    },
+    //////////
     {
         chainId: 101,
         address: "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
@@ -290,7 +598,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/SLRSSpSLUTP7okbCUBYStWCo1vUgyt775faPqz8HUMr/logo.png",
         tags: [],
         extensions: {
-          coingeckoId: "solrise-finance"
+            coingeckoId: "solrise-finance"
         }
     },
     {
@@ -338,7 +646,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/PoRTjZMPXb9T7dyU7tpLEZRQj7e6ssfAE62j2oQuc6y/PORT.png",
         tags: [],
         extensions: {
-          serumV3Usdc: "8x8jf7ikJwgP9UthadtiGFgfFuyyyYPHL3obJAuxFWko"
+            serumV3Usdc: "8x8jf7ikJwgP9UthadtiGFgfFuyyyYPHL3obJAuxFWko"
         }
     },
     {
@@ -348,7 +656,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         name: "Solanium",
         decimals: 6,
         logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/xxxxa1sKNGwFtw2kFn8XauW9xq8hBZ5kVtcSesTT9fW/logo.png",
-        extensions: { }
+        extensions: {}
     },
     {
         chainId: 101,
