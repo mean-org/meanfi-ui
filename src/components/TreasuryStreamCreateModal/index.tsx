@@ -1590,7 +1590,7 @@ export const TreasuryStreamCreateModal = (props: {
                             value={moment(
                               paymentStartDate,
                               DATEPICKER_FORMAT
-                            )}
+                            ) as any}
                             format={DATEPICKER_FORMAT}
                           />
                         }
@@ -1920,7 +1920,7 @@ export const TreasuryStreamCreateModal = (props: {
                             value={moment(
                               paymentStartDate,
                               DATEPICKER_FORMAT
-                            )}
+                            ) as any}
                             format={DATEPICKER_FORMAT}
                           />
                         }
