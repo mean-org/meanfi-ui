@@ -52,7 +52,7 @@ import {
 } from '../../constants';
 import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
-import { OperationType, TransactionStatus } from '../../models/enums';
+import { OperationType, PaymentRateType, TransactionStatus } from '../../models/enums';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { IconBank, IconClock, IconShieldOutline, IconTrash } from '../../Icons';
 import { TreasuryOpenModal } from '../../components/TreasuryOpenModal';
@@ -113,6 +113,7 @@ export const TreasuriesView = () => {
     treasuryOption,
     detailsPanelOpen,
     transactionStatus,
+    paymentRateFrequency,
     streamProgramAddress,
     streamV2ProgramAddress,
     previousWalletConnectState,
@@ -5638,10 +5639,7 @@ export const TreasuriesView = () => {
     <>
       {/* {isLocal() && (
         <div className="debug-bar">
-          <span className="ml-1">loadingTreasuries:</span><span className="ml-1 font-bold fg-dark-active">{loadingTreasuries ? 'true' : 'false'}</span>
-          <span className="ml-1">isBusy:</span><span className="ml-1 font-bold fg-dark-active">{isBusy ? 'true' : 'false'}</span>
-          <span className="ml-1">highLightableStreamId:</span><span className="ml-1 font-bold fg-dark-active">{highLightableStreamId || '-'}</span>
-          <span className="ml-1">lockPeriodFrequency:</span><span className="ml-1 font-bold fg-dark-active">{PaymentRateType[lockPeriodFrequency]}</span>
+          <span className="ml-1">paymentRateFrequency:</span><span className="ml-1 font-bold fg-dark-active">{PaymentRateType[paymentRateFrequency]}</span>
         </div>
       )} */}
 
