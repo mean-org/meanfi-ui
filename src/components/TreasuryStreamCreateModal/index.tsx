@@ -833,6 +833,10 @@ export const TreasuryStreamCreateModal = (props: {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cliffRelease, lockPeriodAmount]);
 
+  ////////////////////////
+  // Transaction start  //
+  ////////////////////////
+
   const onTransactionStart = async () => {
 
     let transactions: Transaction[] = [];
@@ -1011,11 +1015,20 @@ export const TreasuryStreamCreateModal = (props: {
       startUtc.setSeconds(now.getSeconds());
       startUtc.setMilliseconds(now.getMilliseconds());
 
+      const isLockedTreasury = treasuryOption && treasuryOption.type === TreasuryType.Lock
+        ? true
+        : false;
+
       consoleOut('fromParsedDate.toString()', startUtc.toString(), 'crimson');
       consoleOut('fromParsedDate.toLocaleString()', startUtc.toLocaleString(), 'crimson');
       consoleOut('fromParsedDate.toISOString()', startUtc.toISOString(), 'crimson');
       consoleOut('fromParsedDate.toUTCString()', startUtc.toUTCString(), 'crimson');
-      consoleOut('paymentRateFrequency', lockPeriodFrequency, 'crimson');
+
+      if (isLockedTreasury) {
+        consoleOut('paymentRateFrequency', lockPeriodFrequency, 'crimson');
+      } else {
+        consoleOut('paymentRateFrequency', paymentRateFrequency, 'crimson');
+      }
 
       // Create a transaction
       const data = {
@@ -1026,7 +1039,9 @@ export const TreasuryStreamCreateModal = (props: {
         associatedToken: associatedToken.toBase58(),                                // associatedToken
         allocationAssigned: amount,                                                 // allocationAssigned
         rateAmount: rateAmount,                                                     // rateAmount
-        rateIntervalInSeconds: getRateIntervalInSeconds(lockPeriodFrequency),       // rateIntervalInSeconds
+        rateIntervalInSeconds: isLockedTreasury
+          ? getRateIntervalInSeconds(lockPeriodFrequency)                           // rateIntervalInSeconds
+          : getRateIntervalInSeconds(paymentRateFrequency),
         startUtc: startUtc,                                                         // startUtc
         cliffVestAmount: cliffAmount,                                               // cliffVestAmount
         cliffVestPercent: 0,                                                        // cliffVestPercent
