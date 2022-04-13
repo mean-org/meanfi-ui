@@ -311,7 +311,7 @@ export const Streams = () => {
         symbol: shortenAddress(address),
       };
       setSelectedToken(unkToken);
-      consoleOut("stream token:", unkToken, 'blue');
+      consoleOut("stream custom token:", unkToken, 'blue');
       setEffectiveRate(0);
     } else {
       openNotification({

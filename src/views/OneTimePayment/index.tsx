@@ -1126,7 +1126,7 @@ export const OneTimePayment = () => {
                   value={moment(
                     paymentStartDate,
                     DATEPICKER_FORMAT
-                  )}
+                  ) as any}
                   format={DATEPICKER_FORMAT}
                 />
               </div>

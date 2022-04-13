@@ -209,8 +209,10 @@ export function isValidNumber(str: string): boolean {
   return INPUT_AMOUNT_PATTERN.test(str);
 }
 
-export const getTokenByMintAddress = (address: string): TokenInfo | undefined => {
-  const tokenFromTokenList = MEAN_TOKEN_LIST.find(t => t.address === address);
+export const getTokenByMintAddress = (address: string, tokenList?: TokenInfo[]): TokenInfo | undefined => {
+  const tokenFromTokenList = tokenList
+    ? tokenList.find(t => t.address === address)
+    : MEAN_TOKEN_LIST.find(t => t.address === address);
   if (tokenFromTokenList) {
     return tokenFromTokenList;
   }

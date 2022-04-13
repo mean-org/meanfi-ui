@@ -1,6 +1,6 @@
 {
   "name": "meanfi-ui",
-  "version": "1.13.3",
+  "version": "1.13.4",
   "private": true,
   "scripts": {
     "clean": "rm -rf build/*",
@@ -68,7 +68,7 @@
     "@transak/transak-sdk": "^1.0",
     "@walletconnect/client": "^2.0.0-beta.17",
     "@walletconnect/qrcode-modal": "^2.0.0-alpha.20",
-    "antd": "^4.18",
+    "antd": "4.19.5",
     "bignumber.js": "^9.0",
     "bn.js": "^5.2.0",
     "borsh": "^0.7",
@@ -112,7 +112,7 @@
     "@types/ledgerhq__hw-transport": "^4.21",
     "@types/ledgerhq__hw-transport-webusb": "^4.70.1",
     "@types/mz": "^2.7.4",
-    "@types/node": "17.0.12",
+    "@types/node": "16.0.0",
     "@types/react": "^17.0",
     "@types/react-dom": "^17.0",
     "@types/react-helmet": "^6.1.4",
@@ -141,6 +141,7 @@
   "resolutions": {
     "@saberhq/stableswap-sdk": "1.9.0",
     "@saberhq/token-utils": "1.9.0",
-    "@solana/web3.js": "1.31.0"
+    "@solana/web3.js": "1.31.0",
+    "@types/react": "17.0.30"
   }
 }
