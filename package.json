@@ -84,7 +84,7 @@
     "i18next-browser-languagedetector": "^6.1",
     "jazzicon": "^1.5",
     "loggly-jslogger": "2.2.4",
-    "moment": "2.29.1",
+    "moment": "2.29.2",
     "moment-timezone": "0.5.34",
     "mz": "2.7.0",
     "qrcode.react": "1.0.1",
