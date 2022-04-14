@@ -924,6 +924,7 @@
 		},
 		"status": {
 			"cta-view-stream": "스트림 보기",
+			"cta-start-transfer-busy": "Creating transfer",
 			"ddca-add-funds": "펀딩 금고",
 			"ddca-add-funds-success": "자금이 성공적으로 추가되었습니다.",
 			"ddca-create-tx": "예약된 반복 교환 만들기",
@@ -1004,7 +1005,7 @@
 			"cannot-use-own-account-as-treasury": "귀하의 계정을 트레저리 ID로 사용할 수 없습니다.",
 			"exchange-unavailable": "교환 불가",
 			"insufficient-amount-needed": "교환하려면 최소 {{amount}} {{symbol}} 필요",
-			"insufficient-balance-needed": "최소 {{balance}} SOL 필요",
+			"insufficient-balance-needed": "Need at least {{balance}} SOL in your wallet",
 			"invalid-account": "Cannot use a Multisig address as a destination account",
 			"invalid-amount": "잘못된 금액",
 			"invalid-exchange": "토큰 선택",

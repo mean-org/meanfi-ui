@@ -921,6 +921,7 @@
 		},
 		"status": {
 			"cta-view-stream": "Aktarımı Görüntüle",
+			"cta-start-transfer-busy": "Creating transfer",
 			"ddca-add-funds": "...ile fon kasası",
 			"ddca-add-funds-success": "Fonlar başarıyla eklendi",
 			"ddca-create-tx": "Planlanmış yinelenen alım-satım oluşturun",
@@ -1001,7 +1002,7 @@
 			"cannot-use-own-account-as-treasury": "Hesabınızı hazine kimliği olarak kullanamazsınız",
 			"exchange-unavailable": "Alım-Satım mevcut değil",
 			"insufficient-amount-needed": "Değiştirmek için en az {{amount}} {{symbol}} gerekir",
-			"insufficient-balance-needed": "En az {{balance}} SOL gerekiyor",
+			"insufficient-balance-needed": "Need at least {{balance}} SOL in your wallet",
 			"invalid-account": "Hedef hesap olarak bir Çoklu-İmza adresi kullanılamaz",
 			"invalid-amount": "Geçersiz miktar",
 			"invalid-exchange": "Token seçin",

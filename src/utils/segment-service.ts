@@ -61,6 +61,7 @@ export enum StatsTriggertEvent {
 
 export interface SegmentStreamOTPTransferData {
     asset: string;
+    assetPrice: number;
     amount: number;
     beneficiary: string;
     startUtc: string;
@@ -68,6 +69,7 @@ export interface SegmentStreamOTPTransferData {
 
 export interface SegmentStreamRPTransferData {
     asset: string;
+    assetPrice: number;
     allocation: number;
     beneficiary: string;
     rateAmount: number;
@@ -76,45 +78,40 @@ export interface SegmentStreamRPTransferData {
     startUtc: string;
 }
 
-/**
- * When fee could potentially apply, lets include these three values even if fee is 0
- * inputAmount: 1.000000
- * feeAmount: 0.009825
- * sentAmount: 0.990175
- */
-
 export interface SegmentStreamWithdrawData {
     asset: string;
+    assetPrice: number;
     stream: string;
     beneficiary: string;
-    amount: number;
     inputAmount: number;
     feeAmount: number;
     sentAmount: number;
 }
 
-export interface SegmentStreamTransferOwnershipData {
-    stream: string;
-    beneficiary: string;
-    newBeneficiary: string;
-}
-
 export interface SegmentStreamAddFundsData {
+    asset: string;
+    assetPrice: number;
     contributor: string;
     treasury: string;
     stream: string;
-    contributorMint: string;
     amount: number;
 }
 
 export interface SegmentStreamCloseData {
     asset: string;
+    assetPrice: number;
     stream: string;
     initializer: string;
     closeTreasury: boolean;
     vestedReturns: number;
     unvestedReturns: number;
     feeAmount: number;
+}
+
+export interface SegmentStreamTransferOwnershipData {
+    stream: string;
+    beneficiary: string;
+    newBeneficiary: string;
 }
 
 export class SegmentAnalyticsService {
