@@ -1000,7 +1000,7 @@
 			"cannot-use-own-account-as-treasury": "نمی توان از حساب خود به عنوان treasury id استفاده کرد",
 			"exchange-unavailable": "مبادله در دسترس نیست",
 			"insufficient-amount-needed": "برای مبادله حداقل به {{amount}} {{symbol}} نیاز دارید",
-			"insufficient-balance-needed": "حداقل به {{balance}} SOL نیاز دارید",
+			"insufficient-balance-needed": "Need at least {{balance}} SOL in your wallet",
 			"invalid-account": "نمی توان از آدرس Multisig به عنوان حساب مقصد استفاده کرد",
 			"invalid-amount": "مقدار نامعتبر",
 			"invalid-exchange": "توکن را انتخاب کنید",

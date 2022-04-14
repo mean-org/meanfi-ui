@@ -1004,7 +1004,7 @@
 			"cannot-use-own-account-as-treasury": "Tài khoản ví của bạn không phải là treasury id",
 			"exchange-unavailable": "Giao dịch không khả dụng",
 			"insufficient-amount-needed": "Cần ít nhất {{amount}} {{symbol}} để giao dịch",
-			"insufficient-balance-needed": "Cần ít nhất {{balance}} SOL",
+			"insufficient-balance-needed": "Need at least {{balance}} SOL in your wallet",
 			"invalid-account": "Cannot use a Multisig address as a destination account",
 			"invalid-amount": "Số lượng không hợp lệ",
 			"invalid-exchange": "Chọn token",

@@ -6,6 +6,7 @@ import { AppStateContext } from '../../contexts/appstate';
 import {
   cutNumber,
   formatAmount,
+  formatThousands,
   getAmountWithSymbol,
   getTokenAmountAndSymbolByTokenAddress,
   isValidNumber,
@@ -365,7 +366,7 @@ export const TreasuryStreamCreateModal = (props: {
       : !isVerifiedRecipient
       ? t('transactions.validation.verified-recipient-unchecked')
       : props.nativeBalance < getMinBalanceRequired()
-        ? t('transactions.validation.insufficient-balance-needed', { balance: getMinBalanceRequired() })
+        ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getMinBalanceRequired(), 5) })
         : t('transactions.validation.valid-approve');
   };
 
@@ -394,7 +395,9 @@ export const TreasuryStreamCreateModal = (props: {
       ? getPaymentSettingsButtonLabel()
       : !isVerifiedRecipient
       ? t('transactions.validation.verified-recipient-unchecked')
-      : t('transactions.validation.valid-approve');
+      : props.nativeBalance < getMinBalanceRequired()
+        ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getMinBalanceRequired(), 5) })
+        : t('transactions.validation.valid-approve');
   };
 
   const getPaymentSettingsButtonLabel = (): string => {
@@ -2174,7 +2177,8 @@ export const TreasuryStreamCreateModal = (props: {
             (parseFloat(cliffRelease) > makeDecimal(unallocatedBalance, selectedToken.decimals)) ||
             !arePaymentSettingsValid() ||
             !areSendAmountSettingsValid() ||
-            !isVerifiedRecipient
+            !isVerifiedRecipient ||
+            props.nativeBalance < getMinBalanceRequired()
           }>
           {getTransactionStartButtonLabelInLocked()}
         </Button>

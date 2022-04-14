@@ -1001,7 +1001,7 @@
 			"cannot-use-own-account-as-treasury": "Cannot use your account as treasury id",
 			"exchange-unavailable": "Exchange unavailable",
 			"insufficient-amount-needed": "Need at least {{amount}} {{symbol}} to exchange",
-			"insufficient-balance-needed": "Need at least {{balance}} SOL",
+			"insufficient-balance-needed": "Need at least {{balance}} SOL in your wallet",
 			"invalid-account": "Cannot use a Multisig address as a destination account",
 			"invalid-amount": "Invalid amount",
 			"invalid-exchange": "Select token",

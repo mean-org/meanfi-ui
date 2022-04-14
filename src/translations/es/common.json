@@ -1010,7 +1010,7 @@
 			"cannot-use-own-account-as-treasury": "No puede usar su cuenta como identificación de tesorería",
 			"exchange-unavailable": "Exchange unavailable",
 			"insufficient-amount-needed": "Necesita al menos {{amount}} {{symbol}} para intercambiar",
-			"insufficient-balance-needed": "Necesita al menos {{balance}} SOL",
+			"insufficient-balance-needed": "Need at least {{balance}} SOL in your wallet",
 			"invalid-amount": "Monto no válido",
 			"invalid-exchange": "Seleccione un token",
 			"invalid-solana-address": "Invalid solana address",

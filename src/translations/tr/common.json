@@ -1002,7 +1002,7 @@
 			"cannot-use-own-account-as-treasury": "Hesabınızı hazine kimliği olarak kullanamazsınız",
 			"exchange-unavailable": "Alım-Satım mevcut değil",
 			"insufficient-amount-needed": "Değiştirmek için en az {{amount}} {{symbol}} gerekir",
-			"insufficient-balance-needed": "En az {{balance}} SOL gerekiyor",
+			"insufficient-balance-needed": "Need at least {{balance}} SOL in your wallet",
 			"invalid-account": "Hedef hesap olarak bir Çoklu-İmza adresi kullanılamaz",
 			"invalid-amount": "Geçersiz miktar",
 			"invalid-exchange": "Token seçin",

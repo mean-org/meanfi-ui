@@ -3,7 +3,7 @@ import { SwapSettings } from "../../components/SwapSettings";
 import { ExchangeInput } from "../../components/ExchangeInput";
 import { TextInput } from "../../components/TextInput";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { formatAmount, isValidNumber } from "../../utils/utils";
+import { formatAmount, formatThousands, isValidNumber } from "../../utils/utils";
 import { Identicon } from "../../components/Identicon";
 import { InfoCircleOutlined, WarningFilled } from "@ant-design/icons";
 import { consoleOut, getTxPercentFeeAmount } from "../../utils/ui";
@@ -961,7 +961,7 @@ export const RecurringExchange = (props: {
           needed = parseFloat(needed.toFixed(9));
         }
 
-        label = t('transactions.validation.insufficient-balance-needed', { balance: needed.toString() });
+        label = t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(needed, 5) });
 
       } else if (fromSwapAmount === 0) {
         label = t('transactions.validation.no-amount');

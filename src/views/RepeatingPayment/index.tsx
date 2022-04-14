@@ -9,6 +9,7 @@ import { useConnection, useConnectionConfig } from "../../contexts/connection";
 import { IconCaretDown, IconEdit } from "../../Icons";
 import {
   formatAmount,
+  formatThousands,
   getAmountWithSymbol,
   getTokenAmountAndSymbolByTokenAddress,
   getTxIxResume,
@@ -587,7 +588,7 @@ export const RepeatingPayment = () => {
       : !isVerifiedRecipient
       ? t('transactions.validation.verified-recipient-unchecked')
       : nativeBalance < getFeeAmount()
-      ? t('transactions.validation.insufficient-balance-needed', { balance: getFeeAmount() })
+      ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getFeeAmount(), 5) })
       : t('transactions.validation.valid-approve');
   }
 
