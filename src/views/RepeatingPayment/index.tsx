@@ -246,7 +246,7 @@ export const RepeatingPayment = () => {
   const onTxConfirmed = useCallback((item: TransactionStatusInfo) => {
     consoleOut("onTxConfirmed event executed:", item, 'crimson');
     // If we have the item, record success and remove it from the list
-    if (item) {
+    if (item && item.operationType === OperationType.Transfer) {
       recordTxConfirmation(item.signature, true);
       handleGoToStreamsClick();
     }

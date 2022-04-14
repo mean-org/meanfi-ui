@@ -857,6 +857,7 @@ export const OneTimePayment = () => {
     isWhitelisted,
     nativeBalance,
     selectedToken,
+    effectiveRate,
     fromCoinAmount,
     paymentStartDate,
     recipientAddress,
