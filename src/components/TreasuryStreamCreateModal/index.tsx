@@ -1,14 +1,13 @@
 import React, { useCallback, useEffect } from 'react';
 import "./style.less";
 import { useContext, useState } from 'react';
-import { Modal, Button, Select, Dropdown, Menu, DatePicker, Checkbox, Divider, Radio, Tooltip, Row, Col } from 'antd';
+import { Modal, Button, Select, Dropdown, Menu, DatePicker, Checkbox, Divider, Tooltip, Row, Col } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
 import {
   cutNumber,
   formatAmount,
   getAmountWithSymbol,
   getTokenAmountAndSymbolByTokenAddress,
-  getTxIxResume,
   isValidNumber,
   makeDecimal,
   makeInteger,
@@ -28,7 +27,6 @@ import {
   isToday,
   isValidAddress,
   PaymentRateTypeOption,
-  LockPeriodTypeOption,
 } from '../../utils/ui';
 import { getTokenByMintAddress, NATIVE_SOL } from '../../utils/tokens';
 import { LoadingOutlined } from '@ant-design/icons';
@@ -65,6 +63,7 @@ export const TreasuryStreamCreateModal = (props: {
   withdrawTransactionFees: TransactionFees;
   treasuryDetails: Treasury | TreasuryInfo | undefined;
   isMultisigTreasury: boolean;
+  minRequiredBalance: number;
   multisigClient: Program<Idl>;
   multisigAddress: PublicKey;
   userBalances: any;
@@ -365,7 +364,9 @@ export const TreasuryStreamCreateModal = (props: {
       ? getPaymentSettingsButtonLabel()
       : !isVerifiedRecipient
       ? t('transactions.validation.verified-recipient-unchecked')
-      : t('transactions.validation.valid-approve');
+      : props.nativeBalance < getMinBalanceRequired()
+        ? t('transactions.validation.insufficient-balance-needed', { balance: getMinBalanceRequired() })
+        : t('transactions.validation.valid-approve');
   };
 
   const getTransactionStartButtonLabelInLocked = (): string => {
@@ -743,6 +744,16 @@ export const TreasuryStreamCreateModal = (props: {
     reader.readAsText(e.target.files[0]);
   }
 
+  const getMinBalanceRequired = useCallback(() => {
+    if (!props.transactionFees) { return 0; }
+
+    const bf = props.transactionFees.blockchainFee;       // Blockchain fee
+    const ff = props.transactionFees.mspFlatFee;          // Flat fee (protocol)
+    const minRequired = props.isMultisigTreasury ? props.minRequiredBalance : bf + ff;
+    return minRequired;
+
+  }, [props.isMultisigTreasury, props.minRequiredBalance, props.transactionFees]);
+
   useEffect(() => {
     if (!csvFile) { return; }
 
@@ -1078,10 +1089,12 @@ export const TreasuryStreamCreateModal = (props: {
 
       // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
       // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-      consoleOut('blockchainFee:', props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee, 'blue');
+
+      const minRequired = getMinBalanceRequired();
+      consoleOut('Min balance required:', minRequired, 'blue');
       consoleOut('nativeBalance:', props.nativeBalance, 'blue');
 
-      if (props.nativeBalance < props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee) {
+      if (props.nativeBalance < minRequired) {
         setTransactionStatus({
           lastOperation: transactionStatus.currentOperation,
           currentOperation: TransactionStatus.TransactionStartFailure
@@ -1091,7 +1104,7 @@ export const TreasuryStreamCreateModal = (props: {
           result: `Not enough balance (${
             getTokenAmountAndSymbolByTokenAddress(props.nativeBalance, NATIVE_SOL_MINT.toBase58())
           }) to pay for network fees (${
-            getTokenAmountAndSymbolByTokenAddress(props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+            getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
           })`
         });
         customLogger.logWarning('CreateStreams for a treasury transaction failed', { transcript: transactionLog });
@@ -2075,29 +2088,29 @@ export const TreasuryStreamCreateModal = (props: {
 
       <div className={currentStep === 0 ? "contract-wrapper panel1 show" : "contract-wrapper panel1 hide"}>
         <Button
-            className="main-cta"
-            block
-            type="primary"
-            shape="round"
-            size="large"
-            onClick={onContinueStepOneButtonClick}
-            disabled={(treasuryOption && treasuryOption.type === TreasuryType.Lock) ? (
-              !publicKey ||
-              !isMemoValid() ||
-              !isValidAddress(recipientAddress) ||
-              (!selectedToken || unallocatedBalance.toNumber() === 0) ||
-              (!fromCoinAmount || parseFloat(fromCoinAmount) === 0 || parseFloat(fromCoinAmount) > makeDecimal(unallocatedBalance, selectedToken.decimals)) ||
-              !arePaymentSettingsValid()
-            ) : (
-              !publicKey ||
-              (!enableMultipleStreamsOption && !isMemoValid()) ||
-              ((!enableMultipleStreamsOption ? !isValidAddress(recipientAddress) : (!isCsvSelected || !validMultiRecipientsList))) ||
-              (!paymentRateAmount || unallocatedBalance.toNumber() === 0) ||
-              (!paymentRateAmount || parseFloat(paymentRateAmount) === 0) ||
-              !arePaymentSettingsValid()
-            )}>
-            {(treasuryOption && treasuryOption.type === TreasuryType.Open) ? getStepOneContinueButtonLabel() : getStepOneContinueButtonLabelInLocked()}
-          </Button>
+          className="main-cta"
+          block
+          type="primary"
+          shape="round"
+          size="large"
+          onClick={onContinueStepOneButtonClick}
+          disabled={(treasuryOption && treasuryOption.type === TreasuryType.Lock) ? (
+            !publicKey ||
+            !isMemoValid() ||
+            !isValidAddress(recipientAddress) ||
+            (!selectedToken || unallocatedBalance.toNumber() === 0) ||
+            (!fromCoinAmount || parseFloat(fromCoinAmount) === 0 || parseFloat(fromCoinAmount) > makeDecimal(unallocatedBalance, selectedToken.decimals)) ||
+            !arePaymentSettingsValid()
+          ) : (
+            !publicKey ||
+            (!enableMultipleStreamsOption && !isMemoValid()) ||
+            ((!enableMultipleStreamsOption ? !isValidAddress(recipientAddress) : (!isCsvSelected || !validMultiRecipientsList))) ||
+            (!paymentRateAmount || unallocatedBalance.toNumber() === 0) ||
+            (!paymentRateAmount || parseFloat(paymentRateAmount) === 0) ||
+            !arePaymentSettingsValid()
+          )}>
+          {(treasuryOption && treasuryOption.type === TreasuryType.Open) ? getStepOneContinueButtonLabel() : getStepOneContinueButtonLabelInLocked()}
+        </Button>
       </div>
 
       <div className={currentStep === 1 ? "contract-wrapper panel2 show" : "contract-wrapper panel2 hide"}>
@@ -2125,9 +2138,9 @@ export const TreasuryStreamCreateModal = (props: {
             (!paymentRateAmount || parseFloat(paymentRateAmount) === 0) ||
             !arePaymentSettingsValid() ||
             !areSendAmountSettingsValid() ||
-            !isVerifiedRecipient
-          )}
-        >
+            !isVerifiedRecipient ||
+            props.nativeBalance < getMinBalanceRequired()
+          )}>
           {(treasuryOption && treasuryOption.type === TreasuryType.Open) && (
             isBusy && (
               <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
@@ -2141,6 +2154,7 @@ export const TreasuryStreamCreateModal = (props: {
           {(treasuryOption && treasuryOption.type === TreasuryType.Lock) && getStepTwoContinueButtonLabel()}
         </Button>
       </div>
+
       <div className={currentStep === 2 ? "contract-wrapper panel3 show" : "contract-wrapper panel3 hide"}>
         <Button
           className="main-cta"

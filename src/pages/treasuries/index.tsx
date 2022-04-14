@@ -5958,6 +5958,7 @@ export const TreasuriesView = () => {
           withdrawTransactionFees={withdrawTransactionFees}
           treasuryDetails={treasuryDetails}
           isMultisigTreasury={isMultisigTreasury()}
+          minRequiredBalance={minRequiredBalance}
           multisigClient={multisigClient}
           multisigAddress={getSelectedTreasuryMultisig()}
           userBalances={userBalances}
