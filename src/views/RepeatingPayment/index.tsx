@@ -413,6 +413,14 @@ export const RepeatingPayment = () => {
     return repeatingPaymentFees.blockchainFee + repeatingPaymentFees.mspFlatFee;
   }, [repeatingPaymentFees.blockchainFee, repeatingPaymentFees.mspFlatFee]);
 
+  const getTokenPrice = useCallback(() => {
+    if (!fromCoinAmount || ! effectiveRate) {
+      return 0;
+    }
+
+    return parseFloat(fromCoinAmount) * effectiveRate;
+  }, [effectiveRate, fromCoinAmount]);
+
   // Hook on wallet connect/disconnect
   useEffect(() => {
 
@@ -727,15 +735,16 @@ export const RepeatingPayment = () => {
         consoleOut('data:', data);
 
         // Report event to Segment analytics
-        const segmentData = {
+        const segmentData: SegmentStreamRPTransferData = {
           asset: selectedToken?.symbol,
+          assetPrice: effectiveRate,
           allocation: parseFloat(fromCoinAmount as string),
           beneficiary: data.beneficiary,
           startUtc: dateFormat(data.startUtc, SIMPLE_DATE_TIME_FORMAT),
           rateAmount: parseFloat(paymentRateAmount as string),
           interval: getPaymentRateOptionLabel(paymentRateFrequency),
           feePayedByTreasurer: data.feePayedByTreasurer
-        } as SegmentStreamRPTransferData;
+        };
         consoleOut('segment data:', segmentData, 'brown');
         segmentAnalytics.recordEvent(AppUsageEvent.TransferRecurringFormButton, segmentData);
 
@@ -961,6 +970,7 @@ export const RepeatingPayment = () => {
     nativeBalance,
     recipientNote,
     selectedToken,
+    effectiveRate,
     fromCoinAmount,
     recipientAddress,
     paymentStartDate,
@@ -1330,7 +1340,7 @@ export const RepeatingPayment = () => {
             <div className="right inner-label">
               <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
                 ~${fromCoinAmount && effectiveRate
-                  ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
+                  ? formatAmount(getTokenPrice(), 2)
                   : "0.00"}
               </span>
             </div>

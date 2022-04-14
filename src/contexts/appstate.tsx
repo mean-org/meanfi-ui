@@ -791,13 +791,6 @@ const AppStateProvider: React.FC = ({ children }) => {
       } else {
         consoleOut("Coin prices:", prices, 'blue');
         setCoinPrices(prices);
-        if (selectedToken) {
-          const tokenSymbol = selectedToken.symbol.toUpperCase();
-          const symbol = tokenSymbol[0] === 'W' ? tokenSymbol.slice(1) : tokenSymbol;
-          updateEffectiveRate(
-            prices[symbol] ? prices[symbol] : 0
-          );
-        }
       }
       setLoadingPrices(false);
     } catch (error) {
@@ -805,7 +798,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       updateEffectiveRate(0);
       setLoadingPrices(false);
     }
-  },[selectedToken]);
+  },[]);
 
   // Effect to load coin prices
   useEffect(() => {
@@ -834,6 +827,17 @@ const AppStateProvider: React.FC = ({ children }) => {
     shouldLoadCoinPrices,
     getCoinPrices
   ]);
+
+  // Update token price while list of prices change
+  useEffect(() => {
+    if (coinPrices && selectedToken) {
+      const tokenSymbol = selectedToken.symbol.toUpperCase();
+      const symbol = tokenSymbol[0] === 'W' ? tokenSymbol.slice(1) : tokenSymbol;
+      updateEffectiveRate(
+        coinPrices[symbol] ? coinPrices[symbol] : 0
+      );
+    }
+  }, [coinPrices, selectedToken]);
 
   // Cache selected contract
   const contractFromCache = useMemo(

@@ -200,6 +200,14 @@ export const OneTimePayment = () => {
     setTransactionStatus
   ]);
 
+  const getTokenPrice = useCallback(() => {
+    if (!fromCoinAmount || ! effectiveRate) {
+      return 0;
+    }
+
+    return parseFloat(fromCoinAmount) * effectiveRate;
+  }, [effectiveRate, fromCoinAmount]);
+
   // Token selection modal
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
   const showTokenSelector = useCallback(() => setTokenSelectorModalVisibility(true), []);
@@ -603,12 +611,14 @@ export const OneTimePayment = () => {
       consoleOut('data:', data, 'blue');
 
       // Report event to Segment analytics
-      const segmentData = {
+      const segmentData: SegmentStreamOTPTransferData = {
         asset: selectedToken?.symbol,
+        assetPrice: effectiveRate,
         amount: parseFloat(fromCoinAmount as string),
         beneficiary: data.beneficiary,
         startUtc: dateFormat(startUtc, SIMPLE_DATE_TIME_FORMAT)
-      } as SegmentStreamOTPTransferData;
+      };
+      consoleOut('segment data:', segmentData, 'brown');
       segmentAnalytics.recordEvent(AppUsageEvent.TransferOTPFormButton, segmentData);
 
       // Log input data
@@ -1014,7 +1024,7 @@ export const OneTimePayment = () => {
             <div className="right inner-label">
               <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
                 ~${fromCoinAmount && effectiveRate
-                  ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
+                  ? formatAmount(getTokenPrice(), 2)
                   : "0.00"}
               </span>
             </div>
