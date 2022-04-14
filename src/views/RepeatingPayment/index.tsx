@@ -588,7 +588,7 @@ export const RepeatingPayment = () => {
       : !isVerifiedRecipient
       ? t('transactions.validation.verified-recipient-unchecked')
       : nativeBalance < getFeeAmount()
-      ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getFeeAmount(), 5) })
+      ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getFeeAmount(), 4) })
       : t('transactions.validation.valid-approve');
   }
 

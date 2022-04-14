@@ -366,7 +366,7 @@ export const TreasuryStreamCreateModal = (props: {
       : !isVerifiedRecipient
       ? t('transactions.validation.verified-recipient-unchecked')
       : props.nativeBalance < getMinBalanceRequired()
-        ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getMinBalanceRequired(), 5) })
+        ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getMinBalanceRequired(), 4) })
         : t('transactions.validation.valid-approve');
   };
 
@@ -396,7 +396,7 @@ export const TreasuryStreamCreateModal = (props: {
       : !isVerifiedRecipient
       ? t('transactions.validation.verified-recipient-unchecked')
       : props.nativeBalance < getMinBalanceRequired()
-        ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getMinBalanceRequired(), 5) })
+        ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getMinBalanceRequired(), 4) })
         : t('transactions.validation.valid-approve');
   };
 
