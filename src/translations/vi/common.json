@@ -923,6 +923,7 @@
 		},
 		"status": {
 			"cta-view-stream": "Xem Stream",
+			"cta-start-transfer-busy": "Creating transfer",
 			"ddca-add-funds": "Cấp quỹ vào vault với",
 			"ddca-add-funds-success": "Quỹ được thêm vào thành công",
 			"ddca-create-tx": "Tạo giao dịch định kỳ",

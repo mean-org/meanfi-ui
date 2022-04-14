@@ -1,14 +1,12 @@
 import React from 'react';
-import { Button, Modal, DatePicker, Spin, Checkbox, Select } from "antd";
+import { Button, Modal, DatePicker, Checkbox, Select } from "antd";
 import {
-  CheckOutlined,
   LoadingOutlined,
   QrcodeOutlined,
-  WarningOutlined,
 } from "@ant-design/icons";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnection, useConnectionConfig } from "../../contexts/connection";
-import { formatAmount, formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber, toTokenAmount } from "../../utils/utils";
+import { formatAmount, formatThousands, getAmountWithSymbol, getTxIxResume, isValidNumber, toTokenAmount } from "../../utils/utils";
 import { DATEPICKER_FORMAT, SIMPLE_DATE_TIME_FORMAT } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
 import { EventType, OperationType, TransactionStatus } from "../../models/enums";
@@ -16,9 +14,6 @@ import {
   addMinutes,
   consoleOut,
   disabledDate,
-  getAmountWithTokenSymbol,
-  getTransactionModalTitle,
-  getTransactionOperationDescription,
   getTransactionStatusForLogs,
   isToday,
   isValidAddress
@@ -33,7 +28,6 @@ import { useTranslation } from "react-i18next";
 import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { customLogger } from '../..';
-import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { confirmationEvents, TransactionStatusContext, TransactionStatusInfo } from '../../contexts/transaction-status';
 import { useNavigate } from 'react-router-dom';
 import { TokenDisplay } from '../../components/TokenDisplay';
@@ -46,7 +40,6 @@ import dateFormat from 'dateformat';
 import { NATIVE_SOL } from '../../utils/tokens';
 
 const { Option } = Select;
-const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const OneTimePayment = () => {
   const connection = useConnection();
@@ -85,9 +78,10 @@ export const OneTimePayment = () => {
   const { enqueueTransactionConfirmation } = useContext(TransactionStatusContext);
   const navigate = useNavigate();
   const { t } = useTranslation('common');
-  const [isBusy, setIsBusy] = useState(false);
   const { account } = useNativeAccount();
   const accounts = useAccountsContext();
+  const [isBusy, setIsBusy] = useState(false);
+  const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [userBalances, setUserBalances] = useState<any>();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
@@ -197,7 +191,6 @@ export const OneTimePayment = () => {
 
   const resetTransactionStatus = useCallback(() => {
 
-    setIsBusy(false);
     setTransactionStatus({
       lastOperation: TransactionStatus.Iddle,
       currentOperation: TransactionStatus.Iddle
@@ -226,26 +219,7 @@ export const OneTimePayment = () => {
     closeQrScannerModal();
   };
 
-  // Transaction execution modal
-  const [transactionCancelled, setTransactionCancelled] = useState(false);
-  const [isTransactionModalVisible, setTransactionModalVisibility] = useState(false);
-  const showTransactionModal = useCallback(() => setTransactionModalVisibility(true), []);
-  const closeTransactionModal = useCallback(() => setTransactionModalVisibility(false), []);
-
   // Event handling
-
-  const onTransactionModalClosed = () => {
-    if (isBusy) {
-      setTransactionCancelled(true);
-    }
-    if (isSuccess()) {
-      setFixedScheduleValue(0);
-      resetContractValues();
-      setIsVerifiedRecipient(false);
-    }
-    resetTransactionStatus();
-    closeTransactionModal();
-  }
 
   const recordTxConfirmation = useCallback((signature: string, success = true) => {
     let event: any;
@@ -260,10 +234,19 @@ export const OneTimePayment = () => {
       recordTxConfirmation(item.signature, true);
       navigate("/accounts/streams");
     }
+    setIsBusy(false);
+    resetTransactionStatus();
     resetContractValues();
     setIsVerifiedRecipient(false);
     setSelectedStream(undefined);
-  }, [navigate, recordTxConfirmation, resetContractValues, setIsVerifiedRecipient, setSelectedStream]);
+  }, [
+    navigate,
+    setSelectedStream,
+    resetContractValues,
+    recordTxConfirmation,
+    resetTransactionStatus,
+    setIsVerifiedRecipient,
+  ]);
 
   // Setup event handler for Tx confirmation error
   const onTxTimedout = useCallback((item: TransactionStatusInfo) => {
@@ -271,9 +254,9 @@ export const OneTimePayment = () => {
     if (item && item.operationType === OperationType.Transfer) {
       recordTxConfirmation(item.signature, false);
     }
-  }, [
-    recordTxConfirmation,
-  ]);
+    setIsBusy(false);
+    resetTransactionStatus();
+  }, [recordTxConfirmation, resetTransactionStatus]);
 
   const handleFromCoinAmountChange = (e: any) => {
 
@@ -519,6 +502,8 @@ export const OneTimePayment = () => {
       ? t('transactions.validation.memo-empty')
       : !isVerifiedRecipient
       ? t('transactions.validation.verified-recipient-unchecked')
+      : nativeBalance < getFeeAmount()
+      ? t('transactions.validation.insufficient-balance-needed', { balance: getFeeAmount() })
       : t('transactions.validation.valid-approve');
   }
 
@@ -637,28 +622,8 @@ export const OneTimePayment = () => {
         result: ''
       });
 
-      // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
-      // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-      consoleOut('blockchainFee:', getFeeAmount(), 'blue');
+      consoleOut('otpFee:', getFeeAmount(), 'blue');
       consoleOut('nativeBalance:', nativeBalance, 'blue');
-
-      if (nativeBalance < getFeeAmount()) {
-        setTransactionStatus({
-          lastOperation: transactionStatus.currentOperation,
-          currentOperation: TransactionStatus.TransactionStartFailure
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-          result: `Not enough balance (${
-            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
-          }) to pay for network fees (${
-            getTokenAmountAndSymbolByTokenAddress(getFeeAmount(), NATIVE_SOL_MINT.toBase58())
-          })`
-        });
-        customLogger.logWarning('One-Time Payment transaction failed', { transcript: transactionLog });
-        segmentAnalytics.recordEvent(AppUsageEvent.TransferOTPFailed, { transcript: transactionLog });
-        return false;
-      }
 
       let result = await otpTx(data)
         .then(value => {
@@ -821,7 +786,6 @@ export const OneTimePayment = () => {
     }
 
     if (wallet && selectedToken) {
-      showTransactionModal();
       const created = await createTx();
       consoleOut('created:', created);
       if (created && !transactionCancelled) {
@@ -869,10 +833,6 @@ export const OneTimePayment = () => {
               lastOperation: TransactionStatus.SendTransactionSuccess,
               currentOperation: TransactionStatus.TransactionFinished
             });
-            setIsBusy(false);
-            setTimeout(() => {
-              closeTransactionModal();
-            }, 300);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -895,9 +855,7 @@ export const OneTimePayment = () => {
     streamV2ProgramAddress,
     transactionStatus.currentOperation,
     enqueueTransactionConfirmation,
-    closeTransactionModal,
     setTransactionStatus,
-    showTransactionModal,
     isScheduledPayment,
     getFeeAmount,
   ]);
@@ -910,28 +868,9 @@ export const OneTimePayment = () => {
     setFixedScheduleValue(value);
   }
 
-  // const onGotoExchange = () => {
-  //   onCloseTokenSelector();
-  //   navigate('/exchange?from=SOL&to=wSOL');
-  // }
-
   const onGoToWrap = () => {
     onCloseTokenSelector();
     navigate('/wrap');
-  }
-
-  const isSuccess = (): boolean => {
-    return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
-  }
-
-  const isError = (): boolean => {
-    return  transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ||
-            transactionStatus.currentOperation === TransactionStatus.InitTransactionFailure ||
-            transactionStatus.currentOperation === TransactionStatus.SignTransactionFailure ||
-            transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ||
-            transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure
-            ? true
-            : false;
   }
 
   const getPricePerToken = (token: TokenInfo): number => {
@@ -1158,7 +1097,7 @@ export const OneTimePayment = () => {
 
         {/* Action button */}
         <Button
-          className="main-cta"
+          className={`main-cta ${isBusy ? 'inactive' : ''}`}
           block
           type="primary"
           shape="round"
@@ -1169,8 +1108,16 @@ export const OneTimePayment = () => {
             isAddressOwnAccount() ||
             !paymentStartDate ||
             !areSendAmountSettingsValid() ||
-            !isVerifiedRecipient}>
-          {getTransactionStartButtonLabel()}
+            !isVerifiedRecipient ||
+            nativeBalance < getFeeAmount()
+          }>
+          {isBusy && (
+            <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
+          )}
+          {isBusy
+            ? t('transactions.status.cta-start-transfer-busy')
+            : getTransactionStartButtonLabel()
+          }
         </Button>
       </div>
 
@@ -1234,70 +1181,6 @@ export const OneTimePayment = () => {
           handleOk={onAcceptQrScannerModal}
           handleClose={closeQrScannerModal}/>
       )}
-
-      {/* Transaction execution modal */}
-      <Modal
-        className="mean-modal"
-        maskClosable={false}
-        visible={isTransactionModalVisible}
-        title={getTransactionModalTitle(transactionStatus, isBusy, t)}
-        onCancel={onTransactionModalClosed}
-        width={330}
-        footer={null}>
-        <div className="transaction-progress">
-          {isBusy ? (
-            <>
-              <Spin indicator={bigLoadingIcon} className="icon" />
-              <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
-              <p className="operation">{t('transactions.status.tx-send-operation')} {getAmountWithTokenSymbol(fromCoinAmount, selectedToken as TokenInfo)}...</p>
-              {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
-                <div className="indication">{t('transactions.status.instructions')}</div>
-              )}
-            </>
-          ) : isSuccess() ? (
-            <>
-              <CheckOutlined style={{ fontSize: 48 }} className="icon" />
-              <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
-              <p className="operation">{getAmountWithTokenSymbol(fromCoinAmount, selectedToken as TokenInfo)} {t('transactions.status.tx-send-operation-success')}.</p>
-              <Button
-                block
-                type="primary"
-                shape="round"
-                size="middle"
-                onClick={onTransactionModalClosed}>
-                {t('general.cta-close')}
-              </Button>
-            </>
-          ) : isError() ? (
-            <>
-              <WarningOutlined style={{ fontSize: 48 }} className="icon" />
-              {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
-                <h4 className="mb-4">
-                  {t('transactions.status.tx-start-failure', {
-                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())}`,
-                    feeAmount: `${getTokenAmountAndSymbolByTokenAddress(getFeeAmount(), NATIVE_SOL_MINT.toBase58())}`})
-                  }
-                </h4>
-              ) : (
-                <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
-              )}
-              <Button
-                block
-                type="primary"
-                shape="round"
-                size="middle"
-                onClick={closeTransactionModal}>
-                {t('general.cta-close')}
-              </Button>
-            </>
-          ) : (
-            <>
-              <Spin indicator={bigLoadingIcon} className="icon" />
-              <h4 className="font-bold mb-4 text-uppercase">{t('transactions.status.tx-wait')}...</h4>
-            </>
-          )}
-        </div>
-      </Modal>
     </>
   );
 };

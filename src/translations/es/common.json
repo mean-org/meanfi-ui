@@ -929,6 +929,7 @@
 		},
 		"status": {
 			"cta-view-stream": "Ver Transferencia de dinero",
+			"cta-start-transfer-busy": "Creating transfer",
 			"ddca-add-funds": "Funding vault with",
 			"ddca-add-funds-success": "Funds added successfully",
 			"ddca-create-tx": "Create scheduled recurring exchange",

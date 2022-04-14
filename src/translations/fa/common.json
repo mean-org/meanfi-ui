@@ -919,6 +919,7 @@
 		},
 		"status": {
 			"cta-view-stream": "مشاهده Stream",
+			"cta-start-transfer-busy": "Creating transfer",
 			"ddca-add-funds": "صندوق سرمایه گذاری با",
 			"ddca-add-funds-success": "وجوه با موفقیت اضافه شد",
 			"ddca-create-tx": "مبادله مکرر برنامه ریزی شده ایجاد کنید",

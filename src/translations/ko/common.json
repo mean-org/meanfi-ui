@@ -924,6 +924,7 @@
 		},
 		"status": {
 			"cta-view-stream": "스트림 보기",
+			"cta-start-transfer-busy": "Creating transfer",
 			"ddca-add-funds": "펀딩 금고",
 			"ddca-add-funds-success": "자금이 성공적으로 추가되었습니다.",
 			"ddca-create-tx": "예약된 반복 교환 만들기",

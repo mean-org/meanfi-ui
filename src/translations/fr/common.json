@@ -920,6 +920,7 @@
 		},
 		"status": {
 			"cta-view-stream": "Afficher le flux",
+			"cta-start-transfer-busy": "Creating transfer",
 			"ddca-add-funds": "Caisse de financement avec",
 			"ddca-add-funds-success": "Fonds ajoutés avec succès",
 			"ddca-create-tx": "Créer un échange récurrent planifié",

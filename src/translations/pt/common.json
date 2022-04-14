@@ -919,6 +919,7 @@
 		},
 		"status": {
 			"cta-view-stream": "Ver Stream",
+			"cta-start-transfer-busy": "Creating transfer",
 			"ddca-add-funds": "Cofre de financiamento com",
 			"ddca-add-funds-success": "Fundos adicionados com sucesso",
 			"ddca-create-tx": "Criar troca recorrente agendada",
