@@ -919,6 +919,7 @@
 		},
 		"status": {
 			"cta-view-stream": "Ver Stream",
+			"cta-start-transfer-busy": "Creating transfer",
 			"ddca-add-funds": "Cofre de financiamento com",
 			"ddca-add-funds-success": "Fundos adicionados com sucesso",
 			"ddca-create-tx": "Criar troca recorrente agendada",
@@ -999,7 +1000,7 @@
 			"cannot-use-own-account-as-treasury": "Não é possível usar sua conta como ID de tesouraria",
 			"exchange-unavailable": "Troca indisponível",
 			"insufficient-amount-needed": "Precisa de pelo menos {{amount}} {{symbol}} para trocar",
-			"insufficient-balance-needed": "Precisa de pelo menos {{balance}} SOL",
+			"insufficient-balance-needed": "Need at least {{balance}} SOL in your wallet",
 			"invalid-amount": "Montante inválido",
 			"invalid-exchange": "Selecionar token",
 			"invalid-solana-address": "Endereço de solana inválido",

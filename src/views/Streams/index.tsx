@@ -226,7 +226,7 @@ export const Streams = () => {
     return await calculateActionFeesV2(connection, action);
   }, [connection]);
 
-  const getPricePerToken = useCallback((token: UserTokenAccount): number => {
+  const getPricePerToken = useCallback((token: UserTokenAccount | TokenInfo): number => {
     if (!token || !token.symbol) { return 0; }
     const tokenSymbol = token.symbol.toUpperCase();
     const symbol = tokenSymbol[0] === 'W' ? tokenSymbol.slice(1) : tokenSymbol;
@@ -2001,11 +2001,11 @@ export const Streams = () => {
         consoleOut('Transfer stream data:', data);
 
         // Report event to Segment analytics
-        const segmentData = {
+        const segmentData: SegmentStreamTransferOwnershipData = {
           stream: data.stream,
           beneficiary: data.beneficiary,
           newBeneficiary: data.newBeneficiary
-        } as SegmentStreamTransferOwnershipData;
+        };
         consoleOut('segment data:', segmentData, 'brown');
         segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferOwnershipFormButton, segmentData);
 
@@ -2424,13 +2424,14 @@ export const Streams = () => {
 
         // Report event to Segment analytics
         const token = selectedToken ? selectedToken.symbol : '';
-        const segmentData = {
+        const segmentData: SegmentStreamAddFundsData = {
           stream: data.stream,
           contributor: data.contributor,
           treasury: data.treasury,
-          contributorMint: token ? `${token} [${data.contributorMint}]` : data.contributorMint,
+          asset: token ? `${token} [${data.contributorMint}]` : data.contributorMint,
+          assetPrice: selectedToken ? getPricePerToken(selectedToken) : 0,
           amount
-        } as SegmentStreamAddFundsData;
+        };
         consoleOut('segment data:', segmentData, 'brown');
         segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupApproveFormButton, segmentData);
 
@@ -2547,15 +2548,16 @@ export const Streams = () => {
       consoleOut('add funds data:', data);
 
       // Report event to Segment analytics
-      const segmentData = {
+      const segmentData: SegmentStreamAddFundsData = {
         stream: data.stream,
         contributor: data.contributor,
         treasury: data.treasury,
-        contributorMint: selectedToken
+        asset: selectedToken
           ? `${selectedToken.symbol} [${selectedToken.address}]`
           : associatedToken.toBase58(),
+        assetPrice: selectedToken ? getPricePerToken(selectedToken) : 0,
         amount: parseFloat(addFundsData.amount)
-      } as SegmentStreamAddFundsData;
+      };
       consoleOut('segment data:', segmentData, 'brown');
       segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupApproveFormButton, segmentData);
 
@@ -3163,14 +3165,15 @@ export const Streams = () => {
         consoleOut('withdraw params:', data, 'brown');
 
         // Report event to Segment analytics
-        const segmentData = {
+        const segmentData: SegmentStreamWithdrawData = {
           asset: withdrawData.token,
+          assetPrice: selectedToken ? getPricePerToken(selectedToken) : 0,
           stream: data.stream,
           beneficiary: data.beneficiary,
           feeAmount: withdrawData.fee,
           inputAmount: withdrawData.inputAmount,
           sentAmount: withdrawData.receiveAmount
-        } as SegmentStreamWithdrawData;
+        };
         consoleOut('segment data:', segmentData, 'brown');
         segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalStartFormButton, segmentData);
 
@@ -3272,14 +3275,15 @@ export const Streams = () => {
         consoleOut('withdraw params:', data, 'brown');
 
         // Report event to Segment analytics
-        const segmentData = {
+        const segmentData: SegmentStreamWithdrawData = {
           asset: withdrawData.token,
+          assetPrice: selectedToken ? getPricePerToken(selectedToken) : 0,
           stream: data.stream,
           beneficiary: data.beneficiary,
           feeAmount: withdrawData.fee,
           inputAmount: withdrawData.inputAmount,
           sentAmount: withdrawData.receiveAmount
-        } as SegmentStreamWithdrawData;
+        };
         consoleOut('segment data:', segmentData, 'brown');
         segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalStartFormButton, segmentData);
 
@@ -3551,15 +3555,16 @@ export const Streams = () => {
         consoleOut('data:', data);
 
         // Report event to Segment analytics
-        const segmentData = {
-          asset: selectedToken?.symbol,
+        const segmentData: SegmentStreamCloseData = {
+          asset: selectedToken ? selectedToken.symbol : '-',
+          assetPrice: selectedToken ? getPricePerToken(selectedToken) : 0,
           stream: data.stream,
           initializer: data.initializer,
           closeTreasury: data.autoCloseTreasury,
           vestedReturns: closeTreasuryData.vestedReturns,
           unvestedReturns: closeTreasuryData.unvestedReturns,
           feeAmount: closeTreasuryData.feeAmount
-        } as SegmentStreamCloseData;
+        };
         consoleOut('segment data:', segmentData, 'brown');
         segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseStreamFormButton, segmentData);
 
@@ -3657,15 +3662,16 @@ export const Streams = () => {
         consoleOut('data:', data);
 
         // Report event to Segment analytics
-        const segmentData = {
-          asset: selectedToken?.symbol,
+        const segmentData: SegmentStreamCloseData = {
+          asset: selectedToken ? selectedToken.symbol : '-',
+          assetPrice: selectedToken ? getPricePerToken(selectedToken) : 0,
           stream: data.stream,
           initializer: data.initializer,
           closeTreasury: data.autoCloseTreasury,
           vestedReturns: closeTreasuryData.vestedReturns,
           unvestedReturns: closeTreasuryData.unvestedReturns,
           feeAmount: closeTreasuryData.feeAmount
-        } as SegmentStreamCloseData;
+        };
         consoleOut('segment data:', segmentData, 'brown');
         segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseStreamFormButton, segmentData);
 

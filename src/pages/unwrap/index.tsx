@@ -23,7 +23,7 @@ import { useTranslation } from "react-i18next";
 import { PreFooter } from "../../components/PreFooter";
 import { useNativeAccount, useUserAccounts } from "../../contexts/accounts";
 import { customLogger } from '../..';
-import { confirmationEvents, TransactionStatusContext } from '../../contexts/transaction-status';
+import { confirmationEvents, TransactionStatusContext, TransactionStatusInfo } from '../../contexts/transaction-status';
 import BN from 'bn.js';
 import { unwrapSol } from '@mean-dao/hybrid-liquidity-ag';
 import { notify } from '../../utils/notifications';
@@ -106,13 +106,15 @@ export const UnwrapView = () => {
 
   }, [setTransactionStatus]);
 
-  const onUnwrapConfirmed = useCallback((value: any) => {
-    setIsUnwrapping(false);
-    resetTransactionStatus();
-    setTimeout(() => {
-      refreshTokenBalance();
-    });
+  const onUnwrapConfirmed = useCallback((item: TransactionStatusInfo) => {
     consoleOut("onUnwrapConfirmed event executed!", '', 'crimson');
+    if (item && item.operationType === OperationType.Unwrap) {
+      setIsUnwrapping(false);
+      resetTransactionStatus();
+      setTimeout(() => {
+        refreshTokenBalance();
+      });
+    }
   }, [refreshTokenBalance, resetTransactionStatus]);
 
 

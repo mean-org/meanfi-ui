@@ -920,6 +920,7 @@
 		},
 		"status": {
 			"cta-view-stream": "Afficher le flux",
+			"cta-start-transfer-busy": "Creating transfer",
 			"ddca-add-funds": "Caisse de financement avec",
 			"ddca-add-funds-success": "Fonds ajoutés avec succès",
 			"ddca-create-tx": "Créer un échange récurrent planifié",
@@ -1000,7 +1001,7 @@
 			"cannot-use-own-account-as-treasury": "Impossible d'utiliser votre compte comme identifiant de trésorerie",
 			"exchange-unavailable": "Échange indisponible",
 			"insufficient-amount-needed": "Besoin d'au moins {{amount}} {{symbol}} pour échanger",
-			"insufficient-balance-needed": "Besoin d'au moins {{balance}} SOL",
+			"insufficient-balance-needed": "Need at least {{balance}} SOL in your wallet",
 			"invalid-account": "Impossible d'utiliser une adresse Multisig comme compte de destination",
 			"invalid-amount": "Montant invalide",
 			"invalid-exchange": "Sélectionnez le jeton",
