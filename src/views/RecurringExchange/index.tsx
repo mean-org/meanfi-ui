@@ -961,7 +961,7 @@ export const RecurringExchange = (props: {
           needed = parseFloat(needed.toFixed(9));
         }
 
-        label = t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(needed, 5) });
+        label = t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(needed, 4) });
 
       } else if (fromSwapAmount === 0) {
         label = t('transactions.validation.no-amount');
