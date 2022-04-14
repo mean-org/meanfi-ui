@@ -98,7 +98,7 @@ export const DepositOptions = (props: {
         hideMenu: true,
         walletAddress: publicKey?.toBase58() || '', // Your customer's wallet address
         themeColor: 'B7001C', // App theme color
-        fiatCurrency: 'EUR',
+        // fiatCurrency: 'EUR',
         email: '', // Your customer's email address
         redirectURL: '',
         hostURL: window.location.origin,
