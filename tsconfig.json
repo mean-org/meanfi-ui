@@ -25,7 +25,8 @@
     ]
   },
   "include": [
-    "./src/**/*"
+    "./src/**/*",
+    "./src/setupTests.ts"
   ],
   "$schema": "https://json.schemastore.org/tsconfig",
   "display": "Recommended"
