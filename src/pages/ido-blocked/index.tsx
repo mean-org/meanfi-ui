@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { MEAN_FINANCE_DISCORD_URL, MEAN_FINANCE_TWITTER_URL } from "../../constants";
 import { AppStateContext } from '../../contexts/appstate';
 import { PreFooter } from "../../components/PreFooter";
-import "./style.less";
+import "./style.scss";
 
 export const IdoBlockedView = () => {
   const {

@@ -23,7 +23,7 @@ import { JupiterExchangeOutput } from "../../components/JupiterExchangeOutput";
 import { InfoCircleOutlined, LoadingOutlined, ReloadOutlined, SyncOutlined, WarningFilled } from "@ant-design/icons";
 import { appConfig, customLogger } from "../..";
 import BN from 'bn.js';
-import "./style.less";
+import "./style.scss";
 import { NATIVE_SOL } from "../../utils/tokens";
 import { MEAN_TOKEN_LIST, PINNED_TOKENS } from "../../constants/token-list";
 import { InfoIcon } from "../../components/InfoIcon";
@@ -127,13 +127,22 @@ export const JupiterExchange = (props: {
         } as TokenInfo;
     }, []);
 
-    const isSol = useCallback(() => {
+    const isFromSol = useCallback(() => {
         return fromMint !== undefined && (fromMint === sol.address || fromMint === WRAPPED_SOL_MINT_ADDRESS)
             ? true
             : false;
     }, [
         sol,
         fromMint
+    ])
+
+    const isToSol = useCallback(() => {
+        return toMint !== undefined && (toMint === sol.address || toMint === WRAPPED_SOL_MINT_ADDRESS)
+            ? true
+            : false;
+    }, [
+        sol,
+        toMint
     ])
 
     // Keep account balance updated
@@ -471,6 +480,7 @@ export const JupiterExchange = (props: {
                         inputMint: new PublicKey(inputToken.address),
                         outputMint: new PublicKey(outputToken.address),
                         inputAmount: inputAmountLamports,
+                        onlyDirectRoutes: isFromSol() || isToSol(),
                         slippage,
                         forceFetch: true,
                     })
@@ -538,7 +548,6 @@ export const JupiterExchange = (props: {
             }
         }
     }, [
-        sol,
         toMint,
         fromMint,
         tokenList,
@@ -556,7 +565,6 @@ export const JupiterExchange = (props: {
             }
         }
     }, [
-        sol,
         toMint,
         tokenList,
         subjectTokenSelection
@@ -624,7 +632,6 @@ export const JupiterExchange = (props: {
             setShowToMintList(undefined);
         }
     }, [
-        sol,
         toMint,
         routeMap,
         publicKey,
@@ -1714,7 +1721,7 @@ export const JupiterExchange = (props: {
                                         : ''
                                 : ''
                         }
-                        toTokenAmount={isSol()
+                        toTokenAmount={isFromSol()
                             ? fromAmount
                             : selectedRoute && outputToken
                                 ? toUiAmount(new BN(selectedRoute.outAmount), outputToken.decimals).toFixed(outputToken.decimals)

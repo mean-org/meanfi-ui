@@ -162,7 +162,7 @@ export const JupiterExchangeOutput = (props: {
                 const amountOut = toUiAmount(new BN(c.outAmount), decimals);
                 const showBadge = props.routes.length > 1 && (firstInfo.outAmount || 0) > (lastInfo.outAmount || 0);
                 const marketInfo = c.marketInfos;
-                const labels = marketInfo.map(item => item.marketMeta.amm.label).join(' x ');
+                const labels = marketInfo.map(item => item.amm.label).join(' x ');
                 const maxNumItems = props.showAllRoutes ? 10 : 2;
 
                 if (index < maxNumItems) {
@@ -239,7 +239,6 @@ export const JupiterExchangeOutput = (props: {
               ) : (
                 <div className="left">&nbsp;</div>
               )}
-              <div className="right text-right font-size-75 fg-secondary-50">Powered by Jupiter</div>
             </div>
           </>
         )}

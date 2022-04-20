@@ -1,4 +1,4 @@
-import "./style.less";
+import "./style.scss";
 import { data } from "./data";
 import { IconInfoCircle } from '../../Icons';
 import { Button, Card, Col, Divider, Row, Tooltip } from 'antd';

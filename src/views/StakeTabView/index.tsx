@@ -1,5 +1,5 @@
 import { useCallback, useContext, useEffect, useState } from "react";
-import './style.less';
+import './style.scss';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined,  } from "@ant-design/icons";
 import { Button, Col, Divider, Modal, Row, Spin } from "antd";
 import moment from 'moment';

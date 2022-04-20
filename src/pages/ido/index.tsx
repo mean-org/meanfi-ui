@@ -1,7 +1,7 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { PreFooter } from "../../components/PreFooter";
 import { IDO_START_DATE, UTC_FULL_DATE_TIME_FORMAT } from "../../constants";
-import "./style.less";
+import "./style.scss";
 import Countdown from 'react-countdown';
 import dateFormat from "dateformat";
 import { AppStateContext } from '../../contexts/appstate';

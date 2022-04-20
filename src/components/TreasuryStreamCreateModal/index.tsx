@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect } from 'react';
-import "./style.less";
+import "./style.scss";
 import { useContext, useState } from 'react';
 import { Modal, Button, Select, Dropdown, Menu, DatePicker, Checkbox, Divider, Tooltip, Row, Col } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';

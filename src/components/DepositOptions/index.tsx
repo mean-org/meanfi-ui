@@ -9,7 +9,7 @@ import { IconCopy, IconInfoTriangle, IconSolana } from "../../Icons";
 import { notify } from "../../utils/notifications";
 import { consoleOut, copyText } from "../../utils/ui";
 import { AppConfig, environment } from '../../environments/environment';
-import "./style.less";
+import "./style.scss";
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import useScript from '../../hooks/useScript';
 import { appConfig } from '../..';

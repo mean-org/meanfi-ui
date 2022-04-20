@@ -1,7 +1,7 @@
 import React from "react";
 import { PreFooter } from "../../components/PreFooter";
 import { Helmet } from "react-helmet";
-import "./style.less";
+import "./style.scss";
 import { CustomCSSProps } from "../../utils/css-custom-props";
 import { Link } from "react-router-dom";
 import { Button } from "antd";

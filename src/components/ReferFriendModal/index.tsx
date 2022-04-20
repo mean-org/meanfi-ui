@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Modal } from "antd";
 import { useTranslation } from "react-i18next";
-import "./style.less";
+import "./style.scss";
 import { IconCopy, IconFacebook, IconLinkedin, IconTelegram, IconTwitter, IconWhatsapp } from '../../Icons';
 import { notify } from '../../utils/notifications';
 import { copyText } from '../../utils/ui';
