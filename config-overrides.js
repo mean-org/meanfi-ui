@@ -29,15 +29,13 @@ module.exports = function (config, env) {
         resolve: {
             ...config.resolve,
             fallback: {
-                // assert: require.resolve('assert'),
-                // buffer: require.resolve('buffer'),
+                assert: require.resolve('assert'),
+                buffer: require.resolve('buffer/'),
                 // stream: require.resolve('stream-browserify'),
                 // url: require.resolve('url'),
                 // http: require.resolve("stream-http"),
                 // zlib: require.resolve("browserify-zlib"),
                 // https: require.resolve("https-browserify"),
-                assert: false,
-                buffer: false,
                 stream: false,
                 url: false,
                 http: false,

@@ -66,6 +66,7 @@ export const JupiterExchange = (props: {
     const [paramsProcessed, setParamsProcessed] = useState(false);
     const [refreshingRoutes, setRefreshingRoutes] = useState(false);
     const [jupiter, setJupiter] = useState<Jupiter | undefined>(undefined);
+    const [jupiterReady, setJupiterReady] = useState(false);
     const [slippage, setSlippage] = useLocalStorage('slippage', DEFAULT_SLIPPAGE_PERCENT);
     const [fromAmount, setFromAmount] = useState("");
     const [inputAmount, setInputAmount] = useState(0);
@@ -453,58 +454,6 @@ export const JupiterExchange = (props: {
         }
     };
 
-    const getJupiterRoutes = async ({
-        jupiter,
-        inputToken,
-        outputToken,
-        inputAmount,
-        slippage,
-    }: {
-        jupiter: Jupiter;
-        inputToken?: TokenInfo;
-        outputToken?: TokenInfo;
-        inputAmount: number;
-        slippage: number;
-    }) => {
-        try {
-            if (!inputToken || !outputToken) {
-                return null;
-            }
-
-            console.log("Getting routes");
-            const inputAmountLamports = inputToken
-                ? Math.round(inputAmount * 10 ** inputToken.decimals)
-                : 0; // Lamports based on token decimals
-            const routes = inputToken && outputToken
-                ?   await jupiter.computeRoutes({
-                        inputMint: new PublicKey(inputToken.address),
-                        outputMint: new PublicKey(outputToken.address),
-                        inputAmount: inputAmountLamports,
-                        onlyDirectRoutes: isFromSol() || isToSol(),
-                        slippage,
-                        forceFetch: true,
-                    })
-                :   null;
-
-            if (routes && routes.routesInfos) {
-                consoleOut('routesInfos:', routes.routesInfos, 'blue');
-                if (inputAmount) {
-                    setMinInAmount(routes.routesInfos[0].marketInfos[0].minInAmount);
-                    setMinOutAmount(routes.routesInfos[0].marketInfos[0].minOutAmount);
-                    return routes;
-                } else {
-                    setMinInAmount(undefined);
-                    setMinOutAmount(undefined);
-                    return null;
-                }
-            } else {
-                return null;
-            }
-        } catch (error) {
-            throw error;
-        }
-    };
-
     // Calculates the max allowed amount to swap
     // TODO: Review the whole MAX amount story. Jupiter seems to always charge 0.05 SOL no matter what.
     const getMaxAllowedSwapAmount = useCallback(() => {
@@ -645,6 +594,58 @@ export const JupiterExchange = (props: {
     // Routes are sorted based on outputAmount, so ideally the first route is the best.
     const refreshRoutes = useCallback(() => {
 
+        const getJupiterRoutes = async ({
+            jupiter,
+            inputToken,
+            outputToken,
+            inputAmount,
+            slippage,
+        }: {
+            jupiter: Jupiter;
+            inputToken?: TokenInfo;
+            outputToken?: TokenInfo;
+            inputAmount: number;
+            slippage: number;
+        }) => {
+            try {
+                if (!inputToken || !outputToken) {
+                    return null;
+                }
+    
+                console.log("Getting routes");
+                const inputAmountLamports = inputToken
+                    ? Math.round(inputAmount * 10 ** inputToken.decimals)
+                    : 0; // Lamports based on token decimals
+                const routes = inputToken && outputToken
+                    ?   await jupiter.computeRoutes({
+                            inputMint: new PublicKey(inputToken.address),
+                            outputMint: new PublicKey(outputToken.address),
+                            inputAmount: inputAmountLamports,
+                            onlyDirectRoutes: isFromSol() || isToSol(),
+                            slippage,
+                            forceFetch: true,
+                        })
+                    :   null;
+    
+                if (routes && routes.routesInfos) {
+                    consoleOut('routesInfos:', routes.routesInfos, 'blue');
+                    if (inputAmount) {
+                        setMinInAmount(routes.routesInfos[0].marketInfos[0].minInAmount);
+                        setMinOutAmount(routes.routesInfos[0].marketInfos[0].minOutAmount);
+                        return routes;
+                    } else {
+                        setMinInAmount(undefined);
+                        setMinOutAmount(undefined);
+                        return null;
+                    }
+                } else {
+                    return null;
+                }
+            } catch (error) {
+                throw error;
+            }
+        };
+
         if (!jupiter || !inputToken || !outputToken || !slippage) {
             setRefreshingRoutes(false);
             return;
@@ -688,7 +689,9 @@ export const JupiterExchange = (props: {
         slippage,
         inputToken,
         outputToken,
-        inputAmount
+        inputAmount,
+        isFromSol,
+        isToSol,
     ]);
 
     // Automatically get routes
@@ -747,7 +750,9 @@ export const JupiterExchange = (props: {
 
             let label = '';
 
-            if (!publicKey) {
+            if (!jupiterReady) {
+                label = 'Loading exchange';
+            } else if (!publicKey) {
                 label = t('transactions.validation.not-connected');
             } else if (!inputToken || !fromMint || !toMint) {
                 label = t('transactions.validation.invalid-exchange');
@@ -785,6 +790,7 @@ export const JupiterExchange = (props: {
         inputToken,
         inputAmount,
         minInAmount,
+        jupiterReady,
         selectedRoute,
         refreshingRoutes,
         getMaxAllowedSwapAmount,
@@ -1013,6 +1019,13 @@ export const JupiterExchange = (props: {
         inputAmount,
         refreshRoutes,
     ]);
+
+    // Set Jupiter ready
+    useEffect(() => {
+        if (jupiter && routeMap && showToMintList) {
+            setJupiterReady(true);
+        }
+    }, [jupiter, routeMap, showToMintList]);
 
     const onStartUnwrapTx = async () => {
         let transaction: Transaction;
@@ -1625,6 +1638,7 @@ export const JupiterExchange = (props: {
                                 : ''
                         }
                         className="mb-0"
+                        disabled={!jupiterReady}
                         onPriceClick={() => refreshPrices()}
                         onBalanceClick={() => refreshUserBalances()}
                     />
@@ -1739,7 +1753,7 @@ export const JupiterExchange = (props: {
                             consoleOut('onSelectedRoute:', route, 'blue');
                             setSelectedRoute(route);
                         }}
-                        isBusy={isBusy || refreshingRoutes}
+                        isBusy={isBusy || refreshingRoutes || !jupiterReady}
                         showAllRoutes={showFullRoutesList}
                         onToggleShowFullRouteList={onShowLpListToggled}
                     />
