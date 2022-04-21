@@ -1,0 +1,22 @@
+{
+    "extends": [
+        "react-app",
+        "react-app/jest",
+        "eslint:recommended"
+    ],
+    "plugins": [
+        "react",
+        "react-hooks"
+    ],
+    "overrides": [
+        {
+            "files": [
+                "**/*.ts?(x)"
+            ],
+            "rules": {
+                "max-len": "off",
+                "no-unused-vars": "warn"
+            }
+        }
+    ]
+}

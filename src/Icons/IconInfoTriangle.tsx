@@ -1,4 +1,6 @@
-export const IconInfoTriangle = (props: {className: string; style?: React.CSSProperties;}) => {
+import { CSSProperties } from "react";
+
+export const IconInfoTriangle = (props: {className: string; style?: CSSProperties;}) => {
     return (
         <svg className={props.className} style={props.style} width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M13 8.99999C13 9.55227 12.5523 9.99999 12 9.99999C11.4477 9.99999 11 9.55227 11 8.99999C11 8.4477 11.4477 7.99999 12 7.99999C12.5523 7.99999 13 8.4477 13 8.99999Z" fill="currentColor"/>

@@ -12,23 +12,6 @@
     "url": "https://github.com/mean-dao/meanfi-ui"
   },
   "homepage": "/",
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ],
-    "rules": {
-      "no-unused-vars": "warn"
-    },
-    "overrides": [
-      {
-        "files": ["**/*.ts?(x)"],
-        "rules": {
-          "max-len": "warn"
-        }
-      }
-    ]
-  },
   "jest": {
     "transformIgnorePatterns": [
       "/node_modules/(?!antd|@ant-design|rc-.+?|@babel/runtime).+(js|jsx)$"
@@ -60,7 +43,7 @@
     "@jup-ag/core": "1.0.0-beta.21",
     "@ledgerhq/hw-transport": "^6.11",
     "@ledgerhq/hw-transport-webhid": "^6.11",
-    "@mean-dao/ddca": "1.2.33",
+    "@mean-dao/ddca": "1.2.34",
     "@mean-dao/hybrid-liquidity-ag": "1.1.32",
     "@mean-dao/money-streaming": "^1.7.10",
     "@mean-dao/msp": "^0.5.15",
@@ -135,12 +118,16 @@
     "@types/w3c-web-hid": "^1.0.2",
     "@walletconnect/types": "^2.0.0-beta.17",
     "assert": "^2.0.0",
+    "constants-browserify": "^1.0.0",
     "eslint-config-react-app": "^7.0.1",
+    "eslint-plugin-react-hooks": "^4.4.0",
+    "graceful-fs": "^4.2.10",
     "node-sass": "^7.0.1",
     "process": "^0.11.10",
     "react-app-rewired": "^2.2.1",
     "react-git-info": "^2.0.1",
     "react-scripts": "5.0.1",
+    "stream-browserify": "^3.0.0",
     "typescript": "^4.4.2"
   },
   "resolutions": {

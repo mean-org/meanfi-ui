@@ -20,6 +20,9 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "strict": true,
+    "types": [
+      "node"
+    ],
     "typeRoots": [
       "./types"
     ]

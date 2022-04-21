@@ -1,4 +1,6 @@
-export const IconPayroll = (props: {className: string; style?: React.CSSProperties;}) => {
+import { CSSProperties } from "react";
+
+export const IconPayroll = (props: {className: string; style?: CSSProperties;}) => {
   return (
     <svg className={props.className} style={props.style} width="100%" height="100%" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fillRule="evenodd" clipRule="evenodd" strokeLinejoin="round" strokeMiterlimit="2">
       <path d="M18.983 6.888a.88.88 0 0 0 .572-1.227l-1.952-4.155a.88.88 0 0 0-1.596.003l-.861 1.844a1.13 1.13 0 0 0-.096-.032C9.942 1.953 4.69 4.984 3.32 10.094c-1.367 5.108 1.665 10.36 6.774 11.73 5.108 1.367 10.36-1.665 11.73-6.773a9.535 9.535 0 0 0 .043-4.793.88.88 0 1 0-1.71.428 7.816 7.816 0 1 1-15.133-.136 7.815 7.815 0 0 1 9.366-5.578l-.868 1.86a.883.883 0 0 0 1.023 1.226l4.438-1.17Z" fillRule="nonzero" fill="currentColor" />

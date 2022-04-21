@@ -16,7 +16,6 @@ import { appConfig } from '../..';
 
 const QRCode = require('qrcode.react');
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 declare const TransakSDK: any;
 let transak: any = undefined;
 

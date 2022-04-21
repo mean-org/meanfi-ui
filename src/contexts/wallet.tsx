@@ -141,6 +141,7 @@ const WC = {
   isWebWallet: false
 };
 
+/*
 const getIsProviderInstalled = (provider: any): boolean => {
   if (provider.adapter) {
     switch (provider.name) {
@@ -166,6 +167,7 @@ const getIsProviderInstalled = (provider: any): boolean => {
   }
   return true;
 }
+*/
 
 const WalletContext = React.createContext<{
   wallet: WalletAdapter | undefined;
@@ -257,7 +259,7 @@ export function WalletProvider({ children = null as any }) {
         wallet.disconnect();
       }
     };
-  }, [wallet]);
+  }, [t, wallet]);
 
   useEffect(() => {
     if (wallet && autoConnect) {

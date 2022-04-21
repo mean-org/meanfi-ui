@@ -117,8 +117,8 @@ export abstract class BaseSolletWalletAdapter extends BaseMessageSignerWalletAda
             try {
                 // HACK: sol-wallet-adapter doesn't reject or emit an event if the popup or extension is closed or blocked
                 const handleDisconnect: (...args: unknown[]) => unknown = (wallet as any).handleDisconnect;
-                let timeout: NodeJS.Timer | undefined;
-                let interval: NodeJS.Timer | undefined;
+                let timeout: any;
+                let interval: any;
                 try {
                     await new Promise<void>((resolve, reject) => {
                         const connect = () => {

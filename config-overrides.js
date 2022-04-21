@@ -1,4 +1,4 @@
-const { ProvidePlugin } = require('webpack');
+const webpack = require("webpack");
 
 module.exports = function (config, env) {
     return {
@@ -20,32 +20,45 @@ module.exports = function (config, env) {
                 },
             ],
         },
-        plugins: [
-            ...config.plugins,
-            new ProvidePlugin({
-                process: 'process/browser',
-            }),
-        ],
         resolve: {
             ...config.resolve,
             fallback: {
                 assert: require.resolve('assert'),
-                buffer: require.resolve('buffer/'),
-                // stream: require.resolve('stream-browserify'),
-                // url: require.resolve('url'),
+                buffer: require.resolve('buffer'),
+                fs: require.resolve("graceful-fs"),
+                stream: require.resolve('stream-browserify'),
+                constants: require.resolve("constants-browserify"),
+                url: require.resolve('url'),
                 // http: require.resolve("stream-http"),
                 // zlib: require.resolve("browserify-zlib"),
                 // https: require.resolve("https-browserify"),
-                stream: false,
-                url: false,
+                https: false,
                 http: false,
                 zlib: false,
-                https: false,
-                fs: false,
-                os: false,
                 path: false,
+                os: false,
             },
         },
+        plugins: [
+            ...config.plugins,
+            new webpack.ProvidePlugin({
+                process: "process/browser",
+                Buffer: ["buffer", "Buffer"],
+            }),
+            new webpack.NormalModuleReplacementPlugin(/node:/, (resource) => {
+                const mod = resource.request.replace(/^node:/, "");
+                switch (mod) {
+                    case "buffer":
+                        resource.request = "buffer";
+                        break;
+                    case "stream":
+                        resource.request = "readable-stream";
+                        break;
+                    default:
+                        throw new Error(`Not found ${mod}`);
+                }
+            }),
+        ],
         ignoreWarnings: [/Failed to parse source map/],
     };
 };
