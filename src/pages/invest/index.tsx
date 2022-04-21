@@ -451,7 +451,7 @@ export const InvestView = () => {
   const getSoceanTotalStakedInfo = useCallback(async () => {
 
     try {
-      const res = await fetch('https://www.socean.fi/api/tvl');
+      const res = await fetch('https://api.socean.fi/v2/stake/tvl_sol');
       const data = await res.json();
       // Should update if got data
       if (data) {
