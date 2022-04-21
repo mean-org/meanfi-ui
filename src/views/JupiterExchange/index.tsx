@@ -433,29 +433,26 @@ export const JupiterExchange = (props: {
         routeMap: Map<string, string[]>;
         inputToken?: TokenInfo;
     }) => {
-        try {
-            if (!inputToken) {
-                return {};
-            }
 
-            const possiblePairs = inputToken
-                ? routeMap.get(inputToken.address) || []
-                : []; // return an array of token mints that can be swapped with the selected inputToken
-            const possiblePairsTokenInfo: { [key: string]: TokenInfo | undefined } = {};
-            possiblePairs.forEach((address) => {
-                const pick = tokens.find((t) => t.address === address);
-                if (pick) {
-                    possiblePairsTokenInfo[address] = pick;
-                }
-            });
-            return possiblePairsTokenInfo;
-        } catch (error) {
-            throw error;
-        }
+        if (!inputToken) { return {}; }
+
+        const possiblePairs = inputToken
+            ? routeMap.get(inputToken.address) || []
+            : []; // return an array of token mints that can be swapped with the selected inputToken
+
+        const possiblePairsTokenInfo: { [key: string]: TokenInfo | undefined } = {};
+        possiblePairs.forEach((address) => {
+            const pick = tokens.find((t) => t.address === address);
+            if (pick) {
+                possiblePairsTokenInfo[address] = pick;
+            }
+        });
+        return possiblePairsTokenInfo;
+
     };
 
     // Calculates the max allowed amount to swap
-    // TODO: Review the whole MAX amount story. Jupiter seems to always charge 0.05 SOL no matter what.
+    // Review the whole MAX amount story. Jupiter seems to always charge 0.05 SOL no matter what.
     const getMaxAllowedSwapAmount = useCallback(() => {
 
         if (!fromMint || !toMint || !userBalances) {
@@ -607,42 +604,37 @@ export const JupiterExchange = (props: {
             inputAmount: number;
             slippage: number;
         }) => {
-            try {
-                if (!inputToken || !outputToken) {
-                    return null;
-                }
-    
-                console.log("Getting routes");
-                const inputAmountLamports = inputToken
-                    ? Math.round(inputAmount * 10 ** inputToken.decimals)
-                    : 0; // Lamports based on token decimals
-                const routes = inputToken && outputToken
-                    ?   await jupiter.computeRoutes({
-                            inputMint: new PublicKey(inputToken.address),
-                            outputMint: new PublicKey(outputToken.address),
-                            inputAmount: inputAmountLamports,
-                            onlyDirectRoutes: isFromSol() || isToSol(),
-                            slippage,
-                            forceFetch: true,
-                        })
-                    :   null;
-    
-                if (routes && routes.routesInfos) {
-                    consoleOut('routesInfos:', routes.routesInfos, 'blue');
-                    if (inputAmount) {
-                        setMinInAmount(routes.routesInfos[0].marketInfos[0].minInAmount);
-                        setMinOutAmount(routes.routesInfos[0].marketInfos[0].minOutAmount);
-                        return routes;
-                    } else {
-                        setMinInAmount(undefined);
-                        setMinOutAmount(undefined);
-                        return null;
-                    }
+
+            if (!inputToken || !outputToken) { return null; }
+
+            console.log("Getting routes");
+            const inputAmountLamports = inputToken
+                ? Math.round(inputAmount * 10 ** inputToken.decimals)
+                : 0; // Lamports based on token decimals
+            const routes = inputToken && outputToken
+                ?   await jupiter.computeRoutes({
+                        inputMint: new PublicKey(inputToken.address),
+                        outputMint: new PublicKey(outputToken.address),
+                        inputAmount: inputAmountLamports,
+                        onlyDirectRoutes: isFromSol() || isToSol(),
+                        slippage,
+                        forceFetch: true,
+                    })
+                :   null;
+
+            if (routes && routes.routesInfos) {
+                consoleOut('routesInfos:', routes.routesInfos, 'blue');
+                if (inputAmount) {
+                    setMinInAmount(routes.routesInfos[0].marketInfos[0].minInAmount);
+                    setMinOutAmount(routes.routesInfos[0].marketInfos[0].minOutAmount);
+                    return routes;
                 } else {
+                    setMinInAmount(undefined);
+                    setMinOutAmount(undefined);
                     return null;
                 }
-            } catch (error) {
-                throw error;
+            } else {
+                return null;
             }
         };
 
@@ -1249,32 +1241,28 @@ export const JupiterExchange = (props: {
 
         setIsBusy(true);
 
-        try {
-            // Prepare execute exchange
-            const { execute } = await jupiter.exchange({
-                routeInfo: selectedRoute,
-            });
+        // Prepare execute exchange
+        const { execute } = await jupiter.exchange({
+            routeInfo: selectedRoute,
+        });
 
-            // Execute swap
-            const swapResult: any = await execute({
-                wallet: wallet as SignerWalletAdapter,
-            });
+        // Execute swap
+        const swapResult: any = await execute({
+            wallet: wallet as SignerWalletAdapter,
+        });
 
-            if (swapResult.error) {
-                console.log(swapResult.error);
-            } else {
-                console.log(`https://explorer.solana.com/tx/${swapResult.txid}`);
-                console.log(`inputAddress=${swapResult.inputAddress.toString()} outputAddress=${swapResult.outputAddress.toString()}`);
-                console.log(`inputAmount=${swapResult.inputAmount} outputAmount=${swapResult.outputAmount}`);
-                setInputAmount(0);
-                setFromAmount('');
-                refreshUserBalances();
-            }
-        } catch (error) {
-            throw error;
-        } finally {
-            setIsBusy(false);
+        if (swapResult.error) {
+            console.log(swapResult.error);
+        } else {
+            console.log(`https://explorer.solana.com/tx/${swapResult.txid}`);
+            console.log(`inputAddress=${swapResult.inputAddress.toString()} outputAddress=${swapResult.outputAddress.toString()}`);
+            console.log(`inputAmount=${swapResult.inputAmount} outputAmount=${swapResult.outputAmount}`);
+            setInputAmount(0);
+            setFromAmount('');
+            refreshUserBalances();
         }
+
+        setIsBusy(false);
 
     }, [
         wallet,

@@ -1,4 +1,8 @@
 {
+    "globals": {
+        "React": "readonly",
+        "JSX": "readonly"
+    },
     "extends": [
         "react-app",
         "react-app/jest",

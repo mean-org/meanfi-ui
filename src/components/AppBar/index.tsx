@@ -16,7 +16,7 @@ import { DepositOptions } from '../DepositOptions';
 import { environment } from '../../environments/environment';
 import { CustomCSSProps } from '../../utils/css-custom-props';
 import { useOnlineStatus } from '../../contexts/online-status';
-import { isDev, isLocal } from '../../utils/ui';
+import { isLocal } from '../../utils/ui';
 
 const { SubMenu } = Menu;
 
@@ -34,7 +34,6 @@ export const AppBar = (props: {
     isWhitelisted,
     detailsPanelOpen,
     addAccountPanelOpen,
-    isInBetaTestingProgram,
     isDepositOptionsModalVisible,
     refreshStreamList,
     setDtailsPanelOpen,
