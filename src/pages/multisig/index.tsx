@@ -9,6 +9,7 @@ import {
 import {
   ConfirmOptions,
   Connection,
+  GetProgramAccountsFilter,
   Keypair,
   LAMPORTS_PER_SOL,
   MemcmpFilter,
@@ -2385,9 +2386,22 @@ export const MultisigView = () => {
     setLoadingMultisigTxs(true);
     let transactions: MultisigTransaction[] = [];
 
+    const msFilter: GetProgramAccountsFilter[] = [
+      {
+          dataSize: 1200
+      },
+      {
+          memcmp: {
+            offset: 8,    // Skip discriminator
+            bytes: selectedMultisig.id.toBase58()
+          }
+      }
+    ];
+
     multisigClient.account.transaction
-      .all(selectedMultisig.id.toBuffer())
+      .all(msFilter)
       .then((txs) => {
+        console.log('!!!multisig txs:', txs, 'orange');
         for (let tx of txs) {
           // console.log('tx account', tx.account);
           let currentOwnerIndex = selectedMultisig.owners.findIndex((o: any) => o.address === publicKey.toBase58());
