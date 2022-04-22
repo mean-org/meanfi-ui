@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Modal } from "antd";
 import { useTranslation } from "react-i18next";
 import { LANGUAGES } from "../../constants";
-import "./style.less";
+import "./style.scss";
 
 export const LanguageSelector = (props: {
   handleClose: any;

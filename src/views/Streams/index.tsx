@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Divider, Row, Col, Button, Modal, Spin, Dropdown, Menu, Tooltip, Empty } from "antd";
 import {
   ArrowDownOutlined,
@@ -181,7 +181,6 @@ export const Streams = () => {
   const [canSubscribe, setCanSubscribe] = useState(true);
 
   // Treasury related
-  const [streamTreasuryType, setStreamTreasuryType] = useState<StreamTreasuryType | undefined>(undefined);
   const [loadingTreasuryDetails, setLoadingTreasuryDetails] = useState(true);
   const [treasuryDetails, setTreasuryDetails] = useState<Treasury | TreasuryInfo | undefined>(undefined);
 
@@ -338,19 +337,6 @@ export const Streams = () => {
     }
     return false;
   }, [publicKey]);
-
-  const isAuthority = (): boolean => {
-    if (streamDetail && publicKey) {
-      const v1 = streamDetail as StreamInfo;
-      const v2 = streamDetail as Stream;
-      if (v1.version < 2 && (v1.treasurerAddress === publicKey.toBase58() || v1.beneficiaryAddress === publicKey.toBase58())) {
-        return true;
-      } else if (v2.version >= 2 && (v2.treasurer === publicKey.toBase58() || v2.beneficiary === publicKey.toBase58())) {
-        return true;
-      }
-    }
-    return false;
-  }
 
   const isTreasurer = (): boolean => {
     if (streamDetail && publicKey) {
@@ -2824,6 +2810,7 @@ export const Streams = () => {
     navigate("/transfers");
   };
 
+  /*
   const getEscrowEstimatedDepletionUtcLabel = (date: Date): string => {
     const today = new Date();
     let miniDate = '';
@@ -2850,6 +2837,7 @@ export const Streams = () => {
       return `(${t('streams.stream-detail.label-funds-runout')} ${miniDate})`;
     }
   }
+  */
 
   const getStreamTypeIcon = useCallback((item: Stream | StreamInfo) => {
     if (isInboundStream(item)) {
@@ -3917,7 +3905,7 @@ export const Streams = () => {
       const treasury = streamDetail.version < 2 ? (streamDetail as StreamInfo).treasuryAddress as string : (streamDetail as Stream).treasury as string;
       const treasurer = streamDetail.version < 2 ? (streamDetail as StreamInfo).treasurerAddress : (streamDetail as Stream).treasurer;
       const beneficiary = streamDetail.version < 2 ? (streamDetail as StreamInfo).beneficiaryAddress as string : (streamDetail as Stream).beneficiary as string;
-      // TODO: Account for multiple beneficiaries funded by the same treasury (only 1 right now)
+      // Account for multiple beneficiaries funded by the same treasury (only 1 right now)
       const numTreasuryBeneficiaries = 1; // streamList.filter(s => s.treasurerAddress === me && s.treasuryAddress === treasury).length;
 
       if (treasurer === me) {  // If I am the treasurer
@@ -5803,7 +5791,6 @@ export const Streams = () => {
               <>
                 {transactionStatus.currentOperation === TransactionStatus.FeatureTemporarilyDisabled ? (
                   <>
-                    {/* TODO: Remove this when everything is back to normal */}
                     <InfoCircleOutlined style={{ fontSize: 48 }} className="icon" />
                     <h4 className="mb-4">Money Streams are getting a makeover, and we are making them more awesome! Stand by, you'll be able to withdraw shortly.</h4>
                   </>

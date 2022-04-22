@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { PreFooter } from "../../components/PreFooter";
-import "./style.less";
+import "./style.scss";
 import { IconStats } from '../../Icons';
 import { Col, Row } from 'antd';
 import { useTranslation } from 'react-i18next';

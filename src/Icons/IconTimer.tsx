@@ -1,4 +1,6 @@
-export const IconTimer = (props: {className: string; style?: React.CSSProperties;}) => {
+import { CSSProperties } from "react";
+
+export const IconTimer = (props: {className: string; style?: CSSProperties;}) => {
     return (
         <svg className={props.className} style={props.style} width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path fillRule="evenodd" clipRule="evenodd" d="M9.99999 3.01776C9.58578 3.01776 9.24999 2.68197 9.24999 2.26776C9.24999 1.85355 9.58578 1.51776 9.99999 1.51776H13.5355C13.9497 1.51776 14.2855 1.85355 14.2855 2.26776C14.2855 2.68197 13.9497 3.01776 13.5355 3.01776H9.99999Z" fill="currentColor"/>

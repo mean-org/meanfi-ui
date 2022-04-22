@@ -1,5 +1,5 @@
 import { useCallback, useContext, useEffect, useState } from "react";
-import './style.less';
+import './style.scss';
 import { Button, Modal, Spin } from "antd";
 import { useTranslation } from 'react-i18next';
 import { TokenDisplay } from "../../components/TokenDisplay";

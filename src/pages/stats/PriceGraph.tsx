@@ -9,7 +9,7 @@ import {
   AreaChart,
   Area,
 } from "recharts";
-import "./style.less";
+import "./style.scss";
 import moment from "moment";
 import { array, bool, str } from "@project-serum/borsh";
 import { Button } from "antd";

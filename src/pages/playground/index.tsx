@@ -6,7 +6,7 @@ import { AppStateContext } from "../../contexts/appstate";
 import { SelectOption } from "../../models/common-types";
 import { TransactionStatus } from "../../models/enums";
 import { UserTokenAccount } from "../../models/transactions";
-import "./style.less";
+import "./style.scss";
 import {
   CheckOutlined,
   LoadingOutlined,

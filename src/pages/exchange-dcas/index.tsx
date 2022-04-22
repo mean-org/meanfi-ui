@@ -20,7 +20,7 @@ import {
 import { Button, Col, Dropdown, Empty, Menu, Modal, Row, Spin, Tooltip } from 'antd';
 import { MEAN_TOKEN_LIST } from '../../constants/token-list';
 import { Identicon } from '../../components/Identicon';
-import "./style.less";
+import "./style.scss";
 import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, useLocalStorageState } from '../../utils/utils';
 import {
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,

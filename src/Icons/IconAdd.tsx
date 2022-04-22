@@ -1,4 +1,6 @@
-export const IconAdd = (props: {className: string; style?: React.CSSProperties;}) => {
+import { CSSProperties } from "react";
+
+export const IconAdd = (props: {className: string; style?: CSSProperties;}) => {
     return (
         <svg className={props.className} style={props.style} width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M7.00739 12C7.00739 11.5858 7.34317 11.25 7.75739 11.25H11.25V7.75735C11.25 7.34314 11.5858 7.00735 12 7.00735C12.4142 7.00735 12.75 7.34314 12.75 7.75735V11.25H16.2427C16.6569 11.25 16.9927 11.5858 16.9927 12C16.9927 12.4142 16.6569 12.75 16.2427 12.75H12.75V16.2426C12.75 16.6569 12.4142 16.9926 12 16.9926C11.5858 16.9926 11.25 16.6569 11.25 16.2426V12.75H7.75739C7.34317 12.75 7.00739 12.4142 7.00739 12Z" fill="currentColor"/>

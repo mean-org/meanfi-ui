@@ -118,7 +118,7 @@ export function getTransactionModalTitle(status: TransactionStatusInfo, isBusy: 
         }
     }
     return title;
-};
+}
 
 export function getTransactionStatusForLogs (status: TransactionStatus): string {
     switch (status) {
