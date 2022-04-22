@@ -25,7 +25,7 @@ import { calculateActionFees as calculateDdcaActionFees, TransactionFees as Ddca
 import { useNavigate } from "react-router-dom";
 import { DEFAULT_SLIPPAGE_PERCENT } from "../../constants";
 import useLocalStorage from "../../hooks/useLocalStorage";
-import "./style.less";
+import "./style.scss";
 
 import {
   getClients,

@@ -1,5 +1,5 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import './style.less';
+import './style.scss';
 import { WarningFilled } from "@ant-design/icons";
 import { useTranslation } from 'react-i18next';
 import { PreFooter } from "../../components/PreFooter";

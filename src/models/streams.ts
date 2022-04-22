@@ -3,7 +3,7 @@ export interface StreamsSummary {
     incomingAmount: number;
     outgoingAmount: number;
     totalAmount: number;
-};
+}
 
 export const initialSummary: StreamsSummary = {
     totalNet: 0,

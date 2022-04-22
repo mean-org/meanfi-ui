@@ -3,7 +3,7 @@ import { Button, Popover } from "antd";
 import { useTranslation } from "react-i18next";
 import { CloseOutlined } from "@ant-design/icons";
 import { shortenAddress } from "../../utils/utils";
-import "./style.less";
+import "./style.scss";
 import { MultisigParticipant } from "../../models/multisig";
 import { IconDocument } from "../../Icons";
 

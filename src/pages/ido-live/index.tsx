@@ -10,7 +10,7 @@ import {
 } from "../../constants";
 import { useTranslation } from 'react-i18next';
 import { consoleOut, isLocal, isProd, isValidAddress, percentual } from '../../utils/ui';
-import "./style.less";
+import "./style.scss";
 import { AirdropRedeem, IdoDeposit, IdoRedeem } from '../../views';
 import { IdoWithdraw } from '../../views/IdoWithdraw';
 import Countdown from 'react-countdown';
