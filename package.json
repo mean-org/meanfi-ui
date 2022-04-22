@@ -36,14 +36,15 @@
     "build:staging:win": "set \"REACT_APP_ENV=staging\" && npm run build",
     "build:prod": "REACT_APP_ENV=production npm run build",
     "build:prod:win": "set \"REACT_APP_ENV=production\" && npm run build",
-    "postbuild": "node ci/copy-config.js"
+    "postbuild": "node ci/copy-config.js",
+    "lint": "eslint src --ext .js,.jsx,.ts,.tsx"
   },
   "dependencies": {
     "@ant-design/icons": "^4.7",
     "@jup-ag/core": "1.0.0-beta.21",
     "@ledgerhq/hw-transport": "^6.11",
     "@ledgerhq/hw-transport-webhid": "^6.11",
-    "@mean-dao/ddca": "1.2.34",
+    "@mean-dao/ddca": "1.2.35",
     "@mean-dao/hybrid-liquidity-ag": "1.1.32",
     "@mean-dao/money-streaming": "^1.7.10",
     "@mean-dao/msp": "^0.5.15",
