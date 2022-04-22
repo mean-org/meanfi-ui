@@ -76,7 +76,7 @@ import { StreamResumeModal } from '../../components/StreamResumeModal';
 import { TREASURY_TYPE_OPTIONS } from '../../constants/treasury-type-options';
 import { TreasuryTopupParams } from '../../models/common-types';
 import { TokenInfo } from '@solana/spl-token-registry';
-import './style.less';
+import './style.scss';
 import { Constants, refreshTreasuryBalanceInstruction } from '@mean-dao/money-streaming';
 import {
   TransactionFees,

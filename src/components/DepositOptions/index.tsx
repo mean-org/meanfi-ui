@@ -9,14 +9,13 @@ import { IconCopy, IconInfoTriangle, IconSolana } from "../../Icons";
 import { notify } from "../../utils/notifications";
 import { consoleOut, copyText } from "../../utils/ui";
 import { AppConfig, environment } from '../../environments/environment';
-import "./style.less";
+import "./style.scss";
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import useScript from '../../hooks/useScript';
 import { appConfig } from '../..';
 
 const QRCode = require('qrcode.react');
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 declare const TransakSDK: any;
 let transak: any = undefined;
 

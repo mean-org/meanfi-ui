@@ -1,4 +1,6 @@
-export const IconIncomingPaused = (props: {className: string; style?: React.CSSProperties;}) => {
+import { CSSProperties } from "react";
+
+export const IconIncomingPaused = (props: {className: string; style?: CSSProperties;}) => {
     return (
         <svg className={props.className} style={props.style} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fillRule="evenodd" clipRule="evenodd">
             <path d="M21 5a2 2 0 00-2-2H3a2 2 0 00-2 2v16a2 2 0 002 2h16a2 2 0 002-2V5z" fill="none" stroke="currentColor"/>

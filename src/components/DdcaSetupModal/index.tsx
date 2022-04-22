@@ -7,7 +7,7 @@ import { DcaInterval } from '../../models/ddca-models';
 import { consoleOut, getTransactionStatusForLogs, isProd, percentage } from '../../utils/ui';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume } from '../../utils/utils';
-import "./style.less";
+import "./style.scss";
 import { SliderMarks } from 'antd/lib/slider';
 import { InfoIcon } from '../InfoIcon';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';

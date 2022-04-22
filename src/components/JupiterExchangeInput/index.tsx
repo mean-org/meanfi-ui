@@ -17,6 +17,7 @@ export const JupiterExchangeInput = (props: {
   onPriceClick: any;
   onBalanceClick?: any;
   readonly?: boolean;
+  disabled?: boolean;
   className?: string;
   hint?: string;
 }) => {
@@ -39,7 +40,7 @@ export const JupiterExchangeInput = (props: {
 
     return (
         <>
-        <div className={`well ${props.className || ''}`}>
+        <div className={`well ${props.disabled ? 'disabled' : props.className || ''}`}>
 
             {/* Balance row */}
             <div className="flex-fixed-right">

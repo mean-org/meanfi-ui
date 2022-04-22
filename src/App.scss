@@ -1,4 +1,4 @@
-@import '~antd/dist/antd.less'; // Import Ant Design styles by less entry
+@import '~antd/dist/antd.css'; // Import Ant Design styles by less entry
 
 // Normal / Light theme
 :root {
@@ -1340,6 +1340,27 @@ footer.ant-layout-footer {
   animation-timing-function: ease-in-out;
 }
 
+.ant-menu {
+  &.ant-menu-horizontal {
+    .ant-menu-item:hover::after,
+    .ant-menu-submenu:hover::after,
+    .ant-menu-item-active::after,
+    .ant-menu-submenu-active::after,
+    .ant-menu-item-open::after,
+    .ant-menu-submenu-open::after,
+    .ant-menu-item-selected::after,
+    .ant-menu-submenu-selected::after {
+      border-bottom: 2px solid var(--color-primary-highlight);
+    }
+    .ant-menu-item {
+      &.ant-menu-item-selected::after,
+      &.ant-menu-submenu-selected::after {
+        border-bottom: 2px solid var(--color-primary-highlight);
+      }
+    }
+  }
+}
+
 .ant-menu:not(.ant-menu-horizontal) {
   &.ant-menu-submenu-popup > .ant-menu {
     background-color: var(--bg-color);
@@ -1354,10 +1375,24 @@ footer.ant-layout-footer {
       a {
         color: var(--color-secondary-alpha-85);
       }
+      &::after {
+        border-bottom: 2px solid var(--color-primary-highlight);
+      }
     }
     &.ant-menu-item-active:not(.ant-menu-item-selected) {
       background-color: var(--color-secondary-alpha-02);
     }
+  }
+}
+
+.ant-switch-checked {
+  background-color: var(--color-primary);
+}
+
+.ant-spin {
+  color: var(--color-primary-highlight);
+  .ant-spin-dot.ant-spin-dot-spin .ant-spin-dot-item {
+    background-color: var(--color-primary-highlight);
   }
 }
 
@@ -1500,10 +1535,28 @@ footer.ant-layout-footer {
         .ant-picker-cell-disabled {
           color: var(--color-secondary-alpha-15);
         }
+        .ant-picker-cell {
+          &:not(.ant-picker-cell-selected):hover {
+            .ant-picker-cell-inner {
+              background-color: var(--color-secondary-alpha-20);
+            }
+          }
+          &.ant-picker-cell-selected {
+            .ant-picker-cell-inner {
+              background-color: var(--color-primary-highlight);
+              &::before {
+                border: 1px solid var(--color-primary-highlight);
+              }
+            }
+          }
+        }
       }
     }
     .ant-picker-footer {
       border-top: var(--custom-border-style);
+      .ant-picker-today-btn {
+        color: var(--color-primary-highlight);
+      }
     }
   }
 }
@@ -4058,9 +4111,6 @@ main section {
         line-height: 2;
         opacity: 0;
         transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
-        .ant-spin-dot.ant-spin-dot-spin .ant-spin-dot-item {
-          background-color: var(--color-primary-highlight);
-        }
       }
       .transaction-legend {
         display: inline-flex;
@@ -4457,7 +4507,9 @@ main section {
         @media (min-width: 576px) {
           &.empty {
             height: calc(100% - 1rem);
-            &:extend(.flex-center);
+            display: flex;
+            justify-content: center;
+            align-items: center;
           }
         }
         .item-list-header.compact {
@@ -6618,7 +6670,7 @@ code {
   }
   #qr-reader__dashboard_section_csr {
     button {
-      &:extend(.ant-btn);
+      @extend .ant-btn;
     }
   }
   #qr-reader__status_span {
@@ -6836,14 +6888,34 @@ code {
   color: inherit;
   display: inline-flex;
   align-items: center;
+  &.ant-checkbox-wrapper-checked:not(:disabled):hover {
+    .ant-checkbox-checked::after {
+      border: 1px solid var(--color-primary-highlight);
+    }
+  }
   &:not(:disabled):hover {
-    .ant-checkbox .ant-checkbox-inner {
-      border: 1px solid var(--color-secondary-alpha-50) !important;
+    .ant-checkbox {
+      &.ant-checkbox-checked {
+        .ant-checkbox-inner {
+          border: 1px solid var(--color-primary-highlight);
+        }
+      }
+      &:not(.ant-checkbox-checked) {
+        .ant-checkbox-inner {
+          border: 1px solid var(--color-secondary-alpha-50) !important;
+        }
+      }
     }
   }
   .ant-checkbox {
     top: unset;
     color: inherit;
+    &.ant-checkbox-checked {
+      .ant-checkbox-inner {
+        background-color: var(--color-primary-highlight);
+        border: 1px solid var(--color-primary-highlight);
+      }
+    }
     &:not(.ant-checkbox-checked) {
       .ant-checkbox-inner {
         background-color: var(--color-component-background);
@@ -6865,7 +6937,7 @@ code {
   height: 10px;
   background-color: var(--color-notify-warning);
   border-radius: 50%;
-  box-shadow: 1px 1px 1px 0px rgb(0 0 0 / 30%);
+  box-shadow: 1px 1px 1px 0px rgba(0,0,0,0.3);
   opacity: 0.6;
   &.success {
     background-color: var(--color-notify-success);

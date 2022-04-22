@@ -25,6 +25,7 @@ import { initializeAccount } from '@project-serum/serum/lib/token-instructions';
 import { AccountTokenParsedInfo, TokenAccountInfo } from '../models/token';
 import { BigNumber } from "bignumber.js";
 import BN from "bn.js";
+import { isMobile } from "react-device-detect";
 
 export type KnownTokenMap = Map<string, TokenInfo>;
 
@@ -65,7 +66,8 @@ export function useLocalStorageState(key: string, defaultState?: string) {
 
 // shorten the checksummed version of the input address to have 4 characters at start and end
 export function shortenAddress(address: string, chars = 4): string {
-  return `${address.slice(0, chars)}...${address.slice(-chars)}`;
+  const numChars = isMobile ? 4 : chars;
+  return `${address.slice(0, numChars)}...${address.slice(-numChars)}`;
 }
 
 export function getTokenIcon(

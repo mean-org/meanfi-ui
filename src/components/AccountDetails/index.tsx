@@ -9,7 +9,7 @@ import {
   IconLogout,
   IconWallet,
 } from "../../Icons";
-import "./style.less";
+import "./style.scss";
 import { Button, Col, Collapse, Modal, Row } from "antd";
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "../../constants";
 import { Identicon } from "../Identicon";

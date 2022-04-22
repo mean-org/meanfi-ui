@@ -68,7 +68,7 @@ import {
   getFees
 } from '../../models/multisig';
 import { MultisigCreateModal } from '../../components/MultisigCreateModal';
-import './style.less';
+import './style.scss';
 
 // MULTISIG
 import { BN, Program, Provider } from "@project-serum/anchor";

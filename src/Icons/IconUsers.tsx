@@ -1,4 +1,6 @@
-export const IconUsers = (props: {className: string; style?: React.CSSProperties;}) => {
+import { CSSProperties } from "react";
+
+export const IconUsers = (props: {className: string; style?: CSSProperties;}) => {
     return (
         <svg className={props.className} style={props.style} width="24" height="24" viewBox="0 0 100.353 100.353" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path fillRule="evenodd" clipRule="evenodd" d="M49.106 50.437c-12.167 0-22.066 9.898-22.066 22.065a1.5 1.5 0 0 0 1.5 1.5h41.131a1.5 1.5 0 0 0 1.5-1.5c0-12.167-9.899-22.065-22.065-22.065zM30.099 71.002c.768-9.814 9-17.565 19.007-17.565 10.007 0 18.239 7.751 19.006 17.565H30.099zM48.746 48.456c7.143 0 12.954-5.811 12.954-12.954 0-7.143-5.812-12.954-12.954-12.954-7.143 0-12.954 5.811-12.954 12.954 0 7.143 5.811 12.954 12.954 12.954zm0-22.908c5.488 0 9.954 4.465 9.954 9.954 0 5.488-4.466 9.954-9.954 9.954-5.489 0-9.954-4.465-9.954-9.954 0-5.489 4.465-9.954 9.954-9.954z" fill="currentColor"/>

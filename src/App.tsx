@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Layout } from "antd";
 import { AppRoutes } from "./routes";
-import "./App.less";
+import "./App.scss";
 import { useLocalStorageState } from './utils/utils';
 import { refreshCachedRpc } from './models/connections-hq';
 import { useTranslation } from 'react-i18next';
