@@ -566,7 +566,7 @@
 			"transaction-requires": "This transaction requires",
 			"treasury-closed-warning": "When a treasury is closed, all funds left over will be deposited back into the multisig safe.",
 			"tx-operation-failure": "작동{{operation}}실패",
-			"tx-operation-pending-one": "A transaction on this Multisig is now ready for execution. Please tell the person who initiated this transaction to execute it.",
+			"tx-operation-pending-one": "This transaction is ready for execution. Please tell the person who initiated this transaction to execute it.",
 			"tx-operation-pending-two": "A transaction on this Multisig is ready for",
 			"tx-operation-success": "작동{{operation}}성공",
 			"tx-operation-voided": "This pending transaction has been VOIDED due to the Multisig being edited.",

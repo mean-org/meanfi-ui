@@ -549,7 +549,7 @@ const renderer = ({ days, hours, minutes, seconds, completed }: any) => {
                 ) : (
                   <h3 className="text-center">{t('multisig.multisig-transactions.tx-operation-pending-two')} {isUserTheProposer() ? t('multisig.multisig-transactions.your-execution') : t('multisig.multisig-transactions.execution')}.</h3>
                 )}
-                <Divider plain />
+                <Divider className="mt-1" />
                 {renderGeneralSummaryModal}
                 {/* <div className="mb-1 d-flex align-items-center justify-content-center text-center">
                   <span className="mr-1">{t('multisig.multisig-transactions.your-status')}</span>

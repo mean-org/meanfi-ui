@@ -542,7 +542,7 @@
 			"tx-operation-success": "Operation {{operation}} succeeded",
 			"tx-operation-failure": "Operation {{operation}} failed",
 			"no-transactions": "This multisig asset has no transactions",
-			"tx-operation-pending-one": "A transaction on this multisig is now ready for execution. Please tell the person who initiated this transaction to execute it.",
+			"tx-operation-pending-one": "This transaction is ready for execution. Please tell the person who initiated this transaction to execute it.",
 			"tx-operation-pending-two": "A transaction on this multisig is ready for",
 			"tx-operation-voided": "This pending transaction has been VOIDED due to the Multisig being edited.",
 			"tx-operation-rejected": "This transaction has been rejected.",

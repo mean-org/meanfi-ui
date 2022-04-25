@@ -569,7 +569,7 @@
 			"tx-operation-executed": "This transaction has already been executed",
 			"tx-operation-expired": "This transaction has already been expired",
 			"tx-operation-failure": "Operation {{operation}} failed",
-			"tx-operation-pending-one": "A transaction on this multisig is now ready for execution. Please tell the person who initiated this transaction to execute it.",
+			"tx-operation-pending-one": "This transaction is ready for execution. Please tell the person who initiated this transaction to execute it.",
 			"tx-operation-pending-two": "A transaction on this multisig is ready for",
 			"tx-operation-rejected": "This transaction has been rejected.",
 			"tx-operation-success": "Operation {{operation}} succeeded",
