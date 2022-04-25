@@ -361,6 +361,15 @@ export const getMultisigTransactionSummary = (
 ): MultisigTransactionSummary | undefined => {
   try {
 
+    let expDate = (
+      transaction.details && 
+      transaction.details.expirationDate
+    ) ? (
+      transaction.details.expirationDate.getTime().toString().length > 13
+         ? new Date(parseInt((transaction.details.expirationDate.getTime() / 1_000).toString())).toString()
+         : transaction.details.expirationDate.toString()
+     ) : "";
+
     let txSummary = {
       address: transaction.id.toBase58(),
       operation: transaction.operation.toString(),
@@ -369,7 +378,7 @@ export const getMultisigTransactionSummary = (
       description: transaction.details ? transaction.details.description : "",
       createdOn: transaction.createdOn.toString(),
       executedOn: transaction.executedOn ? transaction.executedOn.toString() : "",
-      expirationDate: transaction.details && transaction.details.expirationDate ? transaction.details.expirationDate.toString() : "",
+      expirationDate: expDate,
       approvals: transaction.signers.filter(s => s === true).length,
       multisig: transaction.multisig.toBase58(),
       status: transaction.status.toString(),
