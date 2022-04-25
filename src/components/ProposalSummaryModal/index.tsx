@@ -1,4 +1,4 @@
-import React, { useCallback, useContext } from 'react';
+import React, { useCallback, useContext, useState } from 'react';
 import {
   CheckOutlined,
   CopyOutlined,
@@ -12,7 +12,7 @@ import {
   getTokenAmountAndSymbolByTokenAddress,
   shortenAddress
 } from '../../utils/utils';
-
+import "./style.scss";
 import { Button, Col, Divider, Modal, Row, Spin } from 'antd';
 import {
   copyText,
@@ -29,6 +29,7 @@ import {
   MultisigTransaction,
   MultisigTransactionStatus,
 } from '../../models/multisig';
+import Countdown from 'react-countdown';
 
 // MULTISIG
 import { MultisigOwnersSigned } from '../../components/MultisigOwnersSigned';
@@ -63,7 +64,7 @@ export const ProposalSummaryModal = (props: {
   // // Transaction confirm and execution modal launched from each Tx row
   // const [isMultisigActionTransactionModalVisible, setMultisigActionTransactionModalVisible] = useState(false);
 
-  const { highlightedMultisigTx, multisigTransactionSummary, selectedMultisig, isBusy, nativeBalance, minRequiredBalance, isVisible } = props;
+  const { highlightedMultisigTx, multisigTransactionSummary, selectedMultisig, isBusy, nativeBalance, minRequiredBalance, isVisible } = props;  
 
   const resetTransactionStatus = useCallback(() => {
 
@@ -348,70 +349,129 @@ export const ProposalSummaryModal = (props: {
     window.location.reload();
   },[]);
 
+  // Random component
+const Completionist = () => <span>You are good to go!</span>;
+
+  // Renderer callback with condition
+const renderer = ({ total, days, hours, minutes, seconds, completed }: any) => {
+  if (completed) {
+    // Render a completed state
+    return <Completionist />;
+  } else {
+    // Render a countdown
+    return <span>{total}:{days}:{hours}:{minutes}:{seconds}</span>;
+  }
+};
+
   const renderGeneralSummaryModal = (
     <>
       {
         highlightedMultisigTx && multisigTransactionSummary && (
         <>
           <Row>
-          {multisigTransactionSummary.title && (
-            <Col span={24} className="mb-1 d-flex text-left">
-              {/* <span className="info-label width-25">{t('multisig.multisig-transactions.transaction-title')}</span> */}
+          {/* {multisigTransactionSummary.title && (
+            <Col span={12} className="mb-1 d-flex text-left">
               <span>{multisigTransactionSummary.title}</span>
             </Col>
-          )}
+          )} */}
           {multisigTransactionSummary.description && (
-            <Col span={24} className="mb-1 d-flex text-left">
+            <Col span={12} className="mb-1 d-flex text-left">
               {/* <span className="info-label width-25">{t('multisig.multisig-transactions.transaction-description')}</span> */}
               <span>{multisigTransactionSummary.description}</span>
             </Col>
           )}
           </Row>
           {/* Action */}
-          <Row className="mb-1">
-            <Col span={6} className="text-left pr-1">
+          {/* <Row className="mb-1">
+            <Col span={12} className="text-right pr-1">
               <span className="info-label">{t('multisig.multisig-transactions.proposed-action')}</span>
             </Col>
-            <Col span={18} className="text-left pl-1">
+            <Col span={12} className="text-left pl-1">
               <span>{getOperationName(highlightedMultisigTx.operation)}</span>
             </Col>
-          </Row>
-          {/* Proposer */}
+          </Row> */}
+          {/* Title */}
           <Row className="mb-1">
-            <Col span={6} className="text-left pr-1">
-              <span className="info-label">{t('multisig.multisig-transactions.proposed-by')}</span>
-            </Col>
-            <Col span={18} className="text-left pl-1">
-              <span>{getTxInitiator(highlightedMultisigTx)?.name} ({shortenAddress(multisigTransactionSummary.proposer as string, 4)})</span>
-            </Col>
-          </Row>
-          {/* Submitted on */}
-          <Row className="mb-1">
-            <Col span={6} className="text-left pr-1">
-              <span className="info-label">{t('multisig.multisig-transactions.submitted-on')}</span>
-            </Col>
-            <Col span={18} className="text-left pl-1">
-              <span>{getReadableDate(multisigTransactionSummary.createdOn, true)}</span>
-            </Col>
+            {multisigTransactionSummary.title && (
+              <>
+                <Col span={12} className="text-right pr-1">
+                  <span className="info-label">Title:</span>
+                </Col>
+                <Col span={12} className="text-left pl-1">
+                  <span>{multisigTransactionSummary.title}</span>
+                </Col>
+              </>
+            )}
           </Row>
           {/* Expiry date */}
           <Row className="mb-1">
-            <Col span={6} className="text-left pr-1">
-              <span className="info-label">{t('multisig.multisig-transactions.transaction-expiry-date')}</span>
+            <Col span={12} className="text-right pr-1">
+              <span className="info-label">Expires in:</span>
             </Col>
-            <Col span={18} className="text-left pl-1">
+            <Col span={12} className="text-left pl-1">
               {multisigTransactionSummary.expirationDate ? (
-                <span>{getReadableDate(multisigTransactionSummary.expirationDate, true)}</span>
+                <>
+                  {/* <Countdown className="align-middle" date={getReadableDate(multisigTransactionSummary.expirationDate)} daysInHours={true} renderer={renderer} /> */}
+                  <span>{getReadableDate(multisigTransactionSummary.expirationDate, true)}</span>
+                </>
               ) : (
                 <span>{t('multisig.proposal-modal.does-not-expire')}</span>
               )}
             </Col>
           </Row>
+          {/* Proposer */}
+          <Row className="mb-1">
+            <Col span={12} className="text-right pr-1">
+              <span className="info-label">{t('multisig.multisig-transactions.proposed-by')}</span>
+            </Col>
+            <Col span={12} className="text-left pl-1">
+              <span>{getTxInitiator(highlightedMultisigTx)?.name} ({shortenAddress(multisigTransactionSummary.proposer as string, 4)})</span>
+            </Col>
+          </Row>
+          {/* Submitted on */}
+          <Row className="mb-1">
+            <Col span={12} className="text-right pr-1">
+              <span className="info-label">{t('multisig.multisig-transactions.submitted-on')}</span>
+            </Col>
+            <Col span={12} className="text-left pl-1">
+              <span>{getReadableDate(multisigTransactionSummary.createdOn, true)}</span>
+            </Col>
+          </Row>
+          {/* Status */}
+          <Row className="mb-1">
+            <Col span={12} className="text-right pr-1">
+              <span className="info-label">Status</span>
+            </Col>
+            <Col span={12} className="text-left pl-1 mb-1 d-flex align-items-start justify-content-start">
+              <span>{getTxSignedCount(highlightedMultisigTx)} signed, {selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)} pending</span>
+              <MultisigOwnersSigned className="ml-1" participants={getParticipantsThatApprovedTx(highlightedMultisigTx) || []} />
+            </Col>
+          </Row>
         </>)
       }
-      <h3 className="text-uppercase text-center mb-1 mt-2">{t('multisig.proposal-modal.instruction')}</h3>
-      <div className="well mb-3 proposal-summary-container vertical-scroll">
-        <div className="mb-2">
+      <Row>
+        <Col span={24}>
+          {isTxPendingExecution() ? (
+            <div className="text-center proposal-resume">{t('multisig.multisig-transactions.proposal-ready-to-be-executed')}</div>
+          ) : isTxPendingApproval() ? (
+            <div className="text-center proposal-resume">{(selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)) > 1 ? t('multisig.multisig-transactions.missing-signatures', {missingSignature: selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)}) : t('multisig.multisig-transactions.missing-signature', {missingSignature: selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)})}</div>
+          ) : null}
+        </Col>
+      </Row>
+
+      <Divider className="mt-1" />
+
+      <Row className="mb-1">
+        <Col span={12} className="text-right pr-1">
+          <div className="text-uppercase">{t('multisig.proposal-modal.instruction')}:</div>
+        </Col>
+        <Col span={12} className="text-left pl-1">
+          <div>{getOperationName(highlightedMultisigTx.operation)}</div>
+        </Col>
+      </Row>
+
+      <div className="well mb-1 proposal-summary-container vertical-scroll">
+        <div className="mb-1">
           <span>{t('multisig.proposal-modal.instruction-program')}:</span><br />
           <div>
             <span onClick={() => copyAddressToClipboard(multisigTransactionSummary?.instruction.programId)}  className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
@@ -426,7 +486,7 @@ export const ProposalSummaryModal = (props: {
           </div>
         </div>
         {multisigTransactionSummary?.instruction.accounts.map((account: any) => (
-          <div className="mb-2">
+          <div className="mb-1">
             <span>{t('multisig.proposal-modal.instruction-account')} {account.index + 1}:</span><br />
             <div>
               <span onClick={() => copyAddressToClipboard(account.value)}  className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
@@ -479,14 +539,14 @@ export const ProposalSummaryModal = (props: {
                 ) : (
                   <h3 className="text-center">{t('multisig.multisig-transactions.tx-operation-pending-two')} {isUserTheProposer() ? t('multisig.multisig-transactions.your-execution') : t('multisig.multisig-transactions.execution')}.</h3>
                 )}
-                <Divider className="mt-2" />
+                <Divider plain />
                 {renderGeneralSummaryModal}
-                <div className="mb-1 d-flex align-items-center justify-content-center text-center">
+                {/* <div className="mb-1 d-flex align-items-center justify-content-center text-center">
                   <span className="mr-1">{t('multisig.multisig-transactions.your-status')}</span>
                   <span className={`font-bold ${getTxUserStatusClass(highlightedMultisigTx)}`}>{getTransactionUserStatusAction(highlightedMultisigTx, true)}</span>
                   <MultisigOwnersSigned className="ml-1" participants={getParticipantsThatApprovedTx(highlightedMultisigTx) || []} />
-                </div>
-                <div className="mb-2 text-center">{t('multisig.multisig-transactions.proposal-ready-to-be-executed')}</div>
+                </div> */}
+                {/* <div className="mb-2 text-center">{t('multisig.multisig-transactions.proposal-ready-to-be-executed')}</div> */}
               </>
             ) : isTxPendingApproval() ? (
               <>
@@ -494,12 +554,12 @@ export const ProposalSummaryModal = (props: {
                 <Divider className="mt-2" />
                 {renderGeneralSummaryModal}
                 
-                <div className="mb-1 d-flex align-items-center justify-content-center text-center">
+                {/* <div className="mb-1 d-flex align-items-center justify-content-center text-center">
                   <span className="mr-1">{t('multisig.multisig-transactions.your-status')}</span>
                   <span className={`font-bold mr-1 ${getTxUserStatusClass(highlightedMultisigTx)}`}>{getTransactionUserStatusAction(highlightedMultisigTx, true)}</span>
                   <MultisigOwnersSigned className="ml-1" participants={getParticipantsThatApprovedTx(highlightedMultisigTx) || []} />
-                </div>
-                <div className="mb-2 text-center">{(selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)) > 1 ? t('multisig.multisig-transactions.missing-signatures', {missingSignature: selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)}) : t('multisig.multisig-transactions.missing-signature', {missingSignature: selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)})}</div>
+                </div> */}
+                {/* <div className="mb-2 text-center">{(selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)) > 1 ? t('multisig.multisig-transactions.missing-signatures', {missingSignature: selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)}) : t('multisig.multisig-transactions.missing-signature', {missingSignature: selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)})}</div> */}
               </>
             ) : (
               <>
@@ -513,11 +573,12 @@ export const ProposalSummaryModal = (props: {
                 <Divider className="mt-2" />
                 {(!isTxVoided() && !isTxRejected()) && (
                   <>
-                    <div className="mb-1 d-flex align-items-center justify-content-center text-center">
+                    {/* <div className="mb-1 d-flex align-items-center justify-content-center text-center">
                       <span className="mr-1">{t('multisig.multisig-transactions.your-status')}</span>
                       <span className={`font-bold mr-1 ${getTxUserStatusClass(highlightedMultisigTx)}`}>{getTransactionUserStatusAction(highlightedMultisigTx, true)}</span>
                       <MultisigOwnersSigned className="ml-1" participants={getParticipantsThatApprovedTx(highlightedMultisigTx) || []} />
-                    </div>
+                    </div> */}
+                    {renderGeneralSummaryModal}
                   </>
                 )}
               </>
@@ -613,9 +674,11 @@ export const ProposalSummaryModal = (props: {
         )}
       </div>
 
+      <Divider plain />
+
       {/* CTAs shown always - IF DIFFERENT CTAS ARE BEST FOR EACH STAGE, MOVE THEM INSIDE THE PANELS */}
       {!(isBusy && transactionStatus !== TransactionStatus.Iddle) && (
-        <div className="row two-col-ctas mt-3 transaction-progress p-0 no-margin-right-left">
+        <div className="row two-col-ctas transaction-progress p-0 no-margin-right-left">
           <div className={((canShowExecuteButton() || canShowApproveButton() || canShowCancelButton()) && !isError(transactionStatus.currentOperation)) ? "col-6 no-padding-left" : "col-12 no-padding-left no-padding-right"}>
             <Button
               block

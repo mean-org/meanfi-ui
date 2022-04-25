@@ -1,17 +1,9 @@
 .proposal-summary-modal {
-  .ant-modal-header,
   .ant-modal-body {
-    .ant-divider.ant-divider-horizontal.ant-divider-plain {
-      margin: 0 !important;
-    }
-  }
-  .ant-modal-body {
-    padding: 0.25em !important;
-    .stepper-wrapper {
-      padding: 1.5em 1.75em 0 !important;
-    }
-    .contract-wrapper {
-      padding: 1.5em;
+    padding-top: 0 !important;
+    .proposal-resume {
+      font-weight: 100 !important;
+      font-style: italic !important;
     }
   }
 }
