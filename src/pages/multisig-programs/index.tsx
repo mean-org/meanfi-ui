@@ -16,7 +16,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { consoleOut, copyText, delay, getReadableDate, getShortDate, getTransactionOperationDescription, getTransactionStatusForLogs, isDev, isLocal } from '../../utils/ui';
 import { Identicon } from '../../components/Identicon';
 import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress } from '../../utils/utils';
-import { MultisigV2, MultisigTransaction, MultisigTransactionStatus, MultisigParticipant, Multisig, MEAN_MULTISIG_OPS, listMultisigTransactions, MultisigTransactionSummary, getMultisigTransactionSummary, DEFAULT_EXPIRATION_TIME_SECONDS } from '../../models/multisig';
+import { MultisigV2, MultisigTransaction, MultisigTransactionStatus, MultisigParticipant, Multisig, MEAN_MULTISIG_OPS, listMultisigTransactions, MultisigTransactionSummary, DEFAULT_EXPIRATION_TIME_SECONDS } from '../../models/multisig';
 import { TransactionFees } from '@mean-dao/msp';
 import { useNativeAccount } from '../../contexts/accounts';
 import { OperationType, TransactionStatus } from '../../models/enums';
@@ -1139,6 +1139,8 @@ export const MultisigProgramsView = () => {
         multisigClient.programId
       );
 
+      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
+
       const tx = multisigClient.transaction.createTransaction(
         BPF_LOADER_UPGRADEABLE_PID,
         ixAccounts,
@@ -1146,7 +1148,7 @@ export const MultisigProgramsView = () => {
         OperationType.UpgradeProgram,
         "Upgrade Program",
         "",
-        new BN(Date.now() + DEFAULT_EXPIRATION_TIME_SECONDS),
+        new BN(expirationTime),
         new BN(0),
         new BN(0),
         {
@@ -1828,6 +1830,8 @@ export const MultisigProgramsView = () => {
         multisigClient.programId
       ); 
 
+      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
+
       const tx = multisigClient.transaction.createTransaction(
         BPF_LOADER_UPGRADEABLE_PID,
         ixAccounts,
@@ -1835,7 +1839,7 @@ export const MultisigProgramsView = () => {
         OperationType.SetMultisigAuthority,
         "Set Program Authority",
         "",
-        new BN(Date.now() + DEFAULT_EXPIRATION_TIME_SECONDS),
+        new BN(expirationTime),
         new BN(0),
         new BN(0),
         {
@@ -3526,8 +3530,8 @@ export const MultisigProgramsView = () => {
       {(isMultisigActionTransactionModalVisible && highlightedMultisigTx && selectedMultisig) && (
         <ProposalSummaryModal
           isVisible={isMultisigActionTransactionModalVisible}
-          handleOk={() => setMultisigActionTransactionModalVisible(false)}
-          handleClose={() => setMultisigActionTransactionModalVisible(false)}
+          handleOk={onAcceptMultisigActionModal}
+          handleClose={onCloseMultisigActionModal}
           isBusy={isBusy}
           nativeBalance={nativeBalance}
           highlightedMultisigTx={highlightedMultisigTx}

@@ -1808,6 +1808,8 @@ export const TreasuriesView = () => {
         ],
         multisigClient.programId
       );
+
+      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
       
       let tx = multisigClient.transaction.createTransaction(
         MSPV2Constants.MSP, 
@@ -1816,7 +1818,7 @@ export const TreasuriesView = () => {
         OperationType.TreasuryRefreshBalance,
         "Refresh Treasury Data",
         "",
-        new BN(Date.now() + DEFAULT_EXPIRATION_TIME_SECONDS),
+        new BN(expirationTime),
         new BN(0),
         new BN(0),
         {
@@ -2152,6 +2154,8 @@ export const TreasuriesView = () => {
         ],
         multisigClient.programId
       );
+
+      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
       
       let tx = multisigClient.transaction.createTransaction(
         MSPV2Constants.MSP, 
@@ -2160,7 +2164,7 @@ export const TreasuriesView = () => {
         OperationType.TreasuryCreate,
         "Create Treasury",
         "",
-        new BN(Date.now() + DEFAULT_EXPIRATION_TIME_SECONDS),
+        new BN(expirationTime),
         new BN(0),
         new BN(0),
         {
@@ -2664,6 +2668,8 @@ export const TreasuriesView = () => {
         ],
         multisigClient.programId
       ); 
+
+      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
       
       let tx = multisigClient.transaction.createTransaction(
         MSPV2Constants.MSP, 
@@ -2672,7 +2678,7 @@ export const TreasuriesView = () => {
         OperationType.StreamAddFunds,
         "Add Funds",
         "",
-        new BN(Date.now() + DEFAULT_EXPIRATION_TIME_SECONDS),
+        new BN(expirationTime),
         new BN(0),
         new BN(0),
         {
@@ -3144,6 +3150,8 @@ export const TreasuriesView = () => {
         ],
         multisigClient.programId
       );
+
+      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
       
       let tx = multisigClient.transaction.createTransaction(
         MSPV2Constants.MSP, 
@@ -3152,7 +3160,7 @@ export const TreasuriesView = () => {
         OperationType.TreasuryClose,
         "Close Treasury",
         "",
-        new BN(Date.now() + DEFAULT_EXPIRATION_TIME_SECONDS),
+        new BN(expirationTime),
         new BN(0),
         new BN(0),
         {
@@ -3618,6 +3626,8 @@ export const TreasuriesView = () => {
         ],
         multisigClient.programId
       );
+
+      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
       
       let tx = multisigClient.transaction.createTransaction(
         MSPV2Constants.MSP, 
@@ -3626,7 +3636,7 @@ export const TreasuriesView = () => {
         OperationType.StreamClose,
         "Close Stream",
         "",
-        new BN(Date.now() + DEFAULT_EXPIRATION_TIME_SECONDS),
+        new BN(expirationTime),
         new BN(0),
         new BN(0),
         {
@@ -4075,6 +4085,8 @@ export const TreasuriesView = () => {
         ],
         multisigClient.programId
       );
+
+      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
       
       let tx = multisigClient.transaction.createTransaction(
         MSPV2Constants.MSP, 
@@ -4083,7 +4095,7 @@ export const TreasuriesView = () => {
         OperationType.StreamPause,
         "Pause Stream",
         "",
-        new BN(Date.now() + DEFAULT_EXPIRATION_TIME_SECONDS),
+        new BN(expirationTime),
         new BN(0),
         new BN(0),
         {
@@ -4534,6 +4546,8 @@ export const TreasuriesView = () => {
         ],
         multisigClient.programId
       );
+
+      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
       
       let tx = multisigClient.transaction.createTransaction(
         MSPV2Constants.MSP, 
@@ -4542,7 +4556,7 @@ export const TreasuriesView = () => {
         OperationType.StreamResume,
         "Resume Stream",
         "",
-        new BN(Date.now() + DEFAULT_EXPIRATION_TIME_SECONDS),
+        new BN(expirationTime),
         new BN(0),
         new BN(0),
         {
@@ -4903,6 +4917,8 @@ export const TreasuriesView = () => {
         ],
         multisigClient.programId
       );
+
+      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
       
       let tx = multisigClient.transaction.createTransaction(
         MSPV2Constants.MSP, 
@@ -4911,7 +4927,7 @@ export const TreasuriesView = () => {
         OperationType.TreasuryWithdraw,
         "Withdraw Treasury Funds",
         "",
-        new BN(Date.now() + DEFAULT_EXPIRATION_TIME_SECONDS),
+        new BN(expirationTime),
         new BN(0),
         new BN(0),
         {

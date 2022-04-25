@@ -3472,8 +3472,8 @@ useEffect(() => {
       {(isMultisigActionTransactionModalVisible && highlightedMultisigTx && selectedMultisig) && (
         <ProposalSummaryModal
           isVisible={isMultisigActionTransactionModalVisible}
-          handleOk={() => setMultisigActionTransactionModalVisible(false)}
-          handleClose={() => setMultisigActionTransactionModalVisible(false)}
+          handleOk={onAcceptMultisigActionModal}
+          handleClose={onCloseMultisigActionModal}
           isBusy={isBusy}
           nativeBalance={nativeBalance}
           highlightedMultisigTx={highlightedMultisigTx}

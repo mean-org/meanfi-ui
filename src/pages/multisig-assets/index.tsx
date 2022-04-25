@@ -1538,6 +1538,8 @@ export const MultisigAssetsView = () => {
         multisigClient.programId
       );
 
+      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
+
       let tx = multisigClient.transaction.createTransaction(
         TOKEN_PROGRAM_ID, 
         transferIx.keys,
@@ -1545,7 +1547,7 @@ export const MultisigAssetsView = () => {
         OperationType.TransferTokens,
         "Transfer Asset Funds",
         "",
-        new BN(Date.now() + DEFAULT_EXPIRATION_TIME_SECONDS),
+        new BN(expirationTime),
         new BN(0),
         new BN(0),
         {
@@ -1882,6 +1884,8 @@ export const MultisigAssetsView = () => {
         ],
         multisigClient.programId
       );
+
+      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
   
       let tx = multisigClient.transaction.createTransaction(
         TOKEN_PROGRAM_ID, 
@@ -1890,7 +1894,7 @@ export const MultisigAssetsView = () => {
         OperationType.SetAssetAuthority,
         "Change Asset Authority",
         "",
-        new BN(Date.now() + DEFAULT_EXPIRATION_TIME_SECONDS),
+        new BN(expirationTime),
         new BN(0),
         new BN(0),
         {
@@ -2219,6 +2223,8 @@ export const MultisigAssetsView = () => {
         multisigClient.programId
       );
 
+      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
+
       let tx = multisigClient.transaction.createTransaction(
         TOKEN_PROGRAM_ID,
         closeIx.keys,
@@ -2226,7 +2232,7 @@ export const MultisigAssetsView = () => {
         OperationType.DeleteAsset,
         "Close Asset",
         "",
-        new BN(Date.now() + DEFAULT_EXPIRATION_TIME_SECONDS),
+        new BN(expirationTime),
         new BN(0),
         new BN(0),
         {
@@ -3963,8 +3969,8 @@ export const MultisigAssetsView = () => {
       {(isMultisigActionTransactionModalVisible && highlightedMultisigTx && selectedMultisig) && (
         <ProposalSummaryModal
           isVisible={isMultisigActionTransactionModalVisible}
-          handleOk={() => setMultisigActionTransactionModalVisible(false)}
-          handleClose={() => setMultisigActionTransactionModalVisible(false)}
+          handleOk={onAcceptMultisigActionModal}
+          handleClose={onCloseMultisigActionModal}
           isBusy={isBusy}
           nativeBalance={nativeBalance}
           highlightedMultisigTx={highlightedMultisigTx}

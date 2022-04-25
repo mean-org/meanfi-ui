@@ -735,6 +735,8 @@ export const MultisigView = () => {
         ],
         multisigClient.programId
       ); 
+
+      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
       
       let tx = multisigClient.transaction.createTransaction(
         multisigClient.programId, 
@@ -743,7 +745,7 @@ export const MultisigView = () => {
         OperationType.EditMultisig,
         "Edit Safe",
         "",
-        new BN(Date.now() + DEFAULT_EXPIRATION_TIME_SECONDS),
+        new BN(expirationTime),
         new BN(0),
         new BN(0),
         {
@@ -3643,8 +3645,8 @@ export const MultisigView = () => {
       {(isMultisigActionTransactionModalVisible && highlightedMultisigTx && selectedMultisig) && (
         <ProposalSummaryModal
           isVisible={isMultisigActionTransactionModalVisible}
-          handleOk={() => setMultisigActionTransactionModalVisible(false)}
-          handleClose={() => setMultisigActionTransactionModalVisible(false)}
+          handleOk={onAcceptMultisigActionModal}
+          handleClose={onCloseMultisigActionModal}
           isBusy={isBusy}
           nativeBalance={nativeBalance}
           highlightedMultisigTx={highlightedMultisigTx}
