@@ -51,6 +51,7 @@ import {
   getTransactionStatusForLogs,
   isDev,
   isLocal,
+  isProd,
   isValidAddress,
 } from "../../utils/ui";
 import { StreamOpenModal } from '../../components/StreamOpenModal';
@@ -58,6 +59,7 @@ import { StreamWithdrawModal } from '../../components/StreamWithdrawModal';
 import {
   FALLBACK_COIN_IMAGE,
   NO_FEES,
+  PERFORMANCE_THRESHOLD,
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
   SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
 } from "../../constants";
@@ -124,6 +126,7 @@ export const Streams = () => {
   const { connected, wallet, publicKey } = useWallet();
   const {
     theme,
+    tpsAvg,
     streamList,
     coinPrices,
     streamListv1,
@@ -218,6 +221,12 @@ export const Streams = () => {
     endpoint,
     streamV2ProgramAddress
   ]);
+
+  const isDowngradedPerformance = useMemo(() => {
+    return isProd() && (!tpsAvg || tpsAvg < PERFORMANCE_THRESHOLD)
+      ? true
+      : false;
+  }, [tpsAvg]);
 
   const streamDetailRef = useRef(streamDetail);
   useEffect(() => {
@@ -3943,8 +3952,12 @@ export const Streams = () => {
     if (manual) {
       // Record user event in Segment Analytics
       segmentAnalytics.recordEvent(AppUsageEvent.StreamRefresh);
+      refreshStreamList(true);
+    } else {
+      if (!isDowngradedPerformance) {
+        refreshStreamList(false);
+      }
     }
-    refreshStreamList(manual);
     setCustomStreamDocked(false);
     setKey(prevKey => prevKey + 1);
   };

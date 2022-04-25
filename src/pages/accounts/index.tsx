@@ -62,6 +62,7 @@ import { openNotification } from '../../components/Notifications';
 import CountUp from 'react-countup';
 import { AddressDisplay } from '../../components/AddressDisplay';
 import { ReceiveSplOrSolModal } from '../../components/ReceiveSplOrSolModal';
+import { SendAssetModal } from '../../components/SendAssetModal';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const QRCode = require('qrcode.react');
@@ -179,6 +180,28 @@ export const AccountsNewView = () => {
   ////////////////////////////
   //   Events and actions   //
   ////////////////////////////
+
+  // Token Merger Modal
+  const hideTokenMergerModal = useCallback(() => setTokenMergerModalVisibility(false), []);
+  const showTokenMergerModal = useCallback(() => setTokenMergerModalVisibility(true), []);
+  const [isTokenMergerModalVisible, setTokenMergerModalVisibility] = useState(false);
+  const onFinishedTokenMerge = useCallback(() => {
+    hideTokenMergerModal();
+    setShouldLoadTokens(true);
+  }, [
+    setShouldLoadTokens,
+    hideTokenMergerModal
+  ]);
+
+  // Receive SPL or SOL modal
+  const [isReceiveSplOrSolModalOpen, setIsReceiveSplOrSolModalOpen] = useState(false);
+  const hideReceiveSplOrSolModal = useCallback(() => setIsReceiveSplOrSolModalOpen(false), []);
+  const showReceiveSplOrSolModal = useCallback(() => setIsReceiveSplOrSolModalOpen(true), []);
+
+  // Send selected token
+  const [isSendAssetModalOpen, setIsSendAssetModalOpen] = useState(false);
+  const hideSendAssetModal = useCallback(() => setIsSendAssetModalOpen(false), []);
+  const showSendAssetModal = useCallback(() => setIsSendAssetModalOpen(true), []);
 
   const startSwitch = useCallback(() => {
     setStatus(FetchStatus.Fetching);
@@ -302,10 +325,12 @@ export const AccountsNewView = () => {
     }
     if (token) {
       setSelectedToken(token as SolanaTokenInfo);
-      navigate('/transfers');
     }
+    showSendAssetModal();
 
-  }, [isSelectedAssetNativeAccount, navigate, selectedAsset, setDtailsPanelOpen, setSelectedToken]);
+  }, [
+    isSelectedAssetNativeAccount, selectedAsset, setDtailsPanelOpen, setSelectedToken, showSendAssetModal
+  ]);
 
   // Copy address to clipboard
   const copyAddressToClipboard = useCallback((address: any) => {
@@ -529,21 +554,6 @@ export const AccountsNewView = () => {
     isSelectedAssetNativeAccount
   ]);
 
-  // Token Merger Modal
-  const hideTokenMergerModal = useCallback(() => setTokenMergerModalVisibility(false), []);
-  const showTokenMergerModal = useCallback(() => setTokenMergerModalVisibility(true), []);
-  const [isTokenMergerModalVisible, setTokenMergerModalVisibility] = useState(false);
-  const onFinishedTokenMerge = useCallback(() => {
-    hideTokenMergerModal();
-    setShouldLoadTokens(true);
-  }, [
-    setShouldLoadTokens,
-    hideTokenMergerModal
-  ]);
-
-  const [isReceiveSplOrSolModalOpen, setIsReceiveSplOrSolModalOpen] = useState(false);
-  const hideReceiveSplOrSolModal = useCallback(() => setIsReceiveSplOrSolModalOpen(false), []);
-  const showReceiveSplOrSolModal = useCallback(() => setIsReceiveSplOrSolModalOpen(true), []);
 
   /////////////////////
   // Data management //
@@ -1745,6 +1755,14 @@ export const AccountsNewView = () => {
           address={publicKey.toBase58()}
           isVisible={isReceiveSplOrSolModalOpen}
           handleClose={hideReceiveSplOrSolModal}
+          tokenSymbol={selectedAsset.symbol}
+        />
+      )}
+
+      {isSendAssetModalOpen && publicKey && selectedAsset && (
+        <SendAssetModal
+          isVisible={isSendAssetModalOpen}
+          handleClose={hideSendAssetModal}
           tokenSymbol={selectedAsset.symbol}
         />
       )}
