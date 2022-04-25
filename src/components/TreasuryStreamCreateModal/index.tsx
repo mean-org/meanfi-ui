@@ -49,7 +49,7 @@ import { useConnectionConfig } from '../../contexts/connection';
 import { Idl, Program } from '@project-serum/anchor';
 import { BN } from 'bn.js';
 import { u64 } from '@solana/spl-token';
-import { DEFAULT_EXPIRATION_TIME_SECONDS, MEAN_MULTISIG_OPS } from '../../models/multisig';
+import { MEAN_MULTISIG_OPS, DEFAULT_EXPIRATION_TIME_SECONDS } from '../../models/multisig';
 
 const { Option } = Select;
 
@@ -946,9 +946,8 @@ export const TreasuryStreamCreateModal = (props: {
         data.feePayedByTreasurer                                              // feePayedByTreasurer
       );
 
+      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
       let txs: Transaction[] = [];
-
-      // console.log('streamsBumps', streamsBumps);
 
       for (let createTx of createStreams) {
         const ixData = Buffer.from(createTx.instructions[0].data);
@@ -968,7 +967,6 @@ export const TreasuryStreamCreateModal = (props: {
           props.multisigClient.programId
         );
 
-
         let streamSeedData = streamsBumps[createTx.instructions[0].keys[7].pubkey.toBase58()];
         let tx = props.multisigClient.transaction.createTransaction(
           MSPV2Constants.MSP,
@@ -977,7 +975,7 @@ export const TreasuryStreamCreateModal = (props: {
           OperationType.StreamCreate,
           "Create Stream",
           "",
-          new BN(Date.now() + DEFAULT_EXPIRATION_TIME_SECONDS),
+          new BN(expirationTime),
           new u64(streamSeedData.timeStamp.toNumber()),
           new BN(streamSeedData.bump),
           {

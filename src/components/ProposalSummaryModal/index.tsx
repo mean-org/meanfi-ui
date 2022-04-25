@@ -76,8 +76,8 @@ export const ProposalSummaryModal = (props: {
     setTransactionStatus
   ]);
 
-  const onAcceptMultisigActionModal = (item: MultisigTransaction) => {
-    consoleOut('onAcceptMultisigActionModal:', item, 'blue');
+  const onAcceptModal = () => {
+    // consoleOut('onAcceptMultisigActionModal:', item, 'blue');
     // if (item.status === MultisigTransactionStatus.Pending) {
     //   onExecuteApproveTx({ transaction: item });
     // } else if (item.status === MultisigTransactionStatus.Approved) {
@@ -85,6 +85,7 @@ export const ProposalSummaryModal = (props: {
     // } else if (item.status === MultisigTransactionStatus.Voided) {
     //   onExecuteCancelTx({ transaction: item })
     // }
+    props.handleOk(highlightedMultisigTx);
   };
 
   const onCloseModal = () => {
@@ -460,7 +461,7 @@ export const ProposalSummaryModal = (props: {
       maskClosable={false}
       visible={isVisible}
       closable={true}
-      onOk={onCloseModal}
+      onOk={onAcceptModal}
       onCancel={onCloseModal}
       width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 400 : 480}
       footer={null}>
@@ -624,7 +625,7 @@ export const ProposalSummaryModal = (props: {
               size="middle"
               className={isBusy ? 'inactive' : ''}
               onClick={() => (isError(transactionStatus.currentOperation) && transactionStatus.currentOperation === TransactionStatus.SignTransactionFailure)
-                ? onAcceptMultisigActionModal(highlightedMultisigTx)
+                ? onAcceptModal()
                 : onCloseModal()}>
               {(isError(transactionStatus.currentOperation)  && transactionStatus.currentOperation === TransactionStatus.SignTransactionFailure)
                 ? t('general.retry')
@@ -645,7 +646,7 @@ export const ProposalSummaryModal = (props: {
                   size="middle"
                   onClick={() => {
                     if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
-                      onAcceptMultisigActionModal(highlightedMultisigTx);
+                      onAcceptModal();
                     } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
                       onCloseModal();
                     } else {
