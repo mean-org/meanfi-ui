@@ -355,13 +355,13 @@ export const ProposalSummaryModal = (props: {
         <>
           <Row>
           {multisigTransactionSummary.title && (
-            <Col span={24} className="mb-1 d-flex justify-content-center">
+            <Col span={24} className="mb-1 d-flex text-left">
               {/* <span className="info-label width-25">{t('multisig.multisig-transactions.transaction-title')}</span> */}
               <span>{multisigTransactionSummary.title}</span>
             </Col>
           )}
           {multisigTransactionSummary.description && (
-            <Col span={24} className="mb-1 d-flex justify-content-center">
+            <Col span={24} className="mb-1 d-flex text-left">
               {/* <span className="info-label width-25">{t('multisig.multisig-transactions.transaction-description')}</span> */}
               <span>{multisigTransactionSummary.description}</span>
             </Col>
@@ -369,37 +369,37 @@ export const ProposalSummaryModal = (props: {
           </Row>
           {/* Action */}
           <Row className="mb-1">
-            <Col span={12} className="text-right pr-1">
+            <Col span={6} className="text-left pr-1">
               <span className="info-label">{t('multisig.multisig-transactions.proposed-action')}</span>
             </Col>
-            <Col span={12} className="text-left pl-1">
+            <Col span={18} className="text-left pl-1">
               <span>{getOperationName(highlightedMultisigTx.operation)}</span>
             </Col>
           </Row>
           {/* Proposer */}
           <Row className="mb-1">
-            <Col span={12} className="text-right pr-1">
+            <Col span={6} className="text-left pr-1">
               <span className="info-label">{t('multisig.multisig-transactions.proposed-by')}</span>
             </Col>
-            <Col span={12} className="text-left pl-1">
+            <Col span={18} className="text-left pl-1">
               <span>{getTxInitiator(highlightedMultisigTx)?.name} ({shortenAddress(multisigTransactionSummary.proposer as string, 4)})</span>
             </Col>
           </Row>
           {/* Submitted on */}
           <Row className="mb-1">
-            <Col span={12} className="text-right pr-1">
+            <Col span={6} className="text-left pr-1">
               <span className="info-label">{t('multisig.multisig-transactions.submitted-on')}</span>
             </Col>
-            <Col span={12} className="text-left pl-1">
+            <Col span={18} className="text-left pl-1">
               <span>{getReadableDate(multisigTransactionSummary.createdOn, true)}</span>
             </Col>
           </Row>
           {/* Expiry date */}
           <Row className="mb-1">
-            <Col span={12} className="text-right pr-1">
+            <Col span={6} className="text-left pr-1">
               <span className="info-label">{t('multisig.multisig-transactions.transaction-expiry-date')}</span>
             </Col>
-            <Col span={12} className="text-left pl-1">
+            <Col span={18} className="text-left pl-1">
               {multisigTransactionSummary.expirationDate ? (
                 <span>{getReadableDate(multisigTransactionSummary.expirationDate, true)}</span>
               ) : (
