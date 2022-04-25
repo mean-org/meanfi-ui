@@ -47,13 +47,13 @@ import {
   FALLBACK_COIN_IMAGE,
   NO_FEES,
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
-  STREAMS_REFRESH_TIMEOUT,
+  FIVE_MINUTES_REFRESH_TIMEOUT,
   VERBOSE_DATE_TIME_FORMAT
 } from '../../constants';
 import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
 import { OperationType, PaymentRateType, TransactionStatus } from '../../models/enums';
-import { TransactionStatusContext } from '../../contexts/transaction-status';
+import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { IconBank, IconClock, IconShieldOutline, IconTrash } from '../../Icons';
 import { TreasuryOpenModal } from '../../components/TreasuryOpenModal';
 import { MSP_ACTIONS, StreamInfo, STREAM_STATE, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
@@ -135,8 +135,8 @@ export const TreasuriesView = () => {
     lastSentTxSignature,
     lastSentTxOperationType,
     startFetchTxSignatureInfo,
-    clearTransactionStatusContext,
-  } = useContext(TransactionStatusContext);
+    clearTxConfirmationContext,
+  } = useContext(TxConfirmationContext);
   const { t } = useTranslation('common');
   const { width } = useWindowSize();
   const { account } = useNativeAccount();
@@ -477,7 +477,7 @@ export const TreasuriesView = () => {
 
       setTimeout(() => {
         setLoadingTreasuries(true);
-        clearTransactionStatusContext();
+        clearTxConfirmationContext();
       });
 
       let treasuryAccumulator: (Treasury | TreasuryInfo)[] = [];
@@ -558,7 +558,7 @@ export const TreasuriesView = () => {
     selectedMultisig,
     fetchTxInfoStatus,
     loadingTreasuries,
-    clearTransactionStatusContext,
+    clearTxConfirmationContext,
     openTreasuryById,
     getAllUserV2Treasuries
   ]);
@@ -1072,9 +1072,9 @@ export const TreasuriesView = () => {
 
     if (publicKey && treasuriesLoaded && !customStreamDocked) {
       timer = setInterval(() => {
-        consoleOut(`Refreshing treasuries past ${STREAMS_REFRESH_TIMEOUT / 60 / 1000}min...`);
+        consoleOut(`Refreshing treasuries past ${FIVE_MINUTES_REFRESH_TIMEOUT / 60 / 1000}min...`);
         refreshTreasuries(false);
-      }, STREAMS_REFRESH_TIMEOUT);
+      }, FIVE_MINUTES_REFRESH_TIMEOUT);
     }
 
     return () => clearInterval(timer);
@@ -1111,7 +1111,7 @@ export const TreasuriesView = () => {
         case OperationType.TreasuryCreate:
           const usedOptions = retryOperationPayload as TreasuryCreateOptions;
           if (usedOptions.multisigId) {
-            clearTransactionStatusContext();
+            clearTxConfirmationContext();
             stackedMessagesAndNavigate(usedOptions.multisigId);
           } else {
             refreshTreasuries(true);
@@ -1134,7 +1134,7 @@ export const TreasuriesView = () => {
     lastSentTxSignature,
     retryOperationPayload,
     lastSentTxOperationType,
-    clearTransactionStatusContext,
+    clearTxConfirmationContext,
     setHighLightableMultisigId,
     refreshTreasuries,
     navigate,
@@ -1711,7 +1711,7 @@ export const TreasuriesView = () => {
     const transactionLog: any[] = [];
 
     resetTransactionStatus();
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.TreasuryRefreshBalance);
     setIsBusy(true);
@@ -2070,7 +2070,7 @@ export const TreasuriesView = () => {
     transactionFees.blockchainFee,
     transactionStatus.currentOperation,
     onRefreshTreasuryBalanceTransactionFinished,
-    clearTransactionStatusContext,
+    clearTxConfirmationContext,
     startFetchTxSignatureInfo,
     resetTransactionStatus,
     setTransactionStatus,
@@ -2084,7 +2084,7 @@ export const TreasuriesView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.TreasuryCreate);
@@ -2465,7 +2465,7 @@ export const TreasuriesView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.TreasuryAddFunds);
@@ -2964,7 +2964,7 @@ export const TreasuriesView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.TreasuryClose);
@@ -3422,7 +3422,7 @@ export const TreasuriesView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.StreamClose);
     setRetryOperationPayload(closeTreasury);
@@ -3871,7 +3871,7 @@ export const TreasuriesView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.StreamPause);
@@ -4318,7 +4318,7 @@ export const TreasuriesView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.StreamResume);
@@ -4775,7 +4775,7 @@ export const TreasuriesView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.TreasuryCreate);

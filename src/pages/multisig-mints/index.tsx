@@ -1,7 +1,7 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
-import { TransactionStatusContext } from '../../contexts/transaction-status';
+import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { useWallet } from '../../contexts/wallet';
 import { AppStateContext, TransactionStatusInfo } from '../../contexts/appstate';
 import { Button, Col, Divider, Empty, Modal, Row, Space, Spin, Tooltip } from 'antd';
@@ -58,8 +58,8 @@ export const MultisigMintsView = () => {
     lastSentTxSignature,
     lastSentTxOperationType,
     startFetchTxSignatureInfo,
-    clearTransactionStatusContext,
-  } = useContext(TransactionStatusContext);
+    clearTxConfirmationContext,
+  } = useContext(TxConfirmationContext);
   const { t } = useTranslation('common');
   // Misc hooks
   const { width } = useWindowSize();
@@ -1006,7 +1006,7 @@ export const MultisigMintsView = () => {
     if (!publicKey) { return; }
 
     if (multisigAddress && lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
-      clearTransactionStatusContext();
+      clearTxConfirmationContext();
       refreshMints();
       setLoadingMultisigTxs(true);
     }
@@ -1016,7 +1016,7 @@ export const MultisigMintsView = () => {
     fetchTxInfoStatus,
     lastSentTxSignature,
     // lastSentTxOperationType,
-    clearTransactionStatusContext,
+    clearTxConfirmationContext,
     refreshMints,
   ]);
 
@@ -1100,7 +1100,7 @@ export const MultisigMintsView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.SetMintAuthority);
     setRetryOperationPayload(authority);
@@ -1404,7 +1404,7 @@ export const MultisigMintsView = () => {
     transactionFees.blockchainFee,
     transactionFees.mspFlatFee,
     transactionStatus.currentOperation,
-    clearTransactionStatusContext,
+    clearTxConfirmationContext,
     startFetchTxSignatureInfo,
     onMintAuthorityTransfered,
     setTransactionStatus,
@@ -1447,7 +1447,7 @@ export const MultisigMintsView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.CreateMint);
     setRetryOperationPayload(data);
@@ -1727,7 +1727,7 @@ export const MultisigMintsView = () => {
     transactionFees.blockchainFee,
     multisigClient.provider.connection,
     transactionStatus.currentOperation,
-    clearTransactionStatusContext,
+    clearTxConfirmationContext,
     startFetchTxSignatureInfo,
     setTransactionStatus,
     onMintCreated,
@@ -1770,7 +1770,7 @@ export const MultisigMintsView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.MintTokens);
     setRetryOperationPayload(data);
@@ -2067,7 +2067,7 @@ export const MultisigMintsView = () => {
     }
 
   }, [
-    clearTransactionStatusContext, 
+    clearTxConfirmationContext, 
     connection, 
     multisigClient.account.transaction, 
     multisigClient.programId, 
@@ -2100,7 +2100,7 @@ export const MultisigMintsView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     setTransactionCancelled(false);
     setRetryOperationPayload(data);
     setIsBusy(true);
@@ -2359,7 +2359,7 @@ export const MultisigMintsView = () => {
     transactionFees.mspFlatFee,
     transactionFees.blockchainFee,
     transactionStatus.currentOperation,
-    clearTransactionStatusContext,
+    clearTxConfirmationContext,
     startFetchTxSignatureInfo,
     setTransactionStatus,
   ]);
@@ -2372,7 +2372,7 @@ export const MultisigMintsView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     setTransactionCancelled(false);
     setRetryOperationPayload(data);
     setIsBusy(true);
@@ -2657,7 +2657,7 @@ export const MultisigMintsView = () => {
     transactionFees.blockchainFee,
     multisigClient.provider.connection,
     transactionStatus.currentOperation,
-    clearTransactionStatusContext,
+    clearTxConfirmationContext,
     startFetchTxSignatureInfo,
     setTransactionStatus,
     onTxExecuted,
@@ -2671,7 +2671,7 @@ export const MultisigMintsView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     setTransactionCancelled(false);
     setRetryOperationPayload(data);
     setIsBusy(true);
@@ -2943,7 +2943,7 @@ export const MultisigMintsView = () => {
     }
 
   }, [
-    clearTransactionStatusContext, 
+    clearTxConfirmationContext, 
     connection, 
     multisigClient.transaction, 
     nativeBalance, 

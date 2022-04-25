@@ -23,6 +23,7 @@ const { SubMenu } = Menu;
 export const AppBar = (props: {
   menuType: string;
   topNavVisible: boolean;
+  onOpenDrawer: any;
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -113,9 +114,15 @@ export const AppBar = (props: {
 
   const mainNav = (
     <Menu selectedKeys={[location.pathname]} mode="horizontal">
-      <Menu.Item key="/accounts">
-        <Link to='/accounts' onClick={goToAccounts}>{t('ui-menus.main-menu.accounts')}</Link>
-      </Menu.Item>
+      {location.pathname === '/accounts/streams' ? (
+        <Menu.Item key="/accounts/streams">
+          <Link to='/accounts' onClick={goToAccounts}>{t('ui-menus.main-menu.accounts')}</Link>
+        </Menu.Item>
+      ) : (
+        <Menu.Item key="/accounts">
+          <Link to='/accounts' onClick={goToAccounts}>{t('ui-menus.main-menu.accounts')}</Link>
+        </Menu.Item>
+      )}
       <Menu.Item key="/exchange">
         <Link to="/exchange">{t('ui-menus.main-menu.swap')}</Link>
       </Menu.Item>
@@ -206,7 +213,7 @@ export const AppBar = (props: {
           {renderOnlineStatus}
           {connected ? (
             <div className="connection-and-account-bar">
-              <CurrentBalance />
+              <CurrentBalance onOpenDrawer={props.onOpenDrawer}/>
               <AccountDetails />
             </div>
           ) : (
@@ -233,7 +240,7 @@ export const AppBar = (props: {
           <div id="overlay">
             <div className="h-100 w-100 flex-column align-items-center vertical-scroll">
               <ul onClick={dismissMenu}>
-                <li key="/accounts" className={location.pathname === '/accounts' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 1} as CustomCSSProps}>
+                <li key="/accounts" className={location.pathname.startsWith('/accounts') ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 1} as CustomCSSProps}>
                   <Link to="/accounts">{t('ui-menus.main-menu.accounts')}</Link>
                 </li>
                 <li key="/exchange" className={location.pathname === '/exchange' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 2} as CustomCSSProps}>

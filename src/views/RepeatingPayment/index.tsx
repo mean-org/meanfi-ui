@@ -47,7 +47,7 @@ import { customLogger } from '../..';
 import { StepSelector } from '../../components/StepSelector';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { useNavigate } from 'react-router-dom';
-import { confirmationEvents, TransactionStatusContext, TransactionStatusInfo } from '../../contexts/transaction-status';
+import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
 import { TokenDisplay } from '../../components/TokenDisplay';
 import { TextInput } from '../../components/TextInput';
 import { TokenListItem } from '../../components/TokenListItem';
@@ -93,7 +93,7 @@ export const RepeatingPayment = () => {
     setPaymentRateFrequency,
     setSelectedTokenBalance,
   } = useContext(AppStateContext);
-  const { enqueueTransactionConfirmation } = useContext(TransactionStatusContext);
+  const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const navigate = useNavigate();
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
@@ -243,7 +243,7 @@ export const RepeatingPayment = () => {
   }, []);
 
   // Setup event handler for Tx confirmed
-  const onTxConfirmed = useCallback((item: TransactionStatusInfo) => {
+  const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
     consoleOut("onTxConfirmed event executed:", item, 'crimson');
     // If we have the item, record success and remove it from the list
     if (item && item.operationType === OperationType.Transfer) {
@@ -259,7 +259,7 @@ export const RepeatingPayment = () => {
   ]);
 
   // Setup event handler for Tx confirmation error
-  const onTxTimedout = useCallback((item: TransactionStatusInfo) => {
+  const onTxTimedout = useCallback((item: TxConfirmationInfo) => {
     consoleOut("onTxTimedout event executed:", item, 'crimson');
     // If we have the item, record failure and remove it from the list
     if (item) {
@@ -951,9 +951,9 @@ export const RepeatingPayment = () => {
               finality: "confirmed",
               txInfoFetchStatus: "fetching",
               loadingTitle: "Confirming transaction",
-              loadingMessage: `Sending ${getPaymentRateLabel(paymentRateFrequency, paymentRateAmount)}`,
+              loadingMessage: `Send ${getPaymentRateLabel(paymentRateFrequency, paymentRateAmount)}`,
               completedTitle: "Transaction confirmed",
-              completedMessage: "Money Stream created successfully"
+              completedMessage: `Successfuly sent ${getPaymentRateLabel(paymentRateFrequency, paymentRateAmount)}`
             });
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransactionSuccess,

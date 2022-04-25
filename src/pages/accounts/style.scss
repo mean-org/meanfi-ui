@@ -1,0 +1,174 @@
+.accounts {
+    @media (max-width: 575.98px) {
+        .meanfi-two-panel-layout {
+            height: 100%;
+            max-height: 100%;
+        }
+    }
+
+    .flexible-column-bottom {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+
+        .top {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        .bottom {
+            .transaction-list-data-wrapper {
+                min-height: 100px;
+
+                &:not(.empty) {
+                    max-height: calc(58vh - 60px) !important;
+                }
+            }
+        }
+    }
+
+    .asset-category-title {
+        text-transform: uppercase;
+        font-weight: 600;
+        color: var(--color-secondary-alpha-70);
+        background-color: var(--darken-20);
+
+        @media (max-width: 767.98px) {
+            margin: 0.5rem -2.6%;
+            padding: 3px 2.6%;
+        }
+
+        @media (min-width: 768px) {
+            margin: 0.5rem 0 0.5rem -2.6%;
+            padding: 3px calc(2.6% + 4px) 3px 2.6%;
+        }
+    }
+
+    .asset-category {
+        height: auto;
+        min-height: 50px;
+    }
+
+    .networth-list-item {
+        @media (max-width: 767.98px) {
+            margin: -0.6rem 0.1rem -0.2rem 0;
+        }
+
+        @media (min-width: 768px) {
+            margin: -0.6rem 2.6% -0.2rem 0;
+        }
+
+        padding: 14px 6px 10px 10px;
+        border-left: 4px solid transparent;
+
+        &.no-pointer {
+            pointer-events: none;
+        }
+
+        &:not(.no-pointer) {
+            cursor: pointer;
+        }
+
+        &.selected {
+            border-left-color: var(--color-primary-highlight);
+            background-color: var(--color-secondary-alpha-02);
+        }
+
+        &:not(.no-pointer):not(.selected):hover,
+        &:not(.no-pointer):not(.selected):focus {
+            background-color: var(--color-secondary-alpha-02);
+        }
+    }
+
+    .transaction-list-row {
+        border-radius: unset;
+        border-top: none;
+        border-bottom: none;
+        border-right: none;
+        border-left: 4px solid transparent;
+        .icon-cell {
+            position: relative;
+            flex: 0 0 40px;
+            display: flex;
+            .token-icon {
+                width: 100%;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 4px;
+                padding: 2px;
+                margin: 0;
+                vertical-align: unset;
+                background: transparent;
+                > img {
+                    border-radius: 50%;
+                }
+                .streams-count {
+                    line-height: 1.3;
+                    display: flex;
+                    width: 100%;
+                    height: 1.3rem;
+                    color: var(--color-white);
+                    background: var(--color-primary);
+                    padding: 2px;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 4px;
+                }
+            }
+        }
+        .description-cell {
+            flex: 1 1 calc(100% - 40px);
+            padding-left: 0;
+            .title {
+                display: block;
+                align-items: center;
+                font-size: 14px;
+                line-height: 1.2;
+                color: var(--color-secondary-alpha-85);
+            }
+            .subtitle {
+                display: block;
+                color: var(--color-secondary-alpha-40);
+                font-size: 12px;
+                line-height: 1;
+            }
+        }
+        @media (min-width: 768px) {
+            margin-right: 10px;
+            padding-right: 4px !important;
+        }
+        &.selected {
+            border-left-color: var(--color-primary-highlight);
+            background-color: var(--color-secondary-alpha-02);
+        }
+    }
+    .accounts-category-meta {
+        .info-label {
+            width: 100%;
+            font-size: 0.8rem;
+            font-weight: 400;
+            color: var(--color-secondary-alpha-50);
+            margin-bottom: 0;
+        }
+
+        .info-data {
+            font-weight: 600;
+            color: var(--color-secondary-alpha-70);
+        }
+
+        .info-extra {
+            font-weight: 400;
+            color: var(--color-secondary-alpha-50);
+            line-height: 1;
+            margin-top: 2px;
+        }
+
+        .mean-svg-icons {
+            font-size: inherit;
+            color: inherit;
+        }
+    }
+}

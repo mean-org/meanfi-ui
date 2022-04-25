@@ -4,11 +4,17 @@ import {
   DAO_CORE_TEAM_WHITELIST,
   BANNED_TOKENS,
   DDCA_FREQUENCY_OPTIONS,
-  PRICE_REFRESH_TIMEOUT,
+  TEN_MINUTES_REFRESH_TIMEOUT,
   STREAMING_PAYMENT_CONTRACTS,
-  STREAMS_REFRESH_TIMEOUT,
+  FIVE_MINUTES_REFRESH_TIMEOUT,
   TRANSACTIONS_PER_PAGE,
-  BETA_TESTING_PROGRAM_WHITELIST
+  BETA_TESTING_PROGRAM_WHITELIST,
+  HALF_MINUTE_REFRESH_TIMEOUT,
+  FORTY_SECONDS_REFRESH_TIMEOUT,
+  FIVETY_SECONDS_REFRESH_TIMEOUT,
+  SEVENTY_SECONDS_REFRESH_TIMEOUT,
+  PERFORMANCE_THRESHOLD,
+  ONE_MINUTE_REFRESH_TIMEOUT
 } from "../constants";
 import { ContractDefinition } from "../models/contract-definition";
 import { DdcaFrequencyOption } from "../models/ddca-models";
@@ -28,16 +34,17 @@ import { MEAN_TOKEN_LIST, PINNED_TOKENS } from "../constants/token-list";
 import { NATIVE_SOL } from "../utils/tokens";
 import useLocalStorage from "../hooks/useLocalStorage";
 import { MappedTransaction } from "../utils/history";
-import { consoleOut, isProd } from "../utils/ui";
+import { consoleOut, isProd, msToTime } from "../utils/ui";
 import { appConfig } from "..";
 import { DdcaAccount } from "@mean-dao/ddca";
-import { TransactionStatusContext } from "./transaction-status";
+import { TxConfirmationContext } from "./transaction-status";
 import { MoneyStreaming } from "@mean-dao/money-streaming/lib/money-streaming";
 import { TreasuryTypeOption } from "../models/treasuries";
 import { TREASURY_TYPE_OPTIONS } from "../constants/treasury-type-options";
 import { initialSummary, StreamsSummary } from "../models/streams";
 import { MSP, Stream } from "@mean-dao/msp";
 import { AccountDetails } from "../models";
+import moment from "moment";
 
 export interface TransactionStatusInfo {
   customError?: any;
@@ -47,6 +54,8 @@ export interface TransactionStatusInfo {
 
 interface AppStateConfig {
   theme: string | undefined;
+  tpsAvg: number | null | undefined;
+  refreshInterval: number;
   isWhitelisted: boolean;
   isInBetaTestingProgram: boolean;
   detailsPanelOpen: boolean;
@@ -63,6 +72,8 @@ interface AppStateConfig {
   recipientAddress: string;
   recipientNote: string;
   paymentStartDate: string | undefined;
+  proposalEndDate: string | undefined;
+  proposalEndTime: string | undefined;
   paymentRateAmount: string;
   lockPeriodAmount: string;
   paymentRateFrequency: PaymentRateType;
@@ -79,6 +90,7 @@ interface AppStateConfig {
   selectedStream: Stream | StreamInfo | undefined;
   streamDetail: Stream | StreamInfo | undefined;
   activeStream: StreamInfo | Stream | undefined;
+  deletedStreams: string[];
   highLightableStreamId: string | undefined;
   streamProgramAddress: string;
   streamV2ProgramAddress: string;
@@ -112,6 +124,7 @@ interface AppStateConfig {
   unstakeStartDate: string | undefined;
   stakingMultiplier: number;
   setTheme: (name: string) => void;
+  setTpsAvg: (value: number | null | undefined) => void;
   setDtailsPanelOpen: (state: boolean) => void;
   showDepositOptionsModal: () => void;
   hideDepositOptionsModal: () => void;
@@ -130,6 +143,8 @@ interface AppStateConfig {
   setRecipientAddress: (address: string) => void;
   setRecipientNote: (note: string) => void;
   setPaymentStartDate: (date: string) => void;
+  setProposalEndDate: (date: string) => void;
+  setProposalEndTime: (time: string) => void;
   setPaymentRateAmount: (data: string) => void;
   setLockPeriodAmount: (data: string) => void;
   setPaymentRateFrequency: (freq: PaymentRateType) => void;
@@ -143,6 +158,7 @@ interface AppStateConfig {
   setStreamList: (list: Array<StreamInfo | Stream> | undefined) => void;
   setSelectedStream: (stream: Stream | StreamInfo | undefined) => void;
   setStreamDetail: (stream: Stream | StreamInfo | undefined) => void;
+  setDeletedStream: (id: string) => void,
   setHighLightableStreamId: (id: string | undefined) => void,
   openStreamById: (streamId: string, dock: boolean) => void;
   getStreamActivity: (streamId: string, version: number) => void;
@@ -173,6 +189,8 @@ interface AppStateConfig {
 
 const contextDefaultValues: AppStateConfig = {
   theme: undefined,
+  tpsAvg: undefined,
+  refreshInterval: ONE_MINUTE_REFRESH_TIMEOUT,
   isWhitelisted: false,
   isInBetaTestingProgram: false,
   detailsPanelOpen: false,
@@ -189,6 +207,8 @@ const contextDefaultValues: AppStateConfig = {
   recipientAddress: '',
   recipientNote: '',
   paymentStartDate: undefined,
+  proposalEndDate: undefined,
+  proposalEndTime: undefined,
   paymentRateAmount: '',
   lockPeriodAmount: '',
   paymentRateFrequency: PaymentRateType.PerMonth,
@@ -208,6 +228,7 @@ const contextDefaultValues: AppStateConfig = {
   selectedStream: undefined,
   streamDetail: undefined,
   activeStream: undefined,
+  deletedStreams: [],
   highLightableStreamId: undefined,
   streamProgramAddress: '',
   streamV2ProgramAddress: '',
@@ -241,6 +262,7 @@ const contextDefaultValues: AppStateConfig = {
   unstakeStartDate: 'undefined',
   stakingMultiplier: 1,
   setTheme: () => {},
+  setTpsAvg: () => {},
   setDtailsPanelOpen: () => {},
   showDepositOptionsModal: () => {},
   hideDepositOptionsModal: () => {},
@@ -259,6 +281,8 @@ const contextDefaultValues: AppStateConfig = {
   setRecipientAddress: () => {},
   setRecipientNote: () => {},
   setPaymentStartDate: () => {},
+  setProposalEndDate: () => {},
+  setProposalEndTime: () => {},
   setPaymentRateAmount: () => {},
   setLockPeriodAmount: () => {},
   setPaymentRateFrequency: () => {},
@@ -272,6 +296,7 @@ const contextDefaultValues: AppStateConfig = {
   setStreamList: () => {},
   setSelectedStream: () => {},
   setStreamDetail: () => {},
+  setDeletedStream: () => {},
   setHighLightableStreamId: () => {},
   openStreamById: () => {},
   getStreamActivity: () => {},
@@ -316,10 +341,13 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [streamV2ProgramAddress, setStreamV2ProgramAddress] = useState('');
   const {
     lastSentTxStatus,
-    clearTransactionStatusContext,
-  } = useContext(TransactionStatusContext);
+    clearTxConfirmationContext,
+  } = useContext(TxConfirmationContext);
   const today = new Date().toLocaleDateString("en-US");
+  const tomorrow = moment().add(1, 'days').format('L');
+  const timeDate = moment().format('hh:mm A');  
   const [theme, updateTheme] = useLocalStorageState("theme");
+  const [tpsAvg, setTpsAvg] = useState<number | null | undefined>(contextDefaultValues.tpsAvg);
   const [detailsPanelOpen, updateDetailsPanelOpen] = useState(contextDefaultValues.detailsPanelOpen);
   const [shouldLoadTokens, updateShouldLoadTokens] = useState(contextDefaultValues.shouldLoadTokens);
   const [contract, setSelectedContract] = useState<ContractDefinition | undefined>();
@@ -330,6 +358,8 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [recipientAddress, updateRecipientAddress] = useState<string>(contextDefaultValues.recipientAddress);
   const [recipientNote, updateRecipientNote] = useState<string>(contextDefaultValues.recipientNote);
   const [paymentStartDate, updatePaymentStartDate] = useState<string | undefined>(today);
+  const [proposalEndDate, updateProposalEndDate] = useState<string | undefined>(tomorrow);
+  const [proposalEndTime, updateProposalEndTime] = useState<string | undefined>(timeDate);
   const [fromCoinAmount, updateFromCoinAmount] = useState<string>(contextDefaultValues.fromCoinAmount);
   const [paymentRateAmount, updatePaymentRateAmount] = useState<string>(contextDefaultValues.paymentRateAmount);
   const [lockPeriodAmount, updateLockPeriodAmount] = useState<string>(contextDefaultValues.lockPeriodAmount);
@@ -353,6 +383,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [selectedStream, updateSelectedStream] = useState<Stream | StreamInfo | undefined>();
   const [streamDetail, updateStreamDetail] = useState<Stream | StreamInfo | undefined>();
   const [activeStream, setActiveStream] = useState<Stream | StreamInfo | undefined>();
+  const [deletedStreams, setDeletedStreams] = useState<string[]>([]);
   const [highLightableStreamId, setHighLightableStreamId] = useState<string | undefined>(contextDefaultValues.highLightableStreamId);
   const [highLightableMultisigId, setHighLightableMultisigId] = useState<string | undefined>(contextDefaultValues.highLightableMultisigId);
   const [selectedToken, updateSelectedToken] = useState<TokenInfo>();
@@ -368,6 +399,12 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [unstakeStartDate, updateUnstakeStartDate] = useState<string | undefined>(today);
   const streamProgramAddressFromConfig = appConfig.getConfig().streamProgramAddress;
   const streamV2ProgramAddressFromConfig = appConfig.getConfig().streamV2ProgramAddress;
+
+  const isDowngradedPerformance = useMemo(() => {
+    return isProd() && (!tpsAvg || tpsAvg < PERFORMANCE_THRESHOLD)
+      ? true
+      : false;
+  }, [tpsAvg]);
 
   if (!streamProgramAddress) {
     setStreamProgramAddress(streamProgramAddressFromConfig);
@@ -409,6 +446,29 @@ const AppStateProvider: React.FC = ({ children }) => {
   const setDtailsPanelOpen = (state: boolean) => {
     updateDetailsPanelOpen(state);
   }
+
+  /**
+   * Auto reload timeout breakdown
+   * 
+   * #s <= 5 30s
+   * #s > 5 & <= 25 40s
+   * #s > 25 & <= 60 50s
+   * #s > 60 & <= 100 70s
+   * #s > 100 5min is ok
+   */
+   const refreshInterval = useMemo(() => {
+    if (!streamList || streamList.length <= 5) {
+      return HALF_MINUTE_REFRESH_TIMEOUT;
+    } else if (streamList.length > 5 && streamList.length <= 25) {
+      return FORTY_SECONDS_REFRESH_TIMEOUT;
+    } else if (streamList.length > 25 && streamList.length <= 60) {
+      return FIVETY_SECONDS_REFRESH_TIMEOUT;
+    } else if (streamList.length > 60 && streamList.length <= 100) {
+      return SEVENTY_SECONDS_REFRESH_TIMEOUT;
+    } else {
+      return FIVE_MINUTES_REFRESH_TIMEOUT;
+    }
+  }, [streamList]);
 
   const setShouldLoadTokens = (state: boolean) => {
     updateShouldLoadTokens(state);
@@ -503,6 +563,14 @@ const AppStateProvider: React.FC = ({ children }) => {
     updatePaymentStartDate(date);
   }
 
+  const setProposalEndDate = (date: string) => {
+    updateProposalEndDate(date);
+  }
+
+  const setProposalEndTime = (time: string) => {
+    updateProposalEndTime(time);
+  }
+
   const setFromCoinAmount = (data: string) => {
     updateFromCoinAmount(data);
   }
@@ -548,6 +616,8 @@ const AppStateProvider: React.FC = ({ children }) => {
     setRecipientAddress('');
     setRecipientNote('');
     setPaymentStartDate(today);
+    setProposalEndDate(tomorrow);
+    setProposalEndTime(timeDate);
     setPaymentRateAmount('');
     setLockPeriodAmount('');
     setPaymentRateFrequency(PaymentRateType.PerMonth);
@@ -728,6 +798,11 @@ const AppStateProvider: React.FC = ({ children }) => {
     updateStreamDetail(stream);
   }
 
+  const setDeletedStream = (id: string) => {
+    console.log('setDeletedStream:', id);
+    setDeletedStreams(oldArray => [...oldArray, id]);
+  }
+
   // Deposits modal
   const [isDepositOptionsModalVisible, setIsDepositOptionsModalVisibility] = useState(false);
 
@@ -811,10 +886,10 @@ const AppStateProvider: React.FC = ({ children }) => {
     }
 
     coinTimer = window.setInterval(() => {
-      consoleOut(`Refreshing prices past ${PRICE_REFRESH_TIMEOUT / 60 / 1000}min...`);
+      consoleOut(`Refreshing prices past ${TEN_MINUTES_REFRESH_TIMEOUT / 60 / 1000}min...`);
       setLoadingPrices(true);
       getCoinPrices();
-    }, PRICE_REFRESH_TIMEOUT);
+    }, TEN_MINUTES_REFRESH_TIMEOUT);
 
     // Return callback to run on unmount.
     return () => {
@@ -916,7 +991,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       setLoadingStreams(true);
       const signature = lastSentTxStatus || '';
       setTimeout(() => {
-        clearTransactionStatusContext();
+        clearTxConfirmationContext();
       });
 
       let streamAccumulator: any[] = [];
@@ -948,6 +1023,7 @@ const AppStateProvider: React.FC = ({ children }) => {
               setStreamListv2(rawStreamsv2);
               setStreamListv1(rawStreamsv1);
               consoleOut('Streams:', streamAccumulator, 'blue');
+              setDeletedStreams([]);
               if (streamAccumulator.length) {
                 let item: Stream | StreamInfo | undefined;
                 if (reset) {
@@ -1042,27 +1118,33 @@ const AppStateProvider: React.FC = ({ children }) => {
     location.pathname,
     customStreamDocked,
     highLightableStreamId,
-    clearTransactionStatusContext,
+    clearTxConfirmationContext,
     getStreamActivity
   ]);
 
-  // Streams refresh timeout
+  /**
+   * Streams refresh timeout
+   * 
+   * If TPS values are critical we should NOT schedule at all
+   * and resume when TPS goes up again.
+   */
   useEffect(() => {
     let timer: any;
 
-    if (location.pathname.startsWith('/accounts') && !customStreamDocked) {
+    if ((location.pathname === '/accounts' || location.pathname === '/accounts/streams') &&
+        !customStreamDocked && !isDowngradedPerformance) {
       timer = setInterval(() => {
-        consoleOut(`Refreshing streams past ${STREAMS_REFRESH_TIMEOUT / 60 / 1000}min...`);
+        consoleOut(`Refreshing streams past ${msToTime(FIVE_MINUTES_REFRESH_TIMEOUT)}...`);
         refreshStreamList();
-      }, STREAMS_REFRESH_TIMEOUT);
+      }, FIVE_MINUTES_REFRESH_TIMEOUT);
     }
 
     return () => clearInterval(timer);
   }, [
     location,
-    streamList,
     customStreamDocked,
-    refreshStreamList
+    isDowngradedPerformance,
+    refreshStreamList,
   ]);
 
   const refreshTokenBalance = useCallback(async () => {
@@ -1256,6 +1338,8 @@ const AppStateProvider: React.FC = ({ children }) => {
     <AppStateContext.Provider
       value={{
         theme,
+        tpsAvg,
+        refreshInterval,
         isWhitelisted,
         isInBetaTestingProgram,
         detailsPanelOpen,
@@ -1274,6 +1358,8 @@ const AppStateProvider: React.FC = ({ children }) => {
         recipientAddress,
         recipientNote,
         paymentStartDate,
+        proposalEndDate,
+        proposalEndTime,
         paymentRateAmount,
         lockPeriodAmount,
         paymentRateFrequency,
@@ -1290,6 +1376,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         selectedStream,
         streamDetail,
         activeStream,
+        deletedStreams,
         highLightableStreamId,
         streamProgramAddress,
         streamV2ProgramAddress,
@@ -1317,6 +1404,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         unstakeStartDate,
         stakingMultiplier,
         setTheme,
+        setTpsAvg,
         setDtailsPanelOpen,
         setShouldLoadTokens,
         showDepositOptionsModal,
@@ -1337,6 +1425,8 @@ const AppStateProvider: React.FC = ({ children }) => {
         setRecipientAddress,
         setRecipientNote,
         setPaymentStartDate,
+        setProposalEndDate,
+        setProposalEndTime,
         setPaymentRateAmount,
         setLockPeriodAmount,
         setPaymentRateFrequency,
@@ -1350,6 +1440,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         setStreamList,
         setSelectedStream,
         setStreamDetail,
+        setDeletedStream,
         setHighLightableStreamId,
         openStreamById,
         getStreamActivity,

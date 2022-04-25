@@ -40,7 +40,7 @@ import { StepSelector } from '../StepSelector';
 import { DATEPICKER_FORMAT } from '../../constants';
 import { Identicon } from '../Identicon';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
-import { TransactionStatusContext } from '../../contexts/transaction-status';
+import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { Connection, Keypair, PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
 import { customLogger } from '../..';
 import { Beneficiary, Constants as MSPV2Constants, MSP, StreamBeneficiary, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
@@ -106,9 +106,9 @@ export const TreasuryStreamCreateModal = (props: {
     setLockPeriodFrequency
   } = useContext(AppStateContext);
   const {
-    clearTransactionStatusContext,
+    clearTxConfirmationContext,
     startFetchTxSignatureInfo,
-  } = useContext(TransactionStatusContext);
+  } = useContext(TxConfirmationContext);
   const [currentStep, setCurrentStep] = useState(0);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
@@ -860,7 +860,7 @@ export const TreasuryStreamCreateModal = (props: {
 
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     setTransactionCancelled(false);
     setIsBusy(true);
 

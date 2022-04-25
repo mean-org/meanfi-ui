@@ -20,10 +20,12 @@ import { UnstakeTabView } from "../../views/UnstakeTabView";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { MEAN_TOKEN_LIST } from "../../constants/token-list";
-import { confirmationEvents } from "../../contexts/transaction-status";
-import { EventType } from "../../models/enums";
+import { confirmationEvents, TxConfirmationInfo } from "../../contexts/transaction-status";
+import { EventType, OperationType } from "../../models/enums";
 import { InfoIcon } from "../../components/InfoIcon";
 import { ONE_MINUTE_REFRESH_TIMEOUT } from "../../constants";
+import { segmentAnalytics } from "../../App";
+import { AppUsageEvent } from "../../utils/segment-service";
 
 type SwapOption = "stake" | "unstake";
 
@@ -37,6 +39,7 @@ export const InvestView = () => {
     coinPrices,
     stakedAmount,
     detailsPanelOpen,
+    previousWalletConnectState,
     setIsVerifiedRecipient,
     setDtailsPanelOpen,
     setFromCoinAmount,
@@ -664,6 +667,7 @@ export const InvestView = () => {
 
   }, [stakeClient, refreshStakePoolInfo, getMeanPrice, shouldRefreshStakePoolInfo]);
 
+  // Set MAX APR
   useEffect(() => {
     const maxApr = Math.max(maxOrcaAprValue, maxRadiumAprValue);
     consoleOut('maxAprValue:', maxApr, 'blue');
@@ -673,9 +677,10 @@ export const InvestView = () => {
     maxRadiumAprValue
   ]);
 
+  // Set MAX Stake SOL APY
   useEffect(() => {
     const maxStakeSolApy = Math.max(soceanApyValue, marinadeApyValue);
-    consoleOut('maxAprValue:', maxStakeSolApy, 'blue');
+    consoleOut('maxStakeSolApy:', maxStakeSolApy, 'blue');
     setMaxStakeSolApyValue(maxStakeSolApy);
   }, [
     marinadeApyValue,
@@ -699,6 +704,7 @@ export const InvestView = () => {
     setStakingRewards(parseFloat(stakedAmount) * annualPercentageYield / 100);
   }, [stakedAmount]);
 
+  // Refresh Stake pool info timeout
   useEffect(() => {
 
     const interval = setInterval(() => {
@@ -724,17 +730,97 @@ export const InvestView = () => {
     detailsPanelOpen,
   ]);
 
+  const recordTxConfirmation = useCallback((signature: string, operation: OperationType, success = true) => {
+    let event: any;
+    switch (operation) {
+      case OperationType.Stake:
+        event = success ? AppUsageEvent.StakeMeanCompleted : AppUsageEvent.StakeMeanFailed;
+        segmentAnalytics.recordEvent(event, { signature: signature });
+        break;
+      case OperationType.Unstake:
+        event = success ? AppUsageEvent.UnstakeMeanCompleted : AppUsageEvent.UnstakeMeanFailed;
+        segmentAnalytics.recordEvent(event, { signature: signature });
+        break;
+      case OperationType.Deposit:
+        event = success ? AppUsageEvent.DepositInStakingVaultCompleted : AppUsageEvent.DepositInStakingVaultFailed;
+        segmentAnalytics.recordEvent(event, { signature: signature });
+        break;
+      default:
+        break;
+    }
+  }, []);
+
+  // Setup event handler for Tx confirmed
+  const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
+    consoleOut("onTxConfirmed event executed:", item, 'crimson');
+
+    const shouldITakeCare = (item: TxConfirmationInfo) => {
+      return item.operationType === OperationType.Stake ||
+              item.operationType === OperationType.Unstake ||
+              item.operationType === OperationType.Deposit
+        ? true
+        : false;
+    }
+
+    if (item && shouldITakeCare(item)) {
+      recordTxConfirmation(item.signature, item.operationType, true);
+    }
+  }, [
+    recordTxConfirmation,
+  ]);
+
+  // Setup event handler for Tx confirmation error
+  const onTxTimedout = useCallback((item: TxConfirmationInfo) => {
+    consoleOut("onTxTimedout event executed:", item, 'crimson');
+    if (item) {
+      recordTxConfirmation(item.signature, item.operationType, false);
+    }
+  }, [
+    recordTxConfirmation,
+  ]);
+
+  // Hook on wallet connect/disconnect
+  useEffect(() => {
+
+    if (previousWalletConnectState !== connected) {
+      if (!previousWalletConnectState && connected && publicKey) {
+        consoleOut('User is connecting...', publicKey.toBase58(), 'green');
+      } else if (previousWalletConnectState && !connected) {
+        consoleOut('User is disconnecting...', '', 'green');
+        confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
+        consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
+        confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
+        consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
+        setCanSubscribe(true);
+      }
+    }
+
+    return () => {
+      clearTimeout();
+    };
+
+  }, [
+    connected,
+    publicKey,
+    previousWalletConnectState,
+    onTxConfirmed,
+    onTxTimedout,
+  ]);
+
   // Setup event listeners
   useEffect(() => {
     if (pageInitialized && canSubscribe) {
       setCanSubscribe(false);
-      confirmationEvents.on(EventType.TxConfirmSuccess, onStakeTxConfirmed);
-      consoleOut('Subscribed to event txConfirmed with:', 'onStakeTxConfirmed', 'blue');
+      confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
+      consoleOut('Subscribed to event txConfirmed with:', 'onTxConfirmed', 'blue');
+      confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
+      consoleOut('Subscribed to event txTimedout with:', 'onTxTimedout', 'blue');
     }
   }, [
     canSubscribe,
     pageInitialized,
-    onStakeTxConfirmed
+    onTxConfirmed,
+    onTxTimedout,
   ]);
 
   // Set when a page is initialized

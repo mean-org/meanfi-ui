@@ -126,7 +126,7 @@ export async function createTokenMergeTx(
 
   let tx = new Transaction().add(...ixs);
   tx.feePayer = owner;
-  let hash = await connection.getRecentBlockhash("recent");
+  let hash = await connection.getLatestBlockhash("recent");
   tx.recentBlockhash = hash.blockhash;
 
   return tx;

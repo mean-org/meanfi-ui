@@ -17,9 +17,9 @@ import { MEAN_FINANCE_DISCORD_URL, MEAN_DAO_GITHUB_ORG_URL, MEAN_DAO_GITBOOKS_UR
 import { useTranslation } from "react-i18next";
 import { LanguageSelector } from "../LanguageSelector";
 import { ReferFriendModal } from '../ReferFriendModal';
-import { notify } from '../../utils/notifications';
 import { isLocal } from '../../utils/ui';
 import { Link } from 'react-router-dom';
+import { openNotification } from '../Notifications';
 
 export const AppContextMenu = () => {
 
@@ -92,7 +92,10 @@ export const AppContextMenu = () => {
     if (connected) {
       showFriendReferralModal();
     } else {
-      notify({
+      // Welcome to MeanFi
+      // Please connect your wallet to get started.
+      openNotification({
+        title: t('notifications.friend-referral-completed'),
         description: t('referrals.connect-to-refer-friend'),
         type: 'error'
       });

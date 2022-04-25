@@ -16,7 +16,7 @@ import { useConnectionConfig } from '../../contexts/connection';
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
 import { appConfig } from '../..';
 import { CUSTOM_USDC, MEAN_TOKEN_LIST } from '../../constants/token-list';
-import { TransactionStatusContext } from '../../contexts/transaction-status';
+import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { ClockCircleFilled } from '@ant-design/icons';
 
 type IdoTabOption = "deposit" | "withdraw";
@@ -43,7 +43,7 @@ export const IdoLpView = () => {
   const {
     fetchTxInfoStatus,
     lastSentTxSignature,
-  } = useContext(TransactionStatusContext);
+  } = useContext(TxConfirmationContext);
   const [currentTheme] = useState(theme);
   const [idoAccountAddress, setIdoAccountAddress] = useState('');
   const [idoStatus, setIdoStatus] = useState<IdoStatus | undefined>(undefined);

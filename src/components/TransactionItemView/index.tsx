@@ -9,7 +9,7 @@ import { UserTokenAccount } from "../../models/transactions";
 import { NATIVE_SOL } from "../../utils/tokens";
 import { Tooltip } from "antd";
 import { MappedTransaction } from "../../utils/history";
-import { isLocal, relativeTimeFromDates } from "../../utils/ui";
+import { getRelativeDate, isLocal, relativeTimeFromDates } from "../../utils/ui";
 
 export const TransactionItemView = (props: {
   accountAddress: string;
@@ -159,11 +159,6 @@ export const TransactionItemView = (props: {
           NATIVE_SOL.address,
           !isLocal()
         );
-  }
-
-  const getRelativeDate = (timestamp: number) => {
-    const reference = new Date(timestamp);
-    return relativeTimeFromDates(reference);
   }
 
   const getTransactionItem = () => {

@@ -29,7 +29,7 @@ import { appConfig } from '../..';
 import { formatThousands, getFormattedRateAmount, getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
 import { CUSTOM_USDC, MEAN_TOKEN_LIST } from '../../constants/token-list';
 import { PartnerImage } from '../../models/common-types';
-import { TransactionStatusContext } from '../../contexts/transaction-status';
+import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { ClockCircleFilled, DoubleRightOutlined } from '@ant-design/icons';
 import { MoneyStreaming } from '@mean-dao/money-streaming';
 
@@ -67,7 +67,7 @@ export const IdoLiveView = () => {
   const {
     fetchTxInfoStatus,
     lastSentTxSignature,
-  } = useContext(TransactionStatusContext);
+  } = useContext(TxConfirmationContext);
   const [currentTheme] = useState(theme);
   const [xPosPercent, setXPosPercent] = useState(0);
   const [currentDateDisplay, setCurrentDateDisplay] = useState('');

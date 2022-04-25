@@ -66,6 +66,7 @@ export function useLocalStorageState(key: string, defaultState?: string) {
 
 // shorten the checksummed version of the input address to have 4 characters at start and end
 export function shortenAddress(address: string, chars = 4): string {
+  if (!address) { return ""; }
   const numChars = isMobile ? 4 : chars;
   return `${address.slice(0, numChars)}...${address.slice(-numChars)}`;
 }
@@ -347,7 +348,7 @@ export async function signTransaction(
   transaction: Transaction,
   signers: Array<Account> = []
 ) {
-  transaction.recentBlockhash = (await connection.getRecentBlockhash()).blockhash
+  transaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash
   transaction.setSigners(wallet.publicKey, ...signers.map((s) => s.publicKey))
   if (signers.length > 0) {
     transaction.partialSign(...signers)
@@ -419,7 +420,7 @@ async function covertToProgramWalletTransaction(
 
 ) {
 
-  const { blockhash } = await connection.getRecentBlockhash(connection.commitment);
+  const { blockhash } = await connection.getLatestBlockhash(connection.commitment);
 
   transaction.recentBlockhash = blockhash;
   transaction.feePayer = wallet.publicKey;
@@ -623,4 +624,12 @@ export const makeDecimal = (bn: BN, decimals: number): number => {
 export const makeInteger = (num: number, decimals: number): BN => {
   const mul = Math.pow(10, decimals)
   return new BN(num * mul)
+}
+
+export const addSeconds = (date: Date, seconds: number) => {
+  return new Date(date.getTime() + seconds*1000);
+}
+
+export const addDays = (date: Date, days: number) => {
+  return new Date(date.getTime() + days*24*60*60*1000);
 }

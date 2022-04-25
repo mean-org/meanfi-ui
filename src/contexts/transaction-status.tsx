@@ -17,7 +17,7 @@ import { notification } from "antd";
 export type TxStatus = "fetching" | "fetched" | "error";
 const key = 'updatable';
 
-export interface TransactionStatusInfo {
+export interface TxConfirmationInfo {
   signature: string;
   finality: TransactionConfirmationStatus;
   operationType: OperationType;
@@ -26,7 +26,9 @@ export interface TransactionStatusInfo {
   loadingMessage?: string;
   completedTitle: string;
   completedMessage: string;
+  timestamp?: number;
   extras?: any;
+  timestampCompleted?: number;
 }
 
 type Listener = (value: any) => void;
@@ -66,20 +68,24 @@ class EventEmitter {
 
 export const confirmationEvents = new EventEmitter();
 
-const txStatusCache = new Map<string, TransactionStatusInfo>();
+const txStatusCache = new Map<string, TxConfirmationInfo>();
 
-export const transactionStatusCache = {
+export const txConfirmationCache = {
   add: (
     signature: string,
-    data: TransactionStatusInfo,
+    data: TxConfirmationInfo,
+    timestamp: number,
   ) => {
-      if (!data || !data.signature) { return; }
+      if (!signature || !data || !data.signature) { return; }
 
+      const modifiedData = Object.assign({}, data, {
+        timestamp
+      });
       const isNew = !txStatusCache.has(signature);
       if (isNew) {
-          txStatusCache.set(signature, data);
+          txStatusCache.set(signature, modifiedData);
       }
-      return data;
+      return modifiedData;
   },
   get: (signature: string) => {
       return txStatusCache.get(signature);
@@ -93,7 +99,7 @@ export const transactionStatusCache = {
   },
   update: (
     signature: string,
-    data: TransactionStatusInfo,
+    data: TxConfirmationInfo,
   ) => {
       if (txStatusCache.get(signature)) {
           txStatusCache.set(signature, data);
@@ -106,24 +112,25 @@ export const transactionStatusCache = {
   },
 };
 
-interface TransactionStatusConfig {
+interface TxConfirmationState {
   lastSentTxSignature: string;
   lastSentTxStatus: TransactionConfirmationStatus | undefined;
   lastSentTxOperationType: OperationType | undefined;
   fetchTxInfoStatus: TxStatus | undefined;
   recentlyCreatedVault: string;
-  confirmationHistory: TransactionStatusInfo[];
-  enqueueTransactionConfirmation: (data: TransactionStatusInfo) => void;
+  confirmationHistory: TxConfirmationInfo[];
+  enqueueTransactionConfirmation: (data: TxConfirmationInfo) => void;
+  clearConfirmationHistory: () => void;
   startFetchTxSignatureInfo: (
     signature: string,
     finality: TransactionConfirmationStatus,
     type: OperationType
   ) => void;
   setRecentlyCreatedVault: (ddcaAccountPda: string) => void;
-  clearTransactionStatusContext: () => void;
+  clearTxConfirmationContext: () => void;
 }
 
-const defaultCtxValues: TransactionStatusConfig = {
+const defaultCtxValues: TxConfirmationState = {
   lastSentTxSignature: '',
   lastSentTxStatus: undefined,
   lastSentTxOperationType: undefined,
@@ -131,14 +138,15 @@ const defaultCtxValues: TransactionStatusConfig = {
   recentlyCreatedVault: '',
   confirmationHistory: [],
   enqueueTransactionConfirmation: () => {},
+  clearConfirmationHistory: () => {},
   startFetchTxSignatureInfo: () => {},
   setRecentlyCreatedVault: () => {},
-  clearTransactionStatusContext: () => {},
+  clearTxConfirmationContext: () => {},
 };
 
-export const TransactionStatusContext = React.createContext<TransactionStatusConfig>(defaultCtxValues);
+export const TxConfirmationContext = React.createContext<TxConfirmationState>(defaultCtxValues);
 
-const TransactionStatusProvider: React.FC = ({ children }) => {
+const TxConfirmationProvider: React.FC = ({ children }) => {
   const today = new Date();
   const connection = useConnection();
   const { t } = useTranslation('common');
@@ -151,7 +159,11 @@ const TransactionStatusProvider: React.FC = ({ children }) => {
   const [fetchTxInfoStatus, setFetchingTxStatus] = useState<TxStatus | undefined>(defaultCtxValues.fetchTxInfoStatus);
   const [finality, setExpectedFinality] = useState<TransactionConfirmationStatus | undefined>();
   const [recentlyCreatedVault, updateRecentlyCreatedVault] = useState(defaultCtxValues.recentlyCreatedVault);
-  const [confirmationHistory, setConfirmationHistory] = useState<TransactionStatusInfo[]>(defaultCtxValues.confirmationHistory);
+  const [confirmationHistory, setConfirmationHistory] = useState<TxConfirmationInfo[]>(defaultCtxValues.confirmationHistory);
+
+  const clearConfirmationHistory = useCallback(() => {
+    setConfirmationHistory([]);
+  }, []);
 
   const setRecentlyCreatedVault = (ddcaAccountPda: string) => {
     updateRecentlyCreatedVault(ddcaAccountPda);
@@ -174,7 +186,7 @@ const TransactionStatusProvider: React.FC = ({ children }) => {
     });
   }
 
-  const clearTransactionStatusContext = () => {
+  const clearTxConfirmationContext = () => {
     setLastSentTxSignature('');
     setExpectedFinality(undefined);
     setLastSentTxStatus(undefined);
@@ -272,7 +284,7 @@ const TransactionStatusProvider: React.FC = ({ children }) => {
 
   const rebuildHistoryFromCache = useCallback(() => {
     const history = Array.from(txStatusCache.values());
-    setConfirmationHistory(history);
+    setConfirmationHistory(history.reverse());
     consoleOut('confirmationHistory:', history, 'orange');
   }, []);
 
@@ -316,9 +328,9 @@ const TransactionStatusProvider: React.FC = ({ children }) => {
 
   }, [connection]);
 
-  const enqueueTransactionConfirmation = useCallback(async (data: TransactionStatusInfo) => {
+  const enqueueTransactionConfirmation = useCallback(async (data: TxConfirmationInfo) => {
     const now = new Date().getTime();
-    transactionStatusCache.add(data.signature, data);
+    txConfirmationCache.add(data.signature, data, now);
     openNotification({
       key: data.signature,
       type: "info",
@@ -348,10 +360,11 @@ const TransactionStatusProvider: React.FC = ({ children }) => {
     rebuildHistoryFromCache();
     const result = await fetchTxStatus(data.signature, data.finality, now);
     if (result === data.finality) {
-      transactionStatusCache.update(
+      txConfirmationCache.update(
         data.signature,
         Object.assign({}, data, {
-          txInfoFetchStatus: "fetched"
+          txInfoFetchStatus: "fetched",
+          timestampCompleted: new Date().getTime()
         })
       );
       openNotification({
@@ -383,10 +396,11 @@ const TransactionStatusProvider: React.FC = ({ children }) => {
       confirmationEvents.emit(EventType.TxConfirmSuccess, data);
       rebuildHistoryFromCache();
     } else {
-      transactionStatusCache.update(
+      txConfirmationCache.update(
         data.signature,
         Object.assign({}, data, {
-          txInfoFetchStatus: "error"
+          txInfoFetchStatus: "error",
+          timestampCompleted: new Date().getTime()
         })
       );
       notification.close(data.signature);
@@ -401,22 +415,23 @@ const TransactionStatusProvider: React.FC = ({ children }) => {
   ]);
 
   return (
-    <TransactionStatusContext.Provider
+    <TxConfirmationContext.Provider
       value={{
         lastSentTxStatus,
         fetchTxInfoStatus,
+        confirmationHistory,
         lastSentTxSignature,
         recentlyCreatedVault,
         lastSentTxOperationType,
-        confirmationHistory,
         enqueueTransactionConfirmation,
-        clearTransactionStatusContext,
+        clearTxConfirmationContext,
         startFetchTxSignatureInfo,
+        clearConfirmationHistory,
         setRecentlyCreatedVault,
       }}>
       {children}
-    </TransactionStatusContext.Provider>
+    </TxConfirmationContext.Provider>
   );
 };
 
-export default TransactionStatusProvider;
+export default TxConfirmationProvider;

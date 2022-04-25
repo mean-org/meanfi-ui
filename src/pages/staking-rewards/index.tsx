@@ -11,7 +11,7 @@ import { IconStats } from "../../Icons";
 import { consoleOut, getTransactionStatusForLogs, isProd, relativeTimeFromDates } from "../../utils/ui";
 import { ConfirmOptions, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
-import { confirmationEvents, TransactionStatusContext } from "../../contexts/transaction-status";
+import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from "../../contexts/transaction-status";
 import { MEAN_TOKEN_LIST } from "../../constants/token-list";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { appConfig, customLogger } from "../..";
@@ -19,19 +19,23 @@ import { Button, Spin } from "antd";
 import { EventType, OperationType, TransactionStatus } from "../../models/enums";
 import { notify } from "../../utils/notifications";
 import { DepositRecord, DepositsInfo, StakingClient } from "@mean-dao/staking";
+import { AppUsageEvent, SegmentStakingRewardsDepositData } from "../../utils/segment-service";
+import { segmentAnalytics } from "../../App";
 
 const DEFAULT_APR_PERCENT_GOAL = '21';
 
 export const StakingRewardsView = () => {
   const {
+    coinPrices,
     isWhitelisted,
     transactionStatus,
+    previousWalletConnectState,
     setTransactionStatus,
   } = useContext(AppStateContext);
-  const { enqueueTransactionConfirmation } = useContext(TransactionStatusContext);
+  const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const { cluster, endpoint } = useConnectionConfig();
   const connection = useConnection();
-  const { publicKey, wallet } = useWallet();
+  const { publicKey, wallet, connected } = useWallet();
   const { account } = useNativeAccount();
   const accounts = useAccountsContext();
   const { t } = useTranslation('common');
@@ -47,6 +51,7 @@ export const StakingRewardsView = () => {
   // Tokens and balances
   const [meanToken, setMeanToken] = useState<TokenInfo>();
   const [meanBalance, setMeanBalance] = useState<number | undefined>(undefined);
+  const [meanPrice, setMeanPrice] = useState<number>(0);
   const [meanStakingVaultBalance, setMeanStakingVaultBalance] = useState<number>(0);
   const [canSubscribe, setCanSubscribe] = useState(true);
 
@@ -178,19 +183,64 @@ export const StakingRewardsView = () => {
 
   }, [setTransactionStatus]);
 
-  const onDepositTxConfirmed = useCallback((value: any) => {
-    consoleOut("onDepositTxConfirmed event executed:", value, 'crimson');
-    setIsDepositing(false);
-    resetTransactionStatus();
-    setTimeout(() => {
-      refreshMeanStakingVaultBalance();
-      setShouldRefreshDepositsInfo(true);
-    }, 100);
-    setLastDepositSignature('');
-  }, [
-    refreshMeanStakingVaultBalance,
-    resetTransactionStatus,
-  ]);
+  const recordTxConfirmation = useCallback((signature: string, operation: OperationType, success = true) => {
+    let event: any;
+    switch (operation) {
+      case OperationType.Stake:
+        event = success ? AppUsageEvent.StakeMeanCompleted : AppUsageEvent.StakeMeanFailed;
+        segmentAnalytics.recordEvent(event, { signature: signature });
+        break;
+      case OperationType.Unstake:
+        event = success ? AppUsageEvent.UnstakeMeanCompleted : AppUsageEvent.UnstakeMeanFailed;
+        segmentAnalytics.recordEvent(event, { signature: signature });
+        break;
+      case OperationType.Deposit:
+        event = success ? AppUsageEvent.DepositInStakingVaultCompleted : AppUsageEvent.DepositInStakingVaultFailed;
+        segmentAnalytics.recordEvent(event, { signature: signature });
+        break;
+      default:
+        break;
+    }
+  }, []);
+
+  // Setup event handler for Tx confirmed
+  const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
+    consoleOut("onTxConfirmed event executed:", item, 'crimson');
+
+    const shouldITakeCare = (item: TxConfirmationInfo) => {
+      return item.operationType === OperationType.Stake ||
+              item.operationType === OperationType.Unstake ||
+              item.operationType === OperationType.Deposit
+        ? true
+        : false;
+    }
+
+    if (item && shouldITakeCare(item)) {
+      recordTxConfirmation(item.signature, item.operationType, true);
+      setIsDepositing(false);
+      resetTransactionStatus();
+      setTimeout(() => {
+        refreshMeanStakingVaultBalance();
+        setShouldRefreshDepositsInfo(true);
+      }, 100);
+      setLastDepositSignature('');
+    }
+  }, [recordTxConfirmation, refreshMeanStakingVaultBalance, resetTransactionStatus]);
+
+  // Setup event handler for Tx confirmation error
+  const onTxTimedout = useCallback((item: TxConfirmationInfo) => {
+    consoleOut("onTxTimedout event executed:", item, 'crimson');
+    if (item) {
+      recordTxConfirmation(item.signature, item.operationType, false);
+      setIsDepositing(false);
+      resetTransactionStatus();
+      setTimeout(() => {
+        refreshMeanStakingVaultBalance();
+        setShouldRefreshDepositsInfo(true);
+      }, 100);
+    }
+  }, [recordTxConfirmation, refreshMeanStakingVaultBalance, resetTransactionStatus]);
+
 
   /////////////////
   //   Effects   //
@@ -235,6 +285,17 @@ export const StakingRewardsView = () => {
     refreshMeanStakingVaultBalance
   ]);
 
+  // Keep MEAN price updated
+  useEffect(() => {
+
+    if (coinPrices) {
+      const symbol = "MEAN";
+      const price = coinPrices && coinPrices[symbol] ? coinPrices[symbol] : 0;
+      setMeanPrice(price);
+    }
+
+  }, [coinPrices]);
+
   // Keep MEAN balance updated
   useEffect(() => {
     if (!publicKey || !accounts || !accounts.tokenAccounts || !accounts.tokenAccounts.length) {
@@ -273,17 +334,48 @@ export const StakingRewardsView = () => {
 
   }, [connection, shouldRefreshDepositsInfo, stakeClient]);
 
+  // Hook on wallet connect/disconnect
+  useEffect(() => {
+
+    if (previousWalletConnectState !== connected) {
+      if (!previousWalletConnectState && connected && publicKey) {
+        consoleOut('User is connecting...', publicKey.toBase58(), 'green');
+      } else if (previousWalletConnectState && !connected) {
+        consoleOut('User is disconnecting...', '', 'green');
+        confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
+        consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
+        confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
+        consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
+        setCanSubscribe(true);
+      }
+    }
+
+    return () => {
+      clearTimeout();
+    };
+
+  }, [
+    connected,
+    publicKey,
+    previousWalletConnectState,
+    onTxConfirmed,
+    onTxTimedout,
+  ]);
+
   // Setup event listeners
   useEffect(() => {
     if (pageInitialized && canSubscribe) {
       setCanSubscribe(false);
-      confirmationEvents.on(EventType.TxConfirmSuccess, onDepositTxConfirmed);
-      consoleOut('Subscribed to event txConfirmed with:', 'onDepositTxConfirmed', 'blue');
+      confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
+      consoleOut('Subscribed to event txConfirmed with:', 'onTxConfirmed', 'blue');
+      confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
+      consoleOut('Subscribed to event txTimedout with:', 'onTxTimedout', 'blue');
     }
   }, [
     canSubscribe,
     pageInitialized,
-    onDepositTxConfirmed
+    onTxConfirmed,
+    onTxTimedout,
   ]);
 
   // Set when a page is initialized
@@ -332,6 +424,17 @@ export const StakingRewardsView = () => {
           result: "",
         });
 
+        // Report event to Segment analytics
+        const segmentData: SegmentStakingRewardsDepositData = {
+          asset: meanToken.symbol,
+          assetPrice: meanPrice,
+          depositPercentage: depositPercentage,
+          amount: getTotalMeanAdded(),
+          stakingVaultBalance: meanStakingVaultBalance
+        };
+        consoleOut('segment data:', segmentData, 'brown');
+        segmentAnalytics.recordEvent(AppUsageEvent.DepositInStakingVaultFormButton, segmentData);
+
         return await stakeClient.depositTransaction(
           depositPercentage             // depositPercentage
         )
@@ -366,6 +469,7 @@ export const StakingRewardsView = () => {
           customLogger.logError("Deposit transaction failed", {
             transcript: transactionLog,
           });
+          segmentAnalytics.recordEvent(AppUsageEvent.DepositInStakingVaultFailed, { transcript: transactionLog });
           return false;
         });
       } else {
@@ -376,6 +480,7 @@ export const StakingRewardsView = () => {
         customLogger.logError("Deposit transaction failed", {
           transcript: transactionLog,
         });
+        segmentAnalytics.recordEvent(AppUsageEvent.DepositInStakingVaultFailed, { transcript: transactionLog });
         return false;
       }
     };
@@ -413,6 +518,7 @@ export const StakingRewardsView = () => {
               customLogger.logError("Deposit transaction failed", {
                 transcript: transactionLog,
               });
+              segmentAnalytics.recordEvent(AppUsageEvent.DepositInStakingVaultFailed, { transcript: transactionLog });
               return false;
             }
             setTransactionStatus({
@@ -424,6 +530,10 @@ export const StakingRewardsView = () => {
                 TransactionStatus.SignTransactionSuccess
               ),
               result: { signer: wallet.publicKey.toBase58() },
+            });
+            segmentAnalytics.recordEvent(AppUsageEvent.DepositInStakingVaultSigned, {
+              signature,
+              encodedTx
             });
             return true;
           })
@@ -445,6 +555,7 @@ export const StakingRewardsView = () => {
             customLogger.logError("Deposit transaction failed", {
               transcript: transactionLog,
             });
+            segmentAnalytics.recordEvent(AppUsageEvent.DepositInStakingVaultFailed, { transcript: transactionLog });
             return false;
           });
       } else {
@@ -460,6 +571,7 @@ export const StakingRewardsView = () => {
         customLogger.logError("Deposit transaction failed", {
           transcript: transactionLog,
         });
+        segmentAnalytics.recordEvent(AppUsageEvent.DepositInStakingVaultFailed, { transcript: transactionLog });
         return false;
       }
     };
@@ -498,6 +610,7 @@ export const StakingRewardsView = () => {
             customLogger.logError("Deposit transaction failed", {
               transcript: transactionLog,
             });
+            segmentAnalytics.recordEvent(AppUsageEvent.DepositInStakingVaultFailed, { transcript: transactionLog });
             return false;
           });
       } else {
@@ -512,6 +625,7 @@ export const StakingRewardsView = () => {
         customLogger.logError("Deposit transaction failed", {
           transcript: transactionLog,
         });
+        segmentAnalytics.recordEvent(AppUsageEvent.DepositInStakingVaultFailed, { transcript: transactionLog });
         return false;
       }
     };

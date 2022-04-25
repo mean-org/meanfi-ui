@@ -19,7 +19,7 @@ import { DdcaClient, TransactionFees } from '@mean-dao/ddca';
 import { CloseOutlined, LoadingOutlined } from '@ant-design/icons';
 import { HlaInfo } from '@mean-dao/hybrid-liquidity-ag/lib/types';
 import { notify } from '../../utils/notifications';
-import { TransactionStatusContext } from '../../contexts/transaction-status';
+import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { IconShieldSolid } from '../../Icons/IconShieldSolid';
 
 export const DdcaSetupModal = (props: {
@@ -49,7 +49,7 @@ export const DdcaSetupModal = (props: {
   const {
     setRecentlyCreatedVault,
     startFetchTxSignatureInfo
-  } = useContext(TransactionStatusContext);
+  } = useContext(TxConfirmationContext);
   const [isBusy, setIsBusy] = useState(false);
   const [rangeMin, setRangeMin] = useState(0);
   const [rangeMax, setRangeMax] = useState(0);

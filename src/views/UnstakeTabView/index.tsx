@@ -4,11 +4,11 @@ import { Button, Modal, Spin } from "antd";
 import { useTranslation } from 'react-i18next';
 import { TokenDisplay } from "../../components/TokenDisplay";
 import { AppStateContext } from "../../contexts/appstate";
-import { cutNumber, formatAmount, formatThousands, getAmountWithSymbol, getTxIxResume, isValidNumber } from "../../utils/utils";
+import { cutNumber, formatThousands, getAmountWithSymbol, getTxIxResume, isValidNumber } from "../../utils/utils";
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from "@ant-design/icons";
 import { StakingClient, UnstakeQuote } from "@mean-dao/staking";
 import { Transaction } from "@solana/web3.js";
-import { TransactionStatusContext } from "../../contexts/transaction-status";
+import { TxConfirmationContext } from "../../contexts/transaction-status";
 import { OperationType, TransactionStatus } from "../../models/enums";
 import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs } from "../../utils/ui";
 import { customLogger } from "../..";
@@ -17,6 +17,8 @@ import { notify } from "../../utils/notifications";
 import { useWallet } from "../../contexts/wallet";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { INPUT_DEBOUNCE_TIME } from "../../constants";
+import { AppUsageEvent, SegmentUnstakeMeanData } from "../../utils/segment-service";
+import { segmentAnalytics } from "../../App";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 let inputDebounceTimeout: any;
@@ -33,7 +35,7 @@ export const UnstakeTabView = (props: {
     setTransactionStatus,
     refreshPrices
   } = useContext(AppStateContext);
-  const { enqueueTransactionConfirmation } = useContext(TransactionStatusContext);
+  const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const { t } = useTranslation('common');
   const percentages = ["25", "50", "75", "100"];
   const [fromCoinAmount, setFromCoinAmount] = useState<string>('');
@@ -159,7 +161,7 @@ export const UnstakeTabView = (props: {
     const transactionLog: any[] = [];
 
     const createTx = async (): Promise<boolean> => {
-      if (wallet && props.stakeClient) {
+      if (wallet && props.stakeClient && props.selectedToken) {
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
           currentOperation: TransactionStatus.InitTransaction,
@@ -178,6 +180,18 @@ export const UnstakeTabView = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
           result: "",
         });
+
+        // Report event to Segment analytics
+        const segmentData: SegmentUnstakeMeanData = {
+          asset: props.selectedToken.symbol,
+          assetPrice: sMeanToMeanRate,
+          unstakedAsset: 'MEAN',
+          unstakedAssetPrice: meanPrice,
+          amount: uiAmount,
+          quote: parseFloat(unstakeMeanValue || '0')
+        };
+        consoleOut('segment data:', segmentData, 'brown');
+        segmentAnalytics.recordEvent(AppUsageEvent.UnstakeMeanFormButton, segmentData);
 
         return await props.stakeClient
           .unstakeTransaction(
@@ -210,6 +224,7 @@ export const UnstakeTabView = (props: {
             customLogger.logError("Unstake transaction failed", {
               transcript: transactionLog,
             });
+            segmentAnalytics.recordEvent(AppUsageEvent.UnstakeMeanFailed, { transcript: transactionLog });
             return false;
           });
       } else {
@@ -220,6 +235,7 @@ export const UnstakeTabView = (props: {
         customLogger.logError("Unstake transaction failed", {
           transcript: transactionLog,
         });
+        segmentAnalytics.recordEvent(AppUsageEvent.UnstakeMeanFailed, { transcript: transactionLog });
         return false;
       }
     };
@@ -259,6 +275,7 @@ export const UnstakeTabView = (props: {
               customLogger.logError("Unstake transaction failed", {
                 transcript: transactionLog,
               });
+              segmentAnalytics.recordEvent(AppUsageEvent.UnstakeMeanFailed, { transcript: transactionLog });
               return false;
             }
             setTransactionStatus({
@@ -270,6 +287,10 @@ export const UnstakeTabView = (props: {
                 TransactionStatus.SignTransactionSuccess
               ),
               result: { signer: wallet.publicKey.toBase58() },
+            });
+            segmentAnalytics.recordEvent(AppUsageEvent.UnstakeMeanSigned, {
+              signature,
+              encodedTx
             });
             return true;
           })
@@ -288,9 +309,8 @@ export const UnstakeTabView = (props: {
                 error: `${error}`,
               },
             });
-            customLogger.logError("Unstake transaction failed", {
-              transcript: transactionLog,
-            });
+            customLogger.logError("Unstake transaction failed", {transcript: transactionLog});
+            segmentAnalytics.recordEvent(AppUsageEvent.UnstakeMeanFailed, { transcript: transactionLog });
             return false;
           });
       } else {
@@ -303,9 +323,8 @@ export const UnstakeTabView = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: "Cannot sign transaction! Wallet not found!",
         });
-        customLogger.logError("Unstake transaction failed", {
-          transcript: transactionLog,
-        });
+        customLogger.logError("Unstake transaction failed", {transcript: transactionLog});
+        segmentAnalytics.recordEvent(AppUsageEvent.UnstakeMeanFailed, { transcript: transactionLog });
         return false;
       }
     };
@@ -344,6 +363,7 @@ export const UnstakeTabView = (props: {
             customLogger.logError("Unstake transaction failed", {
               transcript: transactionLog,
             });
+            segmentAnalytics.recordEvent(AppUsageEvent.UnstakeMeanFailed, { transcript: transactionLog });
             return false;
           });
       } else {
@@ -358,6 +378,7 @@ export const UnstakeTabView = (props: {
         customLogger.logError("Unstake transaction failed", {
           transcript: transactionLog,
         });
+        segmentAnalytics.recordEvent(AppUsageEvent.UnstakeMeanFailed, { transcript: transactionLog });
         return false;
       }
     };
@@ -412,13 +433,16 @@ export const UnstakeTabView = (props: {
     }
   }, [
     wallet,
+    meanPrice,
     connection,
-    props.selectedToken,
     fromCoinAmount,
+    sMeanToMeanRate,
+    unstakeMeanValue,
     props.stakeClient,
+    props.selectedToken,
     transactionStatus.currentOperation,
-    showTransactionExecutionModal,
     enqueueTransactionConfirmation,
+    showTransactionExecutionModal,
     setTransactionStatus,
     t
   ]);

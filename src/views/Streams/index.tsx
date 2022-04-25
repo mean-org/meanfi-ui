@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Divider, Row, Col, Button, Modal, Spin, Dropdown, Menu, Tooltip, Empty } from "antd";
 import {
   ArrowDownOutlined,
@@ -71,7 +71,7 @@ import { useNativeAccount } from "../../contexts/accounts";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from "../../utils/ids";
-import { confirmationEvents, TransactionStatusContext, TransactionStatusInfo } from "../../contexts/transaction-status";
+import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from "../../contexts/transaction-status";
 import { Identicon } from "../../components/Identicon";
 import BN from "bn.js";
 import { InfoIcon } from "../../components/InfoIcon";
@@ -111,8 +111,10 @@ import { StreamResumeModal } from "../../components/StreamResumeModal";
 import { StreamLockedModal } from "../../components/StreamLockedModal";
 import { StreamEditModal } from "../../components/StreamEditModal";
 import { openNotification } from "../../components/Notifications";
+import { CountdownCircleTimer } from "react-countdown-circle-timer";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
+let ds: string[] = [];
 
 export const Streams = () => {
   const location = useLocation();
@@ -133,7 +135,9 @@ export const Streams = () => {
     selectedToken,
     loadingStreams,
     streamsSummary,
+    deletedStreams,
     streamActivity,
+    refreshInterval,
     detailsPanelOpen,
     transactionStatus,
     customStreamDocked,
@@ -144,28 +148,29 @@ export const Streams = () => {
     highLightableStreamId,
     streamV2ProgramAddress,
     previousWalletConnectState,
-    setStreamList,
-    openStreamById,
-    setStreamDetail,
-    setSelectedToken,
-    setEffectiveRate,
+    setLoadingStreamsSummary,
+    setHighLightableStreamId,
+    setLastStreamsSummary,
+    setCustomStreamDocked,
+    setTransactionStatus,
+    setShouldLoadTokens,
+    refreshTokenBalance,
+    setDtailsPanelOpen,
     setSelectedStream,
     refreshStreamList,
     getStreamActivity,
     setStreamsSummary,
-    setDtailsPanelOpen,
-    setShouldLoadTokens,
-    refreshTokenBalance,
-    setTransactionStatus,
-    setCustomStreamDocked,
-    setLastStreamsSummary,
-    setLoadingStreamsSummary,
-    setHighLightableStreamId,
+    setDeletedStream,
+    setSelectedToken,
+    setEffectiveRate,
+    setStreamDetail,
+    openStreamById,
+    setStreamList,
   } = useContext(AppStateContext);
   const {
     confirmationHistory,
     enqueueTransactionConfirmation
-  } = useContext(TransactionStatusContext);
+  } = useContext(TxConfirmationContext);
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
@@ -179,6 +184,7 @@ export const Streams = () => {
   const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
   const [multisigAccounts, setMultisigAccounts] = useState<MultisigV2[] | undefined>(undefined);
   const [canSubscribe, setCanSubscribe] = useState(true);
+  const [key, setKey] = useState(0);
 
   // Treasury related
   const [loadingTreasuryDetails, setLoadingTreasuryDetails] = useState(true);
@@ -212,6 +218,11 @@ export const Streams = () => {
     endpoint,
     streamV2ProgramAddress
   ]);
+
+  const streamDetailRef = useRef(streamDetail);
+  useEffect(() => {
+    streamDetailRef.current = streamDetail;
+  }, [streamDetail]);
 
   /////////////////
   //  CALLBACKS  //
@@ -338,6 +349,13 @@ export const Streams = () => {
     return false;
   }, [publicKey]);
 
+  const isDeletedStream = useCallback((id: string) => {
+    if (!deletedStreams) {
+      return false;
+    }
+    return deletedStreams.some(i => i === id);
+  }, [deletedStreams]);
+
   const isTreasurer = (): boolean => {
     if (streamDetail && publicKey) {
       const v1 = streamDetail as StreamInfo;
@@ -390,7 +408,7 @@ export const Streams = () => {
   }, []);
 
   // Setup event handler for Tx confirmed
-  const onTxConfirmed = useCallback((item: TransactionStatusInfo) => {
+  const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
 
     const softReloadStreams = () => {
       const streamsRefreshCta = document.getElementById("streams-refresh-noreset-cta");
@@ -406,15 +424,26 @@ export const Streams = () => {
       }
     };
 
+    const refreshStream = (id: string) => {
+      const isCurrentlySelected = streamDetailRef.current && streamDetailRef.current.id as string === id ? true : false;
+      const streamItem = document.getElementById(id);
+      if (streamItem && isCurrentlySelected) {
+        streamItem.scrollIntoView({ behavior: 'smooth' });
+        streamItem.click();
+      }
+    };
+
     consoleOut("onTxConfirmed event handled:", item, 'crimson');
     recordTxConfirmation(item.signature, item.operationType, true);
     switch (item.operationType) {
       case OperationType.StreamWithdraw:
-        softReloadStreams();
+        refreshStream(item.extras);
         break;
       case OperationType.StreamClose:
+        setDeletedStream(item.extras);
         break;
       case OperationType.StreamTransferBeneficiary:
+        setDeletedStream(item.extras);
         break;
       case OperationType.StreamCreate:
         hardReloadStreams();
@@ -423,7 +452,7 @@ export const Streams = () => {
         if (customStreamDocked) {
           openStreamById(item.extras, false);
         } else {
-          softReloadStreams();
+          refreshStream(item.extras);
         }
         break;
       default:
@@ -433,11 +462,12 @@ export const Streams = () => {
   }, [
     customStreamDocked,
     recordTxConfirmation,
+    setDeletedStream,
     openStreamById,
   ]);
 
   // Setup event handler for Tx confirmation error
-  const onTxTimedout = useCallback((item: TransactionStatusInfo) => {
+  const onTxTimedout = useCallback((item: TxConfirmationInfo) => {
     consoleOut("onTxTimedout event executed:", item, 'crimson');
     // If we have the item, record failure and remove it from the list
     if (item) {
@@ -467,6 +497,12 @@ export const Streams = () => {
   /////////////////
   //   EFFECTS   //
   /////////////////
+
+  // Log the list of deleted streams
+  useEffect(() => {
+    ds = deletedStreams;
+    consoleOut('ds:', ds, 'blue');
+  }, [deletedStreams]);
 
   // Keep account balance updated
   useEffect(() => {
@@ -506,9 +542,9 @@ export const Streams = () => {
           freshStream = await msp.refreshStream(stream);
           if (freshStream) {
             newList.push(freshStream);
-            if (streamDetail && streamDetail.id === stream.id) {
-              setStreamDetail(freshStream);
-            }
+            // if (streamDetail && streamDetail.id === stream.id) {
+            //   setStreamDetail(freshStream);
+            // }
           }
         }
       }
@@ -520,9 +556,9 @@ export const Streams = () => {
           freshStream = await ms.refreshStream(stream);
           if (freshStream) {
             newList.push(freshStream);
-            if (streamDetail && streamDetail.id === stream.id) {
-              setStreamDetail(freshStream);
-            }
+            // if (streamDetail && streamDetail.id === stream.id) {
+            //   setStreamDetail(freshStream);
+            // }
           }
         }
       }
@@ -536,7 +572,8 @@ export const Streams = () => {
     const timeout = setTimeout(() => {
       if (!customStreamDocked) {
         refreshStreams();
-      } else if (msp && streamDetail && streamDetail.version === 2) {
+      }
+      if (msp && streamDetail && streamDetail.version >= 2) {
         msp.refreshStream(streamDetail as Stream).then(detail => {
           setStreamDetail(detail as Stream);
         });
@@ -866,19 +903,6 @@ export const Streams = () => {
     setIsBusy(false);
     setCloseStreamTransactionModalVisibility(false);
     resetTransactionStatus();
-    // TODO: Remove if a code review + UX review and testing find this unnecessary
-    // Try to remove the item from the list to avoid reloading the list
-    if (streamDetail && streamList && streamList.length > 1) {
-      let streamIndex = streamList.findIndex(s => s.id !== streamDetail.id);
-      if (streamIndex > 0) {
-        streamIndex--;
-      } else {
-        streamIndex = 0;
-      }
-      const filteredStreams = streamList.filter(s => s.id !== streamDetail.id);
-      setStreamList(filteredStreams);
-      setSelectedStream(filteredStreams[streamIndex]);
-    }
   }
 
   const onTransactionFinished = useCallback(() => {
@@ -1123,7 +1147,7 @@ export const Streams = () => {
       );
 
       tx.feePayer = publicKey;
-      let { blockhash } = await connection.getRecentBlockhash("confirmed");
+      let { blockhash } = await connection.getLatestBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
       tx.partialSign(...txSigners);
 
@@ -1577,7 +1601,7 @@ export const Streams = () => {
       );
 
       tx.feePayer = publicKey;
-      let { blockhash } = await connection.getRecentBlockhash("confirmed");
+      let { blockhash } = await connection.getLatestBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
       tx.partialSign(...txSigners);
 
@@ -1935,19 +1959,6 @@ export const Streams = () => {
     setIsBusy(false);
     hideTransferStreamTransactionModal();
     resetTransactionStatus();
-    // TODO: Remove if a code review + UX review and testing find this unnecessary
-    // Try to remove the item from the list to avoid reloading the list
-    if (streamDetail && streamList && streamList.length > 1) {
-      let streamIndex = streamList.findIndex(s => s.id !== streamDetail.id);
-      if (streamIndex > 0) {
-        streamIndex--;
-      } else {
-        streamIndex = 0;
-      }
-      const filteredStreams = streamList.filter(s => s.id !== streamDetail.id);
-      setStreamList(filteredStreams);
-      setSelectedStream(filteredStreams[streamIndex]);
-    }
   };
 
   const onAfterTransferStreamTransactionModalClosed = () => {
@@ -2739,7 +2750,7 @@ export const Streams = () => {
             enqueueTransactionConfirmation({
               signature: signature,
               operationType: OperationType.StreamAddFunds,
-              finality: "confirmed",
+              finality: "finalized",
               txInfoFetchStatus: "fetching",
               loadingTitle: "Confirming transaction",
               loadingMessage: `Fund stream with ${formatThousands(
@@ -3490,7 +3501,7 @@ export const Streams = () => {
             enqueueTransactionConfirmation({
               signature: signature,
               operationType: OperationType.StreamWithdraw,
-              finality: "confirmed",
+              finality: "finalized",
               txInfoFetchStatus: "fetching",
               loadingTitle: "Confirming transaction",
               loadingMessage: `Withdraw ${formatThousands(
@@ -3928,11 +3939,14 @@ export const Streams = () => {
     );
   }
 
-  const onRefreshStreams = () => {
-    // Record user event in Segment Analytics
-    segmentAnalytics.recordEvent(AppUsageEvent.StreamRefresh);
-    refreshStreamList(true);
+  const onRefreshStreams = (manual: boolean) => {
+    if (manual) {
+      // Record user event in Segment Analytics
+      segmentAnalytics.recordEvent(AppUsageEvent.StreamRefresh);
+    }
+    refreshStreamList(manual);
     setCustomStreamDocked(false);
+    setKey(prevKey => prevKey + 1);
   };
 
   const onRefreshStreamsNoReset = () => {
@@ -4214,7 +4228,11 @@ export const Streams = () => {
       <>
         {stream && (
           <>
-            <div className="stream-details-data-wrapper vertical-scroll">
+            <div className={
+              `stream-details-data-wrapper vertical-scroll ${isDeletedStream(stream.id as string)
+                ? 'disabled blurry-3x'
+                : ''}`
+              }>
 
               <Spin spinning={loadingStreams}>
                 <div className="stream-fields-container">
@@ -4363,7 +4381,7 @@ export const Streams = () => {
                   {/* Allocation info */}
                   {stream && !isScheduledOtp() && hasAllocation() && (
                     <Row className="mb-3">
-                      <Col span={24}>
+                      <Col span={12}>
                         <div className="info-label">
                           {stream.allocationAssigned
                             ? t('streams.stream-detail.label-reserved-allocation')
@@ -4382,6 +4400,21 @@ export const Streams = () => {
                           </span>
                         </div>
                       </Col>
+                      <Col span={12}>
+                        <div className="info-label">{t('streams.stream-detail.label-status')}</div>
+                        <div className="transaction-detail-row">
+                          <span className="info-icon">
+                            {getStreamStatus(stream) === "Running" ? (
+                              <IconSwitchRunning className="mean-svg-icons" />
+                            ) : (
+                              <IconSwitchStopped className="mean-svg-icons" />
+                            )}
+                          </span>
+                          <span className="info-data">
+                            {getStreamStatus(stream)}
+                          </span>
+                        </div>
+                      </Col>
                     </Row>
                   )}
 
@@ -4389,7 +4422,7 @@ export const Streams = () => {
                     <>
                       {/* Funds available to withdraw now (Total Vested) */}
                       <Row className="mb-3 mt-4">
-                        <Col span={24}>
+                        <Col span={12}>
                           <div className="info-label">{t('streams.stream-detail.label-funds-available-to-withdraw')}</div>
                           <div className="transaction-detail-row">
                             <span className="info-icon">
@@ -4413,6 +4446,21 @@ export const Streams = () => {
                             )}
                           </div>
                         </Col>
+                        <Col span={12}>
+                          <div className="info-label">{t('streams.stream-detail.label-status')}</div>
+                          <div className="transaction-detail-row">
+                            <span className="info-icon">
+                              {getStreamStatus(stream) === "Running" ? (
+                                <IconSwitchRunning className="mean-svg-icons" />
+                              ) : (
+                                <IconSwitchStopped className="mean-svg-icons" />
+                              )}
+                            </span>
+                            <span className="info-data">
+                              {getStreamStatus(stream)}
+                            </span>
+                          </div>
+                        </Col>
                       </Row>
                     </>
                   )}
@@ -4430,6 +4478,7 @@ export const Streams = () => {
                         hasStreamPendingTx() ||
                         isScheduledOtp() ||
                         !stream.escrowVestedAmount ||
+                        isDeletedStream(stream.id as string) ||
                         publicKey?.toBase58() !== stream.beneficiaryAddress
                       }
                       onClick={showWithdrawModal}>
@@ -4443,6 +4492,7 @@ export const Streams = () => {
                           type="text"
                           size="small"
                           className="ant-btn-shaded"
+                          disabled={isDeletedStream(stream.id as string)}
                           onClick={(e) => e.preventDefault()}
                           icon={<EllipsisOutlined />}>
                         </Button>
@@ -4484,7 +4534,11 @@ export const Streams = () => {
       <>
         {stream && (
           <>
-            <div className="stream-details-data-wrapper vertical-scroll">
+            <div className={
+              `stream-details-data-wrapper vertical-scroll ${isDeletedStream(stream.id as string)
+                ? 'disabled blurry-3x'
+                : ''}`
+              }>
 
               <Spin spinning={loadingStreams}>
                 <div className="stream-fields-container">
@@ -4595,9 +4649,9 @@ export const Streams = () => {
                   </Row>
 
                   {/* Allocation info */}
-                  {stream && !isScheduledOtp() && hasAllocation() && (
+                  {!isScheduledOtp() && hasAllocation() && (
                     <Row className="mb-3">
-                      <Col span={24}>
+                      <Col span={12}>
                         <div className="info-label">
                           {stream.allocationAssigned
                             ? t('streams.stream-detail.label-reserved-allocation')
@@ -4613,6 +4667,21 @@ export const Streams = () => {
                               toUiAmount(new BN(stream.remainingAllocationAmount), selectedToken?.decimals || 6),
                               stream.associatedToken as string
                             )}
+                          </span>
+                        </div>
+                      </Col>
+                      <Col span={12}>
+                        <div className="info-label">{t('streams.stream-detail.label-status')}</div>
+                        <div className="transaction-detail-row">
+                          <span className="info-icon">
+                            {getStreamStatus(stream) === "Running" ? (
+                              <IconSwitchRunning className="mean-svg-icons" />
+                            ) : (
+                              <IconSwitchStopped className="mean-svg-icons" />
+                            )}
+                          </span>
+                          <span className="info-data">
+                            {getStreamStatus(stream)}
                           </span>
                         </div>
                       </Col>
@@ -4662,6 +4731,7 @@ export const Streams = () => {
                         hasStreamPendingTx() ||
                         isScheduledOtp() ||
                         !stream.withdrawableAmount ||
+                        isDeletedStream(stream.id as string) ||
                         publicKey?.toBase58() !== stream.beneficiary
                       }
                       onClick={showWithdrawModal}>
@@ -4675,6 +4745,7 @@ export const Streams = () => {
                           type="text"
                           size="small"
                           className="ant-btn-shaded"
+                          disabled={isDeletedStream(stream.id as string)}
                           onClick={(e) => e.preventDefault()}
                           icon={<EllipsisOutlined />}>
                         </Button>
@@ -4710,7 +4781,11 @@ export const Streams = () => {
       <>
         {stream && (
           <>
-            <div className="stream-details-data-wrapper vertical-scroll">
+            <div className={
+              `stream-details-data-wrapper vertical-scroll ${isDeletedStream(stream.id as string)
+                ? 'disabled blurry-3x'
+                : ''}`
+              }>
 
               <Spin spinning={loadingStreams}>
                 <div className="stream-fields-container">
@@ -4962,7 +5037,11 @@ export const Streams = () => {
                           type="text"
                           shape="round"
                           size="small"
-                          disabled={isBusy || hasStreamPendingTx()}
+                          disabled={
+                            isBusy ||
+                            isDeletedStream(stream.id as string) ||
+                            hasStreamPendingTx()
+                          }
                           onClick={showCloseStreamModal}>
                           {(isBusy || hasStreamPendingTx()) && (<LoadingOutlined />)}
                           {t('streams.stream-detail.cancel-scheduled-transfer')}
@@ -4980,6 +5059,7 @@ export const Streams = () => {
                             isBusy ||
                             hasStreamPendingTx() ||
                             isOtp() ||
+                            isDeletedStream(stream.id as string) ||
                             (getTreasuryType() === "locked" && (stream && stream.state === STREAM_STATE.Running))
                           }
                           onClick={(getTreasuryType() === "open") ? showAddFundsModal : showCloseStreamModal}>
@@ -4997,6 +5077,7 @@ export const Streams = () => {
                                 type="text"
                                 size="small"
                                 className="ant-btn-shaded"
+                                disabled={isDeletedStream(stream.id as string)}
                                 onClick={(e) => e.preventDefault()}
                                 icon={<EllipsisOutlined />}>
                               </Button>
@@ -5041,7 +5122,11 @@ export const Streams = () => {
       <>
         {stream && (
           <>
-            <div className="stream-details-data-wrapper vertical-scroll">
+            <div className={
+              `stream-details-data-wrapper vertical-scroll ${isDeletedStream(stream.id as string)
+                ? 'disabled blurry-3x'
+                : ''}`
+              }>
 
               <Spin spinning={loadingStreams}>
                 <div className="stream-fields-container">
@@ -5261,6 +5346,7 @@ export const Streams = () => {
                           isBusy ||
                           hasStreamPendingTx() ||
                           isOtp() ||
+                          isDeletedStream(stream.id as string) ||
                           (getTreasuryType() === "locked" && stream.status === STREAM_STATUS.Running)
                         }
                         onClick={(getTreasuryType() === "open") ? showAddFundsModal : showCloseStreamModal}>
@@ -5278,6 +5364,7 @@ export const Streams = () => {
                               type="text"
                               size="small"
                               className="ant-btn-shaded"
+                              disabled={isDeletedStream(stream.id as string)}
                               onClick={(e) => e.preventDefault()}
                               icon={<EllipsisOutlined />}>
                             </Button>
@@ -5295,6 +5382,7 @@ export const Streams = () => {
                             type="text"
                             size="small"
                             className="ant-btn-shaded"
+                            disabled={isDeletedStream(stream.id as string)}
                             onClick={showPauseStreamModal}
                             icon={<IconPause className="mean-svg-icons h-100" />}>
                           </Button>
@@ -5307,6 +5395,7 @@ export const Streams = () => {
                             type="text"
                             size="small"
                             className="ant-btn-shaded"
+                            disabled={isDeletedStream(stream.id as string)}
                             onClick={showResumeStreamModal}
                             icon={<IconPlay className="mean-svg-icons h-100" />}>
                           </Button>
@@ -5322,6 +5411,7 @@ export const Streams = () => {
                           type="text"
                           size="small"
                           className="ant-btn-shaded"
+                          disabled={isDeletedStream(stream.id as string)}
                           onClick={showLockedStreamModal}
                           icon={getStreamStatus(stream) === "Running" && 
                           (<IconLock className="mean-svg-icons" />)}>
@@ -5368,7 +5458,13 @@ export const Streams = () => {
         };
         return (
           <div key={`${index + 50}`} onClick={onStreamClick} id={`${item.id}`}
-              className={`transaction-list-row ${streamDetail && streamDetail.id === item.id ? 'selected' : ''}`}>
+            className={
+              `transaction-list-row ${isDeletedStream(item.id as string)
+                ? 'disabled blurry-1x'
+                : streamDetail && streamDetail.id === item.id
+                  ? 'selected'
+                  : ''}`
+            }>
             <div className="icon-cell">
               {getStreamTypeIcon(item)}
               <div className="token-icon">
@@ -5446,7 +5542,7 @@ export const Streams = () => {
             )}
             <span className="title">{t('streams.screen-title')}</span>
             <Tooltip placement="bottom" title={t('streams.refresh-tooltip')}>
-              <div id="streams-refresh-cta" className={`transaction-stats ${loadingStreams ? 'click-disabled' : 'simplelink'}`} onClick={onRefreshStreams}>
+              <div id="streams-refresh-cta" className={`transaction-stats ${loadingStreams ? 'click-disabled' : 'simplelink'}`} onClick={() => onRefreshStreams(true)}>
                 <Spin size="small" />
                 {customStreamDocked ? (
                   <span className="transaction-legend neutral">
@@ -5456,12 +5552,18 @@ export const Streams = () => {
                   <>
                     <span className="transaction-legend">
                       <span className="icon-button-container">
-                        <Button
-                          type="default"
-                          shape="circle"
-                          size="small"
-                          icon={<ReloadOutlined />}
-                          onClick={() => {}}
+                        <CountdownCircleTimer
+                          isPlaying={true}
+                          key={key}
+                          size={18}
+                          strokeWidth={3}
+                          duration={refreshInterval / 1000}
+                          colors={theme === 'dark' ? '#FFFFFF' : '#000000'}
+                          trailColor={theme === 'dark' ? '#424242' : '#DDDDDD'}
+                          onComplete={() => {
+                            onRefreshStreams(false);
+                            return { shouldRepeat: true, delay: 1 }
+                          }}
                         />
                       </span>
                     </span>

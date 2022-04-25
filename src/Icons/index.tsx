@@ -16,6 +16,7 @@ export { IconDownload } from "./IconDownload";
 export { IconEdit } from "./IconEdit";
 export { IconEllipsis } from "./IconEllipsis";
 export { IconEnvelope } from "./IconEnvelope";
+export { IconEvents } from "./IconEvents";
 export { IconExchange } from "./IconExchange";
 export { IconExit } from "./IconExit";
 export { IconExternalLink } from "./IconExternalLink";

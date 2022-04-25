@@ -28,7 +28,7 @@ import { useTranslation } from "react-i18next";
 import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { customLogger } from '../..';
-import { confirmationEvents, TransactionStatusContext, TransactionStatusInfo } from '../../contexts/transaction-status';
+import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
 import { useNavigate } from 'react-router-dom';
 import { TokenDisplay } from '../../components/TokenDisplay';
 import { TextInput } from '../../components/TextInput';
@@ -75,7 +75,7 @@ export const OneTimePayment = () => {
     setIsVerifiedRecipient,
     setSelectedTokenBalance,
   } = useContext(AppStateContext);
-  const { enqueueTransactionConfirmation } = useContext(TransactionStatusContext);
+  const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const navigate = useNavigate();
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
@@ -236,7 +236,7 @@ export const OneTimePayment = () => {
   }, []);
 
   // Setup event handler for Tx confirmed
-  const onTxConfirmed = useCallback((item: TransactionStatusInfo) => {
+  const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
     consoleOut("onTxConfirmed event executed:", item, 'crimson');
     if (item && item.operationType === OperationType.Transfer && item.extras === 'scheduled') {
       recordTxConfirmation(item.signature, true);
@@ -257,7 +257,7 @@ export const OneTimePayment = () => {
   ]);
 
   // Setup event handler for Tx confirmation error
-  const onTxTimedout = useCallback((item: TransactionStatusInfo) => {
+  const onTxTimedout = useCallback((item: TxConfirmationInfo) => {
     consoleOut("onTxTimedout event executed:", item, 'crimson');
     if (item && item.operationType === OperationType.Transfer) {
       recordTxConfirmation(item.signature, false);

@@ -23,7 +23,7 @@ import { useTranslation } from "react-i18next";
 import { PreFooter } from "../../components/PreFooter";
 import { useNativeAccount, useUserAccounts } from "../../contexts/accounts";
 import { customLogger } from '../..';
-import { confirmationEvents, TransactionStatusContext, TransactionStatusInfo } from '../../contexts/transaction-status';
+import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
 import BN from 'bn.js';
 import { unwrapSol } from '@mean-dao/hybrid-liquidity-ag';
 import { notify } from '../../utils/notifications';
@@ -39,7 +39,7 @@ export const UnwrapView = () => {
     refreshTokenBalance,
     setTransactionStatus,
   } = useContext(AppStateContext);
-  const { enqueueTransactionConfirmation } = useContext(TransactionStatusContext);
+  const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const { t } = useTranslation("common");
   const [isUnwrapping, setIsUnwrapping] = useState(false);
   const [unwrapAmount, setUnwrapAmount] = useState<string>("");
@@ -106,7 +106,7 @@ export const UnwrapView = () => {
 
   }, [setTransactionStatus]);
 
-  const onUnwrapConfirmed = useCallback((item: TransactionStatusInfo) => {
+  const onUnwrapConfirmed = useCallback((item: TxConfirmationInfo) => {
     consoleOut("onUnwrapConfirmed event executed!", '', 'crimson');
     if (item && item.operationType === OperationType.Unwrap) {
       setIsUnwrapping(false);

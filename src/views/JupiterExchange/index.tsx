@@ -8,7 +8,7 @@ import { TOKEN_PROGRAM_ID } from "../../utils/ids";
 import { useWallet } from "../../contexts/wallet";
 import { consoleOut, getTransactionStatusForLogs, isProd } from "../../utils/ui";
 import { getJupiterTokenList } from "../../utils/api";
-import { DEFAULT_SLIPPAGE_PERCENT, EXCHANGE_ROUTES_REFRESH_TIMEOUT, MAX_TOKEN_LIST_ITEMS, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
+import { DEFAULT_SLIPPAGE_PERCENT, ONE_MINUTE_REFRESH_TIMEOUT, MAX_TOKEN_LIST_ITEMS, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { JupiterExchangeInput } from "../../components/JupiterExchangeInput";
 import { useNativeAccount, useUserAccounts } from "../../contexts/accounts";
 import { ACCOUNT_LAYOUT } from "../../utils/layouts";
@@ -31,7 +31,7 @@ import { OperationType, TransactionStatus } from "../../models/enums";
 import { unwrapSol } from "@mean-dao/hybrid-liquidity-ag";
 import { SignerWalletAdapter } from "@solana/wallet-adapter-base";
 import { TokenDisplay } from "../../components/TokenDisplay";
-import { TransactionStatusContext } from "../../contexts/transaction-status";
+import { TxConfirmationContext } from "../../contexts/transaction-status";
 import { notify } from "../../utils/notifications";
 
 export const COMMON_EXCHANGE_TOKENS = ['USDC', 'USDT', 'MEAN', 'SOL'];
@@ -58,7 +58,7 @@ export const JupiterExchange = (props: {
         setTransactionStatus,
         refreshPrices,
     } = useContext(AppStateContext);
-    const { enqueueTransactionConfirmation } = useContext(TransactionStatusContext);
+    const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
     const [isBusy, setIsBusy] = useState(false);
     const [isUnwrapping, setIsUnwrapping] = useState(false);
     const [fromMint, setFromMint] = useState<string | undefined>();
@@ -990,11 +990,11 @@ export const JupiterExchange = (props: {
         if (jupiter && inputToken && outputToken && slippage && inputAmount) {
             timer = setInterval(() => {
                 if (!isBusy) {
-                    consoleOut(`Trigger refresh routes after ${EXCHANGE_ROUTES_REFRESH_TIMEOUT / 1000} seconds`);
+                    consoleOut(`Trigger refresh routes after ${ONE_MINUTE_REFRESH_TIMEOUT / 1000} seconds`);
                     setRefreshingRoutes(true);
                     refreshRoutes();
                 }
-            }, EXCHANGE_ROUTES_REFRESH_TIMEOUT);
+            }, ONE_MINUTE_REFRESH_TIMEOUT);
         }
 
         return () => {
