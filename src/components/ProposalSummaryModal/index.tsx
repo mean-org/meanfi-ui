@@ -147,6 +147,15 @@ export const ProposalSummaryModal = (props: {
     return false;
   }, [highlightedMultisigTx]);
 
+  const isTxExpired = useCallback(() => {
+    if (highlightedMultisigTx) {
+      if (highlightedMultisigTx.status === MultisigTransactionStatus.Expired) {
+        return true;
+      }
+    }
+    return false;
+  }, [highlightedMultisigTx]);
+
   const isTxPendingApproval = useCallback(() => {
     if (highlightedMultisigTx) {
       if (highlightedMultisigTx.status === MultisigTransactionStatus.Pending) {
@@ -565,6 +574,8 @@ const renderer = ({ total, days, hours, minutes, seconds, completed }: any) => {
               <>
                 {isTxVoided() ? (
                   <h3 className="text-center">{t('multisig.multisig-transactions.tx-operation-voided')} {isUserTxInitiator() ? t('multisig.multisig-transactions.tx-operation-cancel') : ''}</h3>
+                ) : isTxExpired() ? (
+                  <h3 className="text-center">{t('multisig.multisig-transactions.tx-operation-expired')}</h3>
                 ) : isTxRejected() ? (
                   <h3 className="text-center">{t('multisig.multisig-transactions.tx-operation-rejected')}</h3>
                   ) : (

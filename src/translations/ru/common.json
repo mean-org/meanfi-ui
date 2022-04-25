@@ -567,6 +567,7 @@
 			"transaction-requires": "This transaction requires",
 			"treasury-closed-warning": "When a treasury is closed, all funds left over will be deposited back into the multisig safe.",
 			"tx-operation-executed": "This transaction has already been executed",
+			"tx-operation-expired": "This transaction has already been expired",
 			"tx-operation-failure": "Operation {{operation}} failed",
 			"tx-operation-pending-one": "A transaction on this multisig is now ready for execution. Please tell the person who initiated this transaction to execute it.",
 			"tx-operation-pending-two": "A transaction on this multisig is ready for",

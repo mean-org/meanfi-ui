@@ -572,6 +572,7 @@
 			"tx-operation-voided": "This pending transaction has been VOIDED due to the Multisig being edited.",
 			"tx-operation-rejected": "This transaction has been rejected.",
 			"tx-operation-executed": "This transaction has already been executed",
+			"tx-operation-expired": "This transaction has already been expired",
 			"your-status": "Your status:",
 			"rejected": "Rejected",
 			"rejected-tx": "You have rejected this transaction",

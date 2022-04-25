@@ -567,6 +567,7 @@
 			"transaction-requires": "Bu işlem gerektiriyor",
 			"treasury-closed-warning": "Hazine kapatıldığında kalan tüm varlıklar kurucunun hesabına gider. Lütfen onaylamadan önce bunu kabul ettiğnizin farkında olun.",
 			"tx-operation-executed": "This transaction has already been executed",
+			"tx-operation-expired": "This transaction has already been expired",
 			"tx-operation-failure": "{{operation}} işlemi başarısız oldu",
 			"tx-operation-pending-one": "Bu çoklu-İmza'da gerçekleştirilmeye hazır bir işlem mevcut. Lütfen bu işlemi başlatana, haber verin.",
 			"tx-operation-pending-two": "Bu çoklu-İmza'da bir işlem hazır şunun için",
