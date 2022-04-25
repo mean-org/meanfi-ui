@@ -17,7 +17,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { consoleOut, copyText, delay, getReadableDate, getShortDate, getTransactionOperationDescription, getTransactionStatusForLogs, isDev, isLocal } from '../../utils/ui';
 import { Identicon } from '../../components/Identicon';
 import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress, toUiAmount } from '../../utils/utils';
-import { MultisigV2, MultisigParticipant, MultisigTransaction, MultisigTransactionStatus, Multisig, CreateMintPayload, MultisigMint, SetMintAuthPayload, MEAN_MULTISIG_OPS } from '../../models/multisig';
+import { MultisigV2, MultisigParticipant, MultisigTransaction, MultisigTransactionStatus, Multisig, CreateMintPayload, MultisigMint, SetMintAuthPayload, MEAN_MULTISIG_OPS, listMultisigTransactions, MultisigTransactionSummary, getMultisigTransactionSummary } from '../../models/multisig';
 import { TransactionFees } from '@mean-dao/msp';
 import { useNativeAccount } from '../../contexts/accounts';
 import { OperationType, TransactionStatus } from '../../models/enums';
@@ -81,6 +81,7 @@ export const MultisigMintsView = () => {
   const [loadingMultisigTxs, setLoadingMultisigTxs] = useState(true);
   const [multisigPendingTxs, setMultisigPendingTxs] = useState<MultisigTransaction[]>([]);
   const [highlightedMultisigTx, sethHighlightedMultisigTx] = useState<MultisigTransaction | undefined>();
+  const [multisigTransactionSummary, setMultisigTransactionSummary] = useState<MultisigTransactionSummary | undefined>(undefined);
   // Tx control
   const [isBusy, setIsBusy] = useState(false);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
@@ -905,120 +906,97 @@ export const MultisigMintsView = () => {
     getMultisigMints
   ]);
 
-  // Update list of txs
-  useEffect(() => {
+ // Update list of txs
+ useEffect(() => {
 
-    if (!connection || !publicKey || !multisigAddress || !selectedMint || !selectedMultisig || !loadingMultisigTxs) {
-      return;
+  if (
+    !connection || 
+    !publicKey || 
+    !multisigClient || 
+    !selectedMultisig || 
+    !selectedMultisig.id || 
+    !loadingMultisigTxs
+  ) { 
+    return;
+  }
+
+  const timeout = setTimeout(() => {
+
+    consoleOut('Triggering loadMultisigPendingTxs using setNeedRefreshTxs...', '', 'blue');
+
+    listMultisigTransactions(
+      multisigClient,
+      selectedMultisig,
+      publicKey
+    )
+    .then((txs: MultisigTransaction[]) => {
+      consoleOut('selected multisig txs', txs, 'blue');
+      setMultisigPendingTxs(txs);
+    })
+    .catch((err: any) => {
+      console.error("Error fetching all transactions", err);
+      setMultisigPendingTxs([]);
+      consoleOut('multisig txs:', [], 'blue');
+    })
+    .finally(() => setLoadingMultisigTxs(false));
+    
+  });
+
+  return () => {
+    clearTimeout(timeout);
+  }    
+
+}, [
+  publicKey, 
+  selectedMultisig, 
+  connection, 
+  multisigClient, 
+  loadingMultisigTxs
+]);
+
+// Load/Unload multisig on wallet connect/disconnect
+useEffect(() => {
+  if (previousWalletConnectState !== connected) {
+    if (!previousWalletConnectState && connected && publicKey) {
+      consoleOut('User is connecting...', publicKey.toBase58(), 'green');
+      setLoadingMultisigAccounts(true);
+    } else if (previousWalletConnectState && !connected) {
+      consoleOut('User is disconnecting...', '', 'green');
+      setMultisigAccounts([]);
+      setSelectedMultisig(undefined);
+      sethHighlightedMultisigTx(undefined);
+      setMultisigTransactionSummary(undefined);
+      setLoadingMultisigAccounts(false);
+      navigate('/multisig');
     }
+  }
+}, [
+  connected,
+  publicKey,
+  previousWalletConnectState,
+  navigate,
+]);
 
-    const timeout = setTimeout(() => {
+// Handle what to do when pending Tx confirmation reaches finality or on error
+useEffect(() => {
+  if (!publicKey) { return; }
 
-      let transactions: MultisigTransaction[] = [];
-
-      multisigClient.account.transaction
-        .all(selectedMultisig.id.toBuffer())
-        .then((txs) => {
-          for (let tx of txs) {
-            let currentOwnerIndex = selectedMultisig.owners
-              .findIndex((o: MultisigParticipant) => o.address === publicKey.toBase58());
-              
-            let txInfo = Object.assign({}, {
-              id: tx.publicKey,
-              multisig: tx.account.multisig,
-              programId: tx.account.programId,
-              signers: tx.account.signers,
-              createdOn: new Date(tx.account.createdOn.toNumber() * 1000),
-              executedOn: tx.account.executedOn > 0
-                ? new Date(tx.account.executedOn.toNumber() * 1000)
-                : undefined,
-              status: getTransactionStatus(tx.account),
-              operation: parseInt(Object.keys(OperationType).filter(k => k === tx.account.operation.toString())[0]),
-              accounts: tx.account.accounts,
-              proposer: tx.account.proposer,
-              didSigned: tx.account.signers[currentOwnerIndex],
-              keypairs: tx.account.keypairs
-                .map((k: any) => {
-                  try {
-                    return Keypair.fromSecretKey(Uint8Array.from(Buffer.from(k)));
-                  } catch {
-                    return undefined;
-                  }
-                })
-                .filter((k: any) => k !== undefined)
-
-            } as MultisigTransaction);
-
-            if (txInfo.accounts.some(a => a.pubkey.equals(selectedMint.address))) {
-              transactions.push(txInfo);
-            }
-          }
-          transactions.sort((a, b) => b.createdOn.getTime() - a.createdOn.getTime());
-          consoleOut('multisigPendingTxs:', transactions, 'blue');
-          setMultisigPendingTxs(transactions);
-        })
-        .catch(err => {
-          console.error(err);
-          setMultisigPendingTxs([]);
-          consoleOut('multisigPendingTxs:', [], 'blue');
-        })
-        .finally(() => setLoadingMultisigTxs(false));
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }
-
-  }, [
-    publicKey,
-    connection,
-    selectedMint,
-    multisigAddress,
-    selectedMultisig,
-    loadingMultisigTxs,
-    multisigClient.account.transaction,
-    getTransactionStatus
-  ]);
-
-  // Load/Unload multisig on wallet connect/disconnect
-  useEffect(() => {
-    if (previousWalletConnectState !== connected) {
-      if (!previousWalletConnectState && connected && publicKey) {
-        consoleOut('User is connecting...', publicKey.toBase58(), 'green');
-        setLoadingMultisigAccounts(true);
-      } else if (previousWalletConnectState && !connected) {
-        consoleOut('User is disconnecting...', '', 'green');
-        setMultisigAccounts([]);
-        setSelectedMultisig(undefined);
-        setLoadingMultisigAccounts(false);
-        navigate('/multisig');
-      }
-    }
-  }, [
-    connected,
-    publicKey,
-    previousWalletConnectState,
-    navigate,
-  ]);
-
-  // Handle what to do when pending Tx confirmation reaches finality or on error
-  useEffect(() => {
-    if (!publicKey) { return; }
-
-    if (multisigAddress && lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
-      clearTransactionStatusContext();
-      refreshMints();
-      setLoadingMultisigTxs(true);
-    }
-  }, [
-    publicKey,
-    multisigAddress,
-    fetchTxInfoStatus,
-    lastSentTxSignature,
-    // lastSentTxOperationType,
-    clearTransactionStatusContext,
-    refreshMints,
-  ]);
+  if (multisigAddress && lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
+    clearTransactionStatusContext();
+    sethHighlightedMultisigTx(undefined);
+    setMultisigTransactionSummary(undefined);
+    refreshMints();
+    setLoadingMultisigTxs(true);
+  }
+}, [
+  publicKey,
+  multisigAddress,
+  fetchTxInfoStatus,
+  lastSentTxSignature,
+  // lastSentTxOperationType,
+  clearTransactionStatusContext,
+  refreshMints,
+]);
 
   ////////////////////////////////
   //   Operations and Actions   //

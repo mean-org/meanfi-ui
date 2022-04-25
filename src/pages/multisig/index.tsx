@@ -9,7 +9,6 @@ import {
 import {
   ConfirmOptions,
   Connection,
-  GetProgramAccountsFilter,
   Keypair,
   LAMPORTS_PER_SOL,
   MemcmpFilter,
@@ -61,11 +60,14 @@ import {
   MultisigV2,
   MultisigParticipant,
   MultisigTransaction,
+  MultisigTransactionSummary,
   MultisigTransactionStatus,
   MEAN_MULTISIG_OPS,
+  listMultisigTransactions,
   MultisigTransactionFees,
   ZERO_FEES,
   MULTISIG_ACTIONS,
+  getMultisigTransactionSummary,
   getFees
 } from '../../models/multisig';
 import { MultisigCreateModal } from '../../components/MultisigCreateModal';
@@ -129,6 +131,7 @@ export const MultisigView = () => {
   const [loadingMultisigTxs, setLoadingMultisigTxs] = useState(false);
   const [multisigTxs, setMultisigTxs] = useState<MultisigTransaction[]>([]);
   const [highlightedMultisigTx, sethHighlightedMultisigTx] = useState<MultisigTransaction | undefined>();
+  const [multisigTransactionSummary, setMultisigTransactionSummary] = useState<MultisigTransactionSummary | undefined>(undefined);
   // Vaults
   const [multisigVaults, setMultisigVaults] = useState<any[]>([]);
   // Programs
@@ -1015,6 +1018,9 @@ export const MultisigView = () => {
   const showMultisigActionTransactionModal = useCallback((tx: MultisigTransaction) => {
     resetTransactionStatus();
     sethHighlightedMultisigTx(tx);
+    setMultisigTransactionSummary(
+      getMultisigTransactionSummary(tx)
+    );
     setMultisigActionTransactionModalVisible(true);
   }, [resetTransactionStatus]);
 
@@ -2061,29 +2067,6 @@ export const MultisigView = () => {
 
   },[]);
 
-  const getTransactionStatus = useCallback((account: any) => {
-
-    if (account.executedOn > 0) {
-      return MultisigTransactionStatus.Executed;
-    } 
-
-    let status = MultisigTransactionStatus.Pending;
-    let approvals = account.signers.filter((s: boolean) => s === true).length;
-
-    if (selectedMultisig && selectedMultisig.threshold === approvals) {
-      status = MultisigTransactionStatus.Approved;
-    }
-
-    if (selectedMultisig && selectedMultisig.ownerSeqNumber !== account.ownerSetSeqno) {
-      status = MultisigTransactionStatus.Voided;
-    }
-
-    return status;
-
-  },[
-    selectedMultisig
-  ]);
-
   const isUserTheProposer = useCallback((): boolean => {
     if (!highlightedMultisigTx || !publicKey) { return false; }
 
@@ -2377,134 +2360,6 @@ export const MultisigView = () => {
 
   }, [connection]);
 
-  const loadMultisigTxs = useCallback(() => {
-    
-    if (!connection || !publicKey || !multisigClient || !selectedMultisig || !selectedMultisig.id || loadingMultisigTxs) { 
-      return;
-    }
-
-    setLoadingMultisigTxs(true);
-    let transactions: MultisigTransaction[] = [];
-
-    const msFilter: GetProgramAccountsFilter[] = [
-      {
-          dataSize: 1200
-      },
-      {
-          memcmp: {
-            offset: 8,    // Skip discriminator
-            bytes: selectedMultisig.id.toBase58()
-          }
-      }
-    ];
-
-    multisigClient.account.transaction
-      .all(msFilter)
-      .then((txs) => {
-        console.log('!!!multisig txs:', txs, 'orange');
-        for (let tx of txs) {
-          // console.log('tx account', tx.account);
-          let currentOwnerIndex = selectedMultisig.owners.findIndex((o: any) => o.address === publicKey.toBase58());
-          let txInfo = Object.assign({}, {
-            id: tx.publicKey,
-            multisig: tx.account.multisig,
-            programId: tx.account.programId,
-            signers: tx.account.signers,
-            ownerSeqNumber: tx.account.ownerSetSeqno,
-            createdOn: new Date(tx.account.createdOn.toNumber() * 1000),
-            executedOn: tx.account.executedOn > 0 && tx.account.executedOn.byteLength <= 53
-              ? new Date(tx.account.executedOn.toNumber() * 1000) 
-              : undefined,
-            status: getTransactionStatus(tx.account),
-            operation: parseInt(Object.keys(OperationType).filter(k => k === tx.account.operation.toString())[0]),
-            accounts: tx.account.accounts,
-            didSigned: tx.account.signers[currentOwnerIndex],
-            proposer: tx.account.proposer,
-            pdaTimestamp: tx.account.pdaTimestamp ? tx.account.pdaTimestamp.toNumber() : undefined,
-            pdaBump: tx.account.pdaBump,
-            data: tx.account.data,
-            keypairs: []
-
-          } as MultisigTransaction);
-          
-          transactions.push(txInfo);
-        }
-        const sortedTxs = transactions.sort((a, b) => b.createdOn.getTime() - a.createdOn.getTime());
-        consoleOut('selected multisig txs', sortedTxs, 'blue');
-        if (!isProd()) {
-          const debugTable: any[] = [];
-          sortedTxs.forEach(item => debugTable.push({
-            operation: OperationType[item.operation],
-            approved: item.didSigned,
-            executed: item.executedOn ? true : false,
-            proposer: item.proposer ? shortenAddress(item.proposer.toBase58(), 6) : '-',
-            status: MultisigTransactionStatus[item.status]
-          }));
-          console.table(debugTable);
-        }
-        setMultisigTxs(sortedTxs);
-        setLoadingMultisigTxs(false);
-      })
-      .catch(err => {
-        console.error(err);
-        setMultisigTxs([]);
-        setLoadingMultisigTxs(false);
-        consoleOut('multisig txs:', [], 'blue');
-      });
-
-  }, [
-    connection, 
-    publicKey, 
-    multisigClient,
-    selectedMultisig, 
-    loadingMultisigTxs,
-    getTransactionStatus
-  ]);
-
-  // Get multisig mint accounts on demmand
-  // const getMultisigMints = useCallback(async (
-  //   connection: Connection,
-  //   multisig: PublicKey
-
-  // ) => {
-
-  //   const [multisigSigner] = await PublicKey.findProgramAddress(
-  //     [multisig.toBuffer()],
-  //     MEAN_MULTISIG
-  //   );
-
-  //   const mintInfos = await connection.getProgramAccounts(TOKEN_PROGRAM_ID, {
-  //     filters: [
-  //       {
-  //         memcmp: { offset: 4, bytes: multisigSigner.toBase58() },
-  //       }, 
-  //       {
-  //         dataSize: MintLayout.span
-  //       }
-  //     ],
-  //   });
-
-  //   if (!mintInfos || !mintInfos.length) { return []; }
-
-  //   const results = mintInfos.map((t: any) => {
-  //     let mintAccount = MintLayout.decode(t.account.data);
-  //     mintAccount.address = t.pubkey;
-  //     return {
-  //       address: mintAccount.address,
-  //       isInitialized: mintAccount.isInitialized === 1 ? true : false,
-  //       decimals: mintAccount.decimals,
-  //       supply: new BN(mintAccount.supply).toNumber(),
-  //       mintAuthority: mintAccount.freezeAuthority ? new PublicKey(mintAccount.freezeAuthority) : null,
-  //       freezeAuthority: mintAccount.freezeAuthority ? new PublicKey(mintAccount.freezeAuthority) : null
-        
-  //     } as MultisigMint;
-  //   });
-
-  //   consoleOut('multisig mints:', results, 'blue');
-  //   return results;
-
-  // },[]);
-
   // Refresh the multisig accounts list
   useEffect(() => {
 
@@ -2586,7 +2441,6 @@ export const MultisigView = () => {
     highLightableMultisigId,
     loadingMultisigAccounts,
     readAllMultisigAccounts,
-    loadMultisigTxs,
   ]);
 
   // Subscribe to multisig account changes
@@ -2665,19 +2519,64 @@ export const MultisigView = () => {
   // Get Txs for the selected multisig
   useEffect(() => {
 
-    if (!publicKey || !selectedMultisig || !needRefreshTxs) { 
+    if (
+      !connection || 
+      !publicKey || 
+      !multisigClient || 
+      !selectedMultisig || 
+      !selectedMultisig.id || 
+      !needRefreshTxs ||
+      loadingMultisigTxs
+    ) { 
       return;
     }
 
-    consoleOut('Triggering loadMultisigPendingTxs using setNeedRefreshTxs...', '', 'blue');
-    setNeedRefreshTxs(false);
-    loadMultisigTxs();
+    const timeout = setTimeout(() => {
+
+      consoleOut('Triggering loadMultisigPendingTxs using setNeedRefreshTxs...', '', 'blue');
+      setNeedRefreshTxs(false);
+      setLoadingMultisigTxs(true);
+
+      listMultisigTransactions(
+        multisigClient,
+        selectedMultisig,
+        publicKey
+      )
+      .then((txs: MultisigTransaction[]) => {
+        consoleOut('selected multisig txs', txs, 'blue');
+        if (!isProd()) {
+          const debugTable: any[] = [];
+          txs.forEach(item => debugTable.push({
+            operation: OperationType[item.operation],
+            approved: item.didSigned,
+            executed: item.executedOn ? true : false,
+            proposer: item.proposer ? shortenAddress(item.proposer.toBase58(), 6) : '-',
+            status: MultisigTransactionStatus[item.status]
+          }));
+          console.table(debugTable);
+        }
+        setMultisigTxs(txs);
+      })
+      .catch((err: any) => {
+        console.error("Error fetching all transactions", err);
+        setMultisigTxs([]);
+        consoleOut('multisig txs:', [], 'blue');
+      })
+      .finally(() => setLoadingMultisigTxs(false));
+      
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }    
 
   }, [
-    publicKey,
-    selectedMultisig,
+    publicKey, 
+    selectedMultisig, 
     needRefreshTxs,
-    loadMultisigTxs
+    connection, 
+    multisigClient, 
+    loadingMultisigTxs
   ]);
 
   // Get multisig treasuries for the selected multisig
@@ -2739,36 +2638,6 @@ export const MultisigView = () => {
     getProgramsByUpgradeAuthority,
   ]);
 
-  // Get Multisig Mint accounts
-  // useEffect(() => {
-
-  //   if (!connection || !publicKey || !multisigClient || !selectedMultisig || !loadingMints) {
-  //     return;
-  //   }
-
-  //   const timeout = setTimeout(() => {
-  //     getMultisigMints(connection, selectedMultisig.address)
-  //     .then((result: MultisigMint[]) => {
-  //       setMultisigMints(result);
-  //       consoleOut('Mints:', result, 'blue');
-  //     })
-  //     .catch(err => console.error(err))
-  //     .finally(() => setLoadingMints(false));
-  //   });
-
-  //   return () => {
-  //     clearTimeout(timeout);
-  //   }
-
-  // },[
-  //   publicKey,
-  //   connection,
-  //   loadingMints,
-  //   multisigClient,
-  //   selectedMultisig,
-  //   getMultisigMints,
-  // ]);
-
   // Load/Unload multisig on wallet connect/disconnect
   useEffect(() => {
     if (previousWalletConnectState !== connected) {
@@ -2782,6 +2651,7 @@ export const MultisigView = () => {
         setMultisigAccounts([]);
         setHighLightableMultisigId(undefined);
         sethHighlightedMultisigTx(undefined);
+        setMultisigTransactionSummary(undefined);
         setSelectedMultisig(undefined);
         setLoadingMultisigAccounts(false);
       }
@@ -2806,21 +2676,28 @@ export const MultisigView = () => {
 
   // Handle what to do when pending Tx confirmation reaches finality or on error
   useEffect(() => {
-    if (!publicKey) { return; }
+
+    if (!publicKey || !multisigClient || !selectedMultisig) { return; }
 
     if (lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
+
+      if (lastSentTxOperationType === OperationType.CreateMultisig) {
+        setSelectedMultisig(undefined);   // Deselects the current multisig if creating a new one
+      }
+      setNeedRefreshTxs(true);          // Trigger reload multisigs
       clearTransactionStatusContext();
       setLoadingMultisigAccounts(true);
       sethHighlightedMultisigTx(undefined);
-      loadMultisigTxs();
+      setMultisigTransactionSummary(undefined);
     }
   }, [
-    publicKey,
-    fetchTxInfoStatus,
-    lastSentTxSignature,
-    lastSentTxOperationType,
-    clearTransactionStatusContext,
-    loadMultisigTxs
+    publicKey, 
+    fetchTxInfoStatus, 
+    lastSentTxSignature, 
+    lastSentTxOperationType, 
+    multisigClient, 
+    selectedMultisig,
+    clearTransactionStatusContext
   ]);
 
   // Get Multisig Vaults

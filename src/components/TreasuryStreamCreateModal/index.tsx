@@ -948,7 +948,7 @@ export const TreasuryStreamCreateModal = (props: {
 
       let txs: Transaction[] = [];
 
-      console.log('streamsBumps', streamsBumps);
+      // console.log('streamsBumps', streamsBumps);
 
       for (let createTx of createStreams) {
         const ixData = Buffer.from(createTx.instructions[0].data);
@@ -960,21 +960,31 @@ export const TreasuryStreamCreateModal = (props: {
           txSize
         );
 
-        console.log('accounts meta keys: ', createTx.instructions[0].keys.map((m: any) => m.pubkey.toBase58()));
+        const [txDetailAddress] = await PublicKey.findProgramAddress(
+          [
+            props.multisigAddress.toBuffer(),
+            transaction.publicKey.toBuffer()
+          ],
+          props.multisigClient.programId
+        );
+
 
         let streamSeedData = streamsBumps[createTx.instructions[0].keys[7].pubkey.toBase58()];
-        console.log('streamSeedData: ', streamSeedData);
         let tx = props.multisigClient.transaction.createTransaction(
           MSPV2Constants.MSP,
-          OperationType.StreamCreate,
           ixAccounts as any,
           ixData as any,
+          OperationType.StreamCreate,
+          "Create Stream",
+          "",
+          new BN(0),
           new u64(streamSeedData.timeStamp.toNumber()),
           new BN(streamSeedData.bump),
           {
             accounts: {
               multisig: props.multisigAddress,
               transaction: transaction.publicKey,
+              transactionDetail: txDetailAddress,
               proposer: publicKey,
               multisigOpsAccount: MEAN_MULTISIG_OPS,
               systemProgram: SystemProgram.programId
@@ -985,7 +995,7 @@ export const TreasuryStreamCreateModal = (props: {
         );
 
         tx.feePayer = publicKey;
-        let { blockhash } = await props.multisigClient.provider.connection.getRecentBlockhash("confirmed");
+        let { blockhash } = await props.multisigClient.provider.connection.getLatestBlockhash("confirmed");
         tx.recentBlockhash = blockhash;
         tx.partialSign(transaction);
         txs.push(tx);
@@ -1617,7 +1627,7 @@ export const TreasuryStreamCreateModal = (props: {
                             allowClear={false}
                             disabledDate={disabledDate}
                             placeholder={t('transactions.send-date.placeholder')}
-                            onChange={(value, date) => handleDateChange(date)}
+                            onChange={(value: any, date: string) => handleDateChange(date)}
                             value={moment(
                               paymentStartDate,
                               DATEPICKER_FORMAT
@@ -1947,7 +1957,7 @@ export const TreasuryStreamCreateModal = (props: {
                             allowClear={false}
                             disabledDate={disabledDate}
                             placeholder={t('transactions.send-date.placeholder')}
-                            onChange={(value, date) => handleDateChange(date)}
+                            onChange={(value: any, date: string) => handleDateChange(date)}
                             value={moment(
                               paymentStartDate,
                               DATEPICKER_FORMAT
