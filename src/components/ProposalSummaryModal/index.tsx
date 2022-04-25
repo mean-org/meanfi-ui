@@ -360,7 +360,7 @@ export const ProposalSummaryModal = (props: {
   },[]);
 
   // Random component
-const Completionist = () => <span>Expired time</span>;
+const Completionist = () => <span>00:00:00:00</span>;
 
   // Renderer callback with condition
 const renderer = ({ days, hours, minutes, seconds, completed }: any) => {
@@ -369,7 +369,12 @@ const renderer = ({ days, hours, minutes, seconds, completed }: any) => {
     return <Completionist />;
   } else {
     // Render a countdown
-    return <span>{days}:{hours}:{minutes}:{seconds}</span>;
+    const daysSpace = (days < 10) ? '0' : '';
+    const hoursSpace = (hours < 10) ? '0' : '';
+    const minutesSpace = (minutes < 10) ? '0' : '';
+    const secondsSpace = (seconds < 10) ? '0' : '';
+
+    return <span>{`${daysSpace}${days}`}:{`${hoursSpace}${hours}`}:{`${minutesSpace}${minutes}`}:{`${secondsSpace}${seconds}`}</span>;
   }
 };
 
@@ -378,36 +383,14 @@ const renderer = ({ days, hours, minutes, seconds, completed }: any) => {
       {
         highlightedMultisigTx && multisigTransactionSummary && (
         <>
-          <Row>
-          {/* {multisigTransactionSummary.title && (
-            <Col span={12} className="mb-1 d-flex text-left">
-              <span>{multisigTransactionSummary.title}</span>
-            </Col>
-          )} */}
-          {multisigTransactionSummary.description && (
-            <Col span={12} className="mb-1 d-flex text-left">
-              {/* <span className="info-label width-25">{t('multisig.multisig-transactions.transaction-description')}</span> */}
-              <span>{multisigTransactionSummary.description}</span>
-            </Col>
-          )}
-          </Row>
-          {/* Action */}
-          {/* <Row className="mb-1">
-            <Col span={12} className="text-right pr-1">
-              <span className="info-label">{t('multisig.multisig-transactions.proposed-action')}</span>
-            </Col>
-            <Col span={12} className="text-left pl-1">
-              <span>{getOperationName(highlightedMultisigTx.operation)}</span>
-            </Col>
-          </Row> */}
           {/* Title */}
           <Row className="mb-1">
             {multisigTransactionSummary.title && (
               <>
-                <Col span={12} className="text-right pr-1">
+                <Col span={8} className="text-right pr-1">
                   <span className="info-label">Title:</span>
                 </Col>
-                <Col span={12} className="text-left pl-1">
+                <Col span={16} className="text-left pl-1">
                   <span>{multisigTransactionSummary.title}</span>
                 </Col>
               </>
@@ -415,14 +398,13 @@ const renderer = ({ days, hours, minutes, seconds, completed }: any) => {
           </Row>
           {/* Expiry date */}
           <Row className="mb-1">
-            <Col span={12} className="text-right pr-1">
+            <Col span={8} className="text-right pr-1">
               <span className="info-label">Expires in:</span>
             </Col>
-            <Col span={12} className="text-left pl-1">
+            <Col span={16} className="text-left pl-1">
               {multisigTransactionSummary.expirationDate ? (
                 <>
-                  <Countdown className="align-middle" date={getReadableDate(multisigTransactionSummary.expirationDate)} daysInHours={true} renderer={renderer} zeroPadTime={2} />
-                  {/* <span>{getReadableDate(multisigTransactionSummary.expirationDate, true)}</span> */}
+                  <Countdown className="align-middle" date={getReadableDate(multisigTransactionSummary.expirationDate)} daysInHours={true} renderer={renderer} />
                 </>
               ) : (
                 <span>{t('multisig.proposal-modal.does-not-expire')}</span>
@@ -431,28 +413,28 @@ const renderer = ({ days, hours, minutes, seconds, completed }: any) => {
           </Row>
           {/* Proposer */}
           <Row className="mb-1">
-            <Col span={12} className="text-right pr-1">
+            <Col span={8} className="text-right pr-1">
               <span className="info-label">{t('multisig.multisig-transactions.proposed-by')}</span>
             </Col>
-            <Col span={12} className="text-left pl-1">
+            <Col span={16} className="text-left pl-1">
               <span>{getTxInitiator(highlightedMultisigTx)?.name} ({shortenAddress(multisigTransactionSummary.proposer as string, 4)})</span>
             </Col>
           </Row>
           {/* Submitted on */}
           <Row className="mb-1">
-            <Col span={12} className="text-right pr-1">
+            <Col span={8} className="text-right pr-1">
               <span className="info-label">{t('multisig.multisig-transactions.submitted-on')}</span>
             </Col>
-            <Col span={12} className="text-left pl-1">
+            <Col span={16} className="text-left pl-1">
               <span>{getReadableDate(multisigTransactionSummary.createdOn, true)}</span>
             </Col>
           </Row>
           {/* Status */}
           <Row className="mb-1">
-            <Col span={12} className="text-right pr-1">
+            <Col span={8} className="text-right pr-1">
               <span className="info-label">Status</span>
             </Col>
-            <Col span={12} className="text-left pl-1 mb-1 d-flex align-items-start justify-content-start">
+            <Col span={16} className="text-left pl-1 mb-1 d-flex align-items-start justify-content-start">
               <span>{getTxSignedCount(highlightedMultisigTx)} signed, {selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)} pending</span>
               <MultisigOwnersSigned className="ml-1" participants={getParticipantsThatApprovedTx(highlightedMultisigTx) || []} />
             </Col>
@@ -465,7 +447,11 @@ const renderer = ({ days, hours, minutes, seconds, completed }: any) => {
             <div className="text-center proposal-resume">{t('multisig.multisig-transactions.proposal-ready-to-be-executed')}</div>
           ) : isTxPendingApproval() ? (
             <div className="text-center proposal-resume">{(selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)) > 1 ? t('multisig.multisig-transactions.missing-signatures', {missingSignature: selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)}) : t('multisig.multisig-transactions.missing-signature', {missingSignature: selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)})}</div>
-          ) : null}
+          ) : isTxExpired() ? (
+            <div className="text-center proposal-resume">{t('multisig.multisig-transactions.proposal-ready-to-be-executed')}</div>
+          ) : (
+            <div className="text-center proposal-resume">{t('multisig.multisig-transactions.proposal-completed')}</div>
+          )}
         </Col>
       </Row>
 
@@ -543,53 +529,19 @@ const renderer = ({ days, hours, minutes, seconds, completed }: any) => {
             {/* Normal stuff - YOUR USER INPUTS / INFO AND ACTIONS */}
             {isTxPendingExecution() ? (
               <>
-                {/* Custom execution-ready message */}
-                {isTreasuryOperation() && !isUserTheProposer() ? (
-                  <h3 className="text-center">{t('multisig.multisig-transactions.tx-operation-pending-one')}</h3>
-                ) : (
-                  <h3 className="text-center">{t('multisig.multisig-transactions.tx-operation-pending-two')} {isUserTheProposer() ? t('multisig.multisig-transactions.your-execution') : t('multisig.multisig-transactions.execution')}.</h3>
-                )}
-                <Divider className="mt-1" />
+                <Divider className="mt-0" />
                 {renderGeneralSummaryModal}
-                {/* <div className="mb-1 d-flex align-items-center justify-content-center text-center">
-                  <span className="mr-1">{t('multisig.multisig-transactions.your-status')}</span>
-                  <span className={`font-bold ${getTxUserStatusClass(highlightedMultisigTx)}`}>{getTransactionUserStatusAction(highlightedMultisigTx, true)}</span>
-                  <MultisigOwnersSigned className="ml-1" participants={getParticipantsThatApprovedTx(highlightedMultisigTx) || []} />
-                </div> */}
-                {/* <div className="mb-2 text-center">{t('multisig.multisig-transactions.proposal-ready-to-be-executed')}</div> */}
               </>
             ) : isTxPendingApproval() ? (
               <>
-                <h3 className="text-center">{t('multisig.multisig-transactions.transaction-awaiting')} {t('multisig.multisig-transactions.approval')}</h3>
-                <Divider className="mt-2" />
+                <Divider className="mt-0" />
                 {renderGeneralSummaryModal}
-                
-                {/* <div className="mb-1 d-flex align-items-center justify-content-center text-center">
-                  <span className="mr-1">{t('multisig.multisig-transactions.your-status')}</span>
-                  <span className={`font-bold mr-1 ${getTxUserStatusClass(highlightedMultisigTx)}`}>{getTransactionUserStatusAction(highlightedMultisigTx, true)}</span>
-                  <MultisigOwnersSigned className="ml-1" participants={getParticipantsThatApprovedTx(highlightedMultisigTx) || []} />
-                </div> */}
-                {/* <div className="mb-2 text-center">{(selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)) > 1 ? t('multisig.multisig-transactions.missing-signatures', {missingSignature: selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)}) : t('multisig.multisig-transactions.missing-signature', {missingSignature: selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)})}</div> */}
               </>
             ) : (
               <>
-                {isTxVoided() ? (
-                  <h3 className="text-center">{t('multisig.multisig-transactions.tx-operation-voided')} {isUserTxInitiator() ? t('multisig.multisig-transactions.tx-operation-cancel') : ''}</h3>
-                ) : isTxExpired() ? (
-                  <h3 className="text-center">{t('multisig.multisig-transactions.tx-operation-expired')}</h3>
-                ) : isTxRejected() ? (
-                  <h3 className="text-center">{t('multisig.multisig-transactions.tx-operation-rejected')}</h3>
-                  ) : (
-                  <h3 className="text-center">{t('multisig.multisig-transactions.tx-operation-executed')}</h3>
-                )}
-                <Divider className="mt-2" />
+                <Divider className="mt-0" />
                 {(!isTxVoided() && !isTxRejected()) && (
                   <>
-                    {/* <div className="mb-1 d-flex align-items-center justify-content-center text-center">
-                      <span className="mr-1">{t('multisig.multisig-transactions.your-status')}</span>
-                      <span className={`font-bold mr-1 ${getTxUserStatusClass(highlightedMultisigTx)}`}>{getTransactionUserStatusAction(highlightedMultisigTx, true)}</span>
-                      <MultisigOwnersSigned className="ml-1" participants={getParticipantsThatApprovedTx(highlightedMultisigTx) || []} />
-                    </div> */}
                     {renderGeneralSummaryModal}
                   </>
                 )}
@@ -612,8 +564,7 @@ const renderer = ({ days, hours, minutes, seconds, completed }: any) => {
             {/* If I am the last approval needed to reach threshold show instructions for exec */}
             {getTxSignedCount(highlightedMultisigTx) === selectedMultisig.threshold - 1 && (
               <>
-                <h3 className="text-center mt-3">{t('multisig.multisig-transactions.ready-for-execution')}</h3>
-                <Divider className="mt-2" />
+                <Divider className="mt-0" />
                 {renderGeneralSummaryModal}
               </>
             )}
