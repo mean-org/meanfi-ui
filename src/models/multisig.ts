@@ -4,6 +4,7 @@ import { OperationType } from "./enums";
 
 export const MEAN_MULTISIG_OPS = new PublicKey("3TD6SWY9M1mLY2kZWJNavPLhwXvcRsWdnZLRaMzERJBw");
 export const LAMPORTS_PER_SIG = 5000;
+export const DEFAULT_EXPIRATION_TIME_SECONDS = 604800;
 export const ZERO_FEES = {
   multisigFee: 0,
   networkFee: 0,
