@@ -360,16 +360,16 @@ export const ProposalSummaryModal = (props: {
   },[]);
 
   // Random component
-const Completionist = () => <span>You are good to go!</span>;
+const Completionist = () => <span>Expired time</span>;
 
   // Renderer callback with condition
-const renderer = ({ total, days, hours, minutes, seconds, completed }: any) => {
+const renderer = ({ days, hours, minutes, seconds, completed }: any) => {
   if (completed) {
     // Render a completed state
     return <Completionist />;
   } else {
     // Render a countdown
-    return <span>{total}:{days}:{hours}:{minutes}:{seconds}</span>;
+    return <span>{days}:{hours}:{minutes}:{seconds}</span>;
   }
 };
 
@@ -421,8 +421,8 @@ const renderer = ({ total, days, hours, minutes, seconds, completed }: any) => {
             <Col span={12} className="text-left pl-1">
               {multisigTransactionSummary.expirationDate ? (
                 <>
-                  {/* <Countdown className="align-middle" date={getReadableDate(multisigTransactionSummary.expirationDate)} daysInHours={true} renderer={renderer} /> */}
-                  <span>{getReadableDate(multisigTransactionSummary.expirationDate, true)}</span>
+                  <Countdown className="align-middle" date={getReadableDate(multisigTransactionSummary.expirationDate)} daysInHours={true} renderer={renderer} zeroPadTime={2} />
+                  {/* <span>{getReadableDate(multisigTransactionSummary.expirationDate, true)}</span> */}
                 </>
               ) : (
                 <span>{t('multisig.proposal-modal.does-not-expire')}</span>
