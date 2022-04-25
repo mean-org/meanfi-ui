@@ -7093,6 +7093,17 @@ code {
   padding-right: 0 !important;
 }
 
+.proposal-summary-container {
+  height: 190px;
+}
+
+.external-icon {
+  float: right;
+  color: #878891;
+  width: 18px;
+  height: 18px;
+}
+
 // Animations
 @keyframes rotate {
   100% {
