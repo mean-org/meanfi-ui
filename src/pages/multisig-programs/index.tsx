@@ -318,6 +318,10 @@ export const MultisigProgramsView = () => {
       return t("multisig.multisig-transactions.tx-voided");
     }
 
+    if (mtx.status === MultisigTransactionStatus.Expired) {
+      return "Expired";
+    }
+
     return t("multisig.multisig-transactions.tx-rejected");
 
   },[t]);
@@ -326,14 +330,16 @@ export const MultisigProgramsView = () => {
 
     if (mtx.executedOn) {
       return "";
+    } else if (mtx.status === MultisigTransactionStatus.Expired) {
+      return "This transaction has expired";
     } else if (mtx.didSigned === undefined) {
-      return longStatus ? t("multisig.multisig-transactions.rejected-tx") : ("multisig.multisig-transactions.rejected");
+      return longStatus ? t("multisig.multisig-transactions.rejected-tx") : t("multisig.multisig-transactions.rejected");
     } else if (mtx.didSigned === false) {
       return !longStatus
         ? t("multisig.multisig-transactions.not-signed")
         : mtx.status === MultisigTransactionStatus.Approved
-        ? t("multisig.multisig-transactions.not-sign-tx")
-        : t("multisig.multisig-transactions.not-signed-tx");
+          ? t("multisig.multisig-transactions.not-sign-tx")
+          : t("multisig.multisig-transactions.not-signed-tx");
     } else {
       return longStatus ? "You have signed this transaction" : t("multisig.multisig-transactions.signed");
     }
@@ -341,18 +347,13 @@ export const MultisigProgramsView = () => {
   },[t]);
 
   const getTransactionStatusClass = useCallback((mtx: MultisigTransaction) => {
-
-    // const approvals = mtx.signers.filter((s: boolean) => s === true).length;
-
-    // if (approvals === 0) {
-    //   return "warning";
-    // } 
     
-    // if (mtx.status === MultisigTransactionStatus.Pending) {
-    //   return "info";
-    // } 
-    
-    if(mtx.status === MultisigTransactionStatus.Pending || mtx.status === MultisigTransactionStatus.Approved || mtx.status === MultisigTransactionStatus.Voided) {
+    if(
+      mtx.status === MultisigTransactionStatus.Pending || 
+      mtx.status === MultisigTransactionStatus.Approved || 
+      mtx.status === MultisigTransactionStatus.Voided ||
+      mtx.status === MultisigTransactionStatus.Expired
+    ) {
       return "error";
     }
 
