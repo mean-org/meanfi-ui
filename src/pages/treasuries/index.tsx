@@ -93,7 +93,7 @@ import BN from 'bn.js';
 import { InfoIcon } from '../../components/InfoIcon';
 import { useLocation, useNavigate } from 'react-router-dom';
 import MultisigIdl from "../../models/mean-multisig-idl";
-import { getFees, MEAN_MULTISIG_OPS, MultisigParticipant, MultisigTransactionFees, MultisigV2, MULTISIG_ACTIONS, ZERO_FEES } from '../../models/multisig';
+import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MEAN_MULTISIG_OPS, MultisigParticipant, MultisigTransactionFees, MultisigV2, MULTISIG_ACTIONS, ZERO_FEES } from '../../models/multisig';
 import { Program, Provider } from '@project-serum/anchor';
 import { TreasuryCreateOptions } from '../../models/treasuries';
 import { customLogger } from '../..';
@@ -1816,7 +1816,7 @@ export const TreasuriesView = () => {
         OperationType.TreasuryRefreshBalance,
         "Refresh Treasury Data",
         "",
-        new BN(0),
+        new BN(Date.now() + DEFAULT_EXPIRATION_TIME_SECONDS),
         new BN(0),
         new BN(0),
         {
@@ -2160,7 +2160,7 @@ export const TreasuriesView = () => {
         OperationType.TreasuryCreate,
         "Create Treasury",
         "",
-        new BN(0),
+        new BN(Date.now() + DEFAULT_EXPIRATION_TIME_SECONDS),
         new BN(0),
         new BN(0),
         {
@@ -2651,35 +2651,48 @@ export const TreasuriesView = () => {
       const ixData = Buffer.from(allocateTx.instructions[0].data);
       const ixAccounts = allocateTx.instructions[0].keys;
       const transaction = Keypair.generate();
-      const txSize = 1000;
-      const txSigners = [transaction];
+      const txSize = 1200;
       const createIx = await multisigClient.account.transaction.createInstruction(
         transaction,
         txSize
       );
+
+      const [txDetailAddress] = await PublicKey.findProgramAddress(
+        [
+          multisig.id.toBuffer(),
+          transaction.publicKey.toBuffer()
+        ],
+        multisigClient.programId
+      ); 
       
       let tx = multisigClient.transaction.createTransaction(
         MSPV2Constants.MSP, 
+        ixAccounts,
+        ixData,
         OperationType.StreamAddFunds,
-        ixAccounts as any,
-        ixData as any,
+        "Add Funds",
+        "",
+        new BN(Date.now() + DEFAULT_EXPIRATION_TIME_SECONDS),
         new BN(0),
         new BN(0),
         {
           accounts: {
             multisig: multisig.id,
             transaction: transaction.publicKey,
+            transactionDetail: txDetailAddress,
             proposer: publicKey as PublicKey,
+            multisigOpsAccount: MEAN_MULTISIG_OPS,
+            systemProgram: SystemProgram.programId
           },
           preInstructions: [createIx],
-          signers: txSigners,
+          signers: [transaction],
         }
       );
 
       tx.feePayer = publicKey;
       let { blockhash } = await connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
-      tx.partialSign(...txSigners);
+      tx.partialSign(transaction);
 
       return tx;
     }
@@ -3139,7 +3152,7 @@ export const TreasuriesView = () => {
         OperationType.TreasuryClose,
         "Close Treasury",
         "",
-        new BN(0),
+        new BN(Date.now() + DEFAULT_EXPIRATION_TIME_SECONDS),
         new BN(0),
         new BN(0),
         {
@@ -3613,7 +3626,7 @@ export const TreasuriesView = () => {
         OperationType.StreamClose,
         "Close Stream",
         "",
-        new BN(0),
+        new BN(Date.now() + DEFAULT_EXPIRATION_TIME_SECONDS),
         new BN(0),
         new BN(0),
         {
@@ -4070,7 +4083,7 @@ export const TreasuriesView = () => {
         OperationType.StreamPause,
         "Pause Stream",
         "",
-        new BN(0),
+        new BN(Date.now() + DEFAULT_EXPIRATION_TIME_SECONDS),
         new BN(0),
         new BN(0),
         {
@@ -4529,7 +4542,7 @@ export const TreasuriesView = () => {
         OperationType.StreamResume,
         "Resume Stream",
         "",
-        new BN(0),
+        new BN(Date.now() + DEFAULT_EXPIRATION_TIME_SECONDS),
         new BN(0),
         new BN(0),
         {
@@ -4898,7 +4911,7 @@ export const TreasuriesView = () => {
         OperationType.TreasuryWithdraw,
         "Withdraw Treasury Funds",
         "",
-        new BN(0),
+        new BN(Date.now() + DEFAULT_EXPIRATION_TIME_SECONDS),
         new BN(0),
         new BN(0),
         {

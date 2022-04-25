@@ -17,7 +17,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { consoleOut, copyText, delay, getReadableDate, getShortDate, getTransactionOperationDescription, getTransactionStatusForLogs, isDev, isLocal } from '../../utils/ui';
 import { Identicon } from '../../components/Identicon';
 import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, getTxIxResume, makeDecimal, shortenAddress } from '../../utils/utils';
-import { MultisigV2, MultisigParticipant, MultisigTransaction, MultisigTransactionStatus, MultisigVault, Multisig, MEAN_MULTISIG_OPS, listMultisigTransactions, MultisigTransactionSummary, getMultisigTransactionSummary } from '../../models/multisig';
+import { MultisigV2, MultisigParticipant, MultisigTransaction, MultisigTransactionStatus, MultisigVault, Multisig, MEAN_MULTISIG_OPS, listMultisigTransactions, MultisigTransactionSummary, getMultisigTransactionSummary, DEFAULT_EXPIRATION_TIME_SECONDS } from '../../models/multisig';
 import { TransactionFees } from '@mean-dao/msp';
 import { MultisigCreateAssetModal } from '../../components/MultisigCreateAssetModal';
 import { useNativeAccount } from '../../contexts/accounts';
@@ -1556,7 +1556,7 @@ export const MultisigAssetsView = () => {
         OperationType.TransferTokens,
         "Transfer Asset Funds",
         "",
-        new BN(0),
+        new BN(Date.now() + DEFAULT_EXPIRATION_TIME_SECONDS),
         new BN(0),
         new BN(0),
         {
@@ -1901,7 +1901,7 @@ export const MultisigAssetsView = () => {
         OperationType.SetAssetAuthority,
         "Change Asset Authority",
         "",
-        new BN(0),
+        new BN(Date.now() + DEFAULT_EXPIRATION_TIME_SECONDS),
         new BN(0),
         new BN(0),
         {
@@ -2237,7 +2237,7 @@ export const MultisigAssetsView = () => {
         OperationType.DeleteAsset,
         "Close Asset",
         "",
-        new BN(0),
+        new BN(Date.now() + DEFAULT_EXPIRATION_TIME_SECONDS),
         new BN(0),
         new BN(0),
         {

@@ -49,7 +49,7 @@ import { useConnectionConfig } from '../../contexts/connection';
 import { Idl, Program } from '@project-serum/anchor';
 import { BN } from 'bn.js';
 import { u64 } from '@solana/spl-token';
-import { MEAN_MULTISIG_OPS } from '../../models/multisig';
+import { DEFAULT_EXPIRATION_TIME_SECONDS, MEAN_MULTISIG_OPS } from '../../models/multisig';
 
 const { Option } = Select;
 
@@ -977,7 +977,7 @@ export const TreasuryStreamCreateModal = (props: {
           OperationType.StreamCreate,
           "Create Stream",
           "",
-          new BN(0),
+          new BN(Date.now() + DEFAULT_EXPIRATION_TIME_SECONDS),
           new u64(streamSeedData.timeStamp.toNumber()),
           new BN(streamSeedData.bump),
           {

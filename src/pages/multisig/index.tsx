@@ -68,7 +68,8 @@ import {
   ZERO_FEES,
   MULTISIG_ACTIONS,
   getMultisigTransactionSummary,
-  getFees
+  getFees,
+  DEFAULT_EXPIRATION_TIME_SECONDS
 } from '../../models/multisig';
 import { MultisigCreateModal } from '../../components/MultisigCreateModal';
 import './style.scss';
@@ -722,23 +723,35 @@ export const MultisigView = () => {
       ];
 
       const transaction = Keypair.generate();
-      const txSize = 1000;
+      const txSize = 1200;
       const createIx = await multisigClient.account.transaction.createInstruction(
         transaction,
         txSize
       );
+
+      const [txDetailAddress] = await PublicKey.findProgramAddress(
+        [
+          selectedMultisig.id.toBuffer(),
+          transaction.publicKey.toBuffer()
+        ],
+        multisigClient.programId
+      ); 
       
       let tx = multisigClient.transaction.createTransaction(
         pid, 
-        operation,
         ixAccounts as any,
         ixData as any,
+        operation,
+        "Edit Safe",
+        "",
+        new BN(Date.now() + DEFAULT_EXPIRATION_TIME_SECONDS),
         new BN(0),
         new BN(0),
         {
           accounts: {
             multisig: selectedMultisig.id,
             transaction: transaction.publicKey,
+            transactionDetail: txDetailAddress,
             proposer: publicKey as PublicKey,
             multisigOpsAccount: MEAN_MULTISIG_OPS,
             systemProgram: SystemProgram.programId
@@ -749,7 +762,7 @@ export const MultisigView = () => {
       );
 
       tx.feePayer = publicKey;
-      const { blockhash } = await connection.getRecentBlockhash("confirmed");
+      const { blockhash } = await connection.getLatestBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
       tx.partialSign(...[transaction]);
 
@@ -1056,18 +1069,28 @@ export const MultisigView = () => {
     const approveTx = async (data: any) => {
 
       if (!selectedMultisig || !publicKey) { return null; }
+
+      const [txDetailAddress] = await PublicKey.findProgramAddress(
+        [
+          selectedMultisig.id.toBuffer(),
+          data.transaction.id.toBuffer()
+        ],
+        multisigClient.programId
+      ); 
   
       let tx = multisigClient.transaction.approve({
           accounts: {
             multisig: selectedMultisig.id,
             transaction: data.transaction.id,
+            transactionDetail: txDetailAddress,
             owner: publicKey,
+            systemProgram: SystemProgram.programId
           }
         }
       );
   
       tx.feePayer = publicKey;
-      const { blockhash } = await connection.getRecentBlockhash("confirmed");
+      const { blockhash } = await connection.getLatestBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
   
       return tx;
@@ -1297,18 +1320,19 @@ export const MultisigView = () => {
     }
 
   }, [
-    wallet,
-    publicKey,
-    connection,
-    nativeBalance,
-    selectedMultisig,
+    wallet, 
+    selectedMultisig, 
+    publicKey, 
+    multisigClient.programId, 
+    multisigClient.transaction, 
+    connection, 
+    nativeBalance, 
+    transactionStatus.currentOperation, 
     transactionCancelled,
-    multisigClient.transaction,
-    transactionStatus.currentOperation,
-    clearTransactionStatusContext,
-    startFetchTxSignatureInfo,
+    clearTransactionStatusContext, 
     resetTransactionStatus,
-    setTransactionStatus
+    setTransactionStatus,
+    startFetchTxSignatureInfo
   ]);
 
   const onExecuteFinishTx = useCallback(async (data: any) => {
@@ -1333,6 +1357,14 @@ export const MultisigView = () => {
         multisigClient.programId
       );
 
+      const [txDetailAddress] = await PublicKey.findProgramAddress(
+        [
+          data.transaction.multisig.toBuffer(),
+          data.transaction.id.toBuffer()
+        ],
+        multisigClient.programId
+      ); 
+
       let remainingAccounts = data.transaction.accounts
         // Change the signer status on the vendor signer since it's signed by the program, not the client.
         .map((meta: any) =>
@@ -1351,6 +1383,9 @@ export const MultisigView = () => {
             multisig: data.transaction.multisig,
             multisigSigner: multisigSigner,
             transaction: data.transaction.id,
+            transactionDetail: txDetailAddress,
+            payer: publicKey,
+            systemProgram: SystemProgram.programId
           },
           remainingAccounts: remainingAccounts
         }
@@ -1390,7 +1425,7 @@ export const MultisigView = () => {
       }
   
       tx.feePayer = publicKey;
-      const { blockhash } = await multisigClient.provider.connection.getRecentBlockhash("confirmed");
+      const { blockhash } = await multisigClient.provider.connection.getLatestBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
   
       return tx;
