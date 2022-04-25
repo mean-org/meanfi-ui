@@ -23,7 +23,7 @@ export enum MultisigTransactionStatus {
   // Invalid owners set seq number
   Voided = 4,
   //
-  Failed = 5
+  Expired = 5
 }
 
 export type Multisig = {
@@ -268,7 +268,7 @@ export const getTransactionStatus = (multisig: any, info: any, detail: any): Mul
     ) ? new Date(detail.expirationDate.toNumber() * 1_000) : undefined;
 
     if (expirationDate && expirationDate.getTime() < Date.now()) {
-      return MultisigTransactionStatus.Failed;
+      return MultisigTransactionStatus.Expired;
     }
   
     let status = MultisigTransactionStatus.Pending;
