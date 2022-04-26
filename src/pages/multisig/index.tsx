@@ -1419,6 +1419,9 @@ export const MultisigView = () => {
               multisigSigner: multisigSigner,
               pdaAccount: streamPda,
               transaction: data.transaction.id,
+              transactionDetail: txDetailAddress,
+              payer: publicKey,
+              systemProgram: SystemProgram.programId
             },
             remainingAccounts: remainingAccounts
           }
