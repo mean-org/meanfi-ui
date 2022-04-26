@@ -558,6 +558,8 @@
 			"ready-for-execution": "This transaction is now ready for execution. Please tell the person who initiated this transaction to execute it.",
 			"signed": "Signed",
 			"signed-so-far": "Signed so far.",
+			"tx-signed": "signed",
+			"tx-pending": "pending",
 			"signers-to-approve": "signers to approve it in order to be executed.",
 			"submitted-on": "Submitted on:",
 			"transaction-awaiting": "A proposal for this multisig is pending",

@@ -559,6 +559,8 @@
 			"rejected-tx": "You have rejected this transaction",
 			"signed": "İmzalandı",
 			"signed-so-far": "Şimdiye kadar imzalanmış olan",
+			"tx-signed": "signed",
+			"tx-pending": "pending",
 			"signers-to-approve": "gerçekleştirilmesi için imzacıların sırayla onaylamalı.",
 			"submitted-on": "Gönderildi:",
 			"transaction-awaiting": "A proposal for this multisig is pending",
