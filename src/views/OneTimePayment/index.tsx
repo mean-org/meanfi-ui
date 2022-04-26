@@ -41,7 +41,7 @@ import { NATIVE_SOL } from '../../utils/tokens';
 
 const { Option } = Select;
 
-export const OneTimePayment = () => {
+export const OneTimePayment = (props: { inModal: boolean; }) => {
   const connection = useConnection();
   const { endpoint } = useConnectionConfig();
   const { connected, publicKey, wallet } = useWallet();

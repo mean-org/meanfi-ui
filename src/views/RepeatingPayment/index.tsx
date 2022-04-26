@@ -57,7 +57,7 @@ import { segmentAnalytics } from '../../App';
 import dateFormat from 'dateformat';
 import { NATIVE_SOL } from '../../utils/tokens';
 
-export const RepeatingPayment = () => {
+export const RepeatingPayment = (props: { inModal: boolean; }) => {
   const connection = useConnection();
   const { endpoint } = useConnectionConfig();
   const { connected, publicKey, wallet } = useWallet();

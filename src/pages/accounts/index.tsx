@@ -1764,6 +1764,7 @@ export const AccountsNewView = () => {
           isVisible={isSendAssetModalOpen}
           handleClose={hideSendAssetModal}
           tokenSymbol={selectedAsset.symbol}
+          selected={"one-time"}
         />
       )}
       <PreFooter />
