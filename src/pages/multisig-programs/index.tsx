@@ -1165,7 +1165,7 @@ export const MultisigProgramsView = () => {
       );
 
       tx.feePayer = publicKey;
-      const { blockhash } = await connection.getLatestBlockhash("recent");
+      const { blockhash } = await connection.getRecentBlockhash("recent");
       tx.recentBlockhash = blockhash;
       tx.partialSign(...[transaction]);
 
@@ -1860,7 +1860,7 @@ export const MultisigProgramsView = () => {
       );
 
       tx.feePayer = publicKey;
-      const { blockhash } = await connection.getLatestBlockhash("confirmed");
+      const { blockhash } = await connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
       tx.partialSign(...[transaction]);
 
@@ -2157,7 +2157,7 @@ export const MultisigProgramsView = () => {
       );
   
       tx.feePayer = publicKey;
-      const { blockhash } = await connection.getLatestBlockhash("confirmed");
+      const { blockhash } = await connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
   
       return tx;
@@ -2460,7 +2460,7 @@ export const MultisigProgramsView = () => {
       );
   
       tx.feePayer = publicKey;
-      const { blockhash } = await multisigClient.provider.connection.getLatestBlockhash("confirmed");
+      const { blockhash } = await multisigClient.provider.connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
       
       if (txSigners.length) {
