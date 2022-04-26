@@ -1100,6 +1100,7 @@ export const MultisigAssetsView = () => {
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
+    resetTransactionStatus();
     setTransactionCancelled(false);
     setIsBusy(true);
 
@@ -1397,6 +1398,7 @@ export const MultisigAssetsView = () => {
 
   }, [
     clearTransactionStatusContext,
+    resetTransactionStatus,
     connection,
     multisigClient.programId,
     multisigClient.provider.connection,
@@ -1454,6 +1456,7 @@ export const MultisigAssetsView = () => {
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
+    resetTransactionStatus();
     setTransactionCancelled(false);
     setIsBusy(true);
 
@@ -1814,6 +1817,7 @@ export const MultisigAssetsView = () => {
     onTokensTransfered,
     setTransactionStatus,
     startFetchTxSignatureInfo,
+    resetTransactionStatus,
     clearTransactionStatusContext,
   ]);
 
@@ -1852,6 +1856,7 @@ export const MultisigAssetsView = () => {
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
+    resetTransactionStatus();
     setTransactionCancelled(false);
     setIsBusy(true);
 
@@ -2143,7 +2148,8 @@ export const MultisigAssetsView = () => {
     }
 
   }, [
-    clearTransactionStatusContext, 
+    clearTransactionStatusContext,
+    resetTransactionStatus, 
     wallet, 
     publicKey, 
     selectedVault, 
@@ -2513,6 +2519,7 @@ export const MultisigAssetsView = () => {
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
+    resetTransactionStatus();
     setTransactionCancelled(false);
     setRetryOperationPayload(data);
     setIsBusy(true);
@@ -2773,7 +2780,8 @@ export const MultisigAssetsView = () => {
     transactionStatus.currentOperation,
     clearTransactionStatusContext,
     startFetchTxSignatureInfo,
-    setTransactionStatus,
+    resetTransactionStatus,
+    setTransactionStatus
   ]);
 
   const onExecuteFinishTx = useCallback(async (data: any) => {
@@ -2785,6 +2793,7 @@ export const MultisigAssetsView = () => {
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
+    resetTransactionStatus();
     setTransactionCancelled(false);
     setRetryOperationPayload(data);
     setIsBusy(true);
@@ -3070,6 +3079,7 @@ export const MultisigAssetsView = () => {
     multisigClient.provider.connection,
     transactionStatus.currentOperation,
     clearTransactionStatusContext,
+    resetTransactionStatus,
     startFetchTxSignatureInfo,
     setTransactionStatus,
     onTxExecuted,
@@ -3084,6 +3094,7 @@ export const MultisigAssetsView = () => {
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
+    resetTransactionStatus();
     setTransactionCancelled(false);
     setRetryOperationPayload(data);
     setIsBusy(true);
@@ -3355,7 +3366,8 @@ export const MultisigAssetsView = () => {
     }
 
   }, [
-    clearTransactionStatusContext, 
+    clearTransactionStatusContext,
+    resetTransactionStatus,
     connection, 
     multisigClient.transaction, 
     nativeBalance, 

@@ -1098,6 +1098,7 @@ export const MultisigProgramsView = () => {
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
+    resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.UpgradeProgram);
     setRetryOperationPayload(data);
@@ -1401,7 +1402,8 @@ export const MultisigProgramsView = () => {
     }
 
   }, [
-    clearTransactionStatusContext, 
+    clearTransactionStatusContext,
+    resetTransactionStatus,
     connection, 
     multisigClient, 
     nativeBalance, 
@@ -1449,6 +1451,7 @@ export const MultisigProgramsView = () => {
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
+    resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.UpgradeIDL);
     setRetryOperationPayload(data);
@@ -1741,7 +1744,8 @@ export const MultisigProgramsView = () => {
     }
 
   }, [
-    clearTransactionStatusContext, 
+    clearTransactionStatusContext,
+    resetTransactionStatus,
     connection, 
     multisigClient, 
     nativeBalance, 
@@ -1789,6 +1793,7 @@ export const MultisigProgramsView = () => {
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
+    resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.SetMultisigAuthority);
     setRetryOperationPayload(data);
@@ -2092,19 +2097,20 @@ export const MultisigProgramsView = () => {
     }
 
   }, [
-    clearTransactionStatusContext, 
-    connection, 
-    multisigClient, 
-    nativeBalance, 
-    onProgramAuthSet, 
-    publicKey, 
-    selectedMultisig, 
-    setTransactionStatus, 
-    startFetchTxSignatureInfo, 
-    transactionCancelled, 
-    transactionFees.blockchainFee, 
-    transactionFees.mspFlatFee, 
-    transactionStatus.currentOperation, 
+    clearTransactionStatusContext,
+    resetTransactionStatus,
+    connection,
+    multisigClient,
+    nativeBalance,
+    onProgramAuthSet,
+    publicKey,
+    selectedMultisig,
+    setTransactionStatus,
+    startFetchTxSignatureInfo,
+    transactionCancelled,
+    transactionFees.blockchainFee,
+    transactionFees.mspFlatFee,
+    transactionStatus.currentOperation,
     wallet
   ]);
 
@@ -2124,6 +2130,7 @@ export const MultisigProgramsView = () => {
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
+    resetTransactionStatus();
     setTransactionCancelled(false);
     setRetryOperationPayload(data);
     setIsBusy(true);
@@ -2395,6 +2402,7 @@ export const MultisigProgramsView = () => {
     transactionCancelled, 
     startFetchTxSignatureInfo,
     clearTransactionStatusContext,
+    resetTransactionStatus,
     setTransactionStatus
   ]);
 
@@ -2407,6 +2415,7 @@ export const MultisigProgramsView = () => {
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
+    resetTransactionStatus();
     setTransactionCancelled(false);
     setRetryOperationPayload(data);
     setIsBusy(true);
@@ -2698,6 +2707,7 @@ export const MultisigProgramsView = () => {
     startFetchTxSignatureInfo,
     setTransactionStatus,
     clearTransactionStatusContext,
+    resetTransactionStatus,
     onTxExecuted
   ]);
 
@@ -2710,6 +2720,7 @@ export const MultisigProgramsView = () => {
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
+    resetTransactionStatus();
     setTransactionCancelled(false);
     setRetryOperationPayload(data);
     setIsBusy(true);
@@ -2981,7 +2992,8 @@ export const MultisigProgramsView = () => {
     }
 
   }, [
-    clearTransactionStatusContext, 
+    clearTransactionStatusContext,
+    resetTransactionStatus,
     connection, 
     multisigClient.transaction, 
     nativeBalance, 

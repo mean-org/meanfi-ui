@@ -360,23 +360,23 @@ export const ProposalSummaryModal = (props: {
   },[]);
 
   // Random component
-const Completionist = () => <span>00:00:00:00</span>;
+  const Completionist = () => <span>00:00:00:00</span>;
 
   // Renderer callback with condition
-const renderer = ({ days, hours, minutes, seconds, completed }: any) => {
-  if (completed) {
-    // Render a completed state
-    return <Completionist />;
-  } else {
-    // Render a countdown
-    const daysSpace = (days < 10) ? '0' : '';
-    const hoursSpace = (hours < 10) ? '0' : '';
-    const minutesSpace = (minutes < 10) ? '0' : '';
-    const secondsSpace = (seconds < 10) ? '0' : '';
+  const renderer = ({ days, hours, minutes, seconds, completed }: any) => {
+    if (completed) {
+      // Render a completed state
+      return <Completionist />;
+    } else {
+      // Render a countdown
+      const daysSpace = (days < 10) ? '0' : '';
+      const hoursSpace = (hours < 10) ? '0' : '';
+      const minutesSpace = (minutes < 10) ? '0' : '';
+      const secondsSpace = (seconds < 10) ? '0' : '';
 
-    return <span>{`${daysSpace}${days}`}:{`${hoursSpace}${hours}`}:{`${minutesSpace}${minutes}`}:{`${secondsSpace}${seconds}`}</span>;
-  }
-};
+      return <span>{`${daysSpace}${days}`}:{`${hoursSpace}${hours}`}:{`${minutesSpace}${minutes}`}:{`${secondsSpace}${seconds}`}</span>;
+    }
+  };
 
   const renderGeneralSummaryModal = (
     <>
@@ -404,7 +404,7 @@ const renderer = ({ days, hours, minutes, seconds, completed }: any) => {
             <Col span={16} className="text-left pl-1">
               {multisigTransactionSummary.expirationDate ? (
                 <>
-                  <Countdown className="align-middle" date={getReadableDate(multisigTransactionSummary.expirationDate)} daysInHours={true} renderer={renderer} />
+                  <Countdown className="align-middle" date={multisigTransactionSummary.expirationDate} renderer={renderer} />
                 </>
               ) : (
                 <span>{t('multisig.proposal-modal.does-not-expire')}</span>
@@ -432,7 +432,7 @@ const renderer = ({ days, hours, minutes, seconds, completed }: any) => {
           {/* Status */}
           <Row className="mb-1">
             <Col span={8} className="text-right pr-1">
-              <span className="info-label">Status</span>
+              <span className="info-label">Status:</span>
             </Col>
             <Col span={16} className="text-left pl-1 mb-1 d-flex align-items-start justify-content-start">
               <span>{getTxSignedCount(highlightedMultisigTx)} signed, {selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)} pending</span>
@@ -569,17 +569,17 @@ const renderer = ({ days, hours, minutes, seconds, completed }: any) => {
               </h4>
             </div>
             {/* If I am the last approval needed to reach threshold show instructions for exec */}
-            {getTxSignedCount(highlightedMultisigTx) === selectedMultisig.threshold - 1 && (
+            {/* {getTxSignedCount(highlightedMultisigTx) === selectedMultisig.threshold - 1 && (
               <>
                 <Divider className="mt-0" />
                 {renderGeneralSummaryModal}
               </>
-            )}
+            )} */}
           </>
         ) : (
           <>
-            <div className="transaction-progress p-2">
-              <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+            <div className="transaction-progress p-0">
+              <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-2" />
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <>
                   {/* Pre Tx execution failures here */}
@@ -599,10 +599,10 @@ const renderer = ({ days, hours, minutes, seconds, completed }: any) => {
               ) : (
                 <>
                   {/* All other error conditions then - A getter could offer a basic explanation of what happened */}
-                  <h4 className="font-bold mb-3">{t('multisig.multisig-transactions.tx-operation-failure', {
+                  <h4 className="font-bold mb-1 mt-2">{t('multisig.multisig-transactions.tx-operation-failure', {
                     operation: getOperationName(highlightedMultisigTx.operation)
                   })}</h4>
-                  <h4 className="mb-3">
+                  <h4 className="mb-0">
                   {!transactionStatus.customError
                     ? getTransactionOperationDescription(transactionStatus.currentOperation, t)
                     : (
@@ -630,10 +630,10 @@ const renderer = ({ days, hours, minutes, seconds, completed }: any) => {
       </div>
 
       {/* A Cross-fading panel shown when busy */}
-      <div className={isBusy ? "panel2 show"  : "panel2 hide"}>          
+      <div className={isBusy ? "panel2 show"  : "panel2 hide"}>
         {transactionStatus.currentOperation !== TransactionStatus.Iddle && (
-          <div className="transaction-progress">
-            <Spin indicator={bigLoadingIcon} className="icon mt-0" />
+          <div className="transaction-progress p-1">
+            <Spin indicator={bigLoadingIcon} className="icon mt-2 mb-4" />
             <h4 className="font-bold mb-1">
               {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
             </h4>
