@@ -8,7 +8,7 @@ import {
   InfoCircleOutlined,
   LoadingOutlined, ReloadOutlined, SearchOutlined,
 } from '@ant-design/icons';
-import { ConfirmOptions, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction, TransactionInstruction } from '@solana/web3.js';
+import { ConfirmOptions, Connection, GetProgramAccountsFilter, Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction, TransactionInstruction } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
 import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
@@ -794,6 +794,7 @@ export const TreasuriesView = () => {
     });
   }, [multisigAddress, multisigClient]);
 
+  // Update treasury pending Txs
   useEffect(() => {
 
     if (!isMultisigTreasury() || !treasuryDetails || !connected || !publicKey || !multisigAccounts) {
@@ -809,10 +810,15 @@ export const TreasuriesView = () => {
         setTreasuryPendingTxs(0);
         return;
       }
+
+      const filters: GetProgramAccountsFilter[] = [
+        { dataSize: 1200 },
+        { memcmp: { offset: 8, bytes: multisig.id.toString() } }
+      ];
       
       multisigClient.account.transaction
-        .all(multisig.id.toBuffer())
-        .then((value: any) => {
+        .all(filters)
+        .then((value) => {
           let pendingTxs = 0;
           for (let tx of value) {
             const isPending = (
