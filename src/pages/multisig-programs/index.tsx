@@ -330,8 +330,6 @@ export const MultisigProgramsView = () => {
 
     if (mtx.executedOn) {
       return "";
-    } else if (mtx.status === MultisigTransactionStatus.Expired) {
-      return "This transaction has expired";
     } else if (mtx.didSigned === undefined) {
       return longStatus ? t("multisig.multisig-transactions.rejected-tx") : t("multisig.multisig-transactions.rejected");
     } else if (mtx.didSigned === false) {
@@ -2739,12 +2737,22 @@ export const MultisigProgramsView = () => {
         return null;
       }
       
+      const [txDetailAddress] = await PublicKey.findProgramAddress(
+        [
+          selectedMultisig.id.toBuffer(),
+          data.transaction.id.toBuffer()
+        ],
+        multisigClient.programId
+      );
+      
       let tx = multisigClient.transaction.cancelTransaction(
         {
           accounts: {
-            transaction: data.transaction.id,
             multisig: selectedMultisig.id,
-            proposer: publicKey as PublicKey,
+            transaction: data.transaction.id,
+            transactionDetail: txDetailAddress,
+            proposer: publicKey,
+            systemProgram: SystemProgram.programId
           }
         }
       );
@@ -2995,7 +3003,8 @@ export const MultisigProgramsView = () => {
     clearTransactionStatusContext,
     resetTransactionStatus,
     connection, 
-    multisigClient.transaction, 
+    multisigClient.transaction,
+    multisigClient.programId,
     nativeBalance, 
     onTxExecuted, 
     publicKey, 
