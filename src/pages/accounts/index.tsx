@@ -63,6 +63,7 @@ import CountUp from 'react-countup';
 import { AddressDisplay } from '../../components/AddressDisplay';
 import { ReceiveSplOrSolModal } from '../../components/ReceiveSplOrSolModal';
 import { SendAssetModal } from '../../components/SendAssetModal';
+import { ExchangeAssetModal } from '../../components/ExchangeAssetModal';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const QRCode = require('qrcode.react');
@@ -203,6 +204,11 @@ export const AccountsNewView = () => {
   const hideSendAssetModal = useCallback(() => setIsSendAssetModalOpen(false), []);
   const showSendAssetModal = useCallback(() => setIsSendAssetModalOpen(true), []);
 
+  // Exchange selected token
+  const [isExchangeAssetModalOpen, setIsExchangeAssetModalOpen] = useState(false);
+  const hideExchangeAssetModal = useCallback(() => setIsExchangeAssetModalOpen(false), []);
+  const showExchangeAssetModal = useCallback(() => setIsExchangeAssetModalOpen(true), []);
+
   const startSwitch = useCallback(() => {
     setStatus(FetchStatus.Fetching);
     setLoadingTransactions(false);
@@ -313,10 +319,25 @@ export const AccountsNewView = () => {
     navigate('/invest');
   }, [navigate, setDtailsPanelOpen]);
 
+  const onExchangeAsset = useCallback(() => {
+    if (!selectedAsset) { return; }
+
+    let token: TokenInfo | null;
+    if (isSelectedAssetNativeAccount()) {
+      token = getTokenByMintAddress(WRAPPED_SOL_MINT_ADDRESS);
+    } else {
+      token = getTokenByMintAddress(selectedAsset.address);
+    }
+    if (token) {
+      setSelectedToken(token as SolanaTokenInfo);
+    }
+    showExchangeAssetModal();
+
+  }, [isSelectedAssetNativeAccount, selectedAsset, setSelectedToken, showExchangeAssetModal]);
+
   const onSendAsset = useCallback(() => {
     if (!selectedAsset) { return; }
 
-    setDtailsPanelOpen(false);
     let token: TokenInfo | null;
     if (isSelectedAssetNativeAccount()) {
       token = getTokenByMintAddress(WRAPPED_SOL_MINT_ADDRESS);
@@ -329,7 +350,7 @@ export const AccountsNewView = () => {
     showSendAssetModal();
 
   }, [
-    isSelectedAssetNativeAccount, selectedAsset, setDtailsPanelOpen, setSelectedToken, showSendAssetModal
+    isSelectedAssetNativeAccount, selectedAsset, setSelectedToken, showSendAssetModal
   ]);
 
   // Copy address to clipboard
@@ -1322,7 +1343,7 @@ export const AccountsNewView = () => {
             <QrcodeOutlined />
             <span className="mx-1">Receive</span>
           </span>
-          <span className="flat-button stroked" onClick={handleGoToExchangeClick}>
+          <span className="flat-button stroked" onClick={onExchangeAsset}>
             <SwapOutlined />
             <span className="mx-1">Exchange</span>
           </span>
@@ -1547,14 +1568,14 @@ export const AccountsNewView = () => {
                           <div className="title">Assets in wallet ({totalTokensHolded})</div>
                           <div className="amount">{toUsCurrency(totalTokenAccountsValue)}</div>
                         </div>
-                        <div className="asset-category">
+                        <div className="asset-category vertical-scroll">
                           {renderAssetsList}
                         </div>
                         <div className="asset-category-title flex-fixed-right">
                           <div className="title">Other assets (1)</div>
                           <div className="amount">{toUsCurrency(streamsSummary.totalNet)}</div>
                         </div>
-                        <div className="asset-category">
+                        <div className="asset-category vertical-scroll">
                           {renderMoneyStreamsSummary}
                         </div>
                       </div>
@@ -1763,10 +1784,18 @@ export const AccountsNewView = () => {
         <SendAssetModal
           isVisible={isSendAssetModalOpen}
           handleClose={hideSendAssetModal}
-          tokenSymbol={selectedAsset.symbol}
           selected={"one-time"}
         />
       )}
+
+      {isExchangeAssetModalOpen && publicKey && selectedAsset && (
+        <ExchangeAssetModal
+          isVisible={isExchangeAssetModalOpen}
+          handleClose={hideExchangeAssetModal}
+          tokenSymbol={selectedAsset.symbol}
+        />
+      )}
+
       <PreFooter />
     </>
   );

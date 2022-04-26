@@ -10,15 +10,14 @@ export const SendAssetModal = (props: {
   handleClose: any;
   isVisible: boolean;
   selected: TransfersTabOption;
-  tokenSymbol: string;
 }) => {
-  const { tokenSymbol, selected, isVisible, handleClose } = props;
+  const { selected, isVisible, handleClose } = props;
   const { t } = useTranslation("common");
 
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={<div className="modal-title">Send {tokenSymbol || 'Funds'}</div>}
+      title={<div className="modal-title">Send Asset</div>}
       footer={null}
       visible={isVisible}
       onOk={handleClose}

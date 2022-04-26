@@ -1,6 +1,6 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
-import { Button, Divider, Modal, Tooltip } from "antd";
+import { Button, Divider, Drawer, Modal, Tooltip } from "antd";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { getPlatformFeeAccounts, Jupiter, RouteInfo, TOKEN_LIST_URL, TransactionFeeInfo } from "@jup-ag/core";
 import useLocalStorage from "../../hooks/useLocalStorage";
@@ -20,7 +20,7 @@ import { useTranslation } from "react-i18next";
 import { TextInput } from "../../components/TextInput";
 import { Identicon } from "../../components/Identicon";
 import { JupiterExchangeOutput } from "../../components/JupiterExchangeOutput";
-import { InfoCircleOutlined, LoadingOutlined, ReloadOutlined, SyncOutlined, WarningFilled } from "@ant-design/icons";
+import { ArrowLeftOutlined, InfoCircleOutlined, LoadingOutlined, ReloadOutlined, SyncOutlined, WarningFilled } from "@ant-design/icons";
 import { appConfig, customLogger } from "../..";
 import BN from 'bn.js';
 import "./style.scss";
@@ -42,7 +42,9 @@ export const JupiterExchange = (props: {
     queryFromMint: string | null;
     queryToMint: string | null;
     connection: Connection;
-}) => {
+    inModal?: boolean;
+    swapExecuted?: any;
+  }) => {
 
     const { t } = useTranslation("common");
     const { publicKey, wallet, connected } = useWallet();
@@ -90,6 +92,7 @@ export const JupiterExchange = (props: {
     const [feeInfo, setFeeInfo] = useState<TransactionFeeInfo | undefined>(undefined);
     const [quickTokens, setQuickTokens] = useState<TokenInfo[]>([]);
     const [swapRate, setSwapRate] = useState(false)
+    const [isTokenSelectorVisible, setIsTokenSelectorVisible] = useState(false);
 
     const platformFeesOwner = appConfig.getConfig().exchangeFeeAccountOwner;
     const platformFeeAmount = appConfig.getConfig().exchangeFlatFee;
@@ -201,11 +204,18 @@ export const JupiterExchange = (props: {
         setParamsProcessed(true);
 
         if (props.queryFromMint || props.queryToMint) {
+            consoleOut('props.queryFromMint:', props.queryFromMint, 'orange');
+            consoleOut('props.queryToMint:', props.queryToMint, 'orange');
             if (props.queryFromMint) {
                 setFromMint(props.queryFromMint);
             }
             if (props.queryToMint) {
                 setToMint(props.queryToMint as string);
+            } else {
+                const to = MEAN_TOKEN_LIST.filter(t => t.chainId === 101 && t.symbol === 'MEAN');
+                if (to && to.length) {
+                    setToMint(to[0].address);
+                }
             }
         } else if (!props.queryFromMint && !props.queryToMint) {
             const from = MEAN_TOKEN_LIST.filter(t => t.chainId === 101 && t.symbol === 'USDC');
@@ -837,6 +847,26 @@ export const JupiterExchange = (props: {
         subjectTokenSelection,
     ]);
 
+    const setModalBodyMinHeight = useCallback((addMinHeight: boolean) => {
+        const modalBody = document.querySelector(".exchange-modal .ant-modal-content");
+        if (modalBody) {
+            if (addMinHeight) {
+                modalBody.classList.add('drawer-open');
+            } else {
+                modalBody.classList.remove('drawer-open');
+            }
+        }
+    }, []);
+
+    const autoFocusInput = useCallback(() => {
+        const input = document.getElementById("token-search-input");
+        if (input) {
+            setTimeout(() => {
+                input.focus();
+            }, 100);
+        }
+    }, []);
+
     // Token selection modal
     const showTokenSelector = useCallback(() => {
 
@@ -845,11 +875,7 @@ export const JupiterExchange = (props: {
             setTokenFilter('');
             updateTokenListByFilter('');
             setTokenSelectorModalVisibility(true);
-            const input = document.getElementById("token-search-input");
-
-            if (input) {
-                input.focus();
-            }
+            autoFocusInput();
 
         });
 
@@ -857,7 +883,18 @@ export const JupiterExchange = (props: {
             clearTimeout(timeout);
         }
 
-    }, [updateTokenListByFilter]);
+    }, [autoFocusInput, updateTokenListByFilter]);
+
+    const showDrawer = useCallback(() => {
+        setIsTokenSelectorVisible(true);
+        setModalBodyMinHeight(true);
+        autoFocusInput();
+    }, [autoFocusInput, setModalBodyMinHeight]);
+
+    const hideDrawer = useCallback(() => {
+        setIsTokenSelectorVisible(false);
+        setModalBodyMinHeight(false);
+    }, [setModalBodyMinHeight]);
 
     // Token selection modal close
     const onCloseTokenSelector = useCallback(() => {
@@ -865,6 +902,7 @@ export const JupiterExchange = (props: {
         const timeout = setTimeout(() => {
             setTokenFilter('');
             updateTokenListByFilter('');
+            hideDrawer();
             setTokenSelectorModalVisibility(false);
         });
 
@@ -872,7 +910,7 @@ export const JupiterExchange = (props: {
             clearTimeout(timeout);
         }
 
-    }, [updateTokenListByFilter]);
+    }, [hideDrawer, updateTokenListByFilter]);
 
     const onInputCleared = useCallback(() => {
         setTokenFilter('');
@@ -1555,6 +1593,29 @@ export const JupiterExchange = (props: {
         </>
     );
 
+    const renderTokenSelectorInner = (
+        <div className="token-selector-wrapper">
+            <div className="token-search-wrapper">
+                <TextInput
+                    value={tokenFilter}
+                    allowClear={true}
+                    extraClass="mb-1"
+                    onInputClear={onInputCleared}
+                    placeholder={t('token-selector.exchange-search-input-placeholder')}
+                    onInputChange={onTokenSearchInputChange} />
+            </div>
+            <div className="common-token-shortcuts">
+                {renderCommonTokens()}
+            </div>
+            <Divider />
+            <div className="token-list vertical-scroll">
+                {subjectTokenSelection === "source"
+                    ? renderSourceTokenList
+                    : renderDestinationTokenList}
+            </div>
+        </div>
+    );
+
     return (
         <>
             {/* {isLocal() && (
@@ -1618,7 +1679,7 @@ export const JupiterExchange = (props: {
                         }
                         onSelectToken={() => {
                             setSubjectTokenSelection("source");
-                            showTokenSelector();
+                            props.inModal ? showDrawer() : showTokenSelector();
                         }}
                         hint={
                             inputToken && inputToken.address === WRAPPED_SOL_MINT_ADDRESS
@@ -1733,7 +1794,7 @@ export const JupiterExchange = (props: {
                         onBalanceClick={() => refreshUserBalances()}
                         onSelectToken={() => {
                             setSubjectTokenSelection("destination");
-                            showTokenSelector();
+                            props.inModal ? showDrawer() : showTokenSelector();
                         }}
                         className="mb-2"
                         routes={routes}
@@ -1772,7 +1833,7 @@ export const JupiterExchange = (props: {
 
                 {/* Warning */}
                 {!isProd() && (
-                    <div className="notifications">
+                    <div className="mt-3">
                         <div data-show="true" className="ant-alert ant-alert-warning" role="alert">
                             <span role="img" aria-label="exclamation-circle" className="anticon anticon-exclamation-circle ant-alert-icon">
                                 <WarningFilled />
@@ -1791,39 +1852,34 @@ export const JupiterExchange = (props: {
                 )}
 
             </div>
+            {props.inModal && (
+                <Drawer
+                    title={t('token-selector.modal-title')}
+                    placement="bottom"
+                    closable={true}
+                    onClose={onCloseTokenSelector}
+                    visible={isTokenSelectorVisible}
+                    getContainer={false}
+                    closeIcon={<ArrowLeftOutlined />}
+                    style={{ position: 'absolute' }}>
+                    {renderTokenSelectorInner}
+                </Drawer>
+            )}
 
             {/* Token selection modal */}
-            <Modal
-                className="mean-modal unpadded-content"
-                visible={isTokenSelectorModalVisible}
-                title={
-                    <div className="modal-title">{t('token-selector.modal-title')}</div>
-                }
-                onCancel={onCloseTokenSelector}
-                width={420}
-                footer={null}>
-                <div className="token-selector-wrapper">
-                    <div className="token-search-wrapper">
-                        <TextInput
-                            value={tokenFilter}
-                            allowClear={true}
-                            extraClass="mb-1"
-                            onInputClear={onInputCleared}
-                            placeholder={t('token-selector.exchange-search-input-placeholder')}
-                            onInputChange={onTokenSearchInputChange} />
-                    </div>
-                    <div className="common-token-shortcuts">
-                        {renderCommonTokens()}
-                    </div>
-                    <Divider />
-                    <div className="token-list vertical-scroll">
-                        {subjectTokenSelection === "source"
-                            ? renderSourceTokenList
-                            : renderDestinationTokenList}
-                    </div>
-                </div>
-            </Modal>
-
+            {!props.inModal && isTokenSelectorModalVisible && (
+                <Modal
+                    className="mean-modal unpadded-content"
+                    visible={isTokenSelectorModalVisible}
+                    title={
+                        <div className="modal-title">{t('token-selector.modal-title')}</div>
+                    }
+                    onCancel={onCloseTokenSelector}
+                    width={420}
+                    footer={null}>
+                    {renderTokenSelectorInner}
+                </Modal>
+            )}
         </>
     );
 };
