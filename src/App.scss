@@ -1034,6 +1034,14 @@ footer.ant-layout-footer {
 }
 
 // Drawer
+.mean-modal {
+  .ant-drawer.ant-drawer-bottom.ant-drawer-open {
+    .ant-drawer-content-wrapper {
+      height: 100% !important;
+    }
+  }
+}
+// Drawer content
 .ant-drawer-content {
   background-color: var(--color-component-background);
   color: var(--color-secondary-alpha-70);

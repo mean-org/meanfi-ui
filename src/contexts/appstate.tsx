@@ -780,7 +780,7 @@ const AppStateProvider: React.FC = ({ children }) => {
             getStreamActivity(detail.id as string, detail.version, true);
             updateStreamDetail(detail);
             setActiveStream(detail);
-            if (location.pathname.startsWith('/accounts')) {
+            if (location.pathname.startsWith('/accounts/streams')) {
               const token = getTokenByMintAddress(detail.associatedToken as string);
               setSelectedToken(token);
             }
@@ -1062,7 +1062,7 @@ const AppStateProvider: React.FC = ({ children }) => {
                       if (detail) {
                         updateStreamDetail(detail);
                         setActiveStream(detail);
-                        if (location.pathname.startsWith('/accounts')) {
+                        if (location.pathname.startsWith('/accounts/streams')) {
                           const token = getTokenByMintAddress(detail.associatedToken as string);
                           setSelectedToken(token);
                         }
@@ -1078,7 +1078,7 @@ const AppStateProvider: React.FC = ({ children }) => {
                   if (item) {
                     updateStreamDetail(item);
                     setActiveStream(item);
-                    if (location.pathname.startsWith('/accounts')) {
+                    if (location.pathname.startsWith('/accounts/streams')) {
                       const token = getTokenByMintAddress(item.associatedToken as string);
                       setSelectedToken(token);
                     }
