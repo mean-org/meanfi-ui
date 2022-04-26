@@ -328,6 +328,14 @@ export const ProposalSummaryModal = (props: {
 
   const renderGeneralSummaryModal = (
     <>
+      {(isTxPendingApproval() || isTxPendingExecution()) && (
+        <div className="inner-container">
+          {/* Top badge */}
+          <div className="float-right-badge">
+            <span className="badge darken small text-uppercase mr-1">Active</span>
+          </div>
+        </div>
+      )}
       {
         highlightedMultisigTx && multisigTransactionSummary && (
         <>
