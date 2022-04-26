@@ -2055,8 +2055,6 @@ export const MultisigView = () => {
 
     if (mtx.executedOn) {
       return "";
-    } else if (mtx.status === MultisigTransactionStatus.Expired) {
-      return "This transaction has expired";
     } else if (mtx.didSigned === undefined) {
       return longStatus ? t("multisig.multisig-transactions.rejected-tx") : t("multisig.multisig-transactions.rejected");
     } else if (mtx.didSigned === false) {
