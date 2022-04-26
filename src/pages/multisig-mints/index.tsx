@@ -3098,7 +3098,7 @@ useEffect(() => {
       );
     } else if (selectedMultisig && !loadingMultisigTxs && multisigPendingTxs.length === 0) {
       return (
-        <div className="mb-2">{t('multisig.multisig-transactions.no-transactions')}</div>
+        <div className="mb-2">{t('multisig.multisig-transactions.no-transactions-multisig-mint')}</div>
       );
     }
 

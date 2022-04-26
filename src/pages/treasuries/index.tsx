@@ -831,7 +831,7 @@ export const TreasuriesView = () => {
               pendingTxs += 1;
             }
           }
-          setTreasuryPendingTxs(pendingTxs); 
+          setTreasuryPendingTxs(pendingTxs);
         });
     });
 
@@ -846,7 +846,7 @@ export const TreasuriesView = () => {
     multisigClient.account.transaction, 
     publicKey, 
     treasuryDetails
-  ]);
+  ]);  
 
   // Get the user multisig accounts' list
   useEffect(() => {
@@ -5910,7 +5910,7 @@ export const TreasuriesView = () => {
                       <Spin spinning={loadingTreasuries || loadingTreasuryDetails}>
                         {treasuryDetails && (
                           <>
-                            {(isMultisigTreasury() && (treasuryPendingTxs > 0)) && (
+                            {isMultisigTreasury() && (
                               renderMultisigTxReminder()
                             )}
                             {renderTreasuryMeta()}

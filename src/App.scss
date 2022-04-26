@@ -7110,6 +7110,12 @@ code {
   height: 18px;
 }
 
+.float-right-badge {
+  float: right;
+  display: flex;
+  margin-bottom: -1em;
+}
+
 // Animations
 @keyframes rotate {
   100% {
