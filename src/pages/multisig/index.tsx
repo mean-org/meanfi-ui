@@ -1711,13 +1711,23 @@ export const MultisigView = () => {
         console.log('here');
         return null;
       }
+
+      const [txDetailAddress] = await PublicKey.findProgramAddress(
+        [
+          selectedMultisig.id.toBuffer(),
+          data.transaction.id.toBuffer()
+        ],
+        multisigClient.programId
+      );
       
       let tx = multisigClient.transaction.cancelTransaction(
         {
           accounts: {
-            transaction: data.transaction.id,
             multisig: selectedMultisig.id,
-            proposer: publicKey as PublicKey,
+            transaction: data.transaction.id,
+            transactionDetail: txDetailAddress,
+            proposer: publicKey,
+            systemProgram: SystemProgram.programId
           }
         }
       );
@@ -1973,6 +1983,7 @@ export const MultisigView = () => {
     selectedMultisig,
     transactionCancelled,
     multisigClient.transaction,
+    multisigClient.programId,
     transactionStatus.currentOperation,
     clearTransactionStatusContext,
     startFetchTxSignatureInfo,

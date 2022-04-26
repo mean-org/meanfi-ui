@@ -3102,12 +3102,22 @@ export const MultisigAssetsView = () => {
         return null;
       }
       
+      const [txDetailAddress] = await PublicKey.findProgramAddress(
+        [
+          selectedMultisig.id.toBuffer(),
+          data.transaction.id.toBuffer()
+        ],
+        multisigClient.programId
+      );
+      
       let tx = multisigClient.transaction.cancelTransaction(
         {
           accounts: {
-            transaction: data.transaction.id,
             multisig: selectedMultisig.id,
-            proposer: publicKey as PublicKey,
+            transaction: data.transaction.id,
+            transactionDetail: txDetailAddress,
+            proposer: publicKey,
+            systemProgram: SystemProgram.programId
           }
         }
       );
@@ -3358,6 +3368,7 @@ export const MultisigAssetsView = () => {
     clearTransactionStatusContext, 
     connection, 
     multisigClient.transaction, 
+    multisigClient.programId,
     nativeBalance, 
     onTxExecuted, 
     publicKey, 
