@@ -300,11 +300,11 @@ export const TreasuriesView = () => {
     if (isNewTreasury) {
       if (msp) {
         msp.listStreams({treasury: treasuryPk })
-          .then((streams) => {
+          .then((streams: any) => {
             consoleOut('treasuryStreams:', streams, 'blue');
             setTreasuryStreams(streams);
           })
-          .catch(err => {
+          .catch((err: any) => {
             console.error(err);
             setTreasuryStreams([]);
           })
@@ -458,7 +458,7 @@ export const TreasuriesView = () => {
       treasuries = multisigTreasuries;
     } 
 
-    return treasuries.filter(t => !t.autoClose);
+    return treasuries.filter((t: any) => !t.autoClose);
 
   }, [
     connection, 
@@ -812,7 +812,7 @@ export const TreasuriesView = () => {
       
       multisigClient.account.transaction
         .all(multisig.id.toBuffer())
-        .then((value) => {
+        .then((value: any) => {
           let pendingTxs = 0;
           for (let tx of value) {
             const isPending = (
@@ -1836,7 +1836,7 @@ export const TreasuriesView = () => {
       );
 
       tx.feePayer = publicKey;
-      let { blockhash } = await connection.getLatestBlockhash("confirmed");
+      let { blockhash } = await connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
       tx.partialSign(...txSigners);
 
@@ -2182,7 +2182,7 @@ export const TreasuriesView = () => {
       );
 
       tx.feePayer = publicKey;
-      let { blockhash } = await connection.getLatestBlockhash("confirmed");
+      let { blockhash } = await connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
       tx.partialSign(transaction);
 
@@ -3178,7 +3178,7 @@ export const TreasuriesView = () => {
       );
 
       tx.feePayer = publicKey;
-      let { blockhash } = await connection.getLatestBlockhash("confirmed");
+      let { blockhash } = await connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
       tx.partialSign(transaction);
 
@@ -3654,7 +3654,7 @@ export const TreasuriesView = () => {
       );
 
       tx.feePayer = publicKey;
-      let { blockhash } = await connection.getLatestBlockhash("confirmed");
+      let { blockhash } = await connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
       tx.partialSign(...txSigners);
 
@@ -4113,7 +4113,7 @@ export const TreasuriesView = () => {
       );
 
       tx.feePayer = publicKey;
-      let { blockhash } = await connection.getLatestBlockhash("confirmed");
+      let { blockhash } = await connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
       tx.partialSign(...txSigners);
 
@@ -4574,7 +4574,7 @@ export const TreasuriesView = () => {
       );
 
       tx.feePayer = publicKey;
-      let { blockhash } = await connection.getLatestBlockhash("confirmed");
+      let { blockhash } = await connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
       tx.partialSign(...txSigners);
 
@@ -4945,7 +4945,7 @@ export const TreasuriesView = () => {
       );
 
       tx.feePayer = publicKey;
-      let { blockhash } = await connection.getLatestBlockhash("confirmed");
+      let { blockhash } = await connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
       tx.partialSign(transaction);
 

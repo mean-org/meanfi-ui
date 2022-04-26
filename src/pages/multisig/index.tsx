@@ -763,7 +763,7 @@ export const MultisigView = () => {
       );
 
       tx.feePayer = publicKey;
-      const { blockhash } = await connection.getLatestBlockhash("confirmed");
+      const { blockhash } = await connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
       tx.partialSign(...[transaction]);
 
@@ -1091,7 +1091,7 @@ export const MultisigView = () => {
       );
   
       tx.feePayer = publicKey;
-      const { blockhash } = await connection.getLatestBlockhash("confirmed");
+      const { blockhash } = await connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
   
       return tx;
@@ -1429,7 +1429,7 @@ export const MultisigView = () => {
       }
   
       tx.feePayer = publicKey;
-      const { blockhash } = await multisigClient.provider.connection.getLatestBlockhash("confirmed");
+      const { blockhash } = await multisigClient.provider.connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
   
       return tx;
@@ -2502,7 +2502,7 @@ export const MultisigView = () => {
     const timeout = setTimeout(() => {
       multisigClient.account.multisigV2
         .subscribe(selectedMultisig.id)
-        .on("change", (account) => {
+        .on("change", (account: any) => {
 
           let address: any;
           let labelBuffer = Buffer

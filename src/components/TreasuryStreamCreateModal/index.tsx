@@ -994,7 +994,7 @@ export const TreasuryStreamCreateModal = (props: {
         );
 
         tx.feePayer = publicKey;
-        let { blockhash } = await props.multisigClient.provider.connection.getLatestBlockhash("confirmed");
+        let { blockhash } = await props.multisigClient.provider.connection.getRecentBlockhash("confirmed");
         tx.recentBlockhash = blockhash;
         tx.partialSign(transaction);
         txs.push(tx);

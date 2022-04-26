@@ -1566,7 +1566,7 @@ export const MultisigAssetsView = () => {
       );
 
       tx.feePayer = publicKey;
-      const { blockhash } = await connection.getLatestBlockhash("confirmed");
+      const { blockhash } = await connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
       tx.partialSign(...[transaction]);
 
@@ -1915,7 +1915,7 @@ export const MultisigAssetsView = () => {
       );
 
       tx.feePayer = publicKey;
-      const { blockhash } = await connection.getLatestBlockhash("confirmed");
+      const { blockhash } = await connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
       tx.partialSign(...[transaction]);
 
@@ -2254,7 +2254,7 @@ export const MultisigAssetsView = () => {
       );
 
       tx.feePayer = publicKey;
-      const { blockhash } = await connection.getLatestBlockhash("confirmed");
+      const { blockhash } = await connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
       tx.partialSign(...[transaction]);
 
