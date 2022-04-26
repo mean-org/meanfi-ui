@@ -578,7 +578,7 @@ const renderer = ({ days, hours, minutes, seconds, completed }: any) => {
           </>
         ) : (
           <>
-            <div className="transaction-progress p-0">
+            <div className="transaction-progress p-2">
               <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <>
@@ -644,53 +644,54 @@ const renderer = ({ days, hours, minutes, seconds, completed }: any) => {
         )}
       </div>
 
-      <Divider plain />
-
       {/* CTAs shown always - IF DIFFERENT CTAS ARE BEST FOR EACH STAGE, MOVE THEM INSIDE THE PANELS */}
       {!(isBusy && transactionStatus !== TransactionStatus.Iddle) && (
-        <div className="row two-col-ctas transaction-progress p-0 no-margin-right-left">
-          <div className={((canShowExecuteButton() || canShowApproveButton() || canShowCancelButton()) && !isError(transactionStatus.currentOperation)) ? "col-6 no-padding-left" : "col-12 no-padding-left no-padding-right"}>
-            <Button
-              block
-              type="text"
-              shape="round"
-              size="middle"
-              className={isBusy ? 'inactive' : ''}
-              onClick={() => (isError(transactionStatus.currentOperation) && transactionStatus.currentOperation === TransactionStatus.SignTransactionFailure)
-                ? onAcceptModal()
-                : onCloseModal()}>
-              {(isError(transactionStatus.currentOperation)  && transactionStatus.currentOperation === TransactionStatus.SignTransactionFailure)
-                ? t('general.retry')
-                : t('general.cta-close')
-              }
-            </Button>
+        <>
+          <Divider plain />
+          <div className="row two-col-ctas transaction-progress p-0 no-margin-right-left">
+            <div className={((canShowExecuteButton() || canShowApproveButton() || canShowCancelButton()) && !isError(transactionStatus.currentOperation)) ? "col-6 no-padding-left" : "col-12 no-padding-left no-padding-right"}>
+              <Button
+                block
+                type="text"
+                shape="round"
+                size="middle"
+                className={isBusy ? 'inactive' : ''}
+                onClick={() => (isError(transactionStatus.currentOperation) && transactionStatus.currentOperation === TransactionStatus.SignTransactionFailure)
+                  ? onAcceptModal()
+                  : onCloseModal()}>
+                {(isError(transactionStatus.currentOperation)  && transactionStatus.currentOperation === TransactionStatus.SignTransactionFailure)
+                  ? t('general.retry')
+                  : t('general.cta-close')
+                }
+              </Button>
+            </div>
+            {
+              ((canShowExecuteButton() || canShowApproveButton() || canShowCancelButton()) && !isError(transactionStatus.currentOperation))
+              &&
+              (
+                <div className="col-6 no-padding-right">
+                  <Button
+                    className={isBusy ? 'inactive' : ''}
+                    block
+                    type="primary"
+                    shape="round"
+                    size="middle"
+                    onClick={() => {
+                      if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+                        onAcceptModal();
+                      } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
+                        onCloseModal();
+                      } else {
+                        refreshPage();
+                      }
+                    }}>
+                    {getTxApproveMainCtaLabel()}
+                  </Button>
+                </div>
+              )
+            }
           </div>
-          {
-            ((canShowExecuteButton() || canShowApproveButton() || canShowCancelButton()) && !isError(transactionStatus.currentOperation))
-            &&
-            (
-              <div className="col-6 no-padding-right">
-                <Button
-                  className={isBusy ? 'inactive' : ''}
-                  block
-                  type="primary"
-                  shape="round"
-                  size="middle"
-                  onClick={() => {
-                    if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
-                      onAcceptModal();
-                    } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
-                      onCloseModal();
-                    } else {
-                      refreshPage();
-                    }
-                  }}>
-                  {getTxApproveMainCtaLabel()}
-                </Button>
-              </div>
-            )
-          }
-        </div>
+        </>
       )}
     </Modal>
   );
