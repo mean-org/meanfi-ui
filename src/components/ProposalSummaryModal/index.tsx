@@ -448,7 +448,7 @@ const renderer = ({ days, hours, minutes, seconds, completed }: any) => {
           ) : isTxPendingApproval() ? (
             <div className="text-center proposal-resume">{(selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)) > 1 ? t('multisig.multisig-transactions.missing-signatures', {missingSignature: selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)}) : t('multisig.multisig-transactions.missing-signature', {missingSignature: selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)})}</div>
           ) : isTxExpired() ? (
-            <div className="text-center proposal-resume">{t('multisig.multisig-transactions.proposal-ready-to-be-executed')}</div>
+            <div className="text-center proposal-resume">{t('multisig.multisig-transactions.tx-operation-expired')}</div>
           ) : (
             <div className="text-center proposal-resume">{t('multisig.multisig-transactions.proposal-completed')}</div>
           )}
