@@ -1,6 +1,7 @@
 import React from 'react';
-import { Button, Modal, Menu, Dropdown, DatePicker, Checkbox } from "antd";
+import { Button, Modal, Menu, Dropdown, DatePicker, Checkbox, Drawer } from "antd";
 import {
+  ArrowLeftOutlined,
   LoadingOutlined,
   QrcodeOutlined,
 } from "@ant-design/icons";
@@ -110,6 +111,7 @@ export const RepeatingPayment = (props: {
   const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
   const [canSubscribe, setCanSubscribe] = useState(true);
+  const [isTokenSelectorVisible, setIsTokenSelectorVisible] = useState(false);
 
   useEffect(() => {
 
@@ -212,10 +214,34 @@ export const RepeatingPayment = (props: {
     setTransactionStatus
   ]);
 
+  const autoFocusInput = useCallback(() => {
+    const input = document.getElementById("token-search-rp");
+    if (input) {
+      setTimeout(() => {
+        input.focus();
+      }, 100);
+    }
+  }, []);
+
+  const showDrawer = () => {
+    setIsTokenSelectorVisible(true);
+    autoFocusInput();
+  };
+
+  const hideDrawer = () => {
+    setIsTokenSelectorVisible(false);
+  };
+
   // Token selection modal
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
-  const showTokenSelector = useCallback(() => setTokenSelectorModalVisibility(true), []);
+
+  const showTokenSelector = useCallback(() => {
+    setTokenSelectorModalVisibility(true);
+    autoFocusInput();
+  }, [autoFocusInput]);
+
   const onCloseTokenSelector = useCallback(() => {
+    hideDrawer();
     setTokenSelectorModalVisibility(false);
     if (tokenFilter && !isValidAddress(tokenFilter)) {
       setTokenFilter('');
@@ -1055,6 +1081,50 @@ export const RepeatingPayment = (props: {
     </>
   );
 
+  const renderTokenSelectorInner = (
+    <div className="token-selector-wrapper">
+      <div className="token-search-wrapper">
+        <TextInput
+          id="token-search-rp"
+          value={tokenFilter}
+          allowClear={true}
+          extraClass="mb-2"
+          onInputClear={onInputCleared}
+          placeholder={t('token-selector.search-input-placeholder')}
+          onInputChange={onTokenSearchInputChange} />
+      </div>
+      <div className="flex-row align-items-center fg-secondary-60 mb-2 px-1">
+        <span>{t('token-selector.looking-for-sol')}</span>&nbsp;
+        <span className="simplelink underline" onClick={onGoToWrap}>{t('token-selector.wrap-sol-first')}</span>
+      </div>
+      <div className="token-list vertical-scroll">
+        {filteredTokenList.length > 0 && renderTokenList}
+        {(tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0) && (
+          <TokenListItem
+            key={tokenFilter}
+            name="Unknown"
+            mintAddress={tokenFilter}
+            className={selectedToken && selectedToken.address === tokenFilter ? "selected" : "simplelink"}
+            onClick={() => {
+              const uknwnToken: TokenInfo = {
+                address: tokenFilter,
+                name: 'Unknown',
+                chainId: 101,
+                decimals: 6,
+                symbol: '',
+              };
+              setSelectedToken(uknwnToken);
+              consoleOut("token selected:", uknwnToken, 'blue');
+              setEffectiveRate(0);
+              onCloseTokenSelector();
+            }}
+            balance={connected && userBalances && userBalances[tokenFilter] > 0 ? userBalances[tokenFilter] : 0}
+          />
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <>
       <StepSelector step={currentStep} steps={2} onValueSelected={onStepperChange} />
@@ -1086,9 +1156,13 @@ export const RepeatingPayment = (props: {
               </span>
             </div>
             <div className="right">
-              <div className="add-on simplelink" onClick={showQrScannerModal}>
-                <QrcodeOutlined />
-              </div>
+              {props.inModal ? (
+                <span>&nbsp;</span>
+              ) : (
+                <div className="add-on simplelink" onClick={showQrScannerModal}>
+                  <QrcodeOutlined />
+                </div>
+              )}
             </div>
           </div>
           {
@@ -1111,7 +1185,7 @@ export const RepeatingPayment = (props: {
             <div className="left">
               <span className="add-on simplelink">
                 {selectedToken && (
-                  <TokenDisplay onClick={() => showTokenSelector()}
+                  <TokenDisplay onClick={() => props.inModal ? showDrawer() : showTokenSelector()}
                     mintAddress={selectedToken.address}
                     name={selectedToken.name}
                     showName={false}
@@ -1301,7 +1375,7 @@ export const RepeatingPayment = (props: {
             <div className="left">
               <span className="add-on simplelink">
               {selectedToken && (
-                <TokenDisplay onClick={() => showTokenSelector()}
+                <TokenDisplay onClick={() => props.inModal ? showDrawer() : showTokenSelector()}
                     mintAddress={selectedToken.address}
                     name={selectedToken.name}
                     showName={false}
@@ -1390,16 +1464,22 @@ export const RepeatingPayment = (props: {
         </Button>
       </div>
 
-      {/* QR scan modal */}
-      {isQrScannerModalVisible && (
-        <QrScannerModal
-          isVisible={isQrScannerModalVisible}
-          handleOk={onAcceptQrScannerModal}
-          handleClose={closeQrScannerModal}/>
+      {props.inModal && (
+        <Drawer
+          title={t('token-selector.modal-title')}
+          placement="bottom"
+          closable={true}
+          onClose={onCloseTokenSelector}
+          visible={isTokenSelectorVisible}
+          getContainer={false}
+          closeIcon={<ArrowLeftOutlined />}
+          style={{ position: 'absolute' }}>
+          {renderTokenSelectorInner}
+        </Drawer>
       )}
 
       {/* Token selection modal */}
-      {isTokenSelectorModalVisible && (
+      {!props.inModal && isTokenSelectorModalVisible && (
         <Modal
           className="mean-modal unpadded-content"
           visible={isTokenSelectorModalVisible}
@@ -1407,48 +1487,16 @@ export const RepeatingPayment = (props: {
           onCancel={onCloseTokenSelector}
           width={450}
           footer={null}>
-          <div className="token-selector-wrapper">
-            <div className="token-search-wrapper">
-              <TextInput
-                id="token-search-rp"
-                value={tokenFilter}
-                allowClear={true}
-                extraClass="mb-2"
-                onInputClear={onInputCleared}
-                placeholder={t('token-selector.search-input-placeholder')}
-                onInputChange={onTokenSearchInputChange} />
-            </div>
-            <div className="flex-row align-items-center fg-secondary-60 mb-2 px-1">
-              <span>{t('token-selector.looking-for-sol')}</span>&nbsp;
-              <span className="simplelink underline" onClick={onGoToWrap}>{t('token-selector.wrap-sol-first')}</span>
-            </div>
-            <div className="token-list vertical-scroll">
-              {filteredTokenList.length > 0 && renderTokenList}
-              {(tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0) && (
-                <TokenListItem
-                  key={tokenFilter}
-                  name="Unknown"
-                  mintAddress={tokenFilter}
-                  className={selectedToken && selectedToken.address === tokenFilter ? "selected" : "simplelink"}
-                  onClick={() => {
-                    const uknwnToken: TokenInfo = {
-                      address: tokenFilter,
-                      name: 'Unknown',
-                      chainId: 101,
-                      decimals: 6,
-                      symbol: '',
-                    };
-                    setSelectedToken(uknwnToken);
-                    consoleOut("token selected:", uknwnToken, 'blue');
-                    setEffectiveRate(0);
-                    onCloseTokenSelector();
-                  }}
-                  balance={connected && userBalances && userBalances[tokenFilter] > 0 ? userBalances[tokenFilter] : 0}
-                />
-              )}
-            </div>
-          </div>
+          {renderTokenSelectorInner}
         </Modal>
+      )}
+
+      {/* QR scan modal */}
+      {isQrScannerModalVisible && (
+        <QrScannerModal
+          isVisible={isQrScannerModalVisible}
+          handleOk={onAcceptQrScannerModal}
+          handleClose={closeQrScannerModal}/>
       )}
     </>
   );

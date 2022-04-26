@@ -1033,9 +1033,13 @@ export const OneTimePayment = (props: {
               </span>
             </div>
             <div className="right">
-              <div className="add-on simplelink" onClick={showQrScannerModal}>
-                <QrcodeOutlined />
-              </div>
+              {props.inModal ? (
+                <span>&nbsp;</span>
+              ) : (
+                <div className="add-on simplelink" onClick={showQrScannerModal}>
+                  <QrcodeOutlined />
+                </div>
+              )}
             </div>
           </div>
           {
