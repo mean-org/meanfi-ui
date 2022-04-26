@@ -1,7 +1,7 @@
 import { Idl } from "@project-serum/anchor";
 
 const idl: Idl = {
-  "version": "0.11.0",
+  version: "0.11.0",
   name: "mean_multisig",
   instructions: [
     {

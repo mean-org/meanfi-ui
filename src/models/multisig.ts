@@ -1,5 +1,5 @@
-import { Idl, Program } from "@project-serum/anchor";
 import { GetProgramAccountsFilter, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
+import { Idl, Program } from "@project-serum/anchor";
 import { OperationType } from "./enums";
 
 export const MEAN_MULTISIG_OPS = new PublicKey("3TD6SWY9M1mLY2kZWJNavPLhwXvcRsWdnZLRaMzERJBw");
