@@ -41,7 +41,10 @@ import { NATIVE_SOL } from '../../utils/tokens';
 
 const { Option } = Select;
 
-export const OneTimePayment = (props: { inModal: boolean; }) => {
+export const OneTimePayment = (props: {
+  inModal: boolean;
+  transferCompleted?: any;
+}) => {
   const connection = useConnection();
   const { endpoint } = useConnectionConfig();
   const { connected, publicKey, wallet } = useWallet();
@@ -238,22 +241,25 @@ export const OneTimePayment = (props: { inModal: boolean; }) => {
   // Setup event handler for Tx confirmed
   const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
     consoleOut("onTxConfirmed event executed:", item, 'crimson');
-    if (item && item.operationType === OperationType.Transfer && item.extras === 'scheduled') {
-      recordTxConfirmation(item.signature, true);
-      navigate("/accounts/streams");
-    }
     setIsBusy(false);
     resetTransactionStatus();
     resetContractValues();
     setIsVerifiedRecipient(false);
     setSelectedStream(undefined);
+    if (item && item.operationType === OperationType.Transfer && item.extras === 'scheduled') {
+      recordTxConfirmation(item.signature, true);
+      if (!props.inModal) {
+        navigate("/accounts/streams");
+      }
+    }
   }, [
-    navigate,
-    setSelectedStream,
-    resetContractValues,
-    recordTxConfirmation,
-    resetTransactionStatus,
+    props,
     setIsVerifiedRecipient,
+    resetTransactionStatus,
+    recordTxConfirmation,
+    resetContractValues,
+    setSelectedStream,
+    navigate,
   ]);
 
   // Setup event handler for Tx confirmation error
@@ -843,12 +849,16 @@ export const OneTimePayment = (props: { inModal: boolean; }) => {
               lastOperation: TransactionStatus.SendTransactionSuccess,
               currentOperation: TransactionStatus.TransactionFinished
             });
+            if (props.inModal) {
+              props.transferCompleted();
+            }
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
 
   }, [
+    props,
     wallet,
     endpoint,
     publicKey,

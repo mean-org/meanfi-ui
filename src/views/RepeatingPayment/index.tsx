@@ -57,7 +57,10 @@ import { segmentAnalytics } from '../../App';
 import dateFormat from 'dateformat';
 import { NATIVE_SOL } from '../../utils/tokens';
 
-export const RepeatingPayment = (props: { inModal: boolean; }) => {
+export const RepeatingPayment = (props: {
+  inModal: boolean;
+  transferCompleted?: any;
+}) => {
   const connection = useConnection();
   const { endpoint } = useConnectionConfig();
   const { connected, publicKey, wallet } = useWallet();
@@ -245,14 +248,17 @@ export const RepeatingPayment = (props: { inModal: boolean; }) => {
   // Setup event handler for Tx confirmed
   const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
     consoleOut("onTxConfirmed event executed:", item, 'crimson');
+    setIsBusy(false);
+    resetTransactionStatus();
     // If we have the item, record success and remove it from the list
     if (item && item.operationType === OperationType.Transfer) {
       recordTxConfirmation(item.signature, true);
-      handleGoToStreamsClick();
+      if (!props.inModal) {
+        handleGoToStreamsClick();
+      }
     }
-    setIsBusy(false);
-    resetTransactionStatus();
   }, [
+    props,
     recordTxConfirmation,
     handleGoToStreamsClick,
     resetTransactionStatus,
@@ -959,11 +965,15 @@ export const RepeatingPayment = (props: { inModal: boolean; }) => {
               lastOperation: TransactionStatus.SendTransactionSuccess,
               currentOperation: TransactionStatus.TransactionFinished
             });
+            if (props.inModal) {
+              props.transferCompleted();
+            }
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
   }, [
+    props,
     wallet,
     endpoint,
     publicKey,
