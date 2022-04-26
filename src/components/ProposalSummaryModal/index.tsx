@@ -352,7 +352,11 @@ export const ProposalSummaryModal = (props: {
             <Col span={16} className="text-left pl-1">
               {multisigTransactionSummary.expirationDate ? (
                 <>
-                  <Countdown className="align-middle" date={multisigTransactionSummary.expirationDate} renderer={renderer} />
+                  {(isTxPendingApproval() || isTxPendingExecution()) ? (
+                    <Countdown className="align-middle" date={multisigTransactionSummary.expirationDate} renderer={renderer} />
+                  ) : (
+                    <span>00:00:00:00</span>
+                  )}
                 </>
               ) : (
                 <span>{t('multisig.proposal-modal.does-not-expire')}</span>
