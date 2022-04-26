@@ -702,6 +702,7 @@ export const TreasuryStreamCreateModal = (props: {
       setFromCoinAmount("");
       setCsvArray([]);
       setIsCsvSelected(false);
+      setIsFeePaidByTreasurer(false);
       setIsVerifiedRecipient(false);
       setPaymentRateFrequency(PaymentRateType.PerMonth);
       setPaymentStartDate(today);
