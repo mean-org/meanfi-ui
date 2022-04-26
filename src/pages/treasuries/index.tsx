@@ -1107,9 +1107,9 @@ export const TreasuriesView = () => {
     }
 
     if (lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
+      const usedOptions = retryOperationPayload as TreasuryCreateOptions;
       switch (lastSentTxOperationType) {
         case OperationType.TreasuryCreate:
-          const usedOptions = retryOperationPayload as TreasuryCreateOptions;
           if (usedOptions.multisigId) {
             clearTxConfirmationContext();
             stackedMessagesAndNavigate(usedOptions.multisigId);

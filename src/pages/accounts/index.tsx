@@ -31,7 +31,7 @@ import {
   getTokenAmountAndSymbolByTokenAddress,
   shortenAddress
 } from '../../utils/utils';
-import { Button, Col, Empty, Result, Row, Space, Spin, Tooltip } from 'antd';
+import { Button, Col, Dropdown, Empty, Menu, Result, Row, Space, Spin, Tooltip } from 'antd';
 import { consoleOut, copyText, friendlyDisplayDecimalPlaces, isValidAddress, kFormatter, toUsCurrency } from '../../utils/ui';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import {
@@ -44,7 +44,7 @@ import {
 } from '../../constants';
 import { QrScannerModal } from '../../components/QrScannerModal';
 import { Helmet } from "react-helmet";
-import { IconCopy } from '../../Icons';
+import { IconCopy, IconShoppingCart, IconVerticalEllipsis } from '../../Icons';
 import { fetchAccountHistory, MappedTransaction } from '../../utils/history';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import useLocalStorage from '../../hooks/useLocalStorage';
@@ -59,7 +59,6 @@ import { initialSummary, StreamsSummary } from '../../models/streams';
 import { MSP, Stream, STREAM_STATUS } from '@mean-dao/msp';
 import { StreamInfo, STREAM_STATE } from '@mean-dao/money-streaming';
 import { openNotification } from '../../components/Notifications';
-import CountUp from 'react-countup';
 import { AddressDisplay } from '../../components/AddressDisplay';
 import { ReceiveSplOrSolModal } from '../../components/ReceiveSplOrSolModal';
 import { SendAssetModal } from '../../components/SendAssetModal';
@@ -127,7 +126,6 @@ export const AccountsNewView = () => {
   const [totalTokensHolded, setTotalTokensHolded] = useState(0);
   const [totalTokenAccountsValue, setTotalTokenAccountsValue] = useState(0);
   const [netWorth, setNetWorth] = useState(0);
-  const [prevNetWorth, setPrevNetWorth] = useState(0);
 
   // Flow control
   const [status, setStatus] = useState<FetchStatus>(FetchStatus.Iddle);
@@ -1043,17 +1041,6 @@ export const AccountsNewView = () => {
         <div className="font-bold font-size-110 left">Net Worth</div>
         <div className="font-bold font-size-110 right">
           {toUsCurrency(netWorth)}
-          {/* {netWorth > prevNetWorth && streamList ? (
-            <CountUp
-              start={prevNetWorth}
-              end={netWorth}
-              decimals={2}
-              separator=','
-              duration={1}
-              prefix="$"
-              onEnd={() => setPrevNetWorth(netWorth)}
-            />
-          ) : toUsCurrency(netWorth)} */}
         </div>
       </div>
     );
@@ -1185,11 +1172,11 @@ export const AccountsNewView = () => {
         </div>
         <div className="rate-cell">
           <div className="rate-amount">
-            {(asset.balance || 0) > 0 ? getTokenAmountAndSymbolByTokenAddress(asset.balance || 0, asset.address, true) : '0'}
+            ${getFormattedRateAmount((asset.balance || 0) * tokenPrice)}
           </div>
           {(tokenPrice > 0 && (asset.balance || 0) > 0) ? (
             <div className="interval">
-              ${getFormattedRateAmount((asset.balance || 0) * tokenPrice)}
+              {(asset.balance || 0) > 0 ? getTokenAmountAndSymbolByTokenAddress(asset.balance || 0, asset.address, true) : '0'}
             </div>
           ) : (null)}
         </div>
@@ -1329,30 +1316,80 @@ export const AccountsNewView = () => {
     } else return null;
   };
 
+
+  const userAssetOptions = (
+    <Menu>
+      <Menu.Item key="1" onClick={reloadSwitch}>
+        <span className="menu-item-text">Refresh asset</span>
+      </Menu.Item>
+      {/* <Menu.Item key="2" onClick={() => {}}>
+        <span className="menu-item-text">Menu 2</span>
+      </Menu.Item> */}
+    </Menu>
+  );
+
   const renderUserAccountAssetCtaRow = () => {
     if (!selectedAsset) { return null; }
 
     return (
-      <>
-        <Space size="middle" wrap>
-          <span className="flat-button stroked" onClick={onSendAsset}>
+      <div className="flex-fixed-right">
+        <Space className="left" size="middle" wrap>
+          <Button
+            type="default"
+            shape="round"
+            size="small"
+            className="thin-stroke"
+            onClick={onSendAsset}>
             <SendOutlined />
             <span className="mx-1">Send</span>
-          </span>
-          <span className="flat-button stroked" onClick={showReceiveSplOrSolModal}>
+          </Button>
+          <Button
+            type="default"
+            shape="round"
+            size="small"
+            className="thin-stroke"
+            onClick={showReceiveSplOrSolModal}>
             <QrcodeOutlined />
             <span className="mx-1">Receive</span>
-          </span>
-          <span className="flat-button stroked" onClick={onExchangeAsset}>
+          </Button>
+          <Button
+            type="default"
+            shape="round"
+            size="small"
+            className="thin-stroke"
+            onClick={onExchangeAsset}>
             <SwapOutlined />
             <span className="mx-1">Exchange</span>
-          </span>
-          <span className="flat-button stroked" onClick={handleGoToInvestClick}>
+          </Button>
+          <Button
+            type="default"
+            shape="round"
+            size="small"
+            className="thin-stroke"
+            onClick={handleGoToInvestClick}>
             <BarChartOutlined />
             <span className="mx-1">Invest</span>
-          </span>
+          </Button>
         </Space>
-      </>
+        <Space className="right" size="small">
+          <span className="flat-button medium primary" onClick={() => {}}>
+            <IconShoppingCart className="mean-svg-icons"/>
+            <span className="mx-1">Buy</span>
+          </span>
+          <Dropdown overlay={userAssetOptions} placement="bottomRight" trigger={["click"]}>
+            <span className="icon-button-container">
+              <Button
+                type="default"
+                shape="circle"
+                size="middle"
+                className="fg-primary-highlight"
+                icon={<IconVerticalEllipsis className="mean-svg-icons"/>}
+                onClick={(e) => e.preventDefault()}
+              />
+            </span>
+          </Dropdown>
+        </Space>
+      </div>
     );
   };
 
@@ -1363,7 +1400,7 @@ export const AccountsNewView = () => {
     return (
       <>
         <div className="accounts-category-meta">
-          <div className="mb-3">
+          <div className="mb-2">
             <Row>
               <Col span={14}>
                 <div className="info-label">
@@ -1623,25 +1660,6 @@ export const AccountsNewView = () => {
                             {/* Activity table heading */}
                             {shallWeDraw() && (
                               <div className="stats-row">
-                                <div className="fetch-control">
-                                  <span className="icon-button-container">
-                                    {status === FetchStatus.Fetching ? (
-                                      <Tooltip placement="bottom" title="Stop">
-                                        <span className="icon-container"><SyncOutlined spin /></span>
-                                      </Tooltip>
-                                    ) : (
-                                      <Tooltip placement="bottom" title="Refresh">
-                                        <Button
-                                          type="default"
-                                          shape="circle"
-                                          size="small"
-                                          icon={<ReloadOutlined />}
-                                          onClick={reloadSwitch}
-                                        />
-                                      </Tooltip>
-                                    )}
-                                  </span>
-                                </div>
                                 <div className="item-list-header compact">
                                   <div className="header-row">
                                     <div className="std-table-cell first-cell">&nbsp;</div>

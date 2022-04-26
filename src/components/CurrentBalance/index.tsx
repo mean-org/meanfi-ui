@@ -8,7 +8,7 @@ import { Tooltip } from 'antd';
 import { getAmountWithTokenSymbol } from '../../utils/ui';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { TxConfirmationContext } from '../../contexts/transaction-status';
-import { IconEvents } from '../../Icons';
+import { IconNotification } from '../../Icons';
 import useWindowSize from '../../hooks/useWindowResize';
 
 export const CurrentBalance = (props: {
@@ -48,7 +48,7 @@ export const CurrentBalance = (props: {
         {!isLargeScreen() && confirmationHistory && confirmationHistory.length > 0 && (
           <div className="events-drawer-trigger lower simplelink" onClick={props.onOpenDrawer}>
             <div className="magictime tinRightIn">
-              <IconEvents className="mean-svg-icons"/>
+              <IconNotification className="mean-svg-icons"/>
             </div>
           </div>
         )}
@@ -70,7 +70,7 @@ export const CurrentBalance = (props: {
         {isLargeScreen() && confirmationHistory && confirmationHistory.length > 0 && (
           <div className="events-drawer-trigger upper simplelink" onClick={props.onOpenDrawer}>
             <div className="magictime tinRightIn">
-              <IconEvents className="mean-svg-icons"/>
+              <IconNotification className="mean-svg-icons"/>
             </div>
           </div>
         )}
