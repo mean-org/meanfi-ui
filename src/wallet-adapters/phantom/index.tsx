@@ -191,7 +191,7 @@ export class PhantomWalletAdapter extends BaseMessageSignerWalletAdapter {
                 // HACK: Phantom's `signAndSendTransaction` should always set these, but doesn't yet
                 transaction.feePayer = transaction.feePayer || this.publicKey || undefined;
                 transaction.recentBlockhash =
-                    transaction.recentBlockhash || (await connection.getLatestBlockhash('finalized')).blockhash;
+                    transaction.recentBlockhash || (await connection.getRecentBlockhash('finalized')).blockhash;
 
                 const { signature } = await wallet.signAndSendTransaction(transaction, options);
                 return signature;

@@ -432,7 +432,7 @@ export async function swap(
   }
 
   tx.feePayer = wallet.publicKey;
-  const { blockhash } = await connection.getLatestBlockhash();
+  const { blockhash } = await connection.getRecentBlockhash();
   tx.recentBlockhash = blockhash;
 
   if (signers.length) {
@@ -682,7 +682,7 @@ export async function place(
   }
 
   tx.feePayer = wallet.publicKey;
-  const { blockhash } = await connection.getLatestBlockhash();
+  const { blockhash } = await connection.getRecentBlockhash();
   tx.recentBlockhash = blockhash;
 
   if (signers.length) {

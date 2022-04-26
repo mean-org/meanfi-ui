@@ -1156,7 +1156,7 @@ export const Streams = () => {
       );
 
       tx.feePayer = publicKey;
-      let { blockhash } = await connection.getLatestBlockhash("confirmed");
+      let { blockhash } = await connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
       tx.partialSign(...txSigners);
 
@@ -1610,7 +1610,7 @@ export const Streams = () => {
       );
 
       tx.feePayer = publicKey;
-      let { blockhash } = await connection.getLatestBlockhash("confirmed");
+      let { blockhash } = await connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
       tx.partialSign(...txSigners);
 
