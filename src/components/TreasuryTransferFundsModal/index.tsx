@@ -37,16 +37,17 @@ export const TreasuryTransferFundsModal = (props: {
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
   const {
-    transactionStatus,
     theme,
+    transactionStatus,
     isVerifiedRecipient,
     selectedToken,
     tokenBalance,
     isWhitelisted,
     loadingPrices,
     effectiveRate,
+    refreshPrices,
+    setTransactionStatus,
     setIsVerifiedRecipient,
-    refreshPrices
   } = useContext(AppStateContext);
 
   const [to, setTo] = useState('');
@@ -109,7 +110,19 @@ export const TreasuryTransferFundsModal = (props: {
   const onCloseModal = () => {
     consoleOut('onCloseModal called!', '', 'crimson');
     props.handleClose();
-    setIsVerifiedRecipient(false);
+    onAfterClose();
+  }
+
+  const onAfterClose = () => {
+    setTimeout(() => {
+      setTopupAmount("");
+      setTo("");
+      setIsVerifiedRecipient(false);
+    });
+    setTransactionStatus({
+      lastOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
+    });
   }
 
   const onMintToAddressChange = (e: any) => {
