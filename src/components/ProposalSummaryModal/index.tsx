@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useState } from 'react';
+import React, { useCallback, useContext } from 'react';
 import {
   CheckOutlined,
   CopyOutlined,
@@ -16,7 +16,6 @@ import "./style.scss";
 import { Button, Col, Divider, Modal, Row, Spin } from 'antd';
 import {
   copyText,
-  consoleOut,
   getTransactionOperationDescription,
   getReadableDate,
 } from '../../utils/ui';
@@ -56,7 +55,6 @@ export const ProposalSummaryModal = (props: {
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
   const {
-    theme,
     transactionStatus,
     setTransactionStatus
   } = useContext(AppStateContext);
@@ -78,14 +76,6 @@ export const ProposalSummaryModal = (props: {
   ]);
 
   const onAcceptModal = () => {
-    // consoleOut('onAcceptMultisigActionModal:', item, 'blue');
-    // if (item.status === MultisigTransactionStatus.Pending) {
-    //   onExecuteApproveTx({ transaction: item });
-    // } else if (item.status === MultisigTransactionStatus.Approved) {
-    //   onExecuteFinishTx({ transaction: item })
-    // } else if (item.status === MultisigTransactionStatus.Voided) {
-    //   onExecuteCancelTx({ transaction: item })
-    // }
     props.handleOk(highlightedMultisigTx);
   };
 
@@ -121,16 +111,6 @@ export const ProposalSummaryModal = (props: {
 
     return initiator;
   }, [selectedMultisig]);
-
-  const isUserTxInitiator = useCallback(() => {
-    if (!highlightedMultisigTx || !publicKey) { return false; }
-    const initiator = getTxInitiator(highlightedMultisigTx);
-    return initiator && publicKey.toBase58() === initiator.address ? true : false;
-  }, [
-    publicKey,
-    highlightedMultisigTx,
-    getTxInitiator,
-  ]);
 
   const getTxSignedCount = useCallback((mtx: MultisigTransaction) => {
     if (mtx && mtx.signers) {
@@ -253,7 +233,7 @@ export const ProposalSummaryModal = (props: {
     highlightedMultisigTx,
     isTreasuryOperation,
     isUserTheProposer,
-  ])
+  ]);
 
   const canShowCancelButton = useCallback(() => {
 
@@ -269,39 +249,7 @@ export const ProposalSummaryModal = (props: {
   },[
     publicKey, 
     highlightedMultisigTx
-  ])
-
-  const getTxUserStatusClass = useCallback((mtx: MultisigTransaction) => {
-
-    if (mtx.executedOn) {
-      return "";
-    } else if (mtx.didSigned === undefined) {
-      return "fg-red";
-    } else if (mtx.didSigned === false) {
-      return theme === 'light' ? "fg-light-orange" : "fg-warning";
-    } else {
-      return theme === 'light' ? "fg-green" : "fg-success"
-    }
-
-  },[theme]);
-
-  const getTransactionUserStatusAction = useCallback((mtx: MultisigTransaction, longStatus = false) => {
-
-    if (mtx.executedOn) {
-      return "";
-    } else if (mtx.didSigned === undefined) {
-      return longStatus ? t("multisig.multisig-transactions.rejected-tx") : t("multisig.multisig-transactions.rejected");
-    } else if (mtx.didSigned === false) {
-      return !longStatus
-        ? t("multisig.multisig-transactions.not-signed")
-        : mtx.status === MultisigTransactionStatus.Approved
-          ? t("multisig.multisig-transactions.not-sign-tx")
-          : t("multisig.multisig-transactions.not-signed-tx");
-    } else {
-      return longStatus ? "You have signed this transaction" : t("multisig.multisig-transactions.signed");
-    }
-
-  },[t]);
+  ]);
 
   const getParticipantsThatApprovedTx = useCallback((mtx: MultisigTransaction) => {
 
@@ -388,7 +336,7 @@ export const ProposalSummaryModal = (props: {
             {multisigTransactionSummary.title && (
               <>
                 <Col span={8} className="text-right pr-1">
-                  <span className="info-label">Title:</span>
+                  <span className="info-label">{t('multisig.proposal-modal.title-label')}:</span>
                 </Col>
                 <Col span={16} className="text-left pl-1">
                   <span>{multisigTransactionSummary.title}</span>
@@ -399,12 +347,16 @@ export const ProposalSummaryModal = (props: {
           {/* Expiry date */}
           <Row className="mb-1">
             <Col span={8} className="text-right pr-1">
-              <span className="info-label">Expires in:</span>
+              <span className="info-label">{t('multisig.proposal-modal.expires-label')}:</span>
             </Col>
             <Col span={16} className="text-left pl-1">
               {multisigTransactionSummary.expirationDate ? (
                 <>
-                  <Countdown className="align-middle" date={multisigTransactionSummary.expirationDate} renderer={renderer} />
+                  {(isTxPendingApproval() || isTxPendingExecution()) ? (
+                    <Countdown className="align-middle" date={multisigTransactionSummary.expirationDate} renderer={renderer} />
+                  ) : (
+                    <span>00:00:00:00</span>
+                  )}
                 </>
               ) : (
                 <span>{t('multisig.proposal-modal.does-not-expire')}</span>
@@ -432,10 +384,10 @@ export const ProposalSummaryModal = (props: {
           {/* Status */}
           <Row className="mb-1">
             <Col span={8} className="text-right pr-1">
-              <span className="info-label">Status:</span>
+              <span className="info-label">{t('multisig.multisig-transactions.column-pending-signatures')}:</span>
             </Col>
             <Col span={16} className="text-left pl-1 mb-1 d-flex align-items-start justify-content-start">
-              <span>{getTxSignedCount(highlightedMultisigTx)} signed, {selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)} pending</span>
+              <span>{getTxSignedCount(highlightedMultisigTx)} {t('multisig.multisig-transactions.tx-signed')}, {selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)} {t('multisig.multisig-transactions.tx-pending')}</span>
               <MultisigOwnersSigned className="ml-1" participants={getParticipantsThatApprovedTx(highlightedMultisigTx) || []} />
             </Col>
           </Row>
@@ -548,9 +500,7 @@ export const ProposalSummaryModal = (props: {
               <>
                 <Divider className="mt-0" />
                 {(!isTxVoided() && !isTxRejected()) && (
-                  <>
-                    {renderGeneralSummaryModal}
-                  </>
+                  renderGeneralSummaryModal
                 )}
               </>
             )}

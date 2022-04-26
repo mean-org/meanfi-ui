@@ -558,6 +558,8 @@
 			"rejected-tx": "You have rejected this transaction",
 			"signed": "امضاء شده.",
 			"signed-so-far": "تا الان امضا شده",
+			"tx-signed": "signed",
+			"tx-pending": "pending",
 			"signers-to-approve": "امضا کنندگان آن را تایید کنند تا اجرا شود.",
 			"submitted-on": "ارسال شده در:",
 			"transaction-awaiting": "A proposal for this multisig is pending",

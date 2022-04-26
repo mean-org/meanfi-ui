@@ -558,6 +558,8 @@
 			"rejected-tx": "You have rejected this transaction",
 			"signed": "Signé.",
 			"signed-so-far": "Signé pour l'instant.",
+			"tx-signed": "signed",
+			"tx-pending": "pending",
 			"signers-to-approve": "signataires de l'approuver afin qu'il soit exécuté.",
 			"submitted-on": "Soumis le :",
 			"transaction-awaiting": "A proposal for this multisig is pending",

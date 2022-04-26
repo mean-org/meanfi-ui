@@ -538,6 +538,8 @@
 			"signers-to-approve": "signers to approve it in order to be executed.",
 			"signed": "Signed",
 			"signed-so-far": "Signed so far.",
+			"tx-signed": "signed",
+			"tx-pending": "pending",
 			"explain-failure": "Explain failure condition if specific",
 			"ready-for-execution": "This transaction is now ready for execution. Please tell the person who initiated this transaction to execute it.",
 			"treasury-closed-warning": "When a treasury is closed, all funds left over will be deposited back into the multisig safe.",
