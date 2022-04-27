@@ -98,6 +98,11 @@ const idl: Idl = {
           "isSigner": true
         },
         {
+          "name": "transactionDetail",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "proposer",
           "isMut": true,
           "isSigner": true
@@ -119,10 +124,6 @@ const idl: Idl = {
           "type": "publicKey"
         },
         {
-          "name": "operation",
-          "type": "u8"
-        },
-        {
           "name": "accs",
           "type": {
             "vec": {
@@ -133,6 +134,22 @@ const idl: Idl = {
         {
           "name": "data",
           "type": "bytes"
+        },
+        {
+          "name": "operation",
+          "type": "u8"
+        },
+        {
+          "name": "title",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        },
+        {
+          "name": "expirationDate",
+          "type": "u64"
         },
         {
           "name": "pdaTimestamp",
@@ -148,12 +165,17 @@ const idl: Idl = {
       "name": "cancelTransaction",
       "accounts": [
         {
+          "name": "multisig",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "transaction",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "multisig",
+          "name": "transactionDetail",
           "isMut": true,
           "isSigner": false
         },
@@ -161,6 +183,11 @@ const idl: Idl = {
           "name": "proposer",
           "isMut": true,
           "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
         }
       ],
       "args": []
@@ -179,9 +206,19 @@ const idl: Idl = {
           "isSigner": false
         },
         {
+          "name": "transactionDetail",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "owner",
           "isMut": true,
           "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
         }
       ],
       "args": []
@@ -202,6 +239,21 @@ const idl: Idl = {
         {
           "name": "transaction",
           "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "transactionDetail",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
           "isSigner": false
         }
       ],
@@ -228,6 +280,21 @@ const idl: Idl = {
         {
           "name": "transaction",
           "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "transactionDetail",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
           "isSigner": false
         }
       ],
@@ -408,6 +475,36 @@ const idl: Idl = {
       }
     },
     {
+      "name": "TransactionDetail",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "title",
+            "type": {
+              "array": [
+                "u8",
+                64
+              ]
+            }
+          },
+          {
+            "name": "description",
+            "type": {
+              "array": [
+                "u8",
+                512
+              ]
+            }
+          },
+          {
+            "name": "expirationDate",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
       "name": "Owner",
       "type": {
         "kind": "struct",
@@ -447,27 +544,6 @@ const idl: Idl = {
       }
     },
     {
-      "name": "Keypair",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "publicKey",
-            "type": "publicKey"
-          },
-          {
-            "name": "secretKey",
-            "type": {
-              "array": [
-                "u8",
-                64
-              ]
-            }
-          }
-        ]
-      }
-    },
-    {
       "name": "TransactionAccount",
       "type": {
         "kind": "struct",
@@ -486,78 +562,59 @@ const idl: Idl = {
           }
         ]
       }
-    }
-  ],
-  errors: [
-    {
-      "code": 6000,
-      "name": "InvalidOwner",
-      "msg": "The given owner is not part of this multisig."
     },
     {
-      "code": 6001,
-      "name": "InvalidOwnersLen",
-      "msg": "Owners length must be non zero."
-    },
-    {
-      "code": 6002,
-      "name": "NotEnoughSigners",
-      "msg": "Not enough owners signed this transaction."
-    },
-    {
-      "code": 6003,
-      "name": "TransactionAlreadySigned",
-      "msg": "Cannot delete a transaction that has been signed by an owner."
-    },
-    {
-      "code": 6004,
-      "name": "Overflow",
-      "msg": "Operation overflow"
-    },
-    {
-      "code": 6005,
-      "name": "UnableToDelete",
-      "msg": "Cannot delete a transaction the owner did not create."
-    },
-    {
-      "code": 6006,
-      "name": "AlreadyExecuted",
-      "msg": "The given transaction has already been executed."
-    },
-    {
-      "code": 6007,
-      "name": "InvalidThreshold",
-      "msg": "Threshold must be less than or equal to the number of owners."
-    },
-    {
-      "code": 6008,
-      "name": "UniqueOwners",
-      "msg": "Owners must be unique"
-    },
-    {
-      "code": 6009,
-      "name": "OwnerNameTooLong",
-      "msg": "Owner name must have less than 32 bytes"
-    },
-    {
-      "code": 6010,
-      "name": "InvalidMultisigNonce",
-      "msg": "Multisig nonce is not valid"
-    },
-    {
-      "code": 6011,
-      "name": "InvalidMultisigVersion",
-      "msg": "Multisig version is not valid"
-    },
-    {
-      "code": 6012,
-      "name": "InvalidOwnerSetSeqNumber",
-      "msg": "Multisig owner set secuency number is not valid"
-    },
-    {
-      "code": 6013,
-      "name": "InvalidMultisig",
-      "msg": "Multisig account is not valid"
+      "name": "ErrorCode",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "InvalidOwner"
+          },
+          {
+            "name": "InvalidOwnersLen"
+          },
+          {
+            "name": "NotEnoughSigners"
+          },
+          {
+            "name": "TransactionAlreadySigned"
+          },
+          {
+            "name": "Overflow"
+          },
+          {
+            "name": "UnableToDelete"
+          },
+          {
+            "name": "AlreadyExecuted"
+          },
+          {
+            "name": "AlreadyExpired"
+          },
+          {
+            "name": "InvalidThreshold"
+          },
+          {
+            "name": "UniqueOwners"
+          },
+          {
+            "name": "OwnerNameTooLong"
+          },
+          {
+            "name": "InvalidMultisigNonce"
+          },
+          {
+            "name": "InvalidMultisigVersion"
+          },
+          {
+            "name": "InvalidOwnerSetSeqNumber"
+          },
+          {
+            "name": "InvalidMultisig"
+          }
+        ]
+      }
     }
   ]
 }

@@ -32,11 +32,11 @@ import { StreamInfo, STREAM_STATE, TransactionFees, TreasuryInfo } from '@mean-d
 import { SelectOption, TreasuryTopupParams } from '../../models/common-types';
 import { TransactionStatus } from '../../models/enums';
 import { useWallet } from '../../contexts/wallet';
-import { notify } from '../../utils/notifications';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { isError } from '../../utils/transactions';
 import { AllocationType, Stream, STREAM_STATUS, Treasury, TreasuryType } from '@mean-dao/msp';
 import BN from 'bn.js';
+import { openNotification } from '../Notifications';
 
 const { Option } = Select;
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -450,8 +450,8 @@ export const TreasuryAddFundsModal = (props: {
       setEffectiveRate(0);
       toggleOverflowEllipsisMiddle(true);
     } else {
-      notify({
-        message: t('notifications.error-title'),
+      openNotification({
+        title: t('notifications.error-title'),
         description: t('transactions.validation.invalid-solana-address'),
         type: "error"
       });

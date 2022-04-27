@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { MultisigV2 } from '../../models/multisig';
 import { IconCopy } from '../../Icons';
 import { copyText } from '../../utils/ui';
-import { notify } from '../../utils/notifications';
+import { openNotification } from '../Notifications';
 
 export const MultisigCreateProgramModal = (props: {
   handleClose: any;
@@ -31,12 +31,12 @@ export const MultisigCreateProgramModal = (props: {
   const copyAddressToClipboard = useCallback((address: any) => {
 
     if (copyText(address.toString())) {
-      notify({
+      openNotification({
         description: t('notifications.account-address-copied-message'),
         type: "info"
       });
     } else {
-      notify({
+      openNotification({
         description: t('notifications.account-address-not-copied-message'),
         type: "error"
       });

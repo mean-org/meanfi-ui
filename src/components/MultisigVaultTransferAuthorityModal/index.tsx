@@ -31,6 +31,7 @@ export const MultisigVaultTransferAuthorityModal = (props: {
   const { t } = useTranslation('common');
   const {
     transactionStatus,
+    setTransactionStatus
   } = useContext(AppStateContext);
 
   const [selectedAuthority, setSelectedAuthority] = useState('');
@@ -42,10 +43,21 @@ export const MultisigVaultTransferAuthorityModal = (props: {
 
   const onCloseModal = () => {
     props.handleClose();
+    onAfterClose();
   }
 
   const onAfterClose = () => {
     props.handleAfterClose();
+
+    setTimeout(() => {
+      setSelectedAuthority("");
+      setDestinationAddressDisclaimerAccepted(false);
+    });
+
+    setTransactionStatus({
+      lastOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
+    });
   }
 
   const isValidForm = (): boolean => {
