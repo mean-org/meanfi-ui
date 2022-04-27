@@ -353,24 +353,28 @@ export const ProposalSummaryModal = (props: {
             )}
           </Row>
           {/* Expiry date */}
-          <Row className="mb-1">
-            <Col span={8} className="text-right pr-1">
-              <span className="info-label">{t('multisig.proposal-modal.expires-label')}:</span>
-            </Col>
-            <Col span={16} className="text-left pl-1">
-              {multisigTransactionSummary.expirationDate ? (
-                <>
-                  {(isTxPendingApproval() || isTxPendingExecution()) ? (
-                    <Countdown className="align-middle" date={multisigTransactionSummary.expirationDate} renderer={renderer} />
+          {
+            !highlightedMultisigTx.executedOn && (
+              <Row className="mb-1">
+                <Col span={8} className="text-right pr-1">
+                  <span className="info-label">{t('multisig.proposal-modal.expires-label')}:</span>
+                </Col>
+                <Col span={16} className="text-left pl-1">
+                  {multisigTransactionSummary.expirationDate ? (
+                    <>
+                      {(isTxPendingApproval() || isTxPendingExecution()) ? (
+                        <Countdown className="align-middle" date={multisigTransactionSummary.expirationDate} renderer={renderer} />
+                      ) : (
+                        <span>Expired on {new Date(multisigTransactionSummary.expirationDate).toDateString()}</span>
+                      )}
+                    </>
                   ) : (
-                    <span>00:00:00:00</span>
+                    <span>{t('multisig.proposal-modal.does-not-expire')}</span>
                   )}
-                </>
-              ) : (
-                <span>{t('multisig.proposal-modal.does-not-expire')}</span>
-              )}
-            </Col>
-          </Row>
+                </Col>
+              </Row>
+            )
+          }
           {/* Proposer */}
           <Row className="mb-1">
             <Col span={8} className="text-right pr-1">

@@ -306,7 +306,7 @@ export const parseMultisigTransaction = (
       signers: txInfo.account.signers,
       ownerSeqNumber: txInfo.account.ownerSetSeqno,
       createdOn: new Date(txInfo.account.createdOn.toNumber() * 1000),
-      executedOn: txInfo.account.executedOn && txInfo.account.executedOn > 0 && txInfo.account.executedOn.byteLength <= 53
+      executedOn: txInfo.account.executedOn && txInfo.account.executedOn > 0
         ? new Date(txInfo.account.executedOn.toNumber() * 1000) 
         : undefined,
       status: getTransactionStatus(multisig, txInfo, txDetailInfo),
