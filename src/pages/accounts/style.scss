@@ -33,6 +33,9 @@
         font-weight: 600;
         color: var(--color-secondary-alpha-70);
         background-color: var(--darken-20);
+        .title {
+            padding-left: 1rem;
+        }
 
         @media (max-width: 767.98px) {
             margin: 0.5rem -2.6%;
@@ -48,16 +51,21 @@
     .asset-category {
         height: auto;
         min-height: 50px;
-        max-height: 290px;
     }
 
     .networth-list-item {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+
         @media (max-width: 767.98px) {
             margin: -0.6rem 0.1rem -0.2rem 0;
+            background-color: var(--bg-color);
         }
 
         @media (min-width: 768px) {
             margin: -0.6rem 2.6% -0.2rem 0;
+            flex: 0 0 auto;
         }
 
         padding: 14px 6px 10px 10px;

@@ -1043,18 +1043,24 @@ footer.ant-layout-footer {
 
 // Drawer
 .mean-modal {
+  .ant-modal-body {
+    > .token-selector-wrapper {
+      .token-list {
+        @extend .vertical-scroll;
+      }    
+    }
+  }
   .ant-drawer.ant-drawer-bottom.ant-drawer-open {
     .ant-drawer-content-wrapper {
       height: 100% !important;
-      .ant-drawer-body {
-        @extend .vertical-scroll;
-      }
     }
     .token-selector-wrapper {
+      height: 100%;
       padding: 0;
       .token-list {
         max-height: calc(100% - 110px);
         height: auto;
+        @extend .vertical-scroll;
       }    
     }
   }
@@ -1205,17 +1211,64 @@ footer.ant-layout-footer {
   }
 }
 
-.warning-bar {
+/* Performance bar */
+#performance-warning-bar {
+  color: var(--color-white);
+  background-color: var(--color-primary);
   flex: 0 0 30px;
   align-items: center;
   justify-content: center;
   display: flex;
-  font-weight: bold;
-  background-color: var(--color-primary);
+  position: relative;
+  width: 100%;
+  padding: 0;
+  &:hover {
+    .sitemessage {
+      animation-play-state: paused;
+    }
+  }
+  > .wrapper {
+    margin: 0 1rem;
+    padding: 0 1rem;
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+  }
+  .sitemessage {
+    font-weight: bold;
+    color: inherit;
+    display: inline-block;
+    white-space: nowrap;
+    @media (max-width: 575.98px) {
+      animation: floatText 10s infinite linear;
+    }
+    @media (min-width: 576px) and (max-width: 767.98px) {
+      animation: floatText 15s infinite linear;
+    }
+    @media (min-width: 768px) and (max-width: 1199.98) {
+      animation: floatText 20s infinite linear;
+    }
+    @media (min-width: 1200px) {
+      animation: floatText 25s infinite linear;
+    }
+    padding-left: 100%; /*Initial offset*/
+  }
+  .right-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    position: absolute;
+    right: 0;
+    top: 0;
+    z-index: 1;
+  }
 }
-.warning-bar ~ header.ant-layout-header.App-Bar {
+
+#performance-warning-bar ~ header.ant-layout-header.App-Bar {
   top: 30px;
 }
+
 .App-Bar {
   align-self: center;
   justify-content: space-between;
@@ -4455,7 +4508,6 @@ main section {
     flex-direction: column;
     justify-content: flex-start;
     overflow: auto;
-    // max-height: calc(100% - (1rem + var(--footer-bar-height)));
     max-height: calc(100% - 1rem);
     min-height: 346px;
     margin-right: -0.5rem;
@@ -4489,10 +4541,6 @@ main section {
       z-index: 1;
       .meanfi-panel-heading .title {
         max-width: 170px;
-      }
-      .inner-container {
-        height: calc(100% - var(--footer-bar-height));
-        background-color: transparent;
       }
     }
     .meanfi-two-panel-right {
@@ -7578,5 +7626,12 @@ code {
     opacity: 1;
     -webkit-transform: scale(1, 1) translateY(0);
     transform: scale(1, 1) translateY(0);
+  }
+}
+
+/* Performance bar scrolling text */
+@keyframes floatText {
+  to {
+    transform: translateX(-100%);
   }
 }

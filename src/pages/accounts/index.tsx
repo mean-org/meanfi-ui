@@ -6,6 +6,7 @@ import {
   CopyOutlined,
   EditOutlined,
   LoadingOutlined,
+  MergeCellsOutlined,
   QrcodeOutlined,
   SendOutlined,
   SwapOutlined,
@@ -30,7 +31,7 @@ import {
   getTokenAmountAndSymbolByTokenAddress,
   shortenAddress
 } from '../../utils/utils';
-import { Button, Col, Dropdown, Empty, Menu, Result, Row, Space, Spin, Tooltip } from 'antd';
+import { Button, Col, Dropdown, Empty, Menu, Result, Row, Space, Spin, Switch, Tooltip } from 'antd';
 import { consoleOut, copyText, friendlyDisplayDecimalPlaces, isValidAddress, kFormatter, toUsCurrency } from '../../utils/ui';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import {
@@ -39,7 +40,8 @@ import {
   EMOJIS,
   TRANSACTIONS_PER_PAGE,
   FALLBACK_COIN_IMAGE,
-  WRAPPED_SOL_MINT_ADDRESS
+  WRAPPED_SOL_MINT_ADDRESS,
+  ACCOUNTS_LOW_BALANCE_LIMIT
 } from '../../constants';
 import { QrScannerModal } from '../../components/QrScannerModal';
 import { Helmet } from "react-helmet";
@@ -62,6 +64,7 @@ import { AddressDisplay } from '../../components/AddressDisplay';
 import { ReceiveSplOrSolModal } from '../../components/ReceiveSplOrSolModal';
 import { SendAssetModal } from '../../components/SendAssetModal';
 import { ExchangeAssetModal } from '../../components/ExchangeAssetModal';
+import { TransactionStatus } from '../../models/enums';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const QRCode = require('qrcode.react');
@@ -99,6 +102,7 @@ export const AccountsNewView = () => {
     showDepositOptionsModal,
     setAddAccountPanelOpen,
     setLastStreamsSummary,
+    setTransactionStatus,
     setShouldLoadTokens,
     setDtailsPanelOpen,
     refreshStreamList,
@@ -205,6 +209,13 @@ export const AccountsNewView = () => {
   const [isExchangeAssetModalOpen, setIsExchangeAssetModalOpen] = useState(false);
   const hideExchangeAssetModal = useCallback(() => setIsExchangeAssetModalOpen(false), []);
   const showExchangeAssetModal = useCallback(() => setIsExchangeAssetModalOpen(true), []);
+
+  const resetTransactionStatus = useCallback(() => {
+    setTransactionStatus({
+      lastOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
+    });
+  }, [setTransactionStatus]);
 
   const startSwitch = useCallback(() => {
     setStatus(FetchStatus.Fetching);
@@ -1132,7 +1143,13 @@ export const AccountsNewView = () => {
 
     return (
       <div key={`${index}`} onClick={onTokenAccountClick}
-          className={`transaction-list-row ${isSelectedToken() && selectedCategory === "user-account" ? 'selected' : ''}`}>
+          className={`transaction-list-row ${isSelectedToken() && selectedCategory === "user-account"
+            ? 'selected'
+            : hideLowBalances && !asset.isMeanSupportedToken && (asset.balance || 0) < ACCOUNTS_LOW_BALANCE_LIMIT
+              ? 'hidden'
+              : ''
+          }`
+        }>
         <div className="icon-cell">
           {publicKey && isOwnedTokenAccount && !asset.isAta ? (
             <Tooltip placement="bottomRight" title={t('account-area.non-ata-tooltip', { tokenSymbol: asset.symbol })}>
@@ -1448,14 +1465,12 @@ export const AccountsNewView = () => {
     }
   };
 
-  // TODO: Add a11y attributes to emojis for screen readers  aria-hidden={label ? undefined : true} aria-label={label ? label : undefined} role="img"
-
   const getRandomEmoji = useCallback(() => {
     const totalEmojis = EMOJIS.length;
     if (totalEmojis) {
       const randomIndex = Math.floor(Math.random() * totalEmojis);
       return (
-        <span className="emoji">{EMOJIS[randomIndex]}</span>
+        <span className="emoji" aria-label={EMOJIS[randomIndex]} role="img">{EMOJIS[randomIndex]}</span>
       );
     }
     return null;
@@ -1598,25 +1613,30 @@ export const AccountsNewView = () => {
                       </div>
                     </div>
                     <div className="inner-container">
-                      <div className="item-block">
-                        {renderNetworth()}
+
+                      {/* Net Worth header (sticky) */}
+                      {renderNetworth()}
+
+                      {/* Middle area (vertically flexible block of items) */}
+                      <div className="item-block vertical-scroll">
                         <div className="asset-category-title flex-fixed-right">
                           <div className="title">Assets in wallet ({totalTokensHolded})</div>
                           <div className="amount">{toUsCurrency(totalTokenAccountsValue)}</div>
                         </div>
-                        <div className="asset-category vertical-scroll">
+                        <div className="asset-category">
                           {renderAssetsList}
                         </div>
                         <div className="asset-category-title flex-fixed-right">
                           <div className="title">Other assets (1)</div>
                           <div className="amount">{toUsCurrency(streamsSummary.totalNet)}</div>
                         </div>
-                        <div className="asset-category vertical-scroll">
+                        <div className="asset-category">
                           {renderMoneyStreamsSummary}
                         </div>
                       </div>
+
                       {/* Bottom CTAs */}
-                      {/* {(accountTokens && accountTokens.length > 0) && (
+                      {(accountTokens && accountTokens.length > 0) && (
                         <div className="thin-bottom-ctas">
                           <Switch size="small" checked={hideLowBalances} onClick={() => setHideLowBalances(value => !value)} />
                           <span className="ml-1 simplelink" onClick={() => setHideLowBalances(value => !value)}>{t('assets.switch-hide-low-balances')}</span>
@@ -1628,11 +1648,7 @@ export const AccountsNewView = () => {
                                   const item = tokenAccountGroups.get(selectedAsset.address);
                                   if (item) {
                                     setSelectedTokenMergeGroup(item);
-                                    // Reset transaction status in the AppState
-                                    setTransactionStatus({
-                                      lastOperation: TransactionStatus.Iddle,
-                                      currentOperation: TransactionStatus.Iddle
-                                    });
+                                    resetTransactionStatus();
                                     showTokenMergerModal();
                                   }
                                 }
@@ -1643,7 +1659,7 @@ export const AccountsNewView = () => {
                             </span>
                           )}
                         </div>
-                      )} */}
+                      )}
                     </div>
                   </div>
 
