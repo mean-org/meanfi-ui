@@ -7,7 +7,6 @@ import {
   EditOutlined,
   LoadingOutlined,
   QrcodeOutlined,
-  ReloadOutlined,
   SendOutlined,
   SwapOutlined,
   SyncOutlined

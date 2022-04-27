@@ -1608,7 +1608,7 @@ export const JupiterExchange = (props: {
                 {renderCommonTokens()}
             </div>
             <Divider />
-            <div className="token-list vertical-scroll">
+            <div className="token-list">
                 {subjectTokenSelection === "source"
                     ? renderSourceTokenList
                     : renderDestinationTokenList}

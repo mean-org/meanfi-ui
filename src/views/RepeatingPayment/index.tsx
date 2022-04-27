@@ -1097,7 +1097,7 @@ export const RepeatingPayment = (props: {
         <span>{t('token-selector.looking-for-sol')}</span>&nbsp;
         <span className="simplelink underline" onClick={onGoToWrap}>{t('token-selector.wrap-sol-first')}</span>
       </div>
-      <div className="token-list vertical-scroll">
+      <div className="token-list">
         {filteredTokenList.length > 0 && renderTokenList}
         {(tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0) && (
           <TokenListItem

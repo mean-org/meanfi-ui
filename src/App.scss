@@ -1046,11 +1046,15 @@ footer.ant-layout-footer {
   .ant-drawer.ant-drawer-bottom.ant-drawer-open {
     .ant-drawer-content-wrapper {
       height: 100% !important;
+      .ant-drawer-body {
+        @extend .vertical-scroll;
+      }
     }
     .token-selector-wrapper {
       padding: 0;
       .token-list {
-        max-height: 19rem;
+        max-height: calc(100% - 110px);
+        height: auto;
       }    
     }
   }
