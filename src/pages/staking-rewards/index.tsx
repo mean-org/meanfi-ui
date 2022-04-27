@@ -17,8 +17,8 @@ import { TokenInfo } from "@solana/spl-token-registry";
 import { appConfig, customLogger } from "../..";
 import { Button, Spin } from "antd";
 import { EventType, OperationType, TransactionStatus } from "../../models/enums";
-import { notify } from "../../utils/notifications";
 import { DepositRecord, DepositsInfo, StakingClient } from "@mean-dao/staking";
+import { openNotification } from "../../components/Notifications";
 
 const DEFAULT_APR_PERCENT_GOAL = '21';
 
@@ -548,8 +548,8 @@ export const StakingRewardsView = () => {
             });
             setAprPercentGoal(DEFAULT_APR_PERCENT_GOAL);
           } else {
-            notify({
-              message: t("notifications.error-title"),
+            openNotification({
+              title: t("notifications.error-title"),
               description: t("notifications.error-sending-transaction"),
               type: "error",
             });

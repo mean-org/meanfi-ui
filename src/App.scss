@@ -3372,7 +3372,13 @@ main section {
       .ant-modal-content{
         .ant-modal-header {
           border: none;
-          padding: 40px 40px 20px 40px;
+          @media (max-width: 575.98px) {
+            padding: 40px 40px 20px 40px;
+          }
+          @media (min-width: 576px) {
+            padding-right: 40px;
+            padding-left: 40px;
+          }
         }
       }
     }
@@ -3398,7 +3404,7 @@ main section {
       border-radius: var(--custom-border-radius);
       @media (max-width: 575.98px) {
         border-radius: 0;
-        height: 100%;
+        min-height: 100% !important;
         .ant-divider.ant-divider-horizontal.ant-divider-plain {
           margin: 0 -24px 24px;
           border: none;
@@ -7091,6 +7097,23 @@ code {
 }
 .no-padding-right {
   padding-right: 0 !important;
+}
+
+.proposal-summary-container {
+  height: 190px;
+}
+
+.external-icon {
+  float: right;
+  color: #878891;
+  width: 18px;
+  height: 18px;
+}
+
+.float-right-badge {
+  float: right;
+  display: flex;
+  margin-bottom: -1em;
 }
 
 // Animations
