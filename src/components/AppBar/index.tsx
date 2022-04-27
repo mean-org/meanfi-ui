@@ -40,7 +40,6 @@ export const AppBar = (props: {
     setDtailsPanelOpen,
     setShouldLoadTokens,
     setAddAccountPanelOpen,
-    showDepositOptionsModal,
     hideDepositOptionsModal,
     setCanShowAccountDetails,
   } = useContext(AppStateContext);
@@ -128,9 +127,6 @@ export const AppBar = (props: {
       </Menu.Item>
       <Menu.Item key="/transfers">
         <Link to="/transfers">{t('ui-menus.main-menu.transfers')}</Link>
-      </Menu.Item>
-      <Menu.Item key="deposits" onClick={showDepositOptionsModal} id="deposits-menu-item">
-        <span className="menu-item-text">{t('ui-menus.main-menu.deposits')}</span>
       </Menu.Item>
       <Menu.Item key="/invest">
         <Link to="/invest">{t('ui-menus.main-menu.invest.submenu-title')}</Link>
@@ -249,9 +245,6 @@ export const AppBar = (props: {
                 <li key="/transfers" className={location.pathname === '/transfers' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 3} as CustomCSSProps}>
                   <Link to="/transfers">{t('ui-menus.main-menu.transfers')}</Link>
                 </li>
-                <li key="deposits" className="mobile-menu-item" onClick={showDepositOptionsModal} style={{'--animation-order': 4} as CustomCSSProps}>
-                  <span className="menu-item-text">{t('ui-menus.main-menu.deposits')}</span>
-                </li>
                 <li key="invest" className={location.pathname === '/invest' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 4} as CustomCSSProps}>
                   <Link to="/invest">{t('ui-menus.main-menu.invest.submenu-title')}</Link>
                 </li>
@@ -279,7 +272,7 @@ export const AppBar = (props: {
                     <Link to="/faucet">{t('ui-menus.main-menu.services.faucet')}</Link>
                   </li>
                 )}
-                <li key="/wrap" className={location.pathname === '/wrap' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 9} as CustomCSSProps}>
+                <li key="/wrap" className={location.pathname === '/wrap' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 8} as CustomCSSProps}>
                   <Link to="/wrap">{t('ui-menus.main-menu.services.wrap')}</Link>
                 </li>
                 <li key="/unwrap" className={location.pathname === '/unwrap' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 9} as CustomCSSProps}>

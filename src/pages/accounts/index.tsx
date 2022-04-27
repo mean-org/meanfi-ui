@@ -1388,7 +1388,7 @@ export const AccountsNewView = () => {
           </Button>
         </Space>
         <Space className="right" size="small">
-          <span className="flat-button medium primary" onClick={() => {}}>
+          <span className="flat-button medium primary" onClick={showDepositOptionsModal}>
             <IconShoppingCart className="mean-svg-icons"/>
             <span className="mx-1">Buy</span>
           </span>
