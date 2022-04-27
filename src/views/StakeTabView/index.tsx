@@ -14,11 +14,11 @@ import { OperationType, TransactionStatus } from "../../models/enums";
 import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs } from "../../utils/ui";
 import { customLogger } from "../..";
 import { useConnection } from "../../contexts/connection";
-import { notify } from "../../utils/notifications";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { INPUT_DEBOUNCE_TIME } from "../../constants";
 import { AppUsageEvent, SegmentStakeMeanData } from "../../utils/segment-service";
 import { segmentAnalytics } from "../../App";
+import { openNotification } from "../../components/Notifications";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 let inputDebounceTimeout: any;
@@ -41,6 +41,8 @@ export const StakeTabView = (props: {
   const [isBusy, setIsBusy] = useState(false);
   const { connected, wallet } = useWallet();
   const { t } = useTranslation('common');
+
+  /*
   const periods = [
     {
       value: 0,
@@ -68,10 +70,11 @@ export const StakeTabView = (props: {
       multiplier: 4.0
     },
   ];
+  */
 
   const [fromCoinAmount, setFromCoinAmount] = useState<string>('');
-  const [periodValue, setPeriodValue] = useState<number>(periods[0].value);
-  const [periodTime, setPeriodTime] = useState<string>(periods[0].time);
+  // const [periodValue, setPeriodValue] = useState<number>(periods[0].value);
+  // const [periodTime, setPeriodTime] = useState<string>(periods[0].time);
   const [stakeQuote, setStakeQuote] = useState<number>(0);
   const [stakedMeanPrice, setStakedMeanPrice] = useState<number>(0);
   const [canFetchStakeQuote, setCanFetchStakeQuote] = useState(false);
@@ -456,8 +459,8 @@ export const StakeTabView = (props: {
             });
             setIsBusy(false);
           } else {
-            notify({
-              message: t("notifications.error-title"),
+            openNotification({
+              title: t("notifications.error-title"),
               description: t("notifications.error-sending-transaction"),
               type: "error",
             });

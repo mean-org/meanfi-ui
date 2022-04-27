@@ -32,7 +32,7 @@ import { unwrapSol } from "@mean-dao/hybrid-liquidity-ag";
 import { SignerWalletAdapter } from "@solana/wallet-adapter-base";
 import { TokenDisplay } from "../../components/TokenDisplay";
 import { TxConfirmationContext } from "../../contexts/transaction-status";
-import { notify } from "../../utils/notifications";
+import { openNotification } from "../../components/Notifications";
 
 export const COMMON_EXCHANGE_TOKENS = ['USDC', 'USDT', 'MEAN', 'SOL'];
 const MINIMUM_REQUIRED_SOL_BALANCE = 0.05;
@@ -1262,8 +1262,8 @@ export const JupiterExchange = (props: {
                             refreshUserBalances();
                         });
                     } else {
-                        notify({
-                            message: t('notifications.error-title'),
+                        openNotification({
+                            title: t('notifications.error-title'),
                             description: t('notifications.error-sending-transaction'),
                             type: "error"
                         });

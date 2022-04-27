@@ -30,7 +30,6 @@ import {
 } from '../../constants';
 import { IconClock, IconExchange, IconExternalLink } from '../../Icons';
 import { ArrowDownOutlined, ArrowUpOutlined, CheckOutlined, EllipsisOutlined, LoadingOutlined, ReloadOutlined, WarningOutlined } from '@ant-design/icons';
-import { notify } from '../../utils/notifications';
 import { calculateActionFees, DdcaAccount, DdcaActivity, DdcaClient, DdcaDetails, DDCA_ACTIONS, TransactionFees } from '@mean-dao/ddca';
 import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
 import { getLiveRpc, RpcConfig } from '../../models/connections-hq';
@@ -44,6 +43,7 @@ import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { DdcaWithdrawModal } from '../../components/DdcaWithdrawModal';
 import { DdcaAddFundsModal } from '../../components/DdcaAddFundsModal';
 import { useNativeAccount } from '../../contexts/accounts';
+import { openNotification } from '../../components/Notifications';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -973,12 +973,12 @@ export const ExchangeDcasView = () => {
 
   const onCopyRecurringBuyAddress = (data: any) => {
     if (copyText(data.toString())) {
-      notify({
+      openNotification({
         description: t('notifications.account-address-copied-message'),
         type: "info"
       });
     } else {
-      notify({
+      openNotification({
         description: t('notifications.account-address-not-copied-message'),
         type: "error"
       });

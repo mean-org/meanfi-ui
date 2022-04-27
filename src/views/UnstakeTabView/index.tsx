@@ -13,12 +13,12 @@ import { OperationType, TransactionStatus } from "../../models/enums";
 import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs } from "../../utils/ui";
 import { customLogger } from "../..";
 import { useConnection } from "../../contexts/connection";
-import { notify } from "../../utils/notifications";
 import { useWallet } from "../../contexts/wallet";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { INPUT_DEBOUNCE_TIME } from "../../constants";
 import { AppUsageEvent, SegmentUnstakeMeanData } from "../../utils/segment-service";
 import { segmentAnalytics } from "../../App";
+import { openNotification } from "../../components/Notifications";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 let inputDebounceTimeout: any;
@@ -417,8 +417,8 @@ export const UnstakeTabView = (props: {
             });
             setIsBusy(false);
           } else {
-            notify({
-              message: t("notifications.error-title"),
+            openNotification({
+              title: t("notifications.error-title"),
               description: t("notifications.error-sending-transaction"),
               type: "error",
             });

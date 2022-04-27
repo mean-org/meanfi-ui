@@ -26,7 +26,7 @@ import { customLogger } from '../..';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
 import BN from 'bn.js';
 import { unwrapSol } from '@mean-dao/hybrid-liquidity-ag';
-import { notify } from '../../utils/notifications';
+import { openNotification } from '../../components/Notifications';
 
 export const UnwrapView = () => {
   const connection = useConnection();
@@ -492,8 +492,8 @@ export const UnwrapView = () => {
             });
             setUnwrapAmount('');
           } else {
-            notify({
-              message: t("notifications.error-title"),
+            openNotification({
+              title: t("notifications.error-title"),
               description: t("notifications.error-sending-transaction"),
               type: "error",
             });

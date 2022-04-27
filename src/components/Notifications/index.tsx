@@ -12,12 +12,13 @@ export const openNotification = (props: {
     notification.open({
         key,
         type: type || "info",
+        top: 80,
         message: <span>{title}</span>,
         description: (
             <span>{description}</span>
         ),
         duration: duration,
-        placement: "bottomLeft",
+        placement: "topRight",
         onClose: handleClose ? handleClose : undefined,
     });
 };

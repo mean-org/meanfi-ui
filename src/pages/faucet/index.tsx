@@ -3,7 +3,6 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnection } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
-import { notify } from "../../utils/notifications";
 import { WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { Button } from "antd";
 import { environment } from "../../environments/environment";
@@ -12,6 +11,7 @@ import { useNativeAccount } from "../../contexts/accounts";
 import { AppStateContext } from "../../contexts/appstate";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { useTranslation } from "react-i18next";
+import { openNotification } from '../../components/Notifications';
 
 export const FaucetView = () => {
   const connection = useConnection();
@@ -75,8 +75,8 @@ export const FaucetView = () => {
     }
 
     if (environment === 'production') {
-      notify({
-        message: t('notifications.error-title'),
+      openNotification({
+        title: t('notifications.error-title'),
         description: t('notifications.error-cannot-faucet-mainnet-message'),
         type: "error"
       });
@@ -85,15 +85,15 @@ export const FaucetView = () => {
 
     try {
       connection.requestAirdrop(publicKey, getFaucetAmount()).then(() => {
-        notify({
+        openNotification({
           description: t('notifications.success-account-funded-message') + '.',
           type: "success"
         });
       });
     } catch (error) {
       console.error(error);
-      notify({
-        message: t('notifications.error-title'),
+      openNotification({
+        title: t('notifications.error-title'),
         description: t('notifications.error-cannot-fund-account-message'),
         type: "error"
       });

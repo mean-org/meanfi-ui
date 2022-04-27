@@ -11,13 +11,13 @@ import { AppStateContext } from '../../contexts/appstate';
 import { useWallet } from '../../contexts/wallet';
 import { useNavigate } from 'react-router';
 import { useLocation } from 'react-router-dom';
-import { notify } from '../../utils/notifications';
 import { useConnectionConfig } from '../../contexts/connection';
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
 import { appConfig } from '../..';
 import { CUSTOM_USDC, MEAN_TOKEN_LIST } from '../../constants/token-list';
 import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { ClockCircleFilled } from '@ant-design/icons';
+import { openNotification } from '../../components/Notifications';
 
 type IdoTabOption = "deposit" | "withdraw";
 type IdoInitStatus = "uninitialized" | "initializing" | "started" | "stopped" | "error";
@@ -90,8 +90,8 @@ export const IdoLpView = () => {
       } else {
         setIdoAccountAddress('');
         consoleOut('Invalid IDO address', address, 'red');
-        notify({
-          message: 'Error',
+        openNotification({
+          title: 'Error',
           description: 'The supplied IDO address is not a valid solana address',
           type: "error"
         });

@@ -20,7 +20,7 @@ import { calculateActionFees, MSP, MSP_ACTIONS, TransactionFees } from '@mean-da
 import { useConnectionConfig } from '../../contexts/connection';
 import { useNavigate } from 'react-router-dom';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
-import { notify } from '../../utils/notifications';
+import { openNotification } from '../../components/Notifications';
 
 export const AirdropRedeem = (props: {
   connection: Connection;
@@ -212,8 +212,8 @@ export const AirdropRedeem = (props: {
           }) to pay for network fees (${
             getTokenAmountAndSymbolByTokenAddress(transactionFee.blockchainFee + transactionFee.mspFlatFee, NATIVE_SOL_MINT.toBase58())
           })`;
-          notify({
-            message: 'Not enough SOL balance',
+          openNotification({
+            title: 'Not enough SOL balance',
             description: noBalanceMessage,
             type: 'error'
           });

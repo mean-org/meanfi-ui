@@ -18,9 +18,9 @@ import { customLogger } from '../..';
 import { DdcaClient, TransactionFees } from '@mean-dao/ddca';
 import { CloseOutlined, LoadingOutlined } from '@ant-design/icons';
 import { HlaInfo } from '@mean-dao/hybrid-liquidity-ag/lib/types';
-import { notify } from '../../utils/notifications';
 import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { IconShieldSolid } from '../../Icons/IconShieldSolid';
+import { openNotification } from '../Notifications';
 
 export const DdcaSetupModal = (props: {
   endpoint: string;
@@ -278,8 +278,8 @@ export const DdcaSetupModal = (props: {
 
   const onTxErrorCreatingVaultWithNotify = () => {
     setRecentlyCreatedVault('');
-    notify({
-      message: t('notifications.error-title'),
+    openNotification({
+      title: t('notifications.error-title'),
       description: t('notifications.error-creating-vault-message'),
       type: "error"
     });

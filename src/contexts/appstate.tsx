@@ -26,7 +26,6 @@ import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { useAccountsContext } from "./accounts";
 import { TokenInfo, TokenListProvider } from "@solana/spl-token-registry";
 import { getPrices } from "../utils/api";
-import { notify } from "../utils/notifications";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
 import { UserTokenAccount } from "../models/transactions";
@@ -45,6 +44,7 @@ import { initialSummary, StreamsSummary } from "../models/streams";
 import { MSP, Stream } from "@mean-dao/msp";
 import { AccountDetails } from "../models";
 import moment from "moment";
+import { openNotification } from "../components/Notifications";
 
 export interface TransactionStatusInfo {
   customError?: any;
@@ -661,38 +661,38 @@ const AppStateProvider: React.FC = ({ children }) => {
               setHasMoreStreamActivity(true);
               getStreamActivity(streamId, detail.version, true);
               setCustomStreamDocked(true);
-              notify({
+              openNotification({
                 description: t('notifications.success-loading-stream-message', {streamId: shortenAddress(streamId, 10)}),
                 type: "success"
               });
             }
           } else {
             if (dock) {
-              notify({
-                message: t('notifications.error-title'),
+              openNotification({
+                title: t('notifications.error-title'),
                 description: t('notifications.error-loading-streamid-message', {streamId: shortenAddress(streamId as string, 10)}),
                 type: "error"
               });
             }
           }
         } else {
-          notify({
-            message: t('notifications.error-title'),
+          openNotification({
+            title: t('notifications.error-title'),
             description: t('notifications.error-loading-streamid-message', {streamId: shortenAddress(streamId as string, 10)}),
             type: "error"
           });
         }
       } catch (error) {
         console.error('customStream', error);
-        notify({
-          message: t('notifications.error-title'),
+        openNotification({
+          title: t('notifications.error-title'),
           description: t('notifications.error-loading-streamid-message', {streamId: shortenAddress(streamId as string, 10)}),
           type: "error"
         });
       }
     } catch (error) {
-      notify({
-        message: t('notifications.error-title'),
+      openNotification({
+        title: t('notifications.error-title'),
         description: t('notifications.invalid-publickey-message'),
         type: "error"
       });
