@@ -4,9 +4,9 @@ import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contex
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { useWallet } from '../../contexts/wallet';
 import { AppStateContext, TransactionStatusInfo } from '../../contexts/appstate';
-import { Button, Col, Divider, Empty, Modal, Row, Space, Spin, Tooltip } from 'antd';
-import { ArrowLeftOutlined, CheckOutlined, InfoCircleOutlined, LoadingOutlined, ReloadOutlined } from '@ant-design/icons';
-import { IconExternalLink, IconSafe, IconShieldOutline, IconTrash, IconWarning } from '../../Icons';
+import { Button, Col, Divider, Empty, Row, Space, Spin, Tooltip } from 'antd';
+import { ArrowLeftOutlined, LoadingOutlined, ReloadOutlined } from '@ant-design/icons';
+import { IconExternalLink, IconSafe, IconShieldOutline, IconTrash } from '../../Icons';
 import { PreFooter } from '../../components/PreFooter';
 import { ConfirmOptions, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Signer, SystemProgram, Transaction, TransactionInstruction } from '@solana/web3.js';
 import { Program, Provider } from '@project-serum/anchor';
@@ -14,7 +14,7 @@ import MultisigIdl from "../../models/mean-multisig-idl";
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { consoleOut, copyText, delay, getReadableDate, getShortDate, getTransactionOperationDescription, getTransactionStatusForLogs, isDev, isLocal } from '../../utils/ui';
+import { consoleOut, copyText, delay, getShortDate, getTransactionStatusForLogs, isDev, isLocal } from '../../utils/ui';
 import { Identicon } from '../../components/Identicon';
 import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, getTxIxResume, makeDecimal, shortenAddress } from '../../utils/utils';
 import { MultisigV2, MultisigParticipant, MultisigTransaction, MultisigTransactionStatus, MultisigVault, Multisig, MEAN_MULTISIG_OPS, listMultisigTransactions, MultisigTransactionSummary, getMultisigTransactionSummary, DEFAULT_EXPIRATION_TIME_SECONDS } from '../../models/multisig';
@@ -24,17 +24,15 @@ import { useNativeAccount } from '../../contexts/accounts';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { BN } from 'bn.js';
-import { notify } from '../../utils/notifications';
 import { MultisigTransferTokensModal } from '../../components/MultisigTransferTokensModal';
-import { FALLBACK_COIN_IMAGE, NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
+import { FALLBACK_COIN_IMAGE, NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../constants';
 import { MultisigVaultTransferAuthorityModal } from '../../components/MultisigVaultTransferAuthorityModal';
 import { customLogger } from '../..';
 import useWindowSize from '../../hooks/useWindowResize';
-import { isError } from '../../utils/transactions';
 import { MultisigVaultDeleteModal } from '../../components/MultisigVaultDeleteModal';
 import { getOperationName } from '../../utils/multisig-helpers';
-import { MultisigOwnersSigned } from '../../components/MultisigOwnersSigned';
 import { ProposalSummaryModal } from '../../components/ProposalSummaryModal';
+import { openNotification } from '../../components/Notifications';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -995,22 +993,48 @@ export const MultisigAssetsView = () => {
 
   // Handle what to do when pending Tx confirmation reaches finality or on error
   useEffect(() => {
-    if (!publicKey) { return; }
+    if (!publicKey || fetchTxInfoStatus === "fetching") { return; }
 
-    if (multisigAddress && lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
-      clearTransactionStatusContext();
-      sethHighlightedMultisigTx(undefined);
-      setMultisigTransactionSummary(undefined);
-      refreshVaults();
-      setLoadingMultisigTxs(true);
+    if (multisigAddress && lastSentTxOperationType) {
+      if (fetchTxInfoStatus === "fetched") {
+        clearTransactionStatusContext();
+        sethHighlightedMultisigTx(undefined);
+        setMultisigTransactionSummary(undefined);
+        refreshVaults();
+        setLoadingMultisigTxs(true);
+      } else if (fetchTxInfoStatus === "error") {
+        clearTransactionStatusContext();
+        openNotification({
+          type: "info",
+          duration: 5,
+          description: (
+            <>
+              <span className="mr-1">
+                {t('notifications.tx-not-confirmed')}
+              </span>
+              <div>
+                <span className="mr-1">{t('notifications.check-transaction-in-explorer')}</span>
+                <a className="secondary-link"
+                    href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${lastSentTxSignature}${getSolanaExplorerClusterParam()}`}
+                    target="_blank"
+                    rel="noopener noreferrer">
+                    {shortenAddress(lastSentTxSignature, 8)}
+                </a>
+              </div>
+            </>
+          )
+        });
+      }
     }
   }, [
+    t,
     publicKey,
     multisigAddress,
     fetchTxInfoStatus,
     lastSentTxSignature,
     clearTransactionStatusContext,
     refreshVaults,
+    lastSentTxOperationType
   ]);
 
   ////////////////////////////////
@@ -1021,12 +1045,12 @@ export const MultisigAssetsView = () => {
   const copyAddressToClipboard = useCallback((address: any) => {
 
     if (copyText(address.toString())) {
-      notify({
+      openNotification({
         description: t('notifications.account-address-copied-message'),
         type: "info"
       });
     } else {
-      notify({
+      openNotification({
         description: t('notifications.account-address-not-copied-message'),
         type: "error"
       });
@@ -1079,7 +1103,7 @@ export const MultisigAssetsView = () => {
   const onAssetCreated = useCallback(() => {
 
     resetTransactionStatus();
-    notify({
+    openNotification({
       description: t('multisig.create-asset.success-message'),
       type: "success"
     });
@@ -2755,7 +2779,7 @@ export const MultisigAssetsView = () => {
               currentOperation: TransactionStatus.TransactionFinished
             });
             // TODO: Translate
-            notify({
+            openNotification({
               description: 'Your signature for the Multisig transaction was successfully recorded.',
               type: "success"
             });

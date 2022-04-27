@@ -47,6 +47,7 @@ import {
   FALLBACK_COIN_IMAGE,
   NO_FEES,
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
+  SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
   STREAMS_REFRESH_TIMEOUT,
   VERBOSE_DATE_TIME_FORMAT
 } from '../../constants';
@@ -1094,9 +1095,9 @@ export const TreasuriesView = () => {
   // Handle what to do when pending Tx confirmation reaches finality or on error
   // For now just refresh treasuries keeping the selection or reseting to first item
   useEffect(() => {
-    if (!publicKey) { return; }
+    if (!publicKey || fetchTxInfoStatus === "fetching") { return; }
 
-    const stackedMessagesAndNavigate = async (multisigId: string) => {
+    const stackedMessagesAndNavigate = async (options: TreasuryCreateOptions) => {
       openNotification({
         type: "info",
         description: t('treasuries.create-treasury.multisig-treasury-created-info'),
@@ -1105,31 +1106,55 @@ export const TreasuriesView = () => {
       await delay(1500);
       openNotification({
         type: "info",
-        description: t('treasuries.create-treasury.multisig-treasury-created-instructions'),
+        description: t('treasuries.create-treasury.multisig-treasury-created-instructions', {treasuryName: options.treasuryName}),
         duration: null,
       });
-      setHighLightableMultisigId(multisigId);
+      setHighLightableMultisigId(options.multisigId);
       navigate('/multisig');
     }
 
-    if (lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
-      const usedOptions = retryOperationPayload as TreasuryCreateOptions;
-      switch (lastSentTxOperationType) {
-        case OperationType.TreasuryCreate:
-          if (usedOptions.multisigId) {
-            clearTransactionStatusContext();
-            stackedMessagesAndNavigate(usedOptions.multisigId);
-          } else {
+    if (lastSentTxOperationType) {
+      if (fetchTxInfoStatus === "fetched") {
+        const usedOptions = retryOperationPayload as TreasuryCreateOptions;
+        switch (lastSentTxOperationType) {
+          case OperationType.TreasuryCreate:
+            if (usedOptions.multisigId) {
+              clearTransactionStatusContext();
+              stackedMessagesAndNavigate(usedOptions);
+            } else {
+              refreshTreasuries(true);
+            }
+            setOngoingOperation(undefined);
+            break;
+          case OperationType.TreasuryClose:
             refreshTreasuries(true);
-          }
-          setOngoingOperation(undefined);
-          break;
-        case OperationType.TreasuryClose:
-          refreshTreasuries(true);
-          break;
-        default:
-          refreshTreasuries(false);
-          break;
+            break;
+          default:
+            refreshTreasuries(false);
+            break;
+        }
+      } else if (fetchTxInfoStatus === "error") {
+        clearTransactionStatusContext();
+        openNotification({
+          type: "info",
+          duration: 5,
+          description: (
+            <>
+              <span className="mr-1">
+                {t('notifications.tx-not-confirmed')}
+              </span>
+              <div>
+                <span className="mr-1">{t('notifications.check-transaction-in-explorer')}</span>
+                <a className="secondary-link"
+                    href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${lastSentTxSignature}${getSolanaExplorerClusterParam()}`}
+                    target="_blank"
+                    rel="noopener noreferrer">
+                    {shortenAddress(lastSentTxSignature, 8)}
+                </a>
+              </div>
+            </>
+          )
+        });
       }
     }
   }, [

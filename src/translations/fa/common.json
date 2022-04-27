@@ -698,7 +698,8 @@
 		"success-loading-treasury-message": "treasury با شناسه {{treasuryId}} بارگیری شده است",
 		"wallet-connect-message": "متصل به کیف پول {{address}}",
 		"wallet-connection-event-title": "به روز رسانی کیف پول",
-		"wallet-disconnect-message": "از کیف پول قطع شده است"
+		"wallet-disconnect-message": "از کیف پول قطع شده است",
+		"tx-not-confirmed": "The transaction could not be confirmed, please retry your transaction."
 	},
 	"open-stream": {
 		"label-streamid-input": "شناسه Stream برای باز کردن",

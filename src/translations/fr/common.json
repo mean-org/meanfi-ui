@@ -698,7 +698,8 @@
 		"success-loading-treasury-message": "La trésorerie avec l'ID {{treasuryId}} a été chargée",
 		"wallet-connect-message": "Connecté au portefeuille {{address}}",
 		"wallet-connection-event-title": "Mise à jour du portefeuille",
-		"wallet-disconnect-message": "Déconnecté du portefeuille"
+		"wallet-disconnect-message": "Déconnecté du portefeuille",
+		"tx-not-confirmed": "The transaction could not be confirmed, please retry your transaction."
 	},
 	"open-stream": {
 		"label-streamid-input": "ID de flux à ouvrir",

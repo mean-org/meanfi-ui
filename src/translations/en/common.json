@@ -699,7 +699,8 @@
 		"success-loading-treasury-message": "The treasury with ID {{treasuryId}} has been loaded",
 		"wallet-connect-message": "Connected to wallet {{address}}",
 		"wallet-connection-event-title": "Wallet update",
-		"wallet-disconnect-message": "Disconnected from wallet"
+		"wallet-disconnect-message": "Disconnected from wallet",
+		"tx-not-confirmed": "The transaction could not be confirmed, please retry your transaction."
 	},
 	"open-stream": {
 		"label-streamid-input": "Stream id to open",
@@ -1118,7 +1119,7 @@
 			"modal-title": "Create streaming treasury",
 			"multisig-selector-label": "Multisig account",
 			"multisig-treasury-created-info": "To complete the treasury setup, the other Multisig signers need to approve it.",
-			"multisig-treasury-created-instructions": "Please ask the other users to sign this treasury creation transaction.",
+			"multisig-treasury-created-instructions": "Treasury {{treasuryName}} was successfully created. Please ask the other users to sign this treasury creation transaction.",
 			"multisig-treasury-switch-label": "Is this treasury for a Multisig account?",
 			"success-message": "Your new treasury was created successfully.",
 			"treasury-name-input-empty": "Enter Treasury name",

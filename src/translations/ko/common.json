@@ -702,7 +702,8 @@
 		"success-loading-treasury-message": "ID가 {{treasuryId}}인 트레저리가 로드되었습니다.",
 		"wallet-connect-message": "지갑 {{address}}에 연결됨",
 		"wallet-connection-event-title": "지갑 업데이트",
-		"wallet-disconnect-message": "지갑에서 연결 해제됨"
+		"wallet-disconnect-message": "지갑에서 연결 해제됨",
+		"tx-not-confirmed": "The transaction could not be confirmed, please retry your transaction."
 	},
 	"open-stream": {
 		"label-streamid-input": "생성할 스트림 ID",

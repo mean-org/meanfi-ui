@@ -698,7 +698,8 @@
 		"success-loading-treasury-message": "The treasury with ID {{treasuryId}} has been loaded",
 		"wallet-connect-message": "Conectado a la billetera {{address}}",
 		"wallet-connection-event-title": "Actualización de billetera",
-		"wallet-disconnect-message": "Desconectado de la billetera"
+		"wallet-disconnect-message": "Desconectado de la billetera",
+		"tx-not-confirmed": "The transaction could not be confirmed, please retry your transaction."
 	},
 	"open-stream": {
 		"label-streamid-input": "Introduzca id de transferencia ",

@@ -698,7 +698,8 @@
 		"success-loading-treasury-message": "A tesouraria com ID {{treasuryId}} foi carregada",
 		"wallet-connect-message": "Conectado à carteira {{address}}",
 		"wallet-connection-event-title": "Atualização da carteira",
-		"wallet-disconnect-message": "Desconectado da carteira"
+		"wallet-disconnect-message": "Desconectado da carteira",
+		"tx-not-confirmed": "The transaction could not be confirmed, please retry your transaction."
 	},
 	"open-stream": {
 		"label-streamid-input": "Código do stream para abrir",

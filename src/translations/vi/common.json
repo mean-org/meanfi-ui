@@ -702,7 +702,8 @@
 		"success-loading-treasury-message": "Kho bạc với ID {{treasuryId}} đã được tải",
 		"wallet-connect-message": "Đã kết nối ví {{address}}",
 		"wallet-connection-event-title": "Cập nhật tình trạng ví",
-		"wallet-disconnect-message": "Kết nối từ ví đã bị ngắt"
+		"wallet-disconnect-message": "Kết nối từ ví đã bị ngắt",
+		"tx-not-confirmed": "The transaction could not be confirmed, please retry your transaction."
 	},
 	"open-stream": {
 		"label-streamid-input": "Mở stream id",

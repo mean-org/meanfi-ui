@@ -1,8 +1,5 @@
 import React, { useCallback, useContext, useMemo } from 'react';
 import {
-  CheckOutlined,
-  CopyOutlined,
-  InfoCircleOutlined,
   LoadingOutlined,
   ReloadOutlined,
 } from '@ant-design/icons';
@@ -18,7 +15,7 @@ import {
 } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
-import { useConnectionConfig } from '../../contexts/connection';
+import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
 import { AppStateContext, TransactionStatusInfo } from '../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
@@ -30,26 +27,24 @@ import {
   shortenAddress
 } from '../../utils/utils';
 
-import { Button, Col, Divider, Dropdown, Empty, Menu, Modal, Row, Space, Spin, Switch, Tooltip } from 'antd';
+import { Button, Col, Divider, Dropdown, Empty, Menu, Row, Space, Spin, Switch, Tooltip } from 'antd';
 import {
   copyText,
   consoleOut,
   getTransactionStatusForLogs,
-  getTransactionOperationDescription,
   isLocal,
   isDev,
-  getReadableDate,
   getShortDate,
   isProd
 } from '../../utils/ui';
 
-import { VERBOSE_DATE_TIME_FORMAT } from '../../constants';
+import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION, VERBOSE_DATE_TIME_FORMAT } from '../../constants';
 
 import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
-import { IconCaretDown, IconClock, IconDocument, IconEdit, IconShieldOutline, IconTrash, IconUpdate, IconUserGroup, IconUsers, IconWallet, IconWarning } from '../../Icons';
+import { IconCaretDown, IconClock, IconDocument, IconEdit, IconShieldOutline, IconTrash, IconUpdate, IconUserGroup, IconUsers, IconWallet } from '../../Icons';
 import dateFormat from 'dateformat';
 import { useNativeAccount } from '../../contexts/accounts';
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
@@ -78,11 +73,9 @@ import './style.scss';
 import { BN, Program, Provider } from "@project-serum/anchor";
 import MultisigIdl from "../../models/mean-multisig-idl";
 import { MultisigOwnersView } from '../../components/MultisigOwnersView';
-import { MultisigOwnersSigned } from '../../components/MultisigOwnersSigned';
 import { MultisigEditModal } from '../../components/MultisigEditModal';
 import { MSP, Treasury } from '@mean-dao/msp';
 import { customLogger } from '../..';
-import { isError } from '../../utils/transactions';
 import { ProgramAccounts } from '../../utils/accounts';
 import { getOperationName } from '../../utils/multisig-helpers';
 import { openNotification } from '../../components/Notifications';
@@ -2726,20 +2719,44 @@ export const MultisigView = () => {
   // Handle what to do when pending Tx confirmation reaches finality or on error
   useEffect(() => {
 
-    if (!publicKey || !multisigClient || !selectedMultisig) { return; }
+    if (!publicKey || !multisigClient || !selectedMultisig || fetchTxInfoStatus === "fetching") { return; }
 
-    if (lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
-
-      if (lastSentTxOperationType === OperationType.CreateMultisig) {
-        setSelectedMultisig(undefined);   // Deselects the current multisig if creating a new one
+    if (lastSentTxOperationType) {
+      if (fetchTxInfoStatus === "fetched") {
+        if (lastSentTxOperationType === OperationType.CreateMultisig) {
+          setSelectedMultisig(undefined);   // Deselects the current multisig if creating a new one
+        }
+        setNeedRefreshTxs(true);          // Trigger reload multisigs
+        clearTransactionStatusContext();
+        setLoadingMultisigAccounts(true);
+        sethHighlightedMultisigTx(undefined);
+        setMultisigTransactionSummary(undefined);
+      } else if (fetchTxInfoStatus === "error") {
+        clearTransactionStatusContext();
+        openNotification({
+          type: "info",
+          duration: 5,
+          description: (
+            <>
+              <span className="mr-1">
+                {t('notifications.tx-not-confirmed')}
+              </span>
+              <div>
+                <span className="mr-1">{t('notifications.check-transaction-in-explorer')}</span>
+                <a className="secondary-link"
+                    href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${lastSentTxSignature}${getSolanaExplorerClusterParam()}`}
+                    target="_blank"
+                    rel="noopener noreferrer">
+                    {shortenAddress(lastSentTxSignature, 8)}
+                </a>
+              </div>
+            </>
+          )
+        });
       }
-      setNeedRefreshTxs(true);          // Trigger reload multisigs
-      clearTransactionStatusContext();
-      setLoadingMultisigAccounts(true);
-      sethHighlightedMultisigTx(undefined);
-      setMultisigTransactionSummary(undefined);
     }
   }, [
+    t,
     publicKey, 
     fetchTxInfoStatus, 
     lastSentTxSignature, 

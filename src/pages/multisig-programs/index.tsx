@@ -21,8 +21,7 @@ import { TransactionFees } from '@mean-dao/msp';
 import { useNativeAccount } from '../../contexts/accounts';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { customLogger } from '../..';
-import { notify } from '../../utils/notifications';
-import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
+import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../constants';
 import { MultisigCreateProgramModal } from '../../components/MultisigCreateProgramModal';
 import { ProgramAccounts } from '../../utils/accounts';
 import useWindowSize from '../../hooks/useWindowResize';
@@ -34,6 +33,7 @@ import { MultisigSetProgramAuthModal } from '../../components/MultisigSetProgram
 import { getOperationName } from '../../utils/multisig-helpers';
 import { MultisigOwnersSigned } from '../../components/MultisigOwnersSigned';
 import { ProposalSummaryModal } from '../../components/ProposalSummaryModal';
+import { openNotification } from '../../components/Notifications';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -981,23 +981,48 @@ export const MultisigProgramsView = () => {
 
   // Handle what to do when pending Tx confirmation reaches finality or on error
   useEffect(() => {
-    if (!publicKey) { return; }
+    if (!publicKey || fetchTxInfoStatus === "fetching") { return; }
 
-    if (multisigAddress && lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
-      clearTransactionStatusContext();
-      sethHighlightedMultisigTx(undefined);
-      setMultisigTransactionSummary(undefined);
-      setLoadingMultisigAccounts(true);
-      setLoadingMultisigTxs(true);
-      setLoadingPrograms(true);
-      refreshPrograms();
+    if (multisigAddress && lastSentTxOperationType) {
+      if (fetchTxInfoStatus === "fetched") {
+        clearTransactionStatusContext();
+        sethHighlightedMultisigTx(undefined);
+        setMultisigTransactionSummary(undefined);
+        setLoadingMultisigAccounts(true);
+        setLoadingMultisigTxs(true);
+        setLoadingPrograms(true);
+        refreshPrograms();
+      } else if (fetchTxInfoStatus === "error") {
+        clearTransactionStatusContext();
+        openNotification({
+          type: "info",
+          duration: 5,
+          description: (
+            <>
+              <span className="mr-1">
+                {t('notifications.tx-not-confirmed')}
+              </span>
+              <div>
+                <span className="mr-1">{t('notifications.check-transaction-in-explorer')}</span>
+                <a className="secondary-link"
+                    href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${lastSentTxSignature}${getSolanaExplorerClusterParam()}`}
+                    target="_blank"
+                    rel="noopener noreferrer">
+                    {shortenAddress(lastSentTxSignature, 8)}
+                </a>
+              </div>
+            </>
+          )
+        });
+      }
     }
   }, [
+    t,
     publicKey,
     multisigAddress,
     fetchTxInfoStatus,
     lastSentTxSignature,
-    // lastSentTxOperationType,
+    lastSentTxOperationType,
     clearTransactionStatusContext,
     refreshPrograms,
   ]);
@@ -1014,12 +1039,12 @@ export const MultisigProgramsView = () => {
   const copyAddressToClipboard = useCallback((address: any) => {
 
     if (copyText(address.toString())) {
-      notify({
+      openNotification({
         description: t('notifications.account-address-copied-message'),
         type: "info"
       });
     } else {
-      notify({
+      openNotification({
         description: t('notifications.account-address-not-copied-message'),
         type: "error"
       });
@@ -2376,7 +2401,7 @@ export const MultisigProgramsView = () => {
               currentOperation: TransactionStatus.TransactionFinished
             });
             // TODO: Translate
-            notify({
+            openNotification({
               description: 'Your signature for the Multisig transaction was successfully recorded.',
               type: "success"
             });

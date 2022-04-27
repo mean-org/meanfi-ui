@@ -699,7 +699,8 @@
 		"success-loading-treasury-message": "The treasury with ID {{treasuryId}} has been loaded",
 		"wallet-connect-message": "Connected to wallet {{address}}",
 		"wallet-connection-event-title": "Wallet update",
-		"wallet-disconnect-message": "Disconnected from wallet"
+		"wallet-disconnect-message": "Disconnected from wallet",
+		"tx-not-confirmed": "The transaction could not be confirmed, please retry your transaction."
 	},
 	"open-stream": {
 		"label-streamid-input": "Stream id to open",
