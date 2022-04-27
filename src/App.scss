@@ -3707,6 +3707,11 @@ main section {
   width: 18px;
   height: 18px;
 }
+.float-right-badge {
+  float: right;
+  display: flex;
+  margin-bottom: -1em;
+}
 
 .expiry-date-switch-label {
   display: flex;
@@ -7249,18 +7254,6 @@ code {
   color: var(--color-notify-warning);
 }
 
-////////////////////////////
-// Cross-fading panels    //
-// Effects classes        //
-// Animation classes      //
-// Keyframe animations    //
-////////////////////////////
-
-.magictime {
-  animation-duration: 1s;
-  animation-fill-mode: both;
-}
-
 .panel1,
 .panel2,
 .panel3,
@@ -7288,6 +7281,18 @@ code {
     transition-property: height, opacity;
     transition-duration: 0.3s;
     transition-timing-function: ease-in-out;
+}
+
+////////////////////////////
+// Cross-fading panels    //
+// Effects classes        //
+// Animation classes      //
+// Keyframe animations    //
+////////////////////////////
+
+.magictime {
+  animation-duration: 1s;
+  animation-fill-mode: both;
 }
 
 .bounce {
@@ -7369,6 +7374,7 @@ code {
   -webkit-animation-name: tinDownIn;
   animation-name: tinDownIn;
 }
+
 
 // Keyframe Animations
 @keyframes rotate {

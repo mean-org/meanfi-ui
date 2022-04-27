@@ -60,7 +60,6 @@ import {
 } from "../../contexts/connection";
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { OperationType } from "../../models/enums";
-import { notify } from "../../utils/notifications";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { useNativeAccount } from "../../contexts/accounts";
 import { useTranslation } from "react-i18next";
@@ -86,6 +85,7 @@ import { StreamsSummary } from "../../models/streams";
 import { UserTokenAccount } from "../../models/transactions";
 import { StreamTreasuryType } from "../../models/treasuries";
 import { PreFooter } from "../../components/PreFooter";
+import { openNotification } from "../../components/Notifications";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -323,8 +323,8 @@ export const MultisigTreasuryStreams = () => {
                 consoleOut("stream token:", unkToken, "blue");
                 setEffectiveRate(0);
             } else {
-                notify({
-                    message: t("notifications.error-title"),
+                openNotification({
+                    title: t("notifications.error-title"),
                     description: t("transactions.validation.invalid-solana-address"),
                     type: "error",
                 });
@@ -929,12 +929,12 @@ export const MultisigTreasuryStreams = () => {
 
     const onCopyStreamAddress = (data: any) => {
         if (copyText(data.toString())) {
-            notify({
+            openNotification({
                 description: t("notifications.account-address-copied-message"),
                 type: "info",
             });
         } else {
-            notify({
+            openNotification({
                 description: t("notifications.account-address-not-copied-message"),
                 type: "error",
             });

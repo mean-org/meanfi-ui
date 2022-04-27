@@ -16,9 +16,9 @@ import { MultisigV2 } from '../../models/multisig';
 import { Identicon } from '../Identicon';
 import { IconCheckedBox } from '../../Icons';
 import { TokenInfo } from '@solana/spl-token-registry';
-import { notify } from '../../utils/notifications';
 import { TokenDisplay } from '../TokenDisplay';
 import { NATIVE_SOL } from '../../utils/tokens';
+import { openNotification } from '../Notifications';
 
 const { Option } = Select;
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -100,8 +100,8 @@ export const TreasuryCreateModal = (props: {
       setEffectiveRate(0);
       toggleOverflowEllipsisMiddle(true);
     } else {
-      notify({
-        message: t('notifications.error-title'),
+      openNotification({
+        title: t('notifications.error-title'),
         description: t('transactions.validation.invalid-solana-address'),
         type: "error"
       });

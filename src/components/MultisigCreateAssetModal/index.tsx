@@ -13,10 +13,10 @@ import { consoleOut, getTransactionOperationDescription, isValidAddress } from '
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { TransactionStatus } from '../../models/enums';
 import { useWallet } from '../../contexts/wallet';
-import { notify } from '../../utils/notifications';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { isError } from '../../utils/transactions';
 import { useConnection } from '../../contexts/connection';
+import { openNotification } from '../Notifications';
 
 const { Option } = Select;
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -146,8 +146,8 @@ export const MultisigCreateAssetModal = (props: {
       setToken(unkToken);
       consoleOut("token selected:", unkToken, 'blue');
     } else {
-      notify({
-        message: t('notifications.error-title'),
+      openNotification({
+        title: t('notifications.error-title'),
         description: t('transactions.validation.invalid-solana-address'),
         type: "error"
       });

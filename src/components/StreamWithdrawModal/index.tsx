@@ -10,10 +10,10 @@ import { useTranslation } from "react-i18next";
 import { TokenInfo } from '@solana/spl-token-registry';
 import { PublicKey } from '@solana/web3.js';
 import { MoneyStreaming } from '@mean-dao/money-streaming';
-import { notify } from '../../utils/notifications';
 import { MSP, Stream, STREAM_STATUS } from '@mean-dao/msp';
 import { AppStateContext } from '../../contexts/appstate';
 import { BN } from 'bn.js';
+import { openNotification } from '../Notifications';
 
 export const StreamWithdrawModal = (props: {
   startUpData: Stream | StreamInfo | undefined;
@@ -58,16 +58,16 @@ export const StreamWithdrawModal = (props: {
           }
           setMaxAmount(max);
         } else {
-          notify({
-            message: t('notifications.error-title'),
+          openNotification({
+            title: t('notifications.error-title'),
             description: t('notifications.error-loading-streamid-message', {streamId: shortenAddress(streamId as string, 10)}),
             type: "error"
           });
         }
       } catch (error) {
         console.error(error);
-        notify({
-          message: t('notifications.error-title'),
+        openNotification({
+          title: t('notifications.error-title'),
           description: t('notifications.error-loading-streamid-message', {streamId: shortenAddress(streamId as string, 10)}),
           type: "error"
         });
@@ -89,8 +89,8 @@ export const StreamWithdrawModal = (props: {
             const ms = new MoneyStreaming(endpoint, streamProgramAddress, "confirmed");
             getStreamDetails(v1.id as string, ms);
           } catch (error) {
-            notify({
-              message: t('notifications.error-title'),
+            openNotification({
+              title: t('notifications.error-title'),
               description: t('notifications.invalid-streamid-message') + '!',
               type: "error"
             });
@@ -107,8 +107,8 @@ export const StreamWithdrawModal = (props: {
             const msp = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
             getStreamDetails(v2.id as string, msp);
           } catch (error) {
-            notify({
-              message: t('notifications.error-title'),
+            openNotification({
+              title: t('notifications.error-title'),
               description: t('notifications.invalid-streamid-message') + '!',
               type: "error"
             });

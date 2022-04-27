@@ -49,7 +49,7 @@ import { useConnectionConfig } from '../../contexts/connection';
 import { Idl, Program } from '@project-serum/anchor';
 import { BN } from 'bn.js';
 import { u64 } from '@solana/spl-token';
-import { MEAN_MULTISIG_OPS } from '../../models/multisig';
+import { MEAN_MULTISIG_OPS, DEFAULT_EXPIRATION_TIME_SECONDS } from '../../models/multisig';
 
 const { Option } = Select;
 
@@ -702,6 +702,7 @@ export const TreasuryStreamCreateModal = (props: {
       setFromCoinAmount("");
       setCsvArray([]);
       setIsCsvSelected(false);
+      setIsFeePaidByTreasurer(false);
       setIsVerifiedRecipient(false);
       setPaymentRateFrequency(PaymentRateType.PerMonth);
       setPaymentStartDate(today);
@@ -946,9 +947,8 @@ export const TreasuryStreamCreateModal = (props: {
         data.feePayedByTreasurer                                              // feePayedByTreasurer
       );
 
+      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
       let txs: Transaction[] = [];
-
-      console.log('streamsBumps', streamsBumps);
 
       for (let createTx of createStreams) {
         const ixData = Buffer.from(createTx.instructions[0].data);
@@ -960,21 +960,30 @@ export const TreasuryStreamCreateModal = (props: {
           txSize
         );
 
-        console.log('accounts meta keys: ', createTx.instructions[0].keys.map((m: any) => m.pubkey.toBase58()));
+        const [txDetailAddress] = await PublicKey.findProgramAddress(
+          [
+            props.multisigAddress.toBuffer(),
+            transaction.publicKey.toBuffer()
+          ],
+          props.multisigClient.programId
+        );
 
         let streamSeedData = streamsBumps[createTx.instructions[0].keys[7].pubkey.toBase58()];
-        console.log('streamSeedData: ', streamSeedData);
         let tx = props.multisigClient.transaction.createTransaction(
           MSPV2Constants.MSP,
-          OperationType.StreamCreate,
           ixAccounts as any,
           ixData as any,
+          OperationType.StreamCreate,
+          "Create Stream",
+          "",
+          new BN(expirationTime),
           new u64(streamSeedData.timeStamp.toNumber()),
           new BN(streamSeedData.bump),
           {
             accounts: {
               multisig: props.multisigAddress,
               transaction: transaction.publicKey,
+              transactionDetail: txDetailAddress,
               proposer: publicKey,
               multisigOpsAccount: MEAN_MULTISIG_OPS,
               systemProgram: SystemProgram.programId
@@ -1617,7 +1626,7 @@ export const TreasuryStreamCreateModal = (props: {
                             allowClear={false}
                             disabledDate={disabledDate}
                             placeholder={t('transactions.send-date.placeholder')}
-                            onChange={(value, date) => handleDateChange(date)}
+                            onChange={(value: any, date: string) => handleDateChange(date)}
                             value={moment(
                               paymentStartDate,
                               DATEPICKER_FORMAT
@@ -1947,7 +1956,7 @@ export const TreasuryStreamCreateModal = (props: {
                             allowClear={false}
                             disabledDate={disabledDate}
                             placeholder={t('transactions.send-date.placeholder')}
-                            onChange={(value, date) => handleDateChange(date)}
+                            onChange={(value: any, date: string) => handleDateChange(date)}
                             value={moment(
                               paymentStartDate,
                               DATEPICKER_FORMAT

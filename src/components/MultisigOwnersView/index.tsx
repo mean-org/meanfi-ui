@@ -6,7 +6,7 @@ import { shortenAddress } from "../../utils/utils";
 import "./style.scss";
 import { MultisigParticipant } from "../../models/multisig";
 import { copyText } from "../../utils/ui";
-import { notify } from "../../utils/notifications";
+import { openNotification } from "../Notifications";
 
 export const MultisigOwnersView = (props: {
   participants: MultisigParticipant[];
@@ -22,12 +22,12 @@ export const MultisigOwnersView = (props: {
 
   const onCopyAddress = (address: any) => {
     if (address && copyText(address)) {
-      notify({
+      openNotification({
         description: t('notifications.account-address-copied-message'),
         type: "info"
       });
     } else {
-      notify({
+      openNotification({
         description: t('notifications.account-address-not-copied-message'),
         type: "error"
       });
