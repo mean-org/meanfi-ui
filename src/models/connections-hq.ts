@@ -4,19 +4,6 @@ import { appConfig } from "..";
 import { requestOptions } from "../constants";
 import { environment } from "../environments/environment";
 import { getRpcApiEndpoint } from "../utils/api";
-import { consoleOut } from "../utils/ui";
-
-export enum InitStatus {
-  LoadingApp = 0,
-  LoadAnotherRpcConfig = 1,
-  LoadRpcConfigSuccess = 2,
-  LoadRpcConfigError = 3,
-  TestRpcConfig = 4,
-  TestRpcSuccess = 5,
-  TestRpcError = 6,
-  Retry = 7,
-  NoNetwork = 8
-}
 
 export interface RpcConfig {
   cluster: Cluster;

@@ -80,6 +80,7 @@ export const AccountsNewView = () => {
     coinPrices,
     userTokens,
     streamList,
+    pinnedTokens,
     splTokenList,
     streamListv1,
     streamListv2,
@@ -119,7 +120,7 @@ export const AccountsNewView = () => {
   const [accountAddressInput, setAccountAddressInput] = useState<string>('');
   const [tokensLoaded, setTokensLoaded] = useState(false);
   const [accountTokens, setAccountTokens] = useState<UserTokenAccount[]>([]);
-  const [meanSupportedTokens, setMeanSupportedTokens] = useState<UserTokenAccount[]>([]);
+  const [meanPinnedTokens, setMeanPinnedTokens] = useState<UserTokenAccount[]>([]);
   const [extraUserTokensSorted, setExtraUserTokensSorted] = useState<UserTokenAccount[]>([]);
   const [solAccountItems, setSolAccountItems] = useState(0);
   const [tokenAccountGroups, setTokenAccountGroups] = useState<Map<string, AccountTokenParsedInfo[]>>();
@@ -629,19 +630,22 @@ export const AccountsNewView = () => {
       setShouldLoadTokens(false);
       setTokensLoaded(false);
 
-      let meanTokensCopy = JSON.parse(JSON.stringify(userTokens)) as UserTokenAccount[];
+      let meanTokensCopy = [] as UserTokenAccount[];
+      const pinnedTokensCopy = JSON.parse(JSON.stringify(pinnedTokens)) as UserTokenAccount[];
       const splTokensCopy = JSON.parse(JSON.stringify(splTokenList)) as UserTokenAccount[];
       const pk = new PublicKey(accountAddress);
 
       // Fetch SOL balance.
       connection.getBalance(pk)
         .then(solBalance => {
-          meanTokensCopy[0].balance = solBalance / LAMPORTS_PER_SOL;
-          meanTokensCopy[0].publicAddress = accountAddress;
+          pinnedTokensCopy[0].balance = solBalance / LAMPORTS_PER_SOL;
+          pinnedTokensCopy[0].publicAddress = accountAddress;
+          pinnedTokensCopy[0].valueInUsd = (solBalance / LAMPORTS_PER_SOL) * getPricePerToken(pinnedTokensCopy[0]);
 
           fetchAccountTokens(connection, pk)
             .then(accTks => {
               if (accTks) {
+
                 consoleOut('fetched accountTokens:', accTks.map(i => {
                   return {
                     pubAddress: i.pubkey.toBase58(),
@@ -666,21 +670,53 @@ export const AccountsNewView = () => {
                     groupedTokenAccounts.set(key, [updatedTa]);
                   }
                 });
+
                 // Keep only groups with more than 1 item
                 groupedTokenAccounts.forEach((item, key) => {
                   if (item.length > 1) {
                     tokenGroups.set(key, item);
                   }
                 });
-                if (tokenGroups.size > 0) {
-                  consoleOut('tokenGroups:', tokenGroups, 'blue');
-                }
+
                 // Save groups for possible further merging
-                if (tokenGroups.size) {
+                if (tokenGroups.size > 0) {
+                  consoleOut('This account owns duplicated tokens...', '', 'blue');
+                  consoleOut('tokenGroups:', tokenGroups, 'blue');
                   setTokenAccountGroups(tokenGroups);
                 } else {
                   setTokenAccountGroups(undefined);
                 }
+
+                // Update balances in the pinned token ist (pinnedTokensCopy)
+                accTks.forEach(item => {
+                  let tokenIndex = 0;
+                  // Locate the token in pinnedTokensCopy
+                  tokenIndex = pinnedTokensCopy.findIndex(i => i.address === item.parsedInfo.mint);
+                  if (tokenIndex !== -1) {
+                    const rate = getPricePerToken(pinnedTokensCopy[tokenIndex]);
+                    // If we didn't already filled info for this associated token address
+                    if (!pinnedTokensCopy[tokenIndex].publicAddress) {
+                      // Add it
+                      pinnedTokensCopy[tokenIndex].publicAddress = item.pubkey.toBase58();
+                      pinnedTokensCopy[tokenIndex].balance = item.parsedInfo.tokenAmount.uiAmount || 0;
+                      pinnedTokensCopy[tokenIndex].valueInUsd = (item.parsedInfo.tokenAmount.uiAmount || 0) * rate;
+                    } else if (pinnedTokensCopy[tokenIndex].publicAddress !== item.pubkey.toBase58()) {
+                      // If we did and the publicAddress is different/new then duplicate this item with the new info
+                      const newItem = JSON.parse(JSON.stringify(pinnedTokensCopy[tokenIndex])) as UserTokenAccount;
+                      newItem.publicAddress = item.pubkey.toBase58();
+                      newItem.balance = item.parsedInfo.tokenAmount.uiAmount || 0;
+                      newItem.valueInUsd = (item.parsedInfo.tokenAmount.uiAmount || 0) * rate;
+                      pinnedTokensCopy.splice(tokenIndex + 1, 0, newItem);
+                    }
+                  }
+                });
+
+                // Build meanTokensCopy not including the items it pinnedTokensCopy
+                userTokens.forEach(item => {
+                  if (!pinnedTokensCopy.includes(item)) {
+                    meanTokensCopy.push(item);
+                  }
+                });
 
                 // Update balances in the mean token list
                 accTks.forEach(item => {
@@ -688,16 +724,19 @@ export const AccountsNewView = () => {
                   // Locate the token in meanTokensCopy
                   tokenIndex = meanTokensCopy.findIndex(i => i.address === item.parsedInfo.mint);
                   if (tokenIndex !== -1) {
+                    const rate = getPricePerToken(meanTokensCopy[tokenIndex]);
                     // If we didn't already filled info for this associated token address
                     if (!meanTokensCopy[tokenIndex].publicAddress) {
                       // Add it
                       meanTokensCopy[tokenIndex].publicAddress = item.pubkey.toBase58();
                       meanTokensCopy[tokenIndex].balance = item.parsedInfo.tokenAmount.uiAmount || 0;
+                      meanTokensCopy[tokenIndex].valueInUsd = (item.parsedInfo.tokenAmount.uiAmount || 0) * rate;
                     } else if (meanTokensCopy[tokenIndex].publicAddress !== item.pubkey.toBase58()) {
                       // If we did and the publicAddress is different/new then duplicate this item with the new info
                       const newItem = JSON.parse(JSON.stringify(meanTokensCopy[tokenIndex])) as UserTokenAccount;
                       newItem.publicAddress = item.pubkey.toBase58();
                       newItem.balance = item.parsedInfo.tokenAmount.uiAmount || 0;
+                      newItem.valueInUsd = (item.parsedInfo.tokenAmount.uiAmount || 0) * rate;
                       meanTokensCopy.splice(tokenIndex + 1, 0, newItem);
                     }
                   }
@@ -706,36 +745,37 @@ export const AccountsNewView = () => {
                 // Update balances in the SPL token list
                 accTks.forEach(item => {
                   const tokenIndex = splTokensCopy.findIndex(i => i.address === item.parsedInfo.mint);
+                  const rate = getPricePerToken(splTokensCopy[tokenIndex]);
                   if (tokenIndex !== -1) {
                     splTokensCopy[tokenIndex].publicAddress = item.pubkey.toBase58();
                     splTokensCopy[tokenIndex].balance = item.parsedInfo.tokenAmount.uiAmount || 0;
+                    splTokensCopy[tokenIndex].valueInUsd = (item.parsedInfo.tokenAmount.uiAmount || 0) * rate;
                   }
                 });
 
-                // Create a list containing the tokens for the user accounts not in the meanTokensCopy
+                // Create a list containing the tokens for the user accounts not in the combinedMeanFiList
+                // combinedMeanFiList = pinnedTokensCopy + meanTokensCopy
+                const combinedMeanFiList = pinnedTokensCopy.concat(meanTokensCopy);
+                // Intersected output list
                 const intersectedList = new Array<UserTokenAccount>();
                 accTks.forEach(item => {
                   // Loop through the user token accounts and add the token account to the list: intersectedList
                   // If it is not already on the list (diferentiate token accounts of the same mint)
-                  const isTokenAccountInTheList = meanTokensCopy.some(t => t.address === item.parsedInfo.mint && t.publicAddress === item.pubkey.toBase58());
+                  const isTokenAccountInTheList = combinedMeanFiList.some(t => t.address === item.parsedInfo.mint && t.publicAddress === item.pubkey.toBase58());
                   const tokenFromSplTokenList = splTokensCopy.find(t => t.address === item.parsedInfo.mint);
                   if (tokenFromSplTokenList && !isTokenAccountInTheList) {
                     intersectedList.push(tokenFromSplTokenList);
                   }
                 });
                 let sortedList = intersectedList.sort((a, b) => {
-                  var nameA = a.symbol.toUpperCase();
-                  var nameB = b.symbol.toUpperCase();
-                  if (nameA < nameB) {
+                  if ((a.valueInUsd || 0) < (b.valueInUsd || 0)) {
                     return -1;
-                  }
-                  if (nameA > nameB) {
+                  } else if ((a.valueInUsd || 0) > (b.valueInUsd || 0)) {
                     return 1;
                   }
-                  // names must be equal
                   return 0;
                 });
-                meanTokensCopy.forEach(async (item: UserTokenAccount, index: number) => {
+                pinnedTokensCopy.forEach(async (item: UserTokenAccount, index: number) => {
                   item.displayIndex = index;
                   item.isAta = await updateAtaFlag(item);
                 });
@@ -745,27 +785,36 @@ export const AccountsNewView = () => {
                 });
 
                 // Concatenate both lists
-                const finalList = meanTokensCopy.concat(sortedList);
+                const finalList = pinnedTokensCopy.concat(sortedList);
                 consoleOut('Tokens (sorted):', finalList, 'blue');
+
                 // Report in the console for debugging
                 const tokenTable: any[] = [];
                 finalList.forEach((item: UserTokenAccount, index: number) => tokenTable.push({
                     pubAddress: item.publicAddress ? shortenAddress(item.publicAddress, 6) : null,
                     mintAddress: shortenAddress(item.address, 6),
                     symbol: item.symbol,
-                    balance: item.balance
+                    balance: item.balance,
+                    value: toUsCurrency(item.valueInUsd)
                   })
                 );
                 console.table(tokenTable);
+
                 // Update the state
+
+                /**
+                 * accountTokens                holds the list of total tokens available to display
+                 * meanPinnedTokens             holds the list of tokens pinned in the top of the left panel
+                 * extraUserTokensSorted        holds the list of tokens owned by the user not in the pinned list
+                 */
                 setAccountTokens(finalList);
+                setMeanPinnedTokens(meanTokensCopy);
                 setExtraUserTokensSorted(sortedList);
-                setMeanSupportedTokens(meanTokensCopy);
                 setTokensLoaded(true);
               } else {
                 setAccountTokens(meanTokensCopy);
+                setMeanPinnedTokens(meanTokensCopy);
                 setExtraUserTokensSorted([]);
-                setMeanSupportedTokens(meanTokensCopy);
                 setTokensLoaded(true);
                 refreshCachedRpc();
               }
@@ -781,7 +830,7 @@ export const AccountsNewView = () => {
             })
             .catch(error => {
               console.error(error);
-              setMeanSupportedTokens(meanTokensCopy);
+              setMeanPinnedTokens(meanTokensCopy);
               setAccountTokens(meanTokensCopy);
               setExtraUserTokensSorted([]);
               setTokensLoaded(true);
@@ -801,14 +850,16 @@ export const AccountsNewView = () => {
 
   }, [
     connection,
-    shouldLoadTokens,
-    accountAddress,
-    selectedAsset,
-    splTokenList,
     userTokens,
-    selectAsset,
-    updateAtaFlag,
+    pinnedTokens,
+    splTokenList,
+    selectedAsset,
+    accountAddress,
+    shouldLoadTokens,
     setShouldLoadTokens,
+    getPricePerToken,
+    updateAtaFlag,
+    selectAsset,
   ]);
 
   // Load the transactions when signaled
@@ -998,16 +1049,16 @@ export const AccountsNewView = () => {
   // Live data calculation - Totals
   useEffect(() => {
 
-    if (streamsSummary && meanSupportedTokens) {
-      const meanSupportedTokensHolded = meanSupportedTokens.filter(t => t.balance).length;
+    if (streamsSummary && meanPinnedTokens) {
+      const meanPinnedTokensHolded = meanPinnedTokens.filter(t => t.balance).length;
       const extraUserTokensSortedHolded = extraUserTokensSorted.filter(t => t.balance).length;
       // Total tokens holded by the user
-      const totalUserTokensHolded = meanSupportedTokensHolded + extraUserTokensSortedHolded;
+      const totalUserTokensHolded = meanPinnedTokensHolded + extraUserTokensSortedHolded;
       setTotalTokensHolded(totalUserTokensHolded);
 
       let sumMeanSupportedTokens = 0;
       let sumExtraUserTokensSorted = 0;
-      meanSupportedTokens.forEach((asset: UserTokenAccount, index: number) => {
+      meanPinnedTokens.forEach((asset: UserTokenAccount, index: number) => {
         const tokenPrice = getPricePerToken(asset);
         if (asset.balance && tokenPrice) {
           sumMeanSupportedTokens += asset.balance * tokenPrice;
@@ -1028,7 +1079,7 @@ export const AccountsNewView = () => {
     }
   }, [
     streamsSummary,
-    meanSupportedTokens,
+    meanPinnedTokens,
     extraUserTokensSorted,
     getPricePerToken
   ]);
@@ -1191,13 +1242,11 @@ export const AccountsNewView = () => {
         </div>
         <div className="rate-cell">
           <div className="rate-amount">
-            ${getFormattedRateAmount((asset.balance || 0) * tokenPrice)}
+            ${getFormattedRateAmount(asset.valueInUsd || 0)}
           </div>
-          {(tokenPrice > 0 && (asset.balance || 0) > 0) ? (
-            <div className="interval">
-              {(asset.balance || 0) > 0 ? getTokenAmountAndSymbolByTokenAddress(asset.balance || 0, asset.address, true) : '0'}
-            </div>
-          ) : (null)}
+          <div className="interval">
+            {(asset.balance || 0) > 0 ? getTokenAmountAndSymbolByTokenAddress(asset.balance || 0, asset.address, true) : '0'}
+          </div>
         </div>
       </div>
     );
@@ -1208,11 +1257,11 @@ export const AccountsNewView = () => {
       {accountTokens && accountTokens.length ? (
         <>
           {/* Render mean supported tokens */}
-          {(meanSupportedTokens && meanSupportedTokens.length > 0) && (
-            meanSupportedTokens.map((asset, index) => renderAsset(asset, index))
+          {(meanPinnedTokens && meanPinnedTokens.length > 0) && (
+            meanPinnedTokens.map((asset, index) => renderAsset(asset, index))
           )}
           {/* Render divider if there are extra tokens */}
-          {(accountTokens.length > meanSupportedTokens.length) && (
+          {(accountTokens.length > meanPinnedTokens.length) && (
             <div key="separator2" className="pinned-token-separator"></div>
           )}
           {/* Render extra user tokens */}

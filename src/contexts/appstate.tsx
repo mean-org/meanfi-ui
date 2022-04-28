@@ -103,6 +103,7 @@ interface AppStateConfig {
   shouldLoadTokens: boolean;
   splTokenList: UserTokenAccount[];
   userTokens: UserTokenAccount[];
+  pinnedTokens: UserTokenAccount[];
   selectedAsset: UserTokenAccount | undefined;
   transactions: MappedTransaction[] | undefined;
   accountAddress: string;
@@ -241,6 +242,7 @@ const contextDefaultValues: AppStateConfig = {
   shouldLoadTokens: true,
   splTokenList: [],
   userTokens: [],
+  pinnedTokens: [],
   selectedAsset: undefined,
   transactions: undefined,
   accountAddress: '',
@@ -1213,6 +1215,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [accountAddress, updateAccountAddress] = useLocalStorage('lastUsedAccount', publicKey ? publicKey.toBase58() : '');
   const [splTokenList, updateSplTokenList] = useState<UserTokenAccount[]>(contextDefaultValues.splTokenList);
   const [userTokens, updateUserTokens] = useState<UserTokenAccount[]>(contextDefaultValues.userTokens);
+  const [pinnedTokens, updatePinnedTokens] = useState<UserTokenAccount[]>(contextDefaultValues.pinnedTokens);
   const [transactions, updateTransactions] = useState<MappedTransaction[] | undefined>(contextDefaultValues.transactions);
   const [selectedAsset, updateSelectedAsset] = useState<UserTokenAccount | undefined>(contextDefaultValues.selectedAsset);
   const [lastTxSignature, setLastTxSignature] = useState<string>(contextDefaultValues.lastTxSignature);
@@ -1284,6 +1287,8 @@ const AppStateProvider: React.FC = ({ children }) => {
       // Add pinned tokens from the MeanFi list
       MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(connectionConfig.cluster) && PINNED_TOKENS.includes(t.symbol))
         .forEach(item => list.push(Object.assign({}, item, { isMeanSupportedToken: true })));
+      // Save pinned tokens' list
+      updatePinnedTokens(list);
       // Add non-pinned tokens from the MeanFi list
       MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(connectionConfig.cluster) && !PINNED_TOKENS.includes(t.symbol))
         .forEach(item => list.push(item));
@@ -1388,6 +1393,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         diagnosisInfo,
         splTokenList,
         userTokens,
+        pinnedTokens,
         selectedAsset,
         transactions,
         accountAddress,
