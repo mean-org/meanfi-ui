@@ -4068,6 +4068,7 @@ export const SafeView = () => {
                           onDataToSafeView={goToDetailsHandler}
                           proposals={proposals}
                           selectedMultisig={selectedMultisig}
+                          onEditMultisigClick={onEditMultisigClick}
                         />
                       )}
                       {isSafeDetails && (

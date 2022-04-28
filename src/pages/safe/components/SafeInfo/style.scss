@@ -6,11 +6,11 @@
     margin-bottom: 0.5em;
     .info-data {
       font-size: 18px;
-    }
-    .icon-link {
-      width: 1em;
-      margin-left: 0.25em;
-      margin-top: -0.1em;
+      svg {
+        width: 1em;
+        margin-left: 0.5em;
+        margin-top: -0.25em;
+      }
     }
   }
 }
@@ -89,4 +89,8 @@
       }
     }
   }
+}
+
+.background-gray {
+  background-color: var(--color-secondary-alpha-02);
 }

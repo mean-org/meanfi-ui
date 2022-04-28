@@ -17,8 +17,9 @@ export const SafeInfoView = (props: {
   onDataToSafeView: any;
   proposals: any[];
   selectedMultisig?: any;
+  onEditMultisigClick: any;
 }) => {
-  const { proposals, selectedMultisig } = props;
+  const { proposals, selectedMultisig, onEditMultisigClick } = props;
   
   const navigate = useNavigate();
   const { t } = useTranslation('common');
@@ -41,7 +42,7 @@ export const SafeInfoView = (props: {
   const renderDepositAddress = (
     <div className="d-flex align-items-start">
       <div onClick={() => copyAddressToClipboard(selectedMultisig.authority)} className="simplelink">{shortenAddress(selectedMultisig.authority.toBase58(), 6)}</div>
-      <span className="icon-link icon-button-container">
+      <span className="icon-button-container">
         <a
           target="_blank"
           rel="noopener noreferrer"
@@ -55,7 +56,7 @@ export const SafeInfoView = (props: {
   const infoSafeData = [
     {
       name: "Safe Name",
-      value: "My Safe XYZ",
+      value: selectedMultisig.label ? selectedMultisig.label : ""
     },
     {
       name: "Security",
@@ -67,7 +68,7 @@ export const SafeInfoView = (props: {
     },
     {
       name: "Deposit address",
-      value: renderDepositAddress
+      value: renderDepositAddress ? renderDepositAddress : ""
     }
   ];
 
@@ -79,7 +80,7 @@ export const SafeInfoView = (props: {
   // Dropdown (three dots button)
   const menu = (
     <Menu>
-      <Menu.Item key="0" onClick={() => {}}>
+      <Menu.Item key="0" onClick={onEditMultisigClick}>
         <IconEdit className="mean-svg-icons" />
         <span className="menu-item-text">Edit Safe</span>
       </Menu.Item>
@@ -116,7 +117,7 @@ export const SafeInfoView = (props: {
               key={proposal.id}
               // onClick={onSelectProposal}
               // className={${selectedProposal.id === proposal.id ? "selected" : ''}
-              className="d-flex w-100 align-items-center"
+              className={`d-flex w-100 align-items-center ${proposal.id % 2 === 0 ? '' : 'background-gray'}`}
               >
                 <ProposalResumeItem
                   id={proposal.id}
