@@ -9,7 +9,7 @@ import {
   UTC_DATE_TIME_FORMAT2
 } from "../../constants";
 import { useTranslation } from 'react-i18next';
-import { consoleOut, isLocal, isProd, isValidAddress, percentual } from '../../utils/ui';
+import { consoleOut, isLocal, isProd, isValidAddress, percentual, toUsCurrency } from '../../utils/ui';
 import "./style.scss";
 import { IdoDeposit, IdoRedeem } from '../../views';
 import { IdoWithdraw } from '../../views/IdoWithdraw';
@@ -25,7 +25,7 @@ import { useLocation } from 'react-router-dom';
 import { useConnectionConfig } from '../../contexts/connection';
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
 import { appConfig } from '../..';
-import { formatThousands, getFormattedRateAmount, getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
+import { formatThousands, getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
 import { CUSTOM_USDC, MEAN_TOKEN_LIST } from '../../constants/token-list';
 import { PartnerImage } from '../../models/common-types';
 import { TxConfirmationContext } from '../../contexts/transaction-status';
@@ -814,11 +814,11 @@ export const IdoLiveView = () => {
                 <>
                   <div className="flex-fixed-right">
                     <div className="left">Bonded Price</div>
-                    <div className="right">{getFormattedRateAmount(idoStatus.currentMeanPrice)}</div>
+                    <div className="right">{toUsCurrency(idoStatus.currentMeanPrice)}</div>
                   </div>
                   <div className="flex-fixed-right">
                     <div className="left">Max Contrib. Allowed</div>
-                    <div className="right">{getFormattedRateAmount(idoStatus.currentMaxUsdcContribution)}</div>
+                    <div className="right">{toUsCurrency(idoStatus.currentMaxUsdcContribution)}</div>
                   </div>
                   <div className="flex-fixed-right">
                     <div className="left">Total Participants</div>

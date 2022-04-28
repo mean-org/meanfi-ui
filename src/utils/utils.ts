@@ -236,10 +236,6 @@ export const getTokenDecimals = (address: string): number => {
   return 0;
 }
 
-export const getFormattedRateAmount = (amount: number): string => {
-  return `${getFormattedNumberToLocale(formatAmount(amount, 2), 2)}`;
-}
-
 export const getAmountWithSymbol = (amount: number, address?: string, onlyValue = false) => {
   let token: TokenInfo | undefined = undefined;
   if (address) {

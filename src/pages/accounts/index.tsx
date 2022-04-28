@@ -27,7 +27,6 @@ import {
   findATokenAddress,
   formatThousands,
   getAmountFromLamports,
-  getFormattedRateAmount,
   getTokenAmountAndSymbolByTokenAddress,
   shortenAddress
 } from '../../utils/utils';
@@ -1239,7 +1238,7 @@ export const AccountsNewView = () => {
             {asset.symbol}
             {tokenPrice > 0 ? (
               <span className={`badge small ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
-                ${getFormattedRateAmount(tokenPrice)}
+                {toUsCurrency(tokenPrice)}
               </span>
             ) : (null)}
           </div>
@@ -1251,7 +1250,7 @@ export const AccountsNewView = () => {
         </div>
         <div className="rate-cell">
           <div className="rate-amount">
-            ${getFormattedRateAmount(asset.valueInUsd || 0)}
+            {toUsCurrency(asset.valueInUsd || 0)}
           </div>
           <div className="interval">
             {(asset.balance || 0) > 0 ? getTokenAmountAndSymbolByTokenAddress(asset.balance || 0, asset.address, true) : '0'}
@@ -1508,7 +1507,7 @@ export const AccountsNewView = () => {
                 </div>
                 <div className="transaction-detail-row">
                   <span className="info-data">
-                    ${getFormattedRateAmount((selectedAsset.balance || 0) * tokenPrice)}
+                    {toUsCurrency((selectedAsset.balance || 0) * tokenPrice)}
                   </span>
                 </div>
               </Col>

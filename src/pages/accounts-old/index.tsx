@@ -26,12 +26,11 @@ import {
   findATokenAddress,
   formatThousands,
   getAmountFromLamports,
-  getFormattedRateAmount,
   getTokenAmountAndSymbolByTokenAddress,
   shortenAddress
 } from '../../utils/utils';
 import { Button, Empty, Result, Space, Spin, Switch, Tooltip } from 'antd';
-import { consoleOut, copyText, friendlyDisplayDecimalPlaces, isValidAddress } from '../../utils/ui';
+import { consoleOut, copyText, friendlyDisplayDecimalPlaces, isValidAddress, toUsCurrency } from '../../utils/ui';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import {
   SOLANA_WALLET_GUIDE,
@@ -1023,7 +1022,7 @@ export const AccountsView = () => {
             {asset.symbol}
             {tokenPrice > 0 ? (
               <span className={`badge small ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
-                ${getFormattedRateAmount(tokenPrice)}
+                {toUsCurrency(tokenPrice)}
               </span>
             ) : (null)}
           </div>
@@ -1039,7 +1038,7 @@ export const AccountsView = () => {
           </div>
           {(tokenPrice > 0 && (asset.balance || 0) > 0) ? (
             <div className="interval">
-              ${getFormattedRateAmount((asset.balance || 0) * tokenPrice)}
+              {toUsCurrency((asset.balance || 0) * tokenPrice)}
             </div>
           ) : (null)}
         </div>
