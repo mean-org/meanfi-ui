@@ -384,22 +384,6 @@ export const AccountsNewView = () => {
     return transactions && transactions.length > 0 ? true : false;
   }, [transactions]);
 
-  const canShowBuyOptions = useCallback(() => {
-    if (!selectedAsset) { return false; }
-    return !selectedAsset.publicAddress ||
-            (selectedAsset?.balance === 0 && !(
-              (!isSelectedAssetNativeAccount() && hasTransactions()) ||
-              (isSelectedAssetNativeAccount() && hasTransactions() && solAccountItems > 0)
-            ))
-      ? true
-      : false
-  }, [
-    selectedAsset,
-    solAccountItems,
-    isSelectedAssetNativeAccount,
-    hasTransactions,
-  ]);
-
   const getScanAddress = useCallback((asset: UserTokenAccount): PublicKey | null => {
     /**
      * If asset.ataAddress
@@ -583,6 +567,25 @@ export const AccountsNewView = () => {
     isSelectedAssetNativeAccount
   ]);
 
+  // I consider the "have" items to render if there are transactions for selected asset if not the user address
+  // or if there are transactions with balance changes in the user address if SOL was selected
+  const hasItemsToRender = useCallback((): boolean => {
+    return ((!isSelectedAssetNativeAccount() && hasTransactions()) ||
+            (isSelectedAssetNativeAccount() && hasTransactions() && solAccountItems > 0))
+      ? true
+      : false;
+  }, [hasTransactions, isSelectedAssetNativeAccount, solAccountItems]);
+
+  const canShowBuyOptions = useCallback(() => {
+    if (!selectedAsset) { return false; }
+    return !selectedAsset.publicAddress ||
+            (selectedAsset?.balance === 0 && !hasItemsToRender())
+      ? true
+      : false
+  }, [
+    selectedAsset,
+    hasItemsToRender,
+  ]);
 
   /////////////////////
   // Data management //
@@ -1202,45 +1205,51 @@ export const AccountsNewView = () => {
 
   const renderAssetsList = (
     <>
-    {accountTokens && accountTokens.length ? (
-      <>
-        {/* Render mean supported tokens */}
-        {(meanSupportedTokens && meanSupportedTokens.length > 0) && (
-          meanSupportedTokens.map((asset, index) => renderAsset(asset, index))
-        )}
-        {/* Render divider if there are extra tokens */}
-        {(accountTokens.length > meanSupportedTokens.length) && (
-          <div key="separator2" className="pinned-token-separator"></div>
-        )}
-        {/* Render extra user tokens */}
-        {(extraUserTokensSorted && extraUserTokensSorted.length > 0) && (
-          extraUserTokensSorted.map((asset, index) => renderAsset(asset, index + 50))
-        )}
-      </>
-    ) : (
-      <div className="h-75 flex-center">
-        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
-      </div>
-    )}
+      {accountTokens && accountTokens.length ? (
+        <>
+          {/* Render mean supported tokens */}
+          {(meanSupportedTokens && meanSupportedTokens.length > 0) && (
+            meanSupportedTokens.map((asset, index) => renderAsset(asset, index))
+          )}
+          {/* Render divider if there are extra tokens */}
+          {(accountTokens.length > meanSupportedTokens.length) && (
+            <div key="separator2" className="pinned-token-separator"></div>
+          )}
+          {/* Render extra user tokens */}
+          {(extraUserTokensSorted && extraUserTokensSorted.length > 0) && (
+            extraUserTokensSorted.map((asset, index) => renderAsset(asset, index + 50))
+          )}
+        </>
+      ) : tokensLoaded ? (
+        <div className="flex flex-center">
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
+        </div>
+      ) : (
+        <div className="flex flex-center">
+          <Spin indicator={antIcon} />
+        </div>
+      )}
     </>
   );
 
   const renderActivityList = () => {
+    const hasItems = hasItemsToRender();
+
+    if (status === FetchStatus.Fetching && !hasItems) {
+      return (
+        <div className="flex flex-center">
+          <Spin indicator={antIcon} />
+        </div>
+      );
+    }
+
     return (
       <>
         {/* Activity list */}
-        <div className={((!isSelectedAssetNativeAccount() && hasTransactions()) ||
-                        (isSelectedAssetNativeAccount() && hasTransactions() && solAccountItems > 0))
-                        ? 'transaction-list-data-wrapper vertical-scroll'
-                        : 'transaction-list-data-wrapper vertical-scroll empty'}>
+        <div className={'transaction-list-data-wrapper vertical-scroll'}>
           <div className="activity-list h-100">
             {
-              status === FetchStatus.Fetching && !((!isSelectedAssetNativeAccount() && hasTransactions()) ||
-                                                  (isSelectedAssetNativeAccount() && hasTransactions() && solAccountItems > 0)) ? (
-                <div className="h-100 flex-center">
-                  <Spin indicator={antIcon} />
-                </div>
-              ) : hasTransactions() ? (
+              hasTransactions() ? (
                 <div className="item-list-body compact">
                   {renderTransactions()}
                 </div>
@@ -1523,13 +1532,6 @@ export const AccountsNewView = () => {
     );
   };
 
-  const shallWeDraw = (): boolean => {
-    return ((!isSelectedAssetNativeAccount() && hasTransactions()) ||
-            (isSelectedAssetNativeAccount() && hasTransactions() && solAccountItems > 0))
-      ? true
-      : false;
-  };
-
   return (
     <>
       <div className="container main-container">
@@ -1623,7 +1625,7 @@ export const AccountsNewView = () => {
                           <div className="title">Assets in wallet ({totalTokensHolded})</div>
                           <div className="amount">{toUsCurrency(totalTokenAccountsValue)}</div>
                         </div>
-                        <div className="asset-category">
+                        <div className="asset-category flex-column">
                           {renderAssetsList}
                         </div>
                         <div className="asset-category-title flex-fixed-right">
@@ -1673,7 +1675,7 @@ export const AccountsNewView = () => {
                             {renderCategoryMeta()}
                             {selectedCategory === "user-account" && renderUserAccountAssetCtaRow()}
                             {/* Activity table heading */}
-                            {shallWeDraw() && (
+                            {hasItemsToRender() && (
                               <div className="stats-row">
                                 <div className="item-list-header compact">
                                   <div className="header-row">
@@ -1687,7 +1689,7 @@ export const AccountsNewView = () => {
                               </div>
                             )}
                           </div>
-                          <div className="bottom">
+                          <div className={`bottom ${!hasItemsToRender() ? 'h-100 flex-column' : ''}`}>
                             {selectedCategory === "user-account" && renderActivityList()}
                           </div>
                         </div>
