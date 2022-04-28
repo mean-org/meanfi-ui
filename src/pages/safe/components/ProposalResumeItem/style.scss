@@ -1,0 +1,40 @@
+.proposal-resume-item-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  .proposal-resume-left-container {
+    display: flex;
+    align-items: center;
+    svg {
+      margin-right: 0.8em;
+    }
+    .proposal-resume-left-text {
+      line-height: 1.3;
+      .proposal-title {
+        font-size: 1.1em;
+      }
+    }
+  }
+  .proposal-resume-right-container {
+    .proposal-resume-right-text {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      .thumbs-up,
+      .thumbs-down {
+        display: flex;
+        align-items: center;
+        padding: 0 0.25em;
+        span {
+          font-size: 1.1em;
+          padding: 0 0.5em;
+        }
+      }
+    }
+    .info-label {
+      float: right;
+      text-align: right;
+      margin-bottom: -0.5em !important;
+    }
+  }
+}
