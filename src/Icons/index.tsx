@@ -31,6 +31,7 @@ export { IconInfoCircle } from "./IconInfoCircle";
 export { IconInfoTriangle } from "./IconInfoTriangle";
 export { IconInstagram } from "./IconInstagram";
 export { IconKey } from "./IconKey";
+export { IconLink } from "./IconLink";
 export { IconLinkedin } from "./IconLinkedin";
 export { IconLiveHelp } from "./IconLiveHelp";
 export { IconLoading } from "./IconLoading";

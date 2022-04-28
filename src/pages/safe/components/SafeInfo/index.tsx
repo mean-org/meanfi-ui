@@ -1,14 +1,16 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import './style.scss';
 import { useNavigate } from "react-router-dom";
 
 import { Button, Col, Dropdown, Menu, Row } from "antd"
-import { IconAdd, IconArrowForward, IconEdit, IconEllipsisVertical, IconShowAll, IconTrash } from "../../../../Icons"
+import { IconAdd, IconArrowForward, IconEdit, IconEllipsisVertical, IconLink, IconShowAll, IconTrash } from "../../../../Icons"
 import { shortenAddress } from "../../../../utils/utils";
 import { ProposalResumeItem } from '../ProposalResumeItem';
 import { useTranslation } from "react-i18next";
 import { openNotification } from "../../../../components/Notifications";
 import { copyText } from "../../../../utils/ui";
+import { getSolanaExplorerClusterParam } from "../../../../contexts/connection";
+import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "../../../../constants";
 
 export const SafeInfoView = (props: {
   isSafeDetails: boolean;
@@ -23,7 +25,6 @@ export const SafeInfoView = (props: {
 
   // Copy address to clipboard
   const copyAddressToClipboard = useCallback((address: any) => {
-
     if (copyText(address.toString())) {
       openNotification({
         description: t('notifications.account-address-copied-message'),
@@ -35,8 +36,21 @@ export const SafeInfoView = (props: {
         type: "error"
       });
     }
-
   },[t])
+
+  const renderDepositAddress = (
+    <div className="d-flex align-items-start">
+      <div onClick={() => copyAddressToClipboard(selectedMultisig.authority)} className="simplelink">{shortenAddress(selectedMultisig.authority.toBase58(), 6)}</div>
+      <span className="icon-link icon-button-container">
+        <a
+          target="_blank"
+          rel="noopener noreferrer"
+          href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${selectedMultisig.authority.toBase58()}${getSolanaExplorerClusterParam()}`}>
+          <IconLink className="mean-svg-icons" />
+        </a>
+      </span>
+    </div>
+  );
 
   const infoSafeData = [
     {
@@ -53,22 +67,16 @@ export const SafeInfoView = (props: {
     },
     {
       name: "Deposit address",
-      value: <div onClick={() => copyAddressToClipboard(selectedMultisig.authority)} className="simplelink">{shortenAddress(selectedMultisig.authority.toBase58(), 6)}</div>
+      value: renderDepositAddress
     }
   ];
 
-  // Tabs
-  const tabs = ["Proposals", "Settings", "Activity"];
+  // View assets
+  const onGoToAccounts = () => {
+    navigate('/accounts');
+  }
 
-  const [activeTab, setActiveTab] = useState(tabs[0]);
-
-  const onClickHandler = (event: any) => {
-    if (event.target.innerHTML !== activeTab) {
-      setActiveTab(event.target.innerHTML);
-    }
-  };
-
-  // Dropdown
+  // Dropdown (three dots button)
   const menu = (
     <Menu>
       <Menu.Item key="0" onClick={() => {}}>
@@ -82,10 +90,18 @@ export const SafeInfoView = (props: {
     </Menu>
   );
 
-  const onGoToAccounts = () => {
-    navigate('/accounts');
-  }
+  // Tabs
+  const tabs = ["Proposals", "Settings", "Activity"];
 
+  const [activeTab, setActiveTab] = useState(tabs[0]);
+
+  const onClickHandler = (event: any) => {
+    if (event.target.innerHTML !== activeTab) {
+      setActiveTab(event.target.innerHTML);
+    }
+  };
+
+  // Proposals list
   const renderListOfProposals = (
     <>
       {proposals && proposals.length && (

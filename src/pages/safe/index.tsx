@@ -635,23 +635,6 @@ export const SafeView = () => {
     return isLocal() || (isDev() && isWhitelisted) ? true : false;
   }
 
-  // Copy address to clipboard
-  const copyAddressToClipboard = useCallback((address: any) => {
-
-    if (copyText(address.toString())) {
-      openNotification({
-        description: t('notifications.account-address-copied-message'),
-        type: "info"
-      });
-    } else {
-      openNotification({
-        description: t('notifications.account-address-not-copied-message'),
-        type: "error"
-      });
-    }
-
-  },[t])
-
   const onEditMultisigClick = useCallback(() => {
 
     getFees(multisigClient, MULTISIG_ACTIONS.createTransaction)
