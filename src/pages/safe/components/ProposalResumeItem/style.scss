@@ -30,6 +30,11 @@
           padding: 0 0.5em;
         }
       }
+      .badge-container {
+        margin-right: 0.5em;
+        margin-left: 0.5em;
+        display: flex;
+      }
     }
     .info-label {
       float: right;

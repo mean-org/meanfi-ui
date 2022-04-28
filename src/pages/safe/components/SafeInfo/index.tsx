@@ -39,6 +39,12 @@ export const SafeInfoView = (props: {
     }
   ];
 
+  // <div onClick={() => copyAddressToClipboard(selectedMultisig.authority)} 
+  //                      className="info-data flex-row wrap align-items-center simplelink underline-on-hover"
+  //                      style={{cursor: 'pointer', fontSize: '1.1rem'}}>
+  //                   {shortenAddress(selectedMultisig.authority.toBase58(), 8)}
+  //                 </div>
+
    // Tabs
    const tabs = ["Proposals", "Settings", "Activity"];
 
@@ -68,40 +74,21 @@ export const SafeInfoView = (props: {
     navigate('/accounts');
   }
 
-  // When any detail button is clicked, goes to Safe Details
-  const showDetailsHandler = () => {
-    // Sends the value to the parent component "SafeView"
-    props.onDataToSafeView();
-  };
-  
-  const [selectedProposal, setSelectedProposal] = useState<any>(proposals[0]);
-
-  // const onSelectProposal = ({e, proposal}: any) => {
-  //   setSelectedProposal(proposal);
-
-  //   console.log("e.target", e.target);
-  // }
-
-  // console.log("selected proposal", selectedProposal);
-  
-
   const renderListOfProposals = (
     <>
       {proposals && proposals.length ? (
-        proposals.map((proposal, index) => {
+        proposals.map((proposal) => {
           const onSelectProposal = () => {
-            setSelectedProposal(proposal);
-
             // Sends isSafeDetails value to the parent component "SafeView"
-            props.onDataToSafeView(selectedProposal);
+            props.onDataToSafeView(proposal);
           };
 
           return (
             <div 
               key={proposal.id}
-              onClick={onSelectProposal}
-              // className={`transaction-list-row ${selectedProposal.id === proposal.id ? "selected" : ''}`}
-              className="d-flex w-100"
+              // onClick={onSelectProposal}
+              // className={${selectedProposal.id === proposal.id ? "selected" : ''}
+              className="d-flex w-100 align-items-center"
               >
                 <ProposalResumeItem
                   id={proposal.id}
@@ -111,17 +98,19 @@ export const SafeInfoView = (props: {
                   rejected={proposal.rejected}
                   status={proposal.status}
                 />
-              <span className="icon-button-container">
-                {/* <Tooltip placement="topRight" title={"See details"}> */}
-                  <Button
-                    type="default"
-                    shape="circle"
-                    size="middle"
-                    icon={<IconArrowForward className="mean-svg-icons" />}
-                    onClick={onSelectProposal}
-                  />
-                {/* </Tooltip> */}
-              </span>
+                <Col>
+                  <span className="icon-button-container">
+                    <Tooltip placement="topRight" title={"See details"}>
+                      <Button
+                        type="default"
+                        shape="circle"
+                        size="middle"
+                        icon={<IconArrowForward className="mean-svg-icons" />}
+                        onClick={onSelectProposal}
+                      />
+                    </Tooltip>
+                  </span>
+                </Col>
             </div>
           )
         })

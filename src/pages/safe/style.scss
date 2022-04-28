@@ -59,3 +59,17 @@
   align-items: center;
   padding-top: 0.55em;
 }
+
+.inner-container {
+  .scroll-wrapper {
+    margin-right: -1.55em;
+    max-height: 100%;
+    overflow-y: auto;
+  }
+  @media (max-width: 575px) {
+    padding-right: 2.55em;
+  }
+  @media (min-width: 576px) {
+    padding-right: 2em;
+  }
+}

@@ -9,10 +9,10 @@ export const ProposalResumeItem = (props: {
   approved: number;
   rejected: number;
   status: string;
-  needs?: number
+  needs?: number;
 }) => {
   const { title, expires, approved, rejected, status, needs } = props;
-
+  
   return (
     <>
       <Row gutter={[8, 8]} className="proposal-resume-item-container">
@@ -41,7 +41,7 @@ export const ProposalResumeItem = (props: {
               <IconThumbsDown className="mean-svg-icons" />
               <span>{rejected}</span>
             </div>
-            <div className="ml-2">
+            <div className="badge-container">
               <span className="badge darken small text-uppercase">{status}</span>
             </div>
           </div>
