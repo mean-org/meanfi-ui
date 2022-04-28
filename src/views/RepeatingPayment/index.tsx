@@ -1472,7 +1472,6 @@ export const RepeatingPayment = (props: {
           onClose={onCloseTokenSelector}
           visible={isTokenSelectorVisible}
           getContainer={false}
-          closeIcon={<ArrowLeftOutlined />}
           style={{ position: 'absolute' }}>
           {renderTokenSelectorInner}
         </Drawer>

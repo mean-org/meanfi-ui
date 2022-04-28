@@ -493,7 +493,7 @@ export const AppLayout = React.memo((props: any) => {
       </Layout>
     </div>
     <Drawer
-      title="Recent events"
+      title={<div className="ant-drawer-header-title">Recent events</div>}
       placement="right"
       width={360}
       onClose={hideDrawer}
