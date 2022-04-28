@@ -1,24 +1,42 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import './style.scss';
 import { useNavigate } from "react-router-dom";
 
-import { Button, Col, Dropdown, Empty, Menu, Row } from "antd"
+import { Button, Col, Dropdown, Menu, Row } from "antd"
 import { IconAdd, IconArrowForward, IconEdit, IconEllipsisVertical, IconShowAll, IconTrash } from "../../../../Icons"
 import { shortenAddress } from "../../../../utils/utils";
 import { ProposalResumeItem } from '../ProposalResumeItem';
-import { useWallet } from "../../../../contexts/wallet";
 import { useTranslation } from "react-i18next";
+import { openNotification } from "../../../../components/Notifications";
+import { copyText } from "../../../../utils/ui";
 
 export const SafeInfoView = (props: {
   isSafeDetails: boolean;
   onDataToSafeView: any;
   proposals: any[];
+  selectedMultisig?: any;
 }) => {
-  const { proposals } = props;
+  const { proposals, selectedMultisig } = props;
   
   const navigate = useNavigate();
-  const { connected } = useWallet();
   const { t } = useTranslation('common');
+
+  // Copy address to clipboard
+  const copyAddressToClipboard = useCallback((address: any) => {
+
+    if (copyText(address.toString())) {
+      openNotification({
+        description: t('notifications.account-address-copied-message'),
+        type: "info"
+      });
+    } else {
+      openNotification({
+        description: t('notifications.account-address-not-copied-message'),
+        type: "error"
+      });
+    }
+
+  },[t])
 
   const infoSafeData = [
     {
@@ -35,15 +53,9 @@ export const SafeInfoView = (props: {
     },
     {
       name: "Deposit address",
-      value: shortenAddress("7kjcW2QHa9pN5e9Fx7LBM3kVwxCi3KteBtM7BMVzrMX4", 6)
+      value: <div onClick={() => copyAddressToClipboard(selectedMultisig.authority)} className="simplelink">{shortenAddress(selectedMultisig.authority.toBase58(), 6)}</div>
     }
   ];
-
-  // <div onClick={() => copyAddressToClipboard(selectedMultisig.authority)} 
-  //                      className="info-data flex-row wrap align-items-center simplelink underline-on-hover"
-  //                      style={{cursor: 'pointer', fontSize: '1.1rem'}}>
-  //                   {shortenAddress(selectedMultisig.authority.toBase58(), 8)}
-  //                 </div>
 
   // Tabs
   const tabs = ["Proposals", "Settings", "Activity"];
@@ -76,7 +88,7 @@ export const SafeInfoView = (props: {
 
   const renderListOfProposals = (
     <>
-      {proposals && proposals.length ? (
+      {proposals && proposals.length && (
         proposals.map((proposal) => {
           const onSelectProposal = () => {
             // Sends isSafeDetails value to the parent component "SafeView"
@@ -112,12 +124,6 @@ export const SafeInfoView = (props: {
             </div>
           )
         })
-      ) : (
-        <div className="h-100 flex-center">
-          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{!connected
-          ? t('invest.panel-left.no-invest-options')
-          : t('invest.panel-left.not-connected')}</p>} />
-        </div>
       )}
     </>
   );
@@ -132,7 +138,7 @@ export const SafeInfoView = (props: {
                 {info.name}
               </span>
               <span className="info-data">
-                {info.value}
+                {info.value ? info.value : ""}
               </span>
             </div>
           </Col>

@@ -3,6 +3,7 @@ import { Button, Col, Collapse, Row } from "antd"
 import { IconArrowBack, IconApprove, IconReject, IconUser } from "../../../../Icons"
 import { ProposalResumeItem } from '../ProposalResumeItem';
 import { useState } from 'react';
+import { shortenAddress } from '../../../../utils/utils';
 
 export const SafeDetailsView = (props: {
   isSafeDetails: boolean;
@@ -51,6 +52,16 @@ export const SafeDetailsView = (props: {
       </Collapse>
     </div>
   );
+
+  const renderActivities = (
+    <Row>
+      {proposalSelected.activities.map((activity: any) => (
+        <div key={activity.id}>
+          {`${activity.date} - Proposal ${activity.description} by ${activity.proposedBy} [${shortenAddress(activity.address, 4)}]`}
+        </div>
+      ))}
+    </Row>
+  )
 
   // Tabs
   const tabs = ["Instructions", "Activity"];
@@ -131,7 +142,7 @@ export const SafeDetailsView = (props: {
         </Row>
         <Row gutter={[8, 8]} className="safe-tabs-content-container safe-details-collapse">
           {activeTab === "Instructions" && renderInstructions}
-          {activeTab === "Activity" && "Activity"}
+          {activeTab === "Activity" && renderActivities}
         </Row>
       </div>
     </div>

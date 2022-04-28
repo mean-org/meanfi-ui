@@ -3385,8 +3385,30 @@ export const SafeView = () => {
           recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
           amount: "18274.94 USDC"
         }
-
-      ]
+      ],
+      activities: [
+        {
+          id: 1,
+          date: "January 2th 2022, 6:55:49",
+          description: "approved",
+          address: "ARmgYJkSQfbSifkXc4h7MGDAALznW5FFSHVucJ6j3vd7",
+          proposedBy: "Tania"
+        },
+        {
+          id: 2,
+          date: "January 5th 2022, 6:55:49",
+          description: "rejected",
+          address: "F4KjjnrM2hr8MasEDAYoGSBWbn3wzz1rrdGtkRkoaMKc",
+          proposedBy: "Yansel"
+        },
+        {
+          id: 3,
+          date: "January 7th 2022, 6:55:49",
+          description: "created",
+          address: "HGb43H86jJNLN4MW1sDWKruUZYrs3rkNQkf3acF8uXiv",
+          proposedBy: "Pavelsan"
+        },
+      ],
     },
     {
       id: 2,
@@ -3408,7 +3430,23 @@ export const SafeView = () => {
           recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
           amount: "18274.94 USDC"
         }
-      ]
+      ],
+      activities: [
+        {
+          id: 1,
+          date: "January 5th 2022, 6:55:49",
+          description: "rejected",
+          address: "F4KjjnrM2hr8MasEDAYoGSBWbn3wzz1rrdGtkRkoaMKc",
+          proposedBy: "Yansel"
+        },
+        {
+          id: 2,
+          date: "January 7th 2022, 6:55:49",
+          description: "created",
+          address: "HGb43H86jJNLN4MW1sDWKruUZYrs3rkNQkf3acF8uXiv",
+          proposedBy: "Pavelsan"
+        },
+      ],
     },
     {
       id: 3,
@@ -3430,7 +3468,30 @@ export const SafeView = () => {
           recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
           amount: "18274.94 USDC"
         }
-      ]
+      ],
+      activities: [
+        {
+          id: 1,
+          date: "February 7th 2022, 6:55:49",
+          description: "approved",
+          address: "ARmgYJkSQfbSifkXc4h7MGDAALznW5FFSHVucJ6j3vd7",
+          proposedBy: "Tania"
+        },
+        {
+          id: 2,
+          date: "February 8th 2022, 6:55:49",
+          description: "rejected",
+          address: "F4KjjnrM2hr8MasEDAYoGSBWbn3wzz1rrdGtkRkoaMKc",
+          proposedBy: "Yansel"
+        },
+        {
+          id: 3,
+          date: "February 12th 2022, 6:55:49",
+          description: "created",
+          address: "HGb43H86jJNLN4MW1sDWKruUZYrs3rkNQkf3acF8uXiv",
+          proposedBy: "Pavelsan"
+        },
+      ],
     },
     {
       id: 4,
@@ -3461,8 +3522,23 @@ export const SafeView = () => {
           recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
           amount: "18274.94 USDC"
         }
-
-      ]
+      ],
+      activities: [
+        {
+          id: 1,
+          date: "February 1th 2022, 6:55:49",
+          description: "approved",
+          address: "ARmgYJkSQfbSifkXc4h7MGDAALznW5FFSHVucJ6j3vd7",
+          proposedBy: "Tania"
+        },
+        {
+          id: 2,
+          date: "February 3th 2022, 6:55:49",
+          description: "created",
+          address: "HGb43H86jJNLN4MW1sDWKruUZYrs3rkNQkf3acF8uXiv",
+          proposedBy: "Pavelsan"
+        },
+      ],
     },
     {
       id: 5,
@@ -3484,7 +3560,30 @@ export const SafeView = () => {
           recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
           amount: "18274.94 USDC"
         }
-      ]
+      ],
+      activities: [
+        {
+          id: 1,
+          date: "March 2th 2022, 6:55:49",
+          description: "approved",
+          address: "ARmgYJkSQfbSifkXc4h7MGDAALznW5FFSHVucJ6j3vd7",
+          proposedBy: "Tania"
+        },
+        {
+          id: 2,
+          date: "March 5th 2022, 6:55:49",
+          description: "rejected",
+          address: "F4KjjnrM2hr8MasEDAYoGSBWbn3wzz1rrdGtkRkoaMKc",
+          proposedBy: "Yansel"
+        },
+        {
+          id: 3,
+          date: "March 14th 2022, 6:55:49",
+          description: "created",
+          address: "HGb43H86jJNLN4MW1sDWKruUZYrs3rkNQkf3acF8uXiv",
+          proposedBy: "Pavelsan"
+        },
+      ],
     },
     {
       id: 6,
@@ -3506,7 +3605,23 @@ export const SafeView = () => {
           recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
           amount: "18274.94 USDC"
         }
-      ]
+      ],
+      activities: [
+        {
+          id: 1,
+          date: "March 5th 2022, 6:55:49",
+          description: "approved",
+          address: "ARmgYJkSQfbSifkXc4h7MGDAALznW5FFSHVucJ6j3vd7",
+          proposedBy: "Tania"
+        },
+        {
+          id: 2,
+          date: "March 9th 2022, 6:55:49",
+          description: "rejected",
+          address: "F4KjjnrM2hr8MasEDAYoGSBWbn3wzz1rrdGtkRkoaMKc",
+          proposedBy: "Yansel"
+        }
+      ],
     },
     {
       id: 7,
@@ -3528,7 +3643,30 @@ export const SafeView = () => {
           recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
           amount: "18274.94 USDC"
         }
-      ]
+      ],
+      activities: [
+        {
+          id: 1,
+          date: "February 23th 2022, 6:55:49",
+          description: "approved",
+          address: "ARmgYJkSQfbSifkXc4h7MGDAALznW5FFSHVucJ6j3vd7",
+          proposedBy: "Tania"
+        },
+        {
+          id: 2,
+          date: "March 2th 2022, 6:55:49",
+          description: "rejected",
+          address: "F4KjjnrM2hr8MasEDAYoGSBWbn3wzz1rrdGtkRkoaMKc",
+          proposedBy: "Yansel"
+        },
+        {
+          id: 3,
+          date: "March 5th 2022, 6:55:49",
+          description: "created",
+          address: "HGb43H86jJNLN4MW1sDWKruUZYrs3rkNQkf3acF8uXiv",
+          proposedBy: "Pavelsan"
+        },
+      ],
     },
     {
       id: 8,
@@ -3559,8 +3697,23 @@ export const SafeView = () => {
           recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
           amount: "18274.94 USDC"
         }
-
-      ]
+      ],
+      activities: [
+        {
+          id: 1,
+          date: "February 3th 2022, 6:55:49",
+          description: "rejected",
+          address: "F4KjjnrM2hr8MasEDAYoGSBWbn3wzz1rrdGtkRkoaMKc",
+          proposedBy: "Yansel"
+        },
+        {
+          id: 2,
+          date: "February 14th 2022, 6:55:49",
+          description: "created",
+          address: "HGb43H86jJNLN4MW1sDWKruUZYrs3rkNQkf3acF8uXiv",
+          proposedBy: "Pavelsan"
+        },
+      ],
     },
     {
       id: 9,
@@ -3582,7 +3735,30 @@ export const SafeView = () => {
           recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
           amount: "18274.94 USDC"
         }
-      ]
+      ],
+      activities: [
+        {
+          id: 1,
+          date: "February 5th 2022, 6:55:49",
+          description: "approved",
+          address: "ARmgYJkSQfbSifkXc4h7MGDAALznW5FFSHVucJ6j3vd7",
+          proposedBy: "Tania"
+        },
+        {
+          id: 2,
+          date: "February 9th 2022, 6:55:49",
+          description: "rejected",
+          address: "F4KjjnrM2hr8MasEDAYoGSBWbn3wzz1rrdGtkRkoaMKc",
+          proposedBy: "Yansel"
+        },
+        {
+          id: 3,
+          date: "February 13th 2022, 6:55:49",
+          description: "created",
+          address: "HGb43H86jJNLN4MW1sDWKruUZYrs3rkNQkf3acF8uXiv",
+          proposedBy: "Pavelsan"
+        },
+      ],
     },
     {
       id: 10,
@@ -3604,7 +3780,23 @@ export const SafeView = () => {
           recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
           amount: "18274.94 USDC"
         }
-      ]
+      ],
+      activities: [
+        {
+          id: 1,
+          date: "March 23th 2022, 6:55:49",
+          description: "approved",
+          address: "ARmgYJkSQfbSifkXc4h7MGDAALznW5FFSHVucJ6j3vd7",
+          proposedBy: "Tania"
+        },
+        {
+          id: 2,
+          date: "April 3th 2022, 6:55:49",
+          description: "created",
+          address: "HGb43H86jJNLN4MW1sDWKruUZYrs3rkNQkf3acF8uXiv",
+          proposedBy: "Pavelsan"
+        },
+      ],
     },
     {
       id: 11,
@@ -3626,7 +3818,23 @@ export const SafeView = () => {
           recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
           amount: "18274.94 USDC"
         }
-      ]
+      ],
+      activities: [
+        {
+          id: 1,
+          date: "April 3th 2022, 6:55:49",
+          description: "approved",
+          address: "ARmgYJkSQfbSifkXc4h7MGDAALznW5FFSHVucJ6j3vd7",
+          proposedBy: "Tania"
+        },
+        {
+          id: 2,
+          date: "April 17th 2022, 6:55:49",
+          description: "rejected",
+          address: "F4KjjnrM2hr8MasEDAYoGSBWbn3wzz1rrdGtkRkoaMKc",
+          proposedBy: "Yansel"
+        }
+      ],
     },
     {
       id: 12,
@@ -3657,8 +3865,30 @@ export const SafeView = () => {
           recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
           amount: "18274.94 USDC"
         }
-
-      ]
+      ],
+      activities: [
+        {
+          id: 1,
+          date: "April 2th 2022, 6:55:49",
+          description: "approved",
+          address: "ARmgYJkSQfbSifkXc4h7MGDAALznW5FFSHVucJ6j3vd7",
+          proposedBy: "Tania"
+        },
+        {
+          id: 2,
+          date: "April 7th 2022, 6:55:49",
+          description: "rejected",
+          address: "F4KjjnrM2hr8MasEDAYoGSBWbn3wzz1rrdGtkRkoaMKc",
+          proposedBy: "Yansel"
+        },
+        {
+          id: 3,
+          date: "April 18th 2022, 6:55:49",
+          description: "created",
+          address: "HGb43H86jJNLN4MW1sDWKruUZYrs3rkNQkf3acF8uXiv",
+          proposedBy: "Pavelsan"
+        },
+      ],
     },
     {
       id: 13,
@@ -3680,7 +3910,23 @@ export const SafeView = () => {
           recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
           amount: "18274.94 USDC"
         }
-      ]
+      ],
+      activities: [
+        {
+          id: 1,
+          date: "April 3th 2022, 6:55:49",
+          description: "rejected",
+          address: "F4KjjnrM2hr8MasEDAYoGSBWbn3wzz1rrdGtkRkoaMKc",
+          proposedBy: "Yansel"
+        },
+        {
+          id: 2,
+          date: "April 4th 2022, 6:55:49",
+          description: "created",
+          address: "HGb43H86jJNLN4MW1sDWKruUZYrs3rkNQkf3acF8uXiv",
+          proposedBy: "Pavelsan"
+        },
+      ],
     },
     {
       id: 15,
@@ -3711,7 +3957,30 @@ export const SafeView = () => {
           recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
           amount: "18274.94 USDC"
         }
-      ]
+      ],
+      activities: [
+        {
+          id: 1,
+          date: "April 5th 2022, 6:55:49",
+          description: "approved",
+          address: "ARmgYJkSQfbSifkXc4h7MGDAALznW5FFSHVucJ6j3vd7",
+          proposedBy: "Tania"
+        },
+        {
+          id: 2,
+          date: "April 13th 2022, 6:55:49",
+          description: "rejected",
+          address: "F4KjjnrM2hr8MasEDAYoGSBWbn3wzz1rrdGtkRkoaMKc",
+          proposedBy: "Yansel"
+        },
+        {
+          id: 3,
+          date: "April 18th 2022, 6:55:49",
+          description: "created",
+          address: "HGb43H86jJNLN4MW1sDWKruUZYrs3rkNQkf3acF8uXiv",
+          proposedBy: "Pavelsan"
+        },
+      ],
     },
   ];
 
@@ -3815,6 +4084,7 @@ export const SafeView = () => {
                           isSafeDetails={isSafeDetails}
                           onDataToSafeView={goToDetailsHandler}
                           proposals={proposals}
+                          selectedMultisig={selectedMultisig}
                         />
                       )}
                       {isSafeDetails && (
