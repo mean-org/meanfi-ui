@@ -2,7 +2,7 @@ import { useState } from "react";
 import './style.scss';
 import { useNavigate } from "react-router-dom";
 
-import { Button, Col, Dropdown, Empty, Menu, Row, Tooltip } from "antd"
+import { Button, Col, Dropdown, Empty, Menu, Row } from "antd"
 import { IconAdd, IconArrowForward, IconEdit, IconEllipsisVertical, IconShowAll, IconTrash } from "../../../../Icons"
 import { shortenAddress } from "../../../../utils/utils";
 import { ProposalResumeItem } from '../ProposalResumeItem';
@@ -45,18 +45,18 @@ export const SafeInfoView = (props: {
   //                   {shortenAddress(selectedMultisig.authority.toBase58(), 8)}
   //                 </div>
 
-   // Tabs
-   const tabs = ["Proposals", "Settings", "Activity"];
+  // Tabs
+  const tabs = ["Proposals", "Settings", "Activity"];
 
-   const [activeTab, setActiveTab] = useState(tabs[0]);
- 
-   const onClickHandler = (event: any) => {
-     if (event.target.innerHTML !== activeTab) {
-       setActiveTab(event.target.innerHTML);
-     }
-   };
+  const [activeTab, setActiveTab] = useState(tabs[0]);
 
-     // Dropdown
+  const onClickHandler = (event: any) => {
+    if (event.target.innerHTML !== activeTab) {
+      setActiveTab(event.target.innerHTML);
+    }
+  };
+
+  // Dropdown
   const menu = (
     <Menu>
       <Menu.Item key="0" onClick={() => {}}>
@@ -100,15 +100,13 @@ export const SafeInfoView = (props: {
                 />
                 <Col>
                   <span className="icon-button-container">
-                    <Tooltip placement="topRight" title={"See details"}>
-                      <Button
-                        type="default"
-                        shape="circle"
-                        size="middle"
-                        icon={<IconArrowForward className="mean-svg-icons" />}
-                        onClick={onSelectProposal}
-                      />
-                    </Tooltip>
+                    <Button
+                      type="default"
+                      shape="circle"
+                      size="middle"
+                      icon={<IconArrowForward className="mean-svg-icons" />}
+                      onClick={onSelectProposal}
+                    />
                   </span>
                 </Col>
             </div>
@@ -122,7 +120,7 @@ export const SafeInfoView = (props: {
         </div>
       )}
     </>
-  )
+  );
 
   return (
     <>
@@ -173,25 +171,27 @@ export const SafeInfoView = (props: {
         </Col>
       </Row>
 
-      <Row gutter={[8, 8]} className="safe-tabs-container">
-        <ul className="tabs ant-menu-overflow ant-menu-horizontal">
-          {tabs.map((tab, index) => (
-            <li 
-              key={index} 
-              className={`ant-menu-item ${activeTab === tab ? "active ant-menu-item-selected" : ""}`} 
-              tabIndex={0} 
-              onClick={onClickHandler}
-            >
-              <span className="ant-menu-title-content">{tab}</span>
-            </li>
-          ))}
-        </ul>
-      </Row>
-      <Row gutter={[8, 8]} className="safe-tabs-content-container">
-        {activeTab === "Proposals" && renderListOfProposals}
-        {activeTab === "Settings" && "Settings"}
-        {activeTab === "Activity" && "Activity"}
-      </Row>
+      <div className="safe-tabs-container">
+        <Row gutter={[8, 8]} className="safe-tabs-header-container">
+          <ul className="tabs ant-menu-overflow ant-menu-horizontal">
+            {tabs.map((tab, index) => (
+              <li 
+                key={index} 
+                className={`ant-menu-item ${activeTab === tab ? "active ant-menu-item-selected" : ""}`} 
+                tabIndex={0} 
+                onClick={onClickHandler}
+              >
+                <span className="ant-menu-title-content">{tab}</span>
+              </li>
+            ))}
+          </ul>
+        </Row>
+        <Row gutter={[8, 8]} className="safe-tabs-content-container">
+          {activeTab === "Proposals" && renderListOfProposals}
+          {activeTab === "Settings" && "Settings"}
+          {activeTab === "Activity" && "Activity"}
+        </Row>
+      </div>
     </>
   )
 }

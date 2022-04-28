@@ -36,49 +36,51 @@
   }
 }
 .safe-tabs-container {
-  margin: 0.25em auto;
-  @media (min-width: 576px) {
-    ul.tabs {
-      width: 25em !important;
-      margin: 0.1em 0 !important;
-      li.ant-menu-item {
-        margin: 0 0.5em !important;
-        display: flex;
-        justify-content: flex-start;
+  .safe-tabs-header-container {
+    margin: 0.25em auto;
+    @media (min-width: 576px) {
+      ul.tabs {
+        width: fit-content !important;
+        margin: 0.1em 0 !important;
+        li.ant-menu-item {
+          margin: 0 1.5em 0 0.5em !important;
+          display: flex;
+          justify-content: flex-start;
+        }
+      }
+      .ant-menu-horizontal:not(.ant-menu-dark) > .ant-menu-item:hover::after,
+      .ant-menu-horizontal:not(.ant-menu-dark) > .ant-menu-item-selected::after {
+        left: 0 !important;
+        right: 0 !important;
       }
     }
-    .ant-menu-horizontal:not(.ant-menu-dark) > .ant-menu-item:hover::after,
     .ant-menu-horizontal:not(.ant-menu-dark) > .ant-menu-item-selected::after {
-      left: 0 !important;
+      // border-bottom: 3px solid var(--color-primary) !important;
+      border-bottom: 3px solid #6b6c77 !important;
+    }
+    .ant-menu-horizontal:not(.ant-menu-dark) > .ant-menu-item:hover::after {
+      // border-bottom: 3px solid var(--color-primary) !important;
+      border-bottom: 3px solid #6b6c77 !important;
+      color: var(--bg-color) !important;
     }
   }
-  .ant-menu-horizontal:not(.ant-menu-dark) > .ant-menu-item-selected::after {
-    // border-bottom: 3px solid var(--color-primary) !important;
-    border-bottom: 3px solid #6b6c77 !important;
-  }
-  .ant-menu-horizontal:not(.ant-menu-dark) > .ant-menu-item:hover::after {
-    // border-bottom: 3px solid var(--color-primary) !important;
-    border-bottom: 3px solid #6b6c77 !important;
-    color: var(--bg-color) !important;
-  }
-}
-
-
-.safe-tabs-content-container {
-  padding: 0.5em;
-  padding-right: 3em;
-  .ant-spin-container,
-  .ant-spin-container::after {
-    background: red !important;
-  }
-  @media (max-width: 575px) {
-    button {
-      min-width: 48px;
-      min-height: 48px;
-      svg {
+  .safe-tabs-content-container {
+    padding: 0.5em;
+    padding-right: 3em;
+    .ant-spin-container,
+    .ant-spin-container::after {
+      background: red !important;
+    }
+    @media (max-width: 575px) {
+      button {
         min-width: 48px;
         min-height: 48px;
-        padding: 0.5em;
+        svg {
+          min-width: 48px;
+          min-height: 48px;
+          padding: 0.5em;
+          margin-right: 1em;
+        }
       }
     }
   }

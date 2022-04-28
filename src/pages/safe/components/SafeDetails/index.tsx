@@ -1,7 +1,8 @@
 import './style.scss';
-import { Button, Col, Row } from "antd"
+import { Button, Col, Collapse, Row } from "antd"
 import { IconArrowBack, IconApprove, IconReject, IconUser } from "../../../../Icons"
 import { ProposalResumeItem } from '../ProposalResumeItem';
+import { useState } from 'react';
 
 export const SafeDetailsView = (props: {
   isSafeDetails: boolean;
@@ -14,6 +15,52 @@ export const SafeDetailsView = (props: {
   const hideDetailsHandler = () => {
     // Sends the value to the parent component "SafeView"
     onDataToSafeView();
+  };
+
+  const { Panel } = Collapse;
+
+  function callback(key: any) {}
+
+  const renderInstructions = (
+    <div className="w-100">
+      <Collapse
+        expandIconPosition="right"
+        accordion={true}
+        onChange={callback}>
+        {proposalSelected.instructions.map((instruction: any) => {
+
+          const header =  <Col className="instruction-header">
+                            <div className="circle-background">{instruction.id}</div>
+                            <div className="instruction-header-text">
+                              <div className="">{instruction.title}</div>
+                              <span className="info-label">{instruction.description}</span>
+                            </div>
+                          </Col>;
+
+          return (
+            <Panel header={header} key={instruction.id}>
+              <div className="d-flex flex-column">
+                <span>Name: {instruction.name}</span>
+                <span>Sender: {instruction.sender}</span>
+                <span>Recipient: {instruction.recipient}</span>
+                <span>Amount: {instruction.amount}</span>
+              </div>
+            </Panel>
+          )
+        })}
+      </Collapse>
+    </div>
+  );
+
+  // Tabs
+  const tabs = ["Instructions", "Activity"];
+
+  const [activeTab, setActiveTab] = useState(tabs[0]);
+
+  const onClickHandler = (event: any) => {
+    if (event.target.innerHTML !== activeTab) {
+      setActiveTab(event.target.innerHTML);
+    }
   };
 
   return (
@@ -66,8 +113,27 @@ export const SafeDetailsView = (props: {
               </div>
           </Button>
         </Col>
-        
       </Row>
+      <div className="safe-tabs-container">
+        <Row gutter={[8, 8]} className="safe-tabs-header-container mt-1">
+          <ul className="tabs ant-menu-overflow ant-menu-horizontal">
+            {tabs.map((tab, index) => (
+              <li 
+                key={index} 
+                className={`ant-menu-item ${activeTab === tab ? "active ant-menu-item-selected" : ""}`} 
+                tabIndex={0} 
+                onClick={onClickHandler}
+              >
+                <span className="ant-menu-title-content">{tab}</span>
+              </li>
+            ))}
+          </ul>
+        </Row>
+        <Row gutter={[8, 8]} className="safe-tabs-content-container safe-details-collapse">
+          {activeTab === "Instructions" && renderInstructions}
+          {activeTab === "Activity" && "Activity"}
+        </Row>
+      </div>
     </div>
   )
-}
+};

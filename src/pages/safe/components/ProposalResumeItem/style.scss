@@ -20,6 +20,7 @@
       display: flex;
       align-items: center;
       justify-content: flex-end;
+      margin-left: 1.6em;
       .thumbs-up,
       .thumbs-down {
         display: flex;
@@ -39,7 +40,7 @@
     .info-label {
       float: right;
       text-align: right;
-      margin-bottom: -0.5em !important;
+      // margin-bottom: -0.5em !important;
     }
   }
 }

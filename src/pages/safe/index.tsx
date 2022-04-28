@@ -3366,12 +3366,27 @@ export const SafeView = () => {
       needs: "2",
       description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ex elit, rutrum id dui eget, malesuada vestibulum felis. Nullam vehicula elementum mi, efficitur facilisis tortor commodo quis. Pellentesque venenatis dapibus magna. Sed in lorem ut magna aenean.",
       proposedBy: "Pavelsan MacKenzie",
-      instruction: {
-        name: "One time payment",
-        sender: "5tr9CDSgZRLYPGdcsm9PztaGSfJtX5CEmqDbEbvCTX3G",
-        recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
-        amount: "18274.94 USDC"
-      }
+      instructions: [
+        {
+          id: 1,
+          title: "Money Streaming Program v3: MSP",
+          description: "Program: Money Streaming Program [MSPas...mkdk]",
+          name: "One time payment",
+          sender: "5tr9CDSgZRLYPGdcsm9PztaGSfJtX5CEmqDbEbvCTX3G",
+          recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
+          amount: "18274.94 USDC"
+        },
+        {
+          id: 2,
+          title: "Memo Program v2: Memo",
+          description: "Program: Memo Program v2: Memo [Memos...mkdk",
+          name: "One time payment",
+          sender: "5tr9CDSgZRLYPGdcsm9PztaGSfJtX5CEmqDbEbvCTX3G",
+          recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
+          amount: "18274.94 USDC"
+        }
+
+      ]
     },
     {
       id: 2,
@@ -3383,12 +3398,17 @@ export const SafeView = () => {
       needs: "2",
       description: "Curabitur rhoncus tempor orci, et ornare eros faucibus vitae. Donec vitae eleifend orci. Vestibulum et ex ut ipsum semper ornare nec nec justo. Nunc vitae risus maximus, ornare orci a, tempus dui. Nulla in orci vitae augue dapibus volutpat vitae sed metus..",
       proposedBy: "Yansel Florian",
-      instruction: {
-        name: "One time payment",
-        sender: "5tr9CDSgZRLYPGdcsm9PztaGSfJtX5CEmqDbEbvCTX3G",
-        recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
-        amount: "18274.94 USDC"
-      }
+      instructions: [
+        {
+          id: 1,
+          title: "Memo Program v2: Memo",
+          description: "Program: Memo Program v2: Memo [Memos...mkdk]",
+          name: "One time payment",
+          sender: "5tr9CDSgZRLYPGdcsm9PztaGSfJtX5CEmqDbEbvCTX3G",
+          recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
+          amount: "18274.94 USDC"
+        }
+      ]
     },
     {
       id: 3,
@@ -3400,12 +3420,17 @@ export const SafeView = () => {
       needs: "2",
       description: "Quisque velit nunc, fringilla sed vehicula quis, pretium ut libero. Quisque id nisl quis risus luctus vestibulum vitae quis lacus. Donec pharetra aliquam turpis et scelerisque. Etiam imperdiet non metus sit amet imperdiet. Nulla viverra luctus ante a quis.",
       proposedBy: "Michel Triana",
-      instruction: {
-        name: "One time payment",
-        sender: "5tr9CDSgZRLYPGdcsm9PztaGSfJtX5CEmqDbEbvCTX3G",
-        recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
-        amount: "18274.94 USDC"
-      }
+      instructions: [
+        {
+          id: 1,
+          title: "Money Streaming Program v3: MSP",
+          description: "Program: Money Streaming Program [MSPas...mkdk]",
+          name: "One time payment",
+          sender: "5tr9CDSgZRLYPGdcsm9PztaGSfJtX5CEmqDbEbvCTX3G",
+          recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
+          amount: "18274.94 USDC"
+        }
+      ]
     },
     {
       id: 4,
@@ -3417,12 +3442,27 @@ export const SafeView = () => {
       needs: "2",
       description: "Morbi vel elit quis ligula pellentesque rhoncus vitae in ex. Quisque consequat est ante, at sodales est facilisis ac. Sed imperdiet dignissim neque non interdum. Aliquam neque quam, consequat ut tempus a, aliquet a nunc. Nulla eu interdum neque. Ut lectus.",
       proposedBy: "Pavelsan MacKenzie",
-      instruction: {
-        name: "One time payment",
-        sender: "5tr9CDSgZRLYPGdcsm9PztaGSfJtX5CEmqDbEbvCTX3G",
-        recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
-        amount: "18274.94 USDC"
-      }
+      instructions: [
+        {
+          id: 1,
+          title: "Money Streaming Program v3: MSP",
+          description: "Program: Money Streaming Program [MSPas...mkdk]",
+          name: "One time payment",
+          sender: "5tr9CDSgZRLYPGdcsm9PztaGSfJtX5CEmqDbEbvCTX3G",
+          recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
+          amount: "18274.94 USDC"
+        },
+        {
+          id: 2,
+          title: "Memo Program v2: Memo",
+          description: "Program: Memo Program v2: Memo [Memos...mkdk]",
+          name: "One time payment",
+          sender: "5tr9CDSgZRLYPGdcsm9PztaGSfJtX5CEmqDbEbvCTX3G",
+          recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
+          amount: "18274.94 USDC"
+        }
+
+      ]
     },
     {
       id: 5,
@@ -3434,12 +3474,17 @@ export const SafeView = () => {
       needs: "2",
       description: "Maecenas varius non risus ac fermentum. Etiam placerat erat sit amet est auctor rhoncus. Mauris varius lobortis sapien, vel consectetur orci dignissim eget. Donec vestibulum nibh metus, in vehicula mi tristique non. Donec id congue lacus, at finibus fusce.",
       proposedBy: "Yansel Florian",
-      instruction: {
-        name: "One time payment",
-        sender: "5tr9CDSgZRLYPGdcsm9PztaGSfJtX5CEmqDbEbvCTX3G",
-        recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
-        amount: "18274.94 USDC"
-      }
+      instructions: [
+        {
+          id: 1,
+          title: "Money Streaming Program v3: MSP",
+          description: "Program: Money Streaming Program [MSPas...mkdk]",
+          name: "One time payment",
+          sender: "5tr9CDSgZRLYPGdcsm9PztaGSfJtX5CEmqDbEbvCTX3G",
+          recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
+          amount: "18274.94 USDC"
+        }
+      ]
     },
     {
       id: 6,
@@ -3451,12 +3496,17 @@ export const SafeView = () => {
       needs: "2",
       description: "Donec gravida cursus magna, ac molestie leo consectetur et. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Vivamus consequat nisi sed pretium bibendum. Aliquam eros tellus, aliquet vel risus non, finibus porta ante.",
       proposedBy: "Pavelsan MacKenzie",
-      instruction: {
-        name: "One time payment",
-        sender: "5tr9CDSgZRLYPGdcsm9PztaGSfJtX5CEmqDbEbvCTX3G",
-        recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
-        amount: "18274.94 USDC"
-      }
+      instructions: [
+        {
+          id: 1,
+          title: "Memo Program v2: Memo",
+          description: "Program: Memo Program v2: Memo [Memos...mkdk]",
+          name: "One time payment",
+          sender: "5tr9CDSgZRLYPGdcsm9PztaGSfJtX5CEmqDbEbvCTX3G",
+          recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
+          amount: "18274.94 USDC"
+        }
+      ]
     },
     {
       id: 7,
@@ -3468,12 +3518,17 @@ export const SafeView = () => {
       needs: "2",
       description: "Etiam vestibulum finibus augue, quis malesuada sapien eleifend ac. Curabitur tortor lorem, pretium sit amet maximus posuere, viverra in sem. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Curabitur et odio mi.",
       proposedBy: "Michel Triana",
-      instruction: {
-        name: "One time payment",
-        sender: "5tr9CDSgZRLYPGdcsm9PztaGSfJtX5CEmqDbEbvCTX3G",
-        recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
-        amount: "18274.94 USDC"
-      }
+      instructions: [
+        {
+          id: 1,
+          title: "Money Streaming Program v3: MSP",
+          description: "Program: Money Streaming Program [MSPas...mkdk]",
+          name: "One time payment",
+          sender: "5tr9CDSgZRLYPGdcsm9PztaGSfJtX5CEmqDbEbvCTX3G",
+          recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
+          amount: "18274.94 USDC"
+        }
+      ]
     },
     {
       id: 8,
@@ -3485,12 +3540,27 @@ export const SafeView = () => {
       needs: "2",
       description: "Maecenas blandit, massa sed mattis suscipit, neque libero malesuada felis, sed dignissim magna nisl ut ligula. In id hendrerit mi. Maecenas maximus posuere enim, ut feugiat tellus accumsan nec. Praesent feugiat urna consectetur gravida sollicitudin tortor.",
       proposedBy: "Pavelsan MacKenzie",
-      instruction: {
-        name: "One time payment",
-        sender: "5tr9CDSgZRLYPGdcsm9PztaGSfJtX5CEmqDbEbvCTX3G",
-        recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
-        amount: "18274.94 USDC"
-      }
+      instructions: [
+        {
+          id: 1,
+          title: "Money Streaming Program v3: MSP",
+          description: "Program: Money Streaming Program [MSPas...mkdk]",
+          name: "One time payment",
+          sender: "5tr9CDSgZRLYPGdcsm9PztaGSfJtX5CEmqDbEbvCTX3G",
+          recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
+          amount: "18274.94 USDC"
+        },
+        {
+          id: 2,
+          title: "Memo Program v2: Memo",
+          description: "Program: Memo Program v2: Memo [Memos...mkdk]",
+          name: "One time payment",
+          sender: "5tr9CDSgZRLYPGdcsm9PztaGSfJtX5CEmqDbEbvCTX3G",
+          recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
+          amount: "18274.94 USDC"
+        }
+
+      ]
     },
     {
       id: 9,
@@ -3502,12 +3572,17 @@ export const SafeView = () => {
       needs: "2",
       description: "Sed vitae dui hendrerit, consequat nunc vel, euismod nunc. Aliquam dictum felis quis urna luctus gravida. Nam dictum sed est id ultricies. Duis eu leo a metus condimentum viverra. Proin maximus nulla urna, non pellentesque ante ultrices sit amet. Cras vel.",
       proposedBy: "Yansel Florian",
-      instruction: {
-        name: "One time payment",
-        sender: "5tr9CDSgZRLYPGdcsm9PztaGSfJtX5CEmqDbEbvCTX3G",
-        recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
-        amount: "18274.94 USDC"
-      }
+      instructions: [
+        {
+          id: 1,
+          title: "Money Streaming Program v3: MSP",
+          description: "Program: Money Streaming Program [MSPas...mkdk]",
+          name: "One time payment",
+          sender: "5tr9CDSgZRLYPGdcsm9PztaGSfJtX5CEmqDbEbvCTX3G",
+          recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
+          amount: "18274.94 USDC"
+        }
+      ]
     },
     {
       id: 10,
@@ -3519,12 +3594,17 @@ export const SafeView = () => {
       needs: "2",
       description: "Sed efficitur fringilla justo, ut luctus odio consectetur vel. Aliquam erat volutpat. Proin ultricies tincidunt felis et dignissim. Curabitur maximus, mi sit amet congue maximus, felis neque facilisis sapien, eget ullamcorper arcu neque non lectus vivamus.",
       proposedBy: "Yamel Amador",
-      instruction: {
-        name: "One time payment",
-        sender: "5tr9CDSgZRLYPGdcsm9PztaGSfJtX5CEmqDbEbvCTX3G",
-        recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
-        amount: "18274.94 USDC"
-      }
+      instructions: [
+        {
+          id: 1,
+          title: "Memo Program v2: Memo",
+          description: "Program: Memo Program v2: Memo [Memos...mkdk]",
+          name: "One time payment",
+          sender: "5tr9CDSgZRLYPGdcsm9PztaGSfJtX5CEmqDbEbvCTX3G",
+          recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
+          amount: "18274.94 USDC"
+        }
+      ]
     },
     {
       id: 11,
@@ -3536,12 +3616,17 @@ export const SafeView = () => {
       needs: "2",
       description: "Ut faucibus luctus lacus in lacinia. Donec vitae orci tellus. Nunc efficitur aliquam euismod. Phasellus ornare metus in nunc fringilla vestibulum. Cras a facilisis risus. Integer vehicula eget metus vitae tristique. Duis accumsan blandit metus, quis nulla.",
       proposedBy: "Pavelsan MacKenzie",
-      instruction: {
-        name: "One time payment",
-        sender: "5tr9CDSgZRLYPGdcsm9PztaGSfJtX5CEmqDbEbvCTX3G",
-        recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
-        amount: "18274.94 USDC"
-      }
+      instructions: [
+        {
+          id: 1,
+          title: "Money Streaming Program v3: MSP",
+          description: "Program: Money Streaming Program [MSPas...mkdk]",
+          name: "One time payment",
+          sender: "5tr9CDSgZRLYPGdcsm9PztaGSfJtX5CEmqDbEbvCTX3G",
+          recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
+          amount: "18274.94 USDC"
+        }
+      ]
     },
     {
       id: 12,
@@ -3553,12 +3638,27 @@ export const SafeView = () => {
       needs: "2",
       description: "Suspendisse ornare massa lorem, vitae tempus ante imperdiet id. Duis nec mi augue. Donec non quam nibh. Praesent ornare lacus ligula, eu scelerisque odio elementum nec. In hac habitasse platea dictumst. Sed a libero arcu. Praesent finibus mollis efficitur.",
       proposedBy: "Yamel Amador",
-      instruction: {
-        name: "One time payment",
-        sender: "5tr9CDSgZRLYPGdcsm9PztaGSfJtX5CEmqDbEbvCTX3G",
-        recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
-        amount: "18274.94 USDC"
-      }
+      instructions: [
+        {
+          id: 1,
+          title: "Money Streaming Program v3: MSP",
+          description: "Program: Money Streaming Program [MSPas...mkdk]",
+          name: "One time payment",
+          sender: "5tr9CDSgZRLYPGdcsm9PztaGSfJtX5CEmqDbEbvCTX3G",
+          recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
+          amount: "18274.94 USDC"
+        },
+        {
+          id: 2,
+          title: "Memo Program v2: Memo",
+          description: "Program: Memo Program v2: Memo [Memos...mkdk]",
+          name: "One time payment",
+          sender: "5tr9CDSgZRLYPGdcsm9PztaGSfJtX5CEmqDbEbvCTX3G",
+          recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
+          amount: "18274.94 USDC"
+        }
+
+      ]
     },
     {
       id: 13,
@@ -3570,12 +3670,17 @@ export const SafeView = () => {
       needs: "2",
       description: "Curabitur rhoncus tempor orci, et ornare eros faucibus vitae. Donec vitae eleifend orci. Vestibulum et ex ut ipsum semper ornare nec nec justo. Nunc vitae risus maximus, ornare orci a, tempus dui. Nulla in orci vitae augue dapibus volutpat vitae sed metus.",
       proposedBy: "Michel Triana",
-      instruction: {
-        name: "One time payment",
-        sender: "5tr9CDSgZRLYPGdcsm9PztaGSfJtX5CEmqDbEbvCTX3G",
-        recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
-        amount: "18274.94 USDC"
-      }
+      instructions: [
+        {
+          id: 1,
+          title: "Money Streaming Program v3: MSP",
+          description: "Program: Money Streaming Program [MSPas...mkdk]",
+          name: "One time payment",
+          sender: "5tr9CDSgZRLYPGdcsm9PztaGSfJtX5CEmqDbEbvCTX3G",
+          recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
+          amount: "18274.94 USDC"
+        }
+      ]
     },
     {
       id: 15,
@@ -3587,12 +3692,26 @@ export const SafeView = () => {
       needs: "2",
       description: "Aenean vel sapien imperdiet, consequat orci ac, luctus velit. Donec suscipit sapien eros, nec fringilla nulla viverra eget. Maecenas leo enim, faucibus quis nisl eget, mollis porttitor mauris. Sed est nulla, congue quis blandit sit amet, maximus eu tortor.",
       proposedBy: "Pavelsan MacKenzie",
-      instruction: {
-        name: "One time payment",
-        sender: "5tr9CDSgZRLYPGdcsm9PztaGSfJtX5CEmqDbEbvCTX3G",
-        recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
-        amount: "18274.94 USDC"
-      }
+      instructions: [
+        {
+          id: 1,
+          title: "Money Streaming Program v3: MSP",
+          description: "Program: Money Streaming Program [MSPas...mkdk]",
+          name: "One time payment",
+          sender: "5tr9CDSgZRLYPGdcsm9PztaGSfJtX5CEmqDbEbvCTX3G",
+          recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
+          amount: "18274.94 USDC"
+        },
+        {
+          id: 2,
+          title: "Memo Program v2: Memo",
+          description: "Program: Memo Program v2: Memo [Memos...mkdk]",
+          name: "One time payment",
+          sender: "5tr9CDSgZRLYPGdcsm9PztaGSfJtX5CEmqDbEbvCTX3G",
+          recipient: "3PdEyhrV3gaUj4ffwjKGXBLo42jF2CQCCBoXenwCRWff",
+          amount: "18274.94 USDC"
+        }
+      ]
     },
   ];
 
@@ -3601,10 +3720,7 @@ export const SafeView = () => {
 
   const goToDetailsHandler = (selectedProposal: any) => {
     setIsSafeDetails(true);
-    setProposalSelected(selectedProposal);
-
-    console.log("selected proposal", selectedProposal);
-    
+    setProposalSelected(selectedProposal);    
   }
 
   const returnFromDetailsHandler = () => {
