@@ -1280,7 +1280,7 @@ footer.ant-layout-footer {
     @media (min-width: 576px) and (max-width: 767.98px) {
       animation: floatText 15s infinite linear;
     }
-    @media (min-width: 768px) and (max-width: 1199.98) {
+    @media (min-width: 768px) and (max-width: 1199.98px) {
       animation: floatText 20s infinite linear;
     }
     @media (min-width: 1200px) {
@@ -4653,12 +4653,12 @@ main section {
   @media (min-width: 768px) {
     height: calc(100% - 20px);
     max-height: 78vh;
-    min-height: 540px;
+    min-height: 600px;
     .meanfi-two-panel-left,
     .meanfi-two-panel-right {
       height: auto;
       max-height: calc(100% - 20px);
-      min-height: 450px;
+      min-height: 600px;
       display: flex;
       position: relative;
       flex-direction: column;

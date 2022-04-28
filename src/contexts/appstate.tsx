@@ -1288,7 +1288,8 @@ const AppStateProvider: React.FC = ({ children }) => {
       MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(connectionConfig.cluster) && PINNED_TOKENS.includes(t.symbol))
         .forEach(item => list.push(Object.assign({}, item, { isMeanSupportedToken: true })));
       // Save pinned tokens' list
-      updatePinnedTokens(list);
+      const pinned = JSON.parse(JSON.stringify(list)) as UserTokenAccount[];
+      updatePinnedTokens(pinned);
       // Add non-pinned tokens from the MeanFi list
       MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(connectionConfig.cluster) && !PINNED_TOKENS.includes(t.symbol))
         .forEach(item => list.push(item));

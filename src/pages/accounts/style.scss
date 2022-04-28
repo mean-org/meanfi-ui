@@ -22,7 +22,12 @@
                 min-height: 100px;
 
                 &:not(.empty) {
-                    max-height: calc(58vh - 60px) !important;
+                    @media (min-width: 768px) and (max-width: 1199.98px) {
+                        max-height: calc(58vh - 120px) !important;
+                    }
+                    @media (min-width: 1200px) {
+                        max-height: calc(58vh - 60px) !important;
+                    }
                 }
             }
         }
