@@ -25,13 +25,12 @@ import { Identicon } from '../../components/Identicon';
 import {
   fetchAccountTokens,
   findATokenAddress,
-  formatThousands,
   getAmountFromLamports,
   getTokenAmountAndSymbolByTokenAddress,
   shortenAddress
 } from '../../utils/utils';
 import { Button, Col, Dropdown, Empty, Menu, Result, Row, Space, Spin, Switch, Tooltip } from 'antd';
-import { consoleOut, copyText, friendlyDisplayDecimalPlaces, isValidAddress, kFormatter, toUsCurrency } from '../../utils/ui';
+import { consoleOut, copyText, isValidAddress, kFormatter, toUsCurrency } from '../../utils/ui';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import {
   SOLANA_WALLET_GUIDE,
@@ -1164,14 +1163,8 @@ export const AccountsNewView = () => {
                   <span className="rate-amount">--</span>
                 ) : (
                   <>
-                    <div className="rate-amount">$
-                      {
-                        formatThousands(
-                          Math.abs(streamsSummary.totalNet),
-                          friendlyDisplayDecimalPlaces(streamsSummary.totalNet),
-                          friendlyDisplayDecimalPlaces(streamsSummary.totalNet)
-                        )
-                      }
+                    <div className="rate-amount">
+                      {toUsCurrency(Math.abs(streamsSummary.totalNet))}
                     </div>
                     <div className="interval">{t('streams.streaming-balance')}</div>
                   </>
@@ -1264,13 +1257,9 @@ export const AccountsNewView = () => {
     <>
       {accountTokens && accountTokens.length ? (
         <>
-          {/* Render mean supported tokens */}
+          {/* Render mean pinned tokens */}
           {(meanPinnedTokens && meanPinnedTokens.length > 0) && (
             meanPinnedTokens.map((asset, index) => renderAsset(asset, index))
-          )}
-          {/* Render divider if there are extra tokens */}
-          {(accountTokens.length > meanPinnedTokens.length) && (
-            <div key="separator2" className="pinned-token-separator"></div>
           )}
           {/* Render extra user tokens */}
           {(extraUserTokensSorted && extraUserTokensSorted.length > 0) && (
