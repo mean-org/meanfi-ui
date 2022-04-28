@@ -98,6 +98,7 @@
     "react-router-dom": "^6.0",
     "react-share": "^4.4.0",
     "recharts": "^2.1.8",
+    "tweetnacl": "^1.0.3",
     "web-vitals": "^2.1.0"
   },
   "devDependencies": {
