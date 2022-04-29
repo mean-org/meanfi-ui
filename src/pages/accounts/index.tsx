@@ -1412,7 +1412,7 @@ export const AccountsNewView = () => {
             className="thin-stroke"
             onClick={onSendAsset}>
             <SendOutlined />
-            <span className="mx-1">Send</span>
+            <span className="ml-1">Send</span>
           </Button>
           <Button
             type="default"
@@ -1421,7 +1421,7 @@ export const AccountsNewView = () => {
             className="thin-stroke"
             onClick={showReceiveSplOrSolModal}>
             <QrcodeOutlined />
-            <span className="mx-1">Receive</span>
+            <span className="ml-1">Receive</span>
           </Button>
           <Button
             type="default"
@@ -1430,7 +1430,7 @@ export const AccountsNewView = () => {
             className="thin-stroke"
             onClick={onExchangeAsset}>
             <SwapOutlined />
-            <span className="mx-1">Exchange</span>
+            <span className="ml-1">Exchange</span>
           </Button>
           <Button
             type="default"
@@ -1439,13 +1439,13 @@ export const AccountsNewView = () => {
             className="thin-stroke"
             onClick={handleGoToInvestClick}>
             <BarChartOutlined />
-            <span className="mx-1">Invest</span>
+            <span className="ml-1">Invest</span>
           </Button>
         </Space>
         <Space className="right" size="small">
-          <span className="flat-button medium primary" onClick={showDepositOptionsModal}>
+          <span className="flat-button medium" onClick={showDepositOptionsModal}>
             <IconShoppingCart className="mean-svg-icons"/>
-            <span className="mx-1">Buy</span>
+            <span className="ml-1">Buy</span>
           </span>
           <Dropdown overlay={userAssetOptions} placement="bottomRight" trigger={["click"]}>
             <span className="icon-button-container">
@@ -1453,7 +1453,6 @@ export const AccountsNewView = () => {
                 type="default"
                 shape="circle"
                 size="middle"
-                className="fg-primary-highlight"
                 icon={<IconVerticalEllipsis className="mean-svg-icons"/>}
                 onClick={(e) => e.preventDefault()}
               />

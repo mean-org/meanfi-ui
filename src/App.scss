@@ -675,7 +675,7 @@ footer.ant-layout-footer {
   &.medium {
     font-weight: normal;
     height: 32px;
-    padding: 0px 6px;
+    padding: 0px 8px;
   }
   &.stroked {
     border-style: solid;
@@ -772,7 +772,7 @@ footer.ant-layout-footer {
 }
 .ant-btn.ant-btn-default.ant-btn-round {
   background-color: inherit;
-  color: var(--color-primary-highlight);
+  color: var(--color-dark);
   height: var(--custom-control-height);
   border-color: var(--color-primary-highlight);
   border-radius: var(--custom-border-radius);
@@ -791,7 +791,7 @@ footer.ant-layout-footer {
   &:focus,
   &:active {
     background-color: var(--color-component-background);
-    color: var(--color-primary-highlight);
+    color: var(--color-dark);
     border-color: var(--color-primary-highlight);
   }
   &:disabled,
