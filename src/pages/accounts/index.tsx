@@ -66,7 +66,8 @@ import { consoleOut, copyText, isValidAddress, kFormatter, toUsCurrency } from '
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const QRCode = require('qrcode.react');
-type CategoryOption = "networth" | "user-account" | "other-assets";
+export type CategoryOption = "networth" | "user-account" | "other-assets";
+export type OtherAssetsOption = "msp-streams" | "msp-treasuries" | "orca" | "solend" | "friktion" | undefined;
 
 export const AccountsNewView = () => {
   const location = useLocation();
@@ -125,11 +126,16 @@ export const AccountsNewView = () => {
   const [selectedTokenMergeGroup, setSelectedTokenMergeGroup] = useState<AccountTokenParsedInfo[]>();
 
   const [refreshingBalance, setRefreshingBalance] = useState(false);
-
   const [selectedCategory, setSelectedCategory] = useState<CategoryOption>("user-account");
+  const [selectedOtherAssetsOption, setSelectedOtherAssetsOption] = useState<OtherAssetsOption>(undefined);
   const [totalTokensHolded, setTotalTokensHolded] = useState(0);
   const [totalTokenAccountsValue, setTotalTokenAccountsValue] = useState(0);
   const [netWorth, setNetWorth] = useState(0);
+
+  // Url Query Params attendants
+  const [urlQueryAddress, setUrlQueryAddress] = useState('');
+  const [urlQueryCategory, setUrlQueryCategory] = useState('');
+  const [urlQueryAsset, setUrlQueryAsset] = useState('');
 
   // Flow control
   const [status, setStatus] = useState<FetchStatus>(FetchStatus.Iddle);
@@ -654,6 +660,89 @@ export const AccountsNewView = () => {
   // Data management //
   /////////////////////
 
+  /**
+   * URL scheme to redirect to /accounts page
+   * 
+   * /accounts?address={address}&cat={catId}&asset={assetId}
+   * 
+   * Navigate to /accounts with Net Worth selected
+   * /accounts?address=GFefRR6EASXvnphnJApp2PRH1wF1B5pJijKBZGFzq1x1&cat=networth
+   * Navigate to /accounts with my USDC asset selected
+   * /accounts?address=GFefRR6EASXvnphnJApp2PRH1wF1B5pJijKBZGFzq1x1&cat=user-assets&asset=USDC
+   * Navigate to /accounts with Treasuries summary selected
+   * /accounts?address=GFefRR6EASXvnphnJApp2PRH1wF1B5pJijKBZGFzq1x1&cat=other-assets&asset=msp-treasuries
+   * 
+   * cat [networth | user-assets | other-assets]
+   * asset (when cat=user-assets)  = [any token symbol]
+   * asset (when cat=other-assets) = [msp-streams | msp-treasuries | orca | solend | friktion]
+   */
+
+  // Enable deep-linking - Parse and save query params as needed
+  useEffect(() => {
+    if (!isFirstLoad) { return; }
+
+    const params = new URLSearchParams(location.search);
+    let address: string | null = null;
+    let asset: string | null = null;
+    let cat: string | null = null;
+
+    if (params.has('address')) {
+      address = params.get('address');
+      setUrlQueryAddress(address || '');
+      consoleOut('params.get("address") =', address, 'crimson');
+    }
+    if (params.has('cat')) {
+      cat = params.get('cat');
+      setUrlQueryCategory(cat || '');
+      consoleOut('params.get("cat") =', cat, 'crimson');
+    }
+    if (params.has('asset')) {
+      asset = params.get('asset');
+      setUrlQueryAsset(asset || '');
+      consoleOut('params.get("asset") =', asset, 'crimson');
+    }
+    if (address) {
+      setAccountAddress(address);
+      if (cat) {
+        switch (cat) {
+          case "networth":
+            setSelectedCategory("networth");
+            break;
+          case "user-account":
+            setSelectedCategory("user-account");
+            break;
+          case "other-assets":
+            setSelectedCategory("other-assets");
+            break;
+          default:
+            break;
+        }
+      }
+      if (asset && cat && (cat as CategoryOption) === "other-assets") {
+        switch (asset as OtherAssetsOption) {
+          case "msp-streams":
+            setSelectedOtherAssetsOption("msp-streams");
+            break;
+          case "msp-treasuries":
+            setSelectedOtherAssetsOption("msp-treasuries");
+            break;
+          case "orca":
+            setSelectedOtherAssetsOption("orca");
+            break;
+          case "solend":
+            setSelectedOtherAssetsOption("solend");
+            break;
+          case "friktion":
+            setSelectedOtherAssetsOption("friktion");
+            break;
+          default:
+            setSelectedOtherAssetsOption(undefined);
+            break;
+        }
+      }
+    }
+  }, [isFirstLoad, location.search, setAccountAddress]);
+
   // Load streams on entering /accounts
   useEffect(() => {
     if (!isFirstLoad) { return; }
@@ -1160,14 +1249,6 @@ export const AccountsNewView = () => {
   // Rendering //
   ///////////////
 
-  /**
-   * /accounts?cat=networth
-   * /accounts?cat=user-account&asset=Ss1dd5HsdsdSx2P
-   *    autoselect asset or pick from url
-   * /accounts?cat=other-assets&project=msp
-   *    project/protocol identifier (msp/orca/solend/friktion)
-   */
-
   const renderNetworth = () => {
     return (
       <div className={`networth-list-item flex-fixed-right no-pointer ${selectedCategory === "networth" ? 'selected' : ''}`} onClick={() => {
@@ -1184,60 +1265,55 @@ export const AccountsNewView = () => {
 
   const renderMoneyStreamsSummary = (
     <>
-      {/* Render Money Streams item if they exist and wallet is connected */}
-      {publicKey && (
-        <>
-          <Link to="/accounts/streams">
-            <div key="streams" className={`transaction-list-row ${selectedCategory === "other-assets" ? 'selected' : ''}`} onClick={() => {
-              setSelectedCategory("other-assets");
-              setSelectedAsset(undefined);
-            }}>
-              <div className="icon-cell">
-                {loadingStreams ? (
-                  <div className="token-icon animate-border-loading">
-                    <div className="streams-count simplelink" onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }}>
-                      <span className="font-bold text-shadow"><SyncOutlined spin /></span>
-                    </div>
-                  </div>
-                ) : (
-                  <div className={streamsSummary.totalNet !== 0 ? 'token-icon animate-border' : 'token-icon'}>
-                    <div className="streams-count simplelink" onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        refreshStreamList();
-                      }}>
-                      <span className="font-size-75 font-bold text-shadow">{kFormatter(streamsSummary.totalAmount) || 0}</span>
-                    </div>
-                  </div>
-                )}
+      <Link to="/accounts/streams">
+        <div key="streams" onClick={() => {
+          setSelectedCategory("other-assets");
+          setSelectedAsset(undefined);
+        }} className={`transaction-list-row ${selectedCategory === "other-assets" && selectedOtherAssetsOption === "msp-streams" ? 'selected' : ''}`}>
+          <div className="icon-cell">
+            {loadingStreams ? (
+              <div className="token-icon animate-border-loading">
+                <div className="streams-count simplelink" onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}>
+                  <span className="font-bold text-shadow"><SyncOutlined spin /></span>
+                </div>
               </div>
-              <div className="description-cell">
-                <div className="title">{t('account-area.money-streams')}</div>
-                {streamsSummary.totalAmount === 0 ? (
-                  <div className="subtitle">{t('account-area.no-money-streams')}</div>
-                ) : (
-                  <div className="subtitle">{streamsSummary.incomingAmount} {t('streams.stream-stats-incoming')}, {streamsSummary.outgoingAmount} {t('streams.stream-stats-outgoing')}</div>
-                )}
+            ) : (
+              <div className={streamsSummary.totalNet !== 0 ? 'token-icon animate-border' : 'token-icon'}>
+                <div className="streams-count simplelink" onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    refreshStreamList();
+                  }}>
+                  <span className="font-size-75 font-bold text-shadow">{kFormatter(streamsSummary.totalAmount) || 0}</span>
+                </div>
               </div>
-              <div className="rate-cell">
-                {streamsSummary.totalAmount === 0 ? (
-                  <span className="rate-amount">--</span>
-                ) : (
-                  <>
-                    <div className="rate-amount">
-                      {toUsCurrency(Math.abs(streamsSummary.totalNet))}
-                    </div>
-                    <div className="interval">{t('streams.streaming-balance')}</div>
-                  </>
-                )}
-              </div>
-            </div>
-          </Link>
-        </>
-      )}
+            )}
+          </div>
+          <div className="description-cell">
+            <div className="title">{t('account-area.money-streams')}</div>
+            {streamsSummary.totalAmount === 0 ? (
+              <div className="subtitle">{t('account-area.no-money-streams')}</div>
+            ) : (
+              <div className="subtitle">{streamsSummary.incomingAmount} {t('streams.stream-stats-incoming')}, {streamsSummary.outgoingAmount} {t('streams.stream-stats-outgoing')}</div>
+            )}
+          </div>
+          <div className="rate-cell">
+            {streamsSummary.totalAmount === 0 ? (
+              <span className="rate-amount">--</span>
+            ) : (
+              <>
+                <div className="rate-amount">
+                  {toUsCurrency(Math.abs(streamsSummary.totalNet))}
+                </div>
+                <div className="interval">{t('streams.streaming-balance')}</div>
+              </>
+            )}
+          </div>
+        </div>
+      </Link>
     </>
   );
 
@@ -1736,6 +1812,7 @@ export const AccountsNewView = () => {
                         <div className="asset-category flex-column">
                           {renderAssetsList}
                         </div>
+                        {/* TODO: Make this part more dynamic */}
                         <div className="asset-category-title flex-fixed-right">
                           <div className="title">Other assets (1)</div>
                           <div className="amount">{toUsCurrency(streamsSummary.totalNet)}</div>
