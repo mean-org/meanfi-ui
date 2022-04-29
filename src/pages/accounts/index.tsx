@@ -124,6 +124,8 @@ export const AccountsNewView = () => {
   const [tokenAccountGroups, setTokenAccountGroups] = useState<Map<string, AccountTokenParsedInfo[]>>();
   const [selectedTokenMergeGroup, setSelectedTokenMergeGroup] = useState<AccountTokenParsedInfo[]>();
 
+  const [refreshingBalance, setRefreshingBalance] = useState(false);
+
   const [selectedCategory, setSelectedCategory] = useState<CategoryOption>("user-account");
   const [totalTokensHolded, setTotalTokensHolded] = useState(0);
   const [totalTokenAccountsValue, setTotalTokenAccountsValue] = useState(0);
@@ -164,7 +166,6 @@ export const AccountsNewView = () => {
 
   const msp = useMemo(() => {
     if (publicKey) {
-      console.log('New MSP from /acounts');
       return new MSP(
         endpoint,
         streamV2ProgramAddress,
@@ -216,46 +217,6 @@ export const AccountsNewView = () => {
     });
   }, [setTransactionStatus]);
 
-  const startSwitch = useCallback(() => {
-    setStatus(FetchStatus.Fetching);
-    setLoadingTransactions(false);
-    setShouldLoadTransactions(true);
-  }, [])
-
-  const reloadSwitch = useCallback(() => {
-    setShouldLoadTokens(true);
-    setSolAccountItems(0);
-    setTransactions(undefined);
-    startSwitch();
-  }, [
-    startSwitch,
-    setTransactions,
-    setShouldLoadTokens
-  ])
-
-  const selectAsset = useCallback((
-    asset: UserTokenAccount,
-    clearTxList: boolean = true,
-    openDetailsPanel: boolean = false
-  ) => {
-    setStatus(FetchStatus.Fetching);
-    if (clearTxList) {
-      setSolAccountItems(0);
-      setTransactions(undefined);
-    }
-    setSelectedAsset(asset);
-    if (openDetailsPanel) {
-      setDtailsPanelOpen(true);
-    }
-    setTimeout(() => {
-      startSwitch();
-    }, 10);
-  }, [
-    startSwitch,
-    setTransactions,
-    setSelectedAsset,
-    setDtailsPanelOpen,
-  ])
 
   const onAddAccountAddress = useCallback(() => {
     setAccountAddress(accountAddressInput);
@@ -425,6 +386,111 @@ export const AccountsNewView = () => {
     const ata = await findATokenAddress(new PublicKey(accountAddress), new PublicKey(token.address));
     return ata && token.publicAddress && ata.toBase58() === token.publicAddress ? true : false;
   }, [accountAddress]);
+
+  const refreshAssetBalance = useCallback(() => {
+    if (!connection || !accountAddress || !selectedAsset || refreshingBalance) { return; }
+
+    setRefreshingBalance(true);
+
+    const pinnedTokensCopy = JSON.parse(JSON.stringify(meanPinnedTokens)) as UserTokenAccount[];
+    const extraUserTokensCopy = JSON.parse(JSON.stringify(extraUserTokensSorted)) as UserTokenAccount[];
+
+    if (isSelectedAssetNativeAccount()) {
+      const pk = new PublicKey(accountAddress);
+      // Fetch SOL balance.
+      connection.getBalance(pk)
+        .then(solBalance => {
+          pinnedTokensCopy[0].balance = solBalance / LAMPORTS_PER_SOL;
+          pinnedTokensCopy[0].valueInUsd = (solBalance / LAMPORTS_PER_SOL) * getPricePerToken(pinnedTokensCopy[0]);
+          consoleOut('solBalance:', solBalance / LAMPORTS_PER_SOL, 'blue');
+          setMeanPinnedTokens(pinnedTokensCopy);
+        })
+        .catch(error => {
+          console.error(error);
+        })
+        .finally(() => setRefreshingBalance(false));
+    } else if (selectedAsset.publicAddress) {
+      let itemIndex = -1;
+      const pk = new PublicKey(selectedAsset.publicAddress);
+      // Fetch token account balance.
+      connection.getTokenAccountBalance(pk)
+        .then(tokenAmount => {
+          const balance = tokenAmount.value.uiAmount;
+          consoleOut('balance:', balance, 'blue');
+          const valueInUSD = (balance || 0) * getPricePerToken(selectedAsset);
+          consoleOut('valueInUSD:', valueInUSD, 'blue');
+          // Find the token in both lists and update it if found
+          itemIndex = pinnedTokensCopy.findIndex(t => t.publicAddress === selectedAsset.publicAddress);
+          if (itemIndex !== -1) {
+            pinnedTokensCopy[itemIndex].balance = (balance || 0);
+            pinnedTokensCopy[itemIndex].valueInUsd = valueInUSD;
+            setMeanPinnedTokens(pinnedTokensCopy);
+            return;
+          } else {
+            itemIndex = extraUserTokensCopy.findIndex(t => t.publicAddress === selectedAsset.publicAddress);
+            if (itemIndex !== -1) {
+              extraUserTokensCopy[itemIndex].balance = (balance || 0);
+              extraUserTokensCopy[itemIndex].valueInUsd = valueInUSD;
+              setExtraUserTokensSorted(extraUserTokensCopy);
+            }
+          }
+        })
+        .catch(error => {
+          console.error(error);
+        })
+        .finally(() => setRefreshingBalance(false));
+    }
+  }, [
+    connection,
+    selectedAsset,
+    accountAddress,
+    meanPinnedTokens,
+    refreshingBalance,
+    extraUserTokensSorted,
+    isSelectedAssetNativeAccount,
+    getPricePerToken,
+  ]);
+
+  const startSwitch = useCallback(() => {
+    setStatus(FetchStatus.Fetching);
+    setLoadingTransactions(false);
+    setShouldLoadTransactions(true);
+  }, [])
+
+  const reloadSwitch = useCallback(() => {
+    refreshAssetBalance();
+    setSolAccountItems(0);
+    setTransactions(undefined);
+    startSwitch();
+  }, [
+    startSwitch,
+    setTransactions,
+    refreshAssetBalance,
+  ]);
+
+  const selectAsset = useCallback((
+    asset: UserTokenAccount,
+    clearTxList: boolean = true,
+    openDetailsPanel: boolean = false
+  ) => {
+    setStatus(FetchStatus.Fetching);
+    if (clearTxList) {
+      setSolAccountItems(0);
+      setTransactions(undefined);
+    }
+    setSelectedAsset(asset);
+    if (openDetailsPanel) {
+      setDtailsPanelOpen(true);
+    }
+    setTimeout(() => {
+      startSwitch();
+    }, 10);
+  }, [
+    startSwitch,
+    setTransactions,
+    setSelectedAsset,
+    setDtailsPanelOpen,
+  ])
 
   const refreshStreamSummary = useCallback(async () => {
 
@@ -1255,7 +1321,7 @@ export const AccountsNewView = () => {
 
   const renderAssetsList = (
     <>
-      {accountTokens && accountTokens.length ? (
+      {(meanPinnedTokens && meanPinnedTokens.length > 0) || (extraUserTokensSorted && extraUserTokensSorted.length > 0) ? (
         <>
           {/* Render mean pinned tokens */}
           {(meanPinnedTokens && meanPinnedTokens.length > 0) && (
@@ -1387,14 +1453,13 @@ export const AccountsNewView = () => {
     } else return null;
   };
 
-
   const userAssetOptions = (
     <Menu>
       <Menu.Item key="1" onClick={reloadSwitch}>
         <span className="menu-item-text">Refresh asset</span>
       </Menu.Item>
-      {/* <Menu.Item key="2" onClick={() => {}}>
-        <span className="menu-item-text">Menu 2</span>
+      {/* <Menu.Item key="2" onClick={refreshAssetBalance}>
+        <span className="menu-item-text">Refresh balances</span>
       </Menu.Item> */}
     </Menu>
   );
