@@ -9,12 +9,13 @@ import {
   FIVE_MINUTES_REFRESH_TIMEOUT,
   TRANSACTIONS_PER_PAGE,
   BETA_TESTING_PROGRAM_WHITELIST,
-  HALF_MINUTE_REFRESH_TIMEOUT,
+  WRAPPED_SOL_MINT_ADDRESS,
   FORTY_SECONDS_REFRESH_TIMEOUT,
   FIVETY_SECONDS_REFRESH_TIMEOUT,
   SEVENTY_SECONDS_REFRESH_TIMEOUT,
   PERFORMANCE_THRESHOLD,
-  ONE_MINUTE_REFRESH_TIMEOUT
+  ONE_MINUTE_REFRESH_TIMEOUT,
+  HALF_MINUTE_REFRESH_TIMEOUT
 } from "../constants";
 import { ContractDefinition } from "../models/contract-definition";
 import { DdcaFrequencyOption } from "../models/ddca-models";
@@ -44,6 +45,7 @@ import { initialSummary, StreamsSummary } from "../models/streams";
 import { MSP, Stream } from "@mean-dao/msp";
 import { AccountDetails } from "../models";
 import moment from "moment";
+import { NATIVE_SOL_MINT } from "../utils/ids";
 import { openNotification } from "../components/Notifications";
 
 export interface TransactionStatusInfo {
@@ -857,7 +859,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   // Fetch coin prices
   const getCoinPrices = useCallback(async () => {
     try {
-      const prices = await getPrices();
+      let prices = await getPrices();
       /**
        * Returns the prices object when succeeds
        * or this object when fails { "success": "false", "msg": "error text" }
@@ -866,7 +868,13 @@ const AppStateProvider: React.FC = ({ children }) => {
         setCoinPrices(null);
         updateEffectiveRate(0);
       } else {
-        consoleOut("Coin prices:", prices, 'blue');
+        const wSolPrice = prices[WRAPPED_SOL_MINT_ADDRESS];
+        const nativeAddress = NATIVE_SOL_MINT.toBase58();
+        // Since Raydium price api v2 don't bring SOL price but it does for wSOL
+        // Lets add it with the native SOL address to the list
+        if (wSolPrice) {
+          prices[nativeAddress] = wSolPrice;
+        }
         setCoinPrices(prices);
       }
       setLoadingPrices(false);
@@ -900,7 +908,6 @@ const AppStateProvider: React.FC = ({ children }) => {
       }
     };
   }, [
-    coinPrices,
     shouldLoadCoinPrices,
     getCoinPrices
   ]);
@@ -908,11 +915,8 @@ const AppStateProvider: React.FC = ({ children }) => {
   // Update token price while list of prices change
   useEffect(() => {
     if (coinPrices && selectedToken) {
-      const tokenSymbol = selectedToken.symbol.toUpperCase();
-      const symbol = tokenSymbol[0] === 'W' ? tokenSymbol.slice(1) : tokenSymbol;
-      updateEffectiveRate(
-        coinPrices[symbol] ? coinPrices[symbol] : 0
-      );
+      const price = coinPrices[selectedToken.address] ? coinPrices[selectedToken.address] : 0;
+      updateEffectiveRate(price);
     }
   }, [coinPrices, selectedToken]);
 

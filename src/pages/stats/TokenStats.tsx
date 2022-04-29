@@ -9,7 +9,7 @@ import { Link } from 'react-router-dom';
 import { PriceGraph } from './PriceGraph';
 import CardStats from './components/CardStats';
 import { AppStateContext } from "../../contexts/appstate";
-import { useContext } from "react";
+import { useCallback, useContext } from "react";
 import { TokenInfo } from '@solana/spl-token-registry';
 import { formatThousands } from "../../utils/utils";
 import { openNotification } from "../../components/Notifications";
@@ -72,15 +72,14 @@ export const FirstCardsLayout = ({
     coinPrices,
   } = useContext(AppStateContext);
 
-  const getPricePerToken = (token: TokenInfo): number => {
-    const tokenSymbol = token.symbol.toUpperCase();
-    const symbol = tokenSymbol[0] === 'W' ? tokenSymbol.slice(1) : tokenSymbol;
+  const getPricePerToken = useCallback((token: TokenInfo): number => {
+    if (!token || !coinPrices) { return 0; }
 
-    return coinPrices && coinPrices[symbol]
-      ? coinPrices[symbol]
+    return coinPrices && coinPrices[token.address]
+      ? coinPrices[token.address]
       : 0;
-  }
-  
+  }, [coinPrices])
+
   // Returns an information or error notification each time the copy icon is clicked
   const onCopyText = (event: any) => { 
     if (event.currentTarget.name === "Address") {

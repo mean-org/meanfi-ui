@@ -156,12 +156,10 @@ export const StakeTabView = (props: {
   };
 
   const getPricePerToken = useCallback((token: TokenInfo): number => {
-    if (!token || !token.symbol) { return 0; }
-    const tokenSymbol = token.symbol.toUpperCase();
-    const symbol = tokenSymbol[0] === 'W' ? tokenSymbol.slice(1) : tokenSymbol;
+    if (!token || !coinPrices) { return 0; }
 
-    return coinPrices && coinPrices[symbol]
-      ? coinPrices[symbol]
+    return coinPrices && coinPrices[token.address]
+      ? coinPrices[token.address]
       : 0;
   }, [coinPrices])
 

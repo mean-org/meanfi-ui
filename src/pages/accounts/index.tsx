@@ -30,7 +30,6 @@ import {
   shortenAddress
 } from '../../utils/utils';
 import { Button, Col, Dropdown, Empty, Menu, Result, Row, Space, Spin, Switch, Tooltip } from 'antd';
-import { consoleOut, copyText, isValidAddress, kFormatter, toUsCurrency } from '../../utils/ui';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import {
   SOLANA_WALLET_GUIDE,
@@ -63,6 +62,7 @@ import { ReceiveSplOrSolModal } from '../../components/ReceiveSplOrSolModal';
 import { SendAssetModal } from '../../components/SendAssetModal';
 import { ExchangeAssetModal } from '../../components/ExchangeAssetModal';
 import { TransactionStatus } from '../../models/enums';
+import { consoleOut, copyText, isValidAddress, kFormatter, toUsCurrency } from '../../utils/ui';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const QRCode = require('qrcode.react');
@@ -362,12 +362,10 @@ export const AccountsNewView = () => {
   },[accountAddress]);
 
   const getPricePerToken = useCallback((token: UserTokenAccount): number => {
-    if (!token || !token.symbol) { return 0; }
-    const tokenSymbol = token.symbol.toUpperCase();
-    const symbol = tokenSymbol[0] === 'W' ? tokenSymbol.slice(1) : tokenSymbol;
+    if (!token || !coinPrices) { return 0; }
 
-    return coinPrices && coinPrices[symbol]
-      ? coinPrices[symbol]
+    return coinPrices && coinPrices[token.address]
+      ? coinPrices[token.address]
       : 0;
   }, [coinPrices])
 
@@ -1312,7 +1310,7 @@ export const AccountsNewView = () => {
             {toUsCurrency(asset.valueInUsd || 0)}
           </div>
           <div className="interval">
-            {(asset.balance || 0) > 0 ? getTokenAmountAndSymbolByTokenAddress(asset.balance || 0, asset.address, true) : '0'}
+              {(asset.balance || 0) > 0 ? getTokenAmountAndSymbolByTokenAddress(asset.balance || 0, asset.address, true) : '0'}
           </div>
         </div>
       </div>

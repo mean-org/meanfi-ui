@@ -27,6 +27,7 @@ export const UnstakeTabView = (props: {
   stakeClient: StakingClient;
   tokenBalance: number;
   selectedToken: TokenInfo | undefined;
+  unstakedToken: TokenInfo | undefined;
 }) => {
   const {
     coinPrices,
@@ -447,16 +448,25 @@ export const UnstakeTabView = (props: {
     t
   ]);
 
+  const getPricePerToken = useCallback((token: TokenInfo): number => {
+    if (!token || !coinPrices) { return 0; }
+
+    return coinPrices && coinPrices[token.address]
+      ? coinPrices[token.address]
+      : 0;
+  }, [coinPrices])
+
   // Keep MEAN price updated
   useEffect(() => {
 
-    if (coinPrices) {
-      const symbol = "MEAN";
-      const price = coinPrices && coinPrices[symbol] ? coinPrices[symbol] : 0;
+    if (coinPrices && props.unstakedToken) {
+      const price = getPricePerToken(props.unstakedToken);
+      consoleOut('meanPrice:', price, 'crimson');
+      console.log('coinPrices:', coinPrices);
       setMeanPrice(price);
     }
 
-  }, [coinPrices]);
+  }, [coinPrices, getPricePerToken, props.unstakedToken]);
 
   // Handler paste clipboard data
   const pasteHandler = useCallback((e: any) => {
