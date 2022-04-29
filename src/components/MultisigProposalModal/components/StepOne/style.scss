@@ -1,0 +1,39 @@
+.step-one-select-app {
+  padding: 0 !important;
+  margin: 0 !important;
+  .select-app {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    .select-app-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      .empty-background {
+        border-radius: 0.25em !important;
+        border: 1px solid #787980;
+        width: 80px !important;
+        height: 80px;
+        padding: 0.1em;
+        &:hover {
+          background-color: var(--color-secondary-alpha-05);
+        }
+      }
+      img {
+        border-radius: 0.25em !important;
+        border: 1px solid #787980;
+        padding: 0.1em;
+        &:hover {
+          background-color: var(--color-secondary-alpha-05);
+        }
+      }
+      span {
+        text-align: center;
+        width: 80px;
+        line-height: 1.2;
+        margin-top: 0.25em;
+      }
+    }
+  }
+}

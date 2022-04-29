@@ -10,16 +10,17 @@ export const ProposalResumeItem = (props: {
   rejected: number;
   status: string;
   needs?: number;
+  isSafeDetails: boolean;
 }) => {
-  const { title, expires, approved, rejected, status, needs } = props;
+  const { title, expires, approved, rejected, status, needs, isSafeDetails } = props;
   
   return (
     <>
-      <Row gutter={[8, 8]} className="proposal-resume-item-container">
+      <Row gutter={[8, 8]} className={`proposal-resume-item-container ${isSafeDetails ? "align-items-start" : ""}`}>
         <Col className="proposal-resume-left-container">
           <IconWallet className="mean-svg-icons" />
           <div className="proposal-resume-left-text">
-            <div className="proposal-title">{title}</div>
+            <div className={`proposal-title ${isSafeDetails ? "big-title" : ""}`}>{title}</div>
             <span className="info-label">
               {status === "active" ? (
                 `Expires in ${expires}`

@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import './style.scss';
 import { useNavigate } from "react-router-dom";
 
@@ -11,6 +11,7 @@ import { openNotification } from "../../../../components/Notifications";
 import { copyText } from "../../../../utils/ui";
 import { getSolanaExplorerClusterParam } from "../../../../contexts/connection";
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "../../../../constants";
+import { MultisigOwnersView } from "../../../../components/MultisigOwnersView";
 
 export const SafeInfoView = (props: {
   isSafeDetails: boolean;
@@ -18,8 +19,10 @@ export const SafeInfoView = (props: {
   proposals: any[];
   selectedMultisig?: any;
   onEditMultisigClick: any;
+  onNewProposalMultisigClick: any;
+  multisigVaults: any;
 }) => {
-  const { proposals, selectedMultisig, onEditMultisigClick } = props;
+  const { isSafeDetails, proposals, selectedMultisig, onEditMultisigClick, onNewProposalMultisigClick, multisigVaults } = props;
   
   const navigate = useNavigate();
   const { t } = useTranslation('common');
@@ -39,9 +42,18 @@ export const SafeInfoView = (props: {
     }
   },[t])
 
+  // Security
+  const renderSecurity = (
+    <>
+      <span>Security</span>
+      <MultisigOwnersView label="view" className="ml-1" participants={selectedMultisig.owners || []} />
+    </>
+  );
+  
+  // Deposit Address
   const renderDepositAddress = (
     <div className="d-flex align-items-start">
-      <div onClick={() => copyAddressToClipboard(selectedMultisig.authority)} className="simplelink">{shortenAddress(selectedMultisig.authority.toBase58(), 6)}</div>
+      <div onClick={() => copyAddressToClipboard(selectedMultisig.authority)} className="simplelink underline-on-hover">{shortenAddress(selectedMultisig.authority.toBase58(), 4)}</div>
       <span className="icon-button-container">
         <a
           target="_blank"
@@ -53,29 +65,49 @@ export const SafeInfoView = (props: {
     </div>
   );
 
+  // Safe Balance (show amount of assets)
+  const [assetsAmout, setAssetsAmount] = useState<string>();
+
+  useEffect(() => {
+    (selectedMultisig) && (
+      multisigVaults.length > 1 ? (
+        setAssetsAmount(`(${multisigVaults.length} assets)`)
+      ) : (
+        setAssetsAmount(`(${multisigVaults.length} asset)`)
+      )
+    )
+  }, [multisigVaults, selectedMultisig]);  
+
   const infoSafeData = [
     {
       name: "Safe Name",
-      value: selectedMultisig.label ? selectedMultisig.label : ""
+      value: selectedMultisig.label ? selectedMultisig.label : "--"
     },
     {
-      name: "Security",
-      value: "3/5 signatures"
+      name: renderSecurity,
+      value: `${selectedMultisig.threshold}/${selectedMultisig.owners.length} signatures`
     },
     {
-      name: "Safe Balance (13 assets)",
+      name: `Safe Balance ${assetsAmout}`,
       value: "$124,558.26"
     },
     {
       name: "Deposit address",
-      value: renderDepositAddress ? renderDepositAddress : ""
+      value: renderDepositAddress ? renderDepositAddress : "--"
     }
   ];
 
   // View assets
   const onGoToAccounts = () => {
-    navigate('/accounts');
+    navigate(`/accounts?cat=account&address=${selectedMultisig.authority.toBase58()}`);
   }
+
+  /**
+   * URL scheme to redirect to /accounts page
+   * /accounts?cat=networth&address=Ss1dd5HsdsdSx2P
+   * /accounts?cat=account&address=Ss1dd5HsdsdSx2P
+   * /accounts?cat=other-assets&project=msp&address=Ss1dd5HsdsdSx2P
+   */
 
   // Dropdown (three dots button)
   const menu = (
@@ -126,6 +158,7 @@ export const SafeInfoView = (props: {
                   approved={proposal.approved}
                   rejected={proposal.rejected}
                   status={proposal.status}
+                  isSafeDetails={isSafeDetails}
                 />
                 <Col>
                   <span className="icon-button-container">
@@ -142,6 +175,20 @@ export const SafeInfoView = (props: {
           )
         })
       )}
+    </>
+  );
+
+  // Settings
+  const renderSettings = (
+    <>
+      <Row gutter={[8, 8]}>
+        <Col xs={12} sm={12} md={12} lg={12} className="text-right pr-1">Minimum cool-off period:</Col>
+        <Col xs={12} sm={12} md={12} lg={12} className="text-left pl-1">24 hours</Col>
+      </Row>
+      <Row gutter={[8, 8]}>
+        <Col xs={12} sm={12} md={12} lg={12} className="text-right pr-1">Single signer balance threshold:</Col>
+        <Col xs={12} sm={12} md={12} lg={12} className="text-left pl-1">$100.00</Col>
+      </Row>
     </>
   );
 
@@ -178,7 +225,7 @@ export const SafeInfoView = (props: {
             type="ghost"
             size="small"
             className="thin-stroke"
-            onClick={() => {}}>
+            onClick={onNewProposalMultisigClick}>
               <div className="btn-content">
                 <IconAdd className="mean-svg-icons" />
                 New Proposal
@@ -211,7 +258,7 @@ export const SafeInfoView = (props: {
         </Row>
         <Row gutter={[8, 8]} className="safe-tabs-content-container">
           {activeTab === "Proposals" && renderListOfProposals}
-          {activeTab === "Settings" && "Settings"}
+          {activeTab === "Settings" && renderSettings}
           {activeTab === "Activity" && "Activity"}
         </Row>
       </div>

@@ -10,7 +10,7 @@ export const SafeDetailsView = (props: {
   onDataToSafeView: any;
   proposalSelected: any
 }) => {
-  const { onDataToSafeView, proposalSelected } = props;
+  const { isSafeDetails, onDataToSafeView, proposalSelected } = props;
 
   // When back button is clicked, goes to Safe Info
   const hideDetailsHandler = () => {
@@ -40,12 +40,48 @@ export const SafeDetailsView = (props: {
 
           return (
             <Panel header={header} key={instruction.id}>
-              <div className="d-flex flex-column">
-                <span>Name: {instruction.name}</span>
-                <span>Sender: {instruction.sender}</span>
-                <span>Recipient: {instruction.recipient}</span>
-                <span>Amount: {instruction.amount}</span>
-              </div>
+              <Row gutter={[8, 8]} className="mb-1">
+                {instruction.name && (
+                  <>
+                    <Col xs={6} sm={6} md={4} lg={4} className="pr-1">
+                      <span className="info-label">Name:</span>
+                    </Col>
+                    <Col xs={18} sm={18} md={20} lg={20} className="pl-1">
+                      <span>{instruction.name}</span>
+                    </Col>
+                  </>
+                )}
+                {instruction.sender && (
+                  <>
+                    <Col xs={6} sm={6} md={4} lg={4} className="pr-1">
+                      <span className="info-label">Sender:</span>
+                    </Col>
+                    <Col xs={18} sm={18} md={20} lg={20} className="pl-1">
+                      <span>{instruction.sender}</span>
+                    </Col>
+                  </>
+                )}
+                {instruction.recipient && (
+                  <>
+                    <Col xs={6} sm={6} md={4} lg={4} className="pr-1">
+                      <span className="info-label">Recipient:</span>
+                    </Col>
+                    <Col xs={18} sm={18} md={20} lg={20} className="pl-1">
+                      <span>{instruction.recipient}</span>
+                    </Col>
+                  </>
+                )}
+                {instruction.amount && (
+                  <>
+                    <Col xs={6} sm={6} md={4} lg={4} className="pr-1">
+                      <span className="info-label">Amount:</span>
+                    </Col>
+                    <Col xs={18} sm={18} md={20} lg={20} className="pl-1">
+                      <span>{instruction.amount}</span>
+                    </Col>
+                  </>
+                )}
+              </Row>
             </Panel>
           )
         })}
@@ -90,6 +126,7 @@ export const SafeDetailsView = (props: {
         rejected={proposalSelected.rejected}
         status={proposalSelected.status}
         needs={proposalSelected.needs}
+        isSafeDetails={isSafeDetails}
       />
       <Row className="safe-details-description">
         {proposalSelected.description}
