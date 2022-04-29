@@ -1,11 +1,13 @@
 import { appConfig } from "..";
-import { meanFiHeaders } from "../constants";
+import { meanFiHeaders, MEANFI_PRICE_API_URL } from "../constants";
 import { Allocation } from "../models/common-types";
 import { getDefaultRpc, RpcConfig } from "../models/connections-hq";
 import { WhitelistClaimType } from "../models/enums";
 
-export const getPrices = async (path?: string): Promise<any> => {
-  return fetch(path || "https://api.raydium.io/coin/price", {
+declare interface RequestInit { }
+
+export const getPrices = async (): Promise<any> => {
+  return fetch(MEANFI_PRICE_API_URL, {
     method: "GET",
   })
     .then((response) => response.json())
@@ -45,26 +47,28 @@ export const getRpcApiEndpoint = async (url: string, options?: RequestInit): Pro
 };
 
 // POST /meanfi-connected-accounts Creates a referral for a new address
-export const reportConnectedAccount = async (address: string, refBy?: string): Promise<boolean> => {
+export function reportConnectedAccount(address: string, refBy?: string): Promise<boolean> {
   const options: RequestInit = {
     method: "POST",
     headers: meanFiHeaders
-  }
+  };
   let url = appConfig.getConfig().apiUrl + '/meanfi-connected-accounts';
   url += `?networkId=${getDefaultRpc().networkId}&a=${address}`;
   if (refBy) {
     url += `&refBy=${refBy}`;
   }
-  try {
-    const response = await fetch(url, options)
-    if (response && response.status === 200) {
-      return true;
-    }
-    return false;
-  } catch (error) {
-    throw(error);
-  }
-};
+
+  return fetch(url, options)
+    .then(response => {
+      if (response && response.status === 200) {
+        return true;
+      }
+      return false;
+    })
+    .catch(error => {
+      throw (error);
+    });
+}
 
 // GET /whitelists/{address} - Gets whitelist allocation - Allocation
 export const getWhitelistAllocation = async (address: string, claimType: WhitelistClaimType): Promise<Allocation | null> => {
@@ -85,7 +89,7 @@ export const getWhitelistAllocation = async (address: string, claimType: Whiteli
   }
 };
 
-export async function sendSignClaimTxRequest(address: string, base64ClaimTx: string): Promise<any> {
+export function sendSignClaimTxRequest(address: string, base64ClaimTx: string): Promise<any> {
   const options: RequestInit = {
     method: "POST",
     headers: meanFiHeaders,
@@ -97,16 +101,17 @@ export async function sendSignClaimTxRequest(address: string, base64ClaimTx: str
 
   let url = `${appConfig.getConfig().apiUrl}/whitelists/${address}`;
 
-  try {
-    const response = await fetch(url, options)
-    if (response.status !== 200) {
-      throw new Error(`Error: request response status: ${response.status}`);
-    }
-    const signedClaimTxResponse = (await response.json()) as any;
-    return signedClaimTxResponse;
-  } catch (error) {
-    throw (error);
-  }
+  return fetch(url, options)
+    .then(async response => {
+      if (response.status !== 200) {
+        throw new Error(`Error: request response status: ${response.status}`);
+      }
+      const signedClaimTxResponse = (await response.json()) as any;
+      return signedClaimTxResponse;
+    })
+    .catch(error => {
+      throw (error);
+    });
 }
 
 export const sendRecordClaimTxRequest = async (address: string, claimTxId: string): Promise<any> => {
@@ -117,15 +122,14 @@ export const sendRecordClaimTxRequest = async (address: string, claimTxId: strin
 
   let url = `${appConfig.getConfig().apiUrl}/airdrop-claim-tx/${address}?txId=${claimTxId}`;
 
-  try {
-    const response = await fetch(url, options)
-    if (response.status !== 200) {
-      throw new Error(`Error: request response status: ${response.status}`);
-    }
-
-    return response;
-
-  } catch (error) {
-    throw (error);
-  }
+  fetch(url, options)
+    .then(response => {
+      if (response.status !== 200) {
+        throw new Error(`Error: request response status: ${response.status}`);
+      }
+      return response;
+    })
+    .catch(error => {
+      throw (error);
+    });
 }

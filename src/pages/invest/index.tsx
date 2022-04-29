@@ -106,18 +106,25 @@ export const InvestView = () => {
     publicKey
   ]);
 
+  const getPricePerToken = useCallback((token: TokenInfo): number => {
+    if (!token || !coinPrices) { return 0; }
+
+    return coinPrices && coinPrices[token.address]
+      ? coinPrices[token.address]
+      : 0;
+  }, [coinPrices])
+
   // Keep MEAN price updated
   useEffect(() => {
 
-    if (coinPrices) {
-      const symbol = "MEAN";
-      const price = coinPrices && coinPrices[symbol] ? coinPrices[symbol] : 0;
+    if (coinPrices && stakingPair && stakingPair.unstakedToken) {
+      const price = getPricePerToken(stakingPair.unstakedToken);
       consoleOut('meanPrice:', price, 'crimson');
       console.log('coinPrices:', coinPrices);
       setMeanPrice(price);
     }
 
-  }, [coinPrices]);
+  }, [coinPrices, getPricePerToken, stakingPair]);
 
   /////////////////
   //  Callbacks  //
@@ -925,6 +932,7 @@ export const InvestView = () => {
                             <UnstakeTabView
                               stakeClient={stakeClient}
                               selectedToken={stakingPair?.stakedToken}
+                              unstakedToken={stakingPair?.unstakedToken}
                               tokenBalance={sMeanBalance}
                             />
                           )}
