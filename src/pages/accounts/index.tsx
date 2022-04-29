@@ -31,7 +31,7 @@ import {
   shortenAddress
 } from '../../utils/utils';
 import { Button, Empty, Result, Space, Spin, Switch, Tooltip } from 'antd';
-import { consoleOut, copyText, friendlyDisplayDecimalPlaces, isValidAddress } from '../../utils/ui';
+import { consoleOut, copyText, friendlyDisplayDecimalPlaces, isValidAddress, toUsCurrency } from '../../utils/ui';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import {
   SOLANA_WALLET_GUIDE,
@@ -311,12 +311,10 @@ export const AccountsView = () => {
   },[accountAddress]);
 
   const getPricePerToken = useCallback((token: UserTokenAccount): number => {
-    if (!token || !token.symbol) { return 0; }
-    const tokenSymbol = token.symbol.toUpperCase();
-    const symbol = tokenSymbol[0] === 'W' ? tokenSymbol.slice(1) : tokenSymbol;
+    if (!token || !coinPrices) { return 0; }
 
-    return coinPrices && coinPrices[symbol]
-      ? coinPrices[symbol]
+    return coinPrices && coinPrices[token.address]
+      ? coinPrices[token.address]
       : 0;
   }, [coinPrices])
 
@@ -1023,7 +1021,7 @@ export const AccountsView = () => {
             {asset.symbol}
             {tokenPrice > 0 ? (
               <span className={`badge small ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
-                ${getFormattedRateAmount(tokenPrice)}
+                {toUsCurrency(tokenPrice)}
               </span>
             ) : (null)}
           </div>
@@ -1039,7 +1037,7 @@ export const AccountsView = () => {
           </div>
           {(tokenPrice > 0 && (asset.balance || 0) > 0) ? (
             <div className="interval">
-              ${getFormattedRateAmount((asset.balance || 0) * tokenPrice)}
+              {toUsCurrency((asset.balance || 0) * tokenPrice)}
             </div>
           ) : (null)}
         </div>
