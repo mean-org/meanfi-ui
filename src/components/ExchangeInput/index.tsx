@@ -28,12 +28,11 @@ export const ExchangeInput = (props: {
     const { publicKey } = useWallet();
 
     const getPricePerToken = (token: TokenInfo): number => {
-        const tokenSymbol = token.symbol.toUpperCase();
-        const symbol = tokenSymbol[0] === 'W' ? tokenSymbol.slice(1) : tokenSymbol;
+        if (!token || !coinPrices) { return 0; }
 
-        return coinPrices && coinPrices[symbol]
-        ? coinPrices[symbol]
-        : 0;
+        return coinPrices && coinPrices[token.address]
+            ? coinPrices[token.address]
+            : 0;
     }
 
     return (

@@ -159,19 +159,13 @@ export const MultisigTreasuryStreams = () => {
     //  CALLBACKS  //
     /////////////////
 
-    const getPricePerToken = useCallback(
-        (token: UserTokenAccount): number => {
-            if (!token || !token.symbol) {
-                return 0;
-            }
-            const tokenSymbol = token.symbol.toUpperCase();
-            const symbol =
-                tokenSymbol[0] === "W" ? tokenSymbol.slice(1) : tokenSymbol;
+    const getPricePerToken = useCallback((token: TokenInfo): number => {
+        if (!token || !coinPrices) { return 0; }
 
-            return coinPrices && coinPrices[symbol] ? coinPrices[symbol] : 0;
-        },
-        [coinPrices]
-    );
+        return coinPrices && coinPrices[token.address]
+            ? coinPrices[token.address]
+            : 0;
+    }, [coinPrices])
 
     const getTreasuryStreams = useCallback((treasuryPk: PublicKey) => {
         if (!publicKey || !ms || loadingTreasuryStreams) { return; }
@@ -536,7 +530,7 @@ export const MultisigTreasuryStreams = () => {
                 const asset = getTokenByMintAddress(
                     freshStream.associatedToken as string
                 );
-                const rate = asset ? getPricePerToken(asset as UserTokenAccount) : 0;
+                const rate = asset ? getPricePerToken(asset) : 0;
                 const streamUnitsUsdPerSecond =
                     parseFloat(
                         freshStream.streamUnitsPerSecond.toFixed(asset?.decimals || 9)
