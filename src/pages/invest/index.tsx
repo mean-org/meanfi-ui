@@ -234,6 +234,7 @@ export const InvestView = () => {
     maxStakeSolApyValue
   ]);
 
+  /*
   const stakingData = useMemo(() => [
     {
       label: t("invest.panel-right.staking-data.label-my-staked"),
@@ -257,6 +258,7 @@ export const InvestView = () => {
     //   value: "20,805.1232"
     // },
   ], [sMeanBalance, stakingPair, t]);
+  */
 
   const stakingSOLData = useMemo(() => [
     {
@@ -292,16 +294,6 @@ export const InvestView = () => {
     marinadeTotalStakedValue
   ]);
 
-  const getMeanPrice = useCallback(() => {
-
-    const symbol = "MEAN";
-    const price = coinPrices && coinPrices[symbol] ? coinPrices[symbol] as number : 0;
-    consoleOut('meanPrice:', price, 'orange');
-    console.log('coinPrices:', coinPrices);
-
-    return price;
-  }, [coinPrices]);
-
   const refreshStakePoolInfo = useCallback((price: number) => {
 
     if (stakeClient && price) {
@@ -325,13 +317,12 @@ export const InvestView = () => {
   // If any Stake/Unstake Tx finished and confirmed refresh the StakePoolInfo
   const onStakeTxConfirmed = useCallback((value: any) => {
     consoleOut("onStakeTxConfirmed event executed:", value, 'crimson');
-    const price = getMeanPrice();
-    if (stakeClient && price) {
+    if (stakeClient && meanPrice) {
       consoleOut('calling getStakePoolInfo...', '', 'orange');
-      refreshStakePoolInfo(price);
+      refreshStakePoolInfo(meanPrice);
       consoleOut('After calling refreshStakePoolInfo()', '', 'orange');
     }
-  }, [getMeanPrice, refreshStakePoolInfo, stakeClient]);
+  }, [meanPrice, refreshStakePoolInfo, stakeClient]);
 
   // Get raydium pool info
   const getRaydiumPoolInfo = useCallback(async () => {
@@ -661,15 +652,14 @@ export const InvestView = () => {
 
     if (!stakeClient) { return; }
 
-    const price = getMeanPrice();
-    if (shouldRefreshStakePoolInfo && price) {
+    if (shouldRefreshStakePoolInfo && meanPrice) {
       setTimeout(() => {
         setShouldRefreshStakePoolInfo(false);
       });
-      refreshStakePoolInfo(price);
+      refreshStakePoolInfo(meanPrice);
     }
 
-  }, [stakeClient, refreshStakePoolInfo, getMeanPrice, shouldRefreshStakePoolInfo]);
+  }, [stakeClient, refreshStakePoolInfo, meanPrice, shouldRefreshStakePoolInfo]);
 
   useEffect(() => {
     const maxApr = Math.max(maxOrcaAprValue, maxRadiumAprValue);
@@ -832,7 +822,7 @@ export const InvestView = () => {
                           size="small"
                           icon={<ReloadOutlined />}
                           onClick={() => {
-                            refreshStakePoolInfo(getMeanPrice());
+                            refreshStakePoolInfo(meanPrice);
                           }}
                         />
                       </span>
