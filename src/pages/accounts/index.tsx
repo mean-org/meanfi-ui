@@ -777,11 +777,18 @@ export const AccountsNewView = () => {
       return;
     }
 
+    // If we have a query param address and accountAddress is different
+    // skip this render. In further renders they will eventually be equal
+    if (urlQueryAddress && urlQueryAddress !== accountAddress) {
+      return;
+    }
+
     const timeout = setTimeout(() => {
       setShouldLoadTokens(false);
       setTokensLoaded(false);
 
       const meanTokensCopy = new Array<UserTokenAccount>();
+      const intersectedList = new Array<UserTokenAccount>();
       const pinnedTokensCopy = JSON.parse(JSON.stringify(pinnedTokens)) as UserTokenAccount[];
       const splTokensCopy = JSON.parse(JSON.stringify(splTokenList)) as UserTokenAccount[];
       const pk = new PublicKey(accountAddress);
@@ -917,7 +924,6 @@ export const AccountsNewView = () => {
 
                 // Create a list containing the tokens for the user accounts not in the meanTokensCopy
                 // Intersected output list
-                const intersectedList = new Array<UserTokenAccount>();
                 accTks.forEach(item => {
                   // Loop through the user token accounts and add the token account to the list: intersectedList
                   // If it is not already on the list (diferentiate token accounts of the same mint)
@@ -976,8 +982,21 @@ export const AccountsNewView = () => {
                 setTokensLoaded(true);
                 refreshCachedRpc();
               }
-              // Preset the first available token
-              if (selectedAsset) {
+              // Preset the passed-in token via query params either
+              // as token account address or mint address or token symbol
+              if (urlQueryAsset) {
+                let asset: UserTokenAccount | undefined = undefined;
+                const combinedList = pinnedTokensCopy.concat(intersectedList);
+                if (isValidAddress(urlQueryAsset)) {
+                  asset = combinedList.find(t => t.publicAddress === urlQueryAsset || t.address === urlQueryAsset);
+                } else {
+                  asset = combinedList.find(t => t.symbol === urlQueryAsset);
+                }
+                if (asset) {
+                  selectAsset(asset);
+                }
+              } else if (selectedAsset) {
+                // If no query param asset but there is already one selected, keep selection
                 const pinnedTokensItemIndex = pinnedTokensCopy.findIndex(m => m.publicAddress === selectedAsset.publicAddress);
                 const meanTokensItemIndex = meanTokensCopy.findIndex(m => m.publicAddress === selectedAsset.publicAddress);
                 if (pinnedTokensItemIndex !== -1) {
@@ -986,6 +1005,7 @@ export const AccountsNewView = () => {
                   selectAsset(meanTokensCopy[meanTokensItemIndex], true);
                 }
               } else {
+                // Preset the first available token
                 selectAsset(pinnedTokensCopy[0]);
               }
             })
@@ -1014,8 +1034,10 @@ export const AccountsNewView = () => {
     userTokens,
     pinnedTokens,
     splTokenList,
+    urlQueryAsset,
     selectedAsset,
     accountAddress,
+    urlQueryAddress,
     shouldLoadTokens,
     setShouldLoadTokens,
     getPricePerToken,
