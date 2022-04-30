@@ -4,16 +4,13 @@ import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contex
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { useWallet } from '../../contexts/wallet';
 import { AppStateContext, TransactionStatusInfo } from '../../contexts/appstate';
-import { Button, Col, Divider, Empty, Modal, Row, Space, Spin, Tooltip } from 'antd';
-import { ArrowLeftOutlined, CheckOutlined, CopyOutlined, InfoCircleOutlined, LoadingOutlined, ReloadOutlined } from '@ant-design/icons';
-import { IconCodeBlock, IconExternalLink, IconShieldOutline, IconWarning } from '../../Icons';
+import { Button, Col, Divider, Empty, Row, Space, Spin, Tooltip } from 'antd';
+import { ArrowLeftOutlined, CopyOutlined, LoadingOutlined, ReloadOutlined } from '@ant-design/icons';
+import { IconCodeBlock, IconExternalLink, IconShieldOutline  } from '../../Icons';
 import { PreFooter } from '../../components/PreFooter';
-import { ConfirmOptions, Connection, Keypair, LAMPORTS_PER_SOL, MemcmpFilter, PublicKey, SystemProgram, SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY, Transaction } from '@solana/web3.js';
-import { BN, Program, Provider } from '@project-serum/anchor';
-import MultisigIdl from "../../models/mean-multisig-idl";
-import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
+import { Connection, LAMPORTS_PER_SOL, MemcmpFilter, PublicKey, SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY, Transaction } from '@solana/web3.js';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { consoleOut, copyText, delay, getReadableDate, getShortDate, getTransactionOperationDescription, getTransactionStatusForLogs, isDev, isLocal } from '../../utils/ui';
+import { consoleOut, copyText, delay, getShortDate, getTransactionStatusForLogs, isDev, isLocal } from '../../utils/ui';
 import { Identicon } from '../../components/Identicon';
 import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress } from '../../utils/utils';
 import { TransactionFees } from '@mean-dao/msp';
@@ -24,13 +21,13 @@ import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, SOLANA_EXPLORER_URI_INSPE
 import { MultisigCreateProgramModal } from '../../components/MultisigCreateProgramModal';
 import { ProgramAccounts } from '../../utils/accounts';
 import useWindowSize from '../../hooks/useWindowResize';
-import { isError } from '../../utils/transactions';
+// import { isError } from '../../utils/transactions';
 import { encodeInstruction } from '../../models/idl';
 import { MultisigUpgradeProgramModal } from '../../components/MultisigUpgradeProgramModal';
 import { MultisigUpgradeIDLModal } from '../../components/MultisigUpgradeIDL';
 import { MultisigSetProgramAuthModal } from '../../components/MultisigSetProgramAuthModal';
 import { getOperationName } from '../../utils/multisig-helpers';
-import { MultisigOwnersSigned } from '../../components/MultisigOwnersSigned';
+// import { MultisigOwnersSigned } from '../../components/MultisigOwnersSigned';
 import { ProposalSummaryModal } from '../../components/ProposalSummaryModal';
 import { openNotification } from '../../components/Notifications';
 import {
@@ -39,15 +36,16 @@ import {
   MeanMultisig,
   MEAN_MULTISIG_PROGRAM,
   MultisigInfo, 
-  MultisigParticipant,
+  // MultisigParticipant,
   MultisigTransaction,
   MultisigTransactionStatus, 
   MultisigTransactionSummary,
   getMultisigTransactionSummary
 
 } from "@mean-dao/mean-multisig-sdk";
+import { NATIVE_SOL_MINT } from '../../utils/ids';
 
-const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
+// const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const MultisigProgramsView = () => {
   const location = useLocation();
@@ -56,7 +54,7 @@ export const MultisigProgramsView = () => {
   const connectionConfig = useConnectionConfig();
   const { publicKey, wallet, connected } = useWallet();
   const {
-    theme,
+    // theme,
     isWhitelisted,
     detailsPanelOpen,
     transactionStatus,
@@ -95,9 +93,9 @@ export const MultisigProgramsView = () => {
   const [isBusy, setIsBusy] = useState(false);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [transactionFees, setTransactionFees] = useState<TransactionFees>(NO_FEES);
-  const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
-  const [retryOperationPayload, setRetryOperationPayload] = useState<any>(undefined);
-  const [minRequiredBalance, setMinRequiredBalance] = useState(0);
+  const [/*ongoingOperation*/, setOngoingOperation] = useState<OperationType | undefined>(undefined);
+  const [/*retryOperationPayload*/, setRetryOperationPayload] = useState<any>(undefined);
+  const [minRequiredBalance, /*setMinRequiredBalance*/] = useState(0);
 
   /////////////////
   //  Init code  //
@@ -144,169 +142,169 @@ export const MultisigProgramsView = () => {
     return width < 576 || (width >= 768 && width < 960);
   }, [width]);
 
-  const getTransactionStatus = useCallback((account: any) => {
+  // const getTransactionStatus = useCallback((account: any) => {
 
-    if (account.executedOn > 0) {
-      return MultisigTransactionStatus.Executed;
-    } 
+  //   if (account.executedOn > 0) {
+  //     return MultisigTransactionStatus.Executed;
+  //   } 
 
-    let status = MultisigTransactionStatus.Pending;
-    let approvals = account.signers.filter((s: boolean) => s === true).length;
+  //   let status = MultisigTransactionStatus.Pending;
+  //   let approvals = account.signers.filter((s: boolean) => s === true).length;
 
-    if (selectedMultisig && selectedMultisig.threshold === approvals) {
-      status = MultisigTransactionStatus.Approved;
-    }
+  //   if (selectedMultisig && selectedMultisig.threshold === approvals) {
+  //     status = MultisigTransactionStatus.Approved;
+  //   }
 
-    if (selectedMultisig && selectedMultisig.ownerSeqNumber !== account.ownerSetSeqno) {
-      status = MultisigTransactionStatus.Voided;
-    }
+  //   if (selectedMultisig && selectedMultisig.ownerSeqNumber !== account.ownerSetSeqno) {
+  //     status = MultisigTransactionStatus.Voided;
+  //   }
 
-    return status;
+  //   return status;
 
-  },[
-    selectedMultisig
-  ]);
+  // },[
+  //   selectedMultisig
+  // ]);
 
-  const getTxInitiator = useCallback((mtx: MultisigTransaction): MultisigParticipant | undefined => {
-    if (!selectedMultisig) { return undefined; }
+  // const getTxInitiator = useCallback((mtx: MultisigTransaction): MultisigParticipant | undefined => {
+  //   if (!selectedMultisig) { return undefined; }
 
-    const owners: MultisigParticipant[] = (selectedMultisig as MultisigInfo).owners;
-    const initiator = owners && owners.length > 0
-      ? owners.find(o => o.address === mtx.proposer?.toBase58())
-      : undefined;
+  //   const owners: MultisigParticipant[] = (selectedMultisig as MultisigInfo).owners;
+  //   const initiator = owners && owners.length > 0
+  //     ? owners.find(o => o.address === mtx.proposer?.toBase58())
+  //     : undefined;
 
-    return initiator;
-  }, [selectedMultisig]);
+  //   return initiator;
+  // }, [selectedMultisig]);
 
-  const isUserTxInitiator = useCallback(() => {
-    if (!highlightedMultisigTx || !publicKey) { return false; }
-    const initiator = getTxInitiator(highlightedMultisigTx);
-    return initiator && publicKey.toBase58() === initiator.address ? true : false;
-  }, [
-    publicKey,
-    highlightedMultisigTx,
-    getTxInitiator,
-  ]);
+  // const isUserTxInitiator = useCallback(() => {
+  //   if (!highlightedMultisigTx || !publicKey) { return false; }
+  //   const initiator = getTxInitiator(highlightedMultisigTx);
+  //   return initiator && publicKey.toBase58() === initiator.address ? true : false;
+  // }, [
+  //   publicKey,
+  //   highlightedMultisigTx,
+  //   getTxInitiator,
+  // ]);
 
-  const getTxSignedCount = useCallback((mtx: MultisigTransaction) => {
-    if (mtx && mtx.signers) {
-      return mtx.signers.filter((s: boolean) => s === true).length;
-    }
-    return 0;
-  }, []);
+  // const getTxSignedCount = useCallback((mtx: MultisigTransaction) => {
+  //   if (mtx && mtx.signers) {
+  //     return mtx.signers.filter((s: boolean) => s === true).length;
+  //   }
+  //   return 0;
+  // }, []);
 
-  const isTxVoided = useCallback(() => {
-    if (highlightedMultisigTx) {
-      if (highlightedMultisigTx.status === MultisigTransactionStatus.Voided) {
-        return true;
-      }
-    }
-    return false;
-  }, [highlightedMultisigTx]);
+  // const isTxVoided = useCallback(() => {
+  //   if (highlightedMultisigTx) {
+  //     if (highlightedMultisigTx.status === MultisigTransactionStatus.Voided) {
+  //       return true;
+  //     }
+  //   }
+  //   return false;
+  // }, [highlightedMultisigTx]);
 
-  const isTxPendingApproval = useCallback(() => {
-    if (highlightedMultisigTx) {
-      if (highlightedMultisigTx.status === MultisigTransactionStatus.Pending) {
-        return true;
-      }
-    }
-    return false;
-  }, [highlightedMultisigTx]);
+  // const isTxPendingApproval = useCallback(() => {
+  //   if (highlightedMultisigTx) {
+  //     if (highlightedMultisigTx.status === MultisigTransactionStatus.Pending) {
+  //       return true;
+  //     }
+  //   }
+  //   return false;
+  // }, [highlightedMultisigTx]);
 
-  const isTxPendingExecution = useCallback(() => {
-    if (highlightedMultisigTx) {
-      if (highlightedMultisigTx.status === MultisigTransactionStatus.Approved) {
-        return true;
-      }
-    }
-    return false;
-  }, [highlightedMultisigTx]);
+  // const isTxPendingExecution = useCallback(() => {
+  //   if (highlightedMultisigTx) {
+  //     if (highlightedMultisigTx.status === MultisigTransactionStatus.Approved) {
+  //       return true;
+  //     }
+  //   }
+  //   return false;
+  // }, [highlightedMultisigTx]);
 
-  const isTxRejected = useCallback(() => {
-    if (highlightedMultisigTx) {
-      if (highlightedMultisigTx.status === MultisigTransactionStatus.Rejected) {
-        return true;
-      }
-    }
-    return false;
-  }, [highlightedMultisigTx]);
+  // const isTxRejected = useCallback(() => {
+  //   if (highlightedMultisigTx) {
+  //     if (highlightedMultisigTx.status === MultisigTransactionStatus.Rejected) {
+  //       return true;
+  //     }
+  //   }
+  //   return false;
+  // }, [highlightedMultisigTx]);
 
-  const isTxPendingApprovalOrExecution = useCallback(() => {
-    if (highlightedMultisigTx) {
-      if (highlightedMultisigTx.status === MultisigTransactionStatus.Pending ||
-          highlightedMultisigTx.status === MultisigTransactionStatus.Approved) {
-        return true;
-      }
-    }
-    return false;
-  }, [highlightedMultisigTx]);
+  // const isTxPendingApprovalOrExecution = useCallback(() => {
+  //   if (highlightedMultisigTx) {
+  //     if (highlightedMultisigTx.status === MultisigTransactionStatus.Pending ||
+  //         highlightedMultisigTx.status === MultisigTransactionStatus.Approved) {
+  //       return true;
+  //     }
+  //   }
+  //   return false;
+  // }, [highlightedMultisigTx]);
 
-  const isUserInputNeeded = useCallback(() => {
-    if (highlightedMultisigTx) {
-      if (highlightedMultisigTx.executedOn) { // Executed
-        return false;
-      } else if (highlightedMultisigTx.didSigned === undefined) { // Rejected
-        return false;
-      } else if (highlightedMultisigTx.didSigned === false) { // Not yet signed
-        return true;
-      } else {
-        return isTxPendingExecution() // Signed but
-          ? true    // Tx still needs signing or execution
-          : false;  // Tx completed, nothing to do
-      }
-    }
+  // const isUserInputNeeded = useCallback(() => {
+  //   if (highlightedMultisigTx) {
+  //     if (highlightedMultisigTx.executedOn) { // Executed
+  //       return false;
+  //     } else if (highlightedMultisigTx.didSigned === undefined) { // Rejected
+  //       return false;
+  //     } else if (highlightedMultisigTx.didSigned === false) { // Not yet signed
+  //       return true;
+  //     } else {
+  //       return isTxPendingExecution() // Signed but
+  //         ? true    // Tx still needs signing or execution
+  //         : false;  // Tx completed, nothing to do
+  //     }
+  //   }
 
-    return false;
+  //   return false;
 
-  }, [highlightedMultisigTx, isTxPendingExecution]);
+  // }, [highlightedMultisigTx, isTxPendingExecution]);
 
-  const getTxUserStatusClass = useCallback((mtx: MultisigTransaction) => {
+  // const getTxUserStatusClass = useCallback((mtx: MultisigTransaction) => {
 
-    if (mtx.executedOn) {
-      return "";
-    } else if (mtx.didSigned === undefined) {
-      return "fg-red";
-    } else if (mtx.didSigned === false) {
-      return theme === 'light' ? "fg-light-orange" : "fg-warning";
-    } else {
-      return theme === 'light' ? "fg-green" : "fg-success"
-    }
+  //   if (mtx.executedOn) {
+  //     return "";
+  //   } else if (mtx.didSigned === undefined) {
+  //     return "fg-red";
+  //   } else if (mtx.didSigned === false) {
+  //     return theme === 'light' ? "fg-light-orange" : "fg-warning";
+  //   } else {
+  //     return theme === 'light' ? "fg-green" : "fg-success"
+  //   }
 
-  },[theme]);
+  // },[theme]);
 
-  const getTxApproveMainCtaLabel = useCallback(() => {
+  // const getTxApproveMainCtaLabel = useCallback(() => {
 
-    const busyLabel = isTxPendingExecution()
-      ? 'Executing transaction'
-      : isTxPendingApproval()
-        ? 'Approving transaction'
-        : isTxVoided() 
-          ? 'Cancelling Transaction' 
-          : '';
+  //   const busyLabel = isTxPendingExecution()
+  //     ? 'Executing transaction'
+  //     : isTxPendingApproval()
+  //       ? 'Approving transaction'
+  //       : isTxVoided() 
+  //         ? 'Cancelling Transaction' 
+  //         : '';
 
-    const iddleLabel = isTxPendingExecution()
-      ? 'Execute transaction'
-      : isTxPendingApproval()
-        ? 'Approve transaction'
-        : isTxVoided() 
-          ? 'Cancel Transaction' 
-          : '';
+  //   const iddleLabel = isTxPendingExecution()
+  //     ? 'Execute transaction'
+  //     : isTxPendingApproval()
+  //       ? 'Approve transaction'
+  //       : isTxVoided() 
+  //         ? 'Cancel Transaction' 
+  //         : '';
 
-    return isBusy
-      ? busyLabel
-      : transactionStatus.currentOperation === TransactionStatus.Iddle
-        ? iddleLabel
-        : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
-          ? t('general.cta-finish')
-          : t('general.refresh');
-  }, [
-    isBusy,
-    transactionStatus.currentOperation,
-    isTxPendingExecution,
-    isTxPendingApproval,
-    isTxVoided,
-    t,
-  ]);
+  //   return isBusy
+  //     ? busyLabel
+  //     : transactionStatus.currentOperation === TransactionStatus.Iddle
+  //       ? iddleLabel
+  //       : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
+  //         ? t('general.cta-finish')
+  //         : t('general.refresh');
+  // }, [
+  //   isBusy,
+  //   transactionStatus.currentOperation,
+  //   isTxPendingExecution,
+  //   isTxPendingApproval,
+  //   isTxVoided,
+  //   t,
+  // ]);
 
   const getTransactionStatusAction = useCallback((mtx: MultisigTransaction) => {
 
@@ -374,9 +372,9 @@ export const MultisigProgramsView = () => {
     fetchTxInfoStatus,
   ]);
 
-  const isSuccess = (): boolean => {
-    return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
-  }
+  // const isSuccess = (): boolean => {
+  //   return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
+  // }
 
   const isUpgradingProgram = useCallback((): boolean => {
 
@@ -456,91 +454,91 @@ export const MultisigProgramsView = () => {
 
   },[]);
 
-  const isUserTheProposer = useCallback((): boolean => {
-    if (!highlightedMultisigTx || !publicKey) { return false; }
+  // const isUserTheProposer = useCallback((): boolean => {
+  //   if (!highlightedMultisigTx || !publicKey) { return false; }
 
-    return  publicKey &&
-            highlightedMultisigTx.proposer &&
-            publicKey.equals(highlightedMultisigTx.proposer)
-        ? true
-        : false;
+  //   return  publicKey &&
+  //           highlightedMultisigTx.proposer &&
+  //           publicKey.equals(highlightedMultisigTx.proposer)
+  //       ? true
+  //       : false;
 
-  }, [
-    publicKey,
-    highlightedMultisigTx
-  ]);
+  // }, [
+  //   publicKey,
+  //   highlightedMultisigTx
+  // ]);
 
-  const isTreasuryOperation = useCallback(() => {
+  // const isTreasuryOperation = useCallback(() => {
 
-    if (!highlightedMultisigTx) { return false; }
+  //   if (!highlightedMultisigTx) { return false; }
 
-    return  highlightedMultisigTx.operation === OperationType.TreasuryCreate ||
-            highlightedMultisigTx.operation === OperationType.TreasuryClose ||
-            highlightedMultisigTx.operation === OperationType.TreasuryAddFunds ||
-            highlightedMultisigTx.operation === OperationType.TreasuryStreamCreate ||
-            highlightedMultisigTx.operation === OperationType.StreamCreate ||
-            highlightedMultisigTx.operation === OperationType.StreamClose ||
-            highlightedMultisigTx.operation === OperationType.StreamAddFunds
-      ? true
-      : false;
+  //   return  highlightedMultisigTx.operation === OperationType.TreasuryCreate ||
+  //           highlightedMultisigTx.operation === OperationType.TreasuryClose ||
+  //           highlightedMultisigTx.operation === OperationType.TreasuryAddFunds ||
+  //           highlightedMultisigTx.operation === OperationType.TreasuryStreamCreate ||
+  //           highlightedMultisigTx.operation === OperationType.StreamCreate ||
+  //           highlightedMultisigTx.operation === OperationType.StreamClose ||
+  //           highlightedMultisigTx.operation === OperationType.StreamAddFunds
+  //     ? true
+  //     : false;
 
-  },[highlightedMultisigTx])
+  // },[highlightedMultisigTx])
 
-  const canShowApproveButton = useCallback(() => {
+  // const canShowApproveButton = useCallback(() => {
 
-    if (!highlightedMultisigTx) { return false; }
+  //   if (!highlightedMultisigTx) { return false; }
 
-    let result = (
-      highlightedMultisigTx.status === MultisigTransactionStatus.Pending &&
-      !highlightedMultisigTx.didSigned
-    );
+  //   let result = (
+  //     highlightedMultisigTx.status === MultisigTransactionStatus.Pending &&
+  //     !highlightedMultisigTx.didSigned
+  //   );
 
-    return result;
+  //   return result;
 
-  },[highlightedMultisigTx])
+  // },[highlightedMultisigTx])
 
-  const canShowExecuteButton = useCallback(() => {
+  // const canShowExecuteButton = useCallback(() => {
 
-    if (!highlightedMultisigTx) { return false; }
+  //   if (!highlightedMultisigTx) { return false; }
 
-    const isPendingForExecution = () => {
-      return  highlightedMultisigTx.status === MultisigTransactionStatus.Approved &&
-              !highlightedMultisigTx.executedOn
-        ? true
-        : false;
-    }
+  //   const isPendingForExecution = () => {
+  //     return  highlightedMultisigTx.status === MultisigTransactionStatus.Approved &&
+  //             !highlightedMultisigTx.executedOn
+  //       ? true
+  //       : false;
+  //   }
 
-    if (isPendingForExecution()) {
-      if (!isTreasuryOperation() || (isUserTheProposer() && isTreasuryOperation)) {
-        return true;
-      } else {
-        return false;
-      }
-    } else {
-      return false;
-    }
+  //   if (isPendingForExecution()) {
+  //     if (!isTreasuryOperation() || (isUserTheProposer() && isTreasuryOperation)) {
+  //       return true;
+  //     } else {
+  //       return false;
+  //     }
+  //   } else {
+  //     return false;
+  //   }
 
-  },[
-    highlightedMultisigTx,
-    isTreasuryOperation,
-    isUserTheProposer,
-  ])
+  // },[
+  //   highlightedMultisigTx,
+  //   isTreasuryOperation,
+  //   isUserTheProposer,
+  // ])
 
-  const canShowCancelButton = useCallback(() => {
+  // const canShowCancelButton = useCallback(() => {
 
-    if (!highlightedMultisigTx || !highlightedMultisigTx.proposer || !publicKey) { return false; }
+  //   if (!highlightedMultisigTx || !highlightedMultisigTx.proposer || !publicKey) { return false; }
 
-    let result = (
-      highlightedMultisigTx.proposer.toBase58() === publicKey.toBase58() &&
-      highlightedMultisigTx.status === MultisigTransactionStatus.Voided
-    );
+  //   let result = (
+  //     highlightedMultisigTx.proposer.toBase58() === publicKey.toBase58() &&
+  //     highlightedMultisigTx.status === MultisigTransactionStatus.Voided
+  //   );
 
-    return result;
+  //   return result;
 
-  },[
-    publicKey, 
-    highlightedMultisigTx
-  ])
+  // },[
+  //   publicKey, 
+  //   highlightedMultisigTx
+  // ])
 
   ////////////////////////////////////////
   // Business logic & Data management   //
@@ -915,9 +913,9 @@ export const MultisigProgramsView = () => {
 
   },[t])
 
-  const refreshPage = useCallback(() => {
-    window.location.reload();
-  },[])
+  // const refreshPage = useCallback(() => {
+  //   window.location.reload();
+  // },[])
 
   const resetTransactionStatus = useCallback(() => {
 
@@ -2839,51 +2837,51 @@ export const MultisigProgramsView = () => {
     );
   }
 
-  const txPendingSigners = (mtx: MultisigTransaction) => {
-    if (!selectedMultisig || !selectedMultisig.owners || selectedMultisig.owners.length === 0) {
-      return null;
-    }
+  // const txPendingSigners = (mtx: MultisigTransaction) => {
+  //   if (!selectedMultisig || !selectedMultisig.owners || selectedMultisig.owners.length === 0) {
+  //     return null;
+  //   }
 
-    const participants = selectedMultisig.owners as MultisigParticipant[]
-    return (
-      <>
-        {participants.map((item, index) => {
-          if (mtx.signers[index]) { return null; }
-          return (
-            <div key={`${index}`} className="well-group mb-1">
-              <div className="flex-fixed-right align-items-center">
-                <div className="left text-truncate m-0">
-                  <div><span>{item.name || `Owner ${index + 1}`}</span></div>
-                  <div className="font-size-75 text-monospace">{item.address}</div>
-                </div>
-                <div className="right pl-2">
-                  <div><span className={theme === 'light' ? "fg-light-orange font-bold" : "fg-warning font-bold"}>Not Signed</span></div>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </>
-    );
-  };
+  //   const participants = selectedMultisig.owners as MultisigParticipant[]
+  //   return (
+  //     <>
+  //       {participants.map((item, index) => {
+  //         if (mtx.signers[index]) { return null; }
+  //         return (
+  //           <div key={`${index}`} className="well-group mb-1">
+  //             <div className="flex-fixed-right align-items-center">
+  //               <div className="left text-truncate m-0">
+  //                 <div><span>{item.name || `Owner ${index + 1}`}</span></div>
+  //                 <div className="font-size-75 text-monospace">{item.address}</div>
+  //               </div>
+  //               <div className="right pl-2">
+  //                 <div><span className={theme === 'light' ? "fg-light-orange font-bold" : "fg-warning font-bold"}>Not Signed</span></div>
+  //               </div>
+  //             </div>
+  //           </div>
+  //         );
+  //       })}
+  //     </>
+  //   );
+  // };
 
-  const getParticipantsThatApprovedTx = useCallback((mtx: MultisigTransaction) => {
+  // const getParticipantsThatApprovedTx = useCallback((mtx: MultisigTransaction) => {
 
-    if (!selectedMultisig || !selectedMultisig.owners || selectedMultisig.owners.length === 0) {
-      return [];
-    }
+  //   if (!selectedMultisig || !selectedMultisig.owners || selectedMultisig.owners.length === 0) {
+  //     return [];
+  //   }
   
-    let addressess: MultisigParticipant[] = [];
-    const participants = selectedMultisig.owners as MultisigParticipant[];
-    participants.forEach((participant: MultisigParticipant, index: number) => {
-      if (mtx.signers[index]) {
-        addressess.push(participant);
-      }
-    });
+  //   let addressess: MultisigParticipant[] = [];
+  //   const participants = selectedMultisig.owners as MultisigParticipant[];
+  //   participants.forEach((participant: MultisigParticipant, index: number) => {
+  //     if (mtx.signers[index]) {
+  //       addressess.push(participant);
+  //     }
+  //   });
   
-    return addressess;
+  //   return addressess;
   
-  }, [selectedMultisig]);
+  // }, [selectedMultisig]);
 
   const renderMultisigPendingTxs = () => {
 

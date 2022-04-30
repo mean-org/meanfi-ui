@@ -8,7 +8,7 @@ import {
   InfoCircleOutlined,
   LoadingOutlined, ReloadOutlined, SearchOutlined,
 } from '@ant-design/icons';
-import { ConfirmOptions, Connection, GetProgramAccountsFilter, Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction, TransactionInstruction } from '@solana/web3.js';
+import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
 import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
@@ -40,8 +40,8 @@ import {
   isProd,
   getIntervalFromSeconds,
   delay,
-  isLocal,
-  isDev
+  // isLocal,
+  // isDev
 } from '../../utils/ui';
 import {
   FALLBACK_COIN_IMAGE,
@@ -53,7 +53,7 @@ import {
 } from '../../constants';
 import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
-import { OperationType, PaymentRateType, TransactionStatus } from '../../models/enums';
+import { OperationType, TransactionStatus } from '../../models/enums';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { IconBank, IconClock, IconShieldOutline, IconTrash } from '../../Icons';
 import { TreasuryOpenModal } from '../../components/TreasuryOpenModal';
@@ -64,7 +64,7 @@ import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
 import dateFormat from 'dateformat';
 import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import { useAccountsContext, useNativeAccount } from '../../contexts/accounts';
-import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
+import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TreasuryAddFundsModal } from '../../components/TreasuryAddFundsModal';
 import { AccountLayout, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { ACCOUNT_LAYOUT } from '../../utils/layouts';
@@ -93,25 +93,23 @@ import {
 import BN from 'bn.js';
 import { InfoIcon } from '../../components/InfoIcon';
 import { useLocation, useNavigate } from 'react-router-dom';
-import MultisigIdl from "../../models/mean-multisig-idl";
-import { Program, Provider } from '@project-serum/anchor';
 import { TreasuryCreateOptions } from '../../models/treasuries';
 import { customLogger } from '../..';
 import { openNotification } from '../../components/Notifications';
 import {
 
   MultisigInfo,
-  MultisigParticipant,
+  // MultisigParticipant,
   MultisigTransaction,
-  MultisigTransactionSummary,
-  MultisigTransactionStatus,
+  // MultisigTransactionSummary,
+  // MultisigTransactionStatus,
   MultisigTransactionFees,
   MULTISIG_ACTIONS,
-  getMultisigTransactionSummary,
+  // getMultisigTransactionSummary,
   getFees,
   DEFAULT_EXPIRATION_TIME_SECONDS,
   MeanMultisig,
-  MEAN_MULTISIG_PROGRAM
+  // MEAN_MULTISIG_PROGRAM
 
 } from '@mean-dao/mean-multisig-sdk';
 
@@ -129,11 +127,11 @@ export const TreasuriesView = () => {
     treasuryOption,
     detailsPanelOpen,
     transactionStatus,
-    paymentRateFrequency,
+    // paymentRateFrequency,
     streamProgramAddress,
     streamV2ProgramAddress,
     previousWalletConnectState,
-    isWhitelisted,
+    // isWhitelisted,
     setStreamList,
     setSelectedToken,
     setEffectiveRate,
@@ -177,7 +175,7 @@ export const TreasuriesView = () => {
   const [multisigAddress, setMultisigAddress] = useState('');
   const [selectedMultisig, setSelectedMultisig] = useState<MultisigInfo | undefined>(undefined);
   const [treasuryAddress, setTreasuryAddress] = useState('');
-  const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(true);
+  const [/*loadingMultisigAccounts*/, setLoadingMultisigAccounts] = useState(true);
   const [multisigAccounts, setMultisigAccounts] = useState<MultisigInfo[] | undefined>(undefined);
   const [treasuryPendingTxs, setTreasuryPendingTxs] = useState(0);
 
@@ -1253,9 +1251,9 @@ export const TreasuriesView = () => {
     return false;
   }, [publicKey]);
 
-  const isUnderDevelopment = () => {
-    return isLocal() || (isDev() && isWhitelisted) ? true : false;
-  };
+  // const isUnderDevelopment = () => {
+  //   return isLocal() || (isDev() && isWhitelisted) ? true : false;
+  // };
 
   const getStreamIcon = useCallback((item: Stream | StreamInfo) => {
     const isInbound = isInboundStream(item);
@@ -1556,14 +1554,14 @@ export const TreasuriesView = () => {
     window.location.reload();
   }
 
-  const resetTreasuriesContext = useCallback(() => {
-    setTreasuriesLoaded(false);
-    setSelectedMultisig(undefined);
-    setMultisigAddress('');
-    navigate('/treasuries');
-  }, [
-    navigate,
-  ]);
+  // const resetTreasuriesContext = useCallback(() => {
+  //   setTreasuriesLoaded(false);
+  //   setSelectedMultisig(undefined);
+  //   setMultisigAddress('');
+  //   navigate('/treasuries');
+  // }, [
+  //   navigate,
+  // ]);
 
   const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({

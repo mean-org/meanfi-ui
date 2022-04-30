@@ -41,16 +41,14 @@ import { DATEPICKER_FORMAT } from '../../constants';
 import { Identicon } from '../Identicon';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
-import { Connection, Keypair, PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
+import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { customLogger } from '../..';
 import { Beneficiary, Constants as MSPV2Constants, MSP, StreamBeneficiary, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
 import { TreasuryInfo } from '@mean-dao/money-streaming';
 import { useConnectionConfig } from '../../contexts/connection';
-import { Idl, Program } from '@project-serum/anchor';
 import { BN } from 'bn.js';
 import { u64 } from '@solana/spl-token';
-import { MEAN_MULTISIG_OPS, DEFAULT_EXPIRATION_TIME_SECONDS } from '../../models/multisig';
-import { MeanMultisig, MEAN_MULTISIG_PROGRAM } from '@mean-dao/mean-multisig-sdk';
+import { MeanMultisig, MEAN_MULTISIG_PROGRAM, DEFAULT_EXPIRATION_TIME_SECONDS } from '@mean-dao/mean-multisig-sdk';
 
 const { Option } = Select;
 
@@ -117,7 +115,7 @@ export const TreasuryStreamCreateModal = (props: {
   const [isFeePaidByTreasurer, setIsFeePaidByTreasurer] = useState(false);
   const [tokenAmount, setTokenAmount] = useState(new BN(0));
   const [maxAllocatableAmount, setMaxAllocatableAmount] = useState<any>(undefined);
-  const [enableMultipleStreamsOption, setEnableMultipleStreamsOption] = useState(false);
+  const [enableMultipleStreamsOption, /*setEnableMultipleStreamsOption*/] = useState(false);
   const today = new Date().toLocaleDateString("en-US");
   const [csvFile, setCsvFile] = useState<any>();
   const [csvArray, setCsvArray] = useState<any>([]);
@@ -720,15 +718,15 @@ export const TreasuryStreamCreateModal = (props: {
   };
 
   // Multi-recipient
-  const onCloseMultipleStreamsChanged = useCallback((e: any) => {
-    setEnableMultipleStreamsOption(e.target.value);
+  // const onCloseMultipleStreamsChanged = useCallback((e: any) => {
+  //   setEnableMultipleStreamsOption(e.target.value);
   
-    if (!enableMultipleStreamsOption) {
-      setCsvArray([]);
-      setIsCsvSelected(false);
-    }
+  //   if (!enableMultipleStreamsOption) {
+  //     setCsvArray([]);
+  //     setIsCsvSelected(false);
+  //   }
 
-  }, [enableMultipleStreamsOption]);
+  // }, [enableMultipleStreamsOption]);
 
   // const onAllocationReservedChanged = (e: any) => {
   //   setIsAllocationReserved(e.target.value);

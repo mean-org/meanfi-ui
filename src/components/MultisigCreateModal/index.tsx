@@ -10,7 +10,7 @@ import { isError } from '../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { formatThousands, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from '../../utils/utils';
 import { MultisigParticipants } from '../MultisigParticipants';
-import { MultisigParticipant, MultisigTransactionFees, MultisigV2 } from '../../models/multisig';
+import { MultisigParticipant, MultisigTransactionFees, MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { useWallet } from '../../contexts/wallet';
 import { MAX_MULTISIG_PARTICIPANTS } from '../../constants';
 import { IconHelpCircle, IconWarning } from '../../Icons';
@@ -24,7 +24,7 @@ export const MultisigCreateModal = (props: {
   isBusy: boolean;
   nativeBalance: number;
   transactionFees: MultisigTransactionFees;
-  multisigAccounts: MultisigV2[];
+  multisigAccounts: MultisigInfo[];
 }) => {
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
