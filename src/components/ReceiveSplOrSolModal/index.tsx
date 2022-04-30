@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { useContext, useState } from 'react';
 import { Modal } from "antd";
-import { useContext, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { AppStateContext } from "../../contexts/appstate";
-import { IconCopy } from "../../Icons";
-import { copyText } from "../../utils/ui";
-import { openNotification } from '../Notifications';
+import { useWallet } from '../../contexts/wallet';
+import { AddressDisplay } from '../AddressDisplay';
+import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
+import { getSolanaExplorerClusterParam } from '../../contexts/connection';
 
 const QRCode = require('qrcode.react');
 
@@ -13,50 +13,20 @@ export const ReceiveSplOrSolModal = (props: {
   handleClose: any;
   isVisible: boolean;
   address: string;
+  accountAddress: string;
   tokenSymbol: string;
 }) => {
   const { t } = useTranslation("common");
+  const { publicKey } = useWallet();
   const { theme } = useContext(AppStateContext);
-  const { address, tokenSymbol, isVisible, handleClose } = props;
+  const { address, accountAddress, tokenSymbol, isVisible, handleClose } = props;
+  const [overrideWithWallet, setOverrideWithWallet] = useState(false);
 
-  const onCopyAddress = () => {
-    if (address && copyText(address)) {
-      openNotification({
-        description: t('notifications.account-address-copied-message'),
-        type: "info"
-      });
-    } else {
-      openNotification({
-        description: t('notifications.account-address-not-copied-message'),
-        type: "error"
-      });
-    }
+  const isWalletAddress = () => {
+    return publicKey && address && accountAddress && address === publicKey.toBase58() && accountAddress === publicKey.toBase58()
+      ? true
+      : false;
   }
-
-  useEffect(() => {
-    const resizeListener = () => {
-      const NUM_CHARS = 4;
-      const ellipsisElements = document.querySelectorAll(".overflow-ellipsis-middle");
-      for (let i = 0; i < ellipsisElements.length; ++i){
-        const e = ellipsisElements[i] as HTMLElement;
-        if (e.offsetWidth < e.scrollWidth){
-          const text = e.textContent;
-          e.dataset.tail = text?.slice(text.length - NUM_CHARS);
-        }
-      }
-    };
-    // Call it a first time
-    resizeListener();
-
-    // set resize listener
-    window.addEventListener('resize', resizeListener);
-
-    // clean up function
-    return () => {
-      // remove resize listener
-      window.removeEventListener('resize', resizeListener);
-    }
-  }, []);
 
   return (
     <Modal
@@ -68,9 +38,18 @@ export const ReceiveSplOrSolModal = (props: {
       onCancel={handleClose}
       width={360}>
       <div className="buy-token-options">
-        <div className="text-center mt-3">
+        <div className="text-center">
           <h3 className="mb-3">Scan the QR code to receive funds</h3>
-          {address && (
+
+          {(isWalletAddress() || overrideWithWallet) ? (
+            <div className={theme === 'light' ? 'qr-container bg-white' : 'qr-container bg-black'}>
+              <QRCode
+                value={publicKey?.toBase58() as string}
+                size={200}
+                renderAs="svg"
+              />
+            </div>
+          ) : (
             <div className={theme === 'light' ? 'qr-container bg-white' : 'qr-container bg-black'}>
               <QRCode
                 value={address}
@@ -79,20 +58,42 @@ export const ReceiveSplOrSolModal = (props: {
               />
             </div>
           )}
-          <div className="transaction-field medium">
-            <div className="transaction-field-row main-row">
-              <span className="input-left recipient-field-wrapper">
-                <span id="address-static-field" className="overflow-ellipsis-middle">
-                  {address}
-                </span>
-              </span>
-              <div className="addon-right simplelink" onClick={onCopyAddress}>
-                <IconCopy className="mean-svg-icons link" />
-              </div>
+
+          {(isWalletAddress() || overrideWithWallet) ? (
+            <div className="flex-center font-size-70 mb-2">
+              <AddressDisplay
+                address={publicKey?.toBase58() as string}
+                showFullAddress={true}
+                iconStyles={{ width: "15", height: "15" }}
+                newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${publicKey?.toBase58()}${getSolanaExplorerClusterParam()}`}
+              />
             </div>
-          </div>
-          <div className="font-light font-size-75 px-4">{t('assets.no-balance.line4')}</div>
-          <div className="font-light font-size-75 px-4">{t('assets.no-balance.line5')}</div>
+          ) : (
+            <div className="flex-center font-size-70 mb-2">
+              <AddressDisplay
+                address={address}
+                showFullAddress={true}
+                iconStyles={{ width: "15", height: "15" }}
+                newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${address}${getSolanaExplorerClusterParam()}`}
+              />
+            </div>
+          )}
+
+          {(isWalletAddress() || overrideWithWallet) ? (
+            <>
+              <div className="font-light font-size-75 px-4">{t('assets.no-balance.line4')}</div>
+              <div className="font-light font-size-75 px-4">{t('assets.no-balance.line5')}</div>
+            </>
+          ) : (
+            <>
+              {tokenSymbol && (
+                <div className="font-light font-size-75 px-4">Use this address to receive {tokenSymbol}</div>
+              )}
+              {(!overrideWithWallet && publicKey) && (
+                <div className="mt-2">Looking for your wallet address? 👉 [<span className="simplelink underline-on-hover" onClick={() => setOverrideWithWallet(true)}>here</span>]</div>
+              )}
+            </>
+          )}
         </div>
       </div>
     </Modal>

@@ -2066,9 +2066,10 @@ export const AccountsNewView = () => {
         />
       )}
 
-      {isReceiveSplOrSolModalOpen && publicKey && selectedAsset && (
+      {isReceiveSplOrSolModalOpen && selectedAsset && (
         <ReceiveSplOrSolModal
-          address={publicKey.toBase58()}
+          address={selectedAsset.publicAddress || ''}
+          accountAddress={accountAddress}
           isVisible={isReceiveSplOrSolModalOpen}
           handleClose={hideReceiveSplOrSolModal}
           tokenSymbol={selectedAsset.symbol}
