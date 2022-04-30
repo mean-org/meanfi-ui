@@ -5,6 +5,8 @@ import {
   BarChartOutlined,
   CopyOutlined,
   EditOutlined,
+  EyeInvisibleOutlined,
+  EyeOutlined,
   LoadingOutlined,
   MergeCellsOutlined,
   QrcodeOutlined,
@@ -42,7 +44,7 @@ import {
 } from '../../constants';
 import { QrScannerModal } from '../../components/QrScannerModal';
 import { Helmet } from "react-helmet";
-import { IconCopy, IconShoppingCart, IconVerticalEllipsis } from '../../Icons';
+import { IconAdd, IconCopy, IconEyeOff, IconEyeOn, IconLightBulb, IconShoppingCart, IconVerticalEllipsis } from '../../Icons';
 import { fetchAccountHistory, MappedTransaction } from '../../utils/history';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import useLocalStorage from '../../hooks/useLocalStorage';
@@ -1560,6 +1562,53 @@ export const AccountsNewView = () => {
     </Menu>
   );
 
+  /**
+   * <Switch size="small" checked={hideLowBalances} onClick={() => setHideLowBalances(value => !value)} />
+   * <span className="ml-1 simplelink" onClick={() => setHideLowBalances(value => !value)}>{t('assets.switch-hide-low-balances')}</span>
+   */
+
+  const assetListOptions = (
+    <Menu>
+      <Menu.Item key="10" onClick={() => {}}>
+        <IconAdd className="mean-svg-icons" />
+        <span className="menu-item-text">Add asset</span>
+      </Menu.Item>
+      {(accountTokens && accountTokens.length > 0) && (
+        <>
+          {hideLowBalances ? (
+            <Menu.Item key="11" onClick={() => setHideLowBalances(value => !value)}>
+              <IconEyeOn className="mean-svg-icons" />
+              <span className="menu-item-text">Show low balances</span>
+            </Menu.Item>
+          ) : (
+            <Menu.Item key="12" onClick={() => setHideLowBalances(value => !value)}>
+              <IconEyeOff className="mean-svg-icons" />
+              <span className="menu-item-text">Hide low balances</span>
+            </Menu.Item>
+          )}
+        </>
+      )}
+      {(canActivateMergeTokenAccounts()) && (
+        <Menu.Item key="13" onClick={() => {
+          if (selectedAsset && tokenAccountGroups) {
+            const acc = tokenAccountGroups.has(selectedAsset.address);
+            if (acc) {
+              const item = tokenAccountGroups.get(selectedAsset.address);
+              if (item) {
+                setSelectedTokenMergeGroup(item);
+                resetTransactionStatus();
+                showTokenMergerModal();
+              }
+            }
+          }
+        }}>
+          <MergeCellsOutlined />
+          <span className="menu-item-text">{t('assets.merge-accounts-cta')}</span>
+        </Menu.Item>
+      )}
+    </Menu>
+  );
+
   const renderUserAccountAssetCtaRow = () => {
     if (!selectedAsset) { return null; }
 
@@ -1845,30 +1894,34 @@ export const AccountsNewView = () => {
                       </div>
 
                       {/* Bottom CTAs */}
-                      {(accountTokens && accountTokens.length > 0) && (
-                        <div className="thin-bottom-ctas">
-                          <Switch size="small" checked={hideLowBalances} onClick={() => setHideLowBalances(value => !value)} />
-                          <span className="ml-1 simplelink" onClick={() => setHideLowBalances(value => !value)}>{t('assets.switch-hide-low-balances')}</span>
-                          {(canActivateMergeTokenAccounts()) && (
-                            <span className="flat-button ml-2" onClick={() => {
-                              if (selectedAsset && tokenAccountGroups) {
-                                const acc = tokenAccountGroups.has(selectedAsset.address);
-                                if (acc) {
-                                  const item = tokenAccountGroups.get(selectedAsset.address);
-                                  if (item) {
-                                    setSelectedTokenMergeGroup(item);
-                                    resetTransactionStatus();
-                                    showTokenMergerModal();
-                                  }
-                                }
-                              }
-                            }}>
-                              <MergeCellsOutlined />
-                              <span className="ml-1">{t('assets.merge-accounts-cta')}</span>
-                            </span>
-                          )}
+                      <div className="bottom-ctas">
+                        <div className="primary-action">
+                          <Button
+                            block
+                            className="flex-center"
+                            type="primary"
+                            shape="round"
+                            onClick={() => {}}>
+                            <IconLightBulb className="mean-svg-icons" />
+                            <span className="ml-1">Suggest an asset</span>
+                          </Button>
                         </div>
-                      )}
+                        <Dropdown className="options-dropdown"
+                          overlay={assetListOptions}
+                          placement="bottomRight"
+                          trigger={["click"]}>
+                          <span className="icon-button-container">
+                            <Button
+                              type="default"
+                              shape="circle"
+                              size="middle"
+                              icon={<IconVerticalEllipsis className="mean-svg-icons"/>}
+                              onClick={(e) => e.preventDefault()}
+                            />
+                          </span>
+                        </Dropdown>
+                      </div>
+
                     </div>
                   </div>
 
