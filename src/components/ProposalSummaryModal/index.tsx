@@ -22,12 +22,13 @@ import {
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import {
-  Multisig,
-  MultisigV2,
+  MultisigInfo,
   MultisigParticipant,
   MultisigTransaction,
   MultisigTransactionStatus,
-} from '../../models/multisig';
+
+} from '@mean-dao/mean-multisig-sdk';
+
 import Countdown from 'react-countdown';
 
 // MULTISIG
@@ -49,7 +50,7 @@ export const ProposalSummaryModal = (props: {
   nativeBalance: number;
   highlightedMultisigTx: MultisigTransaction;
   multisigTransactionSummary: any;
-  selectedMultisig: MultisigV2 | Multisig;
+  selectedMultisig: MultisigInfo;
   minRequiredBalance: number;
 }) => {
   const { t } = useTranslation('common');
@@ -104,7 +105,7 @@ export const ProposalSummaryModal = (props: {
   const getTxInitiator = useCallback((mtx: MultisigTransaction): MultisigParticipant | undefined => {
     if (!selectedMultisig) { return undefined; }
 
-    const owners: MultisigParticipant[] = (selectedMultisig as MultisigV2).owners;
+    const owners: MultisigParticipant[] = (selectedMultisig as MultisigInfo).owners;
     const initiator = owners && owners.length > 0
       ? owners.find(o => o.address === mtx.proposer?.toBase58())
       : undefined;
@@ -451,13 +452,13 @@ export const ProposalSummaryModal = (props: {
           <div className="mb-1">
             <span>{t('multisig.proposal-modal.instruction-account')} {account.index + 1}:</span><br />
             <div>
-              <span onClick={() => copyAddressToClipboard(account.value)}  className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
-                {account.value}
+              <span onClick={() => copyAddressToClipboard(account.address)}  className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
+                {account.address}
               </span>
               <a
                 target="_blank"
                 rel="noopener noreferrer"
-                href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${account.value}${getSolanaExplorerClusterParam()}`}>
+                href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${account.address}${getSolanaExplorerClusterParam()}`}>
                 <IconExternalLink className="mean-svg-icons external-icon" />
               </a>
             </div>

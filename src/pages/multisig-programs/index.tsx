@@ -16,7 +16,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { consoleOut, copyText, delay, getReadableDate, getShortDate, getTransactionOperationDescription, getTransactionStatusForLogs, isDev, isLocal } from '../../utils/ui';
 import { Identicon } from '../../components/Identicon';
 import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress } from '../../utils/utils';
-import { MultisigV2, MultisigTransaction, MultisigTransactionStatus, MultisigParticipant, Multisig, MEAN_MULTISIG_OPS, listMultisigTransactions, MultisigTransactionSummary, DEFAULT_EXPIRATION_TIME_SECONDS } from '../../models/multisig';
 import { TransactionFees } from '@mean-dao/msp';
 import { useNativeAccount } from '../../contexts/accounts';
 import { OperationType, TransactionStatus } from '../../models/enums';
@@ -34,6 +33,19 @@ import { getOperationName } from '../../utils/multisig-helpers';
 import { MultisigOwnersSigned } from '../../components/MultisigOwnersSigned';
 import { ProposalSummaryModal } from '../../components/ProposalSummaryModal';
 import { openNotification } from '../../components/Notifications';
+import {
+
+  DEFAULT_EXPIRATION_TIME_SECONDS,
+  MeanMultisig,
+  MEAN_MULTISIG_PROGRAM,
+  MultisigInfo, 
+  MultisigParticipant,
+  MultisigTransaction,
+  MultisigTransactionStatus, 
+  MultisigTransactionSummary,
+  getMultisigTransactionSummary
+
+} from "@mean-dao/mean-multisig-sdk";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -71,8 +83,8 @@ export const MultisigProgramsView = () => {
   const [selectedProgram, setSelectedProgram] = useState<ProgramAccounts | undefined>(undefined);
   const [loadingPrograms, setLoadingPrograms] = useState(true);
 
-  const [multisigAccounts, setMultisigAccounts] = useState<(MultisigV2 | Multisig)[]>([]);
-  const [selectedMultisig, setSelectedMultisig] = useState<MultisigV2 | undefined>(undefined);
+  const [multisigAccounts, setMultisigAccounts] = useState<(MultisigInfo)[]>([]);
+  const [selectedMultisig, setSelectedMultisig] = useState<MultisigInfo | undefined>(undefined);
   const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(true);
 
   const [multisigPendingTxs, setMultisigPendingTxs] = useState<MultisigTransaction[]>([]);
@@ -100,22 +112,18 @@ export const MultisigProgramsView = () => {
 
   const multisigClient = useMemo(() => {
 
-    const opts: ConfirmOptions = {
-      preflightCommitment: "confirmed",
-      commitment: "confirmed",
-    };
+    if (!connection || !publicKey || !connectionConfig.endpoint) { return null; }
 
-    const provider = new Provider(connection, wallet as any, opts);
-
-    return new Program(
-      MultisigIdl,
-      MEAN_MULTISIG,
-      provider
+    return new MeanMultisig(
+      connectionConfig.endpoint,
+      publicKey,
+      "confirmed"
     );
 
   }, [
-    connection, 
-    wallet
+    connection,
+    publicKey,
+    connectionConfig.endpoint,
   ]);
 
   // Parse query params
@@ -162,7 +170,7 @@ export const MultisigProgramsView = () => {
   const getTxInitiator = useCallback((mtx: MultisigTransaction): MultisigParticipant | undefined => {
     if (!selectedMultisig) { return undefined; }
 
-    const owners: MultisigParticipant[] = (selectedMultisig as MultisigV2).owners;
+    const owners: MultisigParticipant[] = (selectedMultisig as MultisigInfo).owners;
     const initiator = owners && owners.length > 0
       ? owners.find(o => o.address === mtx.proposer?.toBase58())
       : undefined;
@@ -538,127 +546,6 @@ export const MultisigProgramsView = () => {
   // Business logic & Data management   //
   ////////////////////////////////////////
 
-  const readAllMultisigAccounts = useCallback(async (wallet: PublicKey) => {
-
-    let accounts: any[] = [];
-    let multisigV2Accs = await multisigClient.account.multisigV2.all();
-    let filteredAccs = multisigV2Accs.filter((a: any) => {
-      if (a.account.owners.filter((o: any) => o.address.equals(wallet)).length) { return true; }
-      return false;
-    });
-
-    accounts.push(...filteredAccs);
-    let multisigAccs = await multisigClient.account.multisig.all();
-    filteredAccs = multisigAccs.filter((a: any) => {
-      if (a.account.owners.filter((o: PublicKey) => o.equals(wallet)).length) { return true; }
-      return false;
-    });
-
-    accounts.push(...filteredAccs);
-
-    return accounts;
-    
-  }, [
-    multisigClient.account.multisig, 
-    multisigClient.account.multisigV2
-  ]);
-
-  const parseMultisigV2Account = (info: any) => {
-    return PublicKey
-      .findProgramAddress([info.publicKey.toBuffer()], MEAN_MULTISIG)
-      .then(k => {
-
-        let address = k[0];
-        let owners: MultisigParticipant[] = [];
-        let labelBuffer = Buffer
-          .alloc(info.account.label.length, info.account.label)
-          .filter(function (elem, index) { return elem !== 0; }
-        );
-
-        let filteredOwners = info.account.owners.filter((o: any) => !o.address.equals(PublicKey.default));
-
-        for (let i = 0; i < filteredOwners.length; i ++) {
-          owners.push({
-            address: filteredOwners[i].address.toBase58(),
-            name: filteredOwners[i].name.length > 0 
-              ? new TextDecoder().decode(
-                  Buffer.from(
-                    Uint8Array.of(
-                      ...filteredOwners[i].name.filter((b: any) => b !== 0)
-                    )
-                  )
-                )
-              : ""
-          } as MultisigParticipant);
-        }
-
-        return {
-          id: info.publicKey,
-          version: info.account.version,
-          label: new TextDecoder().decode(labelBuffer),
-          authority: address,
-          nounce: info.account.nonce,
-          ownerSeqNumber: info.account.ownerSetSeqno,
-          threshold: info.account.threshold.toNumber(),
-          pendingTxsAmount: info.account.pendingTxs.toNumber(),
-          createdOnUtc: new Date(info.account.createdOn.toNumber() * 1000),
-          owners: owners
-
-        } as MultisigV2;
-      })
-      .catch(err => { 
-        consoleOut('error', err, 'red');
-        return undefined;
-      });
-  };
-
-  const parseMultisiAccount = (info: any) => {
-    return PublicKey
-      .findProgramAddress([info.publicKey.toBuffer()], MEAN_MULTISIG)
-      .then(k => {
-
-        let address = k[0];
-        let owners: MultisigParticipant[] = [];
-        let labelBuffer = Buffer
-          .alloc(info.account.label.length, info.account.label)
-          .filter(function (elem, index) { return elem !== 0; }
-        );
-
-        for (let i = 0; i < info.account.owners.length; i ++) {
-          owners.push({
-            address: info.account.owners[i].toBase58(),
-            name: info.account.ownersNames && info.account.ownersNames.length && info.account.ownersNames[i].length > 0 
-              ? new TextDecoder().decode(
-                  Buffer.from(
-                    Uint8Array.of(
-                      ...info.account.ownersNames[i].filter((b: any) => b !== 0)
-                    )
-                  )
-                )
-              : ""
-          } as MultisigParticipant);
-        }
-
-        return {
-          id: info.publicKey,
-          version: 1,
-          label: new TextDecoder().decode(labelBuffer),
-          authority: address,
-          nounce: info.account.nonce,
-          ownerSeqNumber: info.account.ownerSetSeqno,
-          threshold: info.account.threshold.toNumber(),
-          pendingTxsAmount: info.account.pendingTxs.toNumber(),
-          createdOnUtc: new Date(info.account.createdOn.toNumber() * 1000),
-          owners: owners
-
-        } as Multisig;
-      })
-      .catch(err => { 
-        consoleOut('error', err, 'red');
-        return undefined;
-      });
-  };
-
   const getProgramsByUpgradeAuthority = useCallback(async (upgradeAuthority: PublicKey): Promise<ProgramAccounts[] | undefined> => {
 
     if (!connection || !upgradeAuthority) { return undefined; }
@@ -783,35 +670,13 @@ export const MultisigProgramsView = () => {
 
     const timeout = setTimeout(() => {
 
-      readAllMultisigAccounts(publicKey)
-        .then((allInfo: any) => {
-          let multisigInfoArray: (MultisigV2 | Multisig)[] = [];
-          for (let info of allInfo) {
-            let parsePromise: any;
-            if (info.account.version && info.account.version === 2) {
-              parsePromise = parseMultisigV2Account;
-            } else {
-              parsePromise = parseMultisiAccount;
-            }
-            if (parsePromise) {
-              parsePromise(info)
-                .then((multisig: any) =>{
-                  if (multisig) {
-                    multisigInfoArray.push(multisig);
-                  }
-                })
-                .catch((err: any) => {
-                  console.error(err);
-                  setLoadingMultisigAccounts(false);
-                });
-            }
-          }
-          setTimeout(() => {
-            multisigInfoArray.sort((a: any, b: any) => b.createdOnUtc.getTime() - a.createdOnUtc.getTime());
-            setMultisigAccounts(multisigInfoArray);
-            consoleOut('multisigs:', multisigInfoArray, 'blue');
-            setLoadingMultisigAccounts(false);
-          });
+      multisigClient
+        .getMultisigs(publicKey)
+        .then((allInfo: MultisigInfo[]) => {
+          allInfo.sort((a: any, b: any) => b.createdOnUtc.getTime() - a.createdOnUtc.getTime());
+          setMultisigAccounts(allInfo);
+          consoleOut('multisigs:', allInfo, 'blue');
+          setLoadingMultisigAccounts(false);
         })
         .catch(err => {
           console.error(err);
@@ -828,7 +693,6 @@ export const MultisigProgramsView = () => {
     loadingMultisigAccounts,
     multisigClient,
     publicKey,
-    readAllMultisigAccounts,
   ]);
 
   // Set selectedMultisig based on the passed-in multisigAddress in query params
@@ -917,27 +781,26 @@ export const MultisigProgramsView = () => {
 
       consoleOut('Triggering loadMultisigPendingTxs using setNeedRefreshTxs...', '', 'blue');
 
-      listMultisigTransactions(
-        multisigClient,
-        selectedMultisig,
-        publicKey
-      )
-      .then((txs: MultisigTransaction[]) => {
-        consoleOut('selected multisig txs', txs, 'blue');
-        let transactions: MultisigTransaction[] = [];
-        for (let tx of txs) {
-          if (tx.accounts.some(a => a.pubkey.equals(selectedProgram.pubkey))) {
-            transactions.push(tx);
+      multisigClient
+        .getMultisigTransactions(selectedMultisig.id, publicKey)
+        .then((txs: MultisigTransaction[]) => {
+          consoleOut('selected multisig txs', txs, 'blue');
+          let transactions: MultisigTransaction[] = [];
+          for (let tx of txs) {
+            if (tx.accounts.some(a => {
+              return a.pubkey.equals(selectedProgram.pubkey) || a.pubkey.equals(selectedProgram.executable);
+            })) {
+              transactions.push(tx);
+            }
           }
-        }
-        setMultisigPendingTxs(transactions);
-      })
-      .catch((err: any) => {
-        console.error("Error fetching all transactions", err);
-        setMultisigPendingTxs([]);
-        consoleOut('multisig txs:', [], 'blue');
-      })
-      .finally(() => setLoadingMultisigTxs(false));
+          setMultisigPendingTxs(transactions);
+        })
+        .catch((err: any) => {
+          console.error("Error fetching all transactions", err);
+          setMultisigPendingTxs([]);
+          consoleOut('multisig txs:', [], 'blue');
+        })
+        .finally(() => setLoadingMultisigTxs(false));
       
     });
 
@@ -1132,7 +995,7 @@ export const MultisigProgramsView = () => {
       if (!multisigClient || !selectedMultisig || !publicKey) { return null; }
 
       const dataBuffer = Buffer.from([3, 0, 0, 0]);
-      const spill = multisigClient.provider.wallet.publicKey;
+      const spill = publicKey;
       const ixAccounts = [
         {
           pubkey: new PublicKey(data.programDataAddress),
@@ -1148,51 +1011,19 @@ export const MultisigProgramsView = () => {
       ];
 
       const BPF_LOADER_UPGRADEABLE_PID = new PublicKey("BPFLoaderUpgradeab1e11111111111111111111111");
-      const transaction = Keypair.generate();
-      const txSize = 1200;
-      const createIx = await multisigClient.account.transaction.createInstruction(
-        transaction,
-        txSize
-      );
-
-      const [txDetailAddress] = await PublicKey.findProgramAddress(
-        [
-          selectedMultisig.id.toBuffer(),
-          transaction.publicKey.toBuffer()
-        ],
-        multisigClient.programId
-      );
-
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-      const tx = multisigClient.transaction.createTransaction(
+      let tx = await multisigClient.createTransaction(
+        publicKey,
+        "Upgrade Program",
+        "", // description
+        new Date(expirationTime * 1_000),
+        OperationType.UpgradeProgram,
+        selectedMultisig.id,
         BPF_LOADER_UPGRADEABLE_PID,
         ixAccounts,
-        dataBuffer,
-        OperationType.UpgradeProgram,
-        "Upgrade Program",
-        "",
-        new BN(expirationTime),
-        new BN(0),
-        new BN(0),
-        {
-          accounts: {
-            multisig: selectedMultisig.id,
-            transaction: transaction.publicKey,
-            transactionDetail: txDetailAddress,
-            proposer: publicKey,
-            multisigOpsAccount: MEAN_MULTISIG_OPS,
-            systemProgram: SystemProgram.programId
-          },
-          preInstructions: [createIx],
-          signers: [transaction],
-        }
+        dataBuffer
       );
-
-      tx.feePayer = publicKey;
-      const { blockhash } = await connection.getRecentBlockhash("recent");
-      tx.recentBlockhash = blockhash;
-      tx.partialSign(...[transaction]);
 
       return tx;
     };
@@ -1486,14 +1317,13 @@ export const MultisigProgramsView = () => {
 
       const [multisigSigner] = await PublicKey.findProgramAddress(
         [selectedMultisig.id.toBuffer()],
-        multisigClient.programId
+        MEAN_MULTISIG_PROGRAM
       );
 
       const programAddr = new PublicKey(data.programAddress);
       const bufferAddr = new PublicKey(data.idlBufferAddress);
       const idlAddr = new PublicKey(data.programIDLAddress);
-      const dataBuffer = encodeInstruction({ setBuffer: {} })
-
+      const dataBuffer = encodeInstruction({ setBuffer: {} });
       const ixAccounts = [
         {
           pubkey: bufferAddr,
@@ -1504,37 +1334,19 @@ export const MultisigProgramsView = () => {
         { pubkey: multisigSigner, isWritable: true, isSigner: false },
       ];
 
-      const txSize = 1000; // TODO: tighter bound.
-      const transaction = Keypair.generate();
-      const upgradeIdlTx = await multisigClient.account.transaction.createInstruction(
-        transaction,
-        txSize
-      );
+      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-      const tx = multisigClient.transaction.createTransaction(
-        programAddr,
+      let tx = await multisigClient.createTransaction(
+        publicKey,
+        "Upgrade Program IDL",
+        "", // description
+        new Date(expirationTime * 1_000),
         OperationType.UpgradeIDL,
+        selectedMultisig.id,
+        programAddr,
         ixAccounts,
-        dataBuffer,
-        new BN(0),
-        new BN(0),
-        {
-          accounts: {
-            multisig: selectedMultisig.id,
-            transaction: transaction.publicKey,
-            proposer: publicKey,
-            multisigOpsAccount: MEAN_MULTISIG_OPS,
-            systemProgram: SystemProgram.programId
-          },          
-          preInstructions: [upgradeIdlTx],
-          signers: [transaction],
-        }
+        dataBuffer
       );
-
-      tx.feePayer = publicKey;
-      const { blockhash } = await connection.getRecentBlockhash("confirmed");
-      tx.recentBlockhash = blockhash;
-      tx.partialSign(...[transaction]);
 
       return tx;
     };
@@ -1828,7 +1640,7 @@ export const MultisigProgramsView = () => {
 
       const [multisigSigner] = await PublicKey.findProgramAddress(
         [selectedMultisig.id.toBuffer()],
-        multisigClient.programId
+        MEAN_MULTISIG_PROGRAM
       );
 
       const ixData = Buffer.from([4, 0, 0, 0]);
@@ -1843,51 +1655,19 @@ export const MultisigProgramsView = () => {
       ];
 
       const BPF_LOADER_UPGRADEABLE_PID = new PublicKey("BPFLoaderUpgradeab1e11111111111111111111111");
-      const txSize = 1200;
-      const transaction = Keypair.generate();
-      const createIx = await multisigClient.account.transaction.createInstruction(
-        transaction,
-        txSize
-      );
-
-      const [txDetailAddress] = await PublicKey.findProgramAddress(
-        [
-          selectedMultisig.id.toBuffer(),
-          transaction.publicKey.toBuffer()
-        ],
-        multisigClient.programId
-      ); 
-
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-      const tx = multisigClient.transaction.createTransaction(
+      let tx = await multisigClient.createTransaction(
+        publicKey,
+        "Set Program Authority",
+        "", // description
+        new Date(expirationTime * 1_000),
+        OperationType.SetMultisigAuthority,
+        selectedMultisig.id,
         BPF_LOADER_UPGRADEABLE_PID,
         ixAccounts,
-        ixData,
-        OperationType.SetMultisigAuthority,
-        "Set Program Authority",
-        "",
-        new BN(expirationTime),
-        new BN(0),
-        new BN(0),
-        {
-          accounts: {
-            multisig: selectedMultisig.id,
-            transaction: transaction.publicKey,
-            transactionDetail: txDetailAddress,
-            proposer: publicKey,
-            multisigOpsAccount: MEAN_MULTISIG_OPS,
-            systemProgram: SystemProgram.programId
-          },
-          preInstructions: [createIx],
-          signers: [transaction]
-        }
+        ixData
       );
-
-      tx.feePayer = publicKey;
-      const { blockhash } = await connection.getRecentBlockhash("confirmed");
-      tx.recentBlockhash = blockhash;
-      tx.partialSign(...[transaction]);
 
       return tx;
     };
@@ -2137,7 +1917,6 @@ export const MultisigProgramsView = () => {
     wallet
   ]);
 
-
   // Common Multisig Approve / Execute logic
 
   const onTxExecuted = useCallback(() => {
@@ -2160,30 +1939,9 @@ export const MultisigProgramsView = () => {
 
     const approveTx = async (data: any) => {
 
-      if (!selectedMultisig || !publicKey) { return null; }
+      if (!selectedMultisig || !multisigClient || !publicKey) { return null; }
 
-      const [txDetailAddress] = await PublicKey.findProgramAddress(
-        [
-          selectedMultisig.id.toBuffer(),
-          data.transaction.id.toBuffer()
-        ],
-        multisigClient.programId
-      ); 
-  
-      let tx = multisigClient.transaction.approve({
-          accounts: {
-            multisig: selectedMultisig.id,
-            transaction: data.transaction.id,
-            transactionDetail: txDetailAddress,
-            owner: publicKey,
-            systemProgram: SystemProgram.programId
-          }
-        }
-      );
-  
-      tx.feePayer = publicKey;
-      const { blockhash } = await connection.getRecentBlockhash("confirmed");
-      tx.recentBlockhash = blockhash;
+      let tx = await multisigClient.approveTransaction(publicKey, data.transaction.id);
   
       return tx;
     };
@@ -2415,8 +2173,7 @@ export const MultisigProgramsView = () => {
     wallet, 
     selectedMultisig, 
     publicKey, 
-    multisigClient.programId, 
-    multisigClient.transaction, 
+    multisigClient,
     connection,  
     transactionFees.blockchainFee, 
     transactionFees.mspFlatFee, 
@@ -2445,52 +2202,9 @@ export const MultisigProgramsView = () => {
 
     const finishTx = async (data: any) => {
 
-      if (!data.transaction || !publicKey || !selectedMultisig) { return null; }
+      if (!data.transaction || !publicKey || !multisigClient) { return null; }
 
-      const [txDetailAddress] = await PublicKey.findProgramAddress(
-        [
-          data.transaction.multisig.toBuffer(),
-          data.transaction.id.toBuffer()
-        ],
-        multisigClient.programId
-      ); 
-
-      let remainingAccounts = data.transaction.accounts
-        // Change the signer status on the vendor signer since it's signed by the program, not the client.
-        .map((meta: any) =>
-          meta.pubkey.equals(selectedMultisig.authority)
-            ? { ...meta, isSigner: false }
-            : meta
-        )
-        .concat({
-          pubkey: data.transaction.programId,
-          isWritable: false,
-          isSigner: false,
-        });
-
-      const txSigners = data.transaction.keypairs || [];
-        
-      let tx = multisigClient.transaction.executeTransaction({
-          accounts: {
-            multisig: selectedMultisig.id,
-            multisigSigner: selectedMultisig.authority,
-            transaction: data.transaction.id,
-            transactionDetail: txDetailAddress,
-            payer: publicKey,
-            systemProgram: SystemProgram.programId
-          },
-          remainingAccounts: remainingAccounts,
-          signers: txSigners
-        }
-      );
-  
-      tx.feePayer = publicKey;
-      const { blockhash } = await multisigClient.provider.connection.getRecentBlockhash("confirmed");
-      tx.recentBlockhash = blockhash;
-      
-      if (txSigners.length) {
-        tx.partialSign(...txSigners);
-      }
+      let tx = await multisigClient.executeTransaction(publicKey, data.transaction.id);
   
       return tx;
     };
@@ -2718,19 +2432,17 @@ export const MultisigProgramsView = () => {
   }, [
     wallet, 
     publicKey, 
-    selectedMultisig, 
-    multisigClient.programId, 
-    multisigClient.transaction, 
-    multisigClient.provider.connection,  
+    multisigClient, 
     transactionFees.blockchainFee, 
     transactionFees.mspFlatFee, 
-    nativeBalance, transactionStatus.currentOperation, 
+    nativeBalance, 
+    transactionStatus.currentOperation, 
     connection, 
     transactionCancelled, 
-    startFetchTxSignatureInfo,
-    setTransactionStatus,
-    clearTransactionStatusContext,
-    resetTransactionStatus,
+    startFetchTxSignatureInfo, 
+    setTransactionStatus, 
+    clearTransactionStatusContext, 
+    resetTransactionStatus, 
     onTxExecuted
   ]);
 
@@ -2752,39 +2464,18 @@ export const MultisigProgramsView = () => {
 
       if (
         !publicKey || 
+        !multisigClient ||
         !selectedMultisig || 
         !selectedMultisig.id || 
-        !selectedMultisig.id.equals(data.transaction.multisig) || 
-        data.transaction.proposer.equals(publicKey) ||
+        selectedMultisig.id.toBase58() !== data.transaction.multisig.toBase58() || 
+        data.transaction.proposer.toBase58() !== publicKey.toBase58() ||
         data.transaction.ownerSeqNumber === selectedMultisig.ownerSeqNumber ||
         data.transaction.executedOn
       ) {
         return null;
       }
-      
-      const [txDetailAddress] = await PublicKey.findProgramAddress(
-        [
-          selectedMultisig.id.toBuffer(),
-          data.transaction.id.toBuffer()
-        ],
-        multisigClient.programId
-      );
-      
-      let tx = multisigClient.transaction.cancelTransaction(
-        {
-          accounts: {
-            multisig: selectedMultisig.id,
-            transaction: data.transaction.id,
-            transactionDetail: txDetailAddress,
-            proposer: publicKey,
-            systemProgram: SystemProgram.programId
-          }
-        }
-      );
 
-      tx.feePayer = publicKey;
-      const { blockhash } = await connection.getRecentBlockhash("confirmed");
-      tx.recentBlockhash = blockhash;
+      let tx = await multisigClient.cancelTransaction(publicKey, data.transaction.id);
 
       return tx;
     };
@@ -3028,8 +2719,7 @@ export const MultisigProgramsView = () => {
     clearTransactionStatusContext,
     resetTransactionStatus,
     connection, 
-    multisigClient.transaction,
-    multisigClient.programId,
+    multisigClient,
     nativeBalance, 
     onTxExecuted, 
     publicKey, 
@@ -3053,6 +2743,9 @@ export const MultisigProgramsView = () => {
     };
     setTransactionFees(fees);
     sethHighlightedMultisigTx(tx);
+    setMultisigTransactionSummary(
+      getMultisigTransactionSummary(tx)
+    );
     setMultisigActionTransactionModalVisible(true);
   }, []);
 
