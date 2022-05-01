@@ -5,8 +5,6 @@ import {
   BarChartOutlined,
   CopyOutlined,
   EditOutlined,
-  EyeInvisibleOutlined,
-  EyeOutlined,
   LoadingOutlined,
   MergeCellsOutlined,
   QrcodeOutlined,
@@ -31,7 +29,7 @@ import {
   getTokenAmountAndSymbolByTokenAddress,
   shortenAddress
 } from '../../utils/utils';
-import { Button, Col, Dropdown, Empty, Menu, Result, Row, Space, Spin, Switch, Tooltip } from 'antd';
+import { Button, Col, Dropdown, Empty, Menu, Result, Row, Space, Spin, Tooltip } from 'antd';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import {
   SOLANA_WALLET_GUIDE,
@@ -48,7 +46,6 @@ import { IconAdd, IconCopy, IconEyeOff, IconEyeOn, IconLightBulb, IconShoppingCa
 import { fetchAccountHistory, MappedTransaction } from '../../utils/history';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import useLocalStorage from '../../hooks/useLocalStorage';
-import { refreshCachedRpc } from '../../models/connections-hq';
 import { AccountTokenParsedInfo } from '../../models/token';
 import { getTokenByMintAddress, TokenInfo } from '../../utils/tokens';
 import { TokenInfo as SolanaTokenInfo } from "@solana/spl-token-registry";
@@ -65,6 +62,7 @@ import { SendAssetModal } from '../../components/SendAssetModal';
 import { ExchangeAssetModal } from '../../components/ExchangeAssetModal';
 import { TransactionStatus } from '../../models/enums';
 import { consoleOut, copyText, isValidAddress, kFormatter, toUsCurrency } from '../../utils/ui';
+import { WrapSolModal } from '../../components/WrapSolModal';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const QRCode = require('qrcode.react');
@@ -191,16 +189,33 @@ export const AccountsNewView = () => {
   //   Events and actions   //
   ////////////////////////////
 
+  const resetTransactionStatus = useCallback(() => {
+    setTransactionStatus({
+      lastOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
+    });
+  }, [setTransactionStatus]);
+
   // Token Merger Modal
   const hideTokenMergerModal = useCallback(() => setTokenMergerModalVisibility(false), []);
   const showTokenMergerModal = useCallback(() => setTokenMergerModalVisibility(true), []);
   const [isTokenMergerModalVisible, setTokenMergerModalVisibility] = useState(false);
+  const onCloseTokenMergeModal = useCallback(() => {
+    resetTransactionStatus();
+    hideTokenMergerModal();
+  }, [
+    hideTokenMergerModal,
+    resetTransactionStatus,
+  ]);
+
   const onFinishedTokenMerge = useCallback(() => {
     hideTokenMergerModal();
+    resetTransactionStatus();
     setShouldLoadTokens(true);
   }, [
     setShouldLoadTokens,
-    hideTokenMergerModal
+    hideTokenMergerModal,
+    resetTransactionStatus,
   ]);
 
   // Receive SPL or SOL modal
@@ -213,18 +228,15 @@ export const AccountsNewView = () => {
   const hideSendAssetModal = useCallback(() => setIsSendAssetModalOpen(false), []);
   const showSendAssetModal = useCallback(() => setIsSendAssetModalOpen(true), []);
 
+  // Wrap SOL token
+  const [isWrapSolModalOpen, setIsWrapSolModalOpen] = useState(false);
+  const hideWrapSolModal = useCallback(() => setIsWrapSolModalOpen(false), []);
+  const showWrapSolModal = useCallback(() => setIsWrapSolModalOpen(true), []);
+
   // Exchange selected token
   const [isExchangeAssetModalOpen, setIsExchangeAssetModalOpen] = useState(false);
   const hideExchangeAssetModal = useCallback(() => setIsExchangeAssetModalOpen(false), []);
   const showExchangeAssetModal = useCallback(() => setIsExchangeAssetModalOpen(true), []);
-
-  const resetTransactionStatus = useCallback(() => {
-    setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle
-    });
-  }, [setTransactionStatus]);
-
 
   const onAddAccountAddress = useCallback(() => {
     setAccountAddress(accountAddressInput);
@@ -982,7 +994,6 @@ export const AccountsNewView = () => {
                 setMeanPinnedTokens(pinnedTokensCopy);
                 setExtraUserTokensSorted([]);
                 setTokensLoaded(true);
-                refreshCachedRpc();
               }
               // Preset the passed-in token via query params either
               // as token account address or mint address or token symbol
@@ -1018,12 +1029,10 @@ export const AccountsNewView = () => {
               setExtraUserTokensSorted([]);
               setTokensLoaded(true);
               selectAsset(meanTokensCopy[0], true);
-              refreshCachedRpc();
             });
         })
         .catch(error => {
           console.error(error);
-          refreshCachedRpc();
         });
     });
 
@@ -1556,9 +1565,11 @@ export const AccountsNewView = () => {
       <Menu.Item key="1" onClick={reloadSwitch}>
         <span className="menu-item-text">Refresh asset</span>
       </Menu.Item>
-      {/* <Menu.Item key="2" onClick={refreshAssetBalance}>
-        <span className="menu-item-text">Refresh balances</span>
-      </Menu.Item> */}
+      {isSelectedAssetNativeAccount() && (
+        <Menu.Item key="2" onClick={showWrapSolModal}>
+          <span className="menu-item-text">Wrap SOL</span>
+        </Menu.Item>
+      )}
     </Menu>
   );
 
@@ -2059,7 +2070,7 @@ export const AccountsNewView = () => {
           connection={connection}
           isVisible={isTokenMergerModalVisible}
           handleOk={onFinishedTokenMerge}
-          handleClose={hideTokenMergerModal}
+          handleClose={onCloseTokenMergeModal}
           tokenMint={selectedTokenMergeGroup[0].parsedInfo.mint}
           tokenGroup={selectedTokenMergeGroup}
           accountTokens={accountTokens}
@@ -2081,6 +2092,13 @@ export const AccountsNewView = () => {
           isVisible={isSendAssetModalOpen}
           handleClose={hideSendAssetModal}
           selected={"one-time"}
+        />
+      )}
+
+      {isWrapSolModalOpen && (
+        <WrapSolModal
+          isVisible={isWrapSolModalOpen}
+          handleClose={hideWrapSolModal}
         />
       )}
 
