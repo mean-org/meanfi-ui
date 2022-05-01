@@ -978,7 +978,7 @@
 			"tx-confirm-failure": "İşlem onaylanamadı",
 			"tx-confirm-failure-check": "İşleminizi aşağıdaki bağlantıdan kontrol edin",
 			"tx-confirmation-status-confirmed": "İşlem onaylandı!",
-			"tx-confirmation-status-timeout": "İşleminiz {{timeout}} içinde onaylanamadı",
+			"tx-confirmation-status-timeout": "İşleminiz onaylanamadı",
 			"tx-confirmation-status-wait": "İşlem onayı bekleniyor...",
 			"tx-generic-operation-success": "İşlem başarıyla tamamlandı",
 			"tx-idle": "Boşta",

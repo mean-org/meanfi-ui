@@ -981,7 +981,7 @@
 			"tx-confirm-failure": "거래를 확인할 수 없습니다",
 			"tx-confirm-failure-check": "아래 링크에서 거래 확인",
 			"tx-confirmation-status-confirmed": "거래 확정!",
-			"tx-confirmation-status-timeout": "거래가 확인되지 않습니다 {{timeout}}",
+			"tx-confirmation-status-timeout": "거래를 확인할 수 없습니다",
 			"tx-confirmation-status-wait": "거래확인을 기다리는 중",
 			"tx-generic-operation-success": "거래가 성공적으로 완료되었습니다",
 			"tx-idle": "쉬고있는",

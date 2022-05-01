@@ -132,6 +132,44 @@ export async function createTokenMergeTx(
   return tx;
 }
 
+export async function createAtaAccount(
+  connection: Connection,
+  mint: PublicKey,
+  owner: PublicKey,
+) {
+  let ixs: TransactionInstruction[] = [];
+
+  const associatedAddress = await Token.getAssociatedTokenAddress(
+    ASSOCIATED_TOKEN_PROGRAM_ID,
+    TOKEN_PROGRAM_ID,
+    mint,
+    owner,
+    true
+  );
+
+  const ataInfo = await connection.getAccountInfo(associatedAddress);
+
+  if (ataInfo === null) {
+    ixs.push(
+      Token.createAssociatedTokenAccountInstruction(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        mint,
+        associatedAddress,
+        owner,
+        owner
+      )
+    );
+  }
+
+  let tx = new Transaction().add(...ixs);
+  tx.feePayer = owner;
+  let hash = await connection.getRecentBlockhash("recent");
+  tx.recentBlockhash = hash.blockhash;
+
+  return tx;
+}
+
 /**
    * Assign a new owner to the account
    *

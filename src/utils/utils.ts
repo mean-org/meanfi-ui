@@ -471,16 +471,14 @@ export async function findATokenAddress(
 
 ): Promise<PublicKey> {
 
-  return (
-      await PublicKey.findProgramAddress(
-          [
-              walletAddress.toBuffer(),
-              TOKEN_PROGRAM_ID.toBuffer(),
-              tokenMintAddress.toBuffer(),
-          ],
-          ASSOCIATED_TOKEN_PROGRAM_ID
-      )
-  )[0];
+  return (await PublicKey.findProgramAddress(
+      [
+        walletAddress.toBuffer(),
+        TOKEN_PROGRAM_ID.toBuffer(),
+        tokenMintAddress.toBuffer(),
+      ],
+      ASSOCIATED_TOKEN_PROGRAM_ID
+  ))[0];
 }
 
 export async function createAssociatedTokenAccount(

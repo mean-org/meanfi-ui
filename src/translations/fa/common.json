@@ -976,7 +976,7 @@
 			"tx-confirm-failure": "تراکنش تایید نشد",
 			"tx-confirm-failure-check": "تراکنش خود را در لینک زیر بررسی کنید",
 			"tx-confirmation-status-confirmed": "تراکنش تایید شد!",
-			"tx-confirmation-status-timeout": "تراکنش شما در مدت {{timeout}} تأیید نشد",
+			"tx-confirmation-status-timeout": "تراکنش شما تایید نشد",
 			"tx-confirmation-status-wait": "در انتظار تایید تراکنش...",
 			"tx-generic-operation-success": "تراکنش با موفقیت انجام شد",
 			"tx-idle": "بیکار",

@@ -977,7 +977,7 @@
 			"tx-confirm-failure": "The transaction could not be confirmed",
 			"tx-confirm-failure-check": "Check your transaction in the link below",
 			"tx-confirmation-status-confirmed": "Transaction confirmed!",
-			"tx-confirmation-status-timeout": "Your transaction could not be confirmed within {{timeout}}",
+			"tx-confirmation-status-timeout": "Your transaction could not be confirmed",
 			"tx-confirmation-status-wait": "Waiting for transaction confirmation...",
 			"tx-generic-operation-success": "Transaction completed successfully",
 			"tx-idle": "Idle",

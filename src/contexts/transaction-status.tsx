@@ -291,25 +291,30 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
   const fetchTxStatus = useCallback(async (
     signature: string,
     targetFinality: TransactionConfirmationStatus,
-    timestampAdded: number
   ) => {
     if (!connection) { return; }
 
-    let lastResult: TransactionConfirmationStatus | undefined = undefined;
+    // let lastResult: TransactionConfirmationStatus | undefined = undefined;
 
     const fetchStatus = async () => {
       try {
-        const result = await fetchTransactionStatus(connection, signature);
+        const result = await connection.confirmTransaction(signature, targetFinality)
+        if (result && result.value && !result.value.err) {
+          setLastSentTxStatus(targetFinality);
+          return targetFinality;
+        }
+
+        // const result = await fetchTransactionStatus(connection, signature);
 
         // Success with no data, retry
-        if (!result || (result && !result.info)) {
-          return undefined;
-        }
+        // if (!result || (result && !result.info)) {
+        //   return undefined;
+        // }
 
-        if (result && result.info && !result.info.err) {
-          setLastSentTxStatus(result.info.confirmationStatus);
-          return result.info.confirmationStatus;
-        }
+        // if (result && result.info && !result.info.err) {
+        //   setLastSentTxStatus(result.info.confirmationStatus);
+        //   return result.info.confirmationStatus;
+        // }
         return undefined;
       } catch (error) {
         console.error(error);
@@ -317,14 +322,16 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
       }
     }
 
-    while (lastResult !== targetFinality && ((new Date().getTime()) - timestampAdded) < TRANSACTION_STATUS_RETRY_TIMEOUT) {
-      lastResult = await fetchStatus();
-      if (lastResult !== targetFinality) {
-        await delay(TRANSACTION_STATUS_RETRY);
-      }
-    }
+    return await fetchStatus();
 
-    return lastResult;
+    // while (lastResult !== targetFinality && ((new Date().getTime()) - timestampAdded) < TRANSACTION_STATUS_RETRY_TIMEOUT) {
+    //   lastResult = await fetchStatus();
+    //   if (lastResult !== targetFinality) {
+    //     await delay(TRANSACTION_STATUS_RETRY);
+    //   }
+    // }
+
+    // return lastResult;
 
   }, [connection]);
 
@@ -358,7 +365,7 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
       )
     });
     rebuildHistoryFromCache();
-    const result = await fetchTxStatus(data.signature, data.finality, now);
+    const result = await fetchTxStatus(data.signature, data.finality);
     if (result === data.finality) {
       txConfirmationCache.update(
         data.signature,
@@ -403,8 +410,33 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
           timestampCompleted: new Date().getTime()
         })
       );
-      notification.close(data.signature);
-      // TODO: Add and Info notification if it is asked for
+      // notification.close(data.signature);
+      openNotification({
+        key: data.signature,
+        type: "info",
+        title: t('transactions.status.tx-confirmation-status-timeout'),
+        duration: 5,
+        description: (
+          <>
+            <span className="mr-1">
+              {
+                data.loadingMessage
+                ? data.loadingMessage
+                : `${t('transactions.status.tx-confirmation-status-wait')} (${OperationType[data.operationType]})`
+              }
+            </span>
+            <div>
+              <span className="mr-1">{t('notifications.check-transaction-in-explorer')}</span>
+              <a className="secondary-link"
+                  href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${data.signature}${getSolanaExplorerClusterParam()}`}
+                  target="_blank"
+                  rel="noopener noreferrer">
+                  {shortenAddress(data.signature, 8)}
+              </a>
+            </div>
+          </>
+        )
+      });
       confirmationEvents.emit(EventType.TxConfirmTimeout, data);
       rebuildHistoryFromCache();
     }

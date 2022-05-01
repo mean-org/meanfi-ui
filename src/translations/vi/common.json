@@ -980,7 +980,7 @@
 			"tx-confirm-failure": "Giao dịch không thể xác nhận",
 			"tx-confirm-failure-check": "Kiểm tra giao dịch của bạn ở link bên dưới",
 			"tx-confirmation-status-confirmed": "Giao dịch đã được xác nhận",
-			"tx-confirmation-status-timeout": "Giao dịch của bạn không thể được xác nhận trong {{timeout}}",
+			"tx-confirmation-status-timeout": "Giao dịch của bạn không thể được xác nhận",
 			"tx-confirmation-status-wait": "Đang chờ xác nhận giao dịch...",
 			"tx-generic-operation-success": "Giao dịch đã hoàn tất thành công",
 			"tx-idle": "Idle",

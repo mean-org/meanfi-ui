@@ -4,12 +4,18 @@ import { cache, getMultipleAccounts, MintParser } from "./accounts";
 import { ENV as ChainID, TokenInfo } from "@solana/spl-token-registry";
 import { MEAN_TOKEN_LIST } from "../constants/token-list";
 import { environment } from "../environments/environment";
-import { Cluster, Connection, PublicKey } from "@solana/web3.js";
+import { Cluster, Connection, ConnectionConfig, PublicKey } from "@solana/web3.js";
 import { DEFAULT_RPCS, RpcConfig } from "../models/connections-hq";
 import { useLocalStorageState } from "./../utils/utils";
+import { TRANSACTION_STATUS_RETRY_TIMEOUT } from "../constants";
 
 const DEFAULT = DEFAULT_RPCS[0].httpProvider;
 const DEFAULT_SLIPPAGE = 0.25;
+
+export const failsafeConnectionConfig: ConnectionConfig = {
+  commitment: "recent",
+  confirmTransactionInitialTimeout: TRANSACTION_STATUS_RETRY_TIMEOUT
+}
 
 export const getNetworkIdByCluster = (cluster: Cluster) => {
   switch (cluster) {
@@ -34,7 +40,7 @@ export const getSolanaExplorerClusterParam = (): string => {
   }
 }
 
-interface ConnectionConfig {
+interface ConnectionProviderConfig {
   connection: Connection;
   endpoint: string;
   slippage: number;
@@ -44,7 +50,7 @@ interface ConnectionConfig {
   tokenMap: Map<string, TokenInfo>;
 }
 
-const ConnectionContext = React.createContext<ConnectionConfig>({
+const ConnectionContext = React.createContext<ConnectionProviderConfig>({
   endpoint: DEFAULT,
   slippage: DEFAULT_SLIPPAGE,
   setSlippage: (val: number) => {},
@@ -64,7 +70,7 @@ export function ConnectionProvider({ children = undefined as any }) {
     DEFAULT_SLIPPAGE.toString()
   );
 
-  const connection = useMemo(() => new Connection(cachedRpc.httpProvider, "recent"), [
+  const connection = useMemo(() => new Connection(cachedRpc.httpProvider, failsafeConnectionConfig), [
     cachedRpc,
   ]);
 
