@@ -331,7 +331,11 @@ export const MultisigMintsView = () => {
   const getTransactionUserStatusAction = useCallback((mtx: MultisigTransaction, longStatus = false) => {
 
     if (mtx.executedOn) {
-      return "";
+      if (mtx.didSigned === true) {
+        return t("multisig.multisig-transactions.signed");
+      } else {
+        return t("multisig.multisig-transactions.not-signed");
+      }
     } else if (mtx.status === MultisigTransactionStatus.Expired) {
       return "This transaction has expired";
     } else if (mtx.didSigned === undefined) {
@@ -1092,6 +1096,7 @@ useEffect(() => {
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
+    resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.SetMintAuthority);
     setRetryOperationPayload(authority);
@@ -1373,7 +1378,6 @@ useEffect(() => {
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.TransactionFinished
             });
-            await delay(1000);
             setOngoingOperation(undefined);
             onMintAuthorityTransfered();
           } else { setIsBusy(false); }
@@ -1398,6 +1402,7 @@ useEffect(() => {
     clearTransactionStatusContext,
     startFetchTxSignatureInfo,
     onMintAuthorityTransfered,
+    resetTransactionStatus,
     setTransactionStatus,
   ]);
 
@@ -1439,6 +1444,7 @@ useEffect(() => {
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
+    resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.CreateMint);
     setRetryOperationPayload(data);
@@ -1698,7 +1704,6 @@ useEffect(() => {
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.TransactionFinished
             });
-            await delay(1000);
             onMintCreated();
             setOngoingOperation(undefined);
           } else { setIsBusy(false); }
@@ -1721,6 +1726,7 @@ useEffect(() => {
     clearTransactionStatusContext,
     startFetchTxSignatureInfo,
     setTransactionStatus,
+    resetTransactionStatus,
     onMintCreated,
   ]);
 
@@ -1762,6 +1768,7 @@ useEffect(() => {
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
+    resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.MintTokens);
     setRetryOperationPayload(data);
@@ -2048,7 +2055,6 @@ useEffect(() => {
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.TransactionFinished
             });
-            await delay(1000);
             onTokensMinted();
             setOngoingOperation(undefined);
             setIsMintTokenModalVisible(false);
@@ -2058,7 +2064,8 @@ useEffect(() => {
     }
 
   }, [
-    clearTransactionStatusContext, 
+    clearTransactionStatusContext,
+    resetTransactionStatus,
     connection, 
     multisigClient.account.transaction, 
     multisigClient.programId, 
@@ -2092,6 +2099,7 @@ useEffect(() => {
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
+    resetTransactionStatus();
     setTransactionCancelled(false);
     setRetryOperationPayload(data);
     setIsBusy(true);
@@ -2352,6 +2360,7 @@ useEffect(() => {
     transactionStatus.currentOperation,
     clearTransactionStatusContext,
     startFetchTxSignatureInfo,
+    resetTransactionStatus,
     setTransactionStatus,
   ]);
 
@@ -2364,6 +2373,7 @@ useEffect(() => {
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
+    resetTransactionStatus();
     setTransactionCancelled(false);
     setRetryOperationPayload(data);
     setIsBusy(true);
@@ -2628,7 +2638,6 @@ useEffect(() => {
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.TransactionFinished
             });
-            await delay(1000);
             onTxExecuted();
             setOngoingOperation(undefined);
           } else { setIsBusy(false); }
@@ -2651,6 +2660,7 @@ useEffect(() => {
     clearTransactionStatusContext,
     startFetchTxSignatureInfo,
     setTransactionStatus,
+    resetTransactionStatus,
     onTxExecuted,
   ]);
 
@@ -2663,6 +2673,7 @@ useEffect(() => {
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
+    resetTransactionStatus();
     setTransactionCancelled(false);
     setRetryOperationPayload(data);
     setIsBusy(true);
@@ -2934,7 +2945,8 @@ useEffect(() => {
     }
 
   }, [
-    clearTransactionStatusContext, 
+    clearTransactionStatusContext,
+    resetTransactionStatus,
     connection, 
     multisigClient.transaction, 
     nativeBalance, 
