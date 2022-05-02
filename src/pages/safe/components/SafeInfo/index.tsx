@@ -199,6 +199,32 @@ export const SafeInfoView = (props: {
     </>
   );
 
+  // Programs list 
+  const renderPrograms = (
+    <>
+      {proposals && proposals.length && (
+        proposals.map((proposal) => {
+          const onSelectProgram = () => {
+            // Sends isSafeDetails value to the parent component "SafeView"
+            // props.onDataToSafeView(proposal);
+          }
+    
+          return (
+            proposal.programs.map((program: any) => (
+              <div 
+                key={program.id}
+                onClick={onSelectProgram}
+                className={`d-flex w-100 align-items-center simplelink ${program.id % 2 === 0 ? '' : 'background-gray'}`}
+                >
+                  {program.name}
+              </div>
+            ))
+          )
+        })
+      )}
+    </>
+  );
+
   return (
     <>
       <Row gutter={[8, 8]} className="safe-info-container">
@@ -267,7 +293,7 @@ export const SafeInfoView = (props: {
           {activeTab === "Proposals" && renderListOfProposals}
           {activeTab === "Settings" && renderSettings}
           {activeTab === "Activity" && "Activity"}
-          {activeTab === "Programs" && "Programs"}
+          {activeTab === "Programs" && renderPrograms}
         </Row>
       </div>
     </>

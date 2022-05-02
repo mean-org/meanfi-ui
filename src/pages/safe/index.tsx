@@ -3405,6 +3405,16 @@ export const SafeView = () => {
           proposedBy: "Pavelsan"
         },
       ],
+      programs: [
+        {
+          id: 1,
+          name: "Program 1"
+        },
+        {
+          id: 2,
+          name: "Program 2"
+        },
+      ]
     },
     {
       id: 2,
@@ -3448,6 +3458,20 @@ export const SafeView = () => {
           proposedBy: "Pavelsan"
         },
       ],
+      programs: [
+        {
+          id: 3,
+          name: "Program 3"
+        },
+        {
+          id: 4,
+          name: "Program 4"
+        },
+        {
+          id: 5,
+          name: "Program 5"
+        },
+      ]
     },
     {
       id: 3,
@@ -3498,6 +3522,16 @@ export const SafeView = () => {
           proposedBy: "Pavelsan"
         },
       ],
+      programs: [
+        {
+          id: 6,
+          name: "Program 6"
+        },
+        {
+          id: 7,
+          name: "Program 7"
+        },
+      ]
     },
     {
       id: 4,
@@ -3550,6 +3584,16 @@ export const SafeView = () => {
           proposedBy: "Pavelsan"
         },
       ],
+      programs: [
+        {
+          id: 8,
+          name: "Program 8"
+        },
+        {
+          id: 9,
+          name: "Program 9"
+        },
+      ]
     },
     {
       id: 5,
@@ -3600,6 +3644,20 @@ export const SafeView = () => {
           proposedBy: "Pavelsan"
         },
       ],
+      programs: [
+        {
+          id: 10,
+          name: "Program 10"
+        },
+        {
+          id: 11,
+          name: "Program 11"
+        },
+        {
+          id: 12,
+          name: "Program 12"
+        },
+      ]
     },
     {
       id: 6,
@@ -3643,6 +3701,12 @@ export const SafeView = () => {
           proposedBy: "Yansel"
         }
       ],
+      programs: [
+        {
+          id: 13,
+          name: "Program 13"
+        }
+      ]
     },
     {
       id: 7,
@@ -3693,6 +3757,16 @@ export const SafeView = () => {
           proposedBy: "Pavelsan"
         },
       ],
+      programs: [
+        {
+          id: 14,
+          name: "Program 14"
+        },
+        {
+          id: 15,
+          name: "Program 15"
+        },
+      ]
     },
     {
       id: 8,
@@ -3745,6 +3819,20 @@ export const SafeView = () => {
           proposedBy: "Pavelsan"
         },
       ],
+      programs: [
+        {
+          id: 16,
+          name: "Program 16"
+        },
+        {
+          id: 17,
+          name: "Program 17"
+        },
+        {
+          id: 18,
+          name: "Program 18"
+        },
+      ]
     },
     {
       id: 9,
@@ -3795,6 +3883,16 @@ export const SafeView = () => {
           proposedBy: "Pavelsan"
         },
       ],
+      programs: [
+        {
+          id: 19,
+          name: "Program 19"
+        },
+        {
+          id: 20,
+          name: "Program 20"
+        },
+      ]
     },
     {
       id: 10,
@@ -3838,6 +3936,20 @@ export const SafeView = () => {
           proposedBy: "Pavelsan"
         },
       ],
+      programs: [
+        {
+          id: 21,
+          name: "Program 21"
+        },
+        {
+          id: 22,
+          name: "Program 22"
+        },
+        {
+          id: 23,
+          name: "Program 23"
+        },
+      ]
     },
     {
       id: 11,
@@ -3881,6 +3993,16 @@ export const SafeView = () => {
           proposedBy: "Yansel"
         }
       ],
+      programs: [
+        {
+          id: 24,
+          name: "Program 24"
+        },
+        {
+          id: 25,
+          name: "Program 25"
+        },
+      ]
     },
     {
       id: 12,
@@ -3940,6 +4062,16 @@ export const SafeView = () => {
           proposedBy: "Pavelsan"
         },
       ],
+      programs: [
+        {
+          id: 26,
+          name: "Program 26"
+        },
+        {
+          id: 27,
+          name: "Program 27"
+        },
+      ]
     },
     {
       id: 13,
@@ -3983,6 +4115,12 @@ export const SafeView = () => {
           proposedBy: "Pavelsan"
         },
       ],
+      programs: [
+        {
+          id: 28,
+          name: "Program 28"
+        },
+      ]
     },
     {
       id: 15,
@@ -4042,6 +4180,20 @@ export const SafeView = () => {
           proposedBy: "Pavelsan"
         },
       ],
+      programs: [
+        {
+          id: 29,
+          name: "Program 29"
+        },
+        {
+          id: 30,
+          name: "Program 30"
+        },
+        {
+          id: 31,
+          name: "Program 31"
+        },
+      ]
     },
   ];
 
