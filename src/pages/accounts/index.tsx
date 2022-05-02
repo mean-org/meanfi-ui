@@ -1246,7 +1246,12 @@ export const AccountsNewView = () => {
           setLastStreamsSummary(initialSummary);
           setStreamsSummary(initialSummary);
         });
-        refreshStreamList();
+        const treasurer = publicKey
+          ? publicKey
+          : urlQueryAddress
+            ? new PublicKey(urlQueryAddress)
+            : new PublicKey(accountAddress);
+        refreshStreamList(true, treasurer);
         setShouldLoadTokens(true);
         setAddAccountPanelOpen(false);
         setCanShowAccountDetails(true);
@@ -1274,6 +1279,8 @@ export const AccountsNewView = () => {
     publicKey,
     connected,
     streamDetail,
+    accountAddress,
+    urlQueryAddress,
     previousWalletConnectState,
     setCanShowAccountDetails,
     setAddAccountPanelOpen,
@@ -1429,7 +1436,12 @@ export const AccountsNewView = () => {
                 <div className="streams-count simplelink" onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    refreshStreamList();
+                    const treasurer = publicKey
+                      ? publicKey
+                      : urlQueryAddress
+                        ? new PublicKey(urlQueryAddress)
+                        : new PublicKey(accountAddress);
+                    refreshStreamList(false, treasurer);
                   }}>
                   <span className="font-size-75 font-bold text-shadow">{kFormatter(streamsSummary.totalAmount) || 0}</span>
                 </div>
@@ -1576,7 +1588,13 @@ export const AccountsNewView = () => {
     return (
       <>
         {/* Activity list */}
-        <div className={'transaction-list-data-wrapper vertical-scroll'}>
+        <div className={`transaction-list-data-wrapper ${
+          (status === FetchStatus.Fetched && !hasTransactions()) ||
+           status === FetchStatus.FetchFailed
+            ? 'h-100'
+            : 'vertical-scroll'
+           }`
+          }>
           <div className="activity-list h-100">
             {
               hasTransactions() ? (

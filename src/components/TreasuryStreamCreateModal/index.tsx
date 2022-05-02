@@ -41,15 +41,14 @@ import { DATEPICKER_FORMAT } from '../../constants';
 import { Identicon } from '../Identicon';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TxConfirmationContext } from '../../contexts/transaction-status';
-import { Connection, Keypair, PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
+import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { customLogger } from '../..';
 import { Beneficiary, Constants as MSPV2Constants, MSP, StreamBeneficiary, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
 import { TreasuryInfo } from '@mean-dao/money-streaming';
 import { useConnectionConfig } from '../../contexts/connection';
-import { Idl, Program } from '@project-serum/anchor';
 import { BN } from 'bn.js';
 import { u64 } from '@solana/spl-token';
-import { MEAN_MULTISIG_OPS, DEFAULT_EXPIRATION_TIME_SECONDS } from '../../models/multisig';
+import { MeanMultisig, MEAN_MULTISIG_PROGRAM, DEFAULT_EXPIRATION_TIME_SECONDS } from '@mean-dao/mean-multisig-sdk';
 
 const { Option } = Select;
 
@@ -65,7 +64,7 @@ export const TreasuryStreamCreateModal = (props: {
   treasuryDetails: Treasury | TreasuryInfo | undefined;
   isMultisigTreasury: boolean;
   minRequiredBalance: number;
-  multisigClient: Program<Idl>;
+  multisigClient: MeanMultisig;
   multisigAddress: PublicKey;
   userBalances: any;
 }) => {
@@ -116,7 +115,7 @@ export const TreasuryStreamCreateModal = (props: {
   const [isFeePaidByTreasurer, setIsFeePaidByTreasurer] = useState(false);
   const [tokenAmount, setTokenAmount] = useState(new BN(0));
   const [maxAllocatableAmount, setMaxAllocatableAmount] = useState<any>(undefined);
-  const [enableMultipleStreamsOption, setEnableMultipleStreamsOption] = useState(false);
+  const [enableMultipleStreamsOption, /*setEnableMultipleStreamsOption*/] = useState(false);
   const today = new Date().toLocaleDateString("en-US");
   const [csvFile, setCsvFile] = useState<any>();
   const [csvArray, setCsvArray] = useState<any>([]);
@@ -719,15 +718,15 @@ export const TreasuryStreamCreateModal = (props: {
   };
 
   // Multi-recipient
-  const onCloseMultipleStreamsChanged = useCallback((e: any) => {
-    setEnableMultipleStreamsOption(e.target.value);
+  // const onCloseMultipleStreamsChanged = useCallback((e: any) => {
+  //   setEnableMultipleStreamsOption(e.target.value);
   
-    if (!enableMultipleStreamsOption) {
-      setCsvArray([]);
-      setIsCsvSelected(false);
-    }
+  //   if (!enableMultipleStreamsOption) {
+  //     setCsvArray([]);
+  //     setIsCsvSelected(false);
+  //   }
 
-  }, [enableMultipleStreamsOption]);
+  // }, [enableMultipleStreamsOption]);
 
   // const onAllocationReservedChanged = (e: any) => {
   //   setIsAllocationReserved(e.target.value);
@@ -899,7 +898,7 @@ export const TreasuryStreamCreateModal = (props: {
 
       let [multisigSigner] = await PublicKey.findProgramAddress(
         [props.multisigAddress.toBuffer()],
-        props.multisigClient.programId
+        MEAN_MULTISIG_PROGRAM
       );
 
       let streams: StreamBeneficiary[] = [];
@@ -913,7 +912,7 @@ export const TreasuryStreamCreateModal = (props: {
         let timeStampCounter = new u64(timeStamp + seedCounter);
         let [stream, streamBump] = await PublicKey.findProgramAddress(
           [props.multisigAddress.toBuffer(), timeStampCounter.toBuffer()],
-          props.multisigClient.programId
+          MEAN_MULTISIG_PROGRAM
         );
 
         streams.push({
@@ -950,53 +949,28 @@ export const TreasuryStreamCreateModal = (props: {
       let txs: Transaction[] = [];
 
       for (let createTx of createStreams) {
+
         const ixData = Buffer.from(createTx.instructions[0].data);
         const ixAccounts = createTx.instructions[0].keys;
-        const transaction = Keypair.generate();
-        const txSize = 1200;
-        const createIx = await props.multisigClient.account.transaction.createInstruction(
-          transaction,
-          txSize
-        );
+        const streamSeedData = streamsBumps[createTx.instructions[0].keys[7].pubkey.toBase58()];
 
-        const [txDetailAddress] = await PublicKey.findProgramAddress(
-          [
-            props.multisigAddress.toBuffer(),
-            transaction.publicKey.toBuffer()
-          ],
-          props.multisigClient.programId
-        );
-
-        let streamSeedData = streamsBumps[createTx.instructions[0].keys[7].pubkey.toBase58()];
-        let tx = props.multisigClient.transaction.createTransaction(
-          MSPV2Constants.MSP,
-          ixAccounts as any,
-          ixData as any,
-          OperationType.StreamCreate,
+        let tx = await props.multisigClient.createMoneyStreamTransaction(
+          publicKey,
           "Create Stream",
-          "",
-          new BN(expirationTime),
-          new u64(streamSeedData.timeStamp.toNumber()),
-          new BN(streamSeedData.bump),
-          {
-            accounts: {
-              multisig: props.multisigAddress,
-              transaction: transaction.publicKey,
-              transactionDetail: txDetailAddress,
-              proposer: publicKey,
-              multisigOpsAccount: MEAN_MULTISIG_OPS,
-              systemProgram: SystemProgram.programId
-            },
-            preInstructions: [createIx],
-            signers: [transaction],
-          }
+          "", // description
+          new Date(expirationTime * 1_000),
+          streamSeedData.timeStamp.toNumber(),
+          streamSeedData.bump,
+          OperationType.StreamCreate,
+          props.multisigAddress,
+          MSPV2Constants.MSP,
+          ixAccounts,
+          ixData
         );
-
-        tx.feePayer = publicKey;
-        let { blockhash } = await props.multisigClient.provider.connection.getRecentBlockhash("confirmed");
-        tx.recentBlockhash = blockhash;
-        tx.partialSign(transaction);
-        txs.push(tx);
+        
+        if (tx) {
+          txs.push(tx);
+        }
       } 
 
       return txs;

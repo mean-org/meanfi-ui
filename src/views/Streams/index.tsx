@@ -107,13 +107,14 @@ import {
 } from "../../utils/segment-service";
 import { Program, Provider } from "@project-serum/anchor";
 import MultisigIdl from "../../models/mean-multisig-idl";
-import { MultisigV2 } from "../../models/multisig";
 import { StreamPauseModal } from "../../components/StreamPauseModal";
 import { StreamResumeModal } from "../../components/StreamResumeModal";
 import { StreamLockedModal } from "../../components/StreamLockedModal";
 import { StreamEditModal } from "../../components/StreamEditModal";
 import { openNotification } from "../../components/Notifications";
 import { CountdownCircleTimer } from "react-countdown-circle-timer";
+
+import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 let ds: string[] = [];
@@ -186,7 +187,7 @@ export const Streams = () => {
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
   });
   const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
-  const [multisigAccounts, setMultisigAccounts] = useState<MultisigV2[] | undefined>(undefined);
+  const [multisigAccounts, setMultisigAccounts] = useState<MultisigInfo[] | undefined>(undefined);
   const [canSubscribe, setCanSubscribe] = useState(true);
   const [key, setKey] = useState(0);
 

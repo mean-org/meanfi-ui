@@ -994,6 +994,9 @@ const AppStateProvider: React.FC = ({ children }) => {
       return;
     }
 
+    const userPk = userAddress || publicKey;
+    consoleOut('Fetching streams for:', userPk?.toBase58(), 'blue');
+
     if (msp) {
       setLoadingStreams(true);
       const signature = lastSentTxStatus || '';
@@ -1005,12 +1008,12 @@ const AppStateProvider: React.FC = ({ children }) => {
       let rawStreamsv1: StreamInfo[] = [];
       let rawStreamsv2: Stream[] = [];
 
-      msp.listStreams({treasurer: userAddress || publicKey, beneficiary: userAddress || publicKey})
+      msp.listStreams({treasurer: userPk, beneficiary: userPk})
         .then(streamsv2 => {
           streamAccumulator.push(...streamsv2);
           rawStreamsv2 = streamsv2;
           rawStreamsv2.sort((a, b) => (a.createdBlockTime < b.createdBlockTime) ? 1 : -1);
-          ms.listStreams({treasurer: userAddress || publicKey, beneficiary: userAddress || publicKey})
+          ms.listStreams({treasurer: userPk, beneficiary: userPk})
           .then(streamsv1 => {
               streamAccumulator.push(...streamsv1);
               rawStreamsv1 = streamsv1;

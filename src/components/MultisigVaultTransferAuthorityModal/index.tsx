@@ -9,9 +9,11 @@ import { isError } from '../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TransactionFees } from '@mean-dao/money-streaming';
 import { getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, makeDecimal, shortenAddress } from '../../utils/utils';
-import { MultisigV2, MultisigVault } from '../../models/multisig';
+import { MultisigVault } from '../../models/multisig';
 import { Identicon } from '../Identicon';
 import { FALLBACK_COIN_IMAGE } from '../../constants';
+
+import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -23,8 +25,8 @@ export const MultisigVaultTransferAuthorityModal = (props: {
   isBusy: boolean;
   nativeBalance: number;
   transactionFees: TransactionFees;
-  selectedMultisig: MultisigV2 | undefined;
-  multisigAccounts: MultisigV2[];
+  selectedMultisig: MultisigInfo | undefined;
+  multisigAccounts: MultisigInfo[];
   selectedVault: MultisigVault | undefined;
   assets: MultisigVault[]
 }) => {
@@ -119,7 +121,7 @@ export const MultisigVaultTransferAuthorityModal = (props: {
     );
   }
 
-  const renderMultisigSelectItem = (item: MultisigV2) => ({
+  const renderMultisigSelectItem = (item: MultisigInfo) => ({
     key: item.authority.toBase58(),
     value: item.authority.toBase58(),
     label: (
@@ -151,7 +153,7 @@ export const MultisigVaultTransferAuthorityModal = (props: {
   });
 
   const renderMultisigSelectOptions = () => {
-    const options = props.multisigAccounts.map((multisig: MultisigV2, index: number) => {
+    const options = props.multisigAccounts.map((multisig: MultisigInfo, index: number) => {
       return renderMultisigSelectItem(multisig);
     });
     return options;
