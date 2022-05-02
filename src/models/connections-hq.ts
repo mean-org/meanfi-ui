@@ -47,9 +47,8 @@ export const getDefaultRpc = (): RpcConfig => {
   switch (environment) {
     case 'local':
     case 'development':
-      return DEFAULT_RPCS[2];
     case 'staging':
-      return DEFAULT_RPCS[1];
+      return DEFAULT_RPCS[2];
     case 'production':
     default:
       return DEFAULT_RPCS[0];
