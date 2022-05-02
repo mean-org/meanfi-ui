@@ -1420,7 +1420,6 @@ export const MultisigProgramsView = () => {
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.TransactionFinished
             });
-            await delay(1000);
             onProgramUpgraded();
             setOngoingOperation(undefined);
           } else { setIsBusy(false); }
@@ -1762,7 +1761,6 @@ export const MultisigProgramsView = () => {
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.TransactionFinished
             });
-            await delay(1000);
             onIDLUpgraded();
             setOngoingOperation(undefined);
           } else { setIsBusy(false); }
@@ -2115,7 +2113,6 @@ export const MultisigProgramsView = () => {
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.TransactionFinished
             });
-            await delay(1000);
             onProgramAuthSet();
             setOngoingOperation(undefined);
           } else { setIsBusy(false); }
@@ -2711,7 +2708,6 @@ export const MultisigProgramsView = () => {
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.TransactionFinished
             });
-            await delay(1000);
             onTxExecuted();
             setOngoingOperation(undefined);
           } else { setIsBusy(false); }

@@ -1819,7 +1819,6 @@ export const MultisigAssetsView = () => {
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.TransactionFinished
             });
-            await delay(1000);
             onTokensTransfered();
             setIsTransferTokenModalVisible(false);
           } else { setIsBusy(false); }
@@ -2165,7 +2164,6 @@ export const MultisigAssetsView = () => {
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.TransactionFinished
             });
-            await delay(1000);
             onVaultAuthorityTransfered();
             setIsTransferVaultAuthorityModalVisible(false);
           } else { setIsBusy(false); }
@@ -2503,7 +2501,6 @@ export const MultisigAssetsView = () => {
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.TransactionFinished
             });
-            await delay(1000);
             onVaultDeleted();
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
@@ -3084,7 +3081,6 @@ export const MultisigAssetsView = () => {
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.TransactionFinished
             });
-            await delay(1000);
             onTxExecuted();
             setOngoingOperation(undefined);
           } else { setIsBusy(false); }
