@@ -20,7 +20,7 @@ import { useTranslation } from "react-i18next";
 import { TextInput } from "../../components/TextInput";
 import { Identicon } from "../../components/Identicon";
 import { JupiterExchangeOutput } from "../../components/JupiterExchangeOutput";
-import { ArrowLeftOutlined, InfoCircleOutlined, LoadingOutlined, ReloadOutlined, SyncOutlined, WarningFilled } from "@ant-design/icons";
+import { InfoCircleOutlined, LoadingOutlined, ReloadOutlined, SyncOutlined, WarningFilled } from "@ant-design/icons";
 import { appConfig, customLogger } from "../..";
 import BN from 'bn.js';
 import "./style.scss";
@@ -65,7 +65,6 @@ export const JupiterExchange = (props: {
     const [isUnwrapping, setIsUnwrapping] = useState(false);
     const [fromMint, setFromMint] = useState<string | undefined>();
     const [toMint, setToMint] = useState<string | undefined>(undefined);
-    const [paramsProcessed, setParamsProcessed] = useState(false);
     const [refreshingRoutes, setRefreshingRoutes] = useState(false);
     const [jupiter, setJupiter] = useState<Jupiter | undefined>(undefined);
     const [jupiterReady, setJupiterReady] = useState(false);
@@ -199,10 +198,6 @@ export const JupiterExchange = (props: {
 
     // Set fromMint & toMint from query string if params are provided
     useEffect(() => {
-        if (paramsProcessed) { return; }
-
-        setParamsProcessed(true);
-
         if (props.queryFromMint || props.queryToMint) {
             consoleOut('props.queryFromMint:', props.queryFromMint, 'orange');
             consoleOut('props.queryToMint:', props.queryToMint, 'orange');
@@ -228,7 +223,6 @@ export const JupiterExchange = (props: {
             }
         }
     }, [
-        paramsProcessed,
         props.queryToMint,
         props.queryFromMint
     ]);
