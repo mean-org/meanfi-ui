@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { Analytics } from "@segment/analytics-next";
 import { consoleOut } from "./ui";
 
@@ -66,6 +67,15 @@ export enum AppUsageEvent {
     DepositInStakingVaultSigned = "Deposit in Staking vault Signed",
     DepositInStakingVaultCompleted = "Deposit in Staking vault Completed",
     DepositInStakingVaultFailed = "Deposit in Staking vault Failed",
+    // Asset management
+    WrapSolFormButton = "Wrap SOL form button click",
+    WrapSolSigned = "Wrap SOL Signed",
+    WrapSolCompleted = "Wrap SOL Completed",
+    WrapSolFailed = "Wrap SOL Failed",
+    UnwrapSolFormButton = "Unwrap SOL form button click",
+    UnwrapSolSigned = "Unwrap SOL Signed",
+    UnwrapSolCompleted = "Unwrap SOL Completed",
+    UnwrapSolFailed = "Unwrap SOL Failed",
 }
 
 export enum StatsTriggertEvent {

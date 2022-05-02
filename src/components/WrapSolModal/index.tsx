@@ -19,10 +19,11 @@ import { TokenDisplay } from '../TokenDisplay';
 import { LoadingOutlined } from '@ant-design/icons';
 
 export const WrapSolModal = (props: {
+  handleOk: any;
   handleClose: any;
   isVisible: boolean;
 }) => {
-  const { isVisible, handleClose } = props;
+  const { isVisible, handleClose, handleOk } = props;
   const { t } = useTranslation("common");
   const connection = useConnection();
   const { publicKey, wallet } = useWallet();
@@ -132,8 +133,8 @@ export const WrapSolModal = (props: {
       setWrapAmount("");
     }
     resetTransactionStatus();
-    handleClose();
-  }, [handleClose, isBusy, isSuccess, resetTransactionStatus]);
+    handleOk();
+  }, [handleOk, isBusy, isSuccess, resetTransactionStatus]);
 
   const onTransactionStart = async () => {
     let transaction: Transaction;
@@ -446,7 +447,7 @@ export const WrapSolModal = (props: {
       title={<div className="modal-title">Wrap SOL</div>}
       footer={null}
       visible={isVisible}
-      onOk={handleClose}
+      onOk={handleOk}
       onCancel={handleClose}
       width={400}>
 

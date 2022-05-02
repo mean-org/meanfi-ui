@@ -60,9 +60,13 @@ import { AddressDisplay } from '../../components/AddressDisplay';
 import { ReceiveSplOrSolModal } from '../../components/ReceiveSplOrSolModal';
 import { SendAssetModal } from '../../components/SendAssetModal';
 import { ExchangeAssetModal } from '../../components/ExchangeAssetModal';
-import { TransactionStatus } from '../../models/enums';
+import { EventType, OperationType, TransactionStatus } from '../../models/enums';
 import { consoleOut, copyText, isValidAddress, kFormatter, toUsCurrency } from '../../utils/ui';
 import { WrapSolModal } from '../../components/WrapSolModal';
+import { UnwrapSolModal } from '../../components/UnwrapSolModal';
+import { confirmationEvents, TxConfirmationInfo } from '../../contexts/transaction-status';
+import { AppUsageEvent } from '../../utils/segment-service';
+import { segmentAnalytics } from '../../App';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const QRCode = require('qrcode.react');
@@ -142,6 +146,7 @@ export const AccountsNewView = () => {
   const [loadingTransactions, setLoadingTransactions] = useState(false);
   const [shouldLoadTransactions, setShouldLoadTransactions] = useState(false);
   const [hideLowBalances, setHideLowBalances] = useLocalStorage('hideLowBalances', true);
+  const [canSubscribe, setCanSubscribe] = useState(true);
 
   // QR scan modal
   const [isQrScannerModalVisible, setIsQrScannerModalVisibility] = useState(false);
@@ -233,10 +238,23 @@ export const AccountsNewView = () => {
   const hideWrapSolModal = useCallback(() => setIsWrapSolModalOpen(false), []);
   const showWrapSolModal = useCallback(() => setIsWrapSolModalOpen(true), []);
 
+  // Unwrap SOL token
+  const [isUnwrapSolModalOpen, setIsUnwrapSolModalOpen] = useState(false);
+  const hideUnwrapSolModal = useCallback(() => setIsUnwrapSolModalOpen(false), []);
+  const showUnwrapSolModal = useCallback(() => setIsUnwrapSolModalOpen(true), []);
+
   // Exchange selected token
   const [isExchangeAssetModalOpen, setIsExchangeAssetModalOpen] = useState(false);
   const hideExchangeAssetModal = useCallback(() => setIsExchangeAssetModalOpen(false), []);
   const showExchangeAssetModal = useCallback(() => setIsExchangeAssetModalOpen(true), []);
+
+  const onAfterWrap = () => {
+    hideWrapSolModal();
+  }
+
+  const onAfterUnwrap = () => {
+    hideUnwrapSolModal();
+  }
 
   const onAddAccountAddress = useCallback(() => {
     setAccountAddress(accountAddressInput);
@@ -509,6 +527,44 @@ export const AccountsNewView = () => {
     setSelectedAsset,
     setDtailsPanelOpen,
   ])
+
+  const recordTxConfirmation = useCallback((item: TxConfirmationInfo, success = true) => {
+    let event: any;
+
+    if (item && item.operationType === OperationType.Wrap) {
+      event = success ? AppUsageEvent.WrapSolCompleted : AppUsageEvent.WrapSolFailed;
+    } else if (item && item.operationType === OperationType.Unwrap) {
+      event = success ? AppUsageEvent.UnwrapSolCompleted : AppUsageEvent.UnwrapSolFailed;
+    }
+
+    segmentAnalytics.recordEvent(event, { signature: item.signature });
+  }, []);
+
+  // Setup event handler for Tx confirmed
+  const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
+    consoleOut("onTxConfirmed event executed:", item, 'crimson');
+    if (item && item.operationType === OperationType.Wrap) {
+      recordTxConfirmation(item, false);
+      setShouldLoadTokens(true);
+      reloadSwitch();
+    } else if (item && item.operationType === OperationType.Unwrap) {
+      recordTxConfirmation(item, false);
+      setShouldLoadTokens(true);
+      reloadSwitch();
+    }
+    resetTransactionStatus();
+  }, [recordTxConfirmation, reloadSwitch, resetTransactionStatus, setShouldLoadTokens]);
+
+  // Setup event handler for Tx confirmation error
+  const onTxTimedout = useCallback((item: TxConfirmationInfo) => {
+    consoleOut("onTxTimedout event executed:", item, 'crimson');
+    if (item && item.operationType === OperationType.Wrap) {
+      recordTxConfirmation(item, false);
+    } else if (item && item.operationType === OperationType.Unwrap) {
+      recordTxConfirmation(item, false);
+    }
+    resetTransactionStatus();
+  }, [recordTxConfirmation, resetTransactionStatus]);
 
   const refreshStreamSummary = useCallback(async () => {
 
@@ -1150,6 +1206,11 @@ export const AccountsNewView = () => {
         setCanShowAccountDetails(true);
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'blue');
+        confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
+        consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
+        confirmationEvents.off(EventType.TxConfirmTimeout, onTxTimedout);
+        consoleOut('Unsubscribed from event onTxTimedout!', '', 'blue');
+        setCanSubscribe(true);
         setTimeout(() => {
           setLastStreamsSummary(initialSummary);
           setStreamsSummary(initialSummary);
@@ -1175,6 +1236,8 @@ export const AccountsNewView = () => {
     setStreamsSummary,
     refreshStreamList,
     setStreamDetail,
+    onTxConfirmed,
+    onTxTimedout,
     startSwitch,
   ]);
 
@@ -1277,6 +1340,17 @@ export const AccountsNewView = () => {
     extraUserTokensSorted,
     getPricePerToken
   ]);
+
+  // Setup event listeners
+  useEffect(() => {
+    if (publicKey && canSubscribe) {
+      setCanSubscribe(false);
+      confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
+      consoleOut('Subscribed to event txConfirmed with:', 'onTxConfirmed', 'blue');
+      confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
+      consoleOut('Subscribed to event txTimedout with:', 'onTxTimedout', 'blue');
+    }
+  }, [publicKey, canSubscribe, onTxConfirmed, onTxTimedout]);
 
   ///////////////
   // Rendering //
@@ -1568,6 +1642,11 @@ export const AccountsNewView = () => {
       {isSelectedAssetNativeAccount() && (
         <Menu.Item key="2" onClick={showWrapSolModal}>
           <span className="menu-item-text">Wrap SOL</span>
+        </Menu.Item>
+      )}
+      {selectedAsset && selectedAsset.address === WRAPPED_SOL_MINT_ADDRESS && (
+        <Menu.Item key="2" onClick={showUnwrapSolModal}>
+          <span className="menu-item-text">Unwrap SOL</span>
         </Menu.Item>
       )}
     </Menu>
@@ -2098,7 +2177,16 @@ export const AccountsNewView = () => {
       {isWrapSolModalOpen && (
         <WrapSolModal
           isVisible={isWrapSolModalOpen}
+          handleOk={onAfterWrap}
           handleClose={hideWrapSolModal}
+        />
+      )}
+
+      {isUnwrapSolModalOpen && (
+        <UnwrapSolModal
+          isVisible={isUnwrapSolModalOpen}
+          handleOk={onAfterUnwrap}
+          handleClose={hideUnwrapSolModal}
         />
       )}
 
