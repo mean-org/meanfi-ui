@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Button, Popover, Tooltip } from "antd";
 import { useTranslation } from "react-i18next";
 import { CloseOutlined, CopyOutlined } from "@ant-design/icons";
 import { shortenAddress } from "../../utils/utils";
 import "./style.scss";
-import { MultisigParticipant } from "../../models/multisig";
+import { MultisigParticipant } from "@mean-dao/mean-multisig-sdk";
 import { copyText } from "../../utils/ui";
 import { openNotification } from "../Notifications";
 

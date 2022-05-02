@@ -12,13 +12,14 @@ import { isError } from '../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TransactionFees, TreasuryType } from '@mean-dao/money-streaming';
 import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, shortenAddress } from '../../utils/utils';
-import { MultisigV2 } from '../../models/multisig';
 import { Identicon } from '../Identicon';
 import { IconCheckedBox } from '../../Icons';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { TokenDisplay } from '../TokenDisplay';
 import { NATIVE_SOL } from '../../utils/tokens';
 import { openNotification } from '../Notifications';
+
+import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 
 const { Option } = Select;
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -31,8 +32,8 @@ export const TreasuryCreateModal = (props: {
   nativeBalance: number;
   userBalances: any;
   transactionFees: TransactionFees;
-  selectedMultisig: MultisigV2 | undefined;
-  multisigAccounts: MultisigV2[];
+  selectedMultisig: MultisigInfo | undefined;
+  multisigAccounts: MultisigInfo[];
   associatedToken: string;
 }) => {
   const { t } = useTranslation('common');
@@ -52,7 +53,7 @@ export const TreasuryCreateModal = (props: {
   } = useContext(AppStateContext);
   const [treasuryName, setTreasuryName] = useState('');
   const { treasuryOption, setTreasuryOption } = useContext(AppStateContext);
-  const [localSelectedMultisig, setLocalSelectedMultisig] = useState<MultisigV2 | undefined>(undefined);
+  const [localSelectedMultisig, setLocalSelectedMultisig] = useState<MultisigInfo | undefined>(undefined);
   const [enableMultisigTreasuryOption, setEnableMultisigTreasuryOption] = useState(true);
   const [customTokenInput, setCustomTokenInput] = useState("");
 
@@ -207,7 +208,7 @@ export const TreasuryCreateModal = (props: {
               <Select className={`token-selector-dropdown auto-height`} value={localSelectedMultisig ? localSelectedMultisig.id.toBase58() : undefined}
                   style={{width:400, maxWidth:'none'}}
                   onChange={onMultisigChanged} bordered={false} showArrow={false}>
-                {props.multisigAccounts.map((option: MultisigV2) => {
+                {props.multisigAccounts.map((option: MultisigInfo) => {
                   return (
                     <Option key={option.id.toBase58()} value={option.id.toBase58()}>
                       <div className="option-container">
