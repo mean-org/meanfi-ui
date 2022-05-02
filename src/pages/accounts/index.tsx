@@ -59,7 +59,6 @@ import { openNotification } from '../../components/Notifications';
 import { AddressDisplay } from '../../components/AddressDisplay';
 import { ReceiveSplOrSolModal } from '../../components/ReceiveSplOrSolModal';
 import { SendAssetModal } from '../../components/SendAssetModal';
-import { ExchangeAssetModal } from '../../components/ExchangeAssetModal';
 import { EventType, OperationType, TransactionStatus } from '../../models/enums';
 import { consoleOut, copyText, isValidAddress, kFormatter, toUsCurrency } from '../../utils/ui';
 import { WrapSolModal } from '../../components/WrapSolModal';
@@ -718,8 +717,8 @@ export const AccountsNewView = () => {
     isSelectedAssetNativeAccount
   ]);
 
-  // I consider the "have" items to render if there are transactions for selected asset if not the user address
-  // or if there are transactions with balance changes in the user address if SOL was selected
+  // Lets consider there are items to render if there are transactions for selected asset (NOT SOL)
+  // or if there are transactions with balance changes for the selected asset (SOL)
   const hasItemsToRender = useCallback((): boolean => {
     return ((!isSelectedAssetNativeAccount() && hasTransactions()) ||
             (isSelectedAssetNativeAccount() && hasTransactions() && solAccountItems > 0))
@@ -974,9 +973,23 @@ export const AccountsNewView = () => {
                   }
                 });
 
-                // Build meanTokensCopy including the MeanFi tokens but excluding the items it pinnedTokensCopy
-                splTokensCopy.forEach(item => {
+                consoleOut('pinnedTokensCopy:', pinnedTokensCopy.map(i => {
+                  return {
+                    pubAddress: i.publicAddress,
+                    mintAddress: i.address,
+                    balance: i.balance || 0
+                  };
+                }), 'blue');
+
+                // Build meanTokensCopy including the MeanFi tokens but excluding the items in pinnedTokensCopy
+                userTokens.forEach(item => {
                   if (!pinnedTokensCopy.includes(item)) {
+                    meanTokensCopy.push(item);
+                  }
+                });
+                // Now add all other items but excluding those in pinnedTokensCopy and userTokens
+                splTokensCopy.forEach(item => {
+                  if (!pinnedTokensCopy.includes(item) && !userTokens.includes(item)) {
                     meanTokensCopy.push(item);
                   }
                 });
@@ -1038,6 +1051,14 @@ export const AccountsNewView = () => {
 
                 // Concatenate both lists
                 const finalList = pinnedTokensCopy.concat(sortedList);
+
+                consoleOut('Extra user tokens - sorted:', sortedList.map(i => {
+                  return {
+                    pubAddress: i.publicAddress,
+                    mintAddress: i.address,
+                    balance: i.balance || 0
+                  };
+                }), 'blue');
 
                 // Report in the console for debugging
                 const tokenTable: any[] = [];
