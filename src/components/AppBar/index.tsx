@@ -161,12 +161,6 @@ export const AppBar = (props: {
             <Link to="/faucet">{t('ui-menus.main-menu.services.faucet')}</Link>
           </Menu.Item>
         )}
-        <Menu.Item key="/wrap">
-          <Link to="/wrap">{t('ui-menus.main-menu.services.wrap')}</Link>
-        </Menu.Item>
-        <Menu.Item key="/unwrap">
-          <Link to="/unwrap">{t('ui-menus.main-menu.services.unwrap')}</Link>
-        </Menu.Item>
       </SubMenu>
       {(isLocal() || isWhitelisted) && (
         <Menu.Item key="/stats">
@@ -272,20 +266,14 @@ export const AppBar = (props: {
                     <Link to="/faucet">{t('ui-menus.main-menu.services.faucet')}</Link>
                   </li>
                 )}
-                <li key="/wrap" className={location.pathname === '/wrap' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 8} as CustomCSSProps}>
-                  <Link to="/wrap">{t('ui-menus.main-menu.services.wrap')}</Link>
-                </li>
-                <li key="/unwrap" className={location.pathname === '/unwrap' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 9} as CustomCSSProps}>
-                  <Link to="/unwrap">{t('ui-menus.main-menu.services.unwrap')}</Link>
-                </li>
-                <li key="wallet-guide" className="mobile-menu-item" style={{'--animation-order': isProd() ? 8 : 10} as CustomCSSProps}>
+                <li key="wallet-guide" className="mobile-menu-item" style={{'--animation-order': isProd() ? 8 : 9} as CustomCSSProps}>
                   <a href={SOLANA_WALLET_GUIDE} target="_blank" rel="noopener noreferrer">
                     <span className="menu-item-text">{t('ui-menus.main-menu.services.wallet-guide')}</span>
                     &nbsp;<IconExternalLink className="mean-svg-icons link" />
                   </a>
                 </li>
                 {(isLocal() || isWhitelisted) && (
-                  <li key="/stats" className="mobile-menu-item" style={{'--animation-order': 12} as CustomCSSProps}>
+                  <li key="/stats" className="mobile-menu-item" style={{'--animation-order': 10} as CustomCSSProps}>
                     <Link to="/stats">{t('ui-menus.main-menu.stats')}</Link>
                   </li>
                 )}
