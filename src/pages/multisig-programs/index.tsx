@@ -335,7 +335,11 @@ export const MultisigProgramsView = () => {
   const getTransactionUserStatusAction = useCallback((mtx: MultisigTransaction, longStatus = false) => {
 
     if (mtx.executedOn) {
-      return "";
+      if (mtx.didSigned === true) {
+        return t("multisig.multisig-transactions.signed");
+      } else {
+        return t("multisig.multisig-transactions.not-signed");
+      }
     } else if (mtx.didSigned === undefined) {
       return longStatus ? t("multisig.multisig-transactions.rejected-tx") : t("multisig.multisig-transactions.rejected");
     } else if (mtx.didSigned === false) {
@@ -1245,7 +1249,6 @@ export const MultisigProgramsView = () => {
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.TransactionFinished
             });
-            await delay(1000);
             onProgramUpgraded();
             setOngoingOperation(undefined);
           } else { setIsBusy(false); }
@@ -1568,7 +1571,6 @@ export const MultisigProgramsView = () => {
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.TransactionFinished
             });
-            await delay(1000);
             onIDLUpgraded();
             setOngoingOperation(undefined);
           } else { setIsBusy(false); }
@@ -1889,7 +1891,6 @@ export const MultisigProgramsView = () => {
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.TransactionFinished
             });
-            await delay(1000);
             onProgramAuthSet();
             setOngoingOperation(undefined);
           } else { setIsBusy(false); }
@@ -2419,7 +2420,6 @@ export const MultisigProgramsView = () => {
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.TransactionFinished
             });
-            await delay(1000);
             onTxExecuted();
             setOngoingOperation(undefined);
           } else { setIsBusy(false); }
