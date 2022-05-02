@@ -244,9 +244,9 @@ export const AccountsNewView = () => {
   const showUnwrapSolModal = useCallback(() => setIsUnwrapSolModalOpen(true), []);
 
   // Exchange selected token
-  const [isExchangeAssetModalOpen, setIsExchangeAssetModalOpen] = useState(false);
-  const hideExchangeAssetModal = useCallback(() => setIsExchangeAssetModalOpen(false), []);
-  const showExchangeAssetModal = useCallback(() => setIsExchangeAssetModalOpen(true), []);
+  // const [isExchangeAssetModalOpen, setIsExchangeAssetModalOpen] = useState(false);
+  // const hideExchangeAssetModal = useCallback(() => setIsExchangeAssetModalOpen(false), []);
+  // const showExchangeAssetModal = useCallback(() => setIsExchangeAssetModalOpen(true), []);
 
   const onAfterWrap = () => {
     hideWrapSolModal();
@@ -310,6 +310,16 @@ export const AccountsNewView = () => {
     accountAddress,
   ]);
 
+  const goToExchangeWithPresetAsset = useCallback(() => {
+    const queryParams = `${selectedAsset ? '?from=' + selectedAsset.symbol : ''}`;
+    setDtailsPanelOpen(false);
+    if (queryParams) {
+      navigate(`/exchange${queryParams}`);
+    } else {
+      navigate('/exchange');
+    }
+  }, [navigate, selectedAsset, setDtailsPanelOpen]);
+
   const handleGoToExchangeClick = useCallback(() => {
     const queryParams = `${selectedAsset ? '?to=' + selectedAsset.symbol : ''}`;
     setDtailsPanelOpen(false);
@@ -328,18 +338,20 @@ export const AccountsNewView = () => {
   const onExchangeAsset = useCallback(() => {
     if (!selectedAsset) { return; }
 
-    let token: TokenInfo | null;
-    if (isSelectedAssetNativeAccount()) {
-      token = getTokenByMintAddress(WRAPPED_SOL_MINT_ADDRESS);
-    } else {
-      token = getTokenByMintAddress(selectedAsset.address);
-    }
-    if (token) {
-      setSelectedToken(token as SolanaTokenInfo);
-    }
-    showExchangeAssetModal();
+    goToExchangeWithPresetAsset();
 
-  }, [isSelectedAssetNativeAccount, selectedAsset, setSelectedToken, showExchangeAssetModal]);
+    // let token: TokenInfo | null;
+    // if (isSelectedAssetNativeAccount()) {
+    //   token = getTokenByMintAddress(WRAPPED_SOL_MINT_ADDRESS);
+    // } else {
+    //   token = getTokenByMintAddress(selectedAsset.address);
+    // }
+    // if (token) {
+    //   setSelectedToken(token as SolanaTokenInfo);
+    // }
+    // showExchangeAssetModal();
+
+  }, [goToExchangeWithPresetAsset, selectedAsset]);
 
   const onSendAsset = useCallback(() => {
     if (!selectedAsset) { return; }
@@ -2190,13 +2202,13 @@ export const AccountsNewView = () => {
         />
       )}
 
-      {isExchangeAssetModalOpen && publicKey && selectedAsset && (
+      {/* {isExchangeAssetModalOpen && publicKey && selectedAsset && (
         <ExchangeAssetModal
           isVisible={isExchangeAssetModalOpen}
           handleClose={hideExchangeAssetModal}
           tokenSymbol={selectedAsset.symbol}
         />
-      )}
+      )} */}
 
       <PreFooter />
     </>
