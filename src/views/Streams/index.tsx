@@ -140,6 +140,7 @@ export const Streams = () => {
     streamsSummary,
     deletedStreams,
     streamActivity,
+    accountAddress,
     refreshInterval,
     detailsPanelOpen,
     transactionStatus,
@@ -208,16 +209,13 @@ export const Streams = () => {
   ]);
 
   const msp = useMemo(() => {
-    if (publicKey) {
-      console.log('New MSP from streams');
-      return new MSP(
-        endpoint,
-        streamV2ProgramAddress,
-        "confirmed"
-      );
-    }
+    console.log('New MSP from streams');
+    return new MSP(
+      endpoint,
+      streamV2ProgramAddress,
+      "confirmed"
+    );
   }, [
-    publicKey,
     endpoint,
     streamV2ProgramAddress
   ]);
@@ -613,7 +611,9 @@ export const Streams = () => {
 
   const refreshStreamSummary = useCallback(async () => {
 
-    if (!ms || !msp || !publicKey || (!streamListv1 && !streamListv2) || loadingStreamsSummary) { return; }
+    if (!ms || !msp || (!streamListv1 && !streamListv2) || loadingStreamsSummary) { return; }
+
+    if (!publicKey && !accountAddress) { return; }
 
     setLoadingStreamsSummary(true);
 
@@ -624,14 +624,18 @@ export const Streams = () => {
       totalAmount: 0
     };
 
-    const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], publicKey);
-    const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], publicKey);
+    const treasurer = publicKey
+      ? publicKey
+      : new PublicKey(accountAddress);
 
+      const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
+      const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer);
+  
     // consoleOut('=========== Block strat ===========', '', 'orange');
 
     for (let stream of updatedStreamsv1) {
 
-      const isIncoming = stream.beneficiaryAddress && stream.beneficiaryAddress === publicKey.toBase58()
+      const isIncoming = stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58()
         ? true
         : false;
 
@@ -660,7 +664,7 @@ export const Streams = () => {
 
     for (let stream of updatedStreamsv2) {
 
-      const isIncoming = stream.beneficiary && stream.beneficiary === publicKey.toBase58()
+      const isIncoming = stream.beneficiary && stream.beneficiary === treasurer.toBase58()
         ? true
         : false;
 
@@ -700,15 +704,16 @@ export const Streams = () => {
     setLoadingStreamsSummary(false);
 
   }, [
-    ms, 
-    msp, 
-    publicKey, 
-    streamListv1, 
-    streamListv2, 
+    ms,
+    msp,
+    publicKey,
+    streamListv1,
+    streamListv2,
+    accountAddress,
     streamsSummary,
     loadingStreamsSummary,
-    setLastStreamsSummary, 
-    setLoadingStreamsSummary, 
+    setLastStreamsSummary,
+    setLoadingStreamsSummary,
     setStreamsSummary,
     getPricePerToken
   ]);
@@ -716,30 +721,21 @@ export const Streams = () => {
   // Live data calculation - Stream summary
   useEffect(() => {
 
-    if (!ms || !msp || !publicKey || !streamList || (!streamListv1 && !streamListv2)) { return; }
+    if (!streamList || (!streamListv1 && !streamListv2)) { return; }
 
     const timeout = setTimeout(() => {
       refreshStreamSummary();
-    }, 3000);
+    }, 5000);
 
     return () => {
       clearTimeout(timeout);
     }
 
   }, [
-    ms, 
-    msp, 
-    publicKey, 
-    streamList, 
-    streamListv1, 
-    streamListv2, 
-    streamsSummary, 
-    loadingStreamsSummary, 
-    setLoadingStreamsSummary, 
-    setLastStreamsSummary, 
-    setStreamsSummary, 
-    getPricePerToken, 
-    refreshStreamSummary
+    streamList,
+    streamListv1,
+    streamListv2,
+    refreshStreamSummary,
   ]);
 
   useEffect(() => {
@@ -4084,11 +4080,9 @@ export const Streams = () => {
   //   Rendering   //
   ///////////////////
 
-  const renderMoneyStreamsSummary = (
-    <>
-      {/* Render Money Streams item if they exist and wallet is connected */}
-      {publicKey && (
-        <>
+  const renderMoneyStreamsSummary = useCallback(() => {
+    return (
+      <>
         <div key="streams" className="transaction-list-row money-streams-summary no-pointer">
           <div className="icon-cell">
             {loadingStreams ? (
@@ -4145,10 +4139,9 @@ export const Streams = () => {
           </div>
         </div>
         <div key="separator1" className="pinned-token-separator"></div>
-        </>
-      )}
-    </>
-  );
+      </>
+    );
+  }, [loadingStreams, refreshStreamList, streamsSummary.incomingAmount, streamsSummary.outgoingAmount, streamsSummary.totalAmount, streamsSummary.totalNet, t]);
 
   const menu = (
     <Menu>
@@ -5455,7 +5448,7 @@ export const Streams = () => {
 
   const renderStreamList = (
     <>
-    {streamList && streamList.length ? (
+    {(connected && streamList && streamList.length > 0) ? (
       streamList.map((item, index) => {
         const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
         const onStreamClick = () => {
@@ -5503,12 +5496,20 @@ export const Streams = () => {
           </div>
         );
       })
+    ) : !connected ? (
+      <>
+        <div className="h-100 flex-center">
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={
+            <p>{t('streams.stream-list.not-connected')}</p>
+          }/>
+        </div>
+      </>
     ) : (
       <>
         <div className="h-100 flex-center">
-          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{connected
-          ? t('streams.stream-list.no-streams')
-          : t('streams.stream-list.not-connected')}</p>} />
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={
+            <p>{t('streams.stream-list.no-streams')}</p>
+          }/>
         </div>
       </>
     )}
@@ -5519,9 +5520,10 @@ export const Streams = () => {
     <>
       {/* {isLocal() && (
         <div className="debug-bar">
-          <span className="ml-1">proggress:</span><span className="ml-1 font-bold fg-dark-active">{fetchTxInfoStatus || '-'}</span>
-          <span className="ml-1">status:</span><span className="ml-1 font-bold fg-dark-active">{lastSentTxStatus || '-'}</span>
-          <span className="ml-1">lastSentTxSignature:</span><span className="ml-1 font-bold fg-dark-active">{lastSentTxSignature ? shortenAddress(lastSentTxSignature, 8) : '-'}</span>
+          <span className="ml-1">incoming:</span><span className="ml-1 font-bold fg-dark-active">{streamsSummary ? streamsSummary.incomingAmount : '-'}</span>
+          <span className="ml-1">outgoing:</span><span className="ml-1 font-bold fg-dark-active">{streamsSummary ? streamsSummary.outgoingAmount : '-'}</span>
+          <span className="ml-1">totalAmount:</span><span className="ml-1 font-bold fg-dark-active">{streamsSummary ? streamsSummary.totalAmount : '-'}</span>
+          <span className="ml-1">totalNet:</span><span className="ml-1 font-bold fg-dark-active">{streamsSummary ? streamsSummary.totalNet : '-'}</span>
         </div>
       )} */}
 
@@ -5588,7 +5590,7 @@ export const Streams = () => {
             {/* item block */}
             <div className="item-block vertical-scroll">
               <Spin spinning={loadingStreams}>
-                {(streamsSummary && streamsSummary.totalAmount > 0) && renderMoneyStreamsSummary}
+                {renderMoneyStreamsSummary()}
                 {renderStreamList}
               </Spin>
             </div>
@@ -5610,12 +5612,16 @@ export const Streams = () => {
                     block
                     type="primary"
                     shape="round"
+                    disabled={!connected}
                     onClick={onCreateNewTransfer}>
-                    {t('streams.create-new-stream-cta')}
+                    {connected
+                      ? t('streams.create-new-stream-cta')
+                      : t('transactions.validation.not-connected')
+                    }
                   </Button>
                 </div>
               )}
-              {!customStreamDocked && (
+              {!customStreamDocked && connected && (
                 <div className="open-stream">
                   <Tooltip title={t('streams.lookup-stream-cta-tooltip')}>
                     <Button

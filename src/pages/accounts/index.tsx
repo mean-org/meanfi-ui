@@ -60,7 +60,7 @@ import { AddressDisplay } from '../../components/AddressDisplay';
 import { ReceiveSplOrSolModal } from '../../components/ReceiveSplOrSolModal';
 import { SendAssetModal } from '../../components/SendAssetModal';
 import { EventType, OperationType, TransactionStatus } from '../../models/enums';
-import { consoleOut, copyText, isValidAddress, kFormatter, toUsCurrency } from '../../utils/ui';
+import { consoleOut, copyText, isLocal, isValidAddress, kFormatter, toUsCurrency } from '../../utils/ui';
 import { WrapSolModal } from '../../components/WrapSolModal';
 import { UnwrapSolModal } from '../../components/UnwrapSolModal';
 import { confirmationEvents, TxConfirmationInfo } from '../../contexts/transaction-status';
@@ -175,16 +175,12 @@ export const AccountsNewView = () => {
   ]);
 
   const msp = useMemo(() => {
-    if (publicKey) {
-      return new MSP(
-        endpoint,
-        streamV2ProgramAddress,
-        "confirmed"
-      );
-    }
-    return undefined;
+    return new MSP(
+      endpoint,
+      streamV2ProgramAddress,
+      "confirmed"
+    );
   }, [
-    publicKey,
     endpoint,
     streamV2ProgramAddress
   ]);
@@ -579,7 +575,7 @@ export const AccountsNewView = () => {
 
   const refreshStreamSummary = useCallback(async () => {
 
-    if (!ms || !msp || !publicKey || (!streamListv1 && !streamListv2) || loadingStreamsSummary) { return; }
+    if (!ms || !msp || !(publicKey || urlQueryAddress || accountAddress) || (!streamListv1 && !streamListv2) || loadingStreamsSummary) { return; }
 
     setLoadingStreamsSummary(true);
 
@@ -590,14 +586,20 @@ export const AccountsNewView = () => {
       totalAmount: 0
     };
 
-    const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], publicKey);
-    const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], publicKey);
+    const treasurer = publicKey
+      ? publicKey
+      : urlQueryAddress
+        ? new PublicKey(urlQueryAddress)
+        : new PublicKey(accountAddress);
+
+    const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
+    const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer);
 
     // consoleOut('=========== Block strat ===========', '', 'orange');
 
     for (let stream of updatedStreamsv1) {
 
-      const isIncoming = stream.beneficiaryAddress && stream.beneficiaryAddress === publicKey.toBase58()
+      const isIncoming = stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58()
         ? true
         : false;
 
@@ -626,7 +628,7 @@ export const AccountsNewView = () => {
 
     for (let stream of updatedStreamsv2) {
 
-      const isIncoming = stream.beneficiary && stream.beneficiary === publicKey.toBase58()
+      const isIncoming = stream.beneficiary && stream.beneficiary === treasurer.toBase58()
         ? true
         : false;
 
@@ -666,15 +668,17 @@ export const AccountsNewView = () => {
     setLoadingStreamsSummary(false);
 
   }, [
-    ms, 
-    msp, 
-    publicKey, 
-    streamListv1, 
-    streamListv2, 
+    ms,
+    msp,
+    publicKey,
+    streamListv1,
+    streamListv2,
     streamsSummary,
+    accountAddress,
+    urlQueryAddress,
     loadingStreamsSummary,
-    setLastStreamsSummary, 
-    setLoadingStreamsSummary, 
+    setLastStreamsSummary,
+    setLoadingStreamsSummary,
     setStreamsSummary,
     getPricePerToken
   ]);
@@ -836,19 +840,28 @@ export const AccountsNewView = () => {
       }
     }, 1000);
 
-    if (publicKey && (!streamList || streamList.length === 0)) {
-      consoleOut('Loading streams with wallet connection...', '', 'green');
-      refreshStreamList();
+    if ((publicKey || urlQueryAddress || accountAddress) && (!streamList || streamList.length === 0)) {
+      consoleOut('Loading streams...', '', 'green');
+
+      const treasurer = publicKey
+      ? publicKey
+      : urlQueryAddress
+        ? new PublicKey(urlQueryAddress)
+        : new PublicKey(accountAddress);
+
+      refreshStreamList(false, treasurer);
     }
   }, [
     wallet,
     publicKey,
     streamList,
     isFirstLoad,
+    accountAddress,
+    urlQueryAddress,
     shouldLoadTokens,
-    setTransactions,
+    setShouldLoadTokens,
     refreshStreamList,
-    setShouldLoadTokens
+    setTransactions,
   ]);
 
   // Fetch all the owned token accounts on demmand via setShouldLoadTokens(true)
@@ -1274,43 +1287,10 @@ export const AccountsNewView = () => {
     startSwitch,
   ]);
 
-  // Window resize listeners
-  useEffect(() => {
-    const resizeListener = () => {
-      const NUM_CHARS = 4;
-      const ellipsisElements = document.querySelectorAll(".overflow-ellipsis-middle");
-      if (isValidAddress(accountAddressInput)) {
-        for (let i = 0; i < ellipsisElements.length; ++i){
-          const e = ellipsisElements[i] as HTMLElement;
-          if (e.offsetWidth < e.scrollWidth){
-            const text = e.textContent;
-            e.dataset.tail = text?.slice(text.length - NUM_CHARS);
-          }
-        }
-      } else {
-        if (ellipsisElements?.length) {
-          const e = ellipsisElements[0] as HTMLElement;
-          e.dataset.tail = '';
-        }
-      }
-    };
-    // Call it a first time
-    resizeListener();
-
-    // set resize listener
-    window.addEventListener('resize', resizeListener);
-
-    // clean up function
-    return () => {
-      // remove resize listener
-      window.removeEventListener('resize', resizeListener);
-    }
-  }, [accountAddressInput]);
-
   // Live data calculation
   useEffect(() => {
 
-    if (!ms || !msp || !publicKey || !streamList || (!streamListv1 && !streamListv2)) { return; }
+    if (!streamList || (!streamListv1 && !streamListv2)) { return; }
 
     const timeout = setTimeout(() => {
       refreshStreamSummary();
@@ -1321,19 +1301,10 @@ export const AccountsNewView = () => {
     }
 
   }, [
-    ms,
-    msp,
-    publicKey,
     streamList,
     streamListv1,
     streamListv2,
-    streamsSummary,
-    loadingStreamsSummary,
-    setLoadingStreamsSummary,
-    setLastStreamsSummary,
     refreshStreamSummary,
-    setStreamsSummary,
-    getPricePerToken,
   ]);
 
   // Live data calculation - Totals
@@ -1373,6 +1344,39 @@ export const AccountsNewView = () => {
     extraUserTokensSorted,
     getPricePerToken
   ]);
+
+  // Window resize listeners
+  useEffect(() => {
+    const resizeListener = () => {
+      const NUM_CHARS = 4;
+      const ellipsisElements = document.querySelectorAll(".overflow-ellipsis-middle");
+      if (isValidAddress(accountAddressInput)) {
+        for (let i = 0; i < ellipsisElements.length; ++i){
+          const e = ellipsisElements[i] as HTMLElement;
+          if (e.offsetWidth < e.scrollWidth){
+            const text = e.textContent;
+            e.dataset.tail = text?.slice(text.length - NUM_CHARS);
+          }
+        }
+      } else {
+        if (ellipsisElements?.length) {
+          const e = ellipsisElements[0] as HTMLElement;
+          e.dataset.tail = '';
+        }
+      }
+    };
+    // Call it a first time
+    resizeListener();
+
+    // set resize listener
+    window.addEventListener('resize', resizeListener);
+
+    // clean up function
+    return () => {
+      // remove resize listener
+      window.removeEventListener('resize', resizeListener);
+    }
+  }, [accountAddressInput]);
 
   // Setup event listeners
   useEffect(() => {
@@ -1933,9 +1937,10 @@ export const AccountsNewView = () => {
 
         {/* {isLocal() && (
           <div className="debug-bar">
-            <span className="ml-1">proggress:</span><span className="ml-1 font-bold fg-dark-active">{fetchTxInfoStatus || '-'}</span>
-            <span className="ml-1">status:</span><span className="ml-1 font-bold fg-dark-active">{lastSentTxStatus || '-'}</span>
-            <span className="ml-1">lastSentTxSignature:</span><span className="ml-1 font-bold fg-dark-active">{lastSentTxSignature ? shortenAddress(lastSentTxSignature, 8) : '-'}</span>
+            <span className="ml-1">incoming:</span><span className="ml-1 font-bold fg-dark-active">{streamsSummary ? streamsSummary.incomingAmount : '-'}</span>
+            <span className="ml-1">outgoing:</span><span className="ml-1 font-bold fg-dark-active">{streamsSummary ? streamsSummary.outgoingAmount : '-'}</span>
+            <span className="ml-1">totalAmount:</span><span className="ml-1 font-bold fg-dark-active">{streamsSummary ? streamsSummary.totalAmount : '-'}</span>
+            <span className="ml-1">totalNet:</span><span className="ml-1 font-bold fg-dark-active">{streamsSummary ? streamsSummary.totalNet : '-'}</span>
           </div>
         )} */}
 

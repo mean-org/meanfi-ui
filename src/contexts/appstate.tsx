@@ -140,7 +140,7 @@ interface AppStateConfig {
   refreshTokenBalance: () => void;
   resetContractValues: () => void;
   resetStreamsState: () => void;
-  refreshStreamList: (reset?: boolean) => void;
+  refreshStreamList: (reset?: boolean, userAddress?: PublicKey) => void;
   setContract: (name: string) => void;
   setTreasuryOption: (option: TreasuryTypeOption | undefined) => void;
   setRecipientAddress: (address: string) => void;
@@ -429,16 +429,13 @@ const AppStateProvider: React.FC = ({ children }) => {
   ]);
 
   const msp = useMemo(() => {
-    if (publicKey) {
-      console.log('New MSP from appState');
-      return new MSP(
-        connectionConfig.endpoint,
-        streamV2ProgramAddressFromConfig,
-        "confirmed"
-      );
-    }
+    console.log('New MSP from appState');
+    return new MSP(
+      connectionConfig.endpoint,
+      streamV2ProgramAddressFromConfig,
+      "confirmed"
+    );
   }, [
-    publicKey,
     connectionConfig.endpoint,
     streamV2ProgramAddressFromConfig
   ]);
@@ -988,8 +985,12 @@ const AppStateProvider: React.FC = ({ children }) => {
     updateDdcaOption,
   ]);
 
-  const refreshStreamList = useCallback((reset = false) => {
-    if (!publicKey || loadingStreams || customStreamDocked) {
+  const refreshStreamList = useCallback((reset = false, userAddress?: PublicKey) => {
+    if (loadingStreams || customStreamDocked || !ms || !msp) {
+      return;
+    }
+
+    if (!publicKey && !userAddress) {
       return;
     }
 
@@ -1004,12 +1005,12 @@ const AppStateProvider: React.FC = ({ children }) => {
       let rawStreamsv1: StreamInfo[] = [];
       let rawStreamsv2: Stream[] = [];
 
-      msp.listStreams({treasurer: publicKey, beneficiary: publicKey})
+      msp.listStreams({treasurer: userAddress || publicKey, beneficiary: userAddress || publicKey})
         .then(streamsv2 => {
           streamAccumulator.push(...streamsv2);
           rawStreamsv2 = streamsv2;
           rawStreamsv2.sort((a, b) => (a.createdBlockTime < b.createdBlockTime) ? 1 : -1);
-          ms.listStreams({treasurer: publicKey, beneficiary: publicKey})
+          ms.listStreams({treasurer: userAddress || publicKey, beneficiary: userAddress || publicKey})
           .then(streamsv1 => {
               streamAccumulator.push(...streamsv1);
               rawStreamsv1 = streamsv1;
