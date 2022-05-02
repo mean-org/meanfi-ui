@@ -3,7 +3,7 @@ import './style.scss';
 import { useNavigate } from "react-router-dom";
 
 import { Button, Col, Dropdown, Menu, Row } from "antd"
-import { IconAdd, IconArrowForward, IconEdit, IconEllipsisVertical, IconLink, IconShowAll, IconTrash } from "../../../../Icons"
+import { IconAdd, IconApprove, IconArrowForward, IconCaretDown, IconCheckCircle, IconCreated, IconCross, IconEdit, IconEllipsisVertical, IconLink, IconMinus, IconShowAll, IconTrash } from "../../../../Icons"
 import { shortenAddress } from "../../../../utils/utils";
 import { ProposalResumeItem } from '../ProposalResumeItem';
 import { useTranslation } from "react-i18next";
@@ -158,7 +158,7 @@ export const SafeInfoView = (props: {
   const renderListOfProposals = (
     <>
       {proposals && proposals.length && (
-        proposals.map((proposal) => {
+        proposals.map((proposal, index) => {
           const onSelectProposal = () => {
             // Sends isSafeDetails value to the parent component "SafeView"
             props.onDataToSafeView(proposal);
@@ -168,7 +168,7 @@ export const SafeInfoView = (props: {
             <div 
               key={proposal.id}
               onClick={onSelectProposal}
-              className={`d-flex w-100 align-items-center simplelink ${proposal.id % 2 === 0 ? '' : 'background-gray'}`}
+              className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
               >
                 <ProposalResumeItem
                   id={proposal.id}
@@ -207,14 +207,43 @@ export const SafeInfoView = (props: {
       {proposals && proposals.length && (
         proposals.map((proposal) => (
           proposal.activities.map((activity: any) => {
-    
+
+            let icon = null;
+
+            switch (activity.description) {
+              case 'approved':
+                icon = <IconApprove className="mean-svg-icons" />;
+                break;
+              case 'rejected':
+                icon = <IconCross className="mean-svg-icons" />;
+                break;
+              case 'passed':
+                icon = <IconCheckCircle className="mean-svg-icons" />;
+                break;
+              case 'created':
+                icon = <IconCreated className="mean-svg-icons" />;
+                break;
+              case 'deleted':
+                icon = <IconMinus className="mean-svg-icons" />;
+                break;
+              default:
+                icon = "";
+                break;
+            }
+
             return (
               <div 
                 key={activity.id}
-                className={`d-flex w-100 align-items-center ${activity.id % 2 === 0 ? '' : 'background-gray'}`}
+                className={`d-flex w-100 align-items-center activities-list ${activity.id % 2 === 0 ? '' : 'background-gray'}`}
                 >
                   <div className="list-item">
-                    {`${activity.date} - Proposal ${activity.description} by ${activity.proposedBy} [${shortenAddress(activity.address, 4)}]`}
+                    <span className="mr-2">
+                        {activity.date}
+                    </span>
+                    {icon}
+                    <span>
+                      {`Proposal ${activity.description} by ${activity.proposedBy} [${shortenAddress(activity.address, 4)}]`}
+                    </span>
                   </div>
               </div>
             )
