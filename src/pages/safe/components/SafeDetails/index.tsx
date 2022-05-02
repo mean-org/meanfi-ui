@@ -1,6 +1,6 @@
 import './style.scss';
 import { Button, Col, Collapse, Row } from "antd"
-import { IconArrowBack, IconApprove, IconReject, IconUser } from "../../../../Icons"
+import { IconArrowBack, IconUser, IconThumbsUp, IconThumbsDown } from "../../../../Icons"
 import { ProposalResumeItem } from '../ProposalResumeItem';
 import { useState } from 'react';
 import { shortenAddress } from '../../../../utils/utils';
@@ -120,6 +120,7 @@ export const SafeDetailsView = (props: {
       </Row>
       <ProposalResumeItem 
         id={proposalSelected.id}
+        logo={proposalSelected.logo}
         title={proposalSelected.title}
         expires={proposalSelected.expires}
         approved={proposalSelected.approved}
@@ -146,7 +147,7 @@ export const SafeDetailsView = (props: {
             className="thin-stroke"
             onClick={() => {}}>
               <div className="btn-content">
-                <IconApprove className="mean-svg-icons" />
+                <IconThumbsUp className="mean-svg-icons" />
                 Approve
               </div>
           </Button>
@@ -156,7 +157,7 @@ export const SafeDetailsView = (props: {
             className="thin-stroke"
             onClick={() => {}}>
               <div className="btn-content">
-                <IconReject className="mean-svg-icons" />
+                <IconThumbsDown className="mean-svg-icons" />
                 Reject
               </div>
           </Button>

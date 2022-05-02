@@ -10,18 +10,87 @@ import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { AppStateContext } from '../../contexts/appstate';
 import { useWallet } from '../../contexts/wallet';
-import { Modal, Button, Spin, Divider, Checkbox, DatePicker, Row, Col, TimePicker, Switch, Dropdown, Menu } from 'antd';
+import { Modal, Button, Spin, Divider, Checkbox, DatePicker, Row, Col, TimePicker, Switch, Dropdown, Menu, Input, Select } from 'antd';
 import { StepSelector } from "../StepSelector";
 import moment from 'moment';
-import { IconCaretDown, IconEdit, IconHelpCircle } from "../../Icons";
+import { IconCaretDown, IconEdit, IconHelpCircle, IconUser } from "../../Icons";
 import { InfoIcon } from "../InfoIcon";
 import { DATEPICKER_FORMAT } from "../../constants";
 import { MultisigVault } from '../../models/multisig';
-import { StepOne } from './components/StepOne';
-import { StepTwo } from './components/StepTwo';
-import { StepThree } from './components/StepThree';
+import { InputMean } from '../InputMean';
+import { SelectMean } from '../SelectMean';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
+
+const solanaApps = [
+  {
+    logo: "",
+    name: "BPF Loader Program"
+  },
+  {
+    logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwh7gt29278eysxa7rb5sl8%3Ftype%3DLOGO&w=3840&q=75",
+    name: "Friktion"
+  },
+  {
+    logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwiiri37677eysxluqnog8e%3Ftype%3DLOGO&w=3840&q=75",
+    name: "Raydium"
+  },
+  {
+    logo: "",
+    name: "Money Streaming"
+  },
+  {
+    logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwh6nj28403eysxj7hduqbo%3Ftype%3DLOGO&w=3840&q=75",
+    name: "Saber"
+  },
+  {
+    logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwip3w40063eysxbk0kx2lc%3Ftype%3DLOGO&w=3840&q=75",
+    name: "Wormhole"
+  },
+  {
+    logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwh67t27981eysx2yzq2dq6%3Ftype%3DLOGO&w=3840&q=75",
+    name: "Socean Streams"
+  },
+  {
+    logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwilfd38506eysxniku8quh%3Ftype%3DLOGO&w=3840&q=75",
+    name: "Mango Markets"
+  },
+  {
+    logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwh6su28617eysxuaubvt93%3Ftype%3DLOGO&w=3840&q=75",
+    name: "Marinade Finance"
+  },
+  {
+    logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwilfj38513eysxcwypxovh%3Ftype%3DLOGO&w=3840&q=75",
+    name: "Lido Finance"
+  },
+  {
+    logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwh8w830938eysxhy5e8syg%3Ftype%3DLOGO&w=3840&q=75",
+    name: "Solend"
+  },
+];
+
+const expires = [
+  "No expires", "24 hours", "48 hours", "72 hours", "7 days"
+];
+
+const instructions = [
+  "Close asset",
+  "Send funds to other asset",
+  "Transfer asset ownership",
+  "Create treasury",
+  "Close treasury",
+  "Add an open stream",
+  "Add a locked stream",
+  "Withdraw funds from a stream",
+  "Upgrade program",
+  "Upgrade IDL program",
+  "Upgrade authority program"
+];
+
+const types = [
+  "Open money stream",
+  "Locked money stream"
+];
 
 export const MultisigProposalModal = (props: {
   handleClose: any;
@@ -43,7 +112,12 @@ export const MultisigProposalModal = (props: {
   const [currentStep, setCurrentStep] = useState(0);
 
   const [proposalTitleValue, setProposalTitleValue] = useState('');
-  const [proposalDescriptionValue, setProposalDescriptionValue] = useState('');
+  const [proposalExpiresValue, setProposalExpiresValue] = useState<any>(expires[0]);
+  const [proposalInstructionValue, setProposalInstructionValue] = useState<any>();
+  const [proposalTypeValue, setProposalTypeValue] = useState<any>(types[0]);
+  const [proposalMemoValue, setProposalMemoValue] = useState('');
+  const [proposalRecipientValue, setProposalRecipientValue] = useState('');
+  const [proposalAmountValue, setProposalAmountValue] = useState('');
 
   const [feeAmount, setFeeAmount] = useState<number | null>(null);
 
@@ -84,7 +158,6 @@ export const MultisigProposalModal = (props: {
   const onAfterClose = () => {
     setTimeout(() => {
       setProposalTitleValue("");
-      setProposalDescriptionValue("");
       setIsVerifiedRecipient(false);
     });
     setTransactionStatus({
@@ -115,6 +188,26 @@ export const MultisigProposalModal = (props: {
     setProposalTitleValue(e.target.value);
   }
 
+  const onProposalExpiresValueChange = (value: any) => {
+    setProposalExpiresValue(value);
+  }
+
+  const onProposalInstructionValueChange = (value: any) => {
+    setProposalInstructionValue(value);
+  }
+
+  const onProposalTypeValueChange = (value: any) => {
+    setProposalTypeValue(value);
+  }
+
+  const onProposalMemoValueChange = (e: any) => {
+    setProposalMemoValue(e.target.value);
+  }
+
+  const onProposalRecipientValueChange = (e: any) => {
+    setProposalRecipientValue(e.target.value);
+  }
+
   // const onProposalDescriptionValueChange = (e: any) => {
   //   setProposalDescriptionValue(e.target.value);
   //   setCountWords(e.target.value.length);
@@ -128,9 +221,9 @@ export const MultisigProposalModal = (props: {
   //   setProposalEndTime(time);
   // }
 
-  const onIsVerifiedRecipientChange = (e: any) => {
-    setIsVerifiedRecipient(e.target.checked);
-  }
+  // const onIsVerifiedRecipientChange = (e: any) => {
+  //   setIsVerifiedRecipient(e.target.checked);
+  // }
 
   // Preset fee amount
   // useEffect(() => {
@@ -141,6 +234,14 @@ export const MultisigProposalModal = (props: {
   //   feeAmount,
   //   props.transactionFees
   // ]);
+
+  const [selectedAppName, setSelectedAppName] = useState<string>();
+  const [selectedAppImg, setSelectedAppImg] = useState<string>();
+
+  const onSelectApp = (e: any) => {
+    setSelectedAppName(e.target.getAttribute("alt"));
+    setSelectedAppImg(e.target.getAttribute("src"));
+  }
 
   useEffect(() => {
     setLettersLeft(256 - countWords);
@@ -166,19 +267,314 @@ export const MultisigProposalModal = (props: {
               <StepSelector step={currentStep} steps={3} onValueSelected={onStepperChange} />
 
               <div className={currentStep === 0 ? "contract-wrapper panel1 show" : "contract-wrapper panel1 hide"}>
-                <StepOne />
+                <Row gutter={[8, 8]} className="step-one-select-app">
+                  {solanaApps.map((app, index) => (
+                    <Col xs={8} sm={6} md={6} lg={6} className="select-app" key={index}>
+                      <div className="select-app-item simplelink" onClick={onSelectApp}>
+                        {app.logo === "" ? (
+                          <div className="empty-background"></div>
+                        ) : (
+                          <img src={app.logo} alt={app.name} width={65} height={65} />
+                        )}
+                        <span className="info-label">{app.name}</span>
+                      </div>
+                    </Col>
+                  ))}
+                </Row>
               </div>
 
               <div className={currentStep === 1 ? "contract-wrapper panel12 show" : "contract-wrapper panel2 hide"}>
-                <StepTwo
-                  isBusy={props.isBusy}
-                  onProposalTitleValueChange={onProposalTitleValueChange}
-                  proposalTitleValue={proposalTitleValue}
-                />
+                <Row gutter={[8, 8]}>
+                  <Col span={24} className="step-two-selected-app">
+                    {!selectedAppImg ? (
+                      <IconUser className="mean-svg-icons" />
+                    ) : (
+                      <img className="mr-1" src={selectedAppImg} alt={selectedAppName} width={40} height={40} />
+                    )}
+                    <div className="selected-app">
+                      <div className="info-label">Selected App</div>
+                      <span>{selectedAppName}</span>
+                    </div>
+                  </Col>
+
+                  {/* Proposal title */}
+                  <Col xs={24} sm={24} md={16} lg={16}>
+                    <div className="mb-1">
+                      <div className="form-label">{t('multisig.proposal-modal.title')}</div>
+                      <InputMean
+                        id="proposal-title-field"
+                        className={props.isBusy ? 'disabled' : ''}
+                        onChange={onProposalTitleValueChange}
+                        placeholder="Add a title"
+                        value={proposalTitleValue}
+                      />
+                    </div>
+                  </Col>
+
+                  {/* Expiry date */}
+                  <Col xs={24} sm={24} md={8} lg={8}>
+                    <div className="mb-1">
+                      <div className="form-label">Expires in</div>
+                      <SelectMean
+                        className={props.isBusy ? 'disabled' : ''}
+                        onChange={onProposalExpiresValueChange}
+                        defaultValue={expires[0]}
+                        values={expires}
+                       />
+                    </div>
+                  </Col>
+                </Row>
+
+                <div className="step-two-select-instruction">
+                  {/* Instruction */}
+                  <Row gutter={[8, 8]} className="mb-1">
+                    <Col xs={24} sm={6} md={6} lg={6} className="text-right pr-1">
+                      <div className="form-label">Instruction</div>
+                    </Col>
+                    <Col xs={24} sm={18} md={18} lg={18}>
+                      <SelectMean
+                        className={props.isBusy ? 'disabled' : ''}
+                        onChange={onProposalInstructionValueChange}
+                        defaultValue={instructions[0]}
+                        values={instructions}
+                       />
+                    </Col>
+                  </Row>
+
+                  {/* Type */}
+                  <Row gutter={[8, 8]} className="mb-1">
+                    <Col xs={24} sm={6} md={6} lg={6} className="text-right pr-1">
+                      <div className="form-label">Type</div>
+                    </Col>
+                    <Col xs={24} sm={18} md={18} lg={18}>
+                      <SelectMean
+                        className={props.isBusy ? 'disabled' : ''}
+                        onChange={onProposalTypeValueChange}
+                        defaultValue={types[0]}
+                        values={types}
+                       />
+                    </Col>
+                  </Row>
+
+                  {/* Memo */}
+                  <Row gutter={[8, 8]} className="mb-1">
+                    <Col xs={24} sm={6} md={6} lg={6} className="text-right pr-1">
+                      <div className="form-label">Memo</div>
+                    </Col>
+                    <Col xs={24} sm={18} md={18} lg={18}>
+                      <InputMean 
+                        id="proposal-memo-field"
+                        className={`${props.isBusy ? 'disabled' : ''}`}
+                        onChange={onProposalMemoValueChange}
+                        placeholder="Add a memo"
+                        value={proposalMemoValue}
+                      />
+                    </Col>
+                  </Row>
+
+                  {/* Recipient */}
+                  <Row gutter={[8, 8]} className="mb-1">
+                    <Col xs={24} sm={6} md={6} lg={6} className="text-right pr-1">
+                      <div className="form-label">Recipient</div>
+                    </Col>
+                    <Col xs={24} sm={18} md={18} lg={18}>
+                      <InputMean 
+                        id="proposal-recipient-field"
+                        className={`${props.isBusy ? 'disabled' : ''}`}
+                        onChange={onProposalRecipientValueChange}
+                        placeholder="Add a recipient"
+                        value={proposalRecipientValue}
+                      />
+                    </Col>
+                  </Row>
+
+                  {/* Amount */}
+                  <Row gutter={[8, 8]} className="mb-1">
+                    <Col xs={24} sm={6} md={6} lg={6} className="text-right pr-1">
+                      <div className="form-label">Amount</div>
+                    </Col>
+                    <Col xs={24} sm={18} md={18} lg={18}>
+                      <div className={`well ${props.isBusy ? 'disabled' : ''}`}>
+                        <div className="flex-fixed-right">
+                          <div className="left">
+                            <input
+                              id="proposal-title-field"
+                              className="w-100 general-text-input"
+                              autoComplete="off"
+                              autoCorrect="off"
+                              type="text"
+                              maxLength={52}
+                              onChange={() => {}}
+                              placeholder="Add an amount"
+                              value=""
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </Col>
+                  </Row>
+                </div>
               </div>
 
               <div className={currentStep === 2 ? "contract-wrapper panel3 show" : "contract-wrapper panel3 hide"}>
-                <StepThree />
+                {/* Title */}
+                <Row className="mb-1">
+                  {/* {multisigTransactionSummary.title && ( */}
+                    <>
+                      <Col span={8} className="text-right pr-1">
+                        <span className="info-label">{t('multisig.proposal-modal.title-label')}:</span>
+                      </Col>
+                      <Col span={16} className="text-left pl-1">
+                        <span>{proposalTitleValue}</span>
+                      </Col>
+                    </>
+                  {/* )} */}
+                </Row>
+
+                {/* Expiry date */}
+                {/* {!highlightedMultisigTx.executedOn && ( */}
+                  <Row className="mb-1">
+                    <Col span={8} className="text-right pr-1">
+                      <span className="info-label">{t('multisig.proposal-modal.expires-label')}:</span>
+                    </Col>
+                    <Col span={16} className="text-left pl-1">
+                      {/* {multisigTransactionSummary.expirationDate ? (
+                        <>
+                          {(isTxPendingApproval() || isTxPendingExecution()) ? (
+                            <Countdown className="align-middle" date={multisigTransactionSummary.expirationDate} renderer={renderer} />
+                          ) : (
+                            <span>Expired on {new Date(multisigTransactionSummary.expirationDate).toDateString()}</span>
+                          )}
+                        </>
+                      ) : (
+                        <span>{t('multisig.proposal-modal.does-not-expire')}</span>
+                      )} */}
+                      <span>{proposalExpiresValue}</span>
+                    </Col>
+                  </Row>
+                {/* )} */}
+
+                {/* Instruction */}
+                <Row className="mb-1">
+                  {/* {multisigTransactionSummary.instruction && ( */}
+                    <>
+                      <Col span={8} className="text-right pr-1">
+                        <span className="info-label">Instruction:</span>
+                      </Col>
+                      <Col span={16} className="text-left pl-1">
+                        <span>{proposalInstructionValue}</span>
+                      </Col>
+                    </>
+                  {/* )} */}
+                </Row>
+
+                {/* Type */}
+                <Row className="mb-1">
+                  {/* {multisigTransactionSummary.type && ( */}
+                    <>
+                      <Col span={8} className="text-right pr-1">
+                        <span className="info-label">Type:</span>
+                      </Col>
+                      <Col span={16} className="text-left pl-1">
+                        <span>{proposalTypeValue}</span>
+                      </Col>
+                    </>
+                  {/* )} */}
+                </Row>
+
+                {/* Memo */}
+                <Row className="mb-1">
+                  {/* {multisigTransactionSummary.memo && ( */}
+                    <>
+                      <Col span={8} className="text-right pr-1">
+                        <span className="info-label">Memo:</span>
+                      </Col>
+                      <Col span={16} className="text-left pl-1">
+                        <span>{proposalMemoValue}</span>
+                      </Col>
+                    </>
+                  {/* )} */}
+                </Row>
+
+                {/* Recipient */}
+                <Row className="mb-1">
+                  {/* {multisigTransactionSummary.memo && ( */}
+                    <>
+                      <Col span={8} className="text-right pr-1">
+                        <span className="info-label">Recipient:</span>
+                      </Col>
+                      <Col span={16} className="text-left pl-1">
+                        <span>{proposalRecipientValue}</span>
+                      </Col>
+                    </>
+                  {/* )} */}
+                </Row>
+
+                {/* Proposer */}
+                <Row className="mb-1">
+                  <Col span={8} className="text-right pr-1">
+                    <span className="info-label">{t('multisig.multisig-transactions.proposed-by')}</span>
+                  </Col>
+                  <Col span={16} className="text-left pl-1">
+                    {/* <span>{getTxInitiator(highlightedMultisigTx)?.name} ({shortenAddress(multisigTransactionSummary.proposer as string, 4)})</span> */}
+                    <span>Yansel (HvPJ1...1BUDa)</span>
+                  </Col>
+                </Row>
+
+                {/* Submitted on */}
+                <Row className="mb-1">
+                  <Col span={8} className="text-right pr-1">
+                    <span className="info-label">{t('multisig.multisig-transactions.submitted-on')}</span>
+                  </Col>
+                  <Col span={16} className="text-left pl-1">
+                    {/* <span>{getReadableDate(multisigTransactionSummary.createdOn, true)}</span> */}
+                    <span>{proposalExpiresValue}</span>
+                  </Col>
+                </Row>
+
+                {/* Status */}
+                <Row className="mb-1">
+                  <Col span={8} className="text-right pr-1">
+                    <span className="info-label">{t('multisig.multisig-transactions.column-pending-signatures')}:</span>
+                  </Col>
+                  <Col span={16} className="text-left pl-1 mb-1 d-flex align-items-start justify-content-start">
+                    {/* <span>{getTxSignedCount(highlightedMultisigTx)} {t('multisig.multisig-transactions.tx-signed')}, {selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)} {t('multisig.multisig-transactions.tx-pending')}</span>
+                    <MultisigOwnersSigned className="ml-1" participants={getParticipantsThatApprovedTx(highlightedMultisigTx) || []} /> */}
+                    <span>2 signed, 3 pending</span>
+                  </Col>
+                </Row>
+
+                <Row>
+                  <Col span={24}>
+                    {/* {isTxPendingExecution() ? (
+                      <div className="text-center proposal-resume">{t('multisig.multisig-transactions.proposal-ready-to-be-executed')}</div>
+                    ) : isTxPendingApproval() ? (
+                      <div className="text-center proposal-resume">{(selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)) > 1 ? t('multisig.multisig-transactions.missing-signatures', {missingSignature: selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)}) : t('multisig.multisig-transactions.missing-signature', {missingSignature: selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)})}</div>
+                    ) : isTxVoided() ? (
+                      <div className="text-center proposal-resume">{t('multisig.multisig-transactions.tx-operation-voided')}</div>
+                    ) : isTxExpired() ? (
+                      <div className="text-center proposal-resume">{t('multisig.multisig-transactions.tx-operation-expired')}</div>
+                    ) : (
+                      <div className="text-center proposal-resume">{t('multisig.multisig-transactions.proposal-completed')}</div>
+                    )} */}
+                    <div className="text-center proposal-resume">To execute this proposal, 1 more signature is needed.</div>
+                  </Col>
+                </Row>
+
+                <Divider className="mt-1" />
+
+                <Row className="mb-1">
+                  <Col span={12} className="text-right pr-1">
+                    <div className="text-uppercase">{t('multisig.proposal-modal.instruction')}:</div>
+                  </Col>
+                  <Col span={12} className="text-left pl-1">
+                    {/* <div>{getOperationName(highlightedMultisigTx.operation)}</div> */}
+                    <div>Create Money Stream</div>
+                  </Col>
+                </Row>
+
+                <div className="well mb-1 proposal-summary-container vertical-scroll">
+                </div>
               </div>
             </div>
 
@@ -207,7 +603,8 @@ export const MultisigProposalModal = (props: {
                     className="col-6"
                     onClick={onContinueStepOneButtonClick}
                     disabled={
-                      !publicKey
+                      !publicKey ||
+                      !selectedAppName
                     }
                   >
                     {getStepOneContinueButtonLabel()}

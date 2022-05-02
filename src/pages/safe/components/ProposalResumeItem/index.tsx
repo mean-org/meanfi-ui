@@ -1,9 +1,10 @@
 import './style.scss';
-import { Col, Row } from "antd"
-import { IconThumbsDown, IconThumbsUp, IconWallet } from '../../../../Icons';
+import { Button, Col, Row } from "antd"
+import { IconArrowForward, IconThumbsDown, IconThumbsUp } from '../../../../Icons';
 
 export const ProposalResumeItem = (props: {
   id: number;
+  logo?: string;
   title: string;
   expires: any;
   approved: number;
@@ -12,13 +13,15 @@ export const ProposalResumeItem = (props: {
   needs?: number;
   isSafeDetails: boolean;
 }) => {
-  const { title, expires, approved, rejected, status, needs, isSafeDetails } = props;
+  const { logo, title, expires, approved, rejected, status, needs, isSafeDetails } = props;
   
   return (
     <>
-      <Row gutter={[8, 8]} className={`proposal-resume-item-container ${isSafeDetails ? "align-items-start" : ""}`}>
+      <Row gutter={[8, 8]} className={`proposal-resume-item-container ${!isSafeDetails ? "hover-list" : ""} ${isSafeDetails ? "align-items-start" : ""}`}>
         <Col className="proposal-resume-left-container">
-          <IconWallet className="mean-svg-icons" />
+          {logo && (
+            <img src={logo} alt={title} />
+          )}
           <div className="proposal-resume-left-text">
             <div className={`proposal-title ${isSafeDetails ? "big-title" : ""}`}>{title}</div>
             <span className="info-label">
@@ -34,21 +37,35 @@ export const ProposalResumeItem = (props: {
         </Col>
         <Col className="proposal-resume-right-container">
           <div className="proposal-resume-right-text">
-            <div className="thumbs-up">
-              <span>{approved}</span>
-              <IconThumbsUp className="mean-svg-icons" />
+            <div className="proposal-resume-right-text-up">
+              <div className="thumbs-up">
+                <span>{approved}</span>
+                <IconThumbsUp className="mean-svg-icons" />
+              </div>
+              <div className="thumbs-down">
+                <IconThumbsDown className="mean-svg-icons" />
+                <span>{rejected}</span>
+              </div>
+              <div className={`badge-container ${status === "active" ? "active-purple" : status === "passed" ? "passed-green" : status === "failed" ? "failed-red" : status === "voided" ? "voided-orange" : "expired-gray"}`}>
+                <span className="badge darken small text-uppercase">{status}</span>
+              </div>
             </div>
-            <div className="thumbs-down">
-              <IconThumbsDown className="mean-svg-icons" />
-              <span>{rejected}</span>
-            </div>
-            <div className="badge-container">
-              <span className="badge darken small text-uppercase">{status}</span>
-            </div>
+            {needs && (
+              <span className="info-label">Needs {needs} approvals to pass</span>
+            )}
           </div>
-          {needs && (
-            <span className="info-label">Needs {needs} approvals to pass</span>
-          )}
+          {!isSafeDetails && (
+          // <Col className="arrow-to-proposal-details">
+            <span className="icon-button-container">
+              <Button
+                type="default"
+                shape="circle"
+                size="middle"
+                icon={<IconArrowForward className="mean-svg-icons" />}
+              />
+            </span>
+          // </Col>
+        )}
         </Col>
       </Row>
     </>

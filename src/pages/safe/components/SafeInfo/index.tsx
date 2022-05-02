@@ -99,8 +99,26 @@ export const SafeInfoView = (props: {
 
   // View assets
   const onGoToAccounts = () => {
-    navigate(`/accounts?cat=account&address=${selectedMultisig.authority.toBase58()}`);
+    // navigate(`/accounts?cat=account&address=${selectedMultisig.authority.toBase58()}`);
+    navigate(`/accounts?address=${selectedMultisig.authority.toBase58()}&cat=user-assets`);
   }
+
+  /**
+   * URL scheme to redirect to /accounts page
+   * 
+   * /accounts?address={address}&cat={catId}&asset={assetId}
+   * 
+   *   Navigate to /accounts with Net Worth selected
+   *   /accounts?address=GFefRR6EASXvnphnJApp2PRH1wF1B5pJijKBZGFzq1x1&cat=networth
+   *   Navigate to /accounts with my USDC asset selected
+   *   /accounts?address=GFefRR6EASXvnphnJApp2PRH1wF1B5pJijKBZGFzq1x1&cat=user-assets&asset=USDC
+   *   Navigate to /accounts with Treasuries summary selected
+   *   /accounts?address=GFefRR6EASXvnphnJApp2PRH1wF1B5pJijKBZGFzq1x1&cat=other-assets&asset=msp-treasuries
+   * 
+   *  cat [networth | user-assets | other-assets]
+   *  asset (when cat=user-assets)  = [any token symbol]
+   *  asset (when cat=other-assets) = [msp-streams | msp-treasuries | orca | solend | friktion]
+   */
 
   /**
    * URL scheme to redirect to /accounts page
@@ -124,7 +142,7 @@ export const SafeInfoView = (props: {
   );
 
   // Tabs
-  const tabs = ["Proposals", "Settings", "Activity"];
+  const tabs = ["Proposals", "Settings", "Activity", "Programs"];
 
   const [activeTab, setActiveTab] = useState(tabs[0]);
 
@@ -147,12 +165,12 @@ export const SafeInfoView = (props: {
           return (
             <div 
               key={proposal.id}
-              // onClick={onSelectProposal}
-              // className={${selectedProposal.id === proposal.id ? "selected" : ''}
-              className={`d-flex w-100 align-items-center ${proposal.id % 2 === 0 ? '' : 'background-gray'}`}
+              onClick={onSelectProposal}
+              className={`d-flex w-100 align-items-center simplelink ${proposal.id % 2 === 0 ? '' : 'background-gray'}`}
               >
                 <ProposalResumeItem
                   id={proposal.id}
+                  logo={proposal.logo}
                   title={proposal.title}
                   expires={proposal.expires}
                   approved={proposal.approved}
@@ -160,17 +178,6 @@ export const SafeInfoView = (props: {
                   status={proposal.status}
                   isSafeDetails={isSafeDetails}
                 />
-                <Col>
-                  <span className="icon-button-container">
-                    <Button
-                      type="default"
-                      shape="circle"
-                      size="middle"
-                      icon={<IconArrowForward className="mean-svg-icons" />}
-                      onClick={onSelectProposal}
-                    />
-                  </span>
-                </Col>
             </div>
           )
         })
@@ -195,8 +202,8 @@ export const SafeInfoView = (props: {
   return (
     <>
       <Row gutter={[8, 8]} className="safe-info-container">
-        {infoSafeData.map((info) => (
-          <Col xs={12} sm={12} md={12} lg={12}>
+        {infoSafeData.map((info, index) => (
+          <Col xs={12} sm={12} md={12} lg={12} key={index}>
             <div className="info-safe-group">
               <span className="info-label">
                 {info.name}
@@ -260,6 +267,7 @@ export const SafeInfoView = (props: {
           {activeTab === "Proposals" && renderListOfProposals}
           {activeTab === "Settings" && renderSettings}
           {activeTab === "Activity" && "Activity"}
+          {activeTab === "Programs" && "Programs"}
         </Row>
       </div>
     </>

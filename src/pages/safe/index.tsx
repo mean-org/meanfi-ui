@@ -3349,6 +3349,7 @@ export const SafeView = () => {
   const proposals = [
     {
       id: 1,
+      logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwh7gt29278eysxa7rb5sl8%3Ftype%3DLOGO&w=3840&q=75",
       title: "My awesome proposal",
       expires: "April 27th 2022, 6:55:49",
       approved: 2,
@@ -3407,6 +3408,7 @@ export const SafeView = () => {
     },
     {
       id: 2,
+      logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwh6su28617eysxuaubvt93%3Ftype%3DLOGO&w=3840&q=75",
       title: "Transfer all the money to me",
       expires: "May 1th 2022, 6:55:49",
       approved: 2,
@@ -3449,6 +3451,7 @@ export const SafeView = () => {
     },
     {
       id: 3,
+      logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwiiri37677eysxluqnog8e%3Ftype%3DLOGO&w=3840&q=75",
       title: "Send $1m to Ukraine",
       expires: "April 27th 2022, 6:55:49",
       approved: 2,
@@ -3498,6 +3501,7 @@ export const SafeView = () => {
     },
     {
       id: 4,
+      logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwilfd38506eysxniku8quh%3Ftype%3DLOGO&w=3840&q=75",
       title: "Send $1m to Putin",
       expires: "April 27th 2022, 6:55:49",
       approved: 2,
@@ -3549,6 +3553,7 @@ export const SafeView = () => {
     },
     {
       id: 5,
+      logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwip3w40063eysxbk0kx2lc%3Ftype%3DLOGO&w=3840&q=75",
       title: "My awesome proposal",
       expires: "April 30th 2022, 6:55:49",
       approved: 2,
@@ -3598,6 +3603,7 @@ export const SafeView = () => {
     },
     {
       id: 6,
+      logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwh8w830938eysxhy5e8syg%3Ftype%3DLOGO&w=3840&q=75",
       title: "Transfer all the money to me",
       expires: "April 30th 2022, 6:55:49",
       approved: 2,
@@ -3640,6 +3646,7 @@ export const SafeView = () => {
     },
     {
       id: 7,
+      logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwilfd38506eysxniku8quh%3Ftype%3DLOGO&w=3840&q=75",
       title: "Send $1m to Ukraine",
       expires: "April 30th 2022, 6:55:49",
       approved: 2,
@@ -3689,6 +3696,7 @@ export const SafeView = () => {
     },
     {
       id: 8,
+      logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwilfj38513eysxcwypxovh%3Ftype%3DLOGO&w=3840&q=75",
       title: "My awesome proposal",
       expires: "April 30th 2022, 6:55:49",
       approved: 2,
@@ -3740,6 +3748,7 @@ export const SafeView = () => {
     },
     {
       id: 9,
+      logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwh7gt29278eysxa7rb5sl8%3Ftype%3DLOGO&w=3840&q=75",
       title: "Transfer all the money to me",
       expires: "April 30th 2022, 1:55:49",
       approved: 2,
@@ -3789,6 +3798,7 @@ export const SafeView = () => {
     },
     {
       id: 10,
+      logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwh8w830938eysxhy5e8syg%3Ftype%3DLOGO&w=3840&q=75",
       title: "Send $1m to Putin",
       expires: "April 30th 2022, 3:55:49",
       approved: 2,
@@ -3831,6 +3841,7 @@ export const SafeView = () => {
     },
     {
       id: 11,
+      logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwiiri37677eysxluqnog8e%3Ftype%3DLOGO&w=3840&q=75",
       title: "Send $1m to Ukraine",
       expires: "April 30th 2022, 6:55:49",
       approved: 2,
@@ -3873,6 +3884,7 @@ export const SafeView = () => {
     },
     {
       id: 12,
+      logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwilfd38506eysxniku8quh%3Ftype%3DLOGO&w=3840&q=75",
       title: "My awesome proposal",
       expires: "April 29th 2022, 6:05:49",
       approved: 2,
@@ -3931,6 +3943,7 @@ export const SafeView = () => {
     },
     {
       id: 13,
+      logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwh7gt29278eysxa7rb5sl8%3Ftype%3DLOGO&w=3840&q=75",
       title: "Transfer all the money to me",
       expires: "April 29th 2022, 6:05:49",
       approved: 2,
@@ -3973,6 +3986,7 @@ export const SafeView = () => {
     },
     {
       id: 15,
+      logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwh67t27981eysx2yzq2dq6%3Ftype%3DLOGO&w=3840&q=75",
       title: "Send $1m to Ukraine",
       expires: "April 29th 2022, 6:05:49",
       approved: 2,
