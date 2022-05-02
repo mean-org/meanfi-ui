@@ -83,6 +83,7 @@ import { ProposalSummaryModal } from '../../components/ProposalSummaryModal';
 import { SafeInfoView } from './components/SafeInfo';
 import { SafeDetailsView } from './components/SafeDetails';
 import { MultisigProposalModal } from '../../components/MultisigProposalModal';
+import { ProgramDetailsView } from './components/ProgramDetails';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -3444,14 +3445,14 @@ export const SafeView = () => {
       ],
       activities: [
         {
-          id: 1,
+          id: 4,
           date: "January 5th 2022, 6:55:49",
           description: "rejected",
           address: "F4KjjnrM2hr8MasEDAYoGSBWbn3wzz1rrdGtkRkoaMKc",
           proposedBy: "Yansel"
         },
         {
-          id: 2,
+          id: 5,
           date: "January 7th 2022, 6:55:49",
           description: "created",
           address: "HGb43H86jJNLN4MW1sDWKruUZYrs3rkNQkf3acF8uXiv",
@@ -3501,21 +3502,21 @@ export const SafeView = () => {
       ],
       activities: [
         {
-          id: 1,
+          id: 6,
           date: "February 7th 2022, 6:55:49",
           description: "approved",
           address: "ARmgYJkSQfbSifkXc4h7MGDAALznW5FFSHVucJ6j3vd7",
           proposedBy: "Tania"
         },
         {
-          id: 2,
+          id: 7,
           date: "February 8th 2022, 6:55:49",
           description: "rejected",
           address: "F4KjjnrM2hr8MasEDAYoGSBWbn3wzz1rrdGtkRkoaMKc",
           proposedBy: "Yansel"
         },
         {
-          id: 3,
+          id: 8,
           date: "February 12th 2022, 6:55:49",
           description: "created",
           address: "HGb43H86jJNLN4MW1sDWKruUZYrs3rkNQkf3acF8uXiv",
@@ -3570,14 +3571,14 @@ export const SafeView = () => {
       ],
       activities: [
         {
-          id: 1,
+          id: 9,
           date: "February 1th 2022, 6:55:49",
           description: "approved",
           address: "ARmgYJkSQfbSifkXc4h7MGDAALznW5FFSHVucJ6j3vd7",
           proposedBy: "Tania"
         },
         {
-          id: 2,
+          id: 10,
           date: "February 3th 2022, 6:55:49",
           description: "created",
           address: "HGb43H86jJNLN4MW1sDWKruUZYrs3rkNQkf3acF8uXiv",
@@ -3687,14 +3688,14 @@ export const SafeView = () => {
       ],
       activities: [
         {
-          id: 1,
+          id: 11,
           date: "March 5th 2022, 6:55:49",
           description: "approved",
           address: "ARmgYJkSQfbSifkXc4h7MGDAALznW5FFSHVucJ6j3vd7",
           proposedBy: "Tania"
         },
         {
-          id: 2,
+          id: 12,
           date: "March 9th 2022, 6:55:49",
           description: "rejected",
           address: "F4KjjnrM2hr8MasEDAYoGSBWbn3wzz1rrdGtkRkoaMKc",
@@ -3736,21 +3737,21 @@ export const SafeView = () => {
       ],
       activities: [
         {
-          id: 1,
+          id: 13,
           date: "February 23th 2022, 6:55:49",
           description: "approved",
           address: "ARmgYJkSQfbSifkXc4h7MGDAALznW5FFSHVucJ6j3vd7",
           proposedBy: "Tania"
         },
         {
-          id: 2,
+          id: 14,
           date: "March 2th 2022, 6:55:49",
           description: "rejected",
           address: "F4KjjnrM2hr8MasEDAYoGSBWbn3wzz1rrdGtkRkoaMKc",
           proposedBy: "Yansel"
         },
         {
-          id: 3,
+          id: 15,
           date: "March 5th 2022, 6:55:49",
           description: "created",
           address: "HGb43H86jJNLN4MW1sDWKruUZYrs3rkNQkf3acF8uXiv",
@@ -3805,14 +3806,14 @@ export const SafeView = () => {
       ],
       activities: [
         {
-          id: 1,
+          id: 16,
           date: "February 3th 2022, 6:55:49",
           description: "rejected",
           address: "F4KjjnrM2hr8MasEDAYoGSBWbn3wzz1rrdGtkRkoaMKc",
           proposedBy: "Yansel"
         },
         {
-          id: 2,
+          id: 17,
           date: "February 14th 2022, 6:55:49",
           description: "created",
           address: "HGb43H86jJNLN4MW1sDWKruUZYrs3rkNQkf3acF8uXiv",
@@ -3862,21 +3863,21 @@ export const SafeView = () => {
       ],
       activities: [
         {
-          id: 1,
+          id: 18,
           date: "February 5th 2022, 6:55:49",
           description: "approved",
           address: "ARmgYJkSQfbSifkXc4h7MGDAALznW5FFSHVucJ6j3vd7",
           proposedBy: "Tania"
         },
         {
-          id: 2,
+          id: 19,
           date: "February 9th 2022, 6:55:49",
           description: "rejected",
           address: "F4KjjnrM2hr8MasEDAYoGSBWbn3wzz1rrdGtkRkoaMKc",
           proposedBy: "Yansel"
         },
         {
-          id: 3,
+          id: 20,
           date: "February 13th 2022, 6:55:49",
           description: "created",
           address: "HGb43H86jJNLN4MW1sDWKruUZYrs3rkNQkf3acF8uXiv",
@@ -3922,14 +3923,14 @@ export const SafeView = () => {
       ],
       activities: [
         {
-          id: 1,
+          id: 21,
           date: "March 23th 2022, 6:55:49",
           description: "approved",
           address: "ARmgYJkSQfbSifkXc4h7MGDAALznW5FFSHVucJ6j3vd7",
           proposedBy: "Tania"
         },
         {
-          id: 2,
+          id: 22,
           date: "April 3th 2022, 6:55:49",
           description: "created",
           address: "HGb43H86jJNLN4MW1sDWKruUZYrs3rkNQkf3acF8uXiv",
@@ -3979,14 +3980,14 @@ export const SafeView = () => {
       ],
       activities: [
         {
-          id: 1,
+          id: 23,
           date: "April 3th 2022, 6:55:49",
           description: "approved",
           address: "ARmgYJkSQfbSifkXc4h7MGDAALznW5FFSHVucJ6j3vd7",
           proposedBy: "Tania"
         },
         {
-          id: 2,
+          id: 24,
           date: "April 17th 2022, 6:55:49",
           description: "rejected",
           address: "F4KjjnrM2hr8MasEDAYoGSBWbn3wzz1rrdGtkRkoaMKc",
@@ -4041,21 +4042,21 @@ export const SafeView = () => {
       ],
       activities: [
         {
-          id: 1,
+          id: 25,
           date: "April 2th 2022, 6:55:49",
           description: "approved",
           address: "ARmgYJkSQfbSifkXc4h7MGDAALznW5FFSHVucJ6j3vd7",
           proposedBy: "Tania"
         },
         {
-          id: 2,
+          id: 26,
           date: "April 7th 2022, 6:55:49",
           description: "rejected",
           address: "F4KjjnrM2hr8MasEDAYoGSBWbn3wzz1rrdGtkRkoaMKc",
           proposedBy: "Yansel"
         },
         {
-          id: 3,
+          id: 27,
           date: "April 18th 2022, 6:55:49",
           description: "created",
           address: "HGb43H86jJNLN4MW1sDWKruUZYrs3rkNQkf3acF8uXiv",
@@ -4101,14 +4102,14 @@ export const SafeView = () => {
       ],
       activities: [
         {
-          id: 1,
+          id: 28,
           date: "April 3th 2022, 6:55:49",
           description: "rejected",
           address: "F4KjjnrM2hr8MasEDAYoGSBWbn3wzz1rrdGtkRkoaMKc",
           proposedBy: "Yansel"
         },
         {
-          id: 2,
+          id: 29,
           date: "April 4th 2022, 6:55:49",
           description: "created",
           address: "HGb43H86jJNLN4MW1sDWKruUZYrs3rkNQkf3acF8uXiv",
@@ -4159,21 +4160,21 @@ export const SafeView = () => {
       ],
       activities: [
         {
-          id: 1,
+          id: 30,
           date: "April 5th 2022, 6:55:49",
           description: "approved",
           address: "ARmgYJkSQfbSifkXc4h7MGDAALznW5FFSHVucJ6j3vd7",
           proposedBy: "Tania"
         },
         {
-          id: 2,
+          id: 31,
           date: "April 13th 2022, 6:55:49",
           description: "rejected",
           address: "F4KjjnrM2hr8MasEDAYoGSBWbn3wzz1rrdGtkRkoaMKc",
           proposedBy: "Yansel"
         },
         {
-          id: 3,
+          id: 32,
           date: "April 18th 2022, 6:55:49",
           description: "created",
           address: "HGb43H86jJNLN4MW1sDWKruUZYrs3rkNQkf3acF8uXiv",
@@ -4198,15 +4199,27 @@ export const SafeView = () => {
   ];
 
   const [isSafeDetails, setIsSafeDetails] = useState(false);
+  const [isProgramDetails, setIsProgramDetails] = useState(false);
   const [proposalSelected, setProposalSelected] = useState<any>();
+  const [programSelected, setProgramSelected] = useState<any>();
 
-  const goToDetailsHandler = (selectedProposal: any) => {
+  const goToSafeDetailsHandler = (selectedProposal: any) => {
     setIsSafeDetails(true);
     setProposalSelected(selectedProposal);    
   }
 
-  const returnFromDetailsHandler = () => {
+  const goToProgramDetailsHandler = (selectedProgram: any) => {
     setIsSafeDetails(false);
+    setIsProgramDetails(true);
+    setProgramSelected(selectedProgram);
+  }
+
+  const returnFromSafeDetailsHandler = () => {
+    setIsSafeDetails(false);
+  }
+
+  const returnFromProgramDetailsHandler = () => {
+    setIsProgramDetails(false);
   }
 
   return (
@@ -4292,10 +4305,12 @@ export const SafeView = () => {
                 <div className="scroll-wrapper vertical-scroll">
                   {connected && selectedMultisig ? (
                     <>
-                      {!isSafeDetails && (
+                      {(!isSafeDetails && !isProgramDetails) && (
                         <SafeInfoView
                           isSafeDetails={isSafeDetails}
-                          onDataToSafeView={goToDetailsHandler}
+                          isProgramDetails={isProgramDetails}
+                          onDataToSafeView={goToSafeDetailsHandler}
+                          onDataToProgramView={goToProgramDetailsHandler}
                           proposals={proposals}
                           selectedMultisig={selectedMultisig}
                           onEditMultisigClick={onEditMultisigClick}
@@ -4306,8 +4321,15 @@ export const SafeView = () => {
                       {isSafeDetails && (
                         <SafeDetailsView
                           isSafeDetails={isSafeDetails}
-                          onDataToSafeView={returnFromDetailsHandler}
+                          onDataToSafeView={returnFromSafeDetailsHandler}
                           proposalSelected={proposalSelected}
+                        />
+                      )}
+                      {isProgramDetails && (
+                        <ProgramDetailsView
+                          isProgramDetails={isProgramDetails}
+                          onDataToProgramView={returnFromProgramDetailsHandler}
+                          programSelected={programSelected}
                         />
                       )}
                     </>

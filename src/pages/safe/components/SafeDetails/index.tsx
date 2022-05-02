@@ -8,12 +8,12 @@ import { shortenAddress } from '../../../../utils/utils';
 export const SafeDetailsView = (props: {
   isSafeDetails: boolean;
   onDataToSafeView: any;
-  proposalSelected: any
+  proposalSelected: any;
 }) => {
   const { isSafeDetails, onDataToSafeView, proposalSelected } = props;
 
   // When back button is clicked, goes to Safe Info
-  const hideDetailsHandler = () => {
+  const hideSafeDetailsHandler = () => {
     // Sends the value to the parent component "SafeView"
     onDataToSafeView();
   };
@@ -92,8 +92,13 @@ export const SafeDetailsView = (props: {
   const renderActivities = (
     <Row>
       {proposalSelected.activities.map((activity: any) => (
-        <div key={activity.id}>
-          {`${activity.date} - Proposal ${activity.description} by ${activity.proposedBy} [${shortenAddress(activity.address, 4)}]`}
+        <div 
+          key={activity.id}
+          className={`d-flex w-100 align-items-center ${activity.id % 2 === 0 ? '' : 'background-gray'}`}
+        >
+          <div className="list-item">
+            {`${activity.date} - Proposal ${activity.description} by ${activity.proposedBy} [${shortenAddress(activity.address, 4)}]`}
+          </div>
         </div>
       ))}
     </Row>
@@ -113,7 +118,7 @@ export const SafeDetailsView = (props: {
   return (
     <div className="safe-details-container">
       <Row gutter={[8, 8]} className="safe-details-resume">
-        <div onClick={hideDetailsHandler} className="back-button icon-button-container">
+        <div onClick={hideSafeDetailsHandler} className="back-button icon-button-container">
           <IconArrowBack className="mean-svg-icons" />
           <span>Back</span>
         </div>

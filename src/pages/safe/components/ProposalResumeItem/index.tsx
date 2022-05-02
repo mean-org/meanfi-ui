@@ -17,7 +17,7 @@ export const ProposalResumeItem = (props: {
   
   return (
     <>
-      <Row gutter={[8, 8]} className={`proposal-resume-item-container ${!isSafeDetails ? "hover-list" : ""} ${isSafeDetails ? "align-items-start" : ""}`}>
+      <Row gutter={[8, 8]} className={`proposal-resume-item-container list-item ${!isSafeDetails ? "hover-list" : ""} ${isSafeDetails ? "align-items-start" : ""}`}>
         <Col className="proposal-resume-left-container">
           {logo && (
             <img src={logo} alt={title} />
@@ -55,7 +55,6 @@ export const ProposalResumeItem = (props: {
             )}
           </div>
           {!isSafeDetails && (
-          // <Col className="arrow-to-proposal-details">
             <span className="icon-button-container">
               <Button
                 type="default"
@@ -64,8 +63,7 @@ export const ProposalResumeItem = (props: {
                 icon={<IconArrowForward className="mean-svg-icons" />}
               />
             </span>
-          // </Col>
-        )}
+          )}
         </Col>
       </Row>
     </>

@@ -41,6 +41,7 @@
   }
 }
 .safe-tabs-container {
+  width: 100%;
   .safe-tabs-header-container {
     margin: 0.25em auto;
     @media (min-width: 576px) {
@@ -93,6 +94,4 @@
 
 .background-gray {
   background-color: var(--color-secondary-alpha-02);
-  // padding-top: 0.5em;
-  // padding-bottom: 0.5em;
 }

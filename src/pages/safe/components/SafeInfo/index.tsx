@@ -15,7 +15,9 @@ import { MultisigOwnersView } from "../../../../components/MultisigOwnersView";
 
 export const SafeInfoView = (props: {
   isSafeDetails: boolean;
+  isProgramDetails: boolean;
   onDataToSafeView: any;
+  onDataToProgramView: any;
   proposals: any[];
   selectedMultisig?: any;
   onEditMultisigClick: any;
@@ -199,28 +201,65 @@ export const SafeInfoView = (props: {
     </>
   );
 
+  // Activities list 
+  const renderActivities= (
+    <>
+      {proposals && proposals.length && (
+        proposals.map((proposal) => (
+          proposal.activities.map((activity: any) => {
+    
+            return (
+              <div 
+                key={activity.id}
+                className={`d-flex w-100 align-items-center ${activity.id % 2 === 0 ? '' : 'background-gray'}`}
+                >
+                  <div className="list-item">
+                    {`${activity.date} - Proposal ${activity.description} by ${activity.proposedBy} [${shortenAddress(activity.address, 4)}]`}
+                  </div>
+              </div>
+            )
+          })
+        ))
+      )}
+    </>
+  );
+
   // Programs list 
   const renderPrograms = (
     <>
       {proposals && proposals.length && (
-        proposals.map((proposal) => {
-          const onSelectProgram = () => {
-            // Sends isSafeDetails value to the parent component "SafeView"
-            // props.onDataToSafeView(proposal);
-          }
+        proposals.map((proposal) => (
+          proposal.programs.map((program: any) => {
+            const onSelectProgram = () => {
+              // Sends isProgramDetails value to the parent component "SafeView"
+              props.onDataToProgramView(program);
+            }
     
-          return (
-            proposal.programs.map((program: any) => (
+            return (
               <div 
                 key={program.id}
                 onClick={onSelectProgram}
                 className={`d-flex w-100 align-items-center simplelink ${program.id % 2 === 0 ? '' : 'background-gray'}`}
                 >
-                  {program.name}
+                  <Row className="list-item hover-list">
+                    <Col>
+                      {program.name}
+                    </Col>
+                    {!isSafeDetails && (
+                      <span className="icon-button-container">
+                        <Button
+                          type="default"
+                          shape="circle"
+                          size="middle"
+                          icon={<IconArrowForward className="mean-svg-icons" />}
+                        />
+                      </span>
+                    )}
+                  </Row>
               </div>
-            ))
-          )
-        })
+            )
+          })
+        ))
       )}
     </>
   );
@@ -292,7 +331,7 @@ export const SafeInfoView = (props: {
         <Row gutter={[8, 8]} className="safe-tabs-content-container">
           {activeTab === "Proposals" && renderListOfProposals}
           {activeTab === "Settings" && renderSettings}
-          {activeTab === "Activity" && "Activity"}
+          {activeTab === "Activity" && renderActivities}
           {activeTab === "Programs" && renderPrograms}
         </Row>
       </div>

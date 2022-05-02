@@ -1,14 +1,5 @@
 .safe-details-container {
   padding-right: 1.5em;
-  .safe-details-resume {
-    .back-button {
-      margin-bottom: 1em;
-      span {
-        font-size: 18px;
-        font-weight: 400;
-      }
-    }
-  }
   @media (max-width: 575px) {
     .safe-details-description {
       margin-top: 2em;

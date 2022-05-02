@@ -1,7 +1,7 @@
 @media (max-width: 575px) {
   .proposal-resume-item-container {
     row-gap: 0px !important;
-
+    padding-bottom: 0em;
   }
 }
 @media (min-width: 576px) {
@@ -10,11 +10,6 @@
   }
 }
 .proposal-resume-item-container {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-top: 0.5em;
-  padding-left: 0.5em;
   .proposal-resume-left-container {
     display: flex;
     align-items: center;
@@ -38,7 +33,7 @@
     }
   }
   .proposal-resume-right-container {
-    padding-right: 0;
+    padding-right: 0 !important;
     display: flex;
     align-items: center;
     .proposal-resume-right-text {
@@ -98,10 +93,4 @@
 
 .expired-gray {
   background-color: #292a2d
-}
-
-.hover-list {
-  &:hover {
-    background-color: var(--color-secondary-alpha-05);
-  }
 }
