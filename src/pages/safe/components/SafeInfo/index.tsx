@@ -212,19 +212,19 @@ export const SafeInfoView = (props: {
 
             switch (activity.description) {
               case 'approved':
-                icon = <IconApprove className="mean-svg-icons" />;
+                icon = <IconApprove className="mean-svg-icons fg-green" />;
                 break;
               case 'rejected':
-                icon = <IconCross className="mean-svg-icons" />;
+                icon = <IconCross className="mean-svg-icons fg-red" />;
                 break;
               case 'passed':
-                icon = <IconCheckCircle className="mean-svg-icons" />;
+                icon = <IconCheckCircle className="mean-svg-icons fg-green" />;
                 break;
               case 'created':
-                icon = <IconCreated className="mean-svg-icons" />;
+                icon = <IconCreated className="mean-svg-icons fg-purple" />;
                 break;
               case 'deleted':
-                icon = <IconMinus className="mean-svg-icons" />;
+                icon = <IconMinus className="mean-svg-icons fg-purple" />;
                 break;
               default:
                 icon = "";

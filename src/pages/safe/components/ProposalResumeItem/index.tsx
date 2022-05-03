@@ -46,7 +46,7 @@ export const ProposalResumeItem = (props: {
                 <IconThumbsDown className="mean-svg-icons" />
                 <span>{rejected}</span>
               </div>
-              <div className={`badge-container ${status === "active" ? "active-purple" : status === "passed" ? "passed-green" : status === "failed" ? "failed-red" : status === "voided" ? "voided-orange" : "expired-gray"}`}>
+              <div className={`badge-container ${status === "active" ? "bg-purple" : status === "passed" ? "bg-green" : status === "failed" ? "bg-red" : status === "voided" ? "bg-orange-dark" : ""}`}>
                 <span className="badge darken small text-uppercase">{status}</span>
               </div>
             </div>

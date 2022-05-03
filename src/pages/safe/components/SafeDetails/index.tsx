@@ -1,6 +1,6 @@
 import './style.scss';
 import { Button, Col, Collapse, Row } from "antd"
-import { IconArrowBack, IconUser, IconThumbsUp, IconThumbsDown } from "../../../../Icons"
+import { IconArrowBack, IconUser, IconThumbsUp, IconThumbsDown, IconApprove, IconCross, IconCheckCircle, IconCreated, IconMinus } from "../../../../Icons"
 import { ProposalResumeItem } from '../ProposalResumeItem';
 import { useState } from 'react';
 import { shortenAddress } from '../../../../utils/utils';
@@ -91,16 +91,47 @@ export const SafeDetailsView = (props: {
 
   const renderActivities = (
     <Row>
-      {proposalSelected.activities.map((activity: any) => (
-        <div 
-          key={activity.id}
-          className={`d-flex w-100 align-items-center ${activity.id % 2 === 0 ? '' : 'background-gray'}`}
-        >
-          <div className="list-item">
-            {`${activity.date} - Proposal ${activity.description} by ${activity.proposedBy} [${shortenAddress(activity.address, 4)}]`}
+      {proposalSelected.activities.map((activity: any) => {
+        let icon = null;
+
+        switch (activity.description) {
+          case 'approved':
+            icon = <IconApprove className="mean-svg-icons fg-green" />;
+            break;
+          case 'rejected':
+            icon = <IconCross className="mean-svg-icons fg-red" />;
+            break;
+          case 'passed':
+            icon = <IconCheckCircle className="mean-svg-icons fg-green" />;
+            break;
+          case 'created':
+            icon = <IconCreated className="mean-svg-icons fg-purple" />;
+            break;
+          case 'deleted':
+            icon = <IconMinus className="mean-svg-icons fg-purple" />;
+            break;
+          default:
+            icon = "";
+            break;
+        }
+
+        return (
+          <div 
+            key={activity.id}
+            className={`d-flex w-100 align-items-center activities-list ${activity.id % 2 === 0 ? '' : 'background-gray'}`}
+            >
+              <div className="list-item">
+                <span className="mr-2">
+                    {activity.date}
+                </span>
+                {icon}
+                <span>
+                  {`Proposal ${activity.description} by ${activity.proposedBy} [${shortenAddress(activity.address, 4)}]`}
+                </span>
+              </div>
           </div>
-        </div>
-      ))}
+        )
+      })}
     </Row>
   )
 
