@@ -8,22 +8,23 @@ import { PreFooter } from "../../components/PreFooter";
 import { getNetworkIdByCluster, useConnection, useConnectionConfig } from '../../contexts/connection';
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
-import { cutNumber, findATokenAddress, formatThousands } from "../../utils/utils";
+import { cutNumber, findATokenAddress, formatThousands, getAmountWithSymbol, isValidNumber } from "../../utils/utils";
 import { IconLoading, IconStats } from "../../Icons";
 import { IconHelpCircle } from "../../Icons/IconHelpCircle";
 import useWindowSize from '../../hooks/useWindowResize';
-import { consoleOut, isProd } from "../../utils/ui";
+import { consoleOut, isProd, toUsCurrency } from "../../utils/ui";
 import { ConfirmOptions, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { Env, StakePoolInfo, StakingClient } from "@mean-dao/staking";
 import { StakeTabView } from "../../views/StakeTabView";
 import { UnstakeTabView } from "../../views/UnstakeTabView";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { MEAN_TOKEN_LIST } from "../../constants/token-list";
+import { MEAN_TOKEN_LIST, SOCN_USD } from "../../constants/token-list";
 import { confirmationEvents } from "../../contexts/transaction-status";
 import { EventType } from "../../models/enums";
 import { InfoIcon } from "../../components/InfoIcon";
 import { ONE_MINUTE_REFRESH_TIMEOUT } from "../../constants";
+import { TokenDisplay } from "../../components/TokenDisplay";
 
 type SwapOption = "stake" | "unstake";
 
@@ -36,10 +37,12 @@ export const InvestView = () => {
   const {
     coinPrices,
     stakedAmount,
+    loadingPrices,
     detailsPanelOpen,
     setIsVerifiedRecipient,
     setDtailsPanelOpen,
     setFromCoinAmount,
+    refreshPrices,
   } = useContext(AppStateContext);
   const connection = useConnection();
   const connectionConfig = useConnectionConfig();
@@ -52,6 +55,7 @@ export const InvestView = () => {
   const [isSmallUpScreen, setIsSmallUpScreen] = useState(isDesktop);
   const [nativeBalance, setNativeBalance] = useState(0);
   const [meanPrice, setMeanPrice] = useState<number>(0);
+  const [socnUsdTokenPrice, setSocnUsdTokenPrice] = useState<number>(0);
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [currentTab, setCurrentTab] = useState<SwapOption>("stake");
   const [stakingRewards, setStakingRewards] = useState<number>(0);
@@ -72,6 +76,7 @@ export const InvestView = () => {
   const [stakePoolInfo, setStakePoolInfo] = useState<StakePoolInfo>();
   const [shouldRefreshStakePoolInfo, setShouldRefreshStakePoolInfo] = useState(true);
   const [refreshingStakePoolInfo, setRefreshingStakePoolInfo] = useState(false);
+  const [bondsAmount, setBondsAmount] = useState<string>('');
 
   const [shouldRefreshLpData, setShouldRefreshLpData] = useState(true);
   const [refreshingPoolInfo, setRefreshingPoolInfo] = useState(false);
@@ -83,6 +88,7 @@ export const InvestView = () => {
   const [sMeanBalance, setSmeanBalance] = useState<number>(0);
   const [meanBalance, setMeanBalance] = useState<number>(0);
   const [lastTimestamp, setLastTimestamp] = useState(Date.now());
+  const [socnUsdBalance, setSocnUsdBalance] = useState<number>(0);
 
   // Create and cache Staking client instance
   const stakeClient = useMemo(() => {
@@ -106,6 +112,10 @@ export const InvestView = () => {
     publicKey
   ]);
 
+  const socnUsdToken = useMemo(() => {
+    return SOCN_USD as TokenInfo;
+  }, []);
+
   const getPricePerToken = useCallback((token: TokenInfo): number => {
     if (!token || !coinPrices) { return 0; }
 
@@ -126,6 +136,17 @@ export const InvestView = () => {
 
   }, [coinPrices, getPricePerToken, stakingPair]);
 
+  // Keep SOCN/USDC price updated
+  useEffect(() => {
+
+    if (coinPrices) {
+      const price = getPricePerToken(socnUsdToken);
+      consoleOut('SOCN/USDC Price:', price, 'crimson');
+      setSocnUsdTokenPrice(price);
+    }
+
+  }, [coinPrices, getPricePerToken, socnUsdToken, stakingPair]);
+
   /////////////////
   //  Callbacks  //
   /////////////////
@@ -140,6 +161,32 @@ export const InvestView = () => {
       return 0;
     }
   }, [connection]);
+
+  const refresSocnUsdcBalance = useCallback(async () => {
+
+    if (!connection || !publicKey || !accounts || !accounts.tokenAccounts || !accounts.tokenAccounts.length) {
+      return;
+    }
+
+    let balance = 0;
+
+    try {
+      const socnUsdTokenPk = new PublicKey(socnUsdToken.address);
+      const tokenAddress = await findATokenAddress(publicKey, socnUsdTokenPk);
+      balance = await getTokenAccountBalanceByAddress(tokenAddress);
+      consoleOut('SOCN/USDC balance:', balance, 'blue');
+      setSocnUsdBalance(balance);
+    } catch (error) {
+      setSocnUsdBalance(balance);
+    }
+
+  }, [
+    accounts,
+    publicKey,
+    connection,
+    socnUsdToken.address,
+    getTokenAccountBalanceByAddress
+  ]);
 
   const refreshMeanBalance = useCallback(async () => {
 
@@ -206,7 +253,7 @@ export const InvestView = () => {
       symbol1: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg",
       symbol2: "",
       title: t("invest.panel-left.invest-stake-tab-title"),
-      rateAmount: `${stakePoolInfo ? (stakePoolInfo.apr * 100).toFixed(2) : "0"}`,
+      rateAmount: `${stakePoolInfo ? (stakePoolInfo.apr * 100).toFixed(2) : "0"}%`,
       interval: "APR"
     },
     {
@@ -215,7 +262,7 @@ export const InvestView = () => {
       symbol1: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R/logo.png",
       symbol2: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE/logo.png",
       title: t("invest.panel-left.invest-liquidity-tab-title"),
-      rateAmount: `${t("invest.panel-left.up-to-value-label")} ${maxAprValue ? maxAprValue.toFixed(2) : "0"}`,
+      rateAmount: `${t("invest.panel-left.up-to-value-label")} ${maxAprValue ? maxAprValue.toFixed(2) : "0"}%`,
       interval: "APR/APY"
     },
     {
@@ -224,14 +271,24 @@ export const InvestView = () => {
       symbol1: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
       symbol2: "",
       title: t("invest.panel-left.invest-stake-sol-tab-title"),
-      rateAmount: `${t("invest.panel-left.up-to-value-label")} ${maxStakeSolApyValue ? cutNumber(maxStakeSolApyValue, 2) : "0"}`,
+      rateAmount: `${t("invest.panel-left.up-to-value-label")} ${maxStakeSolApyValue ? cutNumber(maxStakeSolApyValue, 2) : "0"}%`,
       interval: "APR/APY"
+    },
+    {
+      id: 3,
+      name: "Buy MEAN bonded tokens",
+      symbol1: "https://www.socean.fi/static/media/scnSOL_blackCircle.14ca2915.png",
+      symbol2: "",
+      title: "Buy MEAN bonded tokens",
+      rateAmount: soceanTotalStakedValue > 0 ? `${toUsCurrency(soceanTotalStakedValue)}` : "--",
+      interval: "TVL"
     }
   ], [
     t,
     maxAprValue,
     stakePoolInfo,
-    maxStakeSolApyValue
+    maxStakeSolApyValue,
+    soceanTotalStakedValue,
   ]);
 
   /*
@@ -589,6 +646,21 @@ export const InvestView = () => {
     refreshStakedMeanBalance,
   ]);
 
+  // Keep SOCN/USDC balance updated
+  useEffect(() => {
+    if (!publicKey || !accounts || !accounts.tokenAccounts || !accounts.tokenAccounts.length) {
+      setMeanBalance(0);
+      return;
+    }
+
+    refresSocnUsdcBalance();
+
+  }, [
+    accounts,
+    publicKey,
+    refresSocnUsdcBalance,
+  ]);
+
   // Refresh pools info
   useEffect(() => {
     if (!connection || !shouldRefreshLpData) { return; }
@@ -691,6 +763,37 @@ export const InvestView = () => {
     setIsVerifiedRecipient,
   ]);
 
+  const handleBondsAmountChange = (e: any) => {
+
+    let newValue = e.target.value;
+
+    const decimals = socnUsdToken.decimals;
+    const splitted = newValue.toString().split('.');
+    const left = splitted[0];
+
+    if (decimals && splitted[1]) {
+      if (splitted[1].length > decimals) {
+        splitted[1] = splitted[1].slice(0, -1);
+        newValue = splitted.join('.');
+      }
+    } else if (left.length > 1) {
+      const number = splitted[0] - 0;
+      splitted[0] = `${number}`;
+      newValue = splitted.join('.');
+    }
+
+    if (newValue === null || newValue === undefined || newValue === "") {
+      setBondsAmount("");
+    } else if (newValue === '.') {
+      setBondsAmount(".");
+    } else if (isValidNumber(newValue)) {
+      setBondsAmount(newValue);
+      // setFetchingStakeQuote(true);
+      // Debouncing
+      // fetchQuoteFromInput(newValue);
+    }
+  };
+
   // Keep staking rewards updated
   useEffect(() => {
     setStakingRewards(parseFloat(stakedAmount) * annualPercentageYield / 100);
@@ -744,6 +847,131 @@ export const InvestView = () => {
     pageInitialized,
   ]);
 
+  const renderMeanBonds = (
+    <>
+      <h2>Buy MEAN bonded tokens</h2>
+      <p>Lorem ipsum dolor, sit amet consectetur adipisicing elit. Tempora omnis maiores veritatis esse nam explicabo corporis, fugiat natus, quibusdam a doloremque veniam ratione id magnam recusandae quos commodi cupiditate dicta exercitationem ad quia aliquid? Tempore quo, aliquid harum laborum culpa consequatur iste porro voluptates sequi dolorum nesciunt excepturi.</p>
+
+      <Divider />
+
+      {/* Staking Stats */}
+      <div className="invest-fields-container pt-2">
+        <div className="mb-3 px-4">
+          <Row justify="center">
+            <Col span={10}>
+              <div className="info-label icon-label justify-content-center align-items-center">
+                <span>Current price</span>
+              </div>
+              <div className="transaction-detail-row">
+                {refreshingPoolInfo ? (
+                  <IconLoading className="mean-svg-icons"/>
+                ) : (
+                  <span>{toUsCurrency(meanPrice)}</span>
+                )}
+                <span className="ml-1 font-size-60">
+                  <span className="badge rounded fg-white bg-green px-2 font-size-70">25.6% ROI</span>
+                </span>
+              </div>
+            </Col>
+            <Col span={10}>
+              <div className="info-label icon-label justify-content-center align-items-center">
+                {t("invest.panel-right.stats.total-value-locked")}
+              </div>
+              <div className="transaction-detail-row">
+                {refreshingPoolInfo ? (
+                  <IconLoading className="mean-svg-icons"/>
+                ) : (
+                  <span>{toUsCurrency(soceanTotalStakedValue)}</span>
+                )}
+              </div>
+            </Col>
+          </Row>
+        </div>
+      </div>
+
+      <div className="flex flex-center">
+        {meanAddresses && (
+          <div className="place-transaction-box mb-3">
+
+            <div className="flex-fixed-right mb-2 p-1">
+              <div className="left">
+                <span className="font-medium font-size-110">Buy b14sMEAN</span>
+              </div>
+              <div className="right">
+                <span className="font-bold font-size-110">{toUsCurrency(meanPrice)}</span>
+              </div>
+            </div>
+
+            <div className="form-label">You buy</div>
+            <div className="well mb-1">
+              <div className="flex-fixed-left">
+                <div className="left">
+                  <span className="add-on">
+                    <TokenDisplay onClick={() => {}}
+                      mintAddress={socnUsdToken.address}
+                      name={socnUsdToken.name}
+                      symbol={socnUsdToken.symbol}
+                      className="click-disabled"
+                      icon={<img alt={`${socnUsdToken.name}`} width={20} height={20} src={socnUsdToken.logoURI} />}
+                      showCaretDown={false}
+                    />
+                    {socnUsdTokenPrice ? (
+                      <div className="token-max simplelink" onClick={() => {
+                        const newAmount = socnUsdTokenPrice.toFixed(socnUsdToken.decimals);
+                        setBondsAmount(newAmount);
+                        // Debouncing
+                        // fetchQuoteFromInput(newAmount);
+                      }}>
+                        MAX
+                      </div>
+                    ) : null}
+
+                  </span>
+                </div>
+                <div className="right">
+                  <input
+                    className="general-text-input text-right"
+                    inputMode="decimal"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    type="text"
+                    onChange={handleBondsAmountChange}
+                    pattern="^[0-9]*[.,]?[0-9]*$"
+                    placeholder="0.0"
+                    minLength={1}
+                    maxLength={79}
+                    spellCheck="false"
+                    value={bondsAmount}
+                  />
+                </div>
+              </div>
+              <div className="flex-fixed-right">
+                <div className="left inner-label">
+                  <span>{t('transactions.send-amount.label-right')}:</span>
+                  <span>
+                    {`${socnUsdBalance
+                        ? getAmountWithSymbol(socnUsdBalance, socnUsdToken.address, true)
+                        : "0"
+                    }`}
+                  </span>
+                </div>
+                <div className="right inner-label">
+                  <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
+                    ~{bondsAmount
+                      ? toUsCurrency(parseFloat(bondsAmount) * socnUsdTokenPrice)
+                      : "$0.00"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        )}
+      </div>
+
+    </>
+  );
+
   const renderInvestOptions = (
     <>
       {investItems && investItems.length ? (
@@ -773,9 +1001,11 @@ export const InvestView = () => {
               <div className="rate-cell w-50">
                 <div className="rate-amount" style={{minWidth: "fit-content !important"}}>
                   {
-                    item.name === 'Stake' && item.rateAmount === "0"
-                      ? <IconLoading className="mean-svg-icons"/>
-                      : `${item.rateAmount}%`
+                    item.name === 'Stake'
+                      ? refreshingStakePoolInfo || (!stakePoolInfo || stakePoolInfo.apr === 0)
+                        ? <IconLoading className="mean-svg-icons"/>
+                        : item.rateAmount
+                      : item.rateAmount
                   }
                 </div>
                 <div className="interval">{item.interval}</div>
@@ -1135,6 +1365,11 @@ export const InvestView = () => {
                       </div>
                     </div>
                   </>
+                )}
+
+                {/* MEAN Bonds */}
+                {selectedInvest.id === 3 && (
+                  renderMeanBonds
                 )}
 
                 {selectedInvest.id === undefined && (
