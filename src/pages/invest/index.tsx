@@ -1,14 +1,14 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import './style.scss';
 import { ReloadOutlined } from "@ant-design/icons";
-import { Button, Tooltip, Row, Col, Empty, Spin, Divider } from "antd";
+import { Button, Tooltip, Row, Col, Empty, Spin, Divider, Steps } from "antd";
 import { useTranslation } from 'react-i18next';
 import { isDesktop } from "react-device-detect";
 import { PreFooter } from "../../components/PreFooter";
 import { getNetworkIdByCluster, useConnection, useConnectionConfig } from '../../contexts/connection';
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
-import { cutNumber, findATokenAddress, formatThousands, getAmountWithSymbol, isValidNumber } from "../../utils/utils";
+import { cutNumber, findATokenAddress, formatThousands, isValidNumber } from "../../utils/utils";
 import { IconLoading, IconStats } from "../../Icons";
 import { IconHelpCircle } from "../../Icons/IconHelpCircle";
 import useWindowSize from '../../hooks/useWindowResize';
@@ -24,9 +24,9 @@ import { confirmationEvents } from "../../contexts/transaction-status";
 import { EventType } from "../../models/enums";
 import { InfoIcon } from "../../components/InfoIcon";
 import { ONE_MINUTE_REFRESH_TIMEOUT } from "../../constants";
-import { TokenDisplay } from "../../components/TokenDisplay";
 
 type SwapOption = "stake" | "unstake";
+const { Step } = Steps;
 
 type StakingPair = {
   unstakedToken: TokenInfo | undefined;
@@ -276,10 +276,10 @@ export const InvestView = () => {
     },
     {
       id: 3,
-      name: "Buy MEAN bonded tokens",
-      symbol1: "https://www.socean.fi/static/media/scnSOL_blackCircle.14ca2915.png",
+      name: "Get discounted sMEAN",
+      symbol1: "/assets/smean-token.svg",
       symbol2: "",
-      title: "Buy MEAN bonded tokens",
+      title: "Get discounted sMEAN",
       rateAmount: soceanTotalStakedValue > 0 ? `${toUsCurrency(soceanTotalStakedValue)}` : "--",
       interval: "TVL"
     }
@@ -849,13 +849,28 @@ export const InvestView = () => {
 
   const renderMeanBonds = (
     <>
-      <h2>Buy MEAN bonded tokens</h2>
-      <p>Lorem ipsum dolor, sit amet consectetur adipisicing elit. Tempora omnis maiores veritatis esse nam explicabo corporis, fugiat natus, quibusdam a doloremque veniam ratione id magnam recusandae quos commodi cupiditate dicta exercitationem ad quia aliquid? Tempore quo, aliquid harum laborum culpa consequatur iste porro voluptates sequi dolorum nesciunt excepturi.</p>
+      <h2>Get discounted sMEAN</h2>
+      <p>By acquiring MEAN-USDC LP into the Mean DAO Treasury, we guarantee we eat our own dog food by securing MEAN token liquidity for market makers, traders, buyers and sellers forever regardless being in a bull or bear market. This, in turn, increases market confidence in the long term health of Mean DAO and our governance token. Acquiring MEAN LP tokens also helps us diversify our Treasury, and offer community members with a long term view on Mean DAO an opportunity to extend their support while benefiting from a discount. It’s a win-win-win for the DAO, our community, and the market.</p>
 
-      <Divider />
+      <h3 className="mb-2">This is how you can get discounted Staked MEAN:</h3>
+      <Steps direction="vertical" current={1}>
+        <Step title="Step 1" disabled={false} status="process" active={true} description={
+          <>
+            <div>Provide liquidity in the MEAN/USDC Raydium Pool.</div>
+            <p>Go to <a className="simplelink fg-orange-red underline-on-hover" href="https://raydium.io/liquidity/add/?coin0=MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD&coin1=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&fixed=coin0&ammId=5jcGFqXyB3xUrdS7LGmJ3R5a4pYaPPFs3mjFnqgwgo4x" target="_blank" rel="noopener noreferrer">Raydium liquidity Pool</a></p>
+          </>
+        } />
+        <Step title="Step 2" disabled={false} status="process" active={true} description={
+          <>
+            <div>Bond your newly acquired LP tokens for discounted MEAN.</div>
+            <p>Go to <a className="simplelink fg-orange-red underline-on-hover" href="https://www.socean.fi/app/streams" target="_blank" rel="noopener noreferrer">Socean Streams</a></p>
+          </>
+        } />
+      </Steps>
 
-      {/* Staking Stats */}
-      <div className="invest-fields-container pt-2">
+      {/* <Divider /> */}
+
+      {/* <div className="invest-fields-container pt-2">
         <div className="mb-3 px-4">
           <Row justify="center">
             <Col span={10}>
@@ -967,7 +982,7 @@ export const InvestView = () => {
 
           </div>
         )}
-      </div>
+      </div> */}
 
     </>
   );
@@ -1001,10 +1016,8 @@ export const InvestView = () => {
               <div className="rate-cell w-50">
                 <div className="rate-amount" style={{minWidth: "fit-content !important"}}>
                   {
-                    item.name === 'Stake'
-                      ? refreshingStakePoolInfo || (!stakePoolInfo || stakePoolInfo.apr === 0)
-                        ? <IconLoading className="mean-svg-icons"/>
-                        : item.rateAmount
+                    item.name === 'Stake' && (refreshingStakePoolInfo || item.rateAmount === '0%')
+                      ? <IconLoading className="mean-svg-icons"/>
                       : item.rateAmount
                   }
                 </div>
