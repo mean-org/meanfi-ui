@@ -127,6 +127,7 @@ export const AccountsNewView = () => {
   const [extraUserTokensSorted, setExtraUserTokensSorted] = useState<UserTokenAccount[]>([]);
   const [solAccountItems, setSolAccountItems] = useState(0);
   const [tokenAccountGroups, setTokenAccountGroups] = useState<Map<string, AccountTokenParsedInfo[]>>();
+  const [userOwnedTokenAccounts, setUserOwnedTokenAccounts] = useState<AccountTokenParsedInfo[]>();
   const [selectedTokenMergeGroup, setSelectedTokenMergeGroup] = useState<AccountTokenParsedInfo[]>();
 
   const [refreshingBalance, setRefreshingBalance] = useState(false);
@@ -907,6 +908,7 @@ export const AccountsNewView = () => {
                     balance: i.parsedInfo.tokenAmount.uiAmount || 0
                   };
                 }), 'blue');
+                setUserOwnedTokenAccounts(accTks);
 
                 /**
                  * - MEANFI TOKEN LIST
