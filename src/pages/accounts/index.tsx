@@ -1493,9 +1493,6 @@ export const AccountsNewView = () => {
         ? true
         : false;
     }
-    const isOwnedTokenAccount = asset.publicAddress && asset.publicAddress !== accountAddress
-          ? true
-          : false;
 
     return (
       <div key={`${index}`} onClick={onTokenAccountClick}
@@ -1507,25 +1504,13 @@ export const AccountsNewView = () => {
           }`
         }>
         <div className="icon-cell">
-          {publicKey && isOwnedTokenAccount && !asset.isAta ? (
-            <Tooltip placement="bottomRight" title={t('account-area.non-ata-tooltip', { tokenSymbol: asset.symbol })}>
-              <div className="token-icon grayed-out">
-                {asset.logoURI ? (
-                  <img alt={`${asset.name}`} width={30} height={30} src={asset.logoURI} onError={imageOnErrorHandler} />
-                ) : (
-                  <Identicon address={asset.address} style={{ width: "30", display: "inline-flex" }} />
-                )}
-              </div>
-            </Tooltip>
-          ) : (
-            <div className="token-icon">
-              {asset.logoURI ? (
-                <img alt={`${asset.name}`} width={30} height={30} src={asset.logoURI} onError={imageOnErrorHandler} />
-              ) : (
-                <Identicon address={asset.address} style={{ width: "30", display: "inline-flex" }} />
-              )}
-            </div>
-          )}
+          <div className="token-icon">
+            {asset.logoURI ? (
+              <img alt={`${asset.name}`} width={30} height={30} src={asset.logoURI} onError={imageOnErrorHandler} />
+            ) : (
+              <Identicon address={asset.address} style={{ width: "30", display: "inline-flex" }} />
+            )}
+          </div>
         </div>
         <div className="description-cell">
           <div className="title">
@@ -1536,11 +1521,7 @@ export const AccountsNewView = () => {
               </span>
             ) : (null)}
           </div>
-          {publicKey ? (
-            <div className="subtitle text-truncate">{isOwnedTokenAccount && !asset.isAta && asset.name !== 'Unknown Token' ? t('account-area.non-ata-label') : asset.name}</div>
-            ) : (
-            <div className="subtitle text-truncate">{asset.address === WRAPPED_SOL_MINT_ADDRESS ? 'Wrapped SOL' : asset.name}</div>
-          )}
+          <div className="subtitle text-truncate">{asset.address === WRAPPED_SOL_MINT_ADDRESS ? 'Wrapped SOL' : asset.name}</div>
         </div>
         <div className="rate-cell">
           <div className="rate-amount">
@@ -1953,7 +1934,7 @@ export const AccountsNewView = () => {
           </Helmet>
         )}
 
-        {isLocal() && (
+        {/* {isLocal() && (
           <div className="debug-bar">
             <span className="ml-1">incoming:</span><span className="ml-1 font-bold fg-dark-active">{streamsSummary ? streamsSummary.incomingAmount : '-'}</span>
             <span className="ml-1">outgoing:</span><span className="ml-1 font-bold fg-dark-active">{streamsSummary ? streamsSummary.outgoingAmount : '-'}</span>
@@ -1961,7 +1942,7 @@ export const AccountsNewView = () => {
             <span className="ml-1">totalNet:</span><span className="ml-1 font-bold fg-dark-active">{streamsSummary ? streamsSummary.totalNet : '-'}</span>
             <span className="ml-1">treasuriesTvl:</span><span className="ml-1 font-bold fg-dark-active">{treasuriesTvl || '0'}</span>
           </div>
-        )}
+        )} */}
 
         {/* This is a SEO mandatory h1 but it is not visible */}
         {location.pathname === '/accounts/streams' ? (
