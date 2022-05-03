@@ -112,6 +112,7 @@ export const MultisigProposalModal = (props: {
 
   const [proposalTitleValue, setProposalTitleValue] = useState('');
   const [proposalExpiresValue, setProposalExpiresValue] = useState<any>(expires[0]);
+  const [proposalDescriptionValue, setProposalDescriptionValue] = useState('');
   const [proposalInstructionValue, setProposalInstructionValue] = useState<any>();
   const [proposalTypeValue, setProposalTypeValue] = useState<any>(types[0]);
   const [proposalMemoValue, setProposalMemoValue] = useState('');
@@ -207,10 +208,10 @@ export const MultisigProposalModal = (props: {
     setProposalRecipientValue(e.target.value);
   }
 
-  // const onProposalDescriptionValueChange = (e: any) => {
-  //   setProposalDescriptionValue(e.target.value);
-  //   setCountWords(e.target.value.length);
-  // }
+  const onProposalDescriptionValueChange = (e: any) => {
+    setProposalDescriptionValue(e.target.value);
+    setCountWords(e.target.value.length);
+  }
 
   // const handleDateChange = (date: string) => {
   //   setProposalEndDate(date);
@@ -327,6 +328,29 @@ export const MultisigProposalModal = (props: {
                             values={expires}
                             value={proposalExpiresValue}
                           />
+                        </div>
+                      </Col>
+                    </Row>
+
+                    {/* Proposal description */}
+                    <Row gutter={[8, 8]}>
+                      <Col xs={24} sm={24} md={24} lg={24}>
+                        <div className="mb-2">
+                          <div className="form-label">{t('multisig.proposal-modal.description')}</div>
+                          <div className={`well mb-0 ${props.isBusy ? 'disabled' : ''}`}>
+                            <textarea
+                              id="proposal-description-field"
+                              className="w-100 general-text-input"
+                              autoComplete="off"
+                              rows={5}
+                              maxLength={256}
+                              onChange={onProposalDescriptionValueChange}
+                              placeholder={t('multisig.proposal-modal.description-placeholder')}
+                              value={proposalDescriptionValue}
+                            >
+                            </textarea>
+                          </div>
+                          <div className="form-field-hint pr-3 text-right">{t('multisig.proposal-modal.hint-message', {lettersLeft: lettersLeft})}</div>
                         </div>
                       </Col>
                     </Row>
@@ -562,15 +586,15 @@ export const MultisigProposalModal = (props: {
                     </Row>
 
                     {/* Submitted on */}
-                    <Row className="mb-1">
+                    {/* <Row className="mb-1">
                       <Col span={8} className="text-right pr-1">
                         <span className="info-label">{t('multisig.multisig-transactions.submitted-on')}</span>
                       </Col>
-                      <Col span={16} className="text-left pl-1">
+                      <Col span={16} className="text-left pl-1"> */}
                         {/* <span>{getReadableDate(multisigTransactionSummary.createdOn, true)}</span> */}
-                        <span>{proposalExpiresValue}</span>
+                        {/* <span>{proposalExpiresValue}</span>
                       </Col>
-                    </Row>
+                    </Row> */}
 
                     {/* Status */}
                     {/* <Row className="mb-1">

@@ -414,7 +414,7 @@
 			"multisig-threshold-question-mark-tooltip": "Comme meilleure pratique, ayez toujours plus de signataires multisig que le minimum de signataires requis. Un multisig 2 sur 3 est la configuration la plus basique où 2 des 3 participants sont nécessaires pour exécuter une transaction.",
 			"success-message": "Votre nouveau compte multisig a été créé avec succès."
 		},
-		"create-new-multisig-account-cta": "Créer plusieurs signatures",
+		"create-new-multisig-account-cta": "Create safe",
 		"crud-multisig": {
 			"delete-multisig": "Supprimer plusieurs signatures",
 			"edit-multisig": "Modifier la signature multiple",

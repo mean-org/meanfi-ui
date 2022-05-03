@@ -2819,6 +2819,9 @@ main section {
       }
     }
   }
+  textarea {
+    white-space: normal !important;
+  }
 }
 .inner-label {
   font-size: 0.8rem;

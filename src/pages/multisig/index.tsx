@@ -11,6 +11,7 @@ import {
   MemcmpFilter,
   PublicKey,
   SystemProgram,
+  SYSVAR_RENT_PUBKEY,
   Transaction
 } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
@@ -179,6 +180,77 @@ export const MultisigView = () => {
     wallet
   ]);
 
+  // const multisigSerumClient = useMemo(() => {
+
+  //   const opts: ConfirmOptions = {
+  //     preflightCommitment: "confirmed",
+  //     commitment: "confirmed",
+  //   };
+
+  //   const provider = new Provider(connection, wallet as any, opts);
+
+  //   return new Program(
+  //     MultisigIdl,
+  //     "msigmtwzgXJHj2ext4XJjCDmpbcMuufFb5cHuwg6Xdt",
+  //     provider
+  //   );
+
+  // }, [
+  //   connection, 
+  //   wallet
+  // ]);
+
+  ////////////////////////////////////////////
+
+//   const multisig = Keypair.generate();
+//   const [, nonce] = await PublicKey.findProgramAddress(
+//   [multisig.publicKey.toBuffer()],
+//     "msigmtwzgXJHj2ext4XJjCDmpbcMuufFb5cHuwg6Xdt"
+//   );
+
+//   const owners = [{
+//     address: "ARmgYJkSQfbSifkXc4h7MGDAALznW5FFSHVucJ6j3vd7",
+//     name: "Tania 1"
+//   }, {
+//     address: "HvPJ1eSqAnUtoC1dfKCAaDDFaWviHkbfBWoYJmP1BUDa",
+//     name: "Tania 2",
+//   }];
+
+// let threshold = new anchor.BN(2);
+
+//   let tx = await multisigSerumClient.transaction.createMultisig(
+//     owners, 
+//     threshold, 
+//     nonce,
+//     {
+//       accounts: {
+//         multisig: multisig.publicKey,
+//         rent: SYSVAR_RENT_PUBKEY
+//       },
+//       signers: [multisig],
+//     }
+//   );
+
+//   tx.feePayer = payer;
+//   const { blockhash } = await this.connection.getRecentBlockhash(this.connection.commitment);
+//   tx.recentBlockhash = blockhash;
+//   tx.partialSign(...[multisig]);
+
+//   // desp envias la tx con el connection de solana
+//   let signedTx = wallet.signTransaction(tx);
+//   let encodedTx = signedTx.serialize().toString('base64');
+
+//   let signature = connection.sendEncodedTransaction(encodedTx);
+
+////////////////////////////////////////////////////////////
+
+
+
+
+
+
+  
+
   // Create and cache Money Streaming Program V2 instance
   const msp = useMemo(() => {
     if (publicKey) {
@@ -343,6 +415,45 @@ export const MultisigView = () => {
 
       return tx;
     };
+
+    // const createMultisig = async (data: any) => {
+
+    //   const multisig = Keypair.generate();
+    //   const [, nonce] = await PublicKey.findProgramAddress(
+    //     [multisig.publicKey.toBuffer()],
+    //     multisigSerumClient.programId
+    //   );
+
+    //   const owners = [{
+    //     address: "ARmgYJkSQfbSifkXc4h7MGDAALznW5FFSHVucJ6j3vd7",
+    //     name: "Tania 1"
+    //   }, {
+    //     address: "HvPJ1eSqAnUtoC1dfKCAaDDFaWviHkbfBWoYJmP1BUDa",
+    //     name: "Tania 2",
+    //   }];
+
+    //   let threshold = new anchor.BN(2);
+
+    //   let tx = await multisigSerumClient.transaction.createMultisig(
+    //     owners, 
+    //     threshold, 
+    //     nonce,
+    //     {
+    //       accounts: {
+    //         multisig: multisig.publicKey,
+    //         rent: SYSVAR_RENT_PUBKEY
+    //       },
+    //       signers: [multisig],
+    //     }
+    //   );
+
+    //   tx.feePayer = publicKey;
+    //   const { blockhash } = await connection.getRecentBlockhash(connection.commitment);
+    //   tx.recentBlockhash = blockhash;
+    //   tx.partialSign(...[multisig]);
+
+    //   return tx;
+    // };
 
     const createTx = async (): Promise<boolean> => {
 
@@ -584,7 +695,9 @@ export const MultisigView = () => {
     transactionFees,
     transactionCancelled,
     multisigClient.programId,
+    // multisigSerumClient.programId,
     multisigClient.transaction,
+    // multisigSerumClient.transaction,
     transactionStatus.currentOperation,
     clearTransactionStatusContext,
     startFetchTxSignatureInfo,
@@ -2213,6 +2326,14 @@ export const MultisigView = () => {
     });
 
     accounts.push(...filteredAccs);
+
+    // let multisigSerumAccs = await multisigSerumClient.account.multisig.all();
+    // filteredAccs = multisigSerumAccs.filter((a: any) => {
+    //   if (a.account.owners.filter((o: PublicKey) => o.equals(wallet)).length) { return true; }
+    //   return false;
+    // });
+
+    // accounts.push(...filteredAccs);
 
     return accounts;
     

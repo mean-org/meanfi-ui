@@ -414,7 +414,7 @@
 			"multisig-threshold-question-mark-tooltip": "به عنوان بهترین روش، همیشه امضاکنندگان Multisig بیشتر از حداقل امضاکنندگان مورد نیاز داشته باشید. مولتی سیگ 2 از 3 ابتدایی ترین راه اندازی است که در آن 2 نفر از 3 شرکت کننده برای اجرای تراکنش لازم هستند.",
 			"success-message": "حساب Multisig جدید شما با موفقیت ایجاد شد."
 		},
-		"create-new-multisig-account-cta": "ساخت حساب Multisig",
+		"create-new-multisig-account-cta": "Create safe",
 		"crud-multisig": {
 			"delete-multisig": "حساب Multisig را حذف کنید",
 			"edit-multisig": "ویرایش حساب Multisig",
