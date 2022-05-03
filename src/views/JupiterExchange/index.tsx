@@ -1687,7 +1687,7 @@ export const JupiterExchange = (props: {
                     />
                 )}
 
-                {(inputToken && outputToken && inputAmount && isInAmountTooLow()) ? (
+                {(jupiterReady && inputToken && outputToken && inputAmount && isInAmountTooLow()) ? (
                     <div className="input-amount-too-low flex-row flex-center">
                         <InfoCircleOutlined className="font-size-75" />
                         <span>Minimum swap is at least {toUiAmount(new BN(minInAmount || 0), inputToken.decimals)} {inputToken.symbol} for {toUiAmount(new BN(minOutAmount || 0), outputToken.decimals)} {outputToken.symbol}</span>
@@ -1791,6 +1791,7 @@ export const JupiterExchange = (props: {
                             props.inModal ? showDrawer() : showTokenSelector();
                         }}
                         className="mb-2"
+                        disabled={!jupiterReady}
                         routes={routes}
                         onSelectedRoute={(route: any) => {
                             consoleOut('onSelectedRoute:', route, 'blue');
