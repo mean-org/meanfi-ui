@@ -12,6 +12,7 @@ import { TokenInfo } from '@solana/spl-token-registry';
 import BN from 'bn.js';
 import { SyncOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import { useWallet } from '../../contexts/wallet';
 
 export const TreasuriesSummary = (props: {
     address: string;
@@ -24,16 +25,17 @@ export const TreasuriesSummary = (props: {
 }) => {
 
     const { address, connection, ms, msp, selected, onSelect, onNewValue } = props;
+    const { connected, publicKey } = useWallet();
     const {
         coinPrices,
         userTokens,
-        splTokenList
+        splTokenList,
+        previousWalletConnectState
     } = useContext(AppStateContext);
     const { t } = useTranslation('common');
     const [treasuryList, setTreasuryList] = useState<(Treasury | TreasuryInfo)[]>([]);
     const [loadingTreasuries, setLoadingTreasuries] = useState(false);
     const [treasuriesLoaded, setTreasuriesLoaded] = useState(false);
-    const [lastSummary, setLastSummary] = useState<UserTreasuriesSummary>(INITIAL_TREASURIES_SUMMARY);
     const [treasuriesSummary, setTreasuriesSummary] = useState<UserTreasuriesSummary>(INITIAL_TREASURIES_SUMMARY);
 
     ////////////////////////////
@@ -178,12 +180,8 @@ export const TreasuriesSummary = (props: {
         consoleOut('=========== Block ends ===========', '', 'orange');
 
         // Update state
-        setLastSummary(treasuriesSummary)
         setTreasuriesSummary(resume);
-
-        if (resume.totalNet !== treasuriesSummary.totalNet) {
-            onNewValue(resume.totalNet);
-        }
+        onNewValue(resume.totalNet);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [
@@ -226,6 +224,25 @@ export const TreasuriesSummary = (props: {
             refreshTreasuriesSummary();
         }
     }, [refreshTreasuriesSummary, treasuryList]);
+
+    // Hook on the wallet connect/disconnect
+    useEffect(() => {
+
+        if (previousWalletConnectState !== connected) {
+            // User is connecting
+            if (!previousWalletConnectState && connected && publicKey) {
+                consoleOut('User is connecting...', '', 'blue');
+                refreshTreasuries();
+            } else if (previousWalletConnectState && !connected) {
+                consoleOut('Cleaning TreasuriesSummary state...', '', 'blue');
+                setTreasuriesSummary(INITIAL_TREASURIES_SUMMARY);
+                setTreasuryList([]);
+                setTreasuriesLoaded(false);
+                onNewValue(0);
+            }
+        }
+
+    }, [connected, onNewValue, previousWalletConnectState, publicKey]);
 
     ///////////////
     // Rendering //
