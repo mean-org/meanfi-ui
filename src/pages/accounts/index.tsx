@@ -66,6 +66,7 @@ import { UnwrapSolModal } from '../../components/UnwrapSolModal';
 import { confirmationEvents, TxConfirmationInfo } from '../../contexts/transaction-status';
 import { AppUsageEvent } from '../../utils/segment-service';
 import { segmentAnalytics } from '../../App';
+import { TreasuriesSummary } from '../../components/TreasuriesSummary';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const QRCode = require('qrcode.react');
@@ -77,8 +78,8 @@ export const AccountsNewView = () => {
   const navigate = useNavigate();
   const { endpoint } = useConnectionConfig();
   const { publicKey, connected, wallet } = useWallet();
-  const { theme } = useContext(AppStateContext);
   const {
+    theme,
     coinPrices,
     userTokens,
     streamList,
@@ -134,6 +135,7 @@ export const AccountsNewView = () => {
   const [totalTokensHolded, setTotalTokensHolded] = useState(0);
   const [totalTokenAccountsValue, setTotalTokenAccountsValue] = useState(0);
   const [netWorth, setNetWorth] = useState(0);
+  const [treasuriesTvl, setTreasuriesTvl] = useState(0);
 
   // Url Query Params attendants
   const [urlQueryAddress, setUrlQueryAddress] = useState('');
@@ -1342,10 +1344,12 @@ export const AccountsNewView = () => {
       const totalTokenUsdValue = sumMeanSupportedTokens + sumExtraUserTokensSorted;
       setTotalTokenAccountsValue(totalTokenUsdValue);
       // Net Worth
-      const total = totalTokenUsdValue + streamsSummary.totalNet;
+      const total = totalTokenUsdValue + streamsSummary.totalNet + treasuriesTvl;
       setNetWorth(total);
     }
+
   }, [
+    treasuriesTvl,
     streamsSummary,
     meanPinnedTokens,
     extraUserTokensSorted,
@@ -1419,6 +1423,7 @@ export const AccountsNewView = () => {
       <Link to="/accounts/streams">
         <div key="streams" onClick={() => {
           setSelectedCategory("other-assets");
+          setSelectedOtherAssetsOption("msp-streams");
           setSelectedAsset(undefined);
         }} className={`transaction-list-row ${selectedCategory === "other-assets" && selectedOtherAssetsOption === "msp-streams" ? 'selected' : ''}`}>
           <div className="icon-cell">
@@ -1707,11 +1712,6 @@ export const AccountsNewView = () => {
     </Menu>
   );
 
-  /**
-   * <Switch size="small" checked={hideLowBalances} onClick={() => setHideLowBalances(value => !value)} />
-   * <span className="ml-1 simplelink" onClick={() => setHideLowBalances(value => !value)}>{t('assets.switch-hide-low-balances')}</span>
-   */
-
   const assetListOptions = (
     <Menu>
       <Menu.Item key="10" onClick={() => {}}>
@@ -1953,14 +1953,15 @@ export const AccountsNewView = () => {
           </Helmet>
         )}
 
-        {/* {isLocal() && (
+        {isLocal() && (
           <div className="debug-bar">
             <span className="ml-1">incoming:</span><span className="ml-1 font-bold fg-dark-active">{streamsSummary ? streamsSummary.incomingAmount : '-'}</span>
             <span className="ml-1">outgoing:</span><span className="ml-1 font-bold fg-dark-active">{streamsSummary ? streamsSummary.outgoingAmount : '-'}</span>
             <span className="ml-1">totalAmount:</span><span className="ml-1 font-bold fg-dark-active">{streamsSummary ? streamsSummary.totalAmount : '-'}</span>
             <span className="ml-1">totalNet:</span><span className="ml-1 font-bold fg-dark-active">{streamsSummary ? streamsSummary.totalNet : '-'}</span>
+            <span className="ml-1">treasuriesTvl:</span><span className="ml-1 font-bold fg-dark-active">{treasuriesTvl || '0'}</span>
           </div>
-        )} */}
+        )}
 
         {/* This is a SEO mandatory h1 but it is not visible */}
         {location.pathname === '/accounts/streams' ? (
@@ -2031,11 +2032,30 @@ export const AccountsNewView = () => {
                         </div>
                         {/* TODO: Make this part more dynamic */}
                         <div className="asset-category-title flex-fixed-right">
-                          <div className="title">Other assets (1)</div>
-                          <div className="amount">{toUsCurrency(streamsSummary.totalNet)}</div>
+                          <div className="title">Other assets (2)</div>
+                          <div className="amount">{toUsCurrency(streamsSummary.totalNet + treasuriesTvl)}</div>
                         </div>
                         <div className="asset-category">
                           {renderMoneyStreamsSummary}
+                          <TreasuriesSummary
+                            address={
+                              publicKey
+                                ? publicKey.toBase58()
+                                : urlQueryAddress
+                                  ? urlQueryAddress
+                                  : accountAddress
+                            }
+                            connection={connection}
+                            ms={ms}
+                            msp={msp}
+                            selected={selectedCategory === "other-assets" && selectedOtherAssetsOption === "msp-treasuries"}
+                            onNewValue={(value: number) => setTreasuriesTvl(value)}
+                            onSelect={() => {
+                              setSelectedCategory("other-assets");
+                              setSelectedOtherAssetsOption("msp-streams");
+                              setSelectedAsset(undefined);
+                            }}
+                          />
                         </div>
                       </div>
 

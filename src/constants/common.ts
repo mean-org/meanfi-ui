@@ -6,6 +6,7 @@ export const HALF_MINUTE_REFRESH_TIMEOUT = 30 * 1000;
 export const FORTY_SECONDS_REFRESH_TIMEOUT = 40 * 1000;
 export const FIVETY_SECONDS_REFRESH_TIMEOUT = 50 * 1000;
 export const SEVENTY_SECONDS_REFRESH_TIMEOUT = 70 * 1000;
+export const THREE_MINUTES_REFRESH_TIMEOUT = 3 * 60 * 1000;
 export const FIVE_MINUTES_REFRESH_TIMEOUT = 5 * 60 * 1000;
 export const TEN_MINUTES_REFRESH_TIMEOUT = 10 * 60 * 1000;
 export const TRANSACTION_STATUS_RETRY = 3 * 1000;            // Retry fetch transaction status every 3 seconds
