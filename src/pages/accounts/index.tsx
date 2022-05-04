@@ -67,6 +67,7 @@ import { confirmationEvents, TxConfirmationInfo } from '../../contexts/transacti
 import { AppUsageEvent } from '../../utils/segment-service';
 import { segmentAnalytics } from '../../App';
 import { TreasuriesSummary } from '../../components/TreasuriesSummary';
+import { AccountsSuggestAssetModal } from '../../components/AccountsSuggestAssetModal';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const QRCode = require('qrcode.react');
@@ -226,20 +227,25 @@ export const AccountsNewView = () => {
   const hideReceiveSplOrSolModal = useCallback(() => setIsReceiveSplOrSolModalOpen(false), []);
   const showReceiveSplOrSolModal = useCallback(() => setIsReceiveSplOrSolModalOpen(true), []);
 
-  // Send selected token
+  // Send selected token modal
   const [isSendAssetModalOpen, setIsSendAssetModalOpen] = useState(false);
   const hideSendAssetModal = useCallback(() => setIsSendAssetModalOpen(false), []);
   const showSendAssetModal = useCallback(() => setIsSendAssetModalOpen(true), []);
 
-  // Wrap SOL token
+  // Wrap SOL token modal
   const [isWrapSolModalOpen, setIsWrapSolModalOpen] = useState(false);
   const hideWrapSolModal = useCallback(() => setIsWrapSolModalOpen(false), []);
   const showWrapSolModal = useCallback(() => setIsWrapSolModalOpen(true), []);
 
-  // Unwrap SOL token
+  // Unwrap SOL token modal
   const [isUnwrapSolModalOpen, setIsUnwrapSolModalOpen] = useState(false);
   const hideUnwrapSolModal = useCallback(() => setIsUnwrapSolModalOpen(false), []);
   const showUnwrapSolModal = useCallback(() => setIsUnwrapSolModalOpen(true), []);
+
+  // Suggest an Asset modal
+  const [isSuggestAssetModalOpen, setIsSuggestAssetModalOpen] = useState(false);
+  const hideSuggestAssetModal = useCallback(() => setIsSuggestAssetModalOpen(false), []);
+  const showSuggestAssetModal = useCallback(() => setIsSuggestAssetModalOpen(true), []);
 
   // Exchange selected token
   // const [isExchangeAssetModalOpen, setIsExchangeAssetModalOpen] = useState(false);
@@ -2050,7 +2056,7 @@ export const AccountsNewView = () => {
                             className="flex-center"
                             type="primary"
                             shape="round"
-                            onClick={() => {}}>
+                            onClick={showSuggestAssetModal}>
                             <IconLightBulb className="mean-svg-icons" />
                             <span className="ml-1">Suggest an asset</span>
                           </Button>
@@ -2257,6 +2263,14 @@ export const AccountsNewView = () => {
         />
       )} */}
 
+      {isSuggestAssetModalOpen && (
+        <AccountsSuggestAssetModal
+          handleOk={hideSuggestAssetModal}
+          handleClose={hideSuggestAssetModal}
+          isVisible={isSuggestAssetModalOpen}
+        />
+      )}
+  
       <PreFooter />
     </>
   );
