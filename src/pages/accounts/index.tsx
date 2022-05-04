@@ -1761,16 +1761,18 @@ export const AccountsNewView = () => {
     return (
       <div className="flex-fixed-right">
         <Space className="left" size="middle" wrap>
-          <Button
-            type="default"
-            shape="round"
-            size="small"
-            className="thin-stroke"
-            disabled={isSelectedAssetNativeAccount()}
-            onClick={onSendAsset}>
-            <SendOutlined />
-            <span className="ml-1">Send</span>
-          </Button>
+          <Tooltip placement="bottom" title={isSelectedAssetNativeAccount() ? "SOL is not available for money streams, please use wSOL instead." : ""}>
+            <Button
+              type="default"
+              shape="round"
+              size="small"
+              className="thin-stroke"
+              disabled={isSelectedAssetNativeAccount()}
+              onClick={onSendAsset}>
+              <SendOutlined />
+              <span className="ml-1">Send</span>
+            </Button>
+          </Tooltip>
           <Button
             type="default"
             shape="round"
