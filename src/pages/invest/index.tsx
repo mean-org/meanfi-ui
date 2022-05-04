@@ -276,12 +276,12 @@ export const InvestView = () => {
     },
     {
       id: 3,
-      name: "Get discounted sMEAN",
+      name: "Discounted sMEAN",
       symbol1: "/assets/smean-token.svg",
       symbol2: "",
       title: "Get discounted sMEAN",
       rateAmount: soceanTotalStakedValue > 0 ? `${toUsCurrency(soceanTotalStakedValue)}` : "--",
-      interval: "TVL"
+      interval: "Balance TVL"
     }
   ], [
     t,
@@ -1016,12 +1016,16 @@ export const InvestView = () => {
               <div className="rate-cell w-50">
                 <div className="rate-amount" style={{minWidth: "fit-content !important"}}>
                   {
-                    item.name === 'Stake' && (refreshingStakePoolInfo || item.rateAmount === '0%')
-                      ? <IconLoading className="mean-svg-icons"/>
-                      : item.rateAmount
+                    item.name === 'Discounted sMEAN'
+                      ? '-'
+                      :item.name === 'Stake' && (refreshingStakePoolInfo || item.rateAmount === '0%')
+                        ? <IconLoading className="mean-svg-icons"/>
+                        : item.rateAmount
                   }
                 </div>
-                <div className="interval">{item.interval}</div>
+                {item.name !== 'Discounted sMEAN' && (
+                  <div className="interval">{item.interval}</div>
+                )}
               </div>
             </div>
           )
