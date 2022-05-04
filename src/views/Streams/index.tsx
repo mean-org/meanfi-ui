@@ -451,6 +451,7 @@ export const Streams = () => {
       case OperationType.StreamTransferBeneficiary:
         setDeletedStream(item.extras);
         break;
+      case OperationType.Transfer:
       case OperationType.StreamCreate:
         hardReloadStreams();
         break;

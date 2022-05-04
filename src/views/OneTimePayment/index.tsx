@@ -1,7 +1,6 @@
 import React from 'react';
 import { Button, Modal, DatePicker, Checkbox, Select, Drawer } from "antd";
 import {
-  ArrowLeftOutlined,
   LoadingOutlined,
   QrcodeOutlined,
 } from "@ant-design/icons";
@@ -30,7 +29,7 @@ import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { customLogger } from '../..';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { TokenDisplay } from '../../components/TokenDisplay';
 import { TextInput } from '../../components/TextInput';
 import { TokenListItem } from '../../components/TokenListItem';
@@ -77,6 +76,7 @@ export const OneTimePayment = (props: {
   } = useContext(AppStateContext);
   const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
   const accounts = useAccountsContext();
@@ -890,7 +890,15 @@ export const OneTimePayment = (props: {
               currentOperation: TransactionStatus.TransactionFinished
             });
             if (inModal) {
+              setIsBusy(false);
+              resetTransactionStatus();
+              resetContractValues();
+              setIsVerifiedRecipient(false);
               transferCompleted();
+              if (isScheduledPayment() && location.pathname !== "/accounts/streams") {
+                setSelectedStream(undefined);
+                navigate("/accounts/streams");
+              }
             }
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
@@ -910,16 +918,22 @@ export const OneTimePayment = (props: {
     fromCoinAmount,
     paymentStartDate,
     recipientAddress,
+    location.pathname,
     fixedScheduleValue,
     transactionCancelled,
     streamV2ProgramAddress,
     transactionStatus.currentOperation,
     enqueueTransactionConfirmation,
+    resetTransactionStatus,
+    setIsVerifiedRecipient,
     setTransactionStatus,
+    resetContractValues,
     isScheduledPayment,
+    setSelectedStream,
     transferCompleted,
     getPricePerToken,
     getFeeAmount,
+    navigate,
   ]);
 
   const onIsVerifiedRecipientChange = (e: any) => {

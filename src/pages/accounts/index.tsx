@@ -1761,6 +1761,7 @@ export const AccountsNewView = () => {
             shape="round"
             size="small"
             className="thin-stroke"
+            disabled={isSelectedAssetNativeAccount()}
             onClick={onSendAsset}>
             <SendOutlined />
             <span className="ml-1">Send</span>

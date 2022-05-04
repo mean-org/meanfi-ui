@@ -46,7 +46,7 @@ import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { customLogger } from '../..';
 import { StepSelector } from '../../components/StepSelector';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
 import { TokenDisplay } from '../../components/TokenDisplay';
 import { TextInput } from '../../components/TextInput';
@@ -81,20 +81,22 @@ export const RepeatingPayment = (props: {
     isVerifiedRecipient,
     streamV2ProgramAddress,
     previousWalletConnectState,
-    refreshPrices,
-    setEffectiveRate,
-    setRecipientNote,
-    setFromCoinAmount,
+    setPaymentRateFrequency,
+    setIsVerifiedRecipient,
+    setPaymentRateAmount,
+    setTransactionStatus,
     resetContractValues,
     setRecipientAddress,
     setPaymentStartDate,
-    setPaymentRateAmount,
-    setTransactionStatus,
-    setIsVerifiedRecipient,
-    setPaymentRateFrequency,
+    setFromCoinAmount,
+    setSelectedStream,
+    setRecipientNote,
+    setEffectiveRate,
+    refreshPrices,
   } = useContext(AppStateContext);
   const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
   const accounts = useAccountsContext();
@@ -997,7 +999,15 @@ export const RepeatingPayment = (props: {
               currentOperation: TransactionStatus.TransactionFinished
             });
             if (inModal) {
+              setIsBusy(false);
+              resetTransactionStatus();
+              resetContractValues();
+              setIsVerifiedRecipient(false);
               transferCompleted();
+              if (location.pathname !== "/accounts/streams") {
+                setSelectedStream(undefined);
+                navigate("/accounts/streams");
+              }
             }
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
@@ -1017,15 +1027,21 @@ export const RepeatingPayment = (props: {
     recipientAddress,
     paymentStartDate,
     paymentRateAmount,
+    location.pathname,
     paymentRateFrequency,
     transactionCancelled,
     streamV2ProgramAddress,
     transactionStatus.currentOperation,
     enqueueTransactionConfirmation,
+    resetTransactionStatus,
+    setIsVerifiedRecipient,
     setTransactionStatus,
+    resetContractValues,
     getPaymentRateLabel,
+    setSelectedStream,
     transferCompleted,
-    getFeeAmount
+    getFeeAmount,
+    navigate,
   ]);
 
   const onIsVerifiedRecipientChange = (e: any) => {
