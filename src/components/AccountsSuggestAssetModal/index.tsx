@@ -28,7 +28,7 @@ export const AccountsSuggestAssetModal = (props: {
 
       <div className="mb-2 shift-up-1">
         <p>Now you have the opportunity to suggest new Assets to be added to the MeanFi repertoire. As part of your suggestion include a brief description of the Asset, why is it important and the Asset address.</p>
-        <p><a className="simplelink underline"
+        <p className="text-center"><a className="simplelink underline"
           href='https://next.meanfi.com/b/meanfi'
           title="Suggest an Asset"
           target="_blank"
