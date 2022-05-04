@@ -113,7 +113,6 @@ import { StreamLockedModal } from "../../components/StreamLockedModal";
 import { StreamEditModal } from "../../components/StreamEditModal";
 import { openNotification } from "../../components/Notifications";
 import { CountdownCircleTimer } from "react-countdown-circle-timer";
-
 import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;

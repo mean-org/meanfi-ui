@@ -40,7 +40,6 @@ import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION, VERBOSE_DATE_TIME_FORMAT } fro
 import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
 import { OperationType, TransactionStatus } from '../../models/enums';
-import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { IconCaretDown, IconClock, IconDocument, IconEdit, IconShieldOutline, IconTrash, IconUpdate, IconUserGroup, IconUsers, IconWallet } from '../../Icons';
 import dateFormat from 'dateformat';
 import { useNativeAccount } from '../../contexts/accounts';
@@ -77,6 +76,7 @@ import { ProgramAccounts } from '../../utils/accounts';
 import { getOperationName } from '../../utils/multisig-helpers';
 import { openNotification } from '../../components/Notifications';
 import { ProposalSummaryModal } from '../../components/ProposalSummaryModal';
+import { TxConfirmationContext } from '../../contexts/transaction-status';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 

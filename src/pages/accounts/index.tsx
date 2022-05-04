@@ -1703,10 +1703,13 @@ export const AccountsNewView = () => {
 
   const assetListOptions = (
     <Menu>
-      <Menu.Item key="10" onClick={() => {}}>
-        <IconAdd className="mean-svg-icons" />
-        <span className="menu-item-text">Add asset</span>
-      </Menu.Item>
+      {/* TODO: Enable when finished */}
+      {isLocal() && (
+        <Menu.Item key="10" onClick={() => {}}>
+          <IconAdd className="mean-svg-icons" />
+          <span className="menu-item-text">Add asset</span>
+        </Menu.Item>
+      )}
       {(accountTokens && accountTokens.length > 0) && (
         <>
           {hideLowBalances ? (
@@ -1722,8 +1725,7 @@ export const AccountsNewView = () => {
           )}
         </>
       )}
-      {/* TODO: Enable when finished */}
-      {(canActivateMergeTokenAccounts() && isLocal()) && (
+      {canActivateMergeTokenAccounts() && (
         <Menu.Item key="13" onClick={() => {
           if (selectedAsset && tokenAccountGroups) {
             const acc = tokenAccountGroups.has(selectedAsset.address);

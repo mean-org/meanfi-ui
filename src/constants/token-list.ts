@@ -16,7 +16,23 @@ export const CUSTOM_USDC = {
     },
 }
 
-export const PINNED_TOKENS = ['USDC', 'ETH', 'BTC', 'MEAN'];
+export const SOCN_USD = {
+    chainId: 101,
+    address: '7YFfqZGTxkj3Zeq3Et23kMznCaEYZ1WBZDt6CVrxwfqd',
+    symbol: 'SOCN/USDC',
+    name: 'Orca Aquafarm Token (SOCN/USDC)',
+    decimals: 6,
+    logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/7YFfqZGTxkj3Zeq3Et23kMznCaEYZ1WBZDt6CVrxwfqd/logo.svg',
+    tags: [
+        'lp-token',
+    ],
+    extensions: {
+        twitter: 'https://twitter.com/orca_so',
+        website: 'https://www.orca.so',
+    },
+};
+
+export const PINNED_TOKENS = ['USDC', 'ETH', 'BTC', 'USDT', 'wSOL', 'SLND', 'MEAN'];
 export const COMMON_EXCHANGE_TOKENS = ['USDC', 'USDT', 'MEAN', 'wSOL'];
 
 export const MEAN_TOKEN_LIST: TokenInfo[] = [

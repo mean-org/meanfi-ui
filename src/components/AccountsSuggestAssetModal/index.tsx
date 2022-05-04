@@ -26,17 +26,16 @@ export const AccountsSuggestAssetModal = (props: {
       onCancel={handleClose}
       width={320}>
 
-      <div className="mb-2">
-        <h3>How to suggest an asset</h3>
-
-        <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Optio eveniet enim est possimus harum iure, porro maiores totam quia consequatur, <a className="simplelink underline"
+      <div className="mb-2 shift-up-1">
+        <p>Now you have the opportunity to suggest new Assets to be added to the MeanFi repertoire. As part of your suggestion include a brief description of the Asset, why is it important and the Asset address.</p>
+        <p><a className="simplelink underline"
           href='https://next.meanfi.com/b/meanfi'
           title="Suggest an Asset"
           target="_blank"
           rel="noopener noreferrer"
           onClick={
             () => handleClose()
-          }>click here</a>
+          }>Click on this link</a>
         </p>
       </div>
 
