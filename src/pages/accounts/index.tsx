@@ -1878,7 +1878,7 @@ export const AccountsNewView = () => {
     return null;
   }, []);
 
-  const renderQrCode = (
+  const renderQrCodeAndAddress = (
     <div className="text-center mt-3">
       <h3 className="mb-3">{t('assets.no-balance.line3')}</h3>
       <div className={theme === 'light' ? 'qr-container bg-white' : 'qr-container bg-black'}>
@@ -1887,17 +1887,13 @@ export const AccountsNewView = () => {
           size={200}
           renderAs="svg"/>
       </div>
-      <div className="transaction-field medium">
-        <div className="transaction-field-row main-row">
-          <span className="input-left recipient-field-wrapper">
-            <span id="address-static-field" className="overflow-ellipsis-middle">
-              {accountAddress}
-            </span>
-          </span>
-          <div className="addon-right simplelink" onClick={() =>copyAddressToClipboard(accountAddress)}>
-            <IconCopy className="mean-svg-icons link" />
-          </div>
-        </div>
+      <div className="flex-center font-size-70 mb-2">
+        <AddressDisplay
+          address={accountAddress}
+          showFullAddress={true}
+          iconStyles={{ width: "15", height: "15" }}
+          newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${publicKey?.toBase58()}${getSolanaExplorerClusterParam()}`}
+        />
       </div>
       <div className="font-light font-size-75 px-4">{t('assets.no-balance.line4')}</div>
       <div className="font-light font-size-75 px-4">{t('assets.no-balance.line5')}</div>
@@ -1920,7 +1916,7 @@ export const AccountsNewView = () => {
                     onClick={handleGoToExchangeClick}>{t('assets.no-balance.cta2')}</Button>
           )}
         </Space>
-        {renderQrCode}
+        {renderQrCodeAndAddress}
       </div>
     );
   };
