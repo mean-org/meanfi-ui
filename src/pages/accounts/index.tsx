@@ -2225,7 +2225,7 @@ export const AccountsNewView = () => {
         />
       )}
 
-      {isSendAssetModalOpen && publicKey && selectedAsset && (
+      {isSendAssetModalOpen && (
         <SendAssetModal
           isVisible={isSendAssetModalOpen}
           handleClose={hideSendAssetModal}
