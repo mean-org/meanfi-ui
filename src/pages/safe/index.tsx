@@ -2419,7 +2419,7 @@ export const SafeView = () => {
         return {
           id: info.publicKey,
           version: 0,
-          label: "Serum",
+          label: "",
           authority: address,
           nounce: info.account.nonce,
           ownerSeqNumber: info.account.ownerSetSeqno,
@@ -3065,9 +3065,9 @@ export const SafeView = () => {
   ]);
 
   // Switch to hide voided transactions
-  const switchHandler = () => {
-    setSwitchValue(!switchValue);
-  }
+  // const switchHandler = () => {
+  //   setSwitchValue(!switchValue);
+  // }
 
   useEffect(() => {
     const multisigTxsAmountToHide = (multisigTxs.filter((txName) => txName.status === 4).length);
@@ -3418,6 +3418,7 @@ export const SafeView = () => {
           setNeedRefreshTxs(true);
           setLoadingPrograms(true);
         };
+
         return (
           <div 
             key={`${index + 50}`}
@@ -3432,7 +3433,17 @@ export const SafeView = () => {
               }>
 
             <div className="icon-cell">
-              <Identicon address={item.id} style={{ width: "30", height: "30", display: "inline-flex" }} />
+              {(item.version === 0) ? (
+                <Tooltip placement="rightTop" title="Serum Multisig">
+                  <img src="https://assets.website-files.com/6163b94b432ce93a0408c6d2/61ff1e9b7e39c27603439ad2_serum%20NOF.png" alt="Serum" width={30} height={30} />
+                </Tooltip>
+              ) : (item.version === 2) ? (
+                <Tooltip placement="rightTop" title="Meanfi Multisig">
+                  <img src="https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg" alt="Meanfi Multisig" width={30} height={30} />
+                </Tooltip>
+              ) : (
+                <Identicon address={item.id} style={{ width: "30", height: "30", display: "inline-flex" }} />
+              )}
             </div>
             <div className="description-cell">
               <div>
@@ -3441,28 +3452,12 @@ export const SafeView = () => {
                     <span>{item.label}</span>
                   </div>
                 ) : (
-                  <div className="title text-truncate">{shortenAddress(item.id.toBase58(), 4)}</div>
-
-                  // null
-                  // multisigSerumClient.account.multisig ? (
-                  //   <span className="badge darken small text-uppercase">Serum</span>
-                  // ) : (
-                  //   // <span className="badge darken small text-uppercase">Mean</span>
-                  //   null
-                  // )
+                  <div className="title text-truncate">{`${shortenAddress(item.id.toBase58(), 4)} ${item.version === 0 && "(Serum)"}`}</div>
                 )}
                 {
                   <div className="subtitle text-truncate">{shortenAddress(item.id.toBase58(), 8)}</div>
                 }
               </div>
-              {/* <div>
-                {multisigSerumClient.programId.toBase58() ? (
-                    <span className="badge darken small text-uppercase">Serum</span>
-                  ) : (
-                  // <span className="badge darken small text-uppercase">Mean</span>
-                  null
-                )}
-              </div> */}
             </div>
             <div className="rate-cell">
               <div className="rate-amount">

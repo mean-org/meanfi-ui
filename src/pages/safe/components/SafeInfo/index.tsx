@@ -29,6 +29,8 @@ export const SafeInfoView = (props: {
   const navigate = useNavigate();
   const { t } = useTranslation('common');
 
+  const [selectedLabelName, setSelectedLabelName] = useState("");
+
   // Copy address to clipboard
   const copyAddressToClipboard = useCallback((address: any) => {
     if (copyText(address.toString())) {
@@ -43,6 +45,15 @@ export const SafeInfoView = (props: {
       });
     }
   },[t])
+
+  // Safe Name
+  useEffect(() => {
+    (selectedMultisig.label) ? (
+      setSelectedLabelName(selectedMultisig.label)
+    ) : (
+      setSelectedLabelName(shortenAddress(selectedMultisig.id.toBase58(), 4))
+    )
+  }, [selectedMultisig.id, selectedMultisig.label]);
 
   // Security
   const renderSecurity = (
@@ -83,7 +94,7 @@ export const SafeInfoView = (props: {
   const infoSafeData = [
     {
       name: "Safe Name",
-      value: selectedMultisig.label ? selectedMultisig.label : "--"
+      value: selectedLabelName
     },
     {
       name: renderSecurity,

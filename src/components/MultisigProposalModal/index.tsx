@@ -157,7 +157,12 @@ export const MultisigProposalModal = (props: {
 
   const onAfterClose = () => {
     setTimeout(() => {
+      setSelectedAppName("");
+      setSelectedAppImg("");
       setProposalTitleValue("");
+      setProposalExpiresValue(expires[0]);
+      setProposalDescriptionValue("");
+
       setIsVerifiedRecipient(false);
     });
     setTransactionStatus({
@@ -221,9 +226,9 @@ export const MultisigProposalModal = (props: {
   //   setProposalEndTime(time);
   // }
 
-  // const onIsVerifiedRecipientChange = (e: any) => {
-  //   setIsVerifiedRecipient(e.target.checked);
-  // }
+  const onIsVerifiedRecipientChange = (e: any) => {
+    setIsVerifiedRecipient(e.target.checked);
+  }
 
   // Preset fee amount
   // useEffect(() => {
@@ -274,7 +279,7 @@ export const MultisigProposalModal = (props: {
                       <Col xs={8} sm={6} md={6} lg={6} className="select-app" key={index}>
                         <div className="select-app-item simplelink" onClick={onSelectApp}>
                           {app.logo === "" ? (
-                            <div className="empty-background"></div>
+                            <img src="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png" className="empty-background" alt="Select an app" />
                           ) : (
                             <img src={app.logo} alt={app.name} width={65} height={65} />
                           )}
@@ -335,7 +340,7 @@ export const MultisigProposalModal = (props: {
                     {/* Proposal description */}
                     <Row gutter={[8, 8]}>
                       <Col xs={24} sm={24} md={24} lg={24}>
-                        <div className="mb-2">
+                        <div className="mb-3">
                           <div className="form-label">{t('multisig.proposal-modal.description')}</div>
                           <div className={`well mb-0 ${props.isBusy ? 'disabled' : ''}`}>
                             <textarea
@@ -469,6 +474,23 @@ export const MultisigProposalModal = (props: {
                             </div>
                           </Col>
                         </Row>
+                      )}
+
+                      {/* Confirm that the recipient address doesn't belong to an exchange */}
+                      {(proposalInstructionValue && (
+                        proposalInstructionValue === "Transfer asset ownership" ||
+                        proposalInstructionValue === "Send funds to other asset" ||
+                        proposalInstructionValue === "Add a money stream" ||
+                        proposalInstructionValue === "Withdraw funds from a stream" ||
+                        proposalInstructionValue === "Upgrade program" ||
+                        proposalInstructionValue === "Upgrade IDL program" ||
+                        proposalInstructionValue === "Upgrade authority program"
+                      )) && (
+                        <div className="mt-2 mb-3 confirm-terms">
+                          <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>
+                            {t("withdraw-funds.modal.verified-label")}
+                          </Checkbox>
+                        </div>
                       )}
 
                     </div>
@@ -702,7 +724,10 @@ export const MultisigProposalModal = (props: {
                     className="col-6"
                     onClick={onContinueStepTwoButtonClick}
                     disabled={
-                      !publicKey
+                      !publicKey ||
+                      !selectedAppName ||
+                      !proposalTitleValue ||
+                      !isVerifiedRecipient
                     }
                   >
                     {getStepTwoContinueButtonLabel()}
@@ -734,7 +759,10 @@ export const MultisigProposalModal = (props: {
                     className="col-6"
                     onClick={() => onAcceptModal()}
                     disabled={
-                      !publicKey
+                      !publicKey ||
+                      !selectedAppName ||
+                      !proposalTitleValue ||
+                      !isVerifiedRecipient
                     }
                   >
                     {getTransactionStartButtonLabel()}
