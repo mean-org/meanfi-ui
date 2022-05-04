@@ -747,14 +747,8 @@ export const AccountsNewView = () => {
 
   const canShowBuyOptions = useCallback(() => {
     if (!selectedAsset) { return false; }
-    return !selectedAsset.publicAddress ||
-            (selectedAsset?.balance === 0 && !hasItemsToRender())
-      ? true
-      : false
-  }, [
-    selectedAsset,
-    hasItemsToRender,
-  ]);
+    return !selectedAsset.publicAddress ? true : false;
+  }, [selectedAsset]);
 
   /////////////////////
   // Data management //

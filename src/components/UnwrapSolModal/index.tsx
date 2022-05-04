@@ -541,10 +541,10 @@ export const UnwrapSolModal = (props: {
         ? t('transactions.validation.amount-sol-low')
         : nativeBalance < (feeAmount || 0.005)
           ? t('transactions.validation.amount-sol-low')
-          : !unwrapAmount || parseFloat(unwrapAmount) === 0
-            ? t('transactions.validation.no-amount')
-            : !wSolBalance
-              ? t('transactions.validation.no-balance')
+          : !wSolBalance
+            ? t('transactions.validation.no-balance')
+            : !unwrapAmount || parseFloat(unwrapAmount) === 0
+              ? t('transactions.validation.no-amount')
               : parseFloat(unwrapAmount) > wSolBalance
                 ? t('transactions.validation.invalid-amount')
                 : 'Unwrap SOL';
