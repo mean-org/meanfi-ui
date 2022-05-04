@@ -2237,6 +2237,7 @@ export const AccountsNewView = () => {
 
       {isSendAssetModalOpen && (
         <SendAssetModal
+          selectedToken={getTokenByMintAddress(selectedAsset?.address || '') || undefined}
           isVisible={isSendAssetModalOpen}
           handleClose={hideSendAssetModal}
           selected={"one-time"}

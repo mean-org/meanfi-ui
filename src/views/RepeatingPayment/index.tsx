@@ -1,7 +1,6 @@
 import React from 'react';
 import { Button, Modal, Menu, Dropdown, DatePicker, Checkbox, Drawer } from "antd";
 import {
-  ArrowLeftOutlined,
   LoadingOutlined,
   QrcodeOutlined,
 } from "@ant-design/icons";
@@ -61,14 +60,14 @@ import { NATIVE_SOL } from '../../utils/tokens';
 export const RepeatingPayment = (props: {
   inModal: boolean;
   transferCompleted?: any;
+  token?: TokenInfo;
 }) => {
+  const { inModal, transferCompleted, token } = props;
   const connection = useConnection();
   const { endpoint } = useConnectionConfig();
   const { connected, publicKey, wallet } = useWallet();
   const {
     tokenList,
-    selectedToken,
-    tokenBalance,
     effectiveRate,
     coinPrices,
     loadingPrices,
@@ -83,19 +82,16 @@ export const RepeatingPayment = (props: {
     streamV2ProgramAddress,
     previousWalletConnectState,
     refreshPrices,
-    setSelectedToken,
     setEffectiveRate,
     setRecipientNote,
     setFromCoinAmount,
     resetContractValues,
     setRecipientAddress,
     setPaymentStartDate,
-    refreshTokenBalance,
     setPaymentRateAmount,
     setTransactionStatus,
     setIsVerifiedRecipient,
     setPaymentRateFrequency,
-    setSelectedTokenBalance,
   } = useContext(AppStateContext);
   const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const navigate = useNavigate();
@@ -112,6 +108,14 @@ export const RepeatingPayment = (props: {
   const [currentStep, setCurrentStep] = useState(0);
   const [canSubscribe, setCanSubscribe] = useState(true);
   const [isTokenSelectorVisible, setIsTokenSelectorVisible] = useState(false);
+  const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(token);
+  const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
+
+  useEffect(() => {
+    if (inModal && !selectedToken) {
+      setSelectedToken(token);
+    }
+  }, [inModal, selectedToken, token]);
 
   useEffect(() => {
 
@@ -120,8 +124,6 @@ export const RepeatingPayment = (props: {
     }
 
     if (account?.lamports !== previousBalance || !nativeBalance) {
-      // Refresh token balance
-      refreshTokenBalance();
       setNativeBalance(getAccountBalance());
       // Update previous balance
       setPreviousBalance(account?.lamports);
@@ -130,7 +132,6 @@ export const RepeatingPayment = (props: {
     account,
     nativeBalance,
     previousBalance,
-    refreshTokenBalance
   ]);
 
   // Automatically update all token balances
@@ -164,6 +165,9 @@ export const RepeatingPayment = (props: {
             balancesMap[address] = 0;
           }
         }
+        if (selectedToken && balancesMap[selectedToken.address]) {
+          setSelectedTokenBalance(balancesMap[selectedToken.address]);
+        }
       })
       .catch(error => {
         console.error(error);
@@ -179,10 +183,12 @@ export const RepeatingPayment = (props: {
     }
 
   }, [
-    connection,
-    tokenList,
     accounts,
-    publicKey
+    tokenList,
+    publicKey,
+    connection,
+    selectedToken,
+    setSelectedTokenBalance,
   ]);
 
   const [repeatingPaymentFees, setRepeatingPaymentFees] = useState<TransactionFees>({
@@ -279,12 +285,12 @@ export const RepeatingPayment = (props: {
     // If we have the item, record success and remove it from the list
     if (item && item.operationType === OperationType.Transfer) {
       recordTxConfirmation(item.signature, true);
-      if (!props.inModal) {
+      if (!inModal) {
         handleGoToStreamsClick();
       }
     }
   }, [
-    props,
+    inModal,
     recordTxConfirmation,
     handleGoToStreamsClick,
     resetTransactionStatus,
@@ -990,16 +996,16 @@ export const RepeatingPayment = (props: {
               lastOperation: TransactionStatus.SendTransactionSuccess,
               currentOperation: TransactionStatus.TransactionFinished
             });
-            if (props.inModal) {
-              props.transferCompleted();
+            if (inModal) {
+              transferCompleted();
             }
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
   }, [
-    props,
     wallet,
+    inModal,
     endpoint,
     publicKey,
     connection,
@@ -1018,6 +1024,7 @@ export const RepeatingPayment = (props: {
     enqueueTransactionConfirmation,
     setTransactionStatus,
     getPaymentRateLabel,
+    transferCompleted,
     getFeeAmount
   ]);
 
@@ -1155,7 +1162,7 @@ export const RepeatingPayment = (props: {
               </span>
             </div>
             <div className="right">
-              {props.inModal ? (
+              {inModal ? (
                 <span>&nbsp;</span>
               ) : (
                 <div className="add-on simplelink" onClick={showQrScannerModal}>
@@ -1184,7 +1191,7 @@ export const RepeatingPayment = (props: {
             <div className="left">
               <span className="add-on simplelink">
                 {selectedToken && (
-                  <TokenDisplay onClick={() => props.inModal ? showDrawer() : showTokenSelector()}
+                  <TokenDisplay onClick={() => inModal ? showDrawer() : showTokenSelector()}
                     mintAddress={selectedToken.address}
                     name={selectedToken.name}
                     showName={false}
@@ -1374,7 +1381,7 @@ export const RepeatingPayment = (props: {
             <div className="left">
               <span className="add-on simplelink">
               {selectedToken && (
-                <TokenDisplay onClick={() => props.inModal ? showDrawer() : showTokenSelector()}
+                <TokenDisplay onClick={() => inModal ? showDrawer() : showTokenSelector()}
                     mintAddress={selectedToken.address}
                     name={selectedToken.name}
                     showName={false}
@@ -1463,7 +1470,7 @@ export const RepeatingPayment = (props: {
         </Button>
       </div>
 
-      {props.inModal && (
+      {inModal && (
         <Drawer
           title={t('token-selector.modal-title')}
           placement="bottom"
@@ -1477,7 +1484,7 @@ export const RepeatingPayment = (props: {
       )}
 
       {/* Token selection modal */}
-      {!props.inModal && isTokenSelectorModalVisible && (
+      {!inModal && isTokenSelectorModalVisible && (
         <Modal
           className="mean-modal unpadded-content"
           visible={isTokenSelectorModalVisible}

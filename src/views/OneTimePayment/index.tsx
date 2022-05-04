@@ -45,15 +45,14 @@ const { Option } = Select;
 export const OneTimePayment = (props: {
   inModal: boolean;
   transferCompleted?: any;
+  token?: TokenInfo;
 }) => {
+  const { inModal, transferCompleted, token } = props;
   const connection = useConnection();
   const { endpoint } = useConnectionConfig();
   const { connected, publicKey, wallet } = useWallet();
   const {
     tokenList,
-    selectedToken,
-    tokenBalance,
-    effectiveRate,
     coinPrices,
     loadingPrices,
     isWhitelisted,
@@ -66,7 +65,6 @@ export const OneTimePayment = (props: {
     streamV2ProgramAddress,
     previousWalletConnectState,
     refreshPrices,
-    setSelectedToken,
     setEffectiveRate,
     setRecipientNote,
     setFromCoinAmount,
@@ -74,10 +72,8 @@ export const OneTimePayment = (props: {
     resetContractValues,
     setRecipientAddress,
     setPaymentStartDate,
-    refreshTokenBalance,
     setTransactionStatus,
     setIsVerifiedRecipient,
-    setSelectedTokenBalance,
   } = useContext(AppStateContext);
   const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const navigate = useNavigate();
@@ -94,6 +90,14 @@ export const OneTimePayment = (props: {
   const [fixedScheduleValue, setFixedScheduleValue] = useState(0);
   const [canSubscribe, setCanSubscribe] = useState(true);
   const [isTokenSelectorVisible, setIsTokenSelectorVisible] = useState(false);
+  const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
+  const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
+
+  useEffect(() => {
+    if (inModal && !selectedToken) {
+      setSelectedToken(token);
+    }
+  }, [inModal, selectedToken, token]);
 
   useEffect(() => {
 
@@ -102,8 +106,6 @@ export const OneTimePayment = (props: {
     }
 
     if (account?.lamports !== previousBalance || !nativeBalance) {
-      // Refresh token balance
-      refreshTokenBalance();
       setNativeBalance(getAccountBalance());
       // Update previous balance
       setPreviousBalance(account?.lamports);
@@ -112,7 +114,6 @@ export const OneTimePayment = (props: {
     account,
     nativeBalance,
     previousBalance,
-    refreshTokenBalance
   ]);
 
   // Automatically update all token balances
@@ -146,6 +147,9 @@ export const OneTimePayment = (props: {
             balancesMap[address] = 0;
           }
         }
+        if (selectedToken && balancesMap[selectedToken.address]) {
+          setSelectedTokenBalance(balancesMap[selectedToken.address]);
+        }
       })
       .catch(error => {
         console.error(error);
@@ -161,10 +165,12 @@ export const OneTimePayment = (props: {
     }
 
   }, [
-    connection,
-    tokenList,
     accounts,
-    publicKey
+    tokenList,
+    publicKey,
+    connection,
+    selectedToken,
+    setSelectedTokenBalance,
   ]);
 
   const [otpFees, setOtpFees] = useState<TransactionFees>({
@@ -205,13 +211,21 @@ export const OneTimePayment = (props: {
     setTransactionStatus
   ]);
 
+  const getPricePerToken = useCallback((token: TokenInfo): number => {
+    if (!token || !coinPrices) { return 0; }
+
+    return coinPrices && coinPrices[token.address]
+      ? coinPrices[token.address]
+      : 0;
+  }, [coinPrices])
+
   const getTokenPrice = useCallback(() => {
-    if (!fromCoinAmount || ! effectiveRate) {
+    if (!fromCoinAmount || !selectedToken) {
       return 0;
     }
 
-    return parseFloat(fromCoinAmount) * effectiveRate;
-  }, [effectiveRate, fromCoinAmount]);
+    return parseFloat(fromCoinAmount) * getPricePerToken(selectedToken);
+  }, [fromCoinAmount, selectedToken, getPricePerToken]);
 
   const autoFocusInput = useCallback(() => {
     const input = document.getElementById("token-search-otp");
@@ -265,12 +279,12 @@ export const OneTimePayment = (props: {
     setSelectedStream(undefined);
     if (item && item.operationType === OperationType.Transfer && item.extras === 'scheduled') {
       recordTxConfirmation(item.signature, true);
-      if (!props.inModal) {
+      if (!inModal) {
         navigate("/accounts/streams");
       }
     }
   }, [
-    props,
+    inModal,
     setIsVerifiedRecipient,
     resetTransactionStatus,
     recordTxConfirmation,
@@ -645,7 +659,7 @@ export const OneTimePayment = (props: {
       // Report event to Segment analytics
       const segmentData: SegmentStreamOTPTransferData = {
         asset: selectedToken?.symbol,
-        assetPrice: effectiveRate,
+        assetPrice: getPricePerToken(selectedToken),
         amount: parseFloat(fromCoinAmount as string),
         beneficiary: data.beneficiary,
         startUtc: dateFormat(startUtc, SIMPLE_DATE_TIME_FORMAT)
@@ -875,8 +889,8 @@ export const OneTimePayment = (props: {
               lastOperation: TransactionStatus.SendTransactionSuccess,
               currentOperation: TransactionStatus.TransactionFinished
             });
-            if (props.inModal) {
-              props.transferCompleted();
+            if (inModal) {
+              transferCompleted();
             }
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
@@ -884,16 +898,15 @@ export const OneTimePayment = (props: {
     }
 
   }, [
-    props,
     wallet,
+    inModal,
     endpoint,
     publicKey,
     connection,
+    selectedToken,
     recipientNote,
     isWhitelisted,
     nativeBalance,
-    selectedToken,
-    effectiveRate,
     fromCoinAmount,
     paymentStartDate,
     recipientAddress,
@@ -904,6 +917,8 @@ export const OneTimePayment = (props: {
     enqueueTransactionConfirmation,
     setTransactionStatus,
     isScheduledPayment,
+    transferCompleted,
+    getPricePerToken,
     getFeeAmount,
   ]);
 
@@ -920,38 +935,30 @@ export const OneTimePayment = (props: {
     navigate('/wrap');
   }
 
-  const getPricePerToken = useCallback((token: TokenInfo): number => {
-    if (!token || !coinPrices) { return 0; }
-
-    return coinPrices && coinPrices[token.address]
-      ? coinPrices[token.address]
-      : 0;
-  }, [coinPrices])
-
   const renderTokenList = (
     <>
       {(filteredTokenList && filteredTokenList.length > 0) && (
-        filteredTokenList.map((token, index) => {
+        filteredTokenList.map((t, index) => {
 
-          if (token.address === NATIVE_SOL.address) {
+          if (t.address === NATIVE_SOL.address) {
             return null;
           }
 
           const onClick = function () {
-            setSelectedToken(token);
-            consoleOut("token selected:", token.symbol, 'blue');
-            setEffectiveRate(getPricePerToken(token));
+            setSelectedToken(t);
+            consoleOut("token selected:", t.symbol, 'blue');
+            setEffectiveRate(getPricePerToken(t));
             onCloseTokenSelector();
           };
 
           return (
             <TokenListItem
-              key={token.address}
-              name={token.name || 'Unknown'}
-              mintAddress={token.address}
-              className={selectedToken && selectedToken.address === token.address ? "selected" : "simplelink"}
+              key={t.address}
+              name={t.name || 'Unknown'}
+              mintAddress={t.address}
+              className={selectedToken && selectedToken.address === t.address ? "selected" : "simplelink"}
               onClick={onClick}
-              balance={connected && userBalances && userBalances[token.address] > 0 ? userBalances[token.address] : 0}
+              balance={connected && userBalances && userBalances[t.address] > 0 ? userBalances[t.address] : 0}
             />
           );
         })
@@ -1032,7 +1039,7 @@ export const OneTimePayment = (props: {
               </span>
             </div>
             <div className="right">
-              {props.inModal ? (
+              {inModal ? (
                 <span>&nbsp;</span>
               ) : (
                 <div className="add-on simplelink" onClick={showQrScannerModal}>
@@ -1061,7 +1068,7 @@ export const OneTimePayment = (props: {
             <div className="left">
               <span className="add-on simplelink">
                 {selectedToken && (
-                  <TokenDisplay onClick={() => props.inModal ? showDrawer() : showTokenSelector()}
+                  <TokenDisplay onClick={() => inModal ? showDrawer() : showTokenSelector()}
                     mintAddress={selectedToken.address}
                     name={selectedToken.name}
                     showCaretDown={true}
@@ -1107,7 +1114,7 @@ export const OneTimePayment = (props: {
             </div>
             <div className="right inner-label">
               <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
-                ~${fromCoinAmount && effectiveRate
+                ~${fromCoinAmount
                   ? formatAmount(getTokenPrice(), 2)
                   : "0.00"}
               </span>
@@ -1215,7 +1222,7 @@ export const OneTimePayment = (props: {
         </Button>
       </div>
 
-      {props.inModal && (
+      {inModal && (
         <Drawer
           title={t('token-selector.modal-title')}
           placement="bottom"
@@ -1229,7 +1236,7 @@ export const OneTimePayment = (props: {
       )}
 
       {/* Token selection modal */}
-      {!props.inModal && isTokenSelectorModalVisible && (
+      {!inModal && isTokenSelectorModalVisible && (
         <Modal
           className="mean-modal unpadded-content"
           visible={isTokenSelectorModalVisible}

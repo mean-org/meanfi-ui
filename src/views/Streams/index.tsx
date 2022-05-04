@@ -114,6 +114,7 @@ import { StreamEditModal } from "../../components/StreamEditModal";
 import { openNotification } from "../../components/Notifications";
 import { CountdownCircleTimer } from "react-countdown-circle-timer";
 import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
+import { SendAssetModal } from "../../components/SendAssetModal";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 let ds: string[] = [];
@@ -896,6 +897,11 @@ export const Streams = () => {
     hideTransactionExecutionModal();
     window.location.reload();
   }
+
+  // Send selected token modal
+  const [isSendAssetModalOpen, setIsSendAssetModalOpen] = useState(false);
+  const hideSendAssetModal = useCallback(() => setIsSendAssetModalOpen(false), []);
+  const showSendAssetModal = useCallback(() => setIsSendAssetModalOpen(true), []);
 
   // Common reusable transaction execution modal
   const [isTransactionExecutionModalVisible, setTransactionExecutionModalVisibility] = useState(false);
@@ -2821,7 +2827,8 @@ export const Streams = () => {
     // Record user event in Segment Analytics
     segmentAnalytics.recordEvent(AppUsageEvent.NewTransferButton);
     setCustomStreamDocked(false);
-    navigate("/transfers");
+    showSendAssetModal();
+    // navigate("/transfers");
   };
 
   /*
@@ -5795,6 +5802,15 @@ export const Streams = () => {
             isVisible={isWithdrawModalVisible}
             handleOk={onAcceptWithdraw}
             handleClose={closeWithdrawModal}
+          />
+        )}
+
+        {isSendAssetModalOpen && (
+          <SendAssetModal
+            selectedToken={selectedToken}
+            isVisible={isSendAssetModalOpen}
+            handleClose={hideSendAssetModal}
+            selected={"one-time"}
           />
         )}
 
