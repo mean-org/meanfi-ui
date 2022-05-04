@@ -117,6 +117,7 @@ const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const TreasuriesView = () => {
   const location = useLocation();
+  const { state } = useLocation();
   const connectionConfig = useConnectionConfig();
   const { publicKey, connected, wallet } = useWallet();
   const {
@@ -5458,7 +5459,7 @@ export const TreasuriesView = () => {
             <div className="meanfi-two-panel-left">
 
               <div className="meanfi-panel-heading">
-                {isMultisigAvailable() && (
+                {isMultisigAvailable() ? (
                   <div className="back-button">
                     <span className="icon-button-container">
                       <Tooltip placement="bottom" title={t('multisig.multisig-assets.back-to-multisig-accounts-cta')}>
@@ -5478,7 +5479,23 @@ export const TreasuriesView = () => {
                       </Tooltip>
                     </span>
                   </div>
-                )}
+                ) : state && (state as any).previousPath ? (
+                  <div className="back-button">
+                    <span className="icon-button-container">
+                      <Tooltip placement="bottom" title="Back to accounts">
+                        <Button
+                          type="default"
+                          shape="circle"
+                          size="middle"
+                          icon={<ArrowLeftOutlined />}
+                          onClick={() => {
+                            navigate((state as any).previousPath);
+                          }}
+                        />
+                      </Tooltip>
+                    </span>
+                  </div>
+                ) : null}
                 <span className="title">{t('treasuries.screen-title')}</span>
                 <Tooltip placement="bottom" title={t('treasuries.refresh-tooltip')}>
                   <div className={`transaction-stats user-address ${loadingTreasuries ? 'click-disabled' : 'simplelink'}`} onClick={onRefreshTreasuriesClick}>

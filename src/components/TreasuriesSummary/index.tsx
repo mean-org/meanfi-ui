@@ -3,7 +3,7 @@ import { MoneyStreaming, TreasuryInfo } from '@mean-dao/money-streaming';
 import { MSP, Treasury, TreasuryType } from '@mean-dao/msp';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { consoleOut, isProd, kFormatter, toUsCurrency } from '../../utils/ui';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { THREE_MINUTES_REFRESH_TIMEOUT } from '../../constants';
 import { INITIAL_TREASURIES_SUMMARY, UserTreasuriesSummary } from '../../models/treasuries';
 import { getTokenByMintAddress, makeDecimal } from '../../utils/utils';
@@ -33,6 +33,7 @@ export const TreasuriesSummary = (props: {
         previousWalletConnectState
     } = useContext(AppStateContext);
     const { t } = useTranslation('common');
+    const { pathname } = useLocation();
     const [treasuryList, setTreasuryList] = useState<(Treasury | TreasuryInfo)[]>([]);
     const [loadingTreasuries, setLoadingTreasuries] = useState(false);
     const [treasuriesLoaded, setTreasuriesLoaded] = useState(false);
@@ -250,7 +251,7 @@ export const TreasuriesSummary = (props: {
 
     return (
         <>
-            <Link to="/treasuries">
+            <Link to="/treasuries" state={{ previousPath: pathname }}>
                 <div key="streams" onClick={onSelect} className={`transaction-list-row ${selected ? 'selected' : ''}`}>
                     <div className="icon-cell">
                         {loadingTreasuries ? (
