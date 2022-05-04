@@ -1722,7 +1722,8 @@ export const AccountsNewView = () => {
           )}
         </>
       )}
-      {(canActivateMergeTokenAccounts()) && (
+      {/* TODO: Enable when finished */}
+      {(canActivateMergeTokenAccounts() && isLocal()) && (
         <Menu.Item key="13" onClick={() => {
           if (selectedAsset && tokenAccountGroups) {
             const acc = tokenAccountGroups.has(selectedAsset.address);
