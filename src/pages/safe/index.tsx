@@ -4,6 +4,7 @@ import {
   ReloadOutlined,
 } from '@ant-design/icons';
 import {
+  Account,
   ConfirmOptions,
   Connection,
   Keypair,
@@ -11,6 +12,7 @@ import {
   MemcmpFilter,
   PublicKey,
   SystemProgram,
+  SYSVAR_RENT_PUBKEY,
   Transaction
 } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
@@ -84,6 +86,7 @@ import { SafeInfoView } from './components/SafeInfo';
 import { SafeDetailsView } from './components/SafeDetails';
 import { MultisigProposalModal } from '../../components/MultisigProposalModal';
 import { ProgramDetailsView } from './components/ProgramDetails';
+import SerumIDL from '../../models/serum-multisig-idl';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -175,6 +178,26 @@ export const SafeView = () => {
     return new Program(
       MultisigIdl,
       MEAN_MULTISIG,
+      provider
+    );
+
+  }, [
+    connection, 
+    wallet
+  ]);
+
+  const multisigSerumClient = useMemo(() => {
+
+    const opts: ConfirmOptions = {
+      preflightCommitment: "confirmed",
+      commitment: "confirmed",
+    };
+
+    const provider = new Provider(connection, wallet as any, opts);
+
+    return new Program(
+      SerumIDL,
+      "msigmtwzgXJHj2ext4XJjCDmpbcMuufFb5cHuwg6Xdt",
       provider
     );
 
@@ -347,6 +370,57 @@ export const SafeView = () => {
 
       return tx;
     };
+
+    // const createMultisig = async (data: any) => {
+    //   const multisig = new Account();
+    //   // Disc. + threshold + nonce.
+    //   const baseSize = 8 + 8 + 1 + 4;
+    //   // Add enough for 2 more participants, in case the user changes one's
+    //   /// mind later.
+    //   const fudge = 64;
+    //   // Can only grow the participant set by 2x the initialized value.
+    //   const ownerSize = 10 * 32 + 8;
+    //   const multisigSize = baseSize + ownerSize + fudge;
+    //   const [, nonce] = await PublicKey.findProgramAddress(
+    //     [multisig.publicKey.toBuffer()],
+    //     multisigSerumClient.programId
+    //   );
+
+    //   const owners = [
+    //     new PublicKey("ARmgYJkSQfbSifkXc4h7MGDAALznW5FFSHVucJ6j3vd7"),
+    //     new PublicKey("HvPJ1eSqAnUtoC1dfKCAaDDFaWviHkbfBWoYJmP1BUDa"),
+    //     new PublicKey("4BTx2qPnoxfXDKNyYzDTYXUGKGu9uTW3Cmbtfb2JY8AN"),
+    //     new PublicKey("9TKa7AoHtpDnZLMkkCkL7nqvrweCairodoD3DcK3WShZ"),
+    //     new PublicKey("qu32XN2Tys4zXT9AyBjUyKsUR4aAkaXJ4q6CrWMqcot"),
+    //   ];
+
+    //   const tx = multisigSerumClient.transaction.createMultisig(
+    //     owners,
+    //     new BN(2),
+    //     nonce,
+    //     {
+    //       accounts: {
+    //         multisig: multisig.publicKey,
+    //         rent: SYSVAR_RENT_PUBKEY,
+    //       },
+    //       signers: [multisig],
+    //       instructions: [
+    //         await multisigSerumClient.account.multisig.createInstruction(
+    //           multisig,
+    //           // @ts-ignore
+    //           multisigSize
+    //         ),
+    //       ],
+    //     }
+    //   )
+
+    //   tx.feePayer = publicKey;
+    //   const { blockhash } = await connection.getRecentBlockhash(connection.commitment);
+    //   tx.recentBlockhash = blockhash;
+    //   tx.partialSign(...[multisig]);
+
+    //   return tx;
+    // };
 
     const createTx = async (): Promise<boolean> => {
 
@@ -588,7 +662,9 @@ export const SafeView = () => {
     transactionFees,
     transactionCancelled,
     multisigClient.programId,
+    // multisigSerumClient.programId,
     multisigClient.transaction,
+    // multisigSerumClient.transaction,
     transactionStatus.currentOperation,
     clearTransactionStatusContext,
     startFetchTxSignatureInfo,
@@ -2208,11 +2284,23 @@ export const SafeView = () => {
 
     accounts.push(...filteredAccs);
 
+    // Display Serum accounts
+    let multisigSerumAccs = await multisigSerumClient.account.multisig.all();
+    filteredAccs = multisigSerumAccs.filter((a: any) => {
+      if (a.account.owners.filter((o: PublicKey) => o.equals(wallet)).length) {
+        return true;
+      }
+      return false;
+    });
+
+    accounts.push(...filteredAccs);
+
     return accounts;
     
   }, [
-    multisigClient.account.multisig, 
-    multisigClient.account.multisigV2
+    multisigClient.account.multisig,
+    multisigClient.account.multisigV2,
+    multisigSerumClient.account.multisig
   ]);
 
   const parseMultisigV2Account = (info: any) => {
@@ -2311,6 +2399,43 @@ export const SafeView = () => {
       });
   };
 
+  const parseSerumMultisigAccount = (info: any) => {
+    return PublicKey
+      .findProgramAddress([info.publicKey.toBuffer()], new PublicKey("msigmtwzgXJHj2ext4XJjCDmpbcMuufFb5cHuwg6Xdt"))
+      .then(k => {
+
+        let address = k[0];
+        let owners: MultisigParticipant[] = [];
+
+        let filteredOwners = info.account.owners.filter((o: any) => !o.equals(PublicKey.default));
+
+        for (let i = 0; i < filteredOwners.length; i ++) {
+          owners.push({
+            address: filteredOwners[i].toBase58(),
+            name: "owner " + (i + 1),
+          } as MultisigParticipant);
+        }
+
+        return {
+          id: info.publicKey,
+          version: 0,
+          label: "Serum",
+          authority: address,
+          nounce: info.account.nonce,
+          ownerSeqNumber: info.account.ownerSetSeqno,
+          threshold: info.account.threshold.toNumber(),
+          pendingTxsAmount: 0,
+          createdOnUtc: new Date(),
+          owners: owners
+
+        } as MultisigV2;
+      })
+      .catch(err => { 
+        consoleOut('error', err, 'red');
+        return undefined;
+      });
+  };
+
   const getMultisigTreasuries = useCallback(async () => {
 
     if (!connection || !publicKey || !msp || !selectedMultisig) { return []; }
@@ -2399,7 +2524,7 @@ export const SafeView = () => {
   // Refresh the multisig accounts list
   useEffect(() => {
 
-    if (!connection || !connected || !publicKey || !multisigClient || !loadingMultisigAccounts) {
+    if (!connection || !connected || !publicKey || !multisigClient || !multisigSerumClient || !loadingMultisigAccounts) {
       setLoadingMultisigAccounts(false);
       return;
     }
@@ -2412,7 +2537,9 @@ export const SafeView = () => {
           let multisigInfoArray: (MultisigV2 | Multisig)[] = [];
           for (let info of allInfo) {
             let parsePromise: any;
-            if (info.account.version && info.account.version === 2) {
+            if (!info.account.version) {
+              parsePromise = parseSerumMultisigAccount;
+            } else if (info.account.version && info.account.version === 2) {
               parsePromise = parseMultisigV2Account;
             } else {
               parsePromise = parseMultisiAccount;
@@ -2473,6 +2600,7 @@ export const SafeView = () => {
     publicKey,
     connection,
     multisigClient,
+    multisigSerumClient,
     selectedMultisig,
     highLightableMultisigId,
     loadingMultisigAccounts,
@@ -3307,14 +3435,34 @@ export const SafeView = () => {
               <Identicon address={item.id} style={{ width: "30", height: "30", display: "inline-flex" }} />
             </div>
             <div className="description-cell">
-              {item.label ? (
-                <div className="title text-truncate">{item.label}</div>
-              ) : (
-                <div className="title text-truncate">{shortenAddress(item.id.toBase58(), 8)}</div>
-              )}
-              {
-                <div className="subtitle text-truncate">{shortenAddress(item.id.toBase58(), 8)}</div>
-              }
+              <div>
+                {item.label ? (
+                  <div className="title text-truncate">
+                    <span>{item.label}</span>
+                  </div>
+                ) : (
+                  <div className="title text-truncate">{shortenAddress(item.id.toBase58(), 4)}</div>
+
+                  // null
+                  // multisigSerumClient.account.multisig ? (
+                  //   <span className="badge darken small text-uppercase">Serum</span>
+                  // ) : (
+                  //   // <span className="badge darken small text-uppercase">Mean</span>
+                  //   null
+                  // )
+                )}
+                {
+                  <div className="subtitle text-truncate">{shortenAddress(item.id.toBase58(), 8)}</div>
+                }
+              </div>
+              {/* <div>
+                {multisigSerumClient.programId.toBase58() ? (
+                    <span className="badge darken small text-uppercase">Serum</span>
+                  ) : (
+                  // <span className="badge darken small text-uppercase">Mean</span>
+                  null
+                )}
+              </div> */}
             </div>
             <div className="rate-cell">
               <div className="rate-amount">

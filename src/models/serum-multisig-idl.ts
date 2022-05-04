@@ -1,6 +1,6 @@
 import { Idl } from "@project-serum/anchor";
 
-const idl: Idl = {
+const SerumIDL: Idl = {
   version: "0.0.0",
   name: "multisig",
   instructions: [
@@ -296,4 +296,4 @@ const idl: Idl = {
   ],
 };
 
-export default idl;
+export default SerumIDL;
