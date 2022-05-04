@@ -850,7 +850,8 @@ export const InvestView = () => {
   const renderMeanBonds = (
     <>
       <h2>Get discounted sMEAN</h2>
-      <p>By acquiring MEAN-USDC LP into the Mean DAO Treasury, we guarantee we eat our own dog food by securing MEAN token liquidity for market makers, traders, buyers and sellers forever regardless being in a bull or bear market. This, in turn, increases market confidence in the long term health of Mean DAO and our governance token. Acquiring MEAN LP tokens also helps us diversify our Treasury, and offer community members with a long term view on Mean DAO an opportunity to extend their support while benefiting from a discount. It’s a win-win-win for the DAO, our community, and the market.</p>
+      <p>By acquiring MEAN-USDC LP into the Mean DAO Treasury, we guarantee we eat our own dog food by securing MEAN token liquidity for market makers, traders, buyers and sellers forever regardless being in a bull or bear market. This, in turn, increases market confidence in the long term health of Mean DAO and our governance token.</p>
+      <p>Acquiring MEAN LP tokens also helps us diversify our Treasury, and offer community members with a long term view on Mean DAO an opportunity to extend their support while benefiting from a discount. It's a win-win-win for the DAO, our community, and the market.</p>
 
       <h3 className="mb-2">This is how you can get discounted Staked MEAN:</h3>
       <Steps direction="vertical" current={1}>
