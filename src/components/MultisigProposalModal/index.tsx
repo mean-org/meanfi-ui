@@ -243,14 +243,32 @@ export const MultisigProposalModal = (props: {
   const [selectedAppName, setSelectedAppName] = useState<string>();
   const [selectedAppImg, setSelectedAppImg] = useState<string>();
 
-  const onSelectApp = (e: any) => {
-    setSelectedAppName(e.target.getAttribute("alt"));
-    setSelectedAppImg(e.target.getAttribute("src"));
-  }
-
   useEffect(() => {
     setLettersLeft(256 - countWords);
   }, [countWords]);
+
+  // Display solana apps in proposal modal (Step 1)
+  const renderSolanaApps = (
+    <>
+      {solanaApps && solanaApps.length && (
+        solanaApps.map((app, index) => {
+          const onSelectApp = () => {
+            setSelectedAppName(app.name);
+            setSelectedAppImg(app.logo);
+          }
+
+          return (
+            <Col xs={8} sm={6} md={6} lg={6} className="select-app" key={index}>
+              <div className={`select-app-item simplelink ${selectedAppName === app.name ? "selected-app" : "no-selected-app"}`} onClick={onSelectApp}>
+                <img src={app.logo ? app.logo : "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"} width={65} height={65} alt={app.name} />
+                <span className="info-label">{app.name}</span>
+              </div>
+            </Col>
+          )
+        })
+      )}
+    </>
+  )
 
   return (
     <Modal
@@ -275,18 +293,7 @@ export const MultisigProposalModal = (props: {
                 <>
                   <h3>Select app</h3>
                   <Row gutter={[8, 8]} className="step-one-select-app">
-                    {solanaApps.map((app, index) => (
-                      <Col xs={8} sm={6} md={6} lg={6} className="select-app" key={index}>
-                        <div className="select-app-item simplelink" onClick={onSelectApp}>
-                          {app.logo === "" ? (
-                            <img src="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png" className="empty-background" alt="Select an app" />
-                          ) : (
-                            <img src={app.logo} alt={app.name} width={65} height={65} />
-                          )}
-                          <span className="info-label">{app.name}</span>
-                        </div>
-                      </Col>
-                    ))}
+                    {renderSolanaApps}
                   </Row>
                 </>
               </div>
