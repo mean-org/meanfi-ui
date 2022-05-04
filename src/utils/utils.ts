@@ -84,7 +84,7 @@ export function getTokenIcon(
   return map.get(address)?.logoURI;
 }
 
-export const STABLE_COINS = new Set(["USDC", "wUSDC", "USDT"]);
+export const STABLE_COINS = new Set(['USDT', 'USDC', 'UST', 'TUSD', 'BUSD', 'DAI', 'USDP', 'USDN', 'JST', 'FEI']);
 
 export function chunks<T>(array: T[], size: number): T[][] {
   return Array.apply<number, T[], T[][]>(
@@ -143,31 +143,6 @@ export const numberFormatter = new Intl.NumberFormat("en-US", {
 export const isSmallNumber = (val: number) => {
   return val < 0.001 && val > 0;
 };
-
-export const formatNumber = {
-  format: (val?: number, useSmall?: boolean) => {
-    if (!val) {
-      return "--";
-    }
-    if (useSmall && isSmallNumber(val)) {
-      return 0.001;
-    }
-
-    return numberFormatter.format(val);
-  },
-};
-
-export const feeFormatter = new Intl.NumberFormat("en-US", {
-  style: "decimal",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 9,
-});
-
-export const formatPct = new Intl.NumberFormat("en-US", {
-  style: "percent",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
 
 export const formatThousands = (val: number, maxDecimals?: number, minDecimals = 0) => {
   let convertedVlue: Intl.NumberFormat;
@@ -246,24 +221,19 @@ export const getAmountWithSymbol = (amount: number, address?: string, onlyValue 
     }
   }
 
-  const formatToLocale = (value: any, minDigits = 6) => {
-    const converted = parseFloat(value.toString());
-    const formatted = new Intl.NumberFormat('en-US', { style: 'decimal', minimumFractionDigits: minDigits, maximumFractionDigits: minDigits }).format(converted);
-    return formatted || '';
-  }
-
   const inputAmount = amount || 0;
   if (token) {
+    const decimals = STABLE_COINS.has(token.symbol) ? 5 : token.decimals;
     const formatted = new BigNumber(formatAmount(inputAmount, token.decimals));
     const formatted2 = formatted.toFixed(token.decimals);
-    const toLocale = formatToLocale(formatted2, token.decimals);
+    const toLocale = formatThousands(parseFloat(formatted2), decimals, decimals);
     if (onlyValue) { return toLocale; }
     return `${toLocale} ${token.symbol}`;
   } else if (address && !token) {
-    const formatted = formatToLocale(inputAmount);
+    const formatted = formatThousands(inputAmount, 5, 5);
     return onlyValue ? formatted : `${formatted} [${shortenAddress(address, 4)}]`;
   }
-  return `${formatToLocale(inputAmount)}`;
+  return `${formatThousands(inputAmount, 5, 5)}`;
 }
 
 export const getTokenAmountAndSymbolByTokenAddress = (
@@ -275,17 +245,16 @@ export const getTokenAmountAndSymbolByTokenAddress = (
   if (address) {
     if (address === NATIVE_SOL.address) {
       token = NATIVE_SOL as TokenInfo;
-    } else if (address === CUSTOM_USDC.address) {
-      token = CUSTOM_USDC as TokenInfo;
     } else {
       token = address ? MEAN_TOKEN_LIST.find(t => t.address === address) : undefined;
     }
   }
   const inputAmount = amount || 0;
   if (token) {
+    const decimals = STABLE_COINS.has(token.symbol) ? 5 : token.decimals;
     const formatted = new BigNumber(formatAmount(inputAmount, token.decimals));
     const formatted2 = formatted.toFixed(token.decimals);
-    const toLocale = getFormattedNumberToLocale(formatted2, 2);
+    const toLocale = formatThousands(parseFloat(formatted2), decimals, decimals);
     if (onlyValue) { return toLocale; }
     return `${toLocale} ${token.symbol}`;
   } else if (address && !token) {
