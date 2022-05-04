@@ -128,10 +128,10 @@ export const AppBar = (props: {
       <Menu.Item key="/invest">
         <Link to="/invest">{t('ui-menus.main-menu.invest.submenu-title')}</Link>
       </Menu.Item>
+      <Menu.Item key="/multisig">
+        <Link to="/multisig">{t('ui-menus.main-menu.services.multisig')}</Link>
+      </Menu.Item>
       <SubMenu key="services" title={t('ui-menus.main-menu.services.submenu-title')}>
-        <Menu.Item key="/multisig">
-          <Link to="/multisig">{t('ui-menus.main-menu.services.multisig')}</Link>
-        </Menu.Item>
         <Menu.Item key="/custody">
           <Link to="/custody">{t('ui-menus.main-menu.services.custody')}</Link>
         </Menu.Item>

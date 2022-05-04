@@ -1254,7 +1254,7 @@
 			"services": {
 				"custody": "Custódio",
 				"faucet": "Torneiro",
-				"multisig": "Safes & Multisig",
+				"multisig": "Multisig",
 				"submenu-title": "Serviços",
 				"treasuries": "Streaming Treasuries",
 				"wallet-guide": "Guia da carteira",

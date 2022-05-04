@@ -1265,7 +1265,7 @@
 			"services": {
 				"custody": "Custody",
 				"faucet": "Faucet",
-				"multisig": "Multisig Safes",
+				"multisig": "Multisig",
 				"submenu-title": "Servicios",
 				"treasuries": "Streaming Treasuries",
 				"wallet-guide": "Guía de Billeteras",

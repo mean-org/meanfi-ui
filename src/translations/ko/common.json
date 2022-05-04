@@ -1265,7 +1265,7 @@
 			"services": {
 				"custody": "보관",
 				"faucet": "Faucet",
-				"multisig": "Safes & Multisig",
+				"multisig": "Multisig",
 				"submenu-title": "서비스",
 				"treasuries": "Streaming Treasuries",
 				"wallet-guide": "지갑 가이드",

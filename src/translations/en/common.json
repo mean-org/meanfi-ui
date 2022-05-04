@@ -1261,7 +1261,7 @@
 			"services": {
 				"custody": "Custody",
 				"faucet": "Faucet",
-				"multisig": "Safes & Multisig",
+				"multisig": "Multisig",
 				"submenu-title": "Services",
 				"treasuries": "Streaming Treasuries",
 				"unwrap": "Unwrap",
