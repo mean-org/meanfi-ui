@@ -561,14 +561,18 @@ export const AccountsNewView = () => {
   const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
     consoleOut("onTxConfirmed event executed:", item, 'crimson');
     if (item && item.operationType === OperationType.Wrap) {
-      recordTxConfirmation(item, false);
+      recordTxConfirmation(item, true);
       setShouldLoadTokens(true);
       reloadSwitch();
     } else if (item && item.operationType === OperationType.Unwrap) {
-      recordTxConfirmation(item, false);
+      recordTxConfirmation(item, true);
       setShouldLoadTokens(true);
       reloadSwitch();
+    } else if (item && item.operationType === OperationType.Transfer && item.extras === 'scheduled') {
+      recordTxConfirmation(item, true);
+      reloadSwitch();
     }
+
     resetTransactionStatus();
   }, [recordTxConfirmation, reloadSwitch, resetTransactionStatus, setShouldLoadTokens]);
 
