@@ -596,3 +596,7 @@ export const addSeconds = (date: Date, seconds: number) => {
 export const addDays = (date: Date, days: number) => {
   return new Date(date.getTime() + days*24*60*60*1000);
 }
+
+export const openLinkInNewTab = (address: string) => {
+  window.open(address, '_blank','noreferrer');
+}

@@ -27,6 +27,7 @@ import {
   findATokenAddress,
   getAmountFromLamports,
   getTokenAmountAndSymbolByTokenAddress,
+  openLinkInNewTab,
   shortenAddress
 } from '../../utils/utils';
 import { Button, Col, Dropdown, Empty, Menu, Result, Row, Space, Spin, Tooltip } from 'antd';
@@ -42,7 +43,7 @@ import {
 } from '../../constants';
 import { QrScannerModal } from '../../components/QrScannerModal';
 import { Helmet } from "react-helmet";
-import { IconAdd, IconCopy, IconEyeOff, IconEyeOn, IconLightBulb, IconShoppingCart, IconVerticalEllipsis } from '../../Icons';
+import { IconAdd, IconCopy, IconExternalLink, IconEyeOff, IconEyeOn, IconLightBulb, IconShoppingCart, IconVerticalEllipsis } from '../../Icons';
 import { fetchAccountHistory, MappedTransaction } from '../../utils/history';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import useLocalStorage from '../../hooks/useLocalStorage';
@@ -1977,10 +1978,9 @@ export const AccountsNewView = () => {
                       <span className="title">{t('assets.screen-title')}</span>
                       <div className="user-address">
                         <span className="fg-secondary">
-                          (<a className="simplelink underline-on-hover" target="_blank" rel="noopener noreferrer"
-                              href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${accountAddress}${getSolanaExplorerClusterParam()}`}>
+                          (<span className="simplelink underline-on-hover" onClick={() => copyAddressToClipboard(accountAddress)}>
                             {shortenAddress(accountAddress, 5)}
-                          </a>)
+                          </span>)
                         </span>
                         {!connected && (
                           <span className="icon-button-container">
@@ -2001,8 +2001,8 @@ export const AccountsNewView = () => {
                               type="default"
                               shape="circle"
                               size="middle"
-                              icon={<CopyOutlined />}
-                              onClick={() => copyAddressToClipboard(accountAddress)}
+                              icon={<IconExternalLink className="mean-svg-icons" style={{width: "18", height: "18"}} />}
+                              onClick={() => openLinkInNewTab(`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${accountAddress}${getSolanaExplorerClusterParam()}`)}
                             />
                           </Tooltip>
                         </span>
