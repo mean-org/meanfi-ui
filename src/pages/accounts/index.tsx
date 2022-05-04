@@ -1429,11 +1429,14 @@ export const AccountsNewView = () => {
 
   const renderMoneyStreamsSummary = (
     <>
-      <Link to="/accounts/streams">
+      <Tooltip title={publicKey ? "See your Money Streams" : "To see your Money Streams you need to connect your wallet"}>
         <div key="streams" onClick={() => {
-          setSelectedCategory("other-assets");
-          setSelectedOtherAssetsOption("msp-streams");
-          setSelectedAsset(undefined);
+          if (publicKey) {
+            setSelectedCategory("other-assets");
+            setSelectedOtherAssetsOption("msp-streams");
+            setSelectedAsset(undefined);
+            navigate("/accounts/streams");
+          }
         }} className={`transaction-list-row ${selectedCategory === "other-assets" && selectedOtherAssetsOption === "msp-streams" ? 'selected' : ''}`}>
           <div className="icon-cell">
             {loadingStreams ? (
@@ -1483,7 +1486,7 @@ export const AccountsNewView = () => {
             )}
           </div>
         </div>
-      </Link>
+      </Tooltip>
     </>
   );
 
@@ -2039,9 +2042,11 @@ export const AccountsNewView = () => {
                             selected={selectedCategory === "other-assets" && selectedOtherAssetsOption === "msp-treasuries"}
                             onNewValue={(value: number) => setTreasuriesTvl(value)}
                             onSelect={() => {
-                              setSelectedCategory("other-assets");
-                              setSelectedOtherAssetsOption("msp-streams");
-                              setSelectedAsset(undefined);
+                              if (publicKey) {
+                                setSelectedCategory("other-assets");
+                                setSelectedOtherAssetsOption("msp-streams");
+                                setSelectedAsset(undefined);
+                              }
                             }}
                           />
                         </div>

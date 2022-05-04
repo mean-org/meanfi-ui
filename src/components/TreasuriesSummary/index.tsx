@@ -13,6 +13,7 @@ import BN from 'bn.js';
 import { SyncOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useWallet } from '../../contexts/wallet';
+import { Tooltip } from 'antd';
 
 export const TreasuriesSummary = (props: {
     address: string;
@@ -249,54 +250,66 @@ export const TreasuriesSummary = (props: {
     // Rendering //
     ///////////////
 
+    const renderContent = (
+        <div key="streams" onClick={onSelect} className={`transaction-list-row ${selected ? 'selected' : ''}`}>
+            <div className="icon-cell">
+                {loadingTreasuries ? (
+                    <div className="token-icon animate-border-loading">
+                        <div className="streams-count simplelink" onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                        }}>
+                            <span className="font-bold text-shadow"><SyncOutlined spin /></span>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="token-icon">
+                        <div className="streams-count simplelink" onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            refreshTreasuries();
+                        }}>
+                            <span className="font-size-75 font-bold text-shadow">{kFormatter(treasuriesSummary.totalAmount) || 0}</span>
+                        </div>
+                    </div>
+                )}
+            </div>
+            <div className="description-cell">
+                <div className="title">{t('treasuries.screen-title')}</div>
+                {treasuriesSummary.totalAmount === 0 ? (
+                    <div className="subtitle">{t('treasuries.treasury-list.no-treasuries')}</div>
+                ) : (
+                    <div className="subtitle">{treasuriesSummary.openAmount} Open, {treasuriesSummary.lockedAmount} Locked</div>
+                )}
+            </div>
+            <div className="rate-cell">
+                {treasuriesSummary.totalAmount === 0 ? (
+                    <span className="rate-amount">--</span>
+                ) : (
+                    <>
+                        <div className="rate-amount">
+                            {toUsCurrency(Math.abs(treasuriesSummary.totalNet))}
+                        </div>
+                        <div className="interval">Balance TVL</div>
+                    </>
+                )}
+            </div>
+        </div>
+    );
+
     return (
         <>
-            <Link to="/treasuries" state={{ previousPath: pathname }}>
-                <div key="streams" onClick={onSelect} className={`transaction-list-row ${selected ? 'selected' : ''}`}>
-                    <div className="icon-cell">
-                        {loadingTreasuries ? (
-                            <div className="token-icon animate-border-loading">
-                                <div className="streams-count simplelink" onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                }}>
-                                    <span className="font-bold text-shadow"><SyncOutlined spin /></span>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="token-icon">
-                                <div className="streams-count simplelink" onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    refreshTreasuries();
-                                }}>
-                                    <span className="font-size-75 font-bold text-shadow">{kFormatter(treasuriesSummary.totalAmount) || 0}</span>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                    <div className="description-cell">
-                        <div className="title">{t('treasuries.screen-title')}</div>
-                        {treasuriesSummary.totalAmount === 0 ? (
-                            <div className="subtitle">{t('treasuries.treasury-list.no-treasuries')}</div>
-                        ) : (
-                            <div className="subtitle">{treasuriesSummary.openAmount} Open, {treasuriesSummary.lockedAmount} Locked</div>
-                        )}
-                    </div>
-                    <div className="rate-cell">
-                        {treasuriesSummary.totalAmount === 0 ? (
-                            <span className="rate-amount">--</span>
-                        ) : (
-                            <>
-                                <div className="rate-amount">
-                                    {toUsCurrency(Math.abs(treasuriesSummary.totalNet))}
-                                </div>
-                                <div className="interval">Balance TVL</div>
-                            </>
-                        )}
-                    </div>
-                </div>
-            </Link>
+            {publicKey ? (
+                <Link to="/treasuries" state={{ previousPath: pathname }}>
+                    <Tooltip title="See your Streaming Treasuries">
+                        {renderContent}
+                    </Tooltip>
+                </Link>
+            ) : (
+                <Tooltip title="To see your Streaming Treasuries you need to connect your wallet">
+                    {renderContent}
+                </Tooltip>
+            )}
         </>
     );
 
