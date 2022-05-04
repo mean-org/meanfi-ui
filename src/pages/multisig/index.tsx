@@ -1,16 +1,13 @@
-import React, { useCallback, useContext, useMemo } from 'react';
+import { useCallback, useContext, useMemo } from 'react';
 import {
   LoadingOutlined,
   ReloadOutlined,
 } from '@ant-design/icons';
 import {
-  ConfirmOptions,
   Connection,
-  Keypair,
   LAMPORTS_PER_SOL,
   MemcmpFilter,
   PublicKey,
-  SystemProgram,
   Transaction
 } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
@@ -51,27 +48,27 @@ import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
 import { AccountLayout, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { useNavigate } from 'react-router-dom';
 import {
-  Multisig,
-  MultisigV2,
+
+  MultisigInfo,
   MultisigParticipant,
   MultisigTransaction,
   MultisigTransactionSummary,
   MultisigTransactionStatus,
-  MEAN_MULTISIG_OPS,
-  listMultisigTransactions,
   MultisigTransactionFees,
-  ZERO_FEES,
   MULTISIG_ACTIONS,
   getMultisigTransactionSummary,
   getFees,
-  DEFAULT_EXPIRATION_TIME_SECONDS
-} from '../../models/multisig';
+  DEFAULT_EXPIRATION_TIME_SECONDS,
+  MeanMultisig,
+  MEAN_MULTISIG_PROGRAM
+
+} from '@mean-dao/mean-multisig-sdk';
+
 import { MultisigCreateModal } from '../../components/MultisigCreateModal';
 import './style.scss';
 
 // MULTISIG
-import { BN, Program, Provider } from "@project-serum/anchor";
-import MultisigIdl from "../../models/mean-multisig-idl";
+import { BN } from "@project-serum/anchor";
 import { MultisigOwnersView } from '../../components/MultisigOwnersView';
 import { MultisigEditModal } from '../../components/MultisigEditModal';
 import { MSP, Treasury } from '@mean-dao/msp';
@@ -88,7 +85,7 @@ export const MultisigView = () => {
   const connectionConfig = useConnectionConfig();
   const { publicKey, connected, wallet } = useWallet();
   const {
-    theme,
+    // theme,
     isWhitelisted,
     detailsPanelOpen,
     transactionStatus,
@@ -116,11 +113,16 @@ export const MultisigView = () => {
   // Balance and fees
   const [nativeBalance, setNativeBalance] = useState(0);
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
-  const [transactionFees, setTransactionFees] = useState<MultisigTransactionFees>(ZERO_FEES);
+  const [transactionFees, setTransactionFees] = useState<MultisigTransactionFees>({
+    multisigFee: 0,
+    networkFee: 0,
+    rentExempt: 0
+  } as MultisigTransactionFees);
+
   // Multisig accounts
   const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(true);
-  const [multisigAccounts, setMultisigAccounts] = useState<(MultisigV2 | Multisig)[]>([]);
-  const [selectedMultisig, setSelectedMultisig] = useState<MultisigV2 | Multisig | undefined>(undefined);
+  const [multisigAccounts, setMultisigAccounts] = useState<(MultisigInfo)[]>([]);
+  const [selectedMultisig, setSelectedMultisig] = useState<MultisigInfo | undefined>(undefined);
   // Pending Txs
   const [needRefreshTxs, setNeedRefreshTxs] = useState(true);
   const [loadingMultisigTxs, setLoadingMultisigTxs] = useState(false);
@@ -161,22 +163,18 @@ export const MultisigView = () => {
 
   const multisigClient = useMemo(() => {
 
-    const opts: ConfirmOptions = {
-      preflightCommitment: "confirmed",
-      commitment: "confirmed",
-    };
+    if (!connection || !publicKey || !connectionConfig.endpoint) { return null; }
 
-    const provider = new Provider(connection, wallet as any, opts);
-
-    return new Program(
-      MultisigIdl,
-      MEAN_MULTISIG,
-      provider
+    return new MeanMultisig(
+      connectionConfig.endpoint,
+      publicKey,
+      "confirmed"
     );
 
   }, [
-    connection, 
-    wallet
+    connection,
+    publicKey,
+    connectionConfig.endpoint,
   ]);
 
   // Create and cache Money Streaming Program V2 instance
@@ -226,9 +224,9 @@ export const MultisigView = () => {
 
   },[]);
 
-  const refreshPage = useCallback(() => {
-    window.location.reload();
-  },[]);
+  // const refreshPage = useCallback(() => {
+  //   window.location.reload();
+  // },[]);
 
   const resetTransactionStatus = useCallback(() => {
 
@@ -243,7 +241,9 @@ export const MultisigView = () => {
 
   const onCreateMultisigClick = useCallback(() => {
 
-    getFees(multisigClient, MULTISIG_ACTIONS.createMultisig)
+    if (!multisigClient) { return; }
+
+    getFees(multisigClient.getProgram(), MULTISIG_ACTIONS.createMultisig)
       .then(value => {
         setTransactionFees(value);
         consoleOut('transactionFees:', value, 'orange');
@@ -263,11 +263,17 @@ export const MultisigView = () => {
 
     setIsCreateMultisigModalVisible(false);
     resetTransactionStatus();
+
     openNotification({
       description: t('multisig.create-multisig.success-message'),
       type: "success"
     });
-    setTransactionFees(ZERO_FEES);
+
+    setTransactionFees({ 
+      multisigFee: 0,
+      networkFee: 0,
+      rentExempt: 0
+    } as MultisigTransactionFees);
 
   },[
     t,
@@ -307,11 +313,7 @@ export const MultisigView = () => {
 
     const createMultisig = async (data: any) => {
 
-      const multisig = Keypair.generate();
-      const [, nonce] = await PublicKey.findProgramAddress(
-        [multisig.publicKey.toBuffer()],
-        multisigClient.programId
-      );
+      if (!multisigClient || !publicKey) { return; }
 
       const owners = data.owners.map((p: MultisigParticipant) => {
         return {
@@ -320,26 +322,12 @@ export const MultisigView = () => {
         }
       });
 
-      let tx = multisigClient.transaction.createMultisig(
-        owners as any,
-        new BN(data.threshold),
-        nonce,
-        data.label as any,
-        {
-          accounts: {
-            proposer: publicKey as PublicKey,
-            multisig: multisig.publicKey,
-            multisigOpsAccount: MEAN_MULTISIG_OPS,
-            systemProgram: SystemProgram.programId
-          },
-          signers: [wallet as any, multisig]
-        }
+      let tx = await multisigClient.createMultisig(
+        publicKey, 
+        data.label, 
+        data.threshold, 
+        owners
       );
-
-      tx.feePayer = publicKey;
-      const { blockhash } = await connection.getRecentBlockhash("confirmed");
-      tx.recentBlockhash = blockhash;
-      tx.partialSign(...[multisig]);
 
       return tx;
     };
@@ -409,6 +397,7 @@ export const MultisigView = () => {
 
         return await createMultisig(data)
           .then(value => {
+            if (!value) { return false; }
             consoleOut('createMultisig returned transaction:', value);
             setTransactionStatus({
               lastOperation: TransactionStatus.InitTransactionSuccess,
@@ -583,8 +572,7 @@ export const MultisigView = () => {
     nativeBalance,
     transactionFees,
     transactionCancelled,
-    multisigClient.programId,
-    multisigClient.transaction,
+    multisigClient,
     transactionStatus.currentOperation,
     clearTransactionStatusContext,
     startFetchTxSignatureInfo,
@@ -652,7 +640,9 @@ export const MultisigView = () => {
 
   const onEditMultisigClick = useCallback(() => {
 
-    getFees(multisigClient, MULTISIG_ACTIONS.createTransaction)
+    if (!multisigClient) { return; }
+
+    getFees(multisigClient.getProgram(), MULTISIG_ACTIONS.createTransaction)
       .then(value => {
         setTransactionFees(value);
         consoleOut('transactionFees:', value, 'orange');
@@ -678,13 +668,13 @@ export const MultisigView = () => {
 
     const editMultisig = async (data: any) => {
 
-      if (!selectedMultisig) {
+      if (!selectedMultisig || !multisigClient || !publicKey) {
         throw new Error("No selected multisig");
       }
 
       const [multisigSigner] = await PublicKey.findProgramAddress(
         [selectedMultisig.id.toBuffer()],
-        multisigClient.programId
+        MEAN_MULTISIG_PROGRAM
       );
 
       const owners = data.owners.map((p: MultisigParticipant) => {
@@ -694,8 +684,9 @@ export const MultisigView = () => {
         }
       });
 
+      const program = multisigClient.getProgram();
       // Edit Multisig
-      const ixData = multisigClient.coder.instruction.encode("edit_multisig", {
+      const ixData = program.coder.instruction.encode("edit_multisig", {
         owners: owners,
         threshold: new BN(data.threshold),
         label: data.label as any
@@ -714,51 +705,19 @@ export const MultisigView = () => {
         },
       ];
 
-      const transaction = Keypair.generate();
-      const txSize = 1200;
-      const createIx = await multisigClient.account.transaction.createInstruction(
-        transaction,
-        txSize
-      );
-
-      const [txDetailAddress] = await PublicKey.findProgramAddress(
-        [
-          selectedMultisig.id.toBuffer(),
-          transaction.publicKey.toBuffer()
-        ],
-        multisigClient.programId
-      ); 
-
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
-      
-      let tx = multisigClient.transaction.createTransaction(
-        multisigClient.programId, 
-        ixAccounts as any,
-        ixData as any,
-        OperationType.EditMultisig,
-        "Edit Safe",
-        "",
-        new BN(expirationTime),
-        new BN(0),
-        new BN(0),
-        {
-          accounts: {
-            multisig: selectedMultisig.id,
-            transaction: transaction.publicKey,
-            transactionDetail: txDetailAddress,
-            proposer: publicKey as PublicKey,
-            multisigOpsAccount: MEAN_MULTISIG_OPS,
-            systemProgram: SystemProgram.programId
-          },
-          preInstructions: [createIx],
-          signers: [transaction, wallet as any],
-        }
-      );
 
-      tx.feePayer = publicKey;
-      const { blockhash } = await connection.getRecentBlockhash("confirmed");
-      tx.recentBlockhash = blockhash;
-      tx.partialSign(...[transaction]);
+      let tx = await multisigClient.createTransaction(
+        publicKey,
+        "Edit Safe",
+        "", // description
+        new Date(expirationTime * 1_000),
+        OperationType.EditMultisig,
+        selectedMultisig.id,
+        program.programId,
+        ixAccounts,
+        ixData
+      );
 
       return tx;
     };
@@ -828,6 +787,7 @@ export const MultisigView = () => {
 
         return await editMultisig(data)
           .then(value => {
+            if (!value) { return false; }
             consoleOut('editMultisig returned transaction:', value);
             setTransactionStatus({
               lastOperation: TransactionStatus.InitTransactionSuccess,
@@ -1003,11 +963,8 @@ export const MultisigView = () => {
     transactionFees,
     selectedMultisig,
     transactionCancelled,
-    multisigClient.programId,
-    multisigClient.transaction,
+    multisigClient,
     transactionStatus.currentOperation,
-    multisigClient.account.transaction,
-    multisigClient.coder.instruction,
     clearTransactionStatusContext,
     startFetchTxSignatureInfo,
     resetTransactionStatus,
@@ -1062,30 +1019,9 @@ export const MultisigView = () => {
 
     const approveTx = async (data: any) => {
 
-      if (!selectedMultisig || !publicKey) { return null; }
+      if (!selectedMultisig || !multisigClient || !publicKey) { return null; }
 
-      const [txDetailAddress] = await PublicKey.findProgramAddress(
-        [
-          selectedMultisig.id.toBuffer(),
-          data.transaction.id.toBuffer()
-        ],
-        multisigClient.programId
-      ); 
-  
-      let tx = multisigClient.transaction.approve({
-          accounts: {
-            multisig: selectedMultisig.id,
-            transaction: data.transaction.id,
-            transactionDetail: txDetailAddress,
-            owner: publicKey,
-            systemProgram: SystemProgram.programId
-          }
-        }
-      );
-  
-      tx.feePayer = publicKey;
-      const { blockhash } = await connection.getRecentBlockhash("confirmed");
-      tx.recentBlockhash = blockhash;
+      let tx = await multisigClient.approveTransaction(publicKey, data.transaction.id);
   
       return tx;
     };
@@ -1314,18 +1250,17 @@ export const MultisigView = () => {
     }
 
   }, [
+    clearTransactionStatusContext, 
+    resetTransactionStatus, 
     wallet, 
     selectedMultisig, 
+    multisigClient, 
     publicKey, 
-    multisigClient.programId, 
-    multisigClient.transaction, 
-    connection, 
+    setTransactionStatus, 
     nativeBalance, 
     transactionStatus.currentOperation, 
-    transactionCancelled,
-    clearTransactionStatusContext, 
-    resetTransactionStatus,
-    setTransactionStatus,
+    connection, 
+    transactionCancelled, 
     startFetchTxSignatureInfo
   ]);
 
@@ -1344,86 +1279,15 @@ export const MultisigView = () => {
 
     const finishTx = async (data: any) => {
 
-      if (!data.transaction || !publicKey) { return null; }
+      if (!data.transaction || !publicKey || !multisigClient) { return null; }
 
-      const [multisigSigner] = await PublicKey.findProgramAddress(
-        [data.transaction.multisig.toBuffer()],
-        multisigClient.programId
-      );
-
-      const [txDetailAddress] = await PublicKey.findProgramAddress(
-        [
-          data.transaction.multisig.toBuffer(),
-          data.transaction.id.toBuffer()
-        ],
-        multisigClient.programId
-      ); 
-
-      let remainingAccounts = data.transaction.accounts
-        // Change the signer status on the vendor signer since it's signed by the program, not the client.
-        .map((meta: any) =>
-          meta.pubkey.equals(multisigSigner)
-            ? { ...meta, isSigner: false }
-            : meta
-        )
-        .concat({
-          pubkey: data.transaction.programId,
-          isWritable: false,
-          isSigner: false,
-        });
-        
-      let tx = multisigClient.transaction.executeTransaction({
-          accounts: {
-            multisig: data.transaction.multisig,
-            multisigSigner: multisigSigner,
-            transaction: data.transaction.id,
-            transactionDetail: txDetailAddress,
-            payer: publicKey,
-            systemProgram: SystemProgram.programId
-          },
-          remainingAccounts: remainingAccounts
-        }
-      );
+      let tx = await multisigClient.executeTransaction(publicKey, data.transaction.id);
 
       if (data.transaction.operation === OperationType.StreamCreate || 
-        data.transaction.operation === OperationType.TreasuryStreamCreate) {
-
-        remainingAccounts = data.transaction.accounts
-          // Change the signer status on the vendor signer since it's signed by the program, not the client.
-          .map((meta: any) =>
-            !meta.pubkey.equals(publicKey)
-              ? { ...meta, isSigner: false }
-              : meta
-          )
-          .concat({
-            pubkey: data.transaction.programId,
-            isWritable: false,
-            isSigner: false,
-          });
-
-        const streamPda = remainingAccounts[7].pubkey;
-          
-        tx = multisigClient.transaction.executeTransactionPda(
-          new BN(data.transaction.pdaTimestamp),
-          new BN(data.transaction.pdaBump),
-          {
-            accounts: {
-              multisig: data.transaction.multisig,
-              multisigSigner: multisigSigner,
-              pdaAccount: streamPda,
-              transaction: data.transaction.id,
-              transactionDetail: txDetailAddress,
-              payer: publicKey,
-              systemProgram: SystemProgram.programId
-            },
-            remainingAccounts: remainingAccounts
-          }
-        );    
+        data.transaction.operation === OperationType.TreasuryStreamCreate
+      ) {
+        tx = await multisigClient.executeCreateMoneyStreamTransaction(publicKey, data.transaction.id);  
       }
-  
-      tx.feePayer = publicKey;
-      const { blockhash } = await multisigClient.provider.connection.getRecentBlockhash("confirmed");
-      tx.recentBlockhash = blockhash;
   
       return tx;
     };
@@ -1669,9 +1533,7 @@ export const MultisigView = () => {
     connection,
     nativeBalance,
     transactionCancelled,
-    multisigClient.programId,
-    multisigClient.transaction,
-    multisigClient.provider.connection,
+    multisigClient,
     transactionStatus.currentOperation,
     clearTransactionStatusContext,
     startFetchTxSignatureInfo,
@@ -1697,6 +1559,7 @@ export const MultisigView = () => {
 
       if (
         !publicKey || 
+        !multisigClient ||
         !selectedMultisig || 
         !selectedMultisig.id || 
         selectedMultisig.id.toBase58() !== data.transaction.multisig.toBase58() || 
@@ -1704,33 +1567,10 @@ export const MultisigView = () => {
         data.transaction.ownerSeqNumber === selectedMultisig.ownerSeqNumber ||
         data.transaction.executedOn
       ) {
-        console.log('here');
         return null;
       }
 
-      const [txDetailAddress] = await PublicKey.findProgramAddress(
-        [
-          selectedMultisig.id.toBuffer(),
-          data.transaction.id.toBuffer()
-        ],
-        multisigClient.programId
-      );
-      
-      let tx = multisigClient.transaction.cancelTransaction(
-        {
-          accounts: {
-            multisig: selectedMultisig.id,
-            transaction: data.transaction.id,
-            transactionDetail: txDetailAddress,
-            proposer: publicKey,
-            systemProgram: SystemProgram.programId
-          }
-        }
-      );
-
-      tx.feePayer = publicKey;
-      const { blockhash } = await connection.getRecentBlockhash("confirmed");
-      tx.recentBlockhash = blockhash;
+      let tx = await multisigClient.cancelTransaction(publicKey, data.transaction.id);
 
       return tx;
     };
@@ -1978,8 +1818,7 @@ export const MultisigView = () => {
     nativeBalance,
     selectedMultisig,
     transactionCancelled,
-    multisigClient.transaction,
-    multisigClient.programId,
+    multisigClient,
     transactionStatus.currentOperation,
     clearTransactionStatusContext,
     startFetchTxSignatureInfo,
@@ -2113,213 +1952,92 @@ export const MultisigView = () => {
 
   },[]);
 
-  const isUserTheProposer = useCallback((): boolean => {
-    if (!highlightedMultisigTx || !publicKey) { return false; }
+  // const isUserTheProposer = useCallback((): boolean => {
+  //   if (!highlightedMultisigTx || !publicKey) { return false; }
 
-    return  publicKey &&
-            highlightedMultisigTx.proposer &&
-            publicKey.equals(highlightedMultisigTx.proposer)
-        ? true
-        : false;
+  //   return  publicKey &&
+  //           highlightedMultisigTx.proposer &&
+  //           publicKey.equals(highlightedMultisigTx.proposer)
+  //       ? true
+  //       : false;
 
-  }, [
-    publicKey,
-    highlightedMultisigTx
-  ]);
+  // }, [
+  //   publicKey,
+  //   highlightedMultisigTx
+  // ]);
 
-  const isTreasuryOperation = useCallback(() => {
+  // const isTreasuryOperation = useCallback(() => {
 
-    if (!highlightedMultisigTx) { return false; }
+  //   if (!highlightedMultisigTx) { return false; }
 
-    return  highlightedMultisigTx.operation === OperationType.TreasuryCreate ||
-            highlightedMultisigTx.operation === OperationType.TreasuryClose ||
-            highlightedMultisigTx.operation === OperationType.TreasuryAddFunds ||
-            highlightedMultisigTx.operation === OperationType.TreasuryStreamCreate ||
-            highlightedMultisigTx.operation === OperationType.TreasuryWithdraw ||
-            highlightedMultisigTx.operation === OperationType.StreamCreate ||
-            highlightedMultisigTx.operation === OperationType.StreamClose ||
-            highlightedMultisigTx.operation === OperationType.StreamAddFunds
-      ? true
-      : false;
+  //   return  highlightedMultisigTx.operation === OperationType.TreasuryCreate ||
+  //           highlightedMultisigTx.operation === OperationType.TreasuryClose ||
+  //           highlightedMultisigTx.operation === OperationType.TreasuryAddFunds ||
+  //           highlightedMultisigTx.operation === OperationType.TreasuryStreamCreate ||
+  //           highlightedMultisigTx.operation === OperationType.TreasuryWithdraw ||
+  //           highlightedMultisigTx.operation === OperationType.StreamCreate ||
+  //           highlightedMultisigTx.operation === OperationType.StreamClose ||
+  //           highlightedMultisigTx.operation === OperationType.StreamAddFunds
+  //     ? true
+  //     : false;
 
-  },[highlightedMultisigTx])
+  // },[highlightedMultisigTx])
 
-  const canShowApproveButton = useCallback(() => {
+  // const canShowApproveButton = useCallback(() => {
 
-    if (!highlightedMultisigTx) { return false; }
+  //   if (!highlightedMultisigTx) { return false; }
 
-    let result = (
-      highlightedMultisigTx.status === MultisigTransactionStatus.Pending &&
-      !highlightedMultisigTx.didSigned
-    );
+  //   let result = (
+  //     highlightedMultisigTx.status === MultisigTransactionStatus.Pending &&
+  //     !highlightedMultisigTx.didSigned
+  //   );
 
-    return result;
+  //   return result;
 
-  },[highlightedMultisigTx])
+  // },[highlightedMultisigTx])
 
-  const canShowExecuteButton = useCallback(() => {
+  // const canShowExecuteButton = useCallback(() => {
 
-    if (!highlightedMultisigTx) { return false; }
+  //   if (!highlightedMultisigTx) { return false; }
 
-    const isPendingForExecution = () => {
-      return  highlightedMultisigTx.status === MultisigTransactionStatus.Approved &&
-              !highlightedMultisigTx.executedOn
-        ? true
-        : false;
-    }
+  //   const isPendingForExecution = () => {
+  //     return  highlightedMultisigTx.status === MultisigTransactionStatus.Approved &&
+  //             !highlightedMultisigTx.executedOn
+  //       ? true
+  //       : false;
+  //   }
 
-    if (isPendingForExecution()) {
-      if (!isTreasuryOperation() || (isUserTheProposer() && isTreasuryOperation)) {
-        return true;
-      } else {
-        return false;
-      }
-    } else {
-      return false;
-    }
+  //   if (isPendingForExecution()) {
+  //     if (!isTreasuryOperation() || (isUserTheProposer() && isTreasuryOperation)) {
+  //       return true;
+  //     } else {
+  //       return false;
+  //     }
+  //   } else {
+  //     return false;
+  //   }
 
-  },[
-    highlightedMultisigTx,
-    isTreasuryOperation,
-    isUserTheProposer,
-  ])
+  // },[
+  //   highlightedMultisigTx,
+  //   isTreasuryOperation,
+  //   isUserTheProposer,
+  // ])
 
-  const canShowCancelButton = useCallback(() => {
+  // const canShowCancelButton = useCallback(() => {
 
-    if (!highlightedMultisigTx || !highlightedMultisigTx.proposer || !publicKey) { return false; }
+  //   if (!highlightedMultisigTx || !highlightedMultisigTx.proposer || !publicKey) { return false; }
 
-    let result = (
-      highlightedMultisigTx.proposer.toBase58() === publicKey.toBase58() &&
-      highlightedMultisigTx.status === MultisigTransactionStatus.Voided
-    );
+  //   let result = (
+  //     highlightedMultisigTx.proposer.toBase58() === publicKey.toBase58() &&
+  //     highlightedMultisigTx.status === MultisigTransactionStatus.Voided
+  //   );
 
-    return result;
+  //   return result;
 
-  },[
-    publicKey, 
-    highlightedMultisigTx
-  ])
-
-  const readAllMultisigAccounts = useCallback(async (wallet: PublicKey) => {
-
-    let accounts: any[] = [];
-    let multisigV2Accs = await multisigClient.account.multisigV2.all();
-    let filteredAccs = multisigV2Accs.filter((a: any) => {
-      if (a.account.owners.filter((o: any) => o.address.equals(wallet)).length) { return true; }
-      return false;
-    });
-
-    accounts.push(...filteredAccs);
-    let multisigAccs = await multisigClient.account.multisig.all();
-    filteredAccs = multisigAccs.filter((a: any) => {
-      if (a.account.owners.filter((o: PublicKey) => o.equals(wallet)).length) { return true; }
-      return false;
-    });
-
-    accounts.push(...filteredAccs);
-
-    return accounts;
-    
-  }, [
-    multisigClient.account.multisig, 
-    multisigClient.account.multisigV2
-  ]);
-
-  const parseMultisigV2Account = (info: any) => {
-    return PublicKey
-      .findProgramAddress([info.publicKey.toBuffer()], MEAN_MULTISIG)
-      .then(k => {
-
-        let address = k[0];
-        let owners: MultisigParticipant[] = [];
-        let labelBuffer = Buffer
-          .alloc(info.account.label.length, info.account.label)
-          .filter(function (elem, index) { return elem !== 0; }
-        );
-
-        let filteredOwners = info.account.owners.filter((o: any) => !o.address.equals(PublicKey.default));
-
-        for (let i = 0; i < filteredOwners.length; i ++) {
-          owners.push({
-            address: filteredOwners[i].address.toBase58(),
-            name: filteredOwners[i].name.length > 0 
-              ? new TextDecoder().decode(
-                  Buffer.from(
-                    Uint8Array.of(
-                      ...filteredOwners[i].name.filter((b: any) => b !== 0)
-                    )
-                  )
-                )
-              : ""
-          } as MultisigParticipant);
-        }
-
-        return {
-          id: info.publicKey,
-          version: info.account.version,
-          label: new TextDecoder().decode(labelBuffer),
-          authority: address,
-          nounce: info.account.nonce,
-          ownerSeqNumber: info.account.ownerSetSeqno,
-          threshold: info.account.threshold.toNumber(),
-          pendingTxsAmount: info.account.pendingTxs.toNumber(),
-          createdOnUtc: new Date(info.account.createdOn.toNumber() * 1000),
-          owners: owners
-
-        } as MultisigV2;
-      })
-      .catch(err => { 
-        consoleOut('error', err, 'red');
-        return undefined;
-      });
-  };
-
-  const parseMultisiAccount = (info: any) => {
-    return PublicKey
-      .findProgramAddress([info.publicKey.toBuffer()], MEAN_MULTISIG)
-      .then(k => {
-
-        let address = k[0];
-        let owners: MultisigParticipant[] = [];
-        let labelBuffer = Buffer
-          .alloc(info.account.label.length, info.account.label)
-          .filter(function (elem, index) { return elem !== 0; }
-        );
-
-        for (let i = 0; i < info.account.owners.length; i ++) {
-          owners.push({
-            address: info.account.owners[i].toBase58(),
-            name: info.account.ownersNames && info.account.ownersNames.length && info.account.ownersNames[i].length > 0 
-              ? new TextDecoder().decode(
-                  Buffer.from(
-                    Uint8Array.of(
-                      ...info.account.ownersNames[i].filter((b: any) => b !== 0)
-                    )
-                  )
-                )
-              : ""
-          } as MultisigParticipant);
-        }
-
-        return {
-          id: info.publicKey,
-          version: 1,
-          label: new TextDecoder().decode(labelBuffer),
-          authority: address,
-          nounce: info.account.nonce,
-          ownerSeqNumber: info.account.ownerSetSeqno,
-          threshold: info.account.threshold.toNumber(),
-          pendingTxsAmount: info.account.pendingTxs.toNumber(),
-          createdOnUtc: new Date(info.account.createdOn.toNumber() * 1000),
-          owners: owners
-
-        } as Multisig;
-      })
-      .catch(err => { 
-        consoleOut('error', err, 'red');
-        return undefined;
-      });
-  };
+  // },[
+  //   publicKey, 
+  //   highlightedMultisigTx
+  // ])
 
   const getMultisigTreasuries = useCallback(async () => {
 
@@ -2417,54 +2135,31 @@ export const MultisigView = () => {
     const timeout = setTimeout(() => {
 
       consoleOut('=======================================', '', 'green');
-      readAllMultisigAccounts(publicKey)
-        .then((allInfo: any) => {
-          let multisigInfoArray: (MultisigV2 | Multisig)[] = [];
-          for (let info of allInfo) {
-            let parsePromise: any;
-            if (info.account.version && info.account.version === 2) {
-              parsePromise = parseMultisigV2Account;
+      multisigClient
+        .getMultisigs(publicKey)
+        .then((allInfo: MultisigInfo[]) => {
+
+          allInfo.sort((a: any, b: any) => b.createdOnUtc.getTime() - a.createdOnUtc.getTime());
+          setMultisigAccounts(allInfo);
+          consoleOut('tralla:', allInfo, 'blue');
+          let item: MultisigInfo | undefined = undefined;
+          if (allInfo.length > 0) {
+            if (highLightableMultisigId) {
+              // Select a multisig that was instructed to highlight when entering this feature
+              item = allInfo.find(m => m.id.toBase58() === highLightableMultisigId);
+            } else if (selectedMultisig) {
+              // Or re-select the one active
+              item = selectedMultisig.id ? allInfo.find(m => m.id.equals(selectedMultisig.id)) : undefined;
             } else {
-              parsePromise = parseMultisiAccount;
+              item = allInfo[0];
             }
-            if (parsePromise) {
-              parsePromise(info)
-                .then((multisig: any) =>{
-                  if (multisig) {
-                    multisigInfoArray.push(multisig);
-                  }
-                })
-                .catch((err: any) => {
-                  console.error(err);
-                  setLoadingMultisigAccounts(false);
-                });
-            }
+            // Now make item active
+            setSelectedMultisig(item);
+            setNeedRefreshTxs(true);
+          } else {
+            setSelectedMultisig(undefined);
+            setMultisigTxs([]);
           }
-
-          setTimeout(() => {
-            multisigInfoArray.sort((a: any, b: any) => b.createdOnUtc.getTime() - a.createdOnUtc.getTime());
-            setMultisigAccounts(multisigInfoArray);
-            consoleOut('tralla:', multisigInfoArray, 'blue');
-            let item: MultisigV2 | Multisig | undefined = undefined;
-            if (multisigInfoArray.length > 0) {
-              if (highLightableMultisigId) {
-                // Select a multisig that was instructed to highlight when entering this feature
-                item = multisigInfoArray.find(m => m.id.toBase58() === highLightableMultisigId);
-              } else if (selectedMultisig) {
-                // Or re-select the one active
-                item = selectedMultisig.id ? multisigInfoArray.find(m => m.id.equals(selectedMultisig.id)) : undefined;
-              } else {
-                item = multisigInfoArray[0];
-              }
-              // Now make item active
-              setSelectedMultisig(item);
-              setNeedRefreshTxs(true);
-            } else {
-              setSelectedMultisig(undefined);
-              setMultisigTxs([]);
-            }
-          });
-
         })
         .catch(err => {
           console.error(err);
@@ -2479,87 +2174,13 @@ export const MultisigView = () => {
     }
 
   }, [
-    connected,
-    publicKey,
-    connection,
-    multisigClient,
-    selectedMultisig,
-    highLightableMultisigId,
-    loadingMultisigAccounts,
-    readAllMultisigAccounts,
-  ]);
-
-  // Subscribe to multisig account changes
-  useEffect(() => {
-
-    if (!connection || !connected || !selectedMultisig || !selectedMultisig.id) {
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-      multisigClient.account.multisigV2
-        .subscribe(selectedMultisig.id)
-        .on("change", (account: any) => {
-
-          let address: any;
-          let labelBuffer = Buffer
-            .alloc(account.label.length, account.label)
-            .filter(function (elem, index) { return elem !== 0; }
-          );
-
-          let owners: MultisigParticipant[] = [];
-          let filteredOwners = account.owners.filter((o: any) => !o.address.equals(PublicKey.default));
-
-          for (let i = 0; i < filteredOwners.length; i ++) {
-            owners.push({
-              address: filteredOwners[i].address.toBase58(),
-              name: filteredOwners[i].name.length > 0 
-                ? new TextDecoder().decode(
-                    Buffer.from(
-                      Uint8Array.of(
-                        ...filteredOwners[i].name.filter((b: any) => b !== 0)
-                      )
-                    )
-                  )
-                : ""
-            } as MultisigParticipant);
-          }
-
-          PublicKey
-            .findProgramAddress([selectedMultisig.id.toBuffer()], MEAN_MULTISIG)
-            .then(k => {
-              address = k[0];
-              let multisigInfo = {
-                // id: account.publicKey,
-                id: selectedMultisig.id,
-                version: account.version,
-                label: new TextDecoder().decode(labelBuffer),
-                authority: address,
-                // nounce: account.nounce,
-                nounce: selectedMultisig.nounce,
-                ownerSeqNumber: account.ownerSetSeqno,
-                threshold: account.threshold.toNumber(),
-                pendingTxsAmount: new BN(account.pendingTxs || 0).toNumber(),
-                createdOnUtc: new Date(account.createdOn.toNumber() * 1000),
-                owners: owners
-
-              } as MultisigV2;
-
-              setSelectedMultisig(multisigInfo);
-            });
-          }
-        );
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }
-
-  }, [
     connected, 
+    publicKey, 
     connection, 
     multisigClient, 
-    selectedMultisig
+    selectedMultisig, 
+    highLightableMultisigId, 
+    loadingMultisigAccounts
   ]);
 
   // Get Txs for the selected multisig
@@ -2583,33 +2204,29 @@ export const MultisigView = () => {
       setNeedRefreshTxs(false);
       setLoadingMultisigTxs(true);
 
-      listMultisigTransactions(
-        multisigClient,
-        selectedMultisig,
-        publicKey
-      )
-      .then((txs: MultisigTransaction[]) => {
-        consoleOut('selected multisig txs', txs, 'blue');
-        if (!isProd()) {
-          const debugTable: any[] = [];
-          txs.forEach(item => debugTable.push({
-            operation: OperationType[item.operation],
-            approved: item.didSigned,
-            executed: item.executedOn ? true : false,
-            proposer: item.proposer ? shortenAddress(item.proposer.toBase58(), 6) : '-',
-            status: MultisigTransactionStatus[item.status]
-          }));
-          console.table(debugTable);
-        }
-        setMultisigTxs(txs);
-      })
-      .catch((err: any) => {
-        console.error("Error fetching all transactions", err);
-        setMultisigTxs([]);
-        consoleOut('multisig txs:', [], 'blue');
-      })
-      .finally(() => setLoadingMultisigTxs(false));
-      
+      multisigClient
+        .getMultisigTransactions(selectedMultisig.id, publicKey)
+        .then((txs: MultisigTransaction[]) => {
+          consoleOut('selected multisig txs', txs, 'blue');
+          if (!isProd()) {
+            const debugTable: any[] = [];
+            txs.forEach(item => debugTable.push({
+              operation: OperationType[item.operation],
+              approved: item.didSigned,
+              executed: item.executedOn ? true : false,
+              proposer: item.proposer ? shortenAddress(item.proposer.toBase58(), 6) : '-',
+              status: MultisigTransactionStatus[item.status]
+            }));
+            console.table(debugTable);
+          }
+          setMultisigTxs(txs);
+        })
+        .catch((err: any) => {
+          console.error("Error fetching all transactions", err);
+          setMultisigTxs([]);
+          consoleOut('multisig txs:', [], 'blue');
+        })
+        .finally(() => setLoadingMultisigTxs(false));      
     });
 
     return () => {
@@ -2779,10 +2396,10 @@ export const MultisigView = () => {
 
     const timeout = setTimeout(() => {
       getMultisigVaults(multisigClient.provider.connection, selectedMultisig.id)
-      .then(result => {
-        setMultisigVaults(result);
-      })
-      .catch(err => console.error(err));
+        .then(result => {
+          setMultisigVaults(result);
+        })
+        .catch(err => console.error(err));
     });
 
     return () => {
@@ -2827,117 +2444,117 @@ export const MultisigView = () => {
     return width < 576 || (width >= 768 && width < 960);
   }, [width]);
 
-  const getTxInitiator = useCallback((mtx: MultisigTransaction): MultisigParticipant | undefined => {
-    if (!selectedMultisig) { return undefined; }
+  // const getTxInitiator = useCallback((mtx: MultisigTransaction): MultisigParticipant | undefined => {
+  //   if (!selectedMultisig) { return undefined; }
 
-    const owners: MultisigParticipant[] = (selectedMultisig as MultisigV2).owners;
-    const initiator = owners && owners.length > 0
-      ? owners.find(o => o.address === mtx.proposer?.toBase58())
-      : undefined;
+  //   const owners: MultisigParticipant[] = (selectedMultisig as MultisigInfo).owners;
+  //   const initiator = owners && owners.length > 0
+  //     ? owners.find(o => o.address === mtx.proposer?.toBase58())
+  //     : undefined;
 
-    return initiator;
-  }, [selectedMultisig]);
+  //   return initiator;
+  // }, [selectedMultisig]);
 
-  const isUserTxInitiator = useCallback(() => {
-    if (!highlightedMultisigTx || !publicKey) { return false; }
-    const initiator = getTxInitiator(highlightedMultisigTx);
-    return initiator && publicKey.toBase58() === initiator.address ? true : false;
-  }, [
-    publicKey,
-    highlightedMultisigTx,
-    getTxInitiator,
-  ]);
+  // const isUserTxInitiator = useCallback(() => {
+  //   if (!highlightedMultisigTx || !publicKey) { return false; }
+  //   const initiator = getTxInitiator(highlightedMultisigTx);
+  //   return initiator && publicKey.toBase58() === initiator.address ? true : false;
+  // }, [
+  //   publicKey,
+  //   highlightedMultisigTx,
+  //   getTxInitiator,
+  // ]);
 
-  const getTxSignedCount = useCallback((mtx: MultisigTransaction) => {
-    if (mtx && mtx.signers) {
-      return mtx.signers.filter((s: boolean) => s === true).length;
-    }
-    return 0;
-  }, []);
+  // const getTxSignedCount = useCallback((mtx: MultisigTransaction) => {
+  //   if (mtx && mtx.signers) {
+  //     return mtx.signers.filter((s: boolean) => s === true).length;
+  //   }
+  //   return 0;
+  // }, []);
 
-  const isTxVoided = useCallback(() => {
-    if (highlightedMultisigTx) {
-      if (highlightedMultisigTx.status === MultisigTransactionStatus.Voided) {
-        return true;
-      }
-    }
-    return false;
-  }, [highlightedMultisigTx]);
+  // const isTxVoided = useCallback(() => {
+  //   if (highlightedMultisigTx) {
+  //     if (highlightedMultisigTx.status === MultisigTransactionStatus.Voided) {
+  //       return true;
+  //     }
+  //   }
+  //   return false;
+  // }, [highlightedMultisigTx]);
 
-  const isTxPendingApproval = useCallback(() => {
-    if (highlightedMultisigTx) {
-      if (highlightedMultisigTx.status === MultisigTransactionStatus.Pending) {
-        return true;
-      }
-    }
-    return false;
-  }, [highlightedMultisigTx]);
+  // const isTxPendingApproval = useCallback(() => {
+  //   if (highlightedMultisigTx) {
+  //     if (highlightedMultisigTx.status === MultisigTransactionStatus.Pending) {
+  //       return true;
+  //     }
+  //   }
+  //   return false;
+  // }, [highlightedMultisigTx]);
 
-  const isTxPendingExecution = useCallback(() => {
-    if (highlightedMultisigTx) {
-      if (highlightedMultisigTx.status === MultisigTransactionStatus.Approved) {
-        return true;
-      }
-    }
-    return false;
-  }, [highlightedMultisigTx]);
+  // const isTxPendingExecution = useCallback(() => {
+  //   if (highlightedMultisigTx) {
+  //     if (highlightedMultisigTx.status === MultisigTransactionStatus.Approved) {
+  //       return true;
+  //     }
+  //   }
+  //   return false;
+  // }, [highlightedMultisigTx]);
 
-  const isTxRejected = useCallback(() => {
-    if (highlightedMultisigTx) {
-      if (highlightedMultisigTx.status === MultisigTransactionStatus.Rejected) {
-        return true;
-      }
-    }
-    return false;
-  }, [highlightedMultisigTx]);
+  // const isTxRejected = useCallback(() => {
+  //   if (highlightedMultisigTx) {
+  //     if (highlightedMultisigTx.status === MultisigTransactionStatus.Rejected) {
+  //       return true;
+  //     }
+  //   }
+  //   return false;
+  // }, [highlightedMultisigTx]);
 
-  const getTxUserStatusClass = useCallback((mtx: MultisigTransaction) => {
+  // const getTxUserStatusClass = useCallback((mtx: MultisigTransaction) => {
 
-    if (mtx.executedOn) {
-      return "";
-    } else if (mtx.didSigned === undefined) {
-      return "fg-red";
-    } else if (mtx.didSigned === false) {
-      return theme === 'light' ? "fg-light-orange" : "fg-warning";
-    } else {
-      return theme === 'light' ? "fg-green" : "fg-success"
-    }
+  //   if (mtx.executedOn) {
+  //     return "";
+  //   } else if (mtx.didSigned === undefined) {
+  //     return "fg-red";
+  //   } else if (mtx.didSigned === false) {
+  //     return theme === 'light' ? "fg-light-orange" : "fg-warning";
+  //   } else {
+  //     return theme === 'light' ? "fg-green" : "fg-success"
+  //   }
 
-  },[theme]);
+  // },[theme]);
 
-  const getTxApproveMainCtaLabel = useCallback(() => {
+  // const getTxApproveMainCtaLabel = useCallback(() => {
 
-    const busyLabel = isTxPendingExecution()
-      ? 'Executing transaction'
-      : isTxPendingApproval()
-        ? 'Approving transaction'
-        : isTxVoided() 
-          ? 'Cancelling Transaction' 
-          : '';
+  //   const busyLabel = isTxPendingExecution()
+  //     ? 'Executing transaction'
+  //     : isTxPendingApproval()
+  //       ? 'Approving transaction'
+  //       : isTxVoided() 
+  //         ? 'Cancelling Transaction' 
+  //         : '';
 
-    const iddleLabel = isTxPendingExecution()
-      ? 'Execute transaction'
-      : isTxPendingApproval()
-        ? 'Approve transaction'
-        : isTxVoided() 
-          ? 'Cancel Transaction' 
-          : '';
+  //   const iddleLabel = isTxPendingExecution()
+  //     ? 'Execute transaction'
+  //     : isTxPendingApproval()
+  //       ? 'Approve transaction'
+  //       : isTxVoided() 
+  //         ? 'Cancel Transaction' 
+  //         : '';
 
-    return isBusy
-      ? busyLabel
-      : transactionStatus.currentOperation === TransactionStatus.Iddle
-        ? iddleLabel
-        : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
-          ? t('general.cta-finish')
-          : t('general.refresh');
-  }, [
-    isBusy,
-    transactionStatus.currentOperation,
-    isTxPendingExecution,
-    isTxPendingApproval,
-    isTxVoided,
-    t,
-  ]);
+  //   return isBusy
+  //     ? busyLabel
+  //     : transactionStatus.currentOperation === TransactionStatus.Iddle
+  //       ? iddleLabel
+  //       : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
+  //         ? t('general.cta-finish')
+  //         : t('general.refresh');
+  // }, [
+  //   isBusy,
+  //   transactionStatus.currentOperation,
+  //   isTxPendingExecution,
+  //   isTxPendingApproval,
+  //   isTxVoided,
+  //   t,
+  // ]);
 
   const isTxInProgress = useCallback((): boolean => {
     return isBusy || fetchTxInfoStatus === "fetching" ? true : false;
@@ -2996,51 +2613,51 @@ export const MultisigView = () => {
   // Rendering //
   ///////////////
 
-  const txPendingSigners = (mtx: MultisigTransaction) => {
-    if (!selectedMultisig || !selectedMultisig.owners || selectedMultisig.owners.length === 0) {
-      return null;
-    }
+  // const txPendingSigners = (mtx: MultisigTransaction) => {
+  //   if (!selectedMultisig || !selectedMultisig.owners || selectedMultisig.owners.length === 0) {
+  //     return null;
+  //   }
 
-    const participants = selectedMultisig.owners as MultisigParticipant[]
-    return (
-      <>
-        {participants.map((item, index) => {
-          if (mtx.signers[index]) { return null; }
-          return (
-            <div key={`${index}`} className="well-group mb-1">
-              <div className="flex-fixed-right align-items-center">
-                <div className="left text-truncate m-0">
-                  <div><span>{item.name || `Owner ${index + 1}`}</span></div>
-                  <div className="font-size-75 text-monospace">{item.address}</div>
-                </div>
-                <div className="right pl-2">
-                  <div><span className={theme === 'light' ? "fg-light-orange font-bold" : "fg-warning font-bold"}>{t("multisig.multisig-transactions.not-signed")}</span></div>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </>
-    );
-  };
+  //   const participants = selectedMultisig.owners as MultisigParticipant[]
+  //   return (
+  //     <>
+  //       {participants.map((item, index) => {
+  //         if (mtx.signers[index]) { return null; }
+  //         return (
+  //           <div key={`${index}`} className="well-group mb-1">
+  //             <div className="flex-fixed-right align-items-center">
+  //               <div className="left text-truncate m-0">
+  //                 <div><span>{item.name || `Owner ${index + 1}`}</span></div>
+  //                 <div className="font-size-75 text-monospace">{item.address}</div>
+  //               </div>
+  //               <div className="right pl-2">
+  //                 <div><span className={theme === 'light' ? "fg-light-orange font-bold" : "fg-warning font-bold"}>{t("multisig.multisig-transactions.not-signed")}</span></div>
+  //               </div>
+  //             </div>
+  //           </div>
+  //         );
+  //       })}
+  //     </>
+  //   );
+  // };
 
-  const getParticipantsThatApprovedTx = useCallback((mtx: MultisigTransaction) => {
+  // const getParticipantsThatApprovedTx = useCallback((mtx: MultisigTransaction) => {
 
-    if (!selectedMultisig || !selectedMultisig.owners || selectedMultisig.owners.length === 0) {
-      return [];
-    }
+  //   if (!selectedMultisig || !selectedMultisig.owners || selectedMultisig.owners.length === 0) {
+  //     return [];
+  //   }
   
-    let addressess: MultisigParticipant[] = [];
-    const participants = selectedMultisig.owners as MultisigParticipant[];
-    participants.forEach((participant: MultisigParticipant, index: number) => {
-      if (mtx.signers[index]) {
-        addressess.push(participant);
-      }
-    });
+  //   let addressess: MultisigParticipant[] = [];
+  //   const participants = selectedMultisig.owners as MultisigParticipant[];
+  //   participants.forEach((participant: MultisigParticipant, index: number) => {
+  //     if (mtx.signers[index]) {
+  //       addressess.push(participant);
+  //     }
+  //   });
   
-    return addressess;
+  //   return addressess;
   
-  }, [selectedMultisig]);
+  // }, [selectedMultisig]);
 
   const renderMultisigPendingTxs = () => {
 
