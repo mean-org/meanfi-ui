@@ -568,7 +568,7 @@ export const AccountsNewView = () => {
       recordTxConfirmation(item, true);
       setShouldLoadTokens(true);
       reloadSwitch();
-    } else if (item && item.operationType === OperationType.Transfer && item.extras === 'scheduled') {
+    } else if (item && item.operationType === OperationType.Transfer && item.extras !== 'scheduled') {
       recordTxConfirmation(item, true);
       reloadSwitch();
     }
