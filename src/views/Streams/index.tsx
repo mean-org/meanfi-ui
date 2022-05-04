@@ -5590,7 +5590,7 @@ export const Streams = () => {
             {/* item block */}
             <div className="item-block vertical-scroll">
               <Spin spinning={loadingStreams}>
-                {renderMoneyStreamsSummary()}
+                {publicKey && renderMoneyStreamsSummary()}
                 {renderStreamList}
               </Spin>
             </div>
