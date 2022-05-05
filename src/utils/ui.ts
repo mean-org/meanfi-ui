@@ -241,10 +241,10 @@ export function timeConvert(n: number, decimals = 0, abbr = false): string {
 }
 
 export function msToTime(ms: number) {
-    let seconds = (ms / 1000).toFixed(1);
-    let minutes = (ms / (1000 * 60)).toFixed(1);
-    let hours = (ms / (1000 * 60 * 60)).toFixed(1);
-    let days = (ms / (1000 * 60 * 60 * 24)).toFixed(1);
+    const seconds = (ms / 1000).toFixed(1);
+    const minutes = (ms / (1000 * 60)).toFixed(1);
+    const hours = (ms / (1000 * 60 * 60)).toFixed(1);
+    const days = (ms / (1000 * 60 * 60 * 24)).toFixed(1);
     if (+seconds < 60) return seconds + " Sec";
     else if (+minutes < 60) return minutes + " Min";
     else if (+hours < 24) return hours + " Hrs";
@@ -608,7 +608,7 @@ export function addHours(date: Date, hours: number) {
 
 export const getTxPercentFeeAmount = (fees: TransactionFees, amount?: any): number => {
     let fee = 0;
-    let inputAmount = amount ? parseFloat(amount) : 0;
+    const inputAmount = amount ? parseFloat(amount) : 0;
     if (fees && fees.mspPercentFee) {
         fee = percentage(fees.mspPercentFee, inputAmount);
     }
@@ -617,7 +617,7 @@ export const getTxPercentFeeAmount = (fees: TransactionFees, amount?: any): numb
 
 export const getTxFeeAmount = (fees: TransactionFees, amount?: any): number => {
     let fee = 0;
-    let inputAmount = amount ? parseFloat(amount) : 0;
+    const inputAmount = amount ? parseFloat(amount) : 0;
     if (fees) {
         if (fees.mspPercentFee) {
             fee = percentage(fees.mspPercentFee, inputAmount);
@@ -629,7 +629,7 @@ export const getTxFeeAmount = (fees: TransactionFees, amount?: any): number => {
 };
 
 export function scrollToBottom(id: string) {
-    var div = document.getElementById(id);
+    const div = document.getElementById(id);
     if (div) {
         div.scrollTop = div.scrollHeight - div.clientHeight;
     }
@@ -710,7 +710,7 @@ export function intToString(value: number, decimals: number) {
     if (value < 1000) {
         return num;
     }
-    let si = [
+    const si = [
       {v: 1E3, s: "k"},
       {v: 1E6, s: "M"},
       {v: 1E9, s: "B"},

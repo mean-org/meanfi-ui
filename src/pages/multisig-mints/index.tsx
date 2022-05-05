@@ -568,15 +568,15 @@ export const MultisigMintsView = () => {
 
   const readAllMultisigAccounts = useCallback(async (wallet: PublicKey) => {
 
-    let accounts: any[] = [];
-    let multisigV2Accs = await multisigClient.account.multisigV2.all();
+    const accounts: any[] = [];
+    const multisigV2Accs = await multisigClient.account.multisigV2.all();
     let filteredAccs = multisigV2Accs.filter((a: any) => {
       if (a.account.owners.filter((o: any) => o.address.equals(wallet)).length) { return true; }
       return false;
     });
 
     accounts.push(...filteredAccs);
-    let multisigAccs = await multisigClient.account.multisig.all();
+    const multisigAccs = await multisigClient.account.multisig.all();
     filteredAccs = multisigAccs.filter((a: any) => {
       if (a.account.owners.filter((o: PublicKey) => o.equals(wallet)).length) { return true; }
       return false;
@@ -596,14 +596,14 @@ export const MultisigMintsView = () => {
       .findProgramAddress([info.publicKey.toBuffer()], MEAN_MULTISIG)
       .then(k => {
 
-        let address = k[0];
-        let owners: MultisigParticipant[] = [];
-        let labelBuffer = Buffer
+        const address = k[0];
+        const owners: MultisigParticipant[] = [];
+        const labelBuffer = Buffer
           .alloc(info.account.label.length, info.account.label)
           .filter(function (elem, index) { return elem !== 0; }
         );
 
-        let filteredOwners = info.account.owners.filter((o: any) => !o.address.equals(PublicKey.default));
+        const filteredOwners = info.account.owners.filter((o: any) => !o.address.equals(PublicKey.default));
 
         for (let i = 0; i < filteredOwners.length; i ++) {
           owners.push({
@@ -645,9 +645,9 @@ export const MultisigMintsView = () => {
       .findProgramAddress([info.publicKey.toBuffer()], MEAN_MULTISIG)
       .then(k => {
 
-        let address = k[0];
-        let owners: MultisigParticipant[] = [];
-        let labelBuffer = Buffer
+        const address = k[0];
+        const owners: MultisigParticipant[] = [];
+        const labelBuffer = Buffer
           .alloc(info.account.label.length, info.account.label)
           .filter(function (elem, index) { return elem !== 0; }
         );
@@ -713,7 +713,7 @@ export const MultisigMintsView = () => {
     if (!mintInfos || !mintInfos.length) { return []; }
 
     const results = mintInfos.map((t: any) => {
-      let mintAccount = MintLayout.decode(Buffer.from(t.account.data));
+      const mintAccount = MintLayout.decode(Buffer.from(t.account.data));
       mintAccount.address = t.pubkey;
       const supply = mintAccount.supply as Uint8Array;
       return {
@@ -785,8 +785,8 @@ export const MultisigMintsView = () => {
 
       readAllMultisigAccounts(publicKey)
         .then((allInfo: any) => {
-          let multisigInfoArray: MultisigInfo[] = [];
-          for (let info of allInfo) {
+          const multisigInfoArray: MultisigInfo[] = [];
+          for (const info of allInfo) {
             let parsePromise: any;
             if (info.account.version && info.account.version === 2) {
               parsePromise = parseMultisigV2Account;
@@ -1232,7 +1232,7 @@ useEffect(() => {
         return false;
       }
 
-      let result = await setMintAuth(payload)
+      const result = await setMintAuth(payload)
         .then(value => {
           if (!value) { return false; }
           consoleOut('set mint authority returned transaction:', value);
@@ -1471,7 +1471,7 @@ useEffect(() => {
 
       const mintKeypair = Keypair.generate();
 
-      let tx = new Transaction().add(...[
+      const tx = new Transaction().add(...[
         SystemProgram.createAccount({
           fromPubkey: publicKey,
           newAccountPubkey: mintKeypair.publicKey,
@@ -1558,7 +1558,7 @@ useEffect(() => {
         return false;
       }
 
-      let result = await createMint(payload)
+      const result = await createMint(payload)
         .then(value => {
           if (!value) { return false; }
           consoleOut('Create mint returned transaction:', value);
@@ -1796,7 +1796,7 @@ useEffect(() => {
       const mintInfo = await connection.getAccountInfo(data.tokenAddress);
       if (!mintInfo) { return null; }
       const mint = MintLayout.decode(mintInfo.data);
-      let ixs: TransactionInstruction[] = [];
+      const ixs: TransactionInstruction[] = [];
 
       const mintIx = Token.createMintToInstruction(
         TOKEN_PROGRAM_ID,
@@ -1818,7 +1818,7 @@ useEffect(() => {
         )
       );
   
-      let tx = multisigClient.transaction.createTransaction(
+      const tx = multisigClient.transaction.createTransaction(
         TOKEN_PROGRAM_ID,
         OperationType.MintTokens,
         ixAccounts,
@@ -2118,7 +2118,7 @@ useEffect(() => {
 
       if (!selectedMultisig || !publicKey) { return null; }
   
-      let tx = multisigClient.transaction.approve({
+      const tx = multisigClient.transaction.approve({
           accounts: {
             multisig: selectedMultisig.id,
             transaction: data.transaction.id,
@@ -2397,7 +2397,7 @@ useEffect(() => {
         multisigClient.programId
       );
 
-      let remainingAccounts = data.transaction.accounts
+      const remainingAccounts = data.transaction.accounts
         // Change the signer status on the vendor signer since it's signed by the program, not the client.
         .map((meta: any) =>
           meta.pubkey.equals(multisigSigner)
@@ -2412,7 +2412,7 @@ useEffect(() => {
 
       const txSigners = data.transaction.keypairs;
         
-      let tx = multisigClient.transaction.executeTransaction({
+      const tx = multisigClient.transaction.executeTransaction({
           accounts: {
             multisig: data.transaction.multisig,
             multisigSigner: multisigSigner,
@@ -2702,7 +2702,7 @@ useEffect(() => {
         return null;
       }
       
-      let tx = multisigClient.transaction.cancelTransaction(
+      const tx = multisigClient.transaction.cancelTransaction(
         {
           accounts: {
             transaction: data.transaction.id,
@@ -2887,7 +2887,7 @@ useEffect(() => {
         return false;
       }
 
-      let result = await connection
+      const result = await connection
         .sendEncodedTransaction(encodedTx)
         .then(sig => {
           consoleOut('sendEncodedTransaction returned a signature:', sig);
@@ -2910,7 +2910,7 @@ useEffect(() => {
             currentOperation: TransactionStatus.SendTransactionFailure
           } as TransactionStatusInfo;
           if (error.toString().indexOf('0x1794') !== -1) {
-            let treasury = data.transaction.operation === OperationType.StreamClose
+            const treasury = data.transaction.operation === OperationType.StreamClose
               ? data.transaction.accounts[5].pubkey.toBase58()
               : data.transaction.accounts[3].pubkey.toBase58();
             txStatus.customError = {

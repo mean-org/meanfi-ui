@@ -26,7 +26,7 @@ function App() {
       return;
     }
     const loadAnalytics = async () => {
-      let [response] = await AnalyticsBrowser.load({ writeKey });
+      const [response] = await AnalyticsBrowser.load({ writeKey });
       segmentAnalytics.analytics = response;
     }
 

@@ -54,9 +54,9 @@ export const StatsView = () => {
       setMeanToken(token);
 
       // use getParsedAccountInfo
-      let accountInfo = await connection.getParsedAccountInfo(mint);
+      const accountInfo = await connection.getParsedAccountInfo(mint);
       if (accountInfo) {   
-        let totalSupply = (accountInfo as any).value.data["parsed"]["info"]["supply"];
+        const totalSupply = (accountInfo as any).value.data["parsed"]["info"]["supply"];
         
         setMeanTotalSupply(toUiAmount(new BN(totalSupply), totalSupply.decimals || 6));
         setMeanDecimals((accountInfo as any).value.data["parsed"]["info"]["decimals"]);
@@ -186,7 +186,7 @@ export const PromoSpace = () => {
     return array;
   };
 
-  let randomPromoCards = shuffle(promoCards).slice(0, 3);  
+  const randomPromoCards = shuffle(promoCards).slice(0, 3);  
 
   
   return (

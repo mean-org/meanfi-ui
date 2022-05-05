@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 import { Market, OpenOrders, _OPEN_ORDERS_LAYOUT_V2 } from '@project-serum/serum/lib/market';
 import { TOKENS, getTokenByMintAddress } from './tokens';
 import { TokenAmount } from '../utils/safe-math';

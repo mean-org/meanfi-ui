@@ -137,7 +137,7 @@ export const OneTimePayment = (props: {
         connection.commitment
       )
       .then(response => {
-        for (let acc of response.value) {
+        for (const acc of response.value) {
           const decoded = ACCOUNT_LAYOUT.decode(acc.account.data);
           const address = decoded.mint.toBase58();
           const itemIndex = tokenList.findIndex(t => t.address === address);
@@ -153,7 +153,7 @@ export const OneTimePayment = (props: {
       })
       .catch(error => {
         console.error(error);
-        for (let t of tokenList) {
+        for (const t of tokenList) {
           balancesMap[t.address] = 0;
         }
       })
@@ -264,8 +264,7 @@ export const OneTimePayment = (props: {
   // Event handling
 
   const recordTxConfirmation = useCallback((signature: string, success = true) => {
-    let event: any;
-    event = success ? AppUsageEvent.TransferOTPCompleted : AppUsageEvent.TransferOTPFailed;
+    const event = success ? AppUsageEvent.TransferOTPCompleted : AppUsageEvent.TransferOTPFailed;
     segmentAnalytics.recordEvent(event, { signature: signature });
   }, []);
 
@@ -388,7 +387,7 @@ export const OneTimePayment = (props: {
         );
       };
 
-      let showFromList = !searchString 
+      const showFromList = !searchString 
         ? tokenList
         : tokenList.filter((t: any) => filter(t));
 
@@ -681,7 +680,7 @@ export const OneTimePayment = (props: {
       consoleOut('otpFee:', getFeeAmount(), 'blue');
       consoleOut('nativeBalance:', nativeBalance, 'blue');
 
-      let result = await otpTx(data)
+      const result = await otpTx(data)
         .then(value => {
           if (!value) {
             setTransactionStatus({

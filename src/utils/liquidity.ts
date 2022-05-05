@@ -12,7 +12,7 @@ import { MARKETS } from "./markets";
 
 export const getLiquidityPools = async (connection: Connection) => {
   
-  let liquidityPools = {} as any;
+  const liquidityPools = {} as any;
   let ammAll: any; // { publicKey: PublicKey, accountInfo: AccountInfo<Buffer> }[] = [];
   let marketAll: any; //{ publicKey: PublicKey, accountInfo: AccountInfo<Buffer> }[] = [];
 

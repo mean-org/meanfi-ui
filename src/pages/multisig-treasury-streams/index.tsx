@@ -130,7 +130,7 @@ export const MultisigTreasuryStreams = () => {
 
     const { t } = useTranslation("common");
     const { account } = useNativeAccount();
-    let { id } = useParams(); // Unpacking and retrieve id
+    const { id } = useParams(); // Unpacking and retrieve id
     const [previousBalance, setPreviousBalance] = useState(account?.lamports);
     const [nativeBalance, setNativeBalance] = useState(0);
     const [loadingTreasuryStreams, setLoadingTreasuryStreams] = useState(false);
@@ -493,7 +493,7 @@ export const MultisigTreasuryStreams = () => {
 
             setLoadingStreamsSummary(true);
 
-            let resume: StreamsSummary = {
+            const resume: StreamsSummary = {
                 totalNet: 0,
                 incomingAmount: 0,
                 outgoingAmount: 0,
@@ -509,7 +509,7 @@ export const MultisigTreasuryStreams = () => {
 
             let streamsUsdNetChange = 0;
 
-            for (let stream of updatedStreamsv2) {
+            for (const stream of updatedStreamsv2) {
                 const isIncoming =
                     stream.beneficiary && stream.beneficiary === publicKey.toBase58()
                         ? true
@@ -522,7 +522,7 @@ export const MultisigTreasuryStreams = () => {
                 }
 
                 // Get refreshed data
-                let freshStream = (await msp.refreshStream(stream)) as Stream;
+                const freshStream = (await msp.refreshStream(stream)) as Stream;
                 if (!freshStream || freshStream.status !== STREAM_STATUS.Running) {
                     continue;
                 }

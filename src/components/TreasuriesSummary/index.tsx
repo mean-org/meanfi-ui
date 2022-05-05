@@ -69,7 +69,7 @@ export const TreasuriesSummary = (props: {
 
         if (!connection || !address || loadingTreasuries || !msp) { return []; }
 
-        let treasuries = await msp.listTreasuries(new PublicKey(address));
+        const treasuries = await msp.listTreasuries(new PublicKey(address));
 
         return treasuries.filter((t: any) => !t.autoClose);
 
@@ -85,7 +85,7 @@ export const TreasuriesSummary = (props: {
                 setLoadingTreasuries(true);
             });
 
-            let treasuryAccumulator: (Treasury | TreasuryInfo)[] = [];
+            const treasuryAccumulator: (Treasury | TreasuryInfo)[] = [];
             let treasuriesv1: TreasuryInfo[] = [];
 
             getAllUserV2Treasuries()
@@ -129,7 +129,7 @@ export const TreasuriesSummary = (props: {
 
         if (!treasuryList) { return; }
 
-        let resume: UserTreasuriesSummary = {
+        const resume: UserTreasuriesSummary = {
             totalAmount: 0,
             openAmount: 0,
             lockedAmount: 0,
@@ -138,7 +138,7 @@ export const TreasuriesSummary = (props: {
 
         consoleOut('=========== Block strat ===========', '', 'orange');
 
-        for (let treasury of treasuryList) {
+        for (const treasury of treasuryList) {
 
             const isNew = (treasury as Treasury).version && (treasury as Treasury).version >= 2
                 ? true

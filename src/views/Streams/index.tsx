@@ -619,7 +619,7 @@ export const Streams = () => {
 
     setLoadingStreamsSummary(true);
 
-    let resume: StreamsSummary = {
+    const resume: StreamsSummary = {
       totalNet: 0,
       incomingAmount: 0,
       outgoingAmount: 0,
@@ -635,7 +635,7 @@ export const Streams = () => {
   
     // consoleOut('=========== Block strat ===========', '', 'orange');
 
-    for (let stream of updatedStreamsv1) {
+    for (const stream of updatedStreamsv1) {
 
       const isIncoming = stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58()
         ? true
@@ -648,7 +648,7 @@ export const Streams = () => {
       }
 
       // Get refreshed data
-      let freshStream = await ms.refreshStream(stream) as StreamInfo;
+      const freshStream = await ms.refreshStream(stream) as StreamInfo;
       if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
 
       const asset = getTokenByMintAddress(freshStream.associatedToken as string);
@@ -664,7 +664,7 @@ export const Streams = () => {
 
     // consoleOut('totalNet v1:', resume['totalNet'], 'blue');
 
-    for (let stream of updatedStreamsv2) {
+    for (const stream of updatedStreamsv2) {
 
       const isIncoming = stream.beneficiary && stream.beneficiary === treasurer.toBase58()
         ? true
@@ -677,7 +677,7 @@ export const Streams = () => {
       }
 
       // Get refreshed data
-      let freshStream = await msp.refreshStream(stream) as Stream;
+      const freshStream = await msp.refreshStream(stream) as Stream;
       if (!freshStream || freshStream.status !== STREAM_STATUS.Running) { continue; }
 
       const asset = getTokenByMintAddress(freshStream.associatedToken as string);
@@ -1117,12 +1117,12 @@ export const Streams = () => {
 
       if (!treasuryDetails || !multisigClient || !multisigAccounts || !publicKey) { return null; }
 
-      let treasury = treasuryDetails as Treasury;
-      let multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
+      const treasury = treasuryDetails as Treasury;
+      const multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
 
       if (!multisig) { return null; }
 
-      let pauseStream = await msp.pauseStream(
+      const pauseStream = await msp.pauseStream(
         new PublicKey(data.payer),                   // payer
         multisig.authority,                          // treasurer
         new PublicKey(data.stream),                  // stream,
@@ -1138,7 +1138,7 @@ export const Streams = () => {
         txSize
       );
       
-      let tx = multisigClient.transaction.createTransaction(
+      const tx = multisigClient.transaction.createTransaction(
         MSPV2Constants.MSP, 
         OperationType.StreamPause,
         ixAccounts as any,
@@ -1157,7 +1157,7 @@ export const Streams = () => {
       );
 
       tx.feePayer = publicKey;
-      let { blockhash } = await connection.getRecentBlockhash("confirmed");
+      const { blockhash } = await connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
       tx.partialSign(...txSigners);
 
@@ -1221,7 +1221,7 @@ export const Streams = () => {
 
       consoleOut('Starting Stream Pause using MSP V2...', '', 'blue');
       // Create a transaction
-      let result = await pauseStream(data)
+      const result = await pauseStream(data)
         .then(value => {
           if (!value) { return false; }
           consoleOut('pauseStream returned transaction:', value);
@@ -1571,12 +1571,12 @@ export const Streams = () => {
 
       if (!treasuryDetails || !multisigClient || !multisigAccounts || !publicKey) { return null; }
 
-      let treasury = treasuryDetails as Treasury;
-      let multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
+      const treasury = treasuryDetails as Treasury;
+      const multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
 
       if (!multisig) { return null; }
 
-      let resumeStream = await msp.resumeStream(
+      const resumeStream = await msp.resumeStream(
         new PublicKey(data.payer),                   // payer
         multisig.authority,                          // treasurer
         new PublicKey(data.stream),                  // stream,
@@ -1592,7 +1592,7 @@ export const Streams = () => {
         txSize
       );
       
-      let tx = multisigClient.transaction.createTransaction(
+      const tx = multisigClient.transaction.createTransaction(
         MSPV2Constants.MSP, 
         OperationType.StreamResume,
         ixAccounts as any,
@@ -1611,7 +1611,7 @@ export const Streams = () => {
       );
 
       tx.feePayer = publicKey;
-      let { blockhash } = await connection.getRecentBlockhash("confirmed");
+      const { blockhash } = await connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
       tx.partialSign(...txSigners);
 
@@ -1675,7 +1675,7 @@ export const Streams = () => {
 
       consoleOut('Starting Stream Resume using MSP V2...', '', 'blue');
       // Create a transaction
-      let result = await resumeStream(data)
+      const result = await resumeStream(data)
         .then(value => {
           if (!value) { return false; }
           consoleOut('resumeStream returned transaction:', value);
@@ -1903,13 +1903,13 @@ export const Streams = () => {
 
   const isMultisigTreasury = useCallback((treasury?: any) => {
 
-    let treasuryInfo: any = treasury ?? treasuryDetails;
+    const treasuryInfo: any = treasury ?? treasuryDetails;
 
     if (!treasuryInfo || treasuryInfo.version < 2 || !treasuryInfo.treasurer || !publicKey) {
       return false;
     }
 
-    let treasurer = new PublicKey(treasuryInfo.treasurer as string);
+    const treasurer = new PublicKey(treasuryInfo.treasurer as string);
 
     if (!treasurer.equals(publicKey) && multisigAccounts && multisigAccounts.findIndex(m => m.authority.equals(treasurer)) !== -1) {
       return true;

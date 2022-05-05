@@ -7,6 +7,9 @@ import { WhitelistClaimType } from "../models/enums";
 declare interface RequestInit { }
 
 export const getPrices = async (): Promise<any> => {
+
+  // let url = appConfig.getConfig().apiUrl + '/coin-prices';
+
   return fetch(MEANFI_PRICE_API_URL, {
     method: "GET",
   })
@@ -47,7 +50,7 @@ export const getRpcApiEndpoint = async (url: string, options?: RequestInit): Pro
 };
 
 // POST /meanfi-connected-accounts Creates a referral for a new address
-export function reportConnectedAccount(address: string, refBy?: string): Promise<boolean> {
+export const reportConnectedAccount = async (address: string, refBy?: string): Promise<boolean> => {
   const options: RequestInit = {
     method: "POST",
     headers: meanFiHeaders
@@ -76,7 +79,7 @@ export const getWhitelistAllocation = async (address: string, claimType: Whiteli
     method: "GET",
     headers: meanFiHeaders
   }
-  let url = `${appConfig.getConfig().apiUrl}/whitelists/${address}?claimType=${claimType}`;
+  const url = `${appConfig.getConfig().apiUrl}/whitelists/${address}?claimType=${claimType}`;
   try {
     const response = await fetch(url, options)
     if (response && response.status === 200) {
@@ -89,7 +92,7 @@ export const getWhitelistAllocation = async (address: string, claimType: Whiteli
   }
 };
 
-export function sendSignClaimTxRequest(address: string, base64ClaimTx: string): Promise<any> {
+export const sendSignClaimTxRequest = async (address: string, base64ClaimTx: string): Promise<any> => {
   const options: RequestInit = {
     method: "POST",
     headers: meanFiHeaders,
@@ -99,7 +102,7 @@ export function sendSignClaimTxRequest(address: string, base64ClaimTx: string): 
     }),
   }
 
-  let url = `${appConfig.getConfig().apiUrl}/whitelists/${address}`;
+  const url = `${appConfig.getConfig().apiUrl}/whitelists/${address}`;
 
   return fetch(url, options)
     .then(async response => {
@@ -120,7 +123,7 @@ export const sendRecordClaimTxRequest = async (address: string, claimTxId: strin
     headers: meanFiHeaders,
   }
 
-  let url = `${appConfig.getConfig().apiUrl}/airdrop-claim-tx/${address}?txId=${claimTxId}`;
+  const url = `${appConfig.getConfig().apiUrl}/airdrop-claim-tx/${address}?txId=${claimTxId}`;
 
   fetch(url, options)
     .then(response => {

@@ -38,11 +38,12 @@ export async function fetchTransactionStatus(
     signature: TransactionSignature
 ) {
     let data;
-    try {
-        const { value } = await connection.getSignatureStatus(signature, { searchTransactionHistory: true });
 
+    return connection.getSignatureStatus(signature, { searchTransactionHistory: true })
+    .then(async response => {
         let info = null;
-        if (value !== null) {
+        if (response !== null && response.value !== null) {
+            const value = response.value;
             let confirmations: Confirmations;
             if (typeof value.confirmations === "number") {
                 confirmations = value.confirmations;
@@ -55,8 +56,8 @@ export async function fetchTransactionStatus(
             } catch (error) {
                 throw new Error(`${error}`);
             }
-            let timestamp: Timestamp = blockTime !== null ? blockTime : "unavailable";
-
+            const timestamp: Timestamp = blockTime !== null ? blockTime : "unavailable";
+    
             info = {
                 slot: value.slot,
                 timestamp,
@@ -67,9 +68,10 @@ export async function fetchTransactionStatus(
         }
         data = { signature, info };
         return data;
-    } catch (error) {
+    })
+    .catch(error => {
         throw (error);
-    }
+    });
 }
 
 export const isSuccess = (operation: TransactionStatus | undefined): boolean => {
@@ -109,18 +111,19 @@ export const updateCreateStream2Tx = async (
                 claimType: claimType 
             }),
         }
-        
-        try {
-            const response = await fetch(url, options)
+
+        return fetch(url, options)
+        .then(async response => {
             if (response.status !== 200) {
                 throw new Error("Unable to update create stream tx");
             }
             const updateCreateStream2TxResponse = (await response.json()) as any;
             return updateCreateStream2TxResponse.base64ClaimTransaction;
-
-        } catch (error) {
+        })
+        .catch(error => {
             throw (error);
-        }
+        });
+
     };
 
     const createStream2TxSignedResp = await sendCreateStream2UpdateReq();

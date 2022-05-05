@@ -58,9 +58,9 @@ import { initialSummary, StreamsSummary } from '../../models/streams';
 import { MSP, Stream, STREAM_STATUS } from '@mean-dao/msp';
 import { StreamInfo, STREAM_STATE } from '@mean-dao/money-streaming';
 import { openNotification } from '../../components/Notifications';
+import { QRCodeSVG } from 'qrcode.react';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
-const QRCode = require('qrcode.react');
 
 export const AccountsView = () => {
   const location = useLocation();
@@ -188,8 +188,8 @@ export const AccountsView = () => {
 
   const selectAsset = useCallback((
     asset: UserTokenAccount,
-    clearTxList: boolean = true,
-    openDetailsPanel: boolean = false
+    clearTxList = true,
+    openDetailsPanel = false
   ) => {
     setStatus(FetchStatus.Fetching);
     if (clearTxList) {
@@ -341,7 +341,7 @@ export const AccountsView = () => {
 
     setLoadingStreamsSummary(true);
 
-    let resume: StreamsSummary = {
+    const resume: StreamsSummary = {
       totalNet: 0,
       incomingAmount: 0,
       outgoingAmount: 0,
@@ -353,7 +353,7 @@ export const AccountsView = () => {
 
     // consoleOut('=========== Block strat ===========', '', 'orange');
 
-    for (let stream of updatedStreamsv1) {
+    for (const stream of updatedStreamsv1) {
 
       const isIncoming = stream.beneficiaryAddress && stream.beneficiaryAddress === publicKey.toBase58()
         ? true
@@ -366,7 +366,7 @@ export const AccountsView = () => {
       }
 
       // Get refreshed data
-      let freshStream = await ms.refreshStream(stream) as StreamInfo;
+      const freshStream = await ms.refreshStream(stream) as StreamInfo;
       if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
 
       const asset = getTokenByMintAddress(freshStream.associatedToken as string);
@@ -382,7 +382,7 @@ export const AccountsView = () => {
 
     // consoleOut('totalNet v1:', resume['totalNet'], 'blue');
 
-    for (let stream of updatedStreamsv2) {
+    for (const stream of updatedStreamsv2) {
 
       const isIncoming = stream.beneficiary && stream.beneficiary === publicKey.toBase58()
         ? true
@@ -395,7 +395,7 @@ export const AccountsView = () => {
       }
 
       // Get refreshed data
-      let freshStream = await msp.refreshStream(stream) as Stream;
+      const freshStream = await msp.refreshStream(stream) as Stream;
       if (!freshStream || freshStream.status !== STREAM_STATUS.Running) { continue; }
 
       const asset = getTokenByMintAddress(freshStream.associatedToken as string);
@@ -529,7 +529,7 @@ export const AccountsView = () => {
       setShouldLoadTokens(false);
       setTokensLoaded(false);
 
-      let meanTokensCopy = JSON.parse(JSON.stringify(userTokens)) as UserTokenAccount[];
+      const meanTokensCopy = JSON.parse(JSON.stringify(userTokens)) as UserTokenAccount[];
       const splTokensCopy = JSON.parse(JSON.stringify(splTokenList)) as UserTokenAccount[];
       const pk = new PublicKey(accountAddress);
 
@@ -623,9 +623,9 @@ export const AccountsView = () => {
                     intersectedList.push(tokenFromSplTokenList);
                   }
                 });
-                let sortedList = intersectedList.sort((a, b) => {
-                  var nameA = a.symbol.toUpperCase();
-                  var nameB = b.symbol.toUpperCase();
+                const sortedList = intersectedList.sort((a, b) => {
+                  const nameA = a.symbol.toUpperCase();
+                  const nameB = b.symbol.toUpperCase();
                   if (nameA < nameB) {
                     return -1;
                   }
@@ -1146,10 +1146,10 @@ export const AccountsView = () => {
     <div className="text-center mt-3">
       <h3 className="mb-3">{t('assets.no-balance.line3')}</h3>
       <div className={theme === 'light' ? 'qr-container bg-white' : 'qr-container bg-black'}>
-        <QRCode
+        <QRCodeSVG
           value={accountAddress}
           size={200}
-          renderAs="svg"/>
+        />
       </div>
       <div className="transaction-field medium">
         <div className="transaction-field-row main-row">

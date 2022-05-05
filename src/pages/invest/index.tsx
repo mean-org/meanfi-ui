@@ -393,8 +393,8 @@ export const InvestView = () => {
       } else {
         const raydiumData = data.filter((item: any) => item.name.substr(0, 4) === "MEAN");
 
-        let maxRadiumApr = raydiumData.map((item_1: any) => {
-          let properties = item_1.apr7d;
+        const maxRadiumApr = raydiumData.map((item_1: any) => {
+          const properties = item_1.apr7d;
 
           return properties;
         });
@@ -420,8 +420,8 @@ export const InvestView = () => {
           // Treat data as a single element
           const orcaData = [data];
 
-          let maxOrcaApr = orcaData.map((item: any) => {
-            let properties = item.apy_7d;
+          const maxOrcaApr = orcaData.map((item: any) => {
+            const properties = item.apy_7d;
             return properties;
           });
           const maxApr = Math.max(...maxOrcaApr) * 100;
@@ -434,8 +434,8 @@ export const InvestView = () => {
           const orcaData_1 = data.filter((item_1: any) => item_1.name2 === "MEAN/USDC");
           if (orcaData_1 && orcaData_1.length > 0) {
             setOrcaInfo(orcaData_1);
-            let maxOrcaApr_1 = orcaData_1.map((item_2: any) => {
-              let properties_1 = item_2.apy_7d;
+            const maxOrcaApr_1 = orcaData_1.map((item_2: any) => {
+              const properties_1 = item_2.apy_7d;
               return properties_1;
             });
             const maxApr_1 = Math.max(...maxOrcaApr_1) * 100;

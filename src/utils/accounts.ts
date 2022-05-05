@@ -79,7 +79,7 @@ export async function createTokenMergeTx(
   owner: PublicKey,
   mergeGroup: AccountTokenParsedInfo[]
 ) {
-  let ixs: TransactionInstruction[] = [];
+  const ixs: TransactionInstruction[] = [];
 
   const associatedAddress = await Token.getAssociatedTokenAddress(
     ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -104,7 +104,7 @@ export async function createTokenMergeTx(
     );
   }
 
-  for (let token of mergeGroup.filter(a => !a.pubkey.equals(associatedAddress))) {
+  for (const token of mergeGroup.filter(a => !a.pubkey.equals(associatedAddress))) {
     ixs.push(
       Token.createTransferInstruction(
         TOKEN_PROGRAM_ID,
@@ -124,9 +124,9 @@ export async function createTokenMergeTx(
     );
   }
 
-  let tx = new Transaction().add(...ixs);
+  const tx = new Transaction().add(...ixs);
   tx.feePayer = owner;
-  let hash = await connection.getRecentBlockhash("recent");
+  const hash = await connection.getRecentBlockhash("recent");
   tx.recentBlockhash = hash.blockhash;
 
   return tx;
@@ -137,7 +137,7 @@ export async function createAtaAccount(
   mint: PublicKey,
   owner: PublicKey,
 ) {
-  let ixs: TransactionInstruction[] = [];
+  const ixs: TransactionInstruction[] = [];
 
   const associatedAddress = await Token.getAssociatedTokenAddress(
     ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -162,9 +162,9 @@ export async function createAtaAccount(
     );
   }
 
-  let tx = new Transaction().add(...ixs);
+  const tx = new Transaction().add(...ixs);
   tx.feePayer = owner;
-  let hash = await connection.getRecentBlockhash("recent");
+  const hash = await connection.getRecentBlockhash("recent");
   tx.recentBlockhash = hash.blockhash;
 
   return tx;

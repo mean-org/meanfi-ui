@@ -38,7 +38,7 @@ export function getTokenBySymbol(symbol: string): TokenInfo | null {
     return JSON.parse(JSON.stringify(NATIVE_SOL));
   }
 
-  let token = MEAN_TOKEN_LIST.find(t => t.symbol === symbol);
+  const token = MEAN_TOKEN_LIST.find(t => t.symbol === symbol);
 
   if (!token) { return null; }
 

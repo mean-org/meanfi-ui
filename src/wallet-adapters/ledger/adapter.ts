@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type Transport from '@ledgerhq/hw-transport';
 import type TransportWebHID from '@ledgerhq/hw-transport-webhid';
 import {

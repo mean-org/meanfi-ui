@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-types */
 import * as BufferLayout from "buffer-layout";
 import { rustEnum } from "@project-serum/borsh";
 

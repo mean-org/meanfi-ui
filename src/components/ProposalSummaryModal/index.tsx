@@ -200,7 +200,7 @@ export const ProposalSummaryModal = (props: {
 
     if (!highlightedMultisigTx) { return false; }
 
-    let result = (
+    const result = (
       highlightedMultisigTx.status === MultisigTransactionStatus.Pending &&
       !highlightedMultisigTx.didSigned
     );
@@ -240,7 +240,7 @@ export const ProposalSummaryModal = (props: {
 
     if (!highlightedMultisigTx || !highlightedMultisigTx.proposer || !publicKey) { return false; }
 
-    let result = (
+    const result = (
       highlightedMultisigTx.proposer.toBase58() === publicKey.toBase58() &&
       highlightedMultisigTx.status === MultisigTransactionStatus.Voided
     );
@@ -258,7 +258,7 @@ export const ProposalSummaryModal = (props: {
       return [];
     }
   
-    let addressess: MultisigParticipant[] = [];
+    const addressess: MultisigParticipant[] = [];
     const participants = selectedMultisig.owners as MultisigParticipant[];
     participants.forEach((participant: MultisigParticipant, index: number) => {
       if (mtx.signers[index]) {

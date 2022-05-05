@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 import { environment } from "../environments/environment";
 import { osName, isBrowser, browserName, browserVersion } from "react-device-detect";
 import { consoleOut, isLocal } from "./ui";
@@ -86,7 +87,7 @@ export class CustomLoggerService {
     }
 
     private getLoggerJsonData(message: string, level: LogLevel, data?: any): LoggerJsonData {
-        let logBody: LoggerJsonData = {
+        const logBody: LoggerJsonData = {
             Application: this.applicationName,
             Environment: this.getEnv(),
             Level: level,
