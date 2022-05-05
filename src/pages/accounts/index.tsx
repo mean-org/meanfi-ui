@@ -3,7 +3,6 @@ import "./style.scss";
 import {
   ArrowLeftOutlined,
   BarChartOutlined,
-  CopyOutlined,
   EditOutlined,
   LoadingOutlined,
   MergeCellsOutlined,
@@ -30,7 +29,7 @@ import {
   openLinkInNewTab,
   shortenAddress
 } from '../../utils/utils';
-import { Button, Col, Dropdown, Empty, Menu, Result, Row, Space, Spin, Tooltip } from 'antd';
+import { Button, Col, Dropdown, Empty, Menu, Row, Space, Spin, Tooltip } from 'antd';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import {
   SOLANA_WALLET_GUIDE,
@@ -1603,8 +1602,8 @@ export const AccountsNewView = () => {
                   <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{t('assets.no-transactions')}</p>} />
                 </div>
               ) : status === FetchStatus.FetchFailed && (
-                <div className="h-75 flex-center">
-                  <Result status="warning" title={t('assets.loading-error')} />
+                <div className="h-100 flex-center">
+                  <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{t('assets.loading-error')}</p>} />
                 </div>
               )
             }
