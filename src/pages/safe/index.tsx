@@ -46,7 +46,7 @@ import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
-import { IconCaretDown, IconClock, IconDocument, IconShieldOutline, IconUserGroup, IconUsers, IconWallet } from '../../Icons';
+import { IconCaretDown, IconClock, IconDocument, IconSafe, IconShieldOutline, IconUserGroup, IconUsers, IconWallet } from '../../Icons';
 import dateFormat from 'dateformat';
 import { useNativeAccount } from '../../contexts/accounts';
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
@@ -4420,17 +4420,19 @@ export const SafeView = () => {
                   </Spin>
                 </div>
                 <div className="bottom-ctas">
-                  <div className="create-stream">
+                  <div className="create-safe">
                     <Button
                       block
                       type="primary"
                       shape="round"
                       disabled={!connected}
+                      className="d-flex justify-content-center align-items-center"
                       onClick={onCreateMultisigClick}>
-                      {connected
-                        ? t('multisig.create-new-multisig-account-cta')
-                        : t('transactions.validation.not-connected')
-                      }
+                        <IconSafe className="mean-svg-icons mr-1" />
+                        {connected
+                          ? t('multisig.create-new-multisig-account-cta')
+                          : t('transactions.validation.not-connected')
+                        }
                     </Button>
                   </div>
                 </div>
