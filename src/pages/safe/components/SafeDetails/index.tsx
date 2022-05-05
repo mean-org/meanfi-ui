@@ -1,6 +1,6 @@
 import './style.scss';
 import { Button, Col, Collapse, Row } from "antd"
-import { IconArrowBack, IconUser, IconThumbsUp, IconThumbsDown, IconApprove, IconCross, IconCheckCircle, IconCreated, IconMinus } from "../../../../Icons"
+import { IconArrowBack, IconUser, IconThumbsUp, IconThumbsDown, IconApprove, IconCross, IconCheckCircle, IconCreated, IconMinus, IconCaretDown } from "../../../../Icons"
 import { ProposalResumeItem } from '../ProposalResumeItem';
 import { shortenAddress } from '../../../../utils/utils';
 import { TabsMean } from '../../../../components/TabsMean';
@@ -10,7 +10,10 @@ export const SafeDetailsView = (props: {
   onDataToSafeView: any;
   proposalSelected: any;
 }) => {
+  const { Panel } = Collapse;
   const { isSafeDetails, onDataToSafeView, proposalSelected } = props;
+
+  const collapseHandler = (key: any) => {}
 
   // When back button is clicked, goes to Safe Info
   const hideSafeDetailsHandler = () => {
@@ -18,16 +21,12 @@ export const SafeDetailsView = (props: {
     onDataToSafeView();
   };
 
-  const { Panel } = Collapse;
-
-  function callback(key: any) {}
-
+  // Display the instructions in the "Instructions" tab, on safe details page
   const renderInstructions = (
     <div className="safe-details-collapse w-100">
       <Collapse
-        expandIconPosition="right"
         accordion={true}
-        onChange={callback}>
+        onChange={collapseHandler}>
         {proposalSelected.instructions.map((instruction: any) => {
 
           const header =  <Col className="instruction-header">
@@ -38,50 +37,48 @@ export const SafeDetailsView = (props: {
                             </div>
                           </Col>;
 
+          const instructionsContent = [
+            {
+              label: "Name",
+              content: instruction.name
+            },
+            {
+              label: "Sender",
+              content: instruction.sender
+            },
+            {
+              label: "Recipient",
+              content: instruction.recipient
+            },
+            {
+              label: "Amount",
+              content: instruction.amount
+            },
+          ];
+
           return (
-            <Panel header={header} key={instruction.id}>
-              <Row gutter={[8, 8]} className="mb-1">
-                {instruction.name && (
-                  <>
-                    <Col xs={6} sm={6} md={4} lg={4} className="pr-1">
-                      <span className="info-label">Name:</span>
-                    </Col>
-                    <Col xs={18} sm={18} md={20} lg={20} className="pl-1">
-                      <span>{instruction.name}</span>
-                    </Col>
-                  </>
-                )}
-                {instruction.sender && (
-                  <>
-                    <Col xs={6} sm={6} md={4} lg={4} className="pr-1">
-                      <span className="info-label">Sender:</span>
-                    </Col>
-                    <Col xs={18} sm={18} md={20} lg={20} className="pl-1">
-                      <span>{instruction.sender}</span>
-                    </Col>
-                  </>
-                )}
-                {instruction.recipient && (
-                  <>
-                    <Col xs={6} sm={6} md={4} lg={4} className="pr-1">
-                      <span className="info-label">Recipient:</span>
-                    </Col>
-                    <Col xs={18} sm={18} md={20} lg={20} className="pl-1">
-                      <span>{instruction.recipient}</span>
-                    </Col>
-                  </>
-                )}
-                {instruction.amount && (
-                  <>
-                    <Col xs={6} sm={6} md={4} lg={4} className="pr-1">
-                      <span className="info-label">Amount:</span>
-                    </Col>
-                    <Col xs={18} sm={18} md={20} lg={20} className="pl-1">
-                      <span>{instruction.amount}</span>
-                    </Col>
-                  </>
-                )}
-              </Row>
+            <Panel header={header} key={instruction.id} showArrow={false} extra={<span className="icon-button-container arrow-up-down">
+              <Button
+                type="default"
+                shape="circle"
+                size="middle"
+                icon={<IconCaretDown className="mean-svg-icons" />}
+              />
+            </span>}>
+              {instructionsContent.map((instContent, index) => (
+                <Row gutter={[8, 8]} className="mb-1" key={index}>
+                  {instContent.content && (
+                    <>
+                      <Col xs={6} sm={6} md={4} lg={4} className="pr-1">
+                        <span className="info-label">{instContent.label}:</span>
+                      </Col>
+                      <Col xs={18} sm={18} md={20} lg={20} className="pl-1">
+                        <span>{instContent.content}</span>
+                      </Col>
+                    </>
+                  )}
+                </Row>
+              ))}
             </Panel>
           )
         })}
@@ -89,6 +86,7 @@ export const SafeDetailsView = (props: {
     </div>
   );
 
+  // Display the activities in the "Activity" tab, on safe details page
   const renderActivities = (
     <Row>
       {proposalSelected.activities.map((activity: any) => {
