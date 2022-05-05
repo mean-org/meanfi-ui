@@ -11,6 +11,7 @@
 		"money-streams": "머니스트림",
 		"network-unknown": "미확인",
 		"no-money-streams": "머니스트림 없음",
+		"no-recent-events": "No recent events",
 		"non-ata-label": "연동되지 않은 토큰 계좌",
 		"non-ata-tooltip": "MeanFi는 연결된 토큰 계정으로 작동합니다. {{tokenSymbol}} 계정을 병합하세요.",
 		"refresh-tooltip": "자산을 새로 고치려면 클릭하세요.",
@@ -387,7 +388,7 @@
 	},
 	"multisig": {
 		"add-participant-cta": "참가자 추가",
-		"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
+		"back-to-multisig-accounts-cta": "Back to Multisig Safes",
 		"create-asset": {
 			"main-cta": "Create",
 			"main-cta-busy": "Creating vault",
@@ -471,7 +472,7 @@
 		},
 		"multisig-assets": {
 			"asset-detail-heading": "Vault details",
-			"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
+			"back-to-multisig-accounts-cta": "Back to Multisig Safes",
 			"cta-change-multisig-authority": "Change Vault Ownership",
 			"cta-change-multisig-authority-busy": "Changing Multisig",
 			"cta-close": "Close vault",
@@ -499,7 +500,7 @@
 		},
 		"multisig-detail-heading": "다중서명 계좌 세부사항",
 		"multisig-mints": {
-			"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
+			"back-to-multisig-accounts-cta": "Back to Multisig Safes",
 			"change-mint-authority-modal-title": "Set Mint Authority",
 			"create-mint-modal-title": "Create mint",
 			"cta-change-mint-authority": "Transfer Ownership",
@@ -600,7 +601,7 @@
 		},
 		"pending-transactions": "보류중인 거래",
 		"refresh-tooltip": "다중서명 계정 목록을 새로 고치려면 클릭하십시오.",
-		"screen-title": "Safes & Multisig",
+		"screen-title": "Multisig Safes",
 		"set-program-authority": {
 			"main-cta": "권한 설정",
 			"main-cta-busy": "권한 설정",
@@ -688,7 +689,7 @@
 		"error-loading-treasuryid-message": "ID가 {{treasuryId}}인 트레저리를 찾거나 열 수 없습니다.",
 		"error-sending-transaction": "Error submitting the transaction, please try again.",
 		"error-title": "오류",
-		"friend-referral-completed": "친구 추천 완료",
+		"friend-referral-completed": "MeanFi에 오신 것을 환영합니다",
 		"invalid-publickey-message": "잘못된 공개 키입니다. 입력을 확인하십시오",
 		"invalid-streamid-message": "잘못된 스트림 ID",
 		"network-connection-down": "네트워크 연결이 없습니다. 앱이 오프라인 상태입니다!",
@@ -727,7 +728,7 @@
 	},
 	"referrals": {
 		"address-invalid": "추천 주소가 유효한 솔라나 주소가 아닙니다.",
-		"address-processed": "이 추천을 기록하려면 지갑을 연결하십시오.",
+		"address-processed": "시작하려면 지갑을 연결하세요",
 		"connect-to-refer-friend": "이 추천을 기록하려면 지갑을 연결하십시오.",
 		"modal-title": "친구 추천",
 		"refer-friend-hint": "친구를 추천하고 $100 상당의 암호화폐를 교환할 때 MEAN 토큰으로 최대 $25 획득",
@@ -980,7 +981,7 @@
 			"tx-confirm-failure": "거래를 확인할 수 없습니다",
 			"tx-confirm-failure-check": "아래 링크에서 거래 확인",
 			"tx-confirmation-status-confirmed": "거래 확정!",
-			"tx-confirmation-status-timeout": "거래가 확인되지 않습니다 {{timeout}}",
+			"tx-confirmation-status-timeout": "거래를 확인할 수 없습니다",
 			"tx-confirmation-status-wait": "거래확인을 기다리는 중",
 			"tx-generic-operation-success": "거래가 성공적으로 완료되었습니다",
 			"tx-idle": "쉬고있는",
@@ -1033,7 +1034,7 @@
 			"amount-high": "Amount exceeded",
 			"amount-low": "Low balance",
 			"amount-lt-fee": "금액은 거래 수수료보다 커야 합니다.",
-			"amount-sol-high": "Insufficient SOL",
+			"amount-sol-low": "Insufficient SOL",
 			"amount-withdraw-high": "금액이 사용 가능한 자금보다 큽니다.",
 			"cannot-use-own-account-as-treasury": "귀하의 계정을 트레저리 ID로 사용할 수 없습니다.",
 			"exchange-unavailable": "교환 불가",
@@ -1264,7 +1265,7 @@
 			"services": {
 				"custody": "보관",
 				"faucet": "Faucet",
-				"multisig": "Safes & Multisig",
+				"multisig": "Multisig",
 				"submenu-title": "서비스",
 				"treasuries": "Streaming Treasuries",
 				"wallet-guide": "지갑 가이드",

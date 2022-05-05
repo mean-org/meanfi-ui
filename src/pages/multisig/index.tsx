@@ -40,7 +40,6 @@ import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION, VERBOSE_DATE_TIME_FORMAT } fro
 import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
 import { OperationType, TransactionStatus } from '../../models/enums';
-import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { IconCaretDown, IconClock, IconDocument, IconEdit, IconShieldOutline, IconTrash, IconUpdate, IconUserGroup, IconUsers, IconWallet } from '../../Icons';
 import dateFormat from 'dateformat';
 import { useNativeAccount } from '../../contexts/accounts';
@@ -77,6 +76,7 @@ import { ProgramAccounts } from '../../utils/accounts';
 import { getOperationName } from '../../utils/multisig-helpers';
 import { openNotification } from '../../components/Notifications';
 import { ProposalSummaryModal } from '../../components/ProposalSummaryModal';
+import { TxConfirmationContext } from '../../contexts/transaction-status';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -102,8 +102,8 @@ export const MultisigView = () => {
     lastSentTxSignature,
     lastSentTxOperationType,
     startFetchTxSignatureInfo,
-    clearTransactionStatusContext
-  } = useContext(TransactionStatusContext);
+    clearTxConfirmationContext
+  } = useContext(TxConfirmationContext);
 
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
@@ -306,7 +306,7 @@ export const MultisigView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setIsBusy(true);
@@ -574,7 +574,7 @@ export const MultisigView = () => {
     transactionCancelled,
     multisigClient,
     transactionStatus.currentOperation,
-    clearTransactionStatusContext,
+    clearTxConfirmationContext,
     startFetchTxSignatureInfo,
     resetTransactionStatus,
     setTransactionStatus,
@@ -661,7 +661,7 @@ export const MultisigView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setIsBusy(true);
@@ -965,7 +965,7 @@ export const MultisigView = () => {
     transactionCancelled,
     multisigClient,
     transactionStatus.currentOperation,
-    clearTransactionStatusContext,
+    clearTxConfirmationContext,
     startFetchTxSignatureInfo,
     resetTransactionStatus,
     setTransactionStatus,
@@ -1012,7 +1012,7 @@ export const MultisigView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setIsBusy(true);
@@ -1250,7 +1250,7 @@ export const MultisigView = () => {
     }
 
   }, [
-    clearTransactionStatusContext, 
+    clearTxConfirmationContext, 
     resetTransactionStatus, 
     wallet, 
     selectedMultisig, 
@@ -1272,7 +1272,7 @@ export const MultisigView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setIsBusy(true);
@@ -1535,7 +1535,7 @@ export const MultisigView = () => {
     transactionCancelled,
     multisigClient,
     transactionStatus.currentOperation,
-    clearTransactionStatusContext,
+    clearTxConfirmationContext,
     startFetchTxSignatureInfo,
     resetTransactionStatus,
     setTransactionStatus,
@@ -1550,7 +1550,7 @@ export const MultisigView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setIsBusy(true);
@@ -1820,7 +1820,7 @@ export const MultisigView = () => {
     transactionCancelled,
     multisigClient,
     transactionStatus.currentOperation,
-    clearTransactionStatusContext,
+    clearTxConfirmationContext,
     startFetchTxSignatureInfo,
     resetTransactionStatus,
     setTransactionStatus,
@@ -2348,12 +2348,12 @@ export const MultisigView = () => {
           setSelectedMultisig(undefined);   // Deselects the current multisig if creating a new one
         }
         setNeedRefreshTxs(true);          // Trigger reload multisigs
-        clearTransactionStatusContext();
+        clearTxConfirmationContext();
         setLoadingMultisigAccounts(true);
         sethHighlightedMultisigTx(undefined);
         setMultisigTransactionSummary(undefined);
       } else if (fetchTxInfoStatus === "error") {
-        clearTransactionStatusContext();
+        clearTxConfirmationContext();
         openNotification({
           type: "info",
           duration: 5,
@@ -2384,7 +2384,7 @@ export const MultisigView = () => {
     lastSentTxOperationType, 
     multisigClient, 
     selectedMultisig,
-    clearTransactionStatusContext
+    clearTxConfirmationContext
   ]);
 
   // Get Multisig Vaults

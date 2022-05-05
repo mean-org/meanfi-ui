@@ -33,7 +33,7 @@ import { PreFooter } from "../../components/PreFooter";
 import { useNativeAccount } from "../../contexts/accounts";
 import { customLogger } from '../..';
 import { TokenDisplay } from '../../components/TokenDisplay';
-import { TransactionStatusContext } from '../../contexts/transaction-status';
+import { TxConfirmationContext } from '../../contexts/transaction-status';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -46,7 +46,7 @@ export const WrapView = () => {
     refreshTokenBalance,
     setTransactionStatus,
   } = useContext(AppStateContext);
-  const { enqueueTransactionConfirmation } = useContext(TransactionStatusContext);
+  const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const { t } = useTranslation("common");
   const [isBusy, setIsBusy] = useState(false);
   const [wrapAmount, setWrapAmount] = useState<string>("");
@@ -107,7 +107,12 @@ export const WrapView = () => {
 
   const getMaxPossibleAmount = () => {
     // const fee = wrapFees.blockchainFee + getTxPercentFeeAmount(wrapFees, nativeBalance);
-    return nativeBalance - MIN_SOL_BALANCE_REQUIRED;
+    const maxPossibleAmount = nativeBalance - MIN_SOL_BALANCE_REQUIRED;
+    if (maxPossibleAmount > 0) {
+      return maxPossibleAmount;
+    } else {
+      return nativeBalance;
+    }
   }
 
   const isSuccess = useCallback(() => {
@@ -191,8 +196,10 @@ export const WrapView = () => {
 
         // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        const myFees = getTxFeeAmount(wrapFees, amount);
-        if (nativeBalance < wrapFees.blockchainFee + myFees) {
+
+        // const myFees = getTxFeeAmount(wrapFees, amount);
+        // if (nativeBalance < wrapFees.blockchainFee + myFees) {
+        if (nativeBalance < MIN_SOL_BALANCE_REQUIRED) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
@@ -423,7 +430,8 @@ export const WrapView = () => {
   const isValidInput = (): boolean => {
     return wrapAmount &&
       parseFloat(wrapAmount) > 0 &&
-      parseFloat(wrapAmount) > (wrapFees.blockchainFee + getTxPercentFeeAmount(wrapFees, wrapAmount)) &&
+      // parseFloat(wrapAmount) > (wrapFees.blockchainFee + getTxPercentFeeAmount(wrapFees, wrapAmount)) &&
+      parseFloat(wrapAmount) > MIN_SOL_BALANCE_REQUIRED &&
       parseFloat(wrapAmount) <= getMaxPossibleAmount()
       ? true
       : false;
@@ -442,13 +450,18 @@ export const WrapView = () => {
     );
   };
 
+  // console.log("native Balance", nativeBalance.toFixed(wSol?.decimals));
+  // console.log("MIN_SOL_BALANCE_REQUIRED", MIN_SOL_BALANCE_REQUIRED);
+  // console.log("getMaxPossibleAmount", getMaxPossibleAmount().toFixed(wSol?.decimals));
+  
+
   return (
     <>
       <div className="container main-container">
         <div className="interaction-area">
           {publicKey ? (
             <div className="place-transaction-box mt-4 mb-3">
-              <div className="well">
+              <div className="well mb-1">
                 <div className="flexible-right mb-1">
                   <div className="inner-label">
                     <span>{t('faucet.current-sol-balance')}: </span>
@@ -485,7 +498,7 @@ export const WrapView = () => {
                   <div className="right">
                     <span className="add-on simplelink">
                       <div className="token-group">
-                        {getMaxPossibleAmount() > 0 && (
+                        {nativeBalance > 0 && (
                           <div className="token-max simplelink"
                             onClick={() => {
                               setValue(getMaxPossibleAmount().toFixed(wSol?.decimals));
@@ -516,29 +529,29 @@ export const WrapView = () => {
                       </span>
                     ) : parseFloat(wrapAmount) > getMaxPossibleAmount() ? (
                       <span className="form-field-error">
-                        {t('transactions.validation.amount-sol-high')}
+                        {t('transactions.validation.amount-high')}
                       </span>
                     // ) : parseFloat(wrapAmount) <= (wrapFees.blockchainFee + getTxPercentFeeAmount(wrapFees, wrapAmount)) ? (
                     //   <span className="fg-red">
                     //     {t('transactions.validation.amount-lt-fee')}
                     //   </span>
-                    ) : (
-                      <div className="form-field-hint">{t("wrap.hint-message")}</div>
-                    )}
+                    ) : null}
                   </span>
                 </div>
               </div>
+
+              <div className="form-field-hint mb-2 pl-3">{t("wrap.hint-message")}</div>
 
               <div>
                 {isValidInput() &&
                   infoRow(
                     t('faucet.wrapped-amount') + ":",
                     `${
-                      wrapFees
+                      wrapAmount
                         ? "~" +
                           getTokenAmountAndSymbolByTokenAddress(
                             parseFloat(wrapAmount) >=
-                              (wrapFees.blockchainFee as number)
+                              (MIN_SOL_BALANCE_REQUIRED as number)
                               ? parseFloat(wrapAmount)
                               : 0,
                             WRAPPED_SOL_MINT_ADDRESS,
@@ -546,6 +559,19 @@ export const WrapView = () => {
                           )
                         : "0"
                     }`
+                    // `${
+                    //   wrapFees
+                    //     ? "~" +
+                    //       getTokenAmountAndSymbolByTokenAddress(
+                    //         parseFloat(wrapAmount) >=
+                    //           (wrapFees.blockchainFee as number)
+                    //           ? parseFloat(wrapAmount)
+                    //           : 0,
+                    //         WRAPPED_SOL_MINT_ADDRESS,
+                    //         false
+                    //       )
+                    //     : "0"
+                    // }`
                   )
                 }
               </div>

@@ -39,7 +39,7 @@ export const JupiterExchangeInput = (props: {
 
     return (
         <>
-        <div className={`well ${props.disabled ? 'disabled' : props.className || ''}`}>
+        <div className={`well ${props.className} ${props.disabled ? 'disabled' : ''}`}>
 
             {/* Balance row */}
             <div className="flex-fixed-right">

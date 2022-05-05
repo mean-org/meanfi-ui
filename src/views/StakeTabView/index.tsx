@@ -1,8 +1,7 @@
 import { useCallback, useContext, useEffect, useState } from "react";
 import './style.scss';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined,  } from "@ant-design/icons";
-import { Button, Col, Divider, Modal, Row, Spin } from "antd";
-import moment from 'moment';
+import { Button, Col, Modal, Row, Spin } from "antd";
 import { useTranslation } from 'react-i18next';
 import { TokenDisplay } from "../../components/TokenDisplay";
 import { useWallet } from "../../contexts/wallet";
@@ -10,14 +9,16 @@ import { AppStateContext } from "../../contexts/appstate";
 import { cutNumber, formatAmount, formatThousands, getAmountWithSymbol, getTxIxResume, isValidNumber } from "../../utils/utils";
 import { StakeQuote, StakingClient } from "@mean-dao/staking";
 import { Transaction } from "@solana/web3.js";
-import { TransactionStatusContext } from "../../contexts/transaction-status";
+import { TxConfirmationContext } from "../../contexts/transaction-status";
 import { OperationType, TransactionStatus } from "../../models/enums";
 import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs } from "../../utils/ui";
 import { customLogger } from "../..";
 import { useConnection } from "../../contexts/connection";
-import { notify } from "../../utils/notifications";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { INPUT_DEBOUNCE_TIME } from "../../constants";
+import { AppUsageEvent, SegmentStakeMeanData } from "../../utils/segment-service";
+import { segmentAnalytics } from "../../App";
+import { openNotification } from "../../components/Notifications";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 let inputDebounceTimeout: any;
@@ -35,11 +36,13 @@ export const StakeTabView = (props: {
     setTransactionStatus,
     refreshPrices,
   } = useContext(AppStateContext);
-  const { enqueueTransactionConfirmation } = useContext(TransactionStatusContext);
+  const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const connection = useConnection();
   const [isBusy, setIsBusy] = useState(false);
   const { connected, wallet } = useWallet();
   const { t } = useTranslation('common');
+
+  /*
   const periods = [
     {
       value: 0,
@@ -67,10 +70,11 @@ export const StakeTabView = (props: {
       multiplier: 4.0
     },
   ];
+  */
 
   const [fromCoinAmount, setFromCoinAmount] = useState<string>('');
-  const [periodValue, setPeriodValue] = useState<number>(periods[0].value);
-  const [periodTime, setPeriodTime] = useState<string>(periods[0].time);
+  // const [periodValue, setPeriodValue] = useState<number>(periods[0].value);
+  // const [periodTime, setPeriodTime] = useState<string>(periods[0].time);
   const [stakeQuote, setStakeQuote] = useState<number>(0);
   const [stakedMeanPrice, setStakedMeanPrice] = useState<number>(0);
   const [canFetchStakeQuote, setCanFetchStakeQuote] = useState(false);
@@ -199,7 +203,7 @@ export const StakeTabView = (props: {
     const transactionLog: any[] = [];
 
     const createTx = async (): Promise<boolean> => {
-      if (wallet && props.stakeClient) {
+      if (wallet && props.stakeClient && props.selectedToken) {
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
           currentOperation: TransactionStatus.InitTransaction,
@@ -218,6 +222,18 @@ export const StakeTabView = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
           result: "",
         });
+
+        // Report event to Segment analytics
+        const segmentData: SegmentStakeMeanData = {
+          asset: props.selectedToken.symbol,
+          assetPrice: getPricePerToken(props.selectedToken),
+          stakedAsset: 'sMEAN',
+          stakedAssetPrice: stakedMeanPrice,
+          amount: uiAmount,
+          quote: stakeQuote
+        };
+        consoleOut('segment data:', segmentData, 'brown');
+        segmentAnalytics.recordEvent(AppUsageEvent.StakeMeanFormButton, segmentData);
 
         return await props.stakeClient
           .stakeTransaction(
@@ -250,6 +266,7 @@ export const StakeTabView = (props: {
             customLogger.logError("Stake transaction failed", {
               transcript: transactionLog,
             });
+            segmentAnalytics.recordEvent(AppUsageEvent.StakeMeanFailed, { transcript: transactionLog });
             return false;
           });
       } else {
@@ -260,6 +277,7 @@ export const StakeTabView = (props: {
         customLogger.logError("Stake transaction failed", {
           transcript: transactionLog,
         });
+        segmentAnalytics.recordEvent(AppUsageEvent.StakeMeanFailed, { transcript: transactionLog });
         return false;
       }
     };
@@ -297,6 +315,7 @@ export const StakeTabView = (props: {
               customLogger.logError("Stake transaction failed", {
                 transcript: transactionLog,
               });
+              segmentAnalytics.recordEvent(AppUsageEvent.StakeMeanFailed, { transcript: transactionLog });
               return false;
             }
             setTransactionStatus({
@@ -308,6 +327,10 @@ export const StakeTabView = (props: {
                 TransactionStatus.SignTransactionSuccess
               ),
               result: { signer: wallet.publicKey.toBase58() },
+            });
+            segmentAnalytics.recordEvent(AppUsageEvent.StakeMeanSigned, {
+              signature,
+              encodedTx
             });
             return true;
           })
@@ -326,9 +349,8 @@ export const StakeTabView = (props: {
                 error: `${error}`,
               },
             });
-            customLogger.logError("Stake transaction failed", {
-              transcript: transactionLog,
-            });
+            customLogger.logError("Stake transaction failed", {transcript: transactionLog});
+            segmentAnalytics.recordEvent(AppUsageEvent.StakeMeanFailed, { transcript: transactionLog });
             return false;
           });
       } else {
@@ -341,9 +363,8 @@ export const StakeTabView = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: "Cannot sign transaction! Wallet not found!",
         });
-        customLogger.logError("Stake transaction failed", {
-          transcript: transactionLog,
-        });
+        customLogger.logError("Stake transaction failed", {transcript: transactionLog});
+        segmentAnalytics.recordEvent(AppUsageEvent.StakeMeanFailed, { transcript: transactionLog });
         return false;
       }
     };
@@ -382,6 +403,7 @@ export const StakeTabView = (props: {
             customLogger.logError("Stake transaction failed", {
               transcript: transactionLog,
             });
+            segmentAnalytics.recordEvent(AppUsageEvent.StakeMeanFailed, { transcript: transactionLog });
             return false;
           });
       } else {
@@ -396,6 +418,7 @@ export const StakeTabView = (props: {
         customLogger.logError("Stake transaction failed", {
           transcript: transactionLog,
         });
+        segmentAnalytics.recordEvent(AppUsageEvent.StakeMeanFailed, { transcript: transactionLog });
         return false;
       }
     };
@@ -434,8 +457,8 @@ export const StakeTabView = (props: {
             });
             setIsBusy(false);
           } else {
-            notify({
-              message: t("notifications.error-title"),
+            openNotification({
+              title: t("notifications.error-title"),
               description: t("notifications.error-sending-transaction"),
               type: "error",
             });
@@ -451,13 +474,16 @@ export const StakeTabView = (props: {
   }, [
     wallet,
     connection,
-    props.selectedToken,
+    stakeQuote,
     fromCoinAmount,
+    stakedMeanPrice,
     props.stakeClient,
+    props.selectedToken,
     transactionStatus.currentOperation,
-    showTransactionExecutionModal,
     enqueueTransactionConfirmation,
+    showTransactionExecutionModal,
     setTransactionStatus,
+    getPricePerToken,
     t
   ]);
 

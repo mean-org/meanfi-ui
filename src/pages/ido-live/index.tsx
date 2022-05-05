@@ -9,9 +9,9 @@ import {
   UTC_DATE_TIME_FORMAT2
 } from "../../constants";
 import { useTranslation } from 'react-i18next';
-import { consoleOut, isLocal, isProd, isValidAddress, percentual } from '../../utils/ui';
+import { consoleOut, isLocal, isProd, isValidAddress, percentual, toUsCurrency } from '../../utils/ui';
 import "./style.scss";
-import { AirdropRedeem, IdoDeposit, IdoRedeem } from '../../views';
+import { IdoDeposit, IdoRedeem } from '../../views';
 import { IdoWithdraw } from '../../views/IdoWithdraw';
 import Countdown from 'react-countdown';
 import dateFormat from "dateformat";
@@ -22,24 +22,20 @@ import { useWallet } from '../../contexts/wallet';
 import YoutubeEmbed from '../../components/YoutubeEmbed';
 import { useNavigate } from 'react-router';
 import { useLocation } from 'react-router-dom';
-import { notify } from '../../utils/notifications';
 import { useConnectionConfig } from '../../contexts/connection';
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
 import { appConfig } from '../..';
-import { formatThousands, getFormattedRateAmount, getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
+import { formatThousands, getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
 import { CUSTOM_USDC, MEAN_TOKEN_LIST } from '../../constants/token-list';
 import { PartnerImage } from '../../models/common-types';
-import { TransactionStatusContext } from '../../contexts/transaction-status';
+import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { ClockCircleFilled, DoubleRightOutlined } from '@ant-design/icons';
 import { MoneyStreaming } from '@mean-dao/money-streaming';
+import { openNotification } from '../../components/Notifications';
 
 type IdoTabOption = "deposit" | "withdraw";
 type ClaimsTabOption = "ido-claims" | "solanium" | "airdrop";
 type IdoInitStatus = "uninitialized" | "initializing" | "started" | "stopped" | "error";
-
-function addSeconds(date: Date, seconds: number) {
-  return new Date(date.getTime() + seconds*1000);
-}
 
 export const IdoLiveView = () => {
   const location = useLocation();
@@ -67,7 +63,7 @@ export const IdoLiveView = () => {
   const {
     fetchTxInfoStatus,
     lastSentTxSignature,
-  } = useContext(TransactionStatusContext);
+  } = useContext(TxConfirmationContext);
   const [currentTheme] = useState(theme);
   const [xPosPercent, setXPosPercent] = useState(0);
   const [currentDateDisplay, setCurrentDateDisplay] = useState('');
@@ -124,8 +120,8 @@ export const IdoLiveView = () => {
       } else {
         setIdoAccountAddress('');
         consoleOut('Invalid IDO address', address, 'red');
-        notify({
-          message: 'Error',
+        openNotification({
+          title: 'Error',
           description: 'The supplied IDO address is not a valid solana address',
           type: "error"
         });
@@ -165,7 +161,6 @@ export const IdoLiveView = () => {
     streamProgramAddress
   ]);
 
-  // TODO: Add custom USDC token and MEAN token to the list
   useEffect(() => {
     if (isProd()) {
       const usdc = MEAN_TOKEN_LIST.filter(t => t.symbol === 'USDC' && t.chainId === 101)[0];
@@ -819,11 +814,11 @@ export const IdoLiveView = () => {
                 <>
                   <div className="flex-fixed-right">
                     <div className="left">Bonded Price</div>
-                    <div className="right">{getFormattedRateAmount(idoStatus.currentMeanPrice)}</div>
+                    <div className="right">{toUsCurrency(idoStatus.currentMeanPrice)}</div>
                   </div>
                   <div className="flex-fixed-right">
                     <div className="left">Max Contrib. Allowed</div>
-                    <div className="right">{getFormattedRateAmount(idoStatus.currentMaxUsdcContribution)}</div>
+                    <div className="right">{toUsCurrency(idoStatus.currentMaxUsdcContribution)}</div>
                   </div>
                   <div className="flex-fixed-right">
                     <div className="left">Total Participants</div>

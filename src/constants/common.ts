@@ -1,20 +1,25 @@
 import { Language } from "../models/languages";
 
-export const MIN_SOL_BALANCE_REQUIRED = 0.05;
-
-export const TRANSACTIONS_PER_PAGE = 15;
-export const ACCOUNTS_LOW_BALANCE_LIMIT = 0.1; // Minimum balance to start showing user account tokens in /accounts
+// Intervals
 export const ONE_MINUTE_REFRESH_TIMEOUT = 60 * 1000;
-export const EXCHANGE_ROUTES_REFRESH_TIMEOUT = 60 * 1000;
-export const PRICE_REFRESH_TIMEOUT = 10 * 60 * 1000;
-export const STREAMS_REFRESH_TIMEOUT = 5 * 60 * 1000;
+export const HALF_MINUTE_REFRESH_TIMEOUT = 30 * 1000;
+export const FORTY_SECONDS_REFRESH_TIMEOUT = 40 * 1000;
+export const FIVETY_SECONDS_REFRESH_TIMEOUT = 50 * 1000;
+export const SEVENTY_SECONDS_REFRESH_TIMEOUT = 70 * 1000;
+export const THREE_MINUTES_REFRESH_TIMEOUT = 3 * 60 * 1000;
+export const FIVE_MINUTES_REFRESH_TIMEOUT = 5 * 60 * 1000;
+export const TEN_MINUTES_REFRESH_TIMEOUT = 10 * 60 * 1000;
 export const TRANSACTION_STATUS_RETRY = 3 * 1000;            // Retry fetch transaction status every 3 seconds
 export const TRANSACTION_STATUS_RETRY_TIMEOUT = 30 * 1000;   // Max timeout for trying fetch
+
 export const PERFORMANCE_SAMPLE_INTERVAL = 30 * 1000;
 export const PERFORMANCE_SAMPLE_INTERVAL_FAST = 15 * 1000;
-export const PERFORMANCE_THRESHOLD = 1400;  // Min TPS to show the top bar (1100 but can be changed)
-export const INPUT_DEBOUNCE_TIME = 400;
+export const PERFORMANCE_THRESHOLD = 1400;  // Min TPS to show the top bar (1400 but can be changed)
 
+export const INPUT_DEBOUNCE_TIME = 400;
+export const MIN_SOL_BALANCE_REQUIRED = 0.05;
+export const TRANSACTIONS_PER_PAGE = 15;
+export const ACCOUNTS_LOW_BALANCE_LIMIT = 0.1; // Minimum balance to start showing user account tokens in /accounts
 export const MIN_SLIPPAGE_VALUE = 0.1;
 export const DEFAULT_SLIPPAGE_PERCENT = 1;
 export const MAX_SLIPPAGE_VALUE = 20;
@@ -23,6 +28,7 @@ export const MAX_MULTISIG_PARTICIPANTS = 10;
 
 export const INPUT_AMOUNT_PATTERN = /^[0-9]*[.,]?[0-9]*$/;
 export const DATEPICKER_FORMAT = 'MM/DD/YYYY';
+export const TIMEPICKER_FORMAT = 'h:mm a';
 export const SIMPLE_DATE_FORMAT = 'mm/dd/yyyy';
 export const SIMPLE_DATE_TIME_FORMAT = 'mm/dd/yyyy HH:MM';
 export const SIMPLE_DATE_TIME_FORMAT_WITH_SECONDS = 'mm/dd/yyyy HH:MM:ss';
@@ -164,6 +170,7 @@ export const DAO_CORE_TEAM_WHITELIST = [
     '4esXsAJjoExvhPZf1EMvDaajJeCTm72EYt3aurn3fFUG', // J
     'EjchiDcivSQnC282UF4d751JDd7vMb2VCFrQaNeUAjwz', // J
     'c8fLDB5oFSwGnwAV1LGQqaadHt2WbvWv7o79YnnUWxd',  // J
+    '468Z5p52439dAqjLzBm2FCNxvDSnpbMsNx85b7Kmz3TQ', // Ayaz
 ];
 
 export const BETA_TESTING_PROGRAM_WHITELIST = [

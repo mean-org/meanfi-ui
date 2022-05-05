@@ -1,4 +1,5 @@
-export { AccountsView } from './accounts';
+export { AccountsNewView } from './accounts';
+export { AccountsView } from './accounts-old';
 export { CustodyView } from './custody';
 export { ExchangeDcasView } from './exchange-dcas';
 export { FaucetView } from "./faucet";
@@ -12,7 +13,6 @@ export { MultisigProgramsView } from './multisig-programs';
 export { MultisigTreasuryStreams } from './multisig-treasury-streams';
 export { MultisigView } from './multisig';
 export { NotFoundView } from './404';
-export { PayrollView } from './payroll';
 export { PlaygroundView } from './playground';
 export { StakingRewardsView } from './staking-rewards';
 export { StatsView } from './stats';

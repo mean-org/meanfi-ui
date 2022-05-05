@@ -6,13 +6,13 @@ import { MEAN_FINANCE_APP_ALLBRIDGE_URL, MEAN_FINANCE_APP_RENBRIDGE_URL } from "
 import { AppStateContext } from "../../contexts/appstate";
 import { useWallet } from "../../contexts/wallet";
 import { IconCopy, IconInfoTriangle, IconSolana } from "../../Icons";
-import { notify } from "../../utils/notifications";
 import { consoleOut, copyText } from "../../utils/ui";
 import { AppConfig, environment } from '../../environments/environment';
 import "./style.scss";
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import useScript from '../../hooks/useScript';
 import { appConfig } from '../..';
+import { openNotification } from '../Notifications';
 
 const QRCode = require('qrcode.react');
 
@@ -126,12 +126,12 @@ export const DepositOptions = (props: {
 
   const onCopyAddress = () => {
     if (publicKey && copyText(publicKey)) {
-      notify({
+      openNotification({
         description: t('notifications.account-address-copied-message'),
         type: "info"
       });
     } else {
-      notify({
+      openNotification({
         description: t('notifications.account-address-not-copied-message'),
         type: "error"
       });

@@ -34,22 +34,6 @@ export const AccountsMergeModal = (props: {
     const [transactionCancelled, setTransactionCancelled] = useState(false);
     const [isBusy, setIsBusy] = useState(false);
 
-    // const debugInfo = () => {
-    //     return (
-    //         <div className="flex-row">
-    //             <div>lastOperation:<span className="ml-1">{transactionStatus ? transactionStatus.lastOperation : ''}</span></div>
-    //             <div className="pl-3">currentOperation:<span className="ml-1">{transactionStatus ? transactionStatus.currentOperation : ''}</span></div>
-    //         </div>
-    //     );
-    // }
-
-    const onAfterClose = () => {
-        setTransactionStatus({
-            lastOperation: TransactionStatus.Iddle,
-            currentOperation: TransactionStatus.Iddle
-        });
-    }
-
     const onFinishedMergeAccountsTx = () => {
         setIsBusy(false);
         props.handleOk();
@@ -75,7 +59,7 @@ export const AccountsMergeModal = (props: {
             });
 
             const mintPubkey = new PublicKey(props.tokenMint);
-    
+
             // Tx input data
             const data = {
                 connection: props.connection.commitment,
@@ -84,13 +68,13 @@ export const AccountsMergeModal = (props: {
                 mergeGroup: props.tokenGroup
             };
             consoleOut('data:', data, 'blue');
-    
+
             // Log input data
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
               inputs: data
             });
-    
+
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
               result: ''
@@ -316,7 +300,6 @@ export const AccountsMergeModal = (props: {
             footer={null}
             visible={props.isVisible}
             onCancel={props.handleClose}
-            afterClose={onAfterClose}
             width={330}>
 
             <div className={!isBusy ? "panel1 show" : "panel1 hide"}>

@@ -1,6 +1,22 @@
-.invest-layout {
-  margin-bottom: 1.5em;
-  max-height: fit-content !important;
+.invest {
+  .invest-layout {
+    margin-bottom: 1.5em;
+    max-height: fit-content !important;
+  }
+  .stats-row {
+    display: inline-block !important;
+    @media (min-width: 768px) {
+      .invest-col {
+        width: 6em;
+      }
+    }
+    .std-table-cell.first-cell {
+      width: 25px;
+    }
+    .reload {
+      margin-top: 12.5vh;
+    }
+  }
 }
 
 .ant-steps {
@@ -154,22 +170,6 @@
   }
 }
 
-@media (min-width: 768px) {
-  .stats-row {
-    .invest-col {
-      width: 6em;
-    }
-  }
-}
-.stats-row {
-  display: inline-block !important;
-  .std-table-cell.first-cell {
-    width: 25px;
-  }
-  .reload {
-    margin-top: 12.5vh;
-  }
-}
 .contain-icons {
   display: flex;
   justify-content: center;
