@@ -10,12 +10,12 @@ import { ArrowLeftOutlined, CopyOutlined, LoadingOutlined, ReloadOutlined } from
 import { IconCoin, IconExternalLink, IconShieldOutline } from '../../Icons';
 import { PreFooter } from '../../components/PreFooter';
 import { ConfirmOptions, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction, TransactionInstruction } from '@solana/web3.js';
-import { Program, Provider } from '@project-serum/anchor';
+import { AnchorProvider, Program } from '@project-serum/anchor';
 import MultisigIdl from "../../models/mean-multisig-idl";
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
 import { MintLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { consoleOut, copyText, delay, getShortDate, getTransactionStatusForLogs } from '../../utils/ui';
+import { consoleOut, copyText, getShortDate, getTransactionStatusForLogs } from '../../utils/ui';
 import { Identicon } from '../../components/Identicon';
 import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress, /*toUiAmount*/ } from '../../utils/utils';
 import { CreateMintPayload, MultisigMint, SetMintAuthPayload, listMultisigTransactions } from '../../models/multisig';
@@ -117,7 +117,7 @@ export const MultisigMintsView = () => {
       commitment: "confirmed",
     };
 
-    const provider = new Provider(connection, wallet as any, opts);
+    const provider = new AnchorProvider(connection, wallet as any, opts);
 
     return new Program(
       MultisigIdl,

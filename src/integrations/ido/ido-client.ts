@@ -4,9 +4,9 @@ import {
     Transaction,
     TransactionInstruction} from '@solana/web3.js';
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import * as anchor from "@project-serum/anchor";
-import { BN, IdlAccounts, parseIdlErrors, Program, ProgramError } from "@project-serum/anchor";
-import { Wallet } from "@project-serum/anchor/src/provider";
+import * as anchor from "anchor-0-20-1";
+import { BN, IdlAccounts, parseIdlErrors, Program, ProgramError } from "anchor-0-20-1";
+import { Wallet } from "anchor-0-20-1/src/provider";
 import ido_idl from './mean_ido_pool.json';
 import EventEmitter from 'eventemitter3';
 import { MeanIdoPool } from "./mean_ido_pool_types";

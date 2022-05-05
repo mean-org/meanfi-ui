@@ -105,7 +105,7 @@ import {
   SegmentStreamTransferOwnershipData,
   SegmentStreamWithdrawData
 } from "../../utils/segment-service";
-import { Program, Provider } from "@project-serum/anchor";
+import { AnchorProvider, Program } from "@project-serum/anchor";
 import MultisigIdl from "../../models/mean-multisig-idl";
 import { StreamPauseModal } from "../../components/StreamPauseModal";
 import { StreamResumeModal } from "../../components/StreamResumeModal";
@@ -1931,7 +1931,7 @@ export const Streams = () => {
       commitment: "confirmed",
     };
 
-    const provider = new Provider(connection, wallet as any, opts);
+    const provider = new AnchorProvider(connection, wallet as any, opts);
 
     return new Program(
       MultisigIdl,
