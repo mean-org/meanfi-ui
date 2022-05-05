@@ -384,7 +384,7 @@
 	},
 	"multisig": {
 		"add-participant-cta": "Adicionar participante",
-		"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
+		"back-to-multisig-accounts-cta": "Back to Multisig Safes",
 		"create-multisig": {
 			"fee-info-label": "The fee to create this multisig is",
 			"main-cta": "Crio",
@@ -468,7 +468,7 @@
 		},
 		"multisig-detail-heading": "Detalhes da conta multisig",
 		"multisig-mints": {
-			"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
+			"back-to-multisig-accounts-cta": "Back to Multisig Safes",
 			"change-mint-authority-modal-title": "Set Mint Authority",
 			"create-mint-modal-title": "Create mint",
 			"cta-change-mint-authority": "Transfer Ownership",
@@ -568,7 +568,7 @@
 			"back-to-treasuries": "Back to Streaming Treasuries"
 		},
 		"multisig-assets": {
-			"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
+			"back-to-multisig-accounts-cta": "Back to Multisig Safes",
 			"cta-change-multisig-authority": "Transferir propriedade",
 			"cta-change-multisig-authority-busy": "Mudando o Multisig",
 			"cta-close": "Fechar cofre",
@@ -597,7 +597,7 @@
 		},
 		"pending-transactions": "transações pendentes",
 		"refresh-tooltip": "Clique para atualizar a lista de contas multisig",
-		"screen-title": "Safes & Multisig",
+		"screen-title": "Multisig Safes",
 		"set-program-authority": {
 			"main-cta": "Definir autoridade",
 			"main-cta-busy": "Autoridade de configuração",

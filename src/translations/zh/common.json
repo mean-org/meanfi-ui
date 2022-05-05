@@ -385,7 +385,7 @@
 	},
 	"multisig": {
 		"add-participant-cta": "Add participant",
-		"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
+		"back-to-multisig-accounts-cta": "Back to Multisig Safes",
 		"create-asset": {
 			"main-cta": "Create",
 			"main-cta-busy": "Creating asset",
@@ -469,7 +469,7 @@
 		},
 		"multisig-assets": {
 			"asset-detail-heading": "Asset details",
-			"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
+			"back-to-multisig-accounts-cta": "Back to Multisig Safes",
 			"cta-change-multisig-authority": "Change Asset Ownership",
 			"cta-change-multisig-authority-busy": "Changing Multisig",
 			"cta-close": "Close asset",
@@ -497,7 +497,7 @@
 		},
 		"multisig-detail-heading": "Multisig account details",
 		"multisig-mints": {
-			"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
+			"back-to-multisig-accounts-cta": "Back to Multisig Safes",
 			"change-mint-authority-modal-title": "Set Mint Authority",
 			"create-mint-modal-title": "Create mint",
 			"cta-change-mint-authority": "Transfer Ownership",
@@ -598,7 +598,7 @@
 		},
 		"pending-transactions": "pending transactions",
 		"refresh-tooltip": "Click to refresh the list of multisig accounts",
-		"screen-title": "Safes & Multisig",
+		"screen-title": "Multisig Safes",
 		"set-program-authority": {
 			"main-cta": "Set Authority",
 			"main-cta-busy": "Setting Authority",
