@@ -23,10 +23,10 @@ import { useTranslation } from "react-i18next";
 import { PreFooter } from "../../components/PreFooter";
 import { useNativeAccount, useUserAccounts } from "../../contexts/accounts";
 import { customLogger } from '../..';
-import { confirmationEvents, TransactionStatusContext, TransactionStatusInfo } from '../../contexts/transaction-status';
+import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
 import BN from 'bn.js';
 import { unwrapSol } from '@mean-dao/hybrid-liquidity-ag';
-import { notify } from '../../utils/notifications';
+import { openNotification } from '../../components/Notifications';
 
 export const UnwrapView = () => {
   const connection = useConnection();
@@ -39,7 +39,7 @@ export const UnwrapView = () => {
     refreshTokenBalance,
     setTransactionStatus,
   } = useContext(AppStateContext);
-  const { enqueueTransactionConfirmation } = useContext(TransactionStatusContext);
+  const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const { t } = useTranslation("common");
   const [isUnwrapping, setIsUnwrapping] = useState(false);
   const [unwrapAmount, setUnwrapAmount] = useState<string>("");
@@ -106,7 +106,7 @@ export const UnwrapView = () => {
 
   }, [setTransactionStatus]);
 
-  const onUnwrapConfirmed = useCallback((item: TransactionStatusInfo) => {
+  const onUnwrapConfirmed = useCallback((item: TxConfirmationInfo) => {
     consoleOut("onUnwrapConfirmed event executed!", '', 'crimson');
     if (item && item.operationType === OperationType.Unwrap) {
       setIsUnwrapping(false);
@@ -492,8 +492,8 @@ export const UnwrapView = () => {
             });
             setUnwrapAmount('');
           } else {
-            notify({
-              message: t("notifications.error-title"),
+            openNotification({
+              title: t("notifications.error-title"),
               description: t("notifications.error-sending-transaction"),
               type: "error",
             });

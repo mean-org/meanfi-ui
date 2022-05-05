@@ -2,7 +2,7 @@ import React, { useContext, useState } from 'react';
 import { Button } from 'antd';
 import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber } from '../../utils/utils';
 import { AppStateContext } from '../../contexts/appstate';
-import { TransactionStatusContext } from '../../contexts/transaction-status';
+import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { useTranslation } from 'react-i18next';
 import { consoleOut, getFormattedNumberToLocale, getTransactionStatusForLogs } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
@@ -33,8 +33,8 @@ export const IdoDeposit = (props: {
   } = useContext(AppStateContext);
   const {
     startFetchTxSignatureInfo,
-    clearTransactionStatusContext,
-  } = useContext(TransactionStatusContext);
+    clearTxConfirmationContext,
+  } = useContext(TxConfirmationContext);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
 
@@ -103,7 +103,7 @@ export const IdoDeposit = (props: {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     setTransactionCancelled(false);
     setIsBusy(true);
 

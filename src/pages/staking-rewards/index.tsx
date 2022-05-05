@@ -11,7 +11,7 @@ import { IconStats } from "../../Icons";
 import { consoleOut, getTransactionStatusForLogs, isProd, relativeTimeFromDates } from "../../utils/ui";
 import { ConfirmOptions, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
-import { confirmationEvents, TransactionStatusContext } from "../../contexts/transaction-status";
+import { confirmationEvents, TxConfirmationContext } from "../../contexts/transaction-status";
 import { MEAN_TOKEN_LIST } from "../../constants/token-list";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { appConfig, customLogger } from "../..";
@@ -28,7 +28,7 @@ export const StakingRewardsView = () => {
     transactionStatus,
     setTransactionStatus,
   } = useContext(AppStateContext);
-  const { enqueueTransactionConfirmation } = useContext(TransactionStatusContext);
+  const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const { cluster, endpoint } = useConnectionConfig();
   const connection = useConnection();
   const { publicKey, wallet } = useWallet();

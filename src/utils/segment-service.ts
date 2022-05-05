@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { Analytics } from "@segment/analytics-next";
 import { consoleOut } from "./ui";
 
@@ -53,6 +54,28 @@ export enum AppUsageEvent {
     TransferRecurringSigned = "New RTP Signed",
     TransferRecurringCompleted = "New RTP Completed",
     TransferRecurringFailed = "New RTP Failed",
+    // Invest
+    StakeMeanFormButton = "Stake mean form button click",
+    StakeMeanSigned = "Stake mean Signed",
+    StakeMeanCompleted = "Stake mean Completed",
+    StakeMeanFailed = "Stake mean Failed",
+    UnstakeMeanFormButton = "Unstake mean form button click",
+    UnstakeMeanSigned = "Unstake mean Signed",
+    UnstakeMeanCompleted = "Unstake mean Completed",
+    UnstakeMeanFailed = "Unstake mean Failed",
+    DepositInStakingVaultFormButton = "Deposit in Staking vault form button click",
+    DepositInStakingVaultSigned = "Deposit in Staking vault Signed",
+    DepositInStakingVaultCompleted = "Deposit in Staking vault Completed",
+    DepositInStakingVaultFailed = "Deposit in Staking vault Failed",
+    // Asset management
+    WrapSolFormButton = "Wrap SOL form button click",
+    WrapSolSigned = "Wrap SOL Signed",
+    WrapSolCompleted = "Wrap SOL Completed",
+    WrapSolFailed = "Wrap SOL Failed",
+    UnwrapSolFormButton = "Unwrap SOL form button click",
+    UnwrapSolSigned = "Unwrap SOL Signed",
+    UnwrapSolCompleted = "Unwrap SOL Completed",
+    UnwrapSolFailed = "Unwrap SOL Failed",
 }
 
 export enum StatsTriggertEvent {
@@ -113,6 +136,36 @@ export interface SegmentStreamTransferOwnershipData {
     beneficiary: string;
     newBeneficiary: string;
 }
+
+export interface SegmentStakeMeanData {
+    asset: string;
+    assetPrice: number;
+    stakedAsset: string;
+    stakedAssetPrice: number;
+    amount: number;
+    quote: number;
+}
+
+export interface SegmentUnstakeMeanData {
+    asset: string;
+    assetPrice: number;
+    unstakedAsset: string;
+    unstakedAssetPrice: number;
+    amount: number;
+    quote: number;
+}
+
+export interface SegmentStakingRewardsDepositData {
+    asset: string;
+    assetPrice: number;
+    depositPercentage: number;
+    amount: number;
+    stakingVaultBalance: number;
+}
+
+///////////////////
+// Service Class //
+///////////////////
 
 export class SegmentAnalyticsService {
 

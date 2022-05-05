@@ -8,7 +8,9 @@ import { useOnlineStatus } from '../../contexts/online-status';
 import { Tooltip } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-export const FooterBar = () => {
+export const FooterBar = (props: {
+  onOpenDrawer?: any;
+}) => {
   const { t } = useTranslation('common');
   const { connected } = useWallet();
   const { isOnline, responseTime } = useOnlineStatus();
@@ -20,7 +22,7 @@ export const FooterBar = () => {
           {connected ? (
             <div className="footer-account-bar">
               <AccountDetails />
-              <CurrentBalance />
+              <CurrentBalance onOpenDrawer={props.onOpenDrawer} />
             </div>
           ) : (
             <ConnectButton />

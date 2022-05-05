@@ -13,7 +13,6 @@ import {
   IdoLiveView,
   IdoView,
   NotFoundView,
-  PayrollView,
   PlaygroundView,
   SwapView,
   TransfersView,
@@ -26,10 +25,11 @@ import {
   MultisigMintsView,
   MultisigTreasuryStreams,
   StakingRewardsView,
+  AccountsNewView,
 } from "./pages";
 
 import { ServiceUnavailableView } from "./pages/service-unavailable";
-import TransactionStatusProvider from "./contexts/transaction-status";
+import TxConfirmationProvider from "./contexts/transaction-status";
 import { isLocal, isProd } from "./utils/ui";
 import { OnlineStatusProvider } from "./contexts/online-status";
 import { IdoLpView } from "./pages/ido-lp";
@@ -47,16 +47,16 @@ export function AppRoutes() {
         <ConnectionProvider>
           <WalletProvider>
             <AccountsProvider>
-              <TransactionStatusProvider>
+              <TxConfirmationProvider>
                 <AppStateProvider>
                   <AppLayout>
                     <Routes>
                       <Route path='/' element={<Navigate replace to='/accounts' />} />
-                      <Route path="/accounts" element={<AccountsView />} />
+                      <Route path="/accounts" element={<AccountsNewView />} />
+                      <Route path="/accounts-old" element={<AccountsView />} />
                       <Route path="/accounts/streams" element={<AccountsView />} />
                       <Route path="/faucet" element={<FaucetView />} />
                       <Route path="/transfers" element={<TransfersView />} />
-                      <Route path="/payroll" element={<PayrollView />} />
                       <Route path="/exchange" element={<SwapView />} />
                       {(isProd() || isLocal()) && (
                         <Route path="/exchange-dcas" element={<ExchangeDcasView />} />
@@ -87,7 +87,7 @@ export function AppRoutes() {
                     </Routes>
                   </AppLayout>
                 </AppStateProvider>
-              </TransactionStatusProvider>
+              </TxConfirmationProvider>
             </AccountsProvider>
           </WalletProvider>
         </ConnectionProvider>
