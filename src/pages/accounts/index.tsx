@@ -1127,6 +1127,8 @@ export const AccountsNewView = () => {
                   selectAsset(pinnedTokensCopy[pinnedTokensItemIndex], true);
                 } else if (meanTokensItemIndex !== -1) {
                   selectAsset(meanTokensCopy[meanTokensItemIndex], true);
+                } else {
+                  selectAsset(pinnedTokensCopy[0]);
                 }
               } else {
                 // Preset the first available token

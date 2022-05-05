@@ -140,9 +140,7 @@
     "url": "^0.11.0"
   },
   "resolutions": {
-    "@saberhq/stableswap-sdk": "1.9.0",
-    "@saberhq/token-utils": "1.9.0",
-    "@solana/web3.js": "1.31.0",
+    "@solana/web3.js": "^1.36.0",
     "@types/react": "17.0.30"
   }
 }
