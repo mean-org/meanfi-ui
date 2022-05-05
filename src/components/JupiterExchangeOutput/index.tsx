@@ -23,6 +23,7 @@ export const JupiterExchangeOutput = (props: {
   showAllRoutes: boolean;
   onToggleShowFullRouteList: any;
   className?: string;
+  disabled?: boolean;
   readonly?: boolean;
   isBusy?: boolean;
 }) => {
@@ -70,7 +71,7 @@ export const JupiterExchangeOutput = (props: {
 
   return (
     <>
-      <div className={`well ${props.className || ''}`}>
+      <div className={`well ${props.className} ${props.disabled ? 'disabled' : ''}`}>
         {/* Balance row */}
         <div className="flex-fixed-right">
           <div className="left inner-label">

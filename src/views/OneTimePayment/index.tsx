@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Modal, DatePicker, Checkbox, Select } from "antd";
+import { Button, Modal, DatePicker, Checkbox, Select, Drawer } from "antd";
 import {
   LoadingOutlined,
   QrcodeOutlined,
@@ -28,8 +28,8 @@ import { useTranslation } from "react-i18next";
 import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { customLogger } from '../..';
-import { confirmationEvents, TransactionStatusContext, TransactionStatusInfo } from '../../contexts/transaction-status';
-import { useNavigate } from 'react-router-dom';
+import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { TokenDisplay } from '../../components/TokenDisplay';
 import { TextInput } from '../../components/TextInput';
 import { TokenListItem } from '../../components/TokenListItem';
@@ -41,15 +41,17 @@ import { NATIVE_SOL } from '../../utils/tokens';
 
 const { Option } = Select;
 
-export const OneTimePayment = () => {
+export const OneTimePayment = (props: {
+  inModal: boolean;
+  transferCompleted?: any;
+  token?: TokenInfo;
+}) => {
+  const { inModal, transferCompleted, token } = props;
   const connection = useConnection();
   const { endpoint } = useConnectionConfig();
   const { connected, publicKey, wallet } = useWallet();
   const {
     tokenList,
-    selectedToken,
-    tokenBalance,
-    effectiveRate,
     coinPrices,
     loadingPrices,
     isWhitelisted,
@@ -62,7 +64,6 @@ export const OneTimePayment = () => {
     streamV2ProgramAddress,
     previousWalletConnectState,
     refreshPrices,
-    setSelectedToken,
     setEffectiveRate,
     setRecipientNote,
     setFromCoinAmount,
@@ -70,13 +71,12 @@ export const OneTimePayment = () => {
     resetContractValues,
     setRecipientAddress,
     setPaymentStartDate,
-    refreshTokenBalance,
     setTransactionStatus,
     setIsVerifiedRecipient,
-    setSelectedTokenBalance,
   } = useContext(AppStateContext);
-  const { enqueueTransactionConfirmation } = useContext(TransactionStatusContext);
+  const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
   const accounts = useAccountsContext();
@@ -89,6 +89,15 @@ export const OneTimePayment = () => {
   const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
   const [fixedScheduleValue, setFixedScheduleValue] = useState(0);
   const [canSubscribe, setCanSubscribe] = useState(true);
+  const [isTokenSelectorVisible, setIsTokenSelectorVisible] = useState(false);
+  const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
+  const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
+
+  useEffect(() => {
+    if (inModal && !selectedToken) {
+      setSelectedToken(token);
+    }
+  }, [inModal, selectedToken, token]);
 
   useEffect(() => {
 
@@ -97,8 +106,6 @@ export const OneTimePayment = () => {
     }
 
     if (account?.lamports !== previousBalance || !nativeBalance) {
-      // Refresh token balance
-      refreshTokenBalance();
       setNativeBalance(getAccountBalance());
       // Update previous balance
       setPreviousBalance(account?.lamports);
@@ -107,7 +114,6 @@ export const OneTimePayment = () => {
     account,
     nativeBalance,
     previousBalance,
-    refreshTokenBalance
   ]);
 
   // Automatically update all token balances
@@ -141,6 +147,9 @@ export const OneTimePayment = () => {
             balancesMap[address] = 0;
           }
         }
+        if (selectedToken && balancesMap[selectedToken.address]) {
+          setSelectedTokenBalance(balancesMap[selectedToken.address]);
+        }
       })
       .catch(error => {
         console.error(error);
@@ -156,10 +165,12 @@ export const OneTimePayment = () => {
     }
 
   }, [
-    connection,
-    tokenList,
     accounts,
-    publicKey
+    tokenList,
+    publicKey,
+    connection,
+    selectedToken,
+    setSelectedTokenBalance,
   ]);
 
   const [otpFees, setOtpFees] = useState<TransactionFees>({
@@ -200,18 +211,41 @@ export const OneTimePayment = () => {
     setTransactionStatus
   ]);
 
+  const getPricePerToken = useCallback((token: TokenInfo): number => {
+    if (!token || !coinPrices) { return 0; }
+
+    return coinPrices && coinPrices[token.address]
+      ? coinPrices[token.address]
+      : 0;
+  }, [coinPrices])
+
   const getTokenPrice = useCallback(() => {
-    if (!fromCoinAmount || ! effectiveRate) {
+    if (!fromCoinAmount || !selectedToken) {
       return 0;
     }
 
-    return parseFloat(fromCoinAmount) * effectiveRate;
-  }, [effectiveRate, fromCoinAmount]);
+    return parseFloat(fromCoinAmount) * getPricePerToken(selectedToken);
+  }, [fromCoinAmount, selectedToken, getPricePerToken]);
+
+  const autoFocusInput = useCallback(() => {
+    const input = document.getElementById("token-search-otp");
+    if (input) {
+      setTimeout(() => {
+        input.focus();
+      }, 100);
+    }
+  }, []);
 
   // Token selection modal
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
-  const showTokenSelector = useCallback(() => setTokenSelectorModalVisibility(true), []);
+
+  const showTokenSelector = useCallback(() => {
+    setTokenSelectorModalVisibility(true);
+    autoFocusInput();
+  }, [autoFocusInput]);
+
   const onCloseTokenSelector = useCallback(() => {
+    hideDrawer();
     setTokenSelectorModalVisibility(false);
     if (tokenFilter && !isValidAddress(tokenFilter)) {
       setTokenFilter('');
@@ -236,28 +270,31 @@ export const OneTimePayment = () => {
   }, []);
 
   // Setup event handler for Tx confirmed
-  const onTxConfirmed = useCallback((item: TransactionStatusInfo) => {
+  const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
     consoleOut("onTxConfirmed event executed:", item, 'crimson');
-    if (item && item.operationType === OperationType.Transfer && item.extras === 'scheduled') {
-      recordTxConfirmation(item.signature, true);
-      navigate("/accounts/streams");
-    }
     setIsBusy(false);
     resetTransactionStatus();
     resetContractValues();
     setIsVerifiedRecipient(false);
     setSelectedStream(undefined);
+    if (item && item.operationType === OperationType.Transfer && item.extras === 'scheduled') {
+      recordTxConfirmation(item.signature, true);
+      if (!inModal) {
+        navigate("/accounts/streams");
+      }
+    }
   }, [
-    navigate,
-    setSelectedStream,
-    resetContractValues,
-    recordTxConfirmation,
-    resetTransactionStatus,
+    inModal,
     setIsVerifiedRecipient,
+    resetTransactionStatus,
+    recordTxConfirmation,
+    resetContractValues,
+    setSelectedStream,
+    navigate,
   ]);
 
   // Setup event handler for Tx confirmation error
-  const onTxTimedout = useCallback((item: TransactionStatusInfo) => {
+  const onTxTimedout = useCallback((item: TxConfirmationInfo) => {
     consoleOut("onTxTimedout event executed:", item, 'crimson');
     if (item && item.operationType === OperationType.Transfer) {
       recordTxConfirmation(item.signature, false);
@@ -265,6 +302,15 @@ export const OneTimePayment = () => {
     setIsBusy(false);
     resetTransactionStatus();
   }, [recordTxConfirmation, resetTransactionStatus]);
+
+  const showDrawer = () => {
+    setIsTokenSelectorVisible(true);
+    autoFocusInput();
+  };
+
+  const hideDrawer = () => {
+    setIsTokenSelectorVisible(false);
+  };
 
   const handleFromCoinAmountChange = (e: any) => {
 
@@ -613,7 +659,7 @@ export const OneTimePayment = () => {
       // Report event to Segment analytics
       const segmentData: SegmentStreamOTPTransferData = {
         asset: selectedToken?.symbol,
-        assetPrice: effectiveRate,
+        assetPrice: getPricePerToken(selectedToken),
         amount: parseFloat(fromCoinAmount as string),
         beneficiary: data.beneficiary,
         startUtc: dateFormat(startUtc, SIMPLE_DATE_TIME_FORMAT)
@@ -843,6 +889,17 @@ export const OneTimePayment = () => {
               lastOperation: TransactionStatus.SendTransactionSuccess,
               currentOperation: TransactionStatus.TransactionFinished
             });
+            if (inModal) {
+              setIsBusy(false);
+              resetTransactionStatus();
+              resetContractValues();
+              setIsVerifiedRecipient(false);
+              transferCompleted();
+              if (isScheduledPayment() && location.pathname !== "/accounts/streams") {
+                setSelectedStream(undefined);
+                navigate("/accounts/streams");
+              }
+            }
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -850,25 +907,33 @@ export const OneTimePayment = () => {
 
   }, [
     wallet,
+    inModal,
     endpoint,
     publicKey,
     connection,
+    selectedToken,
     recipientNote,
     isWhitelisted,
     nativeBalance,
-    selectedToken,
-    effectiveRate,
     fromCoinAmount,
     paymentStartDate,
     recipientAddress,
+    location.pathname,
     fixedScheduleValue,
     transactionCancelled,
     streamV2ProgramAddress,
     transactionStatus.currentOperation,
     enqueueTransactionConfirmation,
+    resetTransactionStatus,
+    setIsVerifiedRecipient,
     setTransactionStatus,
+    resetContractValues,
     isScheduledPayment,
+    setSelectedStream,
+    transferCompleted,
+    getPricePerToken,
     getFeeAmount,
+    navigate,
   ]);
 
   const onIsVerifiedRecipientChange = (e: any) => {
@@ -884,43 +949,79 @@ export const OneTimePayment = () => {
     navigate('/wrap');
   }
 
-  const getPricePerToken = useCallback((token: TokenInfo): number => {
-    if (!token || !coinPrices) { return 0; }
-
-    return coinPrices && coinPrices[token.address]
-      ? coinPrices[token.address]
-      : 0;
-  }, [coinPrices])
-
   const renderTokenList = (
     <>
       {(filteredTokenList && filteredTokenList.length > 0) && (
-        filteredTokenList.map((token, index) => {
+        filteredTokenList.map((t, index) => {
 
-          if (token.address === NATIVE_SOL.address) {
+          if (t.address === NATIVE_SOL.address) {
             return null;
           }
 
           const onClick = function () {
-            setSelectedToken(token);
-            consoleOut("token selected:", token.symbol, 'blue');
-            setEffectiveRate(getPricePerToken(token));
+            setSelectedToken(t);
+            consoleOut("token selected:", t.symbol, 'blue');
+            setEffectiveRate(getPricePerToken(t));
             onCloseTokenSelector();
           };
 
           return (
             <TokenListItem
-              key={token.address}
-              name={token.name || 'Unknown'}
-              mintAddress={token.address}
-              className={selectedToken && selectedToken.address === token.address ? "selected" : "simplelink"}
+              key={t.address}
+              name={t.name || 'Unknown'}
+              mintAddress={t.address}
+              className={selectedToken && selectedToken.address === t.address ? "selected" : "simplelink"}
               onClick={onClick}
-              balance={connected && userBalances && userBalances[token.address] > 0 ? userBalances[token.address] : 0}
+              balance={connected && userBalances && userBalances[t.address] > 0 ? userBalances[t.address] : 0}
             />
           );
         })
       )}
     </>
+  );
+
+  const renderTokenSelectorInner = (
+    <div className="token-selector-wrapper">
+      <div className="token-search-wrapper">
+        <TextInput
+          id="token-search-otp"
+          value={tokenFilter}
+          allowClear={true}
+          extraClass="mb-2"
+          onInputClear={onInputCleared}
+          placeholder={t('token-selector.search-input-placeholder')}
+          onInputChange={onTokenSearchInputChange} />
+      </div>
+      <div className="flex-row align-items-center fg-secondary-60 mb-2 px-1">
+        <span>{t('token-selector.looking-for-sol')}</span>&nbsp;
+        <span className="simplelink underline" onClick={onGoToWrap}>{t('token-selector.wrap-sol-first')}</span>
+      </div>
+      <div className="token-list">
+        {filteredTokenList.length > 0 && renderTokenList}
+        {(tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0) && (
+          <TokenListItem
+            key={tokenFilter}
+            name="Unknown"
+            mintAddress={tokenFilter}
+            className={selectedToken && selectedToken.address === tokenFilter ? "selected" : "simplelink"}
+            onClick={() => {
+              const uknwnToken: TokenInfo = {
+                address: tokenFilter,
+                name: 'Unknown',
+                chainId: 101,
+                decimals: 6,
+                symbol: '',
+              };
+              setSelectedToken(uknwnToken);
+              consoleOut("token selected:", uknwnToken, 'blue');
+              setEffectiveRate(0);
+              onCloseTokenSelector();
+            }}
+            balance={connected && userBalances && userBalances[tokenFilter] > 0 ? userBalances[tokenFilter] : 0}
+          />
+        )}
+      </div>
+    </div>
   );
 
   return (
@@ -952,9 +1053,13 @@ export const OneTimePayment = () => {
               </span>
             </div>
             <div className="right">
-              <div className="add-on simplelink" onClick={showQrScannerModal}>
-                <QrcodeOutlined />
-              </div>
+              {inModal ? (
+                <span>&nbsp;</span>
+              ) : (
+                <div className="add-on simplelink" onClick={showQrScannerModal}>
+                  <QrcodeOutlined />
+                </div>
+              )}
             </div>
           </div>
           {
@@ -977,7 +1082,7 @@ export const OneTimePayment = () => {
             <div className="left">
               <span className="add-on simplelink">
                 {selectedToken && (
-                  <TokenDisplay onClick={() => showTokenSelector()}
+                  <TokenDisplay onClick={() => inModal ? showDrawer() : showTokenSelector()}
                     mintAddress={selectedToken.address}
                     name={selectedToken.name}
                     showCaretDown={true}
@@ -1023,7 +1128,7 @@ export const OneTimePayment = () => {
             </div>
             <div className="right inner-label">
               <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
-                ~${fromCoinAmount && effectiveRate
+                ~${fromCoinAmount
                   ? formatAmount(getTokenPrice(), 2)
                   : "0.00"}
               </span>
@@ -1131,8 +1236,21 @@ export const OneTimePayment = () => {
         </Button>
       </div>
 
+      {inModal && (
+        <Drawer
+          title={t('token-selector.modal-title')}
+          placement="bottom"
+          closable={true}
+          onClose={onCloseTokenSelector}
+          visible={isTokenSelectorVisible}
+          getContainer={false}
+          style={{ position: 'absolute' }}>
+          {renderTokenSelectorInner}
+        </Drawer>
+      )}
+
       {/* Token selection modal */}
-      {isTokenSelectorModalVisible && (
+      {!inModal && isTokenSelectorModalVisible && (
         <Modal
           className="mean-modal unpadded-content"
           visible={isTokenSelectorModalVisible}
@@ -1140,47 +1258,7 @@ export const OneTimePayment = () => {
           onCancel={onCloseTokenSelector}
           width={450}
           footer={null}>
-          <div className="token-selector-wrapper">
-            <div className="token-search-wrapper">
-              <TextInput
-                id="token-search-otp"
-                value={tokenFilter}
-                allowClear={true}
-                extraClass="mb-2"
-                onInputClear={onInputCleared}
-                placeholder={t('token-selector.search-input-placeholder')}
-                onInputChange={onTokenSearchInputChange} />
-            </div>
-            <div className="flex-row align-items-center fg-secondary-60 mb-2 px-1">
-              <span>{t('token-selector.looking-for-sol')}</span>&nbsp;
-              <span className="simplelink underline" onClick={onGoToWrap}>{t('token-selector.wrap-sol-first')}</span>
-            </div>
-            <div className="token-list vertical-scroll">
-              {filteredTokenList.length > 0 && renderTokenList}
-              {(tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0) && (
-                <TokenListItem
-                  key={tokenFilter}
-                  name="Unknown"
-                  mintAddress={tokenFilter}
-                  className={selectedToken && selectedToken.address === tokenFilter ? "selected" : "simplelink"}
-                  onClick={() => {
-                    const uknwnToken: TokenInfo = {
-                      address: tokenFilter,
-                      name: 'Unknown',
-                      chainId: 101,
-                      decimals: 6,
-                      symbol: '',
-                    };
-                    setSelectedToken(uknwnToken);
-                    consoleOut("token selected:", uknwnToken, 'blue');
-                    setEffectiveRate(0);
-                    onCloseTokenSelector();
-                  }}
-                  balance={connected && userBalances && userBalances[tokenFilter] > 0 ? userBalances[tokenFilter] : 0}
-                />
-              )}
-            </div>
-          </div>
+          {renderTokenSelectorInner}
         </Modal>
       )}
 

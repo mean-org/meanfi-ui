@@ -11,6 +11,7 @@
 		"money-streams": "Money Streams",
 		"network-unknown": "Unknown",
 		"no-money-streams": "No Money Streams",
+		"no-recent-events": "No recent events",
 		"non-ata-label": "Non Associated Token Account",
 		"non-ata-tooltip": "MeanFi operates with associated token accounts, please merge your {{tokenSymbol}} accounts.",
 		"refresh-tooltip": "Click to refresh assets",
@@ -384,7 +385,7 @@
 	},
 	"multisig": {
 		"add-participant-cta": "Add participant",
-		"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
+		"back-to-multisig-accounts-cta": "Back to Multisig Safes",
 		"create-asset": {
 			"main-cta": "Create",
 			"main-cta-busy": "Creating asset",
@@ -468,7 +469,7 @@
 		},
 		"multisig-assets": {
 			"asset-detail-heading": "Asset details",
-			"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
+			"back-to-multisig-accounts-cta": "Back to Multisig Safes",
 			"cta-change-multisig-authority": "Change Asset Ownership",
 			"cta-change-multisig-authority-busy": "Changing Multisig",
 			"cta-close": "Close asset",
@@ -496,7 +497,7 @@
 		},
 		"multisig-detail-heading": "Multisig account details",
 		"multisig-mints": {
-			"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
+			"back-to-multisig-accounts-cta": "Back to Multisig Safes",
 			"change-mint-authority-modal-title": "Set Mint Authority",
 			"create-mint-modal-title": "Create mint",
 			"cta-change-mint-authority": "Transfer Ownership",
@@ -597,7 +598,7 @@
 		},
 		"pending-transactions": "pending transactions",
 		"refresh-tooltip": "Click to refresh the list of multisig accounts",
-		"screen-title": "Safes & Multisig",
+		"screen-title": "Multisig Safes",
 		"set-program-authority": {
 			"main-cta": "Set Authority",
 			"main-cta-busy": "Setting Authority",
@@ -685,7 +686,7 @@
 		"error-loading-treasuryid-message": "Could not find or open treasury with ID {{treasuryId}}",
 		"error-sending-transaction": "Error submitting the transaction, please try again.",
 		"error-title": "Error",
-		"friend-referral-completed": "Friend referral completed",
+		"friend-referral-completed": "Welcome to MeanFi",
 		"invalid-publickey-message": "Invalid public key. Please check input",
 		"invalid-streamid-message": "Invalid stream id",
 		"network-connection-down": "No network connection. App is OFFLINE!",
@@ -724,7 +725,7 @@
 	},
 	"referrals": {
 		"address-invalid": "The referral address is not a valid solana address",
-		"address-processed": "Please connect your wallet to record this referral.",
+		"address-processed": "Please connect your wallet to get started",
 		"connect-to-refer-friend": "Please connect your wallet to refer a friend",
 		"modal-title": "Refer a friend",
 		"refer-friend-hint": "Refer your friends by sharing the link below…",
@@ -976,7 +977,7 @@
 			"tx-confirm-failure": "The transaction could not be confirmed",
 			"tx-confirm-failure-check": "Check your transaction in the link below",
 			"tx-confirmation-status-confirmed": "Transaction confirmed!",
-			"tx-confirmation-status-timeout": "Your transaction could not be confirmed within {{timeout}}",
+			"tx-confirmation-status-timeout": "Your transaction could not be confirmed",
 			"tx-confirmation-status-wait": "Waiting for transaction confirmation...",
 			"tx-generic-operation-success": "Transaction completed successfully",
 			"tx-idle": "Idle",
@@ -1029,7 +1030,7 @@
 			"amount-high": "Amount exceeded",
 			"amount-low": "Low balance",
 			"amount-lt-fee": "Amount has to be greater than the transaction fee",
-			"amount-sol-high": "Insufficient SOL",
+			"amount-sol-low": "Insufficient SOL",
 			"amount-withdraw-high": "Amount is greater than the available funds",
 			"cannot-use-own-account-as-treasury": "Cannot use your account as treasury id",
 			"exchange-unavailable": "Exchange unavailable",
@@ -1260,7 +1261,7 @@
 			"services": {
 				"custody": "Custody",
 				"faucet": "Faucet",
-				"multisig": "Safes & Multisig",
+				"multisig": "Multisig",
 				"submenu-title": "Services",
 				"treasuries": "Streaming Treasuries",
 				"unwrap": "Unwrap",

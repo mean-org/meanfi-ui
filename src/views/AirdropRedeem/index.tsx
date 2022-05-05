@@ -2,12 +2,12 @@ import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { Button } from 'antd';
 import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume, toTokenAmount } from '../../utils/utils';
 import { AppStateContext } from '../../contexts/appstate';
-import { TransactionStatusContext } from '../../contexts/transaction-status';
+import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { useTranslation } from 'react-i18next';
 import { consoleOut, getRateIntervalInSeconds, getTransactionStatusForLogs } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
 import { TokenInfo } from '@solana/spl-token-registry';
-import { Connection, Keypair, PublicKey, Transaction } from '@solana/web3.js';
+import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { PaymentRateType, TransactionStatus, WhitelistClaimType } from '../../models/enums';
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
 import { appConfig, customLogger } from '../..';
@@ -20,7 +20,7 @@ import { calculateActionFees, MSP, MSP_ACTIONS, TransactionFees } from '@mean-da
 import { useConnectionConfig } from '../../contexts/connection';
 import { useNavigate } from 'react-router-dom';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
-import { notify } from '../../utils/notifications';
+import { openNotification } from '../../components/Notifications';
 
 export const AirdropRedeem = (props: {
   connection: Connection;
@@ -44,9 +44,8 @@ export const AirdropRedeem = (props: {
     setTransactionStatus,
   } = useContext(AppStateContext);
   const {
-    startFetchTxSignatureInfo,
-    clearTransactionStatusContext,
-  } = useContext(TransactionStatusContext);
+    clearTxConfirmationContext,
+  } = useContext(TxConfirmationContext);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
   const [userAllocation, setUserAllocation] = useState<Allocation | null>(null);
@@ -141,7 +140,7 @@ export const AirdropRedeem = (props: {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     setTransactionCancelled(false);
     setIsBusy(true);
 
@@ -213,8 +212,8 @@ export const AirdropRedeem = (props: {
           }) to pay for network fees (${
             getTokenAmountAndSymbolByTokenAddress(transactionFee.blockchainFee + transactionFee.mspFlatFee, NATIVE_SOL_MINT.toBase58())
           })`;
-          notify({
-            message: 'Not enough SOL balance',
+          openNotification({
+            title: 'Not enough SOL balance',
             description: noBalanceMessage,
             type: 'error'
           });

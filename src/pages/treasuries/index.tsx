@@ -48,13 +48,13 @@ import {
   NO_FEES,
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
   SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
-  STREAMS_REFRESH_TIMEOUT,
+  HALF_MINUTE_REFRESH_TIMEOUT,
   VERBOSE_DATE_TIME_FORMAT
 } from '../../constants';
 import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
 import { OperationType, TransactionStatus } from '../../models/enums';
-import { TransactionStatusContext } from '../../contexts/transaction-status';
+import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { IconBank, IconClock, IconShieldOutline, IconTrash } from '../../Icons';
 import { TreasuryOpenModal } from '../../components/TreasuryOpenModal';
 import { MSP_ACTIONS, StreamInfo, STREAM_STATE, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
@@ -117,6 +117,7 @@ const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const TreasuriesView = () => {
   const location = useLocation();
+  const { state } = useLocation();
   const connectionConfig = useConnectionConfig();
   const { publicKey, connected, wallet } = useWallet();
   const {
@@ -149,8 +150,8 @@ export const TreasuriesView = () => {
     lastSentTxSignature,
     lastSentTxOperationType,
     startFetchTxSignatureInfo,
-    clearTransactionStatusContext,
-  } = useContext(TransactionStatusContext);
+    clearTxConfirmationContext,
+  } = useContext(TxConfirmationContext);
   const { t } = useTranslation('common');
   const { width } = useWindowSize();
   const { account } = useNativeAccount();
@@ -490,7 +491,7 @@ export const TreasuriesView = () => {
 
       setTimeout(() => {
         setLoadingTreasuries(true);
-        clearTransactionStatusContext();
+        clearTxConfirmationContext();
       });
 
       let treasuryAccumulator: (Treasury | TreasuryInfo)[] = [];
@@ -571,7 +572,7 @@ export const TreasuriesView = () => {
     selectedMultisig,
     fetchTxInfoStatus,
     loadingTreasuries,
-    clearTransactionStatusContext,
+    clearTxConfirmationContext,
     openTreasuryById,
     getAllUserV2Treasuries
   ]);
@@ -1004,9 +1005,9 @@ export const TreasuriesView = () => {
 
     if (publicKey && treasuriesLoaded && !customStreamDocked) {
       timer = setInterval(() => {
-        consoleOut(`Refreshing treasuries past ${STREAMS_REFRESH_TIMEOUT / 60 / 1000}min...`);
+        consoleOut(`Refreshing treasuries past ${HALF_MINUTE_REFRESH_TIMEOUT / 60 / 1000}min...`);
         refreshTreasuries(false);
-      }, STREAMS_REFRESH_TIMEOUT);
+      }, HALF_MINUTE_REFRESH_TIMEOUT);
     }
 
     return () => clearInterval(timer);
@@ -1044,7 +1045,7 @@ export const TreasuriesView = () => {
         switch (lastSentTxOperationType) {
           case OperationType.TreasuryCreate:
             if (usedOptions.multisigId) {
-              clearTransactionStatusContext();
+              clearTxConfirmationContext();
               stackedMessagesAndNavigate(usedOptions);
             } else {
               refreshTreasuries(true);
@@ -1059,7 +1060,7 @@ export const TreasuriesView = () => {
             break;
         }
       } else if (fetchTxInfoStatus === "error") {
-        clearTransactionStatusContext();
+        clearTxConfirmationContext();
         openNotification({
           type: "info",
           duration: 5,
@@ -1090,7 +1091,7 @@ export const TreasuriesView = () => {
     lastSentTxSignature,
     retryOperationPayload,
     lastSentTxOperationType,
-    clearTransactionStatusContext,
+    clearTxConfirmationContext,
     setHighLightableMultisigId,
     refreshTreasuries,
     navigate,
@@ -1667,7 +1668,7 @@ export const TreasuriesView = () => {
     const transactionLog: any[] = [];
 
     resetTransactionStatus();
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.TreasuryRefreshBalance);
     setIsBusy(true);
@@ -2007,7 +2008,7 @@ export const TreasuriesView = () => {
     transactionFees.blockchainFee,
     transactionStatus.currentOperation,
     onRefreshTreasuryBalanceTransactionFinished,
-    clearTransactionStatusContext,
+    clearTxConfirmationContext,
     startFetchTxSignatureInfo,
     resetTransactionStatus,
     setTransactionStatus,
@@ -2021,7 +2022,7 @@ export const TreasuriesView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.TreasuryCreate);
@@ -2383,7 +2384,7 @@ export const TreasuriesView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.TreasuryAddFunds);
@@ -2865,7 +2866,7 @@ export const TreasuriesView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.TreasuryClose);
@@ -3304,7 +3305,7 @@ export const TreasuriesView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.StreamClose);
     setRetryOperationPayload(closeTreasury);
@@ -3734,7 +3735,7 @@ export const TreasuriesView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.StreamPause);
@@ -4162,7 +4163,7 @@ export const TreasuriesView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.StreamResume);
@@ -4600,7 +4601,7 @@ export const TreasuriesView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.TreasuryCreate);
@@ -5458,7 +5459,7 @@ export const TreasuriesView = () => {
             <div className="meanfi-two-panel-left">
 
               <div className="meanfi-panel-heading">
-                {isMultisigAvailable() && (
+                {isMultisigAvailable() ? (
                   <div className="back-button">
                     <span className="icon-button-container">
                       <Tooltip placement="bottom" title={t('multisig.multisig-assets.back-to-multisig-accounts-cta')}>
@@ -5478,7 +5479,23 @@ export const TreasuriesView = () => {
                       </Tooltip>
                     </span>
                   </div>
-                )}
+                ) : state && (state as any).previousPath ? (
+                  <div className="back-button">
+                    <span className="icon-button-container">
+                      <Tooltip placement="bottom" title="Back to accounts">
+                        <Button
+                          type="default"
+                          shape="circle"
+                          size="middle"
+                          icon={<ArrowLeftOutlined />}
+                          onClick={() => {
+                            navigate((state as any).previousPath);
+                          }}
+                        />
+                      </Tooltip>
+                    </span>
+                  </div>
+                ) : null}
                 <span className="title">{t('treasuries.screen-title')}</span>
                 <Tooltip placement="bottom" title={t('treasuries.refresh-tooltip')}>
                   <div className={`transaction-stats user-address ${loadingTreasuries ? 'click-disabled' : 'simplelink'}`} onClick={onRefreshTreasuriesClick}>

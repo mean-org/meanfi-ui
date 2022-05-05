@@ -1,7 +1,7 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
-import { TransactionStatusContext } from '../../contexts/transaction-status';
+import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { useWallet } from '../../contexts/wallet';
 import { AppStateContext, TransactionStatusInfo } from '../../contexts/appstate';
 import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../constants';
@@ -68,8 +68,8 @@ export const MultisigMintsView = () => {
     lastSentTxSignature,
     lastSentTxOperationType,
     startFetchTxSignatureInfo,
-    clearTransactionStatusContext,
-  } = useContext(TransactionStatusContext);
+    clearTxConfirmationContext,
+  } = useContext(TxConfirmationContext);
   const { t } = useTranslation('common');
   // Misc hooks
   const { width } = useWindowSize();
@@ -985,13 +985,13 @@ useEffect(() => {
 
   if (multisigAddress && lastSentTxOperationType) {
     if (fetchTxInfoStatus === "fetched") {
-      clearTransactionStatusContext();
+      clearTxConfirmationContext();
       sethHighlightedMultisigTx(undefined);
       setMultisigTransactionSummary(undefined);
       refreshMints();
       setLoadingMultisigTxs(true);
     } else if (fetchTxInfoStatus === "error") {
-      clearTransactionStatusContext();
+      clearTxConfirmationContext();
       openNotification({
         type: "info",
         duration: 5,
@@ -1021,7 +1021,7 @@ useEffect(() => {
   fetchTxInfoStatus,
   lastSentTxSignature,
   lastSentTxOperationType,
-  clearTransactionStatusContext,
+  clearTxConfirmationContext,
   refreshMints,
 ]);
 
@@ -1105,7 +1105,7 @@ useEffect(() => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.SetMintAuthority);
@@ -1409,7 +1409,7 @@ useEffect(() => {
     transactionFees.blockchainFee,
     transactionFees.mspFlatFee,
     transactionStatus.currentOperation,
-    clearTransactionStatusContext,
+    clearTxConfirmationContext,
     startFetchTxSignatureInfo,
     onMintAuthorityTransfered,
     resetTransactionStatus,
@@ -1453,7 +1453,7 @@ useEffect(() => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.CreateMint);
@@ -1733,7 +1733,7 @@ useEffect(() => {
     transactionFees.blockchainFee,
     multisigClient.provider.connection,
     transactionStatus.currentOperation,
-    clearTransactionStatusContext,
+    clearTxConfirmationContext,
     startFetchTxSignatureInfo,
     setTransactionStatus,
     resetTransactionStatus,
@@ -1777,7 +1777,7 @@ useEffect(() => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.MintTokens);
@@ -2074,7 +2074,7 @@ useEffect(() => {
     }
 
   }, [
-    clearTransactionStatusContext,
+    clearTxConfirmationContext,
     resetTransactionStatus,
     connection, 
     multisigClient.account.transaction, 
@@ -2108,7 +2108,7 @@ useEffect(() => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setRetryOperationPayload(data);
@@ -2368,7 +2368,7 @@ useEffect(() => {
     transactionFees.mspFlatFee,
     transactionFees.blockchainFee,
     transactionStatus.currentOperation,
-    clearTransactionStatusContext,
+    clearTxConfirmationContext,
     startFetchTxSignatureInfo,
     resetTransactionStatus,
     setTransactionStatus,
@@ -2382,7 +2382,7 @@ useEffect(() => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setRetryOperationPayload(data);
@@ -2667,7 +2667,7 @@ useEffect(() => {
     transactionFees.blockchainFee,
     multisigClient.provider.connection,
     transactionStatus.currentOperation,
-    clearTransactionStatusContext,
+    clearTxConfirmationContext,
     startFetchTxSignatureInfo,
     setTransactionStatus,
     resetTransactionStatus,
@@ -2682,7 +2682,7 @@ useEffect(() => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setRetryOperationPayload(data);
@@ -2955,7 +2955,7 @@ useEffect(() => {
     }
 
   }, [
-    clearTransactionStatusContext,
+    clearTxConfirmationContext,
     resetTransactionStatus,
     connection, 
     multisigClient.transaction, 

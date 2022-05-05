@@ -30,8 +30,11 @@ import {
   getTransactionModalTitle,
   getTransactionOperationDescription,
   getTransactionStatusForLogs,
+  kFormatter,
+  intToString,
 } from "../../utils/ui";
 import {
+  formatAmount,
   formatThousands,
   getTokenAmountAndSymbolByTokenAddress,
   shortenAddress,
@@ -46,23 +49,16 @@ const { Option } = Select;
 type TabOption = "first-tab" | "second-tab" | "demo-notifications" | "misc-tab";
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
-interface TokenVolume {
-  symbol: string;
-  amount: number;
-}
-interface BasicTokenInfo {
-  name: string;
-  symbol: string;
-  address: string;
-  decimals: number;
-}
-
 const SAMPLE_SIGNATURE =
   "43n6nSvWLULwu3Gdpkc3P2NtxzKdncvBMdmQxaf2wkWkSLtq2j7QD31TRd499UqijXfeyLWRxJ6t9Z1epWXcixPq";
 
 const CRYPTO_VALUES: number[] = [
   0.0004, 0.000003, 0.00000012345678, 1200.5, 1500.000009, 100500.000009226,
   7131060.641513,
+];
+
+const NUMBER_OF_ITEMS: number[] = [
+  0, 1, 99, 157, 679, 1000, 1300, 1550, 99600, 154350, 600000, 1200000
 ];
 
 interface TxStatusConfig {
@@ -157,10 +153,10 @@ export const PlaygroundView = () => {
   //     })
   //     .then(data => {
   //       // Only get tokens with volume for more than 1000 USD a month
-  //       const tokens = data.lastXTopTokens.filter((s: TokenVolume) => s.amount >= 1000) as TokenVolume[];
-  //       const topTokens: BasicTokenInfo[] = [];
+  //       const tokens = data.lastXTopTokens.filter((s: any) => s.amount >= 1000);
+  //       const topTokens = Array<any>();
   //       if (tokens && tokens.length > 0) {
-  //         tokens.forEach(element => {
+  //         tokens.forEach((element: any) => {
   //           const token = splTokenList.find(t => t.symbol === element.symbol);
   //           if (token) {
   //             topTokens.push({
@@ -306,6 +302,51 @@ export const PlaygroundView = () => {
     });
   };
 
+  const renderKformatters = () => {
+    return NUMBER_OF_ITEMS.map((value: number, index: number) => {
+      return (
+        <div className="item-list-row" key={`${index}`}>
+          <div className="std-table-cell responsive-cell text-monospace">
+            <span className="font-size-75 font-bold text-shadow">{formatThousands(value) || 0}</span>
+          </div>
+          <div className="std-table-cell responsive-cell text-monospace">
+            <div className="table-cell-flex-content">
+              <div className="icon-cell">
+                <div className="token-icon">
+                    <div className="streams-count">
+                      <span className="font-size-75 font-bold text-shadow">{formatAmount(value, 0, true) || 0}</span>
+                    </div>
+                  </div>
+              </div>
+            </div>
+          </div>
+          <div className="std-table-cell responsive-cell text-monospace">
+            <div className="table-cell-flex-content">
+              <div className="icon-cell">
+                <div className="token-icon">
+                    <div className="streams-count">
+                      <span className="font-size-75 font-bold text-shadow">{kFormatter(value) || 0}</span>
+                    </div>
+                  </div>
+              </div>
+            </div>
+          </div>
+          <div className="std-table-cell responsive-cell text-monospace">
+            <div className="table-cell-flex-content">
+              <div className="icon-cell">
+                <div className="token-icon">
+                    <div className="streams-count">
+                      <span className="font-size-75 font-bold text-shadow">{intToString(value, 1) || 0}</span>
+                    </div>
+                  </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    });
+  };
+
   const getOptionsFromEnum = (
     value: any,
     labelCallback: any
@@ -417,7 +458,7 @@ export const PlaygroundView = () => {
 
   const renderDemoNumberFormatting = (
     <>
-      <div className="tabset-heading">Number formatting</div>
+      <div className="tabset-heading">Number Formatting</div>
       <div className="item-list-header">
         <div className="header-row">
           <div className="std-table-cell responsive-cell text-right pr-2">
@@ -432,8 +473,7 @@ export const PlaygroundView = () => {
         </div>
       </div>
       <div className="item-list-body">{renderTable()}</div>
-      <Divider />
-      <div>
+      <div className="mb-2">
         Format1: <code>value.toFixed(decimals)</code>
         <br />
         Format2:{" "}
@@ -441,6 +481,27 @@ export const PlaygroundView = () => {
         <br />
         Format4: <code>formatThousands(value, decimals)</code>
       </div>
+
+      <Divider />
+
+      <div className="tabset-heading">Short Number Formatting</div>
+      <div className="item-list-header">
+        <div className="header-row">
+          <div className="std-table-cell responsive-cell">
+            raw value
+          </div>
+          <div className="std-table-cell responsive-cell">
+            formatAmount Fn
+          </div>
+          <div className="std-table-cell responsive-cell">
+            kFormatter
+          </div>
+          <div className="std-table-cell responsive-cell">
+            intToString
+          </div>
+        </div>
+      </div>
+      <div className="item-list-body">{renderKformatters()}</div>
     </>
   );
 
@@ -797,34 +858,40 @@ export const PlaygroundView = () => {
     }
   };
 
+  const renderTabset = (
+    <>
+      <div className="button-tabset-container">
+        <div
+          className={`tab-button ${currentTab === "first-tab" ? "active" : ""}`}
+          onClick={() => setCurrentTab("first-tab")}>
+          Demo 1
+        </div>
+        <div
+          className={`tab-button ${currentTab === "second-tab" ? "active" : ""}`}
+          onClick={() => setCurrentTab("second-tab")}>
+          Demo 2
+        </div>
+        <div
+          className={`tab-button ${currentTab === "demo-notifications" ? "active" : ""}`}
+          onClick={() => setCurrentTab("demo-notifications")}>
+          Demo 3
+        </div>
+        <div
+          className={`tab-button ${currentTab === "misc-tab" ? "active" : ""}`}
+          onClick={() => setCurrentTab("misc-tab")}>
+          Misc
+        </div>
+      </div>
+      {renderTab()}
+    </>
+  );
+
   return (
     <>
       <section>
         <div className="container mt-4 flex-column flex-center">
           <div className="boxed-area container-max-width-720">
-            <div className="button-tabset-container">
-              <div
-                className={`tab-button ${currentTab === "first-tab" ? "active" : ""}`}
-                onClick={() => setCurrentTab("first-tab")}>
-                Demo 1
-              </div>
-              <div
-                className={`tab-button ${currentTab === "second-tab" ? "active" : ""}`}
-                onClick={() => setCurrentTab("second-tab")}>
-                Demo 2
-              </div>
-              <div
-                className={`tab-button ${currentTab === "demo-notifications" ? "active" : ""}`}
-                onClick={() => setCurrentTab("demo-notifications")}>
-                Demo 3
-              </div>
-              <div
-                className={`tab-button ${currentTab === "misc-tab" ? "active" : ""}`}
-                onClick={() => setCurrentTab("misc-tab")}>
-                Misc
-              </div>
-            </div>
-            {renderTab()}
+            {renderTabset}
             {/* <span className="secondary-link" onClick={getTopJupiterTokensByVolume}>Read list of top Jupiter tokens in volume over 1,000 USD</span> */}
           </div>
         </div>

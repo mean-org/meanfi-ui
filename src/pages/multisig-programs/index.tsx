@@ -1,7 +1,7 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
-import { TransactionStatusContext } from '../../contexts/transaction-status';
+import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { useWallet } from '../../contexts/wallet';
 import { AppStateContext, TransactionStatusInfo } from '../../contexts/appstate';
 import { Button, Col, Divider, Empty, Row, Space, Spin, Tooltip } from 'antd';
@@ -69,8 +69,8 @@ export const MultisigProgramsView = () => {
     lastSentTxSignature,
     lastSentTxOperationType,
     startFetchTxSignatureInfo,
-    clearTransactionStatusContext,
-  } = useContext(TransactionStatusContext);
+    clearTxConfirmationContext,
+  } = useContext(TxConfirmationContext);
   const { t } = useTranslation('common');
   const { width } = useWindowSize();
   const [nativeBalance, setNativeBalance] = useState(0);
@@ -850,7 +850,7 @@ export const MultisigProgramsView = () => {
 
     if (multisigAddress && lastSentTxOperationType) {
       if (fetchTxInfoStatus === "fetched") {
-        clearTransactionStatusContext();
+        clearTxConfirmationContext();
         sethHighlightedMultisigTx(undefined);
         setMultisigTransactionSummary(undefined);
         setLoadingMultisigAccounts(true);
@@ -858,7 +858,7 @@ export const MultisigProgramsView = () => {
         setLoadingPrograms(true);
         refreshPrograms();
       } else if (fetchTxInfoStatus === "error") {
-        clearTransactionStatusContext();
+        clearTxConfirmationContext();
         openNotification({
           type: "info",
           duration: 5,
@@ -888,7 +888,7 @@ export const MultisigProgramsView = () => {
     fetchTxInfoStatus,
     lastSentTxSignature,
     lastSentTxOperationType,
-    clearTransactionStatusContext,
+    clearTxConfirmationContext,
     refreshPrograms,
   ]);
 
@@ -985,7 +985,7 @@ export const MultisigProgramsView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.UpgradeProgram);
@@ -1257,7 +1257,7 @@ export const MultisigProgramsView = () => {
     }
 
   }, [
-    clearTransactionStatusContext,
+    clearTxConfirmationContext,
     resetTransactionStatus,
     connection, 
     multisigClient, 
@@ -1305,7 +1305,7 @@ export const MultisigProgramsView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.UpgradeIDL);
@@ -1579,7 +1579,7 @@ export const MultisigProgramsView = () => {
     }
 
   }, [
-    clearTransactionStatusContext,
+    clearTxConfirmationContext,
     resetTransactionStatus,
     connection, 
     multisigClient, 
@@ -1627,7 +1627,7 @@ export const MultisigProgramsView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.SetMultisigAuthority);
@@ -1899,7 +1899,7 @@ export const MultisigProgramsView = () => {
     }
 
   }, [
-    clearTransactionStatusContext,
+    clearTxConfirmationContext,
     resetTransactionStatus,
     connection,
     multisigClient,
@@ -1930,7 +1930,7 @@ export const MultisigProgramsView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setRetryOperationPayload(data);
@@ -2180,7 +2180,7 @@ export const MultisigProgramsView = () => {
     transactionStatus.currentOperation, 
     transactionCancelled, 
     startFetchTxSignatureInfo,
-    clearTransactionStatusContext,
+    clearTxConfirmationContext,
     resetTransactionStatus,
     setTransactionStatus
   ]);
@@ -2193,7 +2193,7 @@ export const MultisigProgramsView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setRetryOperationPayload(data);
@@ -2439,7 +2439,7 @@ export const MultisigProgramsView = () => {
     transactionCancelled, 
     startFetchTxSignatureInfo, 
     setTransactionStatus, 
-    clearTransactionStatusContext, 
+    clearTxConfirmationContext, 
     resetTransactionStatus, 
     onTxExecuted
   ]);
@@ -2452,7 +2452,7 @@ export const MultisigProgramsView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setRetryOperationPayload(data);
@@ -2714,7 +2714,7 @@ export const MultisigProgramsView = () => {
     }
 
   }, [
-    clearTransactionStatusContext,
+    clearTxConfirmationContext,
     resetTransactionStatus,
     connection, 
     multisigClient,

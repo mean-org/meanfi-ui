@@ -1603,7 +1603,7 @@ export const RecurringExchange = (props: {
 
           {/* Warning */}
           {environment !== 'production' && (
-            <div className="notifications">
+            <div className="mt-3">
               <div data-show="true" className="ant-alert ant-alert-warning" role="alert">
                 <span role="img" aria-label="exclamation-circle" className="anticon anticon-exclamation-circle ant-alert-icon">
                   <WarningFilled />

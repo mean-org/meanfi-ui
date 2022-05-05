@@ -2,7 +2,7 @@ import React, { useCallback, useContext, useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import "./style.scss";
 import { gitInfo } from "../..";
-import { Layout } from "antd";
+import { Drawer, Empty, Layout } from "antd";
 import { AppBar } from "../AppBar";
 import { FooterBar } from "../FooterBar";
 import { AppStateContext } from "../../contexts/appstate";
@@ -24,6 +24,8 @@ import { AccountDetails } from "../../models";
 import { segmentAnalytics } from "../../App";
 import { AppUsageEvent } from "../../utils/segment-service";
 import { openNotification } from "../Notifications";
+import { TxConfirmationContext } from "../../contexts/transaction-status";
+import { TransactionConfirmationHistory } from "../TransactionConfirmationHistory";
 
 const { Header, Content, Footer } = Layout;
 
@@ -33,21 +35,24 @@ export const AppLayout = React.memo((props: any) => {
 
   const {
     theme,
+    tpsAvg,
     detailsPanelOpen,
     addAccountPanelOpen,
     canShowAccountDetails,
     previousWalletConnectState,
-    setStreamList,
-    setSelectedAsset,
-    setDiagnosisInfo,
-    setAccountAddress,
-    setDtailsPanelOpen,
+    setPreviousWalletConnectState,
+    setCanShowAccountDetails,
+    setAddAccountPanelOpen,
     setShouldLoadTokens,
     refreshTokenBalance,
-    setAddAccountPanelOpen,
-    setCanShowAccountDetails,
-    setPreviousWalletConnectState
+    setDtailsPanelOpen,
+    setAccountAddress,
+    setDiagnosisInfo,
+    setSelectedAsset,
+    setStreamList,
+    setTpsAvg,
   } = useContext(AppStateContext);
+  const { confirmationHistory, clearConfirmationHistory } = useContext(TxConfirmationContext);
 
   const { t, i18n } = useTranslation("common");
   const { isOnline, responseTime } = useOnlineStatus();
@@ -57,8 +62,8 @@ export const AppLayout = React.memo((props: any) => {
   const [gaInitialized, setGaInitialized] = useState(false);
   const [referralAddress, setReferralAddress] = useLocalStorage('pendingReferral', '');
   const [language, setLanguage] = useState("");
+  const [isDrawerVisible, setIsDrawerVisible] = useState(false);
   // undefined at first (never had a value), null = couldn't get, number the value successfully retrieved
-  const [avgTps, setAvgTps] = useState<number | null | undefined>(undefined);
   const [needRefresh, setNeedRefresh] = useState(true);
 
   // Clear cachedRpc on App destroy (window is being reloaded)
@@ -126,15 +131,15 @@ export const AppLayout = React.memo((props: any) => {
   useEffect(() => {
 
     // Hoping this to happens once
-    if (avgTps === undefined && needRefresh) {
+    if (tpsAvg === undefined && needRefresh) {
       setTimeout(() => {
-        setAvgTps(null);
+        setTpsAvg(null);
         setNeedRefresh(false);
       });
       getPerformanceSamples()
         .then(value => {
           if (value) {
-            setAvgTps(value);
+            setTpsAvg(value);
           }
         });
     }
@@ -145,11 +150,11 @@ export const AppLayout = React.memo((props: any) => {
         .then(value => {
           if (value) {
             setNeedRefresh(true);
-            setAvgTps(value);
+            setTpsAvg(value);
           }
         });
     },
-    avgTps && avgTps < PERFORMANCE_THRESHOLD
+    tpsAvg && tpsAvg < PERFORMANCE_THRESHOLD
       ? isProd()
         ? PERFORMANCE_SAMPLE_INTERVAL_FAST
         : PERFORMANCE_SAMPLE_INTERVAL
@@ -160,9 +165,10 @@ export const AppLayout = React.memo((props: any) => {
       clearInterval(performanceInterval);
     };
   }, [
-    avgTps,
+    tpsAvg,
     needRefresh,
-    getPerformanceSamples
+    getPerformanceSamples,
+    setTpsAvg,
   ]);
 
   const getPlatform = (): string => {
@@ -245,11 +251,11 @@ export const AppLayout = React.memo((props: any) => {
 
   // Show Avg TPS on the console
   useEffect(() => {
-    if (avgTps !== undefined) {
+    if (tpsAvg !== undefined) {
       setNeedRefresh(true);
     }
   }, [
-    avgTps
+    tpsAvg
   ]);
 
   // Get the current ISO language used by the user
@@ -305,6 +311,7 @@ export const AppLayout = React.memo((props: any) => {
         setPreviousWalletConnectState(false);
         setNeedRefresh(true);
         setStreamList([]);
+        clearConfirmationHistory();
         refreshTokenBalance();
         openNotification({
           type: "info",
@@ -333,6 +340,7 @@ export const AppLayout = React.memo((props: any) => {
     referralAddress,
     previousWalletConnectState,
     setPreviousWalletConnectState,
+    clearConfirmationHistory,
     refreshTokenBalance,
     setReferralAddress,
     setAccountAddress,
@@ -349,11 +357,15 @@ export const AppLayout = React.memo((props: any) => {
       if (address && isValidAddress(address)) {
         consoleOut('Referral address:', address, 'green');
         setReferralAddress(address);
-        openNotification({
-          title: t('notifications.friend-referral-completed'),
-          description: t('referrals.address-processed'),
-          type: "info"
-        });
+        setTimeout(() => {
+          if (!publicKey) {
+            openNotification({
+              title: t('notifications.friend-referral-completed'),
+              description: t('referrals.address-processed'),
+              type: "info"
+            });
+          }
+        }, 1000);
         navigate('/');
       } else {
         consoleOut('Invalid address', '', 'red');
@@ -367,9 +379,10 @@ export const AppLayout = React.memo((props: any) => {
     }
   }, [
     location,
-    t,
-    navigate,
+    publicKey,
     setReferralAddress,
+    navigate,
+    t,
   ]);
 
   useEffect(() => {
@@ -404,6 +417,14 @@ export const AppLayout = React.memo((props: any) => {
     }
   }
 
+  const showDrawer = () => {
+    setIsDrawerVisible(true);
+  };
+
+  const hideDrawer = () => {
+    setIsDrawerVisible(false);
+  };
+
   // Update diagnosis info
   useEffect(() => {
     if (connectionConfig && connectionConfig.endpoint && needRefresh) {
@@ -411,7 +432,7 @@ export const AppLayout = React.memo((props: any) => {
       const device = isDesktop ? 'Desktop' : isTablet ? 'Tablet' : isMobile ? 'Mobile' : 'Other';
       const dateTime = `Client time: ${now.toUTCString()}`;
       const clientInfo = `Client software: ${deviceType} ${browserName} ${fullBrowserVersion} on ${osName} ${osVersion} (${device})`;
-      const networkInfo = `Cluster: ${connectionConfig.cluster} (${connectionConfig.endpoint}) TPS: ${avgTps || '-'}, latency: ${responseTime}ms`;
+      const networkInfo = `Cluster: ${connectionConfig.cluster} (${connectionConfig.endpoint}) TPS: ${tpsAvg || '-'}, latency: ${responseTime}ms`;
       const accountInfo = publicKey && provider ? `Address: ${publicKey.toBase58()} (${provider.name})` : '';
       const appBuildInfo = `App package: ${process.env.REACT_APP_VERSION}, env: ${process.env.REACT_APP_ENV}, build: [${gitInfo.commit.shortHash}] on ${gitInfo.commit.date}`;
       const debugInfo: AccountDetails = {
@@ -425,7 +446,7 @@ export const AppLayout = React.memo((props: any) => {
       setNeedRefresh(false);
     }
   }, [
-    avgTps,
+    tpsAvg,
     isOnline,
     provider,
     publicKey,
@@ -440,11 +461,15 @@ export const AppLayout = React.memo((props: any) => {
     <>
     <div className="App">
       <Layout>
-        {(isProd() && (avgTps !== undefined && avgTps !== null) && avgTps < PERFORMANCE_THRESHOLD) && (
-          <div className="warning-bar">
-            <a className="simplelink underline-on-hover" target="_blank" rel="noopener noreferrer" href={SOLANA_STATUS_PAGE}>
-              {t('notifications.network-performance-low')}
-            </a>
+        {(isProd() && (tpsAvg !== undefined && tpsAvg !== null) && tpsAvg < PERFORMANCE_THRESHOLD) && (
+          <div id="performance-warning-bar">
+            <div className="wrapper">
+              <div className="sitemessage">
+                <a className="simplelink underline-on-hover" target="_blank" rel="noopener noreferrer" href={SOLANA_STATUS_PAGE}>
+                  {t('notifications.network-performance-low')}
+                </a>
+              </div>
+            </div>
           </div>
         )}
         <Header className="App-Bar">
@@ -457,16 +482,33 @@ export const AppLayout = React.memo((props: any) => {
                 <img className="app-logo" src={theme === 'dark' ? '/assets/mean-pay-logo-color-light.svg' : '/assets/mean-pay-logo-color-dark.svg'} alt="Mean Finance" />
               </div>
             </Link>
-            <AppBar menuType="desktop" topNavVisible={(location.pathname === '/ido' || location.pathname === '/ido-live') ? false : true} />
+            <AppBar menuType="desktop" onOpenDrawer={showDrawer} topNavVisible={(location.pathname === '/ido' || location.pathname === '/ido-live') ? false : true} />
           </div>
-          <AppBar menuType="mobile" topNavVisible={false} />
+          <AppBar menuType="mobile" topNavVisible={false} onOpenDrawer={showDrawer} />
         </Header>
         <Content>{props.children}</Content>
         <Footer>
-          <FooterBar/>
+          <FooterBar onOpenDrawer={showDrawer}/>
         </Footer>
       </Layout>
     </div>
+    <Drawer
+      title={<div className="ant-drawer-header-title">Recent events</div>}
+      placement="right"
+      width={360}
+      onClose={hideDrawer}
+      className="recent-events"
+      visible={isDrawerVisible}>
+      {confirmationHistory && confirmationHistory.length > 0 ? (
+        <TransactionConfirmationHistory confirmationHistory={confirmationHistory} />
+      ) : (
+        <div className="flex-center h-50">
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{connected
+          ? t('treasuries.treasury-list.no-treasuries')
+          : t('general.not-connected')}</p>} />
+        </div>
+      )}
+    </Drawer>
     </>
   );
 });

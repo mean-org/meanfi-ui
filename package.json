@@ -1,6 +1,6 @@
 {
   "name": "meanfi-ui",
-  "version": "1.13.14",
+  "version": "1.14.0",
   "private": true,
   "browserslist": [
     ">0.2%",
@@ -41,7 +41,7 @@
   },
   "dependencies": {
     "@ant-design/icons": "^4.7",
-    "@jup-ag/core": "1.0.0-beta.21",
+    "@jup-ag/core": "1.0.0-beta.22",
     "@ledgerhq/hw-transport": "^6.11",
     "@ledgerhq/hw-transport-webhid": "^6.11",
     "@mean-dao/ddca": "1.2.35",
@@ -61,7 +61,7 @@
     "@solana/spl-token-registry": "0.2.3755",
     "@solana/spl-token-swap": "^0.1.0",
     "@solana/wallet-adapter-base": "0.9.1",
-    "@solana/web3.js": "1.30.0",
+    "@solana/web3.js": "1.31.0",
     "@solflare-wallet/sdk": "^1.0.12",
     "@transak/transak-sdk": "^1.0",
     "@walletconnect/client": "^2.0.0-beta.17",
@@ -89,6 +89,7 @@
     "react": "17.0.2",
     "react-async-hook": "4.0.0",
     "react-countdown": "2.3.2",
+    "react-countdown-circle-timer": "^3.0.9",
     "react-countup": "^6.1.0",
     "react-device-detect": "2.1.2",
     "react-dom": "17.0.2",
@@ -98,6 +99,7 @@
     "react-router-dom": "^6.0",
     "react-share": "^4.4.0",
     "recharts": "^2.1.8",
+    "tweetnacl": "^1.0.3",
     "web-vitals": "^2.1.0"
   },
   "devDependencies": {

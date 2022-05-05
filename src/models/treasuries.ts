@@ -14,3 +14,17 @@ export interface TreasuryCreateOptions {
     treasuryType: TreasuryType;
     multisigId: string;
 }
+
+export interface UserTreasuriesSummary {
+    totalAmount: number;
+    openAmount: number;
+    lockedAmount: number;
+    totalNet: number;
+}
+
+export const INITIAL_TREASURIES_SUMMARY: UserTreasuriesSummary = {
+    totalAmount: 0,
+    openAmount: 0,
+    lockedAmount: 0,
+    totalNet: 0
+}

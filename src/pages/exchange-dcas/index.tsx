@@ -30,7 +30,6 @@ import {
 } from '../../constants';
 import { IconClock, IconExchange, IconExternalLink } from '../../Icons';
 import { ArrowDownOutlined, ArrowUpOutlined, CheckOutlined, EllipsisOutlined, LoadingOutlined, ReloadOutlined, WarningOutlined } from '@ant-design/icons';
-import { notify } from '../../utils/notifications';
 import { calculateActionFees, DdcaAccount, DdcaActivity, DdcaClient, DdcaDetails, DDCA_ACTIONS, TransactionFees } from '@mean-dao/ddca';
 import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
 import { getLiveRpc, RpcConfig } from '../../models/connections-hq';
@@ -40,10 +39,11 @@ import { NATIVE_SOL_MINT } from '../../utils/ids';
 import dateFormat from "dateformat";
 import { customLogger } from '../..';
 import { DdcaCloseModal } from '../../components/DdcaCloseModal';
-import { TransactionStatusContext } from '../../contexts/transaction-status';
+import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { DdcaWithdrawModal } from '../../components/DdcaWithdrawModal';
 import { DdcaAddFundsModal } from '../../components/DdcaAddFundsModal';
 import { useNativeAccount } from '../../contexts/accounts';
+import { openNotification } from '../../components/Notifications';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -67,8 +67,8 @@ export const ExchangeDcasView = () => {
     recentlyCreatedVault,
     setRecentlyCreatedVault,
     startFetchTxSignatureInfo,
-    clearTransactionStatusContext,
-  } = useContext(TransactionStatusContext);
+    clearTxConfirmationContext,
+  } = useContext(TxConfirmationContext);
   const navigate = useNavigate();
   const { t } = useTranslation('common');
   const { publicKey, wallet, connected } = useWallet();
@@ -223,7 +223,7 @@ export const ExchangeDcasView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     setTransactionCancelled(false);
     setIsBusy(true);
 
@@ -438,7 +438,7 @@ export const ExchangeDcasView = () => {
             consoleOut('Send Tx to confirmation queue:', signature);
             startFetchTxSignatureInfo(signature, "confirmed", OperationType.DdcaClose);
             setIsBusy(false);
-            // Give time for several renders so startFetchTxSignatureInfo can update TransactionStatusContext
+            // Give time for several renders so startFetchTxSignatureInfo can update TxConfirmationContext
             await delay(250);
             onCloseDdcaTransactionFinished();
           } else { setIsBusy(false); }
@@ -500,7 +500,7 @@ export const ExchangeDcasView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     setTransactionCancelled(false);
     setIsBusy(true);
 
@@ -718,7 +718,7 @@ export const ExchangeDcasView = () => {
             consoleOut('Send Tx to confirmation queue:', signature);
             startFetchTxSignatureInfo(signature, "confirmed", OperationType.DdcaWithdraw);
             setIsBusy(false);
-            // Give time for several renders so startFetchTxSignatureInfo can update TransactionStatusContext
+            // Give time for several renders so startFetchTxSignatureInfo can update TxConfirmationContext
             await delay(250);
             onWithdrawTransactionFinished();
           } else { setIsBusy(false); }
@@ -949,10 +949,10 @@ export const ExchangeDcasView = () => {
 
     if (lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
       if (lastSentTxOperationType === OperationType.DdcaClose) {
-        clearTransactionStatusContext();
+        clearTxConfirmationContext();
         reloadRecurringBuys();
       } else {
-        clearTransactionStatusContext();
+        clearTxConfirmationContext();
         reloadDdcaDetail(ddcaDetails.ddcaAccountAddress);
       }
     }
@@ -964,7 +964,7 @@ export const ExchangeDcasView = () => {
     lastSentTxOperationType,
     reloadRecurringBuys,
     reloadDdcaDetail,
-    clearTransactionStatusContext,
+    clearTxConfirmationContext,
   ]);
 
   ////////////////
@@ -973,12 +973,12 @@ export const ExchangeDcasView = () => {
 
   const onCopyRecurringBuyAddress = (data: any) => {
     if (copyText(data.toString())) {
-      notify({
+      openNotification({
         description: t('notifications.account-address-copied-message'),
         type: "info"
       });
     } else {
-      notify({
+      openNotification({
         description: t('notifications.account-address-not-copied-message'),
         type: "error"
       });
@@ -1484,7 +1484,7 @@ export const ExchangeDcasView = () => {
 
         {isLocal() && (
           <div className="debug-bar">
-            <span className="secondary-link" onClick={() => clearTransactionStatusContext()}>[STOP]</span>
+            <span className="secondary-link" onClick={() => clearTxConfirmationContext()}>[STOP]</span>
             <span className="ml-1">proggress:</span><span className="ml-1 font-bold fg-dark-active">{fetchTxInfoStatus || '-'}</span>
             <span className="ml-1">status:</span><span className="ml-1 font-bold fg-dark-active">{lastSentTxStatus || '-'}</span>
             <span className="ml-1">recentlyCreatedVault:</span><span className="ml-1 font-bold fg-dark-active">{recentlyCreatedVault ? shortenAddress(recentlyCreatedVault, 8) : '-'}</span>
