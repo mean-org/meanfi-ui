@@ -6,8 +6,7 @@ import { useWallet } from '../../contexts/wallet';
 import { AddressDisplay } from '../AddressDisplay';
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
 import { getSolanaExplorerClusterParam } from '../../contexts/connection';
-
-const QRCode = require('qrcode.react');
+import { QRCodeSVG } from 'qrcode.react';
 
 export const ReceiveSplOrSolModal = (props: {
   handleClose: any;
@@ -43,18 +42,16 @@ export const ReceiveSplOrSolModal = (props: {
 
           {(isWalletAddress() || overrideWithWallet) ? (
             <div className={theme === 'light' ? 'qr-container bg-white' : 'qr-container bg-black'}>
-              <QRCode
+              <QRCodeSVG
                 value={publicKey?.toBase58() as string}
                 size={200}
-                renderAs="svg"
               />
             </div>
           ) : (
             <div className={theme === 'light' ? 'qr-container bg-white' : 'qr-container bg-black'}>
-              <QRCode
+              <QRCodeSVG
                 value={address}
                 size={200}
-                renderAs="svg"
               />
             </div>
           )}

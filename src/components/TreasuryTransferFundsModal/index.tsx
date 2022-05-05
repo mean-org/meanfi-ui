@@ -61,13 +61,13 @@ export const TreasuryTransferFundsModal = (props: {
   const [multisigAddresses, setMultisigAddresses] = useState<string[]>([]);
 
   const isMultisigTreasury = useCallback((treasury?: any) => {
-    let treasuryInfo: any = treasury ?? props.treasuryDetails;
+    const treasuryInfo: any = treasury ?? props.treasuryDetails;
 
     if (!treasuryInfo || treasuryInfo.version < 2 || !treasuryInfo.treasurer || !publicKey) {
       return false;
     }
 
-    let treasurer = new PublicKey(treasuryInfo.treasurer as string);
+    const treasurer = new PublicKey(treasuryInfo.treasurer as string);
 
     if (!treasurer.equals(publicKey) && props.multisigAccounts && props.multisigAccounts.findIndex(m => m.authority.equals(treasurer)) !== -1) {
       return true;

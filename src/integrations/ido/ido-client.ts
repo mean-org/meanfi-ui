@@ -4,9 +4,9 @@ import {
     Transaction,
     TransactionInstruction} from '@solana/web3.js';
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import * as anchor from "@project-serum/anchor";
-import { BN, IdlAccounts, parseIdlErrors, Program, ProgramError } from "@project-serum/anchor";
-import { Wallet } from "@project-serum/anchor/src/provider";
+import * as anchor from "anchor-0-20-1";
+import { BN, IdlAccounts, parseIdlErrors, Program, ProgramError } from "anchor-0-20-1";
+import { Wallet } from "anchor-0-20-1/src/provider";
 import ido_idl from './mean_ido_pool.json';
 import EventEmitter from 'eventemitter3';
 import { MeanIdoPool } from "./mean_ido_pool_types";
@@ -178,7 +178,7 @@ export class IdoClient {
             this.readonlyProgram.programId
         );
 
-        let bumps: PoolBumps = {
+        const bumps: PoolBumps = {
             idoAccount: idoAccountBump,
             meanPool: meanPoolBump,
             usdcPool: usdcPoolBump
@@ -222,7 +222,7 @@ export class IdoClient {
             throw Error("Insufficient MEAN balance");
         }
 
-        let [idoWithdrawals, createWithdrawalsTx] = await this.createCreateWithdrawalsTx(idoAuthority);
+        const [idoWithdrawals, createWithdrawalsTx] = await this.createCreateWithdrawalsTx(idoAuthority);
 
         if (this.verbose) {
             console.log(` idoAuthority:        ${program.provider.wallet.publicKey}`);
@@ -282,7 +282,7 @@ export class IdoClient {
         );
 
         initializeIdoTx.feePayer = idoAuthority;
-        let hash = await this.connection.getRecentBlockhash(this.connection.commitment);
+        const hash = await this.connection.getRecentBlockhash(this.connection.commitment);
         initializeIdoTx.recentBlockhash = hash.blockhash;
         initializeIdoTx.partialSign(idoWithdrawals);
 
@@ -355,7 +355,7 @@ export class IdoClient {
         );
 
         depositUsdcTx.feePayer = currentUserPubKey;
-        let hash = await this.connection.getRecentBlockhash(this.connection.commitment);
+        const hash = await this.connection.getRecentBlockhash(this.connection.commitment);
         depositUsdcTx.recentBlockhash = hash.blockhash;
 
         return [userIdo, depositUsdcTx];
@@ -435,7 +435,7 @@ export class IdoClient {
         );
 
         withdrawUsdcTx.feePayer = currentUserPubKey;
-        let hash = await this.connection.getRecentBlockhash(this.connection.commitment);
+        const hash = await this.connection.getRecentBlockhash(this.connection.commitment);
         withdrawUsdcTx.recentBlockhash = hash.blockhash;
 
         return [userIdo, withdrawUsdcTx];
@@ -495,7 +495,7 @@ export class IdoClient {
         );
 
         withdrawMeanLpTx.feePayer = currentUserPubKey;
-        let hash = await this.connection.getRecentBlockhash(this.connection.commitment);
+        const hash = await this.connection.getRecentBlockhash(this.connection.commitment);
         withdrawMeanLpTx.recentBlockhash = hash.blockhash;
 
         return [userIdo, withdrawMeanLpTx];
@@ -530,7 +530,7 @@ export class IdoClient {
         );
 
         createWithdrawalsTx.feePayer = idoAuthorityPubkey;
-        let hash = await this.connection.getRecentBlockhash(this.connection.commitment);
+        const hash = await this.connection.getRecentBlockhash(this.connection.commitment);
         createWithdrawalsTx.recentBlockhash = hash.blockhash;
 
         return [withdrawalsKeypair, createWithdrawalsTx];
@@ -569,7 +569,7 @@ export class IdoClient {
         );
 
         updateTx.feePayer = idoAuthorityAddress;
-        let hash = await this.connection.getRecentBlockhash(this.connection.commitment);
+        const hash = await this.connection.getRecentBlockhash(this.connection.commitment);
         updateTx.recentBlockhash = hash.blockhash;
 
         return updateTx;
@@ -637,7 +637,7 @@ export class IdoClient {
         );
 
         withdrawUsdcTx.feePayer = currentUserPubKey;
-        let hash = await this.connection.getRecentBlockhash(this.connection.commitment);
+        const hash = await this.connection.getRecentBlockhash(this.connection.commitment);
         withdrawUsdcTx.recentBlockhash = hash.blockhash;
 
         return withdrawUsdcTx;
@@ -698,13 +698,13 @@ export class IdoClient {
         );
 
         redeemTx.feePayer = currentUserPubKey;
-        let hash = await this.connection.getRecentBlockhash(this.connection.commitment);
+        const hash = await this.connection.getRecentBlockhash(this.connection.commitment);
         redeemTx.recentBlockhash = hash.blockhash;
 
         return redeemTx;
     }
 
-    public async listIdos(stortByStartTs: boolean = true, desc: boolean = true): Promise<Array<IdoDetails>> {
+    public async listIdos(stortByStartTs = true, desc = true): Promise<Array<IdoDetails>> {
         if(!this.userPubKey)
             throw new Error("Must connect wallet first");
 
@@ -1078,7 +1078,7 @@ class IdoTracker {
 
         const estimatedClusterTimeTs = Math.floor(Date.now() / 1000) + this.clusterTimeOffsetInSeconds;
         const t = (new BN(estimatedClusterTimeTs).sub(new BN(this.latestIdo.idoStartTs)));
-        let status: IdoStatus = {
+        const status: IdoStatus = {
             clusterTs: estimatedClusterTimeTs,
             secondsFromIdoStart: t.toNumber(),
             isRunning: false,
@@ -1216,7 +1216,7 @@ async function createAtaCreateInstructionIfNotExists(
     const ata = await connection.getAccountInfo(ataAddress);
     if(!ata){
         // console.log("ATA: %s for mint: %s was not found. Generating 'create' instruction...", ataAddress.toBase58(), mintAddress.toBase58());
-        let [, createIx] = await createAtaCreateInstruction(ataAddress, mintAddress, ownerAccountAddress, payerAddress);
+        const [, createIx] = await createAtaCreateInstruction(ataAddress, mintAddress, ownerAccountAddress, payerAddress);
         return createIx;
     }
     
@@ -1243,7 +1243,7 @@ async function createAtaCreateInstruction(
     );
   }
 
-  let ataCreateInstruction = Token.createAssociatedTokenAccountInstruction(
+  const ataCreateInstruction = Token.createAssociatedTokenAccountInstruction(
     ASSOCIATED_TOKEN_PROGRAM_ID,
     TOKEN_PROGRAM_ID,
     mintAddress,
@@ -1344,7 +1344,7 @@ export function usdcMaxCurve(us: BN, ue: BN, t_total: BN, t: BN): BN {
 
 export function mapIdoDetails(idoAddress: string, idoAccountUntyped: any): IdoDetails {
     const idoAccount = idoAccountUntyped as idoAccountType;
-    var idoTimes = idoAccount.idoTimes as IdoTimes;
+    const idoTimes = idoAccount.idoTimes as IdoTimes;
     // const withdrawals = (idoAccount.withdrawals as any[]).map(x => 
     //     { 
     //         const entry: WithdrawalEntry = {

@@ -68,9 +68,9 @@ import { AppUsageEvent } from '../../utils/segment-service';
 import { segmentAnalytics } from '../../App';
 import { TreasuriesSummary } from '../../components/TreasuriesSummary';
 import { AccountsSuggestAssetModal } from '../../components/AccountsSuggestAssetModal';
+import { QRCodeSVG } from 'qrcode.react';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
-const QRCode = require('qrcode.react');
 export type CategoryOption = "networth" | "user-account" | "other-assets";
 export type OtherAssetsOption = "msp-streams" | "msp-treasuries" | "orca" | "solend" | "friktion" | undefined;
 
@@ -522,8 +522,8 @@ export const AccountsNewView = () => {
 
   const selectAsset = useCallback((
     asset: UserTokenAccount,
-    clearTxList: boolean = true,
-    openDetailsPanel: boolean = false
+    clearTxList = true,
+    openDetailsPanel = false
   ) => {
     setStatus(FetchStatus.Fetching);
     if (clearTxList) {
@@ -593,7 +593,7 @@ export const AccountsNewView = () => {
 
     setLoadingStreamsSummary(true);
 
-    let resume: StreamsSummary = {
+    const resume: StreamsSummary = {
       totalNet: 0,
       incomingAmount: 0,
       outgoingAmount: 0,
@@ -611,7 +611,7 @@ export const AccountsNewView = () => {
 
     // consoleOut('=========== Block strat ===========', '', 'orange');
 
-    for (let stream of updatedStreamsv1) {
+    for (const stream of updatedStreamsv1) {
 
       const isIncoming = stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58()
         ? true
@@ -624,7 +624,7 @@ export const AccountsNewView = () => {
       }
 
       // Get refreshed data
-      let freshStream = await ms.refreshStream(stream) as StreamInfo;
+      const freshStream = await ms.refreshStream(stream) as StreamInfo;
       if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
 
       const asset = getTokenByMintAddress(freshStream.associatedToken as string);
@@ -640,7 +640,7 @@ export const AccountsNewView = () => {
 
     // consoleOut('totalNet v1:', resume['totalNet'], 'blue');
 
-    for (let stream of updatedStreamsv2) {
+    for (const stream of updatedStreamsv2) {
 
       const isIncoming = stream.beneficiary && stream.beneficiary === treasurer.toBase58()
         ? true
@@ -653,7 +653,7 @@ export const AccountsNewView = () => {
       }
 
       // Get refreshed data
-      let freshStream = await msp.refreshStream(stream) as Stream;
+      const freshStream = await msp.refreshStream(stream) as Stream;
       if (!freshStream || freshStream.status !== STREAM_STATUS.Running) { continue; }
 
       const asset = getTokenByMintAddress(freshStream.associatedToken as string);
@@ -1052,7 +1052,7 @@ export const AccountsNewView = () => {
                   }
                 });
 
-                let sortedList = intersectedList.sort((a, b) => {
+                const sortedList = intersectedList.sort((a, b) => {
                   if ((a.valueInUsd || 0) < (b.valueInUsd || 0)) {
                     return 1;
                   } else if ((a.valueInUsd || 0) > (b.valueInUsd || 0)) {
@@ -1886,10 +1886,10 @@ export const AccountsNewView = () => {
     <div className="text-center mt-3">
       <h3 className="mb-3">{t('assets.no-balance.line3')}</h3>
       <div className={theme === 'light' ? 'qr-container bg-white' : 'qr-container bg-black'}>
-        <QRCode
+        <QRCodeSVG
           value={accountAddress}
           size={200}
-          renderAs="svg"/>
+        />
       </div>
       <div className="flex-center font-size-70 mb-2">
         <AddressDisplay

@@ -572,7 +572,7 @@ export const MultisigAssetsView = () => {
     if (!accountInfoContext.value || !accountInfoContext.value.length) { return []; }
 
     const results = accountInfoContext.value.map((t: any) => {
-      let tokenAccount = ACCOUNT_LAYOUT.decode(t.account.data);
+      const tokenAccount = ACCOUNT_LAYOUT.decode(t.account.data);
       tokenAccount.address = t.pubkey;
       return tokenAccount;
     });
@@ -780,8 +780,8 @@ export const MultisigAssetsView = () => {
         .getMultisigTransactions(selectedMultisig.id, publicKey)
         .then((txs: MultisigTransaction[]) => {
           consoleOut('selected multisig txs', txs, 'blue');
-          let transactions: MultisigTransaction[] = [];
-          for (let tx of txs) {
+          const transactions: MultisigTransaction[] = [];
+          for (const tx of txs) {
             if (tx.accounts.some(a => a.pubkey.equals(selectedVault.address))) {
               transactions.push(tx);
             }
@@ -980,8 +980,8 @@ export const MultisigAssetsView = () => {
 
       const mintAddress = new PublicKey(data.token.address);
 
-      let signers: Signer[] = [];
-      let ixs: TransactionInstruction[] = [];
+      const signers: Signer[] = [];
+      const ixs: TransactionInstruction[] = [];
       let tokenAccount = await Token.getAssociatedTokenAddress(
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
@@ -1027,7 +1027,7 @@ export const MultisigAssetsView = () => {
         signers.push(tokenKeypair);
       }
 
-      let tx = new Transaction().add(...ixs);
+      const tx = new Transaction().add(...ixs);
       tx.feePayer = publicKey;
       const { blockhash } = await connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
@@ -1345,8 +1345,8 @@ export const MultisigAssetsView = () => {
 
       const mint = MintLayout.decode(Buffer.from(mintInfo.data));
       let toAddress = new PublicKey(data.to);
-      let toAccountInfo = await connection.getAccountInfo(toAddress);
-      let ixs: TransactionInstruction[] = [];
+      const toAccountInfo = await connection.getAccountInfo(toAddress);
+      const ixs: TransactionInstruction[] = [];
 
       if (!toAccountInfo || !toAccountInfo.owner.equals(TOKEN_PROGRAM_ID)) {
 
@@ -1387,7 +1387,7 @@ export const MultisigAssetsView = () => {
 
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-      let tx = await multisigClient.createTransaction(
+      const tx = await multisigClient.createTransaction(
         publicKey,
         "Transfer Asset Funds",
         "", // description
@@ -1703,7 +1703,7 @@ export const MultisigAssetsView = () => {
 
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-      let tx = await multisigClient.createTransaction(
+      const tx = await multisigClient.createTransaction(
         publicKey,
         "Change Asset Authority",
         "", // description
@@ -1777,7 +1777,7 @@ export const MultisigAssetsView = () => {
         return false;
       }
 
-      let result =  await createTransferOwnershipTx(selectedAuthority)
+      const result =  await createTransferOwnershipTx(selectedAuthority)
         .then(value => {
           if (!value) { return false; }
           consoleOut('createTransferVaultAuthorityTx returned transaction:', value);
@@ -2007,7 +2007,7 @@ export const MultisigAssetsView = () => {
 
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-      let tx = await multisigClient.createTransaction(
+      const tx = await multisigClient.createTransaction(
         publicKey,
         "Close Asset",
         "", // description
@@ -2080,7 +2080,7 @@ export const MultisigAssetsView = () => {
         return false;
       }
 
-      let result =  await closeAssetTx(selectedVault)
+      const result =  await closeAssetTx(selectedVault)
         .then((value: any) => {
           if (!value) { return false; }
           consoleOut('deleteVaultTx returned transaction:', value);
@@ -2284,7 +2284,7 @@ export const MultisigAssetsView = () => {
 
       if (!selectedMultisig || !multisigClient || !publicKey) { return null; }
 
-      let tx = await multisigClient.approveTransaction(publicKey, data.transaction.id);
+      const tx = await multisigClient.approveTransaction(publicKey, data.transaction.id);
   
       return tx;
     };
@@ -2547,7 +2547,7 @@ export const MultisigAssetsView = () => {
 
       if (!data.transaction || !publicKey || !multisigClient) { return null; }
 
-      let tx = await multisigClient.executeTransaction(publicKey, data.transaction.id);
+      const tx = await multisigClient.executeTransaction(publicKey, data.transaction.id);
   
       return tx;
     };
@@ -2819,7 +2819,7 @@ export const MultisigAssetsView = () => {
         return null;
       }
 
-      let tx = await multisigClient.cancelTransaction(publicKey, data.transaction.id);
+      const tx = await multisigClient.cancelTransaction(publicKey, data.transaction.id);
 
       return tx;
     };
@@ -2992,7 +2992,7 @@ export const MultisigAssetsView = () => {
         return false;
       }
 
-      let result = await connection
+      const result = await connection
         .sendEncodedTransaction(encodedTx)
         .then(sig => {
           consoleOut('sendEncodedTransaction returned a signature:', sig);
@@ -3015,7 +3015,7 @@ export const MultisigAssetsView = () => {
             currentOperation: TransactionStatus.SendTransactionFailure
           } as TransactionStatusInfo;
           if (error.toString().indexOf('0x1794') !== -1) {
-            let treasury = data.transaction.operation === OperationType.StreamClose
+            const treasury = data.transaction.operation === OperationType.StreamClose
               ? data.transaction.accounts[5].pubkey.toBase58()
               : data.transaction.accounts[3].pubkey.toBase58();
             txStatus.customError = {

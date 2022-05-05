@@ -84,14 +84,14 @@ export const listMultisigTransactions = async (
 
   try {
 
-    let filters: GetProgramAccountsFilter[] = [
+    const filters: GetProgramAccountsFilter[] = [
       { dataSize: 1200 },
       { memcmp: { offset: 8, bytes: multisig.id.toString() } }
     ];
 
-    let transactions: MultisigTransaction[] = [];
-    let txs = await program.account.transaction.all(filters);
-    for (let tx of txs) {
+    const transactions: MultisigTransaction[] = [];
+    const txs = await program.account.transaction.all(filters);
+    for (const tx of txs) {
 
       const [txDetailAddress] = await PublicKey.findProgramAddress(
         [
@@ -102,7 +102,7 @@ export const listMultisigTransactions = async (
       );
 
       const txDetail = await program.account.transactionDetail.fetchNullable(txDetailAddress);
-      let txInfo = parseMultisigTransaction(multisig, owner, tx, txDetail);
+      const txInfo = parseMultisigTransaction(multisig, owner, tx, txDetail);
       transactions.push(txInfo);
     }
     
@@ -125,7 +125,7 @@ export const parseMultisigTransaction = (
 ): MultisigTransaction => {
 
   try {
-    let currentOwnerIndex = multisig.owners.findIndex((o: any) => o.address === owner.toBase58());
+    const currentOwnerIndex = multisig.owners.findIndex((o: any) => o.address === owner.toBase58());
     return Object.assign({}, {
       id: txInfo.publicKey,
       multisig: txInfo.account.multisig,

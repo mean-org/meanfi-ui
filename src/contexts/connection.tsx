@@ -79,8 +79,7 @@ export function ConnectionProvider({ children = undefined as any }) {
   useEffect(() => {
     // fetch token files
     (async () => {
-      let list: TokenInfo[];
-      list = MEAN_TOKEN_LIST.filter(t => t.chainId === cachedRpc.networkId);
+      const list = MEAN_TOKEN_LIST.filter(t => t.chainId === cachedRpc.networkId);
       const knownMints = list.reduce((map, item) => {
         map.set(item.address, item);
         return map;

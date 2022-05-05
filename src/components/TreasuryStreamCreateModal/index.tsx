@@ -733,7 +733,7 @@ export const TreasuryStreamCreateModal = (props: {
   // }
 
   const selectCsvHandler = (e: any) => {
-    let reader = new FileReader();
+    const reader = new FileReader();
 
     setHasIsOwnWallet(false);
 
@@ -760,10 +760,10 @@ export const TreasuryStreamCreateModal = (props: {
     if (!csvFile) { return; }
 
     const splittedData = csvFile.split("\n");
-    let dataFormatted: any[] = [];
+    const dataFormatted: any[] = [];
     
     const timeout = setTimeout(() => {
-      for (let line of splittedData) {
+      for (const line of splittedData) {
         const splittedLine = line.split(",");
   
         if (splittedLine.length < 2) {
@@ -896,21 +896,21 @@ export const TreasuryStreamCreateModal = (props: {
 
       if (!props.treasuryDetails || !props.multisigClient || !props.multisigAddress || !publicKey) { return null; }
 
-      let [multisigSigner] = await PublicKey.findProgramAddress(
+      const [multisigSigner] = await PublicKey.findProgramAddress(
         [props.multisigAddress.toBuffer()],
         MEAN_MULTISIG_PROGRAM
       );
 
-      let streams: StreamBeneficiary[] = [];
-      let streamsBumps: any = {};
+      const streams: StreamBeneficiary[] = [];
+      const streamsBumps: any = {};
       let seedCounter = 0;
 
       const timeStamp = parseInt((Date.now() / 1000).toString());
 
-      for (let beneficiary of data.beneficiaries) {
+      for (const beneficiary of data.beneficiaries) {
         
-        let timeStampCounter = new u64(timeStamp + seedCounter);
-        let [stream, streamBump] = await PublicKey.findProgramAddress(
+        const timeStampCounter = new u64(timeStamp + seedCounter);
+        const [stream, streamBump] = await PublicKey.findProgramAddress(
           [props.multisigAddress.toBuffer(), timeStampCounter.toBuffer()],
           MEAN_MULTISIG_PROGRAM
         );
@@ -930,7 +930,7 @@ export const TreasuryStreamCreateModal = (props: {
         seedCounter += 1;
       }
 
-      let createStreams = await msp.createStreamsFromPda(
+      const createStreams = await msp.createStreamsFromPda(
         publicKey,                                                            // payer
         multisigSigner,                                                       // treasurer
         new PublicKey(data.treasury),                                         // treasury
@@ -946,15 +946,15 @@ export const TreasuryStreamCreateModal = (props: {
       );
 
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
-      let txs: Transaction[] = [];
+      const txs: Transaction[] = [];
 
-      for (let createTx of createStreams) {
+      for (const createTx of createStreams) {
 
         const ixData = Buffer.from(createTx.instructions[0].data);
         const ixAccounts = createTx.instructions[0].keys;
         const streamSeedData = streamsBumps[createTx.instructions[0].keys[7].pubkey.toBase58()];
 
-        let tx = await props.multisigClient.createMoneyStreamTransaction(
+        const tx = await props.multisigClient.createMoneyStreamTransaction(
           publicKey,
           "Create Stream",
           "", // description
@@ -1096,7 +1096,7 @@ export const TreasuryStreamCreateModal = (props: {
         return false;
       }
 
-      let result = await createStreams(data)
+      const result = await createStreams(data)
         .then(values => {
           if (!values || !values.length) { return false; }
           // consoleOut('createStreams returned transaction:', values);
@@ -1145,7 +1145,7 @@ export const TreasuryStreamCreateModal = (props: {
       }
 
       consoleOut('Signing transactions...');
-      let result = await wallet.signAllTransactions(transactions)
+      const result = await wallet.signAllTransactions(transactions)
         .then((signed: Transaction[]) => {
           // consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransactions = signed;
@@ -1211,11 +1211,11 @@ export const TreasuryStreamCreateModal = (props: {
 
       const promises: Promise<string>[] = [];
 
-      for (let tx of encodedTxs) {
+      for (const tx of encodedTxs) {
         promises.push(props.connection.sendEncodedTransaction(tx));
       }
 
-      let result = await Promise.all(promises)
+      const result = await Promise.all(promises)
         .then(sigs => {
           consoleOut('sendEncodedTransaction returned a signature:', sigs);
           setTransactionStatus({

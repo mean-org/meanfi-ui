@@ -243,7 +243,7 @@ export const DdcaSetupModal = (props: {
       const isOpValid = minimumRequired < lockedFromTokenBalance ? true : false;
 
       // Set the slider position
-      let sliderPosition = isOpValid ? initialValue : minRangeSelectable;
+      const sliderPosition = isOpValid ? initialValue : minRangeSelectable;
       setRecurrencePeriod(sliderPosition);
 
       consoleOut('HLA INFO', props.hlaInfo, 'blue');

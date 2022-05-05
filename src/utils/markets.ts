@@ -27,7 +27,7 @@ export async function getMarkets(connection: Connection) {
 
   startMarkets();
 
-  let markets: any = [];
+  const markets: any = [];
   const marketInfos = await getMultipleAccounts(
     connection, 
     MARKETS.map(m => new PublicKey(m)), 

@@ -277,13 +277,13 @@ export const JupiterExchange = (props: {
 
             const error = (_error: any, tl: PublicKey[]) => {
                 console.error(_error);
-                for (let t of tl) {
+                for (const t of tl) {
                     balancesMap[t.toBase58()] = 0;
                 }
             };
 
             const success = (response: any) => {
-                for (let acc of response.value) {
+                for (const acc of response.value) {
                     const decoded = ACCOUNT_LAYOUT.decode(acc.account.data);
                     const address = decoded.mint.toBase58();
                     const item = tokenList.find(t => t.address === address);
@@ -361,7 +361,7 @@ export const JupiterExchange = (props: {
             if (publicKey && userBalances) {
 
                 for (const token of tokenList) {
-                    let mint = JSON.parse(JSON.stringify(token));
+                    const mint = JSON.parse(JSON.stringify(token));
                     if (mint.logoURI && token.address !== sol.address && userBalances[token.address] > 0) {
                         newList[mint.address] = mint;
                     }
@@ -463,7 +463,7 @@ export const JupiterExchange = (props: {
             return 0;
         }
 
-        let balance = fromMint === WRAPPED_SOL_MINT_ADDRESS
+        const balance = fromMint === WRAPPED_SOL_MINT_ADDRESS
             ? nativeBalance - MINIMUM_REQUIRED_SOL_BALANCE
             : userBalances[fromMint] || 0;
 
@@ -549,8 +549,8 @@ export const JupiterExchange = (props: {
 
             // First add those with balance
             if (publicKey && userBalances) {
-                for (let info of Object.values(pairs)) {
-                    let mint = JSON.parse(JSON.stringify(info)) as TokenInfo;
+                for (const info of Object.values(pairs)) {
+                    const mint = JSON.parse(JSON.stringify(info)) as TokenInfo;
                     if (mint.logoURI && userBalances[mint.address] > 0) {
                         toList[mint.address] = mint;
                     }
@@ -566,8 +566,8 @@ export const JupiterExchange = (props: {
                 });
 
             // Add all other items
-            for (let info of Object.values(pairs)) {
-                let mint = JSON.parse(JSON.stringify(info)) as TokenInfo;
+            for (const info of Object.values(pairs)) {
+                const mint = JSON.parse(JSON.stringify(info)) as TokenInfo;
                 if (mint.logoURI && !toList[mint.address]) {
                     toList[mint.address] = mint;
                 }
@@ -810,7 +810,7 @@ export const JupiterExchange = (props: {
             };
 
             if (subjectTokenSelection === 'source') {
-                let showFromList = !searchString
+                const showFromList = !searchString
                     ? mintList
                     : Object.values(mintList)
                         .filter((t: any) => filter(t));
@@ -820,7 +820,7 @@ export const JupiterExchange = (props: {
 
             if (subjectTokenSelection === 'destination') {
 
-                let showToList = !searchString
+                const showToList = !searchString
                     ? possiblePairsTokenInfo ? Object.values(possiblePairsTokenInfo).filter(t => t) : {}
                     : possiblePairsTokenInfo ? Object.values(possiblePairsTokenInfo)
                         .filter((t: any) => filter(t)) : {};
@@ -1338,7 +1338,7 @@ export const JupiterExchange = (props: {
     ]);
 
     // Rendering
-    const infoRow = (caption: string, value: string, separator: string = '≈', route: boolean = false) => {
+    const infoRow = (caption: string, value: string, separator = '≈', route = false) => {
         return (
             <>
                 <div className="three-col-info-row">

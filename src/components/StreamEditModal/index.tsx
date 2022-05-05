@@ -173,7 +173,7 @@ export const StreamEditModal = (props: {
         );
       };
 
-      let showFromList = !searchString 
+      const showFromList = !searchString 
         ? tokenList
         : tokenList.filter((t: any) => filter(t));
 

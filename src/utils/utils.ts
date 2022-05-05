@@ -97,17 +97,17 @@ export const getAmountFromLamports = (amount: number): number => {
   return (amount || 0) / LAMPORTS_PER_SOL;
 }
 
-var SI_SYMBOL = ["", "k", "M", "G", "T", "P", "E"];
+const SI_SYMBOL = ["", "k", "M", "G", "T", "P", "E"];
 
 const abbreviateNumber = (number: number, precision: number) => {
   if (number === undefined) {
     return '--';
   }
-  let tier = (Math.log10(number) / 3) | 0;
+  const tier = (Math.log10(number) / 3) | 0;
   let scaled = number;
-  let suffix = SI_SYMBOL[tier];
+  const suffix = SI_SYMBOL[tier];
   if (tier !== 0) {
-    let scale = Math.pow(10, tier * 3);
+    const scale = Math.pow(10, tier * 3);
     scaled = number / scale;
   }
 
@@ -116,8 +116,8 @@ const abbreviateNumber = (number: number, precision: number) => {
 
 export const formatAmount = (
   val: number,
-  precision: number = 6,
-  abbr: boolean = false
+  precision = 6,
+  abbr = false
 ) => {
   if (val) {
     if (abbr) {
@@ -165,7 +165,7 @@ export const formatThousands = (val: number, maxDecimals?: number, minDecimals =
 export function convert(
   account?: TokenAccount | number,
   mint?: MintInfo,
-  rate: number = 1.0
+  rate = 1.0
 ): number {
   if (!account) {
     return 0;
@@ -175,7 +175,7 @@ export function convert(
     typeof account === "number" ? account : account.info.amount?.toNumber();
 
   const precision = Math.pow(10, mint?.decimals || 0);
-  let result = (amount / precision) * rate;
+  const result = (amount / precision) * rate;
 
   return result;
 }

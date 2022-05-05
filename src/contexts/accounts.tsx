@@ -104,7 +104,7 @@ export const cache = {
 
     const address = id.toBase58();
 
-    let account = genericCache.get(address);
+    const account = genericCache.get(address);
     if (account) {
       return account;
     }
@@ -371,8 +371,8 @@ export function AccountsProvider({ children = null as any }) {
     const subs: number[] = [];
     cache.emitter.onCache((args) => {
       if (args.isNew) {
-        let id = args.id;
-        let deserialize = args.parser;
+        const id = args.id;
+        const deserialize = args.parser;
         const listenerId = connection.onAccountChange(new PublicKey(id), (info) => {
           cache.add(id, info, deserialize);
         });

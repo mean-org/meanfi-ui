@@ -157,7 +157,7 @@ export const RepeatingPayment = (props: {
         connection.commitment
       )
       .then(response => {
-        for (let acc of response.value) {
+        for (const acc of response.value) {
           const decoded = ACCOUNT_LAYOUT.decode(acc.account.data);
           const address = decoded.mint.toBase58();
           const itemIndex = tokenList.findIndex(t => t.address === address);
@@ -173,7 +173,7 @@ export const RepeatingPayment = (props: {
       })
       .catch(error => {
         console.error(error);
-        for (let t of tokenList) {
+        for (const t of tokenList) {
           balancesMap[t.address] = 0;
         }
       })
@@ -274,8 +274,7 @@ export const RepeatingPayment = (props: {
   }, [navigate, resetContractValues]);
 
   const recordTxConfirmation = useCallback((signature: string, success = true) => {
-    let event: any;
-    event = success ? AppUsageEvent.TransferRecurringCompleted : AppUsageEvent.TransferRecurringFailed;
+    const event = success ? AppUsageEvent.TransferRecurringCompleted : AppUsageEvent.TransferRecurringFailed;
     segmentAnalytics.recordEvent(event, { signature: signature });
   }, []);
 
@@ -417,7 +416,7 @@ export const RepeatingPayment = (props: {
         );
       };
 
-      let showFromList = !searchString 
+      const showFromList = !searchString 
         ? tokenList
         : tokenList.filter((t: any) => filter(t));
 
@@ -973,8 +972,7 @@ export const RepeatingPayment = (props: {
     }
 
     if (wallet) {
-      let created: boolean;
-      created = await createTx();
+      const created = await createTx();
       consoleOut('created:', created);
       if (created && !transactionCancelled) {
         const sign = await signTx();

@@ -80,7 +80,7 @@ export const getLiveRpc = async (networkId?: number, previousRpcId?: number): Pr
 
   networkId = networkId ?? getDefaultRpc().networkId;
   const url = `${appConfig.getConfig().apiUrl}${GET_RPC_API_ENDPOINT}?networkId=${networkId}&previousRpcId=${previousRpcId || 0}`;
-  let rpcConfig = await getRpcApiEndpoint(url, requestOptions);
+  const rpcConfig = await getRpcApiEndpoint(url, requestOptions);
   if (rpcConfig === null) {
     return null;
   }
@@ -97,7 +97,7 @@ export const getLiveRpc = async (networkId?: number, previousRpcId?: number): Pr
 export const refreshCachedRpc = async () => {
   const cachedRpcJson = window.localStorage.getItem('cachedRpc');
   if (!cachedRpcJson) {
-    let newRpc = (await getLiveRpc()) ?? getDefaultRpc();
+    const newRpc = (await getLiveRpc()) ?? getDefaultRpc();
     window.localStorage.setItem('cachedRpc', JSON.stringify(newRpc));
     return;
   }
