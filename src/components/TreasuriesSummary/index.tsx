@@ -234,6 +234,9 @@ export const TreasuriesSummary = (props: {
             // User is connecting
             if (!previousWalletConnectState && connected && publicKey) {
                 consoleOut('User is connecting...', '', 'blue');
+                onNewValue(0);
+                setTreasuryList([]);
+                setTreasuriesSummary(INITIAL_TREASURIES_SUMMARY);
                 refreshTreasuries();
             } else if (previousWalletConnectState && !connected) {
                 consoleOut('Cleaning TreasuriesSummary state...', '', 'blue');
@@ -244,7 +247,7 @@ export const TreasuriesSummary = (props: {
             }
         }
 
-    }, [connected, onNewValue, previousWalletConnectState, publicKey]);
+    }, [connected, onNewValue, previousWalletConnectState, publicKey, refreshTreasuries]);
 
     ///////////////
     // Rendering //
