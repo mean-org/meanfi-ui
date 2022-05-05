@@ -2,8 +2,8 @@ import './style.scss';
 import { Button, Col, Collapse, Row } from "antd"
 import { IconArrowBack, IconUser, IconThumbsUp, IconThumbsDown, IconApprove, IconCross, IconCheckCircle, IconCreated, IconMinus } from "../../../../Icons"
 import { ProposalResumeItem } from '../ProposalResumeItem';
-import { useState } from 'react';
 import { shortenAddress } from '../../../../utils/utils';
+import { TabsMean } from '../../../../components/TabsMean';
 
 export const SafeDetailsView = (props: {
   isSafeDetails: boolean;
@@ -23,7 +23,7 @@ export const SafeDetailsView = (props: {
   function callback(key: any) {}
 
   const renderInstructions = (
-    <div className="w-100">
+    <div className="safe-details-collapse w-100">
       <Collapse
         expandIconPosition="right"
         accordion={true}
@@ -136,15 +136,16 @@ export const SafeDetailsView = (props: {
   )
 
   // Tabs
-  const tabs = ["Instructions", "Activity"];
-
-  const [activeTab, setActiveTab] = useState(tabs[0]);
-
-  const onClickHandler = (event: any) => {
-    if (event.target.innerHTML !== activeTab) {
-      setActiveTab(event.target.innerHTML);
+  const tabs = [
+    {
+      name: "Instructions",
+      render: renderInstructions
+    }, 
+    {
+      name: "Activity",
+      render: renderActivities
     }
-  };
+  ];
 
   return (
     <div className="safe-details-container">
@@ -176,7 +177,7 @@ export const SafeDetailsView = (props: {
             <span>{proposalSelected.proposedBy}</span>
           </div>
         </Col>
-        <Col className="safe-details-right-container">
+        <Col className="safe-details-right-container btn-group">
           <Button
             type="ghost"
             size="small"
@@ -200,24 +201,11 @@ export const SafeDetailsView = (props: {
         </Col>
       </Row>
       <div className="safe-tabs-container">
-        <Row gutter={[8, 8]} className="safe-tabs-header-container mt-1">
-          <ul className="tabs ant-menu-overflow ant-menu-horizontal">
-            {tabs.map((tab, index) => (
-              <li 
-                key={index} 
-                className={`ant-menu-item ${activeTab === tab ? "active ant-menu-item-selected" : ""}`} 
-                tabIndex={0} 
-                onClick={onClickHandler}
-              >
-                <span className="ant-menu-title-content">{tab}</span>
-              </li>
-            ))}
-          </ul>
-        </Row>
-        <Row gutter={[8, 8]} className="safe-tabs-content-container safe-details-collapse">
-          {activeTab === "Instructions" && renderInstructions}
-          {activeTab === "Activity" && renderActivities}
-        </Row>
+        <TabsMean
+          tabs={tabs}
+          headerClassName="safe-tabs-header-container"
+          bodyClassName="safe-tabs-content-container"
+        />
       </div>
     </div>
   )

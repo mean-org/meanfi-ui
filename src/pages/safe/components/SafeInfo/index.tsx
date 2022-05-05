@@ -3,7 +3,7 @@ import './style.scss';
 import { useNavigate } from "react-router-dom";
 
 import { Button, Col, Dropdown, Menu, Row } from "antd"
-import { IconAdd, IconApprove, IconArrowForward, IconCaretDown, IconCheckCircle, IconCreated, IconCross, IconEdit, IconEllipsisVertical, IconLink, IconMinus, IconShowAll, IconTrash } from "../../../../Icons"
+import { IconAdd, IconApprove, IconArrowForward, IconCheckCircle, IconCreated, IconCross, IconEdit, IconEllipsisVertical, IconLink, IconMinus, IconShowAll, IconTrash } from "../../../../Icons"
 import { shortenAddress } from "../../../../utils/utils";
 import { ProposalResumeItem } from '../ProposalResumeItem';
 import { useTranslation } from "react-i18next";
@@ -12,6 +12,7 @@ import { copyText } from "../../../../utils/ui";
 import { getSolanaExplorerClusterParam } from "../../../../contexts/connection";
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "../../../../constants";
 import { MultisigOwnersView } from "../../../../components/MultisigOwnersView";
+import { TabsMean } from "../../../../components/TabsMean";
 
 export const SafeInfoView = (props: {
   isSafeDetails: boolean;
@@ -62,6 +63,19 @@ export const SafeInfoView = (props: {
       <MultisigOwnersView label="view" className="ml-1" participants={selectedMultisig.owners || []} />
     </>
   );
+
+  // Safe Balance (show amount of assets)
+  const [assetsAmout, setAssetsAmount] = useState<string>();
+
+  useEffect(() => {
+    (selectedMultisig) && (
+      multisigVaults.length > 1 ? (
+        setAssetsAmount(`(${multisigVaults.length} assets)`)
+      ) : (
+        setAssetsAmount(`(${multisigVaults.length} asset)`)
+      )
+    )
+  }, [multisigVaults, selectedMultisig]);
   
   // Deposit Address
   const renderDepositAddress = (
@@ -77,19 +91,6 @@ export const SafeInfoView = (props: {
       </span>
     </div>
   );
-
-  // Safe Balance (show amount of assets)
-  const [assetsAmout, setAssetsAmount] = useState<string>();
-
-  useEffect(() => {
-    (selectedMultisig) && (
-      multisigVaults.length > 1 ? (
-        setAssetsAmount(`(${multisigVaults.length} assets)`)
-      ) : (
-        setAssetsAmount(`(${multisigVaults.length} asset)`)
-      )
-    )
-  }, [multisigVaults, selectedMultisig]);  
 
   const infoSafeData = [
     {
@@ -153,17 +154,6 @@ export const SafeInfoView = (props: {
       </Menu.Item>
     </Menu>
   );
-
-  // Tabs
-  const tabs = ["Proposals", "Settings", "Activity", "Programs"];
-
-  const [activeTab, setActiveTab] = useState(tabs[0]);
-
-  const onClickHandler = (event: any) => {
-    if (event.target.innerHTML !== activeTab) {
-      setActiveTab(event.target.innerHTML);
-    }
-  };
 
   // Proposals list
   const renderListOfProposals = (
@@ -304,6 +294,26 @@ export const SafeInfoView = (props: {
     </>
   );
 
+  // Tabs
+  const tabs = [
+    {
+      name: "Proposals",
+      render: renderListOfProposals
+    }, 
+    {
+      name: "Settings",
+      render: renderSettings
+    }, 
+    {
+      name: "Activity",
+      render: renderActivities
+    }, 
+    {
+      name: "Programs",
+      render: renderPrograms
+    }
+  ];
+
   return (
     <>
       <Row gutter={[8, 8]} className="safe-info-container">
@@ -321,8 +331,8 @@ export const SafeInfoView = (props: {
         ))}
       </Row>
 
-      <Row gutter={[8, 8]} className="safe-btns-container">
-        <Col xs={20} sm={18} md={20} lg={18}>
+      <Row gutter={[8, 8]} className="safe-btns-container mb-1">
+        <Col xs={20} sm={18} md={20} lg={18} className="btn-group">
           <Button
             type="ghost"
             size="small"
@@ -354,26 +364,11 @@ export const SafeInfoView = (props: {
       </Row>
 
       <div className="safe-tabs-container">
-        <Row gutter={[8, 8]} className="safe-tabs-header-container">
-          <ul className="tabs ant-menu-overflow ant-menu-horizontal">
-            {tabs.map((tab, index) => (
-              <li 
-                key={index} 
-                className={`ant-menu-item ${activeTab === tab ? "active ant-menu-item-selected" : ""}`} 
-                tabIndex={0} 
-                onClick={onClickHandler}
-              >
-                <span className="ant-menu-title-content">{tab}</span>
-              </li>
-            ))}
-          </ul>
-        </Row>
-        <Row gutter={[8, 8]} className="safe-tabs-content-container">
-          {activeTab === "Proposals" && renderListOfProposals}
-          {activeTab === "Settings" && renderSettings}
-          {activeTab === "Activity" && renderActivities}
-          {activeTab === "Programs" && renderPrograms}
-        </Row>
+        <TabsMean
+          tabs={tabs}
+          headerClassName="safe-tabs-header-container"
+          bodyClassName="safe-tabs-content-container"
+        />
       </div>
     </>
   )
