@@ -4,10 +4,15 @@
         .meanfi-two-panel-layout {
             height: 100%;
             max-height: 100%;
+            .inner-container {
+                background: transparent;
+                padding-bottom: 2rem;
+            }
         }
     }
 
     .inner-container {
+
         .item-block {
             padding-bottom: 1rem;
         }
