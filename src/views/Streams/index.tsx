@@ -5808,7 +5808,7 @@ export const Streams = () => {
 
         {isSendAssetModalOpen && (
           <SendAssetModal
-            selectedToken={selectedToken}
+            selectedToken={selectedToken as UserTokenAccount}
             isVisible={isSendAssetModalOpen}
             handleClose={hideSendAssetModal}
             selected={"one-time"}
