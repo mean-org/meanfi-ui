@@ -1492,6 +1492,15 @@ export const MultisigView = () => {
               data: treasury
             };
           }
+          if (error.toString().indexOf('0x1797') !== -1) {
+            const treasury = data.transaction.operation === OperationType.TreasuryStreamCreate
+              ? data.transaction.accounts[2].pubkey.toBase58()
+              : data.transaction.accounts[3].pubkey.toBase58();
+            txStatus.customError = {
+              message: 'Your transaction failed to submit due to insufficient balance in the treasury. Please add funds to the treasury and then retry this operation.\n\nTreasury ID: ',
+              data: treasury
+            };
+          }
           setTransactionStatus(txStatus);
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
