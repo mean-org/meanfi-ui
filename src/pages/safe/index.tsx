@@ -87,6 +87,7 @@ import { SafeDetailsView } from './components/SafeDetails';
 import { MultisigProposalModal } from '../../components/MultisigProposalModal';
 import { ProgramDetailsView } from './components/ProgramDetails';
 import SerumIDL from '../../models/serum-multisig-idl';
+import { AppsProvider, NETWORK, App } from '@mean-dao/mean-multisig-apps';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -159,11 +160,33 @@ export const SafeView = () => {
   const [filteredMultisigTxs, setFilteredMultisigTxs] = useState<MultisigTransaction[]>([]);
   const [minRequiredBalance, setMinRequiredBalance] = useState(0);
 
+  const [solanaApps, setSolanaApps] = useState<App[]>([]);
+
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
     commitment: "confirmed",
     disableRetryOnRateLimit: true
   }), [
     connectionConfig.endpoint
+  ]);
+
+  useEffect(() => {
+
+    if (!connectionConfig.cluster) { return; }
+
+    const network = connectionConfig.cluster === "mainnet-beta"
+      ? NETWORK.MainnetBeta
+      : connectionConfig.cluster === "testnet"
+      ? NETWORK.Testnet
+      : NETWORK.Devnet;
+    const provider = new AppsProvider(network);
+    provider
+      .getApps()
+      .then((apps: App[]) => {
+        setSolanaApps(apps);
+      });
+
+  }, [
+    connectionConfig.cluster
   ]);
 
   const multisigClient = useMemo(() => {
@@ -4544,6 +4567,7 @@ export const SafeView = () => {
           isVisible={isMultisigProposalModalVisible}
           handleClose={() => setMultisigProposalModalVisible(false)}
           isBusy={isBusy}
+          solanaApps={solanaApps}
         />
       )}
 

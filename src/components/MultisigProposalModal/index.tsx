@@ -19,72 +19,73 @@ import { DATEPICKER_FORMAT } from "../../constants";
 import { MultisigVault } from '../../models/multisig';
 import { InputMean } from '../InputMean';
 import { SelectMean } from '../SelectMean';
+import { App } from '@mean-dao/mean-multisig-apps';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
-const solanaApps = [
-  {
-    logo: "",
-    name: "BPF Loader Program"
-  },
-  {
-    logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwh7gt29278eysxa7rb5sl8%3Ftype%3DLOGO&w=3840&q=75",
-    name: "Friktion"
-  },
-  {
-    logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwiiri37677eysxluqnog8e%3Ftype%3DLOGO&w=3840&q=75",
-    name: "Raydium"
-  },
-  {
-    logo: "",
-    name: "Money Streaming"
-  },
-  {
-    logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwh6nj28403eysxj7hduqbo%3Ftype%3DLOGO&w=3840&q=75",
-    name: "Saber"
-  },
-  {
-    logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwip3w40063eysxbk0kx2lc%3Ftype%3DLOGO&w=3840&q=75",
-    name: "Wormhole"
-  },
-  {
-    logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwh67t27981eysx2yzq2dq6%3Ftype%3DLOGO&w=3840&q=75",
-    name: "Socean Streams"
-  },
-  {
-    logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwilfd38506eysxniku8quh%3Ftype%3DLOGO&w=3840&q=75",
-    name: "Mango Markets"
-  },
-  {
-    logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwh6su28617eysxuaubvt93%3Ftype%3DLOGO&w=3840&q=75",
-    name: "Marinade Finance"
-  },
-  {
-    logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwilfj38513eysxcwypxovh%3Ftype%3DLOGO&w=3840&q=75",
-    name: "Lido Finance"
-  },
-  {
-    logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwh8w830938eysxhy5e8syg%3Ftype%3DLOGO&w=3840&q=75",
-    name: "Solend"
-  },
-];
+// const solanaApps = [
+//   {
+//     logo: "",
+//     name: "BPF Loader Program"
+//   },
+//   {
+//     logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwh7gt29278eysxa7rb5sl8%3Ftype%3DLOGO&w=3840&q=75",
+//     name: "Friktion"
+//   },
+//   {
+//     logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwiiri37677eysxluqnog8e%3Ftype%3DLOGO&w=3840&q=75",
+//     name: "Raydium"
+//   },
+//   {
+//     logo: "",
+//     name: "Money Streaming"
+//   },
+//   {
+//     logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwh6nj28403eysxj7hduqbo%3Ftype%3DLOGO&w=3840&q=75",
+//     name: "Saber"
+//   },
+//   {
+//     logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwip3w40063eysxbk0kx2lc%3Ftype%3DLOGO&w=3840&q=75",
+//     name: "Wormhole"
+//   },
+//   {
+//     logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwh67t27981eysx2yzq2dq6%3Ftype%3DLOGO&w=3840&q=75",
+//     name: "Socean Streams"
+//   },
+//   {
+//     logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwilfd38506eysxniku8quh%3Ftype%3DLOGO&w=3840&q=75",
+//     name: "Mango Markets"
+//   },
+//   {
+//     logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwh6su28617eysxuaubvt93%3Ftype%3DLOGO&w=3840&q=75",
+//     name: "Marinade Finance"
+//   },
+//   {
+//     logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwilfj38513eysxcwypxovh%3Ftype%3DLOGO&w=3840&q=75",
+//     name: "Lido Finance"
+//   },
+//   {
+//     logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwh8w830938eysxhy5e8syg%3Ftype%3DLOGO&w=3840&q=75",
+//     name: "Solend"
+//   },
+// ];
 
 const expires = [
   "No expires", "24 hours", "48 hours", "72 hours", "7 days"
 ];
 
-const instructions = [
-  "Close asset",
-  "Send funds to other asset",
-  "Transfer asset ownership",
-  "Create treasury",
-  "Close treasury",
-  "Add a money stream",
-  "Withdraw funds from a stream",
-  "Upgrade program",
-  "Upgrade IDL program",
-  "Upgrade authority program"
-];
+// const instructions = [
+//   "Close asset",
+//   "Send funds to other asset",
+//   "Transfer asset ownership",
+//   "Create treasury",
+//   "Close treasury",
+//   "Add a money stream",
+//   "Withdraw funds from a stream",
+//   "Upgrade program",
+//   "Upgrade IDL program",
+//   "Upgrade authority program"
+// ];
 
 const types = [
   "Open",
@@ -95,6 +96,7 @@ export const MultisigProposalModal = (props: {
   handleClose: any;
   isVisible: boolean;
   isBusy: boolean;
+  solanaApps: App[]
 }) => {
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
@@ -109,7 +111,6 @@ export const MultisigProposalModal = (props: {
   const timeDate = moment().format('hh:mm A');
 
   const [currentStep, setCurrentStep] = useState(0);
-
   const [proposalTitleValue, setProposalTitleValue] = useState('');
   const [proposalExpiresValue, setProposalExpiresValue] = useState<any>(expires[0]);
   const [proposalDescriptionValue, setProposalDescriptionValue] = useState('');
@@ -118,12 +119,9 @@ export const MultisigProposalModal = (props: {
   const [proposalMemoValue, setProposalMemoValue] = useState('');
   const [proposalRecipientValue, setProposalRecipientValue] = useState('');
   const [proposalAmountValue, setProposalAmountValue] = useState('');
-
   const [feeAmount, setFeeAmount] = useState<number | null>(null);
-
   const [countWords, setCountWords] = useState(0);
   const [lettersLeft, setLettersLeft] = useState(256);
-
   const [switchValue, setSwitchValue] = useState(true);
 
   // Switch to show expiry date 
@@ -157,8 +155,7 @@ export const MultisigProposalModal = (props: {
 
   const onAfterClose = () => {
     setTimeout(() => {
-      setSelectedAppName("");
-      setSelectedAppImg("");
+      setSelectedApp(undefined);
       setProposalTitleValue("");
       setProposalExpiresValue(expires[0]);
       setProposalDescriptionValue("");
@@ -240,8 +237,7 @@ export const MultisigProposalModal = (props: {
   //   props.transactionFees
   // ]);
 
-  const [selectedAppName, setSelectedAppName] = useState<string>();
-  const [selectedAppImg, setSelectedAppImg] = useState<string>();
+  const [selectedApp, setSelectedApp] = useState<App>();
 
   useEffect(() => {
     setLettersLeft(256 - countWords);
@@ -250,17 +246,16 @@ export const MultisigProposalModal = (props: {
   // Display solana apps in proposal modal (Step 1)
   const renderSolanaApps = (
     <>
-      {solanaApps && solanaApps.length && (
-        solanaApps.map((app, index) => {
+      {props.solanaApps.length > 0 && (
+        props.solanaApps.map((app, index) => {
           const onSelectApp = () => {
-            setSelectedAppName(app.name);
-            setSelectedAppImg(app.logo);
+            setSelectedApp(app);
           }
 
           return (
             <Col xs={8} sm={6} md={6} lg={6} className="select-app" key={index}>
-              <div className={`select-app-item simplelink ${selectedAppName === app.name ? "selected-app" : "no-selected-app"}`} onClick={onSelectApp}>
-                <img src={app.logo ? app.logo : "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"} width={65} height={65} alt={app.name} />
+              <div className={`select-app-item simplelink ${selectedApp && selectedApp.id === app.id ? "selected-app" : "no-selected-app"}`} onClick={onSelectApp}>
+                <img src={app.logoUri ? app.logoUri : "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"} width={65} height={65} alt={app.name} />
                 <span className="info-label">{app.name}</span>
               </div>
             </Col>
@@ -304,15 +299,16 @@ export const MultisigProposalModal = (props: {
                   <div className="step-two-select-app">
                     <Row gutter={[8, 8]}>
                       <Col span={24} className="step-two-selected-app">
-                        {!selectedAppImg ? (
+                        {!selectedApp || !selectedApp.logoUri ? (
                           <IconUser className="mean-svg-icons" />
                         ) : (
-                          <img className="mr-1" src={selectedAppImg} alt={selectedAppName} width={40} height={40} />
+                          <img className="mr-1" src={selectedApp.logoUri} alt={selectedApp.name} width={40} height={40} />
                         )}
-                        <div className="selected-app">
+                        {selectedApp && (<div className="selected-app">
                           <div className="info-label">Selected App</div>
-                          <span>{selectedAppName}</span>
-                        </div>
+                            <span>{selectedApp.name}</span>
+                          </div>
+                        )}
                       </Col>
 
                       {/* Proposal title */}
@@ -378,7 +374,7 @@ export const MultisigProposalModal = (props: {
                             className={props.isBusy ? 'disabled' : ''}
                             onChange={onProposalInstructionValueChange}
                             placeholder={"Select an instruction"}
-                            values={instructions}
+                            values={selectedApp ? selectedApp.instructions.map((ix: any) => ix.label) : []}
                             value={proposalInstructionValue}
                           />
                         </Col>
@@ -699,7 +695,7 @@ export const MultisigProposalModal = (props: {
                     onClick={onContinueStepOneButtonClick}
                     disabled={
                       !publicKey ||
-                      !selectedAppName
+                      !selectedApp
                     }
                   >
                     {getStepOneContinueButtonLabel()}
@@ -732,7 +728,7 @@ export const MultisigProposalModal = (props: {
                     onClick={onContinueStepTwoButtonClick}
                     disabled={
                       !publicKey ||
-                      !selectedAppName ||
+                      !selectedApp ||
                       !proposalTitleValue ||
                       !isVerifiedRecipient
                     }
@@ -767,7 +763,7 @@ export const MultisigProposalModal = (props: {
                     onClick={() => onAcceptModal()}
                     disabled={
                       !publicKey ||
-                      !selectedAppName ||
+                      !selectedApp ||
                       !proposalTitleValue ||
                       !isVerifiedRecipient
                     }
