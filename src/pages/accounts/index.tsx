@@ -609,7 +609,7 @@ export const AccountsNewView = () => {
     const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
     const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer);
 
-    // consoleOut('=========== Block strat ===========', '', 'orange');
+    // consoleOut('=========== Block start ===========', '', 'orange');
 
     for (const stream of updatedStreamsv1) {
 
@@ -2017,16 +2017,9 @@ export const AccountsNewView = () => {
 
                       {/* Middle area (vertically flexible block of items) */}
                       <div className="item-block vertical-scroll">
+
                         <div className="asset-category-title flex-fixed-right">
-                          <div className="title">Assets in wallet ({totalTokensHolded})</div>
-                          <div className="amount">{toUsCurrency(totalTokenAccountsValue)}</div>
-                        </div>
-                        <div className="asset-category flex-column">
-                          {renderAssetsList}
-                        </div>
-                        {/* TODO: Make this part more dynamic */}
-                        <div className="asset-category-title flex-fixed-right">
-                          <div className="title">Other assets (2)</div>
+                          <div className="title">Streaming finance (2)</div>
                           <div className="amount">{toUsCurrency(streamsSummary.totalNet + treasuriesTvl)}</div>
                         </div>
                         <div className="asset-category">
@@ -2053,6 +2046,15 @@ export const AccountsNewView = () => {
                             }}
                           />
                         </div>
+
+                        <div className="asset-category-title flex-fixed-right">
+                          <div className="title">Assets in wallet ({totalTokensHolded})</div>
+                          <div className="amount">{toUsCurrency(totalTokenAccountsValue)}</div>
+                        </div>
+                        <div className="asset-category flex-column">
+                          {renderAssetsList}
+                        </div>
+
                       </div>
 
                       {/* Bottom CTAs */}
