@@ -136,7 +136,7 @@ export const TreasuriesSummary = (props: {
             totalNet: 0
         };
 
-        consoleOut('=========== Block strat ===========', '', 'orange');
+        consoleOut('=========== Block start ===========', '', 'orange');
 
         for (const treasury of treasuryList) {
 

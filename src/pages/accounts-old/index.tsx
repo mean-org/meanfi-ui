@@ -351,7 +351,7 @@ export const AccountsView = () => {
     const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], publicKey);
     const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], publicKey);
 
-    // consoleOut('=========== Block strat ===========', '', 'orange');
+    // consoleOut('=========== Block start ===========', '', 'orange');
 
     for (const stream of updatedStreamsv1) {
 
