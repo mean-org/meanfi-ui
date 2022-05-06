@@ -1491,17 +1491,17 @@ export const MultisigView = () => {
               message: 'Your transaction failed to submit due to there not being enough SOL to cover the fees. Please fund the treasury with at least 0.00002 SOL and then retry this operation.\n\nTreasury ID: ',
               data: treasury
             };
-          }
-          if (error.toString().indexOf('0x1797') !== -1) {
+          } else if (error.toString().indexOf('0x1797') !== -1) {
             const treasury = data.transaction.operation === OperationType.TreasuryStreamCreate
               ? data.transaction.accounts[2].pubkey.toBase58()
+              : data.transaction.operation === OperationType.TreasuryWithdraw
+              ? data.transaction.accounts[5].pubkey.toBase58()
               : data.transaction.accounts[3].pubkey.toBase58();
             txStatus.customError = {
               message: 'Your transaction failed to submit due to insufficient balance in the treasury. Please add funds to the treasury and then retry this operation.\n\nTreasury ID: ',
               data: treasury
             };
-          }
-          if (error.toString().indexOf('0x1') !== -1) {
+          } else if (error.toString().indexOf('0x1') !== -1) {
             const asset = data.transaction.operation === OperationType.TransferTokens
               ? data.transaction.accounts[0].pubkey.toBase58()
               : data.transaction.accounts[3].pubkey.toBase58();
