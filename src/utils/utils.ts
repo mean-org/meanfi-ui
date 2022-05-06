@@ -14,8 +14,7 @@ import {
   TransactionSignature
 } from "@solana/web3.js";
 import { INPUT_AMOUNT_PATTERN } from "../constants";
-import { TokenInfo } from "@solana/spl-token-registry";
-import { CUSTOM_USDC, MEAN_TOKEN_LIST } from "../constants/token-list";
+import { MEAN_TOKEN_LIST } from "../constants/token-list";
 import { getFormattedNumberToLocale, maxTrailingZeroes } from "./ui";
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { RENT_PROGRAM_ID, SYSTEM_PROGRAM_ID, TOKEN_PROGRAM_ID } from "./ids";
@@ -26,6 +25,9 @@ import { AccountTokenParsedInfo, TokenAccountInfo } from '../models/token';
 import { BigNumber } from "bignumber.js";
 import BN from "bn.js";
 import { isMobile } from "react-device-detect";
+import { TokenInfo } from "@solana/spl-token-registry";
+import { getNetworkIdByEnvironment } from "../contexts/connection";
+import { environment } from "../environments/environment";
 
 export type KnownTokenMap = Map<string, TokenInfo>;
 
@@ -189,6 +191,16 @@ export const getTokenByMintAddress = (address: string, tokenList?: TokenInfo[]):
   const tokenFromTokenList = tokenList
     ? tokenList.find(t => t.address === address)
     : MEAN_TOKEN_LIST.find(t => t.address === address);
+  if (tokenFromTokenList) {
+    return tokenFromTokenList;
+  }
+  return undefined;
+}
+
+export const getTokenBySymbol = (symbol: string, tokenList?: TokenInfo[]): TokenInfo | undefined => {
+  const tokenFromTokenList = tokenList
+    ? tokenList.find(t => t.symbol === symbol)
+    : MEAN_TOKEN_LIST.find(t => t.symbol === symbol && t.chainId === getNetworkIdByEnvironment(environment));
   if (tokenFromTokenList) {
     return tokenFromTokenList;
   }

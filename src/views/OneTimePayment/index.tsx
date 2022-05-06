@@ -6,7 +6,7 @@ import {
 } from "@ant-design/icons";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnection, useConnectionConfig } from "../../contexts/connection";
-import { formatAmount, formatThousands, getAmountWithSymbol, getTxIxResume, isValidNumber, toTokenAmount } from "../../utils/utils";
+import { formatAmount, formatThousands, getAmountWithSymbol, getTokenBySymbol, getTxIxResume, isValidNumber, toTokenAmount } from "../../utils/utils";
 import { DATEPICKER_FORMAT, SIMPLE_DATE_TIME_FORMAT } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
 import { EventType, OperationType, TransactionStatus } from "../../models/enums";
@@ -45,8 +45,9 @@ export const OneTimePayment = (props: {
   inModal: boolean;
   transferCompleted?: any;
   token?: TokenInfo;
+  tokenChanged: any;
 }) => {
-  const { inModal, transferCompleted, token } = props;
+  const { inModal, transferCompleted, token, tokenChanged } = props;
   const connection = useConnection();
   const { endpoint } = useConnectionConfig();
   const { connected, publicKey, wallet } = useWallet();
@@ -94,10 +95,29 @@ export const OneTimePayment = (props: {
   const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
 
   useEffect(() => {
-    if (inModal && !selectedToken) {
+    if (token && inModal) {
       setSelectedToken(token);
+      return;
+    } else {
+      let from: TokenInfo | undefined = undefined;
+      if (token) {
+        from = token
+          ? token.symbol === 'SOL'
+            ? getTokenBySymbol('wSOL')
+            : getTokenBySymbol(token.symbol)
+          : getTokenBySymbol('MEAN');
+
+        if (from) {
+          setSelectedToken(from);
+        }
+      } else {
+        from = getTokenBySymbol('MEAN');
+        if (from) {
+          setSelectedToken(from);
+        }
+      }
     }
-  }, [inModal, selectedToken, token]);
+  }, [token, selectedToken, inModal]);
 
   useEffect(() => {
 
@@ -147,9 +167,6 @@ export const OneTimePayment = (props: {
             balancesMap[address] = 0;
           }
         }
-        if (selectedToken && balancesMap[selectedToken.address]) {
-          setSelectedTokenBalance(balancesMap[selectedToken.address]);
-        }
       })
       .catch(error => {
         console.error(error);
@@ -169,9 +186,25 @@ export const OneTimePayment = (props: {
     tokenList,
     publicKey,
     connection,
-    selectedToken,
-    setSelectedTokenBalance,
   ]);
+
+  // Keep token balance updated
+  useEffect(() => {
+
+    if (!connection || !publicKey || !userBalances || !selectedToken) {
+      setSelectedTokenBalance(0);
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      setSelectedTokenBalance(userBalances[selectedToken.address]);
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [connection, publicKey, selectedToken, userBalances]);
 
   const [otpFees, setOtpFees] = useState<TransactionFees>({
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
@@ -958,7 +991,10 @@ export const OneTimePayment = (props: {
           }
 
           const onClick = function () {
+
+            tokenChanged(t);
             setSelectedToken(t);
+
             consoleOut("token selected:", t.symbol, 'blue');
             setEffectiveRate(getPricePerToken(t));
             onCloseTokenSelector();
@@ -1120,7 +1156,7 @@ export const OneTimePayment = (props: {
               <span>{t('transactions.send-amount.label-right')}:</span>
               <span>
                 {`${tokenBalance && selectedToken
-                    ? getAmountWithSymbol(tokenBalance, selectedToken?.address, true)
+                    ? getAmountWithSymbol(tokenBalance, selectedToken.address, true)
                     : "0"
                 }`}
               </span>

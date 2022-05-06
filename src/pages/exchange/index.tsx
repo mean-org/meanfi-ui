@@ -1,7 +1,7 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { PreFooter } from "../../components/PreFooter";
-import { getTokenBySymbol, TokenInfo } from '../../utils/tokens';
+import { getTokenBySymbol } from '../../utils/tokens';
 import { consoleOut, isProd } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
 import { DdcaClient } from '@mean-dao/ddca';
@@ -12,6 +12,7 @@ import { Connection } from '@solana/web3.js';
 import { useTranslation } from 'react-i18next';
 import { IconExchange } from '../../Icons';
 import { JupiterExchange, RecurringExchange, } from '../../views';
+import { TokenInfo } from '@solana/spl-token-registry';
 
 type SwapOption = "one-time" | "recurring";
 

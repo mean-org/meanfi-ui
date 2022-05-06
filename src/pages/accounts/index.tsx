@@ -26,6 +26,7 @@ import {
   findATokenAddress,
   getAmountFromLamports,
   getTokenAmountAndSymbolByTokenAddress,
+  getTokenByMintAddress,
   openLinkInNewTab,
   shortenAddress
 } from '../../utils/utils';
@@ -47,8 +48,7 @@ import { fetchAccountHistory, MappedTransaction } from '../../utils/history';
 import { useLocation, useNavigate } from 'react-router-dom';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import { AccountTokenParsedInfo } from '../../models/token';
-import { getTokenByMintAddress, TokenInfo } from '../../utils/tokens';
-import { TokenInfo as SolanaTokenInfo } from "@solana/spl-token-registry";
+import { TokenInfo } from "@solana/spl-token-registry";
 import { AccountsMergeModal } from '../../components/AccountsMergeModal';
 import { Streams } from '../../views';
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
@@ -351,7 +351,7 @@ export const AccountsNewView = () => {
     //   token = getTokenByMintAddress(selectedAsset.address);
     // }
     // if (token) {
-    //   setSelectedToken(token as SolanaTokenInfo);
+    //   setSelectedToken(token as TokenInfo);
     // }
     // showExchangeAssetModal();
 
@@ -360,14 +360,14 @@ export const AccountsNewView = () => {
   const onSendAsset = useCallback(() => {
     if (!selectedAsset) { return; }
 
-    let token: TokenInfo | null;
+    let token: TokenInfo | undefined;
     if (isSelectedAssetNativeAccount()) {
       token = getTokenByMintAddress(WRAPPED_SOL_MINT_ADDRESS);
     } else {
       token = getTokenByMintAddress(selectedAsset.address);
     }
     if (token) {
-      setSelectedToken(token as SolanaTokenInfo);
+      setSelectedToken(token);
     }
     showSendAssetModal();
 
@@ -2238,9 +2238,9 @@ export const AccountsNewView = () => {
         />
       )}
 
-      {isSendAssetModalOpen && (
+      {isSendAssetModalOpen && selectedAsset && (
         <SendAssetModal
-          selectedToken={getTokenByMintAddress(selectedAsset?.address || '') || undefined}
+          selectedToken={selectedAsset}
           isVisible={isSendAssetModalOpen}
           handleClose={hideSendAssetModal}
           selected={"one-time"}

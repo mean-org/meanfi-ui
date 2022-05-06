@@ -12,6 +12,7 @@ import {
   formatThousands,
   getAmountWithSymbol,
   getTokenAmountAndSymbolByTokenAddress,
+  getTokenBySymbol,
   getTxIxResume,
   isValidNumber,
   shortenAddress,
@@ -38,7 +39,6 @@ import moment from "moment";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
 import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
-import { TokenInfo } from "@solana/spl-token-registry";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
 import { useTranslation } from "react-i18next";
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
@@ -56,13 +56,15 @@ import { AppUsageEvent, SegmentStreamRPTransferData } from '../../utils/segment-
 import { segmentAnalytics } from '../../App';
 import dateFormat from 'dateformat';
 import { NATIVE_SOL } from '../../utils/tokens';
+import { TokenInfo } from '@solana/spl-token-registry';
 
 export const RepeatingPayment = (props: {
   inModal: boolean;
   transferCompleted?: any;
   token?: TokenInfo;
+  tokenChanged: any;
 }) => {
-  const { inModal, transferCompleted, token } = props;
+  const { inModal, transferCompleted, token, tokenChanged } = props;
   const connection = useConnection();
   const { endpoint } = useConnectionConfig();
   const { connected, publicKey, wallet } = useWallet();
@@ -110,14 +112,33 @@ export const RepeatingPayment = (props: {
   const [currentStep, setCurrentStep] = useState(0);
   const [canSubscribe, setCanSubscribe] = useState(true);
   const [isTokenSelectorVisible, setIsTokenSelectorVisible] = useState(false);
-  const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(token);
+  const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
   const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
 
   useEffect(() => {
-    if (inModal && !selectedToken) {
+    if (token && inModal) {
       setSelectedToken(token);
+      return;
+    } else {
+      let from: TokenInfo | undefined = undefined;
+      if (token) {
+        from = token
+          ? token.symbol === 'SOL'
+            ? getTokenBySymbol('wSOL')
+            : getTokenBySymbol(token.symbol)
+          : getTokenBySymbol('MEAN');
+
+        if (from) {
+          setSelectedToken(from);
+        }
+      } else {
+        from = getTokenBySymbol('MEAN');
+        if (from) {
+          setSelectedToken(from);
+        }
+      }
     }
-  }, [inModal, selectedToken, token]);
+  }, [token, selectedToken, inModal]);
 
   useEffect(() => {
 
@@ -167,9 +188,6 @@ export const RepeatingPayment = (props: {
             balancesMap[address] = 0;
           }
         }
-        if (selectedToken && balancesMap[selectedToken.address]) {
-          setSelectedTokenBalance(balancesMap[selectedToken.address]);
-        }
       })
       .catch(error => {
         console.error(error);
@@ -189,9 +207,25 @@ export const RepeatingPayment = (props: {
     tokenList,
     publicKey,
     connection,
-    selectedToken,
-    setSelectedTokenBalance,
   ]);
+
+  // Keep token balance updated
+  useEffect(() => {
+
+    if (!connection || !publicKey || !userBalances || !selectedToken) {
+      setSelectedTokenBalance(0);
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      setSelectedTokenBalance(userBalances[selectedToken.address]);
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [connection, publicKey, selectedToken, userBalances]);
 
   const [repeatingPaymentFees, setRepeatingPaymentFees] = useState<TransactionFees>({
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
@@ -1073,27 +1107,30 @@ export const RepeatingPayment = (props: {
   const renderTokenList = (
     <>
       {(filteredTokenList && filteredTokenList.length > 0) && (
-        filteredTokenList.map((token, index) => {
+        filteredTokenList.map((t, index) => {
 
-          if (token.address === NATIVE_SOL.address) {
+          if (t.address === NATIVE_SOL.address) {
             return null;
           }
 
           const onClick = function () {
-            setSelectedToken(token);
-            consoleOut("token selected:", token.symbol, 'blue');
-            setEffectiveRate(getPricePerToken(token));
+
+            tokenChanged(t);
+            setSelectedToken(t);
+
+            consoleOut("token selected:", t.symbol, 'blue');
+            setEffectiveRate(getPricePerToken(t));
             onCloseTokenSelector();
           };
 
           return (
             <TokenListItem
-              key={token.address}
-              name={token.name || 'Unknown'}
-              mintAddress={token.address}
-              className={selectedToken && selectedToken.address === token.address ? "selected" : "simplelink"}
+              key={t.address}
+              name={t.name || 'Unknown'}
+              mintAddress={t.address}
+              className={selectedToken && selectedToken.address === t.address ? "selected" : "simplelink"}
               onClick={onClick}
-              balance={connected && userBalances && userBalances[token.address] > 0 ? userBalances[token.address] : 0}
+              balance={connected && userBalances && userBalances[t.address] > 0 ? userBalances[t.address] : 0}
             />
           );
         })
