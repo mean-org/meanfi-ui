@@ -1,5 +1,4 @@
 export { AccountsNewView } from './accounts';
-export { AccountsView } from './accounts-old';
 export { CustodyView } from './custody';
 export { ExchangeDcasView } from './exchange-dcas';
 export { FaucetView } from "./faucet";
