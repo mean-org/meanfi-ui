@@ -1501,6 +1501,15 @@ export const MultisigView = () => {
               data: treasury
             };
           }
+          if (error.toString().indexOf('0x1') !== -1) {
+            const asset = data.transaction.operation === OperationType.TransferTokens
+              ? data.transaction.accounts[0].pubkey.toBase58()
+              : data.transaction.accounts[3].pubkey.toBase58();
+            txStatus.customError = {
+              message: 'Your transaction failed to submit due to insufficient balance in the asset. Please add funds to the asset and then retry this operation.\n\nAsset ID: ',
+              data: asset
+            };
+          }
           setTransactionStatus(txStatus);
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),

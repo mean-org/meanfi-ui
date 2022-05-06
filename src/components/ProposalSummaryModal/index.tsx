@@ -449,7 +449,7 @@ export const ProposalSummaryModal = (props: {
           </div>
         </div>
         {multisigTransactionSummary?.instruction.accounts.map((account: any) => (
-          <div className="mb-1">
+          <div className="mb-1" key={account.index}>
             <span>{t('multisig.proposal-modal.instruction-account')} {account.index + 1}:</span><br />
             <div>
               <span onClick={() => copyAddressToClipboard(account.address)}  className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
@@ -467,7 +467,7 @@ export const ProposalSummaryModal = (props: {
         <div className="mb-1">
           <span>{t('multisig.proposal-modal.instruction-data')}:</span><br />
           {multisigTransactionSummary?.instruction.data.map((data: any) => (
-            <span onClick={() => copyAddressToClipboard(data.value)}  className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
+            <span key={data.value} onClick={() => copyAddressToClipboard(data.value)}  className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
               {data.value}
             </span>
           ))}
