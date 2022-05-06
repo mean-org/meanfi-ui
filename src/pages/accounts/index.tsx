@@ -1416,8 +1416,8 @@ export const AccountsNewView = () => {
   const renderNetworth = () => {
     return (
       <div className={`networth-list-item flex-fixed-right no-pointer ${selectedCategory === "networth" ? 'selected' : ''}`} onClick={() => {
-        setSelectedCategory("networth");
-        setSelectedAsset(undefined);
+        // setSelectedCategory("networth");
+        // setSelectedAsset(undefined);
       }}>
         <div className="font-bold font-size-110 left">Net Worth</div>
         <div className="font-bold font-size-110 right">
@@ -1432,9 +1432,9 @@ export const AccountsNewView = () => {
       <Tooltip title={publicKey ? "See your Money Streams" : "To see your Money Streams you need to connect your wallet"}>
         <div key="streams" onClick={() => {
           if (publicKey) {
-            setSelectedCategory("other-assets");
-            setSelectedOtherAssetsOption("msp-streams");
-            setSelectedAsset(undefined);
+            // setSelectedCategory("other-assets");
+            // setSelectedOtherAssetsOption("msp-streams");
+            // setSelectedAsset(undefined);
             navigate("/accounts/streams");
           }
         }} className={`transaction-list-row ${selectedCategory === "other-assets" && selectedOtherAssetsOption === "msp-streams" ? 'selected' : ''}`}>
@@ -1492,8 +1492,8 @@ export const AccountsNewView = () => {
 
   const renderAsset = (asset: UserTokenAccount, index: number) => {
     const onTokenAccountClick = () => {
-      selectAsset(asset, true, true);
       setSelectedCategory("user-account");
+      selectAsset(asset, true, true);
     }
     const tokenPrice = getPricePerToken(asset);
     const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
@@ -2039,9 +2039,9 @@ export const AccountsNewView = () => {
                             onNewValue={(value: number) => setTreasuriesTvl(value)}
                             onSelect={() => {
                               if (publicKey) {
-                                setSelectedCategory("other-assets");
-                                setSelectedOtherAssetsOption("msp-streams");
-                                setSelectedAsset(undefined);
+                                // setSelectedCategory("other-assets");
+                                // setSelectedOtherAssetsOption("msp-streams");
+                                // setSelectedAsset(undefined);
                               }
                             }}
                           />
