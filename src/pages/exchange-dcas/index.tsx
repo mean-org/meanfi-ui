@@ -449,7 +449,7 @@ export const ExchangeDcasView = () => {
   };
 
   const getStreamClosureMessage = () => {
-    let message = `Your recurring purchase will be cancelled, and you'll get these back in your wallet:`;
+    const message = `Your recurring purchase will be cancelled, and you'll get these back in your wallet:`;
 
     return (
       <div>{message}</div>

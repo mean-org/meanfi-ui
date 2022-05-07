@@ -41,7 +41,7 @@ export const DdcaAddFundsModal = (props: {
   const [rangeMin, setRangeMin] = useState(0);
   const [rangeMax, setRangeMax] = useState(0);
   const [marks, setMarks] = useState<SliderMarks>();
-  const [recurrencePeriod, setRecurrencePeriod] = useState(0);
+  const [, setRecurrencePeriod] = useState(0);
   const [lockedSliderValue, setLockedSliderValue] = useState(0);
   const [fromTokenBalance, setFromTokenBalance] = useState(0);
   const [usableTokenAmount, setUsableTokenAmount] = useState(0);
@@ -524,7 +524,7 @@ export const DdcaAddFundsModal = (props: {
     return hasEnoughFromTokenBalance && props.userBalance > gasFeeAmount ? true : false;
   }
 
-  const infoRow = (caption: string, value: string, separator: string = '≈', route: boolean = false) => {
+  const infoRow = (caption: string, value: string, separator = '≈', route = false) => {
     return (
       <Row>
         <Col span={11} className="text-right">

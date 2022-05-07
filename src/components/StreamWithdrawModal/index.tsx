@@ -41,8 +41,7 @@ export const StreamWithdrawModal = (props: {
     if (!wallet || !publicKey) { return; }
 
     const getStreamDetails = async (streamId: string, client: MSP | MoneyStreaming) => {
-      let streamPublicKey: PublicKey;
-      streamPublicKey = new PublicKey(streamId as string);
+      const streamPublicKey = new PublicKey(streamId as string);
       try {
         const detail = await client.getStream(streamPublicKey);
         if (detail) {

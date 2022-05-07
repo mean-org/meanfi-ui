@@ -5,7 +5,6 @@ import { WalletProvider } from "./contexts/wallet";
 import AppStateProvider from "./contexts/appstate";
 import { AppLayout } from "./components/Layout";
 import {
-  AccountsView,
   CustodyView,
   ExchangeDcasView,
   FaucetView,
@@ -53,8 +52,7 @@ export function AppRoutes() {
                     <Routes>
                       <Route path='/' element={<Navigate replace to='/accounts' />} />
                       <Route path="/accounts" element={<AccountsNewView />} />
-                      <Route path="/accounts-old" element={<AccountsView />} />
-                      <Route path="/accounts/streams" element={<AccountsView />} />
+                      <Route path="/accounts/streams" element={<AccountsNewView />} />
                       <Route path="/faucet" element={<FaucetView />} />
                       <Route path="/transfers" element={<TransfersView />} />
                       <Route path="/exchange" element={<SwapView />} />

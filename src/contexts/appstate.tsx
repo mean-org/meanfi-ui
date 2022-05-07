@@ -647,7 +647,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   const openStreamById = async (streamId: string, dock = false) => {
     try {
-      let streamPublicKey = new PublicKey(streamId);
+      const streamPublicKey = new PublicKey(streamId);
       try {
         if (msp && publicKey) {
           console.log('streamPublicKey', streamPublicKey.toBase58());
@@ -856,7 +856,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   // Fetch coin prices
   const getCoinPrices = useCallback(async () => {
     try {
-      let prices = await getPrices();
+      const prices = await getPrices();
       /**
        * Returns the prices object when succeeds
        * or this object when fails { "success": "false", "msg": "error text" }
@@ -884,7 +884,6 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   // Effect to load coin prices
   useEffect(() => {
-    let coinTimer: any;
 
     if (shouldLoadCoinPrices) {
       setShouldLoadCoinPrices(false);
@@ -892,7 +891,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       getCoinPrices();
     }
 
-    coinTimer = window.setInterval(() => {
+    const coinTimer = window.setInterval(() => {
       consoleOut(`Refreshing prices past ${TEN_MINUTES_REFRESH_TIMEOUT / 60 / 1000}min...`);
       setLoadingPrices(true);
       getCoinPrices();
@@ -1004,7 +1003,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         clearTxConfirmationContext();
       });
 
-      let streamAccumulator: any[] = [];
+      const streamAccumulator: any[] = [];
       let rawStreamsv1: StreamInfo[] = [];
       let rawStreamsv2: Stream[] = [];
 
@@ -1277,7 +1276,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   // Load the supported tokens
   useEffect(() => {
     (async () => {
-      let list = new Array<UserTokenAccount>();
+      const list = new Array<UserTokenAccount>();
       const sol: UserTokenAccount = {
         address: NATIVE_SOL.address,
         balance: 0,
@@ -1315,8 +1314,8 @@ const AppStateProvider: React.FC = ({ children }) => {
       const filteredTokens = mainnetList.filter(t => !BANNED_TOKENS.some(bt => bt === t.symbol));
       // Sort the big list
       const sortedMainnetList = filteredTokens.sort((a, b) => {
-        var nameA = a.symbol.toUpperCase();
-        var nameB = b.symbol.toUpperCase();
+        const nameA = a.symbol.toUpperCase();
+        const nameB = b.symbol.toUpperCase();
         if (nameA < nameB) {
           return -1;
         }

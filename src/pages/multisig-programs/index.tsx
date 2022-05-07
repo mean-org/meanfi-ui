@@ -567,7 +567,7 @@ export const MultisigProgramsView = () => {
       });
 
     // 2. For each executable data account found in the previous step, fetch the corresponding program
-    let programs: ProgramAccounts[] = [];
+    const programs: ProgramAccounts[] = [];
     for (let i = 0; i < executableDataAccounts.length; i++) {
       const executableData = executableDataAccounts[i].pubkey;
 
@@ -787,8 +787,8 @@ export const MultisigProgramsView = () => {
         .getMultisigTransactions(selectedMultisig.id, publicKey)
         .then((txs: MultisigTransaction[]) => {
           consoleOut('selected multisig txs', txs, 'blue');
-          let transactions: MultisigTransaction[] = [];
-          for (let tx of txs) {
+          const transactions: MultisigTransaction[] = [];
+          for (const tx of txs) {
             if (tx.accounts.some(a => {
               return a.pubkey.equals(selectedProgram.pubkey) || a.pubkey.equals(selectedProgram.executable);
             })) {
@@ -1015,7 +1015,7 @@ export const MultisigProgramsView = () => {
       const BPF_LOADER_UPGRADEABLE_PID = new PublicKey("BPFLoaderUpgradeab1e11111111111111111111111");
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-      let tx = await multisigClient.createTransaction(
+      const tx = await multisigClient.createTransaction(
         publicKey,
         "Upgrade Program",
         "", // description
@@ -1337,7 +1337,7 @@ export const MultisigProgramsView = () => {
 
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-      let tx = await multisigClient.createTransaction(
+      const tx = await multisigClient.createTransaction(
         publicKey,
         "Upgrade Program IDL",
         "", // description
@@ -1657,7 +1657,7 @@ export const MultisigProgramsView = () => {
       const BPF_LOADER_UPGRADEABLE_PID = new PublicKey("BPFLoaderUpgradeab1e11111111111111111111111");
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-      let tx = await multisigClient.createTransaction(
+      const tx = await multisigClient.createTransaction(
         publicKey,
         "Set Program Authority",
         "", // description
@@ -1940,7 +1940,7 @@ export const MultisigProgramsView = () => {
 
       if (!selectedMultisig || !multisigClient || !publicKey) { return null; }
 
-      let tx = await multisigClient.approveTransaction(publicKey, data.transaction.id);
+      const tx = await multisigClient.approveTransaction(publicKey, data.transaction.id);
   
       return tx;
     };
@@ -2203,7 +2203,7 @@ export const MultisigProgramsView = () => {
 
       if (!data.transaction || !publicKey || !multisigClient) { return null; }
 
-      let tx = await multisigClient.executeTransaction(publicKey, data.transaction.id);
+      const tx = await multisigClient.executeTransaction(publicKey, data.transaction.id);
   
       return tx;
     };
@@ -2473,7 +2473,7 @@ export const MultisigProgramsView = () => {
         return null;
       }
 
-      let tx = await multisigClient.cancelTransaction(publicKey, data.transaction.id);
+      const tx = await multisigClient.cancelTransaction(publicKey, data.transaction.id);
 
       return tx;
     };
@@ -2646,7 +2646,7 @@ export const MultisigProgramsView = () => {
         return false;
       }
 
-      let result = await connection
+      const result = await connection
         .sendEncodedTransaction(encodedTx)
         .then(sig => {
           consoleOut('sendEncodedTransaction returned a signature:', sig);
@@ -2669,7 +2669,7 @@ export const MultisigProgramsView = () => {
             currentOperation: TransactionStatus.SendTransactionFailure
           } as TransactionStatusInfo;
           if (error.toString().indexOf('0x1794') !== -1) {
-            let treasury = data.transaction.operation === OperationType.StreamClose
+            const treasury = data.transaction.operation === OperationType.StreamClose
               ? data.transaction.accounts[5].pubkey.toBase58()
               : data.transaction.accounts[3].pubkey.toBase58();
             txStatus.customError = {

@@ -214,7 +214,7 @@ export const MultisigView = () => {
     if (!accountInfos || !accountInfos.length) { return []; }
 
     const results = accountInfos.map((t: any) => {
-      let tokenAccount = AccountLayout.decode(t.account.data);
+      const tokenAccount = AccountLayout.decode(t.account.data);
       tokenAccount.address = t.pubkey;
       return tokenAccount;
     });
@@ -322,7 +322,7 @@ export const MultisigView = () => {
         }
       });
 
-      let tx = await multisigClient.createMultisig(
+      const tx = await multisigClient.createMultisig(
         publicKey, 
         data.label, 
         data.threshold, 
@@ -707,7 +707,7 @@ export const MultisigView = () => {
 
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
-      let tx = await multisigClient.createTransaction(
+      const tx = await multisigClient.createTransaction(
         publicKey,
         "Edit Safe",
         "", // description
@@ -1021,7 +1021,7 @@ export const MultisigView = () => {
 
       if (!selectedMultisig || !multisigClient || !publicKey) { return null; }
 
-      let tx = await multisigClient.approveTransaction(publicKey, data.transaction.id);
+      const tx = await multisigClient.approveTransaction(publicKey, data.transaction.id);
   
       return tx;
     };
@@ -1462,7 +1462,7 @@ export const MultisigView = () => {
         return false;
       }
 
-      let result = await connection
+      const result = await connection
         .sendEncodedTransaction(encodedTx)
         .then(sig => {
           consoleOut('sendEncodedTransaction returned a signature:', sig);
@@ -1484,12 +1484,30 @@ export const MultisigView = () => {
             currentOperation: TransactionStatus.SendTransactionFailure
           } as TransactionStatusInfo;
           if (error.toString().indexOf('0x1794') !== -1) {
-            let treasury = data.transaction.operation === OperationType.StreamClose
+            const treasury = data.transaction.operation === OperationType.StreamClose
               ? data.transaction.accounts[5].pubkey.toBase58()
               : data.transaction.accounts[3].pubkey.toBase58();
             txStatus.customError = {
               message: 'Your transaction failed to submit due to there not being enough SOL to cover the fees. Please fund the treasury with at least 0.00002 SOL and then retry this operation.\n\nTreasury ID: ',
               data: treasury
+            };
+          } else if (error.toString().indexOf('0x1797') !== -1) {
+            const treasury = data.transaction.operation === OperationType.TreasuryStreamCreate
+              ? data.transaction.accounts[2].pubkey.toBase58()
+              : data.transaction.operation === OperationType.TreasuryWithdraw
+              ? data.transaction.accounts[5].pubkey.toBase58()
+              : data.transaction.accounts[3].pubkey.toBase58();
+            txStatus.customError = {
+              message: 'Your transaction failed to submit due to insufficient balance in the treasury. Please add funds to the treasury and then retry this operation.\n\nTreasury ID: ',
+              data: treasury
+            };
+          } else if (error.toString().indexOf('0x1') !== -1) {
+            const asset = data.transaction.operation === OperationType.TransferTokens
+              ? data.transaction.accounts[0].pubkey.toBase58()
+              : data.transaction.accounts[3].pubkey.toBase58();
+            txStatus.customError = {
+              message: 'Your transaction failed to submit due to insufficient balance in the asset. Please add funds to the asset and then retry this operation.\n\nAsset ID: ',
+              data: asset
             };
           }
           setTransactionStatus(txStatus);
@@ -1570,7 +1588,7 @@ export const MultisigView = () => {
         return null;
       }
 
-      let tx = await multisigClient.cancelTransaction(publicKey, data.transaction.id);
+      const tx = await multisigClient.cancelTransaction(publicKey, data.transaction.id);
 
       return tx;
     };
@@ -1745,7 +1763,7 @@ export const MultisigView = () => {
         return false;
       }
 
-      let result = await connection
+      const result = await connection
         .sendEncodedTransaction(encodedTx)
         .then(sig => {
           consoleOut('sendEncodedTransaction returned a signature:', sig);
@@ -1768,7 +1786,7 @@ export const MultisigView = () => {
             currentOperation: TransactionStatus.SendTransactionFailure
           } as TransactionStatusInfo;
           if (error.toString().indexOf('0x1794') !== -1) {
-            let treasury = data.transaction.operation === OperationType.StreamClose
+            const treasury = data.transaction.operation === OperationType.StreamClose
               ? data.transaction.accounts[5].pubkey.toBase58()
               : data.transaction.accounts[3].pubkey.toBase58();
             txStatus.customError = {
@@ -2079,7 +2097,7 @@ export const MultisigView = () => {
       });
 
     // 2. For each executable data account found in the previous step, fetch the corresponding program
-    let programs: ProgramAccounts[] = [];
+    const programs: ProgramAccounts[] = [];
     for (let i = 0; i < executableDataAccounts.length; i++) {
       const executableData = executableDataAccounts[i].pubkey;
 
@@ -3061,13 +3079,13 @@ export const MultisigView = () => {
 
   return (
     <>
-      {isLocal() && (
+      {/* {isLocal() && (
         <div className="debug-bar">
           <span className="ml-1">isBusy:</span><span className="ml-1 font-bold fg-dark-active">{isBusy ? 'true' : 'false'}</span>
           <span className="ml-1">haveMultisig:</span><span className="ml-1 font-bold fg-dark-active">{selectedMultisig ? 'true' : 'false'}</span>
           <span className="ml-1">multisigId:</span><span className="ml-1 font-bold fg-dark-active">{selectedMultisig ? `${selectedMultisig.id}` : '-'}</span>
         </div>
-      )}
+      )} */}
 
       <div className="container main-container">
 

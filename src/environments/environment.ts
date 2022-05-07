@@ -136,7 +136,7 @@ export class AppConfigService {
         }
     }
 
-    public getConfig(env: string = '') {
+    public getConfig(env = '') {
         if (env) {
             return this.CONFIG[env];
         }

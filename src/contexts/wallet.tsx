@@ -299,7 +299,7 @@ export function WalletProvider({ children = null as any }) {
           {WALLET_PROVIDERS.map((item, index) => {
             // const isInstalled = getIsProviderInstalled(item);
             const onClick = function () {
-              if (item.name === provider?.name) {
+              if (item.name === provider?.name && connected) {
                 close();
                 return;
               }

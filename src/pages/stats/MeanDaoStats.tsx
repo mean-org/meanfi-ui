@@ -56,7 +56,7 @@ const transactions = [
 ]
 
 const MeanDaoStats = () => {
-  let totalTreasuryValue = items.reduce((accumulator, item) => {
+  const totalTreasuryValue = items.reduce((accumulator, item) => {
     return accumulator + item.value;
   }, 0);
 

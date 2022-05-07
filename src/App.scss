@@ -1924,6 +1924,26 @@ em {
     }
   }
 }
+.ant-steps {
+  color: inherit !important;
+  .ant-steps-item-process {
+    > .ant-steps-item-container > .ant-steps-item-icon {
+      background: var(--color-primary);
+    }
+    .ant-steps-item-icon {
+      border-color: var(--color-white);
+    }
+    .ant-steps-item-content {
+      .ant-steps-item-title {
+        font-weight: 600;
+        color: var(--color-secondary-alpha-85) !important;
+      }
+      .ant-steps-item-description {
+        color: inherit !important;
+      }
+    }
+  }
+}
 
 .ant-tabs {
   color: inherit;
@@ -5055,7 +5075,7 @@ main section {
   @media (min-width: 576px) {
     position: absolute;
     top: 0.3rem;
-    right: 0.3rem;
+    right: 1rem;
     z-index: 1;
   }
 }

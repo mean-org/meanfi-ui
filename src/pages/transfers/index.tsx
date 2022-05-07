@@ -5,6 +5,7 @@ import { AppStateContext } from "../../contexts/appstate";
 import { IconMoneyTransfer } from "../../Icons";
 import { OneTimePayment, RepeatingPayment } from "../../views";
 import { PreFooter } from "../../components/PreFooter";
+import { TokenInfo } from '@solana/spl-token-registry';
 
 type TransfersTabOption = "one-time" | "recurring";
 
@@ -20,9 +21,9 @@ export const TransfersView = () => {
 
   const renderContract = () => {
     if (currentTab === "one-time") {
-      return <OneTimePayment inModal={false} />;
+      return <OneTimePayment inModal={false} token={selectedToken} tokenChanged={(t: TokenInfo) => setSelectedToken(t)} />;
     } else {
-      return <RepeatingPayment inModal={false} />;
+      return <RepeatingPayment inModal={false} token={selectedToken} tokenChanged={(t: TokenInfo) => setSelectedToken(t)} />;
     }
   }
 

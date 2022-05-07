@@ -5,8 +5,9 @@ import { useLocalStorageState } from '../../utils/utils';
 import { getLiveRpc, RpcConfig } from '../../models/connections-hq';
 import { useNavigate } from 'react-router-dom';
 import { Connection } from '@solana/web3.js';
-import { getTokenBySymbol, TokenInfo } from '../../utils/tokens';
+import { getTokenBySymbol } from '../../utils/tokens';
 import { consoleOut } from '../../utils/ui';
+import { TokenInfo } from '@solana/spl-token-registry';
 
 export const ExchangeAssetModal = (props: {
   handleClose: any;

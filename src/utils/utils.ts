@@ -14,8 +14,7 @@ import {
   TransactionSignature
 } from "@solana/web3.js";
 import { INPUT_AMOUNT_PATTERN } from "../constants";
-import { TokenInfo } from "@solana/spl-token-registry";
-import { CUSTOM_USDC, MEAN_TOKEN_LIST } from "../constants/token-list";
+import { MEAN_TOKEN_LIST } from "../constants/token-list";
 import { getFormattedNumberToLocale, maxTrailingZeroes } from "./ui";
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { RENT_PROGRAM_ID, SYSTEM_PROGRAM_ID, TOKEN_PROGRAM_ID } from "./ids";
@@ -26,6 +25,9 @@ import { AccountTokenParsedInfo, TokenAccountInfo } from '../models/token';
 import { BigNumber } from "bignumber.js";
 import BN from "bn.js";
 import { isMobile } from "react-device-detect";
+import { TokenInfo } from "@solana/spl-token-registry";
+import { getNetworkIdByEnvironment } from "../contexts/connection";
+import { environment } from "../environments/environment";
 
 export type KnownTokenMap = Map<string, TokenInfo>;
 
@@ -97,17 +99,17 @@ export const getAmountFromLamports = (amount: number): number => {
   return (amount || 0) / LAMPORTS_PER_SOL;
 }
 
-var SI_SYMBOL = ["", "k", "M", "G", "T", "P", "E"];
+const SI_SYMBOL = ["", "k", "M", "G", "T", "P", "E"];
 
 const abbreviateNumber = (number: number, precision: number) => {
   if (number === undefined) {
     return '--';
   }
-  let tier = (Math.log10(number) / 3) | 0;
+  const tier = (Math.log10(number) / 3) | 0;
   let scaled = number;
-  let suffix = SI_SYMBOL[tier];
+  const suffix = SI_SYMBOL[tier];
   if (tier !== 0) {
-    let scale = Math.pow(10, tier * 3);
+    const scale = Math.pow(10, tier * 3);
     scaled = number / scale;
   }
 
@@ -116,8 +118,8 @@ const abbreviateNumber = (number: number, precision: number) => {
 
 export const formatAmount = (
   val: number,
-  precision: number = 6,
-  abbr: boolean = false
+  precision = 6,
+  abbr = false
 ) => {
   if (val) {
     if (abbr) {
@@ -165,7 +167,7 @@ export const formatThousands = (val: number, maxDecimals?: number, minDecimals =
 export function convert(
   account?: TokenAccount | number,
   mint?: MintInfo,
-  rate: number = 1.0
+  rate = 1.0
 ): number {
   if (!account) {
     return 0;
@@ -175,7 +177,7 @@ export function convert(
     typeof account === "number" ? account : account.info.amount?.toNumber();
 
   const precision = Math.pow(10, mint?.decimals || 0);
-  let result = (amount / precision) * rate;
+  const result = (amount / precision) * rate;
 
   return result;
 }
@@ -189,6 +191,16 @@ export const getTokenByMintAddress = (address: string, tokenList?: TokenInfo[]):
   const tokenFromTokenList = tokenList
     ? tokenList.find(t => t.address === address)
     : MEAN_TOKEN_LIST.find(t => t.address === address);
+  if (tokenFromTokenList) {
+    return tokenFromTokenList;
+  }
+  return undefined;
+}
+
+export const getTokenBySymbol = (symbol: string, tokenList?: TokenInfo[]): TokenInfo | undefined => {
+  const tokenFromTokenList = tokenList
+    ? tokenList.find(t => t.symbol === symbol)
+    : MEAN_TOKEN_LIST.find(t => t.symbol === symbol && t.chainId === getNetworkIdByEnvironment(environment));
   if (tokenFromTokenList) {
     return tokenFromTokenList;
   }

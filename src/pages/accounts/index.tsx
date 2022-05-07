@@ -26,6 +26,7 @@ import {
   findATokenAddress,
   getAmountFromLamports,
   getTokenAmountAndSymbolByTokenAddress,
+  getTokenByMintAddress,
   openLinkInNewTab,
   shortenAddress
 } from '../../utils/utils';
@@ -47,8 +48,7 @@ import { fetchAccountHistory, MappedTransaction } from '../../utils/history';
 import { useLocation, useNavigate } from 'react-router-dom';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import { AccountTokenParsedInfo } from '../../models/token';
-import { getTokenByMintAddress, TokenInfo } from '../../utils/tokens';
-import { TokenInfo as SolanaTokenInfo } from "@solana/spl-token-registry";
+import { TokenInfo } from "@solana/spl-token-registry";
 import { AccountsMergeModal } from '../../components/AccountsMergeModal';
 import { Streams } from '../../views';
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
@@ -68,9 +68,9 @@ import { AppUsageEvent } from '../../utils/segment-service';
 import { segmentAnalytics } from '../../App';
 import { TreasuriesSummary } from '../../components/TreasuriesSummary';
 import { AccountsSuggestAssetModal } from '../../components/AccountsSuggestAssetModal';
+import { QRCodeSVG } from 'qrcode.react';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
-const QRCode = require('qrcode.react');
 export type CategoryOption = "networth" | "user-account" | "other-assets";
 export type OtherAssetsOption = "msp-streams" | "msp-treasuries" | "orca" | "solend" | "friktion" | undefined;
 
@@ -351,7 +351,7 @@ export const AccountsNewView = () => {
     //   token = getTokenByMintAddress(selectedAsset.address);
     // }
     // if (token) {
-    //   setSelectedToken(token as SolanaTokenInfo);
+    //   setSelectedToken(token as TokenInfo);
     // }
     // showExchangeAssetModal();
 
@@ -360,14 +360,14 @@ export const AccountsNewView = () => {
   const onSendAsset = useCallback(() => {
     if (!selectedAsset) { return; }
 
-    let token: TokenInfo | null;
+    let token: TokenInfo | undefined;
     if (isSelectedAssetNativeAccount()) {
       token = getTokenByMintAddress(WRAPPED_SOL_MINT_ADDRESS);
     } else {
       token = getTokenByMintAddress(selectedAsset.address);
     }
     if (token) {
-      setSelectedToken(token as SolanaTokenInfo);
+      setSelectedToken(token);
     }
     showSendAssetModal();
 
@@ -522,8 +522,8 @@ export const AccountsNewView = () => {
 
   const selectAsset = useCallback((
     asset: UserTokenAccount,
-    clearTxList: boolean = true,
-    openDetailsPanel: boolean = false
+    clearTxList = true,
+    openDetailsPanel = false
   ) => {
     setStatus(FetchStatus.Fetching);
     if (clearTxList) {
@@ -593,7 +593,7 @@ export const AccountsNewView = () => {
 
     setLoadingStreamsSummary(true);
 
-    let resume: StreamsSummary = {
+    const resume: StreamsSummary = {
       totalNet: 0,
       incomingAmount: 0,
       outgoingAmount: 0,
@@ -609,9 +609,9 @@ export const AccountsNewView = () => {
     const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
     const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer);
 
-    // consoleOut('=========== Block strat ===========', '', 'orange');
+    // consoleOut('=========== Block start ===========', '', 'orange');
 
-    for (let stream of updatedStreamsv1) {
+    for (const stream of updatedStreamsv1) {
 
       const isIncoming = stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58()
         ? true
@@ -624,7 +624,7 @@ export const AccountsNewView = () => {
       }
 
       // Get refreshed data
-      let freshStream = await ms.refreshStream(stream) as StreamInfo;
+      const freshStream = await ms.refreshStream(stream) as StreamInfo;
       if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
 
       const asset = getTokenByMintAddress(freshStream.associatedToken as string);
@@ -640,7 +640,7 @@ export const AccountsNewView = () => {
 
     // consoleOut('totalNet v1:', resume['totalNet'], 'blue');
 
-    for (let stream of updatedStreamsv2) {
+    for (const stream of updatedStreamsv2) {
 
       const isIncoming = stream.beneficiary && stream.beneficiary === treasurer.toBase58()
         ? true
@@ -653,7 +653,7 @@ export const AccountsNewView = () => {
       }
 
       // Get refreshed data
-      let freshStream = await msp.refreshStream(stream) as Stream;
+      const freshStream = await msp.refreshStream(stream) as Stream;
       if (!freshStream || freshStream.status !== STREAM_STATUS.Running) { continue; }
 
       const asset = getTokenByMintAddress(freshStream.associatedToken as string);
@@ -1052,7 +1052,7 @@ export const AccountsNewView = () => {
                   }
                 });
 
-                let sortedList = intersectedList.sort((a, b) => {
+                const sortedList = intersectedList.sort((a, b) => {
                   if ((a.valueInUsd || 0) < (b.valueInUsd || 0)) {
                     return 1;
                   } else if ((a.valueInUsd || 0) > (b.valueInUsd || 0)) {
@@ -1127,6 +1127,8 @@ export const AccountsNewView = () => {
                   selectAsset(pinnedTokensCopy[pinnedTokensItemIndex], true);
                 } else if (meanTokensItemIndex !== -1) {
                   selectAsset(meanTokensCopy[meanTokensItemIndex], true);
+                } else {
+                  selectAsset(pinnedTokensCopy[0]);
                 }
               } else {
                 // Preset the first available token
@@ -1414,8 +1416,8 @@ export const AccountsNewView = () => {
   const renderNetworth = () => {
     return (
       <div className={`networth-list-item flex-fixed-right no-pointer ${selectedCategory === "networth" ? 'selected' : ''}`} onClick={() => {
-        setSelectedCategory("networth");
-        setSelectedAsset(undefined);
+        // setSelectedCategory("networth");
+        // setSelectedAsset(undefined);
       }}>
         <div className="font-bold font-size-110 left">Net Worth</div>
         <div className="font-bold font-size-110 right">
@@ -1430,9 +1432,9 @@ export const AccountsNewView = () => {
       <Tooltip title={publicKey ? "See your Money Streams" : "To see your Money Streams you need to connect your wallet"}>
         <div key="streams" onClick={() => {
           if (publicKey) {
-            setSelectedCategory("other-assets");
-            setSelectedOtherAssetsOption("msp-streams");
-            setSelectedAsset(undefined);
+            // setSelectedCategory("other-assets");
+            // setSelectedOtherAssetsOption("msp-streams");
+            // setSelectedAsset(undefined);
             navigate("/accounts/streams");
           }
         }} className={`transaction-list-row ${selectedCategory === "other-assets" && selectedOtherAssetsOption === "msp-streams" ? 'selected' : ''}`}>
@@ -1490,8 +1492,8 @@ export const AccountsNewView = () => {
 
   const renderAsset = (asset: UserTokenAccount, index: number) => {
     const onTokenAccountClick = () => {
-      selectAsset(asset, true, true);
       setSelectedCategory("user-account");
+      selectAsset(asset, true, true);
     }
     const tokenPrice = getPricePerToken(asset);
     const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
@@ -1886,10 +1888,10 @@ export const AccountsNewView = () => {
     <div className="text-center mt-3">
       <h3 className="mb-3">{t('assets.no-balance.line3')}</h3>
       <div className={theme === 'light' ? 'qr-container bg-white' : 'qr-container bg-black'}>
-        <QRCode
+        <QRCodeSVG
           value={accountAddress}
           size={200}
-          renderAs="svg"/>
+        />
       </div>
       <div className="flex-center font-size-70 mb-2">
         <AddressDisplay
@@ -2015,16 +2017,9 @@ export const AccountsNewView = () => {
 
                       {/* Middle area (vertically flexible block of items) */}
                       <div className="item-block vertical-scroll">
+
                         <div className="asset-category-title flex-fixed-right">
-                          <div className="title">Assets in wallet ({totalTokensHolded})</div>
-                          <div className="amount">{toUsCurrency(totalTokenAccountsValue)}</div>
-                        </div>
-                        <div className="asset-category flex-column">
-                          {renderAssetsList}
-                        </div>
-                        {/* TODO: Make this part more dynamic */}
-                        <div className="asset-category-title flex-fixed-right">
-                          <div className="title">Other assets (2)</div>
+                          <div className="title">Streaming finance (2)</div>
                           <div className="amount">{toUsCurrency(streamsSummary.totalNet + treasuriesTvl)}</div>
                         </div>
                         <div className="asset-category">
@@ -2044,13 +2039,22 @@ export const AccountsNewView = () => {
                             onNewValue={(value: number) => setTreasuriesTvl(value)}
                             onSelect={() => {
                               if (publicKey) {
-                                setSelectedCategory("other-assets");
-                                setSelectedOtherAssetsOption("msp-streams");
-                                setSelectedAsset(undefined);
+                                // setSelectedCategory("other-assets");
+                                // setSelectedOtherAssetsOption("msp-streams");
+                                // setSelectedAsset(undefined);
                               }
                             }}
                           />
                         </div>
+
+                        <div className="asset-category-title flex-fixed-right">
+                          <div className="title">Assets in wallet ({totalTokensHolded})</div>
+                          <div className="amount">{toUsCurrency(totalTokenAccountsValue)}</div>
+                        </div>
+                        <div className="asset-category flex-column">
+                          {renderAssetsList}
+                        </div>
+
                       </div>
 
                       {/* Bottom CTAs */}
@@ -2236,9 +2240,9 @@ export const AccountsNewView = () => {
         />
       )}
 
-      {isSendAssetModalOpen && (
+      {isSendAssetModalOpen && selectedAsset && (
         <SendAssetModal
-          selectedToken={getTokenByMintAddress(selectedAsset?.address || '') || undefined}
+          selectedToken={selectedAsset}
           isVisible={isSendAssetModalOpen}
           handleClose={hideSendAssetModal}
           selected={"one-time"}

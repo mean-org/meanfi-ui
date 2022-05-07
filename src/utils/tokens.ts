@@ -1,6 +1,8 @@
 import { TokenAmount } from './safe-math';
 import { NATIVE_SOL_MINT, WRAPPED_SOL_MINT } from './ids';
 import { MEAN_TOKEN_LIST } from '../constants/token-list';
+import { TokenInfo } from '@solana/spl-token-registry';
+import { isProd } from './ui';
 
 interface Tokens {
   [key: string]: any
@@ -12,7 +14,7 @@ export const TOKENS_TAGS: { [key: string]: { mustShow: boolean; show: boolean; o
   solana: { mustShow: false, show: false, outName: 'Solana Token List' },
 }
 
-export interface TokenInfo {
+export interface CustomTokenInfo {
   symbol: string
   name: string
   address: string
@@ -38,7 +40,7 @@ export function getTokenBySymbol(symbol: string): TokenInfo | null {
     return JSON.parse(JSON.stringify(NATIVE_SOL));
   }
 
-  let token = MEAN_TOKEN_LIST.find(t => t.symbol === symbol);
+  const token = MEAN_TOKEN_LIST.find(t => t.symbol === symbol);
 
   if (!token) { return null; }
 
@@ -69,6 +71,7 @@ export function getTokenByMintAddress(address: string): TokenInfo | null {
 }
 
 export const NATIVE_SOL: TokenInfo = {
+  chainId: isProd() ? 101 : 103,
   symbol: 'SOL',
   name: 'Native SOL',
   address: NATIVE_SOL_MINT.toString(),
@@ -258,7 +261,7 @@ function addTokensSolanaFunc(tokens: any[]) {
 
   if (window.localStorage.addSolanaCoin) {
     window.localStorage.addSolanaCoin.split('---').forEach((itemMint: string) => {
-      if (itemMint === NATIVE_SOL.address) NATIVE_SOL.tags.push('userAdd')
+      if (itemMint === NATIVE_SOL.address) NATIVE_SOL.tags?.push('userAdd')
       else
         Object.keys(TOKENS).forEach((item) => {
           if (TOKENS[item].address === itemMint) {

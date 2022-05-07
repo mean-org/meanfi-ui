@@ -170,7 +170,7 @@ export interface SegmentStakingRewardsDepositData {
 export class SegmentAnalyticsService {
 
     private _analytics: Analytics | undefined = undefined;
-    private _userId: string = '';
+    private _userId = '';
 
     public set analytics(instance: Analytics | undefined) {
         if (instance) {
