@@ -28,6 +28,18 @@ export const getNetworkIdByCluster = (cluster: Cluster) => {
   }
 }
 
+export const getNetworkIdByEnvironment = (env: string) => {
+  switch (env) {
+    case "local":
+    case "staging":
+    case "development":
+      return ChainID.Devnet;
+    case "production":
+    default:
+      return ChainID.MainnetBeta;
+  }
+}
+
 export const getSolanaExplorerClusterParam = (): string => {
   switch (environment) {
     case 'local':

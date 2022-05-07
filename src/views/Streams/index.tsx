@@ -633,7 +633,7 @@ export const Streams = () => {
       const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
       const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer);
   
-    // consoleOut('=========== Block strat ===========', '', 'orange');
+    // consoleOut('=========== Block start ===========', '', 'orange');
 
     for (const stream of updatedStreamsv1) {
 
@@ -5808,7 +5808,7 @@ export const Streams = () => {
 
         {isSendAssetModalOpen && (
           <SendAssetModal
-            selectedToken={selectedToken}
+            selectedToken={selectedToken as UserTokenAccount}
             isVisible={isSendAssetModalOpen}
             handleClose={hideSendAssetModal}
             selected={"one-time"}

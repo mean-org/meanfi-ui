@@ -3,6 +3,7 @@ import { Modal, Tabs } from "antd";
 import { useTranslation } from "react-i18next";
 import { OneTimePayment, RepeatingPayment } from '../../views';
 import { TokenInfo } from '@solana/spl-token-registry';
+import { UserTokenAccount } from '../../models/transactions';
 
 const { TabPane } = Tabs;
 type TransfersTabOption = "one-time" | "recurring";
@@ -11,7 +12,7 @@ export const SendAssetModal = (props: {
   handleClose: any;
   isVisible: boolean;
   selected: TransfersTabOption;
-  selectedToken: any;
+  selectedToken: UserTokenAccount;
 }) => {
   const { selected, isVisible, handleClose, selectedToken } = props;
   const { t } = useTranslation("common");
@@ -34,10 +35,10 @@ export const SendAssetModal = (props: {
       width={480}>
         <Tabs className="shift-up-2" defaultActiveKey={selected} centered>
           <TabPane tab={t('swap.tabset.one-time')} key={"one-time"}>
-            <OneTimePayment inModal={true} transferCompleted={props.handleClose} token={token} />
+            <OneTimePayment inModal={true} transferCompleted={props.handleClose} token={token} tokenChanged={(t: TokenInfo) => setToken(t)} />
           </TabPane>
           <TabPane tab={t('swap.tabset.recurring')} key={"recurring"}>
-            <RepeatingPayment inModal={true} transferCompleted={props.handleClose} token={token} />
+            <RepeatingPayment inModal={true} transferCompleted={props.handleClose} token={token} tokenChanged={(t: TokenInfo) => setToken(t)} />
           </TabPane>
         </Tabs>
     </Modal>

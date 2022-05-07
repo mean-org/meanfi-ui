@@ -505,7 +505,7 @@ export const MultisigTreasuryStreams = () => {
                 publicKey
             );
 
-            // consoleOut('=========== Block strat ===========', '', 'orange');
+            // consoleOut('=========== Block start ===========', '', 'orange');
 
             let streamsUsdNetChange = 0;
 
