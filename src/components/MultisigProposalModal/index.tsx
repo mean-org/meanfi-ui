@@ -304,11 +304,10 @@ export const MultisigProposalModal = (props: {
                         ) : (
                           <img className="mr-1" src={selectedApp.logoUri} alt={selectedApp.name} width={40} height={40} />
                         )}
-                        {selectedApp && (<div className="selected-app">
+                        <div className="selected-app">
                           <div className="info-label">Selected App</div>
-                            <span>{selectedApp.name}</span>
-                          </div>
-                        )}
+                          <span>{selectedApp && selectedApp.name}</span>
+                        </div>
                       </Col>
 
                       {/* Proposal title */}

@@ -1,0 +1,316 @@
+import { useCallback, useEffect, useState } from "react";
+import './style.scss';
+import { useNavigate } from "react-router-dom";
+
+import { Button, Col, Dropdown, Menu, Row } from "antd"
+import { IconAdd, IconApprove, IconArrowForward, IconCheckCircle, IconCreated, IconCross, IconEdit, IconEllipsisVertical, IconLink, IconMinus, IconShowAll, IconTrash } from "../../../../Icons"
+import { shortenAddress } from "../../../../utils/utils";
+import { ProposalResumeItem } from '../ProposalResumeItem';
+import { useTranslation } from "react-i18next";
+import { openNotification } from "../../../../components/Notifications";
+import { copyText } from "../../../../utils/ui";
+import { getSolanaExplorerClusterParam } from "../../../../contexts/connection";
+import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "../../../../constants";
+import { MultisigOwnersView } from "../../../../components/MultisigOwnersView";
+import { TabsMean } from "../../../../components/TabsMean";
+
+export const SafeSerumInfoView = (props: {
+  isSafeDetails: boolean;
+  isProgramDetails: boolean;
+  onDataToSafeView: any;
+  onDataToProgramView: any;
+  proposals: any[];
+  selectedMultisig?: any;
+  onEditMultisigClick: any;
+  onNewProposalMultisigClick: any;
+  multisigVaults: any;
+}) => {
+  const { isSafeDetails, proposals, selectedMultisig, onEditMultisigClick, onNewProposalMultisigClick, multisigVaults } = props;
+  
+  const navigate = useNavigate();
+  const { t } = useTranslation('common');
+
+  const [selectedLabelName, setSelectedLabelName] = useState("");
+
+  // Copy address to clipboard
+  const copyAddressToClipboard = useCallback((address: any) => {
+    if (copyText(address.toString())) {
+      openNotification({
+        description: t('notifications.account-address-copied-message'),
+        type: "info"
+      });
+    } else {
+      openNotification({
+        description: t('notifications.account-address-not-copied-message'),
+        type: "error"
+      });
+    }
+  },[t])
+
+  // Safe Name
+  useEffect(() => {
+    (selectedMultisig.label) ? (
+      setSelectedLabelName(selectedMultisig.label)
+    ) : (
+      setSelectedLabelName(shortenAddress(selectedMultisig.id.toBase58(), 4))
+    )
+  }, [selectedMultisig.id, selectedMultisig.label]);
+
+  // Security
+  const renderSecurity = (
+    <>
+      <span>Security</span>
+      <MultisigOwnersView label="view" className="ml-1" participants={selectedMultisig.owners || []} />
+    </>
+  );
+
+  // Safe Balance (show amount of assets)
+  const [assetsAmout, setAssetsAmount] = useState<string>();
+
+  useEffect(() => {
+    (selectedMultisig) && (
+      multisigVaults.length > 1 ? (
+        setAssetsAmount(`(${multisigVaults.length} assets)`)
+      ) : (
+        setAssetsAmount(`(${multisigVaults.length} asset)`)
+      )
+    )
+  }, [multisigVaults, selectedMultisig]);
+  
+  // Deposit Address
+  const renderDepositAddress = (
+    <div className="d-flex align-items-start">
+      <div onClick={() => copyAddressToClipboard(selectedMultisig.authority)} className="simplelink underline-on-hover">{shortenAddress(selectedMultisig.authority.toBase58(), 4)}</div>
+      <span className="icon-button-container">
+        <a
+          target="_blank"
+          rel="noopener noreferrer"
+          href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${selectedMultisig.authority.toBase58()}${getSolanaExplorerClusterParam()}`}>
+          <IconLink className="mean-svg-icons" />
+        </a>
+      </span>
+    </div>
+  );
+
+  const infoSafeData = [
+    {
+      name: "Safe Name",
+      value: selectedLabelName
+    },
+    {
+      name: renderSecurity,
+      value: `${selectedMultisig.threshold}/${selectedMultisig.owners.length} signatures`
+    },
+    {
+      name: `Safe Balance ${assetsAmout}`,
+      value: "$124,558.26"
+    },
+    {
+      name: "Deposit address",
+      value: renderDepositAddress ? renderDepositAddress : "--"
+    }
+  ];
+
+  // View assets
+  const onGoToAccounts = () => {
+    // navigate(`/accounts?cat=account&address=${selectedMultisig.authority.toBase58()}`);
+    navigate(`/accounts?address=${selectedMultisig.authority.toBase58()}&cat=user-assets`);
+  }
+
+  /**
+   * URL scheme to redirect to /accounts page
+   * 
+   * /accounts?address={address}&cat={catId}&asset={assetId}
+   * 
+   *   Navigate to /accounts with Net Worth selected
+   *   /accounts?address=GFefRR6EASXvnphnJApp2PRH1wF1B5pJijKBZGFzq1x1&cat=networth
+   *   Navigate to /accounts with my USDC asset selected
+   *   /accounts?address=GFefRR6EASXvnphnJApp2PRH1wF1B5pJijKBZGFzq1x1&cat=user-assets&asset=USDC
+   *   Navigate to /accounts with Treasuries summary selected
+   *   /accounts?address=GFefRR6EASXvnphnJApp2PRH1wF1B5pJijKBZGFzq1x1&cat=other-assets&asset=msp-treasuries
+   * 
+   *  cat [networth | user-assets | other-assets]
+   *  asset (when cat=user-assets)  = [any token symbol]
+   *  asset (when cat=other-assets) = [msp-streams | msp-treasuries | orca | solend | friktion]
+   */
+
+  /**
+   * URL scheme to redirect to /accounts page
+   * /accounts?cat=networth&address=Ss1dd5HsdsdSx2P
+   * /accounts?cat=account&address=Ss1dd5HsdsdSx2P
+   * /accounts?cat=other-assets&project=msp&address=Ss1dd5HsdsdSx2P
+   */
+
+  // Dropdown (three dots button)
+  const menu = (
+    <Menu>
+      <Menu.Item key="0" onClick={onEditMultisigClick}>
+        <IconEdit className="mean-svg-icons" />
+        <span className="menu-item-text">Edit Safe</span>
+      </Menu.Item>
+      <Menu.Item key="1" onClick={() => {}}>
+        <IconTrash className="mean-svg-icons" />
+        <span className="menu-item-text">Delete Safe</span>
+      </Menu.Item>
+    </Menu>
+  );
+
+  // Proposals list
+  const renderListOfProposals = (
+    <>
+      {proposals && proposals.length && (
+        proposals.map((proposal, index) => {
+          const onSelectProposal = () => {
+            // Sends isSafeDetails value to the parent component "SafeView"
+            props.onDataToSafeView(proposal);
+          };
+
+          return (
+            <div 
+              key={proposal.id}
+              onClick={onSelectProposal}
+              className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+              >
+                <ProposalResumeItem
+                  id={proposal.id}
+                  version={selectedMultisig.version}
+                  logo={proposal.logo}
+                  title={proposal.title}
+                  expires={proposal.expires}
+                  approved={proposal.approved}
+                  rejected={proposal.rejected}
+                  status={proposal.status}
+                  isSafeDetails={isSafeDetails}
+                />
+            </div>
+          )
+        })
+      )}
+    </>
+  );
+
+  // Activities list 
+  const renderActivities= (
+    <>
+      {proposals && proposals.length && (
+        proposals.map((proposal) => (
+          proposal.activities.map((activity: any) => {
+
+            let icon = null;
+
+            switch (activity.description) {
+              case 'approved':
+                icon = <IconApprove className="mean-svg-icons fg-green" />;
+                break;
+              case 'rejected':
+                icon = <IconCross className="mean-svg-icons fg-red" />;
+                break;
+              case 'passed':
+                icon = <IconCheckCircle className="mean-svg-icons fg-green" />;
+                break;
+              case 'created':
+                icon = <IconCreated className="mean-svg-icons fg-purple" />;
+                break;
+              case 'deleted':
+                icon = <IconMinus className="mean-svg-icons fg-purple" />;
+                break;
+              default:
+                icon = "";
+                break;
+            }
+
+            return (
+              <div 
+                key={activity.id}
+                className={`d-flex w-100 align-items-center activities-list ${activity.id % 2 === 0 ? '' : 'background-gray'}`}
+                >
+                  <div className="list-item">
+                    <span className="mr-2">
+                        {activity.date}
+                    </span>
+                    {icon}
+                    <span>
+                      {`Proposal ${activity.description} by ${activity.proposedBy} [${shortenAddress(activity.address, 4)}]`}
+                    </span>
+                  </div>
+              </div>
+            )
+          })
+        ))
+      )}
+    </>
+  );
+
+  // Tabs
+  const tabs = [
+    {
+      name: "Proposals",
+      render: renderListOfProposals
+    },
+    {
+      name: "Activity",
+      render: renderActivities
+    },
+  ];
+
+  return (
+    <>
+      <Row gutter={[8, 8]} className="safe-info-container">
+        {infoSafeData.map((info, index) => (
+          <Col xs={12} sm={12} md={12} lg={12} key={index}>
+            <div className="info-safe-group">
+              <span className="info-label">
+                {info.name}
+              </span>
+              <span className="info-data">
+                {info.value ? info.value : ""}
+              </span>
+            </div>
+          </Col>
+        ))}
+      </Row>
+
+      <Row gutter={[8, 8]} className="safe-btns-container mb-1">
+        <Col xs={20} sm={18} md={20} lg={18} className="btn-group">
+          {/* {selectedMultisig.version !== 0 && (
+            <Button
+              type="ghost"
+              size="small"
+              className="thin-stroke"
+              onClick={onGoToAccounts}>
+                <div className="btn-content">
+                  <IconShowAll className="mean-svg-icons" />
+                  View Assets
+                </div>
+            </Button>
+          )} */}
+          <Button
+            type="ghost"
+            size="small"
+            className="thin-stroke"
+            onClick={onNewProposalMultisigClick}>
+              <div className="btn-content">
+                <IconAdd className="mean-svg-icons" />
+                New Proposal
+              </div>
+          </Button>
+        </Col>
+        <Col xs={4} sm={6} md={4} lg={6}>
+          <Dropdown trigger={["click"]} overlay={menu} placement="bottomRight">
+            <div onClick={e => e.stopPropagation()} className="ellipsis-icon icon-button-container">
+              <IconEllipsisVertical className="mean-svg-icons" />
+            </div>
+          </Dropdown>
+        </Col>
+      </Row>
+
+      <div className="safe-tabs-container">
+        <TabsMean
+          tabs={tabs}
+          headerClassName="safe-tabs-header-container"
+          bodyClassName="safe-tabs-content-container"
+        />
+      </div>
+    </>
+  )
+}

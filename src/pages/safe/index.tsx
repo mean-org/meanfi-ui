@@ -88,6 +88,7 @@ import { MultisigProposalModal } from '../../components/MultisigProposalModal';
 import { ProgramDetailsView } from './components/ProgramDetails';
 import SerumIDL from '../../models/serum-multisig-idl';
 import { AppsProvider, NETWORK, App } from '@mean-dao/mean-multisig-apps';
+import { SafeSerumInfoView } from './components/SafeSerumInfo';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -161,6 +162,9 @@ export const SafeView = () => {
   const [minRequiredBalance, setMinRequiredBalance] = useState(0);
 
   const [solanaApps, setSolanaApps] = useState<App[]>([]);
+  const [serumAccounts, setSerumAccounts] = useState<any>();
+  const [isCreateMeanMultisig, setIsCreateMeanMultisig] = useState<boolean>();
+  const [isCreateSerumMultisig, setIsCreateSerumMultisig] = useState<boolean>();
 
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
     commitment: "confirmed",
@@ -306,6 +310,7 @@ export const SafeView = () => {
 
   const onAcceptCreateMultisig = (data: any) => {
     consoleOut('multisig:', data, 'blue');
+    setIsCreateMeanMultisig(true);
     onExecuteCreateMultisigTx(data);
   };
 
@@ -2307,16 +2312,19 @@ export const SafeView = () => {
 
     accounts.push(...filteredAccs);
 
+    let filteredSerumAccs;
     // Display Serum accounts
     let multisigSerumAccs = await multisigSerumClient.account.multisig.all();
-    filteredAccs = multisigSerumAccs.filter((a: any) => {
+    filteredSerumAccs = multisigSerumAccs.filter((a: any) => {
       if (a.account.owners.filter((o: PublicKey) => o.equals(wallet)).length) {
         return true;
       }
       return false;
     });
 
-    accounts.push(...filteredAccs);
+    setSerumAccounts(filteredSerumAccs);
+
+    accounts.push(...filteredSerumAccs);
 
     return accounts;
     
@@ -4474,17 +4482,31 @@ export const SafeView = () => {
                   {connected && selectedMultisig ? (
                     <>
                       {(!isSafeDetails && !isProgramDetails) && (
-                        <SafeInfoView
-                          isSafeDetails={isSafeDetails}
-                          isProgramDetails={isProgramDetails}
-                          onDataToSafeView={goToSafeDetailsHandler}
-                          onDataToProgramView={goToProgramDetailsHandler}
-                          proposals={proposals}
-                          selectedMultisig={selectedMultisig}
-                          onEditMultisigClick={onEditMultisigClick}
-                          onNewProposalMultisigClick={onNewProposalMultisigClick}
-                          multisigVaults={multisigVaults}
-                        />
+                        selectedMultisig.version === 0 ? (
+                          <SafeSerumInfoView
+                            isSafeDetails={isSafeDetails}
+                            isProgramDetails={isProgramDetails}
+                            onDataToSafeView={goToSafeDetailsHandler}
+                            onDataToProgramView={goToProgramDetailsHandler}
+                            proposals={proposals}
+                            selectedMultisig={selectedMultisig}
+                            onEditMultisigClick={onEditMultisigClick}
+                            onNewProposalMultisigClick={onNewProposalMultisigClick}
+                            multisigVaults={multisigVaults}
+                          />
+                        ) : (
+                          <SafeInfoView
+                            isSafeDetails={isSafeDetails}
+                            isProgramDetails={isProgramDetails}
+                            onDataToSafeView={goToSafeDetailsHandler}
+                            onDataToProgramView={goToProgramDetailsHandler}
+                            proposals={proposals}
+                            selectedMultisig={selectedMultisig}
+                            onEditMultisigClick={onEditMultisigClick}
+                            onNewProposalMultisigClick={onNewProposalMultisigClick}
+                            multisigVaults={multisigVaults}
+                          />
+                        )
                       )}
                       {isSafeDetails && (
                         <SafeDetailsView

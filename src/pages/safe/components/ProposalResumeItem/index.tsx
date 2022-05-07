@@ -4,6 +4,7 @@ import { IconArrowForward, IconThumbsDown, IconThumbsUp } from '../../../../Icon
 
 export const ProposalResumeItem = (props: {
   id: number;
+  version?: number;
   logo?: string;
   title: string;
   expires: any;
@@ -13,7 +14,7 @@ export const ProposalResumeItem = (props: {
   needs?: number;
   isSafeDetails: boolean;
 }) => {
-  const { logo, title, expires, approved, rejected, status, needs, isSafeDetails } = props;
+  const { logo, version, title, expires, approved, rejected, status, needs, isSafeDetails } = props;
   
   return (
     <>
@@ -24,15 +25,17 @@ export const ProposalResumeItem = (props: {
           )}
           <div className="proposal-resume-left-text">
             <div className={`proposal-title ${isSafeDetails ? "big-title" : ""}`}>{title}</div>
-            <span className="info-label">
-              {status === "active" ? (
-                `Expires in ${expires}`
-              ) : status === "passed" ? (
-                `Executed in ${expires}`
-              ) : status === "failed" ? (
-                `Rejected in ${expires}`
-              ) : null}
-            </span>
+            {version !== 0 && (
+              <span className="info-label">
+                {status === "active" ? (
+                  `Expires in ${expires}`
+                ) : status === "passed" ? (
+                  `Executed in ${expires}`
+                ) : status === "failed" ? (
+                  `Rejected in ${expires}`
+                ) : null}
+              </span>
+            )}
           </div>
         </Col>
         <Col className="proposal-resume-right-container">
@@ -42,10 +45,12 @@ export const ProposalResumeItem = (props: {
                 <span>{approved}</span>
                 <IconThumbsUp className="mean-svg-icons" />
               </div>
-              <div className="thumbs-down">
-                <IconThumbsDown className="mean-svg-icons" />
-                <span>{rejected}</span>
-              </div>
+              {version !== 0 && (
+                <div className="thumbs-down">
+                  <IconThumbsDown className="mean-svg-icons" />
+                  <span>{rejected}</span>
+                </div>
+              )}
               <div className={`badge-container ${status === "active" ? "bg-purple" : status === "passed" ? "bg-green" : status === "failed" ? "bg-red" : status === "voided" ? "bg-orange-dark" : ""}`}>
                 <span className="badge darken small text-uppercase">{status}</span>
               </div>
