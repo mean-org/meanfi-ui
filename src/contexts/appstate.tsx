@@ -26,7 +26,7 @@ import { getNetworkIdByCluster, useConnection, useConnectionConfig } from "./con
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { useAccountsContext } from "./accounts";
 import { TokenInfo, TokenListProvider } from "@solana/spl-token-registry";
-import { getPrices } from "../utils/api";
+import { getNewPrices, getPrices } from "../utils/api";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
 import { UserTokenAccount } from "../models/transactions";
@@ -47,6 +47,10 @@ import { AccountDetails } from "../models";
 import moment from "moment";
 import { NATIVE_SOL_MINT } from "../utils/ids";
 import { openNotification } from "../components/Notifications";
+import { PerformanceCounter } from "../utils/perf-counter";
+
+const pricesOldPerformanceCounter = new PerformanceCounter();
+const pricesNewPerformanceCounter = new PerformanceCounter();
 
 export interface TransactionStatusInfo {
   customError?: any;
@@ -855,31 +859,64 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   // Fetch coin prices
   const getCoinPrices = useCallback(async () => {
+
+    // try {
+    //   pricesOldPerformanceCounter.start();
+    //   const prices = await getPrices();
+    //   pricesOldPerformanceCounter.stop();
+    //   consoleOut(`Fetched old price list in ${pricesOldPerformanceCounter.elapsedTime.toLocaleString()}ms`, '', 'crimson');
+    //   if (!prices || prices.msg) {
+    //     setCoinPrices(null);
+    //     updateEffectiveRate(0);
+    //   } else {
+    //     const wSolPrice = prices[WRAPPED_SOL_MINT_ADDRESS];
+    //     const nativeAddress = NATIVE_SOL_MINT.toBase58();
+    //     if (wSolPrice) {
+    //       prices[nativeAddress] = wSolPrice;
+    //     }
+    //     consoleOut('Old price items:', Object.keys(prices).length, 'blue');
+    //     consoleOut('Old prices list:', prices, 'blue');
+    //     setCoinPrices(prices);
+    //   }
+    //   setLoadingPrices(false);
+    // } catch (error) {
+    //   pricesOldPerformanceCounter.stop();
+    //   setCoinPrices(null);
+    //   updateEffectiveRate(0);
+    //   setLoadingPrices(false);
+    // }
+
     try {
-      const prices = await getPrices();
-      /**
-       * Returns the prices object when succeeds
-       * or this object when fails { "success": "false", "msg": "error text" }
-       */
-      if (!prices || prices.msg) {
-        setCoinPrices(null);
-        updateEffectiveRate(0);
-      } else {
-        const wSolPrice = prices[WRAPPED_SOL_MINT_ADDRESS];
+      pricesNewPerformanceCounter.start();
+      const newPrices = await getNewPrices();
+      pricesNewPerformanceCounter.stop();
+      consoleOut(`Fetched new price list in ${pricesNewPerformanceCounter.elapsedTime.toLocaleString()}ms`, '', 'crimson');
+      if (newPrices && newPrices.length > 0) {
+        // const pricesMap = new Map<string, number>();
+        // newPrices.forEach(tp => pricesMap.set(tp.address, tp.price));
+        const pricesMap: any = {};
+        newPrices.forEach(tp => pricesMap[tp.address] = tp.price);
+        const wSolPrice = pricesMap[WRAPPED_SOL_MINT_ADDRESS];
         const nativeAddress = NATIVE_SOL_MINT.toBase58();
-        // Since Raydium price api v2 don't bring SOL price but it does for wSOL
-        // Lets add it with the native SOL address to the list
+        // Lets add SOL to the list using wSOL price
         if (wSolPrice) {
-          prices[nativeAddress] = wSolPrice;
+          pricesMap[nativeAddress] = wSolPrice;
         }
-        setCoinPrices(prices);
+        consoleOut('New price items:', Object.keys(pricesMap).length, 'blue');
+        consoleOut('New prices list:', pricesMap, 'blue');
+        setCoinPrices(pricesMap);
+      } else {
+        consoleOut('New prices list:', 'NO PRICES RETURNED!', 'red');
       }
-      setLoadingPrices(false);
     } catch (error) {
+      pricesOldPerformanceCounter.stop();
       setCoinPrices(null);
       updateEffectiveRate(0);
+      consoleOut('New prices API error:', error, 'red');
+    } finally {
       setLoadingPrices(false);
     }
+
   },[]);
 
   // Effect to load coin prices

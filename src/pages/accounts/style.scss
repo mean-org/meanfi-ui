@@ -15,6 +15,7 @@
 
         .item-block {
             padding-bottom: 1rem;
+            position: relative;
         }
 
         .bottom-ctas {
@@ -79,7 +80,11 @@
         }
 
         @media (min-width: 768px) {
-            margin: 0.5rem 0 0.5rem -2.6%;
+            position: sticky;
+            z-index: 1;
+            top: 0;
+            background-color: var(--color-section);
+            margin: 0 0 0.5rem -2.6%;
             padding: 3px calc(2.6% + 4px) 3px 2.6%;
         }
     }
@@ -87,6 +92,9 @@
     .asset-category {
         height: auto;
         min-height: 100px;
+        @media (min-width: 768px) {
+            padding-bottom: 0.5rem;
+        }
     }
 
     .networth-list-item {
