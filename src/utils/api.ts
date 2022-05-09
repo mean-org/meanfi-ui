@@ -1,5 +1,5 @@
 import { appConfig } from "..";
-import { meanFiHeaders, MEANFI_PRICE_API_URL } from "../constants";
+import { meanFiHeaders } from "../constants";
 import { Allocation } from "../models/common-types";
 import { getDefaultRpc, RpcConfig } from "../models/connections-hq";
 import { WhitelistClaimType } from "../models/enums";
@@ -7,21 +7,7 @@ import { TokenPrice } from "../models/token";
 
 declare interface RequestInit { }
 
-export const getPrices = async (): Promise<any> => {
-
-  return fetch(MEANFI_PRICE_API_URL, {
-    method: "GET",
-  })
-    .then((response) => response.json())
-    .then((response) => {
-      return response;
-    })
-    .catch((err) => {
-      console.error(err);
-    });
-};
-
-export const getNewPrices = async (): Promise<TokenPrice[]> => {
+export const getPrices = async (): Promise<TokenPrice[]> => {
 
   const options: RequestInit = {
     method: "GET",

@@ -26,7 +26,7 @@ import { getNetworkIdByCluster, useConnection, useConnectionConfig } from "./con
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { useAccountsContext } from "./accounts";
 import { TokenInfo, TokenListProvider } from "@solana/spl-token-registry";
-import { getNewPrices, getPrices } from "../utils/api";
+import { getPrices } from "../utils/api";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
 import { UserTokenAccount } from "../models/transactions";
@@ -860,50 +860,23 @@ const AppStateProvider: React.FC = ({ children }) => {
   // Fetch coin prices
   const getCoinPrices = useCallback(async () => {
 
-    // try {
-    //   pricesOldPerformanceCounter.start();
-    //   const prices = await getPrices();
-    //   pricesOldPerformanceCounter.stop();
-    //   consoleOut(`Fetched old price list in ${pricesOldPerformanceCounter.elapsedTime.toLocaleString()}ms`, '', 'crimson');
-    //   if (!prices || prices.msg) {
-    //     setCoinPrices(null);
-    //     updateEffectiveRate(0);
-    //   } else {
-    //     const wSolPrice = prices[WRAPPED_SOL_MINT_ADDRESS];
-    //     const nativeAddress = NATIVE_SOL_MINT.toBase58();
-    //     if (wSolPrice) {
-    //       prices[nativeAddress] = wSolPrice;
-    //     }
-    //     consoleOut('Old price items:', Object.keys(prices).length, 'blue');
-    //     consoleOut('Old prices list:', prices, 'blue');
-    //     setCoinPrices(prices);
-    //   }
-    //   setLoadingPrices(false);
-    // } catch (error) {
-    //   pricesOldPerformanceCounter.stop();
-    //   setCoinPrices(null);
-    //   updateEffectiveRate(0);
-    //   setLoadingPrices(false);
-    // }
-
     try {
       pricesNewPerformanceCounter.start();
-      const newPrices = await getNewPrices();
+      const newPrices = await getPrices();
       pricesNewPerformanceCounter.stop();
-      consoleOut(`Fetched new price list in ${pricesNewPerformanceCounter.elapsedTime.toLocaleString()}ms`, '', 'crimson');
+      consoleOut(`Fetched price list in ${pricesNewPerformanceCounter.elapsedTime.toLocaleString()}ms`, '', 'crimson');
       if (newPrices && newPrices.length > 0) {
         // const pricesMap = new Map<string, number>();
-        // newPrices.forEach(tp => pricesMap.set(tp.address, tp.price));
+        // newPrices.forEach(tp => pricesMap.set(tp.symbol, tp.price));
         const pricesMap: any = {};
-        newPrices.forEach(tp => pricesMap[tp.address] = tp.price);
-        const wSolPrice = pricesMap[WRAPPED_SOL_MINT_ADDRESS];
-        const nativeAddress = NATIVE_SOL_MINT.toBase58();
-        // Lets add SOL to the list using wSOL price
-        if (wSolPrice) {
-          pricesMap[nativeAddress] = wSolPrice;
+        newPrices.forEach(tp => pricesMap[tp.symbol] = tp.price);
+        const solPrice = pricesMap["SOL"];
+        // Lets add wSOL to the list using SOL price
+        if (solPrice) {
+          pricesMap["WSOL"] = solPrice;
+          pricesMap["wSOL"] = solPrice;
         }
-        consoleOut('New price items:', Object.keys(pricesMap).length, 'blue');
-        consoleOut('New prices list:', pricesMap, 'blue');
+        consoleOut(`Price API returns ${Object.keys(pricesMap).length} items:`, pricesMap, 'blue');
         setCoinPrices(pricesMap);
       } else {
         consoleOut('New prices list:', 'NO PRICES RETURNED!', 'red');
