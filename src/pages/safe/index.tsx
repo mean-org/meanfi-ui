@@ -77,7 +77,7 @@ import { ProgramAccounts } from '../../utils/accounts';
 import { getOperationName } from '../../utils/multisig-helpers';
 import { openNotification } from '../../components/Notifications';
 import { ProposalSummaryModal } from '../../components/ProposalSummaryModal';
-import { SafeInfoView } from './components/SafeInfo';
+import { SafeMeanInfo } from './components/SafeMeanInfo';
 import { SafeDetailsView } from './components/SafeDetails';
 import { MultisigProposalModal } from '../../components/MultisigProposalModal';
 import { ProgramDetailsView } from './components/ProgramDetails';
@@ -4489,7 +4489,7 @@ export const SafeView = () => {
                             multisigVaults={multisigVaults}
                           />
                         ) : (
-                          <SafeInfoView
+                          <SafeMeanInfo
                             isSafeDetails={isSafeDetails}
                             isProgramDetails={isProgramDetails}
                             onDataToSafeView={goToSafeDetailsHandler}

@@ -6,7 +6,7 @@ import { shortenAddress } from "../../../../utils/utils";
 import { ProposalResumeItem } from '../ProposalResumeItem';
 import { SafeInfo } from "../UI/SafeInfo";
 
-export const SafeSerumInfoView = (props: {
+export const SafeMeanInfo = (props: {
   isSafeDetails: boolean;
   isProgramDetails: boolean;
   onDataToSafeView: any;
@@ -17,10 +17,8 @@ export const SafeSerumInfoView = (props: {
   onNewProposalMultisigClick: any;
   multisigVaults: any;
 }) => {
-  const { isSafeDetails, proposals, selectedMultisig, onEditMultisigClick, onNewProposalMultisigClick, multisigVaults } = props;
 
-  const safeSerumNameImg = "https://assets.website-files.com/6163b94b432ce93a0408c6d2/61ff1e9b7e39c27603439ad2_serum%20NOF.png";
-  const safeSerumNameImgAlt = "Serum";
+  const { isSafeDetails, proposals, selectedMultisig, onEditMultisigClick, onNewProposalMultisigClick, multisigVaults } = props;
 
   // Proposals list
   const renderListOfProposals = (
@@ -40,7 +38,6 @@ export const SafeSerumInfoView = (props: {
               >
                 <ProposalResumeItem
                   id={proposal.id}
-                  version={selectedMultisig.version}
                   logo={proposal.logo}
                   title={proposal.title}
                   expires={proposal.expires}
@@ -53,6 +50,20 @@ export const SafeSerumInfoView = (props: {
           )
         })
       )}
+    </>
+  );
+
+  // Settings
+  const renderSettings = (
+    <>
+      <Row gutter={[8, 8]}>
+        <Col xs={12} sm={12} md={12} lg={12} className="text-right pr-1">Minimum cool-off period:</Col>
+        <Col xs={12} sm={12} md={12} lg={12} className="text-left pl-1">24 hours</Col>
+      </Row>
+      <Row gutter={[8, 8]}>
+        <Col xs={12} sm={12} md={12} lg={12} className="text-right pr-1">Single signer balance threshold:</Col>
+        <Col xs={12} sm={12} md={12} lg={12} className="text-left pl-1">$100.00</Col>
+      </Row>
     </>
   );
 
@@ -153,11 +164,15 @@ export const SafeSerumInfoView = (props: {
     {
       name: "Proposals",
       render: renderListOfProposals
-    },
+    }, 
+    {
+      name: "Settings",
+      render: renderSettings
+    }, 
     {
       name: "Activity",
       render: renderActivities
-    },
+    }, 
     {
       name: "Programs",
       render: renderPrograms
@@ -169,12 +184,10 @@ export const SafeSerumInfoView = (props: {
       <SafeInfo
         selectedMultisig={selectedMultisig}
         multisigVaults={multisigVaults}
-        safeNameImg={safeSerumNameImg}
-        safeNameImgAlt={safeSerumNameImgAlt}
         onNewProposalMultisigClick={onNewProposalMultisigClick}
         onEditMultisigClick={onEditMultisigClick}
         tabs={tabs}
-       />
+      />
     </>
   )
 }

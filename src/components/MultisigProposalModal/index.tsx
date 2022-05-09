@@ -728,7 +728,6 @@ export const MultisigProposalModal = (props: {
                     disabled={
                       !publicKey ||
                       !selectedApp ||
-                      !proposalTitleValue ||
                       !isVerifiedRecipient
                     }
                   >
@@ -763,7 +762,6 @@ export const MultisigProposalModal = (props: {
                     disabled={
                       !publicKey ||
                       !selectedApp ||
-                      !proposalTitleValue ||
                       !isVerifiedRecipient
                     }
                   >
