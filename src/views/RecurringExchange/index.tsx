@@ -248,7 +248,7 @@ export const RecurringExchange = (props: {
     }
 
     let maxAmount = 0;
-    let balance = parseFloat(fromBalance);
+    const balance = parseFloat(fromBalance);
 
     if (fromMint === NATIVE_SOL_MINT.toBase58()) {
       maxAmount = balance - feesInfo.network;
@@ -282,7 +282,7 @@ export const RecurringExchange = (props: {
     }
 
     let valid = false;
-    let balance = userBalances[NATIVE_SOL_MINT.toBase58()];
+    const balance = userBalances[NATIVE_SOL_MINT.toBase58()];
 
     if (isWrap() || fromMint !== NATIVE_SOL_MINT.toBase58()) {
       valid = balance >= feesInfo.network;
@@ -475,8 +475,8 @@ export const RecurringExchange = (props: {
       const list: any = { };
 
       //TODO: Remove token filtering when HLA program implementation covers all tokens
-      for (let info of TOKENS) {
-        let mint = Object.assign({}, info);
+      for (const info of TOKENS) {
+        const mint = Object.assign({}, info);
         if (mint.logoURI) {
           list[mint.address] = mint;
         }
@@ -733,13 +733,13 @@ export const RecurringExchange = (props: {
 
       const error = (_error: any, tokens: PublicKey[]) => {
         console.error(_error);
-        for (let t of tokens) {
+        for (const t of tokens) {
           balancesMap[t.toBase58()] = 0;
         }
       };
 
       const success = (response: any) => {
-        for (let acc of response.value) {
+        for (const acc of response.value) {
           const decoded = ACCOUNT_LAYOUT.decode(acc.account.data);
           const address = decoded.mint.toBase58();
 
@@ -1070,7 +1070,7 @@ export const RecurringExchange = (props: {
       
       if (subjectTokenSelection === 'source') {
 
-        let showFromList = !tokenFilter 
+        const showFromList = !tokenFilter 
           ? mintList
           : Object.values(mintList)
             .filter((t: any) => filter(t));
@@ -1081,7 +1081,7 @@ export const RecurringExchange = (props: {
       
       if (subjectTokenSelection === 'destination') {
 
-        let showToList = !tokenFilter 
+        const showToList = !tokenFilter 
           ? mintList 
           : Object.values(mintList)
             .filter((t: any) => filter(t));
@@ -1245,7 +1245,7 @@ export const RecurringExchange = (props: {
       : 0;
   }, [coinPrices])
 
-  const infoRow = (caption: string, value: string, separator: string = '≈', route: boolean = false) => {
+  const infoRow = (caption: string, value: string, separator = '≈', route = false) => {
     return (
       <Row>
         <Col span={11} className="text-right">
@@ -1603,7 +1603,7 @@ export const RecurringExchange = (props: {
 
           {/* Warning */}
           {environment !== 'production' && (
-            <div className="notifications">
+            <div className="mt-3">
               <div data-show="true" className="ant-alert ant-alert-warning" role="alert">
                 <span role="img" aria-label="exclamation-circle" className="anticon anticon-exclamation-circle ant-alert-icon">
                   <WarningFilled />

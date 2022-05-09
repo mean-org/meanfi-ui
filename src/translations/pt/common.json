@@ -11,6 +11,7 @@
 		"money-streams": "Fluxos de dinheiro",
 		"network-unknown": "Desconhecido",
 		"no-money-streams": "Sem fluxos de dinheiro",
+		"no-recent-events": "No recent events",
 		"non-ata-label": "Conta de token não associada",
 		"non-ata-tooltip": "MeanFi opera com conta de token associada, por favor, mescle suas contas {{tokenSymbol}}.",
 		"refresh-tooltip": "Clique para atualizar os ativos",
@@ -383,7 +384,7 @@
 	},
 	"multisig": {
 		"add-participant-cta": "Adicionar participante",
-		"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
+		"back-to-multisig-accounts-cta": "Back to Multisig Safes",
 		"create-multisig": {
 			"fee-info-label": "The fee to create this multisig is",
 			"main-cta": "Crio",
@@ -467,7 +468,7 @@
 		},
 		"multisig-detail-heading": "Detalhes da conta multisig",
 		"multisig-mints": {
-			"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
+			"back-to-multisig-accounts-cta": "Back to Multisig Safes",
 			"change-mint-authority-modal-title": "Set Mint Authority",
 			"create-mint-modal-title": "Create mint",
 			"cta-change-mint-authority": "Transfer Ownership",
@@ -567,7 +568,7 @@
 			"back-to-treasuries": "Back to Streaming Treasuries"
 		},
 		"multisig-assets": {
-			"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
+			"back-to-multisig-accounts-cta": "Back to Multisig Safes",
 			"cta-change-multisig-authority": "Transferir propriedade",
 			"cta-change-multisig-authority-busy": "Mudando o Multisig",
 			"cta-close": "Fechar cofre",
@@ -596,7 +597,7 @@
 		},
 		"pending-transactions": "transações pendentes",
 		"refresh-tooltip": "Clique para atualizar a lista de contas multisig",
-		"screen-title": "Safes & Multisig",
+		"screen-title": "Multisig Safes",
 		"set-program-authority": {
 			"main-cta": "Definir autoridade",
 			"main-cta-busy": "Autoridade de configuração",
@@ -684,7 +685,7 @@
 		"error-loading-treasuryid-message": "Não foi possível encontrar ou abrir a tesouraria com o ID {{treasuryId}}",
 		"error-sending-transaction": "Error submitting the transaction, please try again.",
 		"error-title": "Erro",
-		"friend-referral-completed": "Referência de amigo concluída",
+		"friend-referral-completed": "Bem-vindo ao MeanFi",
 		"invalid-publickey-message": "Chave pública inválida.  Por favor, verifique a entrada",
 		"invalid-streamid-message": "ID de stream inválido",
 		"network-connection-down": "Nenhuma conexão de rede.  O aplicativo está OFFLINE!",
@@ -723,7 +724,7 @@
 	},
 	"referrals": {
 		"address-invalid": "O endereço de referência não é um endereço solana válido",
-		"address-processed": "Por favor, conecte sua carteira para registrar esta referência.",
+		"address-processed": "Conecte sua carteira para começar",
 		"connect-to-refer-friend": "Por favor, conecte sua carteira para indicar um amigo",
 		"modal-title": "Indique um Amigo",
 		"refer-friend-hint": "Indique seus amigos compartilhando o link abaixo...",
@@ -975,7 +976,7 @@
 			"tx-confirm-failure": "A transação não pôde ser confirmada",
 			"tx-confirm-failure-check": "Verifique sua transação no link abaixo",
 			"tx-confirmation-status-confirmed": "Transação confirmada!",
-			"tx-confirmation-status-timeout": "Sua transação não pôde ser confirmada em {{timeout}}",
+			"tx-confirmation-status-timeout": "Sua transação não pôde ser confirmada",
 			"tx-confirmation-status-wait": "Aguardando confirmação da transação...",
 			"tx-generic-operation-success": "Transação concluída com sucesso",
 			"tx-idle": "Parado",
@@ -1028,7 +1029,7 @@
 			"amount-high": "Amount exceeded",
 			"amount-low": "Low balance",
 			"amount-lt-fee": "O valor deve ser maior que a taxa de transação",
-			"amount-sol-high": "Insufficient SOL",
+			"amount-sol-low": "Insufficient SOL",
 			"amount-withdraw-high": "O valor é maior do que os fundos disponíveis",
 			"cannot-use-own-account-as-treasury": "Não é possível usar sua conta como ID de tesouraria",
 			"exchange-unavailable": "Troca indisponível",
@@ -1253,7 +1254,7 @@
 			"services": {
 				"custody": "Custódio",
 				"faucet": "Torneiro",
-				"multisig": "Safes & Multisig",
+				"multisig": "Multisig",
 				"submenu-title": "Serviços",
 				"treasuries": "Streaming Treasuries",
 				"wallet-guide": "Guia da carteira",

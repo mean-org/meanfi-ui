@@ -51,7 +51,7 @@ import {
     FALLBACK_COIN_IMAGE,
     SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
     SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
-    STREAMS_REFRESH_TIMEOUT,
+    FIVE_MINUTES_REFRESH_TIMEOUT,
 } from "../../constants";
 import {
     getSolanaExplorerClusterParam,
@@ -64,7 +64,7 @@ import { TokenInfo } from "@solana/spl-token-registry";
 import { useNativeAccount } from "../../contexts/accounts";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { TransactionStatusContext } from "../../contexts/transaction-status";
+import { TxConfirmationContext } from "../../contexts/transaction-status";
 import { Identicon } from "../../components/Identicon";
 import { MoneyStreaming } from "@mean-dao/money-streaming/lib/money-streaming";
 import BN from "bn.js";
@@ -126,11 +126,11 @@ export const MultisigTreasuryStreams = () => {
     const {
         fetchTxInfoStatus,
         lastSentTxOperationType,
-    } = useContext(TransactionStatusContext);
+    } = useContext(TxConfirmationContext);
 
     const { t } = useTranslation("common");
     const { account } = useNativeAccount();
-    let { id } = useParams(); // Unpacking and retrieve id
+    const { id } = useParams(); // Unpacking and retrieve id
     const [previousBalance, setPreviousBalance] = useState(account?.lamports);
     const [nativeBalance, setNativeBalance] = useState(0);
     const [loadingTreasuryStreams, setLoadingTreasuryStreams] = useState(false);
@@ -405,14 +405,14 @@ export const MultisigTreasuryStreams = () => {
 
         if (location.pathname.startsWith('/treasuries') && location.pathname.endsWith('/streams')) {
             timer = setInterval(() => {
-                consoleOut(`Refreshing treasury streams past ${STREAMS_REFRESH_TIMEOUT / 60 / 1000}min...`);
+                consoleOut(`Refreshing treasury streams past ${FIVE_MINUTES_REFRESH_TIMEOUT / 60 / 1000}min...`);
                 if (treasuryDetails && !loadingTreasuryStreams && signalRefreshTreasuryStreams) {
                     setSignalRefreshTreasuryStreams(false);
                     consoleOut('calling getTreasuryStreams...', '', 'blue');
                     const treasuryPk = new PublicKey(treasuryDetails.id as string);
                     getTreasuryStreams(treasuryPk);
                 }
-            }, STREAMS_REFRESH_TIMEOUT);
+            }, FIVE_MINUTES_REFRESH_TIMEOUT);
         }
 
         return () => clearInterval(timer);
@@ -493,7 +493,7 @@ export const MultisigTreasuryStreams = () => {
 
             setLoadingStreamsSummary(true);
 
-            let resume: StreamsSummary = {
+            const resume: StreamsSummary = {
                 totalNet: 0,
                 incomingAmount: 0,
                 outgoingAmount: 0,
@@ -505,11 +505,11 @@ export const MultisigTreasuryStreams = () => {
                 publicKey
             );
 
-            // consoleOut('=========== Block strat ===========', '', 'orange');
+            // consoleOut('=========== Block start ===========', '', 'orange');
 
             let streamsUsdNetChange = 0;
 
-            for (let stream of updatedStreamsv2) {
+            for (const stream of updatedStreamsv2) {
                 const isIncoming =
                     stream.beneficiary && stream.beneficiary === publicKey.toBase58()
                         ? true
@@ -522,7 +522,7 @@ export const MultisigTreasuryStreams = () => {
                 }
 
                 // Get refreshed data
-                let freshStream = (await msp.refreshStream(stream)) as Stream;
+                const freshStream = (await msp.refreshStream(stream)) as Stream;
                 if (!freshStream || freshStream.status !== STREAM_STATUS.Running) {
                     continue;
                 }
@@ -2485,7 +2485,7 @@ export const MultisigTreasuryStreams = () => {
                                         </Tooltip>
                                     </span>
                                 </div>
-                                <span className="title">{t("streams.screen-title")}</span>
+                                <span className="title">{t("streams.screen-title-safe")}</span>
                                 <Tooltip
                                     placement="bottom"
                                     title={t("streams.refresh-tooltip")}>

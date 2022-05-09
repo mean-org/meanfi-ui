@@ -17,8 +17,18 @@ export const isProd = (): boolean => {
     return environment === 'production';
 }
 
+const isLocalhost = Boolean(
+    window.location.hostname === "localhost" ||
+      // [::1] is the IPv6 localhost address.
+      window.location.hostname === "[::1]" ||
+      // 127.0.0.0/8 are considered localhost for IPv4.
+      window.location.hostname.match(
+        /^127(?:\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$/
+      )
+);
+
 export const isLocal = (): boolean => {
-    return window.location.hostname === 'localhost' ? true : false;
+    return isLocalhost;
 }
 
 export function consoleOut(msg: any, value: any = 'NOT_SPECIFIED', color = 'black') {
@@ -120,7 +130,7 @@ export function getTransactionModalTitle(status: TransactionStatusInfo, isBusy: 
     return title;
 }
 
-export function getTransactionStatusForLogs (status: TransactionStatus): string {
+export function getTransactionStatusForLogs(status: TransactionStatus): string {
     switch (status) {
         case TransactionStatus.WalletNotFound:
             return 'Wallet not found';
@@ -196,7 +206,7 @@ export function getRemainingDays(targetDate?: string): number {
     const date = new Date();
     const time = new Date(date.getTime());
     const toDate = targetDate ? new Date(targetDate) : null;
-    if ( toDate ) {
+    if (toDate) {
         time.setMonth(toDate.getMonth());
     } else {
         time.setMonth(date.getMonth() + 1);
@@ -228,6 +238,17 @@ export function timeConvert(n: number, decimals = 0, abbr = false): string {
         returnString = `${rminutes} minutes.`;
     }
     return returnString;
+}
+
+export function msToTime(ms: number) {
+    const seconds = (ms / 1000).toFixed(1);
+    const minutes = (ms / (1000 * 60)).toFixed(1);
+    const hours = (ms / (1000 * 60 * 60)).toFixed(1);
+    const days = (ms / (1000 * 60 * 60 * 24)).toFixed(1);
+    if (+seconds < 60) return seconds + " Sec";
+    else if (+minutes < 60) return minutes + " Min";
+    else if (+hours < 24) return hours + " Hrs";
+    else return days + " Days"
 }
 
 export const getPaymentRateOptionLabel = (val: PaymentRateType, trans?: any): string => {
@@ -357,7 +378,7 @@ export const getTransactionOperationDescription = (status: TransactionStatus | u
             return trans ? trans('transactions.status.tx-init-failure') : 'Could not init transaction';
         case TransactionStatus.SignTransactionFailure:
             return trans ? trans('transactions.status.tx-rejected') : 'Transaction rejected';
-        case TransactionStatus.SendTransactionFailure :
+        case TransactionStatus.SendTransactionFailure:
             return trans ? trans('transactions.status.tx-send-failure') : 'Failure submitting transaction';
         case TransactionStatus.CreateRecurringBuySchedule:
             return trans ? trans('transactions.status.ddca-create-tx') : 'Create scheduled recurring exchange';
@@ -378,28 +399,28 @@ export const getIntervalFromSeconds = (seconds: number, slash = false, trans?: a
     switch (seconds) {
         case 60:
             return trans
-                    ? slash ? ` / ${trans('general.minute')}` : trans('transactions.rate-and-frequency.payment-rates.per-minute')
-                    : slash ? ' / minute' : 'per minute';
+                ? slash ? ` / ${trans('general.minute')}` : trans('transactions.rate-and-frequency.payment-rates.per-minute')
+                : slash ? ' / minute' : 'per minute';
         case 3600:
             return trans
-                    ? slash ? ` / ${trans('general.hour')}` : trans('transactions.rate-and-frequency.payment-rates.per-hour')
-                    : slash ? ' / hour' : 'per hour';
+                ? slash ? ` / ${trans('general.hour')}` : trans('transactions.rate-and-frequency.payment-rates.per-hour')
+                : slash ? ' / hour' : 'per hour';
         case 86400:
             return trans
-                    ? slash ? ` / ${trans('general.day')}` : trans('transactions.rate-and-frequency.payment-rates.per-day')
-                    : slash ? ' / day' : 'per day';
+                ? slash ? ` / ${trans('general.day')}` : trans('transactions.rate-and-frequency.payment-rates.per-day')
+                : slash ? ' / day' : 'per day';
         case 604800:
             return trans
-                    ? slash ? ` / ${trans('general.week')}` : trans('transactions.rate-and-frequency.payment-rates.per-week')
-                    : slash ? ' / week' : 'per week';
+                ? slash ? ` / ${trans('general.week')}` : trans('transactions.rate-and-frequency.payment-rates.per-week')
+                : slash ? ' / week' : 'per week';
         case 2629750:
             return trans
-                    ? slash ? ` / ${trans('general.month')}` : trans('transactions.rate-and-frequency.payment-rates.per-month')
-                    : slash ? ' / month' : 'per month';
+                ? slash ? ` / ${trans('general.month')}` : trans('transactions.rate-and-frequency.payment-rates.per-month')
+                : slash ? ' / month' : 'per month';
         case 31557000:
             return trans
-                    ? slash ? ` / ${trans('general.year')}` : trans('transactions.rate-and-frequency.payment-rates.per-year')
-                    : slash ? ' / year' : 'per year';
+                ? slash ? ` / ${trans('general.year')}` : trans('transactions.rate-and-frequency.payment-rates.per-year')
+                : slash ? ' / year' : 'per year';
         default:
             return '';
     }
@@ -537,13 +558,23 @@ export function disabledDate(current: any) {
     return current && current < moment().subtract(1, 'days').endOf('day');
 }
 
+export function disabledBeforeTomorrowDate(current: any) {
+    // Can not select days before tomorrow
+    return current && current < moment().add(0, 'days').endOf('day');
+}
+
+export function disabledTime(current: any) {
+    // Can not select time before now
+    return current && current < moment().fromNow(true);
+}
+
 export const isToday = (someDate: string): boolean => {
     if (!someDate) { return false; }
     const inputDate = new Date(someDate);
     const today = new Date();
     return inputDate.getDate() === today.getDate() &&
-      inputDate.getMonth() === today.getMonth() &&
-      inputDate.getFullYear() === today.getFullYear()
+        inputDate.getMonth() === today.getMonth() &&
+        inputDate.getFullYear() === today.getFullYear()
 }
 
 export function displayTimestamp(
@@ -552,23 +583,23 @@ export function displayTimestamp(
 ): string {
     const expireDate = new Date(unixTimestamp);
     const dateString = new Intl.DateTimeFormat("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
+        year: "numeric",
+        month: "short",
+        day: "numeric",
     }).format(expireDate);
     const timeString = new Intl.DateTimeFormat("en-US", {
-      hour: "numeric",
-      minute: "numeric",
-      second: "numeric",
-      hourCycle: "h23",
-      timeZoneName: shortTimeZoneName ? "short" : "long",
+        hour: "numeric",
+        minute: "numeric",
+        second: "numeric",
+        hourCycle: "h23",
+        timeZoneName: shortTimeZoneName ? "short" : "long",
     }).format(expireDate);
 
     return `${dateString} at ${timeString}`;
 }
 
 export function addMinutes(date: Date, minutes: number) {
-    return new Date(date.getTime() + minutes*60000);
+    return new Date(date.getTime() + minutes * 60000);
 }
 
 export function addHours(date: Date, hours: number) {
@@ -577,7 +608,7 @@ export function addHours(date: Date, hours: number) {
 
 export const getTxPercentFeeAmount = (fees: TransactionFees, amount?: any): number => {
     let fee = 0;
-    let inputAmount = amount ? parseFloat(amount) : 0;
+    const inputAmount = amount ? parseFloat(amount) : 0;
     if (fees && fees.mspPercentFee) {
         fee = percentage(fees.mspPercentFee, inputAmount);
     }
@@ -586,42 +617,42 @@ export const getTxPercentFeeAmount = (fees: TransactionFees, amount?: any): numb
 
 export const getTxFeeAmount = (fees: TransactionFees, amount?: any): number => {
     let fee = 0;
-    let inputAmount = amount ? parseFloat(amount) : 0;
+    const inputAmount = amount ? parseFloat(amount) : 0;
     if (fees) {
-      if (fees.mspPercentFee) {
-        fee = percentage(fees.mspPercentFee, inputAmount);
-      } else if (fees.mspFlatFee) {
-        fee = fees.mspFlatFee ? fees.blockchainFee + fees.mspFlatFee : fees.blockchainFee;
-      }
+        if (fees.mspPercentFee) {
+            fee = percentage(fees.mspPercentFee, inputAmount);
+        } else if (fees.mspFlatFee) {
+            fee = fees.mspFlatFee ? fees.blockchainFee + fees.mspFlatFee : fees.blockchainFee;
+        }
     }
     return fee;
 };
 
 export function scrollToBottom(id: string) {
-    var div = document.getElementById(id);
+    const div = document.getElementById(id);
     if (div) {
         div.scrollTop = div.scrollHeight - div.clientHeight;
     }
 }
 
 
-const units: {unit: Intl.RelativeTimeFormatUnit; ms: number}[] = [
-    {unit: "year", ms: 31536000000},
-    {unit: "month", ms: 2628000000},
-    {unit: "day", ms: 86400000},
-    {unit: "hour", ms: 3600000},
-    {unit: "minute", ms: 60000},
-    {unit: "second", ms: 1000},
+const units: { unit: Intl.RelativeTimeFormatUnit; ms: number }[] = [
+    { unit: "year", ms: 31536000000 },
+    { unit: "month", ms: 2628000000 },
+    { unit: "day", ms: 86400000 },
+    { unit: "hour", ms: 3600000 },
+    { unit: "minute", ms: 60000 },
+    { unit: "second", ms: 1000 },
 ];
 
-const rtf = new Intl.RelativeTimeFormat("en", {numeric: "auto"});
+const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
 
 /**
  * Get language-sensitive relative time message from Dates.
  * @param relative  - the relative dateTime, generally is in the past or future
  * @param pivot     - the dateTime of reference, generally is the current time
  */
- export function relativeTimeFromDates(relative: Date | null, pivot: Date = new Date()): string {
+export function relativeTimeFromDates(relative: Date | null, pivot: Date = new Date()): string {
     if (!relative) return "";
     const elapsed = relative.getTime() - pivot.getTime();
     return relativeTimeFromElapsed(elapsed);
@@ -632,10 +663,66 @@ const rtf = new Intl.RelativeTimeFormat("en", {numeric: "auto"});
  * @param elapsed   - the elapsed time in milliseconds
  */
 export function relativeTimeFromElapsed(elapsed: number): string {
-    for (const {unit, ms} of units) {
+    for (const { unit, ms } of units) {
         if (Math.abs(elapsed) >= ms || unit === "second") {
             return rtf.format(Math.round(elapsed / ms), unit);
         }
     }
     return "";
+}
+
+export const getRelativeDate = (timestamp: number) => {
+    const reference = new Date(timestamp);
+    return relativeTimeFromDates(reference);
+}
+
+
+function numberFormat(value: any, dec = 0, decimalsSeparator = '.', thowsendsSeparator = ',', hideDecimalsIfZero = true) {
+    if (!value) {
+        return '0';
+    }
+    value = parseFloat(value).toFixed(~~dec);
+    const parts = value.split('.');
+    const fnums = parts[0];
+    let decimals = '';
+    if (parts[1] && (+parts[1] !== 0 || !hideDecimalsIfZero)) {
+        decimals = decimalsSeparator + parts[1];
+    }
+    return fnums.replace(/(\d)(?=(?:\d{3})+$)/g, '$1' + thowsendsSeparator) + decimals;
+}
+
+export function kFormatter(num: number) {
+    let tempNum: number;
+    if (num > 999 && num < 1000000) {
+        tempNum = num / 1000;
+        return numberFormat(tempNum, 1) + 'k';
+    }
+
+    if (num >= 1000000) {
+        tempNum = num / 1000000;
+        return numberFormat(tempNum, 1) + 'M';
+    }
+    return numberFormat(num);
+}
+
+export function intToString(value: number, decimals: number) {
+    const num = value.toString().replace(/[^0-9.]/g, '');
+    if (value < 1000) {
+        return num;
+    }
+    const si = [
+      {v: 1E3, s: "k"},
+      {v: 1E6, s: "M"},
+      {v: 1E9, s: "B"},
+      {v: 1E12, s: "T"},
+      {v: 1E15, s: "P"},
+      {v: 1E18, s: "E"}
+      ];
+    let index;
+    for (index = si.length - 1; index > 0; index--) {
+        if (value >= si[index].v) {
+            break;
+        }
+    }
+    return (value / si[index].v).toFixed(decimals).replace(/\.0+$|(\.[0-9]*[1-9])0+$/, "$1") + si[index].s;
 }

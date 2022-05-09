@@ -65,8 +65,9 @@ async function send(transport: Transport, instruction: number, p1: number, data:
         while (data.length - offset > MAX_PAYLOAD) {
             const buffer = data.slice(offset, offset + MAX_PAYLOAD);
             const response = await transport.send(LEDGER_CLA, instruction, p1, p2 | P2_MORE, buffer);
-            // @ts-ignore
-            if (response.length !== 2) throw new TransportStatusError(StatusCodes.INCORRECT_DATA);
+            if (response.length !== 2) {
+                throw TransportStatusError(StatusCodes.INCORRECT_DATA);
+            }
 
             p2 |= P2_EXTEND;
             offset += MAX_PAYLOAD;

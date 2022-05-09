@@ -3,7 +3,6 @@ import { Modal } from "antd";
 import { useTranslation } from "react-i18next";
 import "./style.scss";
 import { IconCopy, IconFacebook, IconLinkedin, IconTelegram, IconTwitter, IconWhatsapp } from '../../Icons';
-import { notify } from '../../utils/notifications';
 import { copyText } from '../../utils/ui';
 import {
   FacebookShareButton,
@@ -14,6 +13,7 @@ import {
 } from "react-share";
 import { useWallet } from '../../contexts/wallet';
 import { appConfig } from '../..';
+import { openNotification } from '../Notifications';
 
 export const ReferFriendModal = (props: {
   handleClose: any;
@@ -35,12 +35,12 @@ export const ReferFriendModal = (props: {
 
   const onCopyReferralLink = () => {
     if (referralLink && copyText(referralLink)) {
-      notify({
+      openNotification({
         description: t('notifications.referral-link-copied-message'),
         type: "info"
       });
     } else {
-      notify({
+      openNotification({
         description: t('notifications.referral-link-not-copied-message'),
         type: "error"
       });

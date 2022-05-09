@@ -4,7 +4,6 @@ import {
   ReloadOutlined,
 } from '@ant-design/icons';
 import {
-  Account,
   ConfirmOptions,
   Connection,
   Keypair,
@@ -12,7 +11,6 @@ import {
   MemcmpFilter,
   PublicKey,
   SystemProgram,
-  SYSVAR_RENT_PUBKEY,
   Transaction
 } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
@@ -29,9 +27,8 @@ import {
   shortenAddress
 } from '../../utils/utils';
 
-import { Button, Col, Dropdown, Empty, Menu, Row, Space, Spin, Tooltip } from 'antd';
+import { Button, Dropdown, Empty, Menu, Space, Spin, Tooltip } from 'antd';
 import {
-  copyText,
   consoleOut,
   getTransactionStatusForLogs,
   isLocal,
@@ -45,9 +42,8 @@ import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION, VERBOSE_DATE_TIME_FORMAT } fro
 import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
 import { OperationType, TransactionStatus } from '../../models/enums';
-import { TransactionStatusContext } from '../../contexts/transaction-status';
-import { IconCaretDown, IconClock, IconDocument, IconSafe, IconShieldOutline, IconUserGroup, IconUsers, IconWallet } from '../../Icons';
-import dateFormat from 'dateformat';
+import { TxConfirmationContext } from '../../contexts/transaction-status';
+import { IconCaretDown, IconSafe, IconUserGroup, IconUsers } from '../../Icons';
 import { useNativeAccount } from '../../contexts/accounts';
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
 import { AccountLayout, TOKEN_PROGRAM_ID } from '@solana/spl-token';
@@ -72,9 +68,8 @@ import { MultisigCreateModal } from '../../components/MultisigCreateModal';
 import './style.scss';
 
 // MULTISIG
-import { BN, Program, Provider } from "@project-serum/anchor";
+import { AnchorProvider, BN, Program } from "@project-serum/anchor";
 import MultisigIdl from "../../models/mean-multisig-idl";
-import { MultisigOwnersView } from '../../components/MultisigOwnersView';
 import { MultisigEditModal } from '../../components/MultisigEditModal';
 import { MSP, Treasury } from '@mean-dao/msp';
 import { customLogger } from '../..';
@@ -114,8 +109,8 @@ export const SafeView = () => {
     lastSentTxSignature,
     lastSentTxOperationType,
     startFetchTxSignatureInfo,
-    clearTransactionStatusContext
-  } = useContext(TransactionStatusContext);
+    clearTxConfirmationContext
+  } = useContext(TxConfirmationContext);
 
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
@@ -200,7 +195,7 @@ export const SafeView = () => {
       commitment: "confirmed",
     };
 
-    const provider = new Provider(connection, wallet as any, opts);
+    const provider = new AnchorProvider(connection, wallet as any, opts);
 
     return new Program(
       MultisigIdl,
@@ -220,7 +215,7 @@ export const SafeView = () => {
       commitment: "confirmed",
     };
 
-    const provider = new Provider(connection, wallet as any, opts);
+    const provider = new AnchorProvider(connection, wallet as any, opts);
 
     return new Program(
       SerumIDL,
@@ -270,7 +265,7 @@ export const SafeView = () => {
     if (!accountInfos || !accountInfos.length) { return []; }
 
     const results = accountInfos.map((t: any) => {
-      let tokenAccount = AccountLayout.decode(t.account.data);
+      const tokenAccount = AccountLayout.decode(t.account.data);
       tokenAccount.address = t.pubkey;
       return tokenAccount;
     });
@@ -355,7 +350,7 @@ export const SafeView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setIsBusy(true);
@@ -375,7 +370,7 @@ export const SafeView = () => {
         }
       });
 
-      let tx = multisigClient.transaction.createMultisig(
+      const tx = multisigClient.transaction.createMultisig(
         owners as any,
         new BN(data.threshold),
         nonce,
@@ -694,7 +689,7 @@ export const SafeView = () => {
     multisigClient.transaction,
     // multisigSerumClient.transaction,
     transactionStatus.currentOperation,
-    clearTransactionStatusContext,
+    clearTxConfirmationContext,
     startFetchTxSignatureInfo,
     resetTransactionStatus,
     setTransactionStatus,
@@ -767,7 +762,7 @@ export const SafeView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setIsBusy(true);
@@ -827,7 +822,7 @@ export const SafeView = () => {
 
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
       
-      let tx = multisigClient.transaction.createTransaction(
+      const tx = multisigClient.transaction.createTransaction(
         multisigClient.programId, 
         ixAccounts as any,
         ixData as any,
@@ -1104,7 +1099,7 @@ export const SafeView = () => {
     transactionStatus.currentOperation,
     multisigClient.account.transaction,
     multisigClient.coder.instruction,
-    clearTransactionStatusContext,
+    clearTxConfirmationContext,
     startFetchTxSignatureInfo,
     resetTransactionStatus,
     setTransactionStatus,
@@ -1153,7 +1148,7 @@ export const SafeView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setIsBusy(true);
@@ -1170,7 +1165,7 @@ export const SafeView = () => {
         multisigClient.programId
       ); 
   
-      let tx = multisigClient.transaction.approve({
+      const tx = multisigClient.transaction.approve({
           accounts: {
             multisig: selectedMultisig.id,
             transaction: data.transaction.id,
@@ -1421,7 +1416,7 @@ export const SafeView = () => {
     nativeBalance, 
     transactionStatus.currentOperation, 
     transactionCancelled,
-    clearTransactionStatusContext, 
+    clearTxConfirmationContext, 
     resetTransactionStatus,
     setTransactionStatus,
     startFetchTxSignatureInfo
@@ -1435,7 +1430,7 @@ export const SafeView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setIsBusy(true);
@@ -1696,7 +1691,7 @@ export const SafeView = () => {
         return false;
       }
 
-      let result = await connection
+      const result = await connection
         .sendEncodedTransaction(encodedTx)
         .then(sig => {
           consoleOut('sendEncodedTransaction returned a signature:', sig);
@@ -1718,7 +1713,7 @@ export const SafeView = () => {
             currentOperation: TransactionStatus.SendTransactionFailure
           } as TransactionStatusInfo;
           if (error.toString().indexOf('0x1794') !== -1) {
-            let treasury = data.transaction.operation === OperationType.StreamClose
+            const treasury = data.transaction.operation === OperationType.StreamClose
               ? data.transaction.accounts[5].pubkey.toBase58()
               : data.transaction.accounts[3].pubkey.toBase58();
             txStatus.customError = {
@@ -1771,7 +1766,7 @@ export const SafeView = () => {
     multisigClient.transaction,
     multisigClient.provider.connection,
     transactionStatus.currentOperation,
-    clearTransactionStatusContext,
+    clearTxConfirmationContext,
     startFetchTxSignatureInfo,
     resetTransactionStatus,
     setTransactionStatus,
@@ -1786,7 +1781,7 @@ export const SafeView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setIsBusy(true);
@@ -1814,7 +1809,7 @@ export const SafeView = () => {
         multisigClient.programId
       );
       
-      let tx = multisigClient.transaction.cancelTransaction(
+      const tx = multisigClient.transaction.cancelTransaction(
         {
           accounts: {
             multisig: selectedMultisig.id,
@@ -2003,7 +1998,7 @@ export const SafeView = () => {
         return false;
       }
 
-      let result = await connection
+      const result = await connection
         .sendEncodedTransaction(encodedTx)
         .then(sig => {
           consoleOut('sendEncodedTransaction returned a signature:', sig);
@@ -2026,7 +2021,7 @@ export const SafeView = () => {
             currentOperation: TransactionStatus.SendTransactionFailure
           } as TransactionStatusInfo;
           if (error.toString().indexOf('0x1794') !== -1) {
-            let treasury = data.transaction.operation === OperationType.StreamClose
+            const treasury = data.transaction.operation === OperationType.StreamClose
               ? data.transaction.accounts[5].pubkey.toBase58()
               : data.transaction.accounts[3].pubkey.toBase58();
             txStatus.customError = {
@@ -2079,7 +2074,7 @@ export const SafeView = () => {
     multisigClient.transaction,
     multisigClient.programId,
     transactionStatus.currentOperation,
-    clearTransactionStatusContext,
+    clearTxConfirmationContext,
     startFetchTxSignatureInfo,
     resetTransactionStatus,
     setTransactionStatus,
@@ -2242,7 +2237,7 @@ export const SafeView = () => {
 
     if (!highlightedMultisigTx) { return false; }
 
-    let result = (
+    const result = (
       highlightedMultisigTx.status === MultisigTransactionStatus.Pending &&
       !highlightedMultisigTx.didSigned
     );
@@ -2282,7 +2277,7 @@ export const SafeView = () => {
 
     if (!highlightedMultisigTx || !highlightedMultisigTx.proposer || !publicKey) { return false; }
 
-    let result = (
+    const result = (
       highlightedMultisigTx.proposer.toBase58() === publicKey.toBase58() &&
       highlightedMultisigTx.status === MultisigTransactionStatus.Voided
     );
@@ -2296,15 +2291,15 @@ export const SafeView = () => {
 
   const readAllMultisigAccounts = useCallback(async (wallet: PublicKey) => {
 
-    let accounts: any[] = [];
-    let multisigV2Accs = await multisigClient.account.multisigV2.all();
+    const accounts: any[] = [];
+    const multisigV2Accs = await multisigClient.account.multisigV2.all();
     let filteredAccs = multisigV2Accs.filter((a: any) => {
       if (a.account.owners.filter((o: any) => o.address.equals(wallet)).length) { return true; }
       return false;
     });
 
     accounts.push(...filteredAccs);
-    let multisigAccs = await multisigClient.account.multisig.all();
+    const multisigAccs = await multisigClient.account.multisig.all();
     filteredAccs = multisigAccs.filter((a: any) => {
       if (a.account.owners.filter((o: PublicKey) => o.equals(wallet)).length) { return true; }
       return false;
@@ -2312,10 +2307,9 @@ export const SafeView = () => {
 
     accounts.push(...filteredAccs);
 
-    let filteredSerumAccs;
     // Display Serum accounts
-    let multisigSerumAccs = await multisigSerumClient.account.multisig.all();
-    filteredSerumAccs = multisigSerumAccs.filter((a: any) => {
+    const multisigSerumAccs = await multisigSerumClient.account.multisig.all();
+    const filteredSerumAccs = multisigSerumAccs.filter((a: any) => {
       if (a.account.owners.filter((o: PublicKey) => o.equals(wallet)).length) {
         return true;
       }
@@ -2339,14 +2333,14 @@ export const SafeView = () => {
       .findProgramAddress([info.publicKey.toBuffer()], MEAN_MULTISIG)
       .then(k => {
 
-        let address = k[0];
-        let owners: MultisigParticipant[] = [];
-        let labelBuffer = Buffer
+        const address = k[0];
+        const owners: MultisigParticipant[] = [];
+        const labelBuffer = Buffer
           .alloc(info.account.label.length, info.account.label)
           .filter(function (elem, index) { return elem !== 0; }
         );
 
-        let filteredOwners = info.account.owners.filter((o: any) => !o.address.equals(PublicKey.default));
+        const filteredOwners = info.account.owners.filter((o: any) => !o.address.equals(PublicKey.default));
 
         for (let i = 0; i < filteredOwners.length; i ++) {
           owners.push({
@@ -2388,9 +2382,9 @@ export const SafeView = () => {
       .findProgramAddress([info.publicKey.toBuffer()], MEAN_MULTISIG)
       .then(k => {
 
-        let address = k[0];
-        let owners: MultisigParticipant[] = [];
-        let labelBuffer = Buffer
+        const address = k[0];
+        const owners: MultisigParticipant[] = [];
+        const labelBuffer = Buffer
           .alloc(info.account.label.length, info.account.label)
           .filter(function (elem, index) { return elem !== 0; }
         );
@@ -2435,10 +2429,10 @@ export const SafeView = () => {
       .findProgramAddress([info.publicKey.toBuffer()], new PublicKey("msigmtwzgXJHj2ext4XJjCDmpbcMuufFb5cHuwg6Xdt"))
       .then(k => {
 
-        let address = k[0];
-        let owners: MultisigParticipant[] = [];
+        const address = k[0];
+        const owners: MultisigParticipant[] = [];
 
-        let filteredOwners = info.account.owners.filter((o: any) => !o.equals(PublicKey.default));
+        const filteredOwners = info.account.owners.filter((o: any) => !o.equals(PublicKey.default));
 
         for (let i = 0; i < filteredOwners.length; i ++) {
           owners.push({
@@ -2507,7 +2501,7 @@ export const SafeView = () => {
       });
 
     // 2. For each executable data account found in the previous step, fetch the corresponding program
-    let programs: ProgramAccounts[] = [];
+    const programs: ProgramAccounts[] = [];
     for (let i = 0; i < executableDataAccounts.length; i++) {
       const executableData = executableDataAccounts[i].pubkey;
 
@@ -2565,8 +2559,8 @@ export const SafeView = () => {
       consoleOut('=======================================', '', 'green');
       readAllMultisigAccounts(publicKey)
         .then((allInfo: any) => {
-          let multisigInfoArray: (MultisigV2 | Multisig)[] = [];
-          for (let info of allInfo) {
+          const multisigInfoArray: (MultisigV2 | Multisig)[] = [];
+          for (const info of allInfo) {
             let parsePromise: any;
             if (!info.account.version) {
               parsePromise = parseSerumMultisigAccount;
@@ -2651,13 +2645,13 @@ export const SafeView = () => {
         .on("change", (account: any) => {
 
           let address: any;
-          let labelBuffer = Buffer
+          const labelBuffer = Buffer
             .alloc(account.label.length, account.label)
             .filter(function (elem, index) { return elem !== 0; }
           );
 
-          let owners: MultisigParticipant[] = [];
-          let filteredOwners = account.owners.filter((o: any) => !o.address.equals(PublicKey.default));
+          const owners: MultisigParticipant[] = [];
+          const filteredOwners = account.owners.filter((o: any) => !o.address.equals(PublicKey.default));
 
           for (let i = 0; i < filteredOwners.length; i ++) {
             owners.push({
@@ -2678,7 +2672,7 @@ export const SafeView = () => {
             .findProgramAddress([selectedMultisig.id.toBuffer()], MEAN_MULTISIG)
             .then(k => {
               address = k[0];
-              let multisigInfo = {
+              const multisigInfo = {
                 // id: account.publicKey,
                 id: selectedMultisig.id,
                 version: account.version,
@@ -2880,12 +2874,12 @@ export const SafeView = () => {
           setSelectedMultisig(undefined);   // Deselects the current multisig if creating a new one
         }
         setNeedRefreshTxs(true);          // Trigger reload multisigs
-        clearTransactionStatusContext();
+        clearTxConfirmationContext();
         setLoadingMultisigAccounts(true);
         sethHighlightedMultisigTx(undefined);
         setMultisigTransactionSummary(undefined);
       } else if (fetchTxInfoStatus === "error") {
-        clearTransactionStatusContext();
+        clearTxConfirmationContext();
         openNotification({
           type: "info",
           duration: 5,
@@ -2916,7 +2910,7 @@ export const SafeView = () => {
     lastSentTxOperationType, 
     multisigClient, 
     selectedMultisig,
-    clearTransactionStatusContext
+    clearTxConfirmationContext
   ]);
 
   // Get Multisig Vaults
@@ -3179,7 +3173,7 @@ export const SafeView = () => {
       return [];
     }
   
-    let addressess: MultisigParticipant[] = [];
+    const addressess: MultisigParticipant[] = [];
     const participants = selectedMultisig.owners as MultisigParticipant[];
     participants.forEach((participant: MultisigParticipant, index: number) => {
       if (mtx.signers[index]) {

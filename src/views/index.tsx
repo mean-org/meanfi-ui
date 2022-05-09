@@ -5,7 +5,6 @@ export { IdoLpWithdraw } from "./IdoLpWithdraw";
 export { IdoRedeem } from "./IdoRedeem";
 export { JupiterExchange } from "./JupiterExchange";
 export { OneTimePayment } from "./OneTimePayment";
-export { PayrollPayment } from "./PayrollPayment";
 export { RecurringExchange } from "./RecurringExchange";
 export { RepeatingPayment } from "./RepeatingPayment";
 export { SolaniumRedeem } from "./SolaniumRedeem";

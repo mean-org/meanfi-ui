@@ -3,7 +3,6 @@ import { data } from "./data";
 import { IconInfoCircle } from '../../Icons';
 import { Button, Card, Col, Divider, Row, Tooltip } from 'antd';
 import { CopyOutlined } from '@ant-design/icons';
-import { notify } from '../../utils/notifications';
 import { copyText } from '../../utils/ui';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
@@ -13,6 +12,7 @@ import { AppStateContext } from "../../contexts/appstate";
 import { useCallback, useContext } from "react";
 import { TokenInfo } from '@solana/spl-token-registry';
 import { formatThousands } from "../../utils/utils";
+import { openNotification } from "../../components/Notifications";
 
 export const TokenStats = ({ 
   meanDecimals, 
@@ -84,24 +84,24 @@ export const FirstCardsLayout = ({
   const onCopyText = (event: any) => { 
     if (event.currentTarget.name === "Address") {
       if (data.token_address && copyText(data.token_address)) {
-        notify({
+        openNotification({
           description: t('notifications.account-address-copied-message'),
           type: "info"
         });
       } else {
-        notify({
+        openNotification({
           description: t('notifications.account-address-not-copied-message'),
           type: "error"
         });
       }
     } else if (event.currentTarget.name === "Authority") {
       if (data.authority && copyText(data.authority)) {
-        notify({
+        openNotification({
           description: t('notifications.account-address-copied-message'),
           type: "info"
         });
       } else {
-        notify({
+        openNotification({
           description: t('notifications.account-address-not-copied-message'),
           type: "error"
         });

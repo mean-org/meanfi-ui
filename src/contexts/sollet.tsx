@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { useAsync, UseAsyncReturn } from "react-async-hook";
 import { Connection, PublicKey } from "@solana/web3.js";
 
@@ -14,7 +15,7 @@ type SolletInfo = {
 };
 
 async function handleSwapApiResponse(resp: Response) {
-  let json = await resp.json();
+  const json = await resp.json();
   
   if (!json.success) {
     throw new SwapApiError(json.error, resp.status);
@@ -86,12 +87,12 @@ export async function requestWormholeSwapMarketIfNeeded(
 export async function swapApiRequest(
   method: string,
   path: string,
-  body?: Object
+  body?: any
   
 ) {
 
-  let headers: any = {};
-  let params: any = { headers, method };
+  const headers: any = {};
+  const params: any = { headers, method };
   
   if (method === "GET") {
     params.cache = "no-cache";
@@ -100,7 +101,7 @@ export async function swapApiRequest(
     params.body = JSON.stringify(body);
   }
   
-  let resp = await fetch(`https://swap.sollet.io/api/${path}`, params);
+  const resp = await fetch(`https://swap.sollet.io/api/${path}`, params);
   
   return await handleSwapApiResponse(resp);
 }

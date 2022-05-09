@@ -10,7 +10,7 @@ import { isError } from '../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { getTokenAmountAndSymbolByTokenAddress, isValidNumber } from '../../utils/utils';
 import { MultisigParticipants } from '../MultisigParticipants';
-import { MultisigParticipant, MultisigTransactionFees, MultisigV2 } from '../../models/multisig';
+import { MultisigParticipant, MultisigTransactionFees, MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { MAX_MULTISIG_PARTICIPANTS } from '../../constants';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -24,7 +24,7 @@ export const MultisigEditModal = (props: {
   transactionFees: MultisigTransactionFees;
   multisigName?: string;
   multisigThreshold?: number;
-  multisigAccounts: MultisigV2[];
+  multisigAccounts: MultisigInfo[];
   multisigParticipants?: MultisigParticipant[];
   multisigPendingTxsAmount: number;
 }) => {

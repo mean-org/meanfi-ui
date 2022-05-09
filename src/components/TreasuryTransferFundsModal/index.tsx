@@ -12,7 +12,6 @@ import { StreamInfo, TransactionFees, TreasuryInfo } from '@mean-dao/money-strea
 import { cutNumber, formatAmount, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, isValidNumber, makeDecimal, makeInteger, shortenAddress } from '../../utils/utils';
 import { useWallet } from '../../contexts/wallet';
 import { PublicKey } from '@solana/web3.js';
-import { MultisigV2 } from '../../models/multisig';
 import { FALLBACK_COIN_IMAGE } from '../../constants';
 import { Identicon } from '../Identicon';
 import { Stream, Treasury, TreasuryType } from '@mean-dao/msp';
@@ -20,6 +19,8 @@ import Checkbox from 'antd/lib/checkbox/Checkbox';
 import { TokenDisplay } from '../TokenDisplay';
 import { BN } from 'bn.js';
 import { StreamTreasuryType } from '../../models/treasuries';
+
+import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -32,7 +33,7 @@ export const TreasuryTransferFundsModal = (props: {
   minRequiredBalance: number;
   transactionFees: TransactionFees;
   treasuryDetails: Treasury | TreasuryInfo | undefined;
-  multisigAccounts: MultisigV2[] | undefined;
+  multisigAccounts: MultisigInfo[] | undefined;
 }) => {
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
@@ -60,13 +61,13 @@ export const TreasuryTransferFundsModal = (props: {
   const [multisigAddresses, setMultisigAddresses] = useState<string[]>([]);
 
   const isMultisigTreasury = useCallback((treasury?: any) => {
-    let treasuryInfo: any = treasury ?? props.treasuryDetails;
+    const treasuryInfo: any = treasury ?? props.treasuryDetails;
 
     if (!treasuryInfo || treasuryInfo.version < 2 || !treasuryInfo.treasurer || !publicKey) {
       return false;
     }
 
-    let treasurer = new PublicKey(treasuryInfo.treasurer as string);
+    const treasurer = new PublicKey(treasuryInfo.treasurer as string);
 
     if (!treasurer.equals(publicKey) && props.multisigAccounts && props.multisigAccounts.findIndex(m => m.authority.equals(treasurer)) !== -1) {
       return true;

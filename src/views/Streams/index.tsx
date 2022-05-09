@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Divider, Row, Col, Button, Modal, Spin, Dropdown, Menu, Tooltip, Empty } from "antd";
 import {
   ArrowDownOutlined,
@@ -51,6 +51,7 @@ import {
   getTransactionStatusForLogs,
   isDev,
   isLocal,
+  isProd,
   isValidAddress,
 } from "../../utils/ui";
 import { StreamOpenModal } from '../../components/StreamOpenModal';
@@ -58,6 +59,7 @@ import { StreamWithdrawModal } from '../../components/StreamWithdrawModal';
 import {
   FALLBACK_COIN_IMAGE,
   NO_FEES,
+  PERFORMANCE_THRESHOLD,
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
   SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
 } from "../../constants";
@@ -71,7 +73,7 @@ import { useNativeAccount } from "../../contexts/accounts";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from "../../utils/ids";
-import { confirmationEvents, TransactionStatusContext, TransactionStatusInfo } from "../../contexts/transaction-status";
+import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from "../../contexts/transaction-status";
 import { Identicon } from "../../components/Identicon";
 import BN from "bn.js";
 import { InfoIcon } from "../../components/InfoIcon";
@@ -103,16 +105,19 @@ import {
   SegmentStreamTransferOwnershipData,
   SegmentStreamWithdrawData
 } from "../../utils/segment-service";
-import { Program, Provider } from "@project-serum/anchor";
+import { AnchorProvider, Program } from "@project-serum/anchor";
 import MultisigIdl from "../../models/mean-multisig-idl";
-import { MultisigV2 } from "../../models/multisig";
 import { StreamPauseModal } from "../../components/StreamPauseModal";
 import { StreamResumeModal } from "../../components/StreamResumeModal";
 import { StreamLockedModal } from "../../components/StreamLockedModal";
 import { StreamEditModal } from "../../components/StreamEditModal";
 import { openNotification } from "../../components/Notifications";
+import { CountdownCircleTimer } from "react-countdown-circle-timer";
+import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
+import { SendAssetModal } from "../../components/SendAssetModal";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
+let ds: string[] = [];
 
 export const Streams = () => {
   const location = useLocation();
@@ -122,6 +127,7 @@ export const Streams = () => {
   const { connected, wallet, publicKey } = useWallet();
   const {
     theme,
+    tpsAvg,
     streamList,
     coinPrices,
     streamListv1,
@@ -133,7 +139,10 @@ export const Streams = () => {
     selectedToken,
     loadingStreams,
     streamsSummary,
+    deletedStreams,
     streamActivity,
+    accountAddress,
+    refreshInterval,
     detailsPanelOpen,
     transactionStatus,
     customStreamDocked,
@@ -144,28 +153,29 @@ export const Streams = () => {
     highLightableStreamId,
     streamV2ProgramAddress,
     previousWalletConnectState,
-    setStreamList,
-    openStreamById,
-    setStreamDetail,
-    setSelectedToken,
-    setEffectiveRate,
+    setLoadingStreamsSummary,
+    setHighLightableStreamId,
+    setLastStreamsSummary,
+    setCustomStreamDocked,
+    setTransactionStatus,
+    setShouldLoadTokens,
+    refreshTokenBalance,
+    setDtailsPanelOpen,
     setSelectedStream,
     refreshStreamList,
     getStreamActivity,
     setStreamsSummary,
-    setDtailsPanelOpen,
-    setShouldLoadTokens,
-    refreshTokenBalance,
-    setTransactionStatus,
-    setCustomStreamDocked,
-    setLastStreamsSummary,
-    setLoadingStreamsSummary,
-    setHighLightableStreamId,
+    setDeletedStream,
+    setSelectedToken,
+    setEffectiveRate,
+    setStreamDetail,
+    openStreamById,
+    setStreamList,
   } = useContext(AppStateContext);
   const {
     confirmationHistory,
     enqueueTransactionConfirmation
-  } = useContext(TransactionStatusContext);
+  } = useContext(TxConfirmationContext);
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
@@ -177,8 +187,9 @@ export const Streams = () => {
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
   });
   const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
-  const [multisigAccounts, setMultisigAccounts] = useState<MultisigV2[] | undefined>(undefined);
+  const [multisigAccounts, setMultisigAccounts] = useState<MultisigInfo[] | undefined>(undefined);
   const [canSubscribe, setCanSubscribe] = useState(true);
+  const [key, setKey] = useState(0);
 
   // Treasury related
   const [loadingTreasuryDetails, setLoadingTreasuryDetails] = useState(true);
@@ -199,19 +210,27 @@ export const Streams = () => {
   ]);
 
   const msp = useMemo(() => {
-    if (publicKey) {
-      console.log('New MSP from streams');
-      return new MSP(
-        endpoint,
-        streamV2ProgramAddress,
-        "confirmed"
-      );
-    }
+    console.log('New MSP from streams');
+    return new MSP(
+      endpoint,
+      streamV2ProgramAddress,
+      "confirmed"
+    );
   }, [
-    publicKey,
     endpoint,
     streamV2ProgramAddress
   ]);
+
+  const isDowngradedPerformance = useMemo(() => {
+    return isProd() && (!tpsAvg || tpsAvg < PERFORMANCE_THRESHOLD)
+      ? true
+      : false;
+  }, [tpsAvg]);
+
+  const streamDetailRef = useRef(streamDetail);
+  useEffect(() => {
+    streamDetailRef.current = streamDetail;
+  }, [streamDetail]);
 
   /////////////////
   //  CALLBACKS  //
@@ -336,6 +355,13 @@ export const Streams = () => {
     return false;
   }, [publicKey]);
 
+  const isDeletedStream = useCallback((id: string) => {
+    if (!deletedStreams) {
+      return false;
+    }
+    return deletedStreams.some(i => i === id);
+  }, [deletedStreams]);
+
   const isTreasurer = (): boolean => {
     if (streamDetail && publicKey) {
       const v1 = streamDetail as StreamInfo;
@@ -388,7 +414,7 @@ export const Streams = () => {
   }, []);
 
   // Setup event handler for Tx confirmed
-  const onTxConfirmed = useCallback((item: TransactionStatusInfo) => {
+  const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
 
     const softReloadStreams = () => {
       const streamsRefreshCta = document.getElementById("streams-refresh-noreset-cta");
@@ -404,16 +430,28 @@ export const Streams = () => {
       }
     };
 
+    const refreshStream = (id: string) => {
+      const isCurrentlySelected = streamDetailRef.current && streamDetailRef.current.id as string === id ? true : false;
+      const streamItem = document.getElementById(id);
+      if (streamItem && isCurrentlySelected) {
+        streamItem.scrollIntoView({ behavior: 'smooth' });
+        streamItem.click();
+      }
+    };
+
     consoleOut("onTxConfirmed event handled:", item, 'crimson');
     recordTxConfirmation(item.signature, item.operationType, true);
     switch (item.operationType) {
       case OperationType.StreamWithdraw:
-        softReloadStreams();
+        refreshStream(item.extras);
         break;
       case OperationType.StreamClose:
+        setDeletedStream(item.extras);
         break;
       case OperationType.StreamTransferBeneficiary:
+        setDeletedStream(item.extras);
         break;
+      case OperationType.Transfer:
       case OperationType.StreamCreate:
         hardReloadStreams();
         break;
@@ -421,7 +459,7 @@ export const Streams = () => {
         if (customStreamDocked) {
           openStreamById(item.extras, false);
         } else {
-          softReloadStreams();
+          refreshStream(item.extras);
         }
         break;
       default:
@@ -431,11 +469,12 @@ export const Streams = () => {
   }, [
     customStreamDocked,
     recordTxConfirmation,
+    setDeletedStream,
     openStreamById,
   ]);
 
   // Setup event handler for Tx confirmation error
-  const onTxTimedout = useCallback((item: TransactionStatusInfo) => {
+  const onTxTimedout = useCallback((item: TxConfirmationInfo) => {
     consoleOut("onTxTimedout event executed:", item, 'crimson');
     // If we have the item, record failure and remove it from the list
     if (item) {
@@ -465,6 +504,12 @@ export const Streams = () => {
   /////////////////
   //   EFFECTS   //
   /////////////////
+
+  // Log the list of deleted streams
+  useEffect(() => {
+    ds = deletedStreams;
+    consoleOut('ds:', ds, 'blue');
+  }, [deletedStreams]);
 
   // Keep account balance updated
   useEffect(() => {
@@ -504,9 +549,9 @@ export const Streams = () => {
           freshStream = await msp.refreshStream(stream);
           if (freshStream) {
             newList.push(freshStream);
-            if (streamDetail && streamDetail.id === stream.id) {
-              setStreamDetail(freshStream);
-            }
+            // if (streamDetail && streamDetail.id === stream.id) {
+            //   setStreamDetail(freshStream);
+            // }
           }
         }
       }
@@ -518,9 +563,9 @@ export const Streams = () => {
           freshStream = await ms.refreshStream(stream);
           if (freshStream) {
             newList.push(freshStream);
-            if (streamDetail && streamDetail.id === stream.id) {
-              setStreamDetail(freshStream);
-            }
+            // if (streamDetail && streamDetail.id === stream.id) {
+            //   setStreamDetail(freshStream);
+            // }
           }
         }
       }
@@ -534,7 +579,8 @@ export const Streams = () => {
     const timeout = setTimeout(() => {
       if (!customStreamDocked) {
         refreshStreams();
-      } else if (msp && streamDetail && streamDetail.version === 2) {
+      }
+      if (msp && streamDetail && streamDetail.version >= 2) {
         msp.refreshStream(streamDetail as Stream).then(detail => {
           setStreamDetail(detail as Stream);
         });
@@ -567,25 +613,31 @@ export const Streams = () => {
 
   const refreshStreamSummary = useCallback(async () => {
 
-    if (!ms || !msp || !publicKey || (!streamListv1 && !streamListv2) || loadingStreamsSummary) { return; }
+    if (!ms || !msp || (!streamListv1 && !streamListv2) || loadingStreamsSummary) { return; }
+
+    if (!publicKey && !accountAddress) { return; }
 
     setLoadingStreamsSummary(true);
 
-    let resume: StreamsSummary = {
+    const resume: StreamsSummary = {
       totalNet: 0,
       incomingAmount: 0,
       outgoingAmount: 0,
       totalAmount: 0
     };
 
-    const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], publicKey);
-    const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], publicKey);
+    const treasurer = publicKey
+      ? publicKey
+      : new PublicKey(accountAddress);
 
-    // consoleOut('=========== Block strat ===========', '', 'orange');
+      const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
+      const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer);
+  
+    // consoleOut('=========== Block start ===========', '', 'orange');
 
-    for (let stream of updatedStreamsv1) {
+    for (const stream of updatedStreamsv1) {
 
-      const isIncoming = stream.beneficiaryAddress && stream.beneficiaryAddress === publicKey.toBase58()
+      const isIncoming = stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58()
         ? true
         : false;
 
@@ -596,7 +648,7 @@ export const Streams = () => {
       }
 
       // Get refreshed data
-      let freshStream = await ms.refreshStream(stream) as StreamInfo;
+      const freshStream = await ms.refreshStream(stream) as StreamInfo;
       if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
 
       const asset = getTokenByMintAddress(freshStream.associatedToken as string);
@@ -612,9 +664,9 @@ export const Streams = () => {
 
     // consoleOut('totalNet v1:', resume['totalNet'], 'blue');
 
-    for (let stream of updatedStreamsv2) {
+    for (const stream of updatedStreamsv2) {
 
-      const isIncoming = stream.beneficiary && stream.beneficiary === publicKey.toBase58()
+      const isIncoming = stream.beneficiary && stream.beneficiary === treasurer.toBase58()
         ? true
         : false;
 
@@ -625,7 +677,7 @@ export const Streams = () => {
       }
 
       // Get refreshed data
-      let freshStream = await msp.refreshStream(stream) as Stream;
+      const freshStream = await msp.refreshStream(stream) as Stream;
       if (!freshStream || freshStream.status !== STREAM_STATUS.Running) { continue; }
 
       const asset = getTokenByMintAddress(freshStream.associatedToken as string);
@@ -654,15 +706,16 @@ export const Streams = () => {
     setLoadingStreamsSummary(false);
 
   }, [
-    ms, 
-    msp, 
-    publicKey, 
-    streamListv1, 
-    streamListv2, 
+    ms,
+    msp,
+    publicKey,
+    streamListv1,
+    streamListv2,
+    accountAddress,
     streamsSummary,
     loadingStreamsSummary,
-    setLastStreamsSummary, 
-    setLoadingStreamsSummary, 
+    setLastStreamsSummary,
+    setLoadingStreamsSummary,
     setStreamsSummary,
     getPricePerToken
   ]);
@@ -670,30 +723,21 @@ export const Streams = () => {
   // Live data calculation - Stream summary
   useEffect(() => {
 
-    if (!ms || !msp || !publicKey || !streamList || (!streamListv1 && !streamListv2)) { return; }
+    if (!streamList || (!streamListv1 && !streamListv2)) { return; }
 
     const timeout = setTimeout(() => {
       refreshStreamSummary();
-    }, 3000);
+    }, 5000);
 
     return () => {
       clearTimeout(timeout);
     }
 
   }, [
-    ms, 
-    msp, 
-    publicKey, 
-    streamList, 
-    streamListv1, 
-    streamListv2, 
-    streamsSummary, 
-    loadingStreamsSummary, 
-    setLoadingStreamsSummary, 
-    setLastStreamsSummary, 
-    setStreamsSummary, 
-    getPricePerToken, 
-    refreshStreamSummary
+    streamList,
+    streamListv1,
+    streamListv2,
+    refreshStreamSummary,
   ]);
 
   useEffect(() => {
@@ -855,6 +899,11 @@ export const Streams = () => {
     window.location.reload();
   }
 
+  // Send selected token modal
+  const [isSendAssetModalOpen, setIsSendAssetModalOpen] = useState(false);
+  const hideSendAssetModal = useCallback(() => setIsSendAssetModalOpen(false), []);
+  const showSendAssetModal = useCallback(() => setIsSendAssetModalOpen(true), []);
+
   // Common reusable transaction execution modal
   const [isTransactionExecutionModalVisible, setTransactionExecutionModalVisibility] = useState(false);
   const showTransactionExecutionModal = useCallback(() => setTransactionExecutionModalVisibility(true), []);
@@ -864,19 +913,6 @@ export const Streams = () => {
     setIsBusy(false);
     setCloseStreamTransactionModalVisibility(false);
     resetTransactionStatus();
-    // TODO: Remove if a code review + UX review and testing find this unnecessary
-    // Try to remove the item from the list to avoid reloading the list
-    if (streamDetail && streamList && streamList.length > 1) {
-      let streamIndex = streamList.findIndex(s => s.id !== streamDetail.id);
-      if (streamIndex > 0) {
-        streamIndex--;
-      } else {
-        streamIndex = 0;
-      }
-      const filteredStreams = streamList.filter(s => s.id !== streamDetail.id);
-      setStreamList(filteredStreams);
-      setSelectedStream(filteredStreams[streamIndex]);
-    }
   }
 
   const onTransactionFinished = useCallback(() => {
@@ -1081,12 +1117,12 @@ export const Streams = () => {
 
       if (!treasuryDetails || !multisigClient || !multisigAccounts || !publicKey) { return null; }
 
-      let treasury = treasuryDetails as Treasury;
-      let multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
+      const treasury = treasuryDetails as Treasury;
+      const multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
 
       if (!multisig) { return null; }
 
-      let pauseStream = await msp.pauseStream(
+      const pauseStream = await msp.pauseStream(
         new PublicKey(data.payer),                   // payer
         multisig.authority,                          // treasurer
         new PublicKey(data.stream),                  // stream,
@@ -1102,7 +1138,7 @@ export const Streams = () => {
         txSize
       );
       
-      let tx = multisigClient.transaction.createTransaction(
+      const tx = multisigClient.transaction.createTransaction(
         MSPV2Constants.MSP, 
         OperationType.StreamPause,
         ixAccounts as any,
@@ -1121,7 +1157,7 @@ export const Streams = () => {
       );
 
       tx.feePayer = publicKey;
-      let { blockhash } = await connection.getRecentBlockhash("confirmed");
+      const { blockhash } = await connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
       tx.partialSign(...txSigners);
 
@@ -1185,7 +1221,7 @@ export const Streams = () => {
 
       consoleOut('Starting Stream Pause using MSP V2...', '', 'blue');
       // Create a transaction
-      let result = await pauseStream(data)
+      const result = await pauseStream(data)
         .then(value => {
           if (!value) { return false; }
           consoleOut('pauseStream returned transaction:', value);
@@ -1535,12 +1571,12 @@ export const Streams = () => {
 
       if (!treasuryDetails || !multisigClient || !multisigAccounts || !publicKey) { return null; }
 
-      let treasury = treasuryDetails as Treasury;
-      let multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
+      const treasury = treasuryDetails as Treasury;
+      const multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
 
       if (!multisig) { return null; }
 
-      let resumeStream = await msp.resumeStream(
+      const resumeStream = await msp.resumeStream(
         new PublicKey(data.payer),                   // payer
         multisig.authority,                          // treasurer
         new PublicKey(data.stream),                  // stream,
@@ -1556,7 +1592,7 @@ export const Streams = () => {
         txSize
       );
       
-      let tx = multisigClient.transaction.createTransaction(
+      const tx = multisigClient.transaction.createTransaction(
         MSPV2Constants.MSP, 
         OperationType.StreamResume,
         ixAccounts as any,
@@ -1575,7 +1611,7 @@ export const Streams = () => {
       );
 
       tx.feePayer = publicKey;
-      let { blockhash } = await connection.getRecentBlockhash("confirmed");
+      const { blockhash } = await connection.getRecentBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
       tx.partialSign(...txSigners);
 
@@ -1639,7 +1675,7 @@ export const Streams = () => {
 
       consoleOut('Starting Stream Resume using MSP V2...', '', 'blue');
       // Create a transaction
-      let result = await resumeStream(data)
+      const result = await resumeStream(data)
         .then(value => {
           if (!value) { return false; }
           consoleOut('resumeStream returned transaction:', value);
@@ -1867,13 +1903,13 @@ export const Streams = () => {
 
   const isMultisigTreasury = useCallback((treasury?: any) => {
 
-    let treasuryInfo: any = treasury ?? treasuryDetails;
+    const treasuryInfo: any = treasury ?? treasuryDetails;
 
     if (!treasuryInfo || treasuryInfo.version < 2 || !treasuryInfo.treasurer || !publicKey) {
       return false;
     }
 
-    let treasurer = new PublicKey(treasuryInfo.treasurer as string);
+    const treasurer = new PublicKey(treasuryInfo.treasurer as string);
 
     if (!treasurer.equals(publicKey) && multisigAccounts && multisigAccounts.findIndex(m => m.authority.equals(treasurer)) !== -1) {
       return true;
@@ -1895,7 +1931,7 @@ export const Streams = () => {
       commitment: "confirmed",
     };
 
-    const provider = new Provider(connection, wallet as any, opts);
+    const provider = new AnchorProvider(connection, wallet as any, opts);
 
     return new Program(
       MultisigIdl,
@@ -1933,19 +1969,6 @@ export const Streams = () => {
     setIsBusy(false);
     hideTransferStreamTransactionModal();
     resetTransactionStatus();
-    // TODO: Remove if a code review + UX review and testing find this unnecessary
-    // Try to remove the item from the list to avoid reloading the list
-    if (streamDetail && streamList && streamList.length > 1) {
-      let streamIndex = streamList.findIndex(s => s.id !== streamDetail.id);
-      if (streamIndex > 0) {
-        streamIndex--;
-      } else {
-        streamIndex = 0;
-      }
-      const filteredStreams = streamList.filter(s => s.id !== streamDetail.id);
-      setStreamList(filteredStreams);
-      setSelectedStream(filteredStreams[streamIndex]);
-    }
   };
 
   const onAfterTransferStreamTransactionModalClosed = () => {
@@ -2737,7 +2760,7 @@ export const Streams = () => {
             enqueueTransactionConfirmation({
               signature: signature,
               operationType: OperationType.StreamAddFunds,
-              finality: "confirmed",
+              finality: "finalized",
               txInfoFetchStatus: "fetching",
               loadingTitle: "Confirming transaction",
               loadingMessage: `Fund stream with ${formatThousands(
@@ -2805,7 +2828,8 @@ export const Streams = () => {
     // Record user event in Segment Analytics
     segmentAnalytics.recordEvent(AppUsageEvent.NewTransferButton);
     setCustomStreamDocked(false);
-    navigate("/transfers");
+    showSendAssetModal();
+    // navigate("/transfers");
   };
 
   /*
@@ -3488,7 +3512,7 @@ export const Streams = () => {
             enqueueTransactionConfirmation({
               signature: signature,
               operationType: OperationType.StreamWithdraw,
-              finality: "confirmed",
+              finality: "finalized",
               txInfoFetchStatus: "fetching",
               loadingTitle: "Confirming transaction",
               loadingMessage: `Withdraw ${formatThousands(
@@ -3926,11 +3950,18 @@ export const Streams = () => {
     );
   }
 
-  const onRefreshStreams = () => {
-    // Record user event in Segment Analytics
-    segmentAnalytics.recordEvent(AppUsageEvent.StreamRefresh);
-    refreshStreamList(true);
+  const onRefreshStreams = (manual: boolean) => {
+    if (manual) {
+      // Record user event in Segment Analytics
+      segmentAnalytics.recordEvent(AppUsageEvent.StreamRefresh);
+      refreshStreamList(true);
+    } else {
+      if (!isDowngradedPerformance) {
+        refreshStreamList(false);
+      }
+    }
     setCustomStreamDocked(false);
+    setKey(prevKey => prevKey + 1);
   };
 
   const onRefreshStreamsNoReset = () => {
@@ -4057,11 +4088,9 @@ export const Streams = () => {
   //   Rendering   //
   ///////////////////
 
-  const renderMoneyStreamsSummary = (
-    <>
-      {/* Render Money Streams item if they exist and wallet is connected */}
-      {publicKey && (
-        <>
+  const renderMoneyStreamsSummary = useCallback(() => {
+    return (
+      <>
         <div key="streams" className="transaction-list-row money-streams-summary no-pointer">
           <div className="icon-cell">
             {loadingStreams ? (
@@ -4118,10 +4147,9 @@ export const Streams = () => {
           </div>
         </div>
         <div key="separator1" className="pinned-token-separator"></div>
-        </>
-      )}
-    </>
-  );
+      </>
+    );
+  }, [loadingStreams, refreshStreamList, streamsSummary.incomingAmount, streamsSummary.outgoingAmount, streamsSummary.totalAmount, streamsSummary.totalNet, t]);
 
   const menu = (
     <Menu>
@@ -4212,7 +4240,11 @@ export const Streams = () => {
       <>
         {stream && (
           <>
-            <div className="stream-details-data-wrapper vertical-scroll">
+            <div className={
+              `stream-details-data-wrapper vertical-scroll ${isDeletedStream(stream.id as string)
+                ? 'disabled blurry-3x'
+                : ''}`
+              }>
 
               <Spin spinning={loadingStreams}>
                 <div className="stream-fields-container">
@@ -4361,7 +4393,7 @@ export const Streams = () => {
                   {/* Allocation info */}
                   {stream && !isScheduledOtp() && hasAllocation() && (
                     <Row className="mb-3">
-                      <Col span={24}>
+                      <Col span={12}>
                         <div className="info-label">
                           {stream.allocationAssigned
                             ? t('streams.stream-detail.label-reserved-allocation')
@@ -4380,6 +4412,21 @@ export const Streams = () => {
                           </span>
                         </div>
                       </Col>
+                      <Col span={12}>
+                        <div className="info-label">{t('streams.stream-detail.label-status')}</div>
+                        <div className="transaction-detail-row">
+                          <span className="info-icon">
+                            {getStreamStatus(stream) === "Running" ? (
+                              <IconSwitchRunning className="mean-svg-icons" />
+                            ) : (
+                              <IconSwitchStopped className="mean-svg-icons" />
+                            )}
+                          </span>
+                          <span className="info-data">
+                            {getStreamStatus(stream)}
+                          </span>
+                        </div>
+                      </Col>
                     </Row>
                   )}
 
@@ -4387,7 +4434,7 @@ export const Streams = () => {
                     <>
                       {/* Funds available to withdraw now (Total Vested) */}
                       <Row className="mb-3 mt-4">
-                        <Col span={24}>
+                        <Col span={12}>
                           <div className="info-label">{t('streams.stream-detail.label-funds-available-to-withdraw')}</div>
                           <div className="transaction-detail-row">
                             <span className="info-icon">
@@ -4411,6 +4458,21 @@ export const Streams = () => {
                             )}
                           </div>
                         </Col>
+                        <Col span={12}>
+                          <div className="info-label">{t('streams.stream-detail.label-status')}</div>
+                          <div className="transaction-detail-row">
+                            <span className="info-icon">
+                              {getStreamStatus(stream) === "Running" ? (
+                                <IconSwitchRunning className="mean-svg-icons" />
+                              ) : (
+                                <IconSwitchStopped className="mean-svg-icons" />
+                              )}
+                            </span>
+                            <span className="info-data">
+                              {getStreamStatus(stream)}
+                            </span>
+                          </div>
+                        </Col>
                       </Row>
                     </>
                   )}
@@ -4428,6 +4490,7 @@ export const Streams = () => {
                         hasStreamPendingTx() ||
                         isScheduledOtp() ||
                         !stream.escrowVestedAmount ||
+                        isDeletedStream(stream.id as string) ||
                         publicKey?.toBase58() !== stream.beneficiaryAddress
                       }
                       onClick={showWithdrawModal}>
@@ -4441,6 +4504,7 @@ export const Streams = () => {
                           type="text"
                           size="small"
                           className="ant-btn-shaded"
+                          disabled={isDeletedStream(stream.id as string)}
                           onClick={(e) => e.preventDefault()}
                           icon={<EllipsisOutlined />}>
                         </Button>
@@ -4482,7 +4546,11 @@ export const Streams = () => {
       <>
         {stream && (
           <>
-            <div className="stream-details-data-wrapper vertical-scroll">
+            <div className={
+              `stream-details-data-wrapper vertical-scroll ${isDeletedStream(stream.id as string)
+                ? 'disabled blurry-3x'
+                : ''}`
+              }>
 
               <Spin spinning={loadingStreams}>
                 <div className="stream-fields-container">
@@ -4593,9 +4661,9 @@ export const Streams = () => {
                   </Row>
 
                   {/* Allocation info */}
-                  {stream && !isScheduledOtp() && hasAllocation() && (
+                  {!isScheduledOtp() && hasAllocation() && (
                     <Row className="mb-3">
-                      <Col span={24}>
+                      <Col span={12}>
                         <div className="info-label">
                           {stream.allocationAssigned
                             ? t('streams.stream-detail.label-reserved-allocation')
@@ -4611,6 +4679,21 @@ export const Streams = () => {
                               toUiAmount(new BN(stream.remainingAllocationAmount), selectedToken?.decimals || 6),
                               stream.associatedToken as string
                             )}
+                          </span>
+                        </div>
+                      </Col>
+                      <Col span={12}>
+                        <div className="info-label">{t('streams.stream-detail.label-status')}</div>
+                        <div className="transaction-detail-row">
+                          <span className="info-icon">
+                            {getStreamStatus(stream) === "Running" ? (
+                              <IconSwitchRunning className="mean-svg-icons" />
+                            ) : (
+                              <IconSwitchStopped className="mean-svg-icons" />
+                            )}
+                          </span>
+                          <span className="info-data">
+                            {getStreamStatus(stream)}
                           </span>
                         </div>
                       </Col>
@@ -4660,6 +4743,7 @@ export const Streams = () => {
                         hasStreamPendingTx() ||
                         isScheduledOtp() ||
                         !stream.withdrawableAmount ||
+                        isDeletedStream(stream.id as string) ||
                         publicKey?.toBase58() !== stream.beneficiary
                       }
                       onClick={showWithdrawModal}>
@@ -4673,6 +4757,7 @@ export const Streams = () => {
                           type="text"
                           size="small"
                           className="ant-btn-shaded"
+                          disabled={isDeletedStream(stream.id as string)}
                           onClick={(e) => e.preventDefault()}
                           icon={<EllipsisOutlined />}>
                         </Button>
@@ -4708,7 +4793,11 @@ export const Streams = () => {
       <>
         {stream && (
           <>
-            <div className="stream-details-data-wrapper vertical-scroll">
+            <div className={
+              `stream-details-data-wrapper vertical-scroll ${isDeletedStream(stream.id as string)
+                ? 'disabled blurry-3x'
+                : ''}`
+              }>
 
               <Spin spinning={loadingStreams}>
                 <div className="stream-fields-container">
@@ -4960,7 +5049,11 @@ export const Streams = () => {
                           type="text"
                           shape="round"
                           size="small"
-                          disabled={isBusy || hasStreamPendingTx()}
+                          disabled={
+                            isBusy ||
+                            isDeletedStream(stream.id as string) ||
+                            hasStreamPendingTx()
+                          }
                           onClick={showCloseStreamModal}>
                           {(isBusy || hasStreamPendingTx()) && (<LoadingOutlined />)}
                           {t('streams.stream-detail.cancel-scheduled-transfer')}
@@ -4978,6 +5071,7 @@ export const Streams = () => {
                             isBusy ||
                             hasStreamPendingTx() ||
                             isOtp() ||
+                            isDeletedStream(stream.id as string) ||
                             (getTreasuryType() === "locked" && (stream && stream.state === STREAM_STATE.Running))
                           }
                           onClick={(getTreasuryType() === "open") ? showAddFundsModal : showCloseStreamModal}>
@@ -4995,6 +5089,7 @@ export const Streams = () => {
                                 type="text"
                                 size="small"
                                 className="ant-btn-shaded"
+                                disabled={isDeletedStream(stream.id as string)}
                                 onClick={(e) => e.preventDefault()}
                                 icon={<EllipsisOutlined />}>
                               </Button>
@@ -5039,7 +5134,11 @@ export const Streams = () => {
       <>
         {stream && (
           <>
-            <div className="stream-details-data-wrapper vertical-scroll">
+            <div className={
+              `stream-details-data-wrapper vertical-scroll ${isDeletedStream(stream.id as string)
+                ? 'disabled blurry-3x'
+                : ''}`
+              }>
 
               <Spin spinning={loadingStreams}>
                 <div className="stream-fields-container">
@@ -5259,6 +5358,7 @@ export const Streams = () => {
                           isBusy ||
                           hasStreamPendingTx() ||
                           isOtp() ||
+                          isDeletedStream(stream.id as string) ||
                           (getTreasuryType() === "locked" && stream.status === STREAM_STATUS.Running)
                         }
                         onClick={(getTreasuryType() === "open") ? showAddFundsModal : showCloseStreamModal}>
@@ -5276,6 +5376,7 @@ export const Streams = () => {
                               type="text"
                               size="small"
                               className="ant-btn-shaded"
+                              disabled={isDeletedStream(stream.id as string)}
                               onClick={(e) => e.preventDefault()}
                               icon={<EllipsisOutlined />}>
                             </Button>
@@ -5293,6 +5394,7 @@ export const Streams = () => {
                             type="text"
                             size="small"
                             className="ant-btn-shaded"
+                            disabled={isDeletedStream(stream.id as string)}
                             onClick={showPauseStreamModal}
                             icon={<IconPause className="mean-svg-icons h-100" />}>
                           </Button>
@@ -5305,6 +5407,7 @@ export const Streams = () => {
                             type="text"
                             size="small"
                             className="ant-btn-shaded"
+                            disabled={isDeletedStream(stream.id as string)}
                             onClick={showResumeStreamModal}
                             icon={<IconPlay className="mean-svg-icons h-100" />}>
                           </Button>
@@ -5320,6 +5423,7 @@ export const Streams = () => {
                           type="text"
                           size="small"
                           className="ant-btn-shaded"
+                          disabled={isDeletedStream(stream.id as string)}
                           onClick={showLockedStreamModal}
                           icon={getStreamStatus(stream) === "Running" && 
                           (<IconLock className="mean-svg-icons" />)}>
@@ -5352,7 +5456,7 @@ export const Streams = () => {
 
   const renderStreamList = (
     <>
-    {streamList && streamList.length ? (
+    {(connected && streamList && streamList.length > 0) ? (
       streamList.map((item, index) => {
         const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
         const onStreamClick = () => {
@@ -5366,7 +5470,13 @@ export const Streams = () => {
         };
         return (
           <div key={`${index + 50}`} onClick={onStreamClick} id={`${item.id}`}
-              className={`transaction-list-row ${streamDetail && streamDetail.id === item.id ? 'selected' : ''}`}>
+            className={
+              `transaction-list-row ${isDeletedStream(item.id as string)
+                ? 'disabled blurry-1x'
+                : streamDetail && streamDetail.id === item.id
+                  ? 'selected'
+                  : ''}`
+            }>
             <div className="icon-cell">
               {getStreamTypeIcon(item)}
               <div className="token-icon">
@@ -5394,12 +5504,20 @@ export const Streams = () => {
           </div>
         );
       })
+    ) : !connected ? (
+      <>
+        <div className="h-100 flex-center">
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={
+            <p>{t('streams.stream-list.not-connected')}</p>
+          }/>
+        </div>
+      </>
     ) : (
       <>
         <div className="h-100 flex-center">
-          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{connected
-          ? t('streams.stream-list.no-streams')
-          : t('streams.stream-list.not-connected')}</p>} />
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={
+            <p>{t('streams.stream-list.no-streams')}</p>
+          }/>
         </div>
       </>
     )}
@@ -5410,9 +5528,10 @@ export const Streams = () => {
     <>
       {/* {isLocal() && (
         <div className="debug-bar">
-          <span className="ml-1">proggress:</span><span className="ml-1 font-bold fg-dark-active">{fetchTxInfoStatus || '-'}</span>
-          <span className="ml-1">status:</span><span className="ml-1 font-bold fg-dark-active">{lastSentTxStatus || '-'}</span>
-          <span className="ml-1">lastSentTxSignature:</span><span className="ml-1 font-bold fg-dark-active">{lastSentTxSignature ? shortenAddress(lastSentTxSignature, 8) : '-'}</span>
+          <span className="ml-1">incoming:</span><span className="ml-1 font-bold fg-dark-active">{streamsSummary ? streamsSummary.incomingAmount : '-'}</span>
+          <span className="ml-1">outgoing:</span><span className="ml-1 font-bold fg-dark-active">{streamsSummary ? streamsSummary.outgoingAmount : '-'}</span>
+          <span className="ml-1">totalAmount:</span><span className="ml-1 font-bold fg-dark-active">{streamsSummary ? streamsSummary.totalAmount : '-'}</span>
+          <span className="ml-1">totalNet:</span><span className="ml-1 font-bold fg-dark-active">{streamsSummary ? streamsSummary.totalNet : '-'}</span>
         </div>
       )} */}
 
@@ -5444,7 +5563,7 @@ export const Streams = () => {
             )}
             <span className="title">{t('streams.screen-title')}</span>
             <Tooltip placement="bottom" title={t('streams.refresh-tooltip')}>
-              <div id="streams-refresh-cta" className={`transaction-stats ${loadingStreams ? 'click-disabled' : 'simplelink'}`} onClick={onRefreshStreams}>
+              <div id="streams-refresh-cta" className={`transaction-stats ${loadingStreams ? 'click-disabled' : 'simplelink'}`} onClick={() => onRefreshStreams(true)}>
                 <Spin size="small" />
                 {customStreamDocked ? (
                   <span className="transaction-legend neutral">
@@ -5454,12 +5573,18 @@ export const Streams = () => {
                   <>
                     <span className="transaction-legend">
                       <span className="icon-button-container">
-                        <Button
-                          type="default"
-                          shape="circle"
-                          size="small"
-                          icon={<ReloadOutlined />}
-                          onClick={() => {}}
+                        <CountdownCircleTimer
+                          isPlaying={true}
+                          key={key}
+                          size={18}
+                          strokeWidth={3}
+                          duration={refreshInterval / 1000}
+                          colors={theme === 'dark' ? '#FFFFFF' : '#000000'}
+                          trailColor={theme === 'dark' ? '#424242' : '#DDDDDD'}
+                          onComplete={() => {
+                            onRefreshStreams(false);
+                            return { shouldRepeat: true, delay: 1 }
+                          }}
                         />
                       </span>
                     </span>
@@ -5473,7 +5598,7 @@ export const Streams = () => {
             {/* item block */}
             <div className="item-block vertical-scroll">
               <Spin spinning={loadingStreams}>
-                {(streamsSummary && streamsSummary.totalAmount > 0) && renderMoneyStreamsSummary}
+                {publicKey && renderMoneyStreamsSummary()}
                 {renderStreamList}
               </Spin>
             </div>
@@ -5495,12 +5620,16 @@ export const Streams = () => {
                     block
                     type="primary"
                     shape="round"
+                    disabled={!connected}
                     onClick={onCreateNewTransfer}>
-                    {t('streams.create-new-stream-cta')}
+                    {connected
+                      ? t('streams.create-new-stream-cta')
+                      : t('transactions.validation.not-connected')
+                    }
                   </Button>
                 </div>
               )}
-              {!customStreamDocked && (
+              {!customStreamDocked && connected && (
                 <div className="open-stream">
                   <Tooltip title={t('streams.lookup-stream-cta-tooltip')}>
                     <Button
@@ -5674,6 +5803,15 @@ export const Streams = () => {
             isVisible={isWithdrawModalVisible}
             handleOk={onAcceptWithdraw}
             handleClose={closeWithdrawModal}
+          />
+        )}
+
+        {isSendAssetModalOpen && (
+          <SendAssetModal
+            selectedToken={selectedToken as UserTokenAccount}
+            isVisible={isSendAssetModalOpen}
+            handleClose={hideSendAssetModal}
+            selected={"one-time"}
           />
         )}
 

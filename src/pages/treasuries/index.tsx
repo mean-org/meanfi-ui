@@ -8,7 +8,7 @@ import {
   InfoCircleOutlined,
   LoadingOutlined, ReloadOutlined, SearchOutlined,
 } from '@ant-design/icons';
-import { ConfirmOptions, Connection, GetProgramAccountsFilter, Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction, TransactionInstruction } from '@solana/web3.js';
+import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
 import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
@@ -40,21 +40,21 @@ import {
   isProd,
   getIntervalFromSeconds,
   delay,
-  isLocal,
-  isDev
+  // isLocal,
+  // isDev
 } from '../../utils/ui';
 import {
   FALLBACK_COIN_IMAGE,
   NO_FEES,
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
   SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
-  STREAMS_REFRESH_TIMEOUT,
+  HALF_MINUTE_REFRESH_TIMEOUT,
   VERBOSE_DATE_TIME_FORMAT
 } from '../../constants';
 import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
-import { OperationType, PaymentRateType, TransactionStatus } from '../../models/enums';
-import { TransactionStatusContext } from '../../contexts/transaction-status';
+import { OperationType, TransactionStatus } from '../../models/enums';
+import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { IconBank, IconClock, IconShieldOutline, IconTrash } from '../../Icons';
 import { TreasuryOpenModal } from '../../components/TreasuryOpenModal';
 import { MSP_ACTIONS, StreamInfo, STREAM_STATE, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
@@ -64,7 +64,7 @@ import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
 import dateFormat from 'dateformat';
 import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import { useAccountsContext, useNativeAccount } from '../../contexts/accounts';
-import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
+import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TreasuryAddFundsModal } from '../../components/TreasuryAddFundsModal';
 import { AccountLayout, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { ACCOUNT_LAYOUT } from '../../utils/layouts';
@@ -93,17 +93,31 @@ import {
 import BN from 'bn.js';
 import { InfoIcon } from '../../components/InfoIcon';
 import { useLocation, useNavigate } from 'react-router-dom';
-import MultisigIdl from "../../models/mean-multisig-idl";
-import { DEFAULT_EXPIRATION_TIME_SECONDS, getFees, MEAN_MULTISIG_OPS, MultisigParticipant, MultisigTransactionFees, MultisigV2, MULTISIG_ACTIONS, ZERO_FEES } from '../../models/multisig';
-import { Program, Provider } from '@project-serum/anchor';
 import { TreasuryCreateOptions } from '../../models/treasuries';
 import { customLogger } from '../..';
 import { openNotification } from '../../components/Notifications';
+import {
+
+  MultisigInfo,
+  // MultisigParticipant,
+  MultisigTransaction,
+  // MultisigTransactionSummary,
+  // MultisigTransactionStatus,
+  MultisigTransactionFees,
+  MULTISIG_ACTIONS,
+  // getMultisigTransactionSummary,
+  getFees,
+  DEFAULT_EXPIRATION_TIME_SECONDS,
+  MeanMultisig,
+  // MEAN_MULTISIG_PROGRAM
+
+} from '@mean-dao/mean-multisig-sdk';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const TreasuriesView = () => {
   const location = useLocation();
+  const { state } = useLocation();
   const connectionConfig = useConnectionConfig();
   const { publicKey, connected, wallet } = useWallet();
   const {
@@ -114,11 +128,11 @@ export const TreasuriesView = () => {
     treasuryOption,
     detailsPanelOpen,
     transactionStatus,
-    paymentRateFrequency,
+    // paymentRateFrequency,
     streamProgramAddress,
     streamV2ProgramAddress,
     previousWalletConnectState,
-    isWhitelisted,
+    // isWhitelisted,
     setStreamList,
     setSelectedToken,
     setEffectiveRate,
@@ -136,8 +150,8 @@ export const TreasuriesView = () => {
     lastSentTxSignature,
     lastSentTxOperationType,
     startFetchTxSignatureInfo,
-    clearTransactionStatusContext,
-  } = useContext(TransactionStatusContext);
+    clearTxConfirmationContext,
+  } = useContext(TxConfirmationContext);
   const { t } = useTranslation('common');
   const { width } = useWindowSize();
   const { account } = useNativeAccount();
@@ -160,10 +174,10 @@ export const TreasuriesView = () => {
 
   // Multisig related
   const [multisigAddress, setMultisigAddress] = useState('');
-  const [selectedMultisig, setSelectedMultisig] = useState<MultisigV2 | undefined>(undefined);
+  const [selectedMultisig, setSelectedMultisig] = useState<MultisigInfo | undefined>(undefined);
   const [treasuryAddress, setTreasuryAddress] = useState('');
-  const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(true);
-  const [multisigAccounts, setMultisigAccounts] = useState<MultisigV2[] | undefined>(undefined);
+  const [/*loadingMultisigAccounts*/, setLoadingMultisigAccounts] = useState(true);
+  const [multisigAccounts, setMultisigAccounts] = useState<MultisigInfo[] | undefined>(undefined);
   const [treasuryPendingTxs, setTreasuryPendingTxs] = useState(0);
 
   // Transactions
@@ -173,12 +187,16 @@ export const TreasuriesView = () => {
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
   const [transactionFees, setTransactionFees] = useState<TransactionFees>(NO_FEES);
-  const [multisigTxFees, setMultisigTxFees] = useState<MultisigTransactionFees>(ZERO_FEES);
+  const [multisigTxFees, setMultisigTxFees] = useState<MultisigTransactionFees>({
+    multisigFee: 0,
+    networkFee: 0,
+    rentExempt: 0
+  } as MultisigTransactionFees);
+
   const [withdrawTransactionFees, setWithdrawTransactionFees] = useState<TransactionFees>({
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
   });
   const [minRequiredBalance, setMinRequiredBalance] = useState(0);
-
   const [needReloadMultisig, setNeedReloadMultisig] = useState(true);
 
   // Enable deep-linking - Parse and save query params as needed
@@ -234,25 +252,20 @@ export const TreasuriesView = () => {
     connectionConfig.endpoint
   ]);
 
-  // Create and cache Multisig client instance
   const multisigClient = useMemo(() => {
 
-    const opts: ConfirmOptions = {
-      preflightCommitment: "confirmed",
-      commitment: "confirmed",
-    };
+    if (!connection || !publicKey || !connectionConfig.endpoint) { return null; }
 
-    const provider = new Provider(connection, wallet as any, opts);
-
-    return new Program(
-      MultisigIdl,
-      MEAN_MULTISIG,
-      provider
+    return new MeanMultisig(
+      connectionConfig.endpoint,
+      publicKey,
+      "confirmed"
     );
 
   }, [
-    connection, 
-    wallet
+    connection,
+    publicKey,
+    connectionConfig.endpoint,
   ]);
 
   // Create and cache Money Streaming Program V1 instance
@@ -444,14 +457,14 @@ export const TreasuriesView = () => {
 
     if (selectedMultisig && multisigAccounts) {
 
-      let multisigTreasuries: any[] = [];
+      const multisigTreasuries: any[] = [];
 
-      let filterMultisigAccounts = selectedMultisig
+      const filterMultisigAccounts = selectedMultisig
         ? [selectedMultisig.authority]
         : multisigAccounts.map(m => m.authority);
 
       if (filterMultisigAccounts) {
-        for (let key of filterMultisigAccounts) {
+        for (const key of filterMultisigAccounts) {
           multisigTreasuries.push(...(await msp.listTreasuries(key)));
         }
       }
@@ -478,10 +491,10 @@ export const TreasuriesView = () => {
 
       setTimeout(() => {
         setLoadingTreasuries(true);
-        clearTransactionStatusContext();
+        clearTxConfirmationContext();
       });
 
-      let treasuryAccumulator: (Treasury | TreasuryInfo)[] = [];
+      const treasuryAccumulator: (Treasury | TreasuryInfo)[] = [];
       let treasuriesv1: TreasuryInfo[] = [];
       getAllUserV2Treasuries()
         .then(async (treasuriesv2) => {
@@ -559,7 +572,7 @@ export const TreasuriesView = () => {
     selectedMultisig,
     fetchTxInfoStatus,
     loadingTreasuries,
-    clearTransactionStatusContext,
+    clearTxConfirmationContext,
     openTreasuryById,
     getAllUserV2Treasuries
   ]);
@@ -602,7 +615,7 @@ export const TreasuriesView = () => {
       connection.commitment
     )
     .then(response => {
-      for (let acc of response.value) {
+      for (const acc of response.value) {
         const decoded = ACCOUNT_LAYOUT.decode(acc.account.data);
         const address = decoded.mint.toBase58();
         const itemIndex = tokenList.findIndex(t => t.address === address);
@@ -615,7 +628,7 @@ export const TreasuriesView = () => {
     })
     .catch(error => {
       console.error(error);
-      for (let t of tokenList) {
+      for (const t of tokenList) {
         balancesMap[t.address] = 0;
       }
     })
@@ -670,81 +683,15 @@ export const TreasuriesView = () => {
     setSelectedToken
   ]);
 
-  const readAllMultisigV2Accounts = useCallback(async (wallet: PublicKey) => { // V2
-
-    let accounts: any[] = [];
-    let multisigV2Accs = await multisigClient.account.multisigV2.all();
-    let filteredAccs = multisigV2Accs.filter((a: any) => {
-      if (a.account.owners.filter((o: any) => o.address.equals(wallet)).length) { return true; }
-      return false;
-    });
-
-    accounts.push(...filteredAccs);
-
-    return accounts;
-    
-  }, [
-    multisigClient.account.multisigV2
-  ]);
-
-  const parseMultisigV2Account = (info: any) => {
-    return PublicKey
-      .findProgramAddress([info.publicKey.toBuffer()], MEAN_MULTISIG)
-      .then(k => {
-
-        let address = k[0];
-        let owners: MultisigParticipant[] = [];
-        let labelBuffer = Buffer
-          .alloc(info.account.label.length, info.account.label)
-          .filter(function (elem, index) { return elem !== 0; }
-        );
-
-        let filteredOwners = info.account.owners.filter((o: any) => !o.address.equals(PublicKey.default));
-
-        for (let i = 0; i < filteredOwners.length; i ++) {
-          owners.push({
-            address: filteredOwners[i].address.toBase58(),
-            name: filteredOwners[i].name.length > 0 
-              ? new TextDecoder().decode(
-                  Buffer.from(
-                    Uint8Array.of(
-                      ...filteredOwners[i].name.filter((b: any) => b !== 0)
-                    )
-                  )
-                )
-              : ""
-          } as MultisigParticipant);
-        }
-
-        return {
-          id: info.publicKey,
-          version: info.account.version,
-          label: new TextDecoder().decode(labelBuffer),
-          authority: address,
-          nounce: info.account.nonce,
-          ownerSeqNumber: info.account.ownerSetSeqno,
-          threshold: info.account.threshold.toNumber(),
-          pendingTxsAmount: info.account.pendingTxs.toNumber(),
-          createdOnUtc: new Date(info.account.createdOn.toNumber() * 1000),
-          owners: owners
-
-        } as MultisigV2;
-      })
-      .catch(err => { 
-        consoleOut('error', err, 'red');
-        return undefined;
-      });
-  };
-
   const isMultisigTreasury = useCallback((treasury?: any) => {
 
-    let treasuryInfo: any = treasury ?? treasuryDetails;
+    const treasuryInfo: any = treasury ?? treasuryDetails;
 
     if (!treasuryInfo || treasuryInfo.version < 2 || !treasuryInfo.treasurer || !publicKey) {
       return false;
     }
 
-    let treasurer = new PublicKey(treasuryInfo.treasurer as string);
+    const treasurer = new PublicKey(treasuryInfo.treasurer as string);
 
     if (!treasurer.equals(publicKey) && multisigAccounts && multisigAccounts.findIndex(m => m.authority.equals(treasurer)) !== -1) {
       return true;
@@ -760,13 +707,13 @@ export const TreasuriesView = () => {
 
   const getSelectedTreasuryMultisig = useCallback((treasury?: any) => {
 
-    let treasuryInfo: any = treasury ?? treasuryDetails;
+    const treasuryInfo: any = treasury ?? treasuryDetails;
 
     if (!treasuryInfo || treasuryInfo.version < 2 || !treasuryInfo.treasurer || !publicKey) {
       return PublicKey.default;
     }
 
-    let treasurer = new PublicKey(treasuryInfo.treasurer as string);
+    const treasurer = new PublicKey(treasuryInfo.treasurer as string);
 
     if (!multisigAccounts || !treasuryDetails) { return PublicKey.default; }
     const multisig = multisigAccounts.filter(a => a.authority.equals(treasurer))[0];
@@ -783,7 +730,7 @@ export const TreasuriesView = () => {
 
     if (!multisigClient || !multisigAddress) { return; }
 
-    getFees(multisigClient, MULTISIG_ACTIONS.createTransaction)
+    getFees(multisigClient.getProgram(), MULTISIG_ACTIONS.createTransaction)
     .then(value => {
       setMultisigTxFees(value);
       consoleOut('Multisig transaction fees:', value, 'orange');
@@ -798,35 +745,30 @@ export const TreasuriesView = () => {
   // Update treasury pending Txs
   useEffect(() => {
 
-    if (!isMultisigTreasury() || !treasuryDetails || !connected || !publicKey || !multisigAccounts) {
+    if (!isMultisigTreasury() || !multisigClient || !treasuryDetails || !connected || !publicKey || !multisigAccounts) {
       setTreasuryPendingTxs(0);
       return;
     }
 
     const timeout = setTimeout(() => {
-      let treasury = treasuryDetails as Treasury;
-      let multisig = multisigAccounts.find(m => m.authority.toBase58() === treasury.treasurer);
+      const treasury = treasuryDetails as Treasury;
+      const multisig = multisigAccounts.find(m => m.authority.toBase58() === treasury.treasurer);
       
       if (!multisig) {
         setTreasuryPendingTxs(0);
         return;
       }
-
-      const filters: GetProgramAccountsFilter[] = [
-        { dataSize: 1200 },
-        { memcmp: { offset: 8, bytes: multisig.id.toString() } }
-      ];
       
-      multisigClient.account.transaction
-        .all(filters)
-        .then((value) => {
+      multisigClient
+        .getMultisigTransactions(multisig.id, publicKey)
+        .then((value: MultisigTransaction[]) => {
           let pendingTxs = 0;
-          for (let tx of value) {
+          for (const tx of value) {
             const isPending = (
               multisig !== undefined &&
-              tx.account.accounts.findIndex((a: any) => a.pubkey.equals(new PublicKey(treasuryDetails.id))) !== -1 &&
-              tx.account.executedOn.toNumber() === 0 &&
-              multisig.ownerSeqNumber === tx.account.ownerSetSeqno
+              !tx.executedOn &&
+              tx.accounts.findIndex((a: any) => a.pubkey.equals(new PublicKey(treasuryDetails.id))) !== -1 &&
+              multisig.ownerSeqNumber === tx.ownerSeqNumber
             );
             if (isPending) {
               pendingTxs += 1;
@@ -844,7 +786,7 @@ export const TreasuriesView = () => {
     connected, 
     isMultisigTreasury, 
     multisigAccounts, 
-    multisigClient.account.transaction, 
+    multisigClient, 
     publicKey, 
     treasuryDetails
   ]);  
@@ -860,28 +802,13 @@ export const TreasuriesView = () => {
 
       setNeedReloadMultisig(false);
 
-      readAllMultisigV2Accounts(publicKey)
-        .then((allInfo: any) => {
-          let multisigInfoArray: MultisigV2[] = [];
-          for (let info of allInfo) {
-            parseMultisigV2Account(info)
-              .then((multisig: any) =>{
-                if (multisig) {
-                  multisigInfoArray.push(multisig);
-                }
-              })
-              .catch((err: any) => {
-                console.error(err);
-                setLoadingMultisigAccounts(false);
-              });
-          }
-          
-          setTimeout(() => {
-            multisigInfoArray.sort((a: any, b: any) => b.createdOnUtc.getTime() - a.createdOnUtc.getTime());
-            setMultisigAccounts(multisigInfoArray);
-            consoleOut('multisigs:', multisigInfoArray, 'blue');
-            setLoadingMultisigAccounts(false);
-          });
+      multisigClient
+        .getMultisigs(publicKey)
+        .then((allInfo: MultisigInfo[]) => {          
+          allInfo.sort((a: any, b: any) => b.createdOnUtc.getTime() - a.createdOnUtc.getTime());
+          setMultisigAccounts(allInfo);
+          consoleOut('multisigs:', allInfo, 'blue');
+          setLoadingMultisigAccounts(false);
         })
         .catch(err => {
           console.error(err);
@@ -897,8 +824,7 @@ export const TreasuriesView = () => {
     publicKey,
     connection,
     multisigClient,
-    needReloadMultisig,
-    readAllMultisigV2Accounts
+    needReloadMultisig
   ]);
 
   // Set selectedMultisig based on the passed-in multisigAddress in query params
@@ -1079,9 +1005,9 @@ export const TreasuriesView = () => {
 
     if (publicKey && treasuriesLoaded && !customStreamDocked) {
       timer = setInterval(() => {
-        consoleOut(`Refreshing treasuries past ${STREAMS_REFRESH_TIMEOUT / 60 / 1000}min...`);
+        consoleOut(`Refreshing treasuries past ${HALF_MINUTE_REFRESH_TIMEOUT / 60 / 1000}min...`);
         refreshTreasuries(false);
-      }, STREAMS_REFRESH_TIMEOUT);
+      }, HALF_MINUTE_REFRESH_TIMEOUT);
     }
 
     return () => clearInterval(timer);
@@ -1119,7 +1045,7 @@ export const TreasuriesView = () => {
         switch (lastSentTxOperationType) {
           case OperationType.TreasuryCreate:
             if (usedOptions.multisigId) {
-              clearTransactionStatusContext();
+              clearTxConfirmationContext();
               stackedMessagesAndNavigate(usedOptions);
             } else {
               refreshTreasuries(true);
@@ -1134,7 +1060,7 @@ export const TreasuriesView = () => {
             break;
         }
       } else if (fetchTxInfoStatus === "error") {
-        clearTransactionStatusContext();
+        clearTxConfirmationContext();
         openNotification({
           type: "info",
           duration: 5,
@@ -1165,7 +1091,7 @@ export const TreasuriesView = () => {
     lastSentTxSignature,
     retryOperationPayload,
     lastSentTxOperationType,
-    clearTransactionStatusContext,
+    clearTxConfirmationContext,
     setHighLightableMultisigId,
     refreshTreasuries,
     navigate,
@@ -1326,9 +1252,9 @@ export const TreasuriesView = () => {
     return false;
   }, [publicKey]);
 
-  const isUnderDevelopment = () => {
-    return isLocal() || (isDev() && isWhitelisted) ? true : false;
-  };
+  // const isUnderDevelopment = () => {
+  //   return isLocal() || (isDev() && isWhitelisted) ? true : false;
+  // };
 
   const getStreamIcon = useCallback((item: Stream | StreamInfo) => {
     const isInbound = isInboundStream(item);
@@ -1629,14 +1555,14 @@ export const TreasuriesView = () => {
     window.location.reload();
   }
 
-  const resetTreasuriesContext = useCallback(() => {
-    setTreasuriesLoaded(false);
-    setSelectedMultisig(undefined);
-    setMultisigAddress('');
-    navigate('/treasuries');
-  }, [
-    navigate,
-  ]);
+  // const resetTreasuriesContext = useCallback(() => {
+  //   setTreasuriesLoaded(false);
+  //   setSelectedMultisig(undefined);
+  //   setMultisigAddress('');
+  //   navigate('/treasuries');
+  // }, [
+  //   navigate,
+  // ]);
 
   const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({
@@ -1742,7 +1668,7 @@ export const TreasuriesView = () => {
     const transactionLog: any[] = [];
 
     resetTransactionStatus();
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.TreasuryRefreshBalance);
     setIsBusy(true);
@@ -1753,7 +1679,7 @@ export const TreasuriesView = () => {
         return false;
       }
 
-      let ixs: TransactionInstruction[] = [];
+      const ixs: TransactionInstruction[] = [];
 
       const { value } = await connection.getTokenAccountsByOwner(treasury, {
         programId: TOKEN_PROGRAM_ID
@@ -1811,12 +1737,12 @@ export const TreasuriesView = () => {
 
       if (!treasuryDetails || !multisigClient || !multisigAccounts || !publicKey) { return null; }
 
-      let treasury = treasuryDetails as Treasury;
-      let multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
+      const treasury = treasuryDetails as Treasury;
+      const multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
 
       if (!multisig) { return null; }
 
-      let refreshTreasury = await msp.refreshTreasuryData(
+      const refreshTreasury = await msp.refreshTreasuryData(
         new PublicKey(publicKey),
         multisig.authority,
         new PublicKey(data.treasury)
@@ -1824,52 +1750,19 @@ export const TreasuriesView = () => {
 
       const ixData = Buffer.from(refreshTreasury.instructions[0].data);
       const ixAccounts = refreshTreasury.instructions[0].keys;
-      const transaction = Keypair.generate();
-      const txSize = 1200;
-      const txSigners = [transaction];
-      const createIx = await multisigClient.account.transaction.createInstruction(
-        transaction,
-        txSize
-      );
-
-      const [txDetailAddress] = await PublicKey.findProgramAddress(
-        [
-          multisig.id.toBuffer(),
-          transaction.publicKey.toBuffer()
-        ],
-        multisigClient.programId
-      );
-
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
-      
-      let tx = multisigClient.transaction.createTransaction(
-        MSPV2Constants.MSP, 
-        ixAccounts,
-        ixData,
-        OperationType.TreasuryRefreshBalance,
-        "Refresh Treasury Data",
-        "",
-        new BN(expirationTime),
-        new BN(0),
-        new BN(0),
-        {
-          accounts: {
-            multisig: multisig.id,
-            transaction: transaction.publicKey,
-            transactionDetail: txDetailAddress,
-            proposer: publicKey as PublicKey,
-            multisigOpsAccount: MEAN_MULTISIG_OPS,
-            systemProgram: SystemProgram.programId
-          },
-          preInstructions: [createIx],
-          signers: txSigners,
-        }
-      );
 
-      tx.feePayer = publicKey;
-      let { blockhash } = await connection.getRecentBlockhash("confirmed");
-      tx.recentBlockhash = blockhash;
-      tx.partialSign(...txSigners);
+      const tx = await multisigClient.createTransaction(
+        publicKey,
+        "Refresh Treasury Data",
+        "", // description
+        new Date(expirationTime * 1_000),
+        OperationType.TreasuryRefreshBalance,
+        multisig.id,
+        MSPV2Constants.MSP,
+        ixAccounts,
+        ixData
+      );
 
       return tx;
     }
@@ -1940,7 +1833,7 @@ export const TreasuriesView = () => {
       }
 
       // Create a transaction
-      let result = await refreshTreasuryData(data)
+      const result = await refreshTreasuryData(data)
         .then(value => {
           if (!value) { return false; }
           consoleOut('refreshBalance returned transaction:', value);
@@ -2115,7 +2008,7 @@ export const TreasuriesView = () => {
     transactionFees.blockchainFee,
     transactionStatus.currentOperation,
     onRefreshTreasuryBalanceTransactionFinished,
-    clearTransactionStatusContext,
+    clearTxConfirmationContext,
     startFetchTxSignatureInfo,
     resetTransactionStatus,
     setTransactionStatus,
@@ -2129,7 +2022,7 @@ export const TreasuriesView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.TreasuryCreate);
@@ -2171,51 +2064,19 @@ export const TreasuriesView = () => {
 
       const ixData = Buffer.from(createTreasuryTx.instructions[0].data);
       const ixAccounts = createTreasuryTx.instructions[0].keys;
-      const transaction = Keypair.generate();
-      const txSize = 1200;
-      const createIx = await multisigClient.account.transaction.createInstruction(
-        transaction,
-        txSize
-      );
-
-      const [txDetailAddress] = await PublicKey.findProgramAddress(
-        [
-          multisig.id.toBuffer(),
-          transaction.publicKey.toBuffer()
-        ],
-        multisigClient.programId
-      );
-
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
-      
-      let tx = multisigClient.transaction.createTransaction(
-        MSPV2Constants.MSP, 
-        ixAccounts,
-        ixData,
-        OperationType.TreasuryCreate,
-        "Create Treasury",
-        "",
-        new BN(expirationTime),
-        new BN(0),
-        new BN(0),
-        {
-          accounts: {
-            multisig: multisig.id,
-            transaction: transaction.publicKey,
-            transactionDetail: txDetailAddress,
-            proposer: publicKey as PublicKey,
-            multisigOpsAccount: MEAN_MULTISIG_OPS,
-            systemProgram: SystemProgram.programId
-          },
-          preInstructions: [createIx],
-          signers: [transaction],
-        }
-      );
 
-      tx.feePayer = publicKey;
-      let { blockhash } = await connection.getRecentBlockhash("confirmed");
-      tx.recentBlockhash = blockhash;
-      tx.partialSign(transaction);
+      const tx = await multisigClient.createTransaction(
+        publicKey,
+        "Create Treasury",
+        "", // description
+        new Date(expirationTime * 1_000),
+        OperationType.TreasuryCreate,
+        multisig.id,
+        MSPV2Constants.MSP,
+        ixAccounts,
+        ixData
+      );
 
       return tx;
     }
@@ -2294,7 +2155,7 @@ export const TreasuriesView = () => {
 
       consoleOut('Starting Create Treasury using MSP V2...', '', 'blue');
 
-      let result = await createTreasury(payload)
+      const result = await createTreasury(payload)
         .then(value => {
           if (!value) { return false; }
           consoleOut('createTreasury returned transaction:', value);
@@ -2523,7 +2384,7 @@ export const TreasuriesView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.TreasuryAddFunds);
@@ -2670,12 +2531,12 @@ export const TreasuriesView = () => {
 
       if (!treasuryDetails || !multisigClient || !multisigAccounts || !publicKey) { return null; }
 
-      let treasury = treasuryDetails as Treasury;
-      let multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
+      const treasury = treasuryDetails as Treasury;
+      const multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
 
       if (!multisig) { return null; }
 
-      let allocateTx = await msp.allocate(
+      const allocateTx = await msp.allocate(
         new PublicKey(data.payer),                   // payer
         new PublicKey(multisig.authority),           // treasurer
         new PublicKey(data.treasury),                // treasury
@@ -2685,51 +2546,19 @@ export const TreasuriesView = () => {
 
       const ixData = Buffer.from(allocateTx.instructions[0].data);
       const ixAccounts = allocateTx.instructions[0].keys;
-      const transaction = Keypair.generate();
-      const txSize = 1200;
-      const createIx = await multisigClient.account.transaction.createInstruction(
-        transaction,
-        txSize
-      );
-
-      const [txDetailAddress] = await PublicKey.findProgramAddress(
-        [
-          multisig.id.toBuffer(),
-          transaction.publicKey.toBuffer()
-        ],
-        multisigClient.programId
-      ); 
-
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
-      
-      let tx = multisigClient.transaction.createTransaction(
-        MSPV2Constants.MSP, 
-        ixAccounts,
-        ixData,
-        OperationType.StreamAddFunds,
-        "Add Funds",
-        "",
-        new BN(expirationTime),
-        new BN(0),
-        new BN(0),
-        {
-          accounts: {
-            multisig: multisig.id,
-            transaction: transaction.publicKey,
-            transactionDetail: txDetailAddress,
-            proposer: publicKey as PublicKey,
-            multisigOpsAccount: MEAN_MULTISIG_OPS,
-            systemProgram: SystemProgram.programId
-          },
-          preInstructions: [createIx],
-          signers: [transaction],
-        }
-      );
 
-      tx.feePayer = publicKey;
-      let { blockhash } = await connection.getRecentBlockhash("confirmed");
-      tx.recentBlockhash = blockhash;
-      tx.partialSign(transaction);
+      const tx = await multisigClient.createTransaction(
+        publicKey,
+        "Add Funds",
+        "", // description
+        new Date(expirationTime * 1_000),
+        OperationType.StreamAddFunds,
+        multisig.id,
+        MSPV2Constants.MSP,
+        ixAccounts,
+        ixData
+      );
 
       return tx;
     }
@@ -2813,7 +2642,7 @@ export const TreasuriesView = () => {
 
       consoleOut('Starting Add Funds using MSP V2...', '', 'blue');
       // Create a transaction
-      let result = await addFunds(data)
+      const result = await addFunds(data)
         .then((value: Transaction | null) => {
           if (!value) { return false; }
           consoleOut('addFunds returned transaction:', value);
@@ -3037,7 +2866,7 @@ export const TreasuriesView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.TreasuryClose);
@@ -3154,12 +2983,12 @@ export const TreasuriesView = () => {
 
       if (!treasuryDetails || !multisigClient || !multisigAccounts || !publicKey) { return null; }
 
-      let treasury = treasuryDetails as Treasury;
-      let multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
+      const treasury = treasuryDetails as Treasury;
+      const multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
 
       if (!multisig) { return null; }
 
-      let closeTreasury = await msp.closeTreasury(
+      const closeTreasury = await msp.closeTreasury(
         publicKey,                                                // payer
         multisig.authority,                         // TODO: This should come from the UI        
         new PublicKey(data.treasury),                             // treasury
@@ -3167,51 +2996,19 @@ export const TreasuriesView = () => {
 
       const ixData = Buffer.from(closeTreasury.instructions[0].data);
       const ixAccounts = closeTreasury.instructions[0].keys;
-      const transaction = Keypair.generate();
-      const txSize = 1200;
-      const createIx = await multisigClient.account.transaction.createInstruction(
-        transaction,
-        txSize
-      );
-
-      const [txDetailAddress] = await PublicKey.findProgramAddress(
-        [
-          multisig.id.toBuffer(),
-          transaction.publicKey.toBuffer()
-        ],
-        multisigClient.programId
-      );
-
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
-      
-      let tx = multisigClient.transaction.createTransaction(
-        MSPV2Constants.MSP, 
-        ixAccounts,
-        ixData,
-        OperationType.TreasuryClose,
-        "Close Treasury",
-        "",
-        new BN(expirationTime),
-        new BN(0),
-        new BN(0),
-        {
-          accounts: {
-            multisig: multisig.id,
-            transaction: transaction.publicKey,
-            transactionDetail: txDetailAddress,
-            proposer: publicKey as PublicKey,
-            multisigOpsAccount: MEAN_MULTISIG_OPS,
-            systemProgram: SystemProgram.programId
-          },
-          preInstructions: [createIx],
-          signers: [transaction],
-        }
-      );
 
-      tx.feePayer = publicKey;
-      let { blockhash } = await connection.getRecentBlockhash("confirmed");
-      tx.recentBlockhash = blockhash;
-      tx.partialSign(transaction);
+      const tx = await multisigClient.createTransaction(
+        publicKey,
+        "Close Treasury",
+        "", // description
+        new Date(expirationTime * 1_000),
+        OperationType.TreasuryClose,
+        multisig.id,
+        MSPV2Constants.MSP,
+        ixAccounts,
+        ixData
+      );
 
       return tx;
     }
@@ -3282,7 +3079,7 @@ export const TreasuriesView = () => {
 
       consoleOut('Starting Close Treasury using MSP V2...', '', 'blue');
       // Create a transaction
-      let result = closeTreasury(data)
+      const result = closeTreasury(data)
         .then(value => {
           if (!value) { return false; }
           consoleOut('closeTreasury returned transaction:', value);
@@ -3508,7 +3305,7 @@ export const TreasuriesView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.StreamClose);
     setRetryOperationPayload(closeTreasury);
@@ -3628,12 +3425,12 @@ export const TreasuriesView = () => {
 
       if (!treasuryDetails || !multisigClient || !multisigAccounts || !publicKey) { return null; }
 
-      let treasury = treasuryDetails as Treasury;
-      let multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
+      const treasury = treasuryDetails as Treasury;
+      const multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
 
       if (!multisig) { return null; }
 
-      let closeStream = await msp.closeStream(
+      const closeStream = await msp.closeStream(
         new PublicKey(data.payer),             // payer
         new PublicKey(data.payer),             // TODO: This should come from the UI 
         new PublicKey(data.stream),            // stream,
@@ -3642,52 +3439,19 @@ export const TreasuriesView = () => {
 
       const ixData = Buffer.from(closeStream.instructions[0].data);
       const ixAccounts = closeStream.instructions[0].keys;
-      const transaction = Keypair.generate();
-      const txSize = 1200;
-      const txSigners = [transaction];
-      const createIx = await multisigClient.account.transaction.createInstruction(
-        transaction,
-        txSize
-      );
-
-      const [txDetailAddress] = await PublicKey.findProgramAddress(
-        [
-          multisig.id.toBuffer(),
-          transaction.publicKey.toBuffer()
-        ],
-        multisigClient.programId
-      );
-
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
-      
-      let tx = multisigClient.transaction.createTransaction(
-        MSPV2Constants.MSP, 
-        ixAccounts,
-        ixData,
-        OperationType.StreamClose,
-        "Close Stream",
-        "",
-        new BN(expirationTime),
-        new BN(0),
-        new BN(0),
-        {
-          accounts: {
-            multisig: multisig.id,
-            transaction: transaction.publicKey,
-            transactionDetail: txDetailAddress,
-            proposer: publicKey as PublicKey,
-            multisigOpsAccount: MEAN_MULTISIG_OPS,
-            systemProgram: SystemProgram.programId
-          },
-          preInstructions: [createIx],
-          signers: txSigners,
-        }
-      );
 
-      tx.feePayer = publicKey;
-      let { blockhash } = await connection.getRecentBlockhash("confirmed");
-      tx.recentBlockhash = blockhash;
-      tx.partialSign(...txSigners);
+      const tx = await multisigClient.createTransaction(
+        publicKey,
+        "Close Stream",
+        "", // description
+        new Date(expirationTime * 1_000),
+        OperationType.StreamClose,
+        multisig.id,
+        MSPV2Constants.MSP,
+        ixAccounts,
+        ixData
+      );
 
       return tx;
     }
@@ -3759,7 +3523,7 @@ export const TreasuriesView = () => {
 
       consoleOut('Starting Close Stream using MSP V2...', '', 'blue');
       // Create a transaction
-      let result = await closeStream(data)
+      const result = await closeStream(data)
         .then(value => {
           if (!value) { return false; }
           consoleOut('closeStream returned transaction:', value);
@@ -3971,7 +3735,7 @@ export const TreasuriesView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.StreamPause);
@@ -4088,12 +3852,12 @@ export const TreasuriesView = () => {
 
       if (!treasuryDetails || !multisigClient || !multisigAccounts || !publicKey) { return null; }
 
-      let treasury = treasuryDetails as Treasury;
-      let multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
+      const treasury = treasuryDetails as Treasury;
+      const multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
 
       if (!multisig) { return null; }
 
-      let pauseStream = await msp.pauseStream(
+      const pauseStream = await msp.pauseStream(
         new PublicKey(data.payer),                   // payer
         multisig.authority,                          // treasurer
         new PublicKey(data.stream),                  // stream,
@@ -4101,52 +3865,19 @@ export const TreasuriesView = () => {
 
       const ixData = Buffer.from(pauseStream.instructions[0].data);
       const ixAccounts = pauseStream.instructions[0].keys;
-      const transaction = Keypair.generate();
-      const txSize = 1200;
-      const txSigners = [transaction];
-      const createIx = await multisigClient.account.transaction.createInstruction(
-        transaction,
-        txSize
-      );
-
-      const [txDetailAddress] = await PublicKey.findProgramAddress(
-        [
-          multisig.id.toBuffer(),
-          transaction.publicKey.toBuffer()
-        ],
-        multisigClient.programId
-      );
-
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
-      
-      let tx = multisigClient.transaction.createTransaction(
-        MSPV2Constants.MSP, 
-        ixAccounts,
-        ixData,
-        OperationType.StreamPause,
-        "Pause Stream",
-        "",
-        new BN(expirationTime),
-        new BN(0),
-        new BN(0),
-        {
-          accounts: {
-            multisig: multisig.id,
-            transaction: transaction.publicKey,
-            transactionDetail: txDetailAddress,
-            proposer: publicKey as PublicKey,
-            multisigOpsAccount: MEAN_MULTISIG_OPS,
-            systemProgram: SystemProgram.programId
-          },
-          preInstructions: [createIx],
-          signers: txSigners,
-        }
-      );
 
-      tx.feePayer = publicKey;
-      let { blockhash } = await connection.getRecentBlockhash("confirmed");
-      tx.recentBlockhash = blockhash;
-      tx.partialSign(...txSigners);
+      const tx = await multisigClient.createTransaction(
+        publicKey,
+        "Pause Stream",
+        "", // description
+        new Date(expirationTime * 1_000),
+        OperationType.StreamPause,
+        multisig.id,
+        MSPV2Constants.MSP,
+        ixAccounts,
+        ixData
+      );
 
       return tx;
     }
@@ -4217,7 +3948,7 @@ export const TreasuriesView = () => {
 
       consoleOut('Starting Stream Pause using MSP V2...', '', 'blue');
       // Create a transaction
-      let result = await pauseStream(data)
+      const result = await pauseStream(data)
         .then(value => {
           if (!value) { return false; }
           consoleOut('pauseStream returned transaction:', value);
@@ -4432,7 +4163,7 @@ export const TreasuriesView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.StreamResume);
@@ -4549,12 +4280,12 @@ export const TreasuriesView = () => {
 
       if (!treasuryDetails || !multisigClient || !multisigAccounts || !publicKey) { return null; }
 
-      let treasury = treasuryDetails as Treasury;
-      let multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
+      const treasury = treasuryDetails as Treasury;
+      const multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
 
       if (!multisig) { return null; }
 
-      let resumeStream = await msp.resumeStream(
+      const resumeStream = await msp.resumeStream(
         new PublicKey(data.payer),                   // payer
         multisig.authority,                          // treasurer
         new PublicKey(data.stream),                  // stream,
@@ -4562,52 +4293,19 @@ export const TreasuriesView = () => {
 
       const ixData = Buffer.from(resumeStream.instructions[0].data);
       const ixAccounts = resumeStream.instructions[0].keys;
-      const transaction = Keypair.generate();
-      const txSize = 1200;
-      const txSigners = [transaction];
-      const createIx = await multisigClient.account.transaction.createInstruction(
-        transaction,
-        txSize
-      );
-
-      const [txDetailAddress] = await PublicKey.findProgramAddress(
-        [
-          multisig.id.toBuffer(),
-          transaction.publicKey.toBuffer()
-        ],
-        multisigClient.programId
-      );
-
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
-      
-      let tx = multisigClient.transaction.createTransaction(
-        MSPV2Constants.MSP, 
-        ixAccounts as any,
-        ixData as any,
-        OperationType.StreamResume,
-        "Resume Stream",
-        "",
-        new BN(expirationTime),
-        new BN(0),
-        new BN(0),
-        {
-          accounts: {
-            multisig: multisig.id,
-            transaction: transaction.publicKey,
-            transactionDetail: txDetailAddress,
-            proposer: publicKey as PublicKey,
-            multisigOpsAccount: MEAN_MULTISIG_OPS,
-            systemProgram: SystemProgram.programId
-          },
-          preInstructions: [createIx],
-          signers: txSigners,
-        }
-      );
 
-      tx.feePayer = publicKey;
-      let { blockhash } = await connection.getRecentBlockhash("confirmed");
-      tx.recentBlockhash = blockhash;
-      tx.partialSign(...txSigners);
+      const tx = await multisigClient.createTransaction(
+        publicKey,
+        "Resume Stream",
+        "", // description
+        new Date(expirationTime * 1_000),
+        OperationType.StreamResume,
+        multisig.id,
+        MSPV2Constants.MSP,
+        ixAccounts,
+        ixData
+      );
 
       return tx;
     }
@@ -4678,7 +4376,7 @@ export const TreasuriesView = () => {
 
       consoleOut('Starting Stream Resume using MSP V2...', '', 'blue');
       // Create a transaction
-      let result = await resumeStream(data)
+      const result = await resumeStream(data)
         .then(value => {
           if (!value) { return false; }
           consoleOut('resumeStream returned transaction:', value);
@@ -4903,7 +4601,7 @@ export const TreasuriesView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
-    clearTransactionStatusContext();
+    clearTxConfirmationContext();
     resetTransactionStatus();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.TreasuryCreate);
@@ -4914,7 +4612,7 @@ export const TreasuriesView = () => {
 
       if (!msp) { return null; }
 
-      let treasuryWithdraw = await msp.treasuryWithdraw(
+      const treasuryWithdraw = await msp.treasuryWithdraw(
         new PublicKey(data.payer),              // payer
         new PublicKey(data.destination),        // treasurer
         new PublicKey(data.treasury),           // treasury
@@ -4927,58 +4625,26 @@ export const TreasuriesView = () => {
 
       if (!treasuryDetails || !multisigClient || !multisigAccounts || !publicKey) { return null; }
 
-      let treasury = treasuryDetails as Treasury;
-      let multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
+      const treasury = treasuryDetails as Treasury;
+      const multisig = multisigAccounts.filter(m => m.authority.toBase58() === treasury.treasurer)[0];
 
       if (!multisig) { return null; }
 
       const ixData = Buffer.from(treasuryWithdraw.instructions[0].data);
       const ixAccounts = treasuryWithdraw.instructions[0].keys;
-      const transaction = Keypair.generate();
-      const txSize = 1200;
-      const createIx = await multisigClient.account.transaction.createInstruction(
-        transaction,
-        txSize
-      );
-
-      const [txDetailAddress] = await PublicKey.findProgramAddress(
-        [
-          multisig.id.toBuffer(),
-          transaction.publicKey.toBuffer()
-        ],
-        multisigClient.programId
-      );
-
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
-      
-      let tx = multisigClient.transaction.createTransaction(
-        MSPV2Constants.MSP, 
-        ixAccounts as any,
-        ixData as any,
-        OperationType.TreasuryWithdraw,
-        "Withdraw Treasury Funds",
-        "",
-        new BN(expirationTime),
-        new BN(0),
-        new BN(0),
-        {
-          accounts: {
-            multisig: multisig.id,
-            transaction: transaction.publicKey,
-            transactionDetail: txDetailAddress,
-            proposer: publicKey as PublicKey,
-            multisigOpsAccount: MEAN_MULTISIG_OPS,
-            systemProgram: SystemProgram.programId
-          },
-          preInstructions: [createIx],
-          signers: [transaction],
-        }
-      );
 
-      tx.feePayer = publicKey;
-      let { blockhash } = await connection.getRecentBlockhash("confirmed");
-      tx.recentBlockhash = blockhash;
-      tx.partialSign(transaction);
+      const tx = await multisigClient.createTransaction(
+        publicKey,
+        "Withdraw Treasury Funds",
+        "", // description
+        new Date(expirationTime * 1_000),
+        OperationType.TreasuryWithdraw,
+        multisig.id,
+        MSPV2Constants.MSP,
+        ixAccounts,
+        ixData
+      );
 
       return tx;
     }
@@ -5071,7 +4737,7 @@ export const TreasuriesView = () => {
 
       consoleOut('Starting Treasury Withdraw using MSP V2...', '', 'blue');
 
-      let result = await treasuryWithdraw(payload)
+      const result = await treasuryWithdraw(payload)
         .then(value => {
           if (!value) { return false; }
           consoleOut('treasuryWithdraw returned transaction:', value);
@@ -5399,7 +5065,7 @@ export const TreasuriesView = () => {
     const multisig = v2 && isNewTreasury && multisigAccounts
       ? multisigAccounts.find(m => m.authority.toBase58() === v2.treasurer)
       : undefined;
-    return (
+    return treasuryPendingTxs > 0 && (
       <div key="streams" className="transaction-list-row no-pointer mb-2">
         <div className="icon-cell">
           <div className="token-icon">
@@ -5793,7 +5459,7 @@ export const TreasuriesView = () => {
             <div className="meanfi-two-panel-left">
 
               <div className="meanfi-panel-heading">
-                {isMultisigAvailable() && (
+                {isMultisigAvailable() ? (
                   <div className="back-button">
                     <span className="icon-button-container">
                       <Tooltip placement="bottom" title={t('multisig.multisig-assets.back-to-multisig-accounts-cta')}>
@@ -5813,7 +5479,23 @@ export const TreasuriesView = () => {
                       </Tooltip>
                     </span>
                   </div>
-                )}
+                ) : state && (state as any).previousPath ? (
+                  <div className="back-button">
+                    <span className="icon-button-container">
+                      <Tooltip placement="bottom" title="Back to accounts">
+                        <Button
+                          type="default"
+                          shape="circle"
+                          size="middle"
+                          icon={<ArrowLeftOutlined />}
+                          onClick={() => {
+                            navigate((state as any).previousPath);
+                          }}
+                        />
+                      </Tooltip>
+                    </span>
+                  </div>
+                ) : null}
                 <span className="title">{t('treasuries.screen-title')}</span>
                 <Tooltip placement="bottom" title={t('treasuries.refresh-tooltip')}>
                   <div className={`transaction-stats user-address ${loadingTreasuries ? 'click-disabled' : 'simplelink'}`} onClick={onRefreshTreasuriesClick}>
@@ -6081,7 +5763,7 @@ export const TreasuriesView = () => {
         />
       )}
 
-      {isCreateStreamModalVisible && (
+      {multisigClient && isCreateStreamModalVisible && (
         <TreasuryStreamCreateModal
           associatedToken={
             treasuryDetails

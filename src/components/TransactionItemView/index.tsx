@@ -1,15 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
 import { TokenBalance } from "@solana/web3.js";
-import { NATIVE_SOL_MINT } from "../../utils/ids";
 import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from "../../constants";
 import { getSolanaExplorerClusterParam } from "../../contexts/connection";
-import { getAmountFromLamports, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from "../../utils/utils";
+import { formatThousands, getAmountFromLamports, shortenAddress } from "../../utils/utils";
 import { UserTokenAccount } from "../../models/transactions";
 import { NATIVE_SOL } from "../../utils/tokens";
 import { Tooltip } from "antd";
 import { MappedTransaction } from "../../utils/history";
-import { isLocal, relativeTimeFromDates } from "../../utils/ui";
+import { getRelativeDate } from "../../utils/ui";
 
 export const TransactionItemView = (props: {
   accountAddress: string;
@@ -123,47 +122,45 @@ export const TransactionItemView = (props: {
   const getDisplayAmount = (): string => {
     const displayAmount = postTokenBalance
         ? isNativeAccountSelected
-          ? getTokenAmountAndSymbolByTokenAddress(
-              getAmountFromLamports(balanceChange),
-              NATIVE_SOL.address,
-              !isLocal()
+          ? formatThousands(
+              getAmountFromLamports(balanceChange), NATIVE_SOL.decimals, NATIVE_SOL.decimals
             )
-          : getTokenAmountAndSymbolByTokenAddress(
+          : formatThousands(
               balanceChange,
-              postTokenBalance.mint,
-              !isLocal()
+              postTokenBalance.uiTokenAmount.decimals,
+              postTokenBalance.uiTokenAmount.decimals
             )
-        : getTokenAmountAndSymbolByTokenAddress(
+        : formatThousands(
             getAmountFromLamports(balanceChange),
-            NATIVE_SOL_MINT.toBase58(),
-            !isLocal()
+            NATIVE_SOL.decimals,
+            NATIVE_SOL.decimals
           );
+
     return displayAmount;
   }
 
   const getDisplayPostBalance = (): string => {
     return postTokenBalance
       ? isNativeAccountSelected
-        ? getTokenAmountAndSymbolByTokenAddress(
+        ? formatThousands(
             getAmountFromLamports(postBalance),
-            NATIVE_SOL_MINT.toBase58(),
-            !isLocal()
+            NATIVE_SOL.decimals,
+            NATIVE_SOL.decimals
           )
-        : getTokenAmountAndSymbolByTokenAddress(
+        : formatThousands(
             postTokenBalance ? postTokenBalance.uiTokenAmount.uiAmount || postBalance : postBalance,
-            postTokenBalance ? postTokenBalance.mint || NATIVE_SOL.address : NATIVE_SOL.address,
-            !isLocal()
+            postTokenBalance
+              ? postTokenBalance.uiTokenAmount.decimals || NATIVE_SOL.decimals
+              : NATIVE_SOL.decimals,
+            postTokenBalance
+              ? postTokenBalance.uiTokenAmount.decimals || NATIVE_SOL.decimals
+              : NATIVE_SOL.decimals
           )
-      : getTokenAmountAndSymbolByTokenAddress(
+      : formatThousands(
           getAmountFromLamports(postBalance),
-          NATIVE_SOL.address,
-          !isLocal()
+          NATIVE_SOL.decimals,
+          NATIVE_SOL.decimals
         );
-  }
-
-  const getRelativeDate = (timestamp: number) => {
-    const reference = new Date(timestamp);
-    return relativeTimeFromDates(reference);
   }
 
   const getTransactionItem = () => {

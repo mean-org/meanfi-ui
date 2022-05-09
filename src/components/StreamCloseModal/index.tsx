@@ -292,13 +292,13 @@ export const StreamCloseModal = (props: {
 
       {loadingTreasuryDetails ? (
         // The loading part
-        <div className="transaction-progress">
+        <div className="transaction-progress p-0">
           <LoadingOutlined style={{ fontSize: 48 }} className="icon mt-0" spin />
           <h4 className="operation">{t('close-stream.loading-treasury-message')}</h4>
         </div>
       ) : streamTreasuryType === "locked" && streamState !== STREAM_STATUS.Paused ? (
         // The user can't close the stream
-        <div className="transaction-progress">
+        <div className="transaction-progress p-0">
           <ExclamationCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
           <h4 className="operation">{t('close-stream.cant-close-message')}</h4>
 
@@ -327,7 +327,7 @@ export const StreamCloseModal = (props: {
         </div>
       ) : (
         // The normal stuff
-        <div className="transaction-progress">
+        <div className="transaction-progress p-0">
           <ExclamationCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
           <h4 className="operation">{props.content}</h4>
 
@@ -356,8 +356,8 @@ export const StreamCloseModal = (props: {
           )}
 
           {props.canCloseTreasury && treasuryDetails && !treasuryDetails.autoClose && (
-            <div className="mb-4 flex-fixed-right">
-              <div className="form-label left">
+            <div className="mt-3 flex-fixed-right">
+              <div className="form-label left m-0 p-0">
                 {t('treasuries.treasury-streams.close-stream-also-closes-treasury-label')}
               </div>
               <div className="right">

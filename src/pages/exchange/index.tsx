@@ -1,7 +1,7 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { PreFooter } from "../../components/PreFooter";
-import { getTokenBySymbol, TokenInfo } from '../../utils/tokens';
+import { getTokenBySymbol } from '../../utils/tokens';
 import { consoleOut, isProd } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
 import { DdcaClient } from '@mean-dao/ddca';
@@ -12,6 +12,7 @@ import { Connection } from '@solana/web3.js';
 import { useTranslation } from 'react-i18next';
 import { IconExchange } from '../../Icons';
 import { JupiterExchange, RecurringExchange, } from '../../views';
+import { TokenInfo } from '@solana/spl-token-registry';
 
 type SwapOption = "one-time" | "recurring";
 
@@ -28,6 +29,84 @@ export const SwapView = () => {
   const [queryFromMint, setQueryFromMint] = useState<string | null>(null);
   const [queryToMint, setQueryToMint] = useState<string | null>(null);
   const [currentTab, setCurrentTab] = useState<SwapOption>("one-time");
+
+  // Connection management
+  const [cachedRpcJson] = useLocalStorageState("cachedRpc");
+  const [mainnetRpc, setMainnetRpc] = useState<RpcConfig | null>(null);
+  const cachedRpc = (cachedRpcJson as RpcConfig);
+  const endpoint = mainnetRpc ? mainnetRpc.httpProvider : cachedRpc.httpProvider;
+
+  const connection = useMemo(() => new Connection(mainnetRpc ? mainnetRpc.httpProvider : cachedRpc.httpProvider, "confirmed"),
+    [cachedRpc.httpProvider, mainnetRpc]);
+
+  /////////////////
+  //  CALLBACKS  //
+  /////////////////
+
+  // Gets the recurring buys on demmand
+  const reloadRecurringBuys = useCallback(() => {
+    if (!publicKey) {
+      return;
+    }
+
+    if (!loadingRecurringBuys) {
+      setLoadingRecurringBuys(true);
+
+      const ddcaClient = new DdcaClient(mainnetRpc ? mainnetRpc.httpProvider : cachedRpc.httpProvider, wallet, { commitment: connection.commitment });
+
+      ddcaClient.listDdcas()
+        .then(ddcas => {
+          consoleOut('ddcas:', ddcas, 'blue');
+          setRecurringBuys(ddcas);
+        }).catch(err => {
+          console.error(err);
+        });
+    }
+  }, [
+    wallet,
+    publicKey,
+    mainnetRpc,
+    loadingRecurringBuys,
+    cachedRpc.httpProvider,
+    connection.commitment,
+    setLoadingRecurringBuys,
+    setRecurringBuys
+  ]);
+
+  ///////////////
+  //  Effects  //
+  ///////////////
+
+  // Get RPC endpoint
+  useEffect(() => {
+    (async () => {
+      if (cachedRpc && cachedRpc.networkId !== 101) {
+        const mainnetRpc = await getLiveRpc(101);
+        if (!mainnetRpc) {
+          navigate('/service-unavailable');
+        }
+        setMainnetRpc(mainnetRpc);
+      } else {
+        setMainnetRpc(null);
+      }
+    })();
+    return () => { }
+  }, [
+    cachedRpc,
+    navigate,
+  ]);
+
+  // Load recurring buys once
+  useEffect(() => {
+    if (!loadingRecurringBuys) {
+      reloadRecurringBuys();
+    }
+
+    return () => {};
+  }, [
+    loadingRecurringBuys,
+    reloadRecurringBuys
+  ]);
 
   // Parse query params
   useEffect(() => {
@@ -61,79 +140,17 @@ export const SwapView = () => {
     }
   }, [location]);
 
-  // Connection management
-  const [cachedRpcJson] = useLocalStorageState("cachedRpc");
-  const [mainnetRpc, setMainnetRpc] = useState<RpcConfig | null>(null);
-  const cachedRpc = (cachedRpcJson as RpcConfig);
-  const endpoint = mainnetRpc ? mainnetRpc.httpProvider : cachedRpc.httpProvider;
-
-  // Get RPC endpoint
-  useEffect(() => {
-    (async () => {
-      if (cachedRpc && cachedRpc.networkId !== 101) {
-        const mainnetRpc = await getLiveRpc(101);
-        if (!mainnetRpc) {
-          navigate('/service-unavailable');
-        }
-        setMainnetRpc(mainnetRpc);
-      } else {
-        setMainnetRpc(null);
-      }
-    })();
-    return () => { }
-  }, [
-    cachedRpc,
-    navigate,
-  ]);
-
-  const connection = useMemo(() => new Connection(mainnetRpc ? mainnetRpc.httpProvider : cachedRpc.httpProvider, "confirmed"),
-    [cachedRpc.httpProvider, mainnetRpc]);
-
-  // Gets the recurring buys on demmand
-  const reloadRecurringBuys = useCallback(() => {
-    if (!publicKey) {
-      return;
-    }
-
-    if (!loadingRecurringBuys) {
-      setLoadingRecurringBuys(true);
-
-      const ddcaClient = new DdcaClient(mainnetRpc ? mainnetRpc.httpProvider : cachedRpc.httpProvider, wallet, { commitment: connection.commitment });
-
-      ddcaClient.listDdcas()
-        .then(ddcas => {
-          consoleOut('ddcas:', ddcas, 'blue');
-          setRecurringBuys(ddcas);
-        }).catch(err => {
-          console.error(err);
-        });
-    }
-  }, [
-    wallet,
-    publicKey,
-    mainnetRpc,
-    loadingRecurringBuys,
-    cachedRpc.httpProvider,
-    connection.commitment,
-    setLoadingRecurringBuys,
-    setRecurringBuys
-  ]);
-
-  // Load recurring buys once
-  useEffect(() => {
-    if (!loadingRecurringBuys) {
-      reloadRecurringBuys();
-    }
-
-    return () => {};
-  }, [
-    loadingRecurringBuys,
-    reloadRecurringBuys
-  ]);
+  //////////////////////
+  //  Event handling  //
+  //////////////////////
 
   const onTabChange = (option: SwapOption) => {
     setCurrentTab(option);
   }
+
+  /////////////////
+  //  Rendering  //
+  /////////////////
 
   return (
     <>

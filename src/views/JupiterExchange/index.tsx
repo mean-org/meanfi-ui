@@ -1,6 +1,6 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
-import { Button, Divider, Modal, Tooltip } from "antd";
+import { Button, Divider, Drawer, Modal, Tooltip } from "antd";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { getPlatformFeeAccounts, Jupiter, RouteInfo, TOKEN_LIST_URL, TransactionFeeInfo } from "@jup-ag/core";
 import useLocalStorage from "../../hooks/useLocalStorage";
@@ -8,7 +8,7 @@ import { TOKEN_PROGRAM_ID } from "../../utils/ids";
 import { useWallet } from "../../contexts/wallet";
 import { consoleOut, getTransactionStatusForLogs, isProd } from "../../utils/ui";
 import { getJupiterTokenList } from "../../utils/api";
-import { DEFAULT_SLIPPAGE_PERCENT, EXCHANGE_ROUTES_REFRESH_TIMEOUT, MAX_TOKEN_LIST_ITEMS, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
+import { DEFAULT_SLIPPAGE_PERCENT, ONE_MINUTE_REFRESH_TIMEOUT, MAX_TOKEN_LIST_ITEMS, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { JupiterExchangeInput } from "../../components/JupiterExchangeInput";
 import { useNativeAccount, useUserAccounts } from "../../contexts/accounts";
 import { ACCOUNT_LAYOUT } from "../../utils/layouts";
@@ -31,8 +31,8 @@ import { OperationType, TransactionStatus } from "../../models/enums";
 import { unwrapSol } from "@mean-dao/hybrid-liquidity-ag";
 import { SignerWalletAdapter } from "@solana/wallet-adapter-base";
 import { TokenDisplay } from "../../components/TokenDisplay";
-import { TransactionStatusContext } from "../../contexts/transaction-status";
-import { notify } from "../../utils/notifications";
+import { TxConfirmationContext } from "../../contexts/transaction-status";
+import { openNotification } from "../../components/Notifications";
 
 export const COMMON_EXCHANGE_TOKENS = ['USDC', 'USDT', 'MEAN', 'SOL'];
 const MINIMUM_REQUIRED_SOL_BALANCE = 0.05;
@@ -42,7 +42,9 @@ export const JupiterExchange = (props: {
     queryFromMint: string | null;
     queryToMint: string | null;
     connection: Connection;
-}) => {
+    inModal?: boolean;
+    swapExecuted?: any;
+  }) => {
 
     const { t } = useTranslation("common");
     const { publicKey, wallet, connected } = useWallet();
@@ -58,12 +60,11 @@ export const JupiterExchange = (props: {
         setTransactionStatus,
         refreshPrices,
     } = useContext(AppStateContext);
-    const { enqueueTransactionConfirmation } = useContext(TransactionStatusContext);
+    const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
     const [isBusy, setIsBusy] = useState(false);
     const [isUnwrapping, setIsUnwrapping] = useState(false);
     const [fromMint, setFromMint] = useState<string | undefined>();
     const [toMint, setToMint] = useState<string | undefined>(undefined);
-    const [paramsProcessed, setParamsProcessed] = useState(false);
     const [refreshingRoutes, setRefreshingRoutes] = useState(false);
     const [jupiter, setJupiter] = useState<Jupiter | undefined>(undefined);
     const [jupiterReady, setJupiterReady] = useState(false);
@@ -90,6 +91,7 @@ export const JupiterExchange = (props: {
     const [feeInfo, setFeeInfo] = useState<TransactionFeeInfo | undefined>(undefined);
     const [quickTokens, setQuickTokens] = useState<TokenInfo[]>([]);
     const [swapRate, setSwapRate] = useState(false)
+    const [isTokenSelectorVisible, setIsTokenSelectorVisible] = useState(false);
 
     const platformFeesOwner = appConfig.getConfig().exchangeFeeAccountOwner;
     const platformFeeAmount = appConfig.getConfig().exchangeFlatFee;
@@ -196,16 +198,19 @@ export const JupiterExchange = (props: {
 
     // Set fromMint & toMint from query string if params are provided
     useEffect(() => {
-        if (paramsProcessed) { return; }
-
-        setParamsProcessed(true);
-
         if (props.queryFromMint || props.queryToMint) {
+            consoleOut('props.queryFromMint:', props.queryFromMint, 'orange');
+            consoleOut('props.queryToMint:', props.queryToMint, 'orange');
             if (props.queryFromMint) {
                 setFromMint(props.queryFromMint);
             }
             if (props.queryToMint) {
                 setToMint(props.queryToMint as string);
+            } else {
+                const to = MEAN_TOKEN_LIST.filter(t => t.chainId === 101 && t.symbol === 'MEAN');
+                if (to && to.length) {
+                    setToMint(to[0].address);
+                }
             }
         } else if (!props.queryFromMint && !props.queryToMint) {
             const from = MEAN_TOKEN_LIST.filter(t => t.chainId === 101 && t.symbol === 'USDC');
@@ -218,7 +223,6 @@ export const JupiterExchange = (props: {
             }
         }
     }, [
-        paramsProcessed,
         props.queryToMint,
         props.queryFromMint
     ]);
@@ -273,13 +277,13 @@ export const JupiterExchange = (props: {
 
             const error = (_error: any, tl: PublicKey[]) => {
                 console.error(_error);
-                for (let t of tl) {
+                for (const t of tl) {
                     balancesMap[t.toBase58()] = 0;
                 }
             };
 
             const success = (response: any) => {
-                for (let acc of response.value) {
+                for (const acc of response.value) {
                     const decoded = ACCOUNT_LAYOUT.decode(acc.account.data);
                     const address = decoded.mint.toBase58();
                     const item = tokenList.find(t => t.address === address);
@@ -357,7 +361,7 @@ export const JupiterExchange = (props: {
             if (publicKey && userBalances) {
 
                 for (const token of tokenList) {
-                    let mint = JSON.parse(JSON.stringify(token));
+                    const mint = JSON.parse(JSON.stringify(token));
                     if (mint.logoURI && token.address !== sol.address && userBalances[token.address] > 0) {
                         newList[mint.address] = mint;
                     }
@@ -459,7 +463,7 @@ export const JupiterExchange = (props: {
             return 0;
         }
 
-        let balance = fromMint === WRAPPED_SOL_MINT_ADDRESS
+        const balance = fromMint === WRAPPED_SOL_MINT_ADDRESS
             ? nativeBalance - MINIMUM_REQUIRED_SOL_BALANCE
             : userBalances[fromMint] || 0;
 
@@ -545,8 +549,8 @@ export const JupiterExchange = (props: {
 
             // First add those with balance
             if (publicKey && userBalances) {
-                for (let info of Object.values(pairs)) {
-                    let mint = JSON.parse(JSON.stringify(info)) as TokenInfo;
+                for (const info of Object.values(pairs)) {
+                    const mint = JSON.parse(JSON.stringify(info)) as TokenInfo;
                     if (mint.logoURI && userBalances[mint.address] > 0) {
                         toList[mint.address] = mint;
                     }
@@ -562,8 +566,8 @@ export const JupiterExchange = (props: {
                 });
 
             // Add all other items
-            for (let info of Object.values(pairs)) {
-                let mint = JSON.parse(JSON.stringify(info)) as TokenInfo;
+            for (const info of Object.values(pairs)) {
+                const mint = JSON.parse(JSON.stringify(info)) as TokenInfo;
                 if (mint.logoURI && !toList[mint.address]) {
                     toList[mint.address] = mint;
                 }
@@ -806,7 +810,7 @@ export const JupiterExchange = (props: {
             };
 
             if (subjectTokenSelection === 'source') {
-                let showFromList = !searchString
+                const showFromList = !searchString
                     ? mintList
                     : Object.values(mintList)
                         .filter((t: any) => filter(t));
@@ -816,7 +820,7 @@ export const JupiterExchange = (props: {
 
             if (subjectTokenSelection === 'destination') {
 
-                let showToList = !searchString
+                const showToList = !searchString
                     ? possiblePairsTokenInfo ? Object.values(possiblePairsTokenInfo).filter(t => t) : {}
                     : possiblePairsTokenInfo ? Object.values(possiblePairsTokenInfo)
                         .filter((t: any) => filter(t)) : {};
@@ -837,6 +841,26 @@ export const JupiterExchange = (props: {
         subjectTokenSelection,
     ]);
 
+    const setModalBodyMinHeight = useCallback((addMinHeight: boolean) => {
+        const modalBody = document.querySelector(".exchange-modal .ant-modal-content");
+        if (modalBody) {
+            if (addMinHeight) {
+                modalBody.classList.add('drawer-open');
+            } else {
+                modalBody.classList.remove('drawer-open');
+            }
+        }
+    }, []);
+
+    const autoFocusInput = useCallback(() => {
+        const input = document.getElementById("token-search-input");
+        if (input) {
+            setTimeout(() => {
+                input.focus();
+            }, 100);
+        }
+    }, []);
+
     // Token selection modal
     const showTokenSelector = useCallback(() => {
 
@@ -845,11 +869,7 @@ export const JupiterExchange = (props: {
             setTokenFilter('');
             updateTokenListByFilter('');
             setTokenSelectorModalVisibility(true);
-            const input = document.getElementById("token-search-input");
-
-            if (input) {
-                input.focus();
-            }
+            autoFocusInput();
 
         });
 
@@ -857,7 +877,18 @@ export const JupiterExchange = (props: {
             clearTimeout(timeout);
         }
 
-    }, [updateTokenListByFilter]);
+    }, [autoFocusInput, updateTokenListByFilter]);
+
+    const showDrawer = useCallback(() => {
+        setIsTokenSelectorVisible(true);
+        setModalBodyMinHeight(true);
+        autoFocusInput();
+    }, [autoFocusInput, setModalBodyMinHeight]);
+
+    const hideDrawer = useCallback(() => {
+        setIsTokenSelectorVisible(false);
+        setModalBodyMinHeight(false);
+    }, [setModalBodyMinHeight]);
 
     // Token selection modal close
     const onCloseTokenSelector = useCallback(() => {
@@ -865,6 +896,7 @@ export const JupiterExchange = (props: {
         const timeout = setTimeout(() => {
             setTokenFilter('');
             updateTokenListByFilter('');
+            hideDrawer();
             setTokenSelectorModalVisibility(false);
         });
 
@@ -872,7 +904,7 @@ export const JupiterExchange = (props: {
             clearTimeout(timeout);
         }
 
-    }, [updateTokenListByFilter]);
+    }, [hideDrawer, updateTokenListByFilter]);
 
     const onInputCleared = useCallback(() => {
         setTokenFilter('');
@@ -990,11 +1022,11 @@ export const JupiterExchange = (props: {
         if (jupiter && inputToken && outputToken && slippage && inputAmount) {
             timer = setInterval(() => {
                 if (!isBusy) {
-                    consoleOut(`Trigger refresh routes after ${EXCHANGE_ROUTES_REFRESH_TIMEOUT / 1000} seconds`);
+                    consoleOut(`Trigger refresh routes after ${ONE_MINUTE_REFRESH_TIMEOUT / 1000} seconds`);
                     setRefreshingRoutes(true);
                     refreshRoutes();
                 }
-            }, EXCHANGE_ROUTES_REFRESH_TIMEOUT);
+            }, ONE_MINUTE_REFRESH_TIMEOUT);
         }
 
         return () => {
@@ -1224,8 +1256,8 @@ export const JupiterExchange = (props: {
                             refreshUserBalances();
                         });
                     } else {
-                        notify({
-                            message: t('notifications.error-title'),
+                        openNotification({
+                            title: t('notifications.error-title'),
                             description: t('notifications.error-sending-transaction'),
                             type: "error"
                         });
@@ -1306,7 +1338,7 @@ export const JupiterExchange = (props: {
     ]);
 
     // Rendering
-    const infoRow = (caption: string, value: string, separator: string = '≈', route: boolean = false) => {
+    const infoRow = (caption: string, value: string, separator = '≈', route = false) => {
         return (
             <>
                 <div className="three-col-info-row">
@@ -1555,6 +1587,29 @@ export const JupiterExchange = (props: {
         </>
     );
 
+    const renderTokenSelectorInner = (
+        <div className="token-selector-wrapper">
+            <div className="token-search-wrapper">
+                <TextInput
+                    value={tokenFilter}
+                    allowClear={true}
+                    extraClass="mb-1"
+                    onInputClear={onInputCleared}
+                    placeholder={t('token-selector.exchange-search-input-placeholder')}
+                    onInputChange={onTokenSearchInputChange} />
+            </div>
+            <div className="common-token-shortcuts">
+                {renderCommonTokens()}
+            </div>
+            <Divider />
+            <div className="token-list">
+                {subjectTokenSelection === "source"
+                    ? renderSourceTokenList
+                    : renderDestinationTokenList}
+            </div>
+        </div>
+    );
+
     return (
         <>
             {/* {isLocal() && (
@@ -1618,7 +1673,7 @@ export const JupiterExchange = (props: {
                         }
                         onSelectToken={() => {
                             setSubjectTokenSelection("source");
-                            showTokenSelector();
+                            props.inModal ? showDrawer() : showTokenSelector();
                         }}
                         hint={
                             inputToken && inputToken.address === WRAPPED_SOL_MINT_ADDRESS
@@ -1632,7 +1687,7 @@ export const JupiterExchange = (props: {
                     />
                 )}
 
-                {(inputToken && outputToken && inputAmount && isInAmountTooLow()) ? (
+                {(jupiterReady && inputToken && outputToken && inputAmount && isInAmountTooLow()) ? (
                     <div className="input-amount-too-low flex-row flex-center">
                         <InfoCircleOutlined className="font-size-75" />
                         <span>Minimum swap is at least {toUiAmount(new BN(minInAmount || 0), inputToken.decimals)} {inputToken.symbol} for {toUiAmount(new BN(minOutAmount || 0), outputToken.decimals)} {outputToken.symbol}</span>
@@ -1733,9 +1788,10 @@ export const JupiterExchange = (props: {
                         onBalanceClick={() => refreshUserBalances()}
                         onSelectToken={() => {
                             setSubjectTokenSelection("destination");
-                            showTokenSelector();
+                            props.inModal ? showDrawer() : showTokenSelector();
                         }}
                         className="mb-2"
+                        disabled={!jupiterReady}
                         routes={routes}
                         onSelectedRoute={(route: any) => {
                             consoleOut('onSelectedRoute:', route, 'blue');
@@ -1772,7 +1828,7 @@ export const JupiterExchange = (props: {
 
                 {/* Warning */}
                 {!isProd() && (
-                    <div className="notifications">
+                    <div className="mt-3">
                         <div data-show="true" className="ant-alert ant-alert-warning" role="alert">
                             <span role="img" aria-label="exclamation-circle" className="anticon anticon-exclamation-circle ant-alert-icon">
                                 <WarningFilled />
@@ -1791,39 +1847,33 @@ export const JupiterExchange = (props: {
                 )}
 
             </div>
+            {props.inModal && (
+                <Drawer
+                    title={t('token-selector.modal-title')}
+                    placement="bottom"
+                    closable={true}
+                    onClose={onCloseTokenSelector}
+                    visible={isTokenSelectorVisible}
+                    getContainer={false}
+                    style={{ position: 'absolute' }}>
+                    {renderTokenSelectorInner}
+                </Drawer>
+            )}
 
             {/* Token selection modal */}
-            <Modal
-                className="mean-modal unpadded-content"
-                visible={isTokenSelectorModalVisible}
-                title={
-                    <div className="modal-title">{t('token-selector.modal-title')}</div>
-                }
-                onCancel={onCloseTokenSelector}
-                width={420}
-                footer={null}>
-                <div className="token-selector-wrapper">
-                    <div className="token-search-wrapper">
-                        <TextInput
-                            value={tokenFilter}
-                            allowClear={true}
-                            extraClass="mb-1"
-                            onInputClear={onInputCleared}
-                            placeholder={t('token-selector.exchange-search-input-placeholder')}
-                            onInputChange={onTokenSearchInputChange} />
-                    </div>
-                    <div className="common-token-shortcuts">
-                        {renderCommonTokens()}
-                    </div>
-                    <Divider />
-                    <div className="token-list vertical-scroll">
-                        {subjectTokenSelection === "source"
-                            ? renderSourceTokenList
-                            : renderDestinationTokenList}
-                    </div>
-                </div>
-            </Modal>
-
+            {!props.inModal && isTokenSelectorModalVisible && (
+                <Modal
+                    className="mean-modal unpadded-content"
+                    visible={isTokenSelectorModalVisible}
+                    title={
+                        <div className="modal-title">{t('token-selector.modal-title')}</div>
+                    }
+                    onCancel={onCloseTokenSelector}
+                    width={420}
+                    footer={null}>
+                    {renderTokenSelectorInner}
+                </Modal>
+            )}
         </>
     );
 };

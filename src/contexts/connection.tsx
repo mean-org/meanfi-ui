@@ -4,12 +4,18 @@ import { cache, getMultipleAccounts, MintParser } from "./accounts";
 import { ENV as ChainID, TokenInfo } from "@solana/spl-token-registry";
 import { MEAN_TOKEN_LIST } from "../constants/token-list";
 import { environment } from "../environments/environment";
-import { Cluster, Connection, PublicKey } from "@solana/web3.js";
+import { Cluster, Connection, ConnectionConfig, PublicKey } from "@solana/web3.js";
 import { DEFAULT_RPCS, RpcConfig } from "../models/connections-hq";
 import { useLocalStorageState } from "./../utils/utils";
+import { TRANSACTION_STATUS_RETRY_TIMEOUT } from "../constants";
 
 const DEFAULT = DEFAULT_RPCS[0].httpProvider;
 const DEFAULT_SLIPPAGE = 0.25;
+
+export const failsafeConnectionConfig: ConnectionConfig = {
+  commitment: "recent",
+  confirmTransactionInitialTimeout: TRANSACTION_STATUS_RETRY_TIMEOUT
+}
 
 export const getNetworkIdByCluster = (cluster: Cluster) => {
   switch (cluster) {
@@ -22,19 +28,30 @@ export const getNetworkIdByCluster = (cluster: Cluster) => {
   }
 }
 
+export const getNetworkIdByEnvironment = (env: string) => {
+  switch (env) {
+    case "local":
+    case "staging":
+    case "development":
+      return ChainID.Devnet;
+    case "production":
+    default:
+      return ChainID.MainnetBeta;
+  }
+}
+
 export const getSolanaExplorerClusterParam = (): string => {
   switch (environment) {
     case 'local':
     case 'development':
-      return '?cluster=devnet';
     case 'staging':
-      return '?cluster=testnet';
+      return '?cluster=devnet';
     default:
       return '';
   }
 }
 
-interface ConnectionConfig {
+interface ConnectionProviderConfig {
   connection: Connection;
   endpoint: string;
   slippage: number;
@@ -44,7 +61,7 @@ interface ConnectionConfig {
   tokenMap: Map<string, TokenInfo>;
 }
 
-const ConnectionContext = React.createContext<ConnectionConfig>({
+const ConnectionContext = React.createContext<ConnectionProviderConfig>({
   endpoint: DEFAULT,
   slippage: DEFAULT_SLIPPAGE,
   setSlippage: (val: number) => {},
@@ -64,7 +81,7 @@ export function ConnectionProvider({ children = undefined as any }) {
     DEFAULT_SLIPPAGE.toString()
   );
 
-  const connection = useMemo(() => new Connection(cachedRpc.httpProvider, "recent"), [
+  const connection = useMemo(() => new Connection(cachedRpc.httpProvider, failsafeConnectionConfig), [
     cachedRpc,
   ]);
 
@@ -74,8 +91,7 @@ export function ConnectionProvider({ children = undefined as any }) {
   useEffect(() => {
     // fetch token files
     (async () => {
-      let list: TokenInfo[];
-      list = MEAN_TOKEN_LIST.filter(t => t.chainId === cachedRpc.networkId);
+      const list = MEAN_TOKEN_LIST.filter(t => t.chainId === cachedRpc.networkId);
       const knownMints = list.reduce((map, item) => {
         map.set(item.address, item);
         return map;

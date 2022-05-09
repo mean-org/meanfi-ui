@@ -50,13 +50,13 @@ export async function fetchAccountHistory(
       "confirmed"
     );
 
-    let history = {
+    const history = {
       fetched,
       foundOldest: fetched.length < options.limit,
     };
 
     if (fetchTransactions && history && history.fetched) {
-      let signatures = history.fetched
+      const signatures = history.fetched
         .map((signature) => signature.signature)
         .concat(additionalSignatures || []);
       transactionMap = await fetchParsedTransactionsAsync(connection, signatures);
@@ -81,7 +81,7 @@ export const fetchParsedTransactionsAsync = async (
 
 ): Promise<MappedTransaction[]> => {
 
-  let txMap: MappedTransaction[] = [];
+  const txMap: MappedTransaction[] = [];
   
   try {
 
@@ -94,7 +94,7 @@ export const fetchParsedTransactionsAsync = async (
 
       // let result: MappedTransaction[] = [];
       const fetched = await connection.getParsedConfirmedTransactions(txSignatures);
-      let result = (fetched.map(tx => {
+      const result = (fetched.map(tx => {
         return { 
           signature: tx?.transaction.signatures[0], 
           parsedTransaction: tx 

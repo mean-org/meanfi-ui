@@ -4,19 +4,6 @@ import { appConfig } from "..";
 import { requestOptions } from "../constants";
 import { environment } from "../environments/environment";
 import { getRpcApiEndpoint } from "../utils/api";
-import { consoleOut } from "../utils/ui";
-
-export enum InitStatus {
-  LoadingApp = 0,
-  LoadAnotherRpcConfig = 1,
-  LoadRpcConfigSuccess = 2,
-  LoadRpcConfigError = 3,
-  TestRpcConfig = 4,
-  TestRpcSuccess = 5,
-  TestRpcError = 6,
-  Retry = 7,
-  NoNetwork = 8
-}
 
 export interface RpcConfig {
   cluster: Cluster;
@@ -60,9 +47,8 @@ export const getDefaultRpc = (): RpcConfig => {
   switch (environment) {
     case 'local':
     case 'development':
-      return DEFAULT_RPCS[2];
     case 'staging':
-      return DEFAULT_RPCS[1];
+      return DEFAULT_RPCS[2];
     case 'production':
     default:
       return DEFAULT_RPCS[0];
@@ -94,7 +80,7 @@ export const getLiveRpc = async (networkId?: number, previousRpcId?: number): Pr
 
   networkId = networkId ?? getDefaultRpc().networkId;
   const url = `${appConfig.getConfig().apiUrl}${GET_RPC_API_ENDPOINT}?networkId=${networkId}&previousRpcId=${previousRpcId || 0}`;
-  let rpcConfig = await getRpcApiEndpoint(url, requestOptions);
+  const rpcConfig = await getRpcApiEndpoint(url, requestOptions);
   if (rpcConfig === null) {
     return null;
   }
@@ -111,7 +97,7 @@ export const getLiveRpc = async (networkId?: number, previousRpcId?: number): Pr
 export const refreshCachedRpc = async () => {
   const cachedRpcJson = window.localStorage.getItem('cachedRpc');
   if (!cachedRpcJson) {
-    let newRpc = (await getLiveRpc()) ?? getDefaultRpc();
+    const newRpc = (await getLiveRpc()) ?? getDefaultRpc();
     window.localStorage.setItem('cachedRpc', JSON.stringify(newRpc));
     return;
   }

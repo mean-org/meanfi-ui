@@ -11,6 +11,7 @@
 		"money-streams": "Money Streams",
 		"network-unknown": "Không xác định",
 		"no-money-streams": "Không có Money Streams nào",
+		"no-recent-events": "No recent events",
 		"non-ata-label": "Tài khoản token không liên kết",
 		"non-ata-tooltip": "MeanFi hoạt động với các tài khoản token được liên kết, vui lòng hợp nhất các tài khoản {{tokenSymbol}} của bạn.",
 		"refresh-tooltip": "Nhấn để làm mới danh sách tài sản",
@@ -387,7 +388,7 @@
 	},
 	"multisig": {
 		"add-participant-cta": "Thêm người tham gia",
-		"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
+		"back-to-multisig-accounts-cta": "Back to Multisig Safes",
 		"create-multisig": {
 			"fee-info-label": "The fee to create this multisig is",
 			"main-cta": "Tạo",
@@ -471,7 +472,7 @@
 		},
 		"multisig-detail-heading": "Chi tiết tài khoản multisig",
 		"multisig-mints": {
-			"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
+			"back-to-multisig-accounts-cta": "Back to Multisig Safes",
 			"change-mint-authority-modal-title": "Thiết lập quyền hạn Mint",
 			"create-mint-modal-title": "Tạo mint",
 			"cta-change-mint-authority": "Chuyển quyền sở hữu",
@@ -571,7 +572,7 @@
 			"back-to-treasuries": "Back to Streaming Treasuries"
 		},
 		"multisig-assets": {
-			"back-to-multisig-accounts-cta": "Back to Safes & Multisig",
+			"back-to-multisig-accounts-cta": "Back to Multisig Safes",
 			"cta-change-multisig-authority": "Chuyển quyền sở hữu",
 			"cta-change-multisig-authority-busy": "Đang thay đổi Multisig",
 			"cta-close": "Đóng vault",
@@ -600,7 +601,7 @@
 		},
 		"pending-transactions": "giao dịch đang chờ xử lý",
 		"refresh-tooltip": "Nhấn để làm mới danh sách tài khoản multisig",
-		"screen-title": "Safes & Multisig",
+		"screen-title": "Multisig Safes",
 		"set-program-authority": {
 			"main-cta": "Thiết lập thẩm quyền",
 			"main-cta-busy": "Đang thiết lập thẩm quyền",
@@ -688,7 +689,7 @@
 		"error-loading-treasuryid-message": "Không thể tìm hoặc nạp kho bạc với ID {{treasuryId}}",
 		"error-sending-transaction": "Error submitting the transaction, please try again.",
 		"error-title": "Lỗi",
-		"friend-referral-completed": "Mời bạn hoàn thành",
+		"friend-referral-completed": "Chào mừng đến với MeanFi",
 		"invalid-publickey-message": "Public key không hợp lệ. Vui lòng kiểm tra nội dung nhập",
 		"invalid-streamid-message": "Stream id không hợp lệ",
 		"network-connection-down": "Không có kết nối mạng. App đang OFFLINE!",
@@ -727,7 +728,7 @@
 	},
 	"referrals": {
 		"address-invalid": "Địa chỉ giới thiệu không phải là địa chỉ solana hợp lệ",
-		"address-processed": "Vui lòng kết nối ví để lưu lại việc giới thiệu",
+		"address-processed": "Vui lòng kết nối ví của bạn để bắt đầu",
 		"connect-to-refer-friend": "Vui lòng kết nối ví để giới thiệu bạn bè",
 		"modal-title": "Giới thiệu bạn bè",
 		"refer-friend-hint": "Giới thiệu bạn bè bằng cách chia sẻ link bên dưới...",
@@ -979,7 +980,7 @@
 			"tx-confirm-failure": "Giao dịch không thể xác nhận",
 			"tx-confirm-failure-check": "Kiểm tra giao dịch của bạn ở link bên dưới",
 			"tx-confirmation-status-confirmed": "Giao dịch đã được xác nhận",
-			"tx-confirmation-status-timeout": "Giao dịch của bạn không thể được xác nhận trong {{timeout}}",
+			"tx-confirmation-status-timeout": "Giao dịch của bạn không thể được xác nhận",
 			"tx-confirmation-status-wait": "Đang chờ xác nhận giao dịch...",
 			"tx-generic-operation-success": "Giao dịch đã hoàn tất thành công",
 			"tx-idle": "Idle",
@@ -1032,7 +1033,7 @@
 			"amount-high": "Amount exceeded",
 			"amount-low": "Low balance",
 			"amount-lt-fee": "Số lượng phải lớn phí giao dịch",
-			"amount-sol-high": "Insufficient SOL",
+			"amount-sol-low": "Insufficient SOL",
 			"amount-withdraw-high": "Số lượng lớn hơn số tiền khả dụng",
 			"cannot-use-own-account-as-treasury": "Tài khoản ví của bạn không phải là treasury id",
 			"exchange-unavailable": "Giao dịch không khả dụng",
@@ -1260,7 +1261,7 @@
 			"services": {
 				"custody": "Lưu ký",
 				"faucet": "Faucet",
-				"multisig": "Safes & Multisig",
+				"multisig": "Multisig",
 				"submenu-title": "Dịch vụ",
 				"treasuries": "Streaming Treasuries",
 				"wallet-guide": "Hướng dẫn Ví",
