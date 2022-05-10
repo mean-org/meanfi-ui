@@ -25,6 +25,7 @@ import {
   MultisigTreasuryStreams,
   StakingRewardsView,
   AccountsNewView,
+  SafeView,
 } from "./pages";
 
 import { ServiceUnavailableView } from "./pages/service-unavailable";
@@ -32,8 +33,6 @@ import TxConfirmationProvider from "./contexts/transaction-status";
 import { isLocal, isProd } from "./utils/ui";
 import { OnlineStatusProvider } from "./contexts/online-status";
 import { IdoLpView } from "./pages/ido-lp";
-// import { StakingView } from "./pages/staking";
-// import { PolBondsView } from "./pages/pol-bonds";
 import { InvestView } from "./pages/invest";
 import { UnwrapView } from "./pages/unwrap";
 
@@ -69,14 +68,13 @@ export function AppRoutes() {
                       <Route path="/ido-blocked" element={<IdoBlockedView />} />
                       <Route path="/ido-lp" element={<IdoLpView />} />
                       <Route path="/invest" element={<InvestView />} />
-                      {/* <Route path="/pol-bonds" element={<PolBondsView />} /> */}
-                      {/* <Route path="/staking" element={<StakingView />} /> */}
                       <Route path="/staking-rewards" element={<StakingRewardsView />} />
                       <Route path="/stats" element={<StatsView />} />
                       <Route path="/custody" element={<CustodyView />} />
                       <Route path="/treasuries" element={<TreasuriesView />} />
                       <Route path="/treasuries/:id/streams" element={<MultisigTreasuryStreams />} />
                       <Route path="/multisig" element={<MultisigView />} />
+                      <Route path="/safe" element={<SafeView />} />
                       <Route path="/multisig-mints" element={<MultisigMintsView />} />
                       <Route path="/multisig-assets" element={<MultisigAssetsView />} />
                       <Route path="/multisig-programs" element={<MultisigProgramsView />} />

@@ -416,7 +416,7 @@
 			"multisig-threshold-question-mark-tooltip": "As best practice, always have more multisig signers than the minimum required signers. A 2-of-3 multisig is the most basic setup where 2 of the 3 participants are required to execute a transaction.",
 			"success-message": "Your new multisig account was created successfully."
 		},
-		"create-new-multisig-account-cta": "Create multisig",
+		"create-new-multisig-account-cta": "Create safe",
 		"crud-multisig": {
 			"delete-multisig": "Delete multisig",
 			"edit-multisig": "Edit multisig",

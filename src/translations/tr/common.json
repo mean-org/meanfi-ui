@@ -416,7 +416,7 @@
 			"multisig-threshold-question-mark-tooltip": "En iyi uygulama için, her zaman gereken minimum imzalayan sayısından daha fazla çoklu-imza yetkilisine sahip olun. 2'de 3 çoklu-imza, 3 katılımcıdan 2'sinin bir işleme onay vermesi gereken en temel kurulumdur.",
 			"success-message": "Yeni Çoklu-İmza hesabınız başarıyla oluşturuldu."
 		},
-		"create-new-multisig-account-cta": "Çoklu-İmza oluştur",
+		"create-new-multisig-account-cta": "Create safe",
 		"crud-multisig": {
 			"delete-multisig": "Çoklu-İmza sil",
 			"edit-multisig": "Çoklu-İmza düzenle",

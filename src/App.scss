@@ -23,8 +23,10 @@
   --color-notify-error: #a61d24;
   --color-orange: #e64d11;
   --color-orange-red: #FF4440;
+  --color-orange-dark: #d14e00;
   --text-color: #000000;
   --bg-color: #ffffff;
+  --color-purple: #4b00a6;
   
   /* Grays */
   --color-dark: #313131;
@@ -120,8 +122,10 @@
   --color-notify-error: #a61d24;
   --color-orange: #e64d11;
   --color-orange-red: #FF4440;
+  --color-orange-dark: #d14e00;
   --text-color: #e1e1ff;
   --bg-color: #181a2a;
+  --color-purple: #7402ff;
   
   /* Grays */
   --color-dark: #ffffff;
@@ -397,6 +401,9 @@ h1, h2, h3, h4, h5, h6 {
 .fg-green {
   color: var(--color-green) !important;
 }
+.fg-purple {
+  color: var(--color-purple) !important;
+}
 // Background color classes
 .solid-bg {
   background-color: var(--bg-color);
@@ -419,11 +426,20 @@ h1, h2, h3, h4, h5, h6 {
 .bg-orange-red {
   background-color: var(--color-orange-red) !important;
 }
+.bg-orange-dark {
+  background-color: var(--color-orange-dark) !important;
+}
+.bg-red {
+  background-color: var(--color-primary) !important;
+}
 .bg-yellow {
   background-color: var(--color-yellow) !important;
 }
 .bg-green {
   background-color: var(--color-green) !important;
+}
+.bg-purple {
+  background-color: var(--color-purple) !important;
 }
 
 // Layout

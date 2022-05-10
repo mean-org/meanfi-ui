@@ -1262,6 +1262,7 @@
 				"custody": "Custody",
 				"faucet": "Faucet",
 				"multisig": "Multisig",
+				"new-safe": "Multisig Safes",
 				"submenu-title": "Services",
 				"treasuries": "Streaming Treasuries",
 				"unwrap": "Unwrap",

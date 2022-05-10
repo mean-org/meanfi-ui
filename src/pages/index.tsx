@@ -13,6 +13,7 @@ export { MultisigTreasuryStreams } from './multisig-treasury-streams';
 export { MultisigView } from './multisig';
 export { NotFoundView } from './404';
 export { PlaygroundView } from './playground';
+export { SafeView } from './safe';
 export { StakingRewardsView } from './staking-rewards';
 export { StatsView } from './stats';
 export { SwapView } from './exchange';

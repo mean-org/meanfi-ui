@@ -419,7 +419,7 @@
 			"multisig-threshold-question-mark-tooltip": "As best practice, always have more multisig signers than the minimum required signers. A 2-of-3 multisig is the most basic setup where 2 of the 3 participants are required to execute a transaction.",
 			"success-message": "당신의 다중서명 계좌가 성공적으로 생성되었습니다."
 		},
-		"create-new-multisig-account-cta": "다중서명 생성하기",
+		"create-new-multisig-account-cta": "Create safe",
 		"crud-multisig": {
 			"delete-multisig": "Multisig 삭제",
 			"edit-multisig": "다중서명 수정",
