@@ -312,6 +312,10 @@ export const AccountsNewView = () => {
     accountAddress,
   ]);
 
+  const isSelectedAssetWsol = useCallback(() => {
+    return selectedAsset && selectedAsset.address === WRAPPED_SOL_MINT_ADDRESS ? true : false;
+  }, [selectedAsset]);
+
   const goToExchangeWithPresetAsset = useCallback(() => {
     const queryParams = `${selectedAsset ? '?from=' + selectedAsset.symbol : ''}`;
     setDtailsPanelOpen(false);
@@ -1627,11 +1631,6 @@ export const AccountsNewView = () => {
           <span className="menu-item-text">Wrap SOL</span>
         </Menu.Item>
       )}
-      {selectedAsset && selectedAsset.address === WRAPPED_SOL_MINT_ADDRESS && (
-        <Menu.Item key="2" onClick={showUnwrapSolModal}>
-          <span className="menu-item-text">Unwrap SOL</span>
-        </Menu.Item>
-      )}
     </Menu>
   );
 
@@ -1707,30 +1706,47 @@ export const AccountsNewView = () => {
             <QrcodeOutlined />
             <span className="ml-1">Receive</span>
           </Button>
-          <Button
-            type="default"
-            shape="round"
-            size="small"
-            className="thin-stroke"
-            onClick={onExchangeAsset}>
-            <SwapOutlined />
-            <span className="ml-1">Exchange</span>
-          </Button>
-          <Button
-            type="default"
-            shape="round"
-            size="small"
-            className="thin-stroke"
-            onClick={handleGoToInvestClick}>
-            <BarChartOutlined />
-            <span className="ml-1">Invest</span>
-          </Button>
+          {!isSelectedAssetWsol() && (
+            <Button
+              type="default"
+              shape="round"
+              size="small"
+              className="thin-stroke"
+              onClick={onExchangeAsset}>
+              <SwapOutlined />
+              <span className="ml-1">Exchange</span>
+            </Button>
+          )}
+          {!isSelectedAssetWsol() && (
+            <Button
+              type="default"
+              shape="round"
+              size="small"
+              className="thin-stroke"
+              onClick={handleGoToInvestClick}>
+              <BarChartOutlined />
+              <span className="ml-1">Invest</span>
+            </Button>
+          )}
+          {isSelectedAssetWsol() && (
+            <Button
+              type="default"
+              shape="round"
+              size="small"
+              className="thin-stroke"
+              onClick={showUnwrapSolModal}>
+              <BarChartOutlined />
+              <span className="ml-1">Unwrap</span>
+            </Button>
+          )}
         </Space>
         <Space className="right" size="small">
-          <span className="flat-button medium" onClick={showDepositOptionsModal}>
-            <IconShoppingCart className="mean-svg-icons"/>
-            <span className="ml-1">Buy</span>
-          </span>
+          {!isSelectedAssetWsol() && (
+            <span className="flat-button medium" onClick={showDepositOptionsModal}>
+              <IconShoppingCart className="mean-svg-icons"/>
+              <span className="ml-1">Buy</span>
+            </span>
+          )}
           <Dropdown overlay={userAssetOptions} placement="bottomRight" trigger={["click"]}>
             <span className="icon-button-container">
               <Button
