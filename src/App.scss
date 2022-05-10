@@ -1250,43 +1250,24 @@ footer.ant-layout-footer {
 #performance-warning-bar {
   color: var(--color-white);
   background-color: var(--color-primary);
-  flex: 0 0 30px;
-  align-items: center;
-  justify-content: center;
-  display: flex;
+  flex: 0 0 36px;
   position: relative;
-  width: 100%;
-  padding: 0;
-  &:hover {
-    .sitemessage {
-      animation-play-state: paused;
-    }
-  }
-  > .wrapper {
-    margin: 0 1rem;
-    padding: 0 1rem;
-    position: relative;
-    overflow: hidden;
-    width: 100%;
-  }
+  display: flex;
+  justify-content: center;
+  align-items: center;
   .sitemessage {
-    font-weight: bold;
     color: inherit;
-    display: inline-block;
-    white-space: nowrap;
-    @media (max-width: 575.98px) {
-      animation: floatText 10s infinite linear;
+    line-height: 1.2;
+    padding: 0.151rem 1rem;
+    text-align: center;
+    @media (max-width: 767.98px) {
+      font-weight: 400;
+      font-size: 13px;
     }
-    @media (min-width: 576px) and (max-width: 767.98px) {
-      animation: floatText 15s infinite linear;
+    @media (min-width: 768px) {
+      font-weight: 600;
+      font-size: 14px;
     }
-    @media (min-width: 768px) and (max-width: 1199.98px) {
-      animation: floatText 20s infinite linear;
-    }
-    @media (min-width: 1200px) {
-      animation: floatText 25s infinite linear;
-    }
-    padding-left: 100%; /*Initial offset*/
   }
   .right-actions {
     display: flex;
@@ -1301,7 +1282,7 @@ footer.ant-layout-footer {
 }
 
 #performance-warning-bar ~ header.ant-layout-header.App-Bar {
-  top: 30px;
+  top: 36px;
 }
 
 .App-Bar {

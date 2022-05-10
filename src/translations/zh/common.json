@@ -1145,6 +1145,7 @@
 		},
 		"refresh-tooltip": "Click to refresh the list of treasuries",
 		"screen-title": "Streaming Treasuries",
+		"summary-title": "Streaming Accounts",
 		"treasury-detail": {
 			"associated-token": "Associated token",
 			"created-on": "Created on",

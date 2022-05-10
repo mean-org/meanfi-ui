@@ -66,7 +66,6 @@ export const BANNED_TOKENS = [
     'GSTONKS'
 ];
 
-export const MEANFI_PRICE_API_URL = 'https://api.raydium.io/v2/main/price';
 export const meanFiHeaders = new Headers();
 meanFiHeaders.append('X-Api-Version', '1.0');
 meanFiHeaders.append('content-type', 'application/json;charset=UTF-8');
