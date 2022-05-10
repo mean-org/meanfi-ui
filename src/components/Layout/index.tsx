@@ -463,12 +463,10 @@ export const AppLayout = React.memo((props: any) => {
       <Layout>
         {(isProd() && (tpsAvg !== undefined && tpsAvg !== null) && tpsAvg < PERFORMANCE_THRESHOLD) && (
           <div id="performance-warning-bar">
-            <div className="wrapper">
-              <div className="sitemessage">
-                <a className="simplelink underline-on-hover" target="_blank" rel="noopener noreferrer" href={SOLANA_STATUS_PAGE}>
-                  {t('notifications.network-performance-low')}
-                </a>
-              </div>
+            <div className="sitemessage">
+              <a className="simplelink underline-on-hover" target="_blank" rel="noopener noreferrer" href={SOLANA_STATUS_PAGE}>
+                {t('notifications.network-performance-low')}
+              </a>
             </div>
           </div>
         )}

@@ -47,6 +47,10 @@ import { AccountDetails } from "../models";
 import moment from "moment";
 import { NATIVE_SOL_MINT } from "../utils/ids";
 import { openNotification } from "../components/Notifications";
+import { PerformanceCounter } from "../utils/perf-counter";
+
+const pricesOldPerformanceCounter = new PerformanceCounter();
+const pricesNewPerformanceCounter = new PerformanceCounter();
 
 export interface TransactionStatusInfo {
   customError?: any;
@@ -855,31 +859,37 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   // Fetch coin prices
   const getCoinPrices = useCallback(async () => {
+
     try {
-      const prices = await getPrices();
-      /**
-       * Returns the prices object when succeeds
-       * or this object when fails { "success": "false", "msg": "error text" }
-       */
-      if (!prices || prices.msg) {
-        setCoinPrices(null);
-        updateEffectiveRate(0);
-      } else {
-        const wSolPrice = prices[WRAPPED_SOL_MINT_ADDRESS];
-        const nativeAddress = NATIVE_SOL_MINT.toBase58();
-        // Since Raydium price api v2 don't bring SOL price but it does for wSOL
-        // Lets add it with the native SOL address to the list
-        if (wSolPrice) {
-          prices[nativeAddress] = wSolPrice;
+      pricesNewPerformanceCounter.start();
+      const newPrices = await getPrices();
+      pricesNewPerformanceCounter.stop();
+      consoleOut(`Fetched price list in ${pricesNewPerformanceCounter.elapsedTime.toLocaleString()}ms`, '', 'crimson');
+      if (newPrices && newPrices.length > 0) {
+        // const pricesMap = new Map<string, number>();
+        // newPrices.forEach(tp => pricesMap.set(tp.symbol, tp.price));
+        const pricesMap: any = {};
+        newPrices.forEach(tp => pricesMap[tp.symbol] = tp.price);
+        const solPrice = pricesMap["SOL"];
+        // Lets add wSOL to the list using SOL price
+        if (solPrice) {
+          pricesMap["WSOL"] = solPrice;
+          pricesMap["wSOL"] = solPrice;
         }
-        setCoinPrices(prices);
+        consoleOut(`Price API returns ${Object.keys(pricesMap).length} items:`, pricesMap, 'blue');
+        setCoinPrices(pricesMap);
+      } else {
+        consoleOut('New prices list:', 'NO PRICES RETURNED!', 'red');
       }
-      setLoadingPrices(false);
     } catch (error) {
+      pricesOldPerformanceCounter.stop();
       setCoinPrices(null);
       updateEffectiveRate(0);
+      consoleOut('New prices API error:', error, 'red');
+    } finally {
       setLoadingPrices(false);
     }
+
   },[]);
 
   // Effect to load coin prices
@@ -1288,12 +1298,11 @@ const AppStateProvider: React.FC = ({ children }) => {
         tags: NATIVE_SOL.tags,
         logoURI: NATIVE_SOL.logoURI
       };
-      sol.isMeanSupportedToken = true;
       // First add Native SOL as a token
       list.push(sol);
       // Add pinned tokens from the MeanFi list
       MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(connectionConfig.cluster) && PINNED_TOKENS.includes(t.symbol))
-        .forEach(item => list.push(Object.assign({}, item, { isMeanSupportedToken: true })));
+        .forEach(item => list.push(item));
       // Save pinned tokens' list
       const pinned = JSON.parse(JSON.stringify(list)) as UserTokenAccount[];
       updatePinnedTokens(pinned);
@@ -1303,7 +1312,9 @@ const AppStateProvider: React.FC = ({ children }) => {
       // Save the MeanFi list
       updateTokenlist(list.filter(t => t.address !== NATIVE_SOL.address) as TokenInfo[]);
       // Update the list
-      updateUserTokens(list);
+      const userTokenList = JSON.parse(JSON.stringify(list)) as UserTokenAccount[];
+      consoleOut('userTokenList:', userTokenList, 'purple');
+      updateUserTokens(userTokenList);
       // Load the mainnet list
       const res = await new TokenListProvider().resolve();
       const mainnetList = res

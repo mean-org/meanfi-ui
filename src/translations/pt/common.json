@@ -1140,6 +1140,7 @@
 		},
 		"refresh-tooltip": "Clique para atualizar a lista de tesouros",
 		"screen-title": "Streaming Treasuries",
+		"summary-title": "Streaming Accounts",
 		"treasury-detail": {
 			"associated-token": "Token associado",
 			"created-on": "Criado em",

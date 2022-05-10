@@ -1145,6 +1145,7 @@
 		},
 		"refresh-tooltip": "Cliquez pour rafraîchir la liste des trésoreries",
 		"screen-title": "Trésors",
+		"summary-title": "Streaming Accounts",
 		"treasury-detail": {
 			"associated-token": "Jeton associé",
 			"created-on": "Créé sur",

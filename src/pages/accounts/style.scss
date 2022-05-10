@@ -5,8 +5,12 @@
             height: 100%;
             max-height: 100%;
             .inner-container {
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                padding-bottom: 10px;
                 background: transparent;
-                padding-bottom: 2rem;
+                max-height: calc(100% - 45px);
             }
         }
     }
@@ -14,7 +18,8 @@
     .inner-container {
 
         .item-block {
-            padding-bottom: 1rem;
+            padding-bottom: 0 !important;
+            position: relative;
         }
 
         .bottom-ctas {
@@ -68,7 +73,11 @@
         text-transform: uppercase;
         font-weight: 600;
         color: var(--color-secondary-alpha-70);
-        background-color: var(--darken-20);
+        background-color: var(--color-section);
+        top: 0;
+        position: sticky;
+        z-index: 1;
+
         .title {
             padding-left: 1rem;
         }
@@ -79,29 +88,32 @@
         }
 
         @media (min-width: 768px) {
-            margin: 0.5rem 0 0.5rem -2.6%;
+            margin: 0 0 0.5rem -2.6%;
             padding: 3px calc(2.6% + 4px) 3px 2.6%;
         }
     }
 
     .asset-category {
         height: auto;
-        min-height: 100px;
+        min-height: 50px;
+        @media (min-width: 768px) {
+            padding-bottom: 0.5rem;
+        }
     }
 
     .networth-list-item {
         position: sticky;
         top: 0;
         z-index: 1;
+        flex: 0 0 auto;
+        background-color: var(--bg-color);
 
         @media (max-width: 767.98px) {
-            margin: -0.6rem 0.1rem -0.2rem 0;
-            background-color: var(--bg-color);
+            margin: -0.6rem 4px -0.2rem 0;
         }
 
         @media (min-width: 768px) {
             margin: -0.6rem 2.6% -0.2rem 0;
-            flex: 0 0 auto;
         }
 
         padding: 14px 6px 10px 10px;
