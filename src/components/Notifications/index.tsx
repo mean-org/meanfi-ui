@@ -12,7 +12,7 @@ export const openNotification = (props: {
     notification.open({
         key,
         type: type || "info",
-        top: 80,
+        top: 110,
         message: <span>{title}</span>,
         description: (
             <span>{description}</span>

@@ -451,8 +451,8 @@ export const UnstakeTabView = (props: {
   const getPricePerToken = useCallback((token: TokenInfo): number => {
     if (!token || !coinPrices) { return 0; }
 
-    return coinPrices && coinPrices[token.address]
-      ? coinPrices[token.address]
+    return coinPrices && coinPrices[token.symbol]
+      ? coinPrices[token.symbol]
       : 0;
   }, [coinPrices])
 

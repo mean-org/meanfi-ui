@@ -69,6 +69,7 @@ import { segmentAnalytics } from '../../App';
 import { TreasuriesSummary } from '../../components/TreasuriesSummary';
 import { AccountsSuggestAssetModal } from '../../components/AccountsSuggestAssetModal';
 import { QRCodeSVG } from 'qrcode.react';
+import { NATIVE_SOL } from '../../utils/tokens';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export type CategoryOption = "networth" | "user-account" | "other-assets";
@@ -124,8 +125,6 @@ export const AccountsNewView = () => {
   const [accountAddressInput, setAccountAddressInput] = useState<string>('');
   const [tokensLoaded, setTokensLoaded] = useState(false);
   const [accountTokens, setAccountTokens] = useState<UserTokenAccount[]>([]);
-  const [meanPinnedTokens, setMeanPinnedTokens] = useState<UserTokenAccount[]>([]);
-  const [extraUserTokensSorted, setExtraUserTokensSorted] = useState<UserTokenAccount[]>([]);
   const [solAccountItems, setSolAccountItems] = useState(0);
   const [tokenAccountGroups, setTokenAccountGroups] = useState<Map<string, AccountTokenParsedInfo[]>>();
   const [userOwnedTokenAccounts, setUserOwnedTokenAccounts] = useState<AccountTokenParsedInfo[]>();
@@ -134,7 +133,6 @@ export const AccountsNewView = () => {
   const [refreshingBalance, setRefreshingBalance] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<CategoryOption>("user-account");
   const [selectedOtherAssetsOption, setSelectedOtherAssetsOption] = useState<OtherAssetsOption>(undefined);
-  const [totalTokensHolded, setTotalTokensHolded] = useState(0);
   const [totalTokenAccountsValue, setTotalTokenAccountsValue] = useState(0);
   const [netWorth, setNetWorth] = useState(0);
   const [treasuriesTvl, setTreasuriesTvl] = useState(0);
@@ -314,6 +312,10 @@ export const AccountsNewView = () => {
     accountAddress,
   ]);
 
+  const isSelectedAssetWsol = useCallback(() => {
+    return selectedAsset && selectedAsset.address === WRAPPED_SOL_MINT_ADDRESS ? true : false;
+  }, [selectedAsset]);
+
   const goToExchangeWithPresetAsset = useCallback(() => {
     const queryParams = `${selectedAsset ? '?from=' + selectedAsset.symbol : ''}`;
     setDtailsPanelOpen(false);
@@ -418,8 +420,8 @@ export const AccountsNewView = () => {
   const getPricePerToken = useCallback((token: UserTokenAccount): number => {
     if (!token || !coinPrices) { return 0; }
 
-    return coinPrices && coinPrices[token.address]
-      ? coinPrices[token.address]
+    return coinPrices && coinPrices[token.symbol]
+      ? coinPrices[token.symbol]
       : 0;
   }, [coinPrices])
 
@@ -444,18 +446,17 @@ export const AccountsNewView = () => {
 
     setRefreshingBalance(true);
 
-    const pinnedTokensCopy = JSON.parse(JSON.stringify(meanPinnedTokens)) as UserTokenAccount[];
-    const extraUserTokensCopy = JSON.parse(JSON.stringify(extraUserTokensSorted)) as UserTokenAccount[];
+    const tokensCopy = JSON.parse(JSON.stringify(accountTokens)) as UserTokenAccount[];
 
     if (isSelectedAssetNativeAccount()) {
       const pk = new PublicKey(accountAddress);
       // Fetch SOL balance.
       connection.getBalance(pk)
         .then(solBalance => {
-          pinnedTokensCopy[0].balance = solBalance / LAMPORTS_PER_SOL;
-          pinnedTokensCopy[0].valueInUsd = (solBalance / LAMPORTS_PER_SOL) * getPricePerToken(pinnedTokensCopy[0]);
+          tokensCopy[0].balance = solBalance / LAMPORTS_PER_SOL;
+          tokensCopy[0].valueInUsd = (solBalance / LAMPORTS_PER_SOL) * getPricePerToken(tokensCopy[0]);
           consoleOut('solBalance:', solBalance / LAMPORTS_PER_SOL, 'blue');
-          setMeanPinnedTokens(pinnedTokensCopy);
+          setAccountTokens(tokensCopy);
         })
         .catch(error => {
           console.error(error);
@@ -471,20 +472,13 @@ export const AccountsNewView = () => {
           consoleOut('balance:', balance, 'blue');
           const valueInUSD = (balance || 0) * getPricePerToken(selectedAsset);
           consoleOut('valueInUSD:', valueInUSD, 'blue');
-          // Find the token in both lists and update it if found
-          itemIndex = pinnedTokensCopy.findIndex(t => t.publicAddress === selectedAsset.publicAddress);
+          // Find the token and update it if found
+          itemIndex = tokensCopy.findIndex(t => t.publicAddress === selectedAsset.publicAddress);
           if (itemIndex !== -1) {
-            pinnedTokensCopy[itemIndex].balance = (balance || 0);
-            pinnedTokensCopy[itemIndex].valueInUsd = valueInUSD;
-            setMeanPinnedTokens(pinnedTokensCopy);
+            tokensCopy[itemIndex].balance = (balance || 0);
+            tokensCopy[itemIndex].valueInUsd = valueInUSD;
+            setAccountTokens(tokensCopy);
             return;
-          } else {
-            itemIndex = extraUserTokensCopy.findIndex(t => t.publicAddress === selectedAsset.publicAddress);
-            if (itemIndex !== -1) {
-              extraUserTokensCopy[itemIndex].balance = (balance || 0);
-              extraUserTokensCopy[itemIndex].valueInUsd = valueInUSD;
-              setExtraUserTokensSorted(extraUserTokensCopy);
-            }
           }
         })
         .catch(error => {
@@ -494,11 +488,10 @@ export const AccountsNewView = () => {
     }
   }, [
     connection,
+    accountTokens,
     selectedAsset,
     accountAddress,
-    meanPinnedTokens,
     refreshingBalance,
-    extraUserTokensSorted,
     isSelectedAssetNativeAccount,
     getPricePerToken,
   ]);
@@ -891,16 +884,27 @@ export const AccountsNewView = () => {
 
       const meanTokensCopy = new Array<UserTokenAccount>();
       const intersectedList = new Array<UserTokenAccount>();
-      const pinnedTokensCopy = JSON.parse(JSON.stringify(pinnedTokens)) as UserTokenAccount[];
+
+      const userTokensCopy = JSON.parse(JSON.stringify(userTokens)) as UserTokenAccount[];
       const splTokensCopy = JSON.parse(JSON.stringify(splTokenList)) as UserTokenAccount[];
       const pk = new PublicKey(accountAddress);
 
       // Fetch SOL balance.
       connection.getBalance(pk)
         .then(solBalance => {
-          pinnedTokensCopy[0].balance = solBalance / LAMPORTS_PER_SOL;
-          pinnedTokensCopy[0].publicAddress = accountAddress;
-          pinnedTokensCopy[0].valueInUsd = (solBalance / LAMPORTS_PER_SOL) * getPricePerToken(pinnedTokensCopy[0]);
+
+          const sol: UserTokenAccount = {
+            address: NATIVE_SOL.address,
+            balance: solBalance / LAMPORTS_PER_SOL,
+            chainId: 0,
+            decimals: NATIVE_SOL.decimals,
+            name: NATIVE_SOL.name,
+            symbol: NATIVE_SOL.symbol,
+            publicAddress: accountAddress,
+            tags: NATIVE_SOL.tags,
+            logoURI: NATIVE_SOL.logoURI,
+            valueInUsd: (solBalance / LAMPORTS_PER_SOL) * getPricePerToken(pinnedTokens[0])
+          };
 
           fetchAccountTokens(connection, pk)
             .then(accTks => {
@@ -913,30 +917,8 @@ export const AccountsNewView = () => {
                     balance: i.parsedInfo.tokenAmount.uiAmount || 0
                   };
                 }), 'blue');
-                setUserOwnedTokenAccounts(accTks);
 
-                /**
-                 * - MEANFI TOKEN LIST
-                 *   Pick it from the constant array
-                 * - PINNED TOKENS
-                 *   Filter above against the pinned items
-                 * - SOLANA LIST
-                 *   Load full list from state
-                 * - get all user accounts
-                 *   - decode all account infos with balances
-                 *   - create groups of duplicate token accounts if any
-                 *     store groups so the modal to merge token accounts can work
-                 * - Create two token info lists
-                 *   (1) The pinned token list
-                 *     - add pubKey from account info to the token info
-                 *     - add value in USD to the model
-                 *     - add displayIndex
-                 *   (2) The rest of the tokens the user owns
-                 *     - add pubKey from account info to the token info
-                 *     - add value in USD to the model
-                 *     - Sort the tokens by USD value descending
-                 *     - add displayIndex
-                 */
+                setUserOwnedTokenAccounts(accTks);
 
                 // Group the token accounts by mint.
                 const groupedTokenAccounts = new Map<string, AccountTokenParsedInfo[]>();
@@ -971,84 +953,52 @@ export const AccountsNewView = () => {
                   setTokenAccountGroups(undefined);
                 }
 
-                // Update balances in the pinned token ist (pinnedTokensCopy)
-                accTks.forEach(item => {
-                  let tokenIndex = 0;
-                  // Locate the token in pinnedTokensCopy
-                  tokenIndex = pinnedTokensCopy.findIndex(i => i.address === item.parsedInfo.mint);
-                  if (tokenIndex !== -1) {
-                    const rate = getPricePerToken(pinnedTokensCopy[tokenIndex]);
-                    // If we didn't already filled info for this associated token address
-                    if (!pinnedTokensCopy[tokenIndex].publicAddress) {
-                      // Add it
-                      pinnedTokensCopy[tokenIndex].publicAddress = item.pubkey.toBase58();
-                      pinnedTokensCopy[tokenIndex].balance = item.parsedInfo.tokenAmount.uiAmount || 0;
-                      pinnedTokensCopy[tokenIndex].valueInUsd = (item.parsedInfo.tokenAmount.uiAmount || 0) * rate;
-                    } else if (pinnedTokensCopy[tokenIndex].publicAddress !== item.pubkey.toBase58()) {
-                      // If we did and the publicAddress is different/new then duplicate this item with the new info
-                      const newItem = JSON.parse(JSON.stringify(pinnedTokensCopy[tokenIndex])) as UserTokenAccount;
-                      newItem.publicAddress = item.pubkey.toBase58();
-                      newItem.balance = item.parsedInfo.tokenAmount.uiAmount || 0;
-                      newItem.valueInUsd = (item.parsedInfo.tokenAmount.uiAmount || 0) * rate;
-                      pinnedTokensCopy.splice(tokenIndex + 1, 0, newItem);
-                    }
-                  }
+                // Build meanTokensCopy including the MeanFi pinned tokens
+                userTokensCopy.forEach(item => {
+                  meanTokensCopy.push(item);
                 });
-
-                consoleOut('pinnedTokensCopy:', pinnedTokensCopy.map(i => {
-                  return {
-                    pubAddress: i.publicAddress,
-                    mintAddress: i.address,
-                    balance: i.balance || 0
-                  };
-                }), 'blue');
-
-                // Build meanTokensCopy including the MeanFi tokens but excluding the items in pinnedTokensCopy
-                userTokens.forEach(item => {
-                  if (!pinnedTokensCopy.includes(item)) {
-                    meanTokensCopy.push(item);
-                  }
-                });
-                // Now add all other items but excluding those in pinnedTokensCopy and userTokens
+                // Now add all other items but excluding those in userTokens
                 splTokensCopy.forEach(item => {
-                  if (!pinnedTokensCopy.includes(item) && !userTokens.includes(item)) {
+                  if (!userTokens.includes(item)) {
                     meanTokensCopy.push(item);
                   }
                 });
 
-                // Update balances in the mean token list
-                accTks.forEach(item => {
-                  // Locate the token in meanTokensCopy
-                  const tokenIndex = meanTokensCopy.findIndex(i => i.address === item.parsedInfo.mint);
-                  if (tokenIndex !== -1) {
-                    const rate = getPricePerToken(meanTokensCopy[tokenIndex]);
-                    // If we didn't already filled info for this associated token address
-                    if (!meanTokensCopy[tokenIndex].publicAddress) {
-                      // Add it
-                      meanTokensCopy[tokenIndex].publicAddress = item.pubkey.toBase58();
-                      meanTokensCopy[tokenIndex].balance = item.parsedInfo.tokenAmount.uiAmount || 0;
-                      meanTokensCopy[tokenIndex].valueInUsd = (item.parsedInfo.tokenAmount.uiAmount || 0) * rate;
-                    } else if (meanTokensCopy[tokenIndex].publicAddress !== item.pubkey.toBase58()) {
-                      // If we did and the publicAddress is different/new then duplicate this item with the new info
-                      const newItem = JSON.parse(JSON.stringify(meanTokensCopy[tokenIndex])) as UserTokenAccount;
-                      newItem.publicAddress = item.pubkey.toBase58();
-                      newItem.balance = item.parsedInfo.tokenAmount.uiAmount || 0;
-                      newItem.valueInUsd = (item.parsedInfo.tokenAmount.uiAmount || 0) * rate;
-                      meanTokensCopy.splice(tokenIndex + 1, 0, newItem);
-                    }
-                  }
-                });
-
-                // Create a list containing the tokens for the user accounts not in the meanTokensCopy
+                // Create a list containing tokens for the user owned token accounts
                 // Intersected output list
                 accTks.forEach(item => {
                   // Loop through the user token accounts and add the token account to the list: intersectedList
                   // If it is not already on the list (diferentiate token accounts of the same mint)
-                  const isTokenAccountInTheList = intersectedList.some(t => t.address === item.parsedInfo.mint && t.publicAddress === item.pubkey.toBase58());
-                  const isTokenAccountInPinnedList = pinnedTokensCopy.some(t => t.address === item.parsedInfo.mint && t.publicAddress === item.pubkey.toBase58());
+
+                  const isTokenAccountInTheList = intersectedList.some(t => t.address === item.parsedInfo.mint);
                   const tokenFromMeanTokensCopy = meanTokensCopy.find(t => t.address === item.parsedInfo.mint);
-                  if (tokenFromMeanTokensCopy && !isTokenAccountInTheList && !isTokenAccountInPinnedList) {
+                  if (tokenFromMeanTokensCopy && !isTokenAccountInTheList) {
                     intersectedList.push(tokenFromMeanTokensCopy);
+                  }
+                });
+
+                intersectedList.unshift(sol);
+
+                // Update balances in the mean token list
+                accTks.forEach(item => {
+                  // Locate the token in intersectedList
+                  const tokenIndex = intersectedList.findIndex(i => i.address === item.parsedInfo.mint);
+                  if (tokenIndex !== -1) {
+                    const rate = getPricePerToken(intersectedList[tokenIndex]);
+                    // If we didn't already filled info for this associated token address
+                    if (!intersectedList[tokenIndex].publicAddress) {
+                      // Add it
+                      intersectedList[tokenIndex].publicAddress = item.pubkey.toBase58();
+                      intersectedList[tokenIndex].balance = item.parsedInfo.tokenAmount.uiAmount || 0;
+                      intersectedList[tokenIndex].valueInUsd = (item.parsedInfo.tokenAmount.uiAmount || 0) * rate;
+                    } else if (intersectedList[tokenIndex].publicAddress !== item.pubkey.toBase58()) {
+                      // If we did and the publicAddress is different/new then duplicate this item with the new info
+                      const newItem = JSON.parse(JSON.stringify(intersectedList[tokenIndex])) as UserTokenAccount;
+                      newItem.publicAddress = item.pubkey.toBase58();
+                      newItem.balance = item.parsedInfo.tokenAmount.uiAmount || 0;
+                      newItem.valueInUsd = (item.parsedInfo.tokenAmount.uiAmount || 0) * rate;
+                      intersectedList.splice(tokenIndex + 1, 0, newItem);
+                    }
                   }
                 });
 
@@ -1062,19 +1012,12 @@ export const AccountsNewView = () => {
                 });
 
                 // Update displayIndex and isAta flag
-                pinnedTokensCopy.forEach(async (item: UserTokenAccount, index: number) => {
+                sortedList.forEach(async (item: UserTokenAccount, index: number) => {
                   item.displayIndex = index;
                   item.isAta = await updateAtaFlag(item);
                 });
-                sortedList.forEach(async (item: UserTokenAccount, index: number) => {
-                  item.displayIndex = pinnedTokensCopy.length + index;
-                  item.isAta = await updateAtaFlag(item);
-                });
 
-                // Concatenate both lists
-                const finalList = pinnedTokensCopy.concat(sortedList);
-
-                consoleOut('Extra user tokens - sorted:', sortedList.map(i => {
+                consoleOut('User tokens - sorted:', sortedList.map(i => {
                   return {
                     pubAddress: i.publicAddress,
                     mintAddress: i.address,
@@ -1084,7 +1027,7 @@ export const AccountsNewView = () => {
 
                 // Report in the console for debugging
                 const tokenTable: any[] = [];
-                finalList.forEach((item: UserTokenAccount, index: number) => tokenTable.push({
+                sortedList.forEach((item: UserTokenAccount, index: number) => tokenTable.push({
                     pubAddress: item.publicAddress ? shortenAddress(item.publicAddress, 6) : null,
                     mintAddress: shortenAddress(item.address, 6),
                     symbol: item.symbol,
@@ -1095,53 +1038,47 @@ export const AccountsNewView = () => {
                 console.table(tokenTable);
 
                 // Update the state
-                setAccountTokens(finalList);
-                setMeanPinnedTokens(pinnedTokensCopy);
-                setExtraUserTokensSorted(sortedList);
+                setAccountTokens(sortedList);
                 setTokensLoaded(true);
 
+                // Preset the passed-in token via query params either
+                // as token account address or mint address or token symbol
+                if (urlQueryAsset) {
+                  let asset: UserTokenAccount | undefined = undefined;
+                  if (isValidAddress(urlQueryAsset)) {
+                    asset = intersectedList.find(t => t.publicAddress === urlQueryAsset || t.address === urlQueryAsset);
+                  } else {
+                    asset = intersectedList.find(t => t.symbol === urlQueryAsset);
+                  }
+                  if (asset) {
+                    selectAsset(asset);
+                  }
+                } else if (selectedAsset) {
+                  // If no query param asset but there is already one selected, keep selection
+                  const tokensItemIndex = intersectedList.findIndex(m => m.publicAddress === selectedAsset.publicAddress);
+                  if (tokensItemIndex !== -1) {
+                    selectAsset(intersectedList[tokensItemIndex], true);
+                  } else {
+                    selectAsset(intersectedList[0]);
+                  }
+                } else {
+                  // Preset the first available token
+                  selectAsset(intersectedList[0]);
+                }
+
               } else {
-                setAccountTokens(pinnedTokensCopy);
-                setMeanPinnedTokens(pinnedTokensCopy);
-                setExtraUserTokensSorted([]);
+                setAccountTokens(pinnedTokens);
+                selectAsset(pinnedTokens[0]);
                 setTokensLoaded(true);
-              }
-              // Preset the passed-in token via query params either
-              // as token account address or mint address or token symbol
-              if (urlQueryAsset) {
-                let asset: UserTokenAccount | undefined = undefined;
-                const combinedList = pinnedTokensCopy.concat(intersectedList);
-                if (isValidAddress(urlQueryAsset)) {
-                  asset = combinedList.find(t => t.publicAddress === urlQueryAsset || t.address === urlQueryAsset);
-                } else {
-                  asset = combinedList.find(t => t.symbol === urlQueryAsset);
-                }
-                if (asset) {
-                  selectAsset(asset);
-                }
-              } else if (selectedAsset) {
-                // If no query param asset but there is already one selected, keep selection
-                const pinnedTokensItemIndex = pinnedTokensCopy.findIndex(m => m.publicAddress === selectedAsset.publicAddress);
-                const meanTokensItemIndex = meanTokensCopy.findIndex(m => m.publicAddress === selectedAsset.publicAddress);
-                if (pinnedTokensItemIndex !== -1) {
-                  selectAsset(pinnedTokensCopy[pinnedTokensItemIndex], true);
-                } else if (meanTokensItemIndex !== -1) {
-                  selectAsset(meanTokensCopy[meanTokensItemIndex], true);
-                } else {
-                  selectAsset(pinnedTokensCopy[0]);
-                }
-              } else {
-                // Preset the first available token
-                selectAsset(pinnedTokensCopy[0]);
+                consoleOut('No tokens found in account!', '', 'red');
+
               }
             })
             .catch(error => {
               console.error(error);
-              setMeanPinnedTokens(meanTokensCopy);
-              setAccountTokens(meanTokensCopy);
-              setExtraUserTokensSorted([]);
+              setAccountTokens(pinnedTokens);
               setTokensLoaded(true);
-              selectAsset(meanTokensCopy[0], true);
+              selectAsset(pinnedTokens[0], true);
             });
         })
         .catch(error => {
@@ -1263,6 +1200,7 @@ export const AccountsNewView = () => {
             ? new PublicKey(urlQueryAddress)
             : new PublicKey(accountAddress);
         refreshStreamList(true, treasurer);
+        setSelectedAsset(undefined);
         setShouldLoadTokens(true);
         setAddAccountPanelOpen(false);
         setCanShowAccountDetails(true);
@@ -1299,6 +1237,7 @@ export const AccountsNewView = () => {
     setShouldLoadTokens,
     setStreamsSummary,
     refreshStreamList,
+    setSelectedAsset,
     setStreamDetail,
     onTxConfirmed,
     onTxTimedout,
@@ -1328,42 +1267,23 @@ export const AccountsNewView = () => {
   // Live data calculation - Totals
   useEffect(() => {
 
-    if (streamsSummary && meanPinnedTokens) {
-      const meanPinnedTokensHolded = meanPinnedTokens.filter(t => t.balance).length;
-      const extraUserTokensSortedHolded = extraUserTokensSorted.filter(t => t.balance).length;
-      // Total tokens holded by the user
-      const totalUserTokensHolded = meanPinnedTokensHolded + extraUserTokensSortedHolded;
-      setTotalTokensHolded(totalUserTokensHolded);
-
-      let sumMeanSupportedTokens = 0;
-      let sumExtraUserTokensSorted = 0;
-      meanPinnedTokens.forEach((asset: UserTokenAccount, index: number) => {
-        const tokenPrice = getPricePerToken(asset);
-        if (asset.balance && tokenPrice) {
-          sumMeanSupportedTokens += asset.balance * tokenPrice;
-        }
-      });
-      extraUserTokensSorted.forEach((asset: UserTokenAccount, index: number) => {
-        const tokenPrice = getPricePerToken(asset);
-        if (asset.balance && tokenPrice) {
-          sumExtraUserTokensSorted += asset.balance * tokenPrice;
-        }
-      });
+    if (streamsSummary && accountTokens) {
       // Total USD value
-      const totalTokenUsdValue = sumMeanSupportedTokens + sumExtraUserTokensSorted;
-      setTotalTokenAccountsValue(totalTokenUsdValue);
+      let sumMeanTokens = 0;
+      accountTokens.forEach((asset: UserTokenAccount, index: number) => {
+        const tokenPrice = getPricePerToken(asset);
+        if (asset.balance && tokenPrice) {
+          sumMeanTokens += asset.balance * tokenPrice;
+        }
+      });
+      setTotalTokenAccountsValue(sumMeanTokens);
+
       // Net Worth
-      const total = totalTokenUsdValue + streamsSummary.totalNet + treasuriesTvl;
+      const total = sumMeanTokens + streamsSummary.totalNet + treasuriesTvl;
       setNetWorth(total);
     }
 
-  }, [
-    treasuriesTvl,
-    streamsSummary,
-    meanPinnedTokens,
-    extraUserTokensSorted,
-    getPricePerToken
-  ]);
+  }, [treasuriesTvl, streamsSummary, getPricePerToken, accountTokens]);
 
   // Window resize listeners
   useEffect(() => {
@@ -1510,7 +1430,7 @@ export const AccountsNewView = () => {
       <div key={`${index}`} onClick={onTokenAccountClick}
           className={`transaction-list-row ${isSelectedToken() && selectedCategory === "user-account"
             ? 'selected'
-            : hideLowBalances && !asset.isMeanSupportedToken && (asset.balance || 0) < ACCOUNTS_LOW_BALANCE_LIMIT
+            : hideLowBalances && (asset.valueInUsd || 0) < ACCOUNTS_LOW_BALANCE_LIMIT
               ? 'hidden'
               : ''
           }`
@@ -1549,15 +1469,11 @@ export const AccountsNewView = () => {
 
   const renderAssetsList = (
     <>
-      {(meanPinnedTokens && meanPinnedTokens.length > 0) || (extraUserTokensSorted && extraUserTokensSorted.length > 0) ? (
+      {accountTokens && accountTokens.length > 0 ? (
         <>
-          {/* Render mean pinned tokens */}
-          {(meanPinnedTokens && meanPinnedTokens.length > 0) && (
-            meanPinnedTokens.map((asset, index) => renderAsset(asset, index))
-          )}
-          {/* Render extra user tokens */}
-          {(extraUserTokensSorted && extraUserTokensSorted.length > 0) && (
-            extraUserTokensSorted.map((asset, index) => renderAsset(asset, index + 50))
+          {/* Render user token accounts */}
+          {(accountTokens && accountTokens.length > 0) && (
+            accountTokens.map((asset, index) => renderAsset(asset, index))
           )}
         </>
       ) : tokensLoaded ? (
@@ -1697,11 +1613,6 @@ export const AccountsNewView = () => {
           <span className="menu-item-text">Wrap SOL</span>
         </Menu.Item>
       )}
-      {selectedAsset && selectedAsset.address === WRAPPED_SOL_MINT_ADDRESS && (
-        <Menu.Item key="2" onClick={showUnwrapSolModal}>
-          <span className="menu-item-text">Unwrap SOL</span>
-        </Menu.Item>
-      )}
     </Menu>
   );
 
@@ -1777,30 +1688,47 @@ export const AccountsNewView = () => {
             <QrcodeOutlined />
             <span className="ml-1">Receive</span>
           </Button>
-          <Button
-            type="default"
-            shape="round"
-            size="small"
-            className="thin-stroke"
-            onClick={onExchangeAsset}>
-            <SwapOutlined />
-            <span className="ml-1">Exchange</span>
-          </Button>
-          <Button
-            type="default"
-            shape="round"
-            size="small"
-            className="thin-stroke"
-            onClick={handleGoToInvestClick}>
-            <BarChartOutlined />
-            <span className="ml-1">Invest</span>
-          </Button>
+          {!isSelectedAssetWsol() && (
+            <Button
+              type="default"
+              shape="round"
+              size="small"
+              className="thin-stroke"
+              onClick={onExchangeAsset}>
+              <SwapOutlined />
+              <span className="ml-1">Exchange</span>
+            </Button>
+          )}
+          {!isSelectedAssetWsol() && (
+            <Button
+              type="default"
+              shape="round"
+              size="small"
+              className="thin-stroke"
+              onClick={handleGoToInvestClick}>
+              <BarChartOutlined />
+              <span className="ml-1">Invest</span>
+            </Button>
+          )}
+          {isSelectedAssetWsol() && (
+            <Button
+              type="default"
+              shape="round"
+              size="small"
+              className="thin-stroke"
+              onClick={showUnwrapSolModal}>
+              <BarChartOutlined />
+              <span className="ml-1">Unwrap</span>
+            </Button>
+          )}
         </Space>
         <Space className="right" size="small">
-          <span className="flat-button medium" onClick={showDepositOptionsModal}>
-            <IconShoppingCart className="mean-svg-icons"/>
-            <span className="ml-1">Buy</span>
-          </span>
+          {!isSelectedAssetWsol() && (
+            <span className="flat-button medium" onClick={showDepositOptionsModal}>
+              <IconShoppingCart className="mean-svg-icons"/>
+              <span className="ml-1">Buy</span>
+            </span>
+          )}
           <Dropdown overlay={userAssetOptions} placement="bottomRight" trigger={["click"]}>
             <span className="icon-button-container">
               <Button
@@ -2019,7 +1947,7 @@ export const AccountsNewView = () => {
                       <div className="item-block vertical-scroll">
 
                         <div className="asset-category-title flex-fixed-right">
-                          <div className="title">Streaming finance (2)</div>
+                          <div className="title">Streaming Assets (2)</div>
                           <div className="amount">{toUsCurrency(streamsSummary.totalNet + treasuriesTvl)}</div>
                         </div>
                         <div className="asset-category">
@@ -2048,7 +1976,7 @@ export const AccountsNewView = () => {
                         </div>
 
                         <div className="asset-category-title flex-fixed-right">
-                          <div className="title">Assets in wallet ({totalTokensHolded})</div>
+                          <div className="title">Assets in wallet ({accountTokens.length})</div>
                           <div className="amount">{toUsCurrency(totalTokenAccountsValue)}</div>
                         </div>
                         <div className="asset-category flex-column">
