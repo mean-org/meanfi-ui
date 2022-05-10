@@ -1144,6 +1144,7 @@
 		},
 		"refresh-tooltip": "برای بازخوانی لیست treasury ها کلیک کنید",
 		"screen-title": "treasury ها",
+		"summary-title": "Streaming Accounts",
 		"treasury-detail": {
 			"associated-token": "توکن مرتبط",
 			"created-on": "ایجاد شده در",

@@ -1145,6 +1145,7 @@
 		},
 		"refresh-tooltip": "Nhấn để làm mới danh sách kho bạc",
 		"screen-title": "Streaming Treasuries",
+		"summary-title": "Streaming Accounts",
 		"treasury-detail": {
 			"associated-token": "Mã thông báo được liên kết",
 			"created-on": "Ngày tạo",
