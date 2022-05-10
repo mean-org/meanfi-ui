@@ -1,15 +1,18 @@
+import { Connection } from "@solana/web3.js";
 import { Button, Col, Dropdown, Menu, Row, Tooltip } from "antd";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { MultisigOwnersView } from "../../../../../components/MultisigOwnersView";
 import { openNotification } from "../../../../../components/Notifications";
 import { TabsMean } from "../../../../../components/TabsMean";
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "../../../../../constants";
-import { getSolanaExplorerClusterParam } from "../../../../../contexts/connection";
+import { AppStateContext } from "../../../../../contexts/appstate";
+import { getSolanaExplorerClusterParam, useConnectionConfig } from "../../../../../contexts/connection";
 import { IconAdd, IconEdit, IconEllipsisVertical, IconLink, IconShowAll, IconTrash } from "../../../../../Icons";
-import { copyText } from "../../../../../utils/ui";
-import { shortenAddress } from "../../../../../utils/utils";
+
+import { consoleOut, copyText, toUsCurrency } from "../../../../../utils/ui";
+import { fetchAccountTokens, getTokenByMintAddress, shortenAddress } from "../../../../../utils/utils";
 
 export const SafeInfo = (props: {
   selectedMultisig?: any;
@@ -20,6 +23,11 @@ export const SafeInfo = (props: {
   onEditMultisigClick?: any;
   tabs?: Array<any>;
 }) => {
+  const {
+    coinPrices,
+    splTokenList
+  } = useContext(AppStateContext);
+  const connectionConfig = useConnectionConfig();
 
   const { selectedMultisig, multisigVaults, safeNameImg, safeNameImgAlt, onNewProposalMultisigClick, onEditMultisigClick, tabs } = props;
 
@@ -27,6 +35,15 @@ export const SafeInfo = (props: {
   const navigate = useNavigate();
 
   const [selectedLabelName, setSelectedLabelName] = useState("");
+  const [totalSafeBalance, setTotalSafeBalance] = useState(0);
+
+  // Create and cache the connection
+  const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
+    commitment: "confirmed",
+    disableRetryOnRateLimit: true
+  }), [
+    connectionConfig.endpoint
+  ]);
 
   // Copy address to clipboard
   const copyAddressToClipboard = useCallback((address: any) => {
@@ -74,6 +91,14 @@ export const SafeInfo = (props: {
   // Safe Balance (show amount of assets)
   const [assetsAmout, setAssetsAmount] = useState<string>();
 
+  const getPricePerTokenAddress = useCallback((address: string): number => {
+    if (!address || !coinPrices) { return 0; }
+
+    return coinPrices && coinPrices[address]
+      ? coinPrices[address]
+      : 0;
+  }, [coinPrices]);
+
   useEffect(() => {
     (selectedMultisig) && (
       multisigVaults.length > 1 ? (
@@ -83,6 +108,55 @@ export const SafeInfo = (props: {
       )
     )
   }, [multisigVaults, selectedMultisig]);
+
+  useEffect(() => {
+    if (!connection || !selectedMultisig) { return; }
+
+    fetchAccountTokens(connection, selectedMultisig.authority)
+      .then(accTks => {
+
+        if (accTks) {
+          let usdValue = 0;
+          const cumulative = new Array<any>();
+
+          accTks.forEach(item => {
+            const token = getTokenByMintAddress(item.parsedInfo.mint, splTokenList);
+
+            if (token) {
+              const rate = getPricePerTokenAddress(token.address);
+              const balance = item.parsedInfo.tokenAmount.uiAmount || 0;
+
+              usdValue += balance * rate;
+              cumulative.push({
+                symbol: token.symbol,
+                address: item.parsedInfo.mint,
+                balance: balance,
+                usdValue: balance * rate
+              })
+            } 
+          });
+
+          setTotalSafeBalance(usdValue);
+
+          console.table(cumulative);
+        } else {
+          consoleOut("No tokens founds", "", "");
+        }
+
+      }).catch(error => {
+        console.error(error);
+      });
+
+      
+  }, [
+    getPricePerTokenAddress,
+    selectedMultisig,
+    splTokenList,
+    connection
+  ]);
+
+  console.log(selectedMultisig);
+  
     
   // Deposit Address
   const renderDepositAddress = (
@@ -102,19 +176,19 @@ export const SafeInfo = (props: {
   const infoSafeData = [
     {
       name: "Safe Name",
-      value: renderSafeName
+      value: renderSafeName ? renderSafeName : "--"
     },
     {
       name: renderSecurity,
-      value: `${selectedMultisig.threshold}/${selectedMultisig.owners.length} signatures`
+      value: selectedMultisig ? `${selectedMultisig.threshold}/${selectedMultisig.owners.length} signatures` : "--"
     },
     {
       name: `Safe Balance ${assetsAmout}`,
-      value: "$124,558.26"
+      value: totalSafeBalance ? toUsCurrency(totalSafeBalance) : toUsCurrency(0)
     },
     {
       name: "Deposit address",
-      value: renderDepositAddress
+      value: renderDepositAddress ? renderDepositAddress : "--"
     }
   ];
 
@@ -148,7 +222,7 @@ export const SafeInfo = (props: {
                 {info.name}
               </span>
               <span className="info-data">
-                {info.value ? info.value : "--"}
+                {info.value}
               </span>
             </div>
           </Col>
