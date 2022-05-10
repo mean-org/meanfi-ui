@@ -1448,7 +1448,7 @@ export const AccountsNewView = () => {
       <div key={`${index}`} onClick={onTokenAccountClick}
           className={`transaction-list-row ${isSelectedToken() && selectedCategory === "user-account"
             ? 'selected'
-            : hideLowBalances && (asset.balance || 0) < ACCOUNTS_LOW_BALANCE_LIMIT
+            : hideLowBalances && (asset.valueInUsd || 0) < ACCOUNTS_LOW_BALANCE_LIMIT
               ? 'hidden'
               : ''
           }`
