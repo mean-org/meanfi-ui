@@ -278,11 +278,11 @@ export const TreasuriesSummary = (props: {
                 )}
             </div>
             <div className="description-cell">
-                <div className="title">{t('treasuries.screen-title')}</div>
+                <div className="title">{t('treasuries.summary-title')}</div>
                 {treasuriesSummary.totalAmount === 0 ? (
-                    <div className="subtitle">{t('treasuries.treasury-list.no-treasuries')}</div>
+                    <div className="subtitle">No accounts</div>
                 ) : (
-                    <div className="subtitle">{treasuriesSummary.openAmount} Open, {treasuriesSummary.lockedAmount} Locked</div>
+                    <div className="subtitle">{treasuriesSummary.totalAmount} {treasuriesSummary.totalAmount === 1 ? 'account' : 'accounts'}</div>
                 )}
             </div>
             <div className="rate-cell">

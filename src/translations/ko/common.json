@@ -1149,6 +1149,7 @@
 		},
 		"refresh-tooltip": "금고 목록을 새로 고치려면 클릭하십시오.",
 		"screen-title": "Streaming Treasuries",
+		"summary-title": "Streaming Accounts",
 		"treasury-detail": {
 			"associated-token": "관련 토큰",
 			"created-on": "생성하다",
