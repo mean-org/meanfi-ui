@@ -1298,12 +1298,11 @@ const AppStateProvider: React.FC = ({ children }) => {
         tags: NATIVE_SOL.tags,
         logoURI: NATIVE_SOL.logoURI
       };
-      sol.isMeanSupportedToken = true;
       // First add Native SOL as a token
       list.push(sol);
       // Add pinned tokens from the MeanFi list
       MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(connectionConfig.cluster) && PINNED_TOKENS.includes(t.symbol))
-        .forEach(item => list.push(Object.assign({}, item, { isMeanSupportedToken: true })));
+        .forEach(item => list.push(item));
       // Save pinned tokens' list
       const pinned = JSON.parse(JSON.stringify(list)) as UserTokenAccount[];
       updatePinnedTokens(pinned);
@@ -1313,7 +1312,9 @@ const AppStateProvider: React.FC = ({ children }) => {
       // Save the MeanFi list
       updateTokenlist(list.filter(t => t.address !== NATIVE_SOL.address) as TokenInfo[]);
       // Update the list
-      updateUserTokens(list);
+      const userTokenList = JSON.parse(JSON.stringify(list)) as UserTokenAccount[];
+      consoleOut('userTokenList:', userTokenList, 'purple');
+      updateUserTokens(userTokenList);
       // Load the mainnet list
       const res = await new TokenListProvider().resolve();
       const mainnetList = res
