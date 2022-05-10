@@ -1949,7 +1949,7 @@ export const AccountsNewView = () => {
                       <div className="item-block vertical-scroll">
 
                         <div className="asset-category-title flex-fixed-right">
-                          <div className="title">Streaming finance (2)</div>
+                          <div className="title">Streaming Assets (2)</div>
                           <div className="amount">{toUsCurrency(streamsSummary.totalNet + treasuriesTvl)}</div>
                         </div>
                         <div className="asset-category">
