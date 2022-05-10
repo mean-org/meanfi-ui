@@ -964,10 +964,6 @@ export const AccountsNewView = () => {
                   }
                 });
 
-                consoleOut('meanTokensCopy:', meanTokensCopy, 'purple');
-
-                const excrementList = new Array<AccountTokenParsedInfo>();
-
                 // Create a list containing tokens for the user owned token accounts
                 // Intersected output list
                 accTks.forEach(item => {
@@ -978,22 +974,10 @@ export const AccountsNewView = () => {
                   const tokenFromMeanTokensCopy = meanTokensCopy.find(t => t.address === item.parsedInfo.mint);
                   if (tokenFromMeanTokensCopy && !isTokenAccountInTheList) {
                     intersectedList.push(tokenFromMeanTokensCopy);
-                  } else {
-                    excrementList.push(item);
                   }
                 });
 
                 intersectedList.unshift(sol);
-
-                consoleOut('intersectedList:', intersectedList, 'purple');
-
-                consoleOut('excrementList:', excrementList.map(i => {
-                  return {
-                    pubAddress: i.pubkey.toBase58(),
-                    mintAddress: i.parsedInfo.mint,
-                    balance: i.parsedInfo.tokenAmount.uiAmount || 0
-                  };
-                }), 'blue');
 
                 // Update balances in the mean token list
                 accTks.forEach(item => {
@@ -1017,8 +1001,6 @@ export const AccountsNewView = () => {
                     }
                   }
                 });
-
-                consoleOut('intersectedList with balances:', intersectedList, 'purple');
 
                 const sortedList = intersectedList.sort((a, b) => {
                   if ((a.valueInUsd || 0) < (b.valueInUsd || 0)) {
