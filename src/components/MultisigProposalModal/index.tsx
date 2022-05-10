@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from 'react';
 import { CheckOutlined, ExclamationCircleOutlined, InfoCircleOutlined, LoadingOutlined } from "@ant-design/icons";
 import "./style.scss";
-import { getTransactionOperationDescription } from '../../utils/ui';
+import { consoleOut, getTransactionOperationDescription } from '../../utils/ui';
 import { useTranslation } from 'react-i18next';
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { isError } from '../../utils/transactions';
@@ -19,7 +19,7 @@ import { DATEPICKER_FORMAT } from "../../constants";
 import { MultisigVault } from '../../models/multisig';
 import { InputMean } from '../InputMean';
 import { SelectMean } from '../SelectMean';
-import { App } from '@mean-dao/mean-multisig-apps';
+import { App, AppConfig, AppsProvider } from '@mean-dao/mean-multisig-apps';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -96,6 +96,7 @@ export const MultisigProposalModal = (props: {
   handleClose: any;
   isVisible: boolean;
   isBusy: boolean;
+  appsProvider: AppsProvider | undefined;
   solanaApps: App[]
 }) => {
   const { t } = useTranslation('common');
@@ -238,6 +239,28 @@ export const MultisigProposalModal = (props: {
   // ]);
 
   const [selectedApp, setSelectedApp] = useState<App>();
+  const [selectedAppConfig, setSelectedAppConfig] = useState<AppConfig>();
+
+  useEffect(() => {
+
+    if (!props.appsProvider || !selectedApp) { return; }
+
+    props.appsProvider.getAppConfig(
+      selectedApp.id,
+      selectedApp.ui,
+      selectedApp.definition
+    )
+    .then((config: any) => {
+      setSelectedAppConfig(config);
+    })
+    .catch((err: any) => {
+      consoleOut('Error: ', err, 'red');
+    });
+
+  },[
+    props.appsProvider, 
+    selectedApp
+  ]);
 
   useEffect(() => {
     setLettersLeft(256 - countWords);
@@ -373,7 +396,7 @@ export const MultisigProposalModal = (props: {
                             className={props.isBusy ? 'disabled' : ''}
                             onChange={onProposalInstructionValueChange}
                             placeholder={"Select an instruction"}
-                            values={selectedApp ? selectedApp.instructions.map((ix: any) => ix.label) : []}
+                            values={selectedAppConfig ? selectedAppConfig.ui.map((ix: any) => ix.label) : []}
                             value={proposalInstructionValue}
                           />
                         </Col>

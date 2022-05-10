@@ -158,6 +158,7 @@ export const SafeView = () => {
   const [filteredMultisigTxs, setFilteredMultisigTxs] = useState<MultisigTransaction[]>([]);
   const [minRequiredBalance, setMinRequiredBalance] = useState(0);
 
+  const [appsProvider, setAppsProvider] = useState<AppsProvider>();
   const [solanaApps, setSolanaApps] = useState<App[]>([]);
   const [serumAccounts, setSerumAccounts] = useState<any>();
   // const [isCreateMeanMultisig, setIsCreateMeanMultisig] = useState<boolean>();
@@ -180,6 +181,7 @@ export const SafeView = () => {
       ? NETWORK.Testnet
       : NETWORK.Devnet;
     const provider = new AppsProvider(network);
+    setAppsProvider(provider);
     provider
       .getApps()
       .then((apps: App[]) => {
@@ -5057,6 +5059,7 @@ export const SafeView = () => {
           isVisible={isMultisigProposalModalVisible}
           handleClose={() => setMultisigProposalModalVisible(false)}
           isBusy={isBusy}
+          appsProvider={appsProvider}
           solanaApps={solanaApps}
         />
       )}
