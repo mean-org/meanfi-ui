@@ -868,7 +868,16 @@ export const AccountsNewView = () => {
   // Fetch all the owned token accounts on demmand via setShouldLoadTokens(true)
   // Also, do this after any Tx is completed in places where token balances were indeed changed)
   useEffect(() => {
-    if (!connection || !accountAddress || !shouldLoadTokens || !userTokens || userTokens.length === 0 || !splTokenList || splTokenList.length === 0 ) {
+
+    if (!connection ||
+        !accountAddress ||
+        !shouldLoadTokens ||
+        !userTokens ||
+        userTokens.length === 0 ||
+        !splTokenList ||
+        splTokenList.length === 0 ||
+        !coinPrices
+    ) {
       return;
     }
 
@@ -1092,6 +1101,7 @@ export const AccountsNewView = () => {
 
   }, [
     connection,
+    coinPrices,
     userTokens,
     pinnedTokens,
     splTokenList,
