@@ -46,7 +46,7 @@ export const SafeMeanInfo = (props: {
               className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
               >
                 <ProposalResumeItem
-                  // id={proposal.id.toBase58()}
+                  id={proposal.id.toBase58()}
                   // logo={proposal.logo}
                   title={proposal.details.title}
                   expires={expirationDate}

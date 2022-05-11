@@ -1,17 +1,28 @@
 import './style.scss';
 import { Button, Col, Collapse, Row } from "antd"
-import { IconArrowBack, IconUser, IconThumbsUp, IconThumbsDown, IconApprove, IconCross, IconCheckCircle, IconCreated, IconMinus, IconCaretDown } from "../../../../Icons"
+import { IconArrowBack, IconUser, IconThumbsUp, IconThumbsDown, IconApprove, IconCross, IconCheckCircle, IconCreated, IconMinus, IconCaretDown, IconExternalLink, IconLink } from "../../../../Icons"
 import { ProposalResumeItem } from '../ProposalResumeItem';
 import { shortenAddress } from '../../../../utils/utils';
 import { TabsMean } from '../../../../components/TabsMean';
+import { getOperationName } from '../../../../utils/multisig-helpers';
+import { useTranslation } from 'react-i18next';
+import { openNotification } from '../../../../components/Notifications';
+import { useCallback, useEffect } from 'react';
+import { copyText } from '../../../../utils/ui';
+import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../../../constants';
+import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
 
 export const SafeDetailsView = (props: {
   isSafeDetails: boolean;
   onDataToSafeView: any;
-  proposalSelected: any;
+  proposalSelected?: any;
+  selectedMultisig?: any;
 }) => {
+  const { t } = useTranslation('common');
   const { Panel } = Collapse;
-  const { isSafeDetails, onDataToSafeView, proposalSelected } = props;
+  const { isSafeDetails, onDataToSafeView, selectedMultisig } = props;
+
+  const { id, signers, details, executedOn, status, proposer, operation, programId, accounts, data } = props.proposalSelected;
 
   const collapseHandler = (key: any) => {}
 
@@ -21,13 +32,30 @@ export const SafeDetailsView = (props: {
     onDataToSafeView();
   };
 
+  // Copy address to clipboard
+  const copyAddressToClipboard = useCallback((address: any) => {
+
+    if (copyText(address.toString())) {
+      openNotification({
+        description: t('notifications.account-address-copied-message'),
+        type: "info"
+      });
+    } else {
+      openNotification({
+        description: t('notifications.account-address-not-copied-message'),
+        type: "error"
+      });
+    }
+
+  },[t]);
+
   // Display the instructions in the "Instructions" tab, on safe details page
   const renderInstructions = (
     <div className="safe-details-collapse w-100">
       <Collapse
         accordion={true}
         onChange={collapseHandler}>
-        {proposalSelected.instructions.map((instruction: any) => {
+        {/* {instructions.map((instruction: any) => {
 
           const header =  <Col className="instruction-header">
                             <div className="circle-background">{instruction.id}</div>
@@ -81,7 +109,68 @@ export const SafeDetailsView = (props: {
               ))}
             </Panel>
           )
-        })}
+        })} */}
+
+            <Panel header={getOperationName(operation)} key="1" showArrow={false} extra={<span className="icon-button-container arrow-up-down">
+              <Button
+                type="default"
+                shape="circle"
+                size="middle"
+                icon={<IconCaretDown className="mean-svg-icons" />}
+              />
+            </span>}>
+              <Row gutter={[8, 8]} className="mb-1">
+                <Col xs={6} sm={6} md={4} lg={4} className="pr-1">
+                  <span className="info-label">{t('multisig.proposal-modal.instruction-program')}:</span>
+                </Col>
+                <Col xs={18} sm={18} md={20} lg={20} className="pl-1">
+                  <span onClick={() => copyAddressToClipboard(programId.toBase58())}  className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
+                    {programId.toBase58()}
+                  </span>
+                  <a
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${programId.toBase58()}${getSolanaExplorerClusterParam()}`}>
+                    <IconLink className="mean-svg-icons external-icon" />
+                  </a>
+                </Col>
+              </Row>
+
+              {/* {accounts && (
+                accounts.map((account: any) => (
+                  account.map((acc: any) => (
+                    <Row gutter={[8, 8]} className="mb-1" key={acc.index}>
+                      <Col xs={6} sm={6} md={4} lg={4} className="pr-1">
+                        <span className="info-label">{t('multisig.proposal-modal.instruction-account')} {acc.index + 1}:</span>
+                      </Col>
+                      <Col xs={18} sm={18} md={20} lg={20} className="pl-1">
+                        <span onClick={() => copyAddressToClipboard(acc.address.toBase58())}  className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
+                          {acc.address.toBase58()}
+                        </span>
+                        <a
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${acc.address}${getSolanaExplorerClusterParam()}`}>
+                          <IconLink className="mean-svg-icons external-icon" />
+                        </a>
+                      </Col>
+                    </Row>
+                  ))
+                ))
+              )} */}
+
+                <Row gutter={[8, 8]} className="mb-1">
+                  <Col xs={6} sm={6} md={4} lg={4} className="pr-1">
+                    <span className="info-label">{t('multisig.proposal-modal.instruction-data')}:</span>
+                  </Col>
+                  <Col xs={18} sm={18} md={20} lg={20} className="pl-1">
+                    <span onClick={() => copyAddressToClipboard(data)}  className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
+                      {data}
+                    </span>
+                  </Col>
+                </Row>
+
+            </Panel>
       </Collapse>
     </div>
   );
@@ -89,7 +178,7 @@ export const SafeDetailsView = (props: {
   // Display the activities in the "Activity" tab, on safe details page
   const renderActivities = (
     <Row>
-      {proposalSelected.activities.map((activity: any) => {
+      {/* {proposalSelected.activities.map((activity: any) => {
         let icon = null;
 
         switch (activity.description) {
@@ -129,7 +218,7 @@ export const SafeDetailsView = (props: {
               </div>
           </div>
         )
-      })}
+      })} */}
     </Row>
   )
 
@@ -145,6 +234,15 @@ export const SafeDetailsView = (props: {
     }
   ];
 
+  // Number of participants who have already approved the Tx
+  const approvedSigners = signers.filter((s: any) => s === true).length;
+
+  const neededSigners = approvedSigners && (selectedMultisig.threshold - approvedSigners);
+
+  const expirationDate = details.expirationDate ? new Date(details.expirationDate).toDateString() : "";
+
+  const executedOnDate = executedOn ? new Date(executedOn).toDateString() : "";
+  
   return (
     <div className="safe-details-container">
       <Row gutter={[8, 8]} className="safe-details-resume">
@@ -154,25 +252,28 @@ export const SafeDetailsView = (props: {
         </div>
       </Row>
       <ProposalResumeItem 
-        id={proposalSelected.id}
-        logo={proposalSelected.logo}
-        title={proposalSelected.title}
-        expires={proposalSelected.expires}
-        approved={proposalSelected.approved}
-        rejected={proposalSelected.rejected}
-        status={proposalSelected.status}
-        needs={proposalSelected.needs}
+        id={id}
+        // logo={proposalSelected.logo}
+        title={details.title}
+        expires={expirationDate}
+        executedOn={executedOnDate}
+        approved={approvedSigners}
+        // rejected={proposalSelected.rejected}
+        status={status}
+        needs={neededSigners}
         isSafeDetails={isSafeDetails}
       />
-      <Row className="safe-details-description">
-        {proposalSelected.description}
-      </Row>
+      {details.description && (
+        <Row className="safe-details-description">
+          {details.description}
+        </Row>
+      )}
       <Row gutter={[8, 8]} className="safe-details-proposal">
         <Col className="safe-details-left-container">
           <IconUser className="user-image mean-svg-icons" />
           <div className="proposal-resume-left-text">
             <div className="info-label">Proposed by</div>
-            <span>{proposalSelected.proposedBy}</span>
+            <span>{shortenAddress(proposer.toBase58(), 4)}</span>
           </div>
         </Col>
         <Col className="safe-details-right-container btn-group">

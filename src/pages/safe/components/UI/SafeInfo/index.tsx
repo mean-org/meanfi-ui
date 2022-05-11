@@ -11,7 +11,7 @@ import { AppStateContext } from "../../../../../contexts/appstate";
 import { getSolanaExplorerClusterParam, useConnectionConfig } from "../../../../../contexts/connection";
 import { IconAdd, IconEdit, IconEllipsisVertical, IconLink, IconShowAll, IconTrash } from "../../../../../Icons";
 
-import { consoleOut, copyText, toUsCurrency } from "../../../../../utils/ui";
+import { consoleOut, copyText, isDev, isLocal, toUsCurrency } from "../../../../../utils/ui";
 import { fetchAccountTokens, getTokenByMintAddress, shortenAddress } from "../../../../../utils/utils";
 
 export const SafeInfo = (props: {
@@ -25,7 +25,8 @@ export const SafeInfo = (props: {
 }) => {
   const {
     coinPrices,
-    splTokenList
+    splTokenList,
+    isWhitelisted
   } = useContext(AppStateContext);
   const connectionConfig = useConnectionConfig();
 
@@ -44,6 +45,10 @@ export const SafeInfo = (props: {
   }), [
     connectionConfig.endpoint
   ]);
+
+  const isUnderDevelopment = () => {
+    return isLocal() || (isDev() && isWhitelisted) ? true : false;
+  }
 
   // Copy address to clipboard
   const copyAddressToClipboard = useCallback((address: any) => {
@@ -202,10 +207,12 @@ export const SafeInfo = (props: {
         <IconEdit className="mean-svg-icons" />
         <span className="menu-item-text">Edit Safe</span>
       </Menu.Item>
-      <Menu.Item key="1" onClick={() => {}}>
-        <IconTrash className="mean-svg-icons" />
-        <span className="menu-item-text">Delete Safe</span>
-      </Menu.Item>
+      {isUnderDevelopment() && (
+        <Menu.Item key="1" onClick={() => {}}>
+          <IconTrash className="mean-svg-icons" />
+          <span className="menu-item-text">Delete Safe</span>
+        </Menu.Item>
+      )}
     </Menu>
   );
 
@@ -250,10 +257,19 @@ export const SafeInfo = (props: {
           </Button>
         </Col>
         <Col xs={4} sm={6} md={4} lg={6}>
-          <Dropdown trigger={["click"]} overlay={menu} placement="bottomRight">
-            <div onClick={e => e.stopPropagation()} className="ellipsis-icon icon-button-container">
-              <IconEllipsisVertical className="mean-svg-icons" />
-            </div>
+          <Dropdown
+            overlay={menu}
+            placement="bottomRight"
+            trigger={["click"]}>
+            <span className="ellipsis-icon icon-button-container mr-1">
+              <Button
+                type="default"
+                shape="circle"
+                size="middle"
+                icon={<IconEllipsisVertical className="mean-svg-icons"/>}
+                onClick={(e) => e.preventDefault()}
+              />
+            </span>
           </Dropdown>
         </Col>
       </Row>

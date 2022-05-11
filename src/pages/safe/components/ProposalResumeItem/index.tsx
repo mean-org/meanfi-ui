@@ -1,13 +1,14 @@
-import { useCallback } from 'react';
+import { useCallback, useContext } from 'react';
 import './style.scss';
 import { Button, Col, Row } from "antd"
 import { IconArrowForward, IconThumbsDown, IconThumbsUp } from '../../../../Icons';
 import { useTranslation } from 'react-i18next';
 import { MultisigTransaction, MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
 import Countdown from 'react-countdown';
+import { AppStateContext } from '../../../../contexts/appstate';
 
 export const ProposalResumeItem = (props: {
-  id?: number;
+  id?: any;
   version?: number;
   logo?: string;
   title: string;
@@ -16,9 +17,13 @@ export const ProposalResumeItem = (props: {
   approved?: any;
   rejected?: any;
   status?: any;
-  needs?: number;
+  needs?: any;
   isSafeDetails?: boolean;
 }) => {
+  const {
+    theme
+  } = useContext(AppStateContext);
+
   const { logo, version, title, expires, executedOn, approved, rejected, status, needs, isSafeDetails } = props;
 
   const { t } = useTranslation('common');
@@ -68,15 +73,15 @@ export const ProposalResumeItem = (props: {
     }
 
     if (status === MultisigTransactionStatus.Expired) {
-      return "";
+      return theme === 'light' ? "bg-gray-light" : "bg-gray-dark";
     }
 
     return "";
 
-  },[status]);
+  },[status, theme]);
 
   // Random component
-  const Completionist = () => <span>Expired</span>;
+  const Completionist = () => <span>Expired on {expires}</span>;
 
   // Renderer callback with condition
   const renderer = ({ days, hours, minutes, seconds, completed }: any) => {
@@ -113,15 +118,6 @@ export const ProposalResumeItem = (props: {
                   )}
                 </div>
               )
-              // <span className="info-label">{expires}
-              //   {status === "active" ? (
-              //     `Expires in ${expires}`
-              //   ) : status === "passed" ? (
-              //     `Executed in ${expires}`
-              //   ) : status === "failed" ? (
-              //     `Rejected in ${expires}`
-              //   ) : null}
-              // </span>
             )}
           </div>
         </Col>
@@ -146,8 +142,8 @@ export const ProposalResumeItem = (props: {
                 <span className="badge darken small text-uppercase">{getTransactionStatusAction(status)}</span>
               </div>
             </div>
-            {needs && (
-              <span className="info-label">Needs {needs} approvals to pass</span>
+            {needs >= 0 && (
+              <span className="info-label">{`Needs ${needs} ${needs > 1 ?"approvals" : "approval"} to pass`}</span>
             )}
           </div>
           {!isSafeDetails && (
