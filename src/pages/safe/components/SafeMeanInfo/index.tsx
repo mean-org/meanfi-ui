@@ -5,6 +5,7 @@ import { IconApprove, IconArrowForward, IconCheckCircle, IconCreated, IconCross,
 import { shortenAddress } from "../../../../utils/utils";
 import { ProposalResumeItem } from '../ProposalResumeItem';
 import { SafeInfo } from "../UI/SafeInfo";
+import { MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
 
 export const SafeMeanInfo = (props: {
   isSafeDetails: boolean;
@@ -16,39 +17,50 @@ export const SafeMeanInfo = (props: {
   onEditMultisigClick: any;
   onNewProposalMultisigClick: any;
   multisigVaults: any;
+  multisigTxs: MultisigTransaction[];
 }) => {
 
-  const { isSafeDetails, proposals, selectedMultisig, onEditMultisigClick, onNewProposalMultisigClick, multisigVaults } = props;
+  const { isSafeDetails, multisigTxs, selectedMultisig, onEditMultisigClick, onNewProposalMultisigClick, multisigVaults } = props;
 
   // Proposals list
   const renderListOfProposals = (
     <>
-      {proposals && proposals.length && (
-        proposals.map((proposal, index) => {
+      {multisigTxs && multisigTxs.length ? (
+        multisigTxs.map((proposal, index) => {
           const onSelectProposal = () => {
             // Sends isSafeDetails value to the parent component "SafeView"
             props.onDataToSafeView(proposal);
           };
 
+          // Number of participants who have already approved the Tx
+          const approvedSigners = proposal.signers.filter((s: any) => s === true).length;
+
+          const expirationDate = proposal.details.expirationDate ? new Date(proposal.details.expirationDate).toDateString() : "";
+
+          const executedOnDate = proposal.executedOn ? new Date(proposal.executedOn).toDateString() : "";
+
           return (
             <div 
-              key={proposal.id}
+              key={proposal.id.toBase58()}
               onClick={onSelectProposal}
               className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
               >
                 <ProposalResumeItem
-                  id={proposal.id}
-                  logo={proposal.logo}
-                  title={proposal.title}
-                  expires={proposal.expires}
-                  approved={proposal.approved}
-                  rejected={proposal.rejected}
+                  // id={proposal.id.toBase58()}
+                  // logo={proposal.logo}
+                  title={proposal.details.title}
+                  expires={expirationDate}
+                  executedOn={executedOnDate}
+                  approved={approvedSigners}
+                  // rejected={proposal.rejected}
                   status={proposal.status}
                   isSafeDetails={isSafeDetails}
                 />
             </div>
           )
         })
+      ) : (
+        <span>This multisig has no transactions</span>
       )}
     </>
   );
@@ -70,7 +82,7 @@ export const SafeMeanInfo = (props: {
   // Activities list 
   const renderActivities= (
     <>
-      {proposals && proposals.length && (
+      {/* {proposals && proposals.length && (
         proposals.map((proposal) => (
           proposal.activities.map((activity: any) => {
 
@@ -115,14 +127,14 @@ export const SafeMeanInfo = (props: {
             )
           })
         ))
-      )}
+      )} */}
     </>
   );
 
   // Programs list 
   const renderPrograms = (
     <>
-      {proposals && proposals.length && (
+      {/* {proposals && proposals.length && (
         proposals.map((proposal) => (
           proposal.programs.map((program: any) => {
             const onSelectProgram = () => {
@@ -155,7 +167,7 @@ export const SafeMeanInfo = (props: {
             )
           })
         ))
-      )}
+      )} */}
     </>
   );
 

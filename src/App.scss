@@ -110,6 +110,7 @@
   --color-item-selector-selected: #73c700;
   --color-incoming-transaction: #4e9800;
   --color-green: #006820;
+  --color-green-dark: #022818;
   --color-outgoing-transaction: #e02020;
   --color-pending-transaction: #e64d11;
   --color-paused-transaction: #1698e4;
@@ -437,6 +438,9 @@ h1, h2, h3, h4, h5, h6 {
 }
 .bg-green {
   background-color: var(--color-green) !important;
+}
+.bg-green-dark {
+  background-color: var(--color-green-dark) !important;
 }
 .bg-purple {
   background-color: var(--color-purple) !important;

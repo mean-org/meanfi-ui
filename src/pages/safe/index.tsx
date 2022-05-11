@@ -158,9 +158,7 @@ export const SafeView = () => {
   const [appsProvider, setAppsProvider] = useState<AppsProvider>();
   const [solanaApps, setSolanaApps] = useState<App[]>([]);
   const [serumAccounts, setSerumAccounts] = useState<MultisigInfo[]>([]);
-  // const [isCreateMeanMultisig, setIsCreateMeanMultisig] = useState<boolean>();
-  // const [isCreateSerumMultisig, setIsCreateSerumMultisig] = useState<boolean>();
-
+  
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
     commitment: "confirmed",
     disableRetryOnRateLimit: true
@@ -4298,6 +4296,9 @@ export const SafeView = () => {
     </Menu>
   );
 
+  console.log("filteredMultisigTxs", filteredMultisigTxs);
+  
+
   return (
     <>
       {isLocal() && (
@@ -4399,33 +4400,36 @@ export const SafeView = () => {
                 <div className="scroll-wrapper vertical-scroll">
                   {connected && selectedMultisig ? (
                     <>
-                      {(!isSafeDetails && !isProgramDetails) && (
-                        selectedMultisig.version === 0 ? (
-                          <SafeSerumInfoView
-                            isSafeDetails={isSafeDetails}
-                            isProgramDetails={isProgramDetails}
-                            onDataToSafeView={goToSafeDetailsHandler}
-                            onDataToProgramView={goToProgramDetailsHandler}
-                            proposals={proposals}
-                            selectedMultisig={selectedMultisig}
-                            onEditMultisigClick={onEditMultisigClick}
-                            onNewProposalMultisigClick={onNewProposalMultisigClick}
-                            multisigVaults={multisigVaults}
-                          />
-                        ) : (
-                          <SafeMeanInfo
-                            isSafeDetails={isSafeDetails}
-                            isProgramDetails={isProgramDetails}
-                            onDataToSafeView={goToSafeDetailsHandler}
-                            onDataToProgramView={goToProgramDetailsHandler}
-                            proposals={proposals}
-                            selectedMultisig={selectedMultisig}
-                            onEditMultisigClick={onEditMultisigClick}
-                            onNewProposalMultisigClick={onNewProposalMultisigClick}
-                            multisigVaults={multisigVaults}
-                          />
-                        )
-                      )}
+                      <Spin spinning={loadingMultisigAccounts || loadingMultisigTxs}>
+                        {(!isSafeDetails && !isProgramDetails) && (
+                          selectedMultisig.version === 0 ? (
+                            <SafeSerumInfoView
+                              isSafeDetails={isSafeDetails}
+                              isProgramDetails={isProgramDetails}
+                              onDataToSafeView={goToSafeDetailsHandler}
+                              onDataToProgramView={goToProgramDetailsHandler}
+                              proposals={proposals}
+                              selectedMultisig={selectedMultisig}
+                              onEditMultisigClick={onEditMultisigClick}
+                              onNewProposalMultisigClick={onNewProposalMultisigClick}
+                              multisigVaults={multisigVaults}
+                            />
+                          ) : (
+                            <SafeMeanInfo
+                              isSafeDetails={isSafeDetails}
+                              isProgramDetails={isProgramDetails}
+                              onDataToSafeView={goToSafeDetailsHandler}
+                              onDataToProgramView={goToProgramDetailsHandler}
+                              proposals={proposals}
+                              selectedMultisig={selectedMultisig}
+                              onEditMultisigClick={onEditMultisigClick}
+                              onNewProposalMultisigClick={onNewProposalMultisigClick}
+                              multisigVaults={multisigVaults}
+                              multisigTxs={multisigTxs}
+                            />
+                          )
+                        )}
+                      </Spin>
                       {isSafeDetails && (
                         <SafeDetailsView
                           isSafeDetails={isSafeDetails}
