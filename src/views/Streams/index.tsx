@@ -1223,9 +1223,9 @@ export const Streams = () => {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${
-            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58(), false , splTokenList)
           }) to pay for network fees (${
-            getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+            getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58(), false , splTokenList)
           })`
         });
         customLogger.logWarning('Pause stream transaction failed', { transcript: transactionLog });
@@ -2833,7 +2833,7 @@ export const Streams = () => {
 
   const onAcceptWithdraw = (data: any) => {
     closeWithdrawModal();
-    consoleOut('Withdraw amount:', parseFloat(data.amount));
+    consoleOut('Withdraw data from modal:', data, 'blue');
     onExecuteWithdrawFundsTransaction(data);
   };
 
@@ -2873,6 +2873,38 @@ export const Streams = () => {
     }
   }
   */
+
+  const getRateAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
+    let value = '';
+
+    if (item) {
+      const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string, splTokenList) : undefined;
+      if (item.version < 2) {
+        value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
+      } else {
+        value += getFormattedNumberToLocale(formatAmount(toUiAmount(new BN(item.rateAmount), token?.decimals || 6), 2));
+      }
+      value += ' ';
+      value += getTokenSymbol(item.associatedToken as string);
+    }
+    return value;
+  }, [splTokenList]);
+
+  const getDepositAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
+    let value = '';
+
+    if (item && item.rateAmount === 0 && item.allocationAssigned > 0) {
+      const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string, splTokenList) : undefined;
+      if (item.version < 2) {
+        value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
+      } else {
+        value += getFormattedNumberToLocale(formatAmount(toUiAmount(new BN(item.rateAmount), token?.decimals || 6), 2));
+      }
+      value += ' ';
+      value += getTokenSymbol(item.associatedToken as string);
+    }
+    return value;
+  }, [splTokenList]);
 
   const getStreamTypeIcon = useCallback((item: Stream | StreamInfo) => {
     if (isInboundStream(item)) {
@@ -3017,10 +3049,7 @@ export const Streams = () => {
 
     return title;
 
-  }, [
-    t,
-    isInboundStream
-  ]);
+  }, [isInboundStream, getRateAmountDisplay, getDepositAmountDisplay, t]);
 
   const getStreamStatus = useCallback((item: Stream | StreamInfo) => {
 
@@ -3288,7 +3317,10 @@ export const Streams = () => {
         const stream = new PublicKey(streamDetail.id as string);
         const beneficiary = new PublicKey((streamDetail as Stream).beneficiary as string);
         const amount = toTokenAmount(parseFloat(withdrawData.amount as string), selectedToken.decimals);
-        setWithdrawFundsAmount(withdrawData);
+        const receiveAmount = toTokenAmount(parseFloat(withdrawData.receiveAmount as string), selectedToken.decimals);
+        setWithdrawFundsAmount(Object.assign({}, withdrawData, {
+          amount: amount
+        }));
 
         const data = {
           stream: stream.toBase58(),
@@ -3304,8 +3336,8 @@ export const Streams = () => {
           stream: data.stream,
           beneficiary: data.beneficiary,
           feeAmount: withdrawData.fee,
-          inputAmount: withdrawData.inputAmount,
-          sentAmount: withdrawData.receiveAmount
+          inputAmount: amount,
+          sentAmount: receiveAmount
         };
         consoleOut('segment data:', segmentData, 'brown');
         segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalStartFormButton, segmentData);
@@ -3982,38 +4014,6 @@ export const Streams = () => {
     refreshStreamList(false);
   };
 
-  const getRateAmountDisplay = (item: Stream | StreamInfo): string => {
-    let value = '';
-
-    if (item) {
-      const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string, splTokenList) : undefined;
-      if (item.version < 2) {
-        value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
-      } else {
-        value += getFormattedNumberToLocale(formatAmount(toUiAmount(new BN(item.rateAmount), token?.decimals || 6), 2));
-      }
-      value += ' ';
-      value += getTokenSymbol(item.associatedToken as string);
-    }
-    return value;
-  }
-
-  const getDepositAmountDisplay = (item: Stream | StreamInfo): string => {
-    let value = '';
-
-    if (item && item.rateAmount === 0 && item.allocationAssigned > 0) {
-      const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string, splTokenList) : undefined;
-      if (item.version < 2) {
-        value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
-      } else {
-        value += getFormattedNumberToLocale(formatAmount(toUiAmount(new BN(item.rateAmount), token?.decimals || 6), 2));
-      }
-      value += ' ';
-      value += getTokenSymbol(item.associatedToken as string);
-    }
-    return value;
-  }
-
   const isOtp = (): boolean => {
     return streamDetail?.rateAmount === 0 ? true : false;
   }
@@ -4214,7 +4214,7 @@ export const Streams = () => {
                           <div className="std-table-cell fixed-width-60">
                             <span className="align-middle">{
                               getAmountWithSymbol(
-                                getActivityAmountDisplay(item, streamVersion), item.mint
+                                getActivityAmountDisplay(item, streamVersion), item.mint, false, splTokenList
                               )}
                             </span>
                           </div>
@@ -4311,7 +4311,8 @@ export const Streams = () => {
                                 {
                                   getTokenAmountAndSymbolByTokenAddress(
                                     toUiAmount(new BN(stream.state === STREAM_STATE.Schedule ? stream.allocationAssigned : stream.escrowVestedAmount), token?.decimals || 6),
-                                    stream.associatedToken as string
+                                    stream.associatedToken as string,
+                                    false, splTokenList
                                   )
                                 }
                               </span>
@@ -4322,7 +4323,7 @@ export const Streams = () => {
                             <div className="info-label">{t('streams.stream-detail.label-payment-rate')}</div>
                             <div className="transaction-detail-row">
                               <span className="info-data">
-                                {getAmountWithSymbol(stream.rateAmount, stream.associatedToken as string)}
+                                {getAmountWithSymbol(stream.rateAmount, stream.associatedToken as string, false, splTokenList)}
                                 {getIntervalFromSeconds(stream?.rateIntervalInSeconds as number, true, t)}
                               </span>
                             </div>
@@ -4346,7 +4347,7 @@ export const Streams = () => {
                               (
                                 <span className="info-data">
                                 {stream
-                                  ? getAmountWithSymbol(stream.allocationAssigned, stream.associatedToken as string)
+                                  ? getAmountWithSymbol(stream.allocationAssigned, stream.associatedToken as string, false, splTokenList)
                                   : '--'}
                                 </span>
                               ) : (
@@ -4381,7 +4382,7 @@ export const Streams = () => {
                           {stream ? (
                             <span className="info-data">
                             {stream
-                              ? getAmountWithSymbol(stream.escrowUnvestedAmount, stream.associatedToken as string)
+                              ? getAmountWithSymbol(stream.escrowUnvestedAmount, stream.associatedToken as string, false, splTokenList)
                               : '--'}
                             </span>
                           ) : (
@@ -4421,7 +4422,8 @@ export const Streams = () => {
                           <span className="info-data">
                             {getAmountWithSymbol(
                               stream.allocationAssigned || stream.allocationLeft,
-                              stream.associatedToken as string
+                              stream.associatedToken as string,
+                              false, splTokenList
                             )}
                           </span>
                         </div>
@@ -4463,7 +4465,8 @@ export const Streams = () => {
                               {stream
                                 ? getAmountWithSymbol(
                                     stream.escrowVestedAmount, 
-                                    stream.associatedToken as string
+                                    stream.associatedToken as string,
+                                    false, splTokenList
                                   )
                                 : '--'}
                               </span>
@@ -4617,7 +4620,8 @@ export const Streams = () => {
                                 {
                                   getTokenAmountAndSymbolByTokenAddress(
                                     toUiAmount(new BN(stream.status === STREAM_STATUS.Schedule ? stream.allocationAssigned : stream.withdrawableAmount), token?.decimals || 6),
-                                    stream.associatedToken as string
+                                    stream.associatedToken as string,
+                                    false, splTokenList
                                   )
                                 }
                               </span>
@@ -4628,7 +4632,11 @@ export const Streams = () => {
                             <div className="info-label">{t('streams.stream-detail.label-payment-rate')}</div>
                             <div className="transaction-detail-row">
                               <span className="info-data">
-                                {getAmountWithSymbol(toUiAmount(new BN(stream.rateAmount), selectedToken?.decimals || 6), stream.associatedToken as string)}
+                                {getAmountWithSymbol(
+                                  toUiAmount(new BN(stream.rateAmount), selectedToken?.decimals || 6),
+                                  stream.associatedToken as string,
+                                  false, splTokenList
+                                )}
                                 {getIntervalFromSeconds(stream.rateIntervalInSeconds as number, true, t)}
                               </span>
                             </div>
@@ -4651,7 +4659,8 @@ export const Streams = () => {
                             <span className="info-data">
                               {getAmountWithSymbol(
                                 toUiAmount(new BN(stream.fundsLeftInStream), selectedToken?.decimals || 6),
-                                stream.associatedToken as string
+                                stream.associatedToken as string,
+                                false, splTokenList
                               )}
                             </span>
                           ) : (
@@ -4691,7 +4700,8 @@ export const Streams = () => {
                           <span className="info-data">
                             {getAmountWithSymbol(
                               toUiAmount(new BN(stream.remainingAllocationAmount), selectedToken?.decimals || 6),
-                              stream.associatedToken as string
+                              stream.associatedToken as string,
+                              false, splTokenList
                             )}
                           </span>
                         </div>
@@ -4732,7 +4742,8 @@ export const Streams = () => {
                               <span className="info-data large">
                                 {getAmountWithSymbol(
                                   toUiAmount(new BN(stream.withdrawableAmount), selectedToken?.decimals || 6),
-                                  stream.associatedToken as string
+                                  stream.associatedToken as string,
+                                  false, splTokenList
                                 )}
                               </span>
                             ) : (
@@ -4892,7 +4903,8 @@ export const Streams = () => {
                               {
                                 getTokenAmountAndSymbolByTokenAddress(
                                   toUiAmount(new BN(stream.state === STREAM_STATE.Schedule ? stream.allocationAssigned : stream.escrowVestedAmount), token?.decimals || 6),
-                                  stream.associatedToken as string
+                                  stream.associatedToken as string,
+                                  false, splTokenList
                                 )
                               }
                             </span>
@@ -4904,7 +4916,7 @@ export const Streams = () => {
                           <div className="transaction-detail-row">
                             <span className="info-data">
                               {stream
-                                ? getAmountWithSymbol(stream.rateAmount, stream.associatedToken as string)
+                                ? getAmountWithSymbol(stream.rateAmount, stream.associatedToken as string, false, splTokenList)
                                 : '--'
                               }
                               {getIntervalFromSeconds(stream?.rateIntervalInSeconds as number, true, t)}
@@ -4930,7 +4942,7 @@ export const Streams = () => {
                             (
                               <span className="info-data">
                               {stream
-                                ? getAmountWithSymbol(stream.allocationAssigned, stream.associatedToken as string)
+                                ? getAmountWithSymbol(stream.allocationAssigned, stream.associatedToken as string, false, splTokenList)
                                 : '--'}
                               </span>
                             ) : (
@@ -4972,7 +4984,8 @@ export const Streams = () => {
                           <span className="info-data">
                             {getAmountWithSymbol(
                               stream.allocationAssigned || stream.allocationLeft,
-                              stream.associatedToken as string
+                              stream.associatedToken as string,
+                              false, splTokenList
                             )}
                           </span>
                         </div>
@@ -4996,11 +5009,10 @@ export const Streams = () => {
                             <span className="info-data">
                             {stream
                               ? getAmountWithSymbol(
-                                stream.allocationAssigned - 
-                                stream.allocationLeft + 
-                                stream.escrowVestedAmount, 
-                                stream.associatedToken as string
-                              )
+                                  stream.allocationAssigned - stream.allocationLeft + stream.escrowVestedAmount, 
+                                  stream.associatedToken as string,
+                                  false, splTokenList
+                                )
                               : '--'}
                             </span>
                           ) : (
@@ -5043,7 +5055,7 @@ export const Streams = () => {
                         {stream ? (
                           <span className="info-data large">
                           {stream
-                            ? getAmountWithSymbol(stream.escrowUnvestedAmount, stream.associatedToken as string)
+                            ? getAmountWithSymbol(stream.escrowUnvestedAmount, stream.associatedToken as string, false, splTokenList)
                             : '--'}
                           </span>
                         ) : (
@@ -5233,7 +5245,8 @@ export const Streams = () => {
                               {
                                 getTokenAmountAndSymbolByTokenAddress(
                                   toUiAmount(new BN(stream.status === STREAM_STATUS.Schedule ? stream.allocationAssigned : stream.withdrawableAmount), token?.decimals || 6),
-                                  stream.associatedToken as string
+                                  stream.associatedToken as string,
+                                  false, splTokenList
                                 )
                               }
                             </span>
@@ -5244,7 +5257,11 @@ export const Streams = () => {
                           <div className="info-label">{t('streams.stream-detail.label-payment-rate')}</div>
                           <div className="transaction-detail-row">
                             <span className="info-data">
-                              {getAmountWithSymbol(toUiAmount(new BN(stream.rateAmount), selectedToken?.decimals || 6), stream.associatedToken as string)}
+                              {getAmountWithSymbol(
+                                toUiAmount(new BN(stream.rateAmount), selectedToken?.decimals || 6),
+                                stream.associatedToken as string,
+                                false, splTokenList
+                              )}
                               {getIntervalFromSeconds(stream?.rateIntervalInSeconds as number, true, t)}
                             </span>
                           </div>
@@ -5270,7 +5287,8 @@ export const Streams = () => {
                           <span className="info-data">
                             {getAmountWithSymbol(
                               toUiAmount(new BN(stream.remainingAllocationAmount), selectedToken?.decimals || 6),
-                              stream.associatedToken as string
+                              stream.associatedToken as string,
+                              false, splTokenList
                             )}
                           </span>
                         </div>
@@ -5305,7 +5323,8 @@ export const Streams = () => {
                             <span className="info-data">
                               {getAmountWithSymbol(
                                 toUiAmount(new BN(stream.fundsSentToBeneficiary), selectedToken?.decimals || 6),
-                                stream.associatedToken as string
+                                stream.associatedToken as string,
+                                false, splTokenList
                               )}
                             </span>
                           ) : (
@@ -5349,7 +5368,8 @@ export const Streams = () => {
                           <span className="info-data large">
                             {getAmountWithSymbol(
                               toUiAmount(new BN(stream.fundsLeftInStream), selectedToken?.decimals || 6),
-                              stream.associatedToken as string
+                              stream.associatedToken as string,
+                              false, splTokenList
                             )}
                           </span>
                         ) : (
@@ -5847,7 +5867,8 @@ export const Streams = () => {
                 <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
                 <h5 className="operation">{t('transactions.status.tx-add-funds-operation')} {getAmountWithSymbol(
                     parseFloat(addFundsPayload ? addFundsPayload.amount : 0),
-                    streamDetail?.associatedToken as string
+                    streamDetail?.associatedToken as string,
+                    false, splTokenList
                   )}
                 </h5>
                 {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
@@ -5876,11 +5897,13 @@ export const Streams = () => {
                     {t('transactions.status.tx-start-failure', {
                       accountBalance: getTokenAmountAndSymbolByTokenAddress(
                         nativeBalance,
-                        NATIVE_SOL_MINT.toBase58()
+                        NATIVE_SOL_MINT.toBase58(),
+                        false, splTokenList
                       ),
                       feeAmount: getTokenAmountAndSymbolByTokenAddress(
                         transactionFees.blockchainFee + transactionFees.mspFlatFee,
-                        NATIVE_SOL_MINT.toBase58()
+                        NATIVE_SOL_MINT.toBase58(),
+                        false, splTokenList
                       )})
                     }
                   </h4>
