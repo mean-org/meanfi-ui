@@ -1100,9 +1100,9 @@
 			"search-streams-placeholder": "Rechercher un flux par nom ou adresse",
 			"success-message": "Votre trésorerie a été financée avec succès."
 		},
-		"back-to-treasuries-cta": "Retour aux bons du Trésor",
+		"back-to-treasuries-cta": "Back to Streaming Accounts",
 		"close-treasury-confirmation": "Êtes-vous sûr de vouloir fermer la trésorerie ?",
-		"create-new-treasury-cta": "Créer une trésorerie",
+		"create-new-treasury-cta": "New Streaming Account",
 		"create-treasury": {
 			"create-multisig-cta": "Initier la trésorerie",
 			"create-multisig-cta-busy": "Trésorerie initiatique",
@@ -1143,8 +1143,8 @@
 			"treasuryid-open-cta": "Flux ouvert",
 			"treasuryid-placeholder": "ID de trésorerie créé par Mean Finance"
 		},
-		"refresh-tooltip": "Cliquez pour rafraîchir la liste des trésoreries",
-		"screen-title": "Trésors",
+		"refresh-tooltip": "Click to refresh the list of streaming accounts",
+		"screen-title": "Streaming Accounts",
 		"summary-title": "Streaming Accounts",
 		"treasury-detail": {
 			"associated-token": "Jeton associé",
@@ -1155,8 +1155,8 @@
 			"cta-close-busy": "Trésorerie de clôture",
 			"cta-withdraw-multisig-treasury": "Retirer des fonds",
 			"multisig-tx-headsup": "Transactions en attente d'approbation ou d'exécution pour cette trésorerie",
-			"no-treasury-loaded": "Créer ou rechercher une trésorerie pour afficher les détails",
-			"no-treasury-selected": "Veuillez sélectionner ou rechercher une trésorerie pour afficher les détails",
+			"no-treasury-loaded": "Select a streaming account to view details",
+			"no-treasury-selected": "Select a streaming account to view details",
 			"number-of-streams": "Nombre de flux",
 			"treasury-address-label": "Adresse",
 			"treasury-name-label": "Nom du Trésor",
@@ -1168,7 +1168,7 @@
 			"multisig-treasury-heading": "Trésoreries multisignatures - {{treasuryName}}",
 			"multisig-treasury-help": "Vous trouverez ci-dessous une liste de tous les trésors qui sont connectés à ce Multisig",
 			"multisig-treasury-label": "Trésorerie multisig",
-			"no-treasuries": "Aucune trésorerie disponible",
+			"no-treasuries": "No streaming accounts available",
 			"not-connected": "Veuillez connecter votre portefeuille pour voir vos trésoreries",
 			"total-streams-label": "ruisseaux"
 		},
@@ -1264,7 +1264,6 @@
 				"faucet": "Robinet",
 				"multisig": "Multisig",
 				"submenu-title": "Prestations de service",
-				"treasuries": "Trésorerie et paie",
 				"unwrap": "Unwrap",
 				"wallet-guide": "Guide du portefeuille",
 				"wrap": "Envelopper"

@@ -1104,9 +1104,9 @@
 			"search-streams-placeholder": "이름 또는 주소로 스트림 검색",
 			"success-message": "성공적으로 자금이 조달되었습니다."
 		},
-		"back-to-treasuries-cta": "금고로 돌아가기",
+		"back-to-treasuries-cta": "Back to Streaming Accounts",
 		"close-treasury-confirmation": "트레저리를 닫으시겠습니까?",
-		"create-new-treasury-cta": "트레저리 생성",
+		"create-new-treasury-cta": "New Streaming Account",
 		"create-treasury": {
 			"create-multisig-cta": "트레저리 시작",
 			"create-multisig-cta-busy": "트레저리 시작",
@@ -1147,8 +1147,8 @@
 			"treasuryid-open-cta": "스트림 생성",
 			"treasuryid-placeholder": "Mean Finance에 의해 만든 트레저리 ID"
 		},
-		"refresh-tooltip": "금고 목록을 새로 고치려면 클릭하십시오.",
-		"screen-title": "Streaming Treasuries",
+		"refresh-tooltip": "Click to refresh the list of streaming accounts",
+		"screen-title": "Streaming Accounts",
 		"summary-title": "Streaming Accounts",
 		"treasury-detail": {
 			"associated-token": "관련 토큰",
@@ -1159,8 +1159,8 @@
 			"cta-close-busy": "트레저리 종료",
 			"cta-withdraw-multisig-treasury": "자금 인출",
 			"multisig-tx-headsup": "이 트레저리에 대한 승인 또는 실행 보류 중인 거래",
-			"no-treasury-loaded": "트레저리를 생성하거나 조회하여 세부 정보를 봅니다.",
-			"no-treasury-selected": "세부 정보를 보려면 트레저리를 선택하거나 조회하세요.",
+			"no-treasury-loaded": "Select a streaming account to view details",
+			"no-treasury-selected": "Select a streaming account to view details",
 			"number-of-streams": "스트림 수",
 			"treasury-address-label": "Treasury Address",
 			"treasury-name-label": "트레저리 이름",
@@ -1172,7 +1172,7 @@
 			"multisig-treasury-heading": "Multisig Treasuries - {{treasuryName}}",
 			"multisig-treasury-help": "Below is a list of all the treasuries that are connected to this Multsig",
 			"multisig-treasury-label": "다중 서명 트레저리",
-			"no-treasuries": "사용 가능한 금고가 없습니다.",
+			"no-treasuries": "No streaming accounts available",
 			"not-connected": "지갑을 연결하여 트레저리를 확인하세요",
 			"total-streams-label": "스트림"
 		},
@@ -1268,7 +1268,6 @@
 				"faucet": "Faucet",
 				"multisig": "Multisig",
 				"submenu-title": "서비스",
-				"treasuries": "Streaming Treasuries",
 				"wallet-guide": "지갑 가이드",
 				"wrap": "랩",
 				"unwrap": "Unwrap"

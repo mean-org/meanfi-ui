@@ -1100,9 +1100,9 @@
 			"search-streams-placeholder": "Search stream by name or address",
 			"success-message": "Your treasury was funded successfully."
 		},
-		"back-to-treasuries-cta": "Back to Treasuries",
+		"back-to-treasuries-cta": "Back to Streaming Accounts",
 		"close-treasury-confirmation": "Are you sure you want to close the treasury?",
-		"create-new-treasury-cta": "Create treasury",
+		"create-new-treasury-cta": "New Streaming Account",
 		"create-treasury": {
 			"create-multisig-cta": "Initiate treasury",
 			"create-multisig-cta-busy": "Initiating treasury",
@@ -1143,8 +1143,8 @@
 			"treasuryid-open-cta": "Open stream",
 			"treasuryid-placeholder": "Treasury ID created by Mean Finance"
 		},
-		"refresh-tooltip": "Click to refresh the list of treasuries",
-		"screen-title": "Streaming Treasuries",
+		"refresh-tooltip": "Click to refresh the list of streaming accounts",
+		"screen-title": "Streaming Accounts",
 		"summary-title": "Streaming Accounts",
 		"treasury-detail": {
 			"associated-token": "Associated token",
@@ -1155,8 +1155,8 @@
 			"cta-close-busy": "Closing treasury",
 			"cta-withdraw-multisig-treasury": "Withdraw funds",
 			"multisig-tx-headsup": "Transactions pending approval or execution for this treasury",
-			"no-treasury-loaded": "Create or lookup a treasury to view details",
-			"no-treasury-selected": "Please select or lookup a treasury to view details",
+			"no-treasury-loaded": "Select a streaming account to view details",
+			"no-treasury-selected": "Select a streaming account to view details",
 			"number-of-streams": "Number of streams",
 			"treasury-address-label": "Treasury address",
 			"treasury-name-label": "Treasury name",
@@ -1168,7 +1168,7 @@
 			"multisig-treasury-heading": "Multisig Treasuries - {{treasuryName}}",
 			"multisig-treasury-help": "Below is a list of all the treasuries that are connected to this Multsig",
 			"multisig-treasury-label": "Multisig Treasury",
-			"no-treasuries": "No treasuries available",
+			"no-treasuries": "No streaming accounts available",
 			"not-connected": "Please connect your wallet to see your treasuries",
 			"total-streams-label": "streams"
 		},
@@ -1264,7 +1264,6 @@
 				"faucet": "Faucet",
 				"multisig": "Multisig",
 				"submenu-title": "Services",
-				"treasuries": "Streaming Treasuries",
 				"unwrap": "Unwrap",
 				"wallet-guide": "Wallet Guide",
 				"wrap": "Wrap"

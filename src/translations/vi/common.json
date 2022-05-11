@@ -1100,9 +1100,9 @@
 			"search-streams-placeholder": "Tìm stream theo tên và địa chỉ",
 			"success-message": "Kho bạc của bạn đã được nạp tiền thành công"
 		},
-		"back-to-treasuries-cta": "Quay về danh sách kho bạc",
+		"back-to-treasuries-cta": "Back to Streaming Accounts",
 		"close-treasury-confirmation": "Bạn chắc sẽ đóng kho bạc chứ?",
-		"create-new-treasury-cta": "Tạo kho bạc",
+		"create-new-treasury-cta": "New Streaming Account",
 		"create-treasury": {
 			"create-multisig-cta": "Khởi tạo kho bạc",
 			"create-multisig-cta-busy": "Đang khởi tạo kho bạc",
@@ -1143,8 +1143,8 @@
 			"treasuryid-open-cta": "Mở stream",
 			"treasuryid-placeholder": "Treasury ID tạo bởi Mean finance"
 		},
-		"refresh-tooltip": "Nhấn để làm mới danh sách kho bạc",
-		"screen-title": "Streaming Treasuries",
+		"refresh-tooltip": "Click to refresh the list of streaming accounts",
+		"screen-title": "Streaming Accounts",
 		"summary-title": "Streaming Accounts",
 		"treasury-detail": {
 			"associated-token": "Mã thông báo được liên kết",
@@ -1155,8 +1155,8 @@
 			"cta-close-busy": "Đang đóng kho bạc",
 			"cta-withdraw-multisig-treasury": "Rút tiền",
 			"multisig-tx-headsup": "Giao dịch đang chờ phê duyệt hoặc thực hiện cho Kho bạc này",
-			"no-treasury-loaded": "Tạo hoặc tra cứu kho bạc để xem chi tiết",
-			"no-treasury-selected": "Vui lòng chọn hoặc tra cứu kho bạc để xem chi tiết",
+			"no-treasury-loaded": "Select a streaming account to view details",
+			"no-treasury-selected": "Select a streaming account to view details",
 			"number-of-streams": "Số lượng stream",
 			"treasury-address-label": "Treasury address",
 			"treasury-name-label": "Tên kho bạc",
@@ -1168,7 +1168,7 @@
 			"multisig-treasury-heading": "Kho bạc Multisig - {{treasuryName}}",
 			"multisig-treasury-help": "Dưới đây là danh sách tất cả các kho bạc được kết nối với Multsig này",
 			"multisig-treasury-label": "Kho bạc Multisig",
-			"no-treasuries": "Không có kho bạc nào",
+			"no-treasuries": "No streaming accounts available",
 			"not-connected": "Vui lòng kết nối ví để thấy kho bạc của bạn",
 			"total-streams-label": "streams"
 		},
@@ -1264,7 +1264,6 @@
 				"faucet": "Faucet",
 				"multisig": "Multisig",
 				"submenu-title": "Dịch vụ",
-				"treasuries": "Streaming Treasuries",
 				"wallet-guide": "Hướng dẫn Ví",
 				"wrap": "Wrap",
 				"unwrap": "Unwrap"

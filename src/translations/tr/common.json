@@ -1101,9 +1101,9 @@
 			"search-streams-placeholder": "İsimle ve ya adresle aktarım arayın",
 			"success-message": "Hazineniz başarıyla fonlandı."
 		},
-		"back-to-treasuries-cta": "Hazinelere geri dön",
+		"back-to-treasuries-cta": "Back to Streaming Accounts",
 		"close-treasury-confirmation": "Hazineyi kapatmak istediğinizden emin misiniz?",
-		"create-new-treasury-cta": "Hazine oluştur",
+		"create-new-treasury-cta": "New Streaming Account",
 		"create-treasury": {
 			"create-multisig-cta": "Hazineyi başlat",
 			"create-multisig-cta-busy": "Hazine başlatılıyor",
@@ -1144,8 +1144,8 @@
 			"treasuryid-open-cta": "Aktarımı aç",
 			"treasuryid-placeholder": "Mean Finance tarafından oluşturulan Hazine ID'si"
 		},
-		"refresh-tooltip": "Hazine listesini yenilemek için tıklayın",
-		"screen-title": "Hazineler",
+		"refresh-tooltip": "Click to refresh the list of streaming accounts",
+		"screen-title": "Streaming Accounts",
 		"summary-title": "Streaming Accounts",
 		"treasury-detail": {
 			"associated-token": "İlişkili token",
@@ -1156,8 +1156,8 @@
 			"cta-close-busy": "Kapanış hazinesi",
 			"cta-withdraw-multisig-treasury": "Fonları çek",
 			"multisig-tx-headsup": "Bu Hazine İçin Onay Bekleyen ya da Devam Eden İşlemler",
-			"no-treasury-loaded": "Detaylarını görmek için bir aktarım oluşturun ya da arayın",
-			"no-treasury-selected": "Ayrıntıları görüntülemek için lütfen bir hazine seçin veya arayın",
+			"no-treasury-loaded": "Select a streaming account to view details",
+			"no-treasury-selected": "Select a streaming account to view details",
 			"number-of-streams": "Aktarım sayısı",
 			"treasury-address-label": "Adres",
 			"treasury-name-label": "Hazine adı",
@@ -1169,7 +1169,7 @@
 			"multisig-treasury-heading": "Çoklu-İmza hazineleri - {{treasuryName}}",
 			"multisig-treasury-help": "Aşağıdaki listede Çoklu-İmzaya bağlı tüm hazineler mevcuttur.",
 			"multisig-treasury-label": "Çoklu-imza hazinesi",
-			"no-treasuries": "Hazine yok",
+			"no-treasuries": "No streaming accounts available",
 			"not-connected": "Hazinelerinizi görmek için lütfen cüzdanınızı bağlayın",
 			"total-streams-label": "aktarımlar"
 		},
@@ -1265,7 +1265,6 @@
 				"faucet": "Musluk(Faucet)",
 				"multisig": "Çoklu-imza",
 				"submenu-title": "Hizmetler",
-				"treasuries": "Hazine ve Bordro",
 				"unwrap": "Unwrap",
 				"wallet-guide": "Cüzdan Rehberi",
 				"wrap": "Wrap"

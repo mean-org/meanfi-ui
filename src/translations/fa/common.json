@@ -1099,9 +1099,9 @@
 			"search-streams-placeholder": "استریم را بر اساس نام یا آدرس جستجو کنید",
 			"success-message": "treasury  شما با موفقیت تامین شد."
 		},
-		"back-to-treasuries-cta": "بازگشت به Treasuries",
+		"back-to-treasuries-cta": "Back to Streaming Accounts",
 		"close-treasury-confirmation": "آیا مطمئن هستید که می خواهید treasury را ببندید؟",
-		"create-new-treasury-cta": "treasury ایجاد کنید",
+		"create-new-treasury-cta": "New Streaming Account",
 		"create-treasury": {
 			"create-multisig-cta": "treasury را آغاز کنید",
 			"create-multisig-cta-busy": "راه اندازی treasury",
@@ -1142,8 +1142,8 @@
 			"treasuryid-open-cta": "باز کردن استریم",
 			"treasuryid-placeholder": "شناسه treasury ایجاد شده توسط Mean Finance"
 		},
-		"refresh-tooltip": "برای بازخوانی لیست treasury ها کلیک کنید",
-		"screen-title": "treasury ها",
+		"refresh-tooltip": "Click to refresh the list of streaming accounts",
+		"screen-title": "Streaming Accounts",
 		"summary-title": "Streaming Accounts",
 		"treasury-detail": {
 			"associated-token": "توکن مرتبط",
@@ -1154,8 +1154,8 @@
 			"cta-close-busy": "بسته شدن treasury",
 			"cta-withdraw-multisig-treasury": "برداشت وجوه",
 			"multisig-tx-headsup": "معاملات در انتظار تایید یا اجرا برای این treasury",
-			"no-treasury-loaded": "برای مشاهده جزئیات یک treasury ایجاد کنید یا جستجو کنید",
-			"no-treasury-selected": "لطفاً برای مشاهده جزئیات، treasury را انتخاب یا جستجو کنید",
+			"no-treasury-loaded": "Select a streaming account to view details",
+			"no-treasury-selected": "Select a streaming account to view details",
 			"number-of-streams": "تعداد استریم ها",
 			"treasury-address-label": "آدرس",
 			"treasury-name-label": "نام treasury",
@@ -1167,7 +1167,7 @@
 			"multisig-treasury-heading": "treasury چند امضایی - {{treasuryName}}",
 			"multisig-treasury-help": "در زیر لیستی از تمام treasury هایی که به این Multsig متصل هستند آورده شده است",
 			"multisig-treasury-label": "treasury چند امضایی",
-			"no-treasuries": "treasury در دسترس نیست",
+			"no-treasuries": "No streaming accounts available",
 			"not-connected": "لطفا کیف پول خود را وصل کنید تا treasury های خود را ببینید",
 			"total-streams-label": "استریم ها"
 		},
@@ -1263,7 +1263,6 @@
 				"faucet": "فاست",
 				"multisig": "Multisig",
 				"submenu-title": "خدمات",
-				"treasuries": "Treasuries و حقوق ودستمزد",
 				"unwrap": "Unwrap",
 				"wallet-guide": "راهنمای کیف پول",
 				"wrap": "رپ(Wrap) کردن"

@@ -1095,9 +1095,9 @@
 			"search-streams-placeholder": "Pesquisar stream por nome ou endereço",
 			"success-message": "Seu tesouro foi financiado com sucesso."
 		},
-		"back-to-treasuries-cta": "Voltar para Tesouros",
+		"back-to-treasuries-cta": "Back to Streaming Accounts",
 		"close-treasury-confirmation": "Tem certeza de que deseja fechar a tesouraria?",
-		"create-new-treasury-cta": "Criar tesouraria",
+		"create-new-treasury-cta": "New Streaming Account",
 		"create-treasury": {
 			"create-multisig-cta": "Iniciar tesouraria",
 			"create-multisig-cta-busy": "Iniciando tesouraria",
@@ -1138,8 +1138,8 @@
 			"treasuryid-open-cta": "Fluxo aberto",
 			"treasuryid-placeholder": "ID do Tesouro criado pela Mean Finance"
 		},
-		"refresh-tooltip": "Clique para atualizar a lista de tesouros",
-		"screen-title": "Streaming Treasuries",
+		"refresh-tooltip": "Click to refresh the list of streaming accounts",
+		"screen-title": "Streaming Accounts",
 		"summary-title": "Streaming Accounts",
 		"treasury-detail": {
 			"associated-token": "Token associado",
@@ -1151,8 +1151,8 @@
 			"cta-withdraw-multisig-treasury": "Retirar fundos",
 			"unallocated-treasury-balance": "Unallocated balance",
 			"multisig-tx-headsup": "Transações pendentes de aprovação ou execução para esta tesouraria",
-			"no-treasury-loaded": "Crie ou pesquise uma tesouraria para visualizar detalhes",
-			"no-treasury-selected": "Por favor, selecione ou procure uma tesouraria para ver os detalhes",
+			"no-treasury-loaded": "Select a streaming account to view details",
+			"no-treasury-selected": "Select a streaming account to view details",
 			"number-of-streams": "Número de streams",
 			"treasury-address-label": "Treasury address",
 			"treasury-name-label": "Nome do Tesouro"
@@ -1164,7 +1164,7 @@
 			"multisig-treasury-help": "Below is a list of all the treasuries that are connected to this Multsig",
 			"multisig-treasuries-view-all-cta": "Show All Treasuries",
 			"multisig-treasury-label": "Tesouraria Multisig",
-			"no-treasuries": "Nenhum tesouro disponível",
+			"no-treasuries": "No streaming accounts available",
 			"not-connected": "Por favor, conecte sua carteira para ver seus tesouros",
 			"total-streams-label": "fluxos"
 		},
@@ -1257,7 +1257,6 @@
 				"faucet": "Torneiro",
 				"multisig": "Multisig",
 				"submenu-title": "Serviços",
-				"treasuries": "Streaming Treasuries",
 				"wallet-guide": "Guia da carteira",
 				"wrap": "Enrolar",
 				"unwrap": "Unwrap"
