@@ -97,7 +97,8 @@ export const MultisigProposalModal = (props: {
   isVisible: boolean;
   isBusy: boolean;
   appsProvider: AppsProvider | undefined;
-  solanaApps: App[]
+  solanaApps: App[],
+  handleOk: any
 }) => {
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
@@ -142,11 +143,20 @@ export const MultisigProposalModal = (props: {
     setCurrentStep(2);  // Go to step 3
   }
 
+  const transformAppConfig = (config: AppConfig) => {
+    return config;
+  };
+
   const onAcceptModal = () => {
-    // props.handleOk({
-    //   title: proposalTitleValue,
-    //   description: proposalDescriptionValue
-    // });
+    if (!selectedAppConfig) { return; }
+    const transformedConfig = transformAppConfig(selectedAppConfig);
+    props.handleOk({
+      appId: selectedApp,
+      title: proposalTitleValue,
+      description: proposalDescriptionValue,
+      expires: proposalExpiresValue,
+      config: transformedConfig
+    });
   }
 
   const onCloseModal = () => {
@@ -785,6 +795,7 @@ export const MultisigProposalModal = (props: {
                     disabled={
                       !publicKey ||
                       !selectedApp ||
+                      !selectedAppConfig ||
                       !isVerifiedRecipient
                     }
                   >
