@@ -1,3 +1,4 @@
+import { TokenInfo } from "@solana/spl-token-registry";
 import React from "react";
 import { getTokenByMintAddress } from "../../utils/tokens";
 import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from "../../utils/utils";
@@ -10,30 +11,31 @@ export const TokenListItem = (props: {
   className?: string;
   balance: number;
   onClick: any;
+  token?: TokenInfo;
 }) => {
-  const { name, icon, className, mintAddress, balance } = props;
-  const token = getTokenByMintAddress(mintAddress);
+  const { name, icon, className, mintAddress, balance, token } = props;
+  const displayToken = token || getTokenByMintAddress(mintAddress);
 
   return (
     <div title={mintAddress} key={mintAddress} className={`token-selector token-item ${className || ''}`} onClick={props.onClick}>
       <div className="token-icon">
         {icon ? icon : (
           <>
-            {token && token.logoURI ? (
-              <img alt={`${token.name}`} width={24} height={24} src={token.logoURI} />
+            {displayToken && displayToken.logoURI ? (
+              <img alt={`${displayToken.name}`} width={24} height={24} src={displayToken.logoURI} />
             ) : (
-              <Identicon address={token ? token.address : mintAddress} style={{ width: "24", display: "inline-flex" }} />
+              <Identicon address={displayToken ? displayToken.address : mintAddress} style={{ width: "24", display: "inline-flex" }} />
             )}
           </>
         )}
       </div>
       <div className="token-description">
-        <div className="token-symbol">{token && token.symbol ? token.symbol : shortenAddress(mintAddress)}</div>
-        <div className="token-name m-0">{name ? name : token && token.name ? token.name : shortenAddress(mintAddress)}</div>
+        <div className="token-symbol">{displayToken && displayToken.symbol ? displayToken.symbol : shortenAddress(mintAddress)}</div>
+        <div className="token-name m-0">{name ? name : displayToken && displayToken.name ? displayToken.name : shortenAddress(mintAddress)}</div>
       </div>
       {balance > 0 && (
         <div className="token-balance">
-          {getTokenAmountAndSymbolByTokenAddress(balance, token ? token.address : mintAddress, true)}
+          {getTokenAmountAndSymbolByTokenAddress(balance, displayToken ? displayToken.address : mintAddress, true)}
         </div>
       )}
     </div>
