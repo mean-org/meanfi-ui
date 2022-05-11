@@ -1,5 +1,6 @@
 export const InputMean = (props: {
   id: string;
+  name?: string;
   className?: string;
   autoComplete?: string;
   autoCorrect?: string;
@@ -9,7 +10,7 @@ export const InputMean = (props: {
   onChange?: any;
   value?: any;
 }) => {
-  const { id, className, autoComplete, autoCorrect, type, maxLength, placeholder, onChange, value } = props;
+  const { id, name, className, autoComplete, autoCorrect, type, maxLength, placeholder, onChange, value } = props;
 
   return (
     <>
@@ -18,6 +19,7 @@ export const InputMean = (props: {
           <div className="left">
             <input
               id={id}
+              name={name}
               className="w-100 general-text-input"
               autoComplete={autoComplete || "off"}
               autoCorrect={autoCorrect || "off"}

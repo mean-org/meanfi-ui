@@ -1,95 +1,23 @@
 import { useContext, useEffect, useState } from 'react';
-import { CheckOutlined, ExclamationCircleOutlined, InfoCircleOutlined, LoadingOutlined } from "@ant-design/icons";
+import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from "@ant-design/icons";
 import "./style.scss";
 import { consoleOut, getTransactionOperationDescription } from '../../utils/ui';
 import { useTranslation } from 'react-i18next';
-import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { isError } from '../../utils/transactions';
 import { TransactionStatus } from '../../models/enums';
-import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
-import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { AppStateContext } from '../../contexts/appstate';
 import { useWallet } from '../../contexts/wallet';
-import { Modal, Button, Spin, Divider, Checkbox, DatePicker, Row, Col, TimePicker, Switch, Dropdown, Menu, Input, Select } from 'antd';
+import { Modal, Button, Spin, Divider, Row, Col, Radio } from 'antd';
 import { StepSelector } from "../StepSelector";
-import moment from 'moment';
-import { IconCaretDown, IconEdit, IconHelpCircle, IconUser } from "../../Icons";
-import { InfoIcon } from "../InfoIcon";
-import { DATEPICKER_FORMAT } from "../../constants";
-import { MultisigVault } from '../../models/multisig';
+import { IconUser } from "../../Icons";
 import { InputMean } from '../InputMean';
 import { SelectMean } from '../SelectMean';
 import { App, AppConfig, AppsProvider } from '@mean-dao/mean-multisig-apps';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
-// const solanaApps = [
-//   {
-//     logo: "",
-//     name: "BPF Loader Program"
-//   },
-//   {
-//     logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwh7gt29278eysxa7rb5sl8%3Ftype%3DLOGO&w=3840&q=75",
-//     name: "Friktion"
-//   },
-//   {
-//     logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwiiri37677eysxluqnog8e%3Ftype%3DLOGO&w=3840&q=75",
-//     name: "Raydium"
-//   },
-//   {
-//     logo: "",
-//     name: "Money Streaming"
-//   },
-//   {
-//     logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwh6nj28403eysxj7hduqbo%3Ftype%3DLOGO&w=3840&q=75",
-//     name: "Saber"
-//   },
-//   {
-//     logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwip3w40063eysxbk0kx2lc%3Ftype%3DLOGO&w=3840&q=75",
-//     name: "Wormhole"
-//   },
-//   {
-//     logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwh67t27981eysx2yzq2dq6%3Ftype%3DLOGO&w=3840&q=75",
-//     name: "Socean Streams"
-//   },
-//   {
-//     logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwilfd38506eysxniku8quh%3Ftype%3DLOGO&w=3840&q=75",
-//     name: "Mango Markets"
-//   },
-//   {
-//     logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwh6su28617eysxuaubvt93%3Ftype%3DLOGO&w=3840&q=75",
-//     name: "Marinade Finance"
-//   },
-//   {
-//     logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwilfj38513eysxcwypxovh%3Ftype%3DLOGO&w=3840&q=75",
-//     name: "Lido Finance"
-//   },
-//   {
-//     logo: "https://solana.com/_next/image?url=%2Fapi%2Fprojectimg%2Fckwgwh8w830938eysxhy5e8syg%3Ftype%3DLOGO&w=3840&q=75",
-//     name: "Solend"
-//   },
-// ];
-
 const expires = [
   "No expires", "24 hours", "48 hours", "72 hours", "7 days"
-];
-
-// const instructions = [
-//   "Close asset",
-//   "Send funds to other asset",
-//   "Transfer asset ownership",
-//   "Create treasury",
-//   "Close treasury",
-//   "Add a money stream",
-//   "Withdraw funds from a stream",
-//   "Upgrade program",
-//   "Upgrade IDL program",
-//   "Upgrade authority program"
-// ];
-
-const types = [
-  "Open",
-  "Locked"
 ];
 
 export const MultisigProposalModal = (props: {
@@ -104,32 +32,19 @@ export const MultisigProposalModal = (props: {
   const { publicKey } = useWallet();
   const {
     transactionStatus,
-    isVerifiedRecipient,
     setTransactionStatus,
-    setIsVerifiedRecipient
   } = useContext(AppStateContext);
-
-  const tomorrow = moment().add(1, 'days').format('L');
-  const timeDate = moment().format('hh:mm A');
 
   const [currentStep, setCurrentStep] = useState(0);
   const [proposalTitleValue, setProposalTitleValue] = useState('');
   const [proposalExpiresValue, setProposalExpiresValue] = useState<any>(expires[0]);
   const [proposalDescriptionValue, setProposalDescriptionValue] = useState('');
   const [proposalInstructionValue, setProposalInstructionValue] = useState<any>();
-  const [proposalTypeValue, setProposalTypeValue] = useState<any>(types[0]);
-  const [proposalMemoValue, setProposalMemoValue] = useState('');
-  const [proposalRecipientValue, setProposalRecipientValue] = useState('');
-  const [proposalAmountValue, setProposalAmountValue] = useState('');
-  const [feeAmount, setFeeAmount] = useState<number | null>(null);
   const [countWords, setCountWords] = useState(0);
   const [lettersLeft, setLettersLeft] = useState(256);
-  const [switchValue, setSwitchValue] = useState(true);
 
-  // Switch to show expiry date 
-  // const switchHandler = () => {
-  //   setSwitchValue(!switchValue);
-  // }
+  const [selectedApp, setSelectedApp] = useState<App>();
+  const [selectedAppConfig, setSelectedAppConfig] = useState<AppConfig>();
 
   const onStepperChange = (value: number) => {
     setCurrentStep(value);
@@ -155,7 +70,8 @@ export const MultisigProposalModal = (props: {
       title: proposalTitleValue,
       description: proposalDescriptionValue,
       expires: proposalExpiresValue,
-      config: transformedConfig
+      config: transformedConfig,
+      instruction: proposalInstructionValue
     });
   }
 
@@ -170,8 +86,6 @@ export const MultisigProposalModal = (props: {
       setProposalTitleValue("");
       setProposalExpiresValue(expires[0]);
       setProposalDescriptionValue("");
-
-      setIsVerifiedRecipient(false);
     });
     setTransactionStatus({
       lastOperation: TransactionStatus.Iddle,
@@ -205,37 +119,32 @@ export const MultisigProposalModal = (props: {
     setProposalExpiresValue(value);
   }
 
-  const onProposalInstructionValueChange = (value: any) => {
-    setProposalInstructionValue(value);
-  }
-
-  const onProposalTypeValueChange = (value: any) => {
-    setProposalTypeValue(value);
-  }
-
-  const onProposalMemoValueChange = (e: any) => {
-    setProposalMemoValue(e.target.value);
-  }
-
-  const onProposalRecipientValueChange = (e: any) => {
-    setProposalRecipientValue(e.target.value);
-  }
-
   const onProposalDescriptionValueChange = (e: any) => {
     setProposalDescriptionValue(e.target.value);
     setCountWords(e.target.value.length);
   }
 
-  // const handleDateChange = (date: string) => {
-  //   setProposalEndDate(date);
-  // }
+  const onProposalInstructionValueChange = (value: any) => {
+    setProposalInstructionValue(value);
+  }
 
-  // const handleTimeChange = (time: string) => {
-  //   setProposalEndTime(time);
-  // }
+  const [inputState, setInputState] = useState<any>({});
 
-  const onIsVerifiedRecipientChange = (e: any) => {
-    setIsVerifiedRecipient(e.target.checked);
+  const handleChangeInput = (e: any) => {
+    const { name, value } = e.target;
+
+    setInputState({
+      ...inputState,
+      [name]: value
+    });
+  }
+
+  // console.log("inputState", inputState)
+
+  const [selectOptionState, setSetOptionState] = useState<any>({});
+
+  const handleChangeOption = (e: any) => {
+    setSetOptionState(e);
   }
 
   // Preset fee amount
@@ -247,9 +156,6 @@ export const MultisigProposalModal = (props: {
   //   feeAmount,
   //   props.transactionFees
   // ]);
-
-  const [selectedApp, setSelectedApp] = useState<App>();
-  const [selectedAppConfig, setSelectedAppConfig] = useState<AppConfig>();
 
   useEffect(() => {
 
@@ -282,6 +188,7 @@ export const MultisigProposalModal = (props: {
       {props.solanaApps.length > 0 && (
         props.solanaApps.map((app, index) => {
           const onSelectApp = () => {
+            setProposalInstructionValue(undefined);
             setSelectedApp(app);
           }
 
@@ -345,11 +252,12 @@ export const MultisigProposalModal = (props: {
 
                       {/* Proposal title */}
                       <Col xs={24} sm={24} md={16} lg={16}>
-                        <div className="mb-1">
+                        <div className="mb-2">
                           <div className="form-label">{t('multisig.proposal-modal.title')}</div>
                           <InputMean
                             id="proposal-title-field"
-                            className={props.isBusy ? 'disabled' : ''}
+                            name="Title"
+                            className={`mb-0 ${props.isBusy ? 'disabled' : ''}`}
                             onChange={onProposalTitleValueChange}
                             placeholder="Add a title"
                             value={proposalTitleValue}
@@ -359,10 +267,10 @@ export const MultisigProposalModal = (props: {
 
                       {/* Expiry date */}
                       <Col xs={24} sm={24} md={8} lg={8}>
-                        <div className="mb-1">
+                        <div className="mb-2">
                           <div className="form-label">Expires in</div>
                           <SelectMean
-                            className={props.isBusy ? 'disabled' : ''}
+                            className={`mb-0 ${props.isBusy ? 'disabled' : ''}`}
                             onChange={onProposalExpiresValueChange}
                             defaultValue={expires[0]}
                             values={expires}
@@ -412,122 +320,75 @@ export const MultisigProposalModal = (props: {
                         </Col>
                       </Row>
 
-                      {/* Type */}
-                      {(proposalInstructionValue && (
-                        proposalInstructionValue === "Add a money stream" ||
-                        proposalInstructionValue === "Create treasury"
-                      )) && (
-                        <Row gutter={[8, 8]} className="mb-1">
-                          <Col xs={24} sm={6} md={6} lg={6} className="text-right pr-1">
-                            <div className="form-label">Type</div>
-                          </Col>
-                          <Col xs={24} sm={18} md={18} lg={18}>
-                            <SelectMean
-                              className={props.isBusy ? 'disabled' : ''}
-                              onChange={onProposalTypeValueChange}
-                              placeholder={"Select a type"}
-                              values={types}
-                              value={proposalTypeValue}
-                            />
-                          </Col>
-                        </Row>
-                      )}
-
-                      {/* Memo */}
-                      {(proposalInstructionValue && (
-                        proposalInstructionValue === "Add a money stream"
-                      )) && (
-                        <Row gutter={[8, 8]} className="mb-1">
-                          <Col xs={24} sm={6} md={6} lg={6} className="text-right pr-1">
-                            <div className="form-label">Memo</div>
-                          </Col>
-                          <Col xs={24} sm={18} md={18} lg={18}>
-                            <InputMean 
-                              id="proposal-memo-field"
-                              className={`${props.isBusy ? 'disabled' : ''}`}
-                              onChange={onProposalMemoValueChange}
-                              placeholder="Add a memo"
-                              value={proposalMemoValue}
-                            />
-                          </Col>
-                        </Row>
-                      )}
-
-                      {/* Recipient */}
-                      {(proposalInstructionValue && (
-                        proposalInstructionValue === "Transfer asset ownership" ||
-                        proposalInstructionValue === "Send funds to other asset" ||
-                        proposalInstructionValue === "Add a money stream" ||
-                        proposalInstructionValue === "Withdraw funds from a stream" ||
-                        proposalInstructionValue === "Upgrade program" ||
-                        proposalInstructionValue === "Upgrade IDL program" ||
-                        proposalInstructionValue === "Upgrade authority program"
-                      )) && (
-                        <Row gutter={[8, 8]} className="mb-1">
-                          <Col xs={24} sm={6} md={6} lg={6} className="text-right pr-1">
-                            <div className="form-label">Recipient</div>
-                          </Col>
-                          <Col xs={24} sm={18} md={18} lg={18}>
-                            <InputMean 
-                              id="proposal-recipient-field"
-                              className={`${props.isBusy ? 'disabled' : ''}`}
-                              onChange={onProposalRecipientValueChange}
-                              placeholder="Add a recipient"
-                              value={proposalRecipientValue}
-                            />
-                          </Col>
-                        </Row>
-                      )}
-
-                      {/* Amount */}
-                      {(proposalInstructionValue && (
-                        proposalInstructionValue === "Send funds to other asset" ||
-                        proposalInstructionValue === "Add a money stream" ||
-                        proposalInstructionValue === "Withdraw funds from a stream"
-                      )) && (
-                        <Row gutter={[8, 8]} className="mb-1">
-                          <Col xs={24} sm={6} md={6} lg={6} className="text-right pr-1">
-                            <div className="form-label">Amount</div>
-                          </Col>
-                          <Col xs={24} sm={18} md={18} lg={18}>
-                            <div className={`well ${props.isBusy ? 'disabled' : ''}`}>
-                              <div className="flex-fixed-right">
-                                <div className="left">
-                                  <input
-                                    id="proposal-title-field"
-                                    className="w-100 general-text-input"
-                                    autoComplete="off"
-                                    autoCorrect="off"
-                                    type="text"
-                                    maxLength={52}
-                                    onChange={() => {}}
-                                    placeholder="Add an amount"
-                                    value=""
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          </Col>
-                        </Row>
-                      )}
-
-                      {/* Confirm that the recipient address doesn't belong to an exchange */}
-                      {(proposalInstructionValue && (
-                        proposalInstructionValue === "Transfer asset ownership" ||
-                        proposalInstructionValue === "Send funds to other asset" ||
-                        proposalInstructionValue === "Add a money stream" ||
-                        proposalInstructionValue === "Withdraw funds from a stream" ||
-                        proposalInstructionValue === "Upgrade program" ||
-                        proposalInstructionValue === "Upgrade IDL program" ||
-                        proposalInstructionValue === "Upgrade authority program"
-                      )) && (
-                        <div className="mt-2 mb-3 confirm-terms">
-                          <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>
-                            {t("withdraw-funds.modal.verified-label")}
-                          </Checkbox>
-                        </div>
-                      )}
-
+                      {selectedAppConfig?.ui.map((ix: any) => (
+                        proposalInstructionValue === ix.label && (
+                          ix.uiElements.map((element: any) => (
+                            <>
+                              {element.visibility === "show" ? (
+                                <Row gutter={[8, 8]} className="mb-1" key={element.dataElement.index}>
+                                  {(element.type === "inputText") ? (
+                                    <>
+                                      <Col xs={24} sm={6} md={6} lg={6} className="text-right pr-1">
+                                        <div className="form-label">{element.label}</div>
+                                      </Col>
+                                      <Col xs={24} sm={18} md={18} lg={18}>
+                                        <InputMean
+                                          id={element.label}
+                                          className={props.isBusy ? 'disabled' : ''}
+                                          name={element.label}
+                                          onChange={handleChangeInput}
+                                          placeholder={element.help}
+                                          value={inputState[element.name]}
+                                        />
+                                      </Col>
+                                    </>
+                                  ) : (element.type === "option") ? (
+                                    <>
+                                      <Col xs={24} sm={6} md={6} lg={6} className="text-right pr-1">
+                                        <div className="form-label">{element.label}</div>
+                                      </Col>
+                                      <Col xs={24} sm={18} md={18} lg={18}>
+                                        <SelectMean
+                                          className={props.isBusy ? 'disabled' : ''}
+                                          onChange={handleChangeOption}
+                                          placeholder={element.help}
+                                          values={element.value.map((item: any) => item.value)}
+                                          value={selectOptionState[element.name]}
+                                        />
+                                      </Col>
+                                    </>
+                                  ) : (element.type === "yesOrNo") ? (
+                                    <>
+                                      <Col xs={24} sm={6} md={6} lg={6} className="text-right pr-1">
+                                        <div className="form-label">{element.label}</div>
+                                      </Col>
+                                      <Col xs={24} sm={18} md={18} lg={18}>
+                                        <Radio.Group className="ml-2 d-flex" 
+                                        onChange={handleChangeInput} 
+                                        name={element.label}
+                                        value={inputState[element.name]}
+                                        >
+                                          <Radio value={true}>{t('general.yes')}</Radio>
+                                          <Radio value={false}>{t('general.no')}</Radio>
+                                        </Radio.Group>
+                                      </Col>
+                                    </>
+                                  ) : null}
+                                </Row>
+                              ) : element.visibility === "readOnly" ? (
+                                <Row gutter={[8, 8]} className="mb-1" key={element.dataElement.index}>
+                                  <Col xs={24} sm={6} md={6} lg={6} className="text-right pr-1">
+                                    <div className="form-label">{element.label}</div>
+                                  </Col>
+                                  <Col xs={24} sm={18} md={18} lg={18}>
+                                    <code>{element.value}</code>
+                                  </Col>
+                                </Row>
+                              ) : null}
+                            </>
+                          ))
+                        ) 
+                      ))}
                     </div>
                   </div>
                 </>
@@ -540,7 +401,7 @@ export const MultisigProposalModal = (props: {
 
                     {/* Title */}
                     <Row className="mb-1">
-                      {/* {multisigTransactionSummary.title && ( */}
+                      {proposalTitleValue && (
                         <>
                           <Col span={8} className="text-right pr-1">
                             <span className="info-label">{t('multisig.proposal-modal.title-label')}:</span>
@@ -549,7 +410,7 @@ export const MultisigProposalModal = (props: {
                             <span>{proposalTitleValue}</span>
                           </Col>
                         </>
-                      {/* )} */}
+                      )}
                     </Row>
 
                     {/* Expiry date */}
@@ -575,9 +436,23 @@ export const MultisigProposalModal = (props: {
                       </Row>
                     {/* )} */}
 
+                    {/* Description */}
+                    <Row className="mb-1">
+                      {proposalDescriptionValue && (
+                        <>
+                          <Col span={8} className="text-right pr-1">
+                            <span className="info-label">Description:</span>
+                          </Col>
+                          <Col span={16} className="text-left pl-1">
+                            <span>{proposalDescriptionValue}</span>
+                          </Col>
+                        </>
+                      )}
+                    </Row>
+
                     {/* Instruction */}
                     <Row className="mb-1">
-                      {/* {multisigTransactionSummary.instruction && ( */}
+                      {proposalInstructionValue && (
                         <>
                           <Col span={8} className="text-right pr-1">
                             <span className="info-label">Instruction:</span>
@@ -586,116 +461,24 @@ export const MultisigProposalModal = (props: {
                             <span>{proposalInstructionValue}</span>
                           </Col>
                         </>
-                      {/* )} */}
+                      )}
                     </Row>
 
-                    {/* Type */}
-                    <Row className="mb-1">
-                      {/* {multisigTransactionSummary.type && ( */}
-                        <>
-                          <Col span={8} className="text-right pr-1">
-                            <span className="info-label">Type:</span>
-                          </Col>
-                          <Col span={16} className="text-left pl-1">
-                            <span>{proposalTypeValue}</span>
-                          </Col>
-                        </>
-                      {/* )} */}
-                    </Row>
-
-                    {/* Memo */}
-                    <Row className="mb-1">
-                      {/* {multisigTransactionSummary.memo && ( */}
-                        <>
-                          <Col span={8} className="text-right pr-1">
-                            <span className="info-label">Memo:</span>
-                          </Col>
-                          <Col span={16} className="text-left pl-1">
-                            <span>{proposalMemoValue}</span>
-                          </Col>
-                        </>
-                      {/* )} */}
-                    </Row>
-
-                    {/* Recipient */}
-                    <Row className="mb-1">
-                      {/* {multisigTransactionSummary.memo && ( */}
-                        <>
-                          <Col span={8} className="text-right pr-1">
-                            <span className="info-label">Recipient:</span>
-                          </Col>
-                          <Col span={16} className="text-left pl-1">
-                            <span>{proposalRecipientValue}</span>
-                          </Col>
-                        </>
-                      {/* )} */}
-                    </Row>
-
-                    {/* Proposer */}
-                    <Row className="mb-1">
-                      <Col span={8} className="text-right pr-1">
-                        <span className="info-label">{t('multisig.multisig-transactions.proposed-by')}</span>
-                      </Col>
-                      <Col span={16} className="text-left pl-1">
-                        {/* <span>{getTxInitiator(highlightedMultisigTx)?.name} ({shortenAddress(multisigTransactionSummary.proposer as string, 4)})</span> */}
-                        <span>Yansel (HvPJ1...1BUDa)</span>
-                      </Col>
-                    </Row>
-
-                    {/* Submitted on */}
-                    {/* <Row className="mb-1">
-                      <Col span={8} className="text-right pr-1">
-                        <span className="info-label">{t('multisig.multisig-transactions.submitted-on')}</span>
-                      </Col>
-                      <Col span={16} className="text-left pl-1"> */}
-                        {/* <span>{getReadableDate(multisigTransactionSummary.createdOn, true)}</span> */}
-                        {/* <span>{proposalExpiresValue}</span>
-                      </Col>
-                    </Row> */}
-
-                    {/* Status */}
-                    {/* <Row className="mb-1">
-                      <Col span={8} className="text-right pr-1">
-                        <span className="info-label">{t('multisig.multisig-transactions.column-pending-signatures')}:</span>
-                      </Col>
-                      <Col span={16} className="text-left pl-1 mb-1 d-flex align-items-start justify-content-start"> */}
-                        {/* <span>{getTxSignedCount(highlightedMultisigTx)} {t('multisig.multisig-transactions.tx-signed')}, {selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)} {t('multisig.multisig-transactions.tx-pending')}</span>
-                        <MultisigOwnersSigned className="ml-1" participants={getParticipantsThatApprovedTx(highlightedMultisigTx) || []} /> */}
-                        {/* <span>2 signed, 3 pending</span> */}
-                      {/* </Col>
-                    </Row> */}
-
-                    {/* <Row>
-                      <Col span={24}> */}
-                        {/* {isTxPendingExecution() ? (
-                          <div className="text-center proposal-resume">{t('multisig.multisig-transactions.proposal-ready-to-be-executed')}</div>
-                        ) : isTxPendingApproval() ? (
-                          <div className="text-center proposal-resume">{(selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)) > 1 ? t('multisig.multisig-transactions.missing-signatures', {missingSignature: selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)}) : t('multisig.multisig-transactions.missing-signature', {missingSignature: selectedMultisig.threshold - getTxSignedCount(highlightedMultisigTx)})}</div>
-                        ) : isTxVoided() ? (
-                          <div className="text-center proposal-resume">{t('multisig.multisig-transactions.tx-operation-voided')}</div>
-                        ) : isTxExpired() ? (
-                          <div className="text-center proposal-resume">{t('multisig.multisig-transactions.tx-operation-expired')}</div>
-                        ) : (
-                          <div className="text-center proposal-resume">{t('multisig.multisig-transactions.proposal-completed')}</div>
-                        )} */}
-                        {/* <div className="text-center proposal-resume">To execute this proposal, 1 more signature is needed.</div> */}
-                      {/* </Col>
-                    </Row> */}
-
-                    {/* <Divider className="mt-1" /> */}
-
-                    {/* <Row className="mb-1">
-                      <Col span={12} className="text-right pr-1">
-                        <div className="text-uppercase">{t('multisig.proposal-modal.instruction')}:</div>
-                      </Col>
-                      <Col span={12} className="text-left pl-1">
-                        <div>{getOperationName(highlightedMultisigTx.operation)}</div>
-                        <div>Create Money Stream</div>
-                      </Col>
-                    </Row> */}
-
-                    {/* <div className="well mb-1 proposal-summary-container vertical-scroll">
-                    </div> */}
+                    {/* Data from selected instruction */}
+                    {Object.keys(inputState).map((key, index) => (
+                      <Row className="mb-1" key={index}>
+                        {key && (
+                          <>
+                            <Col span={8} className="text-right pr-1">
+                              <span className="info-label">{key}:</span>
+                            </Col>
+                            <Col span={16} className="text-left pl-1">
+                              <span>{inputState[key] === true ? "Yes" : inputState[key] === false ? "No" : inputState[key]}</span>
+                            </Col>
+                          </>
+                        )}
+                      </Row>
+                    ))}
                   </div>
                 </>
               </div>
@@ -761,7 +544,8 @@ export const MultisigProposalModal = (props: {
                     disabled={
                       !publicKey ||
                       !selectedApp ||
-                      !isVerifiedRecipient
+                      !proposalTitleValue ||
+                      !proposalInstructionValue
                     }
                   >
                     {getStepTwoContinueButtonLabel()}
@@ -795,8 +579,9 @@ export const MultisigProposalModal = (props: {
                     disabled={
                       !publicKey ||
                       !selectedApp ||
-                      !selectedAppConfig ||
-                      !isVerifiedRecipient
+                      !proposalTitleValue ||
+                      !proposalInstructionValue ||
+                      !selectedAppConfig
                     }
                   >
                     {getTransactionStartButtonLabel()}

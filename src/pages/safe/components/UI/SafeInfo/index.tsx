@@ -153,10 +153,7 @@ export const SafeInfo = (props: {
     selectedMultisig,
     splTokenList,
     connection
-  ]);
-
-  console.log(selectedMultisig);
-  
+  ]);  
     
   // Deposit Address
   const renderDepositAddress = (
