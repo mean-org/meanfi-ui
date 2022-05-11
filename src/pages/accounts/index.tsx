@@ -24,8 +24,8 @@ import { Identicon } from '../../components/Identicon';
 import {
   fetchAccountTokens,
   findATokenAddress,
+  formatThousands,
   getAmountFromLamports,
-  getTokenAmountAndSymbolByTokenAddress,
   getTokenByMintAddress,
   openLinkInNewTab,
   shortenAddress
@@ -348,9 +348,9 @@ export const AccountsNewView = () => {
 
     // let token: TokenInfo | null;
     // if (isSelectedAssetNativeAccount()) {
-    //   token = getTokenByMintAddress(WRAPPED_SOL_MINT_ADDRESS);
+    //   token = getTokenByMintAddress(WRAPPED_SOL_MINT_ADDRESS, splTokenList);
     // } else {
-    //   token = getTokenByMintAddress(selectedAsset.address);
+    //   token = getTokenByMintAddress(selectedAsset.address, splTokenList);
     // }
     // if (token) {
     //   setSelectedToken(token as TokenInfo);
@@ -366,7 +366,7 @@ export const AccountsNewView = () => {
     if (isSelectedAssetNativeAccount()) {
       token = getTokenByMintAddress(WRAPPED_SOL_MINT_ADDRESS);
     } else {
-      token = getTokenByMintAddress(selectedAsset.address);
+      token = getTokenByMintAddress(selectedAsset.address, splTokenList);
     }
     if (token) {
       setSelectedToken(token);
@@ -620,7 +620,7 @@ export const AccountsNewView = () => {
       const freshStream = await ms.refreshStream(stream) as StreamInfo;
       if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
 
-      const asset = getTokenByMintAddress(freshStream.associatedToken as string);
+      const asset = getTokenByMintAddress(freshStream.associatedToken as string, splTokenList);
       const rate = asset ? getPricePerToken(asset as UserTokenAccount) : 0;
       if (isIncoming) {
         resume['totalNet'] = resume['totalNet'] + ((freshStream.escrowVestedAmount || 0) * rate);
@@ -649,7 +649,7 @@ export const AccountsNewView = () => {
       const freshStream = await msp.refreshStream(stream) as Stream;
       if (!freshStream || freshStream.status !== STREAM_STATUS.Running) { continue; }
 
-      const asset = getTokenByMintAddress(freshStream.associatedToken as string);
+      const asset = getTokenByMintAddress(freshStream.associatedToken as string, splTokenList);
       const pricePerToken = getPricePerToken(asset as UserTokenAccount);
       const rate = asset ? (pricePerToken ? pricePerToken : 1) : 1;
       const decimals = asset ? asset.decimals : 9;
@@ -678,6 +678,7 @@ export const AccountsNewView = () => {
     ms,
     msp,
     publicKey,
+    splTokenList,
     streamListv1,
     streamListv2,
     streamsSummary,
@@ -934,7 +935,7 @@ export const AccountsNewView = () => {
                 const tokenGroups = new Map<string, AccountTokenParsedInfo[]>();
                 accTks.forEach((ta) => {
                   const key = ta.parsedInfo.mint;
-                  const info = getTokenByMintAddress(key);
+                  const info = getTokenByMintAddress(key, splTokenList);
                   const updatedTa = Object.assign({}, ta, {
                     description: info ? `${info.name} (${info.symbol})` : ''
                   });
@@ -1470,7 +1471,7 @@ export const AccountsNewView = () => {
             {toUsCurrency(asset.valueInUsd || 0)}
           </div>
           <div className="interval">
-              {(asset.balance || 0) > 0 ? getTokenAmountAndSymbolByTokenAddress(asset.balance || 0, asset.address, true) : '0'}
+              {(asset.balance || 0) > 0 ? formatThousands(asset.balance || 0, asset.decimals, asset.decimals) : '0'}
           </div>
         </div>
       </div>
@@ -1770,7 +1771,13 @@ export const AccountsNewView = () => {
                 </div>
                 <div className="transaction-detail-row">
                   <div className="info-data">
-                    {(selectedAsset.balance || 0) > 0 ? getTokenAmountAndSymbolByTokenAddress(selectedAsset.balance || 0, selectedAsset.address) : '0'}
+                    {
+                      `${formatThousands(
+                        selectedAsset.balance || 0,
+                        selectedAsset.decimals,
+                        selectedAsset.decimals
+                      )} ${selectedAsset.symbol}`
+                    }
                   </div>
                 </div>
                 <div className="info-extra font-size-85">

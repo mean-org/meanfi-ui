@@ -15,7 +15,7 @@ import {
 } from "@solana/web3.js";
 import { INPUT_AMOUNT_PATTERN } from "../constants";
 import { MEAN_TOKEN_LIST } from "../constants/token-list";
-import { getFormattedNumberToLocale, maxTrailingZeroes } from "./ui";
+import { getFormattedNumberToLocale, isProd, maxTrailingZeroes } from "./ui";
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { RENT_PROGRAM_ID, SYSTEM_PROGRAM_ID, TOKEN_PROGRAM_ID } from "./ids";
 import { NATIVE_SOL } from './tokens';
@@ -188,7 +188,7 @@ export function isValidNumber(str: string): boolean {
 }
 
 export const getTokenByMintAddress = (address: string, tokenList?: TokenInfo[]): TokenInfo | undefined => {
-  const tokenFromTokenList = tokenList
+  const tokenFromTokenList = tokenList && isProd()
     ? tokenList.find(t => t.address === address)
     : MEAN_TOKEN_LIST.find(t => t.address === address);
   if (tokenFromTokenList) {
@@ -198,7 +198,7 @@ export const getTokenByMintAddress = (address: string, tokenList?: TokenInfo[]):
 }
 
 export const getTokenBySymbol = (symbol: string, tokenList?: TokenInfo[]): TokenInfo | undefined => {
-  const tokenFromTokenList = tokenList
+  const tokenFromTokenList = tokenList && isProd()
     ? tokenList.find(t => t.symbol === symbol)
     : MEAN_TOKEN_LIST.find(t => t.symbol === symbol && t.chainId === getNetworkIdByEnvironment(environment));
   if (tokenFromTokenList) {
@@ -223,13 +223,15 @@ export const getTokenDecimals = (address: string): number => {
   return 0;
 }
 
-export const getAmountWithSymbol = (amount: number, address?: string, onlyValue = false) => {
+export const getAmountWithSymbol = (amount: number, address?: string, onlyValue = false, tokenList?: TokenInfo[]) => {
   let token: TokenInfo | undefined = undefined;
   if (address) {
     if (address === NATIVE_SOL.address) {
       token = NATIVE_SOL as TokenInfo;
     } else {
-      token = address ? MEAN_TOKEN_LIST.find(t => t.address === address) : undefined;
+      token = tokenList && isProd()
+        ? tokenList.find(t => t.address === address)
+        : MEAN_TOKEN_LIST.find(t => t.address === address);
     }
   }
 
@@ -251,14 +253,17 @@ export const getAmountWithSymbol = (amount: number, address?: string, onlyValue 
 export const getTokenAmountAndSymbolByTokenAddress = (
   amount: number,
   address: string,
-  onlyValue = false
+  onlyValue = false,
+  tokenList?: TokenInfo[]
 ): string => {
   let token: TokenInfo | undefined = undefined;
   if (address) {
     if (address === NATIVE_SOL.address) {
       token = NATIVE_SOL as TokenInfo;
     } else {
-      token = address ? MEAN_TOKEN_LIST.find(t => t.address === address) : undefined;
+      token = tokenList && isProd()
+        ? tokenList.find(t => t.address === address)
+        : MEAN_TOKEN_LIST.find(t => t.address === address);
     }
   }
   const inputAmount = amount || 0;
