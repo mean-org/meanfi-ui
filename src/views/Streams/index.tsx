@@ -189,7 +189,10 @@ export const Streams = () => {
   const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
   const [multisigAccounts, setMultisigAccounts] = useState<MultisigInfo[] | undefined>(undefined);
   const [canSubscribe, setCanSubscribe] = useState(true);
+
+  // Countdown timer variables
   const [key, setKey] = useState(0);
+  const [isCounting, setIsCounting] = useState(true);
 
   // Treasury related
   const [loadingTreasuryDetails, setLoadingTreasuryDetails] = useState(true);
@@ -609,7 +612,16 @@ export const Streams = () => {
     customStreamDocked,
     setStreamDetail,
     setStreamList,
-  ])
+  ]);
+
+  // Reset timer only when we are not loading the streams but we already have streams
+  useEffect(() => {
+    if (streamList && !loadingStreams && !isCounting) {
+      consoleOut('resetting timer...', '', 'blue');
+      setIsCounting(true);
+      setKey(prevKey => prevKey + 1);
+    }
+  }, [isCounting, loadingStreams, streamList]);
 
   const refreshStreamSummary = useCallback(async () => {
 
@@ -3954,6 +3966,8 @@ export const Streams = () => {
     if (manual) {
       // Record user event in Segment Analytics
       segmentAnalytics.recordEvent(AppUsageEvent.StreamRefresh);
+      setIsCounting(false);
+      // setKey(prevKey => prevKey + 1);
       refreshStreamList(true);
     } else {
       if (!isDowngradedPerformance) {
@@ -3961,7 +3975,6 @@ export const Streams = () => {
       }
     }
     setCustomStreamDocked(false);
-    setKey(prevKey => prevKey + 1);
   };
 
   const onRefreshStreamsNoReset = () => {
@@ -5574,7 +5587,7 @@ export const Streams = () => {
                     <span className="transaction-legend">
                       <span className="icon-button-container">
                         <CountdownCircleTimer
-                          isPlaying={true}
+                          isPlaying={isCounting}
                           key={key}
                           size={18}
                           strokeWidth={3}
@@ -5582,8 +5595,9 @@ export const Streams = () => {
                           colors={theme === 'dark' ? '#FFFFFF' : '#000000'}
                           trailColor={theme === 'dark' ? '#424242' : '#DDDDDD'}
                           onComplete={() => {
+                            setIsCounting(false);
                             onRefreshStreams(false);
-                            return { shouldRepeat: true, delay: 1 }
+                            return { shouldRepeat: false, delay: 1 }
                           }}
                         />
                       </span>
