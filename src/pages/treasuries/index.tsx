@@ -1421,7 +1421,7 @@ export const TreasuriesView = () => {
 
   const getTreasuryClosureMessage = () => {
     return (
-      <div>{t('treasuries.close-treasury-confirmation')}</div>
+      <div>{t('treasuries.close-account.close-treasury-confirmation')}</div>
     );
   }
 
@@ -5313,7 +5313,7 @@ export const TreasuriesView = () => {
           ) : isRefreshingTreasuryBalance() ? (
             <div className="flex-row flex-center">
               <LoadingOutlined />
-              <span className="ml-1">Refresing treasury balance</span>
+              <span className="ml-1">{t('treasuries.treasury-detail.refreshing-account-balance')}</span>
             </div>
           ) : isClosingStream() ? (
             <div className="flex-row flex-center">

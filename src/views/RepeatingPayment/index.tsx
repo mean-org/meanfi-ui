@@ -8,6 +8,7 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnection, useConnectionConfig } from "../../contexts/connection";
 import { IconCaretDown, IconEdit } from "../../Icons";
 import {
+  fetchAccountTokens,
   formatAmount,
   formatThousands,
   getAmountWithSymbol,
@@ -19,7 +20,7 @@ import {
   toTokenAmount,
 } from "../../utils/utils";
 import { Identicon } from "../../components/Identicon";
-import { DATEPICKER_FORMAT, SIMPLE_DATE_TIME_FORMAT } from "../../constants";
+import { DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, SIMPLE_DATE_TIME_FORMAT } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
 import { EventType, OperationType, PaymentRateType, TransactionStatus } from "../../models/enums";
 import {
@@ -70,17 +71,19 @@ export const RepeatingPayment = (props: {
   const { connected, publicKey, wallet } = useWallet();
   const {
     tokenList,
-    effectiveRate,
+    userTokens,
     coinPrices,
+    splTokenList,
+    effectiveRate,
     loadingPrices,
-    recipientAddress,
     recipientNote,
-    paymentStartDate,
     fromCoinAmount,
+    recipientAddress,
+    paymentStartDate,
     paymentRateAmount,
-    paymentRateFrequency,
     transactionStatus,
     isVerifiedRecipient,
+    paymentRateFrequency,
     streamV2ProgramAddress,
     previousWalletConnectState,
     setPaymentRateFrequency,
@@ -109,12 +112,14 @@ export const RepeatingPayment = (props: {
   const [nativeBalance, setNativeBalance] = useState(0);
   const [tokenFilter, setTokenFilter] = useState("");
   const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
+  const [selectedList, setSelectedList] = useState<TokenInfo[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
   const [canSubscribe, setCanSubscribe] = useState(true);
   const [isTokenSelectorVisible, setIsTokenSelectorVisible] = useState(false);
   const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
   const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
 
+  // Process inputs
   useEffect(() => {
     if (token && inModal) {
       setSelectedToken(token);
@@ -140,6 +145,7 @@ export const RepeatingPayment = (props: {
     }
   }, [token, selectedToken, inModal]);
 
+  // Keep account balance updated
   useEffect(() => {
 
     const getAccountBalance = (): number => {
@@ -157,7 +163,7 @@ export const RepeatingPayment = (props: {
     previousBalance,
   ]);
 
-  // Automatically update all token balances
+  // Automatically update all token balances and rebuild token list
   useEffect(() => {
 
     if (!connection) {
@@ -165,28 +171,62 @@ export const RepeatingPayment = (props: {
       return;
     }
 
-    if (!publicKey || !tokenList || !accounts || !accounts.tokenAccounts) {
+    if (!publicKey || !userTokens || !tokenList || !accounts || !accounts.tokenAccounts) {
       return;
     }
 
     const timeout = setTimeout(() => {
 
       const balancesMap: any = {};
-      connection.getTokenAccountsByOwner(
-        publicKey, 
-        { programId: TOKEN_PROGRAM_ID }, 
-        connection.commitment
-      )
-      .then(response => {
-        for (const acc of response.value) {
-          const decoded = ACCOUNT_LAYOUT.decode(acc.account.data);
-          const address = decoded.mint.toBase58();
-          const itemIndex = tokenList.findIndex(t => t.address === address);
-          if (itemIndex !== -1) {
-            balancesMap[address] = decoded.amount.toNumber() / (10 ** tokenList[itemIndex].decimals);
-          } else {
-            balancesMap[address] = 0;
+
+      fetchAccountTokens(connection, publicKey)
+      .then(accTks => {
+        if (accTks) {
+
+          const meanTokensCopy = new Array<TokenInfo>();
+          const intersectedList = new Array<TokenInfo>();
+          const userTokensCopy = JSON.parse(JSON.stringify(userTokens)) as TokenInfo[];
+
+          // Build meanTokensCopy including the MeanFi pinned tokens
+          userTokensCopy.forEach(item => {
+            meanTokensCopy.push(item);
+          });
+
+          // Now add all other items but excluding those in userTokens
+          splTokenList.forEach(item => {
+            if (!userTokens.includes(item)) {
+              meanTokensCopy.push(item);
+            }
+          });
+
+          // Create a list containing tokens for the user owned token accounts
+          accTks.forEach(item => {
+            balancesMap[item.parsedInfo.mint] = item.parsedInfo.tokenAmount.uiAmount || 0;
+            const isTokenAccountInTheList = intersectedList.some(t => t.address === item.parsedInfo.mint);
+            const tokenFromMeanTokensCopy = meanTokensCopy.find(t => t.address === item.parsedInfo.mint);
+            if (tokenFromMeanTokensCopy && !isTokenAccountInTheList) {
+              intersectedList.push(tokenFromMeanTokensCopy);
+            }
+          });
+
+          intersectedList.sort((a, b) => {
+            if ((balancesMap[a.address] || 0) < (balancesMap[b.address] || 0)) {
+              return 1;
+            } else if ((balancesMap[a.address] || 0) > (balancesMap[b.address] || 0)) {
+              return -1;
+            }
+            return 0;
+          });
+
+          setSelectedList(intersectedList);
+          consoleOut('intersectedList:', intersectedList, 'orange');
+
+        } else {
+          for (const t of tokenList) {
+            balancesMap[t.address] = 0;
           }
+          // set the list to the userTokens list
+          setSelectedList(tokenList);
         }
       })
       .catch(error => {
@@ -194,8 +234,10 @@ export const RepeatingPayment = (props: {
         for (const t of tokenList) {
           balancesMap[t.address] = 0;
         }
+        setSelectedList(tokenList);
       })
       .finally(() => setUserBalances(balancesMap));
+
     });
 
     return () => {
@@ -204,9 +246,11 @@ export const RepeatingPayment = (props: {
 
   }, [
     accounts,
-    tokenList,
     publicKey,
+    tokenList,
+    userTokens,
     connection,
+    splTokenList,
   ]);
 
   // Keep token balance updated
@@ -436,7 +480,7 @@ export const RepeatingPayment = (props: {
   // Updates the token list everytime is filtered
   const updateTokenListByFilter = useCallback((searchString: string) => {
 
-    if (!tokenList) {
+    if (!selectedList) {
       return;
     }
 
@@ -451,8 +495,8 @@ export const RepeatingPayment = (props: {
       };
 
       const showFromList = !searchString 
-        ? tokenList
-        : tokenList.filter((t: any) => filter(t));
+        ? selectedList
+        : selectedList.filter((t: any) => filter(t));
 
       setFilteredTokenList(showFromList);
 
@@ -461,10 +505,8 @@ export const RepeatingPayment = (props: {
     return () => { 
       clearTimeout(timeout);
     }
-    
-  }, [
-    tokenList
-  ]);
+
+  }, [selectedList]);
 
   const onInputCleared = useCallback(() => {
     setTokenFilter('');
@@ -1123,16 +1165,21 @@ export const RepeatingPayment = (props: {
             onCloseTokenSelector();
           };
 
-          return (
-            <TokenListItem
-              key={t.address}
-              name={t.name || 'Unknown'}
-              mintAddress={t.address}
-              className={selectedToken && selectedToken.address === t.address ? "selected" : "simplelink"}
-              onClick={onClick}
-              balance={connected && userBalances && userBalances[t.address] > 0 ? userBalances[t.address] : 0}
-            />
-          );
+          if (index < MAX_TOKEN_LIST_ITEMS) {
+            return (
+              <TokenListItem
+                key={t.address}
+                name={t.name || 'Unknown'}
+                mintAddress={t.address}
+                token={t}
+                className={selectedToken && selectedToken.address === t.address ? "selected" : "simplelink"}
+                onClick={onClick}
+                balance={connected && userBalances && userBalances[t.address] > 0 ? userBalances[t.address] : 0}
+              />
+            );
+          } else {
+            return null;
+          }
         })
       )}
     </>
@@ -1247,6 +1294,7 @@ export const RepeatingPayment = (props: {
                     name={selectedToken.name}
                     showName={false}
                     showCaretDown={true}
+                    fullTokenInfo={selectedToken}
                   />
                 )}
               </span>
@@ -1408,7 +1456,12 @@ export const RepeatingPayment = (props: {
                 <div className="right flex-column">
                   <div className="rate">
                     {selectedToken
-                      ? getTokenAmountAndSymbolByTokenAddress(parseFloat(paymentRateAmount), selectedToken.address)
+                      ? getTokenAmountAndSymbolByTokenAddress(
+                          parseFloat(paymentRateAmount),
+                          selectedToken.address,
+                          false,
+                          selectedList
+                        )
                       : '-'
                     }
                     {getIntervalFromSeconds(getRateIntervalInSeconds(paymentRateFrequency), true, t)}
@@ -1437,6 +1490,7 @@ export const RepeatingPayment = (props: {
                     name={selectedToken.name}
                     showName={false}
                     showCaretDown={true}
+                    fullTokenInfo={selectedToken}
                   />
                 )}
                 {selectedToken && tokenBalance ? (

@@ -880,10 +880,11 @@ const AppStateProvider: React.FC = ({ children }) => {
         setCoinPrices(pricesMap);
       } else {
         consoleOut('New prices list:', 'NO PRICES RETURNED!', 'red');
+        setCoinPrices({ "NO-TOKEN-VALUE": 1 });
       }
     } catch (error) {
       pricesOldPerformanceCounter.stop();
-      setCoinPrices(null);
+      setCoinPrices({ "NO-TOKEN-VALUE": 1 });
       updateEffectiveRate(0);
       consoleOut('New prices API error:', error, 'red');
     } finally {

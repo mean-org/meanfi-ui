@@ -1089,19 +1089,24 @@
 			"allocation-select-stream-label": "stream  را برای تأمین مالی انتخاب کنید",
 			"balance": "موجودی حساب",
 			"label": "اضافه کردن وجوه",
-			"main-cta": "صندوق خزانه",
-			"main-cta-busy": "تامین مالی خزانه",
+			"main-cta": "Fund account",
+			"main-cta-busy": "Funding account",
 			"main-cta-fund-stream": "سرمایه مانی استریم",
 			"main-cta-fund-stream-busy": "وجوه استریم",
-			"modal-title": "اضافه کردن وجوه به treasury",
+			"modal-title": "Add funds to the streaming account",
 			"modal-title-fund-stream": "اضافه کردن وجوه به یک مانی استریم",
 			"money-stream-to-topup-label": "مانی استریم برای شارژ",
 			"search-streams-placeholder": "استریم را بر اساس نام یا آدرس جستجو کنید",
-			"success-message": "treasury  شما با موفقیت تامین شد."
+			"success-message": "Your streaming account was funded successfully."
 		},
-		"back-to-treasuries-cta": "بازگشت به Treasuries",
-		"close-treasury-confirmation": "آیا مطمئن هستید که می خواهید treasury را ببندید؟",
-		"create-new-treasury-cta": "treasury ایجاد کنید",
+		"back-to-treasuries-cta": "Back to Streaming Accounts",
+		"close-account": {
+			"modal-title": "Close account",
+			"close-treasury-confirmation": "Are you sure you want to close the account?",
+			"cta-close": "Close account",
+			"cta-close-busy": "Closing account"
+		},
+		"create-new-treasury-cta": "New Streaming Account",
 		"create-treasury": {
 			"create-multisig-cta": "treasury را آغاز کنید",
 			"create-multisig-cta-busy": "راه اندازی treasury",
@@ -1133,31 +1138,32 @@
 				"treasury-type-open-name": "باز کردن treasury  مانی استریمینگ"
 			}
 		},
-		"lookup-treasury-cta-tooltip": "جستجوی treasury",
+		"lookup-treasury-cta-tooltip": "Lookup a Streaming Account",
 		"open-treasury": {
 			"main-cta": "باز کن",
-			"modal-title": "treasury  باز",
-			"treasuryid-input-empty": "شناسه treasury   را وارد کنید",
-			"treasuryid-input-label": "شناسه treasury برای باز شدن",
-			"treasuryid-open-cta": "باز کردن استریم",
-			"treasuryid-placeholder": "شناسه treasury ایجاد شده توسط Mean Finance"
+			"modal-title": "Open Streaming Account",
+			"treasuryid-input-empty": "Enter account ID",
+			"treasuryid-input-label": "Streaming account id to open",
+			"treasuryid-open-cta": "Open account",
+			"treasuryid-placeholder": "Account ID created by Mean Finance"
 		},
-		"refresh-tooltip": "برای بازخوانی لیست treasury ها کلیک کنید",
-		"screen-title": "treasury ها",
+		"refresh-tooltip": "Click to refresh the list of streaming accounts",
+		"screen-title": "Streaming Accounts",
 		"summary-title": "Streaming Accounts",
 		"treasury-detail": {
 			"associated-token": "توکن مرتبط",
 			"created-on": "ایجاد شده در",
 			"cta-add-funds": "وجوه اضافه کنید",
 			"cta-add-funds-busy": "اضافه کردن وجوه",
-			"cta-close": "treasury را ببند",
-			"cta-close-busy": "بسته شدن treasury",
+			"cta-close": "Close account",
+			"cta-close-busy": "Closing account",
 			"cta-withdraw-multisig-treasury": "برداشت وجوه",
 			"multisig-tx-headsup": "معاملات در انتظار تایید یا اجرا برای این treasury",
-			"no-treasury-loaded": "برای مشاهده جزئیات یک treasury ایجاد کنید یا جستجو کنید",
-			"no-treasury-selected": "لطفاً برای مشاهده جزئیات، treasury را انتخاب یا جستجو کنید",
+			"no-treasury-loaded": "Select a streaming account to view details",
+			"no-treasury-selected": "Select a streaming account to view details",
 			"number-of-streams": "تعداد استریم ها",
-			"treasury-address-label": "آدرس",
+			"refreshing-account-balance": "Refreshing account balance",
+			"treasury-address-label": "Streaming account address",
 			"treasury-name-label": "نام treasury",
 			"unallocated-treasury-balance": "Unallocated balance"
 		},
@@ -1167,11 +1173,11 @@
 			"multisig-treasury-heading": "treasury چند امضایی - {{treasuryName}}",
 			"multisig-treasury-help": "در زیر لیستی از تمام treasury هایی که به این Multsig متصل هستند آورده شده است",
 			"multisig-treasury-label": "treasury چند امضایی",
-			"no-treasuries": "treasury در دسترس نیست",
-			"not-connected": "لطفا کیف پول خود را وصل کنید تا treasury های خود را ببینید",
+			"no-treasuries": "No streaming accounts available",
+			"not-connected": "Please connect your wallet to see your streaming accounts",
 			"total-streams-label": "استریم ها"
 		},
-		"treasury-refresh-tooltip": "رفرش کردن داده های treasury",
+		"treasury-refresh-tooltip": "Refresh account data",
 		"treasury-streams": {
 			"add-stream-locked": {
 				"modal-title": "یک مانی استریم قفل شده اضافه کنید",
@@ -1197,7 +1203,7 @@
 			"available-unallocated-balance-label": "موجودی تخصیص نیافته موجود",
 			"busy-pausing": "توقف استریم",
 			"busy-resuming": "از سرگیری استریم",
-			"close-stream-also-closes-treasury-label": "treasury را هم ببندید",
+			"close-stream-also-closes-treasury-label": "Also close the streaming account",
 			"column-activity": "مانی استریم ها",
 			"column-description": "شرح",
 			"column-destination": "مقصد",
@@ -1212,7 +1218,7 @@
 			"minimum-allocation-advice": "شما باید حداقل تخصیص را برای این مانی استریم تا میزان موجودی تخصیص نیافته موجود در treasury تعیین کنید.",
 			"multiple-address-list": "Multiple address list",
 			"multiple-address-question-mark-tooltip": "Please provide a csv text file with one address per line in the following format: \n MEMO or STREAM NAME, WALLET ADDRESS. \n\n Here is an example of how it should look: \n Epoch 1, FrdFf3EqcGuytTweLvoELBt29WrAGVYjrh4585A2bTAZ \n\n Before you submit the file, please make sure the recipient addresses are correct and do not belong to an exchange.",
-			"no-streams": "این treasury هیچ استریم فعالی ندارد",
+			"no-streams": "This streaming account has no active streams",
 			"option-close-stream": "بستن",
 			"option-explorer-link": "مشاهده در سولانا اکسپلورر",
 			"option-pause-stream": "وقفه",
@@ -1220,7 +1226,17 @@
 			"status-running": "در حال اجرا",
 			"status-scheduled": "برنامه ریزی شده است",
 			"status-stopped": "متوقف شد"
-		}
+		},
+		"withdraw-funds": {
+			"button-title": "Withdraw funds",
+			"label-available-amount": "Funds available to withdraw now",
+			"label-input-amount": "Enter amount to withdraw",
+			"label-input-right": "By percentual preset",
+			"main-cta": "Withdraw funds",
+			"verified-label": "I'm sure the recipient address doesn't belong to an exchange",
+			"selected-treasury-label": "From streaming account",
+			"modal-title": "Withdraw account funds"
+		}	
 	},
 	"ui-language": {
 		"en": "انگلیسی",
@@ -1263,7 +1279,6 @@
 				"faucet": "فاست",
 				"multisig": "Multisig",
 				"submenu-title": "خدمات",
-				"treasuries": "Treasuries و حقوق ودستمزد",
 				"unwrap": "Unwrap",
 				"wallet-guide": "راهنمای کیف پول",
 				"wrap": "رپ(Wrap) کردن"
@@ -1287,12 +1302,6 @@
 		"label-available-amount": "وجوه موجود برای برداشت در حال حاضر",
 		"label-input-amount": "مبلغ برداشت را وارد کنید",
 		"label-input-right": "درصد از پیش تعیین شده",
-		"modal": {
-			"main-cta": "برداشت وجوه",
-			"selected-treasury-label": "از حساب treasury",
-			"title": "برداشت وجوه Treasury",
-			"verified-label": "مطمئنم آدرس گیرنده متعلق به صرافی نیست"
-		},
 		"modal-title": "برداشت وجوه"
 	},
 	"wrap": {
