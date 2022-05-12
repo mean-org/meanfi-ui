@@ -135,7 +135,7 @@ export const MultisigProposalModal = (props: {
     if (!value) { return; }
     
     const uiIx = selectedAppConfig && selectedAppConfig.ui.length 
-      ? selectedAppConfig.ui.filter(ix => ix.id === value.key)[0]
+      ? selectedAppConfig.ui.filter((ix: any) => ix.id === value.key)[0]
       : undefined;
 
     setSelectedUiIx(uiIx);
@@ -335,7 +335,7 @@ export const MultisigProposalModal = (props: {
                             className={props.isBusy ? 'disabled' : ''}
                             onChange={onProposalInstructionValueChange}
                             placeholder={"Select an instruction"}
-                            values={selectedAppConfig ? selectedAppConfig.ui.map(ix => {
+                            values={selectedAppConfig ? selectedAppConfig.ui.map((ix: any) => {
                               return { key: ix.id, label: ix.label, value: ix.id }
                             }) : []}
                             labelInValue={true}
