@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 const webpack = require("webpack");
 
 module.exports = function (config, env) {
@@ -37,6 +38,7 @@ module.exports = function (config, env) {
                 // http: require.resolve("stream-http"),
                 // zlib: require.resolve("browserify-zlib"),
                 // https: require.resolve("https-browserify"),
+                crypto: false,
                 https: false,
                 http: false,
                 zlib: false,
