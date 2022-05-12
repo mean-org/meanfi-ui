@@ -168,7 +168,8 @@ export const TransactionItemView = (props: {
     const blockTime = props.transaction.parsedTransaction.blockTime;
 
     return (
-      <a key={signature} className="item-list-row" target="_blank" rel="noopener noreferrer"
+      <a key={signature} target="_blank" rel="noopener noreferrer"
+          className={`item-list-row ${balanceChange === 0 ? 'dimmed' : ''}`}
           href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${signature}${getSolanaExplorerClusterParam()}`}>
         <div className="std-table-cell first-cell">
           {getTxIcon()}
@@ -179,10 +180,22 @@ export const TransactionItemView = (props: {
           </Tooltip>
         </div>
         <div className="std-table-cell responsive-cell pr-2 text-right">
-          <span>{getDisplayAmount()}</span>
+          {balanceChange === 0 ? (
+            <Tooltip placement="bottom" title="No balance changes">
+              <span className="text-strike-through">{getDisplayAmount()}</span>
+            </Tooltip>
+          ) : (
+            <span>{getDisplayAmount()}</span>
+          )}
         </div>
         <div className="std-table-cell responsive-cell pr-2 text-right">
-          <span>{getDisplayPostBalance()}</span>
+          {balanceChange === 0 ? (
+            <Tooltip placement="bottom" title="No balance changes">
+              <span className="text-strike-through">{getDisplayPostBalance()}</span>
+            </Tooltip>
+          ) : (
+            <span>{getDisplayPostBalance()}</span>
+          )}
         </div>
         <div className="std-table-cell responsive-cell pl-2">
           {
@@ -200,5 +213,9 @@ export const TransactionItemView = (props: {
 
   };
 
-  return isTxRenderable ? getTransactionItem() : null;
+  // balanceChange
+
+  return (isNativeAccountSelected && isTxRenderable) || !isNativeAccountSelected
+    ? getTransactionItem()
+    : null;
 };
