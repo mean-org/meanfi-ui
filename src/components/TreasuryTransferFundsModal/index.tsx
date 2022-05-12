@@ -348,7 +348,7 @@ export const TreasuryTransferFundsModal = (props: {
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={<div className="modal-title">{t('withdraw-funds.modal.title')}</div>}
+      title={<div className="modal-title">{t('treasuries.withdraw-funds.modal-title')}</div>}
       maskClosable={false}
       footer={null}
       visible={props.isVisible}
@@ -367,7 +367,7 @@ export const TreasuryTransferFundsModal = (props: {
             {/* Transfer from */}
             {props.treasuryDetails && (
               <div className="mb-3">
-                <div className="form-label">{t('withdraw-funds.modal.selected-treasury-label')}</div>
+                <div className="form-label">{t('treasuries.withdraw-funds.selected-treasury-label')}</div>
                   <div className="well">
                     {renderTreasury(props.treasuryDetails)}
                   </div>
@@ -535,7 +535,7 @@ export const TreasuryTransferFundsModal = (props: {
             {/* confirm that the recipient address doesn't belong to an exchange */}
             <div className="mt-2 mb-3 confirm-terms">
               <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>
-                {t("withdraw-funds.modal.verified-label")}
+                {t("treasuries.withdraw-funds.verified-label")}
               </Checkbox>
             </div>
           </>
@@ -635,7 +635,7 @@ export const TreasuryTransferFundsModal = (props: {
                 {props.isBusy
                   ? t('multisig.transfer-tokens.main-cta-busy')
                   : transactionStatus.currentOperation === TransactionStatus.Iddle
-                    ? t('withdraw-funds.modal.main-cta')
+                    ? t('treasuries.withdraw-funds.main-cta')
                     : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
                       ? t('general.cta-finish')
                       : t('general.refresh')

@@ -1225,7 +1225,17 @@
 			"status-running": "운영",
 			"status-scheduled": "예정된",
 			"status-stopped": "중지된"
-		}
+		},
+		"withdraw-funds": {
+			"button-title": "Withdraw funds",
+			"label-available-amount": "Funds available to withdraw now",
+			"label-input-amount": "Enter amount to withdraw",
+			"label-input-right": "By percentual preset",
+			"main-cta": "Withdraw funds",
+			"verified-label": "I'm sure the recipient address doesn't belong to an exchange",
+			"selected-treasury-label": "From streaming account",
+			"modal-title": "Withdraw account funds"
+		}	
 	},
 	"ui-language": {
 		"en": "영어",
@@ -1287,12 +1297,6 @@
 		"label-available-amount": "지금 인출 가능한 자금",
 		"label-input-amount": "출금 금액 입력",
 		"label-input-right": "백분율 사전 설정에 따라",
-		"modal": {
-			"main-cta": "Withdraw funds",
-			"selected-treasury-label": "From treasury account",
-			"title": "Withdraw treasury funds",
-			"verified-label": "I'm sure the recipient address doesn't belong to an exchange"
-		},
 		"modal-title": "자금 인출"
 	},
 	"wrap": {
