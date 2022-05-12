@@ -79,7 +79,8 @@ export const SafeInfo = (props: {
     </>
   );
   
-  // Safe Balance (show amount of assets)
+  // Safe Balance
+  const [safeAssetsAmount, setSafeAssetsAmount] = useState<any>();
   const [assetsAmout, setAssetsAmount] = useState<string>();
 
   const getPricePerToken = useCallback((token: UserTokenAccount): number => {
@@ -90,22 +91,27 @@ export const SafeInfo = (props: {
       : 0;
   }, [coinPrices])
 
+  // Show amount of assets
   useEffect(() => {
     (selectedMultisig) && (
-      multisigVaults.length > 1 ? (
-        setAssetsAmount(`(${multisigVaults.length} assets)`)
+      safeAssetsAmount ? (
+        safeAssetsAmount > 1 ? (
+          setAssetsAmount(`(${safeAssetsAmount} assets)`)
+        ) : (
+          setAssetsAmount(`(${safeAssetsAmount} asset)`)
+        )
       ) : (
-        setAssetsAmount(`(${multisigVaults.length} asset)`)
+        setAssetsAmount("(0 assets)")
       )
     )
-  }, [multisigVaults, selectedMultisig]);
+  }, [safeAssetsAmount, selectedMultisig]);
 
+  // Fetch safe balance.
   useEffect(() => {
     if (!connection || !selectedMultisig) { return; }
     
     let usdValue = 0;
 
-    // Fetch SOL balance.
     (async () => {
       const solBalance = await connection.getBalance(selectedMultisig.authority);
   
@@ -113,7 +119,7 @@ export const SafeInfo = (props: {
   
       fetchAccountTokens(connection, selectedMultisig.authority)
         .then(accTks => {
-  
+          
           if (accTks) {
             const cumulative = new Array<any>();
   
@@ -131,7 +137,7 @@ export const SafeInfo = (props: {
                   balance: balance,
                   usdValue: balance * rate
                 })
-              } 
+              }
             });
   
             setTotalSafeBalance(usdValue);
@@ -140,18 +146,21 @@ export const SafeInfo = (props: {
           } else {
             consoleOut("No tokens founds", "", "");
           }
+
+          if (accTks) {
+            setSafeAssetsAmount(accTks.length);
+          }
   
         }).catch(error => {
           console.error(error);
         });
     })();
-
-      
   }, [
+    setSafeAssetsAmount,
     getPricePerToken,
     selectedMultisig,
     splTokenList,
-    connection
+    connection,
   ]);  
     
   // Deposit Address
