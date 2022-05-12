@@ -11,6 +11,7 @@
   --color-item-selector-selected: #73c700;
   --color-incoming-transaction: #4e9800;
   --color-green: #006820;
+  --color-green-dark: #022818;
   --color-outgoing-transaction: #e02020;
   --color-pending-transaction: #e64d11;
   --color-paused-transaction: #1698e4;
@@ -27,6 +28,7 @@
   --text-color: #000000;
   --bg-color: #ffffff;
   --color-purple: #4b00a6;
+  --color-gray-light: #5c5c5c;
   
   /* Grays */
   --color-dark: #313131;
@@ -110,6 +112,7 @@
   --color-item-selector-selected: #73c700;
   --color-incoming-transaction: #4e9800;
   --color-green: #006820;
+  --color-green-dark: #022818;
   --color-outgoing-transaction: #e02020;
   --color-pending-transaction: #e64d11;
   --color-paused-transaction: #1698e4;
@@ -126,6 +129,7 @@
   --text-color: #e1e1ff;
   --bg-color: #181a2a;
   --color-purple: #7402ff;
+  --color-gray-dark: #363636;
   
   /* Grays */
   --color-dark: #ffffff;
@@ -404,6 +408,10 @@ h1, h2, h3, h4, h5, h6 {
 .fg-purple {
   color: var(--color-purple) !important;
 }
+.fg-gray-dark {
+  color: var(--color-gray-dark) !important;
+}
+
 // Background color classes
 .solid-bg {
   background-color: var(--bg-color);
@@ -438,8 +446,17 @@ h1, h2, h3, h4, h5, h6 {
 .bg-green {
   background-color: var(--color-green) !important;
 }
+.bg-green-dark {
+  background-color: var(--color-green-dark) !important;
+}
 .bg-purple {
   background-color: var(--color-purple) !important;
+}
+.bg-gray-light {
+  background-color: var(--color-gray-light) !important;
+}
+.bg-gray-dark {
+  background-color: var(--color-gray-dark) !important;
 }
 
 // Layout

@@ -154,6 +154,7 @@ export const MultisigProposalModal = (props: {
     });
   }
 
+
   console.log("inputState", inputState);
 
   const [selectOptionState, setSelectOptionState] = useState<any>({});

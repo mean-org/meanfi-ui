@@ -24,6 +24,9 @@
       .proposal-title {
         font-size: 1.1em;
       }
+      .info-label {
+        margin-bottom: 0 !important;
+      }
     }
   }
   @media (max-width: 575px) {
@@ -58,6 +61,12 @@
           margin: 0.25em 0 0.25em 0.25em;
           display: flex;
           border-radius: 0.25em;
+          .badge {
+            width: 6em !important;
+            font-size: 9px !important;
+            padding: 0.25px !important;
+            font-weight: 600 !important;
+          }
         }
       }
     }
