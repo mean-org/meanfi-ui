@@ -1104,7 +1104,7 @@
 			"modal-title-fund-stream": "Add funds to a Money Stream",
 			"money-stream-to-topup-label": "Money Stream to top up",
 			"search-streams-placeholder": "Search stream by name or address",
-			"success-message": "Your treasury was funded successfully."
+			"success-message": "Your streaming account was funded successfully."
 		},
 		"back-to-treasuries-cta": "Back to Streaming Accounts",
 		"close-treasury-confirmation": "Are you sure you want to close the treasury?",

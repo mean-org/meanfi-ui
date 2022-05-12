@@ -1099,7 +1099,7 @@
 			"modal-title-fund-stream": "Para aktarımına fon ekle",
 			"money-stream-to-topup-label": "Para Aktarımını tamamla",
 			"search-streams-placeholder": "İsimle ve ya adresle aktarım arayın",
-			"success-message": "Hazineniz başarıyla fonlandı."
+			"success-message": "Your streaming account was funded successfully."
 		},
 		"back-to-treasuries-cta": "Back to Streaming Accounts",
 		"close-treasury-confirmation": "Hazineyi kapatmak istediğinizden emin misiniz?",

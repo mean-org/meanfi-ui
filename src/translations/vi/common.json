@@ -1098,7 +1098,7 @@
 			"modal-title-fund-stream": "Nạp tiền vào Money stream",
 			"money-stream-to-topup-label": "Money Stream to top up",
 			"search-streams-placeholder": "Tìm stream theo tên và địa chỉ",
-			"success-message": "Kho bạc của bạn đã được nạp tiền thành công"
+			"success-message": "Your streaming account was funded successfully."
 		},
 		"back-to-treasuries-cta": "Back to Streaming Accounts",
 		"close-treasury-confirmation": "Bạn chắc sẽ đóng kho bạc chứ?",

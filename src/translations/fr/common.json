@@ -1098,7 +1098,7 @@
 			"modal-title-fund-stream": "Ajouter des fonds à un flux d'argent",
 			"money-stream-to-topup-label": "Money Stream pour recharger",
 			"search-streams-placeholder": "Rechercher un flux par nom ou adresse",
-			"success-message": "Votre trésorerie a été financée avec succès."
+			"success-message": "Your streaming account was funded successfully."
 		},
 		"back-to-treasuries-cta": "Back to Streaming Accounts",
 		"close-treasury-confirmation": "Êtes-vous sûr de vouloir fermer la trésorerie ?",

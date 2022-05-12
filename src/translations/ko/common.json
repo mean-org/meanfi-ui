@@ -1102,7 +1102,7 @@
 			"modal-title-fund-stream": "Add funds to a Money Stream",
 			"money-stream-to-topup-label": "Money Stream to top up",
 			"search-streams-placeholder": "이름 또는 주소로 스트림 검색",
-			"success-message": "성공적으로 자금이 조달되었습니다."
+			"success-message": "Your streaming account was funded successfully."
 		},
 		"back-to-treasuries-cta": "Back to Streaming Accounts",
 		"close-treasury-confirmation": "트레저리를 닫으시겠습니까?",
