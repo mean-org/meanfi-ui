@@ -1154,7 +1154,7 @@
 			"no-treasury-loaded": "Select a streaming account to view details",
 			"no-treasury-selected": "Select a streaming account to view details",
 			"number-of-streams": "Número de streams",
-			"treasury-address-label": "Treasury address",
+			"treasury-address-label": "Streaming account address",
 			"treasury-name-label": "Nome do Tesouro"
 		},
 		"treasury-detail-heading": "Detalhes do Tesouro",

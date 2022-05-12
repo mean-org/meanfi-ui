@@ -1157,7 +1157,7 @@
 			"no-treasury-loaded": "Select a streaming account to view details",
 			"no-treasury-selected": "Select a streaming account to view details",
 			"number-of-streams": "تعداد استریم ها",
-			"treasury-address-label": "آدرس",
+			"treasury-address-label": "Streaming account address",
 			"treasury-name-label": "نام treasury",
 			"unallocated-treasury-balance": "Unallocated balance"
 		},

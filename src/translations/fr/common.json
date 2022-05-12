@@ -1158,7 +1158,7 @@
 			"no-treasury-loaded": "Select a streaming account to view details",
 			"no-treasury-selected": "Select a streaming account to view details",
 			"number-of-streams": "Nombre de flux",
-			"treasury-address-label": "Adresse",
+			"treasury-address-label": "Streaming account address",
 			"treasury-name-label": "Nom du Trésor",
 			"unallocated-treasury-balance": "Unallocated balance"
 		},
