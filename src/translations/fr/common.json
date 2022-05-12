@@ -1090,19 +1090,24 @@
 			"allocation-select-stream-label": "Sélectionnez le flux à financer",
 			"balance": "Équilibre",
 			"label": "Ajouter des fonds",
-			"main-cta": "Trésorerie du fonds",
-			"main-cta-busy": "Trésorerie de financement",
+			"main-cta": "Fund account",
+			"main-cta-busy": "Funding account",
 			"main-cta-fund-stream": "Financer le flux d'argent",
 			"main-cta-fund-stream-busy": "Volet de financement",
-			"modal-title": "Ajouter des fonds au trésor",
+			"modal-title": "Add funds to the streaming account",
 			"modal-title-fund-stream": "Ajouter des fonds à un flux d'argent",
 			"money-stream-to-topup-label": "Money Stream pour recharger",
 			"search-streams-placeholder": "Rechercher un flux par nom ou adresse",
-			"success-message": "Votre trésorerie a été financée avec succès."
+			"success-message": "Your streaming account was funded successfully."
 		},
-		"back-to-treasuries-cta": "Retour aux bons du Trésor",
-		"close-treasury-confirmation": "Êtes-vous sûr de vouloir fermer la trésorerie ?",
-		"create-new-treasury-cta": "Créer une trésorerie",
+		"back-to-treasuries-cta": "Back to Streaming Accounts",
+		"close-account": {
+			"modal-title": "Close account",
+			"close-treasury-confirmation": "Are you sure you want to close the account?",
+			"cta-close": "Close account",
+			"cta-close-busy": "Closing account"
+		},
+		"create-new-treasury-cta": "New Streaming Account",
 		"create-treasury": {
 			"create-multisig-cta": "Initier la trésorerie",
 			"create-multisig-cta-busy": "Trésorerie initiatique",
@@ -1134,31 +1139,32 @@
 				"treasury-type-open-name": "Open money streaming treasury"
 			}
 		},
-		"lookup-treasury-cta-tooltip": "Rechercher une trésorerie",
+		"lookup-treasury-cta-tooltip": "Lookup a Streaming Account",
 		"open-treasury": {
 			"main-cta": "Ouvert",
-			"modal-title": "Trésorerie ouverte",
-			"treasuryid-input-empty": "Entrez l'ID du Trésor",
-			"treasuryid-input-label": "Identifiant du Trésor à ouvrir",
-			"treasuryid-open-cta": "Flux ouvert",
-			"treasuryid-placeholder": "ID de trésorerie créé par Mean Finance"
+			"modal-title": "Open Streaming Account",
+			"treasuryid-input-empty": "Enter account ID",
+			"treasuryid-input-label": "Streaming account id to open",
+			"treasuryid-open-cta": "Open account",
+			"treasuryid-placeholder": "Account ID created by Mean Finance"
 		},
-		"refresh-tooltip": "Cliquez pour rafraîchir la liste des trésoreries",
-		"screen-title": "Trésors",
+		"refresh-tooltip": "Click to refresh the list of streaming accounts",
+		"screen-title": "Streaming Accounts",
 		"summary-title": "Streaming Accounts",
 		"treasury-detail": {
 			"associated-token": "Jeton associé",
 			"created-on": "Créé sur",
 			"cta-add-funds": "Ajouter des fonds",
 			"cta-add-funds-busy": "Ajouter des fonds",
-			"cta-close": "Fermer la trésorerie",
-			"cta-close-busy": "Trésorerie de clôture",
+			"cta-close": "Close account",
+			"cta-close-busy": "Closing account",
 			"cta-withdraw-multisig-treasury": "Retirer des fonds",
 			"multisig-tx-headsup": "Transactions en attente d'approbation ou d'exécution pour cette trésorerie",
-			"no-treasury-loaded": "Créer ou rechercher une trésorerie pour afficher les détails",
-			"no-treasury-selected": "Veuillez sélectionner ou rechercher une trésorerie pour afficher les détails",
+			"no-treasury-loaded": "Select a streaming account to view details",
+			"no-treasury-selected": "Select a streaming account to view details",
 			"number-of-streams": "Nombre de flux",
-			"treasury-address-label": "Adresse",
+			"refreshing-account-balance": "Refreshing account balance",
+			"treasury-address-label": "Streaming account address",
 			"treasury-name-label": "Nom du Trésor",
 			"unallocated-treasury-balance": "Unallocated balance"
 		},
@@ -1168,11 +1174,11 @@
 			"multisig-treasury-heading": "Trésoreries multisignatures - {{treasuryName}}",
 			"multisig-treasury-help": "Vous trouverez ci-dessous une liste de tous les trésors qui sont connectés à ce Multisig",
 			"multisig-treasury-label": "Trésorerie multisig",
-			"no-treasuries": "Aucune trésorerie disponible",
-			"not-connected": "Veuillez connecter votre portefeuille pour voir vos trésoreries",
+			"no-treasuries": "No streaming accounts available",
+			"not-connected": "Please connect your wallet to see your streaming accounts",
 			"total-streams-label": "ruisseaux"
 		},
-		"treasury-refresh-tooltip": "Actualiser les données de trésorerie",
+		"treasury-refresh-tooltip": "Refresh account data",
 		"treasury-streams": {
 			"add-stream-locked": {
 				"modal-title": "Ajouter un flux d'argent verrouillé",
@@ -1198,7 +1204,7 @@
 			"available-unallocated-balance-label": "Solde non alloué disponible",
 			"busy-pausing": "ArrÃªt du flux",
 			"busy-resuming": "Reprise du flux",
-			"close-stream-also-closes-treasury-label": "Fermez aussi la trésorerie",
+			"close-stream-also-closes-treasury-label": "Also close the streaming account",
 			"column-activity": "Flux d'argent",
 			"column-description": "La description",
 			"column-destination": "Destination",
@@ -1213,7 +1219,7 @@
 			"minimum-allocation-advice": "Vous devez définir une allocation minimale pour ce flux d'argent jusqu'au solde non alloué disponible dans le Trésor.",
 			"multiple-address-list": "Liste d'adresses multiples",
 			"multiple-address-question-mark-tooltip": "Veuillez fournir un fichier texte CSV avec une adresse par ligne au format suivant :",
-			"no-streams": "Cette trésorerie n'a pas de flux actifs",
+			"no-streams": "This streaming account has no active streams",
 			"option-close-stream": "Fermer",
 			"option-explorer-link": "Voir sur Solana Explorer",
 			"option-pause-stream": "Pause",
@@ -1221,7 +1227,17 @@
 			"status-running": "Fonctionnement",
 			"status-scheduled": "Programmé",
 			"status-stopped": "Arrêté"
-		}
+		},
+		"withdraw-funds": {
+			"button-title": "Withdraw funds",
+			"label-available-amount": "Funds available to withdraw now",
+			"label-input-amount": "Enter amount to withdraw",
+			"label-input-right": "By percentual preset",
+			"main-cta": "Withdraw funds",
+			"verified-label": "I'm sure the recipient address doesn't belong to an exchange",
+			"selected-treasury-label": "From streaming account",
+			"modal-title": "Withdraw account funds"
+		}	
 	},
 	"ui-language": {
 		"en": "Anglais",
@@ -1264,7 +1280,6 @@
 				"faucet": "Robinet",
 				"multisig": "Multisig",
 				"submenu-title": "Prestations de service",
-				"treasuries": "Trésorerie et paie",
 				"unwrap": "Unwrap",
 				"wallet-guide": "Guide du portefeuille",
 				"wrap": "Envelopper"
@@ -1288,12 +1303,6 @@
 		"label-available-amount": "Fonds disponibles pour retrait maintenant",
 		"label-input-amount": "Entrez le montant à retirer",
 		"label-input-right": "Par préréglage en pourcentage",
-		"modal": {
-			"main-cta": "Retirer des fonds",
-			"selected-treasury-label": "Du compte du trésor",
-			"title": "Retirer des fonds du trésor",
-			"verified-label": "Je suis sûr que l'adresse du destinataire n'appartient pas à un échange"
-		},
 		"modal-title": "Retirer des fonds"
 	},
 	"wrap": {
