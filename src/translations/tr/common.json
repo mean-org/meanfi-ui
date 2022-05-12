@@ -1091,19 +1091,24 @@
 			"allocation-select-stream-label": "Fonlanacak aktarımı seçin",
 			"balance": "Bakiye",
 			"label": "Fon ekle",
-			"main-cta": "Fon hazinesi",
-			"main-cta-busy": "Fonlama hazinesi",
+			"main-cta": "Fund account",
+			"main-cta-busy": "Funding account",
 			"main-cta-fund-stream": "Para aktarımını fonla",
 			"main-cta-fund-stream-busy": "Aktarımı fonla",
-			"modal-title": "Hazineye fon ekleyin",
+			"modal-title": "Add funds to the streaming account",
 			"modal-title-fund-stream": "Para aktarımına fon ekle",
 			"money-stream-to-topup-label": "Para Aktarımını tamamla",
 			"search-streams-placeholder": "İsimle ve ya adresle aktarım arayın",
-			"success-message": "Hazineniz başarıyla fonlandı."
+			"success-message": "Your streaming account was funded successfully."
 		},
-		"back-to-treasuries-cta": "Hazinelere geri dön",
-		"close-treasury-confirmation": "Hazineyi kapatmak istediğinizden emin misiniz?",
-		"create-new-treasury-cta": "Hazine oluştur",
+		"back-to-treasuries-cta": "Back to Streaming Accounts",
+		"close-account": {
+			"modal-title": "Close account",
+			"close-treasury-confirmation": "Are you sure you want to close the account?",
+			"cta-close": "Close account",
+			"cta-close-busy": "Closing account"
+		},
+		"create-new-treasury-cta": "New Streaming Account",
 		"create-treasury": {
 			"create-multisig-cta": "Hazineyi başlat",
 			"create-multisig-cta-busy": "Hazine başlatılıyor",
@@ -1135,31 +1140,32 @@
 				"treasury-type-open-name": "Para aktarım hazinesi aç"
 			}
 		},
-		"lookup-treasury-cta-tooltip": "Hazine ara",
+		"lookup-treasury-cta-tooltip": "Lookup a Streaming Account",
 		"open-treasury": {
 			"main-cta": "Aç",
-			"modal-title": "Hazine aç",
-			"treasuryid-input-empty": "Hazine ID'sini girin",
-			"treasuryid-input-label": "Hazine ID'sini aç",
-			"treasuryid-open-cta": "Aktarımı aç",
-			"treasuryid-placeholder": "Mean Finance tarafından oluşturulan Hazine ID'si"
+			"modal-title": "Open Streaming Account",
+			"treasuryid-input-empty": "Enter account ID",
+			"treasuryid-input-label": "Streaming account id to open",
+			"treasuryid-open-cta": "Open account",
+			"treasuryid-placeholder": "Account ID created by Mean Finance"
 		},
-		"refresh-tooltip": "Hazine listesini yenilemek için tıklayın",
-		"screen-title": "Hazineler",
+		"refresh-tooltip": "Click to refresh the list of streaming accounts",
+		"screen-title": "Streaming Accounts",
 		"summary-title": "Streaming Accounts",
 		"treasury-detail": {
 			"associated-token": "İlişkili token",
 			"created-on": "... 'da oluşturuldu",
 			"cta-add-funds": "Fon ekle",
 			"cta-add-funds-busy": "Fon ekleme",
-			"cta-close": "Hazineyi kapat",
-			"cta-close-busy": "Kapanış hazinesi",
+			"cta-close": "Close account",
+			"cta-close-busy": "Closing account",
 			"cta-withdraw-multisig-treasury": "Fonları çek",
 			"multisig-tx-headsup": "Bu Hazine İçin Onay Bekleyen ya da Devam Eden İşlemler",
-			"no-treasury-loaded": "Detaylarını görmek için bir aktarım oluşturun ya da arayın",
-			"no-treasury-selected": "Ayrıntıları görüntülemek için lütfen bir hazine seçin veya arayın",
+			"no-treasury-loaded": "Select a streaming account to view details",
+			"no-treasury-selected": "Select a streaming account to view details",
 			"number-of-streams": "Aktarım sayısı",
-			"treasury-address-label": "Adres",
+			"refreshing-account-balance": "Refreshing account balance",
+			"treasury-address-label": "Streaming account address",
 			"treasury-name-label": "Hazine adı",
 			"unallocated-treasury-balance": "Unallocated balance"
 		},
@@ -1169,11 +1175,11 @@
 			"multisig-treasury-heading": "Çoklu-İmza hazineleri - {{treasuryName}}",
 			"multisig-treasury-help": "Aşağıdaki listede Çoklu-İmzaya bağlı tüm hazineler mevcuttur.",
 			"multisig-treasury-label": "Çoklu-imza hazinesi",
-			"no-treasuries": "Hazine yok",
-			"not-connected": "Hazinelerinizi görmek için lütfen cüzdanınızı bağlayın",
+			"no-treasuries": "No streaming accounts available",
+			"not-connected": "Please connect your wallet to see your streaming accounts",
 			"total-streams-label": "aktarımlar"
 		},
-		"treasury-refresh-tooltip": "Hazine bilgisini güncelle",
+		"treasury-refresh-tooltip": "Refresh account data",
 		"treasury-streams": {
 			"add-stream-locked": {
 				"modal-title": "Kilitli bir para aktarımı ekle",
@@ -1199,7 +1205,7 @@
 			"available-unallocated-balance-label": "Kullanılabilir Ayrılmamış Bakiye",
 			"busy-pausing": "Aktarım durduruluyor",
 			"busy-resuming": "Aktarım devam ettiriliyor",
-			"close-stream-also-closes-treasury-label": "Hazineyi de kapat",
+			"close-stream-also-closes-treasury-label": "Also close the streaming account",
 			"column-activity": "Para aktarımları",
 			"column-description": "Açıklama",
 			"column-destination": "Hedef",
@@ -1214,7 +1220,7 @@
 			"minimum-allocation-advice": "Bu Para Akışı için Hazine'de bulunan tahsis edilmemiş bakiyeye kadar bir minimum tahsisat belirlemelisiniz.",
 			"multiple-address-list": "Adress listesini çoğalt",
 			"multiple-address-question-mark-tooltip": "Lütfen csc içeriğini her satırda bir adres olacak şekilde gönderin, bir örnek olarak:",
-			"no-streams": "Bu hazinenin aktif aktarımı yok",
+			"no-streams": "This streaming account has no active streams",
 			"option-close-stream": "Kapat",
 			"option-explorer-link": "Solana Explorer'da görüntüle",
 			"option-pause-stream": "Duraklat",
@@ -1222,7 +1228,17 @@
 			"status-running": "Devam ediyor",
 			"status-scheduled": "Zamanlanmış",
 			"status-stopped": "Durduruldu"
-		}
+		},
+		"withdraw-funds": {
+			"button-title": "Withdraw funds",
+			"label-available-amount": "Funds available to withdraw now",
+			"label-input-amount": "Enter amount to withdraw",
+			"label-input-right": "By percentual preset",
+			"main-cta": "Withdraw funds",
+			"verified-label": "I'm sure the recipient address doesn't belong to an exchange",
+			"selected-treasury-label": "From streaming account",
+			"modal-title": "Withdraw account funds"
+		}	
 	},
 	"ui-language": {
 		"en": "İngilizce",
@@ -1265,7 +1281,6 @@
 				"faucet": "Musluk(Faucet)",
 				"multisig": "Çoklu-imza",
 				"submenu-title": "Hizmetler",
-				"treasuries": "Hazine ve Bordro",
 				"unwrap": "Unwrap",
 				"wallet-guide": "Cüzdan Rehberi",
 				"wrap": "Wrap"
@@ -1289,12 +1304,6 @@
 		"label-available-amount": "Şuanda çekilebilecek fonlar",
 		"label-input-amount": "Çekilecek tutarı girin",
 		"label-input-right": "Önceden ayarlanan yüzdeye göre",
-		"modal": {
-			"main-cta": "Fonları geri çek",
-			"selected-treasury-label": "Hazine hesabından",
-			"title": "Hazine fonlarını çek.",
-			"verified-label": "Alıcı adresin bir borsaya ait olmadığından eminim."
-		},
 		"modal-title": "Fonları geri çek"
 	},
 	"wrap": {

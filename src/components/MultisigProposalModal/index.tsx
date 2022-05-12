@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from "@ant-design/icons";
 import "./style.scss";
 import { consoleOut, getTransactionOperationDescription } from '../../utils/ui';
@@ -12,10 +12,10 @@ import { StepSelector } from "../StepSelector";
 import { IconHelpCircle, IconUser } from "../../Icons";
 import { InputMean } from '../InputMean';
 import { SelectMean } from '../SelectMean';
-import { App, AppConfig, AppsProvider } from '@mean-dao/mean-multisig-apps';
 import { InfoIcon } from '../InfoIcon';
 import { FormLabelWithIconInfo } from '../FormLabelWithIconInfo';
 import { InputTextAreaMean } from '../InputTextAreaMean';
+import { App, AppConfig, AppsProvider, UiInstruction } from '@mean-dao/mean-multisig-apps';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -27,6 +27,7 @@ export const MultisigProposalModal = (props: {
   handleClose: any;
   isVisible: boolean;
   isBusy: boolean;
+  proposer: string;
   appsProvider: AppsProvider | undefined;
   solanaApps: App[],
   handleOk: any
@@ -42,12 +43,13 @@ export const MultisigProposalModal = (props: {
   const [proposalTitleValue, setProposalTitleValue] = useState('');
   const [proposalExpiresValue, setProposalExpiresValue] = useState<any>(expires[0]);
   const [proposalDescriptionValue, setProposalDescriptionValue] = useState('');
-  const [proposalInstructionValue, setProposalInstructionValue] = useState<any>();
+  // const [proposalInstructionValue, setProposalInstructionValue] = useState<any>();
   const [countWords, setCountWords] = useState(0);
   const [lettersLeft, setLettersLeft] = useState(256);
 
   const [selectedApp, setSelectedApp] = useState<App>();
   const [selectedAppConfig, setSelectedAppConfig] = useState<AppConfig>();
+  const [selectedUiIx, setSelectedUiIx] = useState<UiInstruction | undefined>();
 
   const onStepperChange = (value: number) => {
     setCurrentStep(value);
@@ -74,7 +76,7 @@ export const MultisigProposalModal = (props: {
       description: proposalDescriptionValue,
       expires: proposalExpiresValue,
       config: transformedConfig,
-      instruction: proposalInstructionValue
+      instruction: selectedUiIx
     });
   }
 
@@ -127,25 +129,46 @@ export const MultisigProposalModal = (props: {
     setCountWords(e.target.value.length);
   }
 
-  const onProposalInstructionValueChange = (value: any) => {
-    setProposalInstructionValue(value);
-  }
+  // console.log('init state', defaultInputState());
 
   const [inputState, setInputState] = useState<any>({});
 
-  const handleChangeInput = (e: any) => {
-    const { name, value } = e.target;
+  const onProposalInstructionValueChange = (value: any) => {
+    // setProposalInstructionValue(value);
+    if (!value) { return; }
+    
+    const uiIx = selectedAppConfig && selectedAppConfig.ui.length 
+      ? selectedAppConfig.ui.filter((ix: any) => ix.id === value.key)[0]
+      : undefined;
 
+    setSelectedUiIx(uiIx);
+  }
+
+  const handleChangeInput = (e: any) => {
     setInputState({
       ...inputState,
-      [name]: value
+      [e.id]: e.value
     });
   }
 
-  const [selectOptionState, setSetOptionState] = useState<any>({});
+  const handleChangeYesOrNot = (e: any) => {
+    setInputState({
+      ...inputState,
+      [e.id]: e.value
+    });
+  }
 
-  const handleChangeOption = (e: any) => {
-    setSetOptionState(e);
+
+  console.log("inputState", inputState);
+
+  const [selectOptionState, setSelectOptionState] = useState<any>({});
+
+  const handleChangeOption = (e: any) => {    
+    setSelectOptionState({ [e.key]: e.value });
+    setInputState({
+      ...inputState,
+      [e.key]: e.value
+    });
   }
 
   // Preset fee amount
@@ -189,7 +212,7 @@ export const MultisigProposalModal = (props: {
       {props.solanaApps.length > 0 && (
         props.solanaApps.map((app, index) => {
           const onSelectApp = () => {
-            setProposalInstructionValue(undefined);
+            setSelectedUiIx(undefined);
             setSelectedApp(app);
           }
 
@@ -300,27 +323,32 @@ export const MultisigProposalModal = (props: {
 
                     <div className="step-two-select-instruction">
                       {/* Instruction */}
-                      <Row gutter={[8, 8]} className="mb-0">
-                        <Col xs={24} sm={24} md={24} lg={24}>
-                          <div className="mb-2">
-                            <div className="form-label">Instruction</div>
-                            <SelectMean
-                              className={props.isBusy ? 'disabled' : ''}
-                              onChange={onProposalInstructionValueChange}
-                              placeholder={"Select an instruction"}
-                              values={selectedAppConfig ? selectedAppConfig.ui.map((ix: any) => ix.label) : []}
-                              value={proposalInstructionValue}
-                            />
-                          </div>
+                      <Row gutter={[8, 8]} className="mb-1">
+                        <Col xs={24} sm={24} md={24} lg={24} className="text-left pr-1">
+                          <div className="form-label">Instruction:</div>
+                          <SelectMean
+                            className={props.isBusy ? 'disabled' : ''}
+                            onChange={onProposalInstructionValueChange}
+                            placeholder={"Select an instruction"}
+                            values={selectedAppConfig ? selectedAppConfig.ui.map((ix: any) => {
+                              return { key: ix.id, label: ix.label, value: ix.id }
+                            }) : []}
+                            labelInValue={true}
+                            value={{
+                              key: selectedUiIx?.id,
+                              value: selectedUiIx?.id,
+                              label: selectedUiIx?.label
+                            }}
+                          />
                         </Col>
                       </Row>
 
                       {selectedAppConfig?.ui.map((ix: any) => (
-                        proposalInstructionValue === ix.label && (
+                        selectedUiIx && selectedUiIx.id === ix.id && (
                           ix.uiElements.map((element: any) => (
                             <>
-                              {element.visibility === "show" ? (
-                                <Row gutter={[8, 8]} className="mb-1 d-flex align-items-center" key={element.dataElement.index}>
+                              {element.visibility === "show" && (
+                                <Row gutter={[8, 8]} className="mb-1" key={element.dataElement.index}>
                                   {(element.type === "inputText") ? (
                                     <>
                                       <Col xs={24} sm={24} md={24} lg={24} className="text-left pl-1">
@@ -329,10 +357,16 @@ export const MultisigProposalModal = (props: {
                                           tooltip_text={element.help}
                                         />
                                         <InputMean
-                                          id={element.label}
+                                          id={element.name}
                                           className={props.isBusy ? 'disabled' : ''}
                                           name={element.label}
-                                          onChange={handleChangeInput}
+                                          onChange={(e: any) => {
+                                            console.log(e);
+                                            handleChangeInput({
+                                              id: element.name,
+                                              value: e.target.value
+                                            });
+                                          }}
                                           placeholder={element.help}
                                           value={inputState[element.name]}
                                         />
@@ -362,10 +396,16 @@ export const MultisigProposalModal = (props: {
                                           tooltip_text={element.help}
                                         />
                                         <SelectMean
+                                          key={element.name}
                                           className={props.isBusy ? 'disabled' : ''}
-                                          onChange={handleChangeOption}
+                                          onChange={(value: any) => {
+                                            handleChangeOption({
+                                              key: element.name,
+                                              value: value
+                                            });
+                                          }}
                                           placeholder={element.help}
-                                          values={element.value.map((item: any) => item.value)}
+                                          values={element.value.map((elem: any) => elem.value)}
                                           value={selectOptionState[element.name]}
                                         />
                                       </Col>
@@ -379,28 +419,64 @@ export const MultisigProposalModal = (props: {
                                         />
                                       </Col>
                                       <Col xs={24} sm={18} md={18} lg={18}>
-                                        <Radio.Group className="ml-2 d-flex" 
-                                        onChange={handleChangeInput} 
-                                        name={element.label}
-                                        value={inputState[element.name]}
+                                        <Radio.Group className="ml-2" 
+                                          id={element.name}
+                                          onChange={(e: any) => {
+                                            handleChangeYesOrNot({
+                                              id: element.name,
+                                              value: e.target.value
+                                            })
+                                          }}
+                                          name={element.label}
+                                          value={inputState[element.name]}
                                         >
                                           <Radio value={true}>{t('general.yes')}</Radio>
                                           <Radio value={false}>{t('general.no')}</Radio>
                                         </Radio.Group>
                                       </Col>
                                     </>
+                                  ) : (element.type === "knownValue") ? (
+                                    <>
+                                      <Row gutter={[8, 8]} className="mb-1" key={element.dataElement.index}>
+                                        <Col xs={24} sm={24} md={24} lg={24} className="text-right pr-1">
+                                          <FormLabelWithIconInfo
+                                            label={element.label}
+                                            tooltip_text={element.help}
+                                          />
+                                          <code>{element.value}</code>
+                                        </Col>
+                                      </Row>
+                                    </>
+                                  ) : (element.type === "slot") ? (
+                                    <>
+                                      <Row gutter={[8, 8]} className="mb-1" key={element.dataElement.index}>
+                                        <Col xs={24} sm={24} md={24} lg={24} className="text-right pr-1">
+                                          <FormLabelWithIconInfo
+                                            label={element.label}
+                                            tooltip_text={element.help}
+                                          />
+                                          <code>{element.value}</code>
+                                        </Col>
+                                      </Row>
+                                    </>
+                                  ) : (element.type === "txProposer") ? (
+                                    <>
+                                      <Row gutter={[8, 8]} className="mb-1" key={element.dataElement.index}>
+                                        <Col xs={24} sm={24} md={24} lg={24} className="text-right pr-1">
+                                          <FormLabelWithIconInfo
+                                            label={element.label}
+                                            tooltip_text={element.help}
+                                          />
+                                          <code>{props.proposer}</code>
+                                        </Col>
+                                      </Row>
+                                    </>
+                                  ) : (element.type === "treasuryAccount") ? (
+                                    <></>
                                   ) : null}
+
                                 </Row>
-                              ) : element.visibility === "readOnly" ? (
-                                <Row gutter={[8, 8]} className="mb-1" key={element.dataElement.index}>
-                                  <Col xs={24} sm={6} md={6} lg={6} className="text-right pr-1">
-                                    <div className="form-label">{element.label}</div>
-                                  </Col>
-                                  <Col xs={24} sm={18} md={18} lg={18}>
-                                    <code>{element.value}</code>
-                                  </Col>
-                                </Row>
-                              ) : null}
+                              )}
                             </>
                           ))
                         ) 
@@ -468,13 +544,13 @@ export const MultisigProposalModal = (props: {
 
                     {/* Instruction */}
                     <Row className="mb-1">
-                      {proposalInstructionValue && (
+                      {selectedUiIx && (
                         <>
                           <Col span={8} className="text-right pr-1">
                             <span className="info-label">Instruction:</span>
                           </Col>
                           <Col span={16} className="text-left pl-1">
-                            <span>{proposalInstructionValue}</span>
+                            <span>{selectedUiIx.label}</span>
                           </Col>
                         </>
                       )}
@@ -486,7 +562,7 @@ export const MultisigProposalModal = (props: {
                         {key && (
                           <>
                             <Col span={8} className="text-right pr-1">
-                              <span className="info-label">{key}:</span>
+                              <span className="info-label">{selectedUiIx?.uiElements.filter((e: any) => e.name === key)[0].label}:</span>
                             </Col>
                             <Col span={16} className="text-left pl-1">
                               <span>{inputState[key] === true ? "Yes" : inputState[key] === false ? "No" : inputState[key]}</span>
@@ -561,7 +637,7 @@ export const MultisigProposalModal = (props: {
                       !publicKey ||
                       !selectedApp ||
                       !proposalTitleValue ||
-                      !proposalInstructionValue
+                      !selectedUiIx
                     }
                   >
                     {getStepTwoContinueButtonLabel()}
@@ -596,7 +672,7 @@ export const MultisigProposalModal = (props: {
                       !publicKey ||
                       !selectedApp ||
                       !proposalTitleValue ||
-                      !proposalInstructionValue ||
+                      !selectedUiIx ||
                       !selectedAppConfig
                     }
                   >
