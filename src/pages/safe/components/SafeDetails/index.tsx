@@ -1,7 +1,7 @@
 import './style.scss';
 import { Button, Col, Collapse, Row } from "antd"
 import { IconArrowBack, IconUser, IconThumbsUp, IconThumbsDown, IconApprove, IconCross, IconCheckCircle, IconCreated, IconMinus, IconCaretDown, IconExternalLink, IconLink } from "../../../../Icons"
-import { ProposalResumeItem } from '../ProposalResumeItem';
+
 import { shortenAddress } from '../../../../utils/utils';
 import { TabsMean } from '../../../../components/TabsMean';
 import { getOperationName } from '../../../../utils/multisig-helpers';
@@ -11,6 +11,7 @@ import { useCallback, useEffect } from 'react';
 import { copyText } from '../../../../utils/ui';
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../../../constants';
 import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
+import { ResumeItem } from '../UI/ResumeItem';
 
 export const SafeDetailsView = (props: {
   isSafeDetails: boolean;
@@ -123,7 +124,7 @@ export const SafeDetailsView = (props: {
                 <Col xs={6} sm={6} md={4} lg={4} className="pr-1">
                   <span className="info-label">{t('multisig.proposal-modal.instruction-program')}:</span>
                 </Col>
-                <Col xs={18} sm={18} md={20} lg={20} className="pl-1">
+                <Col xs={18} sm={18} md={20} lg={20} className="pl-1 text-truncate">
                   <span onClick={() => copyAddressToClipboard(programId.toBase58())}  className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
                     {programId.toBase58()}
                   </span>
@@ -163,7 +164,7 @@ export const SafeDetailsView = (props: {
                   <Col xs={6} sm={6} md={4} lg={4} className="pr-1">
                     <span className="info-label">{t('multisig.proposal-modal.instruction-data')}:</span>
                   </Col>
-                  <Col xs={18} sm={18} md={20} lg={20} className="pl-1">
+                  <Col xs={18} sm={18} md={20} lg={20} className="pl-1 text-truncate">
                     <span onClick={() => copyAddressToClipboard(data)}  className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
                       {data}
                     </span>
@@ -251,7 +252,7 @@ export const SafeDetailsView = (props: {
           <span>Back</span>
         </div>
       </Row>
-      <ProposalResumeItem 
+      <ResumeItem
         id={id}
         // logo={proposalSelected.logo}
         title={details.title}

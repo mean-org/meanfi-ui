@@ -1,16 +1,16 @@
 @media (max-width: 575px) {
-  .proposal-resume-item-container {
+  .resume-item-container {
     row-gap: 0px !important;
     padding-bottom: 0em;
   }
 }
 @media (min-width: 576px) {
-  .proposal-resume-item-container {
+  .resume-item-container {
     padding-bottom: 0.5em;
   }
 }
-.proposal-resume-item-container {
-  .proposal-resume-left-container {
+.resume-item-container {
+  .resume-left-container {
     display: flex;
     align-items: center;
     img {
@@ -19,9 +19,9 @@
       margin-right: 0.5em;
       border-radius: 0.25em;
     }
-    .proposal-resume-left-text {
+    .resume-left-text {
       line-height: 1.3;
-      .proposal-title {
+      .resume-title {
         font-size: 1.1em;
       }
       .info-label {
@@ -30,22 +30,22 @@
     }
   }
   @media (max-width: 575px) {
-    .proposal-resume-right-container {
+    .resume-right-container {
       justify-content: space-between;
       width: 100%;
     }
   }
-  .proposal-resume-right-container {
+  .resume-right-container {
     padding-right: 0 !important;
     display: flex;
     align-items: center;
-    .proposal-resume-right-text {
+    .resume-right-text {
       display: flex;
-      align-items: center;
-      justify-content: flex-end;
+      align-items: flex-end;
       flex-direction: column;
       margin-left: 2.2em;
-      .proposal-resume-right-text-up {
+      line-height: 1.3;
+      .resume-right-text-up {
         display: flex;
         .thumbs-up,
         .thumbs-down {
@@ -73,7 +73,7 @@
     .info-label {
       float: right;
       text-align: right;
-      margin-bottom: -0.5em !important;
+      // margin-bottom: -0.5em !important;
     }
   }
 }

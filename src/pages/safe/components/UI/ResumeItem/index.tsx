@@ -1,13 +1,14 @@
 import { useCallback, useContext } from 'react';
 import './style.scss';
 import { Button, Col, Row } from "antd"
-import { IconArrowForward, IconThumbsDown, IconThumbsUp } from '../../../../Icons';
 import { useTranslation } from 'react-i18next';
 import { MultisigTransaction, MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
 import Countdown from 'react-countdown';
-import { AppStateContext } from '../../../../contexts/appstate';
+import { AppStateContext } from '../../../../../contexts/appstate';
+import { IconArrowForward, IconThumbsDown, IconThumbsUp } from '../../../../../Icons';
+import { formatThousands } from '../../../../../utils/utils';
 
-export const ProposalResumeItem = (props: {
+export const ResumeItem = (props: {
   id?: any;
   version?: number;
   logo?: string;
@@ -19,12 +20,15 @@ export const ProposalResumeItem = (props: {
   status?: any;
   needs?: any;
   isSafeDetails?: boolean;
+  isProgramDetails?: boolean;
+  isProgram?: boolean;
+  programSize?: number;
 }) => {
   const {
     theme
   } = useContext(AppStateContext);
 
-  const { logo, version, title, expires, executedOn, approved, rejected, status, needs, isSafeDetails } = props;
+  const { logo, version, title, expires, executedOn, approved, rejected, status, needs, isSafeDetails, isProgram, programSize } = props;
 
   const { t } = useTranslation('common');
 
@@ -101,13 +105,13 @@ export const ProposalResumeItem = (props: {
 
   return (
     <>
-      <Row gutter={[8, 8]} className={`proposal-resume-item-container list-item ${!isSafeDetails ? "hover-list" : ""} ${isSafeDetails ? "align-items-start" : ""}`}>
-        <Col className="proposal-resume-left-container">
+      <Row gutter={[8, 8]} className={`resume-item-container list-item ${!isSafeDetails ? "hover-list" : ""} ${isSafeDetails ? "align-items-end" : ""}`}>
+        <Col className="resume-left-container">
           {logo && (
             <img src={logo} alt={title} />
           )}
-          <div className="proposal-resume-left-text">
-            <div className={`proposal-title ${isSafeDetails ? "big-title" : ""}`}>{title ? title : "Old transaction"}</div>
+          <div className={`resume-left-text ${isSafeDetails ? "pb-1" : ""}`}>
+            <div className={`resume-title ${isSafeDetails ? "big-title" : ""}`}>{title ? title : "Old transaction"}</div>
             {expires && (
               version !== 0 && (
                 <div className="info-label">
@@ -121,29 +125,44 @@ export const ProposalResumeItem = (props: {
             )}
           </div>
         </Col>
-        <Col className="proposal-resume-right-container">
-          <div className="proposal-resume-right-text">
-            <div className="proposal-resume-right-text-up">
-              {approved && (
-                <div className="thumbs-up">
-                  <span>{approved}</span>
-                  <IconThumbsUp className="mean-svg-icons" />
+        <Col className="resume-right-container">
+          <div className="resume-right-text">
+            {!isProgram ? (
+              <>
+                <div className="resume-right-text-up">
+                  {approved && (
+                    <div className="thumbs-up">
+                      <span>{approved}</span>
+                      <IconThumbsUp className="mean-svg-icons" />
+                    </div>
+                  )}
+                  {rejected && (
+                    version !== 0 && (
+                    <div className="thumbs-down">
+                      <IconThumbsDown className="mean-svg-icons" />
+                      <span>{rejected}</span>
+                    </div>
+                    )
+                  )}
+                  <div className={`badge-container ${getTransactionStatusBackgroundColor(status)}`}>
+                    <span className="badge darken small text-uppercase">{getTransactionStatusAction(status)}</span>
+                  </div>
                 </div>
-              )}
-              {rejected && (
-                version !== 0 && (
-                <div className="thumbs-down">
-                  <IconThumbsDown className="mean-svg-icons" />
-                  <span>{rejected}</span>
-                </div>
-                )
-              )}
-              <div className={`badge-container ${getTransactionStatusBackgroundColor(status)}`}>
-                <span className="badge darken small text-uppercase">{getTransactionStatusAction(status)}</span>
-              </div>
-            </div>
-            {needs >= 0 && (
-              <span className="info-label">{`Needs ${needs} ${needs > 1 ?"approvals" : "approval"} to pass`}</span>
+                {needs >= 0 && (
+                  <span className="info-label">{`Needs ${needs} ${needs > 1 ?"approvals" : "approval"} to pass`}</span>
+                )}
+              </>
+            ) : (
+              <>
+                {programSize && (
+                  <div className="">
+                    <div className="rate-amount">
+                      {formatThousands(programSize)}
+                    </div>
+                    <div className="info-label mb-0">bytes</div>
+                  </div>
+                )}
+              </>
             )}
           </div>
           {!isSafeDetails && (
