@@ -7,8 +7,9 @@ export const SelectMean = (props: {
   onChange?: any;
   value?: any;
   values?: any;
+  labelInValue?: boolean;
 }) => {
-  const { className, placeholder, defaultValue, onChange, value, values } = props;
+  const { className, placeholder, defaultValue, onChange, value, values, labelInValue } = props;
 
   const { Option } = Select;
 
@@ -22,9 +23,14 @@ export const SelectMean = (props: {
           style={{ width: "100%", height: "100%", display: "flex", justifyContent: "space-between", alignItems: "center"}}
           bordered={false}
           value={value}
+          labelInValue={labelInValue}
           onChange={onChange}>
-            {values.map((value: string) => (
-              <Option value={value} key={value}>{value}</Option>
+            {values.map((item: any) => (
+              <Option 
+                value={typeof(item) === "string" ? item : item.value} 
+                key={typeof(item) === "string" ? item : item.key}>
+                  {typeof(item) === "string" ? item : item.label}
+              </Option>
             ))}
         </Select>
       </div>
