@@ -3,8 +3,8 @@ import './style.scss';
 import { Button, Col, Row } from "antd"
 import { IconApprove, IconArrowForward, IconCheckCircle, IconCreated, IconCross, IconMinus } from "../../../../Icons"
 import { shortenAddress } from "../../../../utils/utils";
-import { ProposalResumeItem } from '../ProposalResumeItem';
 import { SafeInfo } from "../UI/SafeInfo";
+import { ResumeItem } from '../UI/ResumeItem';
 
 export const SafeSerumInfoView = (props: {
   isSafeDetails: boolean;
@@ -38,7 +38,7 @@ export const SafeSerumInfoView = (props: {
               onClick={onSelectProposal}
               className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
               >
-                <ProposalResumeItem
+                <ResumeItem
                   id={proposal.id}
                   version={selectedMultisig.version}
                   logo={proposal.logo}

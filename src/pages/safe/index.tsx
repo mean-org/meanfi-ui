@@ -4277,7 +4277,7 @@ export const SafeView = () => {
     setIsSafeDetails(false);
     setIsProgramDetails(true);
     setProgramSelected(selectedProgram);
-  }
+  }  
 
   const returnFromSafeDetailsHandler = () => {
     setIsSafeDetails(false);
@@ -4443,6 +4443,7 @@ export const SafeView = () => {
                           isProgramDetails={isProgramDetails}
                           onDataToProgramView={returnFromProgramDetailsHandler}
                           programSelected={programSelected}
+                          selectedMultisig={selectedMultisig}
                         />
                       )}
                     </>

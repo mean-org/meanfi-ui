@@ -19,6 +19,7 @@
   .ant-col.ant-col-xs-20.ant-col-sm-18.ant-col-md-20.ant-col-lg-18 {
     display: flex;
     align-items: center;
+    flex-wrap: wrap !important;
   }
   .ellipsis-icon {
     float: right;
