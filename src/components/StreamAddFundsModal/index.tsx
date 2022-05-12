@@ -405,6 +405,7 @@ export const StreamAddFundsModal = (props: {
                       mintAddress={selectedToken.address}
                       name={selectedToken.name}
                       showCaretDown={false}
+                      fullTokenInfo={selectedToken}
                     />
                   )}
                   {treasuryDetails && treasuryDetails.autoClose ? (
