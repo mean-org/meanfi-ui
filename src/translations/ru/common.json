@@ -1134,14 +1134,14 @@
 				"treasury-type-open-name": "Open money streaming treasury"
 			}
 		},
-		"lookup-treasury-cta-tooltip": "Lookup a treasury",
+		"lookup-treasury-cta-tooltip": "Lookup a Streaming Account",
 		"open-treasury": {
 			"main-cta": "Open",
-			"modal-title": "Open treasury",
-			"treasuryid-input-empty": "Enter Treasury ID",
-			"treasuryid-input-label": "Treasury id to open",
-			"treasuryid-open-cta": "Open stream",
-			"treasuryid-placeholder": "Treasury ID created by Mean Finance"
+			"modal-title": "Open Streaming Account",
+			"treasuryid-input-empty": "Enter account ID",
+			"treasuryid-input-label": "Streaming account id to open",
+			"treasuryid-open-cta": "Open account",
+			"treasuryid-placeholder": "Account ID created by Mean Finance"
 		},
 		"refresh-tooltip": "Click to refresh the list of streaming accounts",
 		"screen-title": "Streaming Accounts",

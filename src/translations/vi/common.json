@@ -1134,14 +1134,14 @@
 				"treasury-type-open-name": "Kho bạc money streaming không bị khoá"
 			}
 		},
-		"lookup-treasury-cta-tooltip": "Tìm kiếm một kho bạc",
+		"lookup-treasury-cta-tooltip": "Lookup a Streaming Account",
 		"open-treasury": {
 			"main-cta": "Mở",
-			"modal-title": "Mở treasury",
-			"treasuryid-input-empty": "Nhập Treasury ID",
-			"treasuryid-input-label": "Mở Treasury ID",
-			"treasuryid-open-cta": "Mở stream",
-			"treasuryid-placeholder": "Treasury ID tạo bởi Mean finance"
+			"modal-title": "Open Streaming Account",
+			"treasuryid-input-empty": "Enter account ID",
+			"treasuryid-input-label": "Streaming account id to open",
+			"treasuryid-open-cta": "Open account",
+			"treasuryid-placeholder": "Account ID created by Mean Finance"
 		},
 		"refresh-tooltip": "Click to refresh the list of streaming accounts",
 		"screen-title": "Streaming Accounts",

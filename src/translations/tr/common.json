@@ -1135,14 +1135,14 @@
 				"treasury-type-open-name": "Para aktarım hazinesi aç"
 			}
 		},
-		"lookup-treasury-cta-tooltip": "Hazine ara",
+		"lookup-treasury-cta-tooltip": "Lookup a Streaming Account",
 		"open-treasury": {
 			"main-cta": "Aç",
-			"modal-title": "Hazine aç",
-			"treasuryid-input-empty": "Hazine ID'sini girin",
-			"treasuryid-input-label": "Hazine ID'sini aç",
-			"treasuryid-open-cta": "Aktarımı aç",
-			"treasuryid-placeholder": "Mean Finance tarafından oluşturulan Hazine ID'si"
+			"modal-title": "Open Streaming Account",
+			"treasuryid-input-empty": "Enter account ID",
+			"treasuryid-input-label": "Streaming account id to open",
+			"treasuryid-open-cta": "Open account",
+			"treasuryid-placeholder": "Account ID created by Mean Finance"
 		},
 		"refresh-tooltip": "Click to refresh the list of streaming accounts",
 		"screen-title": "Streaming Accounts",

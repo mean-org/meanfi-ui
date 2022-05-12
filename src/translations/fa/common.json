@@ -1133,14 +1133,14 @@
 				"treasury-type-open-name": "باز کردن treasury  مانی استریمینگ"
 			}
 		},
-		"lookup-treasury-cta-tooltip": "جستجوی treasury",
+		"lookup-treasury-cta-tooltip": "Lookup a Streaming Account",
 		"open-treasury": {
 			"main-cta": "باز کن",
-			"modal-title": "treasury  باز",
-			"treasuryid-input-empty": "شناسه treasury   را وارد کنید",
-			"treasuryid-input-label": "شناسه treasury برای باز شدن",
-			"treasuryid-open-cta": "باز کردن استریم",
-			"treasuryid-placeholder": "شناسه treasury ایجاد شده توسط Mean Finance"
+			"modal-title": "Open Streaming Account",
+			"treasuryid-input-empty": "Enter account ID",
+			"treasuryid-input-label": "Streaming account id to open",
+			"treasuryid-open-cta": "Open account",
+			"treasuryid-placeholder": "Account ID created by Mean Finance"
 		},
 		"refresh-tooltip": "Click to refresh the list of streaming accounts",
 		"screen-title": "Streaming Accounts",

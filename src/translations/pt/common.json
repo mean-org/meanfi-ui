@@ -1129,14 +1129,14 @@
 				"treasury-type-open-name": "Tesouro de streaming de dinheiro aberto"
 			}
 		},
-		"lookup-treasury-cta-tooltip": "Pesquise um tesouro",
+		"lookup-treasury-cta-tooltip": "Lookup a Streaming Account",
 		"open-treasury": {
 			"main-cta": "Aberto",
-			"modal-title": "Tesouraria aberta",
-			"treasuryid-input-empty": "Insira o ID do Tesouro",
-			"treasuryid-input-label": "ID do Tesouro para abrir",
-			"treasuryid-open-cta": "Fluxo aberto",
-			"treasuryid-placeholder": "ID do Tesouro criado pela Mean Finance"
+			"modal-title": "Open Streaming Account",
+			"treasuryid-input-empty": "Enter account ID",
+			"treasuryid-input-label": "Streaming account id to open",
+			"treasuryid-open-cta": "Open account",
+			"treasuryid-placeholder": "Account ID created by Mean Finance"
 		},
 		"refresh-tooltip": "Click to refresh the list of streaming accounts",
 		"screen-title": "Streaming Accounts",

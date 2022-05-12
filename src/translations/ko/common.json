@@ -1138,14 +1138,14 @@
 				"treasury-type-open-name": "머니 스트리밍 트레저리 생성"
 			}
 		},
-		"lookup-treasury-cta-tooltip": "트레저리 조회",
+		"lookup-treasury-cta-tooltip": "Lookup a Streaming Account",
 		"open-treasury": {
 			"main-cta": "생성",
-			"modal-title": "트레저리 생성",
-			"treasuryid-input-empty": "트레저리 ID 입력",
-			"treasuryid-input-label": "열 트레저리 아이디",
-			"treasuryid-open-cta": "스트림 생성",
-			"treasuryid-placeholder": "Mean Finance에 의해 만든 트레저리 ID"
+			"modal-title": "Open Streaming Account",
+			"treasuryid-input-empty": "Enter account ID",
+			"treasuryid-input-label": "Streaming account id to open",
+			"treasuryid-open-cta": "Open account",
+			"treasuryid-placeholder": "Account ID created by Mean Finance"
 		},
 		"refresh-tooltip": "Click to refresh the list of streaming accounts",
 		"screen-title": "Streaming Accounts",
