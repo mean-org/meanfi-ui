@@ -1157,6 +1157,7 @@
 			"no-treasury-loaded": "Select a streaming account to view details",
 			"no-treasury-selected": "Select a streaming account to view details",
 			"number-of-streams": "تعداد استریم ها",
+			"refreshing-account-balance": "Refreshing account balance",
 			"treasury-address-label": "Streaming account address",
 			"treasury-name-label": "نام treasury",
 			"unallocated-treasury-balance": "Unallocated balance"
@@ -1168,10 +1169,10 @@
 			"multisig-treasury-help": "در زیر لیستی از تمام treasury هایی که به این Multsig متصل هستند آورده شده است",
 			"multisig-treasury-label": "treasury چند امضایی",
 			"no-treasuries": "No streaming accounts available",
-			"not-connected": "لطفا کیف پول خود را وصل کنید تا treasury های خود را ببینید",
+			"not-connected": "Please connect your wallet to see your streaming accounts",
 			"total-streams-label": "استریم ها"
 		},
-		"treasury-refresh-tooltip": "رفرش کردن داده های treasury",
+		"treasury-refresh-tooltip": "Refresh account data",
 		"treasury-streams": {
 			"add-stream-locked": {
 				"modal-title": "یک مانی استریم قفل شده اضافه کنید",

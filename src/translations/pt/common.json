@@ -1154,18 +1154,19 @@
 			"no-treasury-loaded": "Select a streaming account to view details",
 			"no-treasury-selected": "Select a streaming account to view details",
 			"number-of-streams": "Número de streams",
+			"refreshing-account-balance": "Refreshing account balance",
 			"treasury-address-label": "Streaming account address",
 			"treasury-name-label": "Nome do Tesouro"
 		},
 		"treasury-detail-heading": "Detalhes do Tesouro",
-		"treasury-refresh-tooltip": "Refresh treasury data",
+		"treasury-refresh-tooltip": "Refresh account data",
 		"treasury-list": {
 			"multisig-treasury-heading": "Multisig Treasuries - {{treasuryName}}",
 			"multisig-treasury-help": "Below is a list of all the treasuries that are connected to this Multsig",
 			"multisig-treasuries-view-all-cta": "Show All Treasuries",
 			"multisig-treasury-label": "Tesouraria Multisig",
 			"no-treasuries": "No streaming accounts available",
-			"not-connected": "Por favor, conecte sua carteira para ver seus tesouros",
+			"not-connected": "Please connect your wallet to see your streaming accounts",
 			"total-streams-label": "fluxos"
 		},
 		"treasury-streams": {

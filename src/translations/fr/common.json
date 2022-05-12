@@ -1158,6 +1158,7 @@
 			"no-treasury-loaded": "Select a streaming account to view details",
 			"no-treasury-selected": "Select a streaming account to view details",
 			"number-of-streams": "Nombre de flux",
+			"refreshing-account-balance": "Refreshing account balance",
 			"treasury-address-label": "Streaming account address",
 			"treasury-name-label": "Nom du Trésor",
 			"unallocated-treasury-balance": "Unallocated balance"
@@ -1169,10 +1170,10 @@
 			"multisig-treasury-help": "Vous trouverez ci-dessous une liste de tous les trésors qui sont connectés à ce Multisig",
 			"multisig-treasury-label": "Trésorerie multisig",
 			"no-treasuries": "No streaming accounts available",
-			"not-connected": "Veuillez connecter votre portefeuille pour voir vos trésoreries",
+			"not-connected": "Please connect your wallet to see your streaming accounts",
 			"total-streams-label": "ruisseaux"
 		},
-		"treasury-refresh-tooltip": "Actualiser les données de trésorerie",
+		"treasury-refresh-tooltip": "Refresh account data",
 		"treasury-streams": {
 			"add-stream-locked": {
 				"modal-title": "Ajouter un flux d'argent verrouillé",

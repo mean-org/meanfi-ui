@@ -1159,6 +1159,7 @@
 			"no-treasury-loaded": "Select a streaming account to view details",
 			"no-treasury-selected": "Select a streaming account to view details",
 			"number-of-streams": "Aktarım sayısı",
+			"refreshing-account-balance": "Refreshing account balance",
 			"treasury-address-label": "Streaming account address",
 			"treasury-name-label": "Hazine adı",
 			"unallocated-treasury-balance": "Unallocated balance"
@@ -1170,10 +1171,10 @@
 			"multisig-treasury-help": "Aşağıdaki listede Çoklu-İmzaya bağlı tüm hazineler mevcuttur.",
 			"multisig-treasury-label": "Çoklu-imza hazinesi",
 			"no-treasuries": "No streaming accounts available",
-			"not-connected": "Hazinelerinizi görmek için lütfen cüzdanınızı bağlayın",
+			"not-connected": "Please connect your wallet to see your streaming accounts",
 			"total-streams-label": "aktarımlar"
 		},
-		"treasury-refresh-tooltip": "Hazine bilgisini güncelle",
+		"treasury-refresh-tooltip": "Refresh account data",
 		"treasury-streams": {
 			"add-stream-locked": {
 				"modal-title": "Kilitli bir para aktarımı ekle",

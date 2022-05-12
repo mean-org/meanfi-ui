@@ -1162,6 +1162,7 @@
 			"no-treasury-loaded": "Select a streaming account to view details",
 			"no-treasury-selected": "Select a streaming account to view details",
 			"number-of-streams": "스트림 수",
+			"refreshing-account-balance": "Refreshing account balance",
 			"treasury-address-label": "Streaming account address",
 			"treasury-name-label": "트레저리 이름",
 			"unallocated-treasury-balance": "Unallocated balance"
@@ -1173,10 +1174,10 @@
 			"multisig-treasury-help": "Below is a list of all the treasuries that are connected to this Multsig",
 			"multisig-treasury-label": "다중 서명 트레저리",
 			"no-treasuries": "No streaming accounts available",
-			"not-connected": "지갑을 연결하여 트레저리를 확인하세요",
+			"not-connected": "Please connect your wallet to see your streaming accounts",
 			"total-streams-label": "스트림"
 		},
-		"treasury-refresh-tooltip": "Refresh treasury data",
+		"treasury-refresh-tooltip": "Refresh account data",
 		"treasury-streams": {
 			"add-stream-locked": {
 				"modal-title": "Add a locked money stream",

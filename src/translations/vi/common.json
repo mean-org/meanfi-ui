@@ -1158,6 +1158,7 @@
 			"no-treasury-loaded": "Select a streaming account to view details",
 			"no-treasury-selected": "Select a streaming account to view details",
 			"number-of-streams": "Số lượng stream",
+			"refreshing-account-balance": "Refreshing account balance",
 			"treasury-address-label": "Streaming account address",
 			"treasury-name-label": "Tên kho bạc",
 			"unallocated-treasury-balance": "Unallocated balance"
@@ -1169,10 +1170,10 @@
 			"multisig-treasury-help": "Dưới đây là danh sách tất cả các kho bạc được kết nối với Multsig này",
 			"multisig-treasury-label": "Kho bạc Multisig",
 			"no-treasuries": "No streaming accounts available",
-			"not-connected": "Vui lòng kết nối ví để thấy kho bạc của bạn",
+			"not-connected": "Please connect your wallet to see your streaming accounts",
 			"total-streams-label": "streams"
 		},
-		"treasury-refresh-tooltip": "Làm mới dữ liệu kho bạc",
+		"treasury-refresh-tooltip": "Refresh account data",
 		"treasury-streams": {
 			"add-stream-modal-title": "Thêm stream vào kho bạc",
 			"add-stream-locked": {
