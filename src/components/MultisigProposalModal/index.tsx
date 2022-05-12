@@ -9,10 +9,13 @@ import { AppStateContext } from '../../contexts/appstate';
 import { useWallet } from '../../contexts/wallet';
 import { Modal, Button, Spin, Divider, Row, Col, Radio } from 'antd';
 import { StepSelector } from "../StepSelector";
-import { IconUser } from "../../Icons";
+import { IconHelpCircle, IconUser } from "../../Icons";
 import { InputMean } from '../InputMean';
 import { SelectMean } from '../SelectMean';
 import { App, AppConfig, AppsProvider } from '@mean-dao/mean-multisig-apps';
+import { InfoIcon } from '../InfoIcon';
+import { FormLabelWithIconInfo } from '../FormLabelWithIconInfo';
+import { InputTextAreaMean } from '../InputTextAreaMean';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -281,21 +284,15 @@ export const MultisigProposalModal = (props: {
                     {/* Proposal description */}
                     <Row gutter={[8, 8]}>
                       <Col xs={24} sm={24} md={24} lg={24}>
-                        <div className="mb-3">
+                        <div className="mb-1">
                           <div className="form-label">{t('multisig.proposal-modal.description')}</div>
-                          <div className={`well mb-0 ${props.isBusy ? 'disabled' : ''}`}>
-                            <textarea
-                              id="proposal-description-field"
-                              className="w-100 general-text-input"
-                              autoComplete="off"
-                              rows={5}
-                              maxLength={256}
-                              onChange={onProposalDescriptionValueChange}
-                              placeholder={t('multisig.proposal-modal.description-placeholder')}
-                              value={proposalDescriptionValue}
-                            >
-                            </textarea>
-                          </div>
+                          <InputTextAreaMean 
+                            id="proposal-description-field"
+                            className={`mb-0 ${props.isBusy ? 'disabled' : ''}`}
+                            onChange={onProposalDescriptionValueChange}
+                            placeholder={t('multisig.proposal-modal.description-placeholder')}
+                            value={proposalDescriptionValue}
+                          />
                           <div className="form-field-hint pr-3 text-right">{t('multisig.proposal-modal.hint-message', {lettersLeft: lettersLeft})}</div>
                         </div>
                       </Col>
@@ -303,18 +300,18 @@ export const MultisigProposalModal = (props: {
 
                     <div className="step-two-select-instruction">
                       {/* Instruction */}
-                      <Row gutter={[8, 8]} className="mb-1">
-                        <Col xs={24} sm={6} md={6} lg={6} className="text-right pr-1">
-                          <div className="form-label">Instruction</div>
-                        </Col>
-                        <Col xs={24} sm={18} md={18} lg={18}>
-                          <SelectMean
-                            className={props.isBusy ? 'disabled' : ''}
-                            onChange={onProposalInstructionValueChange}
-                            placeholder={"Select an instruction"}
-                            values={selectedAppConfig ? selectedAppConfig.ui.map((ix: any) => ix.label) : []}
-                            value={proposalInstructionValue}
-                          />
+                      <Row gutter={[8, 8]} className="mb-0">
+                        <Col xs={24} sm={24} md={24} lg={24}>
+                          <div className="mb-2">
+                            <div className="form-label">Instruction</div>
+                            <SelectMean
+                              className={props.isBusy ? 'disabled' : ''}
+                              onChange={onProposalInstructionValueChange}
+                              placeholder={"Select an instruction"}
+                              values={selectedAppConfig ? selectedAppConfig.ui.map((ix: any) => ix.label) : []}
+                              value={proposalInstructionValue}
+                            />
+                          </div>
                         </Col>
                       </Row>
 
@@ -323,13 +320,14 @@ export const MultisigProposalModal = (props: {
                           ix.uiElements.map((element: any) => (
                             <>
                               {element.visibility === "show" ? (
-                                <Row gutter={[8, 8]} className="mb-1" key={element.dataElement.index}>
+                                <Row gutter={[8, 8]} className="mb-1 d-flex align-items-center" key={element.dataElement.index}>
                                   {(element.type === "inputText") ? (
                                     <>
-                                      <Col xs={24} sm={6} md={6} lg={6} className="text-right pr-1">
-                                        <div className="form-label">{element.label}</div>
-                                      </Col>
-                                      <Col xs={24} sm={18} md={18} lg={18}>
+                                      <Col xs={24} sm={24} md={24} lg={24} className="text-left pl-1">
+                                        <FormLabelWithIconInfo
+                                          label={element.label}
+                                          tooltip_text={element.help}
+                                        />
                                         <InputMean
                                           id={element.label}
                                           className={props.isBusy ? 'disabled' : ''}
@@ -340,12 +338,29 @@ export const MultisigProposalModal = (props: {
                                         />
                                       </Col>
                                     </>
+                                  ) : (element.type === "inputTexArea") ? (
+                                    <>
+                                      <Col xs={24} sm={24} md={24} lg={24} className="text-left pl-1">
+                                        <FormLabelWithIconInfo
+                                          label={element.label}
+                                          tooltip_text={element.help}
+                                        />
+                                        <InputTextAreaMean 
+                                          id={element.label}
+                                          className={props.isBusy ? 'disabled' : ''}
+                                          onChange={handleChangeInput}
+                                          placeholder={element.help}
+                                          value={inputState[element.name]}
+                                        />
+                                      </Col>
+                                    </>
                                   ) : (element.type === "option") ? (
                                     <>
-                                      <Col xs={24} sm={6} md={6} lg={6} className="text-right pr-1">
-                                        <div className="form-label">{element.label}</div>
-                                      </Col>
-                                      <Col xs={24} sm={18} md={18} lg={18}>
+                                      <Col xs={24} sm={24} md={24} lg={24} className="text-left pr-1">
+                                        <FormLabelWithIconInfo
+                                          label={element.label}
+                                          tooltip_text={element.help}
+                                        />
                                         <SelectMean
                                           className={props.isBusy ? 'disabled' : ''}
                                           onChange={handleChangeOption}
@@ -358,7 +373,10 @@ export const MultisigProposalModal = (props: {
                                   ) : (element.type === "yesOrNo") ? (
                                     <>
                                       <Col xs={24} sm={6} md={6} lg={6} className="text-right pr-1">
-                                        <div className="form-label">{element.label}</div>
+                                        <FormLabelWithIconInfo
+                                          label={element.label}
+                                          tooltip_text={element.help}
+                                        />
                                       </Col>
                                       <Col xs={24} sm={18} md={18} lg={18}>
                                         <Radio.Group className="ml-2 d-flex" 
