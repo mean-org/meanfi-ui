@@ -1094,19 +1094,24 @@
 			"allocation-select-stream-label": "자금을 조달할 스트림 선택",
 			"balance": "잔액",
 			"label": "자금 추가",
-			"main-cta": "자금 트레저리",
-			"main-cta-busy": "트레저리 자금 추가",
+			"main-cta": "Fund account",
+			"main-cta-busy": "Funding account",
 			"main-cta-fund-stream": "Fund Money Stream",
 			"main-cta-fund-stream-busy": "Funding Stream",
-			"modal-title": "Add funds to the streaming treasury",
+			"modal-title": "Add funds to the streaming account",
 			"modal-title-fund-stream": "Add funds to a Money Stream",
 			"money-stream-to-topup-label": "Money Stream to top up",
 			"search-streams-placeholder": "이름 또는 주소로 스트림 검색",
-			"success-message": "성공적으로 자금이 조달되었습니다."
+			"success-message": "Your streaming account was funded successfully."
 		},
-		"back-to-treasuries-cta": "금고로 돌아가기",
-		"close-treasury-confirmation": "트레저리를 닫으시겠습니까?",
-		"create-new-treasury-cta": "트레저리 생성",
+		"back-to-treasuries-cta": "Back to Streaming Accounts",
+		"close-account": {
+			"modal-title": "Close account",
+			"close-treasury-confirmation": "Are you sure you want to close the account?",
+			"cta-close": "Close account",
+			"cta-close-busy": "Closing account"
+		},
+		"create-new-treasury-cta": "New Streaming Account",
 		"create-treasury": {
 			"create-multisig-cta": "트레저리 시작",
 			"create-multisig-cta-busy": "트레저리 시작",
@@ -1138,31 +1143,32 @@
 				"treasury-type-open-name": "머니 스트리밍 트레저리 생성"
 			}
 		},
-		"lookup-treasury-cta-tooltip": "트레저리 조회",
+		"lookup-treasury-cta-tooltip": "Lookup a Streaming Account",
 		"open-treasury": {
 			"main-cta": "생성",
-			"modal-title": "트레저리 생성",
-			"treasuryid-input-empty": "트레저리 ID 입력",
-			"treasuryid-input-label": "열 트레저리 아이디",
-			"treasuryid-open-cta": "스트림 생성",
-			"treasuryid-placeholder": "Mean Finance에 의해 만든 트레저리 ID"
+			"modal-title": "Open Streaming Account",
+			"treasuryid-input-empty": "Enter account ID",
+			"treasuryid-input-label": "Streaming account id to open",
+			"treasuryid-open-cta": "Open account",
+			"treasuryid-placeholder": "Account ID created by Mean Finance"
 		},
-		"refresh-tooltip": "금고 목록을 새로 고치려면 클릭하십시오.",
-		"screen-title": "Streaming Treasuries",
+		"refresh-tooltip": "Click to refresh the list of streaming accounts",
+		"screen-title": "Streaming Accounts",
 		"summary-title": "Streaming Accounts",
 		"treasury-detail": {
 			"associated-token": "관련 토큰",
 			"created-on": "생성하다",
 			"cta-add-funds": "자금 추가",
 			"cta-add-funds-busy": "자금 추가하기",
-			"cta-close": "트레저리 종료",
-			"cta-close-busy": "트레저리 종료",
+			"cta-close": "Close account",
+			"cta-close-busy": "Closing account",
 			"cta-withdraw-multisig-treasury": "자금 인출",
 			"multisig-tx-headsup": "이 트레저리에 대한 승인 또는 실행 보류 중인 거래",
-			"no-treasury-loaded": "트레저리를 생성하거나 조회하여 세부 정보를 봅니다.",
-			"no-treasury-selected": "세부 정보를 보려면 트레저리를 선택하거나 조회하세요.",
+			"no-treasury-loaded": "Select a streaming account to view details",
+			"no-treasury-selected": "Select a streaming account to view details",
 			"number-of-streams": "스트림 수",
-			"treasury-address-label": "Treasury Address",
+			"refreshing-account-balance": "Refreshing account balance",
+			"treasury-address-label": "Streaming account address",
 			"treasury-name-label": "트레저리 이름",
 			"unallocated-treasury-balance": "Unallocated balance"
 		},
@@ -1172,11 +1178,11 @@
 			"multisig-treasury-heading": "Multisig Treasuries - {{treasuryName}}",
 			"multisig-treasury-help": "Below is a list of all the treasuries that are connected to this Multsig",
 			"multisig-treasury-label": "다중 서명 트레저리",
-			"no-treasuries": "사용 가능한 금고가 없습니다.",
-			"not-connected": "지갑을 연결하여 트레저리를 확인하세요",
+			"no-treasuries": "No streaming accounts available",
+			"not-connected": "Please connect your wallet to see your streaming accounts",
 			"total-streams-label": "스트림"
 		},
-		"treasury-refresh-tooltip": "Refresh treasury data",
+		"treasury-refresh-tooltip": "Refresh account data",
 		"treasury-streams": {
 			"add-stream-locked": {
 				"modal-title": "Add a locked money stream",
@@ -1202,7 +1208,7 @@
 			"available-unallocated-balance-label": "Unallocated Balance",
 			"busy-pausing": "스트림 중지",
 			"busy-resuming": "스트림 재개",
-			"close-stream-also-closes-treasury-label": "트레저리도 닫기",
+			"close-stream-also-closes-treasury-label": "Also close the streaming account",
 			"column-activity": "머니스트림",
 			"column-description": "설명",
 			"column-destination": "목적지",
@@ -1217,7 +1223,7 @@
 			"minimum-allocation-advice": "이 자금 흐름에 대한 최소 할당을 트레저리에서 사용 가능한 할당되지 않은 잔액까지 설정해야 합니다.",
 			"multiple-address-list": "Multiple address list",
 			"multiple-address-question-mark-tooltip": "Please provide a csv text file with one address per line in the following format: \n MEMO or STREAM NAME, WALLET ADDRESS. \n\n Here is an example of how it should look: \n Epoch 1, FrdFf3EqcGuytTweLvoELBt29WrAGVYjrh4585A2bTAZ \n\n Before you submit the file, please make sure the recipient addresses are correct and do not belong to an exchange.",
-			"no-streams": "This streaming treasury has no active streams",
+			"no-streams": "This streaming account has no active streams",
 			"option-close-stream": "종료",
 			"option-explorer-link": "Solana Explore에서 보기",
 			"option-pause-stream": "중지",
@@ -1225,7 +1231,17 @@
 			"status-running": "운영",
 			"status-scheduled": "예정된",
 			"status-stopped": "중지된"
-		}
+		},
+		"withdraw-funds": {
+			"button-title": "Withdraw funds",
+			"label-available-amount": "Funds available to withdraw now",
+			"label-input-amount": "Enter amount to withdraw",
+			"label-input-right": "By percentual preset",
+			"main-cta": "Withdraw funds",
+			"verified-label": "I'm sure the recipient address doesn't belong to an exchange",
+			"selected-treasury-label": "From streaming account",
+			"modal-title": "Withdraw account funds"
+		}	
 	},
 	"ui-language": {
 		"en": "영어",
@@ -1268,7 +1284,6 @@
 				"faucet": "Faucet",
 				"multisig": "Multisig",
 				"submenu-title": "서비스",
-				"treasuries": "Streaming Treasuries",
 				"wallet-guide": "지갑 가이드",
 				"wrap": "랩",
 				"unwrap": "Unwrap"
@@ -1288,12 +1303,6 @@
 		"label-available-amount": "지금 인출 가능한 자금",
 		"label-input-amount": "출금 금액 입력",
 		"label-input-right": "백분율 사전 설정에 따라",
-		"modal": {
-			"main-cta": "Withdraw funds",
-			"selected-treasury-label": "From treasury account",
-			"title": "Withdraw treasury funds",
-			"verified-label": "I'm sure the recipient address doesn't belong to an exchange"
-		},
 		"modal-title": "자금 인출"
 	},
 	"wrap": {

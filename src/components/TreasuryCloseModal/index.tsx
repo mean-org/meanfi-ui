@@ -72,7 +72,7 @@ export const TreasuryCloseModal = (props: {
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={<div className="modal-title">Close treasury</div>}
+      title={<div className="modal-title">{t('treasuries.close-account.modal-title')}</div>}
       maskClosable={false}
       footer={null}
       visible={props.isVisible}
@@ -176,10 +176,10 @@ export const TreasuryCloseModal = (props: {
                     <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
                   )}
                   {props.isBusy
-                    ? 'Closing treasury'
+                    ? t('treasuries.close-account.cta-close-busy')
                     : isError(transactionStatus.currentOperation)
-                      ? 'Retry'
-                      : 'Close treasury'
+                      ? t('general.retry')
+                      : t('treasuries.close-account.cta-close')
                   }
                 </Button>
               </div>

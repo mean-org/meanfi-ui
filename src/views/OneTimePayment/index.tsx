@@ -6,8 +6,8 @@ import {
 } from "@ant-design/icons";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnection, useConnectionConfig } from "../../contexts/connection";
-import { formatAmount, formatThousands, getAmountWithSymbol, getTokenBySymbol, getTxIxResume, isValidNumber, toTokenAmount } from "../../utils/utils";
-import { DATEPICKER_FORMAT, SIMPLE_DATE_TIME_FORMAT } from "../../constants";
+import { fetchAccountTokens, formatAmount, formatThousands, getAmountWithSymbol, getTokenBySymbol, getTxIxResume, isValidNumber, toTokenAmount } from "../../utils/utils";
+import { DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, SIMPLE_DATE_TIME_FORMAT } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
 import { EventType, OperationType, TransactionStatus } from "../../models/enums";
 import {
@@ -25,8 +25,6 @@ import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
 import { useTranslation } from "react-i18next";
-import { ACCOUNT_LAYOUT } from '../../utils/layouts';
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { customLogger } from '../..';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -53,7 +51,9 @@ export const OneTimePayment = (props: {
   const { connected, publicKey, wallet } = useWallet();
   const {
     tokenList,
+    userTokens,
     coinPrices,
+    splTokenList,
     loadingPrices,
     isWhitelisted,
     recipientAddress,
@@ -88,12 +88,14 @@ export const OneTimePayment = (props: {
   const [nativeBalance, setNativeBalance] = useState(0);
   const [tokenFilter, setTokenFilter] = useState("");
   const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
+  const [selectedList, setSelectedList] = useState<TokenInfo[]>([]);
   const [fixedScheduleValue, setFixedScheduleValue] = useState(0);
   const [canSubscribe, setCanSubscribe] = useState(true);
   const [isTokenSelectorVisible, setIsTokenSelectorVisible] = useState(false);
   const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
   const [tokenBalance, setSelectedTokenBalance] = useState<number>(0);
 
+  // Process inputs
   useEffect(() => {
     if (token && inModal) {
       setSelectedToken(token);
@@ -119,6 +121,7 @@ export const OneTimePayment = (props: {
     }
   }, [token, selectedToken, inModal]);
 
+  // Keep account balance updated
   useEffect(() => {
 
     const getAccountBalance = (): number => {
@@ -136,7 +139,7 @@ export const OneTimePayment = (props: {
     previousBalance,
   ]);
 
-  // Automatically update all token balances
+  // Automatically update all token balances and rebuild token list
   useEffect(() => {
 
     if (!connection) {
@@ -144,28 +147,62 @@ export const OneTimePayment = (props: {
       return;
     }
 
-    if (!publicKey || !tokenList || !accounts || !accounts.tokenAccounts) {
+    if (!publicKey || !userTokens || !tokenList || !accounts || !accounts.tokenAccounts) {
       return;
     }
 
     const timeout = setTimeout(() => {
 
       const balancesMap: any = {};
-      connection.getTokenAccountsByOwner(
-        publicKey, 
-        { programId: TOKEN_PROGRAM_ID }, 
-        connection.commitment
-      )
-      .then(response => {
-        for (const acc of response.value) {
-          const decoded = ACCOUNT_LAYOUT.decode(acc.account.data);
-          const address = decoded.mint.toBase58();
-          const itemIndex = tokenList.findIndex(t => t.address === address);
-          if (itemIndex !== -1) {
-            balancesMap[address] = decoded.amount.toNumber() / (10 ** tokenList[itemIndex].decimals);
-          } else {
-            balancesMap[address] = 0;
+
+      fetchAccountTokens(connection, publicKey)
+      .then(accTks => {
+        if (accTks) {
+
+          const meanTokensCopy = new Array<TokenInfo>();
+          const intersectedList = new Array<TokenInfo>();
+          const userTokensCopy = JSON.parse(JSON.stringify(userTokens)) as TokenInfo[];
+
+          // Build meanTokensCopy including the MeanFi pinned tokens
+          userTokensCopy.forEach(item => {
+            meanTokensCopy.push(item);
+          });
+
+          // Now add all other items but excluding those in userTokens
+          splTokenList.forEach(item => {
+            if (!userTokens.includes(item)) {
+              meanTokensCopy.push(item);
+            }
+          });
+
+          // Create a list containing tokens for the user owned token accounts
+          accTks.forEach(item => {
+            balancesMap[item.parsedInfo.mint] = item.parsedInfo.tokenAmount.uiAmount || 0;
+            const isTokenAccountInTheList = intersectedList.some(t => t.address === item.parsedInfo.mint);
+            const tokenFromMeanTokensCopy = meanTokensCopy.find(t => t.address === item.parsedInfo.mint);
+            if (tokenFromMeanTokensCopy && !isTokenAccountInTheList) {
+              intersectedList.push(tokenFromMeanTokensCopy);
+            }
+          });
+
+          intersectedList.sort((a, b) => {
+            if ((balancesMap[a.address] || 0) < (balancesMap[b.address] || 0)) {
+              return 1;
+            } else if ((balancesMap[a.address] || 0) > (balancesMap[b.address] || 0)) {
+              return -1;
+            }
+            return 0;
+          });
+
+          setSelectedList(intersectedList);
+          consoleOut('intersectedList:', intersectedList, 'orange');
+
+        } else {
+          for (const t of tokenList) {
+            balancesMap[t.address] = 0;
           }
+          // set the list to the userTokens list
+          setSelectedList(tokenList);
         }
       })
       .catch(error => {
@@ -173,8 +210,10 @@ export const OneTimePayment = (props: {
         for (const t of tokenList) {
           balancesMap[t.address] = 0;
         }
+        setSelectedList(tokenList);
       })
       .finally(() => setUserBalances(balancesMap));
+
     });
 
     return () => {
@@ -183,9 +222,11 @@ export const OneTimePayment = (props: {
 
   }, [
     accounts,
-    tokenList,
     publicKey,
+    tokenList,
+    userTokens,
     connection,
+    splTokenList,
   ]);
 
   // Keep token balance updated
@@ -406,7 +447,7 @@ export const OneTimePayment = (props: {
   // Updates the token list everytime is filtered
   const updateTokenListByFilter = useCallback((searchString: string) => {
 
-    if (!tokenList) {
+    if (!selectedList) {
       return;
     }
 
@@ -421,8 +462,8 @@ export const OneTimePayment = (props: {
       };
 
       const showFromList = !searchString 
-        ? tokenList
-        : tokenList.filter((t: any) => filter(t));
+        ? selectedList
+        : selectedList.filter((t: any) => filter(t));
 
       setFilteredTokenList(showFromList);
 
@@ -431,10 +472,8 @@ export const OneTimePayment = (props: {
     return () => { 
       clearTimeout(timeout);
     }
-    
-  }, [
-    tokenList,
-  ]);
+
+  }, [selectedList]);
 
   const onInputCleared = useCallback(() => {
     setTokenFilter('');
@@ -459,9 +498,9 @@ export const OneTimePayment = (props: {
     if (previousWalletConnectState !== connected) {
       if (!previousWalletConnectState && connected && publicKey) {
         consoleOut('User is connecting...', publicKey.toBase58(), 'green');
-        setSelectedTokenBalance(0);
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'green');
+        setSelectedTokenBalance(0);
         setUserBalances(undefined);
         confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
         consoleOut('Unsubscribed from event txConfirmed!', '', 'blue');
@@ -1000,16 +1039,21 @@ export const OneTimePayment = (props: {
             onCloseTokenSelector();
           };
 
-          return (
-            <TokenListItem
-              key={t.address}
-              name={t.name || 'Unknown'}
-              mintAddress={t.address}
-              className={selectedToken && selectedToken.address === t.address ? "selected" : "simplelink"}
-              onClick={onClick}
-              balance={connected && userBalances && userBalances[t.address] > 0 ? userBalances[t.address] : 0}
-            />
-          );
+          if (index < MAX_TOKEN_LIST_ITEMS) {
+            return (
+              <TokenListItem
+                key={t.address}
+                name={t.name || 'Unknown'}
+                mintAddress={t.address}
+                token={t}
+                className={selectedToken && selectedToken.address === t.address ? "selected" : "simplelink"}
+                onClick={onClick}
+                balance={connected && userBalances && userBalances[t.address] > 0 ? userBalances[t.address] : 0}
+              />
+            );
+          } else {
+            return null;
+          }
         })
       )}
     </>
@@ -1121,6 +1165,7 @@ export const OneTimePayment = (props: {
                     mintAddress={selectedToken.address}
                     name={selectedToken.name}
                     showCaretDown={true}
+                    fullTokenInfo={selectedToken}
                   />
                 )}
                 {selectedToken && tokenBalance ? (

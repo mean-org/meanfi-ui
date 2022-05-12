@@ -1090,19 +1090,24 @@
 			"allocation-select-stream-label": "Chọn stream để nạp tiền",
 			"balance": "Số dư",
 			"label": "Nạp tiền",
-			"main-cta": "Nạp tiền",
-			"main-cta-busy": "Đang nạp tiền",
+			"main-cta": "Fund account",
+			"main-cta-busy": "Funding account",
 			"main-cta-fund-stream": "Nạp tiền",
 			"main-cta-fund-stream-busy": "Đang nạp tiền",
-			"modal-title": "Add funds to the streaming treasury",
+			"modal-title": "Add funds to the streaming account",
 			"modal-title-fund-stream": "Nạp tiền vào Money stream",
 			"money-stream-to-topup-label": "Money Stream to top up",
 			"search-streams-placeholder": "Tìm stream theo tên và địa chỉ",
-			"success-message": "Kho bạc của bạn đã được nạp tiền thành công"
+			"success-message": "Your streaming account was funded successfully."
 		},
-		"back-to-treasuries-cta": "Quay về danh sách kho bạc",
-		"close-treasury-confirmation": "Bạn chắc sẽ đóng kho bạc chứ?",
-		"create-new-treasury-cta": "Tạo kho bạc",
+		"back-to-treasuries-cta": "Back to Streaming Accounts",
+		"close-account": {
+			"modal-title": "Close account",
+			"close-treasury-confirmation": "Are you sure you want to close the account?",
+			"cta-close": "Close account",
+			"cta-close-busy": "Closing account"
+		},
+		"create-new-treasury-cta": "New Streaming Account",
 		"create-treasury": {
 			"create-multisig-cta": "Khởi tạo kho bạc",
 			"create-multisig-cta-busy": "Đang khởi tạo kho bạc",
@@ -1134,31 +1139,32 @@
 				"treasury-type-open-name": "Kho bạc money streaming không bị khoá"
 			}
 		},
-		"lookup-treasury-cta-tooltip": "Tìm kiếm một kho bạc",
+		"lookup-treasury-cta-tooltip": "Lookup a Streaming Account",
 		"open-treasury": {
 			"main-cta": "Mở",
-			"modal-title": "Mở treasury",
-			"treasuryid-input-empty": "Nhập Treasury ID",
-			"treasuryid-input-label": "Mở Treasury ID",
-			"treasuryid-open-cta": "Mở stream",
-			"treasuryid-placeholder": "Treasury ID tạo bởi Mean finance"
+			"modal-title": "Open Streaming Account",
+			"treasuryid-input-empty": "Enter account ID",
+			"treasuryid-input-label": "Streaming account id to open",
+			"treasuryid-open-cta": "Open account",
+			"treasuryid-placeholder": "Account ID created by Mean Finance"
 		},
-		"refresh-tooltip": "Nhấn để làm mới danh sách kho bạc",
-		"screen-title": "Streaming Treasuries",
+		"refresh-tooltip": "Click to refresh the list of streaming accounts",
+		"screen-title": "Streaming Accounts",
 		"summary-title": "Streaming Accounts",
 		"treasury-detail": {
 			"associated-token": "Mã thông báo được liên kết",
 			"created-on": "Ngày tạo",
 			"cta-add-funds": "Nạp tiền",
 			"cta-add-funds-busy": "Đang nạp tiền",
-			"cta-close": "Đóng kho bạc",
-			"cta-close-busy": "Đang đóng kho bạc",
+			"cta-close": "Close account",
+			"cta-close-busy": "Closing account",
 			"cta-withdraw-multisig-treasury": "Rút tiền",
 			"multisig-tx-headsup": "Giao dịch đang chờ phê duyệt hoặc thực hiện cho Kho bạc này",
-			"no-treasury-loaded": "Tạo hoặc tra cứu kho bạc để xem chi tiết",
-			"no-treasury-selected": "Vui lòng chọn hoặc tra cứu kho bạc để xem chi tiết",
+			"no-treasury-loaded": "Select a streaming account to view details",
+			"no-treasury-selected": "Select a streaming account to view details",
 			"number-of-streams": "Số lượng stream",
-			"treasury-address-label": "Treasury address",
+			"refreshing-account-balance": "Refreshing account balance",
+			"treasury-address-label": "Streaming account address",
 			"treasury-name-label": "Tên kho bạc",
 			"unallocated-treasury-balance": "Unallocated balance"
 		},
@@ -1168,11 +1174,11 @@
 			"multisig-treasury-heading": "Kho bạc Multisig - {{treasuryName}}",
 			"multisig-treasury-help": "Dưới đây là danh sách tất cả các kho bạc được kết nối với Multsig này",
 			"multisig-treasury-label": "Kho bạc Multisig",
-			"no-treasuries": "Không có kho bạc nào",
-			"not-connected": "Vui lòng kết nối ví để thấy kho bạc của bạn",
+			"no-treasuries": "No streaming accounts available",
+			"not-connected": "Please connect your wallet to see your streaming accounts",
 			"total-streams-label": "streams"
 		},
-		"treasury-refresh-tooltip": "Làm mới dữ liệu kho bạc",
+		"treasury-refresh-tooltip": "Refresh account data",
 		"treasury-streams": {
 			"add-stream-modal-title": "Thêm stream vào kho bạc",
 			"add-stream-locked": {
@@ -1198,7 +1204,7 @@
 			"available-unallocated-balance-label": "Unallocated Balance",
 			"busy-pausing": "Đang dừng stream",
 			"busy-resuming": "Đang tiếp tục chạy stream",
-			"close-stream-also-closes-treasury-label": "Đóng kho bạc",
+			"close-stream-also-closes-treasury-label": "Also close the streaming account",
 			"column-activity": "Money streams",
 			"column-description": "Mô tả",
 			"column-destination": "Nơi nhận",
@@ -1213,7 +1219,7 @@
 			"multiple-address-list": "Multiple address list",
 			"multiple-address-question-mark-tooltip": "Please provide a csv text file with one address per line in the following format: \n MEMO or STREAM NAME, WALLET ADDRESS. \n\n Here is an example of how it should look: \n Epoch 1, FrdFf3EqcGuytTweLvoELBt29WrAGVYjrh4585A2bTAZ \n\n Before you submit the file, please make sure the recipient addresses are correct and do not belong to an exchange.",
 			"message-warning": "The list of recipients you submitted included your own wallet address. This is not possible and this address has been removed from the imported list.",
-			"no-streams": "This streaming treasury has no active streams",
+			"no-streams": "This streaming account has no active streams",
 			"option-close-stream": "Đóng",
 			"option-explorer-link": "Xem trên Solana Explorer",
 			"option-pause-stream": "Tạm dừng",
@@ -1221,7 +1227,17 @@
 			"status-running": "Đang chạy",
 			"status-scheduled": "Đã lập lịch",
 			"status-stopped": "Đã dừng"
-		}
+		},
+		"withdraw-funds": {
+			"button-title": "Withdraw funds",
+			"label-available-amount": "Funds available to withdraw now",
+			"label-input-amount": "Enter amount to withdraw",
+			"label-input-right": "By percentual preset",
+			"main-cta": "Withdraw funds",
+			"verified-label": "I'm sure the recipient address doesn't belong to an exchange",
+			"selected-treasury-label": "From streaming account",
+			"modal-title": "Withdraw account funds"
+		}	
 	},
 	"ui-language": {
 		"en": "Tiếng Anh",
@@ -1264,7 +1280,6 @@
 				"faucet": "Faucet",
 				"multisig": "Multisig",
 				"submenu-title": "Dịch vụ",
-				"treasuries": "Streaming Treasuries",
 				"wallet-guide": "Hướng dẫn Ví",
 				"wrap": "Wrap",
 				"unwrap": "Unwrap"
@@ -1284,12 +1299,6 @@
 		"label-available-amount": "Số tiền có thể rút ngay",
 		"label-input-amount": "Nhập số lượng muốn rút",
 		"label-input-right": "Theo phần trăm đặt trước",
-		"modal": {
-			"main-cta": "Withdraw funds",
-			"selected-treasury-label": "From treasury account",
-			"title": "Withdraw treasury funds",
-			"verified-label": "I'm sure the recipient address doesn't belong to an exchange"
-		},
 		"modal-title": "Rút tiền"
 	},
 	"wrap": {

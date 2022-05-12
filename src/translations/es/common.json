@@ -1096,19 +1096,24 @@
 			"allocation-select-stream-label": "Select stream to fund",
 			"balance": "Balance",
 			"label": "Add funds",
-			"main-cta": "Fund treasury",
-			"main-cta-busy": "Funding treasury",
+			"main-cta": "Fund account",
+			"main-cta-busy": "Funding account",
 			"main-cta-fund-stream": "Fund Money Stream",
 			"main-cta-fund-stream-busy": "Funding Stream",
-			"modal-title": "Add funds to the streaming treasury",
+			"modal-title": "Add funds to the streaming account",
 			"modal-title-fund-stream": "Add funds to a Money Stream",
 			"money-stream-to-topup-label": "Money Stream to top up",
 			"search-streams-placeholder": "Search stream by name or address",
-			"success-message": "Your treasury was funded successfully."
+			"success-message": "Your streaming account was funded successfully."
 		},
-		"back-to-treasuries-cta": "Back to Treasuries",
-		"close-treasury-confirmation": "Are you sure you want to close the treasury?",
-		"create-new-treasury-cta": "Create treasury",
+		"back-to-treasuries-cta": "Back to Streaming Accounts",
+		"close-account": {
+			"modal-title": "Close account",
+			"close-treasury-confirmation": "Are you sure you want to close the account?",
+			"cta-close": "Close account",
+			"cta-close-busy": "Closing account"
+		},
+		"create-new-treasury-cta": "New Streaming Account",
 		"create-treasury": {
 			"create-multisig-cta": "Initiate treasury",
 			"create-multisig-cta-busy": "Initiating treasury",
@@ -1140,42 +1145,43 @@
 				"treasury-type-open-name": "Open money streaming treasury"
 			}
 		},
-		"lookup-treasury-cta-tooltip": "Lookup a treasury",
+		"lookup-treasury-cta-tooltip": "Lookup a Streaming Account",
 		"open-treasury": {
 			"main-cta": "Open",
-			"modal-title": "Open treasury",
-			"treasuryid-input-empty": "Enter Treasury ID",
-			"treasuryid-input-label": "Treasury id to open",
-			"treasuryid-open-cta": "Open stream",
-			"treasuryid-placeholder": "Treasury ID created by Mean Finance"
+			"modal-title": "Open Streaming Account",
+			"treasuryid-input-empty": "Enter account ID",
+			"treasuryid-input-label": "Streaming account id to open",
+			"treasuryid-open-cta": "Open account",
+			"treasuryid-placeholder": "Account ID created by Mean Finance"
 		},
-		"refresh-tooltip": "Click to refresh the list of treasuries",
-		"screen-title": "Streaming Treasuries",
+		"refresh-tooltip": "Click to refresh the list of streaming accounts",
+		"screen-title": "Streaming Accounts",
 		"summary-title": "Streaming Accounts",
 		"treasury-detail": {
 			"associated-token": "Associated token",
 			"created-on": "Created on",
 			"cta-add-funds": "Add funds",
 			"cta-add-funds-busy": "Adding funds",
-			"cta-close": "Close treasury",
-			"cta-close-busy": "Closing treasury",
+			"cta-close": "Close account",
+			"cta-close-busy": "Closing account",
 			"cta-withdraw-multisig-treasury": "Withdraw funds",
 			"multisig-tx-headsup": "Transactions pending approval or execution for this treasury",
-			"no-treasury-loaded": "Create or lookup a treasury to view details",
-			"no-treasury-selected": "Please select or lookup a treasury to view details",
+			"no-treasury-loaded": "Select a streaming account to view details",
+			"no-treasury-selected": "Select a streaming account to view details",
 			"number-of-streams": "Number of streams",
-			"treasury-address-label": "Treasury address",
+			"refreshing-account-balance": "Refreshing account balance",
+			"treasury-address-label": "Streaming account address",
 			"treasury-name-label": "Treasury name",
 			"unallocated-treasury-balance": "Unallocated balance"
 		},
 		"treasury-detail-heading": "Treasury details",
-		"treasury-refresh-tooltip": "Refresh treasury data",
+		"treasury-refresh-tooltip": "Refresh account data",
 		"treasury-list": {
 			"multisig-treasury-heading": "Multisig Treasuries - {{treasuryName}}",
 			"multisig-treasury-help": "Below is a list of all the treasuries that are connected to this Multsig",
 			"multisig-treasuries-view-all-cta": "Show All Treasuries",
-			"no-treasuries": "No treasuries available",
-			"not-connected": "Please connect your wallet to see your treasuries",
+			"no-treasuries": "No streaming accounts available",
+			"not-connected": "Please connect your wallet to see your streaming accounts",
 			"total-streams-label": "streams",
 			"multisig-treasury-label": "Multisig Treasury"
 		},
@@ -1204,7 +1210,7 @@
 			"available-unallocated-balance-label": "Unallocated Balance",
 			"busy-pausing": "Stopping stream",
 			"busy-resuming": "Resuming stream",
-			"close-stream-also-closes-treasury-label": "Also close the treasury",
+			"close-stream-also-closes-treasury-label": "Also close the streaming account",
 			"column-activity": "Money streams",
 			"column-description": "Description",
 			"column-destination": "Destination",
@@ -1217,7 +1223,7 @@
 			"multiple-address-list": "Multiple address list",
 			"multiple-address-question-mark-tooltip": "Please provide a csv text file with one address per line in the following format: \n MEMO or STREAM NAME, WALLET ADDRESS. \n\n Here is an example of how it should look: \n Epoch 1, FrdFf3EqcGuytTweLvoELBt29WrAGVYjrh4585A2bTAZ \n\n Before you submit the file, please make sure the recipient addresses are correct and do not belong to an exchange.",
 			"message-warning": "The list of recipients you submitted included your own wallet address. This is not possible and this address has been removed from the imported list.",
-			"no-streams": "This streaming treasury has no active streams",
+			"no-streams": "This streaming account has no active streams",
 			"option-close-stream": "Close",
 			"option-explorer-link": "View on Solana Explorer",
 			"option-pause-stream": "Pause",
@@ -1226,7 +1232,17 @@
 			"status-scheduled": "Scheduled",
 			"status-stopped": "Stopped",
 			"fee-payed-by-treasurer": "I want to pay fees for this stream instead of the beneficiary"
-		}
+		},
+		"withdraw-funds": {
+			"button-title": "Withdraw funds",
+			"label-available-amount": "Funds available to withdraw now",
+			"label-input-amount": "Enter amount to withdraw",
+			"label-input-right": "By percentual preset",
+			"main-cta": "Withdraw funds",
+			"verified-label": "I'm sure the recipient address doesn't belong to an exchange",
+			"selected-treasury-label": "From streaming account",
+			"modal-title": "Withdraw account funds"
+		}	
 	},
 	"ui-language": {
 		"en": "Inglés",
@@ -1268,7 +1284,6 @@
 				"faucet": "Faucet",
 				"multisig": "Multisig",
 				"submenu-title": "Servicios",
-				"treasuries": "Streaming Treasuries",
 				"wallet-guide": "Guía de Billeteras",
 				"wrap": "Wrap",
 				"unwrap": "Unwrap"
@@ -1288,13 +1303,7 @@
 		"label-available-amount": "Fondos disponibles para retirar inmediatamente ",
 		"label-input-amount": "Introduzca la cantidad a retirar",
 		"label-input-right": "Porcentaje automático",
-		"modal-title": "Retirar fondos",
-		"modal": {
-			"main-cta": "Withdraw funds",
-			"selected-treasury-label": "From treasury account",
-			"title": "Withdraw treasury funds",
-			"verified-label": "I'm sure the recipient address doesn't belong to an exchange"
-		}
+		"modal-title": "Retirar fondos"
 	},
 	"wrap": {
 		"hint-message": "We recommend having at least 0.05 SOL for any transaction"
