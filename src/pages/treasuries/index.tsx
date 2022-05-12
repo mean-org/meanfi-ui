@@ -1421,7 +1421,7 @@ export const TreasuriesView = () => {
 
   const getTreasuryClosureMessage = () => {
     return (
-      <div>{t('treasuries.close-treasury-confirmation')}</div>
+      <div>{t('treasuries.close-account.close-treasury-confirmation')}</div>
     );
   }
 

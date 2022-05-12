@@ -1101,7 +1101,12 @@
 			"success-message": "Your streaming account was funded successfully."
 		},
 		"back-to-treasuries-cta": "Back to Streaming Accounts",
-		"close-treasury-confirmation": "Êtes-vous sûr de vouloir fermer la trésorerie ?",
+		"close-account": {
+			"modal-title": "Close account",
+			"close-treasury-confirmation": "Are you sure you want to close the account?",
+			"cta-close": "Close account",
+			"cta-close-busy": "Closing account"
+		},
 		"create-new-treasury-cta": "New Streaming Account",
 		"create-treasury": {
 			"create-multisig-cta": "Initier la trésorerie",
@@ -1151,8 +1156,8 @@
 			"created-on": "Créé sur",
 			"cta-add-funds": "Ajouter des fonds",
 			"cta-add-funds-busy": "Ajouter des fonds",
-			"cta-close": "Fermer la trésorerie",
-			"cta-close-busy": "Trésorerie de clôture",
+			"cta-close": "Close account",
+			"cta-close-busy": "Closing account",
 			"cta-withdraw-multisig-treasury": "Retirer des fonds",
 			"multisig-tx-headsup": "Transactions en attente d'approbation ou d'exécution pour cette trésorerie",
 			"no-treasury-loaded": "Select a streaming account to view details",
