@@ -24,6 +24,7 @@ export const MultisigProposalModal = (props: {
   handleClose: any;
   isVisible: boolean;
   isBusy: boolean;
+  proposer: string;
   appsProvider: AppsProvider | undefined;
   solanaApps: App[],
   handleOk: any
@@ -351,7 +352,7 @@ export const MultisigProposalModal = (props: {
                         selectedUiIx && selectedUiIx.id === ix.id && (
                           ix.uiElements.map((element: any) => (
                             <>
-                              {element.visibility === "show" ? (
+                              {element.visibility === "show" && (
                                 <Row gutter={[8, 8]} className="mb-1" key={element.dataElement.index}>
                                   {(element.type === "inputText") ? (
                                     <>
@@ -418,40 +419,44 @@ export const MultisigProposalModal = (props: {
                                         </Radio.Group>
                                       </Col>
                                     </>
+                                  ) : (element.type === "knownValue") ? (
+                                    <>
+                                      <Row gutter={[8, 8]} className="mb-1" key={element.dataElement.index}>
+                                        <Col xs={24} sm={6} md={6} lg={6} className="text-right pr-1">
+                                          <div className="form-label">{element.label}</div>
+                                        </Col>
+                                        <Col xs={24} sm={18} md={18} lg={18}>
+                                          <code>{element.value}</code>
+                                        </Col>
+                                      </Row>
+                                    </>
+                                  ) : (element.type === "slot") ? (
+                                    <>
+                                      <Row gutter={[8, 8]} className="mb-1" key={element.dataElement.index}>
+                                        <Col xs={24} sm={6} md={6} lg={6} className="text-right pr-1">
+                                          <div className="form-label">{element.label}</div>
+                                        </Col>
+                                        <Col xs={24} sm={18} md={18} lg={18}>
+                                          <code>{element.value}</code>
+                                        </Col>
+                                      </Row>
+                                    </>
+                                  ) : (element.type === "txProposer") ? (
+                                    <>
+                                      <Row gutter={[8, 8]} className="mb-1" key={element.dataElement.index}>
+                                        <Col xs={24} sm={6} md={6} lg={6} className="text-right pr-1">
+                                          <div className="form-label">{element.label}</div>
+                                        </Col>
+                                        <Col xs={24} sm={18} md={18} lg={18}>
+                                          <code>{props.proposer}</code>
+                                        </Col>
+                                      </Row>
+                                    </>
+                                  ) : (element.type === "treasuryAccount") ? (
+                                    <></>
                                   ) : null}
+
                                 </Row>
-                              ) : (
-                                element.visibility === "readOnly" ? (
-                                  <>
-                                    <Row gutter={[8, 8]} className="mb-1" key={element.dataElement.index}>
-                                      <Col xs={24} sm={6} md={6} lg={6} className="text-right pr-1">
-                                        <div className="form-label">{element.label}</div>
-                                      </Col>
-                                      <Col xs={24} sm={18} md={18} lg={18}>
-                                        <code>{element.value}</code>
-                                      </Col>
-                                    </Row>
-                                  </>
-                                ) : element.type === "knownValue" ? (
-                                  <>
-                                    <Row gutter={[8, 8]} className="mb-1" key={element.dataElement.index}>
-                                      <Col xs={24} sm={6} md={6} lg={6} className="text-right pr-1">
-                                        <div className="form-label">{element.label}</div>
-                                      </Col>
-                                      <Col xs={24} sm={18} md={18} lg={18}>
-                                        <code>{element.value}</code>
-                                      </Col>
-                                    </Row>
-                                  </>
-                                ) : element.type === "slot" ? (
-                                  <></>
-                                ) : element.type === "txProposer" ? (
-                                  <></>
-                                ) : element.type === "treasuryAccount" ? (
-                                  <></>
-                                ) : (
-                                  <></>
-                                )
                               )}
                             </>
                           ))

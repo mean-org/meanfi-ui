@@ -4512,6 +4512,7 @@ export const SafeView = () => {
           isVisible={isMultisigProposalModalVisible}
           handleClose={() => setMultisigProposalModalVisible(false)}
           isBusy={isBusy}
+          proposer={publicKey ? publicKey.toBase58() : ""}
           appsProvider={appsProvider}
           solanaApps={solanaApps}
           handleOk={onAcceptCreateProposalModal}
