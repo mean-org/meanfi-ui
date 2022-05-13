@@ -16,6 +16,8 @@ import { InfoIcon } from '../InfoIcon';
 import { FormLabelWithIconInfo } from '../FormLabelWithIconInfo';
 import { InputTextAreaMean } from '../InputTextAreaMean';
 import { App, AppConfig, AppsProvider, UiInstruction } from '@mean-dao/mean-multisig-apps';
+import BN from 'bn.js';
+import { PublicKey } from '@solana/web3.js';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -63,19 +65,48 @@ export const MultisigProposalModal = (props: {
     setCurrentStep(2);  // Go to step 3
   }
 
-  const transformAppConfig = (config: AppConfig) => {
-    return config;
+  const updateSelectedIx = (state: any) => {
+    if (!selectedUiIx) { return; }
+    const currentUiIx = Object.assign({}, selectedUiIx);
+    // const stateElements = Object.entries(state);
+    for (const uiElem of currentUiIx.uiElements) {
+      if (!state[uiElem.name]) { continue; }
+      if (uiElem.type !== "knownValue") {
+        if (uiElem.visibility === "show") {
+          uiElem.value = state[uiElem.name];
+          const dataElement = uiElem.dataElement as any;
+          if (dataElement && dataElement.dataType) {
+            if (dataElement.dataType === "u64") {
+              if (uiElem.type === "datePicker") {
+                const date = new Date(state[uiElem.name]);
+                dataElement.dataValue = new BN(date.getTime() / 1_000);
+              } else {
+                dataElement.dataValue = new BN(state[uiElem.name]);
+              }
+            } else if (dataElement.dataType === "u8") {
+              dataElement.dataValue = parseInt(state[uiElem.name]);
+            } else if (dataElement.dataType === "string") {
+              dataElement.dataValue = state[uiElem.name];
+            }
+          } else if (dataElement && !dataElement.dataType) {
+            // console.log('public key', state[uiElem.name]);
+            dataElement.dataValue = new PublicKey(state[uiElem.name]);
+          }
+        }
+      }
+    }
+    setSelectedUiIx(currentUiIx);
   };
 
   const onAcceptModal = () => {
-    if (!selectedAppConfig) { return; }
-    const transformedConfig = transformAppConfig(selectedAppConfig);
+    if (!selectedApp || !selectedAppConfig || !selectedUiIx) { return; }
+    updateSelectedIx(inputState);
     props.handleOk({
-      appId: selectedApp,
+      appId: selectedApp.id,
       title: proposalTitleValue,
       description: proposalDescriptionValue,
       expires: proposalExpiresValue,
-      config: transformedConfig,
+      config: selectedAppConfig,
       instruction: selectedUiIx
     });
   }
@@ -358,6 +389,7 @@ export const MultisigProposalModal = (props: {
                                         />
                                         <InputMean
                                           id={element.name}
+                                          maxLength={64}
                                           className={props.isBusy ? 'disabled' : ''}
                                           name={element.label}
                                           onChange={(e: any) => {

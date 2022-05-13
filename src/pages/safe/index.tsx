@@ -5,13 +5,12 @@ import {
 } from '@ant-design/icons';
 import {
   Account,
+  AccountMeta,
   ConfirmOptions,
   Connection,
-  Keypair,
   LAMPORTS_PER_SOL,
   MemcmpFilter,
   PublicKey,
-  SystemProgram,
   SYSVAR_RENT_PUBKEY,
   Transaction,
   TransactionInstruction
@@ -67,7 +66,7 @@ import { MultisigCreateModal } from '../../components/MultisigCreateModal';
 import './style.scss';
 
 // MULTISIG
-import { AnchorProvider, BN, Program } from "@project-serum/anchor";
+import { AnchorProvider, BN, Idl, Program } from "@project-serum/anchor";
 import { MultisigEditModal } from '../../components/MultisigEditModal';
 import { MSP, Treasury } from '@mean-dao/msp';
 import { customLogger } from '../..';
@@ -80,7 +79,7 @@ import { SafeDetailsView } from './components/SafeDetails';
 import { MultisigProposalModal } from '../../components/MultisigProposalModal';
 import { ProgramDetailsView } from './components/ProgramDetails';
 import SerumIDL from '../../models/serum-multisig-idl';
-import { AppsProvider, NETWORK, App } from '@mean-dao/mean-multisig-apps';
+import { AppsProvider, NETWORK, App, UiInstruction, AppConfig, UiElement, DataElement, Arg } from '@mean-dao/mean-multisig-apps';
 import { SafeSerumInfoView } from './components/SafeSerumInfo';
 import { MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 
@@ -1329,6 +1328,61 @@ export const SafeView = () => {
     onExecuteCreateTransactionProposal(data);
   };
 
+  const createProposalIx = useCallback(async (
+    programId: PublicKey,
+    uiConfig: AppConfig,
+    uiInstruction: UiInstruction
+
+  ): Promise<TransactionInstruction | null> => {
+
+    if (!connection || !connectionConfig || !publicKey) {
+      return null;
+    }
+
+    const createAnchorProgram = (): Program<Idl> => {
+
+      const opts = AnchorProvider.defaultOptions();
+      const anchorWallet = {
+        publicKey: publicKey,
+        signAllTransactions: async (txs: any) => txs,
+        signTransaction: async (tx: any) => tx,
+      };
+
+      const provider = new AnchorProvider(connection, anchorWallet, opts);
+
+      return new Program(uiConfig.definition, programId, provider);
+    }
+
+    const program = createAnchorProgram();
+    const method = program.methods[uiInstruction.name];
+    // ACCS
+    const accElements = uiInstruction.uiElements
+      .filter((elem: UiElement) => elem.dataElement && "isSigner" in elem.dataElement);
+    const accounts: any = {};
+    for (const accItem of accElements) {
+      const accElement = accItem.dataElement as any;
+      accounts[accItem.name] = accElement.dataValue;
+    }
+    // ARGS
+    const argElements = uiInstruction.uiElements
+      .filter((elem: UiElement) => elem.dataElement && !("isSigner" in elem.dataElement));
+    console.log('argElements', argElements);
+    const args = argElements.map((elem: UiElement) => {
+      const argElement = elem.dataElement as Arg;
+      return argElement.dataValue;
+    });
+    args.sort((a, b) => { return (a.index - b.index); });
+    console.log('args', args);
+    return await method(...args)
+      .accounts(accounts)
+      .instruction();
+      
+  },[
+    connection, 
+    connectionConfig, 
+    publicKey
+  ])
+
   const onExecuteCreateTransactionProposal = useCallback(async (data: any) => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
@@ -1347,12 +1401,15 @@ export const SafeView = () => {
         throw new Error("No selected multisig");
       }
 
-      // Proposal (TODO: Can use anchor by creating the program instance based on the IDL)
-      const createProposalIx = new TransactionInstruction({
-        programId: new PublicKey(data.appId),
-        keys: [], // TODO: Get accounts from config
-        data: Buffer.from("") // ToDO: Get data from config
-      });
+      const proposalIx = await createProposalIx(
+        new PublicKey(data.appId),
+        data.config,
+        data.instruction
+      );
+
+      if (!proposalIx) {
+        throw new Error("Invalid proposal instruction");
+      }
       
       const tx = await multisigClient.createTransaction(
         publicKey,
@@ -1361,9 +1418,9 @@ export const SafeView = () => {
         new Date(data.expires),
         OperationType.EditMultisig,
         selectedMultisig.id,
-        createProposalIx.programId,
-        createProposalIx.keys,
-        createProposalIx.data
+        proposalIx.programId,
+        proposalIx.keys,
+        proposalIx.data
       );
 
       return tx;
@@ -1380,20 +1437,13 @@ export const SafeView = () => {
           currentOperation: TransactionStatus.InitTransaction
         });
 
-        // Create a transaction
-        const payload = {
-          wallet: publicKey.toBase58(),     // wallet
-          label: data.label,                // multisig label
-          threshold: data.threshold,
-          owners: data.owners
-        };
-
-        consoleOut('data:', payload);
+        // Data
+        consoleOut('data:', data);
 
         // Log input data
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
-          inputs: payload
+          inputs: data
         });
 
         transactionLog.push({
@@ -1601,22 +1651,23 @@ export const SafeView = () => {
       } else { setIsBusy(false); }
     }
   }, [
-    wallet,
-    publicKey,
-    connection, 
-    multisigClient,
-    nativeBalance, 
+    clearTxConfirmationContext, 
+    resetTransactionStatus, 
+    wallet, 
+    publicKey, 
     selectedMultisig, 
-    transactionCancelled, 
-    transactionFees.multisigFee, 
+    multisigClient, 
+    createProposalIx, 
+    setTransactionStatus, 
+    nativeBalance, 
     transactionFees.networkFee, 
     transactionFees.rentExempt, 
+    transactionFees.multisigFee, 
     transactionStatus.currentOperation, 
-    onMultisigModified,
-    setTransactionStatus,
-    resetTransactionStatus,
-    startFetchTxSignatureInfo,
-    clearTxConfirmationContext,
+    connection, 
+    transactionCancelled, 
+    startFetchTxSignatureInfo, 
+    onMultisigModified
   ]);
 
   const [isMultisigProposalModalVisible, setMultisigProposalModalVisible] = useState(false);
@@ -4435,7 +4486,7 @@ export const SafeView = () => {
                           onDataToSafeView={returnFromSafeDetailsHandler}
                           proposalSelected={proposalSelected}
                           selectedMultisig={selectedMultisig}
-                          
+                          onProposalApprove={onExecuteApproveTx}
                         />
                       )}
                       {isProgramDetails && (
