@@ -1027,13 +1027,25 @@ export const AccountsNewView = () => {
                   item.isAta = await updateAtaFlag(item);
                 });
 
-                consoleOut('User tokens - sorted:', sortedList.map(i => {
-                  return {
-                    pubAddress: i.publicAddress,
-                    mintAddress: i.address,
-                    balance: i.balance || 0
-                  };
-                }), 'blue');
+                // Finally add all owned token accounts as custom tokens
+                accTks.forEach((item: AccountTokenParsedInfo, index: number) => {
+                  if (!sortedList.some(t => t.address === item.parsedInfo.mint)) {
+                    const customToken: UserTokenAccount = {
+                      address: item.parsedInfo.mint,
+                      balance: item.parsedInfo.tokenAmount.uiAmount || 0,
+                      chainId: 0,
+                      displayIndex: sortedList.length + 1 + index,
+                      decimals: item.parsedInfo.tokenAmount.decimals,
+                      name: 'Custom account',
+                      symbol: shortenAddress(item.parsedInfo.mint),
+                      publicAddress: item.pubkey.toBase58(),
+                      tags: undefined,
+                      logoURI: undefined,
+                      valueInUsd: 0
+                    };
+                    sortedList.push(customToken);
+                  }
+                });
 
                 // Report in the console for debugging
                 const tokenTable: any[] = [];
