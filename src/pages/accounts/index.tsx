@@ -11,7 +11,7 @@ import {
   SwapOutlined,
   SyncOutlined
 } from '@ant-design/icons';
-import { Connection, LAMPORTS_PER_SOL, ParsedConfirmedTransactionMeta, PublicKey } from '@solana/web3.js';
+import { Connection, Keypair, LAMPORTS_PER_SOL, ParsedConfirmedTransactionMeta, PublicKey, Transaction } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
 import { TransactionItemView } from '../../components/TransactionItemView';
@@ -26,6 +26,7 @@ import {
   findATokenAddress,
   formatThousands,
   getAmountFromLamports,
+  getTxIxResume,
   openLinkInNewTab,
   shortenAddress
 } from '../../utils/utils';
@@ -59,16 +60,18 @@ import { AddressDisplay } from '../../components/AddressDisplay';
 import { ReceiveSplOrSolModal } from '../../components/ReceiveSplOrSolModal';
 import { SendAssetModal } from '../../components/SendAssetModal';
 import { EventType, OperationType, TransactionStatus } from '../../models/enums';
-import { consoleOut, copyText, isLocal, isValidAddress, kFormatter, toUsCurrency } from '../../utils/ui';
+import { consoleOut, copyText, getTransactionStatusForLogs, isLocal, isValidAddress, kFormatter, toUsCurrency } from '../../utils/ui';
 import { WrapSolModal } from '../../components/WrapSolModal';
 import { UnwrapSolModal } from '../../components/UnwrapSolModal';
-import { confirmationEvents, TxConfirmationInfo } from '../../contexts/transaction-status';
+import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
 import { AppUsageEvent } from '../../utils/segment-service';
 import { segmentAnalytics } from '../../App';
 import { TreasuriesSummary } from '../../components/TreasuriesSummary';
 import { AccountsSuggestAssetModal } from '../../components/AccountsSuggestAssetModal';
 import { QRCodeSVG } from 'qrcode.react';
 import { NATIVE_SOL } from '../../utils/tokens';
+import { unwrapSol } from '@mean-dao/hybrid-liquidity-ag';
+import { customLogger } from '../..';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export type CategoryOption = "networth" | "user-account" | "other-assets";
@@ -97,6 +100,7 @@ export const AccountsNewView = () => {
     lastTxSignature,
     detailsPanelOpen,
     shouldLoadTokens,
+    transactionStatus,
     streamProgramAddress,
     canShowAccountDetails,
     loadingStreamsSummary,
@@ -119,7 +123,7 @@ export const AccountsNewView = () => {
     setStreamDetail,
     setTransactions,
   } = useContext(AppStateContext);
-
+  const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const { t } = useTranslation('common');
   const [isFirstLoad, setIsFirstLoad] = useState(true);
   const [accountAddressInput, setAccountAddressInput] = useState<string>('');
@@ -129,13 +133,14 @@ export const AccountsNewView = () => {
   const [tokenAccountGroups, setTokenAccountGroups] = useState<Map<string, AccountTokenParsedInfo[]>>();
   const [userOwnedTokenAccounts, setUserOwnedTokenAccounts] = useState<AccountTokenParsedInfo[]>();
   const [selectedTokenMergeGroup, setSelectedTokenMergeGroup] = useState<AccountTokenParsedInfo[]>();
-
+  const [wSolBalance, setWsolBalance] = useState(0);
   const [refreshingBalance, setRefreshingBalance] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<CategoryOption>("user-account");
   const [selectedOtherAssetsOption, setSelectedOtherAssetsOption] = useState<OtherAssetsOption>(undefined);
   const [totalTokenAccountsValue, setTotalTokenAccountsValue] = useState(0);
   const [netWorth, setNetWorth] = useState(0);
   const [treasuriesTvl, setTreasuriesTvl] = useState(0);
+  const [isUnwrapping, setIsUnwrapping] = useState(false);
 
   // Url Query Params attendants
   const [urlQueryAddress, setUrlQueryAddress] = useState('');
@@ -555,6 +560,7 @@ export const AccountsNewView = () => {
       setShouldLoadTokens(true);
       reloadSwitch();
     } else if (item && item.operationType === OperationType.Unwrap) {
+      setIsUnwrapping(false);
       recordTxConfirmation(item, true);
       setShouldLoadTokens(true);
       reloadSwitch();
@@ -573,6 +579,7 @@ export const AccountsNewView = () => {
     if (item && item.operationType === OperationType.Wrap) {
       recordTxConfirmation(item, false);
     } else if (item && item.operationType === OperationType.Unwrap) {
+      setIsUnwrapping(false);
       recordTxConfirmation(item, false);
     }
     resetTransactionStatus();
@@ -1121,6 +1128,7 @@ export const AccountsNewView = () => {
     accountAddress,
     urlQueryAddress,
     shouldLoadTokens,
+    getTokenByMintAddress,
     setShouldLoadTokens,
     getPricePerToken,
     updateAtaFlag,
@@ -1203,6 +1211,16 @@ export const AccountsNewView = () => {
     getScanAddress,
     startSwitch
   ]);
+
+  // Keep track of wSOL balance
+  useEffect(() => {
+    if (tokensLoaded && accountTokens && accountTokens.length > 0) {
+      const wSol = accountTokens.find(t => t.address === WRAPPED_SOL_MINT_ADDRESS);
+      if (wSol) {
+        setWsolBalance(wSol.balance || 0);
+      }
+    }
+  }, [accountTokens, tokensLoaded]);
 
   // Hook on the wallet connect/disconnect
   useEffect(() => {
@@ -1350,6 +1368,222 @@ export const AccountsNewView = () => {
     }
   }, [publicKey, canSubscribe, onTxConfirmed, onTxTimedout]);
 
+  //////////////////
+  // Transactions //
+  //////////////////
+
+  const onStartUnwrapTx = async () => {
+    let transaction: Transaction;
+    let signedTransaction: Transaction;
+    let signature: any;
+    let encodedTx: string;
+    const transactionLog: any[] = [];
+
+    const createTx = async (): Promise<boolean> => {
+      if (wallet) {
+        setTransactionStatus({
+          lastOperation: TransactionStatus.TransactionStart,
+          currentOperation: TransactionStatus.InitTransaction,
+        });
+
+        consoleOut('wrapAmount:', wSolBalance, 'blue')
+
+        // Log input data
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+          inputs: `wrapAmount: ${wSolBalance}`
+        });
+
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+          result: ''
+        });
+
+        return await unwrapSol(
+          connection,                 // connection
+          wallet,                     // wallet
+          Keypair.generate(),
+          wSolBalance                 // amount
+        )
+          .then((value) => {
+            consoleOut("unwrapSol returned transaction:", value);
+            // Stage 1 completed - The transaction is created and returned
+            setTransactionStatus({
+              lastOperation: TransactionStatus.InitTransactionSuccess,
+              currentOperation: TransactionStatus.SignTransaction,
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+              result: getTxIxResume(value)
+            });
+            transaction = value;
+            return true;
+          })
+          .catch((error) => {
+            console.error("unwrapSol transaction init error:", error);
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.InitTransactionFailure,
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+              result: `${error}`
+            });
+            customLogger.logError('Unwrap transaction failed', { transcript: transactionLog });
+            return false;
+          });
+      } else {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot start transaction! Wallet not found!'
+        });
+        customLogger.logError('Unwrap transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    };
+
+    const signTx = async (): Promise<boolean> => {
+      if (wallet) {
+        consoleOut("Signing transaction...");
+        return await wallet
+          .signTransaction(transaction)
+          .then((signed: Transaction) => {
+            consoleOut("signTransaction returned a signed transaction:", signed);
+            signedTransaction = signed;
+            // Try signature verification by serializing the transaction
+            try {
+              encodedTx = signedTransaction.serialize().toString('base64');
+              consoleOut('encodedTx:', encodedTx, 'orange');
+            } catch (error) {
+              console.error(error);
+              setTransactionStatus({
+                lastOperation: TransactionStatus.SignTransaction,
+                currentOperation: TransactionStatus.SignTransactionFailure
+              });
+              transactionLog.push({
+                action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+                result: { signer: `${wallet.publicKey.toBase58()}`, error: `${error}` }
+              });
+              customLogger.logError('Unwrap transaction failed', { transcript: transactionLog });
+              return false;
+            }
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransactionSuccess,
+              currentOperation: TransactionStatus.SendTransaction,
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
+              result: { signer: wallet.publicKey.toBase58() }
+            });
+            return true;
+          })
+          .catch(error => {
+            console.error("Signing transaction failed!");
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransaction,
+              currentOperation: TransactionStatus.SignTransactionFailure,
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+              result: { signer: `${wallet.publicKey.toBase58()}`, error: `${error}` }
+            });
+            customLogger.logError('Unwrap transaction failed', { transcript: transactionLog });
+            return false;
+          });
+      } else {
+        console.error("Cannot sign transaction! Wallet not found!");
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.WalletNotFound,
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot sign transaction! Wallet not found!'
+        });
+        customLogger.logError('Unwrap transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    };
+
+    const sendTx = async (): Promise<boolean> => {
+      if (wallet) {
+        return await connection
+          .sendEncodedTransaction(encodedTx)
+          .then((sig) => {
+            consoleOut("sendEncodedTransaction returned a signature:", sig);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.ConfirmTransaction,
+            });
+            signature = sig;
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
+              result: `signature: ${signature}`
+            });
+            return true;
+          })
+          .catch((error) => {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransaction,
+              currentOperation: TransactionStatus.SendTransactionFailure,
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+              result: { error, encodedTx }
+            });
+            customLogger.logError('Unwrap transaction failed', { transcript: transactionLog });
+            return false;
+          });
+      } else {
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SendTransaction,
+          currentOperation: TransactionStatus.WalletNotFound,
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot send transaction! Wallet not found!'
+        });
+        customLogger.logError('Unwrap transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    };
+
+    if (wallet) {
+      setIsUnwrapping(true);
+      const create = await createTx();
+      consoleOut("created:", create);
+      if (create) {
+        const sign = await signTx();
+        consoleOut("signed:", sign);
+        if (sign) {
+          const sent = await sendTx();
+          consoleOut("sent:", sent);
+          if (sent) {
+            enqueueTransactionConfirmation({
+              signature: signature,
+              operationType: OperationType.Unwrap,
+              finality: "confirmed",
+              txInfoFetchStatus: "fetching",
+              loadingTitle: 'Confirming transaction',
+              loadingMessage: `Unwrap ${formatThousands(wSolBalance, NATIVE_SOL.decimals)} SOL`,
+              completedTitle: 'Transaction confirmed',
+              completedMessage: `Successfully unwrapped ${formatThousands(wSolBalance, NATIVE_SOL.decimals)} SOL`
+            });
+          } else {
+            openNotification({
+              title: t('notifications.error-title'),
+              description: t('notifications.error-sending-transaction'),
+              type: "error"
+            });
+            setIsUnwrapping(false);
+          }
+        } else { setIsUnwrapping(false); }
+      } else { setIsUnwrapping(false); }
+    }
+  }
+
+
   ///////////////
   // Rendering //
   ///////////////
@@ -1492,10 +1726,27 @@ export const AccountsNewView = () => {
     <>
       {accountTokens && accountTokens.length > 0 ? (
         <>
-          {/* Render user token accounts */}
-          {(accountTokens && accountTokens.length > 0) && (
-            accountTokens.map((asset, index) => renderAsset(asset, index))
+          {wSolBalance > 0 && (
+              <div className="utility-box">
+                  <div className="well mb-1">
+                      <div className="flex-fixed-right align-items-center">
+                          <div className="left">You have {formatThousands(wSolBalance, NATIVE_SOL.decimals)} <strong>wrapped SOL</strong> in your wallet. Click to unwrap to native SOL.</div>
+                          <div className="right">
+                              <Button
+                                  type="primary"
+                                  shape="round"
+                                  disabled={isUnwrapping}
+                                  onClick={onStartUnwrapTx}
+                                  size="small">
+                                  {isUnwrapping ? 'Unwrapping SOL' : 'Unwrap SOL'}
+                              </Button>
+                          </div>
+                      </div>
+                  </div>
+              </div>
           )}
+          {/* Render user token accounts */}
+          {accountTokens.map((asset, index) => renderAsset(asset, index))}
         </>
       ) : tokensLoaded ? (
         <div className="flex flex-center">

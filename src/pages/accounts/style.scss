@@ -15,6 +15,13 @@
         }
     }
 
+    .utility-box {
+        @media (min-width: 576px) {
+            padding: 0.5rem;
+            margin-right: 10px;
+        }
+    }
+
     .inner-container {
 
         .item-block {
