@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { findATokenAddress, getTokenByMintAddress, shortenAddress, useLocalStorageState } from "../utils/utils";
+import { findATokenAddress, shortenAddress, useLocalStorageState } from "../utils/utils";
 import {
   DAO_CORE_TEAM_WHITELIST,
   BANNED_TOKENS,
@@ -45,9 +45,9 @@ import { initialSummary, StreamsSummary } from "../models/streams";
 import { MSP, Stream } from "@mean-dao/msp";
 import { AccountDetails } from "../models";
 import moment from "moment";
-import { NATIVE_SOL_MINT } from "../utils/ids";
 import { openNotification } from "../components/Notifications";
 import { PerformanceCounter } from "../utils/perf-counter";
+import { TokenPrice } from "../models/token";
 
 const pricesOldPerformanceCounter = new PerformanceCounter();
 const pricesNewPerformanceCounter = new PerformanceCounter();
@@ -141,6 +141,9 @@ interface AppStateConfig {
   refreshPrices: () => void;
   setEffectiveRate: (rate: number) => void;
   setCoinPrices: (prices: any) => void;
+  getTokenPriceByAddress: (address: string) => void;
+  getTokenPriceBySymbol: (symbol: string) => void;
+  getTokenByMintAddress: (address: string) => TokenInfo | undefined;
   refreshTokenBalance: () => void;
   resetContractValues: () => void;
   resetStreamsState: () => void;
@@ -282,6 +285,9 @@ const contextDefaultValues: AppStateConfig = {
   refreshPrices: () => {},
   setEffectiveRate: () => {},
   setCoinPrices: () => {},
+  getTokenPriceByAddress: () => {},
+  getTokenPriceBySymbol: () => {},
+  getTokenByMintAddress: () => undefined,
   refreshTokenBalance: () => {},
   resetContractValues: () => {},
   resetStreamsState: () => {},
@@ -397,6 +403,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [selectedToken, updateSelectedToken] = useState<TokenInfo>();
   const [tokenBalance, updateTokenBalance] = useState<number>(contextDefaultValues.tokenBalance);
   const [stakingMultiplier, updateStakingMultiplier] = useState<number>(contextDefaultValues.stakingMultiplier);
+  const [coinPricesFromApi, setCoinPricesFromApi] = useState<TokenPrice[] | null>(null);
   const [coinPrices, setCoinPrices] = useState<any>(null);
   const [loadingPrices, setLoadingPrices] = useState<boolean>(contextDefaultValues.loadingPrices);
   const [effectiveRate, updateEffectiveRate] = useState<number>(contextDefaultValues.effectiveRate);
@@ -649,6 +656,16 @@ const AppStateProvider: React.FC = ({ children }) => {
     }
   }
 
+  const getTokenByMintAddress = useCallback((address: string): TokenInfo | undefined => {
+    const tokenFromTokenList = tokenList && isProd()
+      ? tokenList.find(t => t.address === address)
+      : MEAN_TOKEN_LIST.find(t => t.address === address);
+    if (tokenFromTokenList) {
+      return tokenFromTokenList;
+    }
+    return undefined;
+  }, [tokenList]);
+
   const openStreamById = async (streamId: string, dock = false) => {
     try {
       const streamPublicKey = new PublicKey(streamId);
@@ -857,6 +874,26 @@ const AppStateProvider: React.FC = ({ children }) => {
     getCoinPrices();
   }
 
+
+
+  const getTokenPriceByAddress = useCallback((address: string): number => {
+    if (!address || !coinPricesFromApi || coinPricesFromApi.length === 0) { return 0; }
+
+    const item = coinPricesFromApi.find(i => i.address === address);
+
+    return item ? (item.price || 0) : 0;
+
+  }, [coinPricesFromApi]);
+
+  const getTokenPriceBySymbol = useCallback((symbol: string): number => {
+    if (!symbol || !coinPrices) { return 0; }
+
+    return coinPrices && coinPrices[symbol]
+      ? coinPrices[symbol] as number
+      : 0;
+
+  }, [coinPrices]);
+
   // Fetch coin prices
   const getCoinPrices = useCallback(async () => {
 
@@ -876,7 +913,27 @@ const AppStateProvider: React.FC = ({ children }) => {
           pricesMap["WSOL"] = solPrice;
           pricesMap["wSOL"] = solPrice;
         }
-        consoleOut(`Price API returns ${Object.keys(pricesMap).length} items:`, pricesMap, 'blue');
+        const solIndex = newPrices.findIndex(p => p.symbol === "SOL");
+        const listCopy = JSON.parse(JSON.stringify(newPrices)) as TokenPrice[];
+        if (solIndex !== -1) {
+          listCopy[solIndex].address = NATIVE_SOL.address;
+        }
+        const sol = listCopy.find(p => p.symbol === "SOL");
+        if (sol) {
+          listCopy.push({
+            symbol: 'wSOL',
+            address: WRAPPED_SOL_MINT_ADDRESS,
+            price: sol.price,
+          });
+          listCopy.push({
+            symbol: 'WSOL',
+            address: WRAPPED_SOL_MINT_ADDRESS,
+            price: sol.price,
+          });
+        }
+        setCoinPricesFromApi(listCopy);
+        consoleOut('Price items:', newPrices.length, 'blue');
+        consoleOut('Mapped prices:', pricesMap, 'blue');
         setCoinPrices(pricesMap);
       } else {
         consoleOut('New prices list:', 'NO PRICES RETURNED!', 'red');
@@ -1139,6 +1196,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     customStreamDocked,
     highLightableStreamId,
     clearTxConfirmationContext,
+    getTokenByMintAddress,
     getStreamActivity
   ]);
 
@@ -1442,6 +1500,9 @@ const AppStateProvider: React.FC = ({ children }) => {
         refreshPrices,
         setEffectiveRate,
         setCoinPrices,
+        getTokenPriceByAddress,
+        getTokenPriceBySymbol,
+        getTokenByMintAddress,
         refreshTokenBalance,
         resetContractValues,
         resetStreamsState,

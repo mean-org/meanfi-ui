@@ -26,7 +26,6 @@ import {
   findATokenAddress,
   formatThousands,
   getAmountFromLamports,
-  getTokenByMintAddress,
   openLinkInNewTab,
   shortenAddress
 } from '../../utils/utils';
@@ -108,6 +107,7 @@ export const AccountsNewView = () => {
     showDepositOptionsModal,
     setAddAccountPanelOpen,
     setLastStreamsSummary,
+    getTokenByMintAddress,
     setTransactionStatus,
     setShouldLoadTokens,
     setDtailsPanelOpen,
@@ -348,9 +348,9 @@ export const AccountsNewView = () => {
 
     // let token: TokenInfo | null;
     // if (isSelectedAssetNativeAccount()) {
-    //   token = getTokenByMintAddress(WRAPPED_SOL_MINT_ADDRESS, splTokenList);
+    //   token = getTokenByMintAddress(WRAPPED_SOL_MINT_ADDRESS);
     // } else {
-    //   token = getTokenByMintAddress(selectedAsset.address, splTokenList);
+    //   token = getTokenByMintAddress(selectedAsset.address);
     // }
     // if (token) {
     //   setSelectedToken(token as TokenInfo);
@@ -366,16 +366,14 @@ export const AccountsNewView = () => {
     if (isSelectedAssetNativeAccount()) {
       token = getTokenByMintAddress(WRAPPED_SOL_MINT_ADDRESS);
     } else {
-      token = getTokenByMintAddress(selectedAsset.address, splTokenList);
+      token = getTokenByMintAddress(selectedAsset.address);
     }
     if (token) {
       setSelectedToken(token);
     }
     showSendAssetModal();
 
-  }, [
-    isSelectedAssetNativeAccount, selectedAsset, setSelectedToken, showSendAssetModal
-  ]);
+  }, [getTokenByMintAddress, isSelectedAssetNativeAccount, selectedAsset, setSelectedToken, showSendAssetModal]);
 
   // Copy address to clipboard
   const copyAddressToClipboard = useCallback((address: any) => {
@@ -620,7 +618,7 @@ export const AccountsNewView = () => {
       const freshStream = await ms.refreshStream(stream) as StreamInfo;
       if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
 
-      const asset = getTokenByMintAddress(freshStream.associatedToken as string, splTokenList);
+      const asset = getTokenByMintAddress(freshStream.associatedToken as string);
       const rate = asset ? getPricePerToken(asset as UserTokenAccount) : 0;
       if (isIncoming) {
         resume['totalNet'] = resume['totalNet'] + ((freshStream.escrowVestedAmount || 0) * rate);
@@ -649,7 +647,7 @@ export const AccountsNewView = () => {
       const freshStream = await msp.refreshStream(stream) as Stream;
       if (!freshStream || freshStream.status !== STREAM_STATUS.Running) { continue; }
 
-      const asset = getTokenByMintAddress(freshStream.associatedToken as string, splTokenList);
+      const asset = getTokenByMintAddress(freshStream.associatedToken as string);
       const pricePerToken = getPricePerToken(asset as UserTokenAccount);
       const rate = asset ? (pricePerToken ? pricePerToken : 1) : 1;
       const decimals = asset ? asset.decimals : 9;
@@ -678,7 +676,6 @@ export const AccountsNewView = () => {
     ms,
     msp,
     publicKey,
-    splTokenList,
     streamListv1,
     streamListv2,
     streamsSummary,
@@ -687,6 +684,7 @@ export const AccountsNewView = () => {
     loadingStreamsSummary,
     setLastStreamsSummary,
     setLoadingStreamsSummary,
+    getTokenByMintAddress,
     setStreamsSummary,
     getPricePerToken
   ]);
@@ -935,7 +933,7 @@ export const AccountsNewView = () => {
                 const tokenGroups = new Map<string, AccountTokenParsedInfo[]>();
                 accTks.forEach((ta) => {
                   const key = ta.parsedInfo.mint;
-                  const info = getTokenByMintAddress(key, splTokenList);
+                  const info = getTokenByMintAddress(key);
                   const updatedTa = Object.assign({}, ta, {
                     description: info ? `${info.name} (${info.symbol})` : ''
                   });
