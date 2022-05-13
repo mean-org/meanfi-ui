@@ -12,19 +12,19 @@ import { copyText } from '../../../../utils/ui';
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../../../constants';
 import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
 import { ResumeItem } from '../UI/ResumeItem';
+import { PublicKey } from '@solana/web3.js';
 
 export const SafeDetailsView = (props: {
   isSafeDetails: boolean;
   onDataToSafeView: any;
   proposalSelected?: any;
   selectedMultisig?: any;
+  onProposalApprove?: any;
 }) => {
   const { t } = useTranslation('common');
   const { Panel } = Collapse;
-  const { isSafeDetails, onDataToSafeView, selectedMultisig } = props;
-
+  const { isSafeDetails, onDataToSafeView, selectedMultisig, onProposalApprove } = props;
   const { id, signers, details, executedOn, status, proposer, operation, programId, accounts, data } = props.proposalSelected;
-
   const collapseHandler = (key: any) => {}
 
   // When back button is clicked, goes to Safe Info
@@ -237,11 +237,8 @@ export const SafeDetailsView = (props: {
 
   // Number of participants who have already approved the Tx
   const approvedSigners = signers.filter((s: any) => s === true).length;
-
   const neededSigners = approvedSigners && (selectedMultisig.threshold - approvedSigners);
-
   const expirationDate = details.expirationDate ? new Date(details.expirationDate).toDateString() : "";
-
   const executedOnDate = executedOn ? new Date(executedOn).toDateString() : "";
   
   return (
@@ -282,7 +279,7 @@ export const SafeDetailsView = (props: {
             type="ghost"
             size="small"
             className="thin-stroke"
-            onClick={() => {}}>
+            onClick={() => onProposalApprove({ transaction: { id: new PublicKey(id) } })}>
               <div className="btn-content">
                 <IconThumbsUp className="mean-svg-icons" />
                 Approve
