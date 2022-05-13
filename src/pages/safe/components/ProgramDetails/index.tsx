@@ -17,12 +17,17 @@ import { IconArrowBack } from "../../../../Icons";
 import { OperationType, TransactionStatus } from "../../../../models/enums";
 import { NATIVE_SOL_MINT } from "../../../../utils/ids";
 import { consoleOut, getTransactionStatusForLogs } from "../../../../utils/ui";
-import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume } from "../../../../utils/utils";
+import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress } from "../../../../utils/utils";
 import { ProgramAccounts } from "../../../../utils/accounts";
 import { customLogger } from "../../../..";
 import { CopyAddressExtLinkGroup } from '../../../../components/CopyAddressExtLinkGroup';
 import { TabsMean } from '../../../../components/TabsMean';
 import { Program, translateAddress } from '@project-serum/anchor';
+import { decodeIdlAccount, idlAddress } from '@project-serum/anchor/dist/cjs/idl';
+import { getProvider } from 'anchor-0-20-1/src/provider';
+import { utf8 } from '@project-serum/anchor/dist/cjs/utils/bytes';
+import { NATIVE_SOL } from '../../../../utils/tokens';
+import { CopyOutlined } from '@ant-design/icons';
 
 export const ProgramDetailsView = (props: {
   isProgramDetails: boolean;
@@ -768,6 +773,20 @@ export const ProgramDetailsView = (props: {
     />
   );
 
+  // Balance SOL
+  const [balanceSol, setBalanceSol] = useState<any>();
+  useEffect(() => {
+    if (!connection) { return; }
+
+    connection.getBalance(programSelected.pubkey)
+        .then(balance => {
+          setBalanceSol(formatThousands(balance / LAMPORTS_PER_SOL, NATIVE_SOL.decimals, NATIVE_SOL.decimals));
+        })
+        .catch(error => {
+          console.error(error);
+        })
+  }, [connection, programSelected.pubkey]);
+
   // Executable
   const [isExecutable, setIsExecutable] = useState<boolean>();
   useEffect(() => {
@@ -807,7 +826,7 @@ export const ProgramDetailsView = (props: {
     },
     {
       name: "Balance (SOL)",
-      value: "--"
+      value: balanceSol ? balanceSol : "--"
     },
     {
       name: "Executable",
@@ -823,11 +842,98 @@ export const ProgramDetailsView = (props: {
     }
   ];
 
+  // const programId = translateAddress(programSelected.pubkey);
+  // const provider = getProvider();
+  // (async () => {
+  //   const idlAddr = await idlAddress(programId);
+  //   const accountInfo = await provider.connection.getAccountInfo(idlAddr);
+  //   if (!accountInfo) {
+  //     return null;
+  //   }
+
+  //   const idlAccount = decodeIdlAccount(accountInfo.data.slice(8));
+  //   // const inflatedIdl = inflate(idlAccount.data);
+  //   return JSON.parse(utf8.decode(idlAccount.data));
+  // })();
+
+  // const idl = Program.fetchIdl(programId);
+  // console.log("idl", idl);
+
+  // let Users = ListA.filter((itemA)=> {
+  //   return !ListB.find((itemB)=> {
+  //     return item.id === itemP.id;
+  //   })
+  // })
+
+  // Get transactions
+  const [programSignatures, setProgramSignatures] = useState<any>();
+  const [programTransactions, setProgramTransactions] = useState<any>();
+  // const [sigs, setSigs] = useState<any>();
+  // const [slots, setSlots] = useState<any>();
+  // const [times, setTimes] = useState<any>();
+
+  useEffect(() => {
+    if (!connection) { return; }
+
+    connection.getConfirmedSignaturesForAddress2(programSelected.pubkey)
+        .then(signaturesData => {
+          const signatures = signaturesData.map((data) => data.signature)
+          setProgramSignatures(signatures);
+        })
+        .catch(error => {
+          console.error(error);
+        })
+  }, [connection, programSelected.pubkey]);
+
+  useEffect(() => {
+    if (!connection || !programSignatures) { return; }
+
+    connection.getTransactions(programSignatures)
+        .then(transactions => {
+          setProgramTransactions(transactions);
+          consoleOut("program transactions", transactions, 'blue');
+
+          // const txSigs = transactions.map((tx: any) => tx.transaction.signatures.slice(0, 1).shift());
+          // setSigs(txSigs);
+
+          // const txSlots = transactions.map((tx: any) => tx.slot);
+          // setSlots(txSlots);
+
+          // const txTimes = transactions.map((tx: any) => tx.blockTime);
+          // setTimes(txTimes);
+
+        })
+        .catch(error => {
+          console.error(error);
+        })
+  }, [connection, programSignatures]);
+
+  const renderTransactions = (
+    <>
+      <div className="item-list-header compact mt-2">
+        <Row gutter={[8, 8]} className="d-flex header-row pb-2">
+          <Col span={14}  className="std-table-cell pr-1">Signatures</Col>
+          <Col span={5} className="std-table-cell pr-1">Slots</Col>
+          <Col span={5} className="std-table-cell pr-1">Time</Col>
+        </Row>
+      </div>
+      {programTransactions && (
+        programTransactions.map((tx: any) => (
+          <Row gutter={[8, 8]} className="item-list-body compact simplelink hover-list w-100" key={tx.blockTime}>
+            <Col span={14} className="std-table-cell pr-1">{tx.transaction.signatures.slice(0, 1).shift()}</Col>
+            <Col span={5} className="std-table-cell pr-1">{formatThousands(tx.slot)}</Col>
+            <Col span={5} className="std-table-cell pr-1">{tx.blockTime}</Col>
+          </Row>
+        ))
+      )}
+    </>
+  )
+
   // Tabs
   const tabs = [
     {
       name: "Transactions",
-      render: "Transactions"
+      render: renderTransactions
     }, 
     {
       name: "Anchor IDL",
