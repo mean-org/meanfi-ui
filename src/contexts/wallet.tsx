@@ -16,7 +16,7 @@ import { DownOutlined, UpOutlined } from "@ant-design/icons";
 import { segmentAnalytics } from "../App";
 import { AppUsageEvent } from "../utils/segment-service";
 import { openNotification } from "../components/Notifications";
-import { consoleOut } from "../utils/ui";
+import { consoleOut, isProd } from "../utils/ui";
 import { Coin98WalletAdapter, Coin98WalletName, ExodusWalletAdapter, ExodusWalletName, LedgerWalletAdapter, LedgerWalletName, MathWalletAdapter, MathWalletName, PhantomWalletAdapter, PhantomWalletName, SlopeWalletAdapter, SlopeWalletName, SolflareWalletAdapter, SolflareWalletName, SolletExtensionWalletName, SolletWalletAdapter, SolletWalletName, SolongWalletAdapter, SolongWalletName } from "@solana/wallet-adapter-wallets";
 
 export const WALLET_PROVIDERS = [
@@ -28,7 +28,9 @@ export const WALLET_PROVIDERS = [
     adapterParams: undefined,
     hideOnDesktop: false,
     hideOnMobile: false,
-    isWebWallet: false
+    isWebWallet: false,
+    underDevelopment: false,
+    hideIfUnavailable: false
   },
   {
     name: ExodusWalletName,
@@ -38,7 +40,9 @@ export const WALLET_PROVIDERS = [
     adapterParams: undefined,
     hideOnDesktop: false,
     hideOnMobile: false,
-    isWebWallet: false
+    isWebWallet: false,
+    underDevelopment: true,
+    hideIfUnavailable: false
   },
   {
     name: SolflareWalletName,
@@ -48,7 +52,9 @@ export const WALLET_PROVIDERS = [
     adapterParams: undefined,
     hideOnDesktop: isDesktop && !isSafari ? false : true,
     hideOnMobile: false,
-    isWebWallet: false
+    isWebWallet: false,
+    underDevelopment: false,
+    hideIfUnavailable: false
   },
   // These ones go into the [more] CTA
   {
@@ -59,7 +65,9 @@ export const WALLET_PROVIDERS = [
     adapterParams: undefined,
     hideOnDesktop: false,
     hideOnMobile: false,
-    isWebWallet: false
+    isWebWallet: false,
+    underDevelopment: false,
+    hideIfUnavailable: true
   },
   {
     name: Coin98WalletName,
@@ -69,7 +77,9 @@ export const WALLET_PROVIDERS = [
     adapterParams: undefined,
     hideOnDesktop: false,
     hideOnMobile: false,
-    isWebWallet: false
+    isWebWallet: false,
+    underDevelopment: false,
+    hideIfUnavailable: true
   },
   {
     name: SolongWalletName,
@@ -79,7 +89,9 @@ export const WALLET_PROVIDERS = [
     adapterParams: undefined,
     hideOnDesktop: false,
     hideOnMobile: true,
-    isWebWallet: false
+    isWebWallet: false,
+    underDevelopment: false,
+    hideIfUnavailable: true
   },
   {
     name: SolletWalletName,
@@ -89,7 +101,9 @@ export const WALLET_PROVIDERS = [
     adapterParams: { provider: 'https://www.sollet.io'},
     hideOnDesktop: false,
     hideOnMobile: false,
-    isWebWallet: true
+    isWebWallet: true,
+    underDevelopment: false,
+    hideIfUnavailable: true
   },
   {
     name: SolletExtensionWalletName,
@@ -99,7 +113,9 @@ export const WALLET_PROVIDERS = [
     adapterParams: undefined,
     hideOnDesktop: isSafari ? true : false,
     hideOnMobile: true,
-    isWebWallet: false
+    isWebWallet: false,
+    underDevelopment: false,
+    hideIfUnavailable: true
   },
   {
     name: MathWalletName,
@@ -109,7 +125,9 @@ export const WALLET_PROVIDERS = [
     adapterParams: undefined,
     hideOnDesktop: true,
     hideOnMobile: false,
-    isWebWallet: false
+    isWebWallet: false,
+    underDevelopment: false,
+    hideIfUnavailable: true
   },
   {
     name: LedgerWalletName,
@@ -118,7 +136,9 @@ export const WALLET_PROVIDERS = [
     adapter: LedgerWalletAdapter,
     hideOnDesktop: true,
     hideOnMobile: true,
-    isWebWallet: false
+    isWebWallet: false,
+    underDevelopment: false,
+    hideIfUnavailable: true
   }
 ];
 
@@ -133,25 +153,27 @@ const WC = {
   isWebWallet: false
 };
 
-/*
 const getIsProviderInstalled = (provider: any): boolean => {
   if (provider.adapter) {
     switch (provider.name) {
-      case WalletName.Phantom:
+      case PhantomWalletName:
         return !!(window as any).solana?.isPhantom;
-      case WalletName.Slope:
-        return !!(window as any).Slope;
-      case WalletName.SolletExtension:
-        return !!(window as any).sollet;
-      case WalletName.Solong:
+      case ExodusWalletName:
+        return !!(window as any).exodus?.solana;
+      case SlopeWalletName:
+        return (!!(window as any).Slope && typeof !!(window as any).Slope === 'function') || !!(window as any).slopeApp;
+      case SolletWalletName:
+      case SolletExtensionWalletName:
+        return !!(window as any).sollet && typeof (window as any).sollet?.postMessage === 'function';
+      case SolongWalletName:
         return !!(window as any).solong;
-      case WalletName.MathWallet:
+      case MathWalletName:
         return !!(window as any).solana?.isMathWallet;
-      case WalletName.Coin98:
-        return !!(window as any).coin98;
-      case WalletName.Solflare:
-        return !!(window as any).solflare?.isSolflare;
-      case WalletName.WalletConnect:
+      case Coin98WalletName:
+        return !!(window as any).coin98?.sol;
+      case SolflareWalletName:
+        return !!(window as any).solflare?.isSolflare || !!(window as any).SolflareApp
+      case LedgerWalletName:
         return true;
       default:
         return false;
@@ -159,7 +181,6 @@ const getIsProviderInstalled = (provider: any): boolean => {
   }
   return true;
 }
-*/
 
 const WalletContext = React.createContext<{
   wallet: WalletAdapter | undefined;
@@ -289,7 +310,14 @@ export function WalletProvider({ children = null as any }) {
         width={400}>
         <div className={`wallet-providers ${walletListExpanded ? 'expanded' : ''}`}>
           {WALLET_PROVIDERS.map((item, index) => {
-            // const isInstalled = getIsProviderInstalled(item);
+
+            const isInstalled = getIsProviderInstalled(item);
+
+            // Skip items that won't show up
+            if ((item.underDevelopment && isProd()) || (item.hideIfUnavailable && !isInstalled)) {
+              return null;
+            }
+
             const onClick = function () {
               if (item.name === provider?.name && connected) {
                 close();
