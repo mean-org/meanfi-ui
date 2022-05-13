@@ -20,7 +20,6 @@ import { consoleOut, getTransactionStatusForLogs } from "../../../../utils/ui";
 import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress } from "../../../../utils/utils";
 import { ProgramAccounts } from "../../../../utils/accounts";
 import { customLogger } from "../../../..";
-import { CopyAddressExtLinkGroup } from '../../../../components/CopyAddressExtLinkGroup';
 import { TabsMean } from '../../../../components/TabsMean';
 import { Program, translateAddress } from '@project-serum/anchor';
 import { decodeIdlAccount, idlAddress } from '@project-serum/anchor/dist/cjs/idl';
@@ -28,6 +27,7 @@ import { getProvider } from 'anchor-0-20-1/src/provider';
 import { utf8 } from '@project-serum/anchor/dist/cjs/utils/bytes';
 import { NATIVE_SOL } from '../../../../utils/tokens';
 import { CopyOutlined } from '@ant-design/icons';
+import { CopyExtLinkGroup } from '../../../../components/CopyExtLinkGroup';
 
 export const ProgramDetailsView = (props: {
   isProgramDetails: boolean;
@@ -767,9 +767,10 @@ export const ProgramDetailsView = (props: {
 
   // Program Address
   const renderProgramAddress = (
-    <CopyAddressExtLinkGroup
-      address={programSelected.pubkey.toBase58()}
+    <CopyExtLinkGroup
+      content={programSelected.pubkey.toBase58()}
       number={4}
+      externalLink={true}
     />
   );
 
@@ -809,9 +810,10 @@ export const ProgramDetailsView = (props: {
 
   // Upgrade Authority
   const renderUpgradeAuthority = (
-    <CopyAddressExtLinkGroup
-      address={programSelected.upgradeAuthority.toBase58()}
+    <CopyExtLinkGroup
+      content={programSelected.upgradeAuthority.toBase58()}
       number={4}
+      externalLink={true}
     />
   );  
 
@@ -842,35 +844,9 @@ export const ProgramDetailsView = (props: {
     }
   ];
 
-  // const programId = translateAddress(programSelected.pubkey);
-  // const provider = getProvider();
-  // (async () => {
-  //   const idlAddr = await idlAddress(programId);
-  //   const accountInfo = await provider.connection.getAccountInfo(idlAddr);
-  //   if (!accountInfo) {
-  //     return null;
-  //   }
-
-  //   const idlAccount = decodeIdlAccount(accountInfo.data.slice(8));
-  //   // const inflatedIdl = inflate(idlAccount.data);
-  //   return JSON.parse(utf8.decode(idlAccount.data));
-  // })();
-
-  // const idl = Program.fetchIdl(programId);
-  // console.log("idl", idl);
-
-  // let Users = ListA.filter((itemA)=> {
-  //   return !ListB.find((itemB)=> {
-  //     return item.id === itemP.id;
-  //   })
-  // })
-
   // Get transactions
   const [programSignatures, setProgramSignatures] = useState<any>();
   const [programTransactions, setProgramTransactions] = useState<any>();
-  // const [sigs, setSigs] = useState<any>();
-  // const [slots, setSlots] = useState<any>();
-  // const [times, setTimes] = useState<any>();
 
   useEffect(() => {
     if (!connection) { return; }
@@ -892,16 +868,6 @@ export const ProgramDetailsView = (props: {
         .then(transactions => {
           setProgramTransactions(transactions);
           consoleOut("program transactions", transactions, 'blue');
-
-          // const txSigs = transactions.map((tx: any) => tx.transaction.signatures.slice(0, 1).shift());
-          // setSigs(txSigs);
-
-          // const txSlots = transactions.map((tx: any) => tx.slot);
-          // setSlots(txSlots);
-
-          // const txTimes = transactions.map((tx: any) => tx.blockTime);
-          // setTimes(txTimes);
-
         })
         .catch(error => {
           console.error(error);
@@ -919,9 +885,23 @@ export const ProgramDetailsView = (props: {
       </div>
       {programTransactions && (
         programTransactions.map((tx: any) => (
-          <Row gutter={[8, 8]} className="item-list-body compact simplelink hover-list w-100" key={tx.blockTime}>
-            <Col span={14} className="std-table-cell pr-1">{tx.transaction.signatures.slice(0, 1).shift()}</Col>
-            <Col span={5} className="std-table-cell pr-1">{formatThousands(tx.slot)}</Col>
+          <Row gutter={[8, 8]} className="item-list-body compact hover-list w-100" key={tx.blockTime}>
+            <Col span={14} className="std-table-cell pr-1 simplelink signature">
+              <CopyExtLinkGroup 
+                content={tx.transaction.signatures.slice(0, 1).shift()}
+                externalLink={true}
+                className="text-truncate"
+                message="Signature"
+                isTx={true}
+              />
+            </Col>
+            <Col span={5} className="std-table-cell pr-1 simplelink">
+              <CopyExtLinkGroup 
+                content={formatThousands(tx.slot)}
+                externalLink={false}
+                message="Slot"
+              />
+            </Col>
             <Col span={5} className="std-table-cell pr-1">{tx.blockTime}</Col>
           </Row>
         ))

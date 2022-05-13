@@ -3,7 +3,7 @@ import { Button, Col, Dropdown, Menu, Row, Tooltip } from "antd";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { CopyAddressExtLinkGroup } from "../../../../../components/CopyAddressExtLinkGroup";
+import { CopyExtLinkGroup } from "../../../../../components/CopyExtLinkGroup";
 import { MultisigOwnersView } from "../../../../../components/MultisigOwnersView";
 import { TabsMean } from "../../../../../components/TabsMean";
 import { AppStateContext } from "../../../../../contexts/appstate";
@@ -156,9 +156,10 @@ export const SafeInfo = (props: {
     
   // Deposit Address
   const renderDepositAddress = (
-    <CopyAddressExtLinkGroup
-      address={selectedMultisig.authority.toBase58()}
+    <CopyExtLinkGroup
+      content={selectedMultisig.authority.toBase58()}
       number={4}
+      externalLink={true}
     />
   );
 
