@@ -28,6 +28,7 @@ import { utf8 } from '@project-serum/anchor/dist/cjs/utils/bytes';
 import { NATIVE_SOL } from '../../../../utils/tokens';
 import { CopyOutlined } from '@ant-design/icons';
 import { CopyExtLinkGroup } from '../../../../components/CopyExtLinkGroup';
+import moment from 'moment';
 
 export const ProgramDetailsView = (props: {
   isProgramDetails: boolean;
@@ -774,30 +775,6 @@ export const ProgramDetailsView = (props: {
     />
   );
 
-  // Balance SOL
-  const [balanceSol, setBalanceSol] = useState<any>();
-  useEffect(() => {
-    if (!connection) { return; }
-
-    connection.getBalance(programSelected.pubkey)
-        .then(balance => {
-          setBalanceSol(formatThousands(balance / LAMPORTS_PER_SOL, NATIVE_SOL.decimals, NATIVE_SOL.decimals));
-        })
-        .catch(error => {
-          console.error(error);
-        })
-  }, [connection, programSelected.pubkey]);
-
-  // Executable
-  const [isExecutable, setIsExecutable] = useState<boolean>();
-  useEffect(() => {
-    programSelected && programSelected.executable.toBase58() ? (
-      setIsExecutable(true)
-    ) : (
-      setIsExecutable(false)
-    )
-  }, [programSelected]);
-
   // Upgradeable
   const [isUpgradeable, setIsUpgradeable] = useState<boolean>();
   useEffect(() => {
@@ -815,7 +792,31 @@ export const ProgramDetailsView = (props: {
       number={4}
       externalLink={true}
     />
-  );  
+  );
+
+  // Executable
+  const [isExecutable, setIsExecutable] = useState<boolean>();
+  useEffect(() => {
+    programSelected && programSelected.executable.toBase58() ? (
+      setIsExecutable(true)
+    ) : (
+      setIsExecutable(false)
+    )
+  }, [programSelected]);
+
+  // Balance SOL
+  const [balanceSol, setBalanceSol] = useState<any>();
+  useEffect(() => {
+    if (!connection) { return; }
+
+    connection.getBalance(programSelected.pubkey)
+        .then(balance => {
+          setBalanceSol(formatThousands(balance / LAMPORTS_PER_SOL, NATIVE_SOL.decimals, NATIVE_SOL.decimals));
+        })
+        .catch(error => {
+          console.error(error);
+        })
+  }, [connection, programSelected.pubkey]);
 
   const infoProgramData = [
     {
@@ -827,21 +828,21 @@ export const ProgramDetailsView = (props: {
       value: renderProgramAddress ? renderProgramAddress : "--"
     },
     {
-      name: "Balance (SOL)",
-      value: balanceSol ? balanceSol : "--"
-    },
-    {
-      name: "Executable",
-      value: isExecutable ? "Yes" : "no"
-    },
-    {
       name: "Upgradeable",
       value: isUpgradeable ? "Yes" : "no"
     },
     {
       name: "Upgrade authority",
       value: renderUpgradeAuthority ? renderUpgradeAuthority : "--"
-    }
+    },
+    {
+      name: "Executable",
+      value: isExecutable ? "Yes" : "no"
+    },
+    {
+      name: "Balance (SOL)",
+      value: balanceSol ? balanceSol : "--"
+    },
   ];
 
   // Get transactions
@@ -876,16 +877,16 @@ export const ProgramDetailsView = (props: {
 
   const renderTransactions = (
     <>
-      <div className="item-list-header compact mt-2">
+      <div className="item-list-header compact mt-2 mr-1">
         <Row gutter={[8, 8]} className="d-flex header-row pb-2">
           <Col span={14}  className="std-table-cell pr-1">Signatures</Col>
-          <Col span={5} className="std-table-cell pr-1">Slots</Col>
-          <Col span={5} className="std-table-cell pr-1">Time</Col>
+          <Col span={5} className="std-table-cell pl-3 pr-1">Slots</Col>
+          <Col span={5} className="std-table-cell pl-3 pr-1">Time</Col>
         </Row>
       </div>
       {programTransactions && (
         programTransactions.map((tx: any) => (
-          <Row gutter={[8, 8]} className="item-list-body compact hover-list w-100" key={tx.blockTime}>
+          <Row gutter={[8, 8]} className="item-list-body compact hover-list w-100 pt-1" key={tx.blockTime}>
             <Col span={14} className="std-table-cell pr-1 simplelink signature">
               <CopyExtLinkGroup 
                 content={tx.transaction.signatures.slice(0, 1).shift()}
@@ -899,10 +900,13 @@ export const ProgramDetailsView = (props: {
               <CopyExtLinkGroup 
                 content={formatThousands(tx.slot)}
                 externalLink={false}
+                className="text-truncate"
                 message="Slot"
               />
             </Col>
-            <Col span={5} className="std-table-cell pr-1">{tx.blockTime}</Col>
+            <Col span={5} className="std-table-cell pr-1">
+              {moment.unix(tx.blockTime).fromNow()}
+            </Col>
           </Row>
         ))
       )}
@@ -944,7 +948,7 @@ export const ProgramDetailsView = (props: {
             </Col>
           ))}
         </Row>
-        <Row gutter={[8, 8]} className="safe-btns-container mb-1">
+        <Row gutter={[8, 8]} className="safe-btns-container mt-2 mb-1">
           <Col xs={20} sm={18} md={20} lg={18} className="btn-group">
             <Button
               type="ghost"

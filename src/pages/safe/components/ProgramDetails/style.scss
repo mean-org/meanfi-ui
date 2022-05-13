@@ -11,6 +11,10 @@
     margin-top: -0.25em !important;
     margin-bottom: -0.25em !important;
   }
+  .header-row {
+    border-top: 1px solid var(--color-secondary-alpha-05);
+    padding-top: 0.5em;
+  }
 }
 .safe-btns-container {
   .ant-col.ant-col-xs-20.ant-col-sm-18.ant-col-md-20.ant-col-lg-18 {
