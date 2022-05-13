@@ -156,7 +156,7 @@ export const SafeMeanInfo = (props: {
 
     if (!connection || !upgradeAuthority) { return undefined; }
 
-    console.log(`Searching for programs with upgrade authority: ${upgradeAuthority}`);
+    consoleOut(`Searching for programs with upgrade authority: ${upgradeAuthority}`);
 
     // 1. Fetch executable data account having upgradeAuthority as upgrade authority
     const BPFLoaderUpgradeab1e = new PublicKey("BPFLoaderUpgradeab1e11111111111111111111111");
@@ -323,14 +323,14 @@ export const SafeMeanInfo = (props: {
       name: "Proposals",
       render: renderListOfProposals
     }, 
-    {
-      name: "Settings",
-      render: renderSettings
-    }, 
-    {
-      name: "Activity",
-      render: renderActivities
-    }, 
+    // {
+    //   name: "Settings",
+    //   render: renderSettings
+    // }, 
+    // {
+    //   name: "Activity",
+    //   render: renderActivities
+    // }, 
     {
       name: "Programs",
       render: renderPrograms

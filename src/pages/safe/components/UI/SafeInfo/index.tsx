@@ -1,17 +1,18 @@
-import { Connection } from "@solana/web3.js";
+import { Connection, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { Button, Col, Dropdown, Menu, Row, Tooltip } from "antd";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import { CopyAddressExtLinkGroup } from "../../../../../components/CopyAddressExtLinkGroup";
 import { MultisigOwnersView } from "../../../../../components/MultisigOwnersView";
-import { openNotification } from "../../../../../components/Notifications";
 import { TabsMean } from "../../../../../components/TabsMean";
-import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "../../../../../constants";
 import { AppStateContext } from "../../../../../contexts/appstate";
-import { getSolanaExplorerClusterParam, useConnectionConfig } from "../../../../../contexts/connection";
-import { IconAdd, IconEdit, IconEllipsisVertical, IconLink, IconShowAll, IconTrash } from "../../../../../Icons";
+import { useConnectionConfig } from "../../../../../contexts/connection";
+import { IconAdd, IconEdit, IconEllipsisVertical, IconShowAll, IconTrash } from "../../../../../Icons";
+import { UserTokenAccount } from "../../../../../models/transactions";
+import { NATIVE_SOL } from "../../../../../utils/tokens";
 
-import { consoleOut, copyText, isDev, isLocal, toUsCurrency } from "../../../../../utils/ui";
+import { consoleOut, isDev, isLocal, toUsCurrency } from "../../../../../utils/ui";
 import { fetchAccountTokens, getTokenByMintAddress, shortenAddress } from "../../../../../utils/utils";
 
 export const SafeInfo = (props: {
@@ -49,21 +50,6 @@ export const SafeInfo = (props: {
   const isUnderDevelopment = () => {
     return isLocal() || (isDev() && isWhitelisted) ? true : false;
   }
-
-  // Copy address to clipboard
-  const copyAddressToClipboard = useCallback((address: any) => {
-    if (copyText(address.toString())) {
-      openNotification({
-        description: t('notifications.account-address-copied-message'),
-        type: "info"
-      });
-    } else {
-      openNotification({
-        description: t('notifications.account-address-not-copied-message'),
-        type: "error"
-      });
-    }
-  },[t])
   
   // Safe Name
   useEffect(() => {
@@ -96,13 +82,13 @@ export const SafeInfo = (props: {
   // Safe Balance (show amount of assets)
   const [assetsAmout, setAssetsAmount] = useState<string>();
 
-  const getPricePerTokenAddress = useCallback((address: string): number => {
-    if (!address || !coinPrices) { return 0; }
+  const getPricePerToken = useCallback((token: UserTokenAccount): number => {
+    if (!token || !coinPrices) { return 0; }
 
-    return coinPrices && coinPrices[address]
-      ? coinPrices[address]
+    return coinPrices && coinPrices[token.symbol]
+      ? coinPrices[token.symbol]
       : 0;
-  }, [coinPrices]);
+  }, [coinPrices])
 
   useEffect(() => {
     (selectedMultisig) && (
@@ -116,45 +102,53 @@ export const SafeInfo = (props: {
 
   useEffect(() => {
     if (!connection || !selectedMultisig) { return; }
+    
+    let usdValue = 0;
 
-    fetchAccountTokens(connection, selectedMultisig.authority)
-      .then(accTks => {
-
-        if (accTks) {
-          let usdValue = 0;
-          const cumulative = new Array<any>();
-
-          accTks.forEach(item => {
-            const token = getTokenByMintAddress(item.parsedInfo.mint, splTokenList);
-
-            if (token) {
-              const rate = getPricePerTokenAddress(token.address);
-              const balance = item.parsedInfo.tokenAmount.uiAmount || 0;
-
-              usdValue += balance * rate;
-              cumulative.push({
-                symbol: token.symbol,
-                address: item.parsedInfo.mint,
-                balance: balance,
-                usdValue: balance * rate
-              })
-            } 
-          });
-
-          setTotalSafeBalance(usdValue);
-
-          console.table(cumulative);
-        } else {
-          consoleOut("No tokens founds", "", "");
-        }
-
-      }).catch(error => {
-        console.error(error);
-      });
+    // Fetch SOL balance.
+    (async () => {
+      const solBalance = await connection.getBalance(selectedMultisig.authority);
+  
+      usdValue = (solBalance / LAMPORTS_PER_SOL) * getPricePerToken(NATIVE_SOL);
+  
+      fetchAccountTokens(connection, selectedMultisig.authority)
+        .then(accTks => {
+  
+          if (accTks) {
+            const cumulative = new Array<any>();
+  
+            accTks.forEach(item => {
+              const token = getTokenByMintAddress(item.parsedInfo.mint, splTokenList);
+  
+              if (token) {
+                const rate = getPricePerToken(token);
+                const balance = item.parsedInfo.tokenAmount.uiAmount || 0;
+  
+                usdValue += balance * rate;
+                cumulative.push({
+                  symbol: token.symbol,
+                  address: item.parsedInfo.mint,
+                  balance: balance,
+                  usdValue: balance * rate
+                })
+              } 
+            });
+  
+            setTotalSafeBalance(usdValue);
+  
+            console.table(cumulative);
+          } else {
+            consoleOut("No tokens founds", "", "");
+          }
+  
+        }).catch(error => {
+          console.error(error);
+        });
+    })();
 
       
   }, [
-    getPricePerTokenAddress,
+    getPricePerToken,
     selectedMultisig,
     splTokenList,
     connection
@@ -162,17 +156,10 @@ export const SafeInfo = (props: {
     
   // Deposit Address
   const renderDepositAddress = (
-    <div className="d-flex align-items-start">
-      <div onClick={() => copyAddressToClipboard(selectedMultisig.authority)} className="simplelink underline-on-hover">{shortenAddress(selectedMultisig.authority.toBase58(), 4)}</div>
-      <span className="icon-button-container">
-        <a
-          target="_blank"
-          rel="noopener noreferrer"
-          href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${selectedMultisig.authority.toBase58()}${getSolanaExplorerClusterParam()}`}>
-          <IconLink className="mean-svg-icons" />
-        </a>
-      </span>
-    </div>
+    <CopyAddressExtLinkGroup
+      address={selectedMultisig.authority.toBase58()}
+      number={4}
+    />
   );
 
   const infoSafeData = [
@@ -196,7 +183,6 @@ export const SafeInfo = (props: {
 
   // View assets
   const onGoToAccounts = () => {
-    // navigate(`/accounts?cat=account&address=${selectedMultisig.authority.toBase58()}`);
     navigate(`/accounts?address=${selectedMultisig.authority.toBase58()}&cat=user-assets`);
   }
 
@@ -256,6 +242,7 @@ export const SafeInfo = (props: {
               </div>
           </Button>
         </Col>
+        
         <Col xs={4} sm={6} md={4} lg={6}>
           <Dropdown
             overlay={menu}

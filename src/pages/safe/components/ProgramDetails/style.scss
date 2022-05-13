@@ -1,3 +1,11 @@
+.program-details-container {
+  button {
+    min-width: 11em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+}
 .safe-btns-container {
   .ant-col.ant-col-xs-20.ant-col-sm-18.ant-col-md-20.ant-col-lg-18 {
     flex-wrap: wrap !important;

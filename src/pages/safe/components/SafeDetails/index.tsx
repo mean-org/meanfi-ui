@@ -231,10 +231,10 @@ export const SafeDetailsView = (props: {
       name: "Instructions",
       render: renderInstructions
     }, 
-    {
-      name: "Activity",
-      render: renderActivities
-    }
+    // {
+    //   name: "Activity",
+    //   render: renderActivities
+    // }
   ];
 
   // Number of participants who have already approved the Tx
