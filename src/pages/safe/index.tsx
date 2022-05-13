@@ -48,7 +48,7 @@ import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { IconEllipsisVertical, IconSafe, IconUserGroup, IconUsers } from '../../Icons';
 import { useNativeAccount } from '../../contexts/accounts';
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
-import { AccountLayout, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { AccountLayout, Token, TOKEN_PROGRAM_ID, u64 } from '@solana/spl-token';
 import { useNavigate } from 'react-router-dom';
 import {
   MultisigParticipant,
@@ -66,7 +66,7 @@ import { MultisigCreateModal } from '../../components/MultisigCreateModal';
 import './style.scss';
 
 // MULTISIG
-import { AnchorProvider, BN, Idl, Program } from "@project-serum/anchor";
+import { AnchorProvider, BN, BorshInstructionCoder, Idl, Program, utils } from "@project-serum/anchor";
 import { MultisigEditModal } from '../../components/MultisigEditModal';
 import { MSP, Treasury } from '@mean-dao/msp';
 import { customLogger } from '../..';
@@ -82,6 +82,7 @@ import SerumIDL from '../../models/serum-multisig-idl';
 import { AppsProvider, NETWORK, App, UiInstruction, AppConfig, UiElement, DataElement, Arg } from '@mean-dao/mean-multisig-apps';
 import { SafeSerumInfoView } from './components/SafeSerumInfo';
 import { MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigInfo } from '@mean-dao/mean-multisig-sdk';
+import { MethodsBuilder } from '@project-serum/anchor/dist/cjs/program/namespace/methods';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -1350,7 +1351,7 @@ export const SafeView = () => {
 
       const provider = new AnchorProvider(connection, anchorWallet, opts);
 
-      return new Program(uiConfig.definition, programId, provider);
+      return new Program(uiConfig.definition as Idl, programId, provider);
     }
 
     const program = createAnchorProgram();
@@ -1359,6 +1360,7 @@ export const SafeView = () => {
     const accElements = uiInstruction.uiElements
       .filter((elem: UiElement) => elem.dataElement && "isSigner" in elem.dataElement);
     const accounts: any = {};
+    accElements.sort((a: any, b: any) => { return (a.index - b.index) });
     for (const accItem of accElements) {
       const accElement = accItem.dataElement as any;
       accounts[accItem.name] = accElement.dataValue;
@@ -1366,17 +1368,19 @@ export const SafeView = () => {
     // ARGS
     const argElements = uiInstruction.uiElements
       .filter((elem: UiElement) => elem.dataElement && !("isSigner" in elem.dataElement));
-    console.log('argElements', argElements);
     const args = argElements.map((elem: UiElement) => {
       const argElement = elem.dataElement as Arg;
       return argElement.dataValue;
     });
-    args.sort((a, b) => { return (a.index - b.index); });
-    console.log('args', args);
-    return await method(...args)
+    args.sort((a: any, b: any) => { return (a.index - b.index); });
+    // console.log('args', args);
+    // const me = method(...args);
+    // console.log('me', me);
+    const ix = await method(...args)
       .accounts(accounts)
       .instruction();
-      
+
+    return ix;    
   },[
     connection, 
     connectionConfig, 
@@ -1408,19 +1412,40 @@ export const SafeView = () => {
       );
 
       if (!proposalIx) {
-        throw new Error("Invalid proposal instruction");
+        throw new Error("Invalid proposal instruction.");
       }
+
+      // console.log('proposal program ID', proposalIx.programId.toBase58());
+      // console.log('proposal account metas', proposalIx.keys.map(k => k.pubkey.toBase58()));
+      // console.log('proposal data', proposalIx.data);
+      
+      // const coder = new BorshInstructionCoder(data.config.definition as Idl);
+      // const decodedIx = coder.decode(proposalIx.data, "base58");
+      // console.log('proposal data', decodedIx);
+      // if (!decodedIx) { return null; }
+      // const propData = {
+      //   tag: data.config.uiInstructions.indexOf((uiIx: any) => decodedIx && uiIx.name === decodedIx.name),
+      //   amount: (decodedIx.data as any).value
+      // }
+
+      // if (!decodedIx) { return null; }
+
+      // const ixTag = data.config.definition.instructions.indexOf((uiIx: any) => uiIx.name === decodedIx.name) as number;
+      // const tagBuffer = Buffer.from(Uint8Array.of(...[ixTag]));
+      // const bytesBufffer = Object.entries(decodedIx.data).map((o: any) => Buffer.from(o['key']))
+      // const dataBuffer = [...[tagBuffer], ...bytesBufffer];
+      // console.log('data buffer', dataBuffer);
       
       const tx = await multisigClient.createTransaction(
         publicKey,
         data.title,
         data.description,
         new Date(data.expires),
-        OperationType.EditMultisig,
+        OperationType.TransferTokens,
         selectedMultisig.id,
         proposalIx.programId,
         proposalIx.keys,
-        proposalIx.data
+        proposalIx.data // Buffer.from(dataBuffer.toString())
       );
 
       return tx;
@@ -1692,6 +1717,7 @@ export const SafeView = () => {
     } else if (item.status === MultisigTransactionStatus.Voided) {
       onExecuteCancelTx({ transaction: item })
     }
+    setMultisigActionTransactionModalVisible(false);
   };
 
   const onCloseMultisigActionModal = () => {
@@ -1999,13 +2025,11 @@ export const SafeView = () => {
         });
 
         // Create a transaction
-        const payload = { transaction: data.transaction };  
-        consoleOut('data:', payload);
-
+        consoleOut('data:', data);
         // Log input data
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
-          inputs: payload
+          inputs: data
         });
 
         transactionLog.push({
@@ -2040,7 +2064,7 @@ export const SafeView = () => {
           return false;
         }
 
-        return await finishTx(payload)
+        return await finishTx(data)
           .then(value => {
             if (!value) { return false; }
             consoleOut('multisig returned transaction:', value);
@@ -2876,18 +2900,23 @@ export const SafeView = () => {
       multisigClient
         .getMultisigTransactions(selectedMultisig.id, publicKey)
         .then((txs: any) => {
-          consoleOut('selected multisig txs', txs, 'blue');
-          if (!isProd()) {
-            const debugTable: any[] = [];
-            txs.forEach((item: any) => debugTable.push({
-              operation: OperationType[item.operation],
-              approved: item.didSigned,
-              executed: item.executedOn ? true : false,
-              proposer: item.proposer ? shortenAddress(item.proposer.toBase58(), 6) : '-',
-              status: MultisigTransactionStatus[item.status]
-            }));
-            console.table(debugTable);
+          // consoleOut('selected multisig txs', txs, 'blue');
+          for (const tx of txs) {
+            consoleOut('selected multisig txs accs', tx.programId.toBase58(), 'blue');
+            consoleOut('selected multisig txs accs', tx.accounts.map((a: any) => a.pubkey.toBase58()), 'blue');
+            // consoleOut('selected multisig txs accs', tx.data.toNumber(), 'blue');
           }
+          // if (!isProd()) {
+          //   const debugTable: any[] = [];
+          //   txs.forEach((item: any) => debugTable.push({
+          //     operation: OperationType[item.operation],
+          //     approved: item.didSigned,
+          //     executed: item.executedOn ? true : false,
+          //     proposer: item.proposer ? shortenAddress(item.proposer.toBase58(), 6) : '-',
+          //     status: MultisigTransactionStatus[item.status]
+          //   }));
+          //   console.table(debugTable);
+          // }
           setMultisigTxs(txs);
         })
         .catch((err: any) => {
@@ -4487,6 +4516,7 @@ export const SafeView = () => {
                           proposalSelected={proposalSelected}
                           selectedMultisig={selectedMultisig}
                           onProposalApprove={onExecuteApproveTx}
+                          onProposalExecute={onExecuteFinishTx}
                         />
                       )}
                       {isProgramDetails && (
