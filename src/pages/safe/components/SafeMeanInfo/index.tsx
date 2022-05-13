@@ -1,6 +1,6 @@
 import './style.scss';
 
-import { Button, Col, Row } from "antd"
+import { Button, Col, Row, Spin } from "antd"
 import { IconApprove, IconArrowForward, IconCheckCircle, IconCreated, IconCross, IconMinus } from "../../../../Icons"
 import { shortenAddress } from "../../../../utils/utils";
 import { SafeInfo } from "../UI/SafeInfo";
@@ -12,6 +12,7 @@ import { useConnectionConfig } from '../../../../contexts/connection';
 import { consoleOut } from '../../../../utils/ui';
 import { useWallet } from '../../../../contexts/wallet';
 import { ResumeItem } from '../UI/ResumeItem';
+import { program } from '@project-serum/anchor/dist/cjs/spl/token';
 
 export const SafeMeanInfo = (props: {
   isSafeDetails: boolean;
@@ -61,7 +62,7 @@ export const SafeMeanInfo = (props: {
 
           return (
             <div 
-              key={proposal.id.toBase58()}
+              key={index}
               onClick={onSelectProposal}
               className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
               >
@@ -218,66 +219,27 @@ export const SafeMeanInfo = (props: {
 
   }, [connection]);
 
-  // Refresh programs
-  const refreshPrograms = useCallback(() => {
-    if (!selectedMultisig) { return; }
-
-    consoleOut('Calling getProgramsByUpgradeAuthority from refreshPrograms...', '', 'blue');
-
-    getProgramsByUpgradeAuthority(selectedMultisig.id)
-      .then(programs => {
-        consoleOut('programs:', programs, 'blue');
-        if (programs && programs.length > 0) {
-          setPrograms(programs);
-          if (!selectedProgram) {
-            setSelectedProgram(programs[0]);
-          }
-        } else {
-          setPrograms([]);
-          setSelectedProgram(undefined);
-        }
-      })
-      .catch(err => console.error(err))
-      .finally(() => setLoadingPrograms(false));
-
-  }, [
-    selectedProgram,
-    selectedMultisig,
-    getProgramsByUpgradeAuthority,
-  ]);
+  useEffect(() => {
+    setLoadingPrograms(true);
+    setPrograms(undefined);
+    setSelectedProgram(undefined);
+  }, [selectedMultisig]);
 
   // Get Programs
   useEffect(() => {
-    if (!connection || !publicKey || !selectedMultisig || !selectedMultisig.authority || !loadingPrograms) {
-      return;
-    }
+    if (!connection || !selectedMultisig || !selectedMultisig.authority) { return; }
 
-    const timeout = setTimeout(() => {
-      getProgramsByUpgradeAuthority(selectedMultisig.authority)
-        .then(programs => {
-          consoleOut('programs:', programs, 'blue');
-          if (programs && programs.length > 0) {
-            setPrograms(programs);
-            if (!selectedProgram) {
-              setSelectedProgram(programs[0]);
-            }
-          } else {
-            setPrograms([]);
-            setSelectedProgram(undefined);
-          }
-        })
-        .catch(err => console.error(err))
-        .finally(() => setLoadingPrograms(false));
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }
-
-  },[
-    publicKey,
+    getProgramsByUpgradeAuthority(selectedMultisig.authority)
+    .then(programs => {
+      consoleOut('programs:', programs, 'blue');
+      setPrograms(programs);
+    })
+    .catch(error => {
+      console.error(error);
+    })
+    .finally(() => setLoadingPrograms(false));
+  }, [
     connection,
-    loadingPrograms,
     selectedProgram,
     selectedMultisig,
     getProgramsByUpgradeAuthority,
@@ -285,35 +247,42 @@ export const SafeMeanInfo = (props: {
 
   const renderPrograms = (
     <>
-      {programs && programs.length ? (
-        programs.map((program, index) => {
-          const onSelectProgram = () => {
-            // Sends isProgramDetails value to the parent component "SafeView"
-            props.onDataToProgramView(program);
-          }
-
-          const programTitle = shortenAddress(program.pubkey.toBase58(), 4);
-
-          return (
-            <div 
-              key={`${index + 1}`}
-              onClick={onSelectProgram}
-              className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
-            >
-                <ResumeItem
-                  id={program.pubkey.toBase58()}
-                  title={programTitle}
-                  isSafeDetails={isSafeDetails}
-                  isProgram={true}
-                  programSize={program.size}
-                  isProgramDetails={isProgramDetails}
-                />
-            </div>
-          )
-        })
+      {!loadingPrograms ? (
+        (programs && programs.length > 0) ? (
+          programs.map((program, index) => {
+            const onSelectProgram = () => {
+              // Sends isProgramDetails value to the parent component "SafeView"
+              props.onDataToProgramView(program);
+            }
+  
+            const programTitle = shortenAddress(program.pubkey.toBase58(), 4);
+  
+            return (
+              <Spin spinning={loadingPrograms}>
+              <div 
+                key={`${index + 1}`}
+                onClick={onSelectProgram}
+                className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+              >
+                  <ResumeItem
+                    id={program.pubkey.toBase58()}
+                    title={programTitle}
+                    isSafeDetails={isSafeDetails}
+                    isProgram={true}
+                    programSize={program.size}
+                    isProgramDetails={isProgramDetails}
+                  />
+              </div>
+              </Spin>
+            )
+          })
+        ) : (
+          <span>This multisig has no programs</span>
+        )
       ) : (
-        <span>This multisig has no programs</span>
+        <span>Loading...</span>
       )}
+
     </>
   );
 
