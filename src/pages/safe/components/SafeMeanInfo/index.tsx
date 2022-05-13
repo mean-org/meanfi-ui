@@ -323,14 +323,14 @@ export const SafeMeanInfo = (props: {
       name: "Proposals",
       render: renderListOfProposals
     }, 
-    {
-      name: "Settings",
-      render: renderSettings
-    }, 
-    {
-      name: "Activity",
-      render: renderActivities
-    }, 
+    // {
+    //   name: "Settings",
+    //   render: renderSettings
+    // }, 
+    // {
+    //   name: "Activity",
+    //   render: renderActivities
+    // }, 
     {
       name: "Programs",
       render: renderPrograms

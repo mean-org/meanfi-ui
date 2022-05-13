@@ -3,15 +3,14 @@ import { Button, Col, Dropdown, Menu, Row, Tooltip } from "antd";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import { CopyAddressExtLinkGroup } from "../../../../../components/CopyAddressExtLinkGroup";
 import { MultisigOwnersView } from "../../../../../components/MultisigOwnersView";
-import { openNotification } from "../../../../../components/Notifications";
 import { TabsMean } from "../../../../../components/TabsMean";
-import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "../../../../../constants";
 import { AppStateContext } from "../../../../../contexts/appstate";
-import { getSolanaExplorerClusterParam, useConnectionConfig } from "../../../../../contexts/connection";
-import { IconAdd, IconEdit, IconEllipsisVertical, IconLink, IconShowAll, IconTrash } from "../../../../../Icons";
+import { useConnectionConfig } from "../../../../../contexts/connection";
+import { IconAdd, IconEdit, IconEllipsisVertical, IconShowAll, IconTrash } from "../../../../../Icons";
 
-import { consoleOut, copyText, isDev, isLocal, toUsCurrency } from "../../../../../utils/ui";
+import { consoleOut, isDev, isLocal, toUsCurrency } from "../../../../../utils/ui";
 import { fetchAccountTokens, getTokenByMintAddress, shortenAddress } from "../../../../../utils/utils";
 
 export const SafeInfo = (props: {
@@ -49,21 +48,6 @@ export const SafeInfo = (props: {
   const isUnderDevelopment = () => {
     return isLocal() || (isDev() && isWhitelisted) ? true : false;
   }
-
-  // Copy address to clipboard
-  const copyAddressToClipboard = useCallback((address: any) => {
-    if (copyText(address.toString())) {
-      openNotification({
-        description: t('notifications.account-address-copied-message'),
-        type: "info"
-      });
-    } else {
-      openNotification({
-        description: t('notifications.account-address-not-copied-message'),
-        type: "error"
-      });
-    }
-  },[t])
   
   // Safe Name
   useEffect(() => {
@@ -162,17 +146,10 @@ export const SafeInfo = (props: {
     
   // Deposit Address
   const renderDepositAddress = (
-    <div className="d-flex align-items-start">
-      <div onClick={() => copyAddressToClipboard(selectedMultisig.authority)} className="simplelink underline-on-hover">{shortenAddress(selectedMultisig.authority.toBase58(), 4)}</div>
-      <span className="icon-button-container">
-        <a
-          target="_blank"
-          rel="noopener noreferrer"
-          href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${selectedMultisig.authority.toBase58()}${getSolanaExplorerClusterParam()}`}>
-          <IconLink className="mean-svg-icons" />
-        </a>
-      </span>
-    </div>
+    <CopyAddressExtLinkGroup
+      address={selectedMultisig.authority.toBase58()}
+      number={4}
+    />
   );
 
   const infoSafeData = [
@@ -196,7 +173,6 @@ export const SafeInfo = (props: {
 
   // View assets
   const onGoToAccounts = () => {
-    // navigate(`/accounts?cat=account&address=${selectedMultisig.authority.toBase58()}`);
     navigate(`/accounts?address=${selectedMultisig.authority.toBase58()}&cat=user-assets`);
   }
 
@@ -256,6 +232,7 @@ export const SafeInfo = (props: {
               </div>
           </Button>
         </Col>
+        
         <Col xs={4} sm={6} md={4} lg={6}>
           <Dropdown
             overlay={menu}

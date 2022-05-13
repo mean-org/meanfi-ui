@@ -129,8 +129,6 @@ export const MultisigProposalModal = (props: {
     setCountWords(e.target.value.length);
   }
 
-  // console.log('init state', defaultInputState());
-
   const [inputState, setInputState] = useState<any>({});
 
   const onProposalInstructionValueChange = (value: any) => {
@@ -158,8 +156,7 @@ export const MultisigProposalModal = (props: {
     });
   }
 
-
-  console.log("inputState", inputState);
+  consoleOut("inputState", inputState);
 
   const [selectOptionState, setSelectOptionState] = useState<any>({});
 
@@ -382,7 +379,13 @@ export const MultisigProposalModal = (props: {
                                         <InputTextAreaMean 
                                           id={element.label}
                                           className={props.isBusy ? 'disabled' : ''}
-                                          onChange={handleChangeInput}
+                                          onChange={(e: any) => {
+                                            console.log(e);
+                                            handleChangeInput({
+                                              id: element.name,
+                                              value: e.target.value
+                                            });
+                                          }}
                                           placeholder={element.help}
                                           value={inputState[element.name]}
                                         />
@@ -418,7 +421,7 @@ export const MultisigProposalModal = (props: {
                                           tooltip_text={element.help}
                                         />
                                       </Col>
-                                      <Col xs={24} sm={18} md={18} lg={18}>
+                                      <Col xs={24} sm={18} md={18} lg={18} className="pt-1">
                                         <Radio.Group className="ml-2" 
                                           id={element.name}
                                           onChange={(e: any) => {
