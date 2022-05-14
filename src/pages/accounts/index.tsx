@@ -70,8 +70,10 @@ import { TreasuriesSummary } from '../../components/TreasuriesSummary';
 import { AccountsSuggestAssetModal } from '../../components/AccountsSuggestAssetModal';
 import { QRCodeSVG } from 'qrcode.react';
 import { NATIVE_SOL } from '../../utils/tokens';
+import { NATIVE_MINT } from '@solana/spl-token';
 import { unwrapSol } from '@mean-dao/hybrid-liquidity-ag';
 import { customLogger } from '../..';
+import { AccountsInitAtaModal } from '../../components/AccountsInitAtaModal';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export type CategoryOption = "networth" | "user-account" | "other-assets";
@@ -249,6 +251,11 @@ export const AccountsNewView = () => {
   const [isSuggestAssetModalOpen, setIsSuggestAssetModalOpen] = useState(false);
   const hideSuggestAssetModal = useCallback(() => setIsSuggestAssetModalOpen(false), []);
   const showSuggestAssetModal = useCallback(() => setIsSuggestAssetModalOpen(true), []);
+
+  // Add Asset (Init ATA) modal
+  const [isInitAtaModalOpen, setIsInitAtaModalOpen] = useState(false);
+  const hideInitAtaModal = useCallback(() => setIsInitAtaModalOpen(false), []);
+  const showInitAtaModal = useCallback(() => setIsInitAtaModalOpen(true), []);
 
   // Exchange selected token
   // const [isExchangeAssetModalOpen, setIsExchangeAssetModalOpen] = useState(false);
@@ -1730,7 +1737,7 @@ export const AccountsNewView = () => {
               <div className="utility-box">
                   <div className="well mb-1">
                       <div className="flex-fixed-right align-items-center">
-                          <div className="left">You have {formatThousands(wSolBalance, NATIVE_SOL.decimals)} <strong>wrapped SOL</strong> in your wallet. Click to unwrap to native SOL.</div>
+                          <div className="left">You have {formatThousands(wSolBalance, NATIVE_SOL.decimals, NATIVE_SOL.decimals)} <strong>wrapped SOL</strong> in your wallet. Click to unwrap to native SOL.</div>
                           <div className="right">
                               <Button
                                   type="primary"
@@ -1890,13 +1897,10 @@ export const AccountsNewView = () => {
 
   const assetListOptions = (
     <Menu>
-      {/* TODO: Enable when finished */}
-      {isLocal() && (
-        <Menu.Item key="10" onClick={() => {}}>
-          <IconAdd className="mean-svg-icons" />
-          <span className="menu-item-text">Add asset</span>
-        </Menu.Item>
-      )}
+      <Menu.Item key="10" onClick={showSuggestAssetModal}>
+        <IconLightBulb className="mean-svg-icons" />
+        <span className="menu-item-text">Suggest an asset</span>
+      </Menu.Item>
       {(accountTokens && accountTokens.length > 0) && (
         <>
           {hideLowBalances ? (
@@ -2271,9 +2275,9 @@ export const AccountsNewView = () => {
                             className="flex-center"
                             type="primary"
                             shape="round"
-                            onClick={showSuggestAssetModal}>
-                            <IconLightBulb className="mean-svg-icons" />
-                            <span className="ml-1">Suggest an asset</span>
+                            onClick={showInitAtaModal}>
+                            <IconAdd className="mean-svg-icons" />
+                            <span className="ml-1">Add asset</span>
                           </Button>
                         </div>
                         <Dropdown className="options-dropdown"
@@ -2484,6 +2488,15 @@ export const AccountsNewView = () => {
           handleOk={hideSuggestAssetModal}
           handleClose={hideSuggestAssetModal}
           isVisible={isSuggestAssetModalOpen}
+        />
+      )}
+
+      {isInitAtaModalOpen && (
+        <AccountsInitAtaModal
+          handleOk={hideInitAtaModal}
+          handleClose={hideInitAtaModal}
+          isVisible={isInitAtaModalOpen}
+          ownedTokenAccounts={userOwnedTokenAccounts}
         />
       )}
   
