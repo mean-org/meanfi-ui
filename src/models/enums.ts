@@ -92,6 +92,7 @@ export enum OperationType {
     Unwrap = 51,
     Swap = 52,
     CreateAsset = 37,
+    CloseTokenAccount = 38,
     // Invest
     Stake = 53,
     Unstake = 54,

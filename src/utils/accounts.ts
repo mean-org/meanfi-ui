@@ -1,6 +1,18 @@
 import { ASSOCIATED_TOKEN_PROGRAM_ID, AuthorityType, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { AccountInfo, Commitment, Connection, Keypair, PublicKey, sendAndConfirmTransaction, Transaction, TransactionInstruction } from "@solana/web3.js"
-import { AccountTokenParsedInfo } from "../models/token";
+import {
+  AccountInfo,
+  Commitment,
+  Connection,
+  Keypair,
+  ParsedAccountData,
+  PublicKey,
+  sendAndConfirmTransaction,
+  Transaction,
+  TransactionInstruction
+} from "@solana/web3.js"
+import { AccountTokenParsedInfo, TokenAccountInfo } from "../models/token";
+import { consoleOut } from "./ui";
+import { SOLANA_ACCOUNT_INCINERATOR } from "../constants";
 
 export type ProgramAccounts = {
   pubkey: PublicKey;
@@ -161,6 +173,65 @@ export async function createAtaAccount(
       )
     );
   }
+
+  const tx = new Transaction().add(...ixs);
+  tx.feePayer = owner;
+  const hash = await connection.getLatestBlockhash("recent");
+  tx.recentBlockhash = hash.blockhash;
+
+  return tx;
+}
+
+export async function closeTokenAccount(
+  connection: Connection,
+  tokenPubkey: PublicKey,
+  owner: PublicKey,
+) {
+  const ixs: TransactionInstruction[] = [];
+  const incinerator = new PublicKey(SOLANA_ACCOUNT_INCINERATOR);
+  let accountInfo: AccountInfo<Buffer | ParsedAccountData> | null = null;
+
+  try {
+    accountInfo = (await connection.getParsedAccountInfo(tokenPubkey)).value;
+  } catch (error) {
+    console.error(error);
+  }
+
+  if (!accountInfo) { return null; }
+
+  const info = (accountInfo as any).data["parsed"]["info"] as TokenAccountInfo;
+
+  consoleOut('---- Parsed info ----', '', 'purple');
+  consoleOut('tokenPubkey:', tokenPubkey.toBase58(), 'orange');
+  consoleOut('mint:', info.mint, 'orange');
+  consoleOut('owner:', info.owner, 'orange');
+  consoleOut('decimals:', info.tokenAmount.decimals, 'orange');
+  consoleOut('balance:', info.tokenAmount.uiAmount || 0, 'orange');
+
+  // If the account has balance, burn the tokens
+  if ((info.tokenAmount.uiAmount || 0) > 0) {
+    ixs.push(
+      Token.createBurnInstruction(
+        TOKEN_PROGRAM_ID,
+        new PublicKey(info.mint),
+        tokenPubkey,
+        owner,
+        [],
+        (info.tokenAmount.uiAmount || 0) * 10 ** info.tokenAmount.decimals
+      )
+    );
+  }
+
+  // Close the account
+  ixs.push(
+    Token.createCloseAccountInstruction(
+      TOKEN_PROGRAM_ID,
+      tokenPubkey,
+      owner,
+      owner,
+      []
+    )
+  );
 
   const tx = new Transaction().add(...ixs);
   tx.feePayer = owner;

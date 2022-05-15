@@ -43,7 +43,7 @@ import {
 } from '../../constants';
 import { QrScannerModal } from '../../components/QrScannerModal';
 import { Helmet } from "react-helmet";
-import { IconAdd, IconExternalLink, IconEyeOff, IconEyeOn, IconLightBulb, IconShoppingCart, IconVerticalEllipsis } from '../../Icons';
+import { IconAdd, IconExternalLink, IconEyeOff, IconEyeOn, IconLightBulb, IconRefresh, IconShoppingCart, IconVerticalEllipsis } from '../../Icons';
 import { fetchAccountHistory, MappedTransaction } from '../../utils/history';
 import { useLocation, useNavigate } from 'react-router-dom';
 import useLocalStorage from '../../hooks/useLocalStorage';
@@ -74,6 +74,7 @@ import { NATIVE_MINT } from '@solana/spl-token';
 import { unwrapSol } from '@mean-dao/hybrid-liquidity-ag';
 import { customLogger } from '../..';
 import { AccountsInitAtaModal } from '../../components/AccountsInitAtaModal';
+import { AccountsCloseAssetModal } from '../../components/AccountsCloseAssetModal';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export type CategoryOption = "networth" | "user-account" | "other-assets";
@@ -256,6 +257,11 @@ export const AccountsNewView = () => {
   const [isInitAtaModalOpen, setIsInitAtaModalOpen] = useState(false);
   const hideInitAtaModal = useCallback(() => setIsInitAtaModalOpen(false), []);
   const showInitAtaModal = useCallback(() => setIsInitAtaModalOpen(true), []);
+
+  // Close Asset modal
+  const [isCloseAssetModalOpen, setIsCloseAssetModalOpen] = useState(false);
+  const hideCloseAssetModal = useCallback(() => setIsCloseAssetModalOpen(false), []);
+  const showCloseAssetModal = useCallback(() => setIsCloseAssetModalOpen(true), []);
 
   // Exchange selected token
   // const [isExchangeAssetModalOpen, setIsExchangeAssetModalOpen] = useState(false);
@@ -581,8 +587,11 @@ export const AccountsNewView = () => {
       if (isSelectedAssetNativeAccount()) {
         reloadSwitch();
       }
+    } else if (item && item.operationType === OperationType.CloseTokenAccount) {
+      recordTxConfirmation(item, true);
+      setShouldLoadTokens(true);
+      reloadSwitch();
     }
-
     resetTransactionStatus();
   }, [isSelectedAssetNativeAccount, recordTxConfirmation, reloadSwitch, resetTransactionStatus, setShouldLoadTokens]);
 
@@ -1891,9 +1900,13 @@ export const AccountsNewView = () => {
       <Menu.Item key="1" onClick={reloadSwitch}>
         <span className="menu-item-text">Refresh asset</span>
       </Menu.Item>
-      {isSelectedAssetNativeAccount() && (
+      {isSelectedAssetNativeAccount() ? (
         <Menu.Item key="2" onClick={showWrapSolModal}>
           <span className="menu-item-text">Wrap SOL</span>
+        </Menu.Item>
+      ) : (
+        <Menu.Item key="3" onClick={showCloseAssetModal}>
+          <span className="menu-item-text">Close account</span>
         </Menu.Item>
       )}
     </Menu>
@@ -2504,7 +2517,17 @@ export const AccountsNewView = () => {
           ownedTokenAccounts={userOwnedTokenAccounts}
         />
       )}
-  
+
+      {isCloseAssetModalOpen && selectedAsset && (
+        <AccountsCloseAssetModal
+          connection={connection}
+          handleOk={hideCloseAssetModal}
+          handleClose={hideCloseAssetModal}
+          isVisible={isCloseAssetModalOpen}
+          asset={selectedAsset}
+        />
+      )}
+
       <PreFooter />
     </>
   );

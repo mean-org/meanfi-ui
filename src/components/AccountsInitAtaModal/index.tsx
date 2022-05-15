@@ -242,7 +242,9 @@ export const AccountsInitAtaModal = (props: {
         const data = {
           owred: publicKey.toBase58(),
           mint: selectedToken.address,
-        }
+        };
+
+        consoleOut('createAtaAccount data:', data, 'blue');
 
         // Log input data
         transactionLog.push({
