@@ -1710,7 +1710,7 @@ export const TreasuriesView = () => {
 
       const tx = new Transaction().add(...ixs);
       tx.feePayer = publicKey;
-      const { blockhash } = await connection.getRecentBlockhash("recent");
+      const { blockhash } = await connection.getLatestBlockhash("recent");
       tx.recentBlockhash = blockhash;
 
       return tx;

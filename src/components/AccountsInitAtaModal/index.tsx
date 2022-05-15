@@ -1,15 +1,16 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
+import { environment } from '../../environments/environment';
 import { Button, Drawer, Modal } from "antd";
 import { useTranslation } from "react-i18next";
-import { useConnection } from '../../contexts/connection';
+import { getNetworkIdByEnvironment, useConnection } from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
 import { AppStateContext } from '../../contexts/appstate';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
 import { useAccountsContext, useNativeAccount, useUserAccounts } from '../../contexts/accounts';
 import { MAX_TOKEN_LIST_ITEMS } from '../../constants';
-import { AccountInfo, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey } from '@solana/web3.js';
-import { consoleOut, isProd, isValidAddress } from '../../utils/ui';
-import { TransactionStatus } from '../../models/enums';
+import { AccountInfo, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey, Transaction } from '@solana/web3.js';
+import { consoleOut, getTransactionStatusForLogs, isProd, isValidAddress } from '../../utils/ui';
+import { OperationType, TransactionStatus } from '../../models/enums';
 import { LoadingOutlined } from '@ant-design/icons';
 import { AccountTokenParsedInfo } from '../../models/token';
 import { TokenInfo } from '@solana/spl-token-registry';
@@ -18,9 +19,13 @@ import { TokenListItem } from '../TokenListItem';
 import { TextInput } from '../TextInput';
 import { TokenDisplay } from '../TokenDisplay';
 import { TransactionFees } from '@mean-dao/msp';
-import { shortenAddress } from '../../utils/utils';
+import { getTxIxResume, shortenAddress } from '../../utils/utils';
+import { openNotification } from '../Notifications';
+import { createAtaAccount } from '../../utils/accounts';
+import { customLogger } from '../..';
 
 export const AccountsInitAtaModal = (props: {
+  connection: Connection;
   handleOk: any;
   handleClose: any;
   isVisible: boolean;
@@ -220,8 +225,7 @@ export const AccountsInitAtaModal = (props: {
     handleOk();
   }, [handleOk, resetTransactionStatus]);
 
-  /*
-  const onStartUnwrapTx = async () => {
+  const onStartTransaction = async () => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
@@ -229,21 +233,23 @@ export const AccountsInitAtaModal = (props: {
     const transactionLog: any[] = [];
 
     const createTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (publicKey && selectedToken) {
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
           currentOperation: TransactionStatus.InitTransaction,
         });
 
-        const amount = parseFloat(unwrapAmount)
-        consoleOut("unwrapAmount:", amount, "blue");
+        const data = {
+          owred: publicKey.toBase58(),
+          mint: selectedToken.address,
+        }
 
         // Log input data
         transactionLog.push({
           action: getTransactionStatusForLogs(
             TransactionStatus.TransactionStart
           ),
-          inputs: `unwrapAmount: ${amount}`,
+          inputs: data,
         });
 
         transactionLog.push({
@@ -253,14 +259,13 @@ export const AccountsInitAtaModal = (props: {
           result: "",
         });
 
-        return await unwrapSol(
-          connection, // connection
-          wallet, // wallet
-          Keypair.generate(),
-          amount // amount
+        return await createAtaAccount(
+          connection,                             // connection
+          new PublicKey(selectedToken.address),   // mint
+          publicKey                               // owner
         )
           .then((value) => {
-            consoleOut("unwrapSol returned transaction:", value);
+            consoleOut("createAtaAccount returned transaction:", value);
             // Stage 1 completed - The transaction is created and returned
             setTransactionStatus({
               lastOperation: TransactionStatus.InitTransactionSuccess,
@@ -276,7 +281,7 @@ export const AccountsInitAtaModal = (props: {
             return true;
           })
           .catch((error) => {
-            console.error("unwrapSol transaction init error:", error);
+            console.error("createAtaAccount transaction init error:", error);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.InitTransactionFailure,
@@ -287,7 +292,7 @@ export const AccountsInitAtaModal = (props: {
               ),
               result: `${error}`,
             });
-            customLogger.logError("Unwrap transaction failed", {
+            customLogger.logError("Create Asset transaction failed", {
               transcript: transactionLog,
             });
             return false;
@@ -297,7 +302,7 @@ export const AccountsInitAtaModal = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: "Cannot start transaction! Wallet not found!",
         });
-        customLogger.logError("Unwrap transaction failed", {
+        customLogger.logError("Create Asset transaction failed", {
           transcript: transactionLog,
         });
         return false;
@@ -334,7 +339,7 @@ export const AccountsInitAtaModal = (props: {
                   error: `${error}`,
                 },
               });
-              customLogger.logError("Unwrap transaction failed", {
+              customLogger.logError("Create Asset transaction failed", {
                 transcript: transactionLog,
               });
               return false;
@@ -366,7 +371,7 @@ export const AccountsInitAtaModal = (props: {
                 error: `${error}`,
               },
             });
-            customLogger.logError("Unwrap transaction failed", {
+            customLogger.logError("Create Asset transaction failed", {
               transcript: transactionLog,
             });
             return false;
@@ -381,7 +386,7 @@ export const AccountsInitAtaModal = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: "Cannot sign transaction! Wallet not found!",
         });
-        customLogger.logError("Unwrap transaction failed", {
+        customLogger.logError("Create Asset transaction failed", {
           transcript: transactionLog,
         });
         return false;
@@ -419,7 +424,7 @@ export const AccountsInitAtaModal = (props: {
               ),
               result: { error, encodedTx },
             });
-            customLogger.logError("Unwrap transaction failed", {
+            customLogger.logError("Create Asset transaction failed", {
               transcript: transactionLog,
             });
             return false;
@@ -433,15 +438,15 @@ export const AccountsInitAtaModal = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: "Cannot send transaction! Wallet not found!",
         });
-        customLogger.logError("Unwrap transaction failed", {
+        customLogger.logError("Create Asset transaction failed", {
           transcript: transactionLog,
         });
         return false;
       }
     };
 
-    if (wallet && wSol) {
-      setIsUnwrapping(true);
+    if (publicKey && selectedToken) {
+      setIsBusy(true);
       const create = await createTx();
       consoleOut("created:", create);
       if (create) {
@@ -453,19 +458,13 @@ export const AccountsInitAtaModal = (props: {
           if (sent) {
             enqueueTransactionConfirmation({
               signature: signature,
-              operationType: OperationType.Unwrap,
+              operationType: OperationType.CreateAsset,
               finality: "confirmed",
               txInfoFetchStatus: "fetching",
               loadingTitle: "Confirming transaction",
-              loadingMessage: `Unwrap ${formatThousands(
-                parseFloat(unwrapAmount),
-                wSol.decimals
-              )} ${wSol.symbol}`,
+              loadingMessage: `Create Associated Token Account for ${selectedToken.symbol}`,
               completedTitle: "Transaction confirmed",
-              completedMessage: `Successfully unwrapped ${formatThousands(
-                parseFloat(unwrapAmount),
-                wSol.decimals
-              )} ${wSol.symbol}`,
+              completedMessage: `Successfully created ATA account for ${selectedToken.symbol}`,
             });
             onTransactionFinished();
           } else {
@@ -474,17 +473,16 @@ export const AccountsInitAtaModal = (props: {
               description: t("notifications.error-sending-transaction"),
               type: "error",
             });
-            setIsUnwrapping(false);
+            setIsBusy(false);
           }
         } else {
-          setIsUnwrapping(false);
+          setIsBusy(false);
         }
       } else {
-        setIsUnwrapping(false);
+        setIsBusy(false);
       }
     }
   };
-  */
 
   // Validation
 
@@ -602,7 +600,7 @@ export const AccountsInitAtaModal = (props: {
               const uknwnToken: TokenInfo = {
                 address,
                 name: 'Unknown token',
-                chainId: 101,
+                chainId: getNetworkIdByEnvironment(environment),
                 decimals,
                 symbol: shortenAddress(address),
               };
@@ -638,7 +636,7 @@ export const AccountsInitAtaModal = (props: {
         </div>
 
         {/* Asset picker */}
-        <div className="form-label">Select token</div>
+        <div className="form-label">Mint for your asset</div>
         <div className="well">
           <div className="flex-fixed-left">
             <div className="left">
@@ -679,7 +677,7 @@ export const AccountsInitAtaModal = (props: {
           shape="round"
           size="large"
           disabled={!isOperationValid() || isBusy}
-          onClick={() => {}}>
+          onClick={onStartTransaction}>
           {isBusy && (
               <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
           )}

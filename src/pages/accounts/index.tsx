@@ -575,20 +575,24 @@ export const AccountsNewView = () => {
       recordTxConfirmation(item, true);
       setShouldLoadTokens(true);
       reloadSwitch();
+    } else if (item && item.operationType === OperationType.CreateAsset) {
+      recordTxConfirmation(item, true);
+      setShouldLoadTokens(true);
+      if (isSelectedAssetNativeAccount()) {
+        reloadSwitch();
+      }
     }
 
     resetTransactionStatus();
-  }, [recordTxConfirmation, reloadSwitch, resetTransactionStatus, setShouldLoadTokens]);
+  }, [isSelectedAssetNativeAccount, recordTxConfirmation, reloadSwitch, resetTransactionStatus, setShouldLoadTokens]);
 
   // Setup event handler for Tx confirmation error
   const onTxTimedout = useCallback((item: TxConfirmationInfo) => {
     consoleOut("onTxTimedout event executed:", item, 'crimson');
-    if (item && item.operationType === OperationType.Wrap) {
-      recordTxConfirmation(item, false);
-    } else if (item && item.operationType === OperationType.Unwrap) {
+    if (item && item.operationType === OperationType.Unwrap) {
       setIsUnwrapping(false);
-      recordTxConfirmation(item, false);
     }
+    recordTxConfirmation(item, false);
     resetTransactionStatus();
   }, [recordTxConfirmation, resetTransactionStatus]);
 
@@ -2493,6 +2497,7 @@ export const AccountsNewView = () => {
 
       {isInitAtaModalOpen && (
         <AccountsInitAtaModal
+          connection={connection}
           handleOk={hideInitAtaModal}
           handleClose={hideInitAtaModal}
           isVisible={isInitAtaModalOpen}
