@@ -96,7 +96,6 @@ export const MultisigTreasuryStreams = () => {
     const {
         theme,
         streamList,
-        coinPrices,
         streamDetail,
         selectedStream,
         selectedToken,
@@ -110,6 +109,7 @@ export const MultisigTreasuryStreams = () => {
         highLightableMultisigId,
         setLoadingStreamsSummary,
         setHighLightableStreamId,
+        getTokenPriceBySymbol,
         setLastStreamsSummary,
         getTokenByMintAddress,
         refreshTokenBalance,
@@ -157,14 +157,6 @@ export const MultisigTreasuryStreams = () => {
     /////////////////
     //  CALLBACKS  //
     /////////////////
-
-    const getPricePerToken = useCallback((token: TokenInfo): number => {
-        if (!token || !coinPrices) { return 0; }
-
-        return coinPrices && coinPrices[token.symbol]
-            ? coinPrices[token.symbol]
-            : 0;
-    }, [coinPrices])
 
     const getTreasuryStreams = useCallback((treasuryPk: PublicKey) => {
         if (!publicKey || !ms || loadingTreasuryStreams) { return; }
@@ -530,7 +522,7 @@ export const MultisigTreasuryStreams = () => {
                 const asset = getTokenByMintAddress(
                     freshStream.associatedToken as string
                 );
-                const rate = asset ? getPricePerToken(asset) : 0;
+                const rate = asset ? getTokenPriceBySymbol(asset.symbol) : 0;
                 const streamUnitsUsdPerSecond =
                     parseFloat(
                         freshStream.streamUnitsPerSecond.toFixed(asset?.decimals || 9)
@@ -574,10 +566,10 @@ export const MultisigTreasuryStreams = () => {
         streamsSummary,
         loadingStreamsSummary,
         setLoadingStreamsSummary,
+        getTokenPriceBySymbol,
         getTokenByMintAddress,
         setLastStreamsSummary,
         setStreamsSummary,
-        getPricePerToken,
     ]);
 
     // Scroll to a given stream is specified as highLightableStreamId

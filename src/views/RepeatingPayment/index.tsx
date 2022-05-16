@@ -42,8 +42,6 @@ import { AppStateContext } from "../../contexts/appstate";
 import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
 import { useTranslation } from "react-i18next";
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { customLogger } from '../..';
 import { StepSelector } from '../../components/StepSelector';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
@@ -72,7 +70,6 @@ export const RepeatingPayment = (props: {
   const {
     tokenList,
     userTokens,
-    coinPrices,
     splTokenList,
     effectiveRate,
     loadingPrices,
@@ -88,6 +85,7 @@ export const RepeatingPayment = (props: {
     previousWalletConnectState,
     setPaymentRateFrequency,
     setIsVerifiedRecipient,
+    getTokenPriceBySymbol,
     setPaymentRateAmount,
     setTransactionStatus,
     resetContractValues,
@@ -775,14 +773,6 @@ export const RepeatingPayment = (props: {
     return options;
   }
 
-  const getPricePerToken = useCallback((token: TokenInfo): number => {
-    if (!token || !coinPrices) { return 0; }
-
-    return coinPrices && coinPrices[token.symbol]
-      ? coinPrices[token.symbol]
-      : 0;
-  }, [coinPrices])
-
   const onStepperChange = (value: number) => {
     setCurrentStep(value);
   }
@@ -1161,7 +1151,7 @@ export const RepeatingPayment = (props: {
             setSelectedToken(t);
 
             consoleOut("token selected:", t.symbol, 'blue');
-            setEffectiveRate(getPricePerToken(t));
+            setEffectiveRate(getTokenPriceBySymbol(t.symbol));
             onCloseTokenSelector();
           };
 

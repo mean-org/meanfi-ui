@@ -33,8 +33,9 @@ export const UnstakeTabView = (props: {
     coinPrices,
     loadingPrices,
     transactionStatus,
+    getTokenPriceBySymbol,
     setTransactionStatus,
-    refreshPrices
+    refreshPrices,
   } = useContext(AppStateContext);
   const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const { t } = useTranslation('common');
@@ -448,25 +449,17 @@ export const UnstakeTabView = (props: {
     t
   ]);
 
-  const getPricePerToken = useCallback((token: TokenInfo): number => {
-    if (!token || !coinPrices) { return 0; }
-
-    return coinPrices && coinPrices[token.symbol]
-      ? coinPrices[token.symbol]
-      : 0;
-  }, [coinPrices])
-
   // Keep MEAN price updated
   useEffect(() => {
 
     if (coinPrices && props.unstakedToken) {
-      const price = getPricePerToken(props.unstakedToken);
+      const price = getTokenPriceBySymbol(props.unstakedToken.symbol);
       consoleOut('meanPrice:', price, 'crimson');
       console.log('coinPrices:', coinPrices);
       setMeanPrice(price);
     }
 
-  }, [coinPrices, getPricePerToken, props.unstakedToken]);
+  }, [coinPrices, getTokenPriceBySymbol, props.unstakedToken]);
 
   // Handler paste clipboard data
   const pasteHandler = useCallback((e: any) => {

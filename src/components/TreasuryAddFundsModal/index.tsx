@@ -57,7 +57,6 @@ export const TreasuryAddFundsModal = (props: {
 }) => {
   const {
     tokenList,
-    coinPrices,
     tokenBalance,
     selectedToken,
     effectiveRate,
@@ -65,6 +64,7 @@ export const TreasuryAddFundsModal = (props: {
     transactionStatus,
     highLightableStreamId,
     getTokenByMintAddress,
+    getTokenPriceBySymbol,
     setTransactionStatus,
     setSelectedToken,
     setEffectiveRate,
@@ -191,14 +191,6 @@ export const TreasuryAddFundsModal = (props: {
     }
     return false;
   }, [publicKey]);
-
-  const getPricePerToken = (token: TokenInfo): number => {
-    if (!token || !coinPrices) { return 0; }
-
-    return coinPrices && coinPrices[token.symbol]
-      ? coinPrices[token.symbol]
-      : 0;
-  }
 
   const getTransactionStartButtonLabel = (): string => {
     return !selectedToken || !availableBalance || availableBalance.isZero()
@@ -671,7 +663,7 @@ export const TreasuryAddFundsModal = (props: {
     const token = getTokenByMintAddress(e);
     if (token) {
       setSelectedToken(token as TokenInfo);
-      setEffectiveRate(getPricePerToken(token as TokenInfo));
+      setEffectiveRate(getTokenPriceBySymbol(token.symbol));
       toggleOverflowEllipsisMiddle(false);
     }
   }

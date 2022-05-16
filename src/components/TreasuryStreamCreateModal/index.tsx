@@ -74,7 +74,6 @@ export const TreasuryStreamCreateModal = (props: {
   const { treasuryOption } = useContext(AppStateContext);
   const {
     tokenList,
-    coinPrices,
     selectedToken,
     effectiveRate,
     loadingPrices,
@@ -94,6 +93,7 @@ export const TreasuryStreamCreateModal = (props: {
     setIsVerifiedRecipient,
     setLockPeriodFrequency,
     getTokenByMintAddress,
+    getTokenPriceBySymbol,
     setTransactionStatus,
     setPaymentRateAmount,
     setRecipientAddress,
@@ -227,14 +227,6 @@ export const TreasuryStreamCreateModal = (props: {
   /////////////////
   //   Getters   //
   /////////////////
-
-  const getPricePerToken = (token: TokenInfo): number => {
-    if (!token || !coinPrices) { return 0; }
-
-    return coinPrices && coinPrices[token.symbol]
-      ? coinPrices[token.symbol]
-      : 0;
-  }
 
   const getOptionsFromEnum = (value: any): PaymentRateTypeOption[] => {
     let index = 0;
@@ -600,7 +592,7 @@ export const TreasuryStreamCreateModal = (props: {
     const token = getTokenByMintAddress(e);
     if (token) {
       setSelectedToken(token as TokenInfo);
-      setEffectiveRate(getPricePerToken(token as TokenInfo));
+      setEffectiveRate(getTokenPriceBySymbol(token.symbol));
     }
   }
 

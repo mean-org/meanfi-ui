@@ -14,7 +14,6 @@ import { consoleOut, delay, getTransactionStatusForLogs, toUsCurrency } from '..
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { customLogger } from '../..';
 import { formatThousands, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber } from '../../utils/utils';
-import { TokenInfo } from '@solana/spl-token-registry';
 import { TokenDisplay } from '../TokenDisplay';
 import { LoadingOutlined } from '@ant-design/icons';
 
@@ -29,9 +28,9 @@ export const WrapSolModal = (props: {
   const { publicKey, wallet } = useWallet();
   const {
     tokenList,
-    coinPrices,
     loadingPrices,
     transactionStatus,
+    getTokenPriceBySymbol,
     setTransactionStatus,
     refreshTokenBalance,
     refreshPrices,
@@ -88,15 +87,6 @@ export const WrapSolModal = (props: {
       });
     }
   }, [connection, wrapFees]);
-
-  const getPricePerToken = useCallback((token: TokenInfo): number => {
-    if (!token || !coinPrices) { return 0; }
-
-    return coinPrices && coinPrices[token.symbol]
-      ? coinPrices[token.symbol]
-      : 0;
-  }, [coinPrices])
-
 
   const getMaxPossibleAmount = () => {
     // const fee = wrapFees.blockchainFee + getTxPercentFeeAmount(wrapFees, nativeBalance);
@@ -507,7 +497,7 @@ export const WrapSolModal = (props: {
             <div className="right inner-label">
               <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
                 ~{wSol
-                  ? toUsCurrency((parseFloat(wrapAmount) || 0) * getPricePerToken(wSol))
+                  ? toUsCurrency((parseFloat(wrapAmount) || 0) * getTokenPriceBySymbol(wSol.symbol))
                   : "$0.00"}
               </span>
             </div>

@@ -2,7 +2,7 @@ import React, { useCallback, useContext, useEffect, useState } from 'react'
 import { MoneyStreaming, TreasuryInfo } from '@mean-dao/money-streaming';
 import { MSP, Treasury, TreasuryType } from '@mean-dao/msp';
 import { Connection, PublicKey } from '@solana/web3.js';
-import { consoleOut, isProd, kFormatter, toUsCurrency } from '../../utils/ui';
+import { consoleOut, kFormatter, toUsCurrency } from '../../utils/ui';
 import { Link, useLocation } from 'react-router-dom';
 import { THREE_MINUTES_REFRESH_TIMEOUT } from '../../constants';
 import { INITIAL_TREASURIES_SUMMARY, UserTreasuriesSummary } from '../../models/treasuries';
@@ -28,11 +28,9 @@ export const TreasuriesSummary = (props: {
     const { address, connection, ms, msp, selected, onSelect, onNewValue } = props;
     const { connected, publicKey } = useWallet();
     const {
-        coinPrices,
-        userTokens,
-        splTokenList,
         previousWalletConnectState,
-        getTokenByMintAddress
+        getTokenPriceBySymbol,
+        getTokenByMintAddress,
     } = useContext(AppStateContext);
     const { t } = useTranslation('common');
     const { pathname } = useLocation();
@@ -44,14 +42,6 @@ export const TreasuriesSummary = (props: {
     ////////////////////////////
     //   Events and actions   //
     ////////////////////////////
-
-    const getPricePerToken = useCallback((token: TokenInfo): number => {
-        if (!token || !coinPrices) { return 0; }
-
-        return coinPrices && coinPrices[token.symbol]
-            ? coinPrices[token.symbol]
-            : 0;
-    }, [coinPrices])
 
     const getTreasuryUnallocatedBalance = useCallback((tsry: Treasury | TreasuryInfo, assToken: TokenInfo | undefined) => {
         if (tsry) {
@@ -164,7 +154,7 @@ export const TreasuriesSummary = (props: {
             const asset = getTokenByMintAddress(associatedToken);
 
             if (asset) {
-                pricePerToken = getPricePerToken(asset);
+                pricePerToken = getTokenPriceBySymbol(asset.symbol);
                 const rate = asset ? (pricePerToken ? pricePerToken : 1) : 1;
                 const amount = getTreasuryUnallocatedBalance(treasury, asset);
                 amountChange = amount * rate;
@@ -188,7 +178,7 @@ export const TreasuriesSummary = (props: {
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [
-        getPricePerToken,
+        getTokenPriceBySymbol,
         getTokenByMintAddress,
         getTreasuryUnallocatedBalance,
         treasuryList

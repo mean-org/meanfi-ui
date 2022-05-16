@@ -39,13 +39,13 @@ export const TreasuryCreateModal = (props: {
   const { t } = useTranslation('common');
   const {
     tokenList,
-    coinPrices,
     tokenBalance,
     selectedToken,
     effectiveRate,
     loadingPrices,
     transactionStatus,
     getTokenByMintAddress,
+    getTokenPriceBySymbol,
     setTransactionStatus,
     setSelectedToken,
     setEffectiveRate,
@@ -56,16 +56,6 @@ export const TreasuryCreateModal = (props: {
   const [localSelectedMultisig, setLocalSelectedMultisig] = useState<MultisigInfo | undefined>(undefined);
   const [enableMultisigTreasuryOption, setEnableMultisigTreasuryOption] = useState(true);
   const [customTokenInput, setCustomTokenInput] = useState("");
-
-  const getPricePerToken = useCallback((token: TokenInfo): number => {
-    if (!token || !token.symbol) { return 0; }
-    const tokenSymbol = token.symbol.toUpperCase();
-    const symbol = tokenSymbol[0] === 'W' ? tokenSymbol.slice(1) : tokenSymbol;
-
-    return coinPrices && coinPrices[symbol]
-      ? coinPrices[symbol]
-      : 0;
-  }, [coinPrices])
 
   const toggleOverflowEllipsisMiddle = useCallback((state: boolean) => {
     const ellipsisElements = document.querySelectorAll(".ant-select.token-selector-dropdown .ant-select-selector .ant-select-selection-item");
@@ -138,7 +128,7 @@ export const TreasuryCreateModal = (props: {
     const token = getTokenByMintAddress(e);
     if (token) {
       setSelectedToken(token as TokenInfo);
-      setEffectiveRate(getPricePerToken(token as TokenInfo));
+      setEffectiveRate(getTokenPriceBySymbol(token.symbol));
       toggleOverflowEllipsisMiddle(false);
     }
   }

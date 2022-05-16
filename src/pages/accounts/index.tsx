@@ -43,7 +43,7 @@ import {
 } from '../../constants';
 import { QrScannerModal } from '../../components/QrScannerModal';
 import { Helmet } from "react-helmet";
-import { IconAdd, IconExternalLink, IconEyeOff, IconEyeOn, IconLightBulb, IconRefresh, IconShoppingCart, IconVerticalEllipsis } from '../../Icons';
+import { IconAdd, IconExternalLink, IconEyeOff, IconEyeOn, IconLightBulb, IconShoppingCart, IconVerticalEllipsis } from '../../Icons';
 import { fetchAccountHistory, MappedTransaction } from '../../utils/history';
 import { useLocation, useNavigate } from 'react-router-dom';
 import useLocalStorage from '../../hooks/useLocalStorage';
@@ -60,7 +60,7 @@ import { AddressDisplay } from '../../components/AddressDisplay';
 import { ReceiveSplOrSolModal } from '../../components/ReceiveSplOrSolModal';
 import { SendAssetModal } from '../../components/SendAssetModal';
 import { EventType, OperationType, TransactionStatus } from '../../models/enums';
-import { consoleOut, copyText, getTransactionStatusForLogs, isLocal, isValidAddress, kFormatter, toUsCurrency } from '../../utils/ui';
+import { consoleOut, copyText, getTransactionStatusForLogs, isValidAddress, kFormatter, toUsCurrency } from '../../utils/ui';
 import { WrapSolModal } from '../../components/WrapSolModal';
 import { UnwrapSolModal } from '../../components/UnwrapSolModal';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
@@ -70,7 +70,6 @@ import { TreasuriesSummary } from '../../components/TreasuriesSummary';
 import { AccountsSuggestAssetModal } from '../../components/AccountsSuggestAssetModal';
 import { QRCodeSVG } from 'qrcode.react';
 import { NATIVE_SOL } from '../../utils/tokens';
-import { NATIVE_MINT } from '@solana/spl-token';
 import { unwrapSol } from '@mean-dao/hybrid-liquidity-ag';
 import { customLogger } from '../..';
 import { AccountsInitAtaModal } from '../../components/AccountsInitAtaModal';
@@ -113,6 +112,8 @@ export const AccountsNewView = () => {
     setCanShowAccountDetails,
     showDepositOptionsModal,
     setAddAccountPanelOpen,
+    getTokenPriceByAddress,
+    getTokenPriceBySymbol,
     setLastStreamsSummary,
     getTokenByMintAddress,
     setTransactionStatus,
@@ -433,14 +434,6 @@ export const AccountsNewView = () => {
             : null;
   },[accountAddress]);
 
-  const getPricePerToken = useCallback((token: UserTokenAccount): number => {
-    if (!token || !coinPrices) { return 0; }
-
-    return coinPrices && coinPrices[token.symbol]
-      ? coinPrices[token.symbol]
-      : 0;
-  }, [coinPrices])
-
   const canActivateMergeTokenAccounts = (): boolean => {
     if (publicKey && selectedAsset && tokenAccountGroups) {
       const acc = tokenAccountGroups.has(selectedAsset.address);
@@ -470,7 +463,7 @@ export const AccountsNewView = () => {
       connection.getBalance(pk)
         .then(solBalance => {
           tokensCopy[0].balance = solBalance / LAMPORTS_PER_SOL;
-          tokensCopy[0].valueInUsd = (solBalance / LAMPORTS_PER_SOL) * getPricePerToken(tokensCopy[0]);
+          tokensCopy[0].valueInUsd = (solBalance / LAMPORTS_PER_SOL) * getTokenPriceBySymbol(tokensCopy[0].symbol);
           consoleOut('solBalance:', solBalance / LAMPORTS_PER_SOL, 'blue');
           setAccountTokens(tokensCopy);
         })
@@ -486,7 +479,7 @@ export const AccountsNewView = () => {
         .then(tokenAmount => {
           const balance = tokenAmount.value.uiAmount;
           consoleOut('balance:', balance, 'blue');
-          const valueInUSD = (balance || 0) * getPricePerToken(selectedAsset);
+          const valueInUSD = (balance || 0) * getTokenPriceByAddress(selectedAsset.address);
           consoleOut('valueInUSD:', valueInUSD, 'blue');
           // Find the token and update it if found
           itemIndex = tokensCopy.findIndex(t => t.publicAddress === selectedAsset.publicAddress);
@@ -509,7 +502,8 @@ export const AccountsNewView = () => {
     accountAddress,
     refreshingBalance,
     isSelectedAssetNativeAccount,
-    getPricePerToken,
+    getTokenPriceByAddress,
+    getTokenPriceBySymbol,
   ]);
 
   const startSwitch = useCallback(() => {
@@ -646,7 +640,7 @@ export const AccountsNewView = () => {
       if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
 
       const asset = getTokenByMintAddress(freshStream.associatedToken as string);
-      const rate = asset ? getPricePerToken(asset as UserTokenAccount) : 0;
+      const rate = asset ? getTokenPriceByAddress(asset.address) : 0;
       if (isIncoming) {
         resume['totalNet'] = resume['totalNet'] + ((freshStream.escrowVestedAmount || 0) * rate);
       } else {
@@ -675,7 +669,7 @@ export const AccountsNewView = () => {
       if (!freshStream || freshStream.status !== STREAM_STATUS.Running) { continue; }
 
       const asset = getTokenByMintAddress(freshStream.associatedToken as string);
-      const pricePerToken = getPricePerToken(asset as UserTokenAccount);
+      const pricePerToken = asset ? getTokenPriceByAddress(asset.address) : 0;
       const rate = asset ? (pricePerToken ? pricePerToken : 1) : 1;
       const decimals = asset ? asset.decimals : 9;
       // const amount = isIncoming ? freshStream.fundsSentToBeneficiary : freshStream.fundsLeftInStream;
@@ -711,9 +705,9 @@ export const AccountsNewView = () => {
     loadingStreamsSummary,
     setLastStreamsSummary,
     setLoadingStreamsSummary,
+    getTokenPriceByAddress,
     getTokenByMintAddress,
     setStreamsSummary,
-    getPricePerToken
   ]);
 
   // Filter only useful Txs for the SOL account and return count
@@ -938,7 +932,7 @@ export const AccountsNewView = () => {
             publicAddress: accountAddress,
             tags: NATIVE_SOL.tags,
             logoURI: NATIVE_SOL.logoURI,
-            valueInUsd: (solBalance / LAMPORTS_PER_SOL) * getPricePerToken(pinnedTokens[0])
+            valueInUsd: (solBalance / LAMPORTS_PER_SOL) * getTokenPriceBySymbol(pinnedTokens[0].symbol)
           };
 
           fetchAccountTokens(connection, pk)
@@ -1019,7 +1013,7 @@ export const AccountsNewView = () => {
                   // Locate the token in intersectedList
                   const tokenIndex = intersectedList.findIndex(i => i.address === item.parsedInfo.mint);
                   if (tokenIndex !== -1) {
-                    const rate = getPricePerToken(intersectedList[tokenIndex]);
+                    const rate = getTokenPriceBySymbol(intersectedList[tokenIndex].symbol);
                     // If we didn't already filled info for this associated token address
                     if (!intersectedList[tokenIndex].publicAddress) {
                       // Add it
@@ -1149,8 +1143,8 @@ export const AccountsNewView = () => {
     urlQueryAddress,
     shouldLoadTokens,
     getTokenByMintAddress,
+    getTokenPriceBySymbol,
     setShouldLoadTokens,
-    getPricePerToken,
     updateAtaFlag,
     selectAsset,
   ]);
@@ -1330,7 +1324,7 @@ export const AccountsNewView = () => {
       // Total USD value
       let sumMeanTokens = 0;
       accountTokens.forEach((asset: UserTokenAccount, index: number) => {
-        const tokenPrice = getPricePerToken(asset);
+        const tokenPrice = getTokenPriceBySymbol(asset.symbol);
         if (asset.balance && tokenPrice) {
           sumMeanTokens += asset.balance * tokenPrice;
         }
@@ -1342,7 +1336,7 @@ export const AccountsNewView = () => {
       setNetWorth(total);
     }
 
-  }, [treasuriesTvl, streamsSummary, getPricePerToken, accountTokens]);
+  }, [treasuriesTvl, streamsSummary, getTokenPriceBySymbol, accountTokens]);
 
   // Window resize listeners
   useEffect(() => {
@@ -1690,7 +1684,8 @@ export const AccountsNewView = () => {
       setSelectedCategory("user-account");
       selectAsset(asset, true, true);
     }
-    const tokenPrice = getPricePerToken(asset);
+    const priceByAddress = getTokenPriceByAddress(asset.address);
+    const tokenPrice = priceByAddress || getTokenPriceBySymbol(asset.symbol);
     const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
       event.currentTarget.src = FALLBACK_COIN_IMAGE;
       event.currentTarget.className = "error";
@@ -2041,7 +2036,8 @@ export const AccountsNewView = () => {
   const renderUserAccountAssetMeta = () => {
     if (!selectedAsset) { return null; }
 
-    const tokenPrice = getPricePerToken(selectedAsset);
+    const priceByAddress = getTokenPriceByAddress(selectedAsset.address);
+    const tokenPrice = priceByAddress || getTokenPriceBySymbol(selectedAsset.symbol);
     return (
       <>
         <div className="accounts-category-meta">

@@ -1,21 +1,20 @@
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AppStateContext } from "../../contexts/appstate";
-import { Modal, Button, Spin, Dropdown, Menu, Row, Col } from 'antd';
+import { Modal, Button, Dropdown, Menu, Row, Col } from 'antd';
 import { PaymentRateType, TransactionStatus } from '../../models/enums';
 import { TokenInfo } from "@solana/spl-token-registry";
 import { TokenListItem } from "../TokenListItem";
-import { consoleOut, getIntervalFromSeconds, getPaymentRateOptionLabel, isValidAddress, PaymentRateTypeOption } from "../../utils/ui";
+import { consoleOut, getPaymentRateOptionLabel, isValidAddress, PaymentRateTypeOption } from "../../utils/ui";
 import { useWallet } from "../../contexts/wallet";
 import { TokenDisplay } from "../TokenDisplay";
-import { formatAmount, getAmountWithSymbol, isValidNumber, toUiAmount } from "../../utils/utils";
+import { getAmountWithSymbol, isValidNumber } from "../../utils/utils";
 import { TextInput } from "../TextInput";
 import { useNavigate } from "react-router-dom";
 import { IconCaretDown } from "../../Icons";
 import { isError } from "../../utils/transactions";
 import { StreamInfo } from '@mean-dao/money-streaming/lib/types';
 import { Stream } from "@mean-dao/msp";
-import { BN } from "bn.js";
 import { NATIVE_SOL } from "../../utils/tokens";
 
 export const StreamEditModal = (props: {
@@ -31,22 +30,18 @@ export const StreamEditModal = (props: {
   const {
     transactionStatus,
     selectedToken,
-    effectiveRate,
-    coinPrices,
     tokenList,
     tokenBalance,
-    loadingPrices,
     recipientNote,
     fromCoinAmount,
     paymentRateFrequency,
-    selectedStream,
+    setPaymentRateFrequency,
+    getTokenPriceBySymbol,
     setTransactionStatus,
+    setFromCoinAmount,
+    setRecipientNote,
     setSelectedToken,
     setEffectiveRate,
-    refreshPrices,
-    setRecipientNote,
-    setFromCoinAmount,
-    setPaymentRateFrequency
   } = useContext(AppStateContext);
   const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
   const [tokenFilter, setTokenFilter] = useState("");
@@ -137,14 +132,6 @@ export const StreamEditModal = (props: {
       setFromCoinAmount(newValue);
     }
   };
-
-  const getPricePerToken = (token: TokenInfo): number => {
-    if (!token || !coinPrices) { return 0; }
-
-    return coinPrices && coinPrices[token.symbol]
-      ? coinPrices[token.symbol]
-      : 0;
-  }
 
   // Token selection modal
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
@@ -258,7 +245,7 @@ export const StreamEditModal = (props: {
           const onClick = function () {
             setSelectedToken(token);
             consoleOut("token selected:", token.symbol, 'blue');
-            setEffectiveRate(getPricePerToken(token));
+            setEffectiveRate(getTokenPriceBySymbol(token.symbol));
             onCloseTokenSelector();
           };
 

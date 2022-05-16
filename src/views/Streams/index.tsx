@@ -126,7 +126,6 @@ export const Streams = () => {
     theme,
     tpsAvg,
     streamList,
-    coinPrices,
     streamListv1,
     streamListv2,
     streamDetail,
@@ -153,6 +152,7 @@ export const Streams = () => {
     setLoadingStreamsSummary,
     setHighLightableStreamId,
     getTokenByMintAddress,
+    getTokenPriceBySymbol,
     setLastStreamsSummary,
     setCustomStreamDocked,
     setTransactionStatus,
@@ -240,14 +240,6 @@ export const Streams = () => {
   const getTransactionFeesV2 = useCallback(async (action: MSP_ACTIONS_V2): Promise<TransactionFees> => {
     return await calculateActionFeesV2(connection, action);
   }, [connection]);
-
-  const getPricePerToken = useCallback((token: UserTokenAccount | TokenInfo): number => {
-    if (!token || !coinPrices) { return 0; }
-
-    return coinPrices && coinPrices[token.symbol]
-      ? coinPrices[token.symbol]
-      : 0;
-  }, [coinPrices])
 
   const getTreasuryName = useCallback(() => {
     if (treasuryDetails) {
@@ -658,7 +650,7 @@ export const Streams = () => {
       if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
 
       const asset = getTokenByMintAddress(freshStream.associatedToken as string);
-      const rate = asset ? getPricePerToken(asset as UserTokenAccount) : 0;
+      const rate = asset ? getTokenPriceBySymbol(asset.symbol) : 0;
       if (isIncoming) {
         resume['totalNet'] = resume['totalNet'] + ((freshStream.escrowVestedAmount || 0) * rate);
       } else {
@@ -687,7 +679,7 @@ export const Streams = () => {
       if (!freshStream || freshStream.status !== STREAM_STATUS.Running) { continue; }
 
       const asset = getTokenByMintAddress(freshStream.associatedToken as string);
-      const pricePerToken = getPricePerToken(asset as UserTokenAccount);
+      const pricePerToken = asset ? getTokenPriceBySymbol(asset.symbol) : 0;
       const rate = asset ? (pricePerToken ? pricePerToken : 1) : 1;
       const decimals = asset ? asset.decimals : 9;
       // const amount = isIncoming ? freshStream.fundsSentToBeneficiary : freshStream.fundsLeftInStream;
@@ -721,10 +713,10 @@ export const Streams = () => {
     streamsSummary,
     loadingStreamsSummary,
     setLoadingStreamsSummary,
+    getTokenPriceBySymbol,
     getTokenByMintAddress,
     setLastStreamsSummary,
     setStreamsSummary,
-    getPricePerToken
   ]);
 
   // Live data calculation - Stream summary
@@ -2445,7 +2437,7 @@ export const Streams = () => {
           contributor: data.contributor,
           treasury: data.treasury,
           asset: token ? `${token} [${data.contributorMint}]` : data.contributorMint,
-          assetPrice: selectedToken ? getPricePerToken(selectedToken) : 0,
+          assetPrice: selectedToken ? getTokenPriceBySymbol(selectedToken.symbol) : 0,
           amount
         };
         consoleOut('segment data:', segmentData, 'brown');
@@ -2571,7 +2563,7 @@ export const Streams = () => {
         asset: selectedToken
           ? `${selectedToken.symbol} [${selectedToken.address}]`
           : associatedToken.toBase58(),
-        assetPrice: selectedToken ? getPricePerToken(selectedToken) : 0,
+        assetPrice: selectedToken ? getTokenPriceBySymbol(selectedToken.symbol) : 0,
         amount: parseFloat(addFundsData.amount)
       };
       consoleOut('segment data:', segmentData, 'brown');
@@ -3215,7 +3207,7 @@ export const Streams = () => {
         // Report event to Segment analytics
         const segmentData: SegmentStreamWithdrawData = {
           asset: withdrawData.token,
-          assetPrice: selectedToken ? getPricePerToken(selectedToken) : 0,
+          assetPrice: selectedToken ? getTokenPriceBySymbol(selectedToken.symbol) : 0,
           stream: data.stream,
           beneficiary: data.beneficiary,
           feeAmount: withdrawData.fee,
@@ -3328,7 +3320,7 @@ export const Streams = () => {
         // Report event to Segment analytics
         const segmentData: SegmentStreamWithdrawData = {
           asset: withdrawData.token,
-          assetPrice: selectedToken ? getPricePerToken(selectedToken) : 0,
+          assetPrice: selectedToken ? getTokenPriceBySymbol(selectedToken.symbol) : 0,
           stream: data.stream,
           beneficiary: data.beneficiary,
           feeAmount: withdrawData.fee,
@@ -3608,7 +3600,7 @@ export const Streams = () => {
         // Report event to Segment analytics
         const segmentData: SegmentStreamCloseData = {
           asset: selectedToken ? selectedToken.symbol : '-',
-          assetPrice: selectedToken ? getPricePerToken(selectedToken) : 0,
+          assetPrice: selectedToken ? getTokenPriceBySymbol(selectedToken.symbol) : 0,
           stream: data.stream,
           initializer: data.initializer,
           closeTreasury: data.autoCloseTreasury,
@@ -3715,7 +3707,7 @@ export const Streams = () => {
         // Report event to Segment analytics
         const segmentData: SegmentStreamCloseData = {
           asset: selectedToken ? selectedToken.symbol : '-',
-          assetPrice: selectedToken ? getPricePerToken(selectedToken) : 0,
+          assetPrice: selectedToken ? getTokenPriceBySymbol(selectedToken.symbol) : 0,
           stream: data.stream,
           initializer: data.initializer,
           closeTreasury: data.autoCloseTreasury,

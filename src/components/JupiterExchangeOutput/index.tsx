@@ -30,8 +30,8 @@ export const JupiterExchangeOutput = (props: {
 
   const { t } = useTranslation("common");
   const {
-    coinPrices,
     loadingPrices,
+    getTokenPriceBySymbol,
     refreshPrices,
   } = useContext(AppStateContext);
   const { publicKey } = useWallet();
@@ -61,14 +61,6 @@ export const JupiterExchangeOutput = (props: {
     selectedRouteIndex
   ]);
 
-  const getPricePerToken = (token: TokenInfo): number => {
-    if (!token || !coinPrices) { return 0; }
-
-    return coinPrices && coinPrices[token.symbol]
-      ? coinPrices[token.symbol]
-      : 0;
-  }
-
   return (
     <>
       <div className={`well ${props.className} ${props.disabled ? 'disabled' : ''}`}>
@@ -94,7 +86,7 @@ export const JupiterExchangeOutput = (props: {
                     {`(~${
                       props.toToken && props.toTokenBalance
                         ? toUsCurrency(
-                            parseFloat(props.toTokenBalance) * getPricePerToken(props.toToken as TokenInfo)
+                            parseFloat(props.toTokenBalance) * getTokenPriceBySymbol(props.toToken.symbol)
                           )
                         : "$0.00"
                     })`}
@@ -110,7 +102,7 @@ export const JupiterExchangeOutput = (props: {
             <>
               <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
                 ~{props.toToken && props.toTokenBalance
-                  ? toUsCurrency(parseFloat(props.toTokenBalance) * getPricePerToken(props.toToken as TokenInfo))
+                  ? toUsCurrency(parseFloat(props.toTokenBalance) * getTokenPriceBySymbol(props.toToken.symbol))
                   : "$0.00"
                 }
               </span>

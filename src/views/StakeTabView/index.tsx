@@ -30,9 +30,9 @@ export const StakeTabView = (props: {
   selectedToken: TokenInfo | undefined;
 }) => {
   const {
-    coinPrices,
     loadingPrices,
     transactionStatus,
+    getTokenPriceBySymbol,
     setTransactionStatus,
     refreshPrices,
   } = useContext(AppStateContext);
@@ -155,14 +155,6 @@ export const StakeTabView = (props: {
     }
   };
 
-  const getPricePerToken = useCallback((token: TokenInfo): number => {
-    if (!token || !coinPrices) { return 0; }
-
-    return coinPrices && coinPrices[token.symbol]
-      ? coinPrices[token.symbol]
-      : 0;
-  }, [coinPrices])
-
   const getStakeButtonLabel = useCallback(() => {
     return !connected
       ? t('transactions.validation.not-connected')
@@ -226,7 +218,7 @@ export const StakeTabView = (props: {
         // Report event to Segment analytics
         const segmentData: SegmentStakeMeanData = {
           asset: props.selectedToken.symbol,
-          assetPrice: getPricePerToken(props.selectedToken),
+          assetPrice: getTokenPriceBySymbol(props.selectedToken.symbol),
           stakedAsset: 'sMEAN',
           stakedAssetPrice: stakedMeanPrice,
           amount: uiAmount,
@@ -482,8 +474,8 @@ export const StakeTabView = (props: {
     transactionStatus.currentOperation,
     enqueueTransactionConfirmation,
     showTransactionExecutionModal,
+    getTokenPriceBySymbol,
     setTransactionStatus,
-    getPricePerToken,
     t
   ]);
 
@@ -656,7 +648,7 @@ export const StakeTabView = (props: {
           <div className="right inner-label">
             <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
               ~${fromCoinAmount && props.selectedToken
-                ? formatAmount(parseFloat(fromCoinAmount) * getPricePerToken(props.selectedToken), 2)
+                ? formatAmount(parseFloat(fromCoinAmount) * getTokenPriceBySymbol(props.selectedToken.symbol), 2)
                 : "0.00"}
             </span>
           </div>
