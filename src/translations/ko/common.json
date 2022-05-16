@@ -916,6 +916,7 @@
 		"modal-title": "토큰 선택",
 		"no-matches": "검색 결과가 없습니다",
 		"search-input-placeholder": "이름, 기호 또는 주소로 토큰 검색",
+		"lookup-add-asset-input-placeholder": "토큰 이름, 기호 또는 주소 입력",
 		"wrap-sol-first": "wSOL로 먼저 랩핑하기"
 	},
 	"transactions": {

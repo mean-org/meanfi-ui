@@ -915,6 +915,7 @@
 		"modal-title": "Chọn một token",
 		"no-matches": "Không tìm thấy",
 		"search-input-placeholder": "Tìm token theo tên, ký hiệu hoặc địa chỉ",
+		"lookup-add-asset-input-placeholder": "Nhập tên mã thông báo, ký hiệu hoặc địa chỉ",
 		"wrap-sol-first": "hoán đổi qua wSOL trước"
 	},
 	"transactions": {

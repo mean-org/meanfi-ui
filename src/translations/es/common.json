@@ -921,6 +921,7 @@
 		"modal-title": "Seleccione un token",
 		"no-matches": "No se encontraron coincidencias",
 		"search-input-placeholder": "Buscar token por nombre, símbolo o la dirección",
+		"lookup-add-asset-input-placeholder": "Introduzca nombre de token, símbolo o dirección",
 		"wrap-sol-first": "wrap it first to wSOL"
 	},
 	"transactions": {

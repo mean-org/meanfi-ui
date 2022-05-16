@@ -5,8 +5,8 @@ import { useTranslation } from "react-i18next";
 import { getNetworkIdByEnvironment, useConnection } from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
 import { AppStateContext } from '../../contexts/appstate';
-import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
-import { useAccountsContext, useNativeAccount, useUserAccounts } from '../../contexts/accounts';
+import { TxConfirmationContext } from '../../contexts/transaction-status';
+import { useNativeAccount, useUserAccounts } from '../../contexts/accounts';
 import { MAX_TOKEN_LIST_ITEMS } from '../../constants';
 import { AccountInfo, Connection, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey, Transaction } from '@solana/web3.js';
 import { consoleOut, getTransactionStatusForLogs, isProd, isValidAddress } from '../../utils/ui';
@@ -40,7 +40,6 @@ export const AccountsInitAtaModal = (props: {
     splTokenList,
     transactionStatus,
     setTransactionStatus,
-    refreshTokenBalance,
   } = useContext(AppStateContext);
   const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const [isBusy, setIsBusy] = useState(false);
@@ -559,7 +558,7 @@ export const AccountsInitAtaModal = (props: {
           allowClear={true}
           extraClass="mb-2"
           onInputClear={onInputCleared}
-          placeholder={t('token-selector.search-input-placeholder')}
+          placeholder={t('token-selector.lookup-add-asset-input-placeholder')}
           onInputChange={onTokenSearchInputChange}
           error={
             tokenFilter && selectedToken && selectedToken.decimals === -1
@@ -633,8 +632,8 @@ export const AccountsInitAtaModal = (props: {
       <div className="px-4 pb-3">
 
         <div className="mb-2 shift-up-1 text-center">
-          <p>Adding an asset will initialize the Associated Token Account for the selected token below. You can add a custom asset by entering its mint address.</p>
-          <p>The asset will be added to your wallet if you don't already own it.</p>
+          <p>Adding an asset will initialize the Associated Token Account. You can add a custom asset by entering its mint address.</p>
+          <p>The asset will be added to your wallet if you don't own it already.</p>
         </div>
 
         {/* Asset picker */}

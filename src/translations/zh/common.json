@@ -912,6 +912,7 @@
 		"modal-title": "Select a token",
 		"no-matches": "No matches found",
 		"search-input-placeholder": "Search token by name, symbol or address",
+		"lookup-add-asset-input-placeholder": "Enter token name, symbol or address",
 		"wrap-sol-first": "wrap it first to wSOL"
 	},
 	"transactions": {

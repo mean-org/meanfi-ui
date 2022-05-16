@@ -913,6 +913,7 @@
 		"modal-title": "Bir token seçin",
 		"no-matches": "Hiçbir sonuç bulunamadı",
 		"search-input-placeholder": "İsim, sembol veya adrese göre token arayın",
+		"lookup-add-asset-input-placeholder": "Belirteç adı, sembol veya adres girin",
 		"wrap-sol-first": "önce wSOL'a çevirin"
 	},
 	"transactions": {

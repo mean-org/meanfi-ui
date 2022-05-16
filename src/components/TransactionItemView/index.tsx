@@ -130,11 +130,18 @@ export const TransactionItemView = (props: {
               postTokenBalance.uiTokenAmount.decimals,
               postTokenBalance.uiTokenAmount.decimals
             )
-        : formatThousands(
-            getAmountFromLamports(balanceChange),
-            NATIVE_SOL.decimals,
-            NATIVE_SOL.decimals
+        : isNativeAccountSelected
+          ? formatThousands(
+              getAmountFromLamports(balanceChange),
+              NATIVE_SOL.decimals,
+              NATIVE_SOL.decimals
+            )
+          : formatThousands(
+            balanceChange,
+            props.selectedAsset?.decimals || 0,
+            props.selectedAsset?.decimals || 0
           );
+
 
     return displayAmount;
   }
@@ -156,10 +163,16 @@ export const TransactionItemView = (props: {
               ? postTokenBalance.uiTokenAmount.decimals || NATIVE_SOL.decimals
               : NATIVE_SOL.decimals
           )
-      : formatThousands(
-          getAmountFromLamports(postBalance),
-          NATIVE_SOL.decimals,
-          NATIVE_SOL.decimals
+      : isNativeAccountSelected
+        ? formatThousands(
+            getAmountFromLamports(postBalance),
+            NATIVE_SOL.decimals,
+            NATIVE_SOL.decimals
+          )
+        : formatThousands(
+          balanceChange,
+          props.selectedAsset?.decimals || 0,
+          props.selectedAsset?.decimals || 0
         );
   }
 
