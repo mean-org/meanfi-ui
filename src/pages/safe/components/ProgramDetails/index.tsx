@@ -17,18 +17,17 @@ import { IconArrowBack } from "../../../../Icons";
 import { OperationType, TransactionStatus } from "../../../../models/enums";
 import { NATIVE_SOL_MINT } from "../../../../utils/ids";
 import { consoleOut, getTransactionStatusForLogs } from "../../../../utils/ui";
-import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress } from "../../../../utils/utils";
+import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume } from "../../../../utils/utils";
 import { ProgramAccounts } from "../../../../utils/accounts";
 import { customLogger } from "../../../..";
 import { TabsMean } from '../../../../components/TabsMean';
-import { Program, translateAddress } from '@project-serum/anchor';
-import { decodeIdlAccount, idlAddress } from '@project-serum/anchor/dist/cjs/idl';
-import { getProvider } from 'anchor-0-20-1/src/provider';
+import { AnchorProvider, Program, Idl, translateAddress } from '@project-serum/anchor';
 import { utf8 } from '@project-serum/anchor/dist/cjs/utils/bytes';
 import { NATIVE_SOL } from '../../../../utils/tokens';
 import { CopyOutlined } from '@ant-design/icons';
 import { CopyExtLinkGroup } from '../../../../components/CopyExtLinkGroup';
 import moment from 'moment';
+import { decodeIdlAccount, idlAddress } from '@project-serum/anchor/dist/cjs/idl';
 
 export const ProgramDetailsView = (props: {
   isProgramDetails: boolean;
@@ -919,7 +918,43 @@ export const ProgramDetailsView = (props: {
         <span>Loading...</span>
       )}
     </>
-  )
+  );
+
+  // Get Anchor IDL
+  // useEffect(() => {
+  //   if (!connection) { return; }
+
+  //   const createAnchorProvider = (): AnchorProvider => {
+  //     const opts = AnchorProvider.defaultOptions();
+  //     const anchorWallet = {
+  //       publicKey: publicKey as PublicKey,
+  //       signAllTransactions: async (txs: any) => txs,
+  //       signTransaction: async (tx: any) => tx,
+  //     };
+
+  //     const provider = new AnchorProvider(connection, anchorWallet, opts);
+
+  //     return provider
+  //   }
+
+  //   const provider = createAnchorProvider();
+
+  //   const programId = translateAddress(programSelected.pubkey.toBase58());
+
+  //   (async () => {
+  //     const idlAddr = await idlAddress(programId);
+  //     const accountInfo = await provider.connection.getAccountInfo(idlAddr);
+  //     if (!accountInfo) {
+  //       return null;
+  //     }
+  //     // Chop off account discriminator
+  //     const idlAccount = decodeIdlAccount(accountInfo.data.slice(8));
+  //     // const inflatedIdl = inflate(idlAccount.data);
+  //     console.log("idlAccount", idlAccount);
+  //     return JSON.parse(utf8.decode(idlAccount.data));
+  //   })();
+
+  // }, [connection, programSelected.pubkey, publicKey]);
 
   // Tabs
   const tabs = [
