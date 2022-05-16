@@ -13,6 +13,7 @@ import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../../../constants';
 import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
 import { ResumeItem } from '../UI/ResumeItem';
 import { PublicKey } from '@solana/web3.js';
+import { MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
 
 export const SafeDetailsView = (props: {
   isSafeDetails: boolean;
@@ -20,10 +21,11 @@ export const SafeDetailsView = (props: {
   proposalSelected?: any;
   selectedMultisig?: any;
   onProposalApprove?: any;
+  onProposalExecute?: any;
 }) => {
   const { t } = useTranslation('common');
   const { Panel } = Collapse;
-  const { isSafeDetails, onDataToSafeView, selectedMultisig, onProposalApprove } = props;
+  const { isSafeDetails, onDataToSafeView, selectedMultisig, onProposalApprove, onProposalExecute } = props;
   const { id, signers, details, executedOn, status, proposer, operation, programId, accounts, data } = props.proposalSelected;
   const collapseHandler = (key: any) => {}
 
@@ -275,26 +277,44 @@ export const SafeDetailsView = (props: {
           </div>
         </Col>
         <Col className="safe-details-right-container btn-group">
-          <Button
-            type="ghost"
-            size="small"
-            className="thin-stroke"
-            onClick={() => onProposalApprove({ transaction: { id: new PublicKey(id) } })}>
+          {status === MultisigTransactionStatus.Approved ? (
+            <Button
+              type="ghost"
+              size="small"
+              className="thin-stroke"
+              onClick={() => onProposalExecute({ 
+                transaction: { 
+                  id: new PublicKey(id),
+                  operation: operation
+                }
+              })}>
               <div className="btn-content">
-                <IconThumbsUp className="mean-svg-icons" />
-                Approve
+                Execute
               </div>
-          </Button>
-          <Button
-            type="ghost"
-            size="small"
-            className="thin-stroke"
-            onClick={() => {}}>
-              <div className="btn-content">
-                <IconThumbsDown className="mean-svg-icons" />
-                Reject
-              </div>
-          </Button>
+            </Button>
+          ) : (
+            <>
+              <Button
+                type="ghost"
+                size="small"
+                className="thin-stroke"
+                onClick={() => onProposalApprove({ transaction: { id: new PublicKey(id) } })}>
+                <div className="btn-content">
+                  <IconThumbsUp className="mean-svg-icons" />
+                  Approve
+                </div>
+              </Button><Button
+                type="ghost"
+                size="small"
+                className="thin-stroke"
+                onClick={() => { } }>
+                  <div className="btn-content">
+                    <IconThumbsDown className="mean-svg-icons" />
+                    Reject
+                  </div>
+              </Button>
+            </>
+          )}
         </Col>
       </Row>
       <div className="safe-tabs-container">
