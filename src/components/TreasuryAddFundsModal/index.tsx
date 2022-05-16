@@ -1,10 +1,10 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { useContext, useState } from 'react';
 import { Modal, Button, Select, Divider, Input, Spin } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
 import { TokenInfo } from '@solana/spl-token-registry';
-import { getTokenByMintAddress, NATIVE_SOL } from '../../utils/tokens';
+import { NATIVE_SOL } from '../../utils/tokens';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { TokenDisplay } from '../TokenDisplay';
 import {
@@ -29,7 +29,7 @@ import {
 } from '../../utils/ui';
 import { TreasuryStreamsBreakdown } from '../../models/streams';
 import { StreamInfo, STREAM_STATE, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
-import { SelectOption, TreasuryTopupParams } from '../../models/common-types';
+import { TreasuryTopupParams } from '../../models/common-types';
 import { TransactionStatus } from '../../models/enums';
 import { useWallet } from '../../contexts/wallet';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
@@ -64,6 +64,7 @@ export const TreasuryAddFundsModal = (props: {
     loadingPrices,
     transactionStatus,
     highLightableStreamId,
+    getTokenByMintAddress,
     setTransactionStatus,
     setSelectedToken,
     setEffectiveRate,
@@ -75,14 +76,15 @@ export const TreasuryAddFundsModal = (props: {
   const [allocationOption, setAllocationOption] = useState<AllocationType>(AllocationType.None);
   const [customTokenInput, setCustomTokenInput] = useState("");
   // const [selectedStreamForAllocation, setSelectedStreamForAllocation] = useState('');
-  const [treasuryType, setTreasuryType] = useState<TreasuryType>(TreasuryType.Open);
+  const [, setTreasuryType] = useState<TreasuryType>(TreasuryType.Open);
   const [availableBalance, setAvailableBalance] = useState<any>();
   const [tokenAmount, setTokenAmount] = useState<any>(0);
 
-  const numTreasuryStreams = useCallback(() => {
-    return props.treasuryStreams ? props.treasuryStreams.length : 0;
-  }, [props.treasuryStreams]);
+  // const numTreasuryStreams = useCallback(() => {
+  //   return props.treasuryStreams ? props.treasuryStreams.length : 0;
+  // }, [props.treasuryStreams]);
 
+  /*
   const allocationOptions = useMemo(() => {
     const options: SelectOption[] = [];
     // options.push({
@@ -105,6 +107,7 @@ export const TreasuryAddFundsModal = (props: {
     });
     return options;
   }, [t, numTreasuryStreams]);
+  */
 
   /////////////////
   //   Getters   //
@@ -210,6 +213,38 @@ export const TreasuryAddFundsModal = (props: {
             ? t('treasuries.add-funds.main-cta-fund-stream')
             : t('treasuries.add-funds.main-cta');
   }
+
+  const getRateAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
+    let value = '';
+
+    if (item) {
+      const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+      if (item.version < 2) {
+        value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
+      } else {
+        value += getFormattedNumberToLocale(formatAmount(toUiAmount(new BN(item.rateAmount), token?.decimals || 6), 2));
+      }
+      value += ' ';
+      value += getTokenSymbol(item.associatedToken as string);
+    }
+    return value;
+  }, [getTokenByMintAddress]);
+
+  const getTransferAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
+    let value = '';
+
+    if (item && item.rateAmount === 0 && item.allocationAssigned > 0) {
+      const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+      if (item.version < 2) {
+        value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
+      } else {
+        value += getFormattedNumberToLocale(formatAmount(toUiAmount(new BN(item.rateAmount), token?.decimals || 6), 2));
+      }
+      value += ' ';
+      value += getTokenSymbol(item.associatedToken as string);
+    }
+    return value;
+  }, [getTokenByMintAddress]);
 
   const getStreamIcon = useCallback((item: Stream | StreamInfo) => {
     const isInbound = isInboundStream(item);
@@ -380,40 +415,10 @@ export const TreasuryAddFundsModal = (props: {
 
   }, [
     t,
-    isInboundStream
+    isInboundStream,
+    getRateAmountDisplay,
+    getTransferAmountDisplay,
   ]);
-
-  const getRateAmountDisplay = (item: Stream | StreamInfo): string => {
-    let value = '';
-
-    if (item) {
-      const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
-      if (item.version < 2) {
-        value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
-      } else {
-        value += getFormattedNumberToLocale(formatAmount(toUiAmount(new BN(item.rateAmount), token?.decimals || 6), 2));
-      }
-      value += ' ';
-      value += getTokenSymbol(item.associatedToken as string);
-    }
-    return value;
-  }
-
-  const getTransferAmountDisplay = (item: Stream | StreamInfo): string => {
-    let value = '';
-
-    if (item && item.rateAmount === 0 && item.allocationAssigned > 0) {
-      const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
-      if (item.version < 2) {
-        value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
-      } else {
-        value += getFormattedNumberToLocale(formatAmount(toUiAmount(new BN(item.rateAmount), token?.decimals || 6), 2));
-      }
-      value += ' ';
-      value += getTokenSymbol(item.associatedToken as string);
-    }
-    return value;
-  }
 
   const toggleOverflowEllipsisMiddle = useCallback((state: boolean) => {
     const ellipsisElements = document.querySelectorAll(".ant-select.token-selector-dropdown .ant-select-selector .ant-select-selection-item");
@@ -462,14 +467,14 @@ export const TreasuryAddFundsModal = (props: {
     t,
   ]);
 
-  const getStreamName = useCallback((item: Stream | StreamInfo | undefined) => {
-    if (item) {
-      const v1 = item as StreamInfo;
-      const v2 = item as Stream;
-      return v1.version < 2 ? v1.streamName : v2.name;
-    }
-    return '';
-  }, []);
+  // const getStreamName = useCallback((item: Stream | StreamInfo | undefined) => {
+  //   if (item) {
+  //     const v1 = item as StreamInfo;
+  //     const v2 = item as Stream;
+  //     return v1.version < 2 ? v1.streamName : v2.name;
+  //   }
+  //   return '';
+  // }, []);
 
   /////////////////////
   // Data management //

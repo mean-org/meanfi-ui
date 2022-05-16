@@ -14,7 +14,7 @@ import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout, Token, TOKEN_PR
 import { useLocation, useNavigate } from 'react-router-dom';
 import { consoleOut, copyText, delay, getShortDate, getTransactionStatusForLogs, isLocal } from '../../utils/ui';
 import { Identicon } from '../../components/Identicon';
-import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, getTxIxResume, makeDecimal, shortenAddress } from '../../utils/utils';
+import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress } from '../../utils/utils';
 import { TransactionFees } from '@mean-dao/msp';
 import { MultisigCreateAssetModal } from '../../components/MultisigCreateAssetModal';
 import { useNativeAccount } from '../../contexts/accounts';
@@ -32,7 +32,6 @@ import { ProposalSummaryModal } from '../../components/ProposalSummaryModal';
 import { openNotification } from '../../components/Notifications';
 import { MultisigVault } from '../../models/multisig';
 import {
-
   DEFAULT_EXPIRATION_TIME_SECONDS,
   getMultisigTransactionSummary,
   MeanMultisig,
@@ -41,12 +40,7 @@ import {
   MultisigTransaction,
   MultisigTransactionStatus, 
   MultisigTransactionSummary
-
 } from "@mean-dao/mean-multisig-sdk";
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-// eslint-disable-next-line no-unused-vars
-// const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const MultisigAssetsView = () => {
   const location = useLocation();
@@ -55,16 +49,15 @@ export const MultisigAssetsView = () => {
   const connectionConfig = useConnectionConfig();
   const { publicKey, wallet, connected } = useWallet();
   const {
-    // theme,
     tokenList,
-    // isWhitelisted,
     detailsPanelOpen,
     transactionStatus,
-    setDtailsPanelOpen,
-    refreshTokenBalance,
-    setTransactionStatus,
-    setHighLightableMultisigId,
     previousWalletConnectState,
+    setHighLightableMultisigId,
+    getTokenByMintAddress,
+    setTransactionStatus,
+    refreshTokenBalance,
+    setDtailsPanelOpen,
   } = useContext(AppStateContext);
   const {
     fetchTxInfoStatus,

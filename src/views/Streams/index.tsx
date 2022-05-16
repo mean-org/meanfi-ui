@@ -31,7 +31,6 @@ import {
   formatThousands,
   getAmountWithSymbol,
   getTokenAmountAndSymbolByTokenAddress,
-  getTokenByMintAddress,
   getTokenSymbol,
   getTxIxResume,
   shortenAddress,
@@ -49,8 +48,6 @@ import {
   getTransactionModalTitle,
   getTransactionOperationDescription,
   getTransactionStatusForLogs,
-  isDev,
-  isLocal,
   isProd,
   isValidAddress,
 } from "../../utils/ui";
@@ -136,7 +133,6 @@ export const Streams = () => {
     activeStream,
     tokenBalance,
     splTokenList,
-    isWhitelisted,
     selectedToken,
     loadingStreams,
     streamsSummary,
@@ -156,6 +152,7 @@ export const Streams = () => {
     previousWalletConnectState,
     setLoadingStreamsSummary,
     setHighLightableStreamId,
+    getTokenByMintAddress,
     setLastStreamsSummary,
     setCustomStreamDocked,
     setTransactionStatus,
@@ -188,7 +185,7 @@ export const Streams = () => {
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
   });
   const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
-  const [multisigAccounts, setMultisigAccounts] = useState<MultisigInfo[] | undefined>(undefined);
+  const [multisigAccounts] = useState<MultisigInfo[] | undefined>(undefined);
   const [canSubscribe, setCanSubscribe] = useState(true);
 
   // Countdown timer variables
@@ -198,10 +195,6 @@ export const Streams = () => {
   // Treasury related
   const [loadingTreasuryDetails, setLoadingTreasuryDetails] = useState(true);
   const [treasuryDetails, setTreasuryDetails] = useState<Treasury | TreasuryInfo | undefined>(undefined);
-
-  const isUnderDevelopment = () => {
-    return isLocal() || (isDev() && isWhitelisted) ? true : false;
-  }
 
   // Create and cache Money Streaming Program instance
   const ms = useMemo(() => new MoneyStreaming(
@@ -664,7 +657,7 @@ export const Streams = () => {
       const freshStream = await ms.refreshStream(stream) as StreamInfo;
       if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
 
-      const asset = getTokenByMintAddress(freshStream.associatedToken as string, splTokenList);
+      const asset = getTokenByMintAddress(freshStream.associatedToken as string);
       const rate = asset ? getPricePerToken(asset as UserTokenAccount) : 0;
       if (isIncoming) {
         resume['totalNet'] = resume['totalNet'] + ((freshStream.escrowVestedAmount || 0) * rate);
@@ -693,7 +686,7 @@ export const Streams = () => {
       const freshStream = await msp.refreshStream(stream) as Stream;
       if (!freshStream || freshStream.status !== STREAM_STATUS.Running) { continue; }
 
-      const asset = getTokenByMintAddress(freshStream.associatedToken as string, splTokenList);
+      const asset = getTokenByMintAddress(freshStream.associatedToken as string);
       const pricePerToken = getPricePerToken(asset as UserTokenAccount);
       const rate = asset ? (pricePerToken ? pricePerToken : 1) : 1;
       const decimals = asset ? asset.decimals : 9;
@@ -727,8 +720,9 @@ export const Streams = () => {
     accountAddress,
     streamsSummary,
     loadingStreamsSummary,
-    setLastStreamsSummary,
     setLoadingStreamsSummary,
+    getTokenByMintAddress,
+    setLastStreamsSummary,
     setStreamsSummary,
     getPricePerToken
   ]);
@@ -841,7 +835,7 @@ export const Streams = () => {
   // Watch for stream's associated token changes then load the token to the state as selectedToken
   useEffect(() => {
     if (streamDetail && selectedToken?.address !== streamDetail.associatedToken) {
-      const token = getTokenByMintAddress(streamDetail.associatedToken as string, splTokenList);
+      const token = getTokenByMintAddress(streamDetail.associatedToken as string);
       if (token) {
         consoleOut("stream token:", token, 'blue');
         if (!selectedToken || selectedToken.address !== token.address) {
@@ -857,6 +851,7 @@ export const Streams = () => {
     selectedToken,
     setCustomToken,
     setSelectedToken,
+    getTokenByMintAddress,
     streamDetail?.associatedToken
   ]);
 
@@ -2258,7 +2253,7 @@ export const Streams = () => {
   const showAddFundsModal = useCallback(() => {
     // Record user event in Segment Analytics
     segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupButton);
-    const token = getTokenByMintAddress(streamDetail?.associatedToken as string, splTokenList);
+    const token = getTokenByMintAddress(streamDetail?.associatedToken as string);
     consoleOut("stream token:", token?.symbol);
     if (token) {
       if (!selectedToken || selectedToken.address !== token.address) {
@@ -2293,8 +2288,9 @@ export const Streams = () => {
   }, [
     streamDetail,
     selectedToken,
-    refreshTokenBalance,
+    getTokenByMintAddress,
     getTransactionFeesV2,
+    refreshTokenBalance,
     getTransactionFees,
     setSelectedToken,
     setCustomToken,
@@ -2878,7 +2874,7 @@ export const Streams = () => {
     let value = '';
 
     if (item) {
-      const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string, splTokenList) : undefined;
+      const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
       if (item.version < 2) {
         value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
       } else {
@@ -2888,13 +2884,13 @@ export const Streams = () => {
       value += getTokenSymbol(item.associatedToken as string);
     }
     return value;
-  }, [splTokenList]);
+  }, [getTokenByMintAddress]);
 
   const getDepositAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
     let value = '';
 
     if (item && item.rateAmount === 0 && item.allocationAssigned > 0) {
-      const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string, splTokenList) : undefined;
+      const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
       if (item.version < 2) {
         value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
       } else {
@@ -2904,7 +2900,7 @@ export const Streams = () => {
       value += getTokenSymbol(item.associatedToken as string);
     }
     return value;
-  }, [splTokenList]);
+  }, [getTokenByMintAddress]);
 
   const getStreamTypeIcon = useCallback((item: Stream | StreamInfo) => {
     if (isInboundStream(item)) {
@@ -4062,7 +4058,7 @@ export const Streams = () => {
   const getActivityAmountDisplay = (item: StreamActivity, streamVersion: number): number => {
     let value = '';
 
-    const token = getTokenByMintAddress(item.mint as string, splTokenList);
+    const token = getTokenByMintAddress(item.mint as string);
     if (streamVersion < 2) {
       value += formatAmount(item.amount, token?.decimals || 6);
     } else {
@@ -4249,7 +4245,7 @@ export const Streams = () => {
   }
 
   const renderInboundStreamV1 = (stream: StreamInfo) => {
-    const token = stream.associatedToken ? getTokenByMintAddress(stream.associatedToken as string, splTokenList) : undefined;
+    const token = stream.associatedToken ? getTokenByMintAddress(stream.associatedToken as string) : undefined;
     return (
       <>
         {stream && (
@@ -4558,7 +4554,7 @@ export const Streams = () => {
   };
 
   const renderInboundStreamV2 = (stream: Stream) => {
-    const token = stream.associatedToken ? getTokenByMintAddress(stream.associatedToken as string, splTokenList) : undefined;
+    const token = stream.associatedToken ? getTokenByMintAddress(stream.associatedToken as string) : undefined;
     return (
       <>
         {stream && (
@@ -4813,7 +4809,7 @@ export const Streams = () => {
   };
 
   const renderOutboundStreamV1 = (stream: StreamInfo) => {
-    const token = stream.associatedToken ? getTokenByMintAddress(stream.associatedToken as string, splTokenList) : undefined;
+    const token = stream.associatedToken ? getTokenByMintAddress(stream.associatedToken as string) : undefined;
     return (
       <>
         {stream && (
@@ -5155,7 +5151,7 @@ export const Streams = () => {
   };
 
   const renderOutboundStreamV2 = (stream: Stream) => {
-    const token = stream.associatedToken ? getTokenByMintAddress(stream.associatedToken as string, splTokenList) : undefined;
+    const token = stream.associatedToken ? getTokenByMintAddress(stream.associatedToken as string) : undefined;
     return (
       <>
         {stream && (
@@ -5492,7 +5488,7 @@ export const Streams = () => {
     <>
     {(connected && streamList && streamList.length > 0) ? (
       streamList.map((item, index) => {
-        const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string, splTokenList) : undefined;
+        const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
         const onStreamClick = () => {
           setSelectedStream(item);
           setDtailsPanelOpen(true);

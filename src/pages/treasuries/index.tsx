@@ -21,7 +21,6 @@ import {
   formatThousands,
   getAmountWithSymbol,
   getTokenAmountAndSymbolByTokenAddress,
-  getTokenByMintAddress,
   getTokenSymbol,
   getTxIxResume,
   makeDecimal,
@@ -142,6 +141,7 @@ export const TreasuriesView = () => {
     resetContractValues,
     refreshTokenBalance,
     setTransactionStatus,
+    getTokenByMintAddress,
     setHighLightableStreamId,
     setHighLightableMultisigId,
   } = useContext(AppStateContext);
@@ -443,6 +443,7 @@ export const TreasuriesView = () => {
     connection,
     selectedToken,
     loadingTreasuryDetails,
+    getTokenByMintAddress,
     setTreasuryOption,
     setSelectedToken,
     setCustomToken,

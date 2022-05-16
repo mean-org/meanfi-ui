@@ -29,7 +29,7 @@ import {
   isValidAddress,
   PaymentRateTypeOption,
 } from '../../utils/ui';
-import { getTokenByMintAddress, NATIVE_SOL } from '../../utils/tokens';
+import { NATIVE_SOL } from '../../utils/tokens';
 import { LoadingOutlined } from '@ant-design/icons';
 import { TokenDisplay } from '../TokenDisplay';
 import { IconCaretDown, IconEdit, IconHelpCircle, IconWarning } from '../../Icons';
@@ -77,32 +77,33 @@ export const TreasuryStreamCreateModal = (props: {
     coinPrices,
     selectedToken,
     effectiveRate,
-    recipientAddress,
     loadingPrices,
     recipientNote,
     isWhitelisted,
-    paymentStartDate,
     fromCoinAmount,
-    paymentRateAmount,
+    recipientAddress,
+    paymentStartDate,
     lockPeriodAmount,
-    paymentRateFrequency,
-    lockPeriodFrequency,
     transactionStatus,
+    paymentRateAmount,
     isVerifiedRecipient,
+    lockPeriodFrequency,
+    paymentRateFrequency,
     streamV2ProgramAddress,
-    refreshPrices,
+    setPaymentRateFrequency,
+    setIsVerifiedRecipient,
+    setLockPeriodFrequency,
+    getTokenByMintAddress,
+    setTransactionStatus,
+    setPaymentRateAmount,
+    setRecipientAddress,
+    setPaymentStartDate,
+    setLockPeriodAmount,
+    setFromCoinAmount,
     setSelectedToken,
     setEffectiveRate,
     setRecipientNote,
-    setFromCoinAmount,
-    setRecipientAddress,
-    setPaymentStartDate,
-    setPaymentRateAmount,
-    setLockPeriodAmount,
-    setTransactionStatus,
-    setIsVerifiedRecipient,
-    setPaymentRateFrequency,
-    setLockPeriodFrequency
+    refreshPrices,
   } = useContext(AppStateContext);
   const {
     clearTxConfirmationContext,

@@ -32,7 +32,6 @@ import {
     formatThousands,
     getAmountWithSymbol,
     getTokenAmountAndSymbolByTokenAddress,
-    getTokenByMintAddress,
     getTokenSymbol,
     shortenAddress,
     toUiAmount,
@@ -82,7 +81,6 @@ import {
     TreasuryType,
 } from "@mean-dao/msp";
 import { StreamsSummary } from "../../models/streams";
-import { UserTokenAccount } from "../../models/transactions";
 import { StreamTreasuryType } from "../../models/treasuries";
 import { PreFooter } from "../../components/PreFooter";
 import { openNotification } from "../../components/Notifications";
@@ -110,18 +108,19 @@ export const MultisigTreasuryStreams = () => {
         highLightableStreamId,
         streamV2ProgramAddress,
         highLightableMultisigId,
-        setStreamList,
-        setStreamDetail,
-        setSelectedToken,
-        setEffectiveRate,
+        setLoadingStreamsSummary,
+        setHighLightableStreamId,
+        setLastStreamsSummary,
+        getTokenByMintAddress,
+        refreshTokenBalance,
+        setDtailsPanelOpen,
         getStreamActivity,
         setSelectedStream,
         setStreamsSummary,
-        setDtailsPanelOpen,
-        refreshTokenBalance,
-        setLastStreamsSummary,
-        setLoadingStreamsSummary,
-        setHighLightableStreamId,
+        setSelectedToken,
+        setEffectiveRate,
+        setStreamDetail,
+        setStreamList,
     } = useContext(AppStateContext);
     const {
         fetchTxInfoStatus,
@@ -238,6 +237,7 @@ export const MultisigTreasuryStreams = () => {
         loadingStreamActivity,
         highLightableStreamId,
         loadingTreasuryStreams,
+        getTokenByMintAddress,
         getStreamActivity,
         setSelectedToken,
         setStreamDetail,
@@ -574,6 +574,7 @@ export const MultisigTreasuryStreams = () => {
         streamsSummary,
         loadingStreamsSummary,
         setLoadingStreamsSummary,
+        getTokenByMintAddress,
         setLastStreamsSummary,
         setStreamsSummary,
         getPricePerToken,
@@ -669,6 +670,38 @@ export const MultisigTreasuryStreams = () => {
         },
         [isInboundStream]
     );
+
+    const getRateAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
+        let value = '';
+
+        if (item) {
+            const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+            if (item.version < 2) {
+                value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
+            } else {
+                value += getFormattedNumberToLocale(formatAmount(toUiAmount(new BN(item.rateAmount), token?.decimals || 6), 2));
+            }
+            value += ' ';
+            value += getTokenSymbol(item.associatedToken as string);
+        }
+        return value;
+    }, [getTokenByMintAddress]);
+
+    const getDepositAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
+        let value = '';
+
+        if (item && item.rateAmount === 0 && item.allocationAssigned > 0) {
+            const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+            if (item.version < 2) {
+                value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
+            } else {
+                value += getFormattedNumberToLocale(formatAmount(toUiAmount(new BN(item.rateAmount), token?.decimals || 6), 2));
+            }
+            value += ' ';
+            value += getTokenSymbol(item.associatedToken as string);
+        }
+        return value;
+    }, [getTokenByMintAddress]);
 
     const getStreamDescription = (item: Stream | StreamInfo): string => {
         let title = "";
@@ -830,7 +863,7 @@ export const MultisigTreasuryStreams = () => {
 
             return title;
         },
-        [t, isInboundStream]
+        [isInboundStream, getRateAmountDisplay, getDepositAmountDisplay, t]
     );
 
     const getStreamStatus = useCallback(
@@ -941,52 +974,6 @@ export const MultisigTreasuryStreams = () => {
             const treasuryPk = new PublicKey(treasuryDetails.id as string);
             getTreasuryStreams(treasuryPk);
         }
-    };
-
-    const getRateAmountDisplay = (item: Stream | StreamInfo): string => {
-        let value = "";
-
-        if (item) {
-            const token = item.associatedToken
-                ? getTokenByMintAddress(item.associatedToken as string)
-                : undefined;
-            if (item.version < 2) {
-                value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
-            } else {
-                value += getFormattedNumberToLocale(
-                    formatAmount(
-                        toUiAmount(new BN(item.rateAmount), token?.decimals || 6),
-                        2
-                    )
-                );
-            }
-            value += " ";
-            value += getTokenSymbol(item.associatedToken as string);
-        }
-        return value;
-    };
-
-    const getDepositAmountDisplay = (item: Stream | StreamInfo): string => {
-        let value = "";
-
-        if (item && item.rateAmount === 0 && item.allocationAssigned > 0) {
-            const token = item.associatedToken
-                ? getTokenByMintAddress(item.associatedToken as string)
-                : undefined;
-            if (item.version < 2) {
-                value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
-            } else {
-                value += getFormattedNumberToLocale(
-                    formatAmount(
-                        toUiAmount(new BN(item.rateAmount), token?.decimals || 6),
-                        2
-                    )
-                );
-            }
-            value += " ";
-            value += getTokenSymbol(item.associatedToken as string);
-        }
-        return value;
     };
 
     const isOtp = (): boolean => {

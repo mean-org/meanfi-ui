@@ -3,7 +3,6 @@ import { useContext } from 'react';
 import { Modal, Button, Spin } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
-import { getTokenByMintAddress } from '../../utils/tokens';
 import { getTokenAmountAndSymbolByTokenAddress, makeDecimal, shortenAddress } from '../../utils/utils';
 import { TransactionStatus } from '../../models/enums';
 import { isError } from '../../utils/transactions';
@@ -26,6 +25,7 @@ export const MultisigVaultDeleteModal = (props: {
   const { t } = useTranslation('common');
   const {
     transactionStatus,
+    getTokenByMintAddress,
   } = useContext(AppStateContext);
 
   const onCloseModal = () => {

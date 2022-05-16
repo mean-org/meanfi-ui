@@ -11,7 +11,7 @@ import { consoleOut, getTransactionOperationDescription, isValidAddress } from '
 import { isError } from '../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TransactionFees, TreasuryType } from '@mean-dao/money-streaming';
-import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, shortenAddress } from '../../utils/utils';
+import { formatAmount, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
 import { Identicon } from '../Identicon';
 import { IconCheckedBox } from '../../Icons';
 import { TokenInfo } from '@solana/spl-token-registry';
@@ -45,7 +45,7 @@ export const TreasuryCreateModal = (props: {
     effectiveRate,
     loadingPrices,
     transactionStatus,
-    highLightableStreamId,
+    getTokenByMintAddress,
     setTransactionStatus,
     setSelectedToken,
     setEffectiveRate,
@@ -183,9 +183,9 @@ export const TreasuryCreateModal = (props: {
     setTreasuryOption(option);
   }
 
-  const onCloseTreasuryOptionChanged = (e: any) => {
-    setEnableMultisigTreasuryOption(e.target.value);
-  }
+  // const onCloseTreasuryOptionChanged = (e: any) => {
+  //   setEnableMultisigTreasuryOption(e.target.value);
+  // }
 
   const onMultisigChanged = useCallback((e: any) => {
     

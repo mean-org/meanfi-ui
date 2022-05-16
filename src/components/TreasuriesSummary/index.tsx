@@ -6,7 +6,7 @@ import { consoleOut, isProd, kFormatter, toUsCurrency } from '../../utils/ui';
 import { Link, useLocation } from 'react-router-dom';
 import { THREE_MINUTES_REFRESH_TIMEOUT } from '../../constants';
 import { INITIAL_TREASURIES_SUMMARY, UserTreasuriesSummary } from '../../models/treasuries';
-import { getTokenByMintAddress, makeDecimal } from '../../utils/utils';
+import { makeDecimal } from '../../utils/utils';
 import { AppStateContext } from '../../contexts/appstate';
 import { TokenInfo } from '@solana/spl-token-registry';
 import BN from 'bn.js';
@@ -31,7 +31,8 @@ export const TreasuriesSummary = (props: {
         coinPrices,
         userTokens,
         splTokenList,
-        previousWalletConnectState
+        previousWalletConnectState,
+        getTokenByMintAddress
     } = useContext(AppStateContext);
     const { t } = useTranslation('common');
     const { pathname } = useLocation();
@@ -107,7 +108,7 @@ export const TreasuriesSummary = (props: {
                         const v1 = i as TreasuryInfo;
                         const v2 = i as Treasury;
                         const ata = isNew ? v2.associatedToken as string : v1.associatedTokenAddress as string;
-                        const asset = getTokenByMintAddress(ata, isProd() ? splTokenList : userTokens);
+                        const asset = getTokenByMintAddress(ata);
                         return {
                             version: isNew ? v2.version : 1,
                             token: asset ? asset.symbol : '-',
@@ -123,7 +124,7 @@ export const TreasuriesSummary = (props: {
                 .finally(() => setLoadingTreasuries(false));
         }
 
-    }, [address, connection, getAllUserV2Treasuries, getTreasuryUnallocatedBalance, loadingTreasuries, ms, msp, splTokenList, userTokens]);
+    }, [address, connection, getAllUserV2Treasuries, getTokenByMintAddress, getTreasuryUnallocatedBalance, loadingTreasuries, ms, msp]);
 
     const refreshTreasuriesSummary = useCallback(async () => {
 
@@ -160,7 +161,7 @@ export const TreasuriesSummary = (props: {
 
             let pricePerToken = 0;
             let amountChange = 0;
-            const asset = getTokenByMintAddress(associatedToken, isProd() ? splTokenList : userTokens);
+            const asset = getTokenByMintAddress(associatedToken);
 
             if (asset) {
                 pricePerToken = getPricePerToken(asset);
@@ -187,7 +188,10 @@ export const TreasuriesSummary = (props: {
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [
-        treasuryList,
+        getPricePerToken,
+        getTokenByMintAddress,
+        getTreasuryUnallocatedBalance,
+        treasuryList
     ]);
 
 

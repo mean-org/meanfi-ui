@@ -1,12 +1,11 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { PreFooter } from "../../components/PreFooter";
-import { getTokenBySymbol } from '../../utils/tokens';
 import { consoleOut, isProd } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
 import { DdcaClient } from '@mean-dao/ddca';
 import { AppStateContext } from '../../contexts/appstate';
-import { useLocalStorageState } from '../../utils/utils';
+import { getTokenBySymbol, useLocalStorageState } from '../../utils/utils';
 import { getLiveRpc, RpcConfig } from '../../models/connections-hq';
 import { Connection } from '@solana/web3.js';
 import { useTranslation } from 'react-i18next';
@@ -111,8 +110,8 @@ export const SwapView = () => {
   // Parse query params
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    let from: TokenInfo | null = null;
-    let to: TokenInfo | null = null;
+    let from: TokenInfo | undefined = undefined;
+    let to: TokenInfo | undefined = undefined;
     // Get from address from symbol passed via query string param
     if (params.has('from')) {
       const symbol = params.get('from');
@@ -120,7 +119,7 @@ export const SwapView = () => {
         ? symbol === 'SOL'
           ? getTokenBySymbol('wSOL')
           : getTokenBySymbol(symbol)
-        : null;
+        : undefined;
       if (from) {
         setQueryFromMint(from.address);
       }
@@ -128,7 +127,7 @@ export const SwapView = () => {
     // Get to as well
     if (params.has('to')) {
       const symbol = params.get('to');
-      to = symbol ? getTokenBySymbol(symbol) : null;
+      to = symbol ? getTokenBySymbol(symbol) : undefined;
       if (to) {
         setQueryToMint(to.address);
       }
