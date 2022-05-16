@@ -3419,6 +3419,8 @@ export const SafeView = () => {
           setSelectedMultisig(item);
           setNeedRefreshTxs(true);
           setLoadingPrograms(true);
+          setIsSafeDetails(false);
+          setIsProgramDetails(false);
         };
 
         return (
