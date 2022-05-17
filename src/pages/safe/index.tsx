@@ -3111,9 +3111,7 @@ export const SafeView = () => {
   // Keep account balance updated
   useEffect(() => {
 
-    if (!account || account.lamports !== previousBalance || !nativeBalance) {
-      return;    
-    }
+    if (!account) { return; }
 
     const timeout = setTimeout(() => {
 
