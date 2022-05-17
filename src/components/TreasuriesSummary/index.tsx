@@ -298,12 +298,12 @@ export const TreasuriesSummary = (props: {
         <>
             {publicKey ? (
                 <Link to="/treasuries" state={{ previousPath: pathname }}>
-                    <Tooltip title="See your Streaming Treasuries">
+                    <Tooltip title="See your Streaming Accounts">
                         {renderContent}
                     </Tooltip>
                 </Link>
             ) : (
-                <Tooltip title="To see your Streaming Treasuries you need to connect your wallet">
+                <Tooltip title="To see your Streaming Accounts you need to connect your wallet">
                     {renderContent}
                 </Tooltip>
             )}
