@@ -486,7 +486,7 @@ export const AppLayout = React.memo((props: any) => {
             <div id="performance-warning-bar">
               <div className="sitemessage">
                 <a className="simplelink underline-on-hover" target="_blank" rel="noopener noreferrer" href={SOLANA_STATUS_PAGE}>
-                  {t('notifications.network-performance-low')}
+                  {t('notifications.network-performance-low')} [TPS: {tpsAvg}]
                 </a>
               </div>
             </div>
