@@ -55,10 +55,8 @@ export const SafeMeanInfo = (props: {
 
           // Number of participants who have already approved the Tx
           const approvedSigners = proposal.signers.filter((s: any) => s === true).length;
-
-          const expirationDate = proposal.details.expirationDate ? new Date(proposal.details.expirationDate).toDateString() : "";
-
-          const executedOnDate = proposal.executedOn ? new Date(proposal.executedOn).toDateString() : "";
+          const expirationDate = proposal.details.expirationDate ? proposal.details.expirationDate.toDateString() : "";
+          const executedOnDate = proposal.executedOn ? proposal.executedOn.toDateString() : "";
 
           return (
             <div 

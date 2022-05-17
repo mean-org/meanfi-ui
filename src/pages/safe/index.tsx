@@ -2899,24 +2899,18 @@ export const SafeView = () => {
 
       multisigClient
         .getMultisigTransactions(selectedMultisig.id, publicKey)
-        .then((txs: any) => {
-          // consoleOut('selected multisig txs', txs, 'blue');
-          for (const tx of txs) {
-            consoleOut('selected multisig txs accs', tx.programId.toBase58(), 'blue');
-            consoleOut('selected multisig txs accs', tx.accounts.map((a: any) => a.pubkey.toBase58()), 'blue');
-            // consoleOut('selected multisig txs accs', tx.data.toNumber(), 'blue');
+        .then((txs: any[]) => {
+          if (!isProd()) {
+            const debugTable: any[] = [];
+            txs.forEach((item: any) => debugTable.push({
+              operation: OperationType[item.operation],
+              approved: item.didSigned,
+              executed: item.executedOn ? true : false,
+              proposer: item.proposer ? shortenAddress(item.proposer.toBase58(), 6) : '-',
+              status: MultisigTransactionStatus[item.status]
+            }));
+            console.table(debugTable);
           }
-          // if (!isProd()) {
-          //   const debugTable: any[] = [];
-          //   txs.forEach((item: any) => debugTable.push({
-          //     operation: OperationType[item.operation],
-          //     approved: item.didSigned,
-          //     executed: item.executedOn ? true : false,
-          //     proposer: item.proposer ? shortenAddress(item.proposer.toBase58(), 6) : '-',
-          //     status: MultisigTransactionStatus[item.status]
-          //   }));
-          //   console.table(debugTable);
-          // }
           setMultisigTxs(txs);
         })
         .catch((err: any) => {
