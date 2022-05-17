@@ -633,7 +633,7 @@ export const RepeatingPayment = (props: {
   }
 
   const isAddressOwnAccount = (): boolean => {
-    return recipientAddress && wallet && wallet.publicKey && recipientAddress === wallet.publicKey.toBase58()
+    return recipientAddress && wallet && publicKey && recipientAddress === publicKey.toBase58()
            ? true : false;
   }
 
@@ -823,7 +823,7 @@ export const RepeatingPayment = (props: {
 
         // Create a transaction
         const data = {
-          wallet: wallet.publicKey.toBase58(),                        // wallet
+          wallet: publicKey.toBase58(),                        // wallet
           treasury: 'undefined',                                      // treasury
           beneficiary: beneficiary.toBase58(),                        // beneficiary
           associatedToken: associatedToken.toBase58(),                // mint
@@ -922,7 +922,7 @@ export const RepeatingPayment = (props: {
     }
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (wallet && publicKey) {
         consoleOut('Signing transaction...');
         return await wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
@@ -940,7 +940,7 @@ export const RepeatingPayment = (props: {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
             segmentAnalytics.recordEvent(AppUsageEvent.TransferRecurringFailed, { transcript: transactionLog });
@@ -952,7 +952,7 @@ export const RepeatingPayment = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58()}
+            result: {signer: publicKey.toBase58()}
           });
           segmentAnalytics.recordEvent(AppUsageEvent.TransferRecurringSigned, {
             signature,
@@ -968,7 +968,7 @@ export const RepeatingPayment = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
           segmentAnalytics.recordEvent(AppUsageEvent.TransferRecurringFailed, { transcript: transactionLog });

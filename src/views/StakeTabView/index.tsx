@@ -39,7 +39,7 @@ export const StakeTabView = (props: {
   const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const connection = useConnection();
   const [isBusy, setIsBusy] = useState(false);
-  const { connected, wallet } = useWallet();
+  const { connected, wallet, publicKey } = useWallet();
   const { t } = useTranslation('common');
 
   /*
@@ -275,7 +275,7 @@ export const StakeTabView = (props: {
     };
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (wallet && publicKey) {
         consoleOut("Signing transaction...");
         return await wallet
           .signTransaction(transaction)
@@ -300,7 +300,7 @@ export const StakeTabView = (props: {
                   TransactionStatus.SignTransactionFailure
                 ),
                 result: {
-                  signer: `${wallet.publicKey.toBase58()}`,
+                  signer: `${publicKey.toBase58()}`,
                   error: `${error}`,
                 },
               });
@@ -318,7 +318,7 @@ export const StakeTabView = (props: {
               action: getTransactionStatusForLogs(
                 TransactionStatus.SignTransactionSuccess
               ),
-              result: { signer: wallet.publicKey.toBase58() },
+              result: { signer: publicKey.toBase58() },
             });
             segmentAnalytics.recordEvent(AppUsageEvent.StakeMeanSigned, {
               signature,
@@ -337,7 +337,7 @@ export const StakeTabView = (props: {
                 TransactionStatus.SignTransactionFailure
               ),
               result: {
-                signer: `${wallet.publicKey.toBase58()}`,
+                signer: `${publicKey.toBase58()}`,
                 error: `${error}`,
               },
             });
@@ -465,6 +465,7 @@ export const StakeTabView = (props: {
     }
   }, [
     wallet,
+    publicKey,
     connection,
     stakeQuote,
     fromCoinAmount,

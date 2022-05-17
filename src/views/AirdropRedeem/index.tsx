@@ -287,7 +287,7 @@ export const AirdropRedeem = (props: {
             consoleOut('signTransaction returned a signed transaction:', signed);
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-              result: {signer: wallet.publicKey.toBase58()}
+              result: {signer: publicKey.toBase58()}
             });
 
             // Send Tx to add treasurer signature
@@ -320,7 +320,7 @@ export const AirdropRedeem = (props: {
               });
               transactionLog.push({
                 action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-                result: { signer: `${wallet.publicKey.toBase58()}`, error: `${error}` }
+                result: { signer: `${publicKey.toBase58()}`, error: `${error}` }
               });
               customLogger.logError('Create Airdrop Claim transaction failed', { transcript: transactionLog });
               return false;
@@ -334,7 +334,7 @@ export const AirdropRedeem = (props: {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logWarning('Create Airdrop Claim transaction failed', { transcript: transactionLog });
             return false;

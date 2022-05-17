@@ -2,13 +2,10 @@ import React, { useCallback, useContext, useMemo } from 'react';
 import "./style.scss";
 import {
   ArrowLeftOutlined,
-  BarChartOutlined,
   EditOutlined,
   LoadingOutlined,
   MergeCellsOutlined,
   QrcodeOutlined,
-  SendOutlined,
-  SwapOutlined,
   SyncOutlined
 } from '@ant-design/icons';
 import { Connection, Keypair, LAMPORTS_PER_SOL, ParsedConfirmedTransactionMeta, PublicKey, Transaction } from '@solana/web3.js';
@@ -43,7 +40,7 @@ import {
 } from '../../constants';
 import { QrScannerModal } from '../../components/QrScannerModal';
 import { Helmet } from "react-helmet";
-import { IconAdd, IconExternalLink, IconEyeOff, IconEyeOn, IconLightBulb, IconShoppingCart, IconVerticalEllipsis } from '../../Icons';
+import { IconAdd, IconExternalLink, IconEyeOff, IconEyeOn, IconLightBulb, IconVerticalEllipsis } from '../../Icons';
 import { fetchAccountHistory, MappedTransaction } from '../../utils/history';
 import { useLocation, useNavigate } from 'react-router-dom';
 import useLocalStorage from '../../hooks/useLocalStorage';
@@ -1457,7 +1454,7 @@ export const AccountsNewView = () => {
     };
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (wallet && publicKey) {
         consoleOut("Signing transaction...");
         return await wallet
           .signTransaction(transaction)
@@ -1476,7 +1473,7 @@ export const AccountsNewView = () => {
               });
               transactionLog.push({
                 action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-                result: { signer: `${wallet.publicKey.toBase58()}`, error: `${error}` }
+                result: { signer: `${publicKey.toBase58()}`, error: `${error}` }
               });
               customLogger.logError('Unwrap transaction failed', { transcript: transactionLog });
               return false;
@@ -1487,7 +1484,7 @@ export const AccountsNewView = () => {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-              result: { signer: wallet.publicKey.toBase58() }
+              result: { signer: publicKey.toBase58() }
             });
             return true;
           })
@@ -1499,7 +1496,7 @@ export const AccountsNewView = () => {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: { signer: `${wallet.publicKey.toBase58()}`, error: `${error}` }
+              result: { signer: `${publicKey.toBase58()}`, error: `${error}` }
             });
             customLogger.logError('Unwrap transaction failed', { transcript: transactionLog });
             return false;
@@ -1963,8 +1960,7 @@ export const AccountsNewView = () => {
               className="thin-stroke"
               disabled={isSelectedAssetNativeAccount()}
               onClick={onSendAsset}>
-              <SendOutlined />
-              <span className="ml-1">Send</span>
+              <span>Send</span>
             </Button>
           </Tooltip>
           <Button
@@ -1973,8 +1969,7 @@ export const AccountsNewView = () => {
             size="small"
             className="thin-stroke"
             onClick={showReceiveSplOrSolModal}>
-            <QrcodeOutlined />
-            <span className="ml-1">Receive</span>
+            <span>Receive</span>
           </Button>
           {!isSelectedAssetWsol() && (
             <Button
@@ -1983,8 +1978,7 @@ export const AccountsNewView = () => {
               size="small"
               className="thin-stroke"
               onClick={onExchangeAsset}>
-              <SwapOutlined />
-              <span className="ml-1">Exchange</span>
+              <span>Exchange</span>
             </Button>
           )}
           {!isSelectedAssetWsol() && (
@@ -1994,8 +1988,7 @@ export const AccountsNewView = () => {
               size="small"
               className="thin-stroke"
               onClick={handleGoToInvestClick}>
-              <BarChartOutlined />
-              <span className="ml-1">Invest</span>
+              <span>Invest</span>
             </Button>
           )}
           {isSelectedAssetWsol() && (
@@ -2005,30 +1998,31 @@ export const AccountsNewView = () => {
               size="small"
               className="thin-stroke"
               onClick={showUnwrapSolModal}>
-              <BarChartOutlined />
-              <span className="ml-1">Unwrap</span>
+              <span>Unwrap</span>
+            </Button>
+          )}
+          {!isSelectedAssetWsol() && (
+            <Button
+              type="default"
+              shape="round"
+              size="small"
+              className="thin-stroke"
+              onClick={showDepositOptionsModal}>
+              <span>Buy</span>
             </Button>
           )}
         </Space>
-        <Space className="right" size="small">
-          {!isSelectedAssetWsol() && (
-            <span className="flat-button medium" onClick={showDepositOptionsModal}>
-              <IconShoppingCart className="mean-svg-icons"/>
-              <span className="ml-1">Buy</span>
-            </span>
-          )}
-          <Dropdown overlay={userAssetOptions} placement="bottomRight" trigger={["click"]}>
-            <span className="icon-button-container">
-              <Button
-                type="default"
-                shape="circle"
-                size="middle"
-                icon={<IconVerticalEllipsis className="mean-svg-icons"/>}
-                onClick={(e) => e.preventDefault()}
-              />
-            </span>
-          </Dropdown>
-        </Space>
+        <Dropdown overlay={userAssetOptions} placement="bottomRight" trigger={["click"]}>
+          <span className="icon-button-container">
+            <Button
+              type="default"
+              shape="circle"
+              size="middle"
+              icon={<IconVerticalEllipsis className="mean-svg-icons"/>}
+              onClick={(e) => e.preventDefault()}
+            />
+          </span>
+        </Dropdown>
       </div>
     );
   };

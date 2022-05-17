@@ -311,7 +311,7 @@ export const AccountsInitAtaModal = (props: {
     };
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (wallet && publicKey) {
         consoleOut("Signing transaction...");
         return await wallet
           .signTransaction(transaction)
@@ -336,7 +336,7 @@ export const AccountsInitAtaModal = (props: {
                   TransactionStatus.SignTransactionFailure
                 ),
                 result: {
-                  signer: `${wallet.publicKey.toBase58()}`,
+                  signer: `${publicKey.toBase58()}`,
                   error: `${error}`,
                 },
               });
@@ -353,7 +353,7 @@ export const AccountsInitAtaModal = (props: {
               action: getTransactionStatusForLogs(
                 TransactionStatus.SignTransactionSuccess
               ),
-              result: { signer: wallet.publicKey.toBase58() },
+              result: { signer: publicKey.toBase58() },
             });
             return true;
           })
@@ -368,7 +368,7 @@ export const AccountsInitAtaModal = (props: {
                 TransactionStatus.SignTransactionFailure
               ),
               result: {
-                signer: `${wallet.publicKey.toBase58()}`,
+                signer: `${publicKey.toBase58()}`,
                 error: `${error}`,
               },
             });

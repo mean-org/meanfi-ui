@@ -1284,9 +1284,10 @@
 		}
 	},
 	"wallet-selector": {
+		"connect-to-begin": "In order to use MeanFi you need to connect to a Solana wallet.",
 		"more-options-collapsed": "Mostrar mais opções",
 		"more-options-expanded": "Mostrar menos opções",
-		"primary-action": "Selecionar"
+		"primary-action": "Conectar Carteira"
 	},
 	"withdraw-funds": {
 		"button-title": "Withdraw funds",

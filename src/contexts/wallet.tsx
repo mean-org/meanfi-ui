@@ -1,4 +1,3 @@
-import Wallet from "@project-serum/sol-wallet-adapter";
 import { Button, Modal } from "antd";
 import React, {
   useCallback,
@@ -11,13 +10,32 @@ import { useLocalStorageState } from "./../utils/utils";
 import { useTranslation } from "react-i18next";
 import { useConnectionConfig } from "./connection";
 import { isDesktop, isSafari } from "react-device-detect";
-import { WalletAdapter } from "../wallet-adapters/wallet-adapter";
 import { DownOutlined, UpOutlined } from "@ant-design/icons";
 import { segmentAnalytics } from "../App";
 import { AppUsageEvent } from "../utils/segment-service";
 import { openNotification } from "../components/Notifications";
 import { consoleOut, isProd } from "../utils/ui";
-import { Coin98WalletAdapter, Coin98WalletName, ExodusWalletAdapter, ExodusWalletName, LedgerWalletAdapter, LedgerWalletName, MathWalletAdapter, MathWalletName, PhantomWalletAdapter, PhantomWalletName, SlopeWalletAdapter, SlopeWalletName, SolflareWalletAdapter, SolflareWalletName, SolletExtensionWalletName, SolletWalletAdapter, SolletWalletName, SolongWalletAdapter, SolongWalletName } from "@solana/wallet-adapter-wallets";
+import {
+  Coin98WalletAdapter,
+  Coin98WalletName,
+  ExodusWalletAdapter,
+  ExodusWalletName,
+  LedgerWalletAdapter,
+  LedgerWalletName,
+  MathWalletAdapter,
+  MathWalletName,
+  PhantomWalletAdapter,
+  PhantomWalletName,
+  SlopeWalletAdapter,
+  SlopeWalletName,
+  SolflareWalletAdapter,
+  SolflareWalletName,
+  SolletExtensionWalletName,
+  SolletWalletAdapter,
+  SolletWalletName,
+  SolongWalletAdapter,
+  SolongWalletName
+} from "@solana/wallet-adapter-wallets";
 
 export const WALLET_PROVIDERS = [
   {
@@ -142,17 +160,6 @@ export const WALLET_PROVIDERS = [
   }
 ];
 
-const WC = {
-  name: 'WalletConnect',
-  url: 'https://walletconnect.org',
-  icon: 'data:image/svg+xml;base64,PHN2ZyBoZWlnaHQ9IjE4NSIgdmlld0JveD0iMCAwIDMwMCAxODUiIHdpZHRoPSIzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0ibTYxLjQzODU0MjkgMzYuMjU2MjYxMmM0OC45MTEyMjQxLTQ3Ljg4ODE2NjMgMTI4LjIxMTk4NzEtNDcuODg4MTY2MyAxNzcuMTIzMjA5MSAwbDUuODg2NTQ1IDUuNzYzNDE3NGMyLjQ0NTU2MSAyLjM5NDQwODEgMi40NDU1NjEgNi4yNzY1MTEyIDAgOC42NzA5MjA0bC0yMC4xMzY2OTUgMTkuNzE1NTAzYy0xLjIyMjc4MSAxLjE5NzIwNTEtMy4yMDUzIDEuMTk3MjA1MS00LjQyODA4MSAwbC04LjEwMDU4NC03LjkzMTE0NzljLTM0LjEyMTY5Mi0zMy40MDc5ODE3LTg5LjQ0Mzg4Ni0zMy40MDc5ODE3LTEyMy41NjU1Nzg4IDBsLTguNjc1MDU2MiA4LjQ5MzYwNTFjLTEuMjIyNzgxNiAxLjE5NzIwNDEtMy4yMDUzMDEgMS4xOTcyMDQxLTQuNDI4MDgwNiAwbC0yMC4xMzY2OTQ5LTE5LjcxNTUwMzFjLTIuNDQ1NTYxMi0yLjM5NDQwOTItMi40NDU1NjEyLTYuMjc2NTEyMiAwLTguNjcwOTIwNHptMjE4Ljc2Nzc5NjEgNDAuNzczNzQ0OSAxNy45MjE2OTcgMTcuNTQ2ODk3YzIuNDQ1NTQ5IDIuMzk0Mzk2OSAyLjQ0NTU2MyA2LjI3NjQ3NjkuMDAwMDMxIDguNjcwODg5OWwtODAuODEwMTcxIDc5LjEyMTEzNGMtMi40NDU1NDQgMi4zOTQ0MjYtNi40MTA1ODIgMi4zOTQ0NTMtOC44NTYxNi4wMDAwNjItLjAwMDAxLS4wMDAwMS0uMDAwMDIyLS4wMDAwMjItLjAwMDAzMi0uMDAwMDMybC01Ny4zNTQxNDMtNTYuMTU0NTcyYy0uNjExMzktLjU5ODYwMi0xLjYwMjY1LS41OTg2MDItMi4yMTQwNCAwLS4wMDAwMDQuMDAwMDA0LS4wMDAwMDcuMDAwMDA4LS4wMDAwMTEuMDAwMDExbC01Ny4zNTI5MjEyIDU2LjE1NDUzMWMtMi40NDU1MzY4IDIuMzk0NDMyLTYuNDEwNTc1NSAyLjM5NDQ3Mi04Ljg1NjE2MTIuMDAwMDg3LS4wMDAwMTQzLS4wMDAwMTQtLjAwMDAyOTYtLjAwMDAyOC0uMDAwMDQ0OS0uMDAwMDQ0bC04MC44MTI0MTk0My03OS4xMjIxODVjLTIuNDQ1NTYwMjEtMi4zOTQ0MDgtMi40NDU1NjAyMS02LjI3NjUxMTUgMC04LjY3MDkxOTdsMTcuOTIxNzI5NjMtMTcuNTQ2ODY3M2MyLjQ0NTU2MDItMi4zOTQ0MDgyIDYuNDEwNTk4OS0yLjM5NDQwODIgOC44NTYxNjAyIDBsNTcuMzU0OTc3NSA1Ni4xNTUzNTdjLjYxMTM5MDguNTk4NjAyIDEuNjAyNjQ5LjU5ODYwMiAyLjIxNDAzOTggMCAuMDAwMDA5Mi0uMDAwMDA5LjAwMDAxNzQtLjAwMDAxNy4wMDAwMjY1LS4wMDAwMjRsNTcuMzUyMTAzMS01Ni4xNTUzMzNjMi40NDU1MDUtMi4zOTQ0NjMzIDYuNDEwNTQ0LTIuMzk0NTUzMSA4Ljg1NjE2MS0uMDAwMi4wMDAwMzQuMDAwMDMzNi4wMDAwNjguMDAwMDY3My4wMDAxMDEuMDAwMTAxbDU3LjM1NDkwMiA1Ni4xNTU0MzJjLjYxMTM5LjU5ODYwMSAxLjYwMjY1LjU5ODYwMSAyLjIxNDA0IDBsNTcuMzUzOTc1LTU2LjE1NDMyNDljMi40NDU1NjEtMi4zOTQ0MDkyIDYuNDEwNTk5LTIuMzk0NDA5MiA4Ljg1NjE2IDB6IiBmaWxsPSIjM2I5OWZjIi8+PC9zdmc+',
-  adapter: undefined,
-  adapterParams: undefined,
-  hideOnDesktop: false,
-  hideOnMobile: false,
-  isWebWallet: false
-};
-
 const getIsProviderInstalled = (provider: any): boolean => {
   if (provider.adapter) {
     switch (provider.name) {
@@ -183,9 +190,12 @@ const getIsProviderInstalled = (provider: any): boolean => {
 }
 
 const WalletContext = React.createContext<{
-  wallet: WalletAdapter | undefined;
+  wallet: PhantomWalletAdapter | ExodusWalletAdapter | SolflareWalletAdapter
+          | SlopeWalletAdapter | Coin98WalletAdapter | SolongWalletAdapter | SolletWalletAdapter
+          | MathWalletAdapter | LedgerWalletAdapter | undefined;
   connected: boolean;
   select: () => void;
+  isSelecting: boolean;
   autoConnect: boolean;
   provider: typeof WALLET_PROVIDERS[number] | undefined;
   resetWalletProvider: () => void;
@@ -193,6 +203,7 @@ const WalletContext = React.createContext<{
   wallet: undefined,
   connected: false,
   select() {},
+  isSelecting: false,
   autoConnect: true,
   provider: undefined,
   resetWalletProvider: () => {},
@@ -217,30 +228,40 @@ export function WalletProvider({ children = null as any }) {
 
   const wallet = useMemo(
     function () {
-      if (provider) {
-        if (provider.adapter) {
-          return new (provider.adapter)(provider.adapterParams as any) as WalletAdapter;
-        } else {
-          return new Wallet(
-            provider.url,
-            endpoint
-          ) as WalletAdapter;
-        }
+      if (provider && provider.adapter) {
+        return new (provider.adapter)(provider.adapterParams as any);
+        // if (provider.adapter) {
+        //   return new (provider.adapter)(provider.adapterParams as any) as WalletAdapter;
+        // } else {
+        //   return new Wallet(
+        //     provider.url,
+        //     endpoint
+        //   ) as WalletAdapter;
+        // }
       }
     },
-    [
-      provider,
-      endpoint,
-    ]
+    [provider]
   );
 
   const [connected, setConnected] = useState(false);
+  const [isSelecting, setIsSelecting] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const select = useCallback(() => {
+    setIsSelecting(true);
+    setIsModalVisible(true);
+  }, []);
+  const close = useCallback(() => {
+    setIsSelecting(false);
+    setIsModalVisible(false);
+  }, []);
+  const [walletListExpanded, setWalletListExpanded] = useState(isDesktop ? false : true);
 
   useEffect(() => {
     if (wallet) {
       wallet.on("connect", () => {
         if (wallet.publicKey) {
           setConnected(true);
+          close();
           const walletPublicKey = wallet.publicKey.toBase58();
           const keyToDisplay =
             walletPublicKey.length > 20
@@ -264,6 +285,13 @@ export function WalletProvider({ children = null as any }) {
       wallet.on("disconnect", () => {
         setConnected(false);
       });
+
+      wallet.on("error", (error) => {
+        setConnected(false);
+        wallet.removeAllListeners();
+        resetWalletProvider();
+        select();
+      });
     }
 
     return () => {
@@ -272,7 +300,8 @@ export function WalletProvider({ children = null as any }) {
         wallet.disconnect();
       }
     };
-  }, [t, wallet]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wallet]);
 
   useEffect(() => {
     if (wallet && autoConnect) {
@@ -284,155 +313,138 @@ export function WalletProvider({ children = null as any }) {
     return () => {};
   }, [wallet, autoConnect]);
 
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const select = useCallback(() => setIsModalVisible(true), []);
-  const close = useCallback(() => setIsModalVisible(false), []);
-  const [walletListExpanded, setWalletListExpanded] = useState(isDesktop ? false : true);
-
   return (
     <WalletContext.Provider
       value={{
         wallet,
         connected,
         select,
+        isSelecting,
         provider,
         autoConnect,
         resetWalletProvider,
       }}>
       {children}
       <Modal
-        className="mean-modal"
-        title={t(`wallet-selector.primary-action`)}
-        okText="Connect"
+        className="mean-modal simple-modal"
+        title={<div className="modal-title">{t(`wallet-selector.primary-action`)}</div>}
         visible={isModalVisible}
         footer={null}
+        maskClosable={connected}
+        closable={connected}
         onCancel={close}
-        width={400}>
-        <div className={`wallet-providers ${walletListExpanded ? 'expanded' : ''}`}>
-          {WALLET_PROVIDERS.map((item, index) => {
+        width={450}>
+        <div className="px-4 pb-4">
+          <div className="mb-3 text-center">
+            <h2>{t(`wallet-selector.connect-to-begin`)}</h2>
+          </div>
+          <div className={`wallet-providers ${walletListExpanded ? 'expanded' : ''}`}>
+            {WALLET_PROVIDERS.map((item, index) => {
 
-            const isInstalled = getIsProviderInstalled(item);
+              const isInstalled = getIsProviderInstalled(item);
 
-            // Skip items that won't show up
-            if ((item.underDevelopment && isProd()) || (item.hideIfUnavailable && !isInstalled)) {
-              return null;
-            }
-
-            const onClick = function () {
-              if (item.name === provider?.name && connected) {
-                close();
-                return;
+              // Skip items that won't show up
+              if ((item.underDevelopment && isProd()) || (item.hideIfUnavailable && !isInstalled)) {
+                return null;
               }
-              if (wallet) {
-                wallet.disconnect();
-              }
-              // Record user event in Segment Analytics
-              segmentAnalytics.recordEvent(AppUsageEvent.WalletSelected, {
-                walletProvider: item.name,
-                isWebWallet: item.isWebWallet
-              });
-              // TODO: This is not the right way of doing this, there most be a better way
-              setTimeout(() => {
-                setProviderName(item.name);
-                setAutoConnect(true);
-              }, 1000);
-              close();
-              // if (!isInstalled && !item.isWebWallet) {
-              //   window.open(item.url, '_blank');
-              // }
-            };
 
-            return (
-              <Button
-                block
-                size="large"
-                className={`wallet-provider thin-stroke ${item.hideOnDesktop && isDesktop ? 'hidden' : item.hideOnMobile && !isDesktop ? 'hidden' : ''}`}
-                shape="round"
-                type="ghost"
-                onClick={onClick}
-                key={index}
-                icon={
-                  <img
-                    alt={`${item.name}`}
-                    width={20}
-                    height={20}
-                    src={item.icon}
-                    style={{ marginRight: 8 }}
-                  />
-                }>
-                <span className="align-middle">{item.name}</span>
-                {item.name === 'WalletConnect' && (
-                  <span className="badge small darken align-middle ml-1">Coming soon</span>
-                )}
-              </Button>
-            );
-          })}
-          <Button
-            block
-            size="large"
-            className="wallet-provider thin-stroke"
-            shape="round"
-            type="ghost"
-            onClick={() => {}}
-            key="wallet-connect"
-            icon={
-              <img
-                alt={`${WC.name}`}
-                width={20}
-                height={20}
-                src={WC.icon}
-                style={{ marginRight: 8 }}
-              />
-            }>
-            <span className="badge small darken align-middle ml-1">Coming soon</span>
-          </Button>
+              const onClick = function () {
+                if (item.name === provider?.name && connected) {
+                  close();
+                  return;
+                }
+                if (wallet) {
+                  wallet.disconnect();
+                }
+                // Record user event in Segment Analytics
+                segmentAnalytics.recordEvent(AppUsageEvent.WalletSelected, {
+                  walletProvider: item.name,
+                  isWebWallet: item.isWebWallet
+                });
+
+                setTimeout(() => {
+                  setProviderName(item.name);
+                  setAutoConnect(true);
+                }, 600);
+
+                // close();
+
+                // if (!isInstalled && !item.isWebWallet) {
+                //   window.open(item.url, '_blank');
+                // }
+              };
+
+              return (
+                <Button
+                  block
+                  size="large"
+                  className={`wallet-provider thin-stroke ${item.hideOnDesktop && isDesktop ? 'hidden' : item.hideOnMobile && !isDesktop ? 'hidden' : ''}`}
+                  shape="round"
+                  type="ghost"
+                  onClick={onClick}
+                  key={index}
+                  icon={
+                    <img
+                      alt={`${item.name}`}
+                      width={20}
+                      height={20}
+                      src={item.icon}
+                      style={{ marginRight: 8 }}
+                    />
+                  }>
+                  <span className="align-middle">{item.name}</span>
+                  {item.name === 'WalletConnect' && (
+                    <span className="badge small darken align-middle ml-1">Coming soon</span>
+                  )}
+                </Button>
+              );
+            })}
+          </div>
+          {isDesktop && (
+            <Button
+              block
+              size="large"
+              className="wallet-providers-more-options thin-stroke"
+              shape="round"
+              type="ghost"
+              onClick={() => setWalletListExpanded(state => !state)}
+              icon={walletListExpanded ? <UpOutlined /> : <DownOutlined />}
+              key="more-options">
+              <span className="align-middle">{
+                walletListExpanded
+                  ? t('wallet-selector.more-options-expanded')
+                  : t('wallet-selector.more-options-collapsed')
+              }</span>
+            </Button>
+          )}
         </div>
-        {isDesktop && (
-          <Button
-            block
-            size="large"
-            className="wallet-providers-more-options thin-stroke"
-            shape="round"
-            type="ghost"
-            onClick={() => setWalletListExpanded(state => !state)}
-            icon={walletListExpanded ? <UpOutlined /> : <DownOutlined />}
-            key="more-options">
-            <span className="align-middle">{
-              walletListExpanded
-                ? t('wallet-selector.more-options-expanded')
-                : t('wallet-selector.more-options-collapsed')
-            }</span>
-          </Button>
-        )}
       </Modal>
     </WalletContext.Provider>
   );
 }
 
 export function useWallet() {
-  const { wallet, connected, provider, autoConnect, select, resetWalletProvider } = useContext(WalletContext);
+  const { wallet, connected, provider, autoConnect, resetWalletProvider, select, isSelecting } = useContext(WalletContext);
 
   return {
     wallet,
-    connected,
     provider,
+    connected,
     select,
+    isSelecting,
     autoConnect,
     resetWalletProvider,
     publicKey: wallet?.publicKey,
     connect() {
       if  (wallet) {
-        consoleOut(`Connecting to provider...`, '', 'blue');
         wallet.connect();
       } else {
-        consoleOut(`Selecting a wallet...`, '', 'blue');
         select();
       }
     },
     disconnect() {
       consoleOut(`Disconnecting provider...`, '', 'blue');
       wallet?.disconnect();
-      // wallet ? wallet.disconnect() : resetWalletProvider();
     },
   };
 }

@@ -48,7 +48,7 @@ export const UnstakeTabView = (props: {
   const [sMeanToMeanRate, setSMeanToMeanRate] = useState(0);
   const [meanPrice, setMeanPrice] = useState<number>(0);
   const [isBusy, setIsBusy] = useState(false);
-  const { connected, wallet } = useWallet();
+  const { connected, wallet, publicKey } = useWallet();
   const connection = useConnection();
 
   ///////////////////////
@@ -243,7 +243,7 @@ export const UnstakeTabView = (props: {
     };
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (wallet && publicKey) {
         consoleOut("Signing transaction...");
         const miamia = transaction.serialize({ verifySignatures: false, requireAllSignatures: false }).toString("base64");
         consoleOut("encodedTx before sending:", miamia, "orange");
@@ -270,7 +270,7 @@ export const UnstakeTabView = (props: {
                   TransactionStatus.SignTransactionFailure
                 ),
                 result: {
-                  signer: `${wallet.publicKey.toBase58()}`,
+                  signer: `${publicKey.toBase58()}`,
                   error: `${error}`,
                 },
               });
@@ -288,7 +288,7 @@ export const UnstakeTabView = (props: {
               action: getTransactionStatusForLogs(
                 TransactionStatus.SignTransactionSuccess
               ),
-              result: { signer: wallet.publicKey.toBase58() },
+              result: { signer: publicKey.toBase58() },
             });
             segmentAnalytics.recordEvent(AppUsageEvent.UnstakeMeanSigned, {
               signature,
@@ -307,7 +307,7 @@ export const UnstakeTabView = (props: {
                 TransactionStatus.SignTransactionFailure
               ),
               result: {
-                signer: `${wallet.publicKey.toBase58()}`,
+                signer: `${publicKey.toBase58()}`,
                 error: `${error}`,
               },
             });
@@ -435,6 +435,7 @@ export const UnstakeTabView = (props: {
     }
   }, [
     wallet,
+    publicKey,
     meanPrice,
     connection,
     fromCoinAmount,

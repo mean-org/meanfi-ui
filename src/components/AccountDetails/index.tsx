@@ -89,7 +89,6 @@ export const AccountDetails = () => {
     segmentAnalytics.recordEvent(AppUsageEvent.WalletDisconnect);
     close();
     disconnect();
-    // TODO: If we decide to turn OFF wallet autoConnect then next line will be needed
     resetWalletProvider();
   }, [close, disconnect, resetWalletProvider, setSelectedStream, setStreamList]);
 

@@ -431,6 +431,19 @@ h1, h2, h3, h4, h5, h6 {
 #root {
   height: 100%;
 }
+.background-logo-container {
+  position: absolute;
+  height: 100%;
+  width: auto;
+  overflow: hidden;
+  z-index: 0;
+  .meanfi-bg-logo {
+    width: auto;
+    height: 100%;
+    margin-left: -27%;
+    opacity: 0.15;
+  }
+}
 .ant-layout {
   background-color: transparent;
   height: 100%;

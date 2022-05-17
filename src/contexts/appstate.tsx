@@ -1057,11 +1057,11 @@ const AppStateProvider: React.FC = ({ children }) => {
       return;
     }
 
-    if (!publicKey && !userAddress) {
+    if ((publicKey === null || publicKey === undefined) && !userAddress) {
       return;
     }
 
-    const userPk = userAddress || publicKey;
+    const userPk = userAddress || publicKey as PublicKey;
     consoleOut('Fetching streams for:', userPk?.toBase58(), 'blue');
 
     if (msp) {

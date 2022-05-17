@@ -14,7 +14,7 @@ import { TokenListItem } from '../TokenListItem';
 import { TransactionFees } from '@mean-dao/msp';
 import { getTxIxResume } from '../../utils/utils';
 import { openNotification } from '../Notifications';
-import { closeTokenAccount, createAtaAccount } from '../../utils/accounts';
+import { closeTokenAccount } from '../../utils/accounts';
 import { customLogger } from '../..';
 import { UserTokenAccount } from '../../models/transactions';
 
@@ -175,7 +175,7 @@ export const AccountsCloseAssetModal = (props: {
     };
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (wallet && publicKey) {
         consoleOut("Signing transaction...");
         return await wallet
           .signTransaction(transaction)
@@ -200,7 +200,7 @@ export const AccountsCloseAssetModal = (props: {
                   TransactionStatus.SignTransactionFailure
                 ),
                 result: {
-                  signer: `${wallet.publicKey.toBase58()}`,
+                  signer: `${publicKey.toBase58()}`,
                   error: `${error}`,
                 },
               });
@@ -217,7 +217,7 @@ export const AccountsCloseAssetModal = (props: {
               action: getTransactionStatusForLogs(
                 TransactionStatus.SignTransactionSuccess
               ),
-              result: { signer: wallet.publicKey.toBase58() },
+              result: { signer: publicKey.toBase58() },
             });
             return true;
           })
@@ -232,7 +232,7 @@ export const AccountsCloseAssetModal = (props: {
                 TransactionStatus.SignTransactionFailure
               ),
               result: {
-                signer: `${wallet.publicKey.toBase58()}`,
+                signer: `${publicKey.toBase58()}`,
                 error: `${error}`,
               },
             });
