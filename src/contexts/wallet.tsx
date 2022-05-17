@@ -8,12 +8,10 @@ import React, {
 } from "react";
 import { useLocalStorageState } from "./../utils/utils";
 import { useTranslation } from "react-i18next";
-import { useConnectionConfig } from "./connection";
 import { isDesktop, isSafari } from "react-device-detect";
 import { DownOutlined, UpOutlined } from "@ant-design/icons";
 import { segmentAnalytics } from "../App";
 import { AppUsageEvent } from "../utils/segment-service";
-import { openNotification } from "../components/Notifications";
 import { consoleOut, isProd } from "../utils/ui";
 import {
   Coin98WalletAdapter,
@@ -211,7 +209,7 @@ const WalletContext = React.createContext<{
 
 export function WalletProvider({ children = null as any }) {
   const { t } = useTranslation("common");
-  const { endpoint } = useConnectionConfig();
+  // const { endpoint } = useConnectionConfig();
 
   // If we want to play with autoConnect, here it is
   const [autoConnect, setAutoConnect] = useState(true);
@@ -262,23 +260,23 @@ export function WalletProvider({ children = null as any }) {
         if (wallet.publicKey) {
           setConnected(true);
           close();
-          const walletPublicKey = wallet.publicKey.toBase58();
-          const keyToDisplay =
-            walletPublicKey.length > 20
-              ? `${walletPublicKey.substring(
-                  0,
-                  7
-                )}.....${walletPublicKey.substring(
-                  walletPublicKey.length - 7,
-                  walletPublicKey.length
-                )}`
-              : walletPublicKey;
+          // const walletPublicKey = wallet.publicKey.toBase58();
+          // const keyToDisplay =
+          //   walletPublicKey.length > 20
+          //     ? `${walletPublicKey.substring(
+          //         0,
+          //         7
+          //       )}.....${walletPublicKey.substring(
+          //         walletPublicKey.length - 7,
+          //         walletPublicKey.length
+          //       )}`
+          //     : walletPublicKey;
 
-            openNotification({
-              type: "success",
-              title: t('notifications.wallet-connection-event-title'),
-              description: t('notifications.wallet-connect-message', {address: keyToDisplay}),
-            });
+          //   openNotification({
+          //     type: "success",
+          //     title: t('notifications.wallet-connection-event-title'),
+          //     description: t('notifications.wallet-connect-message', {address: keyToDisplay}),
+          //   });
         }
       });
 

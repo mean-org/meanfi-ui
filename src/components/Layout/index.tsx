@@ -26,6 +26,7 @@ import { AppUsageEvent } from "../../utils/segment-service";
 import { openNotification } from "../Notifications";
 import { TxConfirmationContext } from "../../contexts/transaction-status";
 import { TransactionConfirmationHistory } from "../TransactionConfirmationHistory";
+import { shortenAddress } from "../../utils/utils";
 
 const { Header, Content, Footer } = Layout;
 
@@ -272,6 +273,11 @@ export const AppLayout = React.memo((props: any) => {
       if (!previousWalletConnectState && connected) {
         if (publicKey) {
           const walletAddress = publicKey.toBase58();
+          openNotification({
+            type: "success",
+            title: t('notifications.wallet-connection-event-title'),
+            description: t('notifications.wallet-connect-message', {address: shortenAddress(walletAddress)}),
+          });
 
           // Record user login in Segment Analytics
           segmentAnalytics.recordIdentity(walletAddress, {

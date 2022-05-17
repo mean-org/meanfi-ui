@@ -448,7 +448,7 @@ export const AccountsNewView = () => {
   }, [accountAddress]);
 
   const refreshAssetBalance = useCallback(() => {
-    if (!connection || !accountAddress || !selectedAsset || refreshingBalance) { return; }
+    if (!connection || !accountAddress || !selectedAsset || refreshingBalance || !accountTokens) { return; }
 
     setRefreshingBalance(true);
 
@@ -543,6 +543,13 @@ export const AccountsNewView = () => {
     setSelectedAsset,
     setDtailsPanelOpen,
   ])
+
+  const toggleHideLowBalances = useCallback((setting: boolean) => {
+    if (selectedAsset && (!selectedAsset.valueInUsd || selectedAsset.valueInUsd < ACCOUNTS_LOW_BALANCE_LIMIT) && setting) {
+      selectAsset(accountTokens[0]);
+    }
+    setHideLowBalances(setting);
+  }, [accountTokens, selectAsset, selectedAsset, setHideLowBalances]);
 
   const recordTxConfirmation = useCallback((item: TxConfirmationInfo, success = true) => {
     let event: any;
@@ -929,7 +936,7 @@ export const AccountsNewView = () => {
             publicAddress: accountAddress,
             tags: NATIVE_SOL.tags,
             logoURI: NATIVE_SOL.logoURI,
-            valueInUsd: (solBalance / LAMPORTS_PER_SOL) * getTokenPriceBySymbol(pinnedTokens[0].symbol)
+            valueInUsd: (solBalance / LAMPORTS_PER_SOL) * getTokenPriceBySymbol('SOL')
           };
 
           fetchAccountTokens(connection, pk)
@@ -1105,6 +1112,9 @@ export const AccountsNewView = () => {
                 }
 
               } else {
+                pinnedTokens.forEach((item, index) => {
+                  item.valueInUsd = 0;
+                });
                 setAccountTokens(pinnedTokens);
                 selectAsset(pinnedTokens[0]);
                 setTokensLoaded(true);
@@ -1913,12 +1923,12 @@ export const AccountsNewView = () => {
       {(accountTokens && accountTokens.length > 0) && (
         <>
           {hideLowBalances ? (
-            <Menu.Item key="11" onClick={() => setHideLowBalances(value => !value)}>
+            <Menu.Item key="11" onClick={() => toggleHideLowBalances(false)}>
               <IconEyeOn className="mean-svg-icons" />
               <span className="menu-item-text">Show low balances</span>
             </Menu.Item>
           ) : (
-            <Menu.Item key="12" onClick={() => setHideLowBalances(value => !value)}>
+            <Menu.Item key="12" onClick={() => toggleHideLowBalances(true)}>
               <IconEyeOff className="mean-svg-icons" />
               <span className="menu-item-text">Hide low balances</span>
             </Menu.Item>
@@ -1952,64 +1962,70 @@ export const AccountsNewView = () => {
     return (
       <div className="flex-fixed-right">
         <Space className="left" size="middle" wrap>
-          <Tooltip placement="bottom" title={isSelectedAssetNativeAccount() ? "SOL is not available for money streams, please use wSOL instead." : ""}>
-            <Button
-              type="default"
-              shape="round"
-              size="small"
-              className="thin-stroke"
-              disabled={isSelectedAssetNativeAccount()}
-              onClick={onSendAsset}>
-              <span>Send</span>
-            </Button>
-          </Tooltip>
-          <Button
-            type="default"
-            shape="round"
-            size="small"
-            className="thin-stroke"
-            onClick={showReceiveSplOrSolModal}>
-            <span>Receive</span>
-          </Button>
-          {!isSelectedAssetWsol() && (
-            <Button
-              type="default"
-              shape="round"
-              size="small"
-              className="thin-stroke"
-              onClick={onExchangeAsset}>
-              <span>Exchange</span>
-            </Button>
-          )}
-          {!isSelectedAssetWsol() && (
-            <Button
-              type="default"
-              shape="round"
-              size="small"
-              className="thin-stroke"
-              onClick={handleGoToInvestClick}>
-              <span>Invest</span>
-            </Button>
-          )}
-          {isSelectedAssetWsol() && (
-            <Button
-              type="default"
-              shape="round"
-              size="small"
-              className="thin-stroke"
-              onClick={showUnwrapSolModal}>
-              <span>Unwrap</span>
-            </Button>
-          )}
-          {!isSelectedAssetWsol() && (
-            <Button
-              type="default"
-              shape="round"
-              size="small"
-              className="thin-stroke"
-              onClick={showDepositOptionsModal}>
-              <span>Buy</span>
-            </Button>
+          {selectedAsset.name !== 'Custom account' ? (
+            <>
+              <Tooltip placement="bottom" title={isSelectedAssetNativeAccount() ? "SOL is not available for money streams, please use wSOL instead." : ""}>
+                <Button
+                  type="default"
+                  shape="round"
+                  size="small"
+                  className="thin-stroke"
+                  disabled={isSelectedAssetNativeAccount()}
+                  onClick={onSendAsset}>
+                  <span>Send</span>
+                </Button>
+              </Tooltip>
+              <Button
+                type="default"
+                shape="round"
+                size="small"
+                className="thin-stroke"
+                onClick={showReceiveSplOrSolModal}>
+                <span>Receive</span>
+              </Button>
+              {!isSelectedAssetWsol() && (
+                <Button
+                  type="default"
+                  shape="round"
+                  size="small"
+                  className="thin-stroke"
+                  onClick={onExchangeAsset}>
+                  <span>Exchange</span>
+                </Button>
+              )}
+              {!isSelectedAssetWsol() && (
+                <Button
+                  type="default"
+                  shape="round"
+                  size="small"
+                  className="thin-stroke"
+                  onClick={handleGoToInvestClick}>
+                  <span>Invest</span>
+                </Button>
+              )}
+              {isSelectedAssetWsol() && (
+                <Button
+                  type="default"
+                  shape="round"
+                  size="small"
+                  className="thin-stroke"
+                  onClick={showUnwrapSolModal}>
+                  <span>Unwrap</span>
+                </Button>
+              )}
+              {!isSelectedAssetWsol() && (
+                <Button
+                  type="default"
+                  shape="round"
+                  size="small"
+                  className="thin-stroke"
+                  onClick={showDepositOptionsModal}>
+                  <span>Buy</span>
+                </Button>
+              )}
+            </>
+          ) : (
+            <h4 className="mb-0">Text to show when the token account is custom</h4>
           )}
         </Space>
         <Dropdown overlay={userAssetOptions} placement="bottomRight" trigger={["click"]}>
