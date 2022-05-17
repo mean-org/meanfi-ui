@@ -134,7 +134,7 @@ export const SafeView = () => {
   const [multisigVaults, setMultisigVaults] = useState<any[]>([]);
   // Programs
   const [loadingPrograms, setLoadingPrograms] = useState(true);
-  const [programs, setPrograms] = useState<ProgramAccounts[] | undefined>(undefined);
+  const [programs, setPrograms] = useState<ProgramAccounts[]>([]);
   // Treasuries
   const [multisigTreasuries, setMultisigTreasuries] = useState<Treasury[]>([]);
   // Mints
@@ -208,6 +208,8 @@ export const SafeView = () => {
     const opts: ConfirmOptions = {
       preflightCommitment: "confirmed",
       commitment: "confirmed",
+      skipPreflight: true,
+      maxRetries: 3
     };
 
     const provider = new AnchorProvider(connection, wallet as any, opts);
@@ -238,36 +240,36 @@ export const SafeView = () => {
     streamV2ProgramAddress
   ]);
 
-  const getMultisigVaults = useCallback(async (
-    connection: Connection,
-    multisig: PublicKey
+  // const getMultisigVaults = useCallback(async (
+  //   connection: Connection,
+  //   multisig: PublicKey
 
-  ) => {
+  // ) => {
 
-    const [multisigSigner] = await PublicKey.findProgramAddress(
-      [multisig.toBuffer()],
-      MEAN_MULTISIG
-    );
+  //   const [multisigSigner] = await PublicKey.findProgramAddress(
+  //     [multisig.toBuffer()],
+  //     MEAN_MULTISIG
+  //   );
 
-    const accountInfos = await connection.getProgramAccounts(TOKEN_PROGRAM_ID, {
-      filters: [
-        { memcmp: { offset: 32, bytes: multisigSigner.toBase58() } }, 
-        { dataSize: AccountLayout.span }
-      ],
-    });
+  //   const accountInfos = await connection.getProgramAccounts(TOKEN_PROGRAM_ID, {
+  //     filters: [
+  //       { memcmp: { offset: 32, bytes: multisigSigner.toBase58() } }, 
+  //       { dataSize: AccountLayout.span }
+  //     ],
+  //   });
 
-    if (!accountInfos || !accountInfos.length) { return []; }
+  //   if (!accountInfos || !accountInfos.length) { return []; }
 
-    const results = accountInfos.map((t: any) => {
-      const tokenAccount = AccountLayout.decode(t.account.data);
-      tokenAccount.address = t.pubkey;
-      return tokenAccount;
-    });
+  //   const results = accountInfos.map((t: any) => {
+  //     const tokenAccount = AccountLayout.decode(t.account.data);
+  //     tokenAccount.address = t.pubkey;
+  //     return tokenAccount;
+  //   });
 
-    consoleOut('multisig assets:', results, 'blue');
-    return results;
+  //   consoleOut('multisig assets:', results, 'blue');
+  //   return results;
 
-  },[]);
+  // },[]);
 
   const refreshPage = useCallback(() => {
     window.location.reload();
@@ -2650,13 +2652,13 @@ export const SafeView = () => {
   ]);
 
   const parseSerumMultisigAccount = (info: any) => {
+
     return PublicKey
       .findProgramAddress([info.publicKey.toBuffer()], new PublicKey("msigmtwzgXJHj2ext4XJjCDmpbcMuufFb5cHuwg6Xdt"))
       .then(k => {
 
         const address = k[0];
         const owners: MultisigParticipant[] = [];
-
         const filteredOwners = info.account.owners.filter((o: any) => !o.equals(PublicKey.default));
 
         for (let i = 0; i < filteredOwners.length; i ++) {
@@ -2705,13 +2707,13 @@ export const SafeView = () => {
     selectedMultisig,
   ]);
 
-  const getProgramsByUpgradeAuthority = useCallback(async (upgradeAuthority: PublicKey): Promise<ProgramAccounts[] | undefined> => {
+  const getProgramsByUpgradeAuthority = useCallback(async (): Promise<ProgramAccounts[] | undefined> => {
 
-    if (!connection || !upgradeAuthority) { return undefined; }
+    if (!connection || !selectedMultisig || !selectedMultisig.authority) { return undefined; }
 
     // 1. Fetch executable data account having upgradeAuthority as upgrade authority
     const BPFLoaderUpgradeab1e = new PublicKey("BPFLoaderUpgradeab1e11111111111111111111111");
-    const executableDataAccountsFilter: MemcmpFilter = { memcmp: { offset: 13, bytes: upgradeAuthority.toBase58() } }
+    const executableDataAccountsFilter: MemcmpFilter = { memcmp: { offset: 13, bytes: selectedMultisig.authority.toBase58() } }
     const executableDataAccounts = await connection.getProgramAccounts(
       BPFLoaderUpgradeab1e,
       {
@@ -2722,14 +2724,15 @@ export const SafeView = () => {
         },
         filters: [
           executableDataAccountsFilter
-        ]
+        ],
+        commitment: "confirmed"
       });
 
     // 2. For each executable data account found in the previous step, fetch the corresponding program
     const programs: ProgramAccounts[] = [];
     for (let i = 0; i < executableDataAccounts.length; i++) {
-      const executableData = executableDataAccounts[i].pubkey;
 
+      const executableData = executableDataAccounts[i].pubkey;
       const executableAccountsFilter: MemcmpFilter = { memcmp: { offset: 4, bytes: executableData.toBase58() } }
       const executableAccounts = await connection.getProgramAccounts(
         BPFLoaderUpgradeab1e,
@@ -2741,7 +2744,8 @@ export const SafeView = () => {
           },
           filters: [
             executableAccountsFilter
-          ]
+          ],
+          commitment: "confirmed"
         });
 
       if (executableAccounts.length === 0) {
@@ -2756,7 +2760,7 @@ export const SafeView = () => {
         pubkey: executableAccounts[0].pubkey,
         owner: executableAccounts[0].account.owner,
         executable: executableData,
-        upgradeAuthority: upgradeAuthority,
+        upgradeAuthority: selectedMultisig.authority,
         size: executableDataAccounts[i].account.data.byteLength
 
       } as ProgramAccounts;
@@ -2767,12 +2771,15 @@ export const SafeView = () => {
 
     return programs;
 
-  }, [connection]);
+  }, [
+    connection, 
+    selectedMultisig
+  ]);
 
   // SERUM ACCOUNTS
   useEffect(() => {
 
-    if (!publicKey || !multisigSerumClient) { return; }
+    if (!connection || !publicKey || !multisigSerumClient) { return; }
 
     const timeout = setTimeout(() => {
       multisigSerumClient
@@ -2796,16 +2803,12 @@ export const SafeView = () => {
                 parsedSerumAccs.push(parsed);
               }
             })
-            .catch((err: any) => {
-              console.error(err);
-            });
+            .catch((err: any) => console.error(err));
         }
 
         setSerumAccounts(parsedSerumAccs);
       })
-      .catch((err: any) => {
-        console.error(err);
-      });
+      .catch((err: any) => console.error(err));
     });
 
     return () => {
@@ -2813,6 +2816,7 @@ export const SafeView = () => {
     }
 
   }, [
+    connection,
     multisigSerumClient, 
     publicKey
   ]);
@@ -2820,12 +2824,12 @@ export const SafeView = () => {
   // Refresh the multisig accounts list
   useEffect(() => {
 
-    if (!connection || !connected || !publicKey || !multisigClient || !loadingMultisigAccounts) {
-      setLoadingMultisigAccounts(false);
+    if (!connection || !publicKey || !multisigClient || !loadingMultisigAccounts) {
       return;
     }
 
     const timeout = setTimeout(() => {
+
       consoleOut('=======================================', '', 'green');
       multisigClient
         .getMultisigs(publicKey)
@@ -2865,15 +2869,15 @@ export const SafeView = () => {
       clearTimeout(timeout);
     }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    connected, 
     publicKey, 
     connection, 
     multisigClient, 
     selectedMultisig, 
     highLightableMultisigId, 
     loadingMultisigAccounts,
-    serumAccounts
+    // serumAccounts
   ]);
 
   // Get Txs for the selected multisig
@@ -2884,7 +2888,6 @@ export const SafeView = () => {
       !publicKey || 
       !multisigClient || 
       !selectedMultisig || 
-      !selectedMultisig.id || 
       !needRefreshTxs ||
       loadingMultisigTxs
     ) { 
@@ -2900,17 +2903,17 @@ export const SafeView = () => {
       multisigClient
         .getMultisigTransactions(selectedMultisig.id, publicKey)
         .then((txs: any[]) => {
-          if (!isProd()) {
-            const debugTable: any[] = [];
-            txs.forEach((item: any) => debugTable.push({
-              operation: OperationType[item.operation],
-              approved: item.didSigned,
-              executed: item.executedOn ? true : false,
-              proposer: item.proposer ? shortenAddress(item.proposer.toBase58(), 6) : '-',
-              status: MultisigTransactionStatus[item.status]
-            }));
-            console.table(debugTable);
-          }
+          // if (!isProd()) {
+          //   const debugTable: any[] = [];
+          //   txs.forEach((item: any) => debugTable.push({
+          //     operation: OperationType[item.operation],
+          //     approved: item.didSigned,
+          //     executed: item.executedOn ? true : false,
+          //     proposer: item.proposer ? shortenAddress(item.proposer.toBase58(), 6) : '-',
+          //     status: MultisigTransactionStatus[item.status]
+          //   }));
+          //   console.table(debugTable);
+          // }
           setMultisigTxs(txs);
         })
         .catch((err: any) => {
@@ -2935,47 +2938,45 @@ export const SafeView = () => {
   ]);
 
   // Get multisig treasuries for the selected multisig
-  useEffect(() => {
+  // useEffect(() => {
 
-    if (!connection || !publicKey || !selectedMultisig) {
-      return;
-    }
+  //   if (!connection || !publicKey || !selectedMultisig) {
+  //     return;
+  //   }
 
-    const timeout = setTimeout(() => {
-      getMultisigTreasuries()
-        .then(values => {
-          consoleOut('multisigTreasuries:', values, 'blue');
-          setMultisigTreasuries(values);
-        })
-    });
+  //   const timeout = setTimeout(() => {
+  //     getMultisigTreasuries()
+  //       .then(values => {
+  //         consoleOut('multisigTreasuries:', values, 'blue');
+  //         setMultisigTreasuries(values);
+  //       })
+  //   });
 
-    return () => {
-      clearTimeout(timeout);
-    }
+  //   return () => {
+  //     clearTimeout(timeout);
+  //   }
 
-  }, [
-    publicKey,
-    connection,
-    selectedMultisig,
-    getMultisigTreasuries
-  ]);
+  // }, [
+  //   publicKey,
+  //   connection,
+  //   selectedMultisig,
+  //   getMultisigTreasuries
+  // ]);
 
   // Get Programs
   useEffect(() => {
 
-    if (!connection || !publicKey || !selectedMultisig || !selectedMultisig.authority || !loadingPrograms) {
+    if (!connection || !publicKey || !selectedMultisig || !loadingPrograms) {
       return;
     }
 
-    setTimeout(() => {
-      setLoadingPrograms(true);
-    });
+    setLoadingPrograms(true);
 
     const timeout = setTimeout(() => {
-      getProgramsByUpgradeAuthority(selectedMultisig.authority)
+      getProgramsByUpgradeAuthority()
         .then(programs => {
           consoleOut('programs:', programs, 'blue');
-          setPrograms(programs);
+          setPrograms(programs || []);
         })
         .catch(err => console.error(err))
         .finally(() => setLoadingPrograms(false));
@@ -3080,29 +3081,29 @@ export const SafeView = () => {
   ]);
 
   // Get Multisig Vaults
-  useEffect(() => {
+  // useEffect(() => {
 
-    if (!multisigClient || !selectedMultisig || !selectedMultisig.id) {
-      return;
-    }
+  //   if (!multisigClient || !selectedMultisig || !selectedMultisig.id) {
+  //     return;
+  //   }
 
-    const timeout = setTimeout(() => {
-      getMultisigVaults(multisigClient.provider.connection, selectedMultisig.id)
-        .then(result => {
-          setMultisigVaults(result);
-        })
-        .catch(err => console.error(err));
-    });
+  //   const timeout = setTimeout(() => {
+  //     getMultisigVaults(multisigClient.provider.connection, selectedMultisig.id)
+  //       .then(result => {
+  //         setMultisigVaults(result);
+  //       })
+  //       .catch(err => console.error(err));
+  //   });
 
-    return () => {
-      clearTimeout(timeout);
-    }
+  //   return () => {
+  //     clearTimeout(timeout);
+  //   }
 
-  },[
-    getMultisigVaults,
-    multisigClient, 
-    selectedMultisig
-  ]);
+  // },[
+  //   getMultisigVaults,
+  //   multisigClient, 
+  //   selectedMultisig
+  // ]);
 
   // END MULTISIG
 
@@ -3110,21 +3111,31 @@ export const SafeView = () => {
   // Keep account balance updated
   useEffect(() => {
 
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
+    if (!account || account.lamports !== previousBalance || !nativeBalance) {
+      return;    
     }
 
-    if (account?.lamports !== previousBalance || !nativeBalance) {
+    const timeout = setTimeout(() => {
+
+      const getAccountBalance = (): number => {
+        return (account.lamports || 0) / LAMPORTS_PER_SOL;
+      }
+
       // Refresh token balance
       refreshTokenBalance();
       setNativeBalance(getAccountBalance());
       // Update previous balance
-      setPreviousBalance(account?.lamports);
+      setPreviousBalance(account.lamports);
+    });
+
+    return () => {
+      clearTimeout(timeout);
     }
+
   }, [
-    account,
-    nativeBalance,
-    previousBalance,
+    account, 
+    nativeBalance, 
+    previousBalance, 
     refreshTokenBalance
   ]);
 
@@ -3244,8 +3255,8 @@ export const SafeView = () => {
   // }
 
   useEffect(() => {
-    const multisigTxsAmountToHide = (multisigTxs.filter((txName) => txName.status === 4).length);
 
+    const multisigTxsAmountToHide = (multisigTxs.filter((txName) => txName.status === 4).length);
     const multisigTxsToShow = multisigTxs.filter((txName) => txName.status !== 4);
 
     if (switchValue) {
@@ -3254,11 +3265,13 @@ export const SafeView = () => {
     } else {
       setFilteredMultisigTxs(multisigTxs);
     }
+
   }, [multisigTxs, switchValue]);
 
   // Scroll to a given multisig is specified as highLightableMultisigId
   useEffect(() => {
-    if (loadingMultisigAccounts || !multisigAccounts || multisigAccounts.length === 0 || !highLightableMultisigId || !selectedMultisig) {
+
+    if (loadingMultisigAccounts || multisigAccounts.length === 0 || !highLightableMultisigId || !selectedMultisig) {
       return;
     }
 
@@ -3404,7 +3417,7 @@ export const SafeView = () => {
 
   const renderMultisigList = (
     <>
-    {multisigAccounts && multisigAccounts.length ? (
+    {multisigAccounts.length ? (
       multisigAccounts.map((item, index) => {
         const onMultisigClick = (ev: any) => {
           consoleOut('=======================================', '', 'green');
@@ -4473,7 +4486,7 @@ export const SafeView = () => {
 
               <div className="inner-container">
                 <div className="scroll-wrapper vertical-scroll">
-                  {connected && selectedMultisig ? (
+                  {connected && multisigClient && selectedMultisig ? (
                     <>
                       <Spin spinning={loadingMultisigAccounts || loadingMultisigTxs}>
                         {(!isSafeDetails && !isProgramDetails) && (
@@ -4487,7 +4500,7 @@ export const SafeView = () => {
                               selectedMultisig={selectedMultisig}
                               onEditMultisigClick={onEditMultisigClick}
                               onNewProposalMultisigClick={onNewProposalMultisigClick}
-                              multisigVaults={multisigVaults}
+                              multisigClient={multisigSerumClient}
                             />
                           ) : (
                             <SafeMeanInfo
@@ -4499,7 +4512,7 @@ export const SafeView = () => {
                               selectedMultisig={selectedMultisig}
                               onEditMultisigClick={onEditMultisigClick}
                               onNewProposalMultisigClick={onNewProposalMultisigClick}
-                              multisigVaults={multisigVaults}
+                              multisigClient={multisigClient}
                               multisigTxs={multisigTxs}
                             />
                           )

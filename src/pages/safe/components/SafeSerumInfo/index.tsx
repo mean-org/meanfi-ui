@@ -1,10 +1,11 @@
 import './style.scss';
-
+import { useState } from 'react';
 import { Button, Col, Row } from "antd"
 import { IconApprove, IconArrowForward, IconCheckCircle, IconCreated, IconCross, IconMinus } from "../../../../Icons"
 import { shortenAddress } from "../../../../utils/utils";
 import { SafeInfo } from "../UI/SafeInfo";
 import { ResumeItem } from '../UI/ResumeItem';
+import { Idl, Program } from '@project-serum/anchor';
 
 export const SafeSerumInfoView = (props: {
   isSafeDetails: boolean;
@@ -15,12 +16,21 @@ export const SafeSerumInfoView = (props: {
   selectedMultisig?: any;
   onEditMultisigClick: any;
   onNewProposalMultisigClick: any;
-  multisigVaults: any;
+  multisigClient: Program<Idl>;
 }) => {
-  const { isSafeDetails, proposals, selectedMultisig, onEditMultisigClick, onNewProposalMultisigClick, multisigVaults } = props;
+  const { 
+    isSafeDetails, 
+    proposals, 
+    selectedMultisig, 
+    onEditMultisigClick, 
+    onNewProposalMultisigClick,
+    multisigClient
+     
+  } = props;
 
   const safeSerumNameImg = "https://assets.website-files.com/6163b94b432ce93a0408c6d2/61ff1e9b7e39c27603439ad2_serum%20NOF.png";
   const safeSerumNameImgAlt = "Serum";
+  const [multisigVaults, setMultisigVaults] = useState<any[]>([]);
 
   // Proposals list
   const renderListOfProposals = (
