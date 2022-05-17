@@ -1996,6 +1996,7 @@ export const MultisigProgramsView = () => {
 
         return await approveTx(payload)
           .then(value => {
+            console.log('value', value);
             if (!value) { return false; }
             consoleOut('approveTx returned transaction:', value);
             setTransactionStatus({

@@ -1,16 +1,16 @@
 import './style.scss';
 
-import { Button, Col, Row } from "antd"
 import { IconApprove, IconArrowForward, IconCheckCircle, IconCreated, IconCross, IconMinus } from "../../../../Icons"
 import { formatThousands, getTokenByMintAddress, makeDecimal, shortenAddress } from "../../../../utils/utils";
+import { Button, Col, Row, Spin } from "antd"
 import { SafeInfo } from "../UI/SafeInfo";
-import { MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
+import { MeanMultisig, MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
 import { ProgramAccounts } from '../../../../utils/accounts';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Connection, MemcmpFilter, PublicKey } from '@solana/web3.js';
 import { useConnectionConfig } from '../../../../contexts/connection';
 import { consoleOut } from '../../../../utils/ui';
-import { useWallet } from '../../../../contexts/wallet';
+// import { useWallet } from '../../../../contexts/wallet';
 import { ResumeItem } from '../UI/ResumeItem';
 import { program } from '@project-serum/anchor/dist/cjs/spl/token';
 import { FALLBACK_COIN_IMAGE } from '../../../../constants';
@@ -18,6 +18,9 @@ import { MultisigVault } from '../../../../models/multisig';
 import { Identicon } from '../../../../components/Identicon';
 import { BN } from 'bn.js';
 import { u64 } from '@solana/spl-token';
+import { MEAN_MULTISIG } from '../../../../utils/ids';
+import { ACCOUNT_LAYOUT } from '../../../../utils/layouts';
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
 export const SafeMeanInfo = (props: {
   isSafeDetails: boolean;
@@ -31,14 +34,15 @@ export const SafeMeanInfo = (props: {
   onEditMultisigClick: any;
   onNewCreateAssetClick: any;
   onNewProposalMultisigClick: any;
-  multisigVaults: MultisigVault[];
+  // multisigVaults: MultisigVault[];
+  multisigClient: MeanMultisig | null;
   multisigTxs: MultisigTransaction[];
   selectedTab?: any;
 }) => {
 
-  const { isSafeDetails, isProgramDetails, isAssetDetails,  multisigTxs, selectedMultisig, onEditMultisigClick, onNewProposalMultisigClick, onNewCreateAssetClick, multisigVaults, selectedTab } = props;
+  const { isSafeDetails, isProgramDetails, isAssetDetails,  multisigTxs, selectedMultisig, onEditMultisigClick, onNewProposalMultisigClick, onNewCreateAssetClick, selectedTab, multisigClient } = props;
 
-  const { publicKey } = useWallet();
+  // const { publicKey } = useWallet();
   const connectionConfig = useConnectionConfig();
 
   const [programs, setPrograms] = useState<ProgramAccounts[] | undefined>(undefined);
@@ -46,6 +50,7 @@ export const SafeMeanInfo = (props: {
   const [loadingProposals, setLoadingProposals] = useState(true);
   const [loadingAssets, setLoadingAssets] = useState(true);
   const [loadingPrograms, setLoadingPrograms] = useState(true);
+  const [multisigVaults, setMultisigVaults] = useState<any[]>([]);
 
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
     commitment: "confirmed",
@@ -81,12 +86,10 @@ export const SafeMeanInfo = (props: {
               props.onDataToSafeView(proposal);
             };
 
-            // Number of participants who have already approved the Tx
-            const approvedSigners = proposal.signers.filter((s: any) => s === true).length;
-
-            const expirationDate = proposal.details.expirationDate ? new Date(proposal.details.expirationDate).toDateString() : "";
-
-            const executedOnDate = proposal.executedOn ? new Date(proposal.executedOn).toDateString() : "";
+          // Number of participants who have already approved the Tx
+          const approvedSigners = proposal.signers.filter((s: any) => s === true).length;
+          const expirationDate = proposal.details.expirationDate ? proposal.details.expirationDate.toDateString() : "";
+          const executedOnDate = proposal.executedOn ? proposal.executedOn.toDateString() : "";
 
             return (
               <div 
@@ -140,7 +143,7 @@ export const SafeMeanInfo = (props: {
               // setLoadingMultisigTxs(true);
             };
 
-                      // const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+            // const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
             //   event.currentTarget.src = FALLBACK_COIN_IMAGE;
             //   event.currentTarget.className = "error";
             // };
@@ -196,70 +199,70 @@ export const SafeMeanInfo = (props: {
   );
 
   // Settings
-  const renderSettings = (
-    <>
-      <Row gutter={[8, 8]}>
-        <Col xs={12} sm={12} md={12} lg={12} className="text-right pr-1">Minimum cool-off period:</Col>
-        <Col xs={12} sm={12} md={12} lg={12} className="text-left pl-1">24 hours</Col>
-      </Row>
-      <Row gutter={[8, 8]}>
-        <Col xs={12} sm={12} md={12} lg={12} className="text-right pr-1">Single signer balance threshold:</Col>
-        <Col xs={12} sm={12} md={12} lg={12} className="text-left pl-1">$100.00</Col>
-      </Row>
-    </>
-  );
+  // const renderSettings = (
+  //   <>
+  //     <Row gutter={[8, 8]}>
+  //       <Col xs={12} sm={12} md={12} lg={12} className="text-right pr-1">Minimum cool-off period:</Col>
+  //       <Col xs={12} sm={12} md={12} lg={12} className="text-left pl-1">24 hours</Col>
+  //     </Row>
+  //     <Row gutter={[8, 8]}>
+  //       <Col xs={12} sm={12} md={12} lg={12} className="text-right pr-1">Single signer balance threshold:</Col>
+  //       <Col xs={12} sm={12} md={12} lg={12} className="text-left pl-1">$100.00</Col>
+  //     </Row>
+  //   </>
+  // );
 
-  // Activities list 
-  const renderActivities= (
-    <>
-      {/* {proposals && proposals.length && (
-        proposals.map((proposal) => (
-          proposal.activities.map((activity: any) => {
+  // // Activities list 
+  // const renderActivities= (
+  //   <>
+  //     {/* {proposals && proposals.length && (
+  //       proposals.map((proposal) => (
+  //         proposal.activities.map((activity: any) => {
 
-            let icon = null;
+  //           let icon = null;
 
-            switch (activity.description) {
-              case 'approved':
-                icon = <IconApprove className="mean-svg-icons fg-green" />;
-                break;
-              case 'rejected':
-                icon = <IconCross className="mean-svg-icons fg-red" />;
-                break;
-              case 'passed':
-                icon = <IconCheckCircle className="mean-svg-icons fg-green" />;
-                break;
-              case 'created':
-                icon = <IconCreated className="mean-svg-icons fg-purple" />;
-                break;
-              case 'deleted':
-                icon = <IconMinus className="mean-svg-icons fg-purple" />;
-                break;
-              default:
-                icon = "";
-                break;
-            }
+  //           switch (activity.description) {
+  //             case 'approved':
+  //               icon = <IconApprove className="mean-svg-icons fg-green" />;
+  //               break;
+  //             case 'rejected':
+  //               icon = <IconCross className="mean-svg-icons fg-red" />;
+  //               break;
+  //             case 'passed':
+  //               icon = <IconCheckCircle className="mean-svg-icons fg-green" />;
+  //               break;
+  //             case 'created':
+  //               icon = <IconCreated className="mean-svg-icons fg-purple" />;
+  //               break;
+  //             case 'deleted':
+  //               icon = <IconMinus className="mean-svg-icons fg-purple" />;
+  //               break;
+  //             default:
+  //               icon = "";
+  //               break;
+  //           }
 
-            return (
-              <div 
-                key={activity.id}
-                className={`d-flex w-100 align-items-center activities-list ${activity.id % 2 === 0 ? '' : 'background-gray'}`}
-                >
-                  <div className="list-item">
-                    <span className="mr-2">
-                        {activity.date}
-                    </span>
-                    {icon}
-                    <span>
-                      {`Proposal ${activity.description} by ${activity.proposedBy} [${shortenAddress(activity.address, 4)}]`}
-                    </span>
-                  </div>
-              </div>
-            )
-          })
-        ))
-      )} */}
-    </>
-  );
+  //           return (
+  //             <div 
+  //               key={activity.id}
+  //               className={`d-flex w-100 align-items-center activities-list ${activity.id % 2 === 0 ? '' : 'background-gray'}`}
+  //               >
+  //                 <div className="list-item">
+  //                   <span className="mr-2">
+  //                       {activity.date}
+  //                   </span>
+  //                   {icon}
+  //                   <span>
+  //                     {`Proposal ${activity.description} by ${activity.proposedBy} [${shortenAddress(activity.address, 4)}]`}
+  //                   </span>
+  //                 </div>
+  //             </div>
+  //           )
+  //         })
+  //       ))
+  //     )} */}
+  //   </>
+  // );
 
   // Programs list
   const getProgramsByUpgradeAuthority = useCallback(async (upgradeAuthority: PublicKey): Promise<ProgramAccounts[] | undefined> => {
@@ -330,22 +333,83 @@ export const SafeMeanInfo = (props: {
 
   // Get Programs
   useEffect(() => {
+
     if (!connection || !selectedMultisig || !selectedMultisig.authority) { return; }
 
-    getProgramsByUpgradeAuthority(selectedMultisig.authority)
-    .then(programs => {
-      consoleOut('programs:', programs, 'blue');
-      setPrograms(programs);
-    })
-    .catch(error => {
-      console.error(error);
-    })
-    .finally(() => setLoadingPrograms(false));
+    const timeout = setTimeout(() => {
+      getProgramsByUpgradeAuthority(selectedMultisig.authority)
+      .then(programs => {
+        consoleOut('programs:', programs, 'blue');
+        setPrograms(programs);
+      })
+      .catch(error => console.error(error))
+      .finally(() => setLoadingPrograms(false));
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
   }, [
     connection,
     selectedProgram,
     selectedMultisig,
     getProgramsByUpgradeAuthority,
+  ]);
+
+  const getMultisigVaults = useCallback(async (
+    connection: Connection,
+    multisig: PublicKey
+
+  ) => {
+
+    const [multisigSigner] = await PublicKey.findProgramAddress(
+      [multisig.toBuffer()],
+      MEAN_MULTISIG
+    );
+
+    const accountInfos = await connection.getProgramAccounts(TOKEN_PROGRAM_ID, {
+      filters: [
+        { memcmp: { offset: 32, bytes: multisigSigner.toBase58() } }, 
+        { dataSize: ACCOUNT_LAYOUT.span }
+      ],
+    });
+
+    if (!accountInfos || !accountInfos.length) { return []; }
+
+    const results = accountInfos.map((t: any) => {
+      const tokenAccount = ACCOUNT_LAYOUT.decode(t.account.data);
+      tokenAccount.address = t.pubkey;
+      return tokenAccount;
+    });
+
+    consoleOut('multisig assets:', results, 'blue');
+    return results;
+
+  },[]);
+
+  // Get Multisig Vaults
+  useEffect(() => {
+
+    if (!multisigClient || !selectedMultisig || !selectedMultisig.id) {
+      return;
+    }
+
+    const program = multisigClient.getProgram();
+    const timeout = setTimeout(() => {
+      getMultisigVaults(program.provider.connection, selectedMultisig.id)
+        .then(result => setMultisigVaults(result))
+        .catch(err => console.error(err));
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  },[
+    getMultisigVaults,
+    multisigClient, 
+    selectedMultisig
   ]);
 
   useEffect(() => {

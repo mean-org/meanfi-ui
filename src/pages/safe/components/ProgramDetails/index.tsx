@@ -1,7 +1,7 @@
 import './style.scss';
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MEAN_MULTISIG_PROGRAM } from "@mean-dao/mean-multisig-sdk";
 import { TransactionFees } from "@mean-dao/msp";
-import { Connection, LAMPORTS_PER_SOL, PublicKey, SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY, Transaction } from "@solana/web3.js";
+import { ConfirmOptions, Connection, LAMPORTS_PER_SOL, PublicKey, SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY, Transaction } from "@solana/web3.js";
 import { Button, Col, Row } from "antd";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -21,13 +21,13 @@ import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume }
 import { ProgramAccounts } from "../../../../utils/accounts";
 import { customLogger } from "../../../..";
 import { TabsMean } from '../../../../components/TabsMean';
-import { AnchorProvider, Program, Idl, translateAddress } from '@project-serum/anchor';
-import { utf8 } from '@project-serum/anchor/dist/cjs/utils/bytes';
+import { AnchorProvider, Program, Idl, SplToken } from '@project-serum/anchor';
 import { NATIVE_SOL } from '../../../../utils/tokens';
 import { CopyOutlined } from '@ant-design/icons';
 import { CopyExtLinkGroup } from '../../../../components/CopyExtLinkGroup';
 import moment from 'moment';
 import { decodeIdlAccount, idlAddress } from '@project-serum/anchor/dist/cjs/idl';
+import { IDL } from '@project-serum/anchor/dist/cjs/spl/token';
 
 export const ProgramDetailsView = (props: {
   isProgramDetails: boolean;
@@ -60,6 +60,7 @@ export const ProgramDetailsView = (props: {
   const [/*ongoingOperation*/, setOngoingOperation] = useState<OperationType | undefined>(undefined);
   const [/*retryOperationPayload*/, setRetryOperationPayload] = useState<any>(undefined);
   const [selectedProgram, setSelectedProgram] = useState<ProgramAccounts | undefined>(undefined);
+  const [selectedProgramIdl, setSelectedProgramIdl] = useState<string>("");
   const [loadingTxs, setLoadingTxs] = useState(true);
 
   // When back button is clicked, goes to Safe Info
@@ -920,41 +921,104 @@ export const ProgramDetailsView = (props: {
     </>
   );
 
+  const getProgramIDL = useCallback(async () => {
+
+    if (!connection || !publicKey || !programSelected) { return null; }
+
+    const createAnchorProvider = (): AnchorProvider => {
+
+      const opts: ConfirmOptions = {
+        commitment: "confirmed",
+        preflightCommitment: "confirmed",
+        maxRetries: 3,
+        skipPreflight: false
+      };
+
+      const anchorWallet = {
+        publicKey: publicKey as PublicKey,
+        signAllTransactions: async (txs: any) => txs,
+        signTransaction: async (tx: any) => tx,
+      };
+
+      const provider = new AnchorProvider(connection, anchorWallet, opts);
+
+      return provider
+    };
+
+    const provider = createAnchorProvider();
+
+    const idl = await Program.fetchIdl(programSelected.pubkey, provider);
+
+    console.log('idl', idl);
+
+    // const splTokenJson = JSON.stringify(IDL);
+    // console.log('splTokenJson', splTokenJson);
+
+    // const idlAddr = await idlAddress(new PublicKey("FF7U7Vj1PpBkTPau7frwLLrUHrjkxTQLsH7U5K3T3B3j"));
+    // console.log('idlAddr', idlAddr.toBase58());
+    // const accountInfo = await provider.connection.getAccountInfo(idlAddr);
+
+    // console.log('accountInfo', accountInfo);
+
+    // if (!accountInfo) {
+    //   return null;
+    // }
+    // // Chop off account discriminator.
+    // const idlAccount = decodeIdlAccount(accountInfo.data.slice(8));
+    // const inflatedIdl = inflate(idlAccount.data);
+
+    // const idl = await Program.fetchIdl(programSelected.pubkey, provider);
+
+    // const accountInfo = await provider.connection.getAccountInfo(programSelected.pubkey);
+    // if (!accountInfo) {
+    //   return null;
+    // }
+
+    // console.log('idlAccount', idlAccount);
+
+    // console.log('AQUI', provider, accountInfo);
+    // // Chop off account discriminator
+    // return decodeIdlAccount(accountInfo.data);
+    // return idlAccount.data.toString('utf8');
+
+  }, [
+    connection, 
+    programSelected, 
+    publicKey
+  ]);
+
   // Get Anchor IDL
-  // useEffect(() => {
-  //   if (!connection) { return; }
+  useEffect(() => {
 
-  //   const createAnchorProvider = (): AnchorProvider => {
-  //     const opts = AnchorProvider.defaultOptions();
-  //     const anchorWallet = {
-  //       publicKey: publicKey as PublicKey,
-  //       signAllTransactions: async (txs: any) => txs,
-  //       signTransaction: async (tx: any) => tx,
-  //     };
+    if (!connection || !publicKey || !programSelected) { return; }
 
-  //     const provider = new AnchorProvider(connection, anchorWallet, opts);
+    const timeout = setTimeout(() => {
+      getProgramIDL()
+        .then((idl: any) => {
+          console.log('IDL', idl);
+          if (!idl) {
+            setSelectedProgramIdl("");
+            return;
+          }
+          console.log('IDL', idl);
+          setSelectedProgramIdl(idl);
+        })
+        .catch((err: any) => {
+          setSelectedProgramIdl("");
+          console.error(err);
+        });
+    });
 
-  //     return provider
-  //   }
+    return () => {
+      clearTimeout(timeout);
+    }
 
-  //   const provider = createAnchorProvider();
-
-  //   const programId = translateAddress(programSelected.pubkey.toBase58());
-
-  //   (async () => {
-  //     const idlAddr = await idlAddress(programId);
-  //     const accountInfo = await provider.connection.getAccountInfo(idlAddr);
-  //     if (!accountInfo) {
-  //       return null;
-  //     }
-  //     // Chop off account discriminator
-  //     const idlAccount = decodeIdlAccount(accountInfo.data.slice(8));
-  //     // const inflatedIdl = inflate(idlAccount.data);
-  //     console.log("idlAccount", idlAccount);
-  //     return JSON.parse(utf8.decode(idlAccount.data));
-  //   })();
-
-  // }, [connection, programSelected.pubkey, publicKey]);
+  }, [
+    connection, 
+    getProgramIDL, 
+    programSelected, 
+    publicKey
+  ]);
 
   // Tabs
   const tabs = [
@@ -964,7 +1028,7 @@ export const ProgramDetailsView = (props: {
     }, 
     {
       name: "Anchor IDL",
-      render: "Anchor IDL"
+      render: selectedProgramIdl
     }
   ];
 
