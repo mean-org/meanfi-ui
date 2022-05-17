@@ -3787,7 +3787,6 @@ export const SafeView = () => {
           setDtailsPanelOpen(true);
           setSelectedMultisig(item);
           setNeedRefreshTxs(true);
-          setLoadingPrograms(true);
           setIsSafeDetails(false);
           setIsProgramDetails(false);
           setIsAssetDetails(false);
@@ -4818,9 +4817,9 @@ export const SafeView = () => {
 
               <div className="inner-container">
                 <div className="item-block vertical-scroll">
-                  <Spin spinning={loadingMultisigAccounts}>
+                  {/* <Spin spinning={loadingMultisigAccounts}> */}
                     {renderMultisigList}
-                  </Spin>
+                  {/* </Spin> */}
                 </div>
 
                 {/* Bottom CTAs */}
@@ -4871,7 +4870,7 @@ export const SafeView = () => {
                 <div className="scroll-wrapper vertical-scroll">
                   {connected && selectedMultisig ? (
                     <>
-                      <Spin spinning={loadingMultisigAccounts || loadingMultisigTxs}>
+                      {/* <Spin spinning={loadingMultisigAccounts || loadingMultisigTxs}> */}
                         {(!isSafeDetails && !isProgramDetails && !isAssetDetails) && (
                           selectedMultisig.version === 0 ? (
                             <SafeSerumInfoView
@@ -4906,7 +4905,7 @@ export const SafeView = () => {
                             />
                           )
                         )}
-                      </Spin>
+                      {/* </Spin> */}
                       {isSafeDetails && (
                         <SafeDetailsView
                           isSafeDetails={isSafeDetails}

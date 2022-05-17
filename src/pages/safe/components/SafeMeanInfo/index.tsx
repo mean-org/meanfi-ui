@@ -43,6 +43,8 @@ export const SafeMeanInfo = (props: {
 
   const [programs, setPrograms] = useState<ProgramAccounts[] | undefined>(undefined);
   const [selectedProgram, setSelectedProgram] = useState<ProgramAccounts | undefined>(undefined);
+  const [loadingProposals, setLoadingProposals] = useState(true);
+  const [loadingAssets, setLoadingAssets] = useState(true);
   const [loadingPrograms, setLoadingPrograms] = useState(true);
 
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
@@ -52,113 +54,143 @@ export const SafeMeanInfo = (props: {
     connectionConfig.endpoint
   ]);
 
+  useEffect(() => {
+    if (selectedMultisig ) {
+      setLoadingProposals(true);
+      setLoadingAssets(true);
+      setLoadingPrograms(true);
+    }
+  }, [selectedMultisig]);
+
+  useEffect(() => {
+    if (multisigTxs || (isSafeDetails)) {
+      setLoadingProposals(false);
+    } else {
+      setLoadingProposals(true);
+    }
+  }, [isSafeDetails, multisigTxs]);
+
   // Proposals list
   const renderListOfProposals = (
     <>
-      {(multisigTxs && multisigTxs.length > 0) ? (
-        multisigTxs.map((proposal, index) => {
-          const onSelectProposal = () => {
-            // Sends isSafeDetails value to the parent component "SafeView"
-            props.onDataToSafeView(proposal);
-          };
+      {!loadingProposals ? (
+        (multisigTxs && multisigTxs.length > 0) ? (
+          multisigTxs.map((proposal, index) => {
+            const onSelectProposal = () => {
+              // Sends isSafeDetails value to the parent component "SafeView"
+              props.onDataToSafeView(proposal);
+            };
 
-          // Number of participants who have already approved the Tx
-          const approvedSigners = proposal.signers.filter((s: any) => s === true).length;
+            // Number of participants who have already approved the Tx
+            const approvedSigners = proposal.signers.filter((s: any) => s === true).length;
 
-          const expirationDate = proposal.details.expirationDate ? new Date(proposal.details.expirationDate).toDateString() : "";
+            const expirationDate = proposal.details.expirationDate ? new Date(proposal.details.expirationDate).toDateString() : "";
 
-          const executedOnDate = proposal.executedOn ? new Date(proposal.executedOn).toDateString() : "";
+            const executedOnDate = proposal.executedOn ? new Date(proposal.executedOn).toDateString() : "";
 
-          return (
-            <div 
-              key={index}
-              onClick={onSelectProposal}
-              className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
-              >
-                <ResumeItem
-                  id={proposal.id.toBase58()}
-                  // logo={proposal.logo}
-                  title={proposal.details.title}
-                  expires={expirationDate}
-                  executedOn={executedOnDate}
-                  approved={approvedSigners}
-                  // rejected={proposal.rejected}
-                  status={proposal.status}
-                  isSafeDetails={isSafeDetails}
-                />
-            </div>
-          )
-        })
+            return (
+              <div 
+                key={index}
+                onClick={onSelectProposal}
+                className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+                >
+                  <ResumeItem
+                    id={proposal.id.toBase58()}
+                    // logo={proposal.logo}
+                    title={proposal.details.title}
+                    expires={expirationDate}
+                    executedOn={executedOnDate}
+                    approved={approvedSigners}
+                    // rejected={proposal.rejected}
+                    status={proposal.status}
+                    isSafeDetails={isSafeDetails}
+                  />
+              </div>
+            )
+          })
+        ) : (
+          <span>This multisig has no proposals</span>
+        )
       ) : (
-        <span>This multisig has no proposals</span>
+        <span>Loading proposals ...</span>
       )}
     </>
   );
 
   // Assets list
-  // const [selectedAsset, setSelectedAsset] = useState<MultisigVault | undefined>(undefined);
+  useEffect(() => {
+    if (multisigVaults || (isAssetDetails)) {
+      setLoadingAssets(false);
+    } else {
+      setLoadingAssets(true);
+    }
+  }, [isAssetDetails, multisigVaults]);
 
   const renderListOfAssets = (
     <>
-      {(multisigVaults && multisigVaults.length) ? (
-        multisigVaults.map((asset, index) => {
-          const onSelectAsset = () => {
-            // Sends isProgramDetails value to the parent component "SafeView"
-            props.onDataToAssetView(asset);
-            // setSelectedAsset(asset);
-            // setDtailsPanelOpen(true);
-            consoleOut('selected asset:', asset, 'blue');
-            // setLoadingMultisigTxs(true);
-          };
+      {!loadingAssets ? (
+        (multisigVaults && multisigVaults.length > 0) ? (
+          multisigVaults.map((asset, index) => {
+            const onSelectAsset = () => {
+              // Sends isProgramDetails value to the parent component "SafeView"
+              props.onDataToAssetView(asset);
+              // setSelectedAsset(asset);
+              // setDtailsPanelOpen(true);
+              consoleOut('selected asset:', asset, 'blue');
+              // setLoadingMultisigTxs(true);
+            };
 
-                    // const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
-          //   event.currentTarget.src = FALLBACK_COIN_IMAGE;
-          //   event.currentTarget.className = "error";
-          // };
+                      // const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+            //   event.currentTarget.src = FALLBACK_COIN_IMAGE;
+            //   event.currentTarget.className = "error";
+            // };
 
-          // const tokenIcon = (
-          //   <div className="token-icon">
-          //     {token && token.logoURI && (
-          //       <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
-          //     ) : (
-          //       <Identicon address={new PublicKey(asset.mint).toBase58()} style={{
-          //         width: "30",
-          //         display: "inline-flex",
-          //         height: "30",
-          //         overflow: "hidden",
-          //         borderRadius: "50%"
-          //       }} />
-          //     )}
-          //   </div>
-          // )
+            // const tokenIcon = (
+            //   <div className="token-icon">
+            //     {token && token.logoURI && (
+            //       <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
+            //     ) : (
+            //       <Identicon address={new PublicKey(asset.mint).toBase58()} style={{
+            //         width: "30",
+            //         display: "inline-flex",
+            //         height: "30",
+            //         overflow: "hidden",
+            //         borderRadius: "50%"
+            //       }} />
+            //     )}
+            //   </div>
+            // )
 
-          const token = getTokenByMintAddress(asset.mint.toBase58());
-          const tokenIcon = token && token.logoURI;
-          const assetToken = token && token.symbol;
-          const assetAddress = shortenAddress(asset.address.toBase58(), 8);
-          const assetAmount = token && formatThousands(makeDecimal(asset.amount, token.decimals), token.decimals);          
+            const token = getTokenByMintAddress(asset.mint.toBase58());
+            const tokenIcon = token && token.logoURI;
+            const assetToken = token && token.symbol;
+            const assetAddress = shortenAddress(asset.address.toBase58(), 8);
+            const assetAmount = token && formatThousands(makeDecimal(asset.amount, token.decimals), token.decimals);          
 
-          return (
-            <div 
-              key={`${asset.address.toBase58() + 60}`}
-              onClick={onSelectAsset}
-              className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
-              >
-                <ResumeItem
-                  id={`${index + 61}`}
-                  logo={tokenIcon}
-                  title={assetToken}
-                  subtitle={assetAddress}
-                  isAsset={true}
-                  rightContent={assetAmount}
-                  isSafeDetails={isSafeDetails}
-                  isAssetDetails={isAssetDetails}
-                />
-            </div>
-          );
-        })
+            return (
+              <div 
+                key={`${asset.address.toBase58() + 60}`}
+                onClick={onSelectAsset}
+                className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+                >
+                  <ResumeItem
+                    id={`${index + 61}`}
+                    logo={tokenIcon}
+                    title={assetToken}
+                    subtitle={assetAddress}
+                    isAsset={true}
+                    rightContent={assetAmount}
+                    isSafeDetails={isSafeDetails}
+                    isAssetDetails={isAssetDetails}
+                  />
+              </div>
+            );
+          })
+        ) : (
+          <span>This multisig has no assets</span>
+        )
       ) : (
-        <span>This multisig has no assets</span>
+        <span>Loading assets ...</span>
       )}
     </>
   );
@@ -296,12 +328,6 @@ export const SafeMeanInfo = (props: {
 
   }, [connection]);
 
-  useEffect(() => {
-    setLoadingPrograms(true);
-    setPrograms(undefined);
-    setSelectedProgram(undefined);
-  }, [selectedMultisig]);
-
   // Get Programs
   useEffect(() => {
     if (!connection || !selectedMultisig || !selectedMultisig.authority) { return; }
@@ -321,6 +347,14 @@ export const SafeMeanInfo = (props: {
     selectedMultisig,
     getProgramsByUpgradeAuthority,
   ]);
+
+  useEffect(() => {
+    if (programs || (isProgramDetails)) {
+      setLoadingPrograms(false);
+    } else {
+      setLoadingPrograms(true);
+    }
+  }, [isProgramDetails, programs]);
 
   const renderListOfPrograms = (
     <>
@@ -357,7 +391,6 @@ export const SafeMeanInfo = (props: {
       ) : (
         <span>Loading programs ...</span>
       )}
-
     </>
   );
 
