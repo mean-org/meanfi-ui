@@ -1960,7 +1960,7 @@ export const AccountsNewView = () => {
     if (!selectedAsset) { return null; }
 
     return (
-      <div className="flex-fixed-right">
+      <div className="flex-fixed-right cta-row">
         <Space className="left" size="middle" wrap>
           {selectedAsset.name !== 'Custom account' ? (
             <>
@@ -2025,7 +2025,7 @@ export const AccountsNewView = () => {
               )}
             </>
           ) : (
-            <h4 className="mb-0">Text to show when the token account is custom</h4>
+            <h4 className="mb-0">The token for this Custom account was not found in the Solana token list</h4>
           )}
         </Space>
         <Dropdown overlay={userAssetOptions} placement="bottomRight" trigger={["click"]}>

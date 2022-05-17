@@ -209,9 +209,6 @@ const WalletContext = React.createContext<{
 
 export function WalletProvider({ children = null as any }) {
   const { t } = useTranslation("common");
-  // const { endpoint } = useConnectionConfig();
-
-  // If we want to play with autoConnect, here it is
   const [autoConnect, setAutoConnect] = useState(true);
   const [providerName, setProviderName] = useLocalStorageState("providerName");
 
@@ -228,14 +225,6 @@ export function WalletProvider({ children = null as any }) {
     function () {
       if (provider && provider.adapter) {
         return new (provider.adapter)(provider.adapterParams as any);
-        // if (provider.adapter) {
-        //   return new (provider.adapter)(provider.adapterParams as any) as WalletAdapter;
-        // } else {
-        //   return new Wallet(
-        //     provider.url,
-        //     endpoint
-        //   ) as WalletAdapter;
-        // }
       }
     },
     [provider]
@@ -260,23 +249,6 @@ export function WalletProvider({ children = null as any }) {
         if (wallet.publicKey) {
           setConnected(true);
           close();
-          // const walletPublicKey = wallet.publicKey.toBase58();
-          // const keyToDisplay =
-          //   walletPublicKey.length > 20
-          //     ? `${walletPublicKey.substring(
-          //         0,
-          //         7
-          //       )}.....${walletPublicKey.substring(
-          //         walletPublicKey.length - 7,
-          //         walletPublicKey.length
-          //       )}`
-          //     : walletPublicKey;
-
-          //   openNotification({
-          //     type: "success",
-          //     title: t('notifications.wallet-connection-event-title'),
-          //     description: t('notifications.wallet-connect-message', {address: keyToDisplay}),
-          //   });
         }
       });
 
@@ -306,8 +278,6 @@ export function WalletProvider({ children = null as any }) {
   useEffect(() => {
     if (wallet && autoConnect) {
       wallet.connect();
-      // TODO: Only turn OFF autoConnect after connecting if the setting is configured ON
-      // setAutoConnect(false);
     }
 
     return () => {};
