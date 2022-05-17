@@ -285,10 +285,12 @@ export function WalletProvider({ children = null as any }) {
       });
 
       wallet.on("error", (error) => {
-        setConnected(false);
-        wallet.removeAllListeners();
-        resetWalletProvider();
-        select();
+        if (wallet.connecting) {
+          setConnected(false);
+          wallet.removeAllListeners();
+          resetWalletProvider();
+          select();
+        }
       });
     }
 
