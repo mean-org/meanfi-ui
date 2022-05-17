@@ -84,7 +84,7 @@
   --color-network-bar: var(--color-secondary-alpha-10);
   --wallet-wrapper-color: var(--color-white);
   --wallet-wrapper-bg: var(--color-black);
-  --wallet-provider-background: var(--color-secondary-alpha-85);
+  --wallet-provider-background: #343644;
   --bottom-shadow-up-05: 1px -2px 6px rgba(64,64,64, 0.05);
   --darken: rgba(0, 0, 0, 0.05);
 
@@ -175,7 +175,7 @@
   --color-network-bar: var(--color-secondary-alpha-40);
   --wallet-wrapper-color: var(--color-white);
   --wallet-wrapper-bg: var(--color-black);
-  --wallet-provider-background: var(--color-secondary-alpha-10);
+  --wallet-provider-background: #343644;
   --bottom-shadow-up-05: 1px -2px 6px rgba(92,92,92, 0.05);
   --darken: rgba(0, 0, 0, 0.20);
 }
@@ -512,8 +512,8 @@ footer.ant-layout-footer {
       align-items: center;
       background-color: var(--color-network-bar);
       border-radius: var(--custom-border-radius);
-      height: 40px;
-      padding: 2px;
+      height: 36px;
+      padding: 0;
       .connected-network {
         display: flex;
         flex-direction: row;
@@ -1802,20 +1802,31 @@ button.ant-btn.ant-btn-primary.ant-btn-sm {
     font-weight: 400;
   }
 }
-.connected-network .account-balance {
-  .mean-svg-icons {
-    width: 16px;
-    height: 16px;
+.connected-network {
+  display: flex;
+  flex: auto;
+  justify-content: flex-start;
+  align-items: center;
+  .account-balance {
+    .mean-svg-icons {
+      width: 16px;
+      height: 16px;
+    }
   }
 }
 .events-drawer-trigger {
-  font-size: 20px;
-  line-height: 20px;
+  font-size: 22px;
+  line-height: 22px;
+  color: var(--color-secondary-alpha-70) !important;
+  cursor: pointer;
+  &:hover {
+    color: var(--text-color) !important;
+  }
   &.upper {
-    margin: 0 2px 0 6px;
+    margin: 4px 8px 0 0;
   }
   &.lower {
-    margin: 0 6px 0 2px;
+    margin: 4px 0 0 6px;
   }
 }
 .connection-and-account-bar {

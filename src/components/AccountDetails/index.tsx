@@ -157,7 +157,7 @@ export const AccountDetails = () => {
         <Dropdown overlay={menu} placement="bottomRight" trigger={["click"]}>
           <span className="wallet-key">
             {provider && (
-              <img src={provider.icon} alt={provider.name} width="20" className="wallet-provider-icon" />
+              <img src={provider.icon} alt={provider.name} width="22" className="wallet-provider-icon" />
             )}
             {shortenAddress(`${wallet.publicKey}`)}
           </span>

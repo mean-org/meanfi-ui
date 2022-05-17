@@ -29,7 +29,7 @@
 }
 .wallet-provider-icon {
   padding: 3px;
-  /* background-color: var(--darken-50); */
-  border-radius: 50%;
   margin-right: 4px;
+  background-color: var(--wallet-provider-background);
+  border-radius: 5px;
 }

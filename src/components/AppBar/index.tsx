@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, Tooltip } from 'antd';
+import { Menu } from 'antd';
 import { ThunderboltOutlined } from '@ant-design/icons';
 import { useWallet } from "../../contexts/wallet";
 import { AccountDetails } from "../AccountDetails";
@@ -15,8 +15,8 @@ import { IconExternalLink } from '../../Icons';
 import { DepositOptions } from '../DepositOptions';
 import { environment } from '../../environments/environment';
 import { CustomCSSProps } from '../../utils/css-custom-props';
-import { useOnlineStatus } from '../../contexts/online-status';
 import { isLocal } from '../../utils/ui';
+import { NotificationBell } from '../CurrentBalance';
 
 const { SubMenu } = Menu;
 
@@ -29,7 +29,6 @@ export const AppBar = (props: {
   const navigate = useNavigate();
   const connectionConfig = useConnectionConfig();
   const { connected } = useWallet();
-  const {isOnline, responseTime} = useOnlineStatus();
   const { t } = useTranslation("common");
   const {
     isWhitelisted,
@@ -154,25 +153,6 @@ export const AppBar = (props: {
     </Menu>
   );
 
-  const renderOnlineStatus = (
-    <div className="flex">
-      <Tooltip
-        placement="bottom"
-        destroyTooltipOnHide={true}
-        title={!isOnline
-          ? t('notifications.network-connection-down')
-          : responseTime < 1000
-            ? `${t('notifications.network-connection-good')} (${responseTime}ms)`
-            : `${t('notifications.network-connection-poor')} (${responseTime}ms)`}>
-        <span className={`online-status mr-1 ${!isOnline
-          ? 'error'
-          : responseTime < 1000
-            ? 'success'
-            : 'warning'}`}></span>
-      </Tooltip>
-    </div>
-  );
-
   if (props.menuType === 'desktop' ) {
     return (
       <>
@@ -184,10 +164,9 @@ export const AppBar = (props: {
               <span className="network-name">{connectionConfig.cluster}</span>
             </div>
           )}
-          {renderOnlineStatus}
+          <NotificationBell onOpenDrawer={props.onOpenDrawer}/>
           {connected ? (
             <div className="connection-and-account-bar">
-              {/* <CurrentBalance onOpenDrawer={props.onOpenDrawer}/> */}
               <AccountDetails />
             </div>
           ) : (

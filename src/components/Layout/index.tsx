@@ -517,7 +517,7 @@ export const AppLayout = React.memo((props: any) => {
         ) : (
           <div className="flex-center h-50">
             <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{connected
-            ? t('treasuries.treasury-list.no-treasuries')
+            ? t('account-area.no-recent-events')
             : t('general.not-connected')}</p>} />
           </div>
         )}

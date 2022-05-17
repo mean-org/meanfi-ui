@@ -57,9 +57,9 @@ export const WALLET_PROVIDERS = [
     adapter: ExodusWalletAdapter,
     adapterParams: undefined,
     hideOnDesktop: false,
-    hideOnMobile: false,
+    hideOnMobile: true,
     isWebWallet: false,
-    underDevelopment: true,
+    underDevelopment: false,
     hideIfUnavailable: false
   },
   {
