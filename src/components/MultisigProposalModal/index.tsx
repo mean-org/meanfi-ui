@@ -372,149 +372,147 @@ export const MultisigProposalModal = (props: {
                       </Row>
 
                       {selectedAppConfig?.ui.map((ix: any) => (
-                        selectedUiIx && selectedUiIx.id === ix.id && (
-                          ix.uiElements.map((element: any) => (
-                            <>
-                              {element.visibility === "show" && (
-                                <Row gutter={[8, 8]} className="mb-1" key={element.dataElement.index}>
-                                  {(element.type === "inputText") ? (
-                                    <>
-                                      <Col xs={24} sm={24} md={24} lg={24} className="text-left pl-1">
+                        selectedUiIx && selectedUiIx.id === ix.id && ix.uiElements.map((element: any) => (
+                          <>
+                            {element.visibility === "show" && (
+                              <Row gutter={[8, 8]} className="mb-1" key={element.dataElement.index}>
+                                {(element.type === "inputText") ? (
+                                  <>
+                                    <Col xs={24} sm={24} md={24} lg={24} className="text-left pl-1">
+                                      <FormLabelWithIconInfo
+                                        label={element.label}
+                                        tooltip_text={element.help}
+                                      />
+                                      <InputMean
+                                        id={element.name}
+                                        maxLength={64}
+                                        className={props.isBusy ? 'disabled' : ''}
+                                        name={element.label}
+                                        onChange={(e: any) => {
+                                          console.log(e);
+                                          handleChangeInput({
+                                            id: element.name,
+                                            value: e.target.value
+                                          });
+                                        }}
+                                        placeholder={element.help}
+                                        value={inputState[element.name]}
+                                      />
+                                    </Col>
+                                  </>
+                                ) : (element.type === "inputTexArea") ? (
+                                  <>
+                                    <Col xs={24} sm={24} md={24} lg={24} className="text-left pl-1">
+                                      <FormLabelWithIconInfo
+                                        label={element.label}
+                                        tooltip_text={element.help}
+                                      />
+                                      <InputTextAreaMean 
+                                        id={element.label}
+                                        className={props.isBusy ? 'disabled' : ''}
+                                        onChange={(e: any) => {
+                                          console.log(e);
+                                          handleChangeInput({
+                                            id: element.name,
+                                            value: e.target.value
+                                          });
+                                        }}
+                                        placeholder={element.help}
+                                        value={inputState[element.name]}
+                                      />
+                                    </Col>
+                                  </>
+                                ) : (element.type === "option") ? (
+                                  <>
+                                    <Col xs={24} sm={24} md={24} lg={24} className="text-left pr-1">
+                                      <FormLabelWithIconInfo
+                                        label={element.label}
+                                        tooltip_text={element.help}
+                                      />
+                                      <SelectMean
+                                        key={element.name}
+                                        className={props.isBusy ? 'disabled' : ''}
+                                        onChange={(value: any) => {
+                                          handleChangeOption({
+                                            key: element.name,
+                                            value: value
+                                          });
+                                        }}
+                                        placeholder={element.help}
+                                        values={element.value.map((elem: any) => elem.value)}
+                                        value={selectOptionState[element.name]}
+                                      />
+                                    </Col>
+                                  </>
+                                ) : (element.type === "yesOrNo") ? (
+                                  <>
+                                    <Col xs={24} sm={6} md={6} lg={6} className="text-right pr-1">
+                                      <FormLabelWithIconInfo
+                                        label={element.label}
+                                        tooltip_text={element.help}
+                                      />
+                                    </Col>
+                                    <Col xs={24} sm={18} md={18} lg={18} className="pt-1">
+                                      <Radio.Group className="ml-2" 
+                                        id={element.name}
+                                        onChange={(e: any) => {
+                                          handleChangeYesOrNot({
+                                            id: element.name,
+                                            value: e.target.value
+                                          })
+                                        }}
+                                        name={element.label}
+                                        value={inputState[element.name]}
+                                      >
+                                        <Radio value={true}>{t('general.yes')}</Radio>
+                                        <Radio value={false}>{t('general.no')}</Radio>
+                                      </Radio.Group>
+                                    </Col>
+                                  </>
+                                ) : (element.type === "knownValue") ? (
+                                  <>
+                                    <Row gutter={[8, 8]} className="mb-1" key={element.dataElement.index}>
+                                      <Col xs={24} sm={24} md={24} lg={24} className="text-right pr-1">
                                         <FormLabelWithIconInfo
                                           label={element.label}
                                           tooltip_text={element.help}
                                         />
-                                        <InputMean
-                                          id={element.name}
-                                          maxLength={64}
-                                          className={props.isBusy ? 'disabled' : ''}
-                                          name={element.label}
-                                          onChange={(e: any) => {
-                                            console.log(e);
-                                            handleChangeInput({
-                                              id: element.name,
-                                              value: e.target.value
-                                            });
-                                          }}
-                                          placeholder={element.help}
-                                          value={inputState[element.name]}
-                                        />
+                                        <code>{element.value}</code>
                                       </Col>
-                                    </>
-                                  ) : (element.type === "inputTexArea") ? (
-                                    <>
-                                      <Col xs={24} sm={24} md={24} lg={24} className="text-left pl-1">
+                                    </Row>
+                                  </>
+                                ) : (element.type === "slot") ? (
+                                  <>
+                                    <Row gutter={[8, 8]} className="mb-1" key={element.dataElement.index}>
+                                      <Col xs={24} sm={24} md={24} lg={24} className="text-right pr-1">
                                         <FormLabelWithIconInfo
                                           label={element.label}
                                           tooltip_text={element.help}
                                         />
-                                        <InputTextAreaMean 
-                                          id={element.label}
-                                          className={props.isBusy ? 'disabled' : ''}
-                                          onChange={(e: any) => {
-                                            console.log(e);
-                                            handleChangeInput({
-                                              id: element.name,
-                                              value: e.target.value
-                                            });
-                                          }}
-                                          placeholder={element.help}
-                                          value={inputState[element.name]}
-                                        />
+                                        <code>{element.value}</code>
                                       </Col>
-                                    </>
-                                  ) : (element.type === "option") ? (
-                                    <>
-                                      <Col xs={24} sm={24} md={24} lg={24} className="text-left pr-1">
+                                    </Row>
+                                  </>
+                                ) : (element.type === "txProposer") ? (
+                                  <>
+                                    <Row gutter={[8, 8]} className="mb-1" key={element.dataElement.index}>
+                                      <Col xs={24} sm={24} md={24} lg={24} className="text-right pr-1">
                                         <FormLabelWithIconInfo
                                           label={element.label}
                                           tooltip_text={element.help}
                                         />
-                                        <SelectMean
-                                          key={element.name}
-                                          className={props.isBusy ? 'disabled' : ''}
-                                          onChange={(value: any) => {
-                                            handleChangeOption({
-                                              key: element.name,
-                                              value: value
-                                            });
-                                          }}
-                                          placeholder={element.help}
-                                          values={element.value.map((elem: any) => elem.value)}
-                                          value={selectOptionState[element.name]}
-                                        />
+                                        <code>{props.proposer}</code>
                                       </Col>
-                                    </>
-                                  ) : (element.type === "yesOrNo") ? (
-                                    <>
-                                      <Col xs={24} sm={6} md={6} lg={6} className="text-right pr-1">
-                                        <FormLabelWithIconInfo
-                                          label={element.label}
-                                          tooltip_text={element.help}
-                                        />
-                                      </Col>
-                                      <Col xs={24} sm={18} md={18} lg={18} className="pt-1">
-                                        <Radio.Group className="ml-2" 
-                                          id={element.name}
-                                          onChange={(e: any) => {
-                                            handleChangeYesOrNot({
-                                              id: element.name,
-                                              value: e.target.value
-                                            })
-                                          }}
-                                          name={element.label}
-                                          value={inputState[element.name]}
-                                        >
-                                          <Radio value={true}>{t('general.yes')}</Radio>
-                                          <Radio value={false}>{t('general.no')}</Radio>
-                                        </Radio.Group>
-                                      </Col>
-                                    </>
-                                  ) : (element.type === "knownValue") ? (
-                                    <>
-                                      <Row gutter={[8, 8]} className="mb-1" key={element.dataElement.index}>
-                                        <Col xs={24} sm={24} md={24} lg={24} className="text-right pr-1">
-                                          <FormLabelWithIconInfo
-                                            label={element.label}
-                                            tooltip_text={element.help}
-                                          />
-                                          <code>{element.value}</code>
-                                        </Col>
-                                      </Row>
-                                    </>
-                                  ) : (element.type === "slot") ? (
-                                    <>
-                                      <Row gutter={[8, 8]} className="mb-1" key={element.dataElement.index}>
-                                        <Col xs={24} sm={24} md={24} lg={24} className="text-right pr-1">
-                                          <FormLabelWithIconInfo
-                                            label={element.label}
-                                            tooltip_text={element.help}
-                                          />
-                                          <code>{element.value}</code>
-                                        </Col>
-                                      </Row>
-                                    </>
-                                  ) : (element.type === "txProposer") ? (
-                                    <>
-                                      <Row gutter={[8, 8]} className="mb-1" key={element.dataElement.index}>
-                                        <Col xs={24} sm={24} md={24} lg={24} className="text-right pr-1">
-                                          <FormLabelWithIconInfo
-                                            label={element.label}
-                                            tooltip_text={element.help}
-                                          />
-                                          <code>{props.proposer}</code>
-                                        </Col>
-                                      </Row>
-                                    </>
-                                  ) : (element.type === "treasuryAccount") ? (
-                                    <></>
-                                  ) : null}
+                                    </Row>
+                                  </>
+                                ) : (element.type === "treasuryAccount") ? (
+                                  <></>
+                                ) : null}
 
-                                </Row>
-                              )}
-                            </>
-                          ))
-                        ) 
+                              </Row>
+                            )}
+                          </>
+                        ))
                       ))}
                     </div>
                   </div>

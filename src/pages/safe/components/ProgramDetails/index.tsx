@@ -28,10 +28,7 @@ import { CopyExtLinkGroup } from '../../../../components/CopyExtLinkGroup';
 import moment from 'moment';
 import { decodeIdlAccount, idlAddress } from '@project-serum/anchor/dist/cjs/idl';
 import { IDL } from '@project-serum/anchor/dist/cjs/spl/token';
-
-import { Tree } from 'antd';
-import { DataNode } from 'antd/lib/tree';
-import { DownOutlined } from '@ant-design/icons'
+import ReactJson from 'react-json-view'
 
 export const ProgramDetailsView = (props: {
   isProgramDetails: boolean;
@@ -66,6 +63,7 @@ export const ProgramDetailsView = (props: {
   const [selectedProgram, setSelectedProgram] = useState<ProgramAccounts | undefined>(undefined);
   const [selectedProgramIdl, setSelectedProgramIdl] = useState<any>(null);
   const [loadingTxs, setLoadingTxs] = useState(true);
+  const noIdlInfo = "The program IDL is not initialized. To load the IDL info please run `anchor idl init` with the required parameters from your program workspace.";
 
   // When back button is clicked, goes to Safe Info
   const hideProgramDetailsHandler = () => {
@@ -989,56 +987,8 @@ export const ProgramDetailsView = (props: {
   ]);
   
   const renderIdlTree = () => {
-    return !selectedProgramIdl ? "The program IDL is not initialized or doesn't exists" : (
-      <Tree treeData={[
-        {
-          key: selectedProgramIdl.name,
-          title: `${selectedProgramIdl.name[0].toUpperCase()}${selectedProgramIdl.name.substring(1)}`,
-          children: [
-            {
-              key: "instructions",
-              title: "Instructions",
-              children: selectedProgramIdl.instructions.map((ix: any) => {
-                return {
-                  key: ix.name,
-                  title: `${ix.name[0].toUpperCase()}${ix.name.substring(1)}`,
-                  children: []
-      
-                } as DataNode;
-              })
-    
-            } as DataNode,
-            {
-              key: "accounts",
-              title: "Accounts",
-              children: !selectedProgramIdl.accounts ? [] : selectedProgramIdl.accounts.map((a: any) => {
-                return {
-                  key: a.name,
-                  title: `${a.name[0].toUpperCase()}${a.name.substring(1)}`,
-                  children: []
-      
-                } as DataNode;
-              })
-    
-            } as DataNode,
-            {
-              key: "types",
-              title: "Types",
-              children: !selectedProgramIdl.types ? [] : selectedProgramIdl.types.map((ix: any) => {
-                return {
-                  key: ix.name,
-                  title: `${ix.name[0].toUpperCase()}${ix.name.substring(1)}`,
-                  children: []
-      
-                } as DataNode;
-              })
-    
-            } as DataNode
-          ]
-        }
-      ] as DataNode[]}
-
-      defaultExpandAll />
+    return !selectedProgramIdl ? <div className={"no-idl-info"}>{noIdlInfo}</div> : (
+      <ReactJson theme={"ocean"} enableClipboard={false} src={selectedProgramIdl} />
     );
   };
 

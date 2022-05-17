@@ -98,6 +98,7 @@
     "react-ga": "^3.3.0",
     "react-helmet": "^6.1",
     "react-i18next": "^11.15",
+    "react-json-view": "^1.21.3",
     "react-router-dom": "^6.0",
     "react-share": "^4.4.0",
     "recharts": "^2.1.8",

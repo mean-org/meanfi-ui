@@ -21,26 +21,12 @@
     flex-wrap: wrap !important;
   }
 }
-div.ant-tree {
-  box-sizing: border-box;
+div.react-json-view {
+  margin: 10px 20px 10px 0px;
+  padding: 10px;
+}
+div.no-idl-info {
+  color: gray;
   margin: 20px 20px 20px 0px;
-  padding: 10px 5px;
-  color: #fff;
-  font-size: 14px;
-  font-variant: tabular-nums;
-  line-height: 1.5715;
-  list-style: none;
-  font-feature-settings: 'tnum', "tnum";
-  background: #26283b;
-  border: none;
-  transition: background-color 0.3s;
-}
-div.ant-tree.ant-tree-treenode {
-  padding:0px;
-}
-span.ant-tree-title:hover {
-  color: #000;
-}
-span.ant-tree-show-line .ant-tree-switcher {
-  background: transparent;
+  width: fit-content;
 }
