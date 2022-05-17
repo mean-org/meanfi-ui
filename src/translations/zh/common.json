@@ -545,7 +545,7 @@
 			"column-program-id": "Program",
 			"explain-failure": "Explain failure condition if specific",
 			"initiator-transaction": "This transaction was submitted by",
-			"loading-transactions": "Loading transactions",
+			"loading-transactions": "Loading transactions ...",
 			"missing-signature": "To execute this proposal, {{missingSignature}} more signature is needed.",
 			"missing-signatures": "To execute this proposal, {{missingSignature}} more signatures are needed.",
 			"modal-title": "Proposal summary",

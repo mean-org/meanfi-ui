@@ -4753,6 +4753,7 @@ export const SafeView = () => {
 
   const returnFromAssetDetailsHandler = () => {
     setIsAssetDetails(false);
+    
   }
 
   // Dropdown (three dots button)
@@ -4791,7 +4792,6 @@ export const SafeView = () => {
                 <span className="title">Multisig Safes</span>
                 <Tooltip placement="bottom" title={t('multisig.refresh-tooltip')}>
                   <div className={`transaction-stats user-address ${loadingMultisigAccounts ? 'click-disabled' : 'simplelink'}`}>
-                    <Spin size="small" />
                     {!loadingMultisigAccounts && (
                       <span className="incoming-transactions-amout">({formatThousands(multisigAccounts.length)})</span>
                     )}

@@ -1,6 +1,6 @@
 import './style.scss';
 
-import { Button, Col, Row, Spin } from "antd"
+import { Button, Col, Row } from "antd"
 import { IconApprove, IconArrowForward, IconCheckCircle, IconCreated, IconCross, IconMinus } from "../../../../Icons"
 import { formatThousands, getTokenByMintAddress, makeDecimal, shortenAddress } from "../../../../utils/utils";
 import { SafeInfo } from "../UI/SafeInfo";
@@ -334,7 +334,6 @@ export const SafeMeanInfo = (props: {
             const programTitle = shortenAddress(program.pubkey.toBase58(), 4);
   
             return (
-              <Spin spinning={loadingPrograms}>
               <div 
                 key={`${index + 1}`}
                 onClick={onSelectProgram}
@@ -349,14 +348,13 @@ export const SafeMeanInfo = (props: {
                     isProgramDetails={isProgramDetails}
                   />
               </div>
-              </Spin>
             )
           })
         ) : (
           <span>This multisig has no programs</span>
         )
       ) : (
-        <span>Loading...</span>
+        <span>Loading programs ...</span>
       )}
 
     </>

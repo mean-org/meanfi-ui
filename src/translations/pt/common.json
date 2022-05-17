@@ -512,7 +512,7 @@
 			"column-operation": "Transaction",
 			"column-pending-signatures": "Status",
 			"column-program-id": "Programa",
-			"loading-transactions": "Carregando transações",
+			"loading-transactions": "Carregando transações ...",
 			"modal-title": "Proposal summary",
 			"no-transactions-multisig": "This multisig has no transactions",
 			"no-transactions-multisig-asset": "This multisig asset has no transactions",

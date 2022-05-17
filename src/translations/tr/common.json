@@ -545,7 +545,7 @@
 			"column-program-id": "Program",
 			"explain-failure": "Eğer belirliyse hata nedenlerini belirtin",
 			"initiator-transaction": "Bu işlem tarafından gönderildi",
-			"loading-transactions": "İşlem yükleniyor",
+			"loading-transactions": "İşlem yükleniyor ...",
 			"missing-signature": "To execute this proposal, {{missingSignature}} more signature is needed.",
 			"missing-signatures": "To execute this proposal, {{missingSignature}} more signatures are needed.",
 			"modal-title": "İşlem özeti",

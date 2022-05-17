@@ -516,7 +516,7 @@
 			"column-operation": "Transaction",
 			"column-pending-signatures": "Status",
 			"column-program-id": "Chương trình",
-			"loading-transactions": "Đang tải giao dịch",
+			"loading-transactions": "Đang tải giao dịch ...",
 			"modal-title": "Proposal summary",
 			"no-transactions-multisig": "This multisig has no transactions",
 			"no-transactions-multisig-asset": "This multisig asset has no transactions",

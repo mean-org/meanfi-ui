@@ -4,10 +4,11 @@ export const TabsMean = (props: {
   headerClassName?: string;
   bodyClassName?: string;
   tabs?: any;
+  selectedTab?: any;
 }) => {
-  const { headerClassName, bodyClassName, tabs } = props;
+  const { headerClassName, bodyClassName, tabs, selectedTab } = props;
 
-  const [activeTab, setActiveTab] = useState(tabs[0].name);
+  const [activeTab, setActiveTab] = useState(selectedTab || tabs[0].name);
 
   const onClickHandler = (event: any) => {
     if (event.target.innerHTML !== activeTab) {

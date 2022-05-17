@@ -55,9 +55,9 @@ export const SafeDetailsView = (props: {
   // Display the instructions in the "Instructions" tab, on safe details page
   const renderInstructions = (
     <div className="safe-details-collapse w-100">
-      <Collapse
+      {/* <Collapse
         accordion={true}
-        onChange={collapseHandler}>
+        onChange={collapseHandler}> */}
         {/* {instructions.map((instruction: any) => {
 
           const header =  <Col className="instruction-header">
@@ -114,15 +114,15 @@ export const SafeDetailsView = (props: {
           )
         })} */}
 
-            <Panel header={getOperationName(operation)} key="1" showArrow={false} extra={<span className="icon-button-container arrow-up-down">
+            {/* <Panel header={getOperationName(operation)} key="1" showArrow={false} extra={<span className="icon-button-container arrow-up-down">
               <Button
                 type="default"
                 shape="circle"
                 size="middle"
                 icon={<IconCaretDown className="mean-svg-icons" />}
               />
-            </span>}>
-              <Row gutter={[8, 8]} className="mb-1">
+            </span>}> */}
+              <Row gutter={[8, 8]} className="mb-1 mt-2">
                 <Col xs={6} sm={6} md={4} lg={4} className="pr-1">
                   <span className="info-label">{t('multisig.proposal-modal.instruction-program')}:</span>
                 </Col>
@@ -173,8 +173,8 @@ export const SafeDetailsView = (props: {
                   </Col>
                 </Row>
 
-            </Panel>
-      </Collapse>
+            {/* </Panel>
+      </Collapse> */}
     </div>
   );
 

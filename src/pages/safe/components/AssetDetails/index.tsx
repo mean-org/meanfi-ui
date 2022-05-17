@@ -151,68 +151,21 @@ export const AssetDetailsView = (props: {
     refreshTokenBalance
   ]);
 
-  // Update list of txs
-  useEffect(() => {
-
-    if (
-      !connection || 
-      !publicKey || 
-      !multisigClient || 
-      !selectedMultisig || 
-      !selectedMultisig.id ||
-      !assetSelected ||
-      !loadingMultisigTxs
-    ) { 
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-
-      consoleOut('Triggering loadMultisigPendingTxs using setNeedRefreshTxs...', '', 'blue');
-
-      multisigClient
-        .getMultisigTransactions(selectedMultisig.id, publicKey)
-        .then((txs: MultisigTransaction[]) => {
-          consoleOut('selected multisig txs', txs, 'blue');
-          const transactions: MultisigTransaction[] = [];
-          for (const tx of txs) {
-            if (tx.accounts.some(a => a.pubkey.equals(assetSelected.address))) {
-              transactions.push(tx);
-            }
-          }
-          setMultisigPendingTxs(transactions);
-        })
-        .catch((err: any) => {
-          console.error("Error fetching all transactions", err);
-          setMultisigPendingTxs([]);
-          consoleOut('multisig txs:', [], 'blue');
-        })
-        .finally(() => setLoadingMultisigTxs(false));
-          
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }   
-
+  const isTxInProgress = useCallback((): boolean => {
+    return isBusy || fetchTxInfoStatus === "fetching" ? true : false;
   }, [
-    publicKey, 
-    selectedMultisig, 
-    connection, 
-    multisigClient, 
-    loadingMultisigTxs, 
-    assetSelected
+    isBusy,
+    fetchTxInfoStatus,
   ]);
 
   const isUiBusy = useCallback((): boolean => {
-    return isBusy || fetchTxInfoStatus === "fetching" || loadingMultisigAccounts || loadingMultisigTxs
+    return isBusy || fetchTxInfoStatus === "fetching" || loadingMultisigTxs
             ? true
             : false;
   }, [
     isBusy,
     fetchTxInfoStatus,
-    loadingMultisigTxs,
-    loadingMultisigAccounts,
+    loadingMultisigTxs
   ]);
 
   const getOperationProgram = useCallback((op: OperationType) => {
@@ -992,13 +945,6 @@ export const AssetDetailsView = (props: {
     transactionCancelled, 
     startFetchTxSignatureInfo, 
     onVaultAuthorityTransfered
-  ]);
-
-  const isTxInProgress = useCallback((): boolean => {
-    return isBusy || fetchTxInfoStatus === "fetching" ? true : false;
-  }, [
-    isBusy,
-    fetchTxInfoStatus,
   ]);
 
   // Delete asset modal
@@ -2269,7 +2215,7 @@ export const AssetDetailsView = (props: {
     transactionStatus.currentOperation, 
     wallet
   ]);
-
+  
   // Transaction confirm and execution modal launched from each Tx row
   const [isMultisigActionTransactionModalVisible, setMultisigActionTransactionModalVisible] = useState(false);
   const showMultisigActionTransactionModal = useCallback((tx: MultisigTransaction) => {
@@ -2305,7 +2251,6 @@ export const AssetDetailsView = (props: {
 
   // Asset Txs
   const renderMultisigPendingTxs = () => {
-
     if (!selectedMultisig) {
       return null;
     } else if (selectedMultisig && loadingMultisigTxs) {
