@@ -6,7 +6,7 @@ import { useWallet } from "../../contexts/wallet";
 import { AccountDetails } from "../AccountDetails";
 import { ConnectButton } from "../ConnectButton";
 import { AppContextMenu } from "../AppContextMenu";
-import { CurrentBalance } from "../CurrentBalance";
+// import { CurrentBalance } from "../CurrentBalance";
 import { useConnectionConfig } from '../../contexts/connection';
 import { useTranslation } from 'react-i18next';
 import { AppStateContext } from '../../contexts/appstate';
@@ -187,7 +187,7 @@ export const AppBar = (props: {
           {renderOnlineStatus}
           {connected ? (
             <div className="connection-and-account-bar">
-              <CurrentBalance onOpenDrawer={props.onOpenDrawer}/>
+              {/* <CurrentBalance onOpenDrawer={props.onOpenDrawer}/> */}
               <AccountDetails />
             </div>
           ) : (

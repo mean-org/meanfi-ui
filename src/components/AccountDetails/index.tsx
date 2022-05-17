@@ -5,12 +5,15 @@ import { shortenAddress } from "../../utils/utils";
 import {
   IconCopy,
   IconDiagnosis,
+  IconExchange,
   IconExternalLink,
   IconLogout,
+  IconPulse,
+  IconUser,
   IconWallet,
 } from "../../Icons";
 import "./style.scss";
-import { Button, Col, Collapse, Modal, Row } from "antd";
+import { Button, Col, Collapse, Dropdown, Menu, Modal, Row } from "antd";
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "../../constants";
 import { Identicon } from "../Identicon";
 import { copyText } from "../../utils/ui";
@@ -120,13 +123,51 @@ export const AccountDetails = () => {
     </div>
   );
 
+  const menu = (
+    <Menu>
+      <Menu.Item key="1">
+        {provider ? (
+          <>
+            <img src={provider.icon} alt={provider.name} width="24" />
+            <span className="menu-item-text ml-1">Connected with {provider.name}</span>
+          </>
+        ) : (
+          <>
+            <IconWallet className="mean-svg-icons" />
+            <span className="menu-item-text ml-1">Unknown wallet</span>
+          </>
+        )}
+      </Menu.Item>
+      <Menu.Divider />
+      <Menu.Item key="2" onClick={onCopyAddress}>
+        <IconUser className="mean-svg-icons" />
+        <span className="menu-item-text ml-1">{t('account-area.copy-address')}</span>
+      </Menu.Item>
+      <Menu.Item key="3" onClick={switchWallet}>
+        <IconExchange className="mean-svg-icons" />
+        <span className="menu-item-text ml-1">{t('account-area.wallet-change')}</span>
+      </Menu.Item>
+      <Menu.Item key="4" onClick={showAccount}>
+        <IconPulse className="mean-svg-icons" />
+        <span className="menu-item-text ml-1">{t('account-area.diagnosis-info')}</span>
+      </Menu.Item>
+      <Menu.Item key="5" onClick={onDisconnectWallet}>
+        <IconLogout className="mean-svg-icons" />
+        <span className="menu-item-text ml-1">{t('account-area.disconnect')}</span>
+      </Menu.Item>
+    </Menu>
+  );
+
   return (
     <>
       <div className="wallet-wrapper">
-        <span className="wallet-key" onClick={showAccount}>
-          {shortenAddress(`${wallet.publicKey}`)}
-        </span>
+        <Dropdown overlay={menu} placement="bottomRight" trigger={["click"]}>
+          <span className="wallet-key">
+            {shortenAddress(`${wallet.publicKey}`)}
+          </span>
+        </Dropdown>
       </div>
+
       <Modal
         className="mean-modal"
         visible={isModalVisible}

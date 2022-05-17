@@ -73,7 +73,7 @@
 
   /* Properties */
   --custom-border-radius: 7px;
-  --custom-control-height: 40px;
+  --custom-control-height: 36px;
   --animated-border-width: 3px;
   --custom-control-border-radius: 2px;
   --custom-border-style: 1px solid var(--color-secondary-alpha-20);
@@ -164,7 +164,7 @@
 
   /* Properties */
   --custom-border-radius: 7px;
-  --custom-control-height: 40px;
+  --custom-control-height: 36px;
   --animated-border-width: 3px;
   --custom-control-border-radius: 2px;
   --custom-border-style: 1px solid var(--color-secondary-alpha-20);
@@ -820,7 +820,7 @@ footer.ant-layout-footer {
 .ant-btn.ant-btn-text.ant-btn-shaded {
   background-color: var(--color-flat-btn);
   border: none;
-  padding: 10px 12px;
+  padding: 8px 10px;
   font-weight: 500;
   height: var(--custom-control-height);
   &:hover {
@@ -1815,9 +1815,9 @@ button.ant-btn.ant-btn-primary.ant-btn-sm {
   align-items: center;
   background-color: var(--color-network-bar);
   border-radius: var(--custom-border-radius);
+  height: var(--custom-control-height);
   margin-right: 8px;
-  height: 40px;
-  padding: 2px;
+  padding: 0;
   @media (max-width: 575.98px) {
     display: none;
   }
