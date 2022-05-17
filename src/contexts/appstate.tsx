@@ -462,21 +462,21 @@ const AppStateProvider: React.FC = ({ children }) => {
   /**
    * Auto reload timeout breakdown
    * 
-   * #s <= 5 30s
-   * #s > 5 & <= 25 40s
-   * #s > 25 & <= 60 50s
-   * #s > 60 & <= 100 70s
+   * #s <= 5 30s * 2
+   * #s > 5 & <= 25 40s * 2
+   * #s > 25 & <= 60 50s * 2
+   * #s > 60 & <= 100 70s * 2
    * #s > 100 5min is ok
    */
    const refreshInterval = useMemo(() => {
     if (!streamList || streamList.length <= 5) {
-      return HALF_MINUTE_REFRESH_TIMEOUT;
+      return ONE_MINUTE_REFRESH_TIMEOUT;
     } else if (streamList.length > 5 && streamList.length <= 25) {
-      return FORTY_SECONDS_REFRESH_TIMEOUT;
+      return FORTY_SECONDS_REFRESH_TIMEOUT * 2;
     } else if (streamList.length > 25 && streamList.length <= 60) {
-      return FIVETY_SECONDS_REFRESH_TIMEOUT;
+      return FIVETY_SECONDS_REFRESH_TIMEOUT * 2;
     } else if (streamList.length > 60 && streamList.length <= 100) {
-      return SEVENTY_SECONDS_REFRESH_TIMEOUT;
+      return SEVENTY_SECONDS_REFRESH_TIMEOUT * 2;
     } else {
       return FIVE_MINUTES_REFRESH_TIMEOUT;
     }
