@@ -414,10 +414,10 @@
 		"create-asset": {
 			"main-cta": "Tạo",
 			"main-cta-busy": "Đang tạo vault",
-			"modal-title": "Tạo một Multisig Vault",
+			"modal-title": "Tạo một multisig asset",
 			"no-token": "Chọn mã thông báo",
 			"success-message": "Multisig vault của bạn đã được tạo thành công",
-			"token-label": "Amount to transfer",
+			"token-label": "Select an asset",
 			"token-placeholder": "Nhập địa chỉ mint của mã thông báo"
 		},
 		"crud-multisig": {
@@ -516,7 +516,7 @@
 			"column-operation": "Transaction",
 			"column-pending-signatures": "Status",
 			"column-program-id": "Chương trình",
-			"loading-transactions": "Đang tải giao dịch",
+			"loading-transactions": "Đang tải giao dịch ...",
 			"modal-title": "Proposal summary",
 			"no-transactions-multisig": "This multisig has no transactions",
 			"no-transactions-multisig-asset": "This multisig asset has no transactions",
@@ -583,7 +583,7 @@
 			"delete-asset": {
 				"explanatory-paragraph": "By submitting this proposal, you will sign the transaction and approve it as one of the Multisig signers. Before the asset is deleted, the other Multisig members need to approve it.",
 				"main-cta": "Submit delete proposal",
-				"modal-title": "Delete a Multisig Asset",
+				"modal-title": "Delete a multisig asset",
 				"selected-asset-label": "Asset selected",
 				"warning-message": "Only empty assets can be deleted. To delete an asset you need to first transfer all funds to another account."
 			},
@@ -623,11 +623,11 @@
 		"transfer-tokens": {
 			"main-cta": "Bắt đầu yêu cầu",
 			"main-cta-busy": "Đang bắt đầu yêu cầu",
-			"modal-title": "Initiate Transfer Proposal",
+			"modal-title": "Propose send funds",
 			"source-address-label": "Chuyển khoản từ",
 			"source-address-placeholder": "Nhập địa chỉ tài khoản nguồn",
 			"success-message": "Token đã được chuyển khoản thành công",
-			"transfer-amount-label": "Số lượng",
+			"transfer-amount-label": "Amount to send",
 			"transfer-amount-placeholder": "Nhập số lượng token sẽ chuyển khoản",
 			"transfer-to-label": "Chuyển tới (Tài khoản đích)",
 			"transfer-to-placeholder": "Nhập vào địa chỉ tài khoản đích"

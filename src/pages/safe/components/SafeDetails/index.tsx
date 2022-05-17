@@ -7,13 +7,14 @@ import { TabsMean } from '../../../../components/TabsMean';
 import { getOperationName } from '../../../../utils/multisig-helpers';
 import { useTranslation } from 'react-i18next';
 import { openNotification } from '../../../../components/Notifications';
-import { useCallback, useEffect } from 'react';
-import { copyText } from '../../../../utils/ui';
+import { useCallback, useContext, useEffect } from 'react';
+import { copyText, isDev, isLocal } from '../../../../utils/ui';
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../../../constants';
 import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
 import { ResumeItem } from '../UI/ResumeItem';
 import { PublicKey } from '@solana/web3.js';
 import { MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
+import { AppStateContext } from '../../../../contexts/appstate';
 
 export const SafeDetailsView = (props: {
   isSafeDetails: boolean;
@@ -23,11 +24,18 @@ export const SafeDetailsView = (props: {
   onProposalApprove?: any;
   onProposalExecute?: any;
 }) => {
+  const {
+    isWhitelisted,
+  } = useContext(AppStateContext);
   const { t } = useTranslation('common');
   const { Panel } = Collapse;
   const { isSafeDetails, onDataToSafeView, selectedMultisig, onProposalApprove, onProposalExecute } = props;
-  const { id, signers, details, executedOn, status, proposer, operation, programId, accounts, data } = props.proposalSelected;
+  const { id, signers, details, executedOn, status, proposer, operation, programId, accounts, data, didSigned } = props.proposalSelected;
   const collapseHandler = (key: any) => {}
+
+  const isUnderDevelopment = () => {
+    return isLocal() || (isDev() && isWhitelisted) ? true : false;
+  }
 
   // When back button is clicked, goes to Safe Info
   const hideSafeDetailsHandler = () => {
@@ -55,9 +63,9 @@ export const SafeDetailsView = (props: {
   // Display the instructions in the "Instructions" tab, on safe details page
   const renderInstructions = (
     <div className="safe-details-collapse w-100">
-      <Collapse
+      {/* <Collapse
         accordion={true}
-        onChange={collapseHandler}>
+        onChange={collapseHandler}> */}
         {/* {instructions.map((instruction: any) => {
 
           const header =  <Col className="instruction-header">
@@ -114,15 +122,15 @@ export const SafeDetailsView = (props: {
           )
         })} */}
 
-            <Panel header={getOperationName(operation)} key="1" showArrow={false} extra={<span className="icon-button-container arrow-up-down">
+            {/* <Panel header={getOperationName(operation)} key="1" showArrow={false} extra={<span className="icon-button-container arrow-up-down">
               <Button
                 type="default"
                 shape="circle"
                 size="middle"
                 icon={<IconCaretDown className="mean-svg-icons" />}
               />
-            </span>}>
-              <Row gutter={[8, 8]} className="mb-1">
+            </span>}> */}
+              <Row gutter={[8, 8]} className="mb-1 mt-2">
                 <Col xs={6} sm={6} md={4} lg={4} className="pr-1">
                   <span className="info-label">{t('multisig.proposal-modal.instruction-program')}:</span>
                 </Col>
@@ -173,8 +181,8 @@ export const SafeDetailsView = (props: {
                   </Col>
                 </Row>
 
-            </Panel>
-      </Collapse>
+            {/* </Panel>
+      </Collapse> */}
     </div>
   );
 
@@ -277,11 +285,12 @@ export const SafeDetailsView = (props: {
           </div>
         </Col>
         <Col className="safe-details-right-container btn-group">
-          {status === MultisigTransactionStatus.Approved ? (
+          {(status === MultisigTransactionStatus.Approved || status === MultisigTransactionStatus.Executed) ? (
             <Button
               type="ghost"
               size="small"
-              className="thin-stroke"
+              className="thin-stroke d-flex justify-content-center align-items-center"
+              disabled={status === MultisigTransactionStatus.Executed}
               onClick={() => onProposalExecute({ 
                 transaction: { 
                   id: new PublicKey(id),
@@ -298,21 +307,25 @@ export const SafeDetailsView = (props: {
                 type="ghost"
                 size="small"
                 className="thin-stroke"
+                disabled={didSigned || status !== MultisigTransactionStatus.Pending}
                 onClick={() => onProposalApprove({ transaction: { id: new PublicKey(id) } })}>
                 <div className="btn-content">
                   <IconThumbsUp className="mean-svg-icons" />
                   Approve
                 </div>
-              </Button><Button
-                type="ghost"
-                size="small"
-                className="thin-stroke"
-                onClick={() => { } }>
-                  <div className="btn-content">
-                    <IconThumbsDown className="mean-svg-icons" />
-                    Reject
-                  </div>
               </Button>
+              {/* {isUnderDevelopment() && (
+                <Button
+                  type="ghost"
+                  size="small"
+                  className="thin-stroke"
+                  onClick={() => { } }>
+                    <div className="btn-content">
+                      <IconThumbsDown className="mean-svg-icons" />
+                      Reject
+                    </div>
+                </Button>
+              )} */}
             </>
           )}
         </Col>

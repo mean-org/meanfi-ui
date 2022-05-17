@@ -391,7 +391,7 @@
 			"modal-title": "Créer un actif multisig",
 			"no-token": "Sélectionnez le jeton",
 			"success-message": "Votre actif multisig a été créé avec succès",
-			"token-label": "Du compte",
+			"token-label": "Amount to send",
 			"token-placeholder": "Entrez l'adresse mint de jeton"
 		},
 		"create-multisig": {
@@ -544,7 +544,7 @@
 			"column-program-id": "Programme",
 			"explain-failure": "Expliquer la condition de défaillance si spécifique",
 			"initiator-transaction": "Cette transaction a été soumise par",
-			"loading-transactions": "Chargement des transactions",
+			"loading-transactions": "Chargement des transactions ...",
 			"missing-signature": "To execute this proposal, {{missingSignature}} more signature is needed.",
 			"missing-signatures": "To execute this proposal, {{missingSignature}} more signatures are needed.",
 			"modal-title": "Récapitulatif des transactions",

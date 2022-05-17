@@ -9,6 +9,7 @@ import { TabsMean } from "../../../../../components/TabsMean";
 import { AppStateContext } from "../../../../../contexts/appstate";
 import { useConnectionConfig } from "../../../../../contexts/connection";
 import { IconAdd, IconEdit, IconEllipsisVertical, IconShowAll, IconTrash } from "../../../../../Icons";
+import { MultisigVault } from "../../../../../models/multisig";
 import { UserTokenAccount } from "../../../../../models/transactions";
 import { NATIVE_SOL } from "../../../../../utils/tokens";
 
@@ -17,12 +18,14 @@ import { fetchAccountTokens, getTokenByMintAddress, shortenAddress } from "../..
 
 export const SafeInfo = (props: {
   selectedMultisig?: any;
-  multisigVaults?: any;
+  multisigVaults?: MultisigVault[];
   safeNameImg?: string;
   safeNameImgAlt?: string;
   onNewProposalMultisigClick?: any;
+  onNewCreateAssetClick?: any;
   onEditMultisigClick?: any;
   tabs?: Array<any>;
+  selectedTab?: any;
 }) => {
   const {
     coinPrices,
@@ -31,7 +34,7 @@ export const SafeInfo = (props: {
   } = useContext(AppStateContext);
   const connectionConfig = useConnectionConfig();
 
-  const { selectedMultisig, multisigVaults, safeNameImg, safeNameImgAlt, onNewProposalMultisigClick, onEditMultisigClick, tabs } = props;
+  const { selectedMultisig, multisigVaults, safeNameImg, safeNameImgAlt, onNewProposalMultisigClick, onNewCreateAssetClick, onEditMultisigClick, tabs, selectedTab } = props;
 
   const { t } = useTranslation('common');
   const navigate = useNavigate();
@@ -174,7 +177,7 @@ export const SafeInfo = (props: {
 
   const infoSafeData = [
     {
-      name: "Safe Name",
+      name: "Safe name",
       value: renderSafeName ? renderSafeName : "--"
     },
     {
@@ -182,7 +185,7 @@ export const SafeInfo = (props: {
       value: selectedMultisig ? `${selectedMultisig.threshold}/${selectedMultisig.owners.length} signatures` : "--"
     },
     {
-      name: `Safe Balance ${assetsAmout}`,
+      name: `Safe balance ${assetsAmout}`,
       value: totalSafeBalance ? toUsCurrency(totalSafeBalance) : toUsCurrency(0)
     },
     {
@@ -201,12 +204,12 @@ export const SafeInfo = (props: {
     <Menu>
       <Menu.Item key="0" onClick={onEditMultisigClick}>
         <IconEdit className="mean-svg-icons" />
-        <span className="menu-item-text">Edit Safe</span>
+        <span className="menu-item-text">Edit safe</span>
       </Menu.Item>
       {isUnderDevelopment() && (
         <Menu.Item key="1" onClick={() => {}}>
           <IconTrash className="mean-svg-icons" />
-          <span className="menu-item-text">Delete Safe</span>
+          <span className="menu-item-text">Delete safe</span>
         </Menu.Item>
       )}
     </Menu>
@@ -238,7 +241,7 @@ export const SafeInfo = (props: {
             onClick={onGoToAccounts}>
               <div className="btn-content">
                 <IconShowAll className="mean-svg-icons" />
-                View Assets
+                View assets
               </div>
           </Button>
           <Button
@@ -248,7 +251,17 @@ export const SafeInfo = (props: {
             onClick={onNewProposalMultisigClick}>
               <div className="btn-content">
                 <IconAdd className="mean-svg-icons" />
-                New Proposal
+                New proposal
+              </div>
+          </Button>
+          <Button
+            type="ghost"
+            size="small"
+            className="thin-stroke"
+            onClick={onNewCreateAssetClick}>
+              <div className="btn-content">
+                <IconAdd className="mean-svg-icons" />
+                Create asset
               </div>
           </Button>
         </Col>
@@ -276,6 +289,7 @@ export const SafeInfo = (props: {
           tabs={tabs}
           headerClassName="safe-tabs-header-container"
           bodyClassName="safe-tabs-content-container"
+          selectedTab={selectedTab}
         />
       </div>
     </>

@@ -5,6 +5,7 @@ import { IconApprove, IconArrowForward, IconCheckCircle, IconCreated, IconCross,
 import { shortenAddress } from "../../../../utils/utils";
 import { SafeInfo } from "../UI/SafeInfo";
 import { ResumeItem } from '../UI/ResumeItem';
+import { MultisigVault } from '../../../../models/multisig';
 import { Idl, Program } from '@project-serum/anchor';
 import { MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
 import { ProgramAccounts } from '../../../../utils/accounts';
@@ -15,11 +16,14 @@ export const SafeSerumInfoView = (props: {
   connection: Connection;
   isSafeDetails: boolean;
   isProgramDetails: boolean;
+  isAssetDetails: boolean;
   onDataToSafeView: any;
   onDataToProgramView: any;
+  onDataToAssetView: any;
   selectedMultisig?: any;
   onEditMultisigClick: any;
   onNewProposalMultisigClick: any;
+  // multisigVaults: MultisigVault[];
   multisigClient: Program<Idl>;
   multisigTxs: MultisigTransaction[];
 
@@ -30,6 +34,7 @@ export const SafeSerumInfoView = (props: {
     selectedMultisig, 
     onEditMultisigClick, 
     onNewProposalMultisigClick,
+    onDataToAssetView,
     multisigClient,
     multisigTxs
      
@@ -39,7 +44,7 @@ export const SafeSerumInfoView = (props: {
   const [loadingPrograms, setLoadingPrograms] = useState(true);
   const safeSerumNameImg = "https://assets.website-files.com/6163b94b432ce93a0408c6d2/61ff1e9b7e39c27603439ad2_serum%20NOF.png";
   const safeSerumNameImgAlt = "Serum";
-  const [multisigVaults, setMultisigVaults] = useState<any[]>([]);
+  // const [multisigVaults, setMultisigVaults] = useState<any[]>([]);
 
   // Proposals list
   const renderListOfProposals = (
@@ -286,7 +291,7 @@ export const SafeSerumInfoView = (props: {
     <>
       <SafeInfo
         selectedMultisig={selectedMultisig}
-        multisigVaults={multisigVaults}
+        // multisigVaults={multisigVaults}
         safeNameImg={safeSerumNameImg}
         safeNameImgAlt={safeSerumNameImgAlt}
         onNewProposalMultisigClick={onNewProposalMultisigClick}

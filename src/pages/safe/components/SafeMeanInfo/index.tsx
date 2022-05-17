@@ -1,8 +1,8 @@
 import './style.scss';
 
+import { IconApprove, IconArrowForward, IconCheckCircle, IconCreated, IconCross, IconMinus } from "../../../../Icons"
+import { formatThousands, getTokenByMintAddress, makeDecimal, shortenAddress } from "../../../../utils/utils";
 import { Button, Col, Row, Spin } from "antd"
-// import { IconApprove, IconArrowForward, IconCheckCircle, IconCreated, IconCross, IconMinus } from "../../../../Icons"
-import { shortenAddress } from "../../../../utils/utils";
 import { SafeInfo } from "../UI/SafeInfo";
 import { MeanMultisig, MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
 import { ProgramAccounts } from '../../../../utils/accounts';
@@ -12,6 +12,12 @@ import { useConnectionConfig } from '../../../../contexts/connection';
 import { consoleOut } from '../../../../utils/ui';
 // import { useWallet } from '../../../../contexts/wallet';
 import { ResumeItem } from '../UI/ResumeItem';
+import { program } from '@project-serum/anchor/dist/cjs/spl/token';
+import { FALLBACK_COIN_IMAGE } from '../../../../constants';
+import { MultisigVault } from '../../../../models/multisig';
+import { Identicon } from '../../../../components/Identicon';
+import { BN } from 'bn.js';
+import { u64 } from '@solana/spl-token';
 import { MEAN_MULTISIG } from '../../../../utils/ids';
 import { ACCOUNT_LAYOUT } from '../../../../utils/layouts';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
@@ -20,13 +26,18 @@ export const SafeMeanInfo = (props: {
   connection: Connection;
   isSafeDetails: boolean;
   isProgramDetails: boolean;
+  isAssetDetails: boolean;
   onDataToSafeView: any;
   onDataToProgramView: any;
+  onDataToAssetView: any;
   selectedMultisig?: any;
   onEditMultisigClick: any;
+  onNewCreateAssetClick: any;
   onNewProposalMultisigClick: any;
+  // multisigVaults: MultisigVault[];
   multisigClient: MeanMultisig | null;
   multisigTxs: MultisigTransaction[];
+  selectedTab?: any;
 }) => {
 
   const {
@@ -37,7 +48,10 @@ export const SafeMeanInfo = (props: {
     selectedMultisig, 
     onEditMultisigClick, 
     onNewProposalMultisigClick, 
-    multisigClient
+    onNewCreateAssetClick,
+    selectedTab,
+    multisigClient,
+    isAssetDetails
 
   } = props;
 
@@ -46,46 +60,130 @@ export const SafeMeanInfo = (props: {
 
   const [programs, setPrograms] = useState<ProgramAccounts[]>([]);
   const [selectedProgram, setSelectedProgram] = useState<ProgramAccounts | undefined>(undefined);
+  const [loadingProposals, setLoadingProposals] = useState(true);
+  const [loadingAssets, setLoadingAssets] = useState(true);
   const [loadingPrograms, setLoadingPrograms] = useState(true);
   const [multisigVaults, setMultisigVaults] = useState<any[]>([]);
 
   // Proposals list
   const renderListOfProposals = (
     <>
-      {multisigTxs && multisigTxs.length ? (
-        multisigTxs.map((proposal, index) => {
-          const onSelectProposal = () => {
-            // Sends isSafeDetails value to the parent component "SafeView"
-            props.onDataToSafeView(proposal);
-          };
+      {!loadingProposals ? (
+        (multisigTxs && multisigTxs.length > 0) ? (
+          multisigTxs.map((proposal, index) => {
+            const onSelectProposal = () => {
+              // Sends isSafeDetails value to the parent component "SafeView"
+              props.onDataToSafeView(proposal);
+            };
 
           // Number of participants who have already approved the Tx
           const approvedSigners = proposal.signers.filter((s: any) => s === true).length;
           const expirationDate = proposal.details.expirationDate ? proposal.details.expirationDate.toDateString() : "";
           const executedOnDate = proposal.executedOn ? proposal.executedOn.toDateString() : "";
 
-          return (
-            <div 
-              key={index}
-              onClick={onSelectProposal}
-              className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
-              >
-                <ResumeItem
-                  id={proposal.id.toBase58()}
-                  // logo={proposal.logo}
-                  title={proposal.details.title}
-                  expires={expirationDate}
-                  executedOn={executedOnDate}
-                  approved={approvedSigners}
-                  // rejected={proposal.rejected}
-                  status={proposal.status}
-                  isSafeDetails={isSafeDetails}
-                />
-            </div>
-          )
-        })
+            return (
+              <div 
+                key={index}
+                onClick={onSelectProposal}
+                className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+                >
+                  <ResumeItem
+                    id={proposal.id.toBase58()}
+                    // logo={proposal.logo}
+                    title={proposal.details.title}
+                    expires={expirationDate}
+                    executedOn={executedOnDate}
+                    approved={approvedSigners}
+                    // rejected={proposal.rejected}
+                    status={proposal.status}
+                    isSafeDetails={isSafeDetails}
+                  />
+              </div>
+            )
+          })
+        ) : (
+          <span>This multisig has no proposals</span>
+        )
       ) : (
-        <span>This multisig has no proposals</span>
+        <span>Loading proposals ...</span>
+      )}
+    </>
+  );
+
+  // Assets list
+  useEffect(() => {
+    if (multisigVaults || (isAssetDetails)) {
+      setLoadingAssets(false);
+    } else {
+      setLoadingAssets(true);
+    }
+  }, [isAssetDetails, multisigVaults]);
+
+  const renderListOfAssets = (
+    <>
+      {!loadingAssets ? (
+        (multisigVaults && multisigVaults.length > 0) ? (
+          multisigVaults.map((asset, index) => {
+            const onSelectAsset = () => {
+              // Sends isProgramDetails value to the parent component "SafeView"
+              props.onDataToAssetView(asset);
+              // setSelectedAsset(asset);
+              // setDtailsPanelOpen(true);
+              consoleOut('selected asset:', asset, 'blue');
+              // setLoadingMultisigTxs(true);
+            };
+
+            // const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+            //   event.currentTarget.src = FALLBACK_COIN_IMAGE;
+            //   event.currentTarget.className = "error";
+            // };
+
+            // const tokenIcon = (
+            //   <div className="token-icon">
+            //     {token && token.logoURI && (
+            //       <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
+            //     ) : (
+            //       <Identicon address={new PublicKey(asset.mint).toBase58()} style={{
+            //         width: "30",
+            //         display: "inline-flex",
+            //         height: "30",
+            //         overflow: "hidden",
+            //         borderRadius: "50%"
+            //       }} />
+            //     )}
+            //   </div>
+            // )
+
+            const token = getTokenByMintAddress(asset.mint.toBase58());
+            const tokenIcon = token && token.logoURI;
+            const assetToken = token && token.symbol;
+            const assetAddress = shortenAddress(asset.address.toBase58(), 8);
+            const assetAmount = token && formatThousands(makeDecimal(asset.amount, token.decimals), token.decimals);          
+
+            return (
+              <div 
+                key={`${asset.address.toBase58() + 60}`}
+                onClick={onSelectAsset}
+                className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+                >
+                  <ResumeItem
+                    id={`${index + 61}`}
+                    logo={tokenIcon}
+                    title={assetToken}
+                    subtitle={assetAddress}
+                    isAsset={true}
+                    rightContent={assetAmount}
+                    isSafeDetails={isSafeDetails}
+                    isAssetDetails={isAssetDetails}
+                  />
+              </div>
+            );
+          })
+        ) : (
+          <span>This multisig has no assets</span>
+        )
+      ) : (
+        <span>Loading assets ...</span>
       )}
     </>
   );
@@ -223,12 +321,6 @@ export const SafeMeanInfo = (props: {
 
   }, [connection]);
 
-  // useEffect(() => {
-  //   setLoadingPrograms(true);
-  //   setPrograms(undefined);
-  //   setSelectedProgram(undefined);
-  // }, [selectedMultisig]);
-
   // Get Programs
   useEffect(() => {
 
@@ -310,7 +402,15 @@ export const SafeMeanInfo = (props: {
     selectedMultisig
   ]);
 
-  const renderPrograms = (
+  useEffect(() => {
+    if (programs || (isProgramDetails)) {
+      setLoadingPrograms(false);
+    } else {
+      setLoadingPrograms(true);
+    }
+  }, [isProgramDetails, programs]);
+
+  const renderListOfPrograms = (
     <>
       {!loadingPrograms ? (
         (programs && programs.length > 0) ? (
@@ -323,7 +423,6 @@ export const SafeMeanInfo = (props: {
             const programTitle = shortenAddress(program.pubkey.toBase58(), 4);
   
             return (
-              <Spin spinning={loadingPrograms}>
               <div 
                 key={`${index + 1}`}
                 onClick={onSelectProgram}
@@ -338,16 +437,14 @@ export const SafeMeanInfo = (props: {
                     isProgramDetails={isProgramDetails}
                   />
               </div>
-              </Spin>
             )
           })
         ) : (
           <span>This multisig has no programs</span>
         )
       ) : (
-        <span>Loading...</span>
+        <span>Loading programs ...</span>
       )}
-
     </>
   );
 
@@ -356,6 +453,10 @@ export const SafeMeanInfo = (props: {
     {
       name: "Proposals",
       render: renderListOfProposals
+    }, 
+    {
+      name: "Assets",
+      render: renderListOfAssets
     }, 
     // {
     //   name: "Settings",
@@ -367,7 +468,7 @@ export const SafeMeanInfo = (props: {
     // }, 
     {
       name: "Programs",
-      render: renderPrograms
+      render: renderListOfPrograms
     }
   ];
 
@@ -375,10 +476,11 @@ export const SafeMeanInfo = (props: {
     <>
       <SafeInfo
         selectedMultisig={selectedMultisig}
-        multisigVaults={multisigVaults}
         onNewProposalMultisigClick={onNewProposalMultisigClick}
         onEditMultisigClick={onEditMultisigClick}
+        onNewCreateAssetClick={onNewCreateAssetClick}
         tabs={tabs}
+        selectedTab={selectedTab}
       />
     </>
   )

@@ -11,8 +11,9 @@ import { formatThousands } from '../../../../../utils/utils';
 export const ResumeItem = (props: {
   id?: any;
   version?: number;
-  logo?: string;
-  title: string;
+  logo?: any;
+  title?: string;
+  subtitle?: string;
   expires?: any;
   executedOn?: any;
   approved?: any;
@@ -21,14 +22,17 @@ export const ResumeItem = (props: {
   needs?: any;
   isSafeDetails?: boolean;
   isProgramDetails?: boolean;
+  isAssetDetails?: boolean;
   isProgram?: boolean;
+  isAsset?: boolean;
   programSize?: number;
+  rightContent?: any;
 }) => {
   const {
     theme
   } = useContext(AppStateContext);
 
-  const { logo, version, title, expires, executedOn, approved, rejected, status, needs, isSafeDetails, isProgram, programSize } = props;
+  const { logo, version, title, subtitle, expires, executedOn, approved, rejected, status, needs, isSafeDetails, isProgram, isAsset, programSize, rightContent } = props;
 
   const { t } = useTranslation('common');
 
@@ -123,11 +127,16 @@ export const ResumeItem = (props: {
                 </div>
               )
             )}
+            {(!expires && subtitle) && (
+              <div className="info-label">
+                <span className="subtitle">{subtitle}</span>
+              </div>
+            )}
           </div>
         </Col>
         <Col className="resume-right-container">
           <div className="resume-right-text">
-            {!isProgram ? (
+            {(!isProgram && !isAsset) ? (
               <>
                 <div className="resume-right-text-up">
                   {approved && (
@@ -152,7 +161,7 @@ export const ResumeItem = (props: {
                   <span className="info-label">{`Needs ${needs} ${needs > 1 ?"approvals" : "approval"} to pass`}</span>
                 )}
               </>
-            ) : (
+            ) : isProgram ? (
               <>
                 {programSize && (
                   <div className="">
@@ -163,6 +172,10 @@ export const ResumeItem = (props: {
                   </div>
                 )}
               </>
+            ) : (
+              <div className="rate-amount">
+                {rightContent}
+              </div>
             )}
           </div>
           {!isSafeDetails && (

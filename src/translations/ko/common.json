@@ -392,10 +392,10 @@
 		"create-asset": {
 			"main-cta": "Create",
 			"main-cta-busy": "Creating vault",
-			"modal-title": "Create a Multisig Vault",
+			"modal-title": "Create a multisig asset",
 			"no-token": "Select token",
 			"success-message": "Your multisig vault was created successfully",
-			"token-label": "Amount to transfer",
+			"token-label": "Select an asset",
 			"token-placeholder": "Enter the address of the token mint"
 		},
 		"create-multisig": {
@@ -483,7 +483,7 @@
 			"delete-asset": {
 				"explanatory-paragraph": "By submitting this proposal, you will sign the transaction and approve it as one of the Multisig signers. Before the asset is deleted, the other Multisig members need to approve it.",
 				"main-cta": "Submit delete proposal",
-				"modal-title": "Delete a Multisig Asset",
+				"modal-title": "Delete a multisig asset",
 				"selected-asset-label": "Asset selected",
 				"warning-message": "Only empty assets can be deleted. To delete an asset you need to first transfer all funds to another account."
 			},
@@ -503,7 +503,7 @@
 			"back-to-multisig-accounts-cta": "Back to Multisig Safes",
 			"change-mint-authority-modal-title": "Set Mint Authority",
 			"create-mint-modal-title": "Create mint",
-			"cta-change-mint-authority": "Transfer Ownership",
+			"cta-change-mint-authority": "Transfer ownership",
 			"cta-change-mint-authority-busy": "Changing Multisig",
 			"cta-create-mint": "Create mint",
 			"cta-create-mint-busy": "Creating mint",
@@ -623,11 +623,11 @@
 		"transfer-tokens": {
 			"main-cta": "시작 요청",
 			"main-cta-busy": "시작 요청",
-			"modal-title": "Initiate Transfer Proposal",
+			"modal-title": "Propose send funds",
 			"source-address-label": "에서 전송",
 			"source-address-placeholder": "원 계정의 주소를 입력하십시오",
 			"success-message": "토큰이 성공적으로 전송되었습니다.",
-			"transfer-amount-label": "금액",
+			"transfer-amount-label": "Amount to send",
 			"transfer-amount-placeholder": "전송할 토큰의 양을 입력하십시오",
 			"transfer-to-label": "로 전송",
 			"transfer-to-placeholder": "대상 계정의 주소를 입력하십시오"

@@ -392,7 +392,7 @@
 			"modal-title": "Çoklu-İmza kasası oluştur",
 			"no-token": "Token seç",
 			"success-message": "Çoklu-İmza kasanız başarıyla oluşturuldu",
-			"token-label": "Gönderen hesap",
+			"token-label": "Select an asset",
 			"token-placeholder": "Mintlemek için bir token adresi girin"
 		},
 		"create-multisig": {
@@ -480,7 +480,7 @@
 			"delete-asset": {
 				"explanatory-paragraph": "Bu talebi göndererek, işlemi imzalayacak ve Çoklu-İmza üyelerinden biri olarak onaylayacaksınız. Varlık silinmeden önce diğer Çoklu-İmza üyelerinin bunu onaylaması gerekir.",
 				"main-cta": "Silme talebi gönder",
-				"modal-title": "Bir Çoklu-İmza varlığını sil",
+				"modal-title": "Bir çoklu-imza varlığını sil",
 				"selected-asset-label": "Varlık seçildi",
 				"warning-message": "Sadece boş olan varlık hesapları silinebilir. Bir varlığı silmek için önce tüm bakiyeyi başka bir hesaba taşımalısınız"
 			},
@@ -545,7 +545,7 @@
 			"column-program-id": "Program",
 			"explain-failure": "Eğer belirliyse hata nedenlerini belirtin",
 			"initiator-transaction": "Bu işlem tarafından gönderildi",
-			"loading-transactions": "İşlem yükleniyor",
+			"loading-transactions": "İşlem yükleniyor ...",
 			"missing-signature": "To execute this proposal, {{missingSignature}} more signature is needed.",
 			"missing-signatures": "To execute this proposal, {{missingSignature}} more signatures are needed.",
 			"modal-title": "İşlem özeti",
@@ -620,11 +620,11 @@
 		"transfer-tokens": {
 			"main-cta": "Talep etmeye başla",
 			"main-cta-busy": "Talep etmeye başlanıyor",
-			"modal-title": "Çekme Talebine Başla",
+			"modal-title": "Çekme talebine başla",
 			"source-address-label": "Hesaptan transfer ediliyor",
 			"source-address-placeholder": "Kaynak hesabın adresini girin",
 			"success-message": "Tokenlar başarıyla transfer edildi",
-			"transfer-amount-label": "Miktar",
+			"transfer-amount-label": "Amount to send",
 			"transfer-amount-placeholder": "Transfer edilecek token miktarını girin",
 			"transfer-to-label": "ya transfer (Hedef Hesap)",
 			"transfer-to-placeholder": "Hedef hesabın adresini girin"
