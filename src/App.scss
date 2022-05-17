@@ -3647,6 +3647,14 @@ main section {
 }
 
 // Modals
+.ant-modal-mask {
+  left: 0;
+  top: 0;
+  position: fixed;
+  z-index: 1000;
+  width: 100vw;
+  height: 100vh;
+}
 .ant-modal-wrap {
   .ant-modal.mean-modal {
     &:not(.no-full-screen) {
