@@ -17,11 +17,11 @@ import { ACCOUNT_LAYOUT } from '../../../../utils/layouts';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
 export const SafeMeanInfo = (props: {
+  connection: Connection;
   isSafeDetails: boolean;
   isProgramDetails: boolean;
   onDataToSafeView: any;
   onDataToProgramView: any;
-  proposals: any[];
   selectedMultisig?: any;
   onEditMultisigClick: any;
   onNewProposalMultisigClick: any;
@@ -29,7 +29,8 @@ export const SafeMeanInfo = (props: {
   multisigTxs: MultisigTransaction[];
 }) => {
 
-  const { 
+  const {
+    connection,
     isSafeDetails, 
     isProgramDetails, 
     multisigTxs, 
@@ -43,17 +44,10 @@ export const SafeMeanInfo = (props: {
   // const { publicKey } = useWallet();
   const connectionConfig = useConnectionConfig();
 
-  const [programs, setPrograms] = useState<ProgramAccounts[] | undefined>(undefined);
+  const [programs, setPrograms] = useState<ProgramAccounts[]>([]);
   const [selectedProgram, setSelectedProgram] = useState<ProgramAccounts | undefined>(undefined);
   const [loadingPrograms, setLoadingPrograms] = useState(true);
   const [multisigVaults, setMultisigVaults] = useState<any[]>([]);
-
-  const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
-    commitment: "confirmed",
-    disableRetryOnRateLimit: true
-  }), [
-    connectionConfig.endpoint
-  ]);
 
   // Proposals list
   const renderListOfProposals = (
@@ -242,9 +236,9 @@ export const SafeMeanInfo = (props: {
 
     const timeout = setTimeout(() => {
       getProgramsByUpgradeAuthority(selectedMultisig.authority)
-      .then(programs => {
-        consoleOut('programs:', programs, 'blue');
-        setPrograms(programs);
+      .then(progs => {
+        consoleOut('programs:', progs, 'blue');
+        setPrograms(progs || []);
       })
       .catch(error => console.error(error))
       .finally(() => setLoadingPrograms(false));

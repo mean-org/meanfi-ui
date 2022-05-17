@@ -29,6 +29,10 @@ import moment from 'moment';
 import { decodeIdlAccount, idlAddress } from '@project-serum/anchor/dist/cjs/idl';
 import { IDL } from '@project-serum/anchor/dist/cjs/spl/token';
 
+import { Tree } from 'antd';
+import { DataNode } from 'antd/lib/tree';
+import { DownOutlined } from '@ant-design/icons'
+
 export const ProgramDetailsView = (props: {
   isProgramDetails: boolean;
   onDataToProgramView: any;
@@ -60,7 +64,7 @@ export const ProgramDetailsView = (props: {
   const [/*ongoingOperation*/, setOngoingOperation] = useState<OperationType | undefined>(undefined);
   const [/*retryOperationPayload*/, setRetryOperationPayload] = useState<any>(undefined);
   const [selectedProgram, setSelectedProgram] = useState<ProgramAccounts | undefined>(undefined);
-  const [selectedProgramIdl, setSelectedProgramIdl] = useState<string>("");
+  const [selectedProgramIdl, setSelectedProgramIdl] = useState<any>(null);
   const [loadingTxs, setLoadingTxs] = useState(true);
 
   // When back button is clicked, goes to Safe Info
@@ -947,39 +951,7 @@ export const ProgramDetailsView = (props: {
 
     const provider = createAnchorProvider();
 
-    const idl = await Program.fetchIdl(programSelected.pubkey, provider);
-
-    console.log('idl', idl);
-
-    // const splTokenJson = JSON.stringify(IDL);
-    // console.log('splTokenJson', splTokenJson);
-
-    // const idlAddr = await idlAddress(new PublicKey("FF7U7Vj1PpBkTPau7frwLLrUHrjkxTQLsH7U5K3T3B3j"));
-    // console.log('idlAddr', idlAddr.toBase58());
-    // const accountInfo = await provider.connection.getAccountInfo(idlAddr);
-
-    // console.log('accountInfo', accountInfo);
-
-    // if (!accountInfo) {
-    //   return null;
-    // }
-    // // Chop off account discriminator.
-    // const idlAccount = decodeIdlAccount(accountInfo.data.slice(8));
-    // const inflatedIdl = inflate(idlAccount.data);
-
-    // const idl = await Program.fetchIdl(programSelected.pubkey, provider);
-
-    // const accountInfo = await provider.connection.getAccountInfo(programSelected.pubkey);
-    // if (!accountInfo) {
-    //   return null;
-    // }
-
-    // console.log('idlAccount', idlAccount);
-
-    // console.log('AQUI', provider, accountInfo);
-    // // Chop off account discriminator
-    // return decodeIdlAccount(accountInfo.data);
-    // return idlAccount.data.toString('utf8');
+    return await Program.fetchIdl(programSelected.pubkey, provider);
 
   }, [
     connection, 
@@ -995,16 +967,12 @@ export const ProgramDetailsView = (props: {
     const timeout = setTimeout(() => {
       getProgramIDL()
         .then((idl: any) => {
-          console.log('IDL', idl);
-          if (!idl) {
-            setSelectedProgramIdl("");
-            return;
-          }
+          if (!idl) { return; }
           console.log('IDL', idl);
           setSelectedProgramIdl(idl);
         })
         .catch((err: any) => {
-          setSelectedProgramIdl("");
+          setSelectedProgramIdl(null);
           console.error(err);
         });
     });
@@ -1019,6 +987,60 @@ export const ProgramDetailsView = (props: {
     programSelected, 
     publicKey
   ]);
+  
+  const renderIdlTree = () => {
+    return !selectedProgramIdl ? "The program IDL is not initialized or doesn't exists" : (
+      <Tree treeData={[
+        {
+          key: selectedProgramIdl.name,
+          title: `${selectedProgramIdl.name[0].toUpperCase()}${selectedProgramIdl.name.substring(1)}`,
+          children: [
+            {
+              key: "instructions",
+              title: "Instructions",
+              children: selectedProgramIdl.instructions.map((ix: any) => {
+                return {
+                  key: ix.name,
+                  title: `${ix.name[0].toUpperCase()}${ix.name.substring(1)}`,
+                  children: []
+      
+                } as DataNode;
+              })
+    
+            } as DataNode,
+            {
+              key: "accounts",
+              title: "Accounts",
+              children: !selectedProgramIdl.accounts ? [] : selectedProgramIdl.accounts.map((a: any) => {
+                return {
+                  key: a.name,
+                  title: `${a.name[0].toUpperCase()}${a.name.substring(1)}`,
+                  children: []
+      
+                } as DataNode;
+              })
+    
+            } as DataNode,
+            {
+              key: "types",
+              title: "Types",
+              children: !selectedProgramIdl.types ? [] : selectedProgramIdl.types.map((ix: any) => {
+                return {
+                  key: ix.name,
+                  title: `${ix.name[0].toUpperCase()}${ix.name.substring(1)}`,
+                  children: []
+      
+                } as DataNode;
+              })
+    
+            } as DataNode
+          ]
+        }
+      ] as DataNode[]}
+
+      defaultExpandAll />
+    );
+  };
 
   // Tabs
   const tabs = [
@@ -1028,7 +1050,7 @@ export const ProgramDetailsView = (props: {
     }, 
     {
       name: "Anchor IDL",
-      render: selectedProgramIdl
+      render: renderIdlTree()
     }
   ];
 
