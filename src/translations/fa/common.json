@@ -388,10 +388,10 @@
 		"create-asset": {
 			"main-cta": "ساختن",
 			"main-cta-busy": "ایجاد خزانه",
-			"modal-title": "یک خزانه حساب Multisig ایجاد کنید",
+			"modal-title": "یک خزانه حساب multisig ایجاد کنید",
 			"no-token": "توکن را انتخاب کنید",
 			"success-message": "خزانه حساب Multisig شما با موفقیت ایجاد شد",
-			"token-label": "از حساب",
+			"token-label": "Select an asset",
 			"token-placeholder": "آدرس مینت کردن توکن را وارد کنید"
 		},
 		"create-multisig": {
@@ -479,7 +479,7 @@
 			"delete-asset": {
 				"explanatory-paragraph": "با ارسال این درخواست، معامله را امضا کرده و آن را به عنوان یکی از امضاکنندگان Multisig تایید می کنید. قبل از حذف دارایی، سایر اعضای Multisig باید آن را تأیید کنند.",
 				"main-cta": "ارسال درخواست حذف",
-				"modal-title": "یک دارایی Multisig را حذف کنید",
+				"modal-title": "یک دارایی multisig را حذف کنید",
 				"selected-asset-label": "دارایی انتخاب شد",
 				"warning-message": "فقط دارایی های خالی را می توان حذف کرد. برای حذف یک دارایی، ابتدا باید تمام وجوه را به حساب دیگری منتقل کنید."
 			},
@@ -623,7 +623,7 @@
 			"source-address-label": "انتقال از",
 			"source-address-placeholder": "آدرس اکانت منبع را وارد کنید",
 			"success-message": "توکن ها با موفقیت منتقل شدند.",
-			"transfer-amount-label": "مقدار",
+			"transfer-amount-label": "Amount to send",
 			"transfer-amount-placeholder": "مقدار توکن های مورد نظر را برای انتقال وارد کنید",
 			"transfer-to-label": "انتقال به (حساب مقصد)",
 			"transfer-to-placeholder": "آدرس اکانت مقصد را وارد کنید"

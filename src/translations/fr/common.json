@@ -391,7 +391,7 @@
 			"modal-title": "Créer un actif multisig",
 			"no-token": "Sélectionnez le jeton",
 			"success-message": "Votre actif multisig a été créé avec succès",
-			"token-label": "Du compte",
+			"token-label": "Amount to send",
 			"token-placeholder": "Entrez l'adresse mint de jeton"
 		},
 		"create-multisig": {

@@ -413,7 +413,7 @@
 			"modal-title": "Criar um cofre multisig",
 			"no-token": "Selecionar token",
 			"success-message": "Seu cofre multisig foi criado com sucesso",
-			"token-label": "Amount to transfer",
+			"token-label": "Select an asset",
 			"token-placeholder": "Digite o endereço da mint do token"
 		},
 		"crud-multisig": {
@@ -471,7 +471,7 @@
 			"back-to-multisig-accounts-cta": "Back to Multisig Safes",
 			"change-mint-authority-modal-title": "Set Mint Authority",
 			"create-mint-modal-title": "Create mint",
-			"cta-change-mint-authority": "Transfer Ownership",
+			"cta-change-mint-authority": "Transfer ownership",
 			"cta-change-mint-authority-busy": "Changing Multisig",
 			"cta-create-mint": "Create mint",
 			"cta-create-mint-busy": "Creating mint",
@@ -579,7 +579,7 @@
 			"delete-asset": {
 				"explanatory-paragraph": "By submitting this proposal, you will sign the transaction and approve it as one of the Multisig signers. Before the asset is deleted, the other Multisig members need to approve it.",
 				"main-cta": "Submit delete proposal",
-				"modal-title": "Delete a Multisig Asset",
+				"modal-title": "Delete a multisig asset",
 				"selected-asset-label": "Asset selected",
 				"warning-message": "Only empty assets can be deleted. To delete an asset you need to first transfer all funds to another account."
 			},
@@ -619,11 +619,11 @@
 		"transfer-tokens": {
 			"main-cta": "Iniciar solicitação",
 			"main-cta-busy": "Solicitação inicial",
-			"modal-title": "Initiate Transfer Proposal",
+			"modal-title": "Propose send funds",
 			"source-address-label": "Transferir de",
 			"source-address-placeholder": "Digite o endereço da conta de origem",
 			"success-message": "Tokens transferidos com sucesso.",
-			"transfer-amount-label": "Montante",
+			"transfer-amount-label": "Amount to send",
 			"transfer-amount-placeholder": "Insira a quantidade de tokens a serem transferidos",
 			"transfer-to-label": "Transferir para (Conta de Destino)",
 			"transfer-to-placeholder": "Digite o endereço da conta de destino"

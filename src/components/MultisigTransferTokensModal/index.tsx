@@ -204,7 +204,7 @@ export const MultisigTransferTokensModal = (props: {
           <>
             {/* Amount to transfer */}
             <div className="mb-3">
-              <div className="form-label">{t('multisig.create-asset.token-label')}</div>
+              <div className="form-label">{t('multisig.transfer-tokens.transfer-amount-label')}</div>
                 <div className={`well ${props.isBusy ? 'disabled' : ''}`}>
                   {props.assets && props.assets.length > 0 && fromVault && fromMint && (
                     <>

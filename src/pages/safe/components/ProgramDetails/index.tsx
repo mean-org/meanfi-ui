@@ -1000,7 +1000,7 @@ export const ProgramDetailsView = (props: {
               disabled={isTxInProgress()}
               onClick={showUpgradeProgramModal}>
                 <div className="btn-content">
-                  Upgrade - Deployment
+                  Upgrade / Deployment
                 </div>
             </Button>
             <Button

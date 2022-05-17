@@ -410,10 +410,10 @@
 		"create-asset": {
 			"main-cta": "Create",
 			"main-cta-busy": "Creating vault",
-			"modal-title": "Create a Multisig Vault",
+			"modal-title": "Create a multisig asset",
 			"no-token": "Select token",
 			"success-message": "Your multisig vault was created successfully",
-			"token-label": "Amount to transfer",
+			"token-label": "Select an asset",
 			"token-placeholder": "Enter the address of the token mint"
 		},
 		"lookup-multisig-account-cta-tooltip": "Lookup a multisig account",
@@ -487,7 +487,7 @@
 			"delete-asset": {
 				"explanatory-paragraph": "By submitting this proposal, you will sign the transaction and approve it as one of the Multisig signers. Before the asset is deleted, the other Multisig members need to approve it.",
 				"main-cta": "Submit delete proposal",
-				"modal-title": "Delete a Multisig Asset",
+				"modal-title": "Delete a multisig asset",
 				"selected-asset-label": "Asset selected",
 				"warning-message": "Only empty assets can be deleted. To delete an asset you need to first transfer all funds to another account."
 			},
@@ -508,7 +508,7 @@
 			"back-to-multisig-accounts-cta": "Back to Multisig Safes",
 			"change-mint-authority-modal-title": "Set Mint Authority",
 			"create-mint-modal-title": "Create mint",
-			"cta-change-mint-authority": "Transfer Ownership",
+			"cta-change-mint-authority": "Transfer ownership",
 			"cta-change-mint-authority-busy": "Changing Multisig",
 			"cta-create-mint": "Create mint",
 			"cta-create-mint-busy": "Creating mint",
@@ -596,7 +596,7 @@
 		"transfer-authority": {
 			"main-cta": "Set authority",
 			"main-cta-busy": "Setting authority",
-			"modal-title": "Transfer Ownership",
+			"modal-title": "Transfer ownership",
 			"multisig-already-owns-the-asset": "Selected multisig is already authority for this vault",
 			"multisig-selector-label": "New authority (multisig)",
 			"multisig-selector-placeholder": "Select or enter a multisig address",
@@ -607,11 +607,11 @@
 		"transfer-tokens": {
 			"main-cta": "Start Request",
 			"main-cta-busy": "Starting Request",
-			"modal-title": "Initiate Transfer Proposal",
+			"modal-title": "Propose send funds",
 			"source-address-label": "Transfer from",
 			"source-address-placeholder": "Enter the address of the source account",
 			"success-message": "Tokens transferred successfully.",
-			"transfer-amount-label": "Amount",
+			"transfer-amount-label": "Amount to send",
 			"transfer-amount-placeholder": "Enter the amount of tokens to transfer",
 			"transfer-to-label": "Transfer to (Destination Account)",
 			"transfer-to-placeholder": "Enter the address of the destination account"

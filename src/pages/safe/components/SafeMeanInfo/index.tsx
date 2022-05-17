@@ -2,7 +2,7 @@ import './style.scss';
 
 import { Button, Col, Row, Spin } from "antd"
 import { IconApprove, IconArrowForward, IconCheckCircle, IconCreated, IconCross, IconMinus } from "../../../../Icons"
-import { shortenAddress } from "../../../../utils/utils";
+import { formatThousands, getTokenByMintAddress, makeDecimal, shortenAddress } from "../../../../utils/utils";
 import { SafeInfo } from "../UI/SafeInfo";
 import { MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
 import { ProgramAccounts } from '../../../../utils/accounts';
@@ -13,21 +13,29 @@ import { consoleOut } from '../../../../utils/ui';
 import { useWallet } from '../../../../contexts/wallet';
 import { ResumeItem } from '../UI/ResumeItem';
 import { program } from '@project-serum/anchor/dist/cjs/spl/token';
+import { FALLBACK_COIN_IMAGE } from '../../../../constants';
+import { MultisigVault } from '../../../../models/multisig';
+import { Identicon } from '../../../../components/Identicon';
+import { BN } from 'bn.js';
+import { u64 } from '@solana/spl-token';
 
 export const SafeMeanInfo = (props: {
   isSafeDetails: boolean;
   isProgramDetails: boolean;
+  isAssetDetails: boolean;
   onDataToSafeView: any;
   onDataToProgramView: any;
+  onDataToAssetView: any;
   proposals: any[];
   selectedMultisig?: any;
   onEditMultisigClick: any;
+  onNewCreateAssetClick: any;
   onNewProposalMultisigClick: any;
-  multisigVaults: any;
+  multisigVaults: MultisigVault[];
   multisigTxs: MultisigTransaction[];
 }) => {
 
-  const { isSafeDetails, isProgramDetails, multisigTxs, selectedMultisig, onEditMultisigClick, onNewProposalMultisigClick, multisigVaults } = props;
+  const { isSafeDetails, isProgramDetails, isAssetDetails,  multisigTxs, selectedMultisig, onEditMultisigClick, onNewProposalMultisigClick, onNewCreateAssetClick, multisigVaults } = props;
 
   const { publicKey } = useWallet();
   const connectionConfig = useConnectionConfig();
@@ -46,7 +54,7 @@ export const SafeMeanInfo = (props: {
   // Proposals list
   const renderListOfProposals = (
     <>
-      {multisigTxs && multisigTxs.length ? (
+      {(multisigTxs && multisigTxs.length > 0) ? (
         multisigTxs.map((proposal, index) => {
           const onSelectProposal = () => {
             // Sends isSafeDetails value to the parent component "SafeView"
@@ -82,6 +90,74 @@ export const SafeMeanInfo = (props: {
         })
       ) : (
         <span>This multisig has no proposals</span>
+      )}
+    </>
+  );
+
+  // Assets list
+  // const [selectedAsset, setSelectedAsset] = useState<MultisigVault | undefined>(undefined);
+
+  const renderListOfAssets = (
+    <>
+      {(multisigVaults && multisigVaults.length) ? (
+        multisigVaults.map((asset, index) => {
+          const onSelectAsset = () => {
+            // Sends isProgramDetails value to the parent component "SafeView"
+            props.onDataToAssetView(asset);
+            // setSelectedAsset(asset);
+            // setDtailsPanelOpen(true);
+            consoleOut('selected asset:', asset, 'blue');
+            // setLoadingMultisigTxs(true);
+          };
+
+                    // const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+          //   event.currentTarget.src = FALLBACK_COIN_IMAGE;
+          //   event.currentTarget.className = "error";
+          // };
+
+          // const tokenIcon = (
+          //   <div className="token-icon">
+          //     {token && token.logoURI && (
+          //       <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
+          //     ) : (
+          //       <Identicon address={new PublicKey(asset.mint).toBase58()} style={{
+          //         width: "30",
+          //         display: "inline-flex",
+          //         height: "30",
+          //         overflow: "hidden",
+          //         borderRadius: "50%"
+          //       }} />
+          //     )}
+          //   </div>
+          // )
+
+          const token = getTokenByMintAddress(asset.mint.toBase58());
+          const tokenIcon = token && token.logoURI;
+          const assetToken = token && token.symbol;
+          const assetAddress = shortenAddress(asset.address.toBase58(), 8);
+          const assetAmount = token && formatThousands(makeDecimal(asset.amount, token.decimals), token.decimals);          
+
+          return (
+            <div 
+              key={`${asset.address.toBase58() + 60}`}
+              onClick={onSelectAsset}
+              className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+              >
+                <ResumeItem
+                  id={`${index + 61}`}
+                  logo={tokenIcon}
+                  title={assetToken}
+                  subtitle={assetAddress}
+                  isAsset={true}
+                  rightContent={assetAmount}
+                  isSafeDetails={isSafeDetails}
+                  isAssetDetails={isAssetDetails}
+                />
+            </div>
+          );
+        })
+      ) : (
+        <span>This multisig has no assets</span>
       )}
     </>
   );
@@ -245,7 +321,7 @@ export const SafeMeanInfo = (props: {
     getProgramsByUpgradeAuthority,
   ]);
 
-  const renderPrograms = (
+  const renderListOfPrograms = (
     <>
       {!loadingPrograms ? (
         (programs && programs.length > 0) ? (
@@ -292,6 +368,10 @@ export const SafeMeanInfo = (props: {
       name: "Proposals",
       render: renderListOfProposals
     }, 
+    {
+      name: "Assets",
+      render: renderListOfAssets
+    }, 
     // {
     //   name: "Settings",
     //   render: renderSettings
@@ -302,7 +382,7 @@ export const SafeMeanInfo = (props: {
     // }, 
     {
       name: "Programs",
-      render: renderPrograms
+      render: renderListOfPrograms
     }
   ];
 
@@ -310,9 +390,9 @@ export const SafeMeanInfo = (props: {
     <>
       <SafeInfo
         selectedMultisig={selectedMultisig}
-        multisigVaults={multisigVaults}
         onNewProposalMultisigClick={onNewProposalMultisigClick}
         onEditMultisigClick={onEditMultisigClick}
+        onNewCreateAssetClick={onNewCreateAssetClick}
         tabs={tabs}
       />
     </>

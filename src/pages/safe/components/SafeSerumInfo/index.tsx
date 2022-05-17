@@ -5,19 +5,22 @@ import { IconApprove, IconArrowForward, IconCheckCircle, IconCreated, IconCross,
 import { shortenAddress } from "../../../../utils/utils";
 import { SafeInfo } from "../UI/SafeInfo";
 import { ResumeItem } from '../UI/ResumeItem';
+import { MultisigVault } from '../../../../models/multisig';
 
 export const SafeSerumInfoView = (props: {
   isSafeDetails: boolean;
   isProgramDetails: boolean;
+  isAssetDetails: boolean;
   onDataToSafeView: any;
   onDataToProgramView: any;
+  onDataToAssetView: any;
   proposals: any[];
   selectedMultisig?: any;
   onEditMultisigClick: any;
   onNewProposalMultisigClick: any;
-  multisigVaults: any;
+  multisigVaults: MultisigVault[];
 }) => {
-  const { isSafeDetails, proposals, selectedMultisig, onEditMultisigClick, onNewProposalMultisigClick, multisigVaults } = props;
+  const { isSafeDetails, isProgramDetails, isAssetDetails, proposals, selectedMultisig, onEditMultisigClick, onNewProposalMultisigClick, multisigVaults } = props;
 
   const safeSerumNameImg = "https://assets.website-files.com/6163b94b432ce93a0408c6d2/61ff1e9b7e39c27603439ad2_serum%20NOF.png";
   const safeSerumNameImgAlt = "Serum";
