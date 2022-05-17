@@ -70,6 +70,8 @@
   --darken-10: rgba(0, 0, 0, 0.10);
   --darken-20: rgba(0, 0, 0, 0.20);
   --darken-30: rgba(0, 0, 0, 0.30);
+  --darken-40: rgba(0, 0, 0, 0.40);
+  --darken-50: rgba(0, 0, 0, 0.50);
 
   /* Properties */
   --custom-border-radius: 7px;
@@ -816,7 +818,14 @@ footer.ant-layout-footer {
     border-color: var(--color-secondary-alpha-20);
   }
 }
+
 // Text button shaded with rounded corners
+.ant-btn > svg,
+.ant-btn > span {
+    display: inline-block;
+    vertical-align: middle;
+}
+
 .ant-btn.ant-btn-text.ant-btn-shaded {
   background-color: var(--color-flat-btn);
   border: none;
@@ -940,7 +949,6 @@ footer.ant-layout-footer {
     border-color: var(--color-primary-highlight);
   }
 }
-
 .ant-btn.ant-btn-round.wallet-provider {
   color: var(--color-secondary-alpha-60);
   border-color: var(--color-secondary-alpha-40);
