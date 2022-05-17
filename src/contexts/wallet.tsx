@@ -34,6 +34,7 @@ import {
   SolongWalletAdapter,
   SolongWalletName
 } from "@solana/wallet-adapter-wallets";
+import { useNavigate } from "react-router-dom";
 
 export const WALLET_PROVIDERS = [
   {
@@ -209,6 +210,7 @@ const WalletContext = React.createContext<{
 
 export function WalletProvider({ children = null as any }) {
   const { t } = useTranslation("common");
+  const navigate = useNavigate();
   const [autoConnect, setAutoConnect] = useState(true);
   const [providerName, setProviderName] = useLocalStorageState("providerName");
 
@@ -254,6 +256,7 @@ export function WalletProvider({ children = null as any }) {
 
       wallet.on("disconnect", () => {
         setConnected(false);
+        navigate('/');
       });
 
       wallet.on("error", (error) => {
