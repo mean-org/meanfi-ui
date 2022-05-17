@@ -8,7 +8,7 @@ export const TabsMean = (props: {
 }) => {
   const { headerClassName, bodyClassName, tabs, selectedTab } = props;
 
-  const [activeTab, setActiveTab] = useState(selectedTab || tabs[0].name);
+  const [activeTab, setActiveTab] = useState((selectedTab && tabs[selectedTab].name) || tabs[0].name);
 
   const onClickHandler = (event: any) => {
     if (event.target.innerHTML !== activeTab) {

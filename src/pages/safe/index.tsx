@@ -4724,9 +4724,18 @@ export const SafeView = () => {
   const [isAssetDetails, setIsAssetDetails] = useState(false);
   const [assetSelected, setAssetSelected] = useState<any>();
 
+  const [selectedTab, setSelectedTab] = useState<number>();
+
   const goToSafeDetailsHandler = (selectedProposal: any) => {    
     setIsSafeDetails(true);
     setProposalSelected(selectedProposal);
+  }
+
+  const goToAssetDetailsHandler = (selectedAsset: any) => {
+    setIsSafeDetails(false);
+    setIsProgramDetails(false);
+    setIsAssetDetails(true);
+    setAssetSelected(selectedAsset);
   }
 
   const goToProgramDetailsHandler = (selectedProgram: any) => {
@@ -4736,24 +4745,19 @@ export const SafeView = () => {
     setProgramSelected(selectedProgram);
   }
 
-  const goToAssetDetailsHandler = (selectedAsset: any) => {
-    setIsSafeDetails(false);
-    setIsProgramDetails(false);
-    setIsAssetDetails(true);
-    setAssetSelected(selectedAsset);
-  }  
-
   const returnFromSafeDetailsHandler = () => {
     setIsSafeDetails(false);
-  }
-
-  const returnFromProgramDetailsHandler = () => {
-    setIsProgramDetails(false);
+    setSelectedTab(0);
   }
 
   const returnFromAssetDetailsHandler = () => {
     setIsAssetDetails(false);
-    
+    setSelectedTab(1);
+  }
+
+  const returnFromProgramDetailsHandler = () => {
+    setIsProgramDetails(false);
+    setSelectedTab(2);
   }
 
   // Dropdown (three dots button)
@@ -4898,6 +4902,7 @@ export const SafeView = () => {
                               onNewProposalMultisigClick={onNewProposalMultisigClick}
                               multisigVaults={multisigVaults}
                               multisigTxs={multisigTxs}
+                              selectedTab={selectedTab}
                             />
                           )
                         )}

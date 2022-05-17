@@ -33,9 +33,10 @@ export const SafeMeanInfo = (props: {
   onNewProposalMultisigClick: any;
   multisigVaults: MultisigVault[];
   multisigTxs: MultisigTransaction[];
+  selectedTab?: any;
 }) => {
 
-  const { isSafeDetails, isProgramDetails, isAssetDetails,  multisigTxs, selectedMultisig, onEditMultisigClick, onNewProposalMultisigClick, onNewCreateAssetClick, multisigVaults } = props;
+  const { isSafeDetails, isProgramDetails, isAssetDetails,  multisigTxs, selectedMultisig, onEditMultisigClick, onNewProposalMultisigClick, onNewCreateAssetClick, multisigVaults, selectedTab } = props;
 
   const { publicKey } = useWallet();
   const connectionConfig = useConnectionConfig();
@@ -392,6 +393,7 @@ export const SafeMeanInfo = (props: {
         onEditMultisigClick={onEditMultisigClick}
         onNewCreateAssetClick={onNewCreateAssetClick}
         tabs={tabs}
+        selectedTab={selectedTab}
       />
     </>
   )

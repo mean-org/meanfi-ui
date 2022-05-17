@@ -25,6 +25,7 @@ export const SafeInfo = (props: {
   onNewCreateAssetClick?: any;
   onEditMultisigClick?: any;
   tabs?: Array<any>;
+  selectedTab?: any;
 }) => {
   const {
     coinPrices,
@@ -33,7 +34,7 @@ export const SafeInfo = (props: {
   } = useContext(AppStateContext);
   const connectionConfig = useConnectionConfig();
 
-  const { selectedMultisig, multisigVaults, safeNameImg, safeNameImgAlt, onNewProposalMultisigClick, onNewCreateAssetClick, onEditMultisigClick, tabs } = props;
+  const { selectedMultisig, multisigVaults, safeNameImg, safeNameImgAlt, onNewProposalMultisigClick, onNewCreateAssetClick, onEditMultisigClick, tabs, selectedTab } = props;
 
   const { t } = useTranslation('common');
   const navigate = useNavigate();
@@ -288,6 +289,7 @@ export const SafeInfo = (props: {
           tabs={tabs}
           headerClassName="safe-tabs-header-container"
           bodyClassName="safe-tabs-content-container"
+          selectedTab={selectedTab}
         />
       </div>
     </>
