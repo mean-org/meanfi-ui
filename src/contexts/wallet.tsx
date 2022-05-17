@@ -365,11 +365,10 @@ export function WalletProvider({ children = null as any }) {
                   setAutoConnect(true);
                 }, 600);
 
-                // close();
-
-                // if (!isInstalled && !item.isWebWallet) {
-                //   window.open(item.url, '_blank');
-                // }
+                // Only for the Exodus Wallet (if not installed take the user to its extension url)
+                if (!isInstalled && item.name === ExodusWalletName) {
+                  window.open(item.url, '_blank');
+                }
               };
 
               return (
