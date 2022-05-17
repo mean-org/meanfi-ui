@@ -314,7 +314,7 @@ export const SafeDetailsView = (props: {
                   Approve
                 </div>
               </Button>
-              {/* {isUnderDevelopment() && (
+              {isUnderDevelopment() && (
                 <Button
                   type="ghost"
                   size="small"
@@ -325,7 +325,7 @@ export const SafeDetailsView = (props: {
                       Reject
                     </div>
                 </Button>
-              )} */}
+              )}
             </>
           )}
         </Col>

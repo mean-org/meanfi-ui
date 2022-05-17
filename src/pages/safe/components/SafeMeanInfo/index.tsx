@@ -52,7 +52,6 @@ export const SafeMeanInfo = (props: {
     selectedTab,
     multisigClient,
     isAssetDetails
-
   } = props;
 
   // const { publicKey } = useWallet();
@@ -65,7 +64,23 @@ export const SafeMeanInfo = (props: {
   const [loadingPrograms, setLoadingPrograms] = useState(true);
   const [multisigVaults, setMultisigVaults] = useState<any[]>([]);
 
+  useEffect(() => {
+    if (selectedMultisig) {
+      setLoadingProposals(true);
+      setLoadingAssets(true);
+      setLoadingPrograms(true);
+    }
+  }, [selectedMultisig]);
+
   // Proposals list
+  useEffect(() => {
+    if (multisigTxs || (isSafeDetails)) {
+      setLoadingProposals(false);
+    } else {
+      setLoadingProposals(true);
+    }
+  }, [isSafeDetails, multisigTxs]);
+
   const renderListOfProposals = (
     <>
       {!loadingProposals ? (
