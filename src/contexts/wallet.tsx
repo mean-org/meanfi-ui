@@ -40,6 +40,10 @@ import { useNavigate } from "react-router-dom";
 import { getDefaultRpc } from "../models/connections-hq";
 import { environment } from "../environments/environment";
 
+export type MeanFiWallet = PhantomWalletAdapter | ExodusWalletAdapter | SolflareWalletAdapter
+                          | SlopeWalletAdapter | Coin98WalletAdapter | SolongWalletAdapter | SolletWalletAdapter
+                          | SolletExtensionWalletAdapter | MathWalletAdapter | LedgerWalletAdapter | undefined;
+
 export const WALLET_PROVIDERS = [
   {
     name: PhantomWalletName,
@@ -193,9 +197,7 @@ const getIsProviderInstalled = (provider: any): boolean => {
 }
 
 const WalletContext = React.createContext<{
-  wallet: PhantomWalletAdapter | ExodusWalletAdapter | SolflareWalletAdapter
-          | SlopeWalletAdapter | Coin98WalletAdapter | SolongWalletAdapter | SolletWalletAdapter
-          | MathWalletAdapter | LedgerWalletAdapter | undefined;
+  wallet: MeanFiWallet;
   connected: boolean;
   select: () => void;
   isSelecting: boolean;
@@ -217,7 +219,7 @@ export function WalletProvider({ children = null as any }) {
   const navigate = useNavigate();
   const [autoConnect, setAutoConnect] = useState(true);
   const [providerName, setProviderName] = useLocalStorageState("providerName");
-  const [wallet, setWallet] = useState<any>(undefined);
+  const [wallet, setWallet] = useState<MeanFiWallet>(undefined);
 
   const resetWalletProvider = () => {
     setProviderName(null);
@@ -308,11 +310,25 @@ export function WalletProvider({ children = null as any }) {
 
   useEffect(() => {
 
-    consoleOut('Have wallet?', wallet ? 'true' : 'false', 'pink');
-    consoleOut('autoConnect?', autoConnect, 'pink');
+    // When a wallet is created, selected and the autoConnect is ON, lets connect
     if (wallet && autoConnect) {
-      consoleOut('Connecting...', '', 'blue');
-      wallet.connect();
+      consoleOut('Auto-connecting...', '', 'blue');
+      wallet.connect()
+      .catch(error => {
+        if ((error as string).toString().includes('WalletNotReadyError')) {
+          // TODO: Notify or navigate or notify with link to navigate...
+          // Pay attention especially if in mobile mode
+          if (isDesktop) {
+            consoleOut('wallet.connect() error in Desktop:', 'WalletNotReadyError', 'red');
+          } else {
+            consoleOut('wallet.connect() error in Mobile:', 'WalletNotReadyError', 'red');
+          }
+        } else if ((error as string).toString().includes('WalletConnectionError')) {
+          consoleOut('wallet.connect() error', 'WalletConnectionError', 'red');
+        } else {
+          consoleOut('wallet.connect() error', error, 'red');
+        }
+      });
     }
 
     return () => {};
