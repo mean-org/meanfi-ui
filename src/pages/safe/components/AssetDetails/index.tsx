@@ -2340,7 +2340,7 @@ export const AssetDetailsView = (props: {
     return (
       <>
         <span className="info-icon token-icon mr-1">
-          <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} />
+          <img alt={`${token.name}`} width={26} height={26} src={token.logoURI} />
         </span>
         <span className="info-data">
           {

@@ -53,7 +53,7 @@ export const CopyExtLinkGroup = (props: {
           rel="noopener noreferrer"
           href={`${!isTx ? `${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${content}${getSolanaExplorerClusterParam()}` : `${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${content}${getSolanaExplorerClusterParam()}`}`}>
           {externalLink && (
-            <IconExternalLink className="mean-svg-icons external-icon" />
+            <IconExternalLink className="mean-svg-icons external-icon ml-1" />
           )}
         </a>
       </span>

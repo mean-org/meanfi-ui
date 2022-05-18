@@ -3953,6 +3953,7 @@ export const SafeView = () => {
                 <span className="title">Multisig Safes</span>
                 <Tooltip placement="bottom" title={t('multisig.refresh-tooltip')}>
                   <div className={`transaction-stats user-address ${loadingMultisigAccounts ? 'click-disabled' : 'simplelink'}`}>
+                    <Spin size="small" />
                     {!loadingMultisigAccounts && (
                       <span className="incoming-transactions-amout">({formatThousands(multisigAccounts.length)})</span>
                     )}
@@ -3975,9 +3976,9 @@ export const SafeView = () => {
 
               <div className="inner-container">
                 <div className="item-block vertical-scroll">
-                  {/* <Spin spinning={loadingMultisigAccounts}> */}
+                  <Spin spinning={loadingMultisigAccounts}>
                     {renderMultisigList}
-                  {/* </Spin> */}
+                  </Spin>
                 </div>
 
                 {/* Bottom CTAs */}
@@ -4028,7 +4029,7 @@ export const SafeView = () => {
                 <div className="scroll-wrapper vertical-scroll">
                   {connected && multisigClient && selectedMultisig ? (
                     <>
-                      {/* <Spin spinning={loadingMultisigAccounts || loadingMultisigTxs}> */}
+                      <Spin spinning={loadingMultisigAccounts || loadingMultisigTxs || loadingPrograms}>
                         {(!isSafeDetails && !isProgramDetails && !isAssetDetails) && (
                           selectedMultisig.version === 0 ? (
                             <SafeSerumInfoView
@@ -4061,37 +4062,38 @@ export const SafeView = () => {
                               multisigClient={multisigClient}
                               multisigTxs={multisigTxs}
                               selectedTab={selectedTab}
+                              loadingMultisigTxs={loadingMultisigTxs}
                             />
                           )
                         )}
-                      {/* </Spin> */}
-                      {isSafeDetails && (
-                        <SafeDetailsView
-                          isSafeDetails={isSafeDetails}
-                          onDataToSafeView={returnFromSafeDetailsHandler}
-                          proposalSelected={proposalSelected}
-                          selectedMultisig={selectedMultisig}
-                          onProposalApprove={onExecuteApproveTx}
-                          onProposalExecute={onExecuteFinishTx}
-                        />
-                      )}
-                      {isProgramDetails && (
-                        <ProgramDetailsView
-                          isProgramDetails={isProgramDetails}
-                          onDataToProgramView={returnFromProgramDetailsHandler}
-                          programSelected={programSelected}
-                          selectedMultisig={selectedMultisig}
-                        />
-                      )}
-                      {isAssetDetails && (
-                        <AssetDetailsView
-                          isAssetDetails={isAssetDetails}
-                          onDataToAssetView={returnFromAssetDetailsHandler}
-                          assetSelected={assetSelected}
-                          selectedMultisig={selectedMultisig}
-                          multisigVaults={multisigVaults}
-                        />
-                      )}
+                        {isSafeDetails && (
+                          <SafeDetailsView
+                            isSafeDetails={isSafeDetails}
+                            onDataToSafeView={returnFromSafeDetailsHandler}
+                            proposalSelected={proposalSelected}
+                            selectedMultisig={selectedMultisig}
+                            onProposalApprove={onExecuteApproveTx}
+                            onProposalExecute={onExecuteFinishTx}
+                          />
+                        )}
+                        {isProgramDetails && (
+                          <ProgramDetailsView
+                            isProgramDetails={isProgramDetails}
+                            onDataToProgramView={returnFromProgramDetailsHandler}
+                            programSelected={programSelected}
+                            selectedMultisig={selectedMultisig}
+                          />
+                        )}
+                        {isAssetDetails && (
+                          <AssetDetailsView
+                            isAssetDetails={isAssetDetails}
+                            onDataToAssetView={returnFromAssetDetailsHandler}
+                            assetSelected={assetSelected}
+                            selectedMultisig={selectedMultisig}
+                            multisigVaults={multisigVaults}
+                          />
+                        )}
+                      </Spin>
                     </>
                   ) : (
                     <div className="h-100 flex-center">
