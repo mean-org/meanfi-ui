@@ -1,9 +1,9 @@
-import React from "react";
+import React, { useContext } from "react";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { IconCaretDown } from "../../Icons";
-import { getTokenByMintAddress } from "../../utils/tokens";
 import { shortenAddress } from "../../utils/utils";
 import { Identicon } from "../Identicon";
+import { AppStateContext } from "../../contexts/appstate";
 
 export const TokenDisplay = (props: {
   fullTokenInfo?: TokenInfo | undefined;
@@ -18,6 +18,8 @@ export const TokenDisplay = (props: {
   onClick: any;
 }) => {
   const { name, icon, className, mintAddress, showName, showCaretDown, noTokenLabel, fullTokenInfo } = props;
+  const { getTokenByMintAddress } = useContext(AppStateContext);
+
   const token = getTokenByMintAddress(mintAddress);
 
   return (

@@ -4,12 +4,12 @@ import { Modal, Button, Select, Divider, Input, Spin } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
 import { TokenInfo } from '@solana/spl-token-registry';
-import { getTokenByMintAddress, NATIVE_SOL } from '../../utils/tokens';
+import { NATIVE_SOL } from '../../utils/tokens';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { TokenDisplay } from '../TokenDisplay';
 import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
 import { IconCheckedBox } from '../../Icons';
-import { consoleOut, getTransactionOperationDescription, isValidAddress } from '../../utils/ui';
+import { consoleOut, getTransactionOperationDescription, isProd, isValidAddress } from '../../utils/ui';
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { TransactionStatus } from '../../models/enums';
 import { useWallet } from '../../contexts/wallet';
@@ -30,15 +30,16 @@ export const MultisigCreateAssetModal = (props: {
   transactionFees: TransactionFees;
   // tokens: any[]
 }) => {
-  const {
-    tokenList,
-    transactionStatus,
-    setTransactionStatus
-  } = useContext(AppStateContext);
-
   const { t } = useTranslation('common');
   const connection = useConnection();
   const { publicKey } = useWallet();
+  const {
+    tokenList,
+    splTokenList,
+    transactionStatus,
+    setTransactionStatus,
+    getTokenByMintAddress,
+  } = useContext(AppStateContext);
   const [token, setToken] = useState<TokenInfo>();
   const [customToken, setCustomToken] = useState("");
 
@@ -84,13 +85,16 @@ export const MultisigCreateAssetModal = (props: {
 
   useEffect(() => {
 
-    if (!connection || !publicKey || !tokenList.length) {
+    if (!connection || !publicKey || !tokenList.length || !splTokenList.length) {
       return;
     }
 
     const timeout = setTimeout(() => {
-      consoleOut('tokenList:', tokenList, 'blue');
-      setToken(tokenList[0]);
+      const token = isProd()
+        ? splTokenList[0]
+        : tokenList[0]
+      consoleOut('token:', token, 'blue');
+      setToken(token);
     });
 
     return () => {
@@ -98,9 +102,10 @@ export const MultisigCreateAssetModal = (props: {
     }
 
   }, [
-    connection, 
-    publicKey, 
-    tokenList
+    tokenList,
+    publicKey,
+    connection,
+    splTokenList
   ]);
 
   ////////////////
@@ -165,7 +170,7 @@ export const MultisigCreateAssetModal = (props: {
       // toggleOverflowEllipsisMiddle(false);
     }
 
-  },[]);
+  },[getTokenByMintAddress]);
 
   const onCustomTokenChange = useCallback((e: any) => {
     setCustomToken(e.target.value);

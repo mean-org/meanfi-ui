@@ -15,6 +15,12 @@
         }
     }
 
+    .utility-box {
+        @media (min-width: 576px) {
+            margin-right: 10px;
+        }
+    }
+
     .inner-container {
 
         .item-block {
@@ -226,6 +232,12 @@
         .mean-svg-icons {
             font-size: inherit;
             color: inherit;
+        }
+    }
+
+    .cta-row {
+        button.ant-btn.ant-btn-round.ant-btn-sm {
+            min-width: 90px;
         }
     }
 }

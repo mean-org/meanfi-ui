@@ -187,6 +187,11 @@ export function isValidNumber(str: string): boolean {
   return INPUT_AMOUNT_PATTERN.test(str);
 }
 
+/**
+ * Gets a token as TokenInfo from a given token list based on the mint address.
+ *
+ * @deprecated Moved to the AppState. Use getTokenByMintAddress from the AppState instead.
+ */
 export const getTokenByMintAddress = (address: string, tokenList?: TokenInfo[]): TokenInfo | undefined => {
   const tokenFromTokenList = tokenList && isProd()
     ? tokenList.find(t => t.address === address)
@@ -330,7 +335,7 @@ export async function signTransaction(
   transaction: Transaction,
   signers: Array<Account> = []
 ) {
-  transaction.recentBlockhash = (await connection.getRecentBlockhash()).blockhash
+  transaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash
   transaction.setSigners(wallet.publicKey, ...signers.map((s) => s.publicKey))
   if (signers.length > 0) {
     transaction.partialSign(...signers)
@@ -402,7 +407,7 @@ async function covertToProgramWalletTransaction(
 
 ) {
 
-  const { blockhash } = await connection.getRecentBlockhash(connection.commitment);
+  const { blockhash } = await connection.getLatestBlockhash(connection.commitment);
 
   transaction.recentBlockhash = blockhash;
   transaction.feePayer = wallet.publicKey;

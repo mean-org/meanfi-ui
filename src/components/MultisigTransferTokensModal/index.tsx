@@ -9,7 +9,7 @@ import { consoleOut, getTransactionOperationDescription, isValidAddress } from '
 import { isError } from '../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TransactionFees } from '@mean-dao/money-streaming';
-import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, isValidNumber, shortenAddress, toUiAmount } from '../../utils/utils';
+import { formatAmount, getTokenAmountAndSymbolByTokenAddress, isValidNumber, shortenAddress, toUiAmount } from '../../utils/utils';
 import { useConnection } from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
 import { PublicKey } from '@solana/web3.js';
@@ -36,11 +36,12 @@ export const MultisigTransferTokensModal = (props: {
   const connection = useConnection();
   const { publicKey } = useWallet();
   const {
-    transactionStatus,
     selectedToken,
     loadingPrices,
     effectiveRate,
-    refreshPrices
+    transactionStatus,
+    getTokenByMintAddress,
+    refreshPrices,
   } = useContext(AppStateContext);
 
   const [fromVault, setFromVault] = useState<MultisigVault>();

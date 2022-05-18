@@ -1,11 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Modal } from "antd";
 import { JupiterExchange } from '../../views';
-import { useLocalStorageState } from '../../utils/utils';
+import { getTokenBySymbol, useLocalStorageState } from '../../utils/utils';
 import { getLiveRpc, RpcConfig } from '../../models/connections-hq';
 import { useNavigate } from 'react-router-dom';
 import { Connection } from '@solana/web3.js';
-import { getTokenBySymbol } from '../../utils/tokens';
 import { consoleOut } from '../../utils/ui';
 import { TokenInfo } from '@solana/spl-token-registry';
 
@@ -47,12 +46,12 @@ export const ExchangeAssetModal = (props: {
 
   useEffect(() => {
     if (connection && tokenSymbol && isVisible) {
-      let from: TokenInfo | null = null;
+      let from: TokenInfo | undefined = undefined;
       from = tokenSymbol
         ? tokenSymbol === 'SOL'
           ? getTokenBySymbol('wSOL')
           : getTokenBySymbol(tokenSymbol)
-        : null;
+        : undefined;
       if (from) {
         setFromMint(from.address);
         consoleOut('from.address:', from.address, 'blue');

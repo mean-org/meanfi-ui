@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { Button } from 'antd';
 import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume } from '../../utils/utils';
 import { AppStateContext } from '../../contexts/appstate';
@@ -141,7 +141,7 @@ export const IdoLpWithdraw = (props: {
     }
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (wallet && publicKey) {
         consoleOut('Signing transaction...');
         return await wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
@@ -159,7 +159,7 @@ export const IdoLpWithdraw = (props: {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('Withdraw Mean Lp transaction failed', { transcript: transactionLog });
             return false;
@@ -170,7 +170,7 @@ export const IdoLpWithdraw = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58()}
+            result: {signer: publicKey.toBase58()}
           });
           return true;
         })
@@ -182,7 +182,7 @@ export const IdoLpWithdraw = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logWarning('Withdraw Mean Lp transaction failed', { transcript: transactionLog });
           return false;
@@ -352,7 +352,7 @@ export const IdoLpWithdraw = (props: {
     }
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (wallet && publicKey) {
         consoleOut('Signing transaction...');
         return await wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
@@ -370,7 +370,7 @@ export const IdoLpWithdraw = (props: {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('Collect Mean funds transaction failed', { transcript: transactionLog });
             return false;
@@ -381,7 +381,7 @@ export const IdoLpWithdraw = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58()}
+            result: {signer: publicKey.toBase58()}
           });
           return true;
         })
@@ -393,7 +393,7 @@ export const IdoLpWithdraw = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logWarning('Collect Mean funds transaction failed', { transcript: transactionLog });
           return false;

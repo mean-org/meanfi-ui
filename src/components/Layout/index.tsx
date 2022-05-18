@@ -26,6 +26,7 @@ import { AppUsageEvent } from "../../utils/segment-service";
 import { openNotification } from "../Notifications";
 import { TxConfirmationContext } from "../../contexts/transaction-status";
 import { TransactionConfirmationHistory } from "../TransactionConfirmationHistory";
+import { shortenAddress } from "../../utils/utils";
 
 const { Header, Content, Footer } = Layout;
 
@@ -57,7 +58,7 @@ export const AppLayout = React.memo((props: any) => {
   const { t, i18n } = useTranslation("common");
   const { isOnline, responseTime } = useOnlineStatus();
   const connectionConfig = useConnectionConfig();
-  const { provider, connected, publicKey } = useWallet();
+  const { provider, connected, publicKey, isSelecting, connect } = useWallet();
   const [previousChain, setChain] = useState("");
   const [gaInitialized, setGaInitialized] = useState(false);
   const [referralAddress, setReferralAddress] = useLocalStorage('pendingReferral', '');
@@ -272,6 +273,11 @@ export const AppLayout = React.memo((props: any) => {
       if (!previousWalletConnectState && connected) {
         if (publicKey) {
           const walletAddress = publicKey.toBase58();
+          openNotification({
+            type: "success",
+            title: t('notifications.wallet-connection-event-title'),
+            description: t('notifications.wallet-connect-message', {address: shortenAddress(walletAddress)}),
+          });
 
           // Record user login in Segment Analytics
           segmentAnalytics.recordIdentity(walletAddress, {
@@ -457,56 +463,71 @@ export const AppLayout = React.memo((props: any) => {
     t
   ]);
 
+  if (!connected) {
+    setTimeout(() => {
+      if (!connected && !isSelecting) {
+        connect();
+      }
+    }, 250);
+    return (
+      <>
+        <div className="background-logo-container">
+          <img className="meanfi-bg-logo" src="/assets/mean-square.svg" alt="" />
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
-    <div className="App">
-      <Layout>
-        {(isProd() && (tpsAvg !== undefined && tpsAvg !== null) && tpsAvg < PERFORMANCE_THRESHOLD) && (
-          <div id="performance-warning-bar">
-            <div className="sitemessage">
-              <a className="simplelink underline-on-hover" target="_blank" rel="noopener noreferrer" href={SOLANA_STATUS_PAGE}>
-                {t('notifications.network-performance-low')}
-              </a>
+      <div className="App">
+        <Layout>
+          {(isProd() && (tpsAvg !== undefined && tpsAvg !== null) && tpsAvg < PERFORMANCE_THRESHOLD) && (
+            <div id="performance-warning-bar">
+              <div className="sitemessage">
+                <a className="simplelink underline-on-hover" target="_blank" rel="noopener noreferrer" href={SOLANA_STATUS_PAGE}>
+                  {t('notifications.network-performance-low')} [TPS: {tpsAvg}]
+                </a>
+              </div>
             </div>
+          )}
+          <Header className="App-Bar">
+            {(detailsPanelOpen || (addAccountPanelOpen && !canShowAccountDetails)) && (
+              <BackButton handleClose={() => closeAllPanels()} />
+            )}
+            <div className="app-bar-inner">
+              <Link to="/" className="flex-center">
+                <div className="app-title simplelink">
+                  <img className="app-logo" src={theme === 'dark' ? '/assets/mean-pay-logo-color-light.svg' : '/assets/mean-pay-logo-color-dark.svg'} alt="Mean Finance" />
+                </div>
+              </Link>
+              <AppBar menuType="desktop" onOpenDrawer={showDrawer} topNavVisible={(location.pathname === '/ido' || location.pathname === '/ido-live') ? false : true} />
+            </div>
+            <AppBar menuType="mobile" topNavVisible={false} onOpenDrawer={showDrawer} />
+          </Header>
+          <Content>{props.children}</Content>
+          <Footer>
+            <FooterBar onOpenDrawer={showDrawer}/>
+          </Footer>
+        </Layout>
+      </div>
+      <Drawer
+        title={<div className="ant-drawer-header-title">Recent events</div>}
+        placement="right"
+        width={360}
+        onClose={hideDrawer}
+        className="recent-events"
+        visible={isDrawerVisible}>
+        {confirmationHistory && confirmationHistory.length > 0 ? (
+          <TransactionConfirmationHistory confirmationHistory={confirmationHistory} />
+        ) : (
+          <div className="flex-center h-50">
+            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{connected
+            ? t('account-area.no-recent-events')
+            : t('general.not-connected')}</p>} />
           </div>
         )}
-        <Header className="App-Bar">
-          {(detailsPanelOpen || (addAccountPanelOpen && !canShowAccountDetails)) && (
-            <BackButton handleClose={() => closeAllPanels()} />
-          )}
-          <div className="app-bar-inner">
-            <Link to="/" className="flex-center">
-              <div className="app-title simplelink">
-                <img className="app-logo" src={theme === 'dark' ? '/assets/mean-pay-logo-color-light.svg' : '/assets/mean-pay-logo-color-dark.svg'} alt="Mean Finance" />
-              </div>
-            </Link>
-            <AppBar menuType="desktop" onOpenDrawer={showDrawer} topNavVisible={(location.pathname === '/ido' || location.pathname === '/ido-live') ? false : true} />
-          </div>
-          <AppBar menuType="mobile" topNavVisible={false} onOpenDrawer={showDrawer} />
-        </Header>
-        <Content>{props.children}</Content>
-        <Footer>
-          <FooterBar onOpenDrawer={showDrawer}/>
-        </Footer>
-      </Layout>
-    </div>
-    <Drawer
-      title={<div className="ant-drawer-header-title">Recent events</div>}
-      placement="right"
-      width={360}
-      onClose={hideDrawer}
-      className="recent-events"
-      visible={isDrawerVisible}>
-      {confirmationHistory && confirmationHistory.length > 0 ? (
-        <TransactionConfirmationHistory confirmationHistory={confirmationHistory} />
-      ) : (
-        <div className="flex-center h-50">
-          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{connected
-          ? t('treasuries.treasury-list.no-treasuries')
-          : t('general.not-connected')}</p>} />
-        </div>
-      )}
-    </Drawer>
+      </Drawer>
     </>
   );
 });

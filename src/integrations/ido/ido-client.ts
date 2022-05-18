@@ -282,7 +282,7 @@ export class IdoClient {
         );
 
         initializeIdoTx.feePayer = idoAuthority;
-        const hash = await this.connection.getRecentBlockhash(this.connection.commitment);
+        const hash = await this.connection.getLatestBlockhash(this.connection.commitment);
         initializeIdoTx.recentBlockhash = hash.blockhash;
         initializeIdoTx.partialSign(idoWithdrawals);
 
@@ -355,7 +355,7 @@ export class IdoClient {
         );
 
         depositUsdcTx.feePayer = currentUserPubKey;
-        const hash = await this.connection.getRecentBlockhash(this.connection.commitment);
+        const hash = await this.connection.getLatestBlockhash(this.connection.commitment);
         depositUsdcTx.recentBlockhash = hash.blockhash;
 
         return [userIdo, depositUsdcTx];
@@ -435,7 +435,7 @@ export class IdoClient {
         );
 
         withdrawUsdcTx.feePayer = currentUserPubKey;
-        const hash = await this.connection.getRecentBlockhash(this.connection.commitment);
+        const hash = await this.connection.getLatestBlockhash(this.connection.commitment);
         withdrawUsdcTx.recentBlockhash = hash.blockhash;
 
         return [userIdo, withdrawUsdcTx];
@@ -495,7 +495,7 @@ export class IdoClient {
         );
 
         withdrawMeanLpTx.feePayer = currentUserPubKey;
-        const hash = await this.connection.getRecentBlockhash(this.connection.commitment);
+        const hash = await this.connection.getLatestBlockhash(this.connection.commitment);
         withdrawMeanLpTx.recentBlockhash = hash.blockhash;
 
         return [userIdo, withdrawMeanLpTx];
@@ -530,7 +530,7 @@ export class IdoClient {
         );
 
         createWithdrawalsTx.feePayer = idoAuthorityPubkey;
-        const hash = await this.connection.getRecentBlockhash(this.connection.commitment);
+        const hash = await this.connection.getLatestBlockhash(this.connection.commitment);
         createWithdrawalsTx.recentBlockhash = hash.blockhash;
 
         return [withdrawalsKeypair, createWithdrawalsTx];
@@ -569,7 +569,7 @@ export class IdoClient {
         );
 
         updateTx.feePayer = idoAuthorityAddress;
-        const hash = await this.connection.getRecentBlockhash(this.connection.commitment);
+        const hash = await this.connection.getLatestBlockhash(this.connection.commitment);
         updateTx.recentBlockhash = hash.blockhash;
 
         return updateTx;
@@ -637,7 +637,7 @@ export class IdoClient {
         );
 
         withdrawUsdcTx.feePayer = currentUserPubKey;
-        const hash = await this.connection.getRecentBlockhash(this.connection.commitment);
+        const hash = await this.connection.getLatestBlockhash(this.connection.commitment);
         withdrawUsdcTx.recentBlockhash = hash.blockhash;
 
         return withdrawUsdcTx;
@@ -698,7 +698,7 @@ export class IdoClient {
         );
 
         redeemTx.feePayer = currentUserPubKey;
-        const hash = await this.connection.getRecentBlockhash(this.connection.commitment);
+        const hash = await this.connection.getLatestBlockhash(this.connection.commitment);
         redeemTx.recentBlockhash = hash.blockhash;
 
         return redeemTx;
@@ -762,7 +762,7 @@ export class IdoClient {
         //     },
         // });
         // tx.feePayer = IDO_READONLY_PUBKEY;
-        // let hash = await this.readonlyProgram.provider.connection.getRecentBlockhash();
+        // let hash = await this.readonlyProgram.provider.connection.getLatestBlockhash();
         // tx.recentBlockhash = hash.blockhash;
         // console.log(tx.serialize({requireAllSignatures: false, verifySignatures: false}).toString("base64"));
 

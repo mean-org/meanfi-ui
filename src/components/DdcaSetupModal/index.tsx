@@ -398,7 +398,7 @@ export const DdcaSetupModal = (props: {
     }
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (wallet && publicKey) {
         consoleOut('Signing transaction...');
         return await wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
@@ -416,7 +416,7 @@ export const DdcaSetupModal = (props: {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('DDCA Create vault transaction failed', { transcript: transactionLog });
             return false;
@@ -427,7 +427,7 @@ export const DdcaSetupModal = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58()}
+            result: {signer: publicKey.toBase58()}
           });
           return true;
         })
@@ -439,7 +439,7 @@ export const DdcaSetupModal = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logWarning('DDCA Create vault transaction failed', { transcript: transactionLog });
           return false;
@@ -649,7 +649,7 @@ export const DdcaSetupModal = (props: {
     }
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (wallet && publicKey) {
         consoleOut('Signing transaction...');
         return await wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
@@ -667,7 +667,7 @@ export const DdcaSetupModal = (props: {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('WakeAndSwap transaction failed', { transcript: transactionLog });
             return false;
@@ -678,7 +678,7 @@ export const DdcaSetupModal = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58()}
+            result: {signer: publicKey.toBase58()}
           });
           return true;
         })
@@ -690,7 +690,7 @@ export const DdcaSetupModal = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logWarning('WakeAndSwap transaction failed', { transcript: transactionLog });
           return false;

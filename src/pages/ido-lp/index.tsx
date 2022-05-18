@@ -14,7 +14,7 @@ import { useLocation } from 'react-router-dom';
 import { useConnectionConfig } from '../../contexts/connection';
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
 import { appConfig } from '../..';
-import { CUSTOM_USDC, MEAN_TOKEN_LIST } from '../../constants/token-list';
+import { CUSTOM_USDC_TEST_IDO_DEVNET, MEAN_TOKEN_LIST } from '../../constants/token-list';
 import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { ClockCircleFilled } from '@ant-design/icons';
 import { openNotification } from '../../components/Notifications';
@@ -130,9 +130,9 @@ export const IdoLpView = () => {
         setSelectedToken(usdc);
       }
     } else {
-      if (!selectedToken || selectedToken.address !== CUSTOM_USDC.address) {
+      if (!selectedToken || selectedToken.address !== CUSTOM_USDC_TEST_IDO_DEVNET.address) {
         consoleOut('Selecting custom USDC');
-        setSelectedToken(CUSTOM_USDC);
+        setSelectedToken(CUSTOM_USDC_TEST_IDO_DEVNET);
       }
     }
   },[
@@ -326,7 +326,7 @@ export const IdoLpView = () => {
       // User is connecting
       if (!previousWalletConnectState && connected && publicKey) {
         consoleOut('Nothing to do yet...', '', 'blue');
-        setSelectedToken(CUSTOM_USDC);
+        setSelectedToken(CUSTOM_USDC_TEST_IDO_DEVNET);
         setIdoEngineInitStatus("uninitialized");
         setForceRefreshIdoStatus(true);
       } else if (previousWalletConnectState && !connected) {
