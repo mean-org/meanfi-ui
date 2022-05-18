@@ -43,7 +43,7 @@ export const StakingRewardsView = () => {
   const [depositsInfo, setDepositsInfo] = useState<DepositsInfo | undefined>(undefined);
   const [refreshingDepositsInfo, setRefreshingDepositsInfo] = useState<boolean>(false);
   const [shouldRefreshDepositsInfo, setShouldRefreshDepositsInfo] = useState(true);
-  const [lastDepositSignature, setLastDepositSignature] = useState('');
+  const [, setLastDepositSignature] = useState('');
   // Tokens and balances
   const [meanToken, setMeanToken] = useState<TokenInfo>();
   const [meanBalance, setMeanBalance] = useState<number | undefined>(undefined);
@@ -381,7 +381,7 @@ export const StakingRewardsView = () => {
     };
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (wallet && publicKey) {
         consoleOut("Signing transaction...");
         return await wallet
           .signTransaction(transaction)
@@ -406,7 +406,7 @@ export const StakingRewardsView = () => {
                   TransactionStatus.SignTransactionFailure
                 ),
                 result: {
-                  signer: `${wallet.publicKey.toBase58()}`,
+                  signer: `${publicKey.toBase58()}`,
                   error: `${error}`,
                 },
               });
@@ -423,7 +423,7 @@ export const StakingRewardsView = () => {
               action: getTransactionStatusForLogs(
                 TransactionStatus.SignTransactionSuccess
               ),
-              result: { signer: wallet.publicKey.toBase58() },
+              result: { signer: publicKey.toBase58() },
             });
             return true;
           })
@@ -438,7 +438,7 @@ export const StakingRewardsView = () => {
                 TransactionStatus.SignTransactionFailure
               ),
               result: {
-                signer: `${wallet.publicKey.toBase58()}`,
+                signer: `${publicKey.toBase58()}`,
                 error: `${error}`,
               },
             });

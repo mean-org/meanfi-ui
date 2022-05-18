@@ -52,6 +52,7 @@ export { IconOutgoingPaused } from "./IconOutgoingPaused";
 export { IconPause } from "./IconPause";
 export { IconPayroll } from "./IconPayroll";
 export { IconPlay } from "./IconPlay";
+export { IconPulse } from "./IconPulse";
 export { IconRefresh } from "./IconRefresh";
 export { IconReject } from "./IconReject";
 export { IconSafe } from "./IconSafe";

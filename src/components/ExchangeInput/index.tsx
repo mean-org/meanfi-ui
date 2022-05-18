@@ -21,19 +21,11 @@ export const ExchangeInput = (props: {
 }) => {
     const { t } = useTranslation("common");
     const {
-        coinPrices,
         loadingPrices,
+        getTokenPriceBySymbol,
         refreshPrices,
     } = useContext(AppStateContext);
     const { publicKey } = useWallet();
-
-    const getPricePerToken = (token: TokenInfo): number => {
-        if (!token || !coinPrices) { return 0; }
-
-        return coinPrices && coinPrices[token.symbol]
-            ? coinPrices[token.symbol]
-            : 0;
-    }
 
     return (
         <>
@@ -61,7 +53,7 @@ export const ExchangeInput = (props: {
                                         {`(~${
                                         props.token && props.tokenBalance
                                             ? toUsCurrency(
-                                                parseFloat(props.tokenBalance) * getPricePerToken(props.token as TokenInfo)
+                                                parseFloat(props.tokenBalance) * getTokenPriceBySymbol(props.token.symbol)
                                             )
                                             : "$0.00"
                                         })`}
@@ -77,7 +69,7 @@ export const ExchangeInput = (props: {
                             <>
                                 <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
                                 ~{props.token && props.tokenBalance
-                                    ? toUsCurrency(parseFloat(props.tokenBalance) * getPricePerToken(props.token as TokenInfo))
+                                    ? toUsCurrency(parseFloat(props.tokenBalance) * getTokenPriceBySymbol(props.token.symbol))
                                     : "$0.00"
                                 }
                                 </span>

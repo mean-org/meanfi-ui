@@ -14,7 +14,7 @@ import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout, Token, TOKEN_PR
 import { useLocation, useNavigate } from 'react-router-dom';
 import { consoleOut, copyText, delay, getShortDate, getTransactionStatusForLogs, isLocal } from '../../utils/ui';
 import { Identicon } from '../../components/Identicon';
-import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, getTxIxResume, makeDecimal, shortenAddress } from '../../utils/utils';
+import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, makeDecimal, shortenAddress } from '../../utils/utils';
 import { TransactionFees } from '@mean-dao/msp';
 import { MultisigCreateAssetModal } from '../../components/MultisigCreateAssetModal';
 import { useNativeAccount } from '../../contexts/accounts';
@@ -32,7 +32,6 @@ import { ProposalSummaryModal } from '../../components/ProposalSummaryModal';
 import { openNotification } from '../../components/Notifications';
 import { MultisigVault } from '../../models/multisig';
 import {
-
   DEFAULT_EXPIRATION_TIME_SECONDS,
   getMultisigTransactionSummary,
   MeanMultisig,
@@ -41,12 +40,7 @@ import {
   MultisigTransaction,
   MultisigTransactionStatus, 
   MultisigTransactionSummary
-
 } from "@mean-dao/mean-multisig-sdk";
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-// eslint-disable-next-line no-unused-vars
-// const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const MultisigAssetsView = () => {
   const location = useLocation();
@@ -55,16 +49,15 @@ export const MultisigAssetsView = () => {
   const connectionConfig = useConnectionConfig();
   const { publicKey, wallet, connected } = useWallet();
   const {
-    // theme,
     tokenList,
-    // isWhitelisted,
     detailsPanelOpen,
     transactionStatus,
-    setDtailsPanelOpen,
-    refreshTokenBalance,
-    setTransactionStatus,
-    setHighLightableMultisigId,
     previousWalletConnectState,
+    setHighLightableMultisigId,
+    getTokenByMintAddress,
+    setTransactionStatus,
+    refreshTokenBalance,
+    setDtailsPanelOpen,
   } = useContext(AppStateContext);
   const {
     fetchTxInfoStatus,
@@ -1130,7 +1123,7 @@ export const MultisigAssetsView = () => {
     }
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (wallet && publicKey) {
         consoleOut('Signing transaction...');
         return await wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
@@ -1148,7 +1141,7 @@ export const MultisigAssetsView = () => {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('Multisig Create Vault transaction failed', { transcript: transactionLog });
             return false;
@@ -1159,7 +1152,7 @@ export const MultisigAssetsView = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58()}
+            result: {signer: publicKey.toBase58()}
           });
           return true;
         })
@@ -1171,7 +1164,7 @@ export const MultisigAssetsView = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logError('Multisig Create Vault transaction failed', { transcript: transactionLog });
           return false;
@@ -1499,7 +1492,7 @@ export const MultisigAssetsView = () => {
     }
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (wallet && publicKey) {
         consoleOut('Signing transaction...');
         return await wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
@@ -1517,7 +1510,7 @@ export const MultisigAssetsView = () => {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('Transfer tokens transaction failed', { transcript: transactionLog });
             return false;
@@ -1528,7 +1521,7 @@ export const MultisigAssetsView = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58()}
+            result: {signer: publicKey.toBase58()}
           });
           return true;
         })
@@ -1540,7 +1533,7 @@ export const MultisigAssetsView = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logError('Transfer tokens transaction failed', { transcript: transactionLog });
           return false;
@@ -1810,7 +1803,7 @@ export const MultisigAssetsView = () => {
     }
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (wallet && publicKey) {
         consoleOut('Signing transaction...');
         return await wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
@@ -1828,7 +1821,7 @@ export const MultisigAssetsView = () => {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('Transfer Vault Authority transaction failed', { transcript: transactionLog });
             return false;
@@ -1839,7 +1832,7 @@ export const MultisigAssetsView = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58()}
+            result: {signer: publicKey.toBase58()}
           });
           return true;
         })
@@ -1851,7 +1844,7 @@ export const MultisigAssetsView = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logError('Transfer Vault Authority transaction failed', { transcript: transactionLog });
           return false;
@@ -2113,7 +2106,7 @@ export const MultisigAssetsView = () => {
     }
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (wallet && publicKey) {
         consoleOut('Signing transaction...');
         return await wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
@@ -2131,7 +2124,7 @@ export const MultisigAssetsView = () => {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('Delete Vault transaction failed', { transcript: transactionLog });
             return false;
@@ -2142,7 +2135,7 @@ export const MultisigAssetsView = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58()}
+            result: {signer: publicKey.toBase58()}
           });
           return true;
         })
@@ -2154,7 +2147,7 @@ export const MultisigAssetsView = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logError('Delete Vault transaction failed', { transcript: transactionLog });
           return false;
@@ -2378,7 +2371,7 @@ export const MultisigAssetsView = () => {
     }
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (wallet && publicKey) {
         consoleOut('Signing transaction...');
         return await wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
@@ -2396,7 +2389,7 @@ export const MultisigAssetsView = () => {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('Multisig Approve transaction failed', { transcript: transactionLog });
             return false;
@@ -2407,7 +2400,7 @@ export const MultisigAssetsView = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58()}
+            result: {signer: publicKey.toBase58()}
           });
           return true;
         })
@@ -2419,7 +2412,7 @@ export const MultisigAssetsView = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logError('Multisig Approve transaction failed', { transcript: transactionLog });
           return false;
@@ -2643,7 +2636,7 @@ export const MultisigAssetsView = () => {
     }
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (wallet && publicKey) {
         consoleOut('Signing transaction...');
         return await wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
@@ -2661,7 +2654,7 @@ export const MultisigAssetsView = () => {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('Finish Approoved transaction failed', { transcript: transactionLog });
             return false;
@@ -2672,7 +2665,7 @@ export const MultisigAssetsView = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58()}
+            result: {signer: publicKey.toBase58()}
           });
           return true;
         })
@@ -2684,7 +2677,7 @@ export const MultisigAssetsView = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logError('Finish Approoved transaction failed', { transcript: transactionLog });
           return false;
@@ -2915,7 +2908,7 @@ export const MultisigAssetsView = () => {
     }
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (wallet && publicKey) {
         consoleOut('Signing transaction...');
         return await wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
@@ -2933,7 +2926,7 @@ export const MultisigAssetsView = () => {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('Finish Cancel transaction failed', { transcript: transactionLog });
             return false;
@@ -2944,7 +2937,7 @@ export const MultisigAssetsView = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58()}
+            result: {signer: publicKey.toBase58()}
           });
           return true;
         })
@@ -2956,7 +2949,7 @@ export const MultisigAssetsView = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logError('Finish Cancel transaction failed', { transcript: transactionLog });
           return false;

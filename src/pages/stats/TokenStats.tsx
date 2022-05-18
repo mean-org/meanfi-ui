@@ -9,12 +9,11 @@ import { Link } from 'react-router-dom';
 import { PriceGraph } from './PriceGraph';
 import CardStats from './components/CardStats';
 import { AppStateContext } from "../../contexts/appstate";
-import { useCallback, useContext } from "react";
-import { TokenInfo } from '@solana/spl-token-registry';
+import { useContext } from "react";
 import { formatThousands } from "../../utils/utils";
 import { openNotification } from "../../components/Notifications";
 
-export const TokenStats = ({ 
+export const TokenStats = ({
   meanDecimals, 
   meanMintAuth,
   meanTotalSupply,
@@ -40,7 +39,7 @@ export const TokenStats = ({
 };
 
 /*********************** FIRST TYPE OF CARDS *************************/
-export const FirstCardsLayout = ({ 
+export const FirstCardsLayout = ({
   meanDecimals,
   meanMintAuth,
   meanToken
@@ -68,17 +67,7 @@ export const FirstCardsLayout = ({
     }
   ];
 
-  const {
-    coinPrices,
-  } = useContext(AppStateContext);
-
-  const getPricePerToken = useCallback((token: TokenInfo): number => {
-    if (!token || !coinPrices) { return 0; }
-
-    return coinPrices && coinPrices[token.symbol]
-      ? coinPrices[token.symbol]
-      : 0;
-  }, [coinPrices])
+  const { getTokenPriceBySymbol } = useContext(AppStateContext);
 
   // Returns an information or error notification each time the copy icon is clicked
   const onCopyText = (event: any) => { 
@@ -151,8 +140,8 @@ export const FirstCardsLayout = ({
     <div className="ant-card-head-title">
       <span>{t("stats.price.price-title")}</span>
       {
-        coinPrices && meanToken ? (
-          <span>$ {getPricePerToken(meanToken as TokenInfo)}</span>
+        meanToken ? (
+          <span>$ {getTokenPriceBySymbol(meanToken.symbol)}</span>
           ) : (
           <span>0</span>
         )

@@ -915,6 +915,7 @@
 		"modal-title": "Chọn một token",
 		"no-matches": "Không tìm thấy",
 		"search-input-placeholder": "Tìm token theo tên, ký hiệu hoặc địa chỉ",
+		"lookup-add-asset-input-placeholder": "Nhập tên mã thông báo, ký hiệu hoặc địa chỉ",
 		"wrap-sol-first": "hoán đổi qua wSOL trước"
 	},
 	"transactions": {
@@ -1290,9 +1291,10 @@
 		}
 	},
 	"wallet-selector": {
+		"connect-to-begin": "In order to use MeanFi you need to connect to a Solana wallet.",
 		"more-options-collapsed": "Mở thêm tùy chọn",
 		"more-options-expanded": "Mở bớt tùy chọn",
-		"primary-action": "Chọn"
+		"primary-action": "Kết nối ví"
 	},
 	"withdraw-funds": {
 		"button-title": "Withdraw funds",

@@ -1,6 +1,5 @@
 import { TokenAmount } from './safe-math';
 import { NATIVE_SOL_MINT, WRAPPED_SOL_MINT } from './ids';
-import { MEAN_TOKEN_LIST } from '../constants/token-list';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { isProd } from './ui';
 
@@ -28,46 +27,6 @@ export interface CustomTokenInfo {
   balance?: TokenAmount,
   readonly logoURI?: string;
   tags: string[]
-}
-
-/**
- * Get token use symbol
- * @param {string} symbol
- * @returns {TokenInfo | null} tokenInfo
- */
-export function getTokenBySymbol(symbol: string): TokenInfo | null {
-  if (symbol === 'SOL') {
-    return JSON.parse(JSON.stringify(NATIVE_SOL));
-  }
-
-  const token = MEAN_TOKEN_LIST.find(t => t.symbol === symbol);
-
-  if (!token) { return null; }
-
-  return token as TokenInfo;
-}
-
-/**
- * Get token use mint addresses
- * @param {string} address
- * @returns {TokenInfo | null} tokenInfo
- */
-export function getTokenByMintAddress(address: string): TokenInfo | null {
-  if (!address) { return null; }
-
-  if (address === NATIVE_SOL.address) {
-    return JSON.parse(JSON.stringify(NATIVE_SOL));
-  }
-
-  let token = null;
-
-  for (const info of MEAN_TOKEN_LIST) {
-    if (info.address === address) {
-      token = info as TokenInfo;
-    }
-  }
-
-  return token;
 }
 
 export const NATIVE_SOL: TokenInfo = {
@@ -184,104 +143,3 @@ export const LP_TOKENS: Tokens = {
     decimals: TOKENS.ETH.decimals
   },
 }
-
-function addUserLocalCoinMint() {
-  const localMintStr = window.localStorage.user_add_coin_mint
-  const localMintList = (localMintStr ?? '').split('---')
-  if (localMintList.length % 3 !== 0) {
-    window.localStorage.removeItem('user_add_coin_mint')
-  } else {
-    for (let index = 0; index < Math.floor(localMintList.length / 3); index += 1) {
-      const name = localMintList[index * 3 + 0]
-      const address = localMintList[index * 3 + 1]
-      const decimals = localMintList[index * 3 + 2]
-      if (!Object.values(TOKENS).find((item) => item.address === address)) {
-        TOKENS[name + address + 'unofficialUserAdd'] = {
-          name,
-          symbol: name,
-          decimals: parseInt(decimals),
-          address,
-          tags: ['userAdd']
-        }
-      } else if (
-        !Object.values(TOKENS)
-          .find((item) => item.address === address)
-          .tags.includes('userAdd')
-      ) {
-        TOKENS[name].tags.push('userAdd')
-      }
-    }
-  }
-}
-
-function addTokensSolana() {
-  fetch('https://api.raydium.io/cache/solana-token-list')
-    .then(async (response) => {
-      addTokensSolanaFunc((await response.json()).tokens)
-    })
-    .catch(() => {
-      fetch('https://raw.githubusercontent.com/solana-labs/token-list/main/src/tokens/solana.tokenlist.json')
-        .then(function (response) {
-          return response.json()
-        })
-        .then(function (myJson) {
-          addTokensSolanaFunc(myJson.tokens)
-        })
-    })
-}
-
-function addTokensSolanaFunc(tokens: any[]) {
-  tokens.forEach((itemToken: any) => {
-    if (itemToken.tags && itemToken.tags.includes('lp-token')) {
-      return
-    }
-    if (!Object.values(TOKENS).find((item) => item.address === itemToken.address)) {
-      TOKENS[itemToken.symbol + itemToken.address + 'solana'] = {
-        symbol: itemToken.symbol,
-        name: itemToken.name,
-        address: itemToken.address,
-        decimals: itemToken.decimals,
-        picUrl: itemToken.logoURI,
-        tags: ['solana']
-      }
-    } else {
-      const token = Object.values(TOKENS).find((item) => item.address === itemToken.address)
-      if (token.symbol !== itemToken.symbol && !token.tags.includes('raydium')) {
-        token.symbol = itemToken.symbol
-        token.name = itemToken.name
-        token.decimals = itemToken.decimals
-        token.tags.push('solana')
-      }
-      const picToken = Object.values(TOKENS).find((item) => item.address === itemToken.address)
-      if (picToken) {
-        picToken.picUrl = itemToken.logoURI
-      }
-    }
-  })
-
-  if (window.localStorage.addSolanaCoin) {
-    window.localStorage.addSolanaCoin.split('---').forEach((itemMint: string) => {
-      if (itemMint === NATIVE_SOL.address) NATIVE_SOL.tags?.push('userAdd')
-      else
-        Object.keys(TOKENS).forEach((item) => {
-          if (TOKENS[item].address === itemMint) {
-            TOKENS[item].tags.push('userAdd')
-          }
-        })
-    })
-  }
-}
-
-function updateTokenTagsChange() {
-  const userSelectSource = window.localStorage.userSelectSource ?? ''
-  const userSelectSourceList: string[] = userSelectSource.split('---')
-  for (const itemSource of userSelectSourceList) {
-    if (TOKENS_TAGS[itemSource] && !TOKENS_TAGS[itemSource].mustShow) {
-      TOKENS_TAGS[itemSource].show = true
-    }
-  }
-}
-
-addUserLocalCoinMint();
-// addTokensSolana();
-updateTokenTagsChange();

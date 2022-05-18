@@ -916,6 +916,7 @@
 		"modal-title": "토큰 선택",
 		"no-matches": "검색 결과가 없습니다",
 		"search-input-placeholder": "이름, 기호 또는 주소로 토큰 검색",
+		"lookup-add-asset-input-placeholder": "토큰 이름, 기호 또는 주소 입력",
 		"wrap-sol-first": "wSOL로 먼저 랩핑하기"
 	},
 	"transactions": {
@@ -1294,9 +1295,10 @@
 		}
 	},
 	"wallet-selector": {
+		"connect-to-begin": "In order to use MeanFi you need to connect to a Solana wallet.",
 		"more-options-collapsed": "더 많은 옵션 표시",
 		"more-options-expanded": "더 적은 옵션 표시",
-		"primary-action": "선택"
+		"primary-action": "지갑 연결"
 	},
 	"withdraw-funds": {
 		"button-title": "Withdraw funds",

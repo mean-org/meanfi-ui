@@ -9,7 +9,7 @@ import { consoleOut, getTransactionOperationDescription, isValidAddress } from '
 import { isError } from '../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { StreamInfo, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming';
-import { cutNumber, formatAmount, formatThousands, getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, isValidNumber, makeDecimal, makeInteger, shortenAddress } from '../../utils/utils';
+import { cutNumber, formatAmount, formatThousands, getTokenAmountAndSymbolByTokenAddress, isValidNumber, makeDecimal, makeInteger, shortenAddress } from '../../utils/utils';
 import { useWallet } from '../../contexts/wallet';
 import { PublicKey } from '@solana/web3.js';
 import { FALLBACK_COIN_IMAGE } from '../../constants';
@@ -39,16 +39,17 @@ export const TreasuryTransferFundsModal = (props: {
   const { publicKey } = useWallet();
   const {
     theme,
-    transactionStatus,
-    isVerifiedRecipient,
-    selectedToken,
     tokenBalance,
+    selectedToken,
     isWhitelisted,
     loadingPrices,
     effectiveRate,
-    refreshPrices,
-    setTransactionStatus,
+    transactionStatus,
+    isVerifiedRecipient,
     setIsVerifiedRecipient,
+    getTokenByMintAddress,
+    setTransactionStatus,
+    refreshPrices,
   } = useContext(AppStateContext);
 
   const [to, setTo] = useState('');

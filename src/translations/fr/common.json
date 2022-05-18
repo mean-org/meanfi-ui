@@ -912,6 +912,7 @@
 		"modal-title": "Sélectionnez un jeton",
 		"no-matches": "Aucun résultat",
 		"search-input-placeholder": "Rechercher un jeton par nom, symbole ou adresse",
+		"lookup-add-asset-input-placeholder": "Entrez le nom, le symbole ou l'adresse du jeton",
 		"wrap-sol-first": "enveloppez-le d'abord dans wSOL"
 	},
 	"transactions": {
@@ -1294,9 +1295,10 @@
 		"label-input-amount": "Enter amount to unwrap"
 	},
 	"wallet-selector": {
+		"connect-to-begin": "In order to use MeanFi you need to connect to a Solana wallet.",
 		"more-options-collapsed": "Afficher plus d'options",
 		"more-options-expanded": "Afficher moins d'options",
-		"primary-action": "Sélectionner"
+		"primary-action": "Connecter le portefeuille"
 	},
 	"withdraw-funds": {
 		"button-title": "Retirer des fonds",

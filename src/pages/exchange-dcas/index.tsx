@@ -314,7 +314,7 @@ export const ExchangeDcasView = () => {
     }
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet && ddcaDetails && ddcaClient) {
+      if (wallet && publicKey && ddcaDetails && ddcaClient) {
         consoleOut('Signing transaction...');
         return await wallet.signTransaction(transaction)
         .then(async (signed: Transaction) => {
@@ -322,7 +322,7 @@ export const ExchangeDcasView = () => {
           signedTransaction = signed;
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58()}
+            result: {signer: publicKey.toBase58()}
           });
           const ddcaAccountPda = new PublicKey(ddcaDetails.ddcaAccountAddress);
           try {
@@ -346,7 +346,7 @@ export const ExchangeDcasView = () => {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: { signer: `${wallet.publicKey.toBase58()}`, error: `${error}` }
+              result: { signer: `${publicKey.toBase58()}`, error: `${error}` }
             });
             customLogger.logError('Close DDCA transaction failed', { transcript: transactionLog });
             return false;
@@ -360,7 +360,7 @@ export const ExchangeDcasView = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logWarning('Close DDCA transaction failed', { transcript: transactionLog });
           return false;
@@ -506,7 +506,7 @@ export const ExchangeDcasView = () => {
     setIsBusy(true);
 
     const createTx = async (): Promise<boolean> => {
-      if (wallet && ddcaDetails && ddcaClient) {
+      if (wallet && publicKey && ddcaDetails && ddcaClient) {
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
           currentOperation: TransactionStatus.InitTransaction
@@ -535,7 +535,7 @@ export const ExchangeDcasView = () => {
 
         // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        const lamports = await connection.getBalance(wallet.publicKey);
+        const lamports = await connection.getBalance(publicKey);
         const balance = (lamports / LAMPORTS_PER_SOL) || 0;
         setNativeBalance(balance);
         consoleOut('maxBlockchainFee:', ddcaTxFees.maxBlockchainFee, 'blue');
@@ -599,7 +599,7 @@ export const ExchangeDcasView = () => {
     }
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (wallet && publicKey) {
         consoleOut('Signing transaction...');
         return await wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
@@ -617,7 +617,7 @@ export const ExchangeDcasView = () => {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('DDCA withdraw transaction failed', { transcript: transactionLog });
             return false;
@@ -628,7 +628,7 @@ export const ExchangeDcasView = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58()}
+            result: {signer: publicKey.toBase58()}
           });
           return true;
         })
@@ -640,7 +640,7 @@ export const ExchangeDcasView = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logWarning('DDCA withdraw transaction failed', { transcript: transactionLog });
           return false;

@@ -8,7 +8,7 @@ import { consoleOut, getTransactionOperationDescription, isValidAddress } from '
 import { isError } from '../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TransactionFees } from '@mean-dao/money-streaming';
-import { getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, makeDecimal, shortenAddress } from '../../utils/utils';
+import { getTokenAmountAndSymbolByTokenAddress, makeDecimal, shortenAddress } from '../../utils/utils';
 import { MultisigVault } from '../../models/multisig';
 import { Identicon } from '../Identicon';
 import { FALLBACK_COIN_IMAGE } from '../../constants';
@@ -33,7 +33,8 @@ export const MultisigVaultTransferAuthorityModal = (props: {
   const { t } = useTranslation('common');
   const {
     transactionStatus,
-    setTransactionStatus
+    getTokenByMintAddress,
+    setTransactionStatus,
   } = useContext(AppStateContext);
 
   const [selectedAuthority, setSelectedAuthority] = useState('');
@@ -205,9 +206,9 @@ export const MultisigVaultTransferAuthorityModal = (props: {
                       }}
                       filterOption={(inputValue, option) => {
                         const originalItem = props.multisigAccounts.find(i => {
-                          return i.authority.toBase58() === option!.key ? true : false;
+                          return option && i.authority.toBase58() === option.key ? true : false;
                         });
-                        return option!.value.indexOf(inputValue) !== -1 || originalItem?.authority.toBase58().indexOf(inputValue) !== -1
+                        return (option && option.value.indexOf(inputValue) !== -1) || originalItem?.authority.toBase58().indexOf(inputValue) !== -1
                       }}
                       onSelect={onMultisigSelected}
                     />

@@ -4,13 +4,13 @@ import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume } from '../../util
 import { AppStateContext } from '../../contexts/appstate';
 import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { useTranslation } from 'react-i18next';
-import { consoleOut, delay, getTransactionStatusForLogs } from '../../utils/ui';
+import { consoleOut, getTransactionStatusForLogs } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { OperationType, TransactionStatus, WhitelistClaimType } from '../../models/enums';
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
-import { appConfig, customLogger } from '../..';
+import { customLogger } from '../..';
 import { LoadingOutlined } from '@ant-design/icons';
 import { Allocation } from '../../models/common-types';
 import { getWhitelistAllocation } from '../../utils/api';
@@ -31,10 +31,8 @@ export const IdoRedeem = (props: {
 }) => {
   const { t } = useTranslation('common');
   const { connected, wallet, publicKey } = useWallet();
-  const [withdrawAmount, setWithdrawAmount] = useState<string>('');
   const {
     userTokens,
-    selectedToken,
     transactionStatus,
     setTransactionStatus,
   } = useContext(AppStateContext);
@@ -236,7 +234,7 @@ export const IdoRedeem = (props: {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: { signer: `${wallet.publicKey.toBase58()}`, error: `${error}` }
+              result: { signer: `${publicKey.toBase58()}`, error: `${error}` }
             });
             customLogger.logError('Create IDO Redeem transaction failed', { transcript: transactionLog });
             return false;
@@ -250,7 +248,7 @@ export const IdoRedeem = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logWarning('Create IDO Redeem transaction failed', { transcript: transactionLog });
           return false;

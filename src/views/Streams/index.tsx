@@ -31,7 +31,6 @@ import {
   formatThousands,
   getAmountWithSymbol,
   getTokenAmountAndSymbolByTokenAddress,
-  getTokenByMintAddress,
   getTokenSymbol,
   getTxIxResume,
   shortenAddress,
@@ -49,8 +48,6 @@ import {
   getTransactionModalTitle,
   getTransactionOperationDescription,
   getTransactionStatusForLogs,
-  isDev,
-  isLocal,
   isProd,
   isValidAddress,
 } from "../../utils/ui";
@@ -129,14 +126,12 @@ export const Streams = () => {
     theme,
     tpsAvg,
     streamList,
-    coinPrices,
     streamListv1,
     streamListv2,
     streamDetail,
     activeStream,
     tokenBalance,
     splTokenList,
-    isWhitelisted,
     selectedToken,
     loadingStreams,
     streamsSummary,
@@ -156,6 +151,8 @@ export const Streams = () => {
     previousWalletConnectState,
     setLoadingStreamsSummary,
     setHighLightableStreamId,
+    getTokenByMintAddress,
+    getTokenPriceBySymbol,
     setLastStreamsSummary,
     setCustomStreamDocked,
     setTransactionStatus,
@@ -188,7 +185,7 @@ export const Streams = () => {
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
   });
   const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
-  const [multisigAccounts, setMultisigAccounts] = useState<MultisigInfo[] | undefined>(undefined);
+  const [multisigAccounts] = useState<MultisigInfo[] | undefined>(undefined);
   const [canSubscribe, setCanSubscribe] = useState(true);
 
   // Countdown timer variables
@@ -198,10 +195,6 @@ export const Streams = () => {
   // Treasury related
   const [loadingTreasuryDetails, setLoadingTreasuryDetails] = useState(true);
   const [treasuryDetails, setTreasuryDetails] = useState<Treasury | TreasuryInfo | undefined>(undefined);
-
-  const isUnderDevelopment = () => {
-    return isLocal() || (isDev() && isWhitelisted) ? true : false;
-  }
 
   // Create and cache Money Streaming Program instance
   const ms = useMemo(() => new MoneyStreaming(
@@ -247,14 +240,6 @@ export const Streams = () => {
   const getTransactionFeesV2 = useCallback(async (action: MSP_ACTIONS_V2): Promise<TransactionFees> => {
     return await calculateActionFeesV2(connection, action);
   }, [connection]);
-
-  const getPricePerToken = useCallback((token: UserTokenAccount | TokenInfo): number => {
-    if (!token || !coinPrices) { return 0; }
-
-    return coinPrices && coinPrices[token.symbol]
-      ? coinPrices[token.symbol]
-      : 0;
-  }, [coinPrices])
 
   const getTreasuryName = useCallback(() => {
     if (treasuryDetails) {
@@ -664,8 +649,8 @@ export const Streams = () => {
       const freshStream = await ms.refreshStream(stream) as StreamInfo;
       if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
 
-      const asset = getTokenByMintAddress(freshStream.associatedToken as string, splTokenList);
-      const rate = asset ? getPricePerToken(asset as UserTokenAccount) : 0;
+      const asset = getTokenByMintAddress(freshStream.associatedToken as string);
+      const rate = asset ? getTokenPriceBySymbol(asset.symbol) : 0;
       if (isIncoming) {
         resume['totalNet'] = resume['totalNet'] + ((freshStream.escrowVestedAmount || 0) * rate);
       } else {
@@ -693,8 +678,8 @@ export const Streams = () => {
       const freshStream = await msp.refreshStream(stream) as Stream;
       if (!freshStream || freshStream.status !== STREAM_STATUS.Running) { continue; }
 
-      const asset = getTokenByMintAddress(freshStream.associatedToken as string, splTokenList);
-      const pricePerToken = getPricePerToken(asset as UserTokenAccount);
+      const asset = getTokenByMintAddress(freshStream.associatedToken as string);
+      const pricePerToken = asset ? getTokenPriceBySymbol(asset.symbol) : 0;
       const rate = asset ? (pricePerToken ? pricePerToken : 1) : 1;
       const decimals = asset ? asset.decimals : 9;
       // const amount = isIncoming ? freshStream.fundsSentToBeneficiary : freshStream.fundsLeftInStream;
@@ -727,10 +712,11 @@ export const Streams = () => {
     accountAddress,
     streamsSummary,
     loadingStreamsSummary,
-    setLastStreamsSummary,
     setLoadingStreamsSummary,
+    getTokenPriceBySymbol,
+    getTokenByMintAddress,
+    setLastStreamsSummary,
     setStreamsSummary,
-    getPricePerToken
   ]);
 
   // Live data calculation - Stream summary
@@ -841,7 +827,7 @@ export const Streams = () => {
   // Watch for stream's associated token changes then load the token to the state as selectedToken
   useEffect(() => {
     if (streamDetail && selectedToken?.address !== streamDetail.associatedToken) {
-      const token = getTokenByMintAddress(streamDetail.associatedToken as string, splTokenList);
+      const token = getTokenByMintAddress(streamDetail.associatedToken as string);
       if (token) {
         consoleOut("stream token:", token, 'blue');
         if (!selectedToken || selectedToken.address !== token.address) {
@@ -857,6 +843,7 @@ export const Streams = () => {
     selectedToken,
     setCustomToken,
     setSelectedToken,
+    getTokenByMintAddress,
     streamDetail?.associatedToken
   ]);
 
@@ -1029,7 +1016,7 @@ export const Streams = () => {
     setIsBusy(true);
 
     const createTxV1 = async (): Promise<boolean> => {
-      if (wallet && streamDetail) {
+      if (wallet && publicKey && streamDetail) {
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
           currentOperation: TransactionStatus.InitTransaction
@@ -1038,7 +1025,7 @@ export const Streams = () => {
 
         const data = {
           stream: streamPublicKey.toBase58(),                     // stream
-          initializer: wallet.publicKey.toBase58(),               // initializer
+          initializer: publicKey.toBase58(),               // initializer
         }
         consoleOut('data:', data);
 
@@ -1170,7 +1157,7 @@ export const Streams = () => {
       );
 
       tx.feePayer = publicKey;
-      const { blockhash } = await connection.getRecentBlockhash("confirmed");
+      const { blockhash } = await connection.getLatestBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
       tx.partialSign(...txSigners);
 
@@ -1267,7 +1254,7 @@ export const Streams = () => {
     }
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (wallet && publicKey) {
         consoleOut('Signing transaction...');
         return await wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
@@ -1285,7 +1272,7 @@ export const Streams = () => {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('Pause stream transaction failed', { transcript: transactionLog });
             return false;
@@ -1296,7 +1283,7 @@ export const Streams = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58()}
+            result: {signer: publicKey.toBase58()}
           });
           return true;
         })
@@ -1308,7 +1295,7 @@ export const Streams = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logWarning('Pause stream transaction failed', { transcript: transactionLog });
           return false;
@@ -1483,7 +1470,7 @@ export const Streams = () => {
     setIsBusy(true);
 
     const createTxV1 = async (): Promise<boolean> => {
-      if (wallet && streamDetail) {
+      if (wallet && publicKey && streamDetail) {
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
           currentOperation: TransactionStatus.InitTransaction
@@ -1492,7 +1479,7 @@ export const Streams = () => {
 
         const data = {
           stream: streamPublicKey.toBase58(),                     // stream
-          initializer: wallet.publicKey.toBase58(),               // initializer
+          initializer: publicKey.toBase58(),               // initializer
         }
         consoleOut('data:', data);
 
@@ -1624,7 +1611,7 @@ export const Streams = () => {
       );
 
       tx.feePayer = publicKey;
-      const { blockhash } = await connection.getRecentBlockhash("confirmed");
+      const { blockhash } = await connection.getLatestBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
       tx.partialSign(...txSigners);
 
@@ -1721,7 +1708,7 @@ export const Streams = () => {
     }
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (wallet && publicKey) {
         consoleOut('Signing transaction...');
         return await wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
@@ -1739,7 +1726,7 @@ export const Streams = () => {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('Resume stream transaction failed', { transcript: transactionLog });
             return false;
@@ -1750,7 +1737,7 @@ export const Streams = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58()}
+            result: {signer: publicKey.toBase58()}
           });
           return true;
         })
@@ -1762,7 +1749,7 @@ export const Streams = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logWarning('Resume stream transaction failed', { transcript: transactionLog });
           return false;
@@ -2108,7 +2095,7 @@ export const Streams = () => {
     }
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (wallet && publicKey) {
         consoleOut('Signing transaction...');
         return await wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
@@ -2126,7 +2113,7 @@ export const Streams = () => {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('Transfer stream transaction failed', { transcript: transactionLog });
             segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferFailed, { transcript: transactionLog });
@@ -2138,7 +2125,7 @@ export const Streams = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58()}
+            result: {signer: publicKey.toBase58()}
           });
           segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferSigned, {
             signature,
@@ -2154,7 +2141,7 @@ export const Streams = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logWarning('Transfer stream transaction failed', { transcript: transactionLog });
           segmentAnalytics.recordEvent(AppUsageEvent.StreamTransferFailed, { transcript: transactionLog });
@@ -2258,7 +2245,7 @@ export const Streams = () => {
   const showAddFundsModal = useCallback(() => {
     // Record user event in Segment Analytics
     segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupButton);
-    const token = getTokenByMintAddress(streamDetail?.associatedToken as string, splTokenList);
+    const token = getTokenByMintAddress(streamDetail?.associatedToken as string);
     consoleOut("stream token:", token?.symbol);
     if (token) {
       if (!selectedToken || selectedToken.address !== token.address) {
@@ -2293,8 +2280,9 @@ export const Streams = () => {
   }, [
     streamDetail,
     selectedToken,
-    refreshTokenBalance,
+    getTokenByMintAddress,
     getTransactionFeesV2,
+    refreshTokenBalance,
     getTransactionFees,
     setSelectedToken,
     setCustomToken,
@@ -2421,7 +2409,7 @@ export const Streams = () => {
     }
 
     const createTxV1 = async (): Promise<boolean> => {
-      if (wallet && streamDetail) {
+      if (wallet && publicKey && streamDetail) {
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
           currentOperation: TransactionStatus.InitTransaction
@@ -2434,7 +2422,7 @@ export const Streams = () => {
         setAddFundsPayload(addFundsData);
 
         const data = {
-          contributor: wallet.publicKey.toBase58(),               // contributor
+          contributor: publicKey.toBase58(),               // contributor
           treasury: treasury.toBase58(),                          // treasury
           stream: stream.toBase58(),                              // stream
           contributorMint: contributorMint.toBase58(),            // contributorMint
@@ -2449,7 +2437,7 @@ export const Streams = () => {
           contributor: data.contributor,
           treasury: data.treasury,
           asset: token ? `${token} [${data.contributorMint}]` : data.contributorMint,
-          assetPrice: selectedToken ? getPricePerToken(selectedToken) : 0,
+          assetPrice: selectedToken ? getTokenPriceBySymbol(selectedToken.symbol) : 0,
           amount
         };
         consoleOut('segment data:', segmentData, 'brown');
@@ -2491,7 +2479,7 @@ export const Streams = () => {
         consoleOut('Starting addFunds using MSP V1...', '', 'blue');
         // Create a transaction
         return await ms.addFunds(
-          wallet.publicKey,
+          publicKey,
           treasury,
           stream,
           contributorMint,
@@ -2575,7 +2563,7 @@ export const Streams = () => {
         asset: selectedToken
           ? `${selectedToken.symbol} [${selectedToken.address}]`
           : associatedToken.toBase58(),
-        assetPrice: selectedToken ? getPricePerToken(selectedToken) : 0,
+        assetPrice: selectedToken ? getTokenPriceBySymbol(selectedToken.symbol) : 0,
         amount: parseFloat(addFundsData.amount)
       };
       consoleOut('segment data:', segmentData, 'brown');
@@ -2637,7 +2625,7 @@ export const Streams = () => {
     }
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (wallet && publicKey) {
         consoleOut('Signing transaction...');
         return await wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
@@ -2655,7 +2643,7 @@ export const Streams = () => {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
             segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupFailed, { transcript: transactionLog });
@@ -2667,7 +2655,7 @@ export const Streams = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58()}
+            result: {signer: publicKey.toBase58()}
           });
           segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupSigned, {
             signature,
@@ -2683,7 +2671,7 @@ export const Streams = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logWarning('Add funds transaction failed', { transcript: transactionLog });
           segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupFailed, { transcript: transactionLog });
@@ -2878,7 +2866,7 @@ export const Streams = () => {
     let value = '';
 
     if (item) {
-      const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string, splTokenList) : undefined;
+      const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
       if (item.version < 2) {
         value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
       } else {
@@ -2888,13 +2876,13 @@ export const Streams = () => {
       value += getTokenSymbol(item.associatedToken as string);
     }
     return value;
-  }, [splTokenList]);
+  }, [getTokenByMintAddress]);
 
   const getDepositAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
     let value = '';
 
     if (item && item.rateAmount === 0 && item.allocationAssigned > 0) {
-      const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string, splTokenList) : undefined;
+      const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
       if (item.version < 2) {
         value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
       } else {
@@ -2904,7 +2892,7 @@ export const Streams = () => {
       value += getTokenSymbol(item.associatedToken as string);
     }
     return value;
-  }, [splTokenList]);
+  }, [getTokenByMintAddress]);
 
   const getStreamTypeIcon = useCallback((item: Stream | StreamInfo) => {
     if (isInboundStream(item)) {
@@ -3219,7 +3207,7 @@ export const Streams = () => {
         // Report event to Segment analytics
         const segmentData: SegmentStreamWithdrawData = {
           asset: withdrawData.token,
-          assetPrice: selectedToken ? getPricePerToken(selectedToken) : 0,
+          assetPrice: selectedToken ? getTokenPriceBySymbol(selectedToken.symbol) : 0,
           stream: data.stream,
           beneficiary: data.beneficiary,
           feeAmount: withdrawData.fee,
@@ -3332,7 +3320,7 @@ export const Streams = () => {
         // Report event to Segment analytics
         const segmentData: SegmentStreamWithdrawData = {
           asset: withdrawData.token,
-          assetPrice: selectedToken ? getPricePerToken(selectedToken) : 0,
+          assetPrice: selectedToken ? getTokenPriceBySymbol(selectedToken.symbol) : 0,
           stream: data.stream,
           beneficiary: data.beneficiary,
           feeAmount: withdrawData.fee,
@@ -3421,7 +3409,7 @@ export const Streams = () => {
     }
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (wallet && publicKey) {
         consoleOut('Signing transaction...');
         return await wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
@@ -3439,7 +3427,7 @@ export const Streams = () => {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('Withdraw transaction failed', { transcript: transactionLog });
             segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, { transcript: transactionLog });
@@ -3451,7 +3439,7 @@ export const Streams = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58()}
+            result: {signer: publicKey.toBase58()}
           });
           segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalSigned, {
             signature,
@@ -3467,7 +3455,7 @@ export const Streams = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logWarning('Withdraw transaction failed', { transcript: transactionLog });
           segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalFailed, { transcript: transactionLog });
@@ -3595,7 +3583,7 @@ export const Streams = () => {
     setIsBusy(true);
 
     const createTxV1 = async (): Promise<boolean> => {
-      if (wallet && streamDetail) {
+      if (wallet && publicKey && streamDetail) {
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
           currentOperation: TransactionStatus.InitTransaction
@@ -3604,7 +3592,7 @@ export const Streams = () => {
 
         const data = {
           stream: streamPublicKey.toBase58(),                         // stream
-          initializer: wallet.publicKey.toBase58(),                   // initializer
+          initializer: publicKey.toBase58(),                   // initializer
           autoCloseTreasury: closeTreasuryData.closeTreasuryOption    // closeTreasury
         }
         consoleOut('data:', data);
@@ -3612,7 +3600,7 @@ export const Streams = () => {
         // Report event to Segment analytics
         const segmentData: SegmentStreamCloseData = {
           asset: selectedToken ? selectedToken.symbol : '-',
-          assetPrice: selectedToken ? getPricePerToken(selectedToken) : 0,
+          assetPrice: selectedToken ? getTokenPriceBySymbol(selectedToken.symbol) : 0,
           stream: data.stream,
           initializer: data.initializer,
           closeTreasury: data.autoCloseTreasury,
@@ -3719,7 +3707,7 @@ export const Streams = () => {
         // Report event to Segment analytics
         const segmentData: SegmentStreamCloseData = {
           asset: selectedToken ? selectedToken.symbol : '-',
-          assetPrice: selectedToken ? getPricePerToken(selectedToken) : 0,
+          assetPrice: selectedToken ? getTokenPriceBySymbol(selectedToken.symbol) : 0,
           stream: data.stream,
           initializer: data.initializer,
           closeTreasury: data.autoCloseTreasury,
@@ -3810,7 +3798,7 @@ export const Streams = () => {
     }
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (wallet && publicKey) {
         consoleOut('Signing transaction...');
         return await wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
@@ -3828,7 +3816,7 @@ export const Streams = () => {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
             segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFailed, { transcript: transactionLog });
@@ -3840,7 +3828,7 @@ export const Streams = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58()}
+            result: {signer: publicKey.toBase58()}
           });
           segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseSigned, {
             signature,
@@ -3856,7 +3844,7 @@ export const Streams = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
           segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseFailed, { transcript: transactionLog });
@@ -4043,7 +4031,7 @@ export const Streams = () => {
   }
 
   const isAddressMyAccount = (addr: string): boolean => {
-    return wallet && addr && wallet.publicKey && addr === wallet.publicKey.toBase58()
+    return wallet && addr && publicKey && addr === publicKey.toBase58()
            ? true
            : false;
   }
@@ -4062,7 +4050,7 @@ export const Streams = () => {
   const getActivityAmountDisplay = (item: StreamActivity, streamVersion: number): number => {
     let value = '';
 
-    const token = getTokenByMintAddress(item.mint as string, splTokenList);
+    const token = getTokenByMintAddress(item.mint as string);
     if (streamVersion < 2) {
       value += formatAmount(item.amount, token?.decimals || 6);
     } else {
@@ -4249,7 +4237,7 @@ export const Streams = () => {
   }
 
   const renderInboundStreamV1 = (stream: StreamInfo) => {
-    const token = stream.associatedToken ? getTokenByMintAddress(stream.associatedToken as string, splTokenList) : undefined;
+    const token = stream.associatedToken ? getTokenByMintAddress(stream.associatedToken as string) : undefined;
     return (
       <>
         {stream && (
@@ -4558,7 +4546,7 @@ export const Streams = () => {
   };
 
   const renderInboundStreamV2 = (stream: Stream) => {
-    const token = stream.associatedToken ? getTokenByMintAddress(stream.associatedToken as string, splTokenList) : undefined;
+    const token = stream.associatedToken ? getTokenByMintAddress(stream.associatedToken as string) : undefined;
     return (
       <>
         {stream && (
@@ -4813,7 +4801,7 @@ export const Streams = () => {
   };
 
   const renderOutboundStreamV1 = (stream: StreamInfo) => {
-    const token = stream.associatedToken ? getTokenByMintAddress(stream.associatedToken as string, splTokenList) : undefined;
+    const token = stream.associatedToken ? getTokenByMintAddress(stream.associatedToken as string) : undefined;
     return (
       <>
         {stream && (
@@ -5155,7 +5143,7 @@ export const Streams = () => {
   };
 
   const renderOutboundStreamV2 = (stream: Stream) => {
-    const token = stream.associatedToken ? getTokenByMintAddress(stream.associatedToken as string, splTokenList) : undefined;
+    const token = stream.associatedToken ? getTokenByMintAddress(stream.associatedToken as string) : undefined;
     return (
       <>
         {stream && (
@@ -5492,7 +5480,7 @@ export const Streams = () => {
     <>
     {(connected && streamList && streamList.length > 0) ? (
       streamList.map((item, index) => {
-        const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string, splTokenList) : undefined;
+        const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
         const onStreamClick = () => {
           setSelectedStream(item);
           setDtailsPanelOpen(true);

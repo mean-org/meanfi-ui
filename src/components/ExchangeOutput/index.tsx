@@ -20,8 +20,8 @@ export const ExchangeOutput = (props: {
 
   const { t } = useTranslation("common");
   const {
-    coinPrices,
     loadingPrices,
+    getTokenPriceBySymbol,
     refreshPrices,
   } = useContext(AppStateContext);
   const [selectedClient, setSelectedClient] = useState<any>();
@@ -91,14 +91,6 @@ export const ExchangeOutput = (props: {
   //     props.clients
   // ]);
 
-  const getPricePerToken = (token: TokenInfo): number => {
-    if (!token || !coinPrices) { return 0; }
-
-    return coinPrices && coinPrices[token.symbol]
-      ? coinPrices[token.symbol]
-      : 0;
-  }
-
   return (
     <>
       <div className="well">
@@ -119,7 +111,7 @@ export const ExchangeOutput = (props: {
                   props.toToken && props.toTokenBalance
                     ? formatAmount(
                         parseFloat(props.toTokenBalance) *
-                          getPricePerToken(props.toToken as TokenInfo),
+                          getTokenPriceBySymbol(props.toToken.symbol),
                         2
                       )
                     : "0.00"
@@ -130,7 +122,7 @@ export const ExchangeOutput = (props: {
           <div className="right inner-label">
             <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
               ~${props.toToken && props.toTokenBalance
-                ? formatAmount(parseFloat(props.toTokenBalance) * getPricePerToken(props.toToken as TokenInfo), 2)
+                ? formatAmount(parseFloat(props.toTokenBalance) * getTokenPriceBySymbol(props.toToken.symbol), 2)
                 : "0.00"
               }
             </span>

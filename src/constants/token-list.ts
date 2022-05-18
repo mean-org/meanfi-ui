@@ -1,6 +1,6 @@
 import { TokenInfo } from '@solana/spl-token-registry';
 
-export const CUSTOM_USDC = {
+export const CUSTOM_USDC_TEST_IDO_DEVNET = {
     chainId: 103,
     address: 'FsWi13eBPngZ87JTyEcQsPjbQqefoPfLJyhtbNeGyLCX',
     symbol: 'USDC',
@@ -68,69 +68,8 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         ],
     },
     {
-        chainId: 103,
-        address: 'MNZeoVuS87pFssHCbxKHfddvJk4MjmM2RHjQskrk7qs',
-        symbol: 'MEAN',
-        name: 'MEAN',
-        decimals: 6,
-        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg',
-        extensions: {
-            discord: 'https://discord.meanfi.com/',
-            medium: 'https://meandao.medium.com',
-            twitter: 'https://twitter.com/meanfinance',
-            website: 'https://www.meanfi.com/',
-        },
-    },
-    {
-        chainId: 103,
-        address: 'sMNxc4HFhtyY9adKKmE2TBq4poD36moXN8W7YiQMsTA',
-        symbol: 'sMEAN',
-        name: 'Staked MEAN',
-        decimals: 6,
-        logoURI: '/assets/smean-token.svg',
-        extensions: {
-            discord: 'https://discord.meanfi.com/',
-            medium: 'https://meandao.medium.com',
-            twitter: 'https://twitter.com/meanfinance',
-            website: 'https://www.meanfi.com/',
-        },
-        tags: [
-            'stake',
-        ],
-    },
-    {
         chainId: 101,
         address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
-        symbol: 'USDC',
-        name: 'USD Coin',
-        decimals: 6,
-        logoURI: 'https://cdn.jsdelivr.net/gh/solana-labs/token-list@main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png',
-        tags: [
-            'stablecoin',
-        ],
-        extensions: {
-            website: 'https://www.centre.io/',
-            coingeckoId: 'usd-coin',
-        },
-    },
-    {
-        chainId: 102,
-        address: 'CpMah17kQEL2wqyMKt3mZBdTnZbkbfx4nqmQMFDP5vwp',
-        symbol: 'USDC',
-        name: 'USD Coin',
-        decimals: 6,
-        logoURI: 'https://cdn.jsdelivr.net/gh/solana-labs/token-list@main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png',
-        tags: [
-            'stablecoin',
-        ],
-        extensions: {
-            website: 'https://www.centre.io/',
-            coingeckoId: 'usd-coin',
-        },
-    },
-    {
-        chainId: 103,
-        address: 'AbQBt9V212HpPVk64YWAApFJrRzdAdu66fwF9neYucpU',
         symbol: 'USDC',
         name: 'USD Coin',
         decimals: 6,
@@ -195,21 +134,6 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         },
     },
     {
-        chainId: 103,
-        address: '42f2yFqXh8EDCRCiEBQSweWqpTzKGa9DC8e7UjUfFNrP',
-        symbol: 'USDT',
-        name: 'USDT',
-        decimals: 6,
-        logoURI: 'https://cdn.jsdelivr.net/gh/solana-labs/explorer/public/tokens/usdt.svg',
-        tags: [
-            'stablecoin',
-        ],
-        extensions: {
-            website: 'https://tether.to/',
-            coingeckoId: 'tether',
-        },
-    },
-    {
         chainId: 101,
         address: 'So11111111111111111111111111111111111111112',
         symbol: 'wSOL',
@@ -221,31 +145,6 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
             website: 'https://solana.com/',
             serumV3Usdc: '9wFFyRfZBsuAha4YcuxcXLKwMxJR43S7fPfQLusDBzvT',
             serumV3Usdt: 'HWHvQhFmJB3NUcu1aihKmrKegfVxBEHzwVX6yZCKEsi1',
-            coingeckoId: 'solana',
-        },
-    },
-    {
-        chainId: 102,
-        address: 'So11111111111111111111111111111111111111112',
-        symbol: 'wSOL',
-        name: 'Solana',
-        decimals: 9,
-        logoURI: 'https://cdn.jsdelivr.net/gh/trustwallet/assets@master/blockchains/solana/info/logo.png',
-        tags: [],
-        extensions: {
-            website: 'https://www.solana.com/',
-            coingeckoId: 'solana',
-        },
-    },
-    {
-        chainId: 103,
-        address: 'So11111111111111111111111111111111111111112',
-        symbol: 'wSOL',
-        name: 'Solana',
-        decimals: 9,
-        logoURI: 'https://cdn.jsdelivr.net/gh/trustwallet/assets@master/blockchains/solana/info/logo.png',
-        tags: [],
-        extensions: {
             coingeckoId: 'solana',
         },
     },
@@ -556,7 +455,6 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
             website: 'https://solend.fi',
         },
     },
-    //////////
     {
         chainId: 101,
         address: "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
@@ -684,5 +582,205 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         extensions: {
             serumV3Usdc: "6oGsL2puUgySccKzn9XA9afqF217LfxP5ocq4B3LWsjy"
         }
+    },
+    // Testnet tokens
+    {
+        chainId: 102,
+        address: 'CpMah17kQEL2wqyMKt3mZBdTnZbkbfx4nqmQMFDP5vwp',
+        symbol: 'USDC',
+        name: 'USD Coin',
+        decimals: 6,
+        logoURI: 'https://cdn.jsdelivr.net/gh/solana-labs/token-list@main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png',
+        tags: [
+            'stablecoin',
+        ],
+        extensions: {
+            website: 'https://www.centre.io/',
+            coingeckoId: 'usd-coin',
+        },
+    },
+    {
+        chainId: 102,
+        address: 'So11111111111111111111111111111111111111112',
+        symbol: 'wSOL',
+        name: 'Solana',
+        decimals: 9,
+        logoURI: 'https://cdn.jsdelivr.net/gh/trustwallet/assets@master/blockchains/solana/info/logo.png',
+        tags: [],
+        extensions: {
+            website: 'https://www.solana.com/',
+            coingeckoId: 'solana',
+        },
+    },
+    // Devnet tokens
+    {
+        chainId: 103,
+        address: 'AbQBt9V212HpPVk64YWAApFJrRzdAdu66fwF9neYucpU',
+        symbol: 'USDC',
+        name: 'USD Coin',
+        decimals: 6,
+        logoURI: 'https://cdn.jsdelivr.net/gh/solana-labs/token-list@main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png',
+        tags: [
+            'stablecoin',
+        ],
+        extensions: {
+            website: 'https://www.centre.io/',
+            coingeckoId: 'usd-coin',
+        },
+    },
+    {
+        chainId: 103,
+        address: '42f2yFqXh8EDCRCiEBQSweWqpTzKGa9DC8e7UjUfFNrP',
+        symbol: 'USDT',
+        name: 'USDT',
+        decimals: 6,
+        logoURI: 'https://cdn.jsdelivr.net/gh/solana-labs/explorer/public/tokens/usdt.svg',
+        tags: [
+            'stablecoin',
+        ],
+        extensions: {
+            website: 'https://tether.to/',
+            coingeckoId: 'tether',
+        },
+    },
+    {
+        chainId: 103,
+        address: 'MNZeoVuS87pFssHCbxKHfddvJk4MjmM2RHjQskrk7qs',
+        symbol: 'MEAN',
+        name: 'MEAN',
+        decimals: 6,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg',
+        extensions: {
+            discord: 'https://discord.meanfi.com/',
+            medium: 'https://meandao.medium.com',
+            twitter: 'https://twitter.com/meanfinance',
+            website: 'https://www.meanfi.com/',
+        },
+    },
+    {
+        chainId: 103,
+        address: 'sMNxc4HFhtyY9adKKmE2TBq4poD36moXN8W7YiQMsTA',
+        symbol: 'sMEAN',
+        name: 'Staked MEAN',
+        decimals: 6,
+        logoURI: '/assets/smean-token.svg',
+        extensions: {
+            discord: 'https://discord.meanfi.com/',
+            medium: 'https://meandao.medium.com',
+            twitter: 'https://twitter.com/meanfinance',
+            website: 'https://www.meanfi.com/',
+        },
+        tags: [
+            'stake',
+        ],
+    },
+    {
+        address: '2tWC4JAdL4AxEFJySziYJfsAnW2MHKRo98vbAPiRDSk8',
+        chainId: 103,
+        decimals: 6,
+        extensions: {
+            coingeckoId: 'usd-coin',
+            website: 'https://saber.so/',
+        },
+        logoURI: 'https://cdn.jsdelivr.net/gh/saber-hq/spl-token-icons@master/icons/103/2tWC4JAdL4AxEFJySziYJfsAnW2MHKRo98vbAPiRDSk8.png',
+        name: 'USD Coin (Saber Devnet)',
+        symbol: 'USDC',
+        tags: [
+            'saber-mkt-usd',
+            'stablecoin',
+        ],
+    },
+    {
+        address: '4QgnWUPQmfGB5dTDCcc4ZFeZDK7xNVhCUFoNmmYFwAme',
+        chainId: 103,
+        decimals: 6,
+        extensions: {},
+        logoURI: 'https://registry.saber.so/token-icons/candy-usd.png',
+        name: 'Test USD',
+        symbol: 'TEST',
+        tags: [
+            'saber-mkt-usd',
+        ],
+    },
+    {
+        address: 'CASHVDm2wsJXfhj6VWxb7GiMdoLc17Du7paH4bNr5woT',
+        chainId: 103,
+        decimals: 6,
+        extensions: {
+            coingeckoId: 'usd-coin',
+            discord: 'https://discord.com/invite/GmkRRKJkuh',
+            medium: 'https://medium.com/@cashioapp',
+            twitter: 'https://twitter.com/CashioApp',
+            website: 'https://cashio.app',
+        },
+        logoURI: 'https://spl-token-icons.static-assets.ship.capital/icons/101/CASHVDm2wsJXfhj6VWxb7GiMdoLc17Du7paH4bNr5woT.png',
+        name: 'Cashio Dollar',
+        symbol: 'CASH',
+        tags: [
+            'stablecoin',
+            'saber-mkt-usd',
+        ],
+    },
+    {
+        address: 'EJwZgeZrdC8TXTQbQBoL6bfuAnFUUy1PVCMB4DYPzVaS',
+        chainId: 103,
+        decimals: 6,
+        extensions: {
+            coingeckoId: 'tether',
+            website: 'https://saber.so/',
+        },
+        logoURI: 'https://cdn.jsdelivr.net/gh/saber-hq/spl-token-icons@master/icons/103/EJwZgeZrdC8TXTQbQBoL6bfuAnFUUy1PVCMB4DYPzVaS.svg',
+        name: 'USDT (Saber Devnet)',
+        symbol: 'USDT',
+        tags: [
+            'saber-mkt-usd',
+            'stablecoin',
+        ],
+    },
+    {
+        address: 'Ren3RLPCG6hpKay86d2fQccQLuGG331UNxwn2VTw3GJ',
+        chainId: 103,
+        decimals: 8,
+        extensions: {},
+        logoURI: 'https://cdn.jsdelivr.net/gh/trustwallet/assets@master/blockchains/ethereum/assets/0xEB4C2781e4ebA804CE9a9803C67d0893436bB27D/logo.png',
+        name: 'Test RenBTC',
+        symbol: 'renBTC',
+        tags: [
+            'saber-mkt-btc',
+        ],
+    },
+    {
+        address: 'Saber2gLauYim4Mvftnrasomsv6NvAuncvMEZwcLpD1',
+        chainId: 103,
+        decimals: 6,
+        extensions: {},
+        logoURI: 'https://registry.saber.so/token-icons/sbr.svg',
+        name: 'Saber Protocol Token',
+        symbol: 'SBR',
+        tags: [],
+    },
+    {
+        address: 'Wbt2CgkkD3eVckD5XxWJmT8pTnFTyWrwvGM7bUMLvsM',
+        chainId: 103,
+        decimals: 6,
+        extensions: {},
+        logoURI: 'https://cdn.jsdelivr.net/gh/trustwallet/assets@master/blockchains/bitcoin/info/logo.png',
+        name: 'Test WBTC',
+        symbol: 'WBTC',
+        tags: [
+            'saber-mkt-btc',
+        ],
+    },
+    {
+        chainId: 103,
+        address: 'So11111111111111111111111111111111111111112',
+        symbol: 'wSOL',
+        name: 'Solana',
+        decimals: 9,
+        logoURI: 'https://cdn.jsdelivr.net/gh/trustwallet/assets@master/blockchains/solana/info/logo.png',
+        tags: [],
+        extensions: {
+            coingeckoId: 'solana',
+        },
     },
 ];
