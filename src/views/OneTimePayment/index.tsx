@@ -52,7 +52,6 @@ export const OneTimePayment = (props: {
   const {
     tokenList,
     userTokens,
-    coinPrices,
     splTokenList,
     loadingPrices,
     isWhitelisted,
@@ -64,16 +63,17 @@ export const OneTimePayment = (props: {
     isVerifiedRecipient,
     streamV2ProgramAddress,
     previousWalletConnectState,
-    refreshPrices,
-    setEffectiveRate,
-    setRecipientNote,
-    setFromCoinAmount,
-    setSelectedStream,
+    setIsVerifiedRecipient,
+    getTokenPriceBySymbol,
+    setTransactionStatus,
     resetContractValues,
     setRecipientAddress,
     setPaymentStartDate,
-    setTransactionStatus,
-    setIsVerifiedRecipient,
+    setFromCoinAmount,
+    setSelectedStream,
+    setEffectiveRate,
+    setRecipientNote,
+    refreshPrices,
   } = useContext(AppStateContext);
   const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const navigate = useNavigate();
@@ -285,21 +285,13 @@ export const OneTimePayment = (props: {
     setTransactionStatus
   ]);
 
-  const getPricePerToken = useCallback((token: TokenInfo): number => {
-    if (!token || !coinPrices) { return 0; }
-
-    return coinPrices && coinPrices[token.symbol]
-      ? coinPrices[token.symbol]
-      : 0;
-  }, [coinPrices])
-
   const getTokenPrice = useCallback(() => {
     if (!fromCoinAmount || !selectedToken) {
       return 0;
     }
 
-    return parseFloat(fromCoinAmount) * getPricePerToken(selectedToken);
-  }, [fromCoinAmount, selectedToken, getPricePerToken]);
+    return parseFloat(fromCoinAmount) * getTokenPriceBySymbol(selectedToken.symbol);
+  }, [fromCoinAmount, selectedToken, getTokenPriceBySymbol]);
 
   const autoFocusInput = useCallback(() => {
     const input = document.getElementById("token-search-otp");
@@ -590,7 +582,7 @@ export const OneTimePayment = (props: {
   }
 
   const isAddressOwnAccount = (): boolean => {
-    return recipientAddress && wallet && wallet.publicKey && recipientAddress === wallet.publicKey.toBase58()
+    return recipientAddress && wallet && publicKey && recipientAddress === publicKey.toBase58()
            ? true : false;
   }
 
@@ -730,7 +722,7 @@ export const OneTimePayment = (props: {
       // Report event to Segment analytics
       const segmentData: SegmentStreamOTPTransferData = {
         asset: selectedToken?.symbol,
-        assetPrice: getPricePerToken(selectedToken),
+        assetPrice: getTokenPriceBySymbol(selectedToken.symbol),
         amount: parseFloat(fromCoinAmount as string),
         beneficiary: data.beneficiary,
         startUtc: dateFormat(startUtc, SIMPLE_DATE_TIME_FORMAT)
@@ -797,7 +789,7 @@ export const OneTimePayment = (props: {
     }
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (wallet && publicKey) {
         consoleOut('Signing transaction...');
         return await wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
@@ -815,7 +807,7 @@ export const OneTimePayment = (props: {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
             segmentAnalytics.recordEvent(AppUsageEvent.TransferOTPFailed, { transcript: transactionLog });
@@ -827,7 +819,7 @@ export const OneTimePayment = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58()}
+            result: {signer: publicKey.toBase58()}
           });
           segmentAnalytics.recordEvent(AppUsageEvent.TransferOTPSigned, {
             signature,
@@ -843,7 +835,7 @@ export const OneTimePayment = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
           segmentAnalytics.recordEvent(AppUsageEvent.TransferOTPFailed, { transcript: transactionLog });
@@ -997,12 +989,12 @@ export const OneTimePayment = (props: {
     enqueueTransactionConfirmation,
     resetTransactionStatus,
     setIsVerifiedRecipient,
+    getTokenPriceBySymbol,
     setTransactionStatus,
     resetContractValues,
     isScheduledPayment,
     setSelectedStream,
     transferCompleted,
-    getPricePerToken,
     getFeeAmount,
     navigate,
   ]);
@@ -1035,7 +1027,7 @@ export const OneTimePayment = (props: {
             setSelectedToken(t);
 
             consoleOut("token selected:", t.symbol, 'blue');
-            setEffectiveRate(getPricePerToken(t));
+            setEffectiveRate(getTokenPriceBySymbol(t.symbol));
             onCloseTokenSelector();
           };
 

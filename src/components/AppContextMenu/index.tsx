@@ -68,7 +68,6 @@ export const AppContextMenu = () => {
 
   // const onDisconnectWallet = () => {
   //   disconnect();
-  //   resetWalletProvider();
   // }
 
   const onSwitchTheme = () => {

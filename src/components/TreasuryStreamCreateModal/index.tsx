@@ -29,7 +29,7 @@ import {
   isValidAddress,
   PaymentRateTypeOption,
 } from '../../utils/ui';
-import { getTokenByMintAddress, NATIVE_SOL } from '../../utils/tokens';
+import { NATIVE_SOL } from '../../utils/tokens';
 import { LoadingOutlined } from '@ant-design/icons';
 import { TokenDisplay } from '../TokenDisplay';
 import { IconCaretDown, IconEdit, IconHelpCircle, IconWarning } from '../../Icons';
@@ -74,35 +74,36 @@ export const TreasuryStreamCreateModal = (props: {
   const { treasuryOption } = useContext(AppStateContext);
   const {
     tokenList,
-    coinPrices,
     selectedToken,
     effectiveRate,
-    recipientAddress,
     loadingPrices,
     recipientNote,
     isWhitelisted,
-    paymentStartDate,
     fromCoinAmount,
-    paymentRateAmount,
+    recipientAddress,
+    paymentStartDate,
     lockPeriodAmount,
-    paymentRateFrequency,
-    lockPeriodFrequency,
     transactionStatus,
+    paymentRateAmount,
     isVerifiedRecipient,
+    lockPeriodFrequency,
+    paymentRateFrequency,
     streamV2ProgramAddress,
-    refreshPrices,
+    setPaymentRateFrequency,
+    setIsVerifiedRecipient,
+    setLockPeriodFrequency,
+    getTokenByMintAddress,
+    getTokenPriceBySymbol,
+    setTransactionStatus,
+    setPaymentRateAmount,
+    setRecipientAddress,
+    setPaymentStartDate,
+    setLockPeriodAmount,
+    setFromCoinAmount,
     setSelectedToken,
     setEffectiveRate,
     setRecipientNote,
-    setFromCoinAmount,
-    setRecipientAddress,
-    setPaymentStartDate,
-    setPaymentRateAmount,
-    setLockPeriodAmount,
-    setTransactionStatus,
-    setIsVerifiedRecipient,
-    setPaymentRateFrequency,
-    setLockPeriodFrequency
+    refreshPrices,
   } = useContext(AppStateContext);
   const {
     clearTxConfirmationContext,
@@ -226,14 +227,6 @@ export const TreasuryStreamCreateModal = (props: {
   /////////////////
   //   Getters   //
   /////////////////
-
-  const getPricePerToken = (token: TokenInfo): number => {
-    if (!token || !coinPrices) { return 0; }
-
-    return coinPrices && coinPrices[token.symbol]
-      ? coinPrices[token.symbol]
-      : 0;
-  }
 
   const getOptionsFromEnum = (value: any): PaymentRateTypeOption[] => {
     let index = 0;
@@ -599,7 +592,7 @@ export const TreasuryStreamCreateModal = (props: {
     const token = getTokenByMintAddress(e);
     if (token) {
       setSelectedToken(token as TokenInfo);
-      setEffectiveRate(getPricePerToken(token as TokenInfo));
+      setEffectiveRate(getTokenPriceBySymbol(token.symbol));
     }
   }
 
@@ -789,12 +782,12 @@ export const TreasuryStreamCreateModal = (props: {
 
   useEffect(() => {
 
-    if (!csvArray.length) { return; }
+    if (!csvArray.length || !publicKey) { return; }
 
     const timeout = setTimeout(() => {
       const validAddresses = csvArray.filter((csvItem: any) => isValidAddress(csvItem.address));
 
-      const validAddressesSingleSigner = validAddresses.filter((csvItem: any) => wallet && !(csvItem.address === `${wallet.publicKey.toBase58()}`));
+      const validAddressesSingleSigner = validAddresses.filter((csvItem: any) => wallet && !(csvItem.address === `${publicKey.toBase58()}`));
 
       if (!props.isMultisigTreasury) {
         setListValidAddresses(validAddressesSingleSigner);
@@ -811,9 +804,10 @@ export const TreasuryStreamCreateModal = (props: {
     }
 
   }, [
+    wallet,
     csvArray,
+    publicKey,
     props.isMultisigTreasury,
-    wallet
   ]);
 
   useEffect(() => {
@@ -1130,7 +1124,7 @@ export const TreasuryStreamCreateModal = (props: {
 
     const signTxs = async (): Promise<boolean> => {
 
-      if (!wallet) {
+      if (!wallet || !publicKey) {
         console.error('Cannot sign transaction! Wallet not found!');
         setTransactionStatus({
           lastOperation: TransactionStatus.SignTransaction,
@@ -1161,7 +1155,7 @@ export const TreasuryStreamCreateModal = (props: {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('CreateStreams for a treasury transaction failed', { transcript: transactionLog });
             return false;
@@ -1172,7 +1166,7 @@ export const TreasuryStreamCreateModal = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58()}
+            result: {signer: publicKey.toBase58()}
           });
           return true;
         })
@@ -1184,7 +1178,7 @@ export const TreasuryStreamCreateModal = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logError('CreateStreams for a treasury transaction failed', { transcript: transactionLog });
           return false;

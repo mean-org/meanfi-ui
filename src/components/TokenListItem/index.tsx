@@ -1,6 +1,6 @@
 import { TokenInfo } from "@solana/spl-token-registry";
-import React from "react";
-import { getTokenByMintAddress } from "../../utils/tokens";
+import React, { useContext } from "react";
+import { AppStateContext } from "../../contexts/appstate";
 import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from "../../utils/utils";
 import { Identicon } from "../Identicon";
 
@@ -14,6 +14,8 @@ export const TokenListItem = (props: {
   token?: TokenInfo;
 }) => {
   const { name, icon, className, mintAddress, balance, token } = props;
+  const { getTokenByMintAddress } = useContext(AppStateContext);
+
   const displayToken = token || getTokenByMintAddress(mintAddress);
 
   return (

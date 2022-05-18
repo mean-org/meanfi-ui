@@ -911,6 +911,7 @@
 		"modal-title": "یک توکن انتخاب کنید",
 		"no-matches": "جستجو حاصلی دربرنداشت",
 		"search-input-placeholder": "جستجوی توکن بر اساس نام، نماد یا آدرس",
+		"lookup-add-asset-input-placeholder": "نام رمز، نماد یا آدرس را وارد کنید",
 		"wrap-sol-first": "ابتدا آن را به wSOL رپ کنید"
 	},
 	"transactions": {
@@ -1293,9 +1294,10 @@
 		"label-input-amount": "Enter amount to unwrap"
 	},
 	"wallet-selector": {
+		"connect-to-begin": "In order to use MeanFi you need to connect to a Solana wallet.",
 		"more-options-collapsed": "نمایش گزینه های بیشتر",
 		"more-options-expanded": "نمایش گزینه های کمتر",
-		"primary-action": "انتخاب کنید"
+		"primary-action": "کیف پول را وصل کنید"
 	},
 	"withdraw-funds": {
 		"button-title": "برداشت وجوه",

@@ -2,11 +2,11 @@ import React, { useCallback, useContext, useEffect, useState } from 'react'
 import { MoneyStreaming, TreasuryInfo } from '@mean-dao/money-streaming';
 import { MSP, Treasury, TreasuryType } from '@mean-dao/msp';
 import { Connection, PublicKey } from '@solana/web3.js';
-import { consoleOut, isProd, kFormatter, toUsCurrency } from '../../utils/ui';
+import { consoleOut, kFormatter, toUsCurrency } from '../../utils/ui';
 import { Link, useLocation } from 'react-router-dom';
 import { THREE_MINUTES_REFRESH_TIMEOUT } from '../../constants';
 import { INITIAL_TREASURIES_SUMMARY, UserTreasuriesSummary } from '../../models/treasuries';
-import { getTokenByMintAddress, makeDecimal } from '../../utils/utils';
+import { makeDecimal } from '../../utils/utils';
 import { AppStateContext } from '../../contexts/appstate';
 import { TokenInfo } from '@solana/spl-token-registry';
 import BN from 'bn.js';
@@ -28,10 +28,9 @@ export const TreasuriesSummary = (props: {
     const { address, connection, ms, msp, selected, onSelect, onNewValue } = props;
     const { connected, publicKey } = useWallet();
     const {
-        coinPrices,
-        userTokens,
-        splTokenList,
-        previousWalletConnectState
+        previousWalletConnectState,
+        getTokenPriceBySymbol,
+        getTokenByMintAddress,
     } = useContext(AppStateContext);
     const { t } = useTranslation('common');
     const { pathname } = useLocation();
@@ -43,14 +42,6 @@ export const TreasuriesSummary = (props: {
     ////////////////////////////
     //   Events and actions   //
     ////////////////////////////
-
-    const getPricePerToken = useCallback((token: TokenInfo): number => {
-        if (!token || !coinPrices) { return 0; }
-
-        return coinPrices && coinPrices[token.symbol]
-            ? coinPrices[token.symbol]
-            : 0;
-    }, [coinPrices])
 
     const getTreasuryUnallocatedBalance = useCallback((tsry: Treasury | TreasuryInfo, assToken: TokenInfo | undefined) => {
         if (tsry) {
@@ -107,7 +98,7 @@ export const TreasuriesSummary = (props: {
                         const v1 = i as TreasuryInfo;
                         const v2 = i as Treasury;
                         const ata = isNew ? v2.associatedToken as string : v1.associatedTokenAddress as string;
-                        const asset = getTokenByMintAddress(ata, isProd() ? splTokenList : userTokens);
+                        const asset = getTokenByMintAddress(ata);
                         return {
                             version: isNew ? v2.version : 1,
                             token: asset ? asset.symbol : '-',
@@ -123,7 +114,7 @@ export const TreasuriesSummary = (props: {
                 .finally(() => setLoadingTreasuries(false));
         }
 
-    }, [address, connection, getAllUserV2Treasuries, getTreasuryUnallocatedBalance, loadingTreasuries, ms, msp, splTokenList, userTokens]);
+    }, [address, connection, getAllUserV2Treasuries, getTokenByMintAddress, getTreasuryUnallocatedBalance, loadingTreasuries, ms, msp]);
 
     const refreshTreasuriesSummary = useCallback(async () => {
 
@@ -160,10 +151,10 @@ export const TreasuriesSummary = (props: {
 
             let pricePerToken = 0;
             let amountChange = 0;
-            const asset = getTokenByMintAddress(associatedToken, isProd() ? splTokenList : userTokens);
+            const asset = getTokenByMintAddress(associatedToken);
 
             if (asset) {
-                pricePerToken = getPricePerToken(asset);
+                pricePerToken = getTokenPriceBySymbol(asset.symbol);
                 const rate = asset ? (pricePerToken ? pricePerToken : 1) : 1;
                 const amount = getTreasuryUnallocatedBalance(treasury, asset);
                 amountChange = amount * rate;
@@ -187,7 +178,10 @@ export const TreasuriesSummary = (props: {
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [
-        treasuryList,
+        getTokenPriceBySymbol,
+        getTokenByMintAddress,
+        getTreasuryUnallocatedBalance,
+        treasuryList
     ]);
 
 
@@ -304,12 +298,12 @@ export const TreasuriesSummary = (props: {
         <>
             {publicKey ? (
                 <Link to="/treasuries" state={{ previousPath: pathname }}>
-                    <Tooltip title="See your Streaming Treasuries">
+                    <Tooltip title="See your Streaming Accounts">
                         {renderContent}
                     </Tooltip>
                 </Link>
             ) : (
-                <Tooltip title="To see your Streaming Treasuries you need to connect your wallet">
+                <Tooltip title="To see your Streaming Accounts you need to connect your wallet">
                     {renderContent}
                 </Tooltip>
             )}

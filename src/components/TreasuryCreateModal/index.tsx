@@ -11,7 +11,7 @@ import { consoleOut, getTransactionOperationDescription, isValidAddress } from '
 import { isError } from '../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TransactionFees, TreasuryType } from '@mean-dao/money-streaming';
-import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, shortenAddress } from '../../utils/utils';
+import { formatAmount, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
 import { Identicon } from '../Identicon';
 import { IconCheckedBox } from '../../Icons';
 import { TokenInfo } from '@solana/spl-token-registry';
@@ -39,13 +39,13 @@ export const TreasuryCreateModal = (props: {
   const { t } = useTranslation('common');
   const {
     tokenList,
-    coinPrices,
     tokenBalance,
     selectedToken,
     effectiveRate,
     loadingPrices,
     transactionStatus,
-    highLightableStreamId,
+    getTokenByMintAddress,
+    getTokenPriceBySymbol,
     setTransactionStatus,
     setSelectedToken,
     setEffectiveRate,
@@ -56,16 +56,6 @@ export const TreasuryCreateModal = (props: {
   const [localSelectedMultisig, setLocalSelectedMultisig] = useState<MultisigInfo | undefined>(undefined);
   const [enableMultisigTreasuryOption, setEnableMultisigTreasuryOption] = useState(true);
   const [customTokenInput, setCustomTokenInput] = useState("");
-
-  const getPricePerToken = useCallback((token: TokenInfo): number => {
-    if (!token || !token.symbol) { return 0; }
-    const tokenSymbol = token.symbol.toUpperCase();
-    const symbol = tokenSymbol[0] === 'W' ? tokenSymbol.slice(1) : tokenSymbol;
-
-    return coinPrices && coinPrices[symbol]
-      ? coinPrices[symbol]
-      : 0;
-  }, [coinPrices])
 
   const toggleOverflowEllipsisMiddle = useCallback((state: boolean) => {
     const ellipsisElements = document.querySelectorAll(".ant-select.token-selector-dropdown .ant-select-selector .ant-select-selection-item");
@@ -138,7 +128,7 @@ export const TreasuryCreateModal = (props: {
     const token = getTokenByMintAddress(e);
     if (token) {
       setSelectedToken(token as TokenInfo);
-      setEffectiveRate(getPricePerToken(token as TokenInfo));
+      setEffectiveRate(getTokenPriceBySymbol(token.symbol));
       toggleOverflowEllipsisMiddle(false);
     }
   }
@@ -183,9 +173,9 @@ export const TreasuryCreateModal = (props: {
     setTreasuryOption(option);
   }
 
-  const onCloseTreasuryOptionChanged = (e: any) => {
-    setEnableMultisigTreasuryOption(e.target.value);
-  }
+  // const onCloseTreasuryOptionChanged = (e: any) => {
+  //   setEnableMultisigTreasuryOption(e.target.value);
+  // }
 
   const onMultisigChanged = useCallback((e: any) => {
     

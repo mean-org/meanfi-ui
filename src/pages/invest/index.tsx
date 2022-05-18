@@ -8,7 +8,7 @@ import { PreFooter } from "../../components/PreFooter";
 import { getNetworkIdByCluster, useConnection, useConnectionConfig } from '../../contexts/connection';
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
-import { cutNumber, findATokenAddress, formatThousands, isValidNumber } from "../../utils/utils";
+import { cutNumber, findATokenAddress, formatThousands } from "../../utils/utils";
 import { IconLoading, IconStats } from "../../Icons";
 import { IconHelpCircle } from "../../Icons/IconHelpCircle";
 import useWindowSize from '../../hooks/useWindowResize';
@@ -39,6 +39,7 @@ export const InvestView = () => {
     stakedAmount,
     detailsPanelOpen,
     setIsVerifiedRecipient,
+    getTokenPriceBySymbol,
     setDtailsPanelOpen,
     setFromCoinAmount,
   } = useContext(AppStateContext);
@@ -74,7 +75,7 @@ export const InvestView = () => {
   const [stakePoolInfo, setStakePoolInfo] = useState<StakePoolInfo>();
   const [shouldRefreshStakePoolInfo, setShouldRefreshStakePoolInfo] = useState(true);
   const [refreshingStakePoolInfo, setRefreshingStakePoolInfo] = useState(false);
-  const [bondsAmount, setBondsAmount] = useState<string>('');
+  // const [bondsAmount, setBondsAmount] = useState<string>('');
 
   const [shouldRefreshLpData, setShouldRefreshLpData] = useState(true);
   const [refreshingPoolInfo, setRefreshingPoolInfo] = useState(false);
@@ -114,36 +115,28 @@ export const InvestView = () => {
     return SOCN_USD as TokenInfo;
   }, []);
 
-  const getPricePerToken = useCallback((token: TokenInfo): number => {
-    if (!token || !coinPrices) { return 0; }
-
-    return coinPrices && coinPrices[token.symbol]
-      ? coinPrices[token.symbol]
-      : 0;
-  }, [coinPrices])
-
   // Keep MEAN price updated
   useEffect(() => {
 
     if (coinPrices && stakingPair && stakingPair.unstakedToken) {
-      const price = getPricePerToken(stakingPair.unstakedToken);
+      const price = getTokenPriceBySymbol(stakingPair.unstakedToken.symbol);
       consoleOut('meanPrice:', price, 'crimson');
       console.log('coinPrices:', coinPrices);
       setMeanPrice(price);
     }
 
-  }, [coinPrices, getPricePerToken, stakingPair]);
+  }, [coinPrices, getTokenPriceBySymbol, stakingPair]);
 
   // Keep SOCN/USDC price updated
   useEffect(() => {
 
     if (coinPrices) {
-      const price = getPricePerToken(socnUsdToken);
+      const price = getTokenPriceBySymbol(socnUsdToken.symbol);
       consoleOut('SOCN/USDC Price:', price, 'crimson');
       setSocnUsdTokenPrice(price);
     }
 
-  }, [coinPrices, getPricePerToken, socnUsdToken, stakingPair]);
+  }, [coinPrices, getTokenPriceBySymbol, socnUsdToken, stakingPair]);
 
   /////////////////
   //  Callbacks  //
@@ -761,6 +754,7 @@ export const InvestView = () => {
     setIsVerifiedRecipient,
   ]);
 
+  /*
   const handleBondsAmountChange = (e: any) => {
 
     let newValue = e.target.value;
@@ -791,6 +785,7 @@ export const InvestView = () => {
       // fetchQuoteFromInput(newValue);
     }
   };
+  */
 
   // Keep staking rewards updated
   useEffect(() => {

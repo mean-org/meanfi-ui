@@ -42,8 +42,6 @@ import { AppStateContext } from "../../contexts/appstate";
 import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
 import { useTranslation } from "react-i18next";
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { customLogger } from '../..';
 import { StepSelector } from '../../components/StepSelector';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
@@ -72,7 +70,6 @@ export const RepeatingPayment = (props: {
   const {
     tokenList,
     userTokens,
-    coinPrices,
     splTokenList,
     effectiveRate,
     loadingPrices,
@@ -88,6 +85,7 @@ export const RepeatingPayment = (props: {
     previousWalletConnectState,
     setPaymentRateFrequency,
     setIsVerifiedRecipient,
+    getTokenPriceBySymbol,
     setPaymentRateAmount,
     setTransactionStatus,
     resetContractValues,
@@ -635,7 +633,7 @@ export const RepeatingPayment = (props: {
   }
 
   const isAddressOwnAccount = (): boolean => {
-    return recipientAddress && wallet && wallet.publicKey && recipientAddress === wallet.publicKey.toBase58()
+    return recipientAddress && wallet && publicKey && recipientAddress === publicKey.toBase58()
            ? true : false;
   }
 
@@ -775,14 +773,6 @@ export const RepeatingPayment = (props: {
     return options;
   }
 
-  const getPricePerToken = useCallback((token: TokenInfo): number => {
-    if (!token || !coinPrices) { return 0; }
-
-    return coinPrices && coinPrices[token.symbol]
-      ? coinPrices[token.symbol]
-      : 0;
-  }, [coinPrices])
-
   const onStepperChange = (value: number) => {
     setCurrentStep(value);
   }
@@ -833,7 +823,7 @@ export const RepeatingPayment = (props: {
 
         // Create a transaction
         const data = {
-          wallet: wallet.publicKey.toBase58(),                        // wallet
+          wallet: publicKey.toBase58(),                        // wallet
           treasury: 'undefined',                                      // treasury
           beneficiary: beneficiary.toBase58(),                        // beneficiary
           associatedToken: associatedToken.toBase58(),                // mint
@@ -932,7 +922,7 @@ export const RepeatingPayment = (props: {
     }
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (wallet && publicKey) {
         consoleOut('Signing transaction...');
         return await wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
@@ -950,7 +940,7 @@ export const RepeatingPayment = (props: {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
             segmentAnalytics.recordEvent(AppUsageEvent.TransferRecurringFailed, { transcript: transactionLog });
@@ -962,7 +952,7 @@ export const RepeatingPayment = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58()}
+            result: {signer: publicKey.toBase58()}
           });
           segmentAnalytics.recordEvent(AppUsageEvent.TransferRecurringSigned, {
             signature,
@@ -978,7 +968,7 @@ export const RepeatingPayment = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
           segmentAnalytics.recordEvent(AppUsageEvent.TransferRecurringFailed, { transcript: transactionLog });
@@ -1161,7 +1151,7 @@ export const RepeatingPayment = (props: {
             setSelectedToken(t);
 
             consoleOut("token selected:", t.symbol, 'blue');
-            setEffectiveRate(getPricePerToken(t));
+            setEffectiveRate(getTokenPriceBySymbol(t.symbol));
             onCloseTokenSelector();
           };
 

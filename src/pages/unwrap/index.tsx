@@ -328,7 +328,7 @@ export const UnwrapView = () => {
     };
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (wallet && publicKey) {
         consoleOut("Signing transaction...");
         return await wallet
           .signTransaction(transaction)
@@ -353,7 +353,7 @@ export const UnwrapView = () => {
                   TransactionStatus.SignTransactionFailure
                 ),
                 result: {
-                  signer: `${wallet.publicKey.toBase58()}`,
+                  signer: `${publicKey.toBase58()}`,
                   error: `${error}`,
                 },
               });
@@ -370,7 +370,7 @@ export const UnwrapView = () => {
               action: getTransactionStatusForLogs(
                 TransactionStatus.SignTransactionSuccess
               ),
-              result: { signer: wallet.publicKey.toBase58() },
+              result: { signer: publicKey.toBase58() },
             });
             return true;
           })
@@ -385,7 +385,7 @@ export const UnwrapView = () => {
                 TransactionStatus.SignTransactionFailure
               ),
               result: {
-                signer: `${wallet.publicKey.toBase58()}`,
+                signer: `${publicKey.toBase58()}`,
                 error: `${error}`,
               },
             });

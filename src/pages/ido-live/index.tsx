@@ -26,7 +26,7 @@ import { useConnectionConfig } from '../../contexts/connection';
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
 import { appConfig } from '../..';
 import { formatThousands, getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
-import { CUSTOM_USDC, MEAN_TOKEN_LIST } from '../../constants/token-list';
+import { CUSTOM_USDC_TEST_IDO_DEVNET, MEAN_TOKEN_LIST } from '../../constants/token-list';
 import { PartnerImage } from '../../models/common-types';
 import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { ClockCircleFilled, DoubleRightOutlined } from '@ant-design/icons';
@@ -169,9 +169,9 @@ export const IdoLiveView = () => {
         setSelectedToken(usdc);
       }
     } else {
-      if (!selectedToken || selectedToken.address !== CUSTOM_USDC.address) {
+      if (!selectedToken || selectedToken.address !== CUSTOM_USDC_TEST_IDO_DEVNET.address) {
         consoleOut('Selecting custom USDC');
-        setSelectedToken(CUSTOM_USDC);
+        setSelectedToken(CUSTOM_USDC_TEST_IDO_DEVNET);
       }
     }
   },[
@@ -524,9 +524,9 @@ export const IdoLiveView = () => {
             setSelectedToken(usdc);
           }
         } else {
-          if (!selectedToken || selectedToken.address !== CUSTOM_USDC.address) {
+          if (!selectedToken || selectedToken.address !== CUSTOM_USDC_TEST_IDO_DEVNET.address) {
             consoleOut('Selecting custom USDC');
-            setSelectedToken(CUSTOM_USDC);
+            setSelectedToken(CUSTOM_USDC_TEST_IDO_DEVNET);
           }
         }
         setIdoEngineInitStatus("uninitialized");

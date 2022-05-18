@@ -913,6 +913,7 @@
 		"modal-title": "Bir token seçin",
 		"no-matches": "Hiçbir sonuç bulunamadı",
 		"search-input-placeholder": "İsim, sembol veya adrese göre token arayın",
+		"lookup-add-asset-input-placeholder": "Belirteç adı, sembol veya adres girin",
 		"wrap-sol-first": "önce wSOL'a çevirin"
 	},
 	"transactions": {
@@ -1295,9 +1296,10 @@
 		"label-input-amount": "Enter amount to unwrap"
 	},
 	"wallet-selector": {
+		"connect-to-begin": "In order to use MeanFi you need to connect to a Solana wallet.",
 		"more-options-collapsed": "Daha fazla seçenek göster",
 		"more-options-expanded": "Daha az seçenek göster",
-		"primary-action": "Seç"
+		"primary-action": "Cüzdanı Bağla"
 	},
 	"withdraw-funds": {
 		"button-title": "Fonları geri çek",

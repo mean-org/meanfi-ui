@@ -65,10 +65,10 @@ export const RecurringExchange = (props: {
   const { t } = useTranslation("common");
   const { publicKey, connected } = useWallet();
   const {
-    coinPrices,
     ddcaOption,
     previousWalletConnectState,
     setPreviousWalletConnectState,
+    getTokenPriceBySymbol,
     setDdcaOption,
     refreshPrices,
   } = useContext(AppStateContext);
@@ -1237,14 +1237,6 @@ export const RecurringExchange = (props: {
     ) ? true : false;
   }
 
-  const getPricePerToken = useCallback((token: TokenInfo): number => {
-    if (!token || !coinPrices) { return 0; }
-
-    return coinPrices && coinPrices[token.symbol]
-      ? coinPrices[token.symbol]
-      : 0;
-  }, [coinPrices])
-
   const infoRow = (caption: string, value: string, separator = '≈', route = false) => {
     return (
       <Row>
@@ -1316,9 +1308,9 @@ export const RecurringExchange = (props: {
     setSlippage(value);
   };
 
-  const onShowLpListToggled = (value: boolean) => {
-    setShowLpList(value);
-  };
+  // const onShowLpListToggled = (value: boolean) => {
+  //   setShowLpList(value);
+  // };
 
   const renderSourceTokenList = (
     <>
@@ -1536,7 +1528,7 @@ export const RecurringExchange = (props: {
                 toMint && mintList[toMint]
                   ? `~$${
                     exchangeInfo && exchangeInfo.amountIn && exchangeInfo.amountOut
-                    ? formatAmount(parseFloat(exchangeInfo.amountOut.toFixed(mintList[toMint].decimals)) * getPricePerToken(mintList[toMint] as TokenInfo), 2)
+                    ? formatAmount(parseFloat(exchangeInfo.amountOut.toFixed(mintList[toMint].decimals)) * getTokenPriceBySymbol(mintList[toMint].symbol), 2)
                     : '0.00'}`
                   : ''
               }

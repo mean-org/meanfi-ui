@@ -911,6 +911,7 @@
 		"modal-title": "Selecione um token",
 		"no-matches": "Nenhuma equivalência encontrada",
 		"search-input-placeholder": "Pesquisar token por nome, símbolo ou endereço",
+		"lookup-add-asset-input-placeholder": "Insira o nome do token, símbolo ou endereço",
 		"wrap-sol-first": "embrulhe-o primeiro no wSOL"
 	},
 	"transactions": {
@@ -1283,9 +1284,10 @@
 		}
 	},
 	"wallet-selector": {
+		"connect-to-begin": "In order to use MeanFi you need to connect to a Solana wallet.",
 		"more-options-collapsed": "Mostrar mais opções",
 		"more-options-expanded": "Mostrar menos opções",
-		"primary-action": "Selecionar"
+		"primary-action": "Conectar Carteira"
 	},
 	"withdraw-funds": {
 		"button-title": "Withdraw funds",

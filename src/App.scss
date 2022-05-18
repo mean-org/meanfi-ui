@@ -70,10 +70,12 @@
   --darken-10: rgba(0, 0, 0, 0.10);
   --darken-20: rgba(0, 0, 0, 0.20);
   --darken-30: rgba(0, 0, 0, 0.30);
+  --darken-40: rgba(0, 0, 0, 0.40);
+  --darken-50: rgba(0, 0, 0, 0.50);
 
   /* Properties */
   --custom-border-radius: 7px;
-  --custom-control-height: 40px;
+  --custom-control-height: 36px;
   --animated-border-width: 3px;
   --custom-control-border-radius: 2px;
   --custom-border-style: 1px solid var(--color-secondary-alpha-20);
@@ -82,7 +84,7 @@
   --color-network-bar: var(--color-secondary-alpha-10);
   --wallet-wrapper-color: var(--color-white);
   --wallet-wrapper-bg: var(--color-black);
-  --wallet-provider-background: var(--color-secondary-alpha-85);
+  --wallet-provider-background: #343644;
   --bottom-shadow-up-05: 1px -2px 6px rgba(64,64,64, 0.05);
   --darken: rgba(0, 0, 0, 0.05);
 
@@ -164,7 +166,7 @@
 
   /* Properties */
   --custom-border-radius: 7px;
-  --custom-control-height: 40px;
+  --custom-control-height: 36px;
   --animated-border-width: 3px;
   --custom-control-border-radius: 2px;
   --custom-border-style: 1px solid var(--color-secondary-alpha-20);
@@ -173,7 +175,7 @@
   --color-network-bar: var(--color-secondary-alpha-40);
   --wallet-wrapper-color: var(--color-white);
   --wallet-wrapper-bg: var(--color-black);
-  --wallet-provider-background: var(--color-secondary-alpha-10);
+  --wallet-provider-background: #343644;
   --bottom-shadow-up-05: 1px -2px 6px rgba(92,92,92, 0.05);
   --darken: rgba(0, 0, 0, 0.20);
 }
@@ -430,6 +432,20 @@ h1, h2, h3, h4, h5, h6 {
 .App,
 #root {
   height: 100%;
+  position: relative;
+}
+.background-logo-container {
+  position: absolute;
+  height: 100%;
+  width: auto;
+  overflow: hidden;
+  z-index: 0;
+  .meanfi-bg-logo {
+    width: auto;
+    height: 100%;
+    margin-left: -27%;
+    opacity: 0.15;
+  }
 }
 .ant-layout {
   background-color: transparent;
@@ -497,8 +513,8 @@ footer.ant-layout-footer {
       align-items: center;
       background-color: var(--color-network-bar);
       border-radius: var(--custom-border-radius);
-      height: 40px;
-      padding: 2px;
+      height: 36px;
+      padding: 0;
       .connected-network {
         display: flex;
         flex-direction: row;
@@ -803,11 +819,18 @@ footer.ant-layout-footer {
     border-color: var(--color-secondary-alpha-20);
   }
 }
+
 // Text button shaded with rounded corners
+.ant-btn > svg,
+.ant-btn > span {
+    display: inline-block;
+    vertical-align: middle;
+}
+
 .ant-btn.ant-btn-text.ant-btn-shaded {
   background-color: var(--color-flat-btn);
   border: none;
-  padding: 10px 12px;
+  padding: 8px 10px;
   font-weight: 500;
   height: var(--custom-control-height);
   &:hover {
@@ -927,7 +950,6 @@ footer.ant-layout-footer {
     border-color: var(--color-primary-highlight);
   }
 }
-
 .ant-btn.ant-btn-round.wallet-provider {
   color: var(--color-secondary-alpha-60);
   border-color: var(--color-secondary-alpha-40);
@@ -1781,20 +1803,31 @@ button.ant-btn.ant-btn-primary.ant-btn-sm {
     font-weight: 400;
   }
 }
-.connected-network .account-balance {
-  .mean-svg-icons {
-    width: 16px;
-    height: 16px;
+.connected-network {
+  display: flex;
+  flex: auto;
+  justify-content: flex-start;
+  align-items: center;
+  .account-balance {
+    .mean-svg-icons {
+      width: 16px;
+      height: 16px;
+    }
   }
 }
 .events-drawer-trigger {
-  font-size: 20px;
-  line-height: 20px;
+  font-size: 22px;
+  line-height: 22px;
+  color: var(--color-secondary-alpha-70) !important;
+  cursor: pointer;
+  &:hover {
+    color: var(--text-color) !important;
+  }
   &.upper {
-    margin: 0 2px 0 6px;
+    margin: 4px 8px 0 0;
   }
   &.lower {
-    margin: 0 6px 0 2px;
+    margin: 4px 0 0 6px;
   }
 }
 .connection-and-account-bar {
@@ -1802,9 +1835,9 @@ button.ant-btn.ant-btn-primary.ant-btn-sm {
   align-items: center;
   background-color: var(--color-network-bar);
   border-radius: var(--custom-border-radius);
+  height: var(--custom-control-height);
   margin-right: 8px;
-  height: 40px;
-  padding: 2px;
+  padding: 0;
   @media (max-width: 575.98px) {
     display: none;
   }
@@ -3615,6 +3648,14 @@ main section {
 }
 
 // Modals
+.ant-modal-mask {
+  left: 0;
+  top: 0;
+  position: fixed;
+  z-index: 1000;
+  width: 100vw;
+  height: 100vh;
+}
 .ant-modal-wrap {
   .ant-modal.mean-modal {
     &:not(.no-full-screen) {
@@ -4096,6 +4137,9 @@ main section {
     -webkit-transition: .1s all;
     transition: .1s all;
     width: 100%;
+    &.dimmed {
+      opacity: 0.7;
+    }
     &.selected {
       background-color: var(--color-secondary-alpha-05);
     }
@@ -5318,14 +5362,6 @@ main section {
 .h-100 {
   height: 100% !important;
 }
-
-// Text overflow
-.text-truncate {
-  display: inline-block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 #payment-recipient-field {
   position: absolute;
   top: 6px;
@@ -5374,6 +5410,15 @@ main section {
     float: right;
     content: attr(data-tail);
   }
+}
+.text-strike-through {
+  text-decoration: line-through;
+}
+.text-truncate {
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .text-uppercase {
   text-transform: uppercase;
