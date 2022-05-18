@@ -2323,8 +2323,13 @@ export const AssetDetailsView = (props: {
     if (!token) {
       return (
         <>
-          <span className="info-icon token-icon">
-            <Identicon address={tokenAddress} style={{ width: "30", height: "30", display: "inline-flex" }} />
+          <span className="info-icon token-icon mr-1">
+            <Identicon address={tokenAddress} style={{
+              width: "35",
+              height: "30",
+              marginRight: "5",
+              display: "inline-flex"
+            }} />
           </span>
           <span className="info-data">
             {formatThousands(makeDecimal(amount, decimals), decimals)}

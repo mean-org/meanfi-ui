@@ -13,11 +13,12 @@
   .resume-left-container {
     display: flex;
     align-items: center;
-    img {
-      width: 35px;
-      height: 35px;
+    .img-container {
       margin-right: 0.5em;
-      border-radius: 0.25em;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      justify-content: center;
     }
     .resume-left-text {
       line-height: 1.3;

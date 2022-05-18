@@ -11,7 +11,8 @@ import { formatThousands } from '../../../../../utils/utils';
 export const ResumeItem = (props: {
   id?: any;
   version?: number;
-  logo?: any;
+  src?: any;
+  img?: any;
   title?: string;
   subtitle?: string;
   expires?: any;
@@ -32,7 +33,7 @@ export const ResumeItem = (props: {
     theme
   } = useContext(AppStateContext);
 
-  const { logo, version, title, subtitle, expires, executedOn, approved, rejected, status, needs, isSafeDetails, isProgram, isAsset, programSize, rightContent } = props;
+  const { src, img, version, title, subtitle, expires, executedOn, approved, rejected, status, needs, isSafeDetails, isProgram, isAsset, programSize, rightContent } = props;
 
   const { t } = useTranslation('common');
 
@@ -111,11 +112,16 @@ export const ResumeItem = (props: {
     <>
       <Row gutter={[8, 8]} className={`resume-item-container list-item ${!isSafeDetails ? "hover-list" : ""} ${isSafeDetails ? "align-items-end" : ""}`}>
         <Col className="resume-left-container">
-          {logo && (
-            <img src={logo} alt={title} />
+          {(src || img) && (
+            <div className="img-container">
+              {src && (
+                <img src={src} alt={title} width={35} height={35} style={{borderRadius: "0.25em !important"}} />
+              )}
+              {img && img}
+            </div>
           )}
           <div className={`resume-left-text ${isSafeDetails ? "pb-1" : ""}`}>
-            <div className={`resume-title ${isSafeDetails ? "big-title" : ""}`}>{title ? title : "Old transaction"}</div>
+            <div className={`resume-title ${isSafeDetails ? "big-title" : ""}`}>{title ? title : "Unknown proposal"}</div>
             {expires && (
               version !== 0 && (
                 <div className="info-label">
@@ -173,7 +179,7 @@ export const ResumeItem = (props: {
                 )}
               </>
             ) : (
-              <div className="rate-amount">
+              <div className="rate-amount mr-1">
                 {rightContent}
               </div>
             )}

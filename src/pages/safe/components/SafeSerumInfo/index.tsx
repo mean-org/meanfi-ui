@@ -5,7 +5,7 @@ import { IconApprove, IconArrowForward, IconCheckCircle, IconCreated, IconCross,
 import { shortenAddress } from "../../../../utils/utils";
 import { SafeInfo } from "../UI/SafeInfo";
 import { ResumeItem } from '../UI/ResumeItem';
-import { MultisigVault } from '../../../../models/multisig';
+// import { MultisigVault } from '../../../../models/multisig';
 import { Idl, Program } from '@project-serum/anchor';
 import { MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
 import { ProgramAccounts } from '../../../../utils/accounts';
@@ -68,7 +68,7 @@ export const SafeSerumInfoView = (props: {
               >
                 <ResumeItem
                   id={tx.id.toBase58()}
-                  // logo={proposal.logo}
+                  // src={proposal.src}
                   title={tx.details.title}
                   expires={expirationDate}
                   executedOn={executedOnDate}
@@ -291,7 +291,6 @@ export const SafeSerumInfoView = (props: {
     <>
       <SafeInfo
         selectedMultisig={selectedMultisig}
-        // multisigVaults={multisigVaults}
         safeNameImg={safeSerumNameImg}
         safeNameImgAlt={safeSerumNameImgAlt}
         onNewProposalMultisigClick={onNewProposalMultisigClick}

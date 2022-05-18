@@ -6,7 +6,7 @@ import { Button, Col, Row, Spin } from "antd"
 import { SafeInfo } from "../UI/SafeInfo";
 import { MeanMultisig, MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
 import { ProgramAccounts } from '../../../../utils/accounts';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Connection, MemcmpFilter, PublicKey } from '@solana/web3.js';
 import { useConnectionConfig } from '../../../../contexts/connection';
 import { consoleOut } from '../../../../utils/ui';
@@ -21,6 +21,7 @@ import { u64 } from '@solana/spl-token';
 import { MEAN_MULTISIG } from '../../../../utils/ids';
 import { ACCOUNT_LAYOUT } from '../../../../utils/layouts';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { AppStateContext } from '../../../../contexts/appstate';
 
 export const SafeMeanInfo = (props: {
   connection: Connection;
@@ -39,6 +40,9 @@ export const SafeMeanInfo = (props: {
   multisigTxs: MultisigTransaction[];
   selectedTab?: any;
 }) => {
+  const {
+    tokenList,
+  } = useContext(AppStateContext);
 
   const {
     connection,
@@ -142,38 +146,33 @@ export const SafeMeanInfo = (props: {
             const onSelectAsset = () => {
               // Sends isProgramDetails value to the parent component "SafeView"
               props.onDataToAssetView(asset);
-              // setSelectedAsset(asset);
-              // setDtailsPanelOpen(true);
               consoleOut('selected asset:', asset, 'blue');
-              // setLoadingMultisigTxs(true);
             };
 
-            // const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
-            //   event.currentTarget.src = FALLBACK_COIN_IMAGE;
-            //   event.currentTarget.className = "error";
-            // };
+            const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+              event.currentTarget.src = FALLBACK_COIN_IMAGE;
+              event.currentTarget.className = "error";
+            };
 
-            // const tokenIcon = (
-            //   <div className="token-icon">
-            //     {token && token.logoURI && (
-            //       <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
-            //     ) : (
-            //       <Identicon address={new PublicKey(asset.mint).toBase58()} style={{
-            //         width: "30",
-            //         display: "inline-flex",
-            //         height: "30",
-            //         overflow: "hidden",
-            //         borderRadius: "50%"
-            //       }} />
-            //     )}
-            //   </div>
-            // )
+            const token = getTokenByMintAddress(asset.mint.toBase58(), tokenList);
 
-            const token = getTokenByMintAddress(asset.mint.toBase58());
-            const tokenIcon = token && token.logoURI;
-            const assetToken = token && token.symbol;
+            const tokenIcon = (
+              (token && token.logoURI) ? (
+                <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} style={{backgroundColor: "#000", borderRadius: "1em"}} />
+              ) : (
+                <Identicon address={new PublicKey(asset.mint).toBase58()} style={{
+                  width: "26",
+                  display: "inline-flex",
+                  height: "26",
+                  overflow: "hidden",
+                  borderRadius: "50%"
+                }} />
+              )
+            )
+
+            const assetToken = token ? token.symbol : "Unknown";
             const assetAddress = shortenAddress(asset.address.toBase58(), 8);
-            const assetAmount = token && formatThousands(makeDecimal(asset.amount, token.decimals), token.decimals);          
+            const assetAmount = token ? formatThousands(makeDecimal(asset.amount, token.decimals), token.decimals) : formatThousands(makeDecimal(asset.amount, asset.decimals || 6), asset.decimals || 6);
 
             return (
               <div 
@@ -183,7 +182,7 @@ export const SafeMeanInfo = (props: {
                 >
                   <ResumeItem
                     id={`${index + 61}`}
-                    logo={tokenIcon}
+                    img={tokenIcon}
                     title={assetToken}
                     subtitle={assetAddress}
                     isAsset={true}

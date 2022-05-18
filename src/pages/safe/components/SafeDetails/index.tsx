@@ -261,7 +261,7 @@ export const SafeDetailsView = (props: {
       </Row>
       <ResumeItem
         id={id}
-        // logo={proposalSelected.logo}
+        // src={proposalSelected.src}
         title={details.title}
         expires={expirationDate}
         executedOn={executedOnDate}

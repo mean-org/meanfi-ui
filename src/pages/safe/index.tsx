@@ -1113,7 +1113,7 @@ export const SafeView = () => {
     const createTx = async (): Promise<boolean> => {
 
       if (publicKey && data) {
-        consoleOut("Start transaction for create multisig", '', 'blue');
+        consoleOut("Start transaction for create asset", '', 'blue');
         consoleOut('Wallet address:', publicKey.toBase58());
 
         setTransactionStatus({
