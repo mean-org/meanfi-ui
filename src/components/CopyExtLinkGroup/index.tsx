@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from "../../constants";
 import { getSolanaExplorerClusterParam } from "../../contexts/connection";
-import { IconLink } from "../../Icons";
+import { IconExternalLink } from "../../Icons";
 import { copyText } from "../../utils/ui";
 import { shortenAddress } from "../../utils/utils";
 import { openNotification } from "../Notifications";
@@ -43,7 +43,7 @@ export const CopyExtLinkGroup = (props: {
 
   return (
     <>
-    <div className="d-flex align-items-start">
+    <div className="d-flex align-items-center copy-ext-link-group">
       <div onClick={() => copyAddressToClipboard(content)} className={`simplelink underline-on-hover ${className}`}>
         {!number ? content : shortenAddress(content, number)}
         </div>
@@ -53,7 +53,7 @@ export const CopyExtLinkGroup = (props: {
           rel="noopener noreferrer"
           href={`${!isTx ? `${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${content}${getSolanaExplorerClusterParam()}` : `${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${content}${getSolanaExplorerClusterParam()}`}`}>
           {externalLink && (
-            <IconLink className="mean-svg-icons" />
+            <IconExternalLink className="mean-svg-icons external-icon" />
           )}
         </a>
       </span>

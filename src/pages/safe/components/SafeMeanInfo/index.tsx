@@ -1,5 +1,4 @@
 import './style.scss';
-
 import { IconApprove, IconArrowForward, IconCheckCircle, IconCreated, IconCross, IconMinus } from "../../../../Icons"
 import { formatThousands, getTokenByMintAddress, makeDecimal, shortenAddress } from "../../../../utils/utils";
 import { Button, Col, Row, Spin } from "antd"

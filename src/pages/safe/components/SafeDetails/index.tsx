@@ -1,6 +1,6 @@
 import './style.scss';
 import { Button, Col, Collapse, Row } from "antd"
-import { IconArrowBack, IconUser, IconThumbsUp, IconThumbsDown, IconApprove, IconCross, IconCheckCircle, IconCreated, IconMinus, IconCaretDown, IconExternalLink, IconLink } from "../../../../Icons"
+import { IconArrowBack, IconUser, IconThumbsUp, IconThumbsDown, IconApprove, IconCross, IconCheckCircle, IconCreated, IconMinus, IconCaretDown, IconExternalLink } from "../../../../Icons"
 
 import { shortenAddress } from '../../../../utils/utils';
 import { TabsMean } from '../../../../components/TabsMean';
@@ -142,7 +142,7 @@ export const SafeDetailsView = (props: {
                     target="_blank"
                     rel="noopener noreferrer"
                     href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${programId.toBase58()}${getSolanaExplorerClusterParam()}`}>
-                    <IconLink className="mean-svg-icons external-icon" />
+                    <IconExternalLink className="mean-svg-icons external-icon" />
                   </a>
                 </Col>
               </Row>
@@ -162,7 +162,7 @@ export const SafeDetailsView = (props: {
                           target="_blank"
                           rel="noopener noreferrer"
                           href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${acc.address}${getSolanaExplorerClusterParam()}`}>
-                          <IconLink className="mean-svg-icons external-icon" />
+                          <IconExternalLink className="mean-svg-icons external-icon" />
                         </a>
                       </Col>
                     </Row>
