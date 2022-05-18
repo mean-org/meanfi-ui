@@ -1,7 +1,7 @@
 import './style.scss';
 import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MEAN_MULTISIG_PROGRAM } from "@mean-dao/mean-multisig-sdk";
 import { TransactionFees } from "@mean-dao/msp";
-import { ConfirmOptions, Connection, LAMPORTS_PER_SOL, PublicKey, SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY, Transaction } from "@solana/web3.js";
+import { ConfirmOptions, Connection, LAMPORTS_PER_SOL, ParsedTransactionWithMeta, PublicKey, SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY, Transaction } from "@solana/web3.js";
 import { Button, Col, Row } from "antd";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -283,9 +283,22 @@ export const ProgramDetailsView = (props: {
     }
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
-        consoleOut('Signing transaction...');
-        return await wallet.signTransaction(transaction)
+      if (!wallet || !wallet.publicKey) {
+        console.error('Cannot sign transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot sign transaction! Wallet not found!'
+        });
+        customLogger.logError('Upgrade Program transaction failed', { transcript: transactionLog });
+        return false;
+      }
+      const signedPublicKey = wallet.publicKey;
+      consoleOut('Signing transaction...');
+      return await wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
@@ -301,7 +314,7 @@ export const ProgramDetailsView = (props: {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+              result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('Upgrade Program transaction failed', { transcript: transactionLog });
             return false;
@@ -312,7 +325,7 @@ export const ProgramDetailsView = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58()}
+            result: {signer: signedPublicKey.toBase58()}
           });
           return true;
         })
@@ -324,24 +337,11 @@ export const ProgramDetailsView = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logError('Upgrade Program transaction failed', { transcript: transactionLog });
           return false;
         });
-      } else {
-        console.error('Cannot sign transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.WalletNotFound
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot sign transaction! Wallet not found!'
-        });
-        customLogger.logError('Upgrade Program transaction failed', { transcript: transactionLog });
-        return false;
-      }
     }
 
     const sendTx = async (): Promise<boolean> => {
@@ -601,9 +601,22 @@ export const ProgramDetailsView = (props: {
     }
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
-        consoleOut('Signing transaction...');
-        return await wallet.signTransaction(transaction)
+      if (!wallet || !wallet.publicKey) {
+        console.error('Cannot sign transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot sign transaction! Wallet not found!'
+        });
+        customLogger.logError('Set program authority transaction failed', { transcript: transactionLog });
+        return false;
+      }
+      const signedPublicKey = wallet.publicKey;
+      consoleOut('Signing transaction...');
+      return await wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
@@ -619,7 +632,7 @@ export const ProgramDetailsView = (props: {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+              result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('Set program authority transaction failed', { transcript: transactionLog });
             return false;
@@ -630,7 +643,7 @@ export const ProgramDetailsView = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58()}
+            result: {signer: signedPublicKey.toBase58()}
           });
           return true;
         })
@@ -642,24 +655,11 @@ export const ProgramDetailsView = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logError('Set program authority transaction failed', { transcript: transactionLog });
           return false;
         });
-      } else {
-        console.error('Cannot sign transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.WalletNotFound
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot sign transaction! Wallet not found!'
-        });
-        customLogger.logError('Set program authority transaction failed', { transcript: transactionLog });
-        return false;
-      }
     }
 
     const sendTx = async (): Promise<boolean> => {
@@ -868,14 +868,12 @@ export const ProgramDetailsView = (props: {
   useEffect(() => {
     if (!connection || !programSignatures) { return; }
 
-    connection.getTransactions(programSignatures)
+    connection.getParsedTransactions(programSignatures)
         .then(transactions => {
           setProgramTransactions(transactions);
           consoleOut("program transactions", transactions, 'blue');
         })
-        .catch(error => {
-          console.error(error);
-        })
+        .catch(error => console.error(error))
         .finally(() => setLoadingTxs(false));
   }, [connection, programSignatures]);
 
@@ -890,11 +888,11 @@ export const ProgramDetailsView = (props: {
       </div>
       {!loadingTxs ? (
         (programTransactions && programTransactions.length > 0) ? (
-          programTransactions.map((tx: any) => (
+          programTransactions.map((tx: ParsedTransactionWithMeta) => (
             <Row gutter={[8, 8]} className="item-list-body compact hover-list w-100 pt-1" key={tx.blockTime}>
               <Col span={14} className="std-table-cell pr-1 simplelink signature">
                 <CopyExtLinkGroup 
-                  content={tx.transaction.signatures.slice(0, 1).shift()}
+                  content={tx.transaction.signatures.slice(0, 1).shift() || ""}
                   externalLink={true}
                   className="text-truncate"
                   message="Signature"
@@ -910,7 +908,7 @@ export const ProgramDetailsView = (props: {
                 />
               </Col>
               <Col span={5} className="std-table-cell pr-1">
-                {moment.unix(tx.blockTime).fromNow()}
+                {moment.unix(tx.blockTime as number).fromNow()}
               </Col>
             </Row>
           ))

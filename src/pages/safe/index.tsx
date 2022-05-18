@@ -523,9 +523,22 @@ export const SafeView = () => {
     }
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
-        consoleOut('Signing transaction...');
-        return await wallet.signTransaction(transaction)
+      if (!wallet || !wallet.publicKey) {
+        console.error('Cannot sign transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot sign transaction! Wallet not found!'
+        });
+        customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
+        return false;
+      }
+      const signedPublicKey = wallet.publicKey;
+      consoleOut('Signing transaction...');
+      return await wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
@@ -541,7 +554,7 @@ export const SafeView = () => {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+              result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
             return false;
@@ -552,7 +565,7 @@ export const SafeView = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58()}
+            result: {signer: signedPublicKey.toBase58()}
           });
           return true;
         })
@@ -564,24 +577,11 @@ export const SafeView = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
           return false;
         });
-      } else {
-        console.error('Cannot sign transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.WalletNotFound
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot sign transaction! Wallet not found!'
-        });
-        customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
-        return false;
-      }
     }
 
     const sendTx = async (): Promise<boolean> => {
@@ -683,6 +683,9 @@ export const SafeView = () => {
     setIsBusy(true);
 
     const createMultisig = async (data: any) => {
+
+      if (!publicKey) { return null; }
+
       const multisig = new Account();
       // Disc. + threshold + nonce.
       const baseSize = 8 + 8 + 1 + 4;
@@ -797,6 +800,7 @@ export const SafeView = () => {
 
         return await createMultisig(data)
           .then(value => {
+            if (!value) { return false; }
             consoleOut('createMultisig returned transaction:', value);
             setTransactionStatus({
               lastOperation: TransactionStatus.InitTransactionSuccess,
@@ -834,9 +838,22 @@ export const SafeView = () => {
     }
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
-        consoleOut('Signing transaction...');
-        return await wallet.signTransaction(transaction)
+      if (!wallet || !wallet.publicKey) {
+        console.error('Cannot sign transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot sign transaction! Wallet not found!'
+        });
+        customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
+        return false;
+      }
+      const signedPublicKey = wallet.publicKey;
+      consoleOut('Signing transaction...');
+      return await wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
@@ -852,7 +869,7 @@ export const SafeView = () => {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+              result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
             return false;
@@ -863,7 +880,7 @@ export const SafeView = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58()}
+            result: {signer: signedPublicKey.toBase58()}
           });
           return true;
         })
@@ -875,24 +892,11 @@ export const SafeView = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
           return false;
         });
-      } else {
-        console.error('Cannot sign transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.WalletNotFound
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot sign transaction! Wallet not found!'
-        });
-        customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
-        return false;
-      }
     }
 
     const sendTx = async (): Promise<boolean> => {
@@ -1038,11 +1042,10 @@ export const SafeView = () => {
 
     const createAsset = async (data: any) => {
 
-      if (!connection || !multisigAddress || !publicKey || !data || !data.token) { return null; }
+      if (!connection || !selectedMultisig || !publicKey || !data || !data.token) { return null; }
 
-      const selectedMultisig = new PublicKey(multisigAddress);
       const [multisigSigner] = await PublicKey.findProgramAddress(
-        [selectedMultisig.toBuffer()],
+        [selectedMultisig.id.toBuffer()],
         MEAN_MULTISIG_PROGRAM
       );
 
@@ -1198,9 +1201,22 @@ export const SafeView = () => {
     }
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
-        consoleOut('Signing transaction...');
-        return await wallet.signTransaction(transaction)
+      if (!wallet || !wallet.publicKey) {
+        console.error('Cannot sign transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot sign transaction! Wallet not found!'
+        });
+        customLogger.logError('Multisig Create Vault transaction failed', { transcript: transactionLog });
+        return false;
+      }
+      const signedPublicKey = wallet.publicKey;
+      consoleOut('Signing transaction...');
+      return await wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
@@ -1216,7 +1232,7 @@ export const SafeView = () => {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+              result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('Multisig Create Vault transaction failed', { transcript: transactionLog });
             return false;
@@ -1227,7 +1243,7 @@ export const SafeView = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58()}
+            result: {signer: signedPublicKey.toBase58()}
           });
           return true;
         })
@@ -1239,24 +1255,11 @@ export const SafeView = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logError('Multisig Create Vault transaction failed', { transcript: transactionLog });
           return false;
         });
-      } else {
-        console.error('Cannot sign transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.WalletNotFound
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot sign transaction! Wallet not found!'
-        });
-        customLogger.logError('Multisig Create Vault transaction failed', { transcript: transactionLog });
-        return false;
-      }
     }
 
     const sendTx = async (): Promise<boolean> => {
@@ -1329,20 +1332,20 @@ export const SafeView = () => {
     }
 
   }, [
-    clearTxConfirmationContext,
-    resetTransactionStatus,
-    connection,
-    nativeBalance,
-    onAssetCreated,
-    publicKey,
-    multisigAddress,
-    setTransactionStatus,
-    startFetchTxSignatureInfo,
-    transactionCancelled,
-    transactionAssetFees.blockchainFee,
-    transactionAssetFees.mspFlatFee,
-    transactionStatus.currentOperation,
-    wallet
+    clearTxConfirmationContext, 
+    resetTransactionStatus, 
+    wallet, 
+    connection, 
+    selectedMultisig, 
+    publicKey, 
+    setTransactionStatus, 
+    transactionAssetFees.blockchainFee, 
+    transactionAssetFees.mspFlatFee, 
+    nativeBalance, 
+    transactionStatus.currentOperation, 
+    transactionCancelled, 
+    startFetchTxSignatureInfo, 
+    onAssetCreated
   ]);
 
   const onAcceptCreateVault = useCallback((params: any) => {
@@ -1544,9 +1547,22 @@ export const SafeView = () => {
     }
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
-        consoleOut('Signing transaction...');
-        return await wallet.signTransaction(transaction)
+      if (!wallet || !wallet.publicKey) {
+        console.error('Cannot sign transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot sign transaction! Wallet not found!'
+        });
+        customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
+        return false;
+      }
+      const signedPublicKey = wallet.publicKey;
+      consoleOut('Signing transaction...');
+      return await wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
@@ -1562,7 +1578,7 @@ export const SafeView = () => {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+              result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('Edit multisig transaction failed', { transcript: transactionLog });
             return false;
@@ -1573,7 +1589,7 @@ export const SafeView = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58()}
+            result: {signer: signedPublicKey.toBase58()}
           });
           return true;
         })
@@ -1585,24 +1601,11 @@ export const SafeView = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logError('Edit multisig transaction failed', { transcript: transactionLog });
           return false;
         });
-      } else {
-        console.error('Cannot sign transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.WalletNotFound
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot sign transaction! Wallet not found!'
-        });
-        customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
-        return false;
-      }
     }
 
     const sendTx = async (): Promise<boolean> => {
@@ -1918,9 +1921,22 @@ export const SafeView = () => {
     }
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
-        consoleOut('Signing transaction...');
-        return await wallet.signTransaction(transaction)
+      if (!wallet || !wallet.publicKey) {
+        console.error('Cannot sign transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot sign transaction! Wallet not found!'
+        });
+        customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
+        return false;
+      }
+      const signedPublicKey = wallet.publicKey;
+      consoleOut('Signing transaction...');
+      return await wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
@@ -1936,7 +1952,7 @@ export const SafeView = () => {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+              result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('Edit multisig transaction failed', { transcript: transactionLog });
             return false;
@@ -1947,7 +1963,7 @@ export const SafeView = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58()}
+            result: {signer: signedPublicKey.toBase58()}
           });
           return true;
         })
@@ -1959,24 +1975,11 @@ export const SafeView = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logError('Edit multisig transaction failed', { transcript: transactionLog });
           return false;
         });
-      } else {
-        console.error('Cannot sign transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.WalletNotFound
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot sign transaction! Wallet not found!'
-        });
-        customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
-        return false;
-      }
     }
 
     const sendTx = async (): Promise<boolean> => {
@@ -2210,9 +2213,22 @@ export const SafeView = () => {
     }
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
-        consoleOut('Signing transaction...');
-        return await wallet.signTransaction(transaction)
+      if (!wallet || !wallet.publicKey) {
+        console.error('Cannot sign transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot sign transaction! Wallet not found!'
+        });
+        customLogger.logError('Multisig Approve transaction failed', { transcript: transactionLog });
+        return false;
+      }
+      const signedPublicKey = wallet.publicKey;
+      consoleOut('Signing transaction...');
+      return await wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
@@ -2228,7 +2244,7 @@ export const SafeView = () => {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+              result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('Multisig Approve transaction failed', { transcript: transactionLog });
             return false;
@@ -2239,7 +2255,7 @@ export const SafeView = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58()}
+            result: {signer: signedPublicKey.toBase58()}
           });
           return true;
         })
@@ -2251,24 +2267,11 @@ export const SafeView = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logError('Multisig Approve transaction failed', { transcript: transactionLog });
           return false;
         });
-      } else {
-        console.error('Cannot sign transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.WalletNotFound
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot sign transaction! Wallet not found!'
-        });
-        customLogger.logError('Multisig Approve transaction failed', { transcript: transactionLog });
-        return false;
-      }
     }
 
     const sendTx = async (): Promise<boolean> => {
@@ -2476,9 +2479,22 @@ export const SafeView = () => {
     }
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
-        consoleOut('Signing transaction...');
-        return await wallet.signTransaction(transaction)
+      if (!wallet || !wallet.publicKey) {
+        console.error('Cannot sign transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot sign transaction! Wallet not found!'
+        });
+        customLogger.logError('Finish Approoved transaction failed', { transcript: transactionLog });
+        return false;
+      }
+      const signedPublicKey = wallet.publicKey;
+      consoleOut('Signing transaction...');
+      return await wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
@@ -2494,7 +2510,7 @@ export const SafeView = () => {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+              result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('Finish Approoved transaction failed', { transcript: transactionLog });
             return false;
@@ -2505,7 +2521,7 @@ export const SafeView = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58()}
+            result: {signer: signedPublicKey.toBase58()}
           });
           return true;
         })
@@ -2517,24 +2533,11 @@ export const SafeView = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logError('Finish Approoved transaction failed', { transcript: transactionLog });
           return false;
         });
-      } else {
-        console.error('Cannot sign transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.WalletNotFound
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot sign transaction! Wallet not found!'
-        });
-        customLogger.logError('Finish Approoved transaction failed', { transcript: transactionLog });
-        return false;
-      }
     }
 
     const sendTx = async (): Promise<boolean> => {
@@ -2760,9 +2763,22 @@ export const SafeView = () => {
     }
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
-        consoleOut('Signing transaction...');
-        return await wallet.signTransaction(transaction)
+      if (!wallet || !wallet.publicKey) {
+        console.error('Cannot sign transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot sign transaction! Wallet not found!'
+        });
+        customLogger.logError('Finish Cancel transaction failed', { transcript: transactionLog });
+        return false;
+      }
+      const signedPublicKey = wallet.publicKey;
+      consoleOut('Signing transaction...');
+      return await wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
@@ -2778,7 +2794,7 @@ export const SafeView = () => {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+              result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logError('Finish Cancel transaction failed', { transcript: transactionLog });
             return false;
@@ -2789,7 +2805,7 @@ export const SafeView = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58()}
+            result: {signer: signedPublicKey.toBase58()}
           });
           return true;
         })
@@ -2801,24 +2817,11 @@ export const SafeView = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            result: {signer: `${signedPublicKey.toBase58()}`, error: `${error}`}
           });
           customLogger.logError('Finish Cancel transaction failed', { transcript: transactionLog });
           return false;
         });
-      } else {
-        console.error('Cannot sign transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.WalletNotFound
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot sign transaction! Wallet not found!'
-        });
-        customLogger.logError('Finish Cancel transaction failed', { transcript: transactionLog });
-        return false;
-      }
     }
 
     const sendTx = async (): Promise<boolean> => {
