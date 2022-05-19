@@ -17,6 +17,7 @@ import { consoleOut, isDev, isLocal, toUsCurrency } from "../../../../../utils/u
 import { fetchAccountTokens, getTokenByMintAddress, shortenAddress } from "../../../../../utils/utils";
 
 export const SafeInfo = (props: {
+  connection: Connection;
   selectedMultisig?: any;
   multisigVaults?: MultisigVault[];
   safeNameImg?: string;
@@ -32,23 +33,14 @@ export const SafeInfo = (props: {
     splTokenList,
     isWhitelisted
   } = useContext(AppStateContext);
-  const connectionConfig = useConnectionConfig();
 
-  const { selectedMultisig, multisigVaults, safeNameImg, safeNameImgAlt, onNewProposalMultisigClick, onNewCreateAssetClick, onEditMultisigClick, tabs, selectedTab } = props;
+  const { connection, selectedMultisig, multisigVaults, safeNameImg, safeNameImgAlt, onNewProposalMultisigClick, onNewCreateAssetClick, onEditMultisigClick, tabs, selectedTab } = props;
 
   const { t } = useTranslation('common');
   const navigate = useNavigate();
 
   const [selectedLabelName, setSelectedLabelName] = useState("");
   const [totalSafeBalance, setTotalSafeBalance] = useState(0);
-
-  // Create and cache the connection
-  const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
-    commitment: "confirmed",
-    disableRetryOnRateLimit: true
-  }), [
-    connectionConfig.endpoint
-  ]);
 
   const isUnderDevelopment = () => {
     return isLocal() || (isDev() && isWhitelisted) ? true : false;
@@ -83,7 +75,7 @@ export const SafeInfo = (props: {
   );
   
   // Safe Balance
-  const [safeAssetsAmount, setSafeAssetsAmount] = useState<any>();
+  // const [safeAssetsAmount, setSafeAssetsAmount] = useState<any>();
   const [assetsAmout, setAssetsAmount] = useState<string>();
 
   const getPricePerToken = useCallback((token: UserTokenAccount): number => {
@@ -96,74 +88,67 @@ export const SafeInfo = (props: {
 
   // Show amount of assets
   useEffect(() => {
+
     (selectedMultisig) && (
-      safeAssetsAmount ? (
-        safeAssetsAmount > 1 ? (
-          setAssetsAmount(`(${safeAssetsAmount} assets)`)
+      multisigVaults && multisigVaults.length > 0 ? (
+        multisigVaults.length > 1 ? (
+          setAssetsAmount(`(${multisigVaults.length} assets)`)
         ) : (
-          setAssetsAmount(`(${safeAssetsAmount} asset)`)
+          setAssetsAmount(`(${multisigVaults.length} asset)`)
         )
       ) : (
         setAssetsAmount("(0 assets)")
       )
     )
-  }, [safeAssetsAmount, selectedMultisig]);
+  }, [
+    multisigVaults, 
+    selectedMultisig
+  ]);
 
   // Fetch safe balance.
   useEffect(() => {
+
     if (!connection || !selectedMultisig) { return; }
     
     let usdValue = 0;
 
     (async () => {
-      const solBalance = await connection.getBalance(selectedMultisig.authority);
-  
-      usdValue = (solBalance / LAMPORTS_PER_SOL) * getPricePerToken(NATIVE_SOL);
-  
-      fetchAccountTokens(connection, selectedMultisig.authority)
-        .then(accTks => {
-          
-          if (accTks) {
-            const cumulative = new Array<any>();
-  
-            accTks.forEach(item => {
-              const token = getTokenByMintAddress(item.parsedInfo.mint, splTokenList);
-  
-              if (token) {
-                const rate = getPricePerToken(token);
-                const balance = item.parsedInfo.tokenAmount.uiAmount || 0;
-  
-                usdValue += balance * rate;
-                cumulative.push({
-                  symbol: token.symbol,
-                  address: item.parsedInfo.mint,
-                  balance: balance,
-                  usdValue: balance * rate
-                })
-              }
-            });
-  
-            setTotalSafeBalance(usdValue);
-  
-            console.table(cumulative);
-          } else {
-            consoleOut("No tokens founds", "", "");
-          }
 
-          if (accTks) {
-            setSafeAssetsAmount(accTks.length);
-          }
+      const solBalance = await connection.getBalance(selectedMultisig.authority);  
+      usdValue = (solBalance / LAMPORTS_PER_SOL) * getPricePerToken(NATIVE_SOL);
+      const cumulative = new Array<any>();
+
+      if (!multisigVaults) { return; }
   
-        }).catch(error => {
-          console.error(error);
-        });
+      multisigVaults.forEach(item => {
+
+        const token = getTokenByMintAddress(item.mint.toBase58(), splTokenList);
+
+        if (token) {
+
+          const rate = getPricePerToken(token);
+          const balance = item.amount.toNumber() / 10 ** token.decimals;
+          usdValue += balance * rate;
+
+          cumulative.push({
+            symbol: token.symbol,
+            address: item.mint,
+            balance: balance,
+            usdValue: balance * rate
+          })
+        }
+      });
+
+      setTotalSafeBalance(usdValue);
+
     })();
+
   }, [
-    setSafeAssetsAmount,
-    getPricePerToken,
-    selectedMultisig,
-    splTokenList,
-    connection,
+    getPricePerToken, 
+    selectedMultisig, 
+    splTokenList, 
+    connection, 
+    multisigVaults
   ]);  
     
   // Deposit Address

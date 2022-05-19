@@ -3,7 +3,7 @@ import { IconApprove, IconArrowForward, IconCheckCircle, IconCreated, IconCross,
 import { formatThousands, getTokenByMintAddress, makeDecimal, shortenAddress } from "../../../../utils/utils";
 import { Button, Col, Row, Spin } from "antd"
 import { SafeInfo } from "../UI/SafeInfo";
-import { MeanMultisig, MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
+import { MeanMultisig, Multisig, MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
 import { ProgramAccounts } from '../../../../utils/accounts';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Connection, MemcmpFilter, PublicKey } from '@solana/web3.js';
@@ -24,6 +24,7 @@ import { AppStateContext } from '../../../../contexts/appstate';
 
 export const SafeMeanInfo = (props: {
   connection: Connection;
+  publicKey: PublicKey | null | undefined;
   isSafeDetails: boolean;
   isProgramDetails: boolean;
   isAssetDetails: boolean;
@@ -36,7 +37,7 @@ export const SafeMeanInfo = (props: {
   onNewProposalMultisigClick: any;
   // multisigVaults: MultisigVault[];
   multisigClient: MeanMultisig | null;
-  multisigTxs: MultisigTransaction[];
+  // multisigTxs: MultisigTransaction[];
   selectedTab?: any;
 }) => {
   const {
@@ -45,9 +46,10 @@ export const SafeMeanInfo = (props: {
 
   const {
     connection,
+    publicKey,
     isSafeDetails, 
     isProgramDetails, 
-    multisigTxs, 
+    // multisigTxs, 
     selectedMultisig, 
     onEditMultisigClick, 
     onNewProposalMultisigClick, 
@@ -60,6 +62,7 @@ export const SafeMeanInfo = (props: {
   // const { publicKey } = useWallet();
   const connectionConfig = useConnectionConfig();
 
+  const [multisigTxs, setMultisigTxs] = useState<MultisigTransaction[]>([]);
   const [programs, setPrograms] = useState<ProgramAccounts[]>([]);
   const [selectedProgram, setSelectedProgram] = useState<ProgramAccounts | undefined>(undefined);
   const [loadingProposals, setLoadingProposals] = useState(true);
@@ -68,12 +71,61 @@ export const SafeMeanInfo = (props: {
   const [multisigVaults, setMultisigVaults] = useState<any[]>([]);
 
   useEffect(() => {
-    if (selectedMultisig) {
-      setLoadingProposals(true);
-      setLoadingAssets(true);
-      setLoadingPrograms(true);
+
+    const loading = selectedMultisig ? true : false;
+    const timeout = setTimeout(() => {
+      setLoadingProposals(loading);
+      setLoadingAssets(loading);
+      setLoadingPrograms(loading);
+    });
+
+    return () => {
+      clearTimeout(timeout);
     }
-  }, [selectedMultisig]);
+
+  },[
+    selectedMultisig
+  ]);
+
+  // Get Txs for the selected multisig
+  useEffect(() => {
+
+    if (
+      !connection || 
+      !publicKey || 
+      !multisigClient || 
+      !selectedMultisig ||
+      !loadingProposals
+    ) { 
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+
+      consoleOut('Triggering loadMultisigPendingTxs using setNeedRefreshTxs...', '', 'blue');
+
+      multisigClient
+        .getMultisigTransactions(selectedMultisig.id, publicKey)
+        .then((txs: any[]) => setMultisigTxs(txs))
+        .catch((err: any) => {
+          console.error("Error fetching all transactions", err);
+          setMultisigTxs([]);
+          consoleOut('multisig txs:', [], 'blue');
+        })
+        .finally(() => setLoadingProposals(false));      
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }    
+
+  }, [
+    publicKey, 
+    selectedMultisig, 
+    connection, 
+    multisigClient, 
+    loadingProposals
+  ]);
 
   // Proposals list
   useEffect(() => {
@@ -267,86 +319,99 @@ export const SafeMeanInfo = (props: {
   //   </>
   // );
 
-  // Programs list
-  const getProgramsByUpgradeAuthority = useCallback(async (upgradeAuthority: PublicKey): Promise<ProgramAccounts[] | undefined> => {
+  const getProgramsByUpgradeAuthority = useCallback(async (): Promise<ProgramAccounts[]> => {
 
-    if (!connection || !upgradeAuthority) { return undefined; }
+    if (!connection || !selectedMultisig || !selectedMultisig.authority) { return []; }
 
-    consoleOut(`Searching for programs with upgrade authority: ${upgradeAuthority}`);
-
-    // 1. Fetch executable data account having upgradeAuthority as upgrade authority
     const BPFLoaderUpgradeab1e = new PublicKey("BPFLoaderUpgradeab1e11111111111111111111111");
-    const executableDataAccountsFilter: MemcmpFilter = { memcmp: { offset: 13, bytes: upgradeAuthority.toBase58() } }
-    const executableDataAccounts = await connection.getProgramAccounts(
-      BPFLoaderUpgradeab1e,
-      {
-        encoding: "base64",
-        filters: [
-          executableDataAccountsFilter
-        ]
-      });
+    const execDataAccountsFilter: MemcmpFilter = { 
+      memcmp: { offset: 13, bytes: selectedMultisig.authority.toBase58() } 
+    };
 
-    // 2. For each executable data account found in the previous step, fetch the corresponding program
+    const execDataAccounts = await connection.getProgramAccounts(
+      BPFLoaderUpgradeab1e, {
+        filters: [execDataAccountsFilter]
+      }
+    );
+
     const programs: ProgramAccounts[] = [];
-    for (let i = 0; i < executableDataAccounts.length; i++) {
-      const executableData = executableDataAccounts[i].pubkey;
-
-      const executableAccountsFilter: MemcmpFilter = { memcmp: { offset: 4, bytes: executableData.toBase58() } }
-      const executableAccounts = await connection.getProgramAccounts(
-        BPFLoaderUpgradeab1e,
-        {
-          encoding: "base64",
-          dataSlice: {
-            offset: 0,
-            length: 0
-          },
-          filters: [
-            executableAccountsFilter
-          ]
-        });
-
-      if (executableAccounts.length === 0) {
-        continue;
+    const group = (size: number, data: any) => {
+      const result = [];
+      for (let i = 0; i < data.length; i += size) {
+        result.push(data.slice(i, i + size));
       }
+      return result;
+    };
 
-      if (executableAccounts.length > 1) {
-        throw new Error(`More than one program was found for program data account '${executableData}'`);
-      }
-
-      const foundProgram = {
-        pubkey: executableAccounts[0].pubkey,
-        owner: executableAccounts[0].account.owner,
-        executable: executableData,
-        upgradeAuthority: upgradeAuthority,
-        size: executableDataAccounts[i].account.data.byteLength
-
-      } as ProgramAccounts;
-
-      consoleOut(`Upgrade Authority: ${upgradeAuthority} --> Executable Data: ${executableData} --> Program: ${foundProgram}`);
-
-      programs.push(foundProgram);
-
+    const sleep = (ms: number, log = true) => {
+      if (log) { console.log("Sleeping for", ms / 1000, "seconds"); }
+      return new Promise((resolve) => setTimeout(resolve, ms));
     }
 
-    consoleOut(`${programs.length} programs found!`);
+    const getProgramAccountsPromise = async (execDataAccount: any) => {
+
+      const execAccountsFilter: MemcmpFilter = { 
+        memcmp: { offset: 4, bytes: execDataAccount.pubkey.toBase58() } 
+      };
+
+      const execAccounts = await connection.getProgramAccounts(
+        BPFLoaderUpgradeab1e, {
+          dataSlice: { offset: 0, length: 0 },
+          filters: [execAccountsFilter]
+        }
+      );
+
+      if (execAccounts.length === 0) { return; }
+
+      if (execAccounts.length > 1) {
+        throw new Error(`More than one program was found for program data account '${execDataAccount.pubkey.toBase58()}'`);
+      }
+
+      programs.push({
+          pubkey: execAccounts[0].pubkey,
+          owner: execAccounts[0].account.owner,
+          executable: execDataAccount.pubkey,
+          upgradeAuthority: selectedMultisig.authority,
+          size: execDataAccount.account.data.byteLength
+        } as ProgramAccounts
+      );
+    }
+
+    const execDataAccountsGroups = group(8, execDataAccounts);
+
+    for (const groupItem of execDataAccountsGroups) {
+      const promises: Promise<any>[] = [];
+      for (const dataAcc of groupItem) {
+        promises.push(
+          getProgramAccountsPromise(dataAcc)
+        );
+      }
+      await Promise.all(promises);
+      sleep(1_000, false);
+    }
 
     return programs;
 
-  }, [connection]);
+  },[
+    connection, 
+    selectedMultisig
+  ]);
 
   // Get Programs
   useEffect(() => {
 
-    if (!connection || !selectedMultisig || !selectedMultisig.authority) { return; }
+    if (!connection || !selectedMultisig || !selectedMultisig.authority || !loadingPrograms) {
+      return;
+    }
 
     const timeout = setTimeout(() => {
-      getProgramsByUpgradeAuthority(selectedMultisig.authority)
-      .then(progs => {
-        consoleOut('programs:', progs, 'blue');
-        setPrograms(progs || []);
-      })
-      .catch(error => console.error(error))
-      .finally(() => setLoadingPrograms(false));
+      getProgramsByUpgradeAuthority()
+        .then(progs => {
+          console.log('programs:', progs);
+          setPrograms(progs);
+        })
+        .catch(error => console.error(error))
+        .finally(() => setLoadingPrograms(false));
     });
 
     return () => {
@@ -355,9 +420,10 @@ export const SafeMeanInfo = (props: {
 
   }, [
     connection,
-    selectedProgram,
     selectedMultisig,
-    getProgramsByUpgradeAuthority,
+    selectedMultisig.authority,
+    loadingPrograms,
+    getProgramsByUpgradeAuthority
   ]);
 
   const getMultisigVaults = useCallback(async (
@@ -488,7 +554,9 @@ export const SafeMeanInfo = (props: {
   return (
     <>
       <SafeInfo
+        connection={connection}
         selectedMultisig={selectedMultisig}
+        multisigVaults={multisigVaults}
         onNewProposalMultisigClick={onNewProposalMultisigClick}
         onEditMultisigClick={onEditMultisigClick}
         onNewCreateAssetClick={onNewCreateAssetClick}

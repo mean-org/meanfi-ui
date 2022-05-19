@@ -135,7 +135,7 @@ export const SafeView = () => {
   // Pending Txs
   const [needRefreshTxs, setNeedRefreshTxs] = useState(true);
   const [loadingMultisigTxs, setLoadingMultisigTxs] = useState(false);
-  const [multisigTxs, setMultisigTxs] = useState<MultisigTransaction[]>([]);
+  // const [multisigTxs, setMultisigTxs] = useState<MultisigTransaction[]>([]);
   const [highlightedMultisigTx, sethHighlightedMultisigTx] = useState<MultisigTransaction | undefined>();
   const [multisigTransactionSummary, setMultisigTransactionSummary] = useState<MultisigTransactionSummary | undefined>(undefined);
   // Vaults
@@ -3080,6 +3080,86 @@ export const SafeView = () => {
     selectedMultisig,
   ]);
 
+  const getProgramsByUpgradeAuthority2 = useCallback(async (): Promise<ProgramAccounts[]> => {
+
+    if (!connection || !selectedMultisig || !selectedMultisig.authority) { return []; }
+
+    const BPFLoaderUpgradeab1e = new PublicKey("BPFLoaderUpgradeab1e11111111111111111111111");
+    const execDataAccountsFilter: MemcmpFilter = { 
+      memcmp: { offset: 13, bytes: selectedMultisig.authority.toBase58() } 
+    };
+
+    const execDataAccounts = await connection.getProgramAccounts(
+      BPFLoaderUpgradeab1e, {
+        encoding: "base64",
+        filters: [execDataAccountsFilter]
+      }
+    );
+
+    const programs: ProgramAccounts[] = [];
+    const group = (size: number, data: any) => {
+      const result = [];
+      for (let i = 0; i < data.length; i += size) {
+        result.push(data.slice(i, i + size));
+      }
+      return result;
+    };
+
+    const sleep = (ms: number, log = true) => {
+      if (log) { console.log("Sleeping for", ms / 1000, "seconds"); }
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    const getProgramAccountsPromise = async (execDataAccount: any) => {
+
+      const execAccountsFilter: MemcmpFilter = { 
+        memcmp: { offset: 4, bytes: execDataAccount.pubkey.toBase58() } 
+      };
+
+      const execAccounts = await connection.getProgramAccounts(
+        BPFLoaderUpgradeab1e, {
+          encoding: "base64",
+          dataSlice: { offset: 0, length: 0 },
+          filters: [execAccountsFilter]
+        }
+      );
+
+      if (execAccounts.length === 0) { return; }
+
+      if (execAccounts.length > 1) {
+        throw new Error(`More than one program was found for program data account '${execDataAccount.pubkey.toBase58()}'`);
+      }
+
+      programs.push({
+          pubkey: execAccounts[0].pubkey,
+          owner: execAccounts[0].account.owner,
+          executable: execDataAccount.pubkey,
+          upgradeAuthority: selectedMultisig.authority,
+          size: execDataAccount.account.data.byteLength
+        } as ProgramAccounts
+      );
+    }
+
+    const execDataAccountsGroups = group(8, execDataAccounts);
+
+    for (const groupItem of execDataAccountsGroups) {
+      const promises: Promise<any>[] = [];
+      for (const dataAcc of groupItem) {
+        promises.push(
+          getProgramAccountsPromise(dataAcc)
+        );
+      }
+      await Promise.all(promises);
+      sleep(2_000, false);
+    }
+
+    return programs;
+
+  },[
+    connection, 
+    selectedMultisig
+  ]);
+
   const getProgramsByUpgradeAuthority = useCallback(async (): Promise<ProgramAccounts[] | undefined> => {
 
     if (!connection || !selectedMultisig || !selectedMultisig.authority) { return undefined; }
@@ -3227,12 +3307,12 @@ export const SafeView = () => {
             setNeedRefreshTxs(true);
           } else {
             setSelectedMultisig(undefined);
-            setMultisigTxs([]);
+            // setMultisigTxs([]);
           }    
         })
         .catch((err: any) => {
           console.error(err);
-          setMultisigTxs([]);
+          // setMultisigTxs([]);
           consoleOut('multisigPendingTxs:', [], 'blue');
         })
         .finally(() => setLoadingMultisigAccounts(false));
@@ -3253,119 +3333,92 @@ export const SafeView = () => {
     // serumAccounts
   ]);
 
-  // Get Txs for the selected multisig
-  useEffect(() => {
-
-    if (
-      !connection || 
-      !publicKey || 
-      !multisigClient || 
-      !selectedMultisig || 
-      !needRefreshTxs ||
-      loadingMultisigTxs
-    ) { 
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-
-      consoleOut('Triggering loadMultisigPendingTxs using setNeedRefreshTxs...', '', 'blue');
-      setNeedRefreshTxs(false);
-      setLoadingMultisigTxs(true);
-
-      multisigClient
-        .getMultisigTransactions(selectedMultisig.id, publicKey)
-        .then((txs: any[]) => {
-          // if (!isProd()) {
-          //   const debugTable: any[] = [];
-          //   txs.forEach((item: any) => debugTable.push({
-          //     operation: OperationType[item.operation],
-          //     approved: item.didSigned,
-          //     executed: item.executedOn ? true : false,
-          //     proposer: item.proposer ? shortenAddress(item.proposer.toBase58(), 6) : '-',
-          //     status: MultisigTransactionStatus[item.status]
-          //   }));
-          //   console.table(debugTable);
-          // }
-          setMultisigTxs(txs);
-        })
-        .catch((err: any) => {
-          console.error("Error fetching all transactions", err);
-          setMultisigTxs([]);
-          consoleOut('multisig txs:', [], 'blue');
-        })
-        .finally(() => setLoadingMultisigTxs(false));      
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }    
-
-  }, [
-    publicKey, 
-    selectedMultisig, 
-    needRefreshTxs,
-    connection, 
-    multisigClient, 
-    loadingMultisigTxs
-  ]);
-
-  // Get multisig treasuries for the selected multisig
+  // // Get Txs for the selected multisig
   // useEffect(() => {
 
-  //   if (!connection || !publicKey || !selectedMultisig) {
+  //   if (
+  //     !connection || 
+  //     !publicKey || 
+  //     !multisigClient || 
+  //     !selectedMultisig || 
+  //     !needRefreshTxs ||
+  //     loadingMultisigTxs
+  //   ) { 
   //     return;
   //   }
 
   //   const timeout = setTimeout(() => {
-  //     getMultisigTreasuries()
-  //       .then(values => {
-  //         consoleOut('multisigTreasuries:', values, 'blue');
-  //         setMultisigTreasuries(values);
+
+  //     consoleOut('Triggering loadMultisigPendingTxs using setNeedRefreshTxs...', '', 'blue');
+  //     setNeedRefreshTxs(false);
+  //     setLoadingMultisigTxs(true);
+
+  //     multisigClient
+  //       .getMultisigTransactions(selectedMultisig.id, publicKey)
+  //       .then((txs: any[]) => {
+  //         // if (!isProd()) {
+  //         //   const debugTable: any[] = [];
+  //         //   txs.forEach((item: any) => debugTable.push({
+  //         //     operation: OperationType[item.operation],
+  //         //     approved: item.didSigned,
+  //         //     executed: item.executedOn ? true : false,
+  //         //     proposer: item.proposer ? shortenAddress(item.proposer.toBase58(), 6) : '-',
+  //         //     status: MultisigTransactionStatus[item.status]
+  //         //   }));
+  //         //   console.table(debugTable);
+  //         // }
+  //         setMultisigTxs(txs);
   //       })
+  //       .catch((err: any) => {
+  //         console.error("Error fetching all transactions", err);
+  //         setMultisigTxs([]);
+  //         consoleOut('multisig txs:', [], 'blue');
+  //       })
+  //       .finally(() => setLoadingMultisigTxs(false));      
+  //   });
+
+  //   return () => {
+  //     clearTimeout(timeout);
+  //   }    
+
+  // }, [
+  //   publicKey, 
+  //   selectedMultisig, 
+  //   needRefreshTxs,
+  //   connection, 
+  //   multisigClient, 
+  //   loadingMultisigTxs
+  // ]);
+
+  // Get Programs
+  // useEffect(() => {
+
+  //   if (!connection || !selectedMultisig || !selectedMultisig.authority) {
+  //     return;
+  //   }
+
+  //   setLoadingPrograms(true);
+
+  //   const timeout = setTimeout(() => {
+  //     getProgramsByUpgradeAuthority2()
+  //       .then(progs => {
+  //         console.log('programs:', progs);
+  //         setPrograms(progs);
+  //       })
+  //       .catch(err => console.error(err));
   //   });
 
   //   return () => {
   //     clearTimeout(timeout);
   //   }
 
-  // }, [
-  //   publicKey,
+  // },[
   //   connection,
+  //   // loadingPrograms,
   //   selectedMultisig,
-  //   getMultisigTreasuries
+  //   // getProgramsByUpgradeAuthority,
+  //   getProgramsByUpgradeAuthority2
   // ]);
-
-  // Get Programs
-  useEffect(() => {
-
-    if (!connection || !publicKey || !selectedMultisig || !loadingPrograms) {
-      return;
-    }
-
-    setLoadingPrograms(true);
-
-    const timeout = setTimeout(() => {
-      getProgramsByUpgradeAuthority()
-        .then(programs => {
-          consoleOut('programs:', programs, 'blue');
-          setPrograms(programs || []);
-        })
-        .catch(err => console.error(err))
-        .finally(() => setLoadingPrograms(false));
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }
-
-  },[
-    publicKey,
-    connection,
-    loadingPrograms,
-    selectedMultisig,
-    getProgramsByUpgradeAuthority,
-  ]);
 
   // Load/Unload multisig on wallet connect/disconnect
   useEffect(() => {
@@ -3625,19 +3678,19 @@ export const SafeView = () => {
   //   setSwitchValue(!switchValue);
   // }
 
-  useEffect(() => {
+  // useEffect(() => {
 
-    const multisigTxsAmountToHide = (multisigTxs.filter((txName) => txName.status === 4).length);
-    const multisigTxsToShow = multisigTxs.filter((txName) => txName.status !== 4);
+  //   const multisigTxsAmountToHide = (multisigTxs.filter((txName) => txName.status === 4).length);
+  //   const multisigTxsToShow = multisigTxs.filter((txName) => txName.status !== 4);
 
-    if (switchValue) {
-      setMultisigTxsToHide(multisigTxsAmountToHide.toString());
-      setFilteredMultisigTxs(multisigTxsToShow);
-    } else {
-      setFilteredMultisigTxs(multisigTxs);
-    }
+  //   if (switchValue) {
+  //     setMultisigTxsToHide(multisigTxsAmountToHide.toString());
+  //     setFilteredMultisigTxs(multisigTxsToShow);
+  //   } else {
+  //     setFilteredMultisigTxs(multisigTxs);
+  //   }
 
-  }, [multisigTxs, switchValue]);
+  // }, [multisigTxs, switchValue]);
 
   // Scroll to a given multisig is specified as highLightableMultisigId
   useEffect(() => {
@@ -3672,119 +3725,119 @@ export const SafeView = () => {
   // Rendering //
   ///////////////
 
-  const txPendingSigners = (mtx: MultisigTransaction) => {
-    if (!selectedMultisig || !selectedMultisig.owners || selectedMultisig.owners.length === 0) {
-      return null;
-    }
+  // const txPendingSigners = (mtx: MultisigTransaction) => {
+  //   if (!selectedMultisig || !selectedMultisig.owners || selectedMultisig.owners.length === 0) {
+  //     return null;
+  //   }
 
-    const participants = selectedMultisig.owners as MultisigParticipant[]
-    return (
-      <>
-        {participants.map((item, index) => {
-          if (mtx.signers[index]) { return null; }
-          return (
-            <div key={`${index}`} className="well-group mb-1">
-              <div className="flex-fixed-right align-items-center">
-                <div className="left text-truncate m-0">
-                  <div><span>{item.name || `Owner ${index + 1}`}</span></div>
-                  <div className="font-size-75 text-monospace">{item.address}</div>
-                </div>
-                <div className="right pl-2">
-                  <div><span className={theme === 'light' ? "fg-light-orange font-bold" : "fg-warning font-bold"}>{t("multisig.multisig-transactions.not-signed")}</span></div>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </>
-    );
-  };
+  //   const participants = selectedMultisig.owners as MultisigParticipant[]
+  //   return (
+  //     <>
+  //       {participants.map((item, index) => {
+  //         if (mtx.signers[index]) { return null; }
+  //         return (
+  //           <div key={`${index}`} className="well-group mb-1">
+  //             <div className="flex-fixed-right align-items-center">
+  //               <div className="left text-truncate m-0">
+  //                 <div><span>{item.name || `Owner ${index + 1}`}</span></div>
+  //                 <div className="font-size-75 text-monospace">{item.address}</div>
+  //               </div>
+  //               <div className="right pl-2">
+  //                 <div><span className={theme === 'light' ? "fg-light-orange font-bold" : "fg-warning font-bold"}>{t("multisig.multisig-transactions.not-signed")}</span></div>
+  //               </div>
+  //             </div>
+  //           </div>
+  //         );
+  //       })}
+  //     </>
+  //   );
+  // };
 
-  const getParticipantsThatApprovedTx = useCallback((mtx: MultisigTransaction) => {
+  // const getParticipantsThatApprovedTx = useCallback((mtx: MultisigTransaction) => {
 
-    if (!selectedMultisig || !selectedMultisig.owners || selectedMultisig.owners.length === 0) {
-      return [];
-    }
+  //   if (!selectedMultisig || !selectedMultisig.owners || selectedMultisig.owners.length === 0) {
+  //     return [];
+  //   }
   
-    const addressess: MultisigParticipant[] = [];
-    const participants = selectedMultisig.owners as MultisigParticipant[];
-    participants.forEach((participant: MultisigParticipant, index: number) => {
-      if (mtx.signers[index]) {
-        addressess.push(participant);
-      }
-    });
+  //   const addressess: MultisigParticipant[] = [];
+  //   const participants = selectedMultisig.owners as MultisigParticipant[];
+  //   participants.forEach((participant: MultisigParticipant, index: number) => {
+  //     if (mtx.signers[index]) {
+  //       addressess.push(participant);
+  //     }
+  //   });
   
-    return addressess;
+  //   return addressess;
   
-  }, [selectedMultisig]);
+  // }, [selectedMultisig]);
 
-  const renderMultisigPendingTxs = () => {
+  // const renderMultisigPendingTxs = () => {
 
-    if (!selectedMultisig) {
-      return null;
-    } else if (selectedMultisig && loadingMultisigTxs) {
-      return (
-        <div className="mb-2">{t('multisig.multisig-transactions.loading-transactions')}</div>
-      );
-    } else if (selectedMultisig && !loadingMultisigTxs && multisigTxs.length === 0) {
-      return (
-        <div className="mb-2">{t('multisig.multisig-transactions.no-transactions-multisig')}</div>
-      );
-    }
+  //   if (!selectedMultisig) {
+  //     return null;
+  //   } else if (selectedMultisig && loadingMultisigTxs) {
+  //     return (
+  //       <div className="mb-2">{t('multisig.multisig-transactions.loading-transactions')}</div>
+  //     );
+  //   } else if (selectedMultisig && !loadingMultisigTxs && multisigTxs.length === 0) {
+  //     return (
+  //       <div className="mb-2">{t('multisig.multisig-transactions.no-transactions-multisig')}</div>
+  //     );
+  //   }
 
-    return (
-      <>
-        <div className="item-list-header compact">
-          <div className="header-row" style={{ paddingBottom: 5 }}>
-            <div className="std-table-cell responsive-cell">{t('multisig.multisig-transactions.column-operation')}</div>
-            <div className="std-table-cell responsive-cell">{t('multisig.multisig-transactions.column-program-id')}</div>
-            <div className="std-table-cell fixed-width-110">{t('multisig.multisig-transactions.column-created-on')}</div>
-            <div className="std-table-cell fixed-width-90">{t('multisig.multisig-transactions.column-my-status')}</div>
-            <div className="std-table-cell fixed-width-34">{t('multisig.multisig-transactions.column-current-signatures')}</div>
-            <div className="std-table-cell text-center fixed-width-120">{t('multisig.multisig-transactions.column-pending-signatures')}</div>
-          </div>
-        </div>
-        <div className="activity-list-data-wrapper vertical-scroll">
-          <div className="activity-list h-100">
-            <div className="item-list-body compact">
-              {filteredMultisigTxs.map(item => {
-                return (
-                  <div
-                    key={item.id.toBase58()}
-                    style={{padding: '3px 0px'}}
-                    className={`item-list-row ${
-                      highlightedMultisigTx && highlightedMultisigTx.id.equals(item.id)
-                        ? isUiBusy() ? 'selected no-pointer click-disabled' : 'selected'
-                        : isUiBusy() ? 'no-pointer click-disabled' : 'simplelink'}`
-                    }
-                    onClick={() => showMultisigActionTransactionModal(item)}>
-                    <div className="std-table-cell responsive-cell">
-                      <span className="align-middle">{getOperationName(item.operation)}</span>
-                    </div>
-                    <div className="std-table-cell responsive-cell">
-                      <span className="align-middle">{getOperationProgram(item.operation)}</span>
-                    </div>
-                    <div className="std-table-cell fixed-width-110">
-                      <span className="align-middle">{getShortDate(item.createdOn.toString(), isCanvasTight() ? false : true)}</span>
-                    </div>
-                    <div className="std-table-cell fixed-width-90">
-                      <span className="align-middle">{getTransactionUserStatusAction(item)}</span>
-                    </div>
-                    <div className="std-table-cell fixed-width-34">
-                      <span className="align-middle">{`${item.signers.filter(s => s === true).length}/${selectedMultisig.threshold}`}</span>
-                    </div>
-                    <div className="std-table-cell text-center fixed-width-120">
-                      <span className={`badge small status-badge ${getTransactionStatusClass(item)}`} style={{padding: '3px 5px'}}>{getTransactionStatusAction(item)}</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </>
-    );
-  }
+  //   return (
+  //     <>
+  //       <div className="item-list-header compact">
+  //         <div className="header-row" style={{ paddingBottom: 5 }}>
+  //           <div className="std-table-cell responsive-cell">{t('multisig.multisig-transactions.column-operation')}</div>
+  //           <div className="std-table-cell responsive-cell">{t('multisig.multisig-transactions.column-program-id')}</div>
+  //           <div className="std-table-cell fixed-width-110">{t('multisig.multisig-transactions.column-created-on')}</div>
+  //           <div className="std-table-cell fixed-width-90">{t('multisig.multisig-transactions.column-my-status')}</div>
+  //           <div className="std-table-cell fixed-width-34">{t('multisig.multisig-transactions.column-current-signatures')}</div>
+  //           <div className="std-table-cell text-center fixed-width-120">{t('multisig.multisig-transactions.column-pending-signatures')}</div>
+  //         </div>
+  //       </div>
+  //       <div className="activity-list-data-wrapper vertical-scroll">
+  //         <div className="activity-list h-100">
+  //           <div className="item-list-body compact">
+  //             {filteredMultisigTxs.map(item => {
+  //               return (
+  //                 <div
+  //                   key={item.id.toBase58()}
+  //                   style={{padding: '3px 0px'}}
+  //                   className={`item-list-row ${
+  //                     highlightedMultisigTx && highlightedMultisigTx.id.equals(item.id)
+  //                       ? isUiBusy() ? 'selected no-pointer click-disabled' : 'selected'
+  //                       : isUiBusy() ? 'no-pointer click-disabled' : 'simplelink'}`
+  //                   }
+  //                   onClick={() => showMultisigActionTransactionModal(item)}>
+  //                   <div className="std-table-cell responsive-cell">
+  //                     <span className="align-middle">{getOperationName(item.operation)}</span>
+  //                   </div>
+  //                   <div className="std-table-cell responsive-cell">
+  //                     <span className="align-middle">{getOperationProgram(item.operation)}</span>
+  //                   </div>
+  //                   <div className="std-table-cell fixed-width-110">
+  //                     <span className="align-middle">{getShortDate(item.createdOn.toString(), isCanvasTight() ? false : true)}</span>
+  //                   </div>
+  //                   <div className="std-table-cell fixed-width-90">
+  //                     <span className="align-middle">{getTransactionUserStatusAction(item)}</span>
+  //                   </div>
+  //                   <div className="std-table-cell fixed-width-34">
+  //                     <span className="align-middle">{`${item.signers.filter(s => s === true).length}/${selectedMultisig.threshold}`}</span>
+  //                   </div>
+  //                   <div className="std-table-cell text-center fixed-width-120">
+  //                     <span className={`badge small status-badge ${getTransactionStatusClass(item)}`} style={{padding: '3px 5px'}}>{getTransactionStatusAction(item)}</span>
+  //                   </div>
+  //                 </div>
+  //               );
+  //             })}
+  //           </div>
+  //         </div>
+  //       </div>
+  //     </>
+  //   );
+  // }
 
   const renderMultisigList = (
     <>
@@ -4048,6 +4101,7 @@ export const SafeView = () => {
                           ) : (
                             <SafeMeanInfo
                               connection={connection}
+                              publicKey={publicKey}
                               isSafeDetails={isSafeDetails}
                               isProgramDetails={isProgramDetails}
                               isAssetDetails={isAssetDetails}
@@ -4059,7 +4113,7 @@ export const SafeView = () => {
                               onNewCreateAssetClick={onShowCreateAssetModal}
                               onNewProposalMultisigClick={onNewProposalMultisigClick}
                               multisigClient={multisigClient}
-                              multisigTxs={multisigTxs}
+                              // multisigTxs={multisigTxs}
                               selectedTab={selectedTab}
                             />
                           )
