@@ -359,11 +359,11 @@ export const MultisigProposalModal = (props: {
                     </Row>
 
                     <div className="step-two-select-instruction">
-                      {/* Instruction */}
                       {selectedApp && (
                         <Row gutter={[8, 8]} className="mb-1">
                           {(selectedApp.name === "Custom Transaction Proposal") ? (
                             <>
+                              {/* Serialized Tx */}
                               {selectedAppConfig?.ui.map((ix: any) => (
                                 ix.uiElements.map((element: any) => (
                                   <Col xs={24} sm={24} md={24} lg={24} className="text-left pl-1" key={element.id}>
@@ -391,12 +391,13 @@ export const MultisigProposalModal = (props: {
                             </>
                           ) : (
                             <>
+                             {/* Instruction */}
                               <Col xs={24} sm={24} md={24} lg={24} className="text-left pr-1">
                                 <div className="form-label">Instruction:</div>
                                 <SelectMean
                                   className={props.isBusy ? 'disabled' : ''}
                                   onChange={onProposalInstructionValueChange}
-                                  placeholder={"Select an instruction"}
+                                  placeholder="Select an instruction"
                                   values={selectedAppConfig ? selectedAppConfig.ui.map((ix: any) => {
                                     return { key: ix.id, label: ix.label, value: ix.id }
                                   }) : []}
