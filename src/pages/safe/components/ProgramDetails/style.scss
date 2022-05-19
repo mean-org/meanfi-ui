@@ -7,9 +7,7 @@
   }
   .signature svg {
     width: 1em !important;
-    margin-right: 1em !important;
-    margin-top: -0.25em !important;
-    margin-bottom: -0.25em !important;
+    margin: -0.25em 1em -0.25em -0.25em !important;
   }
   .header-row {
     border-top: 1px solid var(--color-secondary-alpha-05);

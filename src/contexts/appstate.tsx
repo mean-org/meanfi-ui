@@ -124,6 +124,7 @@ interface AppStateConfig {
   loadingRecurringBuys: boolean;
   // Multisig
   highLightableMultisigId: string | undefined;
+  loadingMultisigDetails: boolean;
   // Staking
   stakedAmount: string;
   unstakedAmount: string;
@@ -189,6 +190,7 @@ interface AppStateConfig {
   setLoadingRecurringBuys: (state: boolean) => void;
   // Multisig
   setHighLightableMultisigId: (id: string | undefined) => void,
+  setLoadingMultisigDetails: (loading: boolean) => void;
   // Staking
   setStakedAmount: (data: string) => void;
   setUnstakedAmount: (data: string) => void;
@@ -266,6 +268,7 @@ const contextDefaultValues: AppStateConfig = {
   loadingRecurringBuys: false,
   // Multisig
   highLightableMultisigId: undefined,
+  loadingMultisigDetails: false,
   // Staking
   stakedAmount: '',
   unstakedAmount: '',
@@ -331,6 +334,7 @@ const contextDefaultValues: AppStateConfig = {
   setLoadingRecurringBuys: () => {},
   // Multisig
   setHighLightableMultisigId: () => {},
+  setLoadingMultisigDetails: () => {},
   // Staking
   setStakedAmount: () => {},
   setUnstakedAmount: () => {},
@@ -399,6 +403,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [deletedStreams, setDeletedStreams] = useState<string[]>([]);
   const [highLightableStreamId, setHighLightableStreamId] = useState<string | undefined>(contextDefaultValues.highLightableStreamId);
   const [highLightableMultisigId, setHighLightableMultisigId] = useState<string | undefined>(contextDefaultValues.highLightableMultisigId);
+  const [loadingMultisigDetails, setLoadingMultisigDetails] = useState<boolean>(contextDefaultValues.loadingMultisigDetails);
   const [selectedToken, updateSelectedToken] = useState<TokenInfo>();
   const [tokenBalance, updateTokenBalance] = useState<number>(contextDefaultValues.tokenBalance);
   const [stakingMultiplier, updateStakingMultiplier] = useState<number>(contextDefaultValues.stakingMultiplier);
@@ -1483,6 +1488,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         recurringBuys,
         loadingRecurringBuys,
         highLightableMultisigId,
+        loadingMultisigDetails,
         stakedAmount,
         unstakedAmount,
         unstakeStartDate,
@@ -1544,6 +1550,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         setRecurringBuys,
         setLoadingRecurringBuys,
         setHighLightableMultisigId,
+        setLoadingMultisigDetails,
         setStakedAmount,
         setUnstakedAmount,
         setUnstakeStartDate,

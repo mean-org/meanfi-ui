@@ -42,6 +42,8 @@ export const SafeMeanInfo = (props: {
 }) => {
   const {
     tokenList,
+    setLoadingMultisigDetails
+
   } = useContext(AppStateContext);
 
   const {
@@ -56,15 +58,15 @@ export const SafeMeanInfo = (props: {
     onNewCreateAssetClick,
     selectedTab,
     multisigClient,
-    isAssetDetails
+    isAssetDetails,
   } = props;
 
   // const { publicKey } = useWallet();
-  const connectionConfig = useConnectionConfig();
+  // const connectionConfig = useConnectionConfig();
 
   const [multisigTxs, setMultisigTxs] = useState<MultisigTransaction[]>([]);
   const [programs, setPrograms] = useState<ProgramAccounts[]>([]);
-  const [selectedProgram, setSelectedProgram] = useState<ProgramAccounts | undefined>(undefined);
+  // const [selectedProgram, setSelectedProgram] = useState<ProgramAccounts | undefined>(undefined);
   const [loadingProposals, setLoadingProposals] = useState(true);
   const [loadingAssets, setLoadingAssets] = useState(true);
   const [loadingPrograms, setLoadingPrograms] = useState(true);
@@ -86,6 +88,22 @@ export const SafeMeanInfo = (props: {
   },[
     selectedMultisig
   ]);
+
+  useEffect(() => {
+
+    const loading = loadingProposals || loadingAssets || loadingPrograms ? true : false;
+    const timeout = setTimeout(() => setLoadingMultisigDetails(loading));
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [
+    loadingAssets, 
+    loadingPrograms, 
+    loadingProposals, 
+    setLoadingMultisigDetails
+  ])
 
   // Get Txs for the selected multisig
   useEffect(() => {
@@ -399,7 +417,6 @@ export const SafeMeanInfo = (props: {
 
   // Get Programs
   useEffect(() => {
-
     if (!connection || !selectedMultisig || !selectedMultisig.authority || !loadingPrograms) {
       return;
     }
@@ -417,7 +434,6 @@ export const SafeMeanInfo = (props: {
     return () => {
       clearTimeout(timeout);
     }
-
   }, [
     connection,
     selectedMultisig,
@@ -459,7 +475,6 @@ export const SafeMeanInfo = (props: {
 
   // Get Multisig Vaults
   useEffect(() => {
-
     if (!multisigClient || !selectedMultisig || !selectedMultisig.id) {
       return;
     }
@@ -467,59 +482,121 @@ export const SafeMeanInfo = (props: {
     const program = multisigClient.getProgram();
     const timeout = setTimeout(() => {
       getMultisigVaults(program.provider.connection, selectedMultisig.id)
-        .then(result => setMultisigVaults(result))
-        .catch(err => console.error(err));
+        .then(result => {
+          setMultisigVaults(result);
+        })
+        .catch(err => console.error(err))
+        .finally(() => setLoadingAssets(false));
     });
 
     return () => {
       clearTimeout(timeout);
     }
-
   },[
     getMultisigVaults,
     multisigClient, 
     selectedMultisig
   ]);
 
-  useEffect(() => {
-    if (programs || (isProgramDetails)) {
-      setLoadingPrograms(false);
-    } else {
-      setLoadingPrograms(true);
-    }
-  }, [isProgramDetails, programs]);
+  // Settings
+  // const renderSettings = (
+  //   <>
+  //     <Row gutter={[8, 8]}>
+  //       <Col xs={12} sm={12} md={12} lg={12} className="text-right pr-1">Minimum cool-off period:</Col>
+  //       <Col xs={12} sm={12} md={12} lg={12} className="text-left pl-1">24 hours</Col>
+  //     </Row>
+  //     <Row gutter={[8, 8]}>
+  //       <Col xs={12} sm={12} md={12} lg={12} className="text-right pr-1">Single signer balance threshold:</Col>
+  //       <Col xs={12} sm={12} md={12} lg={12} className="text-left pl-1">$100.00</Col>
+  //     </Row>
+  //   </>
+  // );
+
+  // // Activities list 
+  // const renderActivities= (
+  //   <>
+  //     {/* {proposals && proposals.length && (
+  //       proposals.map((proposal) => (
+  //         proposal.activities.map((activity: any) => {
+
+  //           let icon = null;
+
+  //           switch (activity.description) {
+  //             case 'approved':
+  //               icon = <IconApprove className="mean-svg-icons fg-green" />;
+  //               break;
+  //             case 'rejected':
+  //               icon = <IconCross className="mean-svg-icons fg-red" />;
+  //               break;
+  //             case 'passed':
+  //               icon = <IconCheckCircle className="mean-svg-icons fg-green" />;
+  //               break;
+  //             case 'created':
+  //               icon = <IconCreated className="mean-svg-icons fg-purple" />;
+  //               break;
+  //             case 'deleted':
+  //               icon = <IconMinus className="mean-svg-icons fg-purple" />;
+  //               break;
+  //             default:
+  //               icon = "";
+  //               break;
+  //           }
+
+  //           return (
+  //             <div 
+  //               key={activity.id}
+  //               className={`d-flex w-100 align-items-center activities-list ${activity.id % 2 === 0 ? '' : 'background-gray'}`}
+  //               >
+  //                 <div className="list-item">
+  //                   <span className="mr-2">
+  //                       {activity.date}
+  //                   </span>
+  //                   {icon}
+  //                   <span>
+  //                     {`Proposal ${activity.description} by ${activity.proposedBy} [${shortenAddress(activity.address, 4)}]`}
+  //                   </span>
+  //                 </div>
+  //             </div>
+  //           )
+  //         })
+  //       ))
+  //     )} */}
+  //   </>
+  // );
 
   const renderListOfPrograms = (
     <>
       {!loadingPrograms ? (
-        (programs && programs.length > 0) ? (
-          programs.map((program, index) => {
-            const onSelectProgram = () => {
-              // Sends isProgramDetails value to the parent component "SafeView"
-              props.onDataToProgramView(program);
-            }
-  
-            const programTitle = shortenAddress(program.pubkey.toBase58(), 4);
-  
-            return (
-              <div 
-                key={`${index + 1}`}
-                onClick={onSelectProgram}
-                className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
-              >
-                  <ResumeItem
-                    id={program.pubkey.toBase58()}
-                    title={programTitle}
-                    isSafeDetails={isSafeDetails}
-                    isProgram={true}
-                    programSize={program.size}
-                    isProgramDetails={isProgramDetails}
-                  />
-              </div>
-            )
-          })
-        ) : (
-          <span>This multisig has no programs</span>
+        (programs && programs.length >= 0) && (
+          (programs.length > 0) ? (
+            programs.map((program, index) => {
+              const onSelectProgram = () => {
+                // Sends isProgramDetails value to the parent component "SafeView"
+                props.onDataToProgramView(program);
+              }
+    
+              const programTitle = shortenAddress(program.pubkey.toBase58(), 4);
+    
+              return (
+                <div 
+                  key={`${index + 1}`}
+                  onClick={onSelectProgram}
+                  className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+                >
+                    <ResumeItem
+                      id={program.pubkey.toBase58()}
+                      title={programTitle}
+                      isSafeDetails={isSafeDetails}
+                      isProgram={true}
+                      programSize={program.size}
+                      isProgramDetails={isProgramDetails}
+                    />
+                </div>
+              )
+            })
+          ) : (
+            <span>This multisig has no programs</span>
+          )
         )
       ) : (
         <span>Loading programs ...</span>
