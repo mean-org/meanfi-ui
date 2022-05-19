@@ -37,6 +37,7 @@ export const SafeMeanInfo = (props: {
   onNewProposalMultisigClick: any;
   multisigClient: MeanMultisig | null;
   selectedTab?: any;
+  proposalSelected?: any;
 }) => {
   const {
     tokenList,
@@ -55,6 +56,7 @@ export const SafeMeanInfo = (props: {
     selectedTab,
     multisigClient,
     isAssetDetails,
+    proposalSelected
   } = props;
 
   const [multisigTxs, setMultisigTxs] = useState<MultisigTransaction[]>([]);
@@ -63,6 +65,7 @@ export const SafeMeanInfo = (props: {
   const [loadingProposals, setLoadingProposals] = useState(true);
   const [loadingAssets, setLoadingAssets] = useState(true);
   const [loadingPrograms, setLoadingPrograms] = useState(true);
+  const [selectedProposal, setSelectedProposal] = useState<any>(proposalSelected);
 
   const getProgramsByUpgradeAuthority = useCallback(async (): Promise<ProgramAccounts[]> => {
 
@@ -274,7 +277,27 @@ export const SafeMeanInfo = (props: {
 
       multisigClient
         .getMultisigTransactions(selectedMultisig.id, publicKey)
-        .then((txs: any[]) => setMultisigTxs(txs))
+        .then((txs: any[]) => {
+          setMultisigTxs(txs)
+          
+          // if (!selectedProposal) {
+          //   setSelectedProposal(txs[0]);
+          // } else {
+          //   const itemList = txs.find(tx => tx.id.equals(selectedProposal.id));
+
+          //   setSelectedProposal(itemList);
+          // }
+
+          // if (selectedProposal && txs.length > 0) {
+          //   const itemList = txs.find(tx => tx.id.equals(selectedProposal.id));
+
+          //   if (itemList) {
+          //     setSelectedProposal(itemList);
+          //   }
+
+          //   console.log("itemList", itemList);
+          // }
+        })
         .catch((err: any) => {
           console.error("Error fetching all transactions", err);
           setMultisigTxs([]);
@@ -285,14 +308,15 @@ export const SafeMeanInfo = (props: {
 
     return () => {
       clearTimeout(timeout);
-    }    
+    }
 
   }, [
-    publicKey, 
-    selectedMultisig, 
-    connection, 
-    multisigClient, 
-    loadingProposals
+    publicKey,
+    selectedMultisig,
+    connection,
+    multisigClient,
+    loadingProposals,
+    selectedProposal
   ]);
 
   // Proposals list
@@ -303,13 +327,14 @@ export const SafeMeanInfo = (props: {
           multisigTxs.map((proposal, index) => {
             const onSelectProposal = () => {
               // Sends isSafeDetails value to the parent component "SafeView"
+              setSelectedProposal(proposal);
               props.onDataToSafeView(proposal);
             };
 
-          // Number of participants who have already approved the Tx
-          const approvedSigners = proposal.signers.filter((s: any) => s === true).length;
-          const expirationDate = proposal.details.expirationDate ? proposal.details.expirationDate.toDateString() : "";
-          const executedOnDate = proposal.executedOn ? proposal.executedOn.toDateString() : "";
+            // Number of participants who have already approved the Tx
+            const approvedSigners = proposal.signers.filter((s: any) => s === true).length;
+            const expirationDate = proposal.details.expirationDate ? proposal.details.expirationDate.toDateString() : "";
+            const executedOnDate = proposal.executedOn ? proposal.executedOn.toDateString() : "";
 
             return (
               <div 

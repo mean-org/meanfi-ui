@@ -146,6 +146,14 @@ export const SafeView = () => {
   const [solanaApps, setSolanaApps] = useState<App[]>([]);
   const [serumAccounts, setSerumAccounts] = useState<MultisigInfo[]>([]);
   const [serumMultisigTxs, setSerumMultisigTxs] = useState<MultisigTransaction[]>([]);
+
+  const [isSafeDetails, setIsSafeDetails] = useState(false);
+  const [proposalSelected, setProposalSelected] = useState<any>();
+  const [isProgramDetails, setIsProgramDetails] = useState(false);
+  const [programSelected, setProgramSelected] = useState<any>();
+  const [isAssetDetails, setIsAssetDetails] = useState(false);
+  const [assetSelected, setAssetSelected] = useState<any>();
+  const [selectedTab, setSelectedTab] = useState<number>();
   
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
     commitment: "confirmed",
@@ -3207,14 +3215,6 @@ export const SafeView = () => {
     </>
   );
 
-  const [isSafeDetails, setIsSafeDetails] = useState(false);
-  const [proposalSelected, setProposalSelected] = useState<any>();
-  const [isProgramDetails, setIsProgramDetails] = useState(false);
-  const [programSelected, setProgramSelected] = useState<any>();
-  const [isAssetDetails, setIsAssetDetails] = useState(false);
-  const [assetSelected, setAssetSelected] = useState<any>();
-  const [selectedTab, setSelectedTab] = useState<number>();
-
   const goToSafeDetailsHandler = (selectedProposal: any) => {    
     setIsSafeDetails(true);
     setProposalSelected(selectedProposal);
@@ -3394,6 +3394,7 @@ export const SafeView = () => {
                               onNewProposalMultisigClick={onNewProposalMultisigClick}
                               multisigClient={multisigClient}
                               selectedTab={selectedTab}
+                              proposalSelected={proposalSelected}
                             />
                           )
                         )}
