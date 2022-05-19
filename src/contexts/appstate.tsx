@@ -14,8 +14,7 @@ import {
   FIVETY_SECONDS_REFRESH_TIMEOUT,
   SEVENTY_SECONDS_REFRESH_TIMEOUT,
   PERFORMANCE_THRESHOLD,
-  ONE_MINUTE_REFRESH_TIMEOUT,
-  HALF_MINUTE_REFRESH_TIMEOUT
+  ONE_MINUTE_REFRESH_TIMEOUT
 } from "../constants";
 import { ContractDefinition } from "../models/contract-definition";
 import { DdcaFrequencyOption } from "../models/ddca-models";
