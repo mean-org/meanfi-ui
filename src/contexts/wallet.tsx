@@ -324,19 +324,7 @@ export function WalletProvider({ children = null as any }) {
       consoleOut('Auto-connecting...', '', 'blue');
       wallet.connect()
       .catch(error => {
-        if ((error as string).toString().includes('WalletNotReadyError')) {
-          // TODO: Notify or navigate or notify with link to navigate...
-          // Pay attention especially if in mobile mode
-          if (isDesktop) {
-            consoleOut('wallet.connect() error in Desktop:', 'WalletNotReadyError', 'red');
-          } else {
-            consoleOut('wallet.connect() error in Mobile:', 'WalletNotReadyError', 'red');
-          }
-        } else if ((error as string).toString().includes('WalletConnectionError')) {
-          consoleOut('wallet.connect() error', 'WalletConnectionError', 'red');
-        } else {
-          consoleOut('wallet.connect() error', error, 'red');
-        }
+        consoleOut('wallet.connect() error', error, 'red');
       });
     }
 

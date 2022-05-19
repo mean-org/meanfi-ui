@@ -58,7 +58,7 @@ export const AppLayout = React.memo((props: any) => {
   const { t, i18n } = useTranslation("common");
   const { isOnline, responseTime } = useOnlineStatus();
   const connectionConfig = useConnectionConfig();
-  const { wallet, provider, connected, connecting, autoConnect, publicKey, connect, select } = useWallet();
+  const { wallet, provider, connected, connecting, autoConnect, publicKey, select } = useWallet();
   const [previousChain, setChain] = useState("");
   const [gaInitialized, setGaInitialized] = useState(false);
   const [referralAddress, setReferralAddress] = useLocalStorage('pendingReferral', '');
@@ -524,14 +524,6 @@ export const AppLayout = React.memo((props: any) => {
 
     return (
       <>
-        {isLocal() && (
-          <div className="debug-bar">
-            <span className="ml-1">wallet:</span><span className="ml-1 font-bold fg-dark-active">{wallet ? 'true' : 'false'}</span>
-            <span className="ml-1">connecting:</span><span className="ml-1 font-bold fg-dark-active">{connecting ? 'true' : 'false'}</span>
-            <span className="ml-1">connected:</span><span className="ml-1 font-bold fg-dark-active">{connected ? 'true' : 'false'}</span>
-            <span className="ml-1">autoConnect:</span><span className="ml-1 font-bold fg-dark-active">{autoConnect ? 'true' : 'false'}</span>
-          </div>
-        )}
         <div className="background-logo-container">
           <img className="meanfi-bg-logo" src="/assets/mean-square.svg" alt="" />
         </div>
