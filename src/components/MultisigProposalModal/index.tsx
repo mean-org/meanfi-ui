@@ -18,6 +18,7 @@ import { InputTextAreaMean } from '../InputTextAreaMean';
 import { App, AppConfig, AppsProvider, UiInstruction } from '@mean-dao/mean-multisig-apps';
 import BN from 'bn.js';
 import { PublicKey } from '@solana/web3.js';
+import { Identicon } from '../../components/Identicon';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -215,8 +216,8 @@ export const MultisigProposalModal = (props: {
 
     props.appsProvider.getAppConfig(
       selectedApp.id,
-      selectedApp.ui,
-      selectedApp.definition
+      selectedApp.uiUrl,
+      selectedApp.defUrl
     )
     .then((config: any) => {
       setSelectedAppConfig(config);
@@ -247,7 +248,13 @@ export const MultisigProposalModal = (props: {
           return (
             <Col xs={8} sm={6} md={6} lg={6} className="select-app" key={index}>
               <div className={`select-app-item simplelink ${selectedApp && selectedApp.id === app.id ? "selected-app" : "no-selected-app"}`} onClick={onSelectApp}>
-                <img src={app.logoUri ? app.logoUri : "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"} width={65} height={65} alt={app.name} />
+                {app.id === "custom_proposal" ? (
+                  // <Identicon address={PublicKey.default} style={{ width:"65", height:"65", display: "inline-flex" }} />
+                  <img style={{ borderRadius: "50%", padding: "0.2em" }} src={"https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"} width={65} height={65} alt={app.name} />
+                ) : (
+                  <img src={app.logoUri} width={65} height={65} alt={app.name} />
+                )}
+                {/* <img src={app.logoUri ? app.logoUri : "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"} width={65} height={65} alt={app.name} /> */}
                 <span className="info-label">{app.name}</span>
               </div>
             </Col>
@@ -291,10 +298,12 @@ export const MultisigProposalModal = (props: {
                   <div className="step-two-select-app">
                     <Row gutter={[8, 8]}>
                       <Col span={24} className="step-two-selected-app">
-                        {!selectedApp || !selectedApp.logoUri ? (
-                          <IconUser className="mean-svg-icons" />
-                        ) : (
-                          <img className="mr-1" src={selectedApp.logoUri} alt={selectedApp.name} width={40} height={40} />
+                        {selectedApp && (
+                          !selectedApp.logoUri || selectedApp.id === "custom_proposal" ? (
+                            <img style={{ borderRadius: "50%", padding: "0.2em" }} src={"https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"} width={40} height={40} alt={selectedApp.name} />
+                          ) : (
+                            <img className="mr-1" src={selectedApp.logoUri} alt={selectedApp.name} width={40} height={40} />
+                          )
                         )}
                         <div className="selected-app">
                           <div className="info-label">Selected App</div>

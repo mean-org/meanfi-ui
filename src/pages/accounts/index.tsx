@@ -585,11 +585,12 @@ export const AccountsNewView = () => {
       if (isSelectedAssetNativeAccount()) {
         reloadSwitch();
       }
-    } else if (item && item.operationType === OperationType.CloseTokenAccount) {
-      recordTxConfirmation(item, true);
-      setShouldLoadTokens(true);
-      reloadSwitch();
-    }
+    } //TODO: Compilation ERROR HERE (OperationType.CloseTokenAccount doesn't exist)
+    // else if (item && item.operationType === OperationType.CloseTokenAccount) {
+    //   recordTxConfirmation(item, true);
+    //   setShouldLoadTokens(true);
+    //   reloadSwitch();
+    // }
     resetTransactionStatus();
   }, [isSelectedAssetNativeAccount, recordTxConfirmation, reloadSwitch, resetTransactionStatus, setShouldLoadTokens]);
 
