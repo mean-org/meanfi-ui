@@ -3183,14 +3183,14 @@ export const SafeView = () => {
               id={item.id.toBase58()}
               onClick={onMultisigClick}
               className={
-                `transaction-list-row ${
+                `transaction-list-row transparent-left-border ${
                   selectedMultisig && selectedMultisig.id && selectedMultisig.id.equals(item.id)
-                    ? 'selected'
+                    ? 'selected selected-left-border'
                     : ''
                   }`
                 }>
 
-              <div className="icon-cell">
+              <div className="icon-cell pl-1">
                 {(item.version === 0) ? (
                   <Tooltip placement="rightTop" title="Serum Multisig">
                     <img src="https://assets.website-files.com/6163b94b432ce93a0408c6d2/61ff1e9b7e39c27603439ad2_serum%20NOF.png" alt="Serum" width={30} height={30} />
