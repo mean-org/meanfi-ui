@@ -3,7 +3,7 @@ import { IconApprove, IconArrowForward, IconCheckCircle, IconCreated, IconCross,
 import { formatThousands, getTokenByMintAddress, makeDecimal, shortenAddress } from "../../../../utils/utils";
 import { Button, Col, Row, Spin } from "antd"
 import { SafeInfo } from "../UI/SafeInfo";
-import { MeanMultisig, MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
+import { MeanMultisig, Multisig, MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
 import { ProgramAccounts } from '../../../../utils/accounts';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Connection, MemcmpFilter, PublicKey } from '@solana/web3.js';
@@ -24,6 +24,7 @@ import { AppStateContext } from '../../../../contexts/appstate';
 
 export const SafeMeanInfo = (props: {
   connection: Connection;
+  publicKey: PublicKey | null | undefined;
   isSafeDetails: boolean;
   isProgramDetails: boolean;
   isAssetDetails: boolean;
@@ -34,21 +35,19 @@ export const SafeMeanInfo = (props: {
   onEditMultisigClick: any;
   onNewCreateAssetClick: any;
   onNewProposalMultisigClick: any;
-  // multisigVaults: MultisigVault[];
   multisigClient: MeanMultisig | null;
-  multisigTxs: MultisigTransaction[];
   selectedTab?: any;
-  loadingMultisigTxs?: any;
 }) => {
   const {
     tokenList,
+    setLoadingMultisigDetails
   } = useContext(AppStateContext);
 
   const {
     connection,
+    publicKey,
     isSafeDetails, 
     isProgramDetails, 
-    multisigTxs, 
     selectedMultisig, 
     onEditMultisigClick, 
     onNewProposalMultisigClick, 
@@ -56,98 +55,107 @@ export const SafeMeanInfo = (props: {
     selectedTab,
     multisigClient,
     isAssetDetails,
-    loadingMultisigTxs,
   } = props;
 
-  // const { publicKey } = useWallet();
-  const connectionConfig = useConnectionConfig();
-
+  const [multisigTxs, setMultisigTxs] = useState<MultisigTransaction[]>([]);
+  const [multisigVaults, setMultisigVaults] = useState<any[]>([]);
   const [programs, setPrograms] = useState<ProgramAccounts[]>([]);
-  const [selectedProgram, setSelectedProgram] = useState<ProgramAccounts | undefined>(undefined);
   const [loadingProposals, setLoadingProposals] = useState(true);
   const [loadingAssets, setLoadingAssets] = useState(true);
   const [loadingPrograms, setLoadingPrograms] = useState(true);
-  const [multisigVaults, setMultisigVaults] = useState<any[]>([]);
 
-  // Programs list
-  const getProgramsByUpgradeAuthority = useCallback(async (upgradeAuthority: PublicKey): Promise<ProgramAccounts[] | undefined> => {
+  const getProgramsByUpgradeAuthority = useCallback(async (): Promise<ProgramAccounts[]> => {
 
-    if (!connection || !upgradeAuthority) { return undefined; }
+    if (!connection || !selectedMultisig || !selectedMultisig.authority) { return []; }
 
-    consoleOut(`Searching for programs with upgrade authority: ${upgradeAuthority}`);
-
-    // 1. Fetch executable data account having upgradeAuthority as upgrade authority
     const BPFLoaderUpgradeab1e = new PublicKey("BPFLoaderUpgradeab1e11111111111111111111111");
-    const executableDataAccountsFilter: MemcmpFilter = { memcmp: { offset: 13, bytes: upgradeAuthority.toBase58() } }
-    const executableDataAccounts = await connection.getProgramAccounts(
-      BPFLoaderUpgradeab1e,
-      {
-        encoding: "base64",
-        filters: [
-          executableDataAccountsFilter
-        ]
-      });
+    const execDataAccountsFilter: MemcmpFilter = { 
+      memcmp: { offset: 13, bytes: selectedMultisig.authority.toBase58() } 
+    };
 
-    // 2. For each executable data account found in the previous step, fetch the corresponding program
+    const execDataAccounts = await connection.getProgramAccounts(
+      BPFLoaderUpgradeab1e, {
+        filters: [execDataAccountsFilter]
+      }
+    );
+
     const programs: ProgramAccounts[] = [];
-    for (let i = 0; i < executableDataAccounts.length; i++) {
-      const executableData = executableDataAccounts[i].pubkey;
-
-      const executableAccountsFilter: MemcmpFilter = { memcmp: { offset: 4, bytes: executableData.toBase58() } }
-      const executableAccounts = await connection.getProgramAccounts(
-        BPFLoaderUpgradeab1e,
-        {
-          encoding: "base64",
-          dataSlice: {
-            offset: 0,
-            length: 0
-          },
-          filters: [
-            executableAccountsFilter
-          ]
-        });
-
-      if (executableAccounts.length === 0) {
-        continue;
+    const group = (size: number, data: any) => {
+      const result = [];
+      for (let i = 0; i < data.length; i += size) {
+        result.push(data.slice(i, i + size));
       }
+      return result;
+    };
 
-      if (executableAccounts.length > 1) {
-        throw new Error(`More than one program was found for program data account '${executableData}'`);
-      }
-
-      const foundProgram = {
-        pubkey: executableAccounts[0].pubkey,
-        owner: executableAccounts[0].account.owner,
-        executable: executableData,
-        upgradeAuthority: upgradeAuthority,
-        size: executableDataAccounts[i].account.data.byteLength
-
-      } as ProgramAccounts;
-
-      consoleOut(`Upgrade Authority: ${upgradeAuthority} --> Executable Data: ${executableData} --> Program: ${foundProgram}`);
-
-      programs.push(foundProgram);
-
+    const sleep = (ms: number, log = true) => {
+      if (log) { console.log("Sleeping for", ms / 1000, "seconds"); }
+      return new Promise((resolve) => setTimeout(resolve, ms));
     }
 
-    consoleOut(`${programs.length} programs found!`);
+    const getProgramAccountsPromise = async (execDataAccount: any) => {
+
+      const execAccountsFilter: MemcmpFilter = { 
+        memcmp: { offset: 4, bytes: execDataAccount.pubkey.toBase58() } 
+      };
+
+      const execAccounts = await connection.getProgramAccounts(
+        BPFLoaderUpgradeab1e, {
+          dataSlice: { offset: 0, length: 0 },
+          filters: [execAccountsFilter]
+        }
+      );
+
+      if (execAccounts.length === 0) { return; }
+
+      if (execAccounts.length > 1) {
+        throw new Error(`More than one program was found for program data account '${execDataAccount.pubkey.toBase58()}'`);
+      }
+
+      programs.push({
+          pubkey: execAccounts[0].pubkey,
+          owner: execAccounts[0].account.owner,
+          executable: execDataAccount.pubkey,
+          upgradeAuthority: selectedMultisig.authority,
+          size: execDataAccount.account.data.byteLength
+        } as ProgramAccounts
+      );
+    }
+
+    const execDataAccountsGroups = group(8, execDataAccounts);
+
+    for (const groupItem of execDataAccountsGroups) {
+      const promises: Promise<any>[] = [];
+      for (const dataAcc of groupItem) {
+        promises.push(
+          getProgramAccountsPromise(dataAcc)
+        );
+      }
+      await Promise.all(promises);
+      sleep(1_000, false);
+    }
 
     return programs;
 
-  }, [connection]);
+  },[
+    connection, 
+    selectedMultisig
+  ]);
 
   // Get Programs
   useEffect(() => {
-    if (!connection || !selectedMultisig || !selectedMultisig.authority) { return; }
+    if (!connection || !selectedMultisig || !selectedMultisig.authority || !loadingPrograms) {
+      return;
+    }
 
     const timeout = setTimeout(() => {
-      getProgramsByUpgradeAuthority(selectedMultisig.authority)
-      .then(progs => {
-        consoleOut('programs:', progs, 'blue');
-        setPrograms(progs || []);
-      })
-      .catch(error => console.error(error))
-      .finally(() => setLoadingPrograms(false));
+      getProgramsByUpgradeAuthority()
+        .then(progs => {
+          console.log('programs:', progs);
+          setPrograms(progs);
+        })
+        .catch(error => console.error(error))
+        .finally(() => setLoadingPrograms(false));
     });
 
     return () => {
@@ -155,9 +163,10 @@ export const SafeMeanInfo = (props: {
     }
   }, [
     connection,
-    selectedProgram,
     selectedMultisig,
-    getProgramsByUpgradeAuthority,
+    selectedMultisig.authority,
+    loadingPrograms,
+    getProgramsByUpgradeAuthority
   ]);
 
   const getMultisigVaults = useCallback(async (
@@ -215,70 +224,115 @@ export const SafeMeanInfo = (props: {
     multisigClient, 
     selectedMultisig
   ]);
-  
-  useEffect(() => {
-    if (selectedMultisig) {
-      setLoadingProposals(true);
-      setLoadingAssets(true);
-      setLoadingPrograms(true);
-    }
-  }, [selectedMultisig]);
 
-  // Proposals list
   useEffect(() => {
+    const loading = selectedMultisig ? true : false;
     const timeout = setTimeout(() => {
-
-      if (loadingMultisigTxs) {
-        setLoadingProposals(true);
-      } else {
-        setLoadingProposals(false);
-      }
+      setLoadingProposals(loading);
+      setLoadingAssets(loading);
+      setLoadingPrograms(loading);
     });
 
     return () => {
       clearTimeout(timeout);
     }
-  }, [loadingMultisigTxs]);
 
+  },[
+    selectedMultisig
+  ]);
+
+  useEffect(() => {
+    const loading = loadingProposals || loadingAssets || loadingPrograms ? true : false;
+    const timeout = setTimeout(() => setLoadingMultisigDetails(loading));
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [
+    loadingAssets, 
+    loadingPrograms, 
+    loadingProposals, 
+    setLoadingMultisigDetails
+  ])
+
+  // Get Txs for the selected multisig
+  useEffect(() => {
+    if (
+      !connection || 
+      !publicKey || 
+      !multisigClient || 
+      !selectedMultisig ||
+      !loadingProposals
+    ) { 
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+
+      consoleOut('Triggering loadMultisigPendingTxs using setNeedRefreshTxs...', '', 'blue');
+
+      multisigClient
+        .getMultisigTransactions(selectedMultisig.id, publicKey)
+        .then((txs: any[]) => setMultisigTxs(txs))
+        .catch((err: any) => {
+          console.error("Error fetching all transactions", err);
+          setMultisigTxs([]);
+          consoleOut('multisig txs:', [], 'blue');
+        })
+        .finally(() => setLoadingProposals(false));
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }    
+
+  }, [
+    publicKey, 
+    selectedMultisig, 
+    connection, 
+    multisigClient, 
+    loadingProposals
+  ]);
+
+  // Proposals list
   const renderListOfProposals = (
     <>
-      {(!loadingProposals) ? (
-        (multisigTxs && multisigTxs.length >= 0) && (
-          (multisigTxs.length > 0) ? (
-            multisigTxs.map((proposal, index) => {
-              const onSelectProposal = () => {
-                // Sends isSafeDetails value to the parent component "SafeView"
-                props.onDataToSafeView(proposal);
-              };
+      {!loadingProposals ? (
+        (multisigTxs && multisigTxs.length > 0) ? (
+          multisigTxs.map((proposal, index) => {
+            const onSelectProposal = () => {
+              // Sends isSafeDetails value to the parent component "SafeView"
+              props.onDataToSafeView(proposal);
+            };
 
-              // Number of participants who have already approved the Tx
-              const approvedSigners = proposal.signers.filter((s: any) => s === true).length;
-              const expirationDate = proposal.details.expirationDate ? proposal.details.expirationDate.toDateString() : "";
-              const executedOnDate = proposal.executedOn ? proposal.executedOn.toDateString() : "";
+          // Number of participants who have already approved the Tx
+          const approvedSigners = proposal.signers.filter((s: any) => s === true).length;
+          const expirationDate = proposal.details.expirationDate ? proposal.details.expirationDate.toDateString() : "";
+          const executedOnDate = proposal.executedOn ? proposal.executedOn.toDateString() : "";
 
-              return (
-                <div 
-                  key={index}
-                  onClick={onSelectProposal}
-                  className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
-                  >
-                    <ResumeItem
-                      id={proposal.id.toBase58()}
-                      // logo={proposal.logo}
-                      title={proposal.details.title}
-                      expires={expirationDate}
-                      executedOn={executedOnDate}
-                      approved={approvedSigners}
-                      // rejected={proposal.rejected}
-                      status={proposal.status}
-                      isSafeDetails={isSafeDetails}
-                    />
-                </div>
-              )
-            })
-          ) : (
-            <span>This multisig has no proposals</span>
-          )
+            return (
+              <div 
+                key={index}
+                onClick={onSelectProposal}
+                className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+                >
+                  <ResumeItem
+                    id={proposal.id.toBase58()}
+                    // logo={proposal.logo}
+                    title={proposal.details.title}
+                    expires={expirationDate}
+                    executedOn={executedOnDate}
+                    approved={approvedSigners}
+                    // rejected={proposal.rejected}
+                    status={proposal.status}
+                    isSafeDetails={isSafeDetails}
+                  />
+              </div>
+            )
+          })
+        ) : (
+          <span>This multisig has no proposals</span>
         )
       ) : (
         <span>Loading proposals ...</span>
@@ -286,72 +340,136 @@ export const SafeMeanInfo = (props: {
     </>
   );
 
-  // Assets list  
+  // Assets list
   const renderListOfAssets = (
     <>
       {!loadingAssets ? (
-        (multisigVaults && multisigVaults.length >= 0) && (
-          (multisigVaults.length > 0) ? (
-            multisigVaults.map((asset, index) => {
-              const onSelectAsset = () => {
-                // Sends isProgramDetails value to the parent component "SafeView"
-                props.onDataToAssetView(asset);
-                consoleOut('selected asset:', asset, 'blue');
-              };
+        (multisigVaults && multisigVaults.length > 0) ? (
+          multisigVaults.map((asset, index) => {
+            const onSelectAsset = () => {
+              // Sends isProgramDetails value to the parent component "SafeView"
+              props.onDataToAssetView(asset);
+              consoleOut('selected asset:', asset, 'blue');
+            };
 
-              const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
-                event.currentTarget.src = FALLBACK_COIN_IMAGE;
-                event.currentTarget.className = "error";
-              };
+            const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+              event.currentTarget.src = FALLBACK_COIN_IMAGE;
+              event.currentTarget.className = "error";
+            };
 
-              const token = getTokenByMintAddress(asset.mint.toBase58(), tokenList);
+            const token = getTokenByMintAddress(asset.mint.toBase58(), tokenList);
 
-              const tokenIcon = (
-                (token && token.logoURI) ? (
-                  <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} style={{backgroundColor: "#000", borderRadius: "1em"}} />
-                ) : (
-                  <Identicon address={new PublicKey(asset.mint).toBase58()} style={{
-                    width: "26",
-                    display: "inline-flex",
-                    height: "26",
-                    overflow: "hidden",
-                    borderRadius: "50%"
-                  }} />
-                )
+            const tokenIcon = (
+              (token && token.logoURI) ? (
+                <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} style={{backgroundColor: "#000", borderRadius: "1em"}} />
+              ) : (
+                <Identicon address={new PublicKey(asset.mint).toBase58()} style={{
+                  width: "26",
+                  display: "inline-flex",
+                  height: "26",
+                  overflow: "hidden",
+                  borderRadius: "50%"
+                }} />
               )
+            )
 
-              const assetToken = token ? token.symbol : "Unknown";
-              const assetAddress = shortenAddress(asset.address.toBase58(), 8);
-              const assetAmount = token ? formatThousands(makeDecimal(asset.amount, token.decimals), token.decimals) : formatThousands(makeDecimal(asset.amount, asset.decimals || 6), asset.decimals || 6);
+            const assetToken = token ? token.symbol : "Unknown";
+            const assetAddress = shortenAddress(asset.address.toBase58(), 8);
+            const assetAmount = token ? formatThousands(makeDecimal(asset.amount, token.decimals), token.decimals) : formatThousands(makeDecimal(asset.amount, asset.decimals || 6), asset.decimals || 6);
 
-              return (
-                <div 
-                  key={`${asset.address.toBase58() + 60}`}
-                  onClick={onSelectAsset}
-                  className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
-                  >
-                    <ResumeItem
-                      id={`${index + 61}`}
-                      img={tokenIcon}
-                      title={assetToken}
-                      subtitle={assetAddress}
-                      isAsset={true}
-                      rightContent={assetAmount}
-                      isSafeDetails={isSafeDetails}
-                      isAssetDetails={isAssetDetails}
-                    />
-                </div>
-              );
-            })
-          ) : (
-            <span>This multisig has no assets</span>
-          )
+            return (
+              <div 
+                key={`${asset.address.toBase58() + 60}`}
+                onClick={onSelectAsset}
+                className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+                >
+                  <ResumeItem
+                    id={`${index + 61}`}
+                    img={tokenIcon}
+                    title={assetToken}
+                    subtitle={assetAddress}
+                    isAsset={true}
+                    rightContent={assetAmount}
+                    isSafeDetails={isSafeDetails}
+                    isAssetDetails={isAssetDetails}
+                  />
+              </div>
+            );
+          })
+        ) : (
+          <span>This multisig has no assets</span>
         )
       ) : (
         <span>Loading assets ...</span>
       )}
     </>
   );
+
+  // Settings
+  // const renderSettings = (
+  //   <>
+  //     <Row gutter={[8, 8]}>
+  //       <Col xs={12} sm={12} md={12} lg={12} className="text-right pr-1">Minimum cool-off period:</Col>
+  //       <Col xs={12} sm={12} md={12} lg={12} className="text-left pl-1">24 hours</Col>
+  //     </Row>
+  //     <Row gutter={[8, 8]}>
+  //       <Col xs={12} sm={12} md={12} lg={12} className="text-right pr-1">Single signer balance threshold:</Col>
+  //       <Col xs={12} sm={12} md={12} lg={12} className="text-left pl-1">$100.00</Col>
+  //     </Row>
+  //   </>
+  // );
+
+  // // Activities list 
+  // const renderActivities= (
+  //   <>
+  //     {/* {proposals && proposals.length && (
+  //       proposals.map((proposal) => (
+  //         proposal.activities.map((activity: any) => {
+
+  //           let icon = null;
+
+  //           switch (activity.description) {
+  //             case 'approved':
+  //               icon = <IconApprove className="mean-svg-icons fg-green" />;
+  //               break;
+  //             case 'rejected':
+  //               icon = <IconCross className="mean-svg-icons fg-red" />;
+  //               break;
+  //             case 'passed':
+  //               icon = <IconCheckCircle className="mean-svg-icons fg-green" />;
+  //               break;
+  //             case 'created':
+  //               icon = <IconCreated className="mean-svg-icons fg-purple" />;
+  //               break;
+  //             case 'deleted':
+  //               icon = <IconMinus className="mean-svg-icons fg-purple" />;
+  //               break;
+  //             default:
+  //               icon = "";
+  //               break;
+  //           }
+
+  //           return (
+  //             <div 
+  //               key={activity.id}
+  //               className={`d-flex w-100 align-items-center activities-list ${activity.id % 2 === 0 ? '' : 'background-gray'}`}
+  //               >
+  //                 <div className="list-item">
+  //                   <span className="mr-2">
+  //                       {activity.date}
+  //                   </span>
+  //                   {icon}
+  //                   <span>
+  //                     {`Proposal ${activity.description} by ${activity.proposedBy} [${shortenAddress(activity.address, 4)}]`}
+  //                   </span>
+  //                 </div>
+  //             </div>
+  //           )
+  //         })
+  //       ))
+  //     )} */}
+  //   </>
+  // );
 
   // Settings
   // const renderSettings = (
@@ -486,7 +604,9 @@ export const SafeMeanInfo = (props: {
   return (
     <>
       <SafeInfo
+        connection={connection}
         selectedMultisig={selectedMultisig}
+        multisigVaults={multisigVaults}
         onNewProposalMultisigClick={onNewProposalMultisigClick}
         onEditMultisigClick={onEditMultisigClick}
         onNewCreateAssetClick={onNewCreateAssetClick}

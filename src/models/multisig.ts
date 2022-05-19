@@ -179,14 +179,14 @@ export const listMultisigTransactions = async (
 
   try {
 
-    let filters: GetProgramAccountsFilter[] = [
+    const filters: GetProgramAccountsFilter[] = [
       { dataSize: 1200 },
       { memcmp: { offset: 8, bytes: multisig.id.toString() } }
     ];
 
-    let transactions: MultisigTransaction[] = [];
-    let txs = await program.account.transaction.all(filters);
-    for (let tx of txs) {
+    const transactions: MultisigTransaction[] = [];
+    const txs = await program.account.transaction.all(filters);
+    for (const tx of txs) {
 
       const [txDetailAddress] = await PublicKey.findProgramAddress(
         [
@@ -197,7 +197,7 @@ export const listMultisigTransactions = async (
       );
 
       const txDetail = await program.account.transactionDetail.fetchNullable(txDetailAddress);
-      let txInfo = parseMultisigTransaction(multisig, owner, tx, txDetail);
+      const txInfo = parseMultisigTransaction(multisig, owner, tx, txDetail);
       transactions.push(txInfo);
     }
     
@@ -217,7 +217,7 @@ export const getFees = async (
 
 ): Promise<MultisigTransactionFees> => {
 
-  let txFees: MultisigTransactionFees = {
+  const txFees: MultisigTransactionFees = {
     networkFee: 0.0,
     rentExempt: 0.0,
     multisigFee: 0.02,
@@ -272,7 +272,7 @@ export const getTransactionStatus = (multisig: any, info: any, detail: any): Mul
     }
   
     let status = MultisigTransactionStatus.Pending;
-    let approvals = info.account.signers.filter((s: boolean) => s === true).length;
+    const approvals = info.account.signers.filter((s: boolean) => s === true).length;
   
     if (multisig && multisig.threshold === approvals) {
       status = MultisigTransactionStatus.Approved;
@@ -298,7 +298,7 @@ export const parseMultisigTransaction = (
 ): MultisigTransaction => {
 
   try {
-    let currentOwnerIndex = multisig.owners.findIndex((o: any) => o.address === owner.toBase58());
+    const currentOwnerIndex = multisig.owners.findIndex((o: any) => o.address === owner.toBase58());
     return Object.assign({}, {
       id: txInfo.publicKey,
       multisig: txInfo.account.multisig,
@@ -361,7 +361,7 @@ export const getMultisigTransactionSummary = (
 ): MultisigTransactionSummary | undefined => {
   try {
 
-    let expDate = (
+    const expDate = (
       transaction.details && 
       transaction.details.expirationDate
     ) ? (
@@ -370,7 +370,7 @@ export const getMultisigTransactionSummary = (
          : transaction.details.expirationDate.toString()
      ) : "";
 
-    let txSummary = {
+    const txSummary = {
       address: transaction.id.toBase58(),
       operation: transaction.operation.toString(),
       proposer: transaction.proposer ? transaction.proposer.toBase58() : "",
@@ -401,10 +401,10 @@ export const parseMultisigTransactionInstruction = (
 ): MultisigTransactionInstructionInfo | null => {
   try {
 
-    let ixAccInfos: InstructionAccountInfo[] = [];
+    const ixAccInfos: InstructionAccountInfo[] = [];
     let accIndex = 0;
 
-    for (let acc of transaction.accounts) {
+    for (const acc of transaction.accounts) {
 
       ixAccInfos.push({
         index: accIndex,
@@ -417,14 +417,14 @@ export const parseMultisigTransactionInstruction = (
     }
 
     // let ixDataInfos: InstructionDataInfo[] = [];
-    let bufferStr = Buffer.from(transaction.data).toString('hex');
-    let bufferStrArray: string[] = [];
+    const bufferStr = Buffer.from(transaction.data).toString('hex');
+    const bufferStrArray: string[] = [];
 
     for (let i = 0; i < bufferStr.length; i += 2) {
       bufferStrArray.push(bufferStr.substring(i, i + 2));
     }
 
-    let ixInfo = {
+    const ixInfo = {
       programId: transaction.programId.toBase58(),
       accounts: ixAccInfos,
       data: [{
