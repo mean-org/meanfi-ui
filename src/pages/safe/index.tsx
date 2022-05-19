@@ -3288,6 +3288,14 @@ export const SafeView = () => {
           //   console.table(debugTable);
           // }
           setMultisigTxs(txs);
+
+          if (proposalSelected && txs.length > 0) {
+            const itemList = txs.find(tx => tx.id.equals(proposalSelected.id));
+
+            if (itemList) {
+              setProposalSelected(itemList);
+            }
+          }
         })
         .catch((err: any) => {
           console.error("Error fetching all transactions", err);
@@ -3302,11 +3310,11 @@ export const SafeView = () => {
     }    
 
   }, [
-    publicKey, 
-    selectedMultisig, 
+    publicKey,
+    selectedMultisig,
     needRefreshTxs,
-    connection, 
-    multisigClient, 
+    connection,
+    multisigClient,
     loadingMultisigTxs
   ]);
 
