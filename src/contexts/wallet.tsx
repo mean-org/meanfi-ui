@@ -386,7 +386,7 @@ export function WalletProvider({ children = null as any }) {
                 });
 
                 // Only for the Exodus Wallet (if not installed take the user to its extension url)
-                if (!isInstalled && item.name === ExodusWalletName) {
+                if (!isInstalled && (item.name === ExodusWalletName || item.name === PhantomWalletName)) {
                   window.open(item.url, '_blank');
                 }
 
