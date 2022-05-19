@@ -1312,15 +1312,16 @@ footer.ant-layout-footer {
   align-items: center;
   .sitemessage {
     color: inherit;
-    line-height: 1.2;
-    padding: 0.151rem 1rem;
+    padding: 2px 16px;
     text-align: center;
     @media (max-width: 767.98px) {
       font-weight: 400;
+      line-height: 15px;
       font-size: 13px;
     }
     @media (min-width: 768px) {
       font-weight: 600;
+      line-height: 16px;
       font-size: 14px;
     }
   }
