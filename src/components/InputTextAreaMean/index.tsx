@@ -9,8 +9,9 @@ export const InputTextAreaMean = (props: {
   placeholder?: string;
   onChange?: any;
   value?: any;
+  onPaste?: any;
 }) => {
-  const { id, className, autoComplete, rows, maxLength, placeholder, onChange, value } = props;
+  const { id, className, autoComplete, rows, maxLength, placeholder, onChange, value, onPaste } = props;
 
   // const [lettersLeft, setLettersLeft] = useState(256);
   // const [countWords, setCountWords] = useState(0);
@@ -36,6 +37,7 @@ export const InputTextAreaMean = (props: {
           onChange={onChange}
           placeholder={placeholder}
           value={value}
+          onPaste={onPaste}
         >
         </textarea>
       </div>

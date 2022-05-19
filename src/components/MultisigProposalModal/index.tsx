@@ -263,6 +263,18 @@ export const MultisigProposalModal = (props: {
     </>
   );
 
+  const [pasteSerializedTx, setPasteSerializedTx] = useState<any>();
+
+  // Handler paste clipboard serialized transaction
+  const pasteHandler = (e: any) => {
+    const base64regex = /^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/;
+    const getClipBoardData = e.clipboardData.getData('Text');
+
+    const serializedValidation = base64regex.test(getClipBoardData) ? getClipBoardData : "Invalid serialized transaction"; 
+
+    setPasteSerializedTx(serializedValidation);
+  }
+
   return (
     <Modal
       className="mean-modal simple-modal multisig-proposal-modal"
@@ -379,9 +391,10 @@ export const MultisigProposalModal = (props: {
                                         console.log(e);
                                         handleChangeInput({
                                           id: element.name,
-                                          value: e.target.value
+                                          value: pasteSerializedTx
                                         });
                                       }}
+                                      onPaste={pasteHandler}
                                       placeholder={element.help}
                                       value={inputState[element.name]}
                                     />
