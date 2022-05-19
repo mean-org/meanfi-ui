@@ -15,7 +15,7 @@ import { SelectMean } from '../SelectMean';
 import { InfoIcon } from '../InfoIcon';
 import { FormLabelWithIconInfo } from '../FormLabelWithIconInfo';
 import { InputTextAreaMean } from '../InputTextAreaMean';
-import { App, AppConfig, AppsProvider, UiInstruction } from '@mean-dao/mean-multisig-apps';
+import { App, AppConfig, AppsProvider, UiInstruction, MEAN_MULTISIG_PROGRAM } from '@mean-dao/mean-multisig-apps';
 import BN from 'bn.js';
 import { PublicKey } from '@solana/web3.js';
 import { Identicon } from '../../components/Identicon';
@@ -248,7 +248,7 @@ export const MultisigProposalModal = (props: {
           return (
             <Col xs={8} sm={6} md={6} lg={6} className="select-app" key={index}>
               <div className={`select-app-item simplelink ${selectedApp && selectedApp.id === app.id ? "selected-app" : "no-selected-app"}`} onClick={onSelectApp}>
-                {app.id === "custom_proposal" ? (
+                {app.id === MEAN_MULTISIG_PROGRAM.toBase58() ? (
                   // <Identicon address={PublicKey.default} style={{ width:"65", height:"65", display: "inline-flex" }} />
                   <img style={{ borderRadius: "50%", padding: "0.2em" }} src={"https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"} width={65} height={65} alt={app.name} />
                 ) : (
@@ -299,7 +299,7 @@ export const MultisigProposalModal = (props: {
                     <Row gutter={[8, 8]}>
                       <Col span={24} className="step-two-selected-app">
                         {selectedApp && (
-                          !selectedApp.logoUri || selectedApp.id === "custom_proposal" ? (
+                          !selectedApp.logoUri || selectedApp.id === MEAN_MULTISIG_PROGRAM.toBase58() ? (
                             <img style={{ borderRadius: "50%", padding: "0.2em" }} src={"https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"} width={40} height={40} alt={selectedApp.name} />
                           ) : (
                             <img className="mr-1" src={selectedApp.logoUri} alt={selectedApp.name} width={40} height={40} />
@@ -384,7 +384,7 @@ export const MultisigProposalModal = (props: {
                         selectedUiIx && selectedUiIx.id === ix.id && ix.uiElements.map((element: any) => (
                           <>
                             {element.visibility === "show" && (
-                              <Row gutter={[8, 8]} className="mb-1" key={element.dataElement.index}>
+                              <Row gutter={[8, 8]} className="mb-1" key={element.id}>
                                 {(element.type === "inputText") ? (
                                   <>
                                     <Col xs={24} sm={24} md={24} lg={24} className="text-left pl-1">
@@ -409,7 +409,7 @@ export const MultisigProposalModal = (props: {
                                       />
                                     </Col>
                                   </>
-                                ) : (element.type === "inputTexArea") ? (
+                                ) : (element.type === "inputTextArea") ? (
                                   <>
                                     <Col xs={24} sm={24} md={24} lg={24} className="text-left pl-1">
                                       <FormLabelWithIconInfo
@@ -480,7 +480,7 @@ export const MultisigProposalModal = (props: {
                                   </>
                                 ) : (element.type === "knownValue") ? (
                                   <>
-                                    <Row gutter={[8, 8]} className="mb-1" key={element.dataElement.index}>
+                                    <Row gutter={[8, 8]} className="mb-1" key={element.id}>
                                       <Col xs={24} sm={24} md={24} lg={24} className="text-right pr-1">
                                         <FormLabelWithIconInfo
                                           label={element.label}
@@ -492,7 +492,7 @@ export const MultisigProposalModal = (props: {
                                   </>
                                 ) : (element.type === "slot") ? (
                                   <>
-                                    <Row gutter={[8, 8]} className="mb-1" key={element.dataElement.index}>
+                                    <Row gutter={[8, 8]} className="mb-1" key={element.id}>
                                       <Col xs={24} sm={24} md={24} lg={24} className="text-right pr-1">
                                         <FormLabelWithIconInfo
                                           label={element.label}
@@ -504,7 +504,7 @@ export const MultisigProposalModal = (props: {
                                   </>
                                 ) : (element.type === "txProposer") ? (
                                   <>
-                                    <Row gutter={[8, 8]} className="mb-1" key={element.dataElement.index}>
+                                    <Row gutter={[8, 8]} className="mb-1" key={element.id}>
                                       <Col xs={24} sm={24} md={24} lg={24} className="text-right pr-1">
                                         <FormLabelWithIconInfo
                                           label={element.label}
