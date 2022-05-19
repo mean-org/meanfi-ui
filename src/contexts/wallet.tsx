@@ -168,14 +168,14 @@ export const WALLET_PROVIDERS = [
 ];
 
 const getIsProviderInstalled = (provider: any): boolean => {
-  if (provider.adapter) {
+  if (provider) {
     switch (provider.name) {
       case PhantomWalletName:
         return !!(window as any).solana?.isPhantom;
       case ExodusWalletName:
         return !!(window as any).exodus?.solana;
       case SlopeWalletName:
-        return (!!(window as any).Slope && typeof !!(window as any).Slope === 'function') || !!(window as any).slopeApp;
+        return typeof (window as any).Slope === 'function' || (window as any).slopeApp ? true : false;
       case SolletWalletName:
       case SolletExtensionWalletName:
         return !!(window as any).sollet && typeof (window as any).sollet?.postMessage === 'function';
@@ -199,16 +199,16 @@ const getIsProviderInstalled = (provider: any): boolean => {
 const WalletContext = React.createContext<{
   wallet: MeanFiWallet;
   connected: boolean;
+  connecting: boolean;
   select: () => void;
-  isSelecting: boolean;
   autoConnect: boolean;
   provider: typeof WALLET_PROVIDERS[number] | undefined;
   resetWalletProvider: () => void;
 }>({
   wallet: undefined,
   connected: false,
+  connecting: true,
   select() {},
-  isSelecting: false,
   autoConnect: true,
   provider: undefined,
   resetWalletProvider: () => {},
@@ -263,18 +263,26 @@ export function WalletProvider({ children = null as any }) {
   }, [provider, providerName, wallets]);
 
   const [connected, setConnected] = useState(false);
-  const [isSelecting, setIsSelecting] = useState(false);
+  const [connecting, setConnecting] = useState(true);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const select = useCallback(() => {
-    setIsSelecting(true);
     setIsModalVisible(true);
   }, []);
   const close = useCallback(() => {
-    setIsSelecting(false);
     setIsModalVisible(false);
   }, []);
   const [walletListExpanded, setWalletListExpanded] = useState(isDesktop ? false : true);
 
+  // Keep up with connecint flag
+  useEffect(() => {
+    if (wallet) {
+      setConnecting(wallet.connecting);
+    } else {
+      setConnecting(false);
+    }
+  }, [wallet]);
+
+  // Setup listeners
   useEffect(() => {
     if (wallet) {
       wallet.on("connect", () => {
@@ -308,6 +316,7 @@ export function WalletProvider({ children = null as any }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wallet]);
 
+  // Handle connect
   useEffect(() => {
 
     // When a wallet is created, selected and the autoConnect is ON, lets connect
@@ -339,8 +348,8 @@ export function WalletProvider({ children = null as any }) {
       value={{
         wallet,
         connected,
+        connecting,
         select,
-        isSelecting,
         provider,
         autoConnect,
         resetWalletProvider,
@@ -443,14 +452,14 @@ export function WalletProvider({ children = null as any }) {
 }
 
 export function useWallet() {
-  const { wallet, connected, provider, autoConnect, resetWalletProvider, select, isSelecting } = useContext(WalletContext);
+  const { wallet, connected, connecting, provider, autoConnect, resetWalletProvider, select } = useContext(WalletContext);
 
   return {
     wallet,
     provider,
     connected,
+    connecting,
     select,
-    isSelecting,
     autoConnect,
     resetWalletProvider,
     publicKey: wallet?.publicKey,
