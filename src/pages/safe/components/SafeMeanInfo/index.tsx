@@ -61,6 +61,7 @@ export const SafeMeanInfo = (props: {
   } = props;
 
   const [multisig, setMultisig] = useState<any>(selectedMultisig);
+  const [solBalance, setSolBalance] = useState<number>(0);
   const [multisigTxs, setMultisigTxs] = useState<MultisigTransaction[]>([]);
   const [multisigVaults, setMultisigVaults] = useState<any[]>([]);
   const [programs, setPrograms] = useState<ProgramAccounts[]>([]);
@@ -71,11 +72,20 @@ export const SafeMeanInfo = (props: {
 
   useEffect(() => {
 
-    if (!selectedMultisig) { return; }
-    const timeout = setTimeout(() => setMultisig(selectedMultisig));
+    if (!connection || !selectedMultisig) { return; }
+
+    const timeout = setTimeout(() => {
+      setMultisig(selectedMultisig);
+      connection
+        .getBalance(selectedMultisig.id)
+        .then(balance => setSolBalance(balance))
+        .catch(err => console.error(err));
+    });
+
     return () => clearTimeout(timeout);
 
   }, [
+    connection,
     selectedMultisig
   ]);
 
@@ -224,11 +234,12 @@ export const SafeMeanInfo = (props: {
 
   },[]);
 
-  const getSolToken = useCallback(async () => {
-    const solBalance = await connection.getBalance(multisig.id);
-  
-    console.log("solBalance", solBalance)
-     return {
+  const getSolToken = useCallback(() => {
+
+    if (!multisig) { return null; }
+    console.log("solBalance", solBalance);
+
+    return {
       mint: NATIVE_SOL_MINT,
       owner: multisig.authority,
       amount: new BN(solBalance),
@@ -240,46 +251,57 @@ export const SafeMeanInfo = (props: {
       delegatedAmount: 0,
       closeAuthorityOption: 0,
       closeAuthority: undefined,
-      address: multisig.id
-    };
-  }, [connection, multisig])
+      address: multisig.id,
+      decimals: 9
+
+    } as any;
+
+  }, [
+    multisig, 
+    solBalance
+  ]);
   
   // Get Multisig Vaults
   useEffect(() => {
-    if (!multisigClient || !multisig || !multisig.id) {
-      return;
-    }
+
+    if (!multisigClient || !multisig || !loadingAssets) { return; }
   
     consoleOut("multisig id", multisig.id.toBase58(), "blue");
 
-    const program = multisigClient.getProgram();
     const timeout = setTimeout(() => {
-      getSolToken().then(mySol => {
-        getMultisigVaults(program.provider.connection, multisig.id)
-          .then(result => {
-            const modifiedResults = new Array<any>();
-            modifiedResults.push(mySol);
-  
-            result.forEach(item => {
-              modifiedResults.push(item);
-            })
-  
-            setMultisigVaults(modifiedResults);
-  
-            consoleOut("Multisig assets", modifiedResults, "blue");
-          })
-          .catch(err => {
-            console.error(err);
-            setMultisigVaults([mySol]);
-          })
-          .finally(() => setLoadingAssets(false));
-      });
+
+      const program = multisigClient.getProgram();
+      const solToken = getSolToken();
+
+      getMultisigVaults(program.provider.connection, multisig.id)
+        .then(result => {
+          const modifiedResults = new Array<any>();
+          modifiedResults.push(solToken);  
+          result.forEach(item => {
+            modifiedResults.push(item);
+          });  
+          setMultisigVaults(modifiedResults);  
+          consoleOut("Multisig assets", modifiedResults, "blue");
+        })
+        .catch(err => {
+          console.error(err);
+          setMultisigVaults([solToken]);
+        })
+        .finally(() => setLoadingAssets(false));
     });
   
     return () => {
       clearTimeout(timeout);
     }
-  },[getMultisigVaults, multisigClient, multisig, connection, getSolToken]);
+
+  },[
+    getMultisigVaults, 
+    multisigClient, 
+    multisig, 
+    connection, 
+    getSolToken, 
+    loadingAssets
+  ]);
 
   useEffect(() => {
     const loading = multisig ? true : false;
@@ -418,7 +440,9 @@ export const SafeMeanInfo = (props: {
 
             const assetToken = token ? token.symbol : "Unknown";
             const assetAddress = shortenAddress(asset.address.toBase58(), 8);
-            const assetAmount = token ? formatThousands(makeDecimal(asset.amount, token.decimals), token.decimals) : formatThousands(makeDecimal(asset.amount, asset.decimals || 6), asset.decimals || 6);
+            const assetAmount = token 
+              ? formatThousands(makeDecimal(asset.amount, token.decimals), token.decimals) 
+              : formatThousands(makeDecimal(asset.amount, asset.decimals || 6), asset.decimals || 6);
 
             return (
               <div 
@@ -647,7 +671,8 @@ export const SafeMeanInfo = (props: {
   return (
     <>
       <SafeInfo
-        connection={connection}
+        // connection={connection}
+        solBalance={solBalance}
         selectedMultisig={multisig}
         multisigVaults={multisigVaults}
         onNewProposalMultisigClick={onNewProposalMultisigClick}

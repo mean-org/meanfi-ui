@@ -290,7 +290,7 @@ export const SafeSerumInfoView = (props: {
   return (
     <>
       <SafeInfo
-        connection={connection}
+        // connection={connection}
         selectedMultisig={selectedMultisig}
         safeNameImg={safeSerumNameImg}
         safeNameImgAlt={safeSerumNameImgAlt}

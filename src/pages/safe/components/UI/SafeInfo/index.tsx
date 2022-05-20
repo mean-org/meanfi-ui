@@ -1,23 +1,25 @@
-import { Connection, LAMPORTS_PER_SOL } from "@solana/web3.js";
+// import { Connection, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { Button, Col, Dropdown, Menu, Row, Tooltip } from "antd";
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { CopyExtLinkGroup } from "../../../../../components/CopyExtLinkGroup";
 import { MultisigOwnersView } from "../../../../../components/MultisigOwnersView";
 import { TabsMean } from "../../../../../components/TabsMean";
 import { AppStateContext } from "../../../../../contexts/appstate";
-import { useConnectionConfig } from "../../../../../contexts/connection";
+// import { useConnectionConfig } from "../../../../../contexts/connection";
 import { IconAdd, IconEdit, IconEllipsisVertical, IconShowAll, IconTrash } from "../../../../../Icons";
 import { MultisigVault } from "../../../../../models/multisig";
 import { UserTokenAccount } from "../../../../../models/transactions";
 import { NATIVE_SOL } from "../../../../../utils/tokens";
+// import { NATIVE_SOL } from "../../../../../utils/tokens";
 
-import { consoleOut, isDev, isLocal, toUsCurrency } from "../../../../../utils/ui";
-import { fetchAccountTokens, getTokenByMintAddress, shortenAddress } from "../../../../../utils/utils";
+import { isDev, isLocal, toUsCurrency } from "../../../../../utils/ui";
+import { getTokenByMintAddress, shortenAddress } from "../../../../../utils/utils";
 
 export const SafeInfo = (props: {
-  connection: Connection;
+  // connection: Connection;
   selectedMultisig?: any;
   multisigVaults?: MultisigVault[];
   safeNameImg?: string;
@@ -27,6 +29,7 @@ export const SafeInfo = (props: {
   onEditMultisigClick?: any;
   tabs?: Array<any>;
   selectedTab?: any;
+  solBalance?: any
 }) => {
   const {
     coinPrices,
@@ -34,7 +37,7 @@ export const SafeInfo = (props: {
     isWhitelisted
   } = useContext(AppStateContext);
 
-  const { connection, selectedMultisig, multisigVaults, safeNameImg, safeNameImgAlt, onNewProposalMultisigClick, onNewCreateAssetClick, onEditMultisigClick, tabs, selectedTab } = props;
+  const { solBalance, selectedMultisig, multisigVaults, safeNameImg, safeNameImgAlt, onNewProposalMultisigClick, onNewCreateAssetClick, onEditMultisigClick, tabs, selectedTab } = props;
 
   const { t } = useTranslation('common');
   const navigate = useNavigate();
@@ -108,13 +111,13 @@ export const SafeInfo = (props: {
   // Fetch safe balance.
   useEffect(() => {
 
-    if (!connection || !selectedMultisig) { return; }
+    if (!selectedMultisig) { return; }
     
     let usdValue = 0;
 
     (async () => {
 
-      const solBalance = await connection.getBalance(selectedMultisig.authority);  
+      // const solBalance = await connection.getBalance(selectedMultisig.authority);  
       usdValue = (solBalance / LAMPORTS_PER_SOL) * getPricePerToken(NATIVE_SOL);
       const cumulative = new Array<any>();
 
@@ -147,8 +150,8 @@ export const SafeInfo = (props: {
     getPricePerToken, 
     selectedMultisig, 
     splTokenList, 
-    connection, 
-    multisigVaults
+    multisigVaults, 
+    solBalance
   ]);  
     
   // Deposit Address
