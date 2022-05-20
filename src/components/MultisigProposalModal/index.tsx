@@ -68,6 +68,7 @@ export const MultisigProposalModal = (props: {
 
   const updateSelectedIx = (state: any) => {
     if (!selectedUiIx) { return; }
+
     const currentUiIx = Object.assign({}, selectedUiIx);
     // const stateElements = Object.entries(state);
     for (const uiElem of currentUiIx.uiElements) {
@@ -234,13 +235,24 @@ export const MultisigProposalModal = (props: {
     setLettersLeft(256 - countWords);
   }, [countWords]);
 
+  useEffect(() => {
+    if (selectedApp) {
+      if (selectedApp.name === "Custom Transaction Proposal") {
+          selectedAppConfig && selectedAppConfig?.ui.map((ix) => {
+          return setSelectedUiIx(ix)
+        })
+      } else {
+        return setSelectedUiIx(undefined)
+      }
+    }
+  }, [selectedApp, selectedAppConfig]);
+
   // Display solana apps in proposal modal (Step 1)
   const renderSolanaApps = (
     <>
       {props.solanaApps.length > 0 && (
         props.solanaApps.map((app, index) => {
           const onSelectApp = () => {
-            setSelectedUiIx(undefined);
             setSelectedApp(app);
           }
 
@@ -263,16 +275,22 @@ export const MultisigProposalModal = (props: {
     </>
   );
 
-  const [pasteSerializedTx, setPasteSerializedTx] = useState<any>();
+  const [isSerializedTxValid, setIsSerializedTxValid] = useState<boolean>();
+
+  const [serializedTx, setSerializedTx] = useState<any>();
 
   // Handler paste clipboard serialized transaction
   const pasteHandler = (e: any) => {
     const base64regex = /^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/;
-    const getClipBoardData = e.clipboardData.getData('Text');
+    const getInputData = e.clipboardData.getData('Text');
 
-    const serializedValidation = base64regex.test(getClipBoardData) ? getClipBoardData : "Invalid serialized transaction"; 
+    const isValid = base64regex.test(getInputData);
 
-    setPasteSerializedTx(serializedValidation);
+    const serializedValidation = isValid ? getInputData : "Invalid serialized transaction"; 
+
+    setIsSerializedTxValid(isValid);
+
+    setSerializedTx(serializedValidation);
   }
 
   return (
@@ -371,61 +389,30 @@ export const MultisigProposalModal = (props: {
                     </Row>
 
                     <div className="step-two-select-instruction">
-                      {selectedApp && (
-                        <Row gutter={[8, 8]} className="mb-1">
-                          {(selectedApp.name === "Custom Transaction Proposal") ? (
-                            <>
-                              {/* Serialized Tx */}
-                              {selectedAppConfig?.ui.map((ix: any) => (
-                                ix.uiElements.map((element: any) => (
-                                  <Col xs={24} sm={24} md={24} lg={24} className="text-left pl-1" key={element.id}>
-                                    <FormLabelWithIconInfo
-                                      label={element.label}
-                                      tooltip_text={element.help}
-                                    />
-                                    <InputTextAreaMean 
-                                      id={element.label}
-                                      rows={10}
-                                      className={`vertical-scroll ${props.isBusy ? 'disabled' : ''}`}
-                                      onChange={(e: any) => {
-                                        console.log(e);
-                                        handleChangeInput({
-                                          id: element.name,
-                                          value: pasteSerializedTx
-                                        });
-                                      }}
-                                      onPaste={pasteHandler}
-                                      placeholder={element.help}
-                                      value={inputState[element.name]}
-                                    />
-                                  </Col>
-                                ))
-                              ))}
-                            </>
-                          ) : (
-                            <>
-                             {/* Instruction */}
-                              <Col xs={24} sm={24} md={24} lg={24} className="text-left pr-1">
-                                <div className="form-label">Instruction:</div>
-                                <SelectMean
-                                  className={props.isBusy ? 'disabled' : ''}
-                                  onChange={onProposalInstructionValueChange}
-                                  placeholder="Select an instruction"
-                                  values={selectedAppConfig ? selectedAppConfig.ui.map((ix: any) => {
-                                    return { key: ix.id, label: ix.label, value: ix.id }
-                                  }) : []}
-                                  labelInValue={true}
-                                  value={{
-                                    key: selectedUiIx?.id,
-                                    value: selectedUiIx?.id,
-                                    label: selectedUiIx?.label
-                                  }}
-                                />
-                              </Col>
-                            </>
-                          )}
-                        </Row>
-                      )}
+                      <Row gutter={[8, 8]} className="mb-1">
+                        {(selectedApp && selectedApp.name !== "Custom Transaction Proposal") && (
+                          <>
+                            {/* Instruction */}
+                            <Col xs={24} sm={24} md={24} lg={24} className="text-left pr-1">
+                              <div className="form-label">Instruction:</div>
+                              <SelectMean
+                                className={props.isBusy ? 'disabled' : ''}
+                                onChange={onProposalInstructionValueChange}
+                                placeholder="Select an instruction"
+                                values={selectedAppConfig ? selectedAppConfig.ui.map((ix: any) => {
+                                  return { key: ix.id, label: ix.label, value: ix.id }
+                                }) : []}
+                                labelInValue={true}
+                                value={{
+                                  key: selectedUiIx?.id,
+                                  value: selectedUiIx?.id,
+                                  label: selectedUiIx?.label
+                                }}
+                              />
+                            </Col>
+                          </>
+                        )}
+                      </Row>
 
                       {selectedAppConfig?.ui.map((ix: any) => (
                         selectedUiIx && selectedUiIx.id === ix.id && ix.uiElements.map((element: any) => (
@@ -463,20 +450,38 @@ export const MultisigProposalModal = (props: {
                                         label={element.label}
                                         tooltip_text={element.help}
                                       />
-                                      <InputTextAreaMean 
-                                        id={element.label}
-                                        className={props.isBusy ? 'disabled' : ''}
-                                        maxLength={256}
-                                        onChange={(e: any) => {
-                                          console.log(e);
-                                          handleChangeInput({
-                                            id: element.name,
-                                            value: e.target.value
-                                          });
-                                        }}
-                                        placeholder={element.help}
-                                        value={inputState[element.name]}
-                                      />
+                                      {element.name === "serializedTx" ? (
+                                        <InputTextAreaMean 
+                                          id={element.name}
+                                          rows={30}
+                                          className={`well mb-1 proposal-summary-container vertical-scroll paste-input ${props.isBusy ? 'disabled' : ''}`}
+                                          onChange={(e: any) => {
+                                            console.log(e);
+                                            handleChangeInput({
+                                              id: element.name,
+                                              value: serializedTx
+                                            });
+                                          }}
+                                          onPaste={pasteHandler}
+                                          placeholder={element.help}
+                                          value={inputState[element.name]}
+                                        />
+                                      ) : (
+                                        <InputTextAreaMean 
+                                          id={element.label}
+                                          className={props.isBusy ? 'disabled' : ''}
+                                          maxLength={256}
+                                          onChange={(e: any) => {
+                                            console.log(e);
+                                            handleChangeInput({
+                                              id: element.name,
+                                              value: e.target.value
+                                            });
+                                          }}
+                                          placeholder={element.help}
+                                          value={inputState[element.name]}
+                                        />
+                                      )}
                                     </Col>
                                   </>
                                 ) : (element.type === "option") ? (
@@ -648,22 +653,24 @@ export const MultisigProposalModal = (props: {
                     {/* Data from selected instruction */}
                     {(selectedApp && (selectedApp.name === "Custom Transaction Proposal")) ? (
                       <>
-                        {Object.keys(inputState).map((key, index) => (
-                          <>
-                            <div className="info-label text-center">
-                              {selectedAppConfig?.ui.map((ix: any) => (
-                                ix.uiElements.map((element: any) => (
-                                  <span>{element.label}</span>
-                                ))
-                              ))}
-                            </div>
-                            <div className="well mb-1 proposal-summary-container vertical-scroll">
-                              <div className="mb-1">
-                                <span key={index}>{inputState.serializedTx}</span>
+                        {isSerializedTxValid && (
+                          Object.keys(inputState).map((key, index) => (
+                            <>
+                              <div className="info-label text-center">
+                                {selectedAppConfig?.ui.map((ix: any) => (
+                                  ix.uiElements.map((element: any) => (
+                                    <span>{element.label}</span>
+                                  ))
+                                ))}
                               </div>
-                            </div>
-                          </>
-                        ))}
+                              <div className="well mb-1 proposal-summary-container vertical-scroll">
+                                <div className="mb-1">
+                                  <span key={index}>{inputState.serializedTx}</span>
+                                </div>
+                              </div>
+                            </>
+                          ))
+                        )}
                       </>
                     ) : (
                       Object.keys(inputState).map((key, index) => (
