@@ -364,6 +364,7 @@
 					"send-amount": {
 						"label-right": "Disponible pour retirer"
 					},
+					"success-transaction-message": "",
 					"unstake-button-available": "Décoller",
 					"unstake-button-busy": "Unstaking",
 					"unstake-button-unavailable": "Indisponible",
@@ -406,6 +407,7 @@
 			"multisig-label-placeholder": "Tapez un nom pour votre compte multisig",
 			"multisig-no-participants": "Aucun participant ajouté pour le moment",
 			"multisig-participants": "Signataires valides ({{numParticipants}} sur {{maxParticipants}})",
+			"multisig-participants-warning message": "",
 			"multisig-participants-warning-message": "Il n'est pas recommandé de créer un Multisig avec le même nombre de participants que de signatures requises",
 			"multisig-threshold-input-empty": "Saisissez une valeur minimale requise pour les signatures",
 			"multisig-threshold-input-label": "Signatures minimales requises",
@@ -542,6 +544,7 @@
 			"column-operation": "Transaction",
 			"column-pending-signatures": "Status",
 			"column-program-id": "Programme",
+			"execution": "execution",
 			"explain-failure": "Expliquer la condition de défaillance si spécifique",
 			"initiator-transaction": "Cette transaction a été soumise par",
 			"loading-transactions": "Chargement des transactions",
@@ -555,6 +558,8 @@
 			"not-sign-tx": "You did NOT sign this transaction",
 			"not-signed": "Pas signé",
 			"not-signed-tx": "You have NOT signed this transaction",
+			"proposal-completed": "This proposal has been executed and is now complete.",
+			"proposal-ready-to-be-executed": "This proposal has received the required number of signatures and is now ready to be executed.",
 			"proposed-action": "Action proposée :",
 			"proposed-by": "Proposed by:",
 			"ready-for-execution": "Cette transaction est maintenant prête à être exécutée.  Veuillez dire à la personne qui a initié cette transaction de l'exécuter.",
@@ -562,15 +567,16 @@
 			"rejected-tx": "You have rejected this transaction",
 			"signed": "Signé.",
 			"signed-so-far": "Signé pour l'instant.",
-			"tx-signed": "signed",
-			"tx-pending": "pending",
 			"signers-to-approve": "signataires de l'approuver afin qu'il soit exécuté.",
 			"submitted-on": "Soumis le :",
 			"transaction-awaiting": "A proposal for this multisig is pending",
 			"transaction-expiry-date": "Expiry date:",
 			"transaction-has": "Cette transaction a",
+			"transaction-required": "",
 			"transaction-requires": "Cette opération nécessite",
 			"treasury-closed-warning": "Lorsqu'une trésorerie est fermée, tous les fonds restants seront déposés dans le portefeuille de l'initiateur.  Veuillez confirmer que cela est acceptable avant de signer.",
+			"tx-completed": "Completed",
+			"tx-operation-cancel": "Please cancel it below to remove it from the list.",
 			"tx-operation-executed": "This transaction has already been executed",
 			"tx-operation-expired": "This transaction has already been expired",
 			"tx-operation-failure": "L'opération {{operation}} a échoué",
@@ -579,23 +585,45 @@
 			"tx-operation-rejected": "This transaction has been rejected.",
 			"tx-operation-success": "L'opération {{operation}} a réussi",
 			"tx-operation-voided": "This pending transaction has been VOIDED due to the Multisig being edited.",
-			"tx-operation-cancel": "Please cancel it below to remove it from the list.",
-			"tx-switch-hide-btn": "Hide cancelled and voided transactions",
-			"your-status": "Votre statut:",
-			"your-execution": "your execution",
-			"execution": "execution",
+			"tx-pending": "pending",
 			"tx-pending-approval": "Pending Approval",
 			"tx-pending-execution": "Pending Execution",
-			"tx-completed": "Completed",
-			"tx-voided": "Voided",
 			"tx-rejected": "Rejected",
-			"proposal-ready-to-be-executed": "This proposal has received the required number of signatures and is now ready to be executed.",
-			"proposal-completed": "This proposal has been executed and is now complete."
+			"tx-signed": "signed",
+			"tx-switch-hide-btn": "Hide cancelled and voided transactions",
+			"tx-voided": "Voided",
+			"your-execution": "your execution",
+			"your-status": "Votre statut:"
 		},
 		"multisig-treasuries": {
 			"back-to-treasuries": "Retour aux trésoreries"
 		},
 		"pending-transactions": "opérations en attente",
+		"proposal-modal": {
+			"description": "Proposal description",
+			"description-placeholder": "Add a description",
+			"does-not-expire": "Does not expire",
+			"expires-label": "Expires on",
+			"expires-tooltip": "If the confirmation threshold is not passed by the expiry date, the transaction will be automatically cancelled and its status will be displayed as failed.",
+			"expiry-date": "Expiry date",
+			"hint-message": "{{lettersLeft}} available characters",
+			"instruction": "Instruction",
+			"instruction-account": "Account",
+			"instruction-data": "Data",
+			"instruction-program": "Program",
+			"summary-content-close-asset": "Close the selected asset",
+			"summary-content-multisig-new-name": "Change multisig name to {{multisigLabel}}",
+			"summary-content-multisig-new-owners": "Include new owners",
+			"summary-content-multisig-new-threshold": "Change multisig threshold to {{multisigThreshold}}",
+			"summary-content-send-funds": "Send {{amount}} {{symbol}} to the following Solana address:",
+			"summary-content-set-program-auth": "Set program auth",
+			"summary-content-transfer-ownership": "Transfer ownership to the following Solana address:",
+			"summary-content-upgrade-program": "Upgrade program",
+			"summary-label": "Proposal",
+			"title": "Proposal title",
+			"title-label": "Title",
+			"title-placeholder": "Reason for submitting this proposal"
+		},
 		"refresh-tooltip": "Cliquez pour actualiser la liste des comptes multisig",
 		"screen-title": "Comptes multisignatures",
 		"set-program-authority": {
@@ -644,31 +672,6 @@
 			"program-address-label": "Identifiant du programme",
 			"program-address-placeholder": "Entrez l'adresse du programme",
 			"success-message": "Programme mis à jour avec succès."
-		},
-		"proposal-modal": {
-			"title": "Proposal title",
-			"title-placeholder": "Reason for submitting this proposal",
-			"expiry-date": "Expiry date",
-			"description": "Proposal description",
-			"description-placeholder": "Add a description",
-			"hint-message": "{{lettersLeft}} available characters",
-			"summary-label": "Proposal",
-			"summary-content-send-funds": "Send {{amount}} {{symbol}} to the following Solana address:",
-			"summary-content-transfer-ownership": "Transfer ownership to the following Solana address:",
-			"summary-content-close-asset": "Close the selected asset",
-			"summary-content-set-program-auth": "Set program auth",
-			"summary-content-upgrade-program": "Upgrade program",
-			"summary-content-multisig-new-name": "Change multisig name to {{multisigLabel}}",
-			"summary-content-multisig-new-threshold": "Change multisig threshold to {{multisigThreshold}}",
-			"summary-content-multisig-new-owners": "Include new owners",
-			"title-label": "Title",
-			"expires-label": "Expires on",
-			"expires-tooltip": "If the confirmation threshold is not passed by the expiry date, the transaction will be automatically cancelled and its status will be displayed as failed.",
-			"does-not-expire": "Does not expire",
-			"instruction": "Instruction",
-			"instruction-program": "Program",
-			"instruction-account": "Account",
-			"instruction-data": "Data"
 		}
 	},
 	"notifications": {
@@ -697,10 +700,10 @@
 		"success-account-funded-message": "Compte financé",
 		"success-loading-stream-message": "Le flux avec l'ID {{streamId}} a été chargé",
 		"success-loading-treasury-message": "La trésorerie avec l'ID {{treasuryId}} a été chargée",
+		"tx-not-confirmed": "The transaction could not be confirmed, please retry your transaction.",
 		"wallet-connect-message": "Connecté au portefeuille {{address}}",
 		"wallet-connection-event-title": "Mise à jour du portefeuille",
-		"wallet-disconnect-message": "Déconnecté du portefeuille",
-		"tx-not-confirmed": "The transaction could not be confirmed, please retry your transaction."
+		"wallet-disconnect-message": "Déconnecté du portefeuille"
 	},
 	"open-stream": {
 		"label-streamid-input": "ID de flux à ouvrir",
@@ -859,7 +862,6 @@
 			"transfer-money-stream-menu-item": "Transfert de propriété",
 			"withdraw-funds-cta": "Retirer des fonds"
 		},
-		"streaming-balance": "balance",
 		"stream-list": {
 			"no-streams": "Aucun flux disponible",
 			"not-connected": "Veuillez connecter votre portefeuille pour voir vos flux d'argent",
@@ -883,7 +885,8 @@
 			"title-sending-to": "Envoi à"
 		},
 		"stream-stats-incoming": "Entrant",
-		"stream-stats-outgoing": "Sortant"
+		"stream-stats-outgoing": "Sortant",
+		"streaming-balance": "balance"
 	},
 	"swap": {
 		"exchange-warning": "Mean Exchange n'est disponible que sur",
@@ -909,10 +912,10 @@
 	"token-selector": {
 		"exchange-search-input-placeholder": "Rechercher un jeton par nom ou symbole",
 		"looking-for-sol": "Vous cherchez SOL?  Tu dois",
+		"lookup-add-asset-input-placeholder": "Entrez le nom, le symbole ou l'adresse du jeton",
 		"modal-title": "Sélectionnez un jeton",
 		"no-matches": "Aucun résultat",
 		"search-input-placeholder": "Rechercher un jeton par nom, symbole ou adresse",
-		"lookup-add-asset-input-placeholder": "Entrez le nom, le symbole ou l'adresse du jeton",
 		"wrap-sol-first": "enveloppez-le d'abord dans wSOL"
 	},
 	"transactions": {
@@ -954,8 +957,8 @@
 			"placeholder": "Veuillez choisir une date"
 		},
 		"status": {
-			"cta-view-stream": "Afficher le flux",
 			"cta-start-transfer-busy": "Creating transfer",
+			"cta-view-stream": "Afficher le flux",
 			"ddca-add-funds": "Caisse de financement avec",
 			"ddca-add-funds-success": "Fonds ajoutés avec succès",
 			"ddca-create-tx": "Créer un échange récurrent planifié",
@@ -1033,7 +1036,9 @@
 			"amount-lt-fee": "Le montant doit être supérieur aux frais de transaction",
 			"amount-sol-low": "Insufficient SOL",
 			"amount-withdraw-high": "Le montant est supérieur aux fonds disponibles",
+			"asset-no-empty": "",
 			"cannot-use-own-account-as-treasury": "Impossible d'utiliser votre compte comme identifiant de trésorerie",
+			"cliff-release-no-empty": "",
 			"exchange-unavailable": "Échange indisponible",
 			"insufficient-amount-needed": "Besoin d'au moins {{amount}} {{symbol}} pour échanger",
 			"insufficient-balance-needed": "Need at least {{balance}} SOL in your wallet",
@@ -1041,27 +1046,36 @@
 			"invalid-amount": "Montant invalide",
 			"invalid-exchange": "Sélectionnez le jeton",
 			"invalid-solana-address": "Adresse solana invalide",
+			"lock-period-no-empty": "",
+			"memo-empty": "Memo cannot be empty",
 			"minimum-repeating-buy-amount": "Vous avez besoin d'un minimum de {{fromTokenAmount}} pour commencer cet achat répété",
 			"minimum-swap-amount": "Montant minimum requis pour échanger {{mintAmount}} {{fromMint}}",
 			"multi-recipient-invalid-addresses": "{{amountInvalidAddresses}} éléments de votre liste n'ont pas de format d'adresse valide",
 			"multi-recipient-invalid-list": "Votre csv n'a pas d'adresses valides",
 			"no-amount": "Entrer le montant",
 			"no-balance": "Pas de solde",
+			"no-description": "",
 			"no-payment-rate": "Ajouter un taux de paiement",
 			"no-recipient": "Aucun destinataire",
+			"no-title": "",
 			"no-valid-date": "Définir une date valide",
-			"memo-empty": "Memo cannot be empty",
 			"not-connected": "Connectez votre portefeuille",
 			"payment-rate-high": "Le taux de paiement dépasse votre solde",
 			"select-address-list": "Sélectionnez la liste d'adresses",
+			"select-auth-address": "",
+			"select-multisig-address": "",
 			"select-recipient": "Sélectionnez le destinataire",
 			"select-stream": "Sélectionnez un flux",
+			"select-valid-auth-address": "",
+			"select-valid-multisig-address": "",
+			"select-valid-recipient": "",
 			"valid-address-required": "Une adresse solana valide est requise",
 			"valid-approve": "Approuver sur votre portefeuille",
 			"valid-continue": "Continuez",
 			"valid-ddca-review": "Passer en revue",
 			"valid-start-funding": "Commencer le financement",
 			"valid-start-withdrawal": "Commencer le retrait",
+			"valid-submit-proposal": "",
 			"verified-recipient-unchecked": "Recipient Unchecked"
 		}
 	},
@@ -1103,10 +1117,10 @@
 		},
 		"back-to-treasuries-cta": "Back to Streaming Accounts",
 		"close-account": {
-			"modal-title": "Close account",
 			"close-treasury-confirmation": "Are you sure you want to close the account?",
 			"cta-close": "Close account",
-			"cta-close-busy": "Closing account"
+			"cta-close-busy": "Closing account",
+			"modal-title": "Close account"
 		},
 		"create-new-treasury-cta": "New Streaming Account",
 		"create-treasury": {
@@ -1211,9 +1225,9 @@
 			"column-destination": "Destination",
 			"column-funds-left": "Fonds restants",
 			"column-rate": "Taux",
+			"create-multi-recipient-checkbox-label": "Voulez-vous créer plusieurs flux avec les mêmes paramètres ?",
 			"create-stream-main-cta": "Créer un flux",
 			"create-stream-main-cta-busy": "Création de flux",
-			"create-multi-recipient-checkbox-label": "Voulez-vous créer plusieurs flux avec les mêmes paramètres ?",
 			"fee-payed-by-treasurer": "Je veux payer des frais pour ce flux au lieu du bénéficiaire",
 			"loading-streams": "Chargement des flux",
 			"message-warning": "La liste des destinataires que vous avez soumise comprenait votre propre adresse de portefeuille. Ce n'est pas possible et cette adresse a été supprimée de la liste importée.",
@@ -1235,10 +1249,10 @@
 			"label-input-amount": "Enter amount to withdraw",
 			"label-input-right": "By percentual preset",
 			"main-cta": "Withdraw funds",
-			"verified-label": "I'm sure the recipient address doesn't belong to an exchange",
+			"modal-title": "Withdraw account funds",
 			"selected-treasury-label": "From streaming account",
-			"modal-title": "Withdraw account funds"
-		}	
+			"verified-label": "I'm sure the recipient address doesn't belong to an exchange"
+		}
 	},
 	"ui-language": {
 		"en": "Anglais",
