@@ -1183,7 +1183,7 @@
 		},
 		"treasury-refresh-tooltip": "Refresh account data",
 		"treasury-streams": {
-			"add-stream-modal-title": "Thêm stream vào kho bạc",
+			"add-stream-modal-title": "Add stream to the account",
 			"add-stream-locked": {
 				"modal-title": "Add a locked money stream",
 				"panel1-name": "Recipient's info",
@@ -1202,7 +1202,7 @@
 				"panel3-release-rate": "Release rate:",
 				"panel3-warning-message": "IMPORTANT: This is a locked money stream. You cannot cancel, pause or change its details once it is started. Verify all information before proceeding."
 			},
-			"allocate-funds-label": "Phân bổ quỹ",
+			"allocate-funds-label": "Amount to stream",
 			"allocation-reserved-label": "Phân bổ này đã được ĐẶT CHỖ đầy đủ",
 			"available-unallocated-balance-label": "Unallocated Balance",
 			"busy-pausing": "Đang dừng stream",
@@ -1218,7 +1218,7 @@
 			"create-multi-recipient-checkbox-label": "Do you want to create multiple streams with the same settings?",
 			"fee-payed-by-treasurer": "Tôi muốn trả phí cho stream này thay vì người thụ hưởng",
 			"loading-streams": "Đang tải stream",
-			"minimum-allocation-advice": "Bạn phải đặt mức phân bổ tối thiểu cho Money stream này lên đến số dư chưa phân bổ hiện có trong Kho bạc.",
+			"minimum-allocation-advice": "How many {{tokenSymbol}} tokens do you want to send at {{rateInterval}}? You are able to set an ammount up to the unallocated balance in this streaming account.",
 			"multiple-address-list": "Multiple address list",
 			"multiple-address-question-mark-tooltip": "Please provide a csv text file with one address per line in the following format: \n MEMO or STREAM NAME, WALLET ADDRESS. \n\n Here is an example of how it should look: \n Epoch 1, FrdFf3EqcGuytTweLvoELBt29WrAGVYjrh4585A2bTAZ \n\n Before you submit the file, please make sure the recipient addresses are correct and do not belong to an exchange.",
 			"message-warning": "The list of recipients you submitted included your own wallet address. This is not possible and this address has been removed from the imported list.",

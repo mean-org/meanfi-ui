@@ -7210,7 +7210,7 @@ code {
     .ant-popover-arrow {
       .ant-popover-arrow-content {
         background-color: var(--color-component-background);
-        &::after {
+        &::before {
           background: inherit;
         }
       }

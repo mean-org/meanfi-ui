@@ -1310,8 +1310,8 @@ export const RepeatingPayment = (props: {
         {/* Payment rate */}
         <div className="form-label">{t('transactions.rate-and-frequency.amount-label')}</div>
 
-        <Row wrap={false} gutter={16}>
-          <Col flex="1 1 160px">
+        <Row wrap={false}>
+          <Col flex="1 1 160px" style={{ paddingRight: 8 }}>
             <div className="well">
               <div className="flex-fixed-left">
                 <div className="left">
@@ -1346,7 +1346,7 @@ export const RepeatingPayment = (props: {
               </div>
             </div>
           </Col>
-          <Col flex="0 1 160px">
+          <Col flex="0 1 160px" style={{ paddingLeft: 8 }}>
             <div className="well">
               <div className="flex-fixed-left">
                 <div className="left">
@@ -1491,17 +1491,16 @@ export const RepeatingPayment = (props: {
           </div>
         </div>
 
-        {/* Add funds */}
+        {/* Amount to stream */}
         <div className="form-label">
           <span className="align-middle">{t('transactions.send-amount.label-amount')}</span>
           <span className="align-middle">
             <InfoIcon content={<span>This is the total amount of funds that will be streamed to the recipient at the payment rate selected. You can add more funds at any time by topping up the stream.</span>}
-                      placement="top"
-                      trigger="click">
+                      placement="top">
               <InfoCircleOutlined />
             </InfoIcon>
           </span>
-          </div>
+        </div>
         <div className="well">
           <div className="flex-fixed-left">
             <div className="left">
