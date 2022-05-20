@@ -6,7 +6,8 @@ import {
   LoadingOutlined,
   MergeCellsOutlined,
   QrcodeOutlined,
-  SyncOutlined
+  SyncOutlined,
+  WarningFilled
 } from '@ant-design/icons';
 import { Connection, Keypair, LAMPORTS_PER_SOL, ParsedConfirmedTransactionMeta, PublicKey, Transaction } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
@@ -42,7 +43,7 @@ import { QrScannerModal } from '../../components/QrScannerModal';
 import { Helmet } from "react-helmet";
 import { IconAdd, IconExternalLink, IconEyeOff, IconEyeOn, IconLightBulb, IconVerticalEllipsis } from '../../Icons';
 import { fetchAccountHistory, MappedTransaction } from '../../utils/history';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import { AccountTokenParsedInfo } from '../../models/token';
 import { TokenInfo } from "@solana/spl-token-registry";
@@ -73,12 +74,14 @@ import { AccountsInitAtaModal } from '../../components/AccountsInitAtaModal';
 import { AccountsCloseAssetModal } from '../../components/AccountsCloseAssetModal';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
-export type CategoryOption = "networth" | "user-account" | "other-assets";
+export type CategoryOption = "networth" | "assets" | "msigs" | "other-assets";
 export type OtherAssetsOption = "msp-streams" | "msp-treasuries" | "orca" | "solend" | "friktion" | undefined;
+export const ACCOUNTS_ROUTE_BASE_PATH = '/accounts';
 
 export const AccountsNewView = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { address, asset } = useParams();
   const { endpoint } = useConnectionConfig();
   const { publicKey, connected, wallet } = useWallet();
   const {
@@ -136,16 +139,12 @@ export const AccountsNewView = () => {
   const [selectedTokenMergeGroup, setSelectedTokenMergeGroup] = useState<AccountTokenParsedInfo[]>();
   const [wSolBalance, setWsolBalance] = useState(0);
   const [refreshingBalance, setRefreshingBalance] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<CategoryOption>("user-account");
+  const [selectedCategory, setSelectedCategory] = useState<CategoryOption>("assets");
   const [selectedOtherAssetsOption, setSelectedOtherAssetsOption] = useState<OtherAssetsOption>(undefined);
   const [totalTokenAccountsValue, setTotalTokenAccountsValue] = useState(0);
   const [netWorth, setNetWorth] = useState(0);
   const [treasuriesTvl, setTreasuriesTvl] = useState(0);
   const [isUnwrapping, setIsUnwrapping] = useState(false);
-
-  // Url Query Params attendants
-  const [urlQueryAddress, setUrlQueryAddress] = useState('');
-  const [urlQueryCategory, setUrlQueryCategory] = useState('');
   const [urlQueryAsset, setUrlQueryAsset] = useState('');
 
   // Flow control
@@ -164,6 +163,19 @@ export const AccountsNewView = () => {
     triggerWindowResize();
     closeQrScannerModal();
   };
+
+  // Perform premature redirect here if no address was provided in path
+  // to the current wallet address if the user is connected
+  useEffect(() => {
+    if (!publicKey) { return; }
+
+    if (!address && publicKey) {
+      const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${publicKey.toBase58()}/assets`;
+      consoleOut('No account address, redirecting to:', url, 'orange');
+      navigate(url, { replace: true });
+    }
+
+  }, [address, navigate, publicKey]);
 
   const connection = useMemo(() => new Connection(endpoint, {
     commitment: "confirmed",
@@ -275,18 +287,13 @@ export const AccountsNewView = () => {
   }
 
   const onAddAccountAddress = useCallback(() => {
-    setAccountAddress(accountAddressInput);
-    setShouldLoadTokens(true);
-    setCanShowAccountDetails(true);
-    setAccountAddressInput('');
-    setAddAccountPanelOpen(false);
-  }, [
-    accountAddressInput,
-    setCanShowAccountDetails,
-    setAddAccountPanelOpen,
-    setShouldLoadTokens,
-    setAccountAddress,
-  ]);
+    navigate(`${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddressInput}/assets`);
+    // setAccountAddress(accountAddressInput);
+    // setShouldLoadTokens(true);
+    // setCanShowAccountDetails(true);
+    // setAccountAddressInput('');
+    // setAddAccountPanelOpen(false);
+  }, [navigate, accountAddressInput]);
 
   const handleScanAnotherAddressButtonClick = () => {
     setCanShowAccountDetails(false);
@@ -605,7 +612,7 @@ export const AccountsNewView = () => {
 
   const refreshStreamSummary = useCallback(async () => {
 
-    if (!ms || !msp || !(publicKey || urlQueryAddress || accountAddress) || (!streamListv1 && !streamListv2) || loadingStreamsSummary) { return; }
+    if (!ms || !msp || !(publicKey || accountAddress) || (!streamListv1 && !streamListv2) || loadingStreamsSummary) { return; }
 
     setLoadingStreamsSummary(true);
 
@@ -616,11 +623,7 @@ export const AccountsNewView = () => {
       totalAmount: 0
     };
 
-    const treasurer = publicKey
-      ? publicKey
-      : urlQueryAddress
-        ? new PublicKey(urlQueryAddress)
-        : new PublicKey(accountAddress);
+    const treasurer = new PublicKey(accountAddress);
 
     const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
     const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer);
@@ -705,7 +708,6 @@ export const AccountsNewView = () => {
     streamListv2,
     streamsSummary,
     accountAddress,
-    urlQueryAddress,
     loadingStreamsSummary,
     setLastStreamsSummary,
     setLoadingStreamsSummary,
@@ -789,73 +791,72 @@ export const AccountsNewView = () => {
 
   // Enable deep-linking - Parse and save query params as needed
   useEffect(() => {
-    if (!isFirstLoad) { return; }
+    if (!isFirstLoad || !publicKey) { return; }
 
     const params = new URLSearchParams(location.search);
-    let address: string | null = null;
-    let asset: string | null = null;
-    let cat: string | null = null;
+    let catInQuery: string | null = null;
 
-    if (params.has('address')) {
-      address = params.get('address');
-      setUrlQueryAddress(address || '');
-      consoleOut('params.get("address") =', address, 'crimson');
-    }
-    if (params.has('cat')) {
-      cat = params.get('cat');
-      setUrlQueryCategory(cat || '');
-      consoleOut('params.get("cat") =', cat, 'crimson');
-    }
-    if (params.has('asset')) {
-      asset = params.get('asset');
-      setUrlQueryAsset(asset || '');
-      consoleOut('params.get("asset") =', asset, 'crimson');
-    }
     if (address) {
+      consoleOut('Route param address:', address, 'crimson');
       setAccountAddress(address);
-      if (cat) {
-        switch (cat) {
-          case "networth":
-            setSelectedCategory("networth");
-            break;
-          case "user-account":
-            setSelectedCategory("user-account");
-            break;
-          case "other-assets":
-            setSelectedCategory("other-assets");
-            break;
-          default:
-            break;
-        }
-      }
-      if (asset && cat && (cat as CategoryOption) === "other-assets") {
-        switch (asset as OtherAssetsOption) {
-          case "msp-streams":
-            setSelectedOtherAssetsOption("msp-streams");
-            break;
-          case "msp-treasuries":
-            setSelectedOtherAssetsOption("msp-treasuries");
-            break;
-          case "orca":
-            setSelectedOtherAssetsOption("orca");
-            break;
-          case "solend":
-            setSelectedOtherAssetsOption("solend");
-            break;
-          case "friktion":
-            setSelectedOtherAssetsOption("friktion");
-            break;
-          default:
-            setSelectedOtherAssetsOption(undefined);
-            break;
-        }
-      }
     }
-  }, [isFirstLoad, location.search, setAccountAddress]);
+
+    if (params.has('cat')) {
+      catInQuery = params.get('cat');
+      consoleOut('params.get("cat") =', catInQuery, 'crimson');
+    }
+
+    if (asset) {
+      consoleOut('Route param asset:', asset, 'crimson');
+      setUrlQueryAsset(asset);
+    }
+
+    // The category is inferred from the route path
+    if (location.pathname.indexOf('/assets') !== -1) {
+      setSelectedCategory("assets");
+    } else if (location.pathname.indexOf('/msigs') !== -1) {
+      setSelectedCategory("msigs");
+    } else {
+      setSelectedCategory("other-assets");
+    }
+
+    // if (assetInQuery && catInQuery && (catInQuery as CategoryOption) === "other-assets") {
+    //   switch (assetInQuery as OtherAssetsOption) {
+    //     case "msp-streams":
+    //       setSelectedOtherAssetsOption("msp-streams");
+    //       break;
+    //     case "msp-treasuries":
+    //       setSelectedOtherAssetsOption("msp-treasuries");
+    //       break;
+    //     case "orca":
+    //       setSelectedOtherAssetsOption("orca");
+    //       break;
+    //     case "solend":
+    //       setSelectedOtherAssetsOption("solend");
+    //       break;
+    //     case "friktion":
+    //       setSelectedOtherAssetsOption("friktion");
+    //       break;
+    //     default:
+    //       setSelectedOtherAssetsOption(undefined);
+    //       break;
+    //   }
+    // }
+
+  }, [
+    asset,
+    address,
+    publicKey,
+    isFirstLoad,
+    location.search,
+    location.pathname,
+    setAccountAddress,
+  ]);
 
   // Load streams on entering /accounts
   useEffect(() => {
-    if (!isFirstLoad) { return; }
+    if (!isFirstLoad || !publicKey) { return; }
+
     setIsFirstLoad(false);
     setTransactions([]);
 
@@ -865,24 +866,18 @@ export const AccountsNewView = () => {
       }
     }, 1000);
 
-    if ((publicKey || urlQueryAddress || accountAddress) && (!streamList || streamList.length === 0)) {
+    if ((publicKey || accountAddress) && (!streamList || streamList.length === 0)) {
       consoleOut('Loading streams...', '', 'green');
 
-      const treasurer = publicKey
-      ? publicKey
-      : urlQueryAddress
-        ? new PublicKey(urlQueryAddress)
-        : new PublicKey(accountAddress);
+      const treasurer = new PublicKey(accountAddress);
 
       refreshStreamList(false, treasurer);
     }
   }, [
-    wallet,
     publicKey,
     streamList,
     isFirstLoad,
     accountAddress,
-    urlQueryAddress,
     shouldLoadTokens,
     setShouldLoadTokens,
     refreshStreamList,
@@ -894,6 +889,7 @@ export const AccountsNewView = () => {
   useEffect(() => {
 
     if (!connection ||
+        !publicKey ||
         !accountAddress ||
         !shouldLoadTokens ||
         !userTokens ||
@@ -902,12 +898,6 @@ export const AccountsNewView = () => {
         splTokenList.length === 0 ||
         !coinPrices
     ) {
-      return;
-    }
-
-    // If we have a query param address and accountAddress is different
-    // skip this render. In further renders they will eventually be equal
-    if (urlQueryAddress && urlQueryAddress !== accountAddress) {
       return;
     }
 
@@ -1139,6 +1129,7 @@ export const AccountsNewView = () => {
     }
 
   }, [
+    publicKey,
     connection,
     coinPrices,
     userTokens,
@@ -1147,7 +1138,6 @@ export const AccountsNewView = () => {
     urlQueryAsset,
     selectedAsset,
     accountAddress,
-    urlQueryAddress,
     shouldLoadTokens,
     getTokenByMintAddress,
     getTokenPriceBySymbol,
@@ -1158,6 +1148,8 @@ export const AccountsNewView = () => {
 
   // Load the transactions when signaled
   useEffect(() => {
+
+    if (!publicKey) { return; }
 
     if (shouldLoadTransactions && tokensLoaded && connection && accountAddress && selectedAsset && !loadingTransactions) {
       setShouldLoadTransactions(false);
@@ -1217,6 +1209,7 @@ export const AccountsNewView = () => {
     }
 
   }, [
+    publicKey,
     connection,
     transactions,
     tokensLoaded,
@@ -1254,14 +1247,14 @@ export const AccountsNewView = () => {
           setLastStreamsSummary(initialSummary);
           setStreamsSummary(initialSummary);
         });
-        const treasurer = publicKey
-          ? publicKey
-          : urlQueryAddress
-            ? new PublicKey(urlQueryAddress)
-            : new PublicKey(accountAddress);
-        refreshStreamList(true, treasurer);
-        setSelectedAsset(undefined);
-        setShouldLoadTokens(true);
+        // const treasurer = publicKey
+        //   ? publicKey
+        //   : urlQueryAddress
+        //     ? new PublicKey(urlQueryAddress)
+        //     : new PublicKey(accountAddress);
+        // refreshStreamList(true, treasurer);
+        // setSelectedAsset(undefined);
+        // setShouldLoadTokens(true);
         setAddAccountPanelOpen(false);
         setCanShowAccountDetails(true);
       } else if (previousWalletConnectState && !connected) {
@@ -1284,30 +1277,28 @@ export const AccountsNewView = () => {
     }
 
   }, [
-    wallet,
     publicKey,
     connected,
     streamDetail,
-    accountAddress,
-    urlQueryAddress,
+    // accountAddress,
+    // urlQueryAddress,
     previousWalletConnectState,
     setCanShowAccountDetails,
     setAddAccountPanelOpen,
     setLastStreamsSummary,
-    setShouldLoadTokens,
+    // setShouldLoadTokens,
     setStreamsSummary,
-    refreshStreamList,
-    setSelectedAsset,
+    // refreshStreamList,
+    // setSelectedAsset,
     setStreamDetail,
     onTxConfirmed,
     onTxTimedout,
-    startSwitch,
   ]);
 
   // Live data calculation
   useEffect(() => {
 
-    if (!streamList || (!streamListv1 && !streamListv2)) { return; }
+    if (!publicKey || !streamList || (!streamListv1 && !streamListv2)) { return; }
 
     const timeout = setTimeout(() => {
       refreshStreamSummary();
@@ -1318,6 +1309,7 @@ export const AccountsNewView = () => {
     }
 
   }, [
+    publicKey,
     streamList,
     streamListv1,
     streamListv2,
@@ -1631,7 +1623,7 @@ export const AccountsNewView = () => {
             // setSelectedCategory("other-assets");
             // setSelectedOtherAssetsOption("msp-streams");
             // setSelectedAsset(undefined);
-            navigate("/accounts/streams");
+            navigate(`${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streams`);
           }
         }} className={`transaction-list-row ${selectedCategory === "other-assets" && selectedOtherAssetsOption === "msp-streams" ? 'selected' : ''}`}>
           <div className="icon-cell">
@@ -1649,11 +1641,7 @@ export const AccountsNewView = () => {
                 <div className="streams-count simplelink" onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    const treasurer = publicKey
-                      ? publicKey
-                      : urlQueryAddress
-                        ? new PublicKey(urlQueryAddress)
-                        : new PublicKey(accountAddress);
+                    const treasurer = new PublicKey(accountAddress);
                     refreshStreamList(false, treasurer);
                   }}>
                   <span className="font-size-75 font-bold text-shadow">{kFormatter(streamsSummary.totalAmount) || 0}</span>
@@ -1688,7 +1676,7 @@ export const AccountsNewView = () => {
 
   const renderAsset = (asset: UserTokenAccount, index: number) => {
     const onTokenAccountClick = () => {
-      setSelectedCategory("user-account");
+      setSelectedCategory("assets");
       selectAsset(asset, true, true);
     }
     const priceByAddress = getTokenPriceByAddress(asset.address);
@@ -1705,7 +1693,7 @@ export const AccountsNewView = () => {
 
     return (
       <div key={`${index}`} onClick={onTokenAccountClick}
-          className={`transaction-list-row ${isSelectedToken() && selectedCategory === "user-account"
+          className={`transaction-list-row ${isSelectedToken() && selectedCategory === "assets"
             ? 'selected'
             : hideLowBalances && (asset.valueInUsd || 0) < ACCOUNTS_LOW_BALANCE_LIMIT
               ? 'hidden'
@@ -2097,7 +2085,7 @@ export const AccountsNewView = () => {
     switch (selectedCategory) {
       case "networth":
         break;
-      case "user-account":
+      case "assets":
         return renderUserAccountAssetMeta();
       case "other-assets":
         break;
@@ -2162,292 +2150,284 @@ export const AccountsNewView = () => {
 
   return (
     <>
+      {/* {isLocal() && (
+        <div className="debug-bar">
+          <span className="ml-1">incoming:</span><span className="ml-1 font-bold fg-dark-active">{streamsSummary ? streamsSummary.incomingAmount : '-'}</span>
+          <span className="ml-1">outgoing:</span><span className="ml-1 font-bold fg-dark-active">{streamsSummary ? streamsSummary.outgoingAmount : '-'}</span>
+          <span className="ml-1">totalAmount:</span><span className="ml-1 font-bold fg-dark-active">{streamsSummary ? streamsSummary.totalAmount : '-'}</span>
+          <span className="ml-1">totalNet:</span><span className="ml-1 font-bold fg-dark-active">{streamsSummary ? streamsSummary.totalNet : '-'}</span>
+          <span className="ml-1">treasuriesTvl:</span><span className="ml-1 font-bold fg-dark-active">{treasuriesTvl || '0'}</span>
+        </div>
+      )} */}
+
       <div className="container main-container">
 
-        {location.pathname === '/accounts/streams' ? (
-          <Helmet>
-            <title>Streams - Mean Finance</title>
-            <link rel="canonical" href="/accounts/streams" />
-            <meta name="description" content="Streams. Manage your live money streams" />
-            <meta name="keywords" content="streams, transfers, send money" />
-          </Helmet>
-        ) : (
-          <Helmet>
-            <title>Accounts - Mean Finance</title>
-            <link rel="canonical" href="/accounts" />
-            <meta name="description" content="Accounts. Keep track of your assets and transactions" />
-            <meta name="google-site-verification" content="u-gc96PrpV7y_DAaA0uoo4tc2ffcgi_1r6hqSViM-F8" />
-            <meta name="keywords" content="assets, token accounts, transactions" />
-          </Helmet>
-        )}
-
-        {/* {isLocal() && (
-          <div className="debug-bar">
-            <span className="ml-1">incoming:</span><span className="ml-1 font-bold fg-dark-active">{streamsSummary ? streamsSummary.incomingAmount : '-'}</span>
-            <span className="ml-1">outgoing:</span><span className="ml-1 font-bold fg-dark-active">{streamsSummary ? streamsSummary.outgoingAmount : '-'}</span>
-            <span className="ml-1">totalAmount:</span><span className="ml-1 font-bold fg-dark-active">{streamsSummary ? streamsSummary.totalAmount : '-'}</span>
-            <span className="ml-1">totalNet:</span><span className="ml-1 font-bold fg-dark-active">{streamsSummary ? streamsSummary.totalNet : '-'}</span>
-            <span className="ml-1">treasuriesTvl:</span><span className="ml-1 font-bold fg-dark-active">{treasuriesTvl || '0'}</span>
-          </div>
-        )} */}
-
+        {/* SEO tags overrides */}
+        <Helmet>
+          <title>Accounts - Mean Finance</title>
+          <link rel="canonical" href="/accounts" />
+          <meta name="description" content="Accounts. Keep track of your assets and transactions" />
+          <meta name="google-site-verification" content="u-gc96PrpV7y_DAaA0uoo4tc2ffcgi_1r6hqSViM-F8" />
+          <meta name="keywords" content="assets, token accounts, transactions" />
+        </Helmet>
         {/* This is a SEO mandatory h1 but it is not visible */}
-        {location.pathname === '/accounts/streams' ? (
-          <h1 className="mandatory-h1">Manage your live money streams</h1>
-        ) : (
-          <h1 className="mandatory-h1">Keep track of your assets and transactions</h1>
-        )}
+        <h1 className="mandatory-h1">Keep track of your assets and transactions</h1>
 
-        <div className={(canShowAccountDetails && accountAddress) ? 'interaction-area' : 'interaction-area flex-center h-75'}>
+        {publicKey ? (
+          <div className={(canShowAccountDetails && accountAddress) ? 'interaction-area' : 'interaction-area flex-center h-75'}>
 
-          {location.pathname === '/accounts/streams' ? (
-            <Streams />
-          ) : (
-            <>
-              {canShowAccountDetails && accountAddress ? (
-                <div className={`meanfi-two-panel-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
+            {location.pathname === `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streams` ? (
+              <Streams />
+            ) : (
+              <>
+                {canShowAccountDetails && accountAddress ? (
+                  <div className={`meanfi-two-panel-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
 
-                  {/* Left / top panel */}
-                  <div className="meanfi-two-panel-left">
-                    <div className="meanfi-panel-heading">
-                      <span className="title">{t('assets.screen-title')}</span>
-                      <div className="user-address">
-                        <span className="fg-secondary">
-                          (<span className="simplelink underline-on-hover" onClick={() => copyAddressToClipboard(accountAddress)}>
-                            {shortenAddress(accountAddress, 5)}
-                          </span>)
-                        </span>
-                        {!connected && (
+                    {/* Left / top panel */}
+                    <div className="meanfi-two-panel-left">
+                      <div className="meanfi-panel-heading">
+                        <span className="title">{t('assets.screen-title')}</span>
+                        <div className="user-address">
+                          <span className="fg-secondary">
+                            (<span className="simplelink underline-on-hover" onClick={() => copyAddressToClipboard(accountAddress)}>
+                              {shortenAddress(accountAddress, 5)}
+                            </span>)
+                          </span>
+                          {!connected && (
+                            <span className="icon-button-container">
+                              <Tooltip placement="bottom" title={t('assets.account-address-change-cta')}>
+                                <Button
+                                  type="default"
+                                  shape="circle"
+                                  size="middle"
+                                  icon={<EditOutlined />}
+                                  onClick={handleScanAnotherAddressButtonClick}
+                                />
+                              </Tooltip>
+                            </span>
+                          )}
                           <span className="icon-button-container">
-                            <Tooltip placement="bottom" title={t('assets.account-address-change-cta')}>
+                            <Tooltip placement="bottom" title={t('assets.account-address-copy-cta')}>
                               <Button
                                 type="default"
                                 shape="circle"
                                 size="middle"
-                                icon={<EditOutlined />}
-                                onClick={handleScanAnotherAddressButtonClick}
+                                icon={<IconExternalLink className="mean-svg-icons" style={{width: "18", height: "18"}} />}
+                                onClick={() => openLinkInNewTab(`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${accountAddress}${getSolanaExplorerClusterParam()}`)}
                               />
                             </Tooltip>
                           </span>
-                        )}
-                        <span className="icon-button-container">
-                          <Tooltip placement="bottom" title={t('assets.account-address-copy-cta')}>
-                            <Button
-                              type="default"
-                              shape="circle"
-                              size="middle"
-                              icon={<IconExternalLink className="mean-svg-icons" style={{width: "18", height: "18"}} />}
-                              onClick={() => openLinkInNewTab(`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${accountAddress}${getSolanaExplorerClusterParam()}`)}
+                        </div>
+                      </div>
+                      <div className="inner-container">
+
+                        {/* Net Worth header (sticky) */}
+                        {renderNetworth()}
+
+                        {/* Middle area (vertically flexible block of items) */}
+                        <div className="item-block vertical-scroll">
+
+                          <div className="asset-category-title flex-fixed-right">
+                            <div className="title">Streaming Assets (2)</div>
+                            <div className="amount">{toUsCurrency(streamsSummary.totalNet + treasuriesTvl)}</div>
+                          </div>
+                          <div className="asset-category">
+                            {renderMoneyStreamsSummary}
+                            <TreasuriesSummary
+                              address={accountAddress}
+                              connection={connection}
+                              ms={ms}
+                              msp={msp}
+                              selected={selectedCategory === "other-assets" && selectedOtherAssetsOption === "msp-treasuries"}
+                              onNewValue={(value: number) => setTreasuriesTvl(value)}
+                              onSelect={() => {
+                                if (publicKey) {
+                                  // setSelectedCategory("other-assets");
+                                  // setSelectedOtherAssetsOption("msp-streams");
+                                  // setSelectedAsset(undefined);
+                                }
+                              }}
                             />
-                          </Tooltip>
-                        </span>
+                          </div>
+
+                          <div className="asset-category-title flex-fixed-right">
+                            <div className="title">Assets in wallet ({accountTokens.length})</div>
+                            <div className="amount">{toUsCurrency(totalTokenAccountsValue)}</div>
+                          </div>
+                          <div className="asset-category flex-column">
+                            {renderAssetsList}
+                          </div>
+
+                        </div>
+
+                        {/* Bottom CTAs */}
+                        <div className="bottom-ctas">
+                          <div className="primary-action">
+                            <Button
+                              block
+                              className="flex-center"
+                              type="primary"
+                              shape="round"
+                              onClick={showInitAtaModal}>
+                              <IconAdd className="mean-svg-icons" />
+                              <span className="ml-1">Add asset</span>
+                            </Button>
+                          </div>
+                          <Dropdown className="options-dropdown"
+                            overlay={assetListOptions}
+                            placement="bottomRight"
+                            trigger={["click"]}>
+                            <span className="icon-button-container">
+                              <Button
+                                type="default"
+                                shape="circle"
+                                size="middle"
+                                icon={<IconVerticalEllipsis className="mean-svg-icons"/>}
+                                onClick={(e) => e.preventDefault()}
+                              />
+                            </span>
+                          </Dropdown>
+                        </div>
+
                       </div>
                     </div>
-                    <div className="inner-container">
 
-                      {/* Net Worth header (sticky) */}
-                      {renderNetworth()}
-
-                      {/* Middle area (vertically flexible block of items) */}
-                      <div className="item-block vertical-scroll">
-
-                        <div className="asset-category-title flex-fixed-right">
-                          <div className="title">Streaming Assets (2)</div>
-                          <div className="amount">{toUsCurrency(streamsSummary.totalNet + treasuriesTvl)}</div>
-                        </div>
-                        <div className="asset-category">
-                          {renderMoneyStreamsSummary}
-                          <TreasuriesSummary
-                            address={
-                              publicKey
-                                ? publicKey.toBase58()
-                                : urlQueryAddress
-                                  ? urlQueryAddress
-                                  : accountAddress
-                            }
-                            connection={connection}
-                            ms={ms}
-                            msp={msp}
-                            selected={selectedCategory === "other-assets" && selectedOtherAssetsOption === "msp-treasuries"}
-                            onNewValue={(value: number) => setTreasuriesTvl(value)}
-                            onSelect={() => {
-                              if (publicKey) {
-                                // setSelectedCategory("other-assets");
-                                // setSelectedOtherAssetsOption("msp-streams");
-                                // setSelectedAsset(undefined);
-                              }
-                            }}
-                          />
-                        </div>
-
-                        <div className="asset-category-title flex-fixed-right">
-                          <div className="title">Assets in wallet ({accountTokens.length})</div>
-                          <div className="amount">{toUsCurrency(totalTokenAccountsValue)}</div>
-                        </div>
-                        <div className="asset-category flex-column">
-                          {renderAssetsList}
-                        </div>
-
-                      </div>
-
-                      {/* Bottom CTAs */}
-                      <div className="bottom-ctas">
-                        <div className="primary-action">
-                          <Button
-                            block
-                            className="flex-center"
-                            type="primary"
-                            shape="round"
-                            onClick={showInitAtaModal}>
-                            <IconAdd className="mean-svg-icons" />
-                            <span className="ml-1">Add asset</span>
-                          </Button>
-                        </div>
-                        <Dropdown className="options-dropdown"
-                          overlay={assetListOptions}
-                          placement="bottomRight"
-                          trigger={["click"]}>
-                          <span className="icon-button-container">
-                            <Button
-                              type="default"
-                              shape="circle"
-                              size="middle"
-                              icon={<IconVerticalEllipsis className="mean-svg-icons"/>}
-                              onClick={(e) => e.preventDefault()}
-                            />
-                          </span>
-                        </Dropdown>
-                      </div>
-
-                    </div>
-                  </div>
-
-                  {/* Right / down panel */}
-                  <div className="meanfi-two-panel-right">
-                    <div className="meanfi-panel-heading"><span className="title">{t('assets.history-panel-title')}</span></div>
-                    <div className="inner-container">
-                      {canShowBuyOptions() ? renderTokenBuyOptions() : (
-                        <div className="flexible-column-bottom">
-                          <div className="top">
-                            {renderCategoryMeta()}
-                            {selectedCategory === "user-account" && renderUserAccountAssetCtaRow()}
-                            {/* Activity table heading */}
-                            {hasItemsToRender() && (
-                              <div className="stats-row">
-                                <div className="item-list-header compact">
-                                  <div className="header-row">
-                                    <div className="std-table-cell first-cell">&nbsp;</div>
-                                    <div className="std-table-cell responsive-cell">{t('assets.history-table-activity')}</div>
-                                    <div className="std-table-cell responsive-cell pr-2 text-right">{t('assets.history-table-amount')}</div>
-                                    <div className="std-table-cell responsive-cell pr-2 text-right">{t('assets.history-table-postbalance')}</div>
-                                    <div className="std-table-cell responsive-cell pl-2">{t('assets.history-table-date')}</div>
+                    {/* Right / down panel */}
+                    <div className="meanfi-two-panel-right">
+                      <div className="meanfi-panel-heading"><span className="title">{t('assets.history-panel-title')}</span></div>
+                      <div className="inner-container">
+                        {canShowBuyOptions() ? renderTokenBuyOptions() : (
+                          <div className="flexible-column-bottom">
+                            <div className="top">
+                              {renderCategoryMeta()}
+                              {selectedCategory === "assets" && renderUserAccountAssetCtaRow()}
+                              {/* Activity table heading */}
+                              {hasItemsToRender() && (
+                                <div className="stats-row">
+                                  <div className="item-list-header compact">
+                                    <div className="header-row">
+                                      <div className="std-table-cell first-cell">&nbsp;</div>
+                                      <div className="std-table-cell responsive-cell">{t('assets.history-table-activity')}</div>
+                                      <div className="std-table-cell responsive-cell pr-2 text-right">{t('assets.history-table-amount')}</div>
+                                      <div className="std-table-cell responsive-cell pr-2 text-right">{t('assets.history-table-postbalance')}</div>
+                                      <div className="std-table-cell responsive-cell pl-2">{t('assets.history-table-date')}</div>
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                            )}
+                              )}
+                            </div>
+                            <div className={`bottom ${!hasItemsToRender() ? 'h-100 flex-column' : ''}`}>
+                              {selectedCategory === "assets" && renderActivityList()}
+                            </div>
                           </div>
-                          <div className={`bottom ${!hasItemsToRender() ? 'h-100 flex-column' : ''}`}>
-                            {selectedCategory === "user-account" && renderActivityList()}
-                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                  </div>
+                ) : (
+                  <>
+                    <div className="boxed-area container-max-width-600 add-account">
+                      {accountAddress && (
+                        <div className="back-button">
+                          <span className="icon-button-container">
+                            <Tooltip placement="bottom" title={t('assets.back-to-assets-cta')}>
+                              <Button
+                                type="default"
+                                shape="circle"
+                                size="middle"
+                                className="hidden-xs"
+                                icon={<ArrowLeftOutlined />}
+                                onClick={handleBackToAccountDetailsButtonClick}
+                              />
+                            </Tooltip>
+                          </span>
                         </div>
                       )}
-                    </div>
-                  </div>
-
-                </div>
-              ) : (
-                <>
-                  <div className="boxed-area container-max-width-600 add-account">
-                    {accountAddress && (
-                      <div className="back-button">
-                        <span className="icon-button-container">
-                          <Tooltip placement="bottom" title={t('assets.back-to-assets-cta')}>
-                            <Button
-                              type="default"
-                              shape="circle"
-                              size="middle"
-                              className="hidden-xs"
-                              icon={<ArrowLeftOutlined />}
-                              onClick={handleBackToAccountDetailsButtonClick}
-                            />
-                          </Tooltip>
-                        </span>
-                      </div>
-                    )}
-                    <h2 className="text-center mb-3 px-5">{t('assets.account-add-heading')} {renderSolanaIcon} Solana</h2>
-                    <div className="flexible-left mb-3">
-                      <div className="transaction-field left">
-                        <div className="transaction-field-row">
-                          <span className="field-label-left">{t('assets.account-address-label')}</span>
-                          <span className="field-label-right">&nbsp;</span>
-                        </div>
-                        <div className="transaction-field-row main-row">
-                          <span className="input-left recipient-field-wrapper">
-                            <input id="payment-recipient-field"
-                              className="w-100 general-text-input"
-                              autoComplete="on"
-                              autoCorrect="off"
-                              type="text"
-                              onFocus={handleAccountAddressInputFocusIn}
-                              onChange={handleAccountAddressInputChange}
-                              onBlur={handleAccountAddressInputFocusOut}
-                              placeholder={t('assets.account-address-placeholder')}
-                              required={true}
-                              spellCheck="false"
-                              value={accountAddressInput}/>
-                            <span id="payment-recipient-static-field"
-                                  className={`${accountAddressInput ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>
-                              {accountAddressInput || t('assets.account-address-placeholder')}
+                      <h2 className="text-center mb-3 px-5">{t('assets.account-add-heading')} {renderSolanaIcon} Solana</h2>
+                      <div className="flexible-left mb-3">
+                        <div className="transaction-field left">
+                          <div className="transaction-field-row">
+                            <span className="field-label-left">{t('assets.account-address-label')}</span>
+                            <span className="field-label-right">&nbsp;</span>
+                          </div>
+                          <div className="transaction-field-row main-row">
+                            <span className="input-left recipient-field-wrapper">
+                              <input id="payment-recipient-field"
+                                className="w-100 general-text-input"
+                                autoComplete="on"
+                                autoCorrect="off"
+                                type="text"
+                                onFocus={handleAccountAddressInputFocusIn}
+                                onChange={handleAccountAddressInputChange}
+                                onBlur={handleAccountAddressInputFocusOut}
+                                placeholder={t('assets.account-address-placeholder')}
+                                required={true}
+                                spellCheck="false"
+                                value={accountAddressInput}/>
+                              <span id="payment-recipient-static-field"
+                                    className={`${accountAddressInput ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>
+                                {accountAddressInput || t('assets.account-address-placeholder')}
+                              </span>
                             </span>
-                          </span>
-                          <div className="addon-right simplelink" onClick={showQrScannerModal}>
-                            <QrcodeOutlined />
+                            <div className="addon-right simplelink" onClick={showQrScannerModal}>
+                              <QrcodeOutlined />
+                            </div>
+                          </div>
+                          <div className="transaction-field-row">
+                            <span className="field-label-left">
+                              {accountAddressInput && !isValidAddress(accountAddressInput) ? (
+                                <span className="fg-red">
+                                  {t('transactions.validation.address-validation')}
+                                </span>
+                              ) : (
+                                <span>&nbsp;</span>
+                              )}
+                            </span>
                           </div>
                         </div>
-                        <div className="transaction-field-row">
-                          <span className="field-label-left">
-                            {accountAddressInput && !isValidAddress(accountAddressInput) ? (
-                              <span className="fg-red">
-                                {t('transactions.validation.address-validation')}
-                              </span>
-                            ) : (
-                              <span>&nbsp;</span>
-                            )}
-                          </span>
-                        </div>
+                        {/* Go button */}
+                        <Button
+                          className="main-cta right"
+                          type="primary"
+                          shape="round"
+                          size="large"
+                          onClick={onAddAccountAddress}
+                          disabled={!isValidAddress(accountAddressInput)}>
+                          {t('assets.account-add-cta-label')}
+                        </Button>
                       </div>
-                      {/* Go button */}
-                      <Button
-                        className="main-cta right"
-                        type="primary"
-                        shape="round"
-                        size="large"
-                        onClick={onAddAccountAddress}
-                        disabled={!isValidAddress(accountAddressInput)}>
-                        {t('assets.account-add-cta-label')}
-                      </Button>
+                      <div className="text-center">
+                        <span className="mr-1">{t('assets.create-account-help-pre')}</span>
+                        <a className="primary-link font-medium" href={SOLANA_WALLET_GUIDE} target="_blank" rel="noopener noreferrer">
+                          {t('assets.create-account-help-link')}
+                        </a>
+                        <span className="ml-1">{t('assets.create-account-help-post')}</span>
+                      </div>
                     </div>
-                    <div className="text-center">
-                      <span className="mr-1">{t('assets.create-account-help-pre')}</span>
-                      <a className="primary-link font-medium" href={SOLANA_WALLET_GUIDE} target="_blank" rel="noopener noreferrer">
-                        {t('assets.create-account-help-link')}
-                      </a>
-                      <span className="ml-1">{t('assets.create-account-help-post')}</span>
-                    </div>
-                  </div>
-                  {/* QR scan modal */}
-                  {isQrScannerModalVisible && (
-                    <QrScannerModal
-                      isVisible={isQrScannerModalVisible}
-                      handleOk={onAcceptQrScannerModal}
-                      handleClose={closeQrScannerModal}/>
-                  )}
-                </>
-              )}
-            </>
-          )}
+                    {/* QR scan modal */}
+                    {isQrScannerModalVisible && (
+                      <QrScannerModal
+                        isVisible={isQrScannerModalVisible}
+                        handleOk={onAcceptQrScannerModal}
+                        handleClose={closeQrScannerModal}/>
+                    )}
+                  </>
+                )}
+              </>
+            )}
 
-        </div>
+          </div>
+        ) : (
+          <div className="interaction-area">
+            <div className="w-75 h-100 p-5 text-center flex-column flex-center">
+              <div className="text-center mb-2">
+                <WarningFilled style={{ fontSize: 48 }} className="icon fg-warning" />
+              </div>
+              <h3>{t('wallet-selector.connect-to-begin')}</h3>
+            </div>
+          </div>
+        )}
 
       </div>
 

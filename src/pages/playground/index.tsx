@@ -8,6 +8,7 @@ import { TransactionStatus } from "../../models/enums";
 import { UserTokenAccount } from "../../models/transactions";
 import "./style.scss";
 import {
+  ArrowRightOutlined,
   CheckOutlined,
   LoadingOutlined,
   WarningOutlined,
@@ -40,7 +41,7 @@ import {
   shortenAddress,
 } from "../../utils/utils";
 import { IconCopy, IconExternalLink, IconTrash } from "../../Icons";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { openNotification } from "../../components/Notifications";
 import { IconType } from "antd/lib/notification";
 
@@ -628,6 +629,30 @@ export const PlaygroundView = () => {
     </>
   );
 
+  const renderRouteLink = (title: string, linkAddress: string) => {
+    return (
+      <>
+        <div className="well small mb-2">
+          <div className="flex-fixed-right">
+            <div className="left position-relative">
+              <span className="recipient-field-wrapper">
+                <span className="referral-link font-size-75 text-monospace">{linkAddress}</span>
+              </span>
+            </div>
+            <div className="right">
+              <Link to={linkAddress} title={title}>
+                <div className="add-on simplelink">
+                  <ArrowRightOutlined />
+                </div>
+              </Link>
+            </div>
+          </div>
+        </div>
+
+      </>
+    );
+  }
+
   const renderDemoNotifications = (
     <>
       <div className="tabset-heading">Notify and navigate</div>
@@ -686,6 +711,14 @@ export const PlaygroundView = () => {
             <span>Error</span>
           </span>
         </Space>
+      </div>
+
+      <div className="tabset-heading">Test routing</div>
+      <div className="text-left mb-3">
+        <div className="form-label">Go to my connected account</div>
+        {renderRouteLink('With no params', '/accounts')}
+        {renderRouteLink('With only the address', '/accounts/FDUZ2ZsB9eseMYWZNTL33trmch6wDVbfNzZWDb2zooHc')}
+        {renderRouteLink('With specific asset preset', '/accounts/FDUZ2ZsB9eseMYWZNTL33trmch6wDVbfNzZWDb2zooHc/assets/FT5pn24bKRNNdDxUgez4AxQY5WP6YgoQCtHcUwv3sipV')}
       </div>
 
     </>

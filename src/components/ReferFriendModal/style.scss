@@ -34,13 +34,10 @@
       height: 20px;
     }
   }
-  .transaction-field .transaction-field-row.main-row {
-    height: auto;
-    .input-left.recipient-field-wrapper {
-      display: inline-block;
-      text-align: left;
-      padding-right: 12px;
-      font-size: 0.75rem;
-    }
+  .recipient-field-wrapper {
+    display: inline-block;
+    text-align: left;
+    padding-right: 12px;
+    font-size: 0.75rem;
   }
 }

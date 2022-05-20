@@ -112,6 +112,7 @@ import { openNotification } from "../../components/Notifications";
 import { CountdownCircleTimer } from "react-countdown-circle-timer";
 import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { SendAssetModal } from "../../components/SendAssetModal";
+import { ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/accounts";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 let ds: string[] = [];
@@ -624,9 +625,7 @@ export const Streams = () => {
       totalAmount: 0
     };
 
-    const treasurer = publicKey
-      ? publicKey
-      : new PublicKey(accountAddress);
+    const treasurer = new PublicKey(accountAddress);
 
       const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
       const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer);
@@ -5562,7 +5561,7 @@ export const Streams = () => {
         {/* Left / top panel*/}
         <div className="meanfi-two-panel-left">
           <div className="meanfi-panel-heading">
-            {location.pathname === '/accounts/streams' && (
+            {location.pathname === `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streams` && (
               <div className="back-button">
                 <span className="icon-button-container">
                   <Tooltip placement="bottom" title={t('assets.back-to-assets-cta')}>
@@ -5575,7 +5574,7 @@ export const Streams = () => {
                         setShouldLoadTokens(true);
                         refreshStreamList(true);
                         setTimeout(() => {
-                          navigate('/accounts');
+                          navigate(`${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}`);
                         }, 200);
                       }}
                     />
