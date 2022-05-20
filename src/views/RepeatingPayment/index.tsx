@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button, Modal, Menu, Dropdown, DatePicker, Checkbox, Drawer, Col, Row } from "antd";
 import {
+  InfoCircleOutlined,
   LoadingOutlined,
   QrcodeOutlined,
 } from "@ant-design/icons";
@@ -57,6 +58,7 @@ import dateFormat from 'dateformat';
 import { NATIVE_SOL } from '../../utils/tokens';
 import { TokenInfo } from '@solana/spl-token-registry';
 import useWindowSize from '../../hooks/useWindowResize';
+import { InfoIcon } from '../../components/InfoIcon';
 
 export const RepeatingPayment = (props: {
   inModal: boolean;
@@ -1490,7 +1492,16 @@ export const RepeatingPayment = (props: {
         </div>
 
         {/* Add funds */}
-        <div className="form-label">{t('transactions.send-amount.label-amount')}</div>
+        <div className="form-label">
+          <span className="align-middle">{t('transactions.send-amount.label-amount')}</span>
+          <span className="align-middle">
+            <InfoIcon content={<span>This is the total amount of funds that will be streamed to the recipient at the payment rate selected. You can add more funds at any time by topping up the stream.</span>}
+                      placement="top"
+                      trigger="click">
+              <InfoCircleOutlined />
+            </InfoIcon>
+          </span>
+          </div>
         <div className="well">
           <div className="flex-fixed-left">
             <div className="left">
