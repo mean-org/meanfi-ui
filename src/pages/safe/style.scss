@@ -124,3 +124,16 @@
   }
 }
 
+.selected-left-border,
+.transparent-left-border {
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+  padding-left: 3px !important;
+}
+.transparent-left-border {
+  border-left: 3px solid transparent;
+}
+.selected-left-border {
+  border-left: 3px solid var(--color-primary) !important;
+}
+

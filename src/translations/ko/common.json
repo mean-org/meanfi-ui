@@ -704,7 +704,9 @@
 		"wallet-connect-message": "지갑 {{address}}에 연결됨",
 		"wallet-connection-event-title": "지갑 업데이트",
 		"wallet-disconnect-message": "지갑에서 연결 해제됨",
-		"tx-not-confirmed": "The transaction could not be confirmed, please retry your transaction."
+		"tx-not-confirmed": "The transaction could not be confirmed, please retry your transaction.",
+		"tx-not-executed": "Your transaction has not been executed.",
+		"tx-not-approved": "Your transaction has not been approved."
 	},
 	"open-stream": {
 		"label-streamid-input": "생성할 스트림 ID",

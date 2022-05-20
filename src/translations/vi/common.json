@@ -704,7 +704,9 @@
 		"wallet-connect-message": "Đã kết nối ví {{address}}",
 		"wallet-connection-event-title": "Cập nhật tình trạng ví",
 		"wallet-disconnect-message": "Kết nối từ ví đã bị ngắt",
-		"tx-not-confirmed": "The transaction could not be confirmed, please retry your transaction."
+		"tx-not-confirmed": "The transaction could not be confirmed, please retry your transaction.",
+		"tx-not-executed": "Your transaction has not been executed.",
+		"tx-not-approved": "Your transaction has not been approved."
 	},
 	"open-stream": {
 		"label-streamid-input": "Mở stream id",

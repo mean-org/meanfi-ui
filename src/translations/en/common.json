@@ -701,7 +701,9 @@
 		"wallet-connect-message": "Connected to wallet {{address}}",
 		"wallet-connection-event-title": "Wallet update",
 		"wallet-disconnect-message": "Disconnected from wallet",
-		"tx-not-confirmed": "The transaction could not be confirmed, please retry your transaction."
+		"tx-not-confirmed": "The transaction could not be confirmed, please retry your transaction.",
+		"tx-not-executed": "Your transaction has not been executed.",
+		"tx-not-approved": "Your transaction has not been approved."
 	},
 	"open-stream": {
 		"label-streamid-input": "Stream id to open",

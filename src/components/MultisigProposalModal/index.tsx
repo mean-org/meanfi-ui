@@ -225,7 +225,6 @@ export const MultisigProposalModal = (props: {
     .catch((err: any) => {
       consoleOut('Error: ', err, 'red');
     });
-
   },[
     props.appsProvider, 
     selectedApp
@@ -262,7 +261,19 @@ export const MultisigProposalModal = (props: {
         })
       )}
     </>
-  )
+  );
+
+  const [pasteSerializedTx, setPasteSerializedTx] = useState<any>();
+
+  // Handler paste clipboard serialized transaction
+  const pasteHandler = (e: any) => {
+    const base64regex = /^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/;
+    const getClipBoardData = e.clipboardData.getData('Text');
+
+    const serializedValidation = base64regex.test(getClipBoardData) ? getClipBoardData : "Invalid serialized transaction"; 
+
+    setPasteSerializedTx(serializedValidation);
+  }
 
   return (
     <Modal
@@ -348,6 +359,7 @@ export const MultisigProposalModal = (props: {
                           <div className="form-label">{t('multisig.proposal-modal.description')}</div>
                           <InputTextAreaMean 
                             id="proposal-description-field"
+                            maxLength={256}
                             className={`mb-0 ${props.isBusy ? 'disabled' : ''}`}
                             onChange={onProposalDescriptionValueChange}
                             placeholder={t('multisig.proposal-modal.description-placeholder')}
@@ -359,26 +371,61 @@ export const MultisigProposalModal = (props: {
                     </Row>
 
                     <div className="step-two-select-instruction">
-                      {/* Instruction */}
-                      <Row gutter={[8, 8]} className="mb-1">
-                        <Col xs={24} sm={24} md={24} lg={24} className="text-left pr-1">
-                          <div className="form-label">Instruction:</div>
-                          <SelectMean
-                            className={props.isBusy ? 'disabled' : ''}
-                            onChange={onProposalInstructionValueChange}
-                            placeholder={"Select an instruction"}
-                            values={selectedAppConfig ? selectedAppConfig.ui.map((ix: any) => {
-                              return { key: ix.id, label: ix.label, value: ix.id }
-                            }) : []}
-                            labelInValue={true}
-                            value={{
-                              key: selectedUiIx?.id,
-                              value: selectedUiIx?.id,
-                              label: selectedUiIx?.label
-                            }}
-                          />
-                        </Col>
-                      </Row>
+                      {selectedApp && (
+                        <Row gutter={[8, 8]} className="mb-1">
+                          {(selectedApp.name === "Custom Transaction Proposal") ? (
+                            <>
+                              {/* Serialized Tx */}
+                              {selectedAppConfig?.ui.map((ix: any) => (
+                                ix.uiElements.map((element: any) => (
+                                  <Col xs={24} sm={24} md={24} lg={24} className="text-left pl-1" key={element.id}>
+                                    <FormLabelWithIconInfo
+                                      label={element.label}
+                                      tooltip_text={element.help}
+                                    />
+                                    <InputTextAreaMean 
+                                      id={element.label}
+                                      rows={10}
+                                      className={`vertical-scroll ${props.isBusy ? 'disabled' : ''}`}
+                                      onChange={(e: any) => {
+                                        console.log(e);
+                                        handleChangeInput({
+                                          id: element.name,
+                                          value: pasteSerializedTx
+                                        });
+                                      }}
+                                      onPaste={pasteHandler}
+                                      placeholder={element.help}
+                                      value={inputState[element.name]}
+                                    />
+                                  </Col>
+                                ))
+                              ))}
+                            </>
+                          ) : (
+                            <>
+                             {/* Instruction */}
+                              <Col xs={24} sm={24} md={24} lg={24} className="text-left pr-1">
+                                <div className="form-label">Instruction:</div>
+                                <SelectMean
+                                  className={props.isBusy ? 'disabled' : ''}
+                                  onChange={onProposalInstructionValueChange}
+                                  placeholder="Select an instruction"
+                                  values={selectedAppConfig ? selectedAppConfig.ui.map((ix: any) => {
+                                    return { key: ix.id, label: ix.label, value: ix.id }
+                                  }) : []}
+                                  labelInValue={true}
+                                  value={{
+                                    key: selectedUiIx?.id,
+                                    value: selectedUiIx?.id,
+                                    label: selectedUiIx?.label
+                                  }}
+                                />
+                              </Col>
+                            </>
+                          )}
+                        </Row>
+                      )}
 
                       {selectedAppConfig?.ui.map((ix: any) => (
                         selectedUiIx && selectedUiIx.id === ix.id && ix.uiElements.map((element: any) => (
@@ -419,6 +466,7 @@ export const MultisigProposalModal = (props: {
                                       <InputTextAreaMean 
                                         id={element.label}
                                         className={props.isBusy ? 'disabled' : ''}
+                                        maxLength={256}
                                         onChange={(e: any) => {
                                           console.log(e);
                                           handleChangeInput({
@@ -517,7 +565,6 @@ export const MultisigProposalModal = (props: {
                                 ) : (element.type === "treasuryAccount") ? (
                                   <></>
                                 ) : null}
-
                               </Row>
                             )}
                           </>
@@ -599,20 +646,41 @@ export const MultisigProposalModal = (props: {
                     </Row>
 
                     {/* Data from selected instruction */}
-                    {Object.keys(inputState).map((key, index) => (
-                      <Row className="mb-1" key={index}>
-                        {key && (
+                    {(selectedApp && (selectedApp.name === "Custom Transaction Proposal")) ? (
+                      <>
+                        {Object.keys(inputState).map((key, index) => (
                           <>
-                            <Col span={8} className="text-right pr-1">
-                              <span className="info-label">{selectedUiIx?.uiElements.filter((e: any) => e.name === key)[0].label}:</span>
-                            </Col>
-                            <Col span={16} className="text-left pl-1">
-                              <span>{inputState[key] === true ? "Yes" : inputState[key] === false ? "No" : inputState[key]}</span>
-                            </Col>
+                            <div className="info-label text-center">
+                              {selectedAppConfig?.ui.map((ix: any) => (
+                                ix.uiElements.map((element: any) => (
+                                  <span>{element.label}</span>
+                                ))
+                              ))}
+                            </div>
+                            <div className="well mb-1 proposal-summary-container vertical-scroll">
+                              <div className="mb-1">
+                                <span key={index}>{inputState.serializedTx}</span>
+                              </div>
+                            </div>
                           </>
-                        )}
-                      </Row>
-                    ))}
+                        ))}
+                      </>
+                    ) : (
+                      Object.keys(inputState).map((key, index) => (
+                        <Row className="mb-1" key={index}>
+                          {key && (
+                            <>
+                              <Col span={8} className="text-right pr-1">
+                                <span className="info-label">{selectedUiIx?.uiElements.filter((e: any) => e.name === key)[0].label}:</span>
+                              </Col>
+                              <Col span={16} className="text-left pl-1">
+                                <span>{inputState[key] === true ? "Yes" : inputState[key] === false ? "No" : inputState[key]}</span>
+                              </Col>
+                            </>
+                          )}
+                        </Row>
+                      ))
+                    )}
                   </div>
                 </>
               </div>

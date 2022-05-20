@@ -700,7 +700,9 @@
 		"wallet-connect-message": "Conectado à carteira {{address}}",
 		"wallet-connection-event-title": "Atualização da carteira",
 		"wallet-disconnect-message": "Desconectado da carteira",
-		"tx-not-confirmed": "The transaction could not be confirmed, please retry your transaction."
+		"tx-not-confirmed": "The transaction could not be confirmed, please retry your transaction.",
+		"tx-not-executed": "Your transaction has not been executed.",
+		"tx-not-approved": "Your transaction has not been approved."
 	},
 	"open-stream": {
 		"label-streamid-input": "Código do stream para abrir",

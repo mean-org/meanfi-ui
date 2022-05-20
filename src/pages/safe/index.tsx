@@ -2002,6 +2002,18 @@ export const SafeView = () => {
     resetTransactionStatus();
   };
 
+  const onExecuteApproveTxCancelled = useCallback(() => {
+    resetTransactionStatus();
+    openNotification({
+      type: "info",
+      duration: 5,
+      description: t('notifications.tx-not-approved')
+    });
+  },[
+    t,
+    resetTransactionStatus
+  ]);
+
   const onExecuteApproveTx = useCallback(async (data: any) => {
 
     let transaction: Transaction;
@@ -2243,7 +2255,10 @@ export const SafeView = () => {
               type: "success"
             });
           } else { setIsBusy(false); }
-        } else { setIsBusy(false); }
+        } else { 
+          setIsBusy(false);
+          onExecuteApproveTxCancelled();
+        }
       } else { setIsBusy(false); }
     }
 
@@ -2259,7 +2274,20 @@ export const SafeView = () => {
     startFetchTxSignatureInfo, 
     transactionCancelled, 
     transactionStatus.currentOperation, 
-    wallet
+    wallet,
+    onExecuteApproveTxCancelled
+  ]);
+
+  const onExecuteFinishTxCancelled = useCallback(() => {
+    resetTransactionStatus();
+    openNotification({
+      type: "info",
+      duration: 5,
+      description: t('notifications.tx-not-executed')
+    });
+  },[
+    t,
+    resetTransactionStatus
   ]);
 
   const onExecuteFinishTx = useCallback(async (data: any) => {
@@ -2519,7 +2547,10 @@ export const SafeView = () => {
             });
             onTxExecuted();
           } else { setIsBusy(false); }
-        } else { setIsBusy(false); }
+        } else { 
+          setIsBusy(false);
+          onExecuteFinishTxCancelled();
+        }
       } else { setIsBusy(false); }
     }
 
@@ -2535,7 +2566,8 @@ export const SafeView = () => {
     startFetchTxSignatureInfo,
     resetTransactionStatus,
     setTransactionStatus,
-    onTxExecuted
+    onTxExecuted,
+    onExecuteFinishTxCancelled
   ]);
 
   const onExecuteCancelTx = useCallback(async (data: any) => {
@@ -3185,14 +3217,14 @@ export const SafeView = () => {
               id={item.id.toBase58()}
               onClick={onMultisigClick}
               className={
-                `transaction-list-row ${
+                `transaction-list-row transparent-left-border ${
                   selectedMultisig && selectedMultisig.id && selectedMultisig.id.equals(item.id)
-                    ? 'selected'
+                    ? 'selected selected-left-border'
                     : ''
                   }`
                 }>
 
-              <div className="icon-cell">
+              <div className="icon-cell pl-1">
                 {(item.version === 0) ? (
                   <Tooltip placement="rightTop" title="Serum Multisig">
                     <img src="https://assets.website-files.com/6163b94b432ce93a0408c6d2/61ff1e9b7e39c27603439ad2_serum%20NOF.png" alt="Serum" width={30} height={30} />

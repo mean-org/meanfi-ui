@@ -700,7 +700,9 @@
 		"wallet-connect-message": "Connecté au portefeuille {{address}}",
 		"wallet-connection-event-title": "Mise à jour du portefeuille",
 		"wallet-disconnect-message": "Déconnecté du portefeuille",
-		"tx-not-confirmed": "The transaction could not be confirmed, please retry your transaction."
+		"tx-not-confirmed": "The transaction could not be confirmed, please retry your transaction.",
+		"tx-not-executed": "Your transaction has not been executed.",
+		"tx-not-approved": "Your transaction has not been approved."
 	},
 	"open-stream": {
 		"label-streamid-input": "ID de flux à ouvrir",
