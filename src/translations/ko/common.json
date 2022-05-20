@@ -1082,7 +1082,9 @@
 	"transfers": {
 		"screen-subtitle": "전 세계 누구에게나 더 빠르게 송금",
 		"screen-title": "전송",
-		"verified-recipient-disclaimer": "I'm sure the recipient address doesn't belong to an exchange."
+		"verified-recipient-disclaimer": "I'm sure the recipient address doesn't belong to an exchange.",
+		"send-asset-modal-title": "Send Asset",
+		"create-money-stream-modal-title": "Create money stream"
 	},
 	"treasuries": {
 		"add-funds": {

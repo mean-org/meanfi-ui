@@ -1077,7 +1077,9 @@
 	"transfers": {
 		"screen-subtitle": "برای هر کسی در دنیا سریعتر پول بفرستید",
 		"screen-title": "منتقل کردن",
-		"verified-recipient-disclaimer": "مطمئنم آدرس گیرنده متعلق به صرافی نیست."
+		"verified-recipient-disclaimer": "مطمئنم آدرس گیرنده متعلق به صرافی نیست.",
+		"send-asset-modal-title": "Send Asset",
+		"create-money-stream-modal-title": "Create money stream"
 	},
 	"treasuries": {
 		"add-funds": {

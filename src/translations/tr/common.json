@@ -1079,7 +1079,9 @@
 	"transfers": {
 		"screen-subtitle": "Dünyadaki herkese daha hızlı para gönderin",
 		"screen-title": "Transferler",
-		"verified-recipient-disclaimer": "Alıcı adresinin bir borsaya ait olmadığından eminim."
+		"verified-recipient-disclaimer": "Alıcı adresinin bir borsaya ait olmadığından eminim.",
+		"send-asset-modal-title": "Send Asset",
+		"create-money-stream-modal-title": "Create money stream"
 	},
 	"treasuries": {
 		"add-funds": {

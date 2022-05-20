@@ -1078,7 +1078,9 @@
 	"transfers": {
 		"screen-subtitle": "Gửi tiền cho bất kỳ ai trên thế giới nhanh hơn",
 		"screen-title": "Chuyển khoản",
-		"verified-recipient-disclaimer": "Tôi chắc chắn rằng địa chỉ người nhận không thuộc về một sàn giao dịch."
+		"verified-recipient-disclaimer": "Tôi chắc chắn rằng địa chỉ người nhận không thuộc về một sàn giao dịch.",
+		"send-asset-modal-title": "Send Asset",
+		"create-money-stream-modal-title": "Create money stream"
 	},
 	"treasuries": {
 		"add-funds": {

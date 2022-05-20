@@ -171,9 +171,7 @@ export const AccountsNewView = () => {
 
     if (location.pathname.endsWith('/streams')) {
       return;
-    }
-
-    if (!address && publicKey) {
+    } else if (!address && publicKey) {
       const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${publicKey.toBase58()}/assets`;
       consoleOut('No account address, redirecting to:', url, 'orange');
       setTimeout(() => {

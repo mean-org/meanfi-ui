@@ -1084,7 +1084,9 @@
 	"transfers": {
 		"screen-subtitle": "Send money to anyone in the world faster",
 		"screen-title": "Transfers",
-		"verified-recipient-disclaimer": "Estoy seguro de que la dirección del destinatario no pertenece a un intercambio."
+		"verified-recipient-disclaimer": "Estoy seguro de que la dirección del destinatario no pertenece a un intercambio.",
+		"send-asset-modal-title": "Enviar Activo",
+		"create-money-stream-modal-title": "Crear flujo de dinero"
 	},
 	"treasuries": {
 		"add-funds": {

@@ -1073,7 +1073,10 @@
 	"transfers": {
 		"screen-subtitle": "Envie dinheiro para qualquer pessoa no mundo mais rapidamente",
 		"screen-title": "Transferências",
-		"verified-recipient-disclaimer": "Tenho certeza de que o endereço do destinatário não pertence a uma troca."
+		"verified-recipient-disclaimer": "Tenho certeza de que o endereço do destinatário não pertence a uma troca.",
+		"send-asset-modal-title": "Send Asset",
+		"create-money-stream-modal-title": "Create money stream"
+
 	},
 	"treasuries": {
 		"add-funds": {

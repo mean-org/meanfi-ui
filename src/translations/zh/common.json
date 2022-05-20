@@ -1078,7 +1078,9 @@
 	"transfers": {
 		"screen-subtitle": "Send money to anyone in the world faster",
 		"screen-title": "Transfers",
-		"verified-recipient-disclaimer": "I'm sure the recipient address doesn't belong to an exchange."
+		"verified-recipient-disclaimer": "I'm sure the recipient address doesn't belong to an exchange.",
+		"send-asset-modal-title": "Send Asset",
+		"create-money-stream-modal-title": "Create money stream"
 	},
 	"treasuries": {
 		"add-funds": {

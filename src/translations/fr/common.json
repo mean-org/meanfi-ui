@@ -1078,7 +1078,9 @@
 	"transfers": {
 		"screen-subtitle": "Envoyez de l'argent à n'importe qui dans le monde plus rapidement",
 		"screen-title": "Transferts",
-		"verified-recipient-disclaimer": "Je suis sûr que l'adresse du destinataire n'appartient pas à un échange."
+		"verified-recipient-disclaimer": "Je suis sûr que l'adresse du destinataire n'appartient pas à un échange.",
+		"send-asset-modal-title": "Send Asset",
+		"create-money-stream-modal-title": "Create money stream"
 	},
 	"treasuries": {
 		"add-funds": {
