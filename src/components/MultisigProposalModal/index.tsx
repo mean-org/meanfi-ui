@@ -373,7 +373,7 @@ export const MultisigProposalModal = (props: {
                     <div className="step-two-select-instruction">
                       {selectedApp && (
                         <Row gutter={[8, 8]} className="mb-1">
-                          {(selectedApp.name === "Custom Transaction Proposal") ? (
+                          {(selectedApp.id === MEAN_MULTISIG_PROGRAM.toBase58()) ? (
                             <>
                               {/* Serialized Tx */}
                               {selectedAppConfig?.ui.map((ix: any) => (
@@ -646,7 +646,7 @@ export const MultisigProposalModal = (props: {
                     </Row>
 
                     {/* Data from selected instruction */}
-                    {(selectedApp && (selectedApp.name === "Custom Transaction Proposal")) ? (
+                    {(selectedApp && (selectedApp.id === MEAN_MULTISIG_PROGRAM.toBase58())) ? (
                       <>
                         {Object.keys(inputState).map((key, index) => (
                           <>
