@@ -172,10 +172,19 @@ export const AccountsNewView = () => {
     if (!address && publicKey) {
       const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${publicKey.toBase58()}/assets`;
       consoleOut('No account address, redirecting to:', url, 'orange');
+      setTimeout(() => {
+        setIsFirstLoad(true);
+      }, 10);
+      navigate(url, { replace: true });
+    } else if (address && location.pathname.indexOf('/assets') === -1) {
+      const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${address}/assets`;
+      consoleOut('Address found, redirecting to:', url, 'orange');
+      setTimeout(() => {
+        setIsFirstLoad(true);
+      }, 10);
       navigate(url, { replace: true });
     }
-
-  }, [address, navigate, publicKey]);
+  }, [address, location.pathname, navigate, publicKey]);
 
   const connection = useMemo(() => new Connection(endpoint, {
     commitment: "confirmed",
@@ -328,7 +337,10 @@ export const AccountsNewView = () => {
     }, 100);
   }
 
-  const isSelectedAssetNativeAccount = useCallback(() => {
+  const isSelectedAssetNativeAccount = useCallback((asset?: UserTokenAccount) => {
+    if (asset) {
+      return accountAddress && accountAddress === asset.publicAddress ? true : false;
+    }
     return accountAddress && selectedAsset && accountAddress === selectedAsset.publicAddress ? true : false;
   }, [
     selectedAsset,
@@ -527,6 +539,18 @@ export const AccountsNewView = () => {
     refreshAssetBalance,
   ]);
 
+  const navigateToAsset = useCallback((asset: UserTokenAccount) => {
+    const isAccountNative = isSelectedAssetNativeAccount(asset);
+    let url = '';
+    if (isAccountNative) {
+      url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/assets`;
+    } else {
+      url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/assets/${asset.publicAddress}`;
+    }
+    consoleOut('Asset selected, redirecting to:', url, 'orange');
+    navigate(url, { replace: true });
+  }, [accountAddress, isSelectedAssetNativeAccount, navigate])
+
   const selectAsset = useCallback((
     asset: UserTokenAccount,
     clearTxList = true,
@@ -551,12 +575,14 @@ export const AccountsNewView = () => {
     setDtailsPanelOpen,
   ])
 
+  // TODO: It is not selecting an asset anymore but redirect instead
   const toggleHideLowBalances = useCallback((setting: boolean) => {
     if (selectedAsset && (!selectedAsset.valueInUsd || selectedAsset.valueInUsd < ACCOUNTS_LOW_BALANCE_LIMIT) && setting) {
       selectAsset(accountTokens[0]);
+      navigateToAsset(accountTokens[0]);
     }
     setHideLowBalances(setting);
-  }, [accountTokens, selectAsset, selectedAsset, setHideLowBalances]);
+  }, [accountTokens, navigateToAsset, selectAsset, selectedAsset, setHideLowBalances]);
 
   const recordTxConfirmation = useCallback((item: TxConfirmationInfo, success = true) => {
     let event: any;
@@ -793,18 +819,22 @@ export const AccountsNewView = () => {
   useEffect(() => {
     if (!isFirstLoad || !publicKey) { return; }
 
-    const params = new URLSearchParams(location.search);
-    let catInQuery: string | null = null;
+    // const params = new URLSearchParams(location.search);
+    // let catInQuery: string | null = null;
 
     if (address) {
       consoleOut('Route param address:', address, 'crimson');
       setAccountAddress(address);
+    } else {
+      if (accountAddress) {
+        setAccountAddress(publicKey.toBase58());
+      }
     }
 
-    if (params.has('cat')) {
-      catInQuery = params.get('cat');
-      consoleOut('params.get("cat") =', catInQuery, 'crimson');
-    }
+    // if (params.has('cat')) {
+    //   catInQuery = params.get('cat');
+    //   consoleOut('params.get("cat") =', catInQuery, 'crimson');
+    // }
 
     if (asset) {
       consoleOut('Route param asset:', asset, 'crimson');
@@ -812,8 +842,12 @@ export const AccountsNewView = () => {
     }
 
     // The category is inferred from the route path
+    consoleOut('pathname:', location.pathname, 'crimson');
     if (location.pathname.indexOf('/assets') !== -1) {
       setSelectedCategory("assets");
+      if (!asset) {
+        setUrlQueryAsset('');
+      }
     } else if (location.pathname.indexOf('/msigs') !== -1) {
       setSelectedCategory("msigs");
     } else {
@@ -896,7 +930,8 @@ export const AccountsNewView = () => {
         userTokens.length === 0 ||
         !splTokenList ||
         splTokenList.length === 0 ||
-        !coinPrices
+        !coinPrices ||
+        isFirstLoad
     ) {
       return;
     }
@@ -1079,27 +1114,30 @@ export const AccountsNewView = () => {
                 // Preset the passed-in token via query params either
                 // as token account address or mint address or token symbol
                 if (urlQueryAsset) {
-                  let asset: UserTokenAccount | undefined = undefined;
+                  let inferredAsset: UserTokenAccount | undefined = undefined;
                   if (isValidAddress(urlQueryAsset)) {
-                    asset = intersectedList.find(t => t.publicAddress === urlQueryAsset || t.address === urlQueryAsset);
+                    inferredAsset = sortedList.find(t => t.publicAddress === urlQueryAsset || t.address === urlQueryAsset);
                   } else {
-                    asset = intersectedList.find(t => t.symbol === urlQueryAsset);
+                    inferredAsset = sortedList.find(t => t.symbol === urlQueryAsset);
                   }
-                  if (asset) {
-                    selectAsset(asset);
+                  if (inferredAsset) {
+                    selectAsset(inferredAsset);
                   }
                 } else if (selectedAsset) {
-                  // If no query param asset but there is already one selected, keep selection
-                  const tokensItemIndex = intersectedList.findIndex(m => m.publicAddress === selectedAsset.publicAddress);
-                  if (tokensItemIndex !== -1) {
-                    selectAsset(intersectedList[tokensItemIndex], true);
+                  consoleOut('No urlQueryAsset but selectedAsset', 'beware!!!', 'pink');
+                  consoleOut('selectedAsset:', selectedAsset, 'orange');
+                  // If no asset from route param but there is already one selected, keep selection
+                  const item = sortedList.find(m => m.publicAddress === selectedAsset.publicAddress);
+                  if (item) {
+                    selectAsset(item, true);
                   } else {
-                    selectAsset(intersectedList[0]);
+                    selectAsset(sortedList[0]);
                   }
                 } else {
-                  // Preset the first available token
-                  selectAsset(intersectedList[0]);
+                  consoleOut('Neither urlQueryAsset nor selectedAsset', 'beware!!!', 'red');
+                  selectAsset(sortedList[0]);
                 }
+                consoleOut('category', selectedCategory, 'blue');
 
               } else {
                 pinnedTokens.forEach((item, index) => {
@@ -1133,6 +1171,7 @@ export const AccountsNewView = () => {
     connection,
     coinPrices,
     userTokens,
+    isFirstLoad,
     pinnedTokens,
     splTokenList,
     urlQueryAsset,
@@ -1142,6 +1181,7 @@ export const AccountsNewView = () => {
     getTokenByMintAddress,
     getTokenPriceBySymbol,
     setShouldLoadTokens,
+    navigateToAsset,
     updateAtaFlag,
     selectAsset,
   ]);
@@ -1677,6 +1717,7 @@ export const AccountsNewView = () => {
   const renderAsset = (asset: UserTokenAccount, index: number) => {
     const onTokenAccountClick = () => {
       setSelectedCategory("assets");
+      navigateToAsset(asset);
       selectAsset(asset, true, true);
     }
     const priceByAddress = getTokenPriceByAddress(asset.address);

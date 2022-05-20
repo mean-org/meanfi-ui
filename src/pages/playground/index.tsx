@@ -717,8 +717,9 @@ export const PlaygroundView = () => {
       <div className="text-left mb-3">
         <div className="form-label">Go to my connected account</div>
         {renderRouteLink('With no params', '/accounts')}
-        {renderRouteLink('With only the address', '/accounts/FDUZ2ZsB9eseMYWZNTL33trmch6wDVbfNzZWDb2zooHc')}
-        {renderRouteLink('With specific asset preset', '/accounts/FDUZ2ZsB9eseMYWZNTL33trmch6wDVbfNzZWDb2zooHc/assets/FT5pn24bKRNNdDxUgez4AxQY5WP6YgoQCtHcUwv3sipV')}
+        {renderRouteLink('With only the address', '/accounts/DG6nJknzbAq8xitEjMEqUbc77PTzPDpzLjknEXn3vdXZ')}
+        {renderRouteLink('With NO specific asset preset', '/accounts/DG6nJknzbAq8xitEjMEqUbc77PTzPDpzLjknEXn3vdXZ/assets')}
+        {renderRouteLink('With specific asset preset', '/accounts/DG6nJknzbAq8xitEjMEqUbc77PTzPDpzLjknEXn3vdXZ/assets/FQPAweWDZZbKjDQk3MCx285dUeZosLzF2FacqfyegrGC')}
       </div>
 
     </>
