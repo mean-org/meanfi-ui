@@ -22,6 +22,7 @@ import { ACCOUNT_LAYOUT } from '../../../../utils/layouts';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { BN } from 'bn.js';
+import { NATIVE_SOL } from '../../../../utils/tokens';
 
 export const SafeMeanInfo = (props: {
   connection: Connection;
@@ -226,8 +227,7 @@ export const SafeMeanInfo = (props: {
 
   const getSolToken = useCallback(async () => {
     const solBalance = await connection.getBalance(multisig.id);
-  
-    console.log("solBalance", solBalance)
+
      return {
       mint: NATIVE_SOL_MINT,
       owner: multisig.authority,
@@ -402,8 +402,12 @@ export const SafeMeanInfo = (props: {
 
             const token = getTokenByMintAddress(asset.mint.toBase58(), tokenList);
 
-            const tokenIcon = (
-              (token && token.logoURI) ? (
+            const isSol = asset.mint.toBase58() === NATIVE_SOL_MINT.toBase58() ? true : false;
+
+            const assetIcon = (
+              isSol ? (
+                <img alt="Sol" width={30} height={30} src="https://www.gate.io/images/coin_icon/64/sol.png" onError={imageOnErrorHandler} style={{backgroundColor: "#000", borderRadius: "1em"}} />
+              ) : (token && token.logoURI) ? (
                 <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} style={{backgroundColor: "#000", borderRadius: "1em"}} />
               ) : (
                 <Identicon address={new PublicKey(asset.mint).toBase58()} style={{
@@ -414,9 +418,9 @@ export const SafeMeanInfo = (props: {
                   borderRadius: "50%"
                 }} />
               )
-            )
+            );
 
-            const assetToken = token ? token.symbol : "Unknown";
+            const assetName = isSol ? "SOL" : (token ? token.symbol : "Unknown");
             const assetAddress = shortenAddress(asset.address.toBase58(), 8);
             const assetAmount = token ? formatThousands(makeDecimal(asset.amount, token.decimals), token.decimals) : formatThousands(makeDecimal(asset.amount, asset.decimals || 6), asset.decimals || 6);
 
@@ -428,8 +432,8 @@ export const SafeMeanInfo = (props: {
                 >
                   <ResumeItem
                     id={`${index + 61}`}
-                    img={tokenIcon}
-                    title={assetToken}
+                    img={assetIcon}
+                    title={assetName}
                     subtitle={assetAddress}
                     isAsset={true}
                     rightContent={assetAmount}
