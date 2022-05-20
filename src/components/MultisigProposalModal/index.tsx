@@ -1,7 +1,7 @@
-import { useCallback, useContext, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from "@ant-design/icons";
 import "./style.scss";
-import { consoleOut, getTransactionOperationDescription } from '../../utils/ui';
+import { consoleOut, copyText, getTransactionOperationDescription } from '../../utils/ui';
 import { useTranslation } from 'react-i18next';
 import { isError } from '../../utils/transactions';
 import { TransactionStatus } from '../../models/enums';
@@ -9,7 +9,7 @@ import { AppStateContext } from '../../contexts/appstate';
 import { useWallet } from '../../contexts/wallet';
 import { Modal, Button, Spin, Divider, Row, Col, Radio } from 'antd';
 import { StepSelector } from "../StepSelector";
-import { IconHelpCircle, IconUser } from "../../Icons";
+import { IconExternalLink, IconHelpCircle, IconUser } from "../../Icons";
 import { InputMean } from '../InputMean';
 import { SelectMean } from '../SelectMean';
 import { InfoIcon } from '../InfoIcon';
@@ -17,8 +17,12 @@ import { FormLabelWithIconInfo } from '../FormLabelWithIconInfo';
 import { InputTextAreaMean } from '../InputTextAreaMean';
 import { App, AppConfig, AppsProvider, UiInstruction, MEAN_MULTISIG_PROGRAM } from '@mean-dao/mean-multisig-apps';
 import BN from 'bn.js';
-import { PublicKey } from '@solana/web3.js';
+import { Connection, PublicKey, TransactionInstruction } from '@solana/web3.js';
 import { Identicon } from '../../components/Identicon';
+import { getMultisigInstructionSummary, parseSerializedTx } from '../../models/multisig';
+import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
+import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
+import { openNotification } from '../Notifications';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -37,6 +41,7 @@ export const MultisigProposalModal = (props: {
 }) => {
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
+  const connectionConfig = useConnectionConfig();
   const {
     transactionStatus,
     setTransactionStatus,
@@ -53,6 +58,30 @@ export const MultisigProposalModal = (props: {
   const [selectedApp, setSelectedApp] = useState<App>();
   const [selectedAppConfig, setSelectedAppConfig] = useState<AppConfig>();
   const [selectedUiIx, setSelectedUiIx] = useState<UiInstruction | undefined>();
+
+  const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
+    commitment: "confirmed",
+    disableRetryOnRateLimit: true
+  }), [
+    connectionConfig.endpoint
+  ]);
+
+  // Copy address to clipboard
+  const copyAddressToClipboard = useCallback((address: any) => {
+
+    if (copyText(address.toString())) {
+      openNotification({
+        description: t('notifications.account-address-copied-message'),
+        type: "info"
+      });
+    } else {
+      openNotification({
+        description: t('notifications.account-address-not-copied-message'),
+        type: "error"
+      });
+    }
+
+  },[t])
 
   const onStepperChange = (value: number) => {
     setCurrentStep(value);
@@ -292,6 +321,29 @@ export const MultisigProposalModal = (props: {
 
     setSerializedTx(serializedValidation);
   }
+
+  // Deserialize transaction
+  const [deserializedTx, setDeserializedTx] = useState<any>();
+
+  useEffect(() => {
+    serializedTx && (
+      parseSerializedTx(connection, serializedTx)
+        .then(tx => {
+          if (tx) {
+            const ix = {
+              programId: tx.instructions[0].programId,
+              keys: tx.instructions[0].keys,
+              data: tx.instructions[0].data
+            } as TransactionInstruction;
+
+            const summary = getMultisigInstructionSummary(ix);
+            consoleOut("Deserialized Tx", summary);
+
+            setDeserializedTx(summary);
+          }
+        })
+    )
+  }, [connection, serializedTx]);
 
   return (
     <Modal
@@ -656,7 +708,7 @@ export const MultisigProposalModal = (props: {
                         {isSerializedTxValid && (
                           Object.keys(inputState).map((key, index) => (
                             <>
-                              <div className="info-label text-center">
+                              <div className="info-label text-center mt-2">
                                 {selectedAppConfig?.ui.map((ix: any) => (
                                   ix.uiElements.map((element: any) => (
                                     <span>{element.label}</span>
@@ -665,7 +717,43 @@ export const MultisigProposalModal = (props: {
                               </div>
                               <div className="well mb-1 proposal-summary-container vertical-scroll">
                                 <div className="mb-1">
-                                  <span key={index}>{inputState.serializedTx}</span>
+                                  <span>{t('multisig.proposal-modal.instruction-program')}:</span><br />
+                                  <div>
+                                    <span onClick={() => copyAddressToClipboard(deserializedTx?.programId)}  className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
+                                      {deserializedTx?.programId}
+                                    </span>
+                                    <a
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${deserializedTx?.programId}${getSolanaExplorerClusterParam()}`}>
+                                      <IconExternalLink
+                                       className="mean-svg-icons external-icon" />
+                                    </a>
+                                  </div>
+                                </div>
+                                {deserializedTx?.accounts.map((account: any) => (
+                                  <div className="mb-1" key={account.index}>
+                                    <span>{t('multisig.proposal-modal.instruction-account')} {account.index + 1}:</span><br />
+                                    <div>
+                                      <span onClick={() => copyAddressToClipboard(account.value)}  className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
+                                        {account.value}
+                                      </span>
+                                      <a
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${account.value}${getSolanaExplorerClusterParam()}`}>
+                                        <IconExternalLink className="mean-svg-icons external-icon" />
+                                      </a>
+                                    </div>
+                                  </div>
+                                ))}
+                                <div className="mb-1">
+                                  <span>{t('multisig.proposal-modal.instruction-data')}:</span><br />
+                                  {deserializedTx?.data.map((data: any) => (
+                                    <span key={data.value} onClick={() => copyAddressToClipboard(data.value)}  className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
+                                      {data.value}
+                                    </span>
+                                  ))}
                                 </div>
                               </div>
                             </>
