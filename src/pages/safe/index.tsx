@@ -14,7 +14,8 @@ import {
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
   Transaction,
-  TransactionInstruction
+  TransactionInstruction,
+  TransactionInstructionCtorFields
 } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
@@ -60,7 +61,9 @@ import {
   getMultisigTransactionSummary,
   getFees,
   DEFAULT_EXPIRATION_TIME_SECONDS,
-  MultisigVault
+  MultisigVault,
+  parseSerializedTx,
+  getMultisigInstructionSummary
 } from '../../models/multisig';
 import { MultisigCreateModal } from '../../components/MultisigCreateModal';
 import './style.scss';
@@ -1662,7 +1665,7 @@ export const SafeView = () => {
     connection, 
     connectionConfig, 
     publicKey
-  ])
+  ]);
 
   const onExecuteCreateTransactionProposal = useCallback(async (data: any) => {
     let transaction: Transaction;
@@ -1682,11 +1685,53 @@ export const SafeView = () => {
         throw new Error("No selected multisig");
       }
 
-      const proposalIx = await createProposalIx(
-        new PublicKey(data.appId),
-        data.config,
-        data.instruction
-      );
+      let proposalIx: TransactionInstruction | null = null;
+
+      // // TEST
+
+      // const testSysTransfer = new Transaction().add(
+      //   SystemProgram.transfer({
+      //     fromPubkey: publicKey,
+      //     toPubkey: publicKey,
+      //     lamports: 100_000_000
+      //   })
+      // );
+
+      // const testUiIx = {
+      //   id: await PublicKey.findProgramAddress([
+      //     SystemProgram.programId.toBuffer(), 
+      //     Buffer.from("custom_proposal")
+      //   ], MEAN_MULTISIG_PROGRAM),
+      //   name: "custom_proposal",
+      //   help: "",
+      //   label: "Custom Transaction Proposal",
+      //   uiElements: [
+      //     {
+      //       name: "custom_tx_proposal",
+      //       help: "",
+      //       label: "Custom Transaction Proposal",
+      //       value: txBase64,
+      //       type: "inputTextArea",
+      //       visibility: "show",
+      //       dataElement: undefined
+  
+      //     } as UiElement
+      //   ]
+      // };
+
+      // //
+
+      if (data.appId === MEAN_MULTISIG_PROGRAM.toBase58()) {
+        const tx = await parseSerializedTx(connection, data.instruction.uiElements[0].value);
+        if (!tx) { return null; }
+        proposalIx = tx?.instructions[0];
+      } else {
+        proposalIx = await createProposalIx(
+          new PublicKey(data.appId),
+          data.config,
+          data.instruction
+        );
+      }
 
       if (!proposalIx) {
         throw new Error("Invalid proposal instruction.");
@@ -2981,6 +3026,24 @@ export const SafeView = () => {
     if (!connection || !publicKey || !multisigClient || !loadingMultisigAccounts) {
       return;
     }
+
+    // TESTTT
+    const txBase64 = "Au5cyRspuXCowCT/+ilRl3IFM0+zyDg+xNoeX/il97L14rz25oRnV3TZQwiS7FQT/1dYpvdgFysdPXt1hPp/hgMJED7e2nTO7mtM1glLdyMvIyXdS4FzvlRPENhkAHwk105UAarPcuViKIttmW9r0PoYDLazcLLDq+jmAcPm6JEBAgACB9Ddi5QinaLbOwGnnixxndnvOnhxKxEs0bv2shUrFl9vFE2R6SqfHaa9rkiof+5OWJ5+S5iWxCt7rPaXW647aNokbiY9zPQJhwiSbzvZD7xSMWUNO9Oe25oftdQtY06VjmURFoGn/CqhuB3Rl7o7VEj72j+1YLmIB4AYam9IPfJziAle07Jj8d3CiaatZ+fwwumiiGwRm+uxuHj6UyK5/TwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAANOhD6HP8Q/RVRbUn2Jvbitb2UnXaECZYigdvUqYSEi2gsVgZtO0GJyyQVtYG63AUEsOvlWqRh6zCq+eHtfr86ACBQIAATQAAAAAAAmNAAAAAACwBAAAAAAAANOhD6HP8Q/RVRbUn2Jvbitb2UnXaECZYigdvUqYSEi2BgYEAQMAAgWPAuPBNe83fnBp06EPoc/xD9FVFtSfYm9uK1vZSddoQJliKB29SphISLYCAAAAiAle07Jj8d3CiaatZ+fwwumiiGwRm+uxuHj6UyK5/TwAAZL8UfGDFvpMfNzng0XWzTDIXl3cdVU9LM9MeLJqt2UFAQB4AAAA/2X4c8ZfIvcCAAAA0N2LlCKdots7AaeeLHGd2e86eHErESzRu/ayFSsWX28GAAAAWWFuc2VseELOLC0rIwNPS2wK2QPcKcaiKdzI7aAqCQktQSBg/l4HAAAAT3duZXIgMgIAAAAAAAAACwAAAE1TIE1heSAjMS4yHwkAAABFZGl0IFNhZmUAAAAATOmPYgAAAAAAAAAAAAAAAAA=";
+    parseSerializedTx(connection, txBase64)
+      .then(tx => {
+        if (tx) {
+          const ix = {
+            programId: tx.instructions[1].programId,
+            keys: tx.instructions[1].keys,
+            data: tx.instructions[1].data
+          } as TransactionInstruction;
+          console.log('ix', ix);
+          const summary = getMultisigInstructionSummary(ix);
+          console.log('ix summary', summary);
+        }
+      });
+
+    //
 
     const timeout = setTimeout(() => {
 

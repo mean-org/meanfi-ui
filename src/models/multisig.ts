@@ -1,4 +1,4 @@
-import { GetProgramAccountsFilter, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
+import { Connection, GetProgramAccountsFilter, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js";
 import { Idl, Program } from "@project-serum/anchor";
 import { OperationType } from "./enums";
 
@@ -439,6 +439,79 @@ export const parseMultisigTransactionInstruction = (
 
   } catch (err: any) {
     console.error(`Parse Multisig Transaction: ${err}`);
+    return null;
+  }
+}
+
+export const parseSerializedTx = async (
+  connection: Connection,
+  base64Str: string
+): Promise<Transaction | null> => {
+  try {
+
+    if (!connection || !base64Str) { 
+      throw Error(`Parse Serialized Transaction: Invalid parameters.`)
+    }
+
+    // const base64Str = uiInstruction.uiElements[0].value;
+    const base64StrRegx = /^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/;
+
+    if (!base64StrRegx.test(base64Str)) {
+      throw Error(`Parse Serialized Transaction: The parameter "base64Str" is not a valid base64 string.`);
+    }
+
+    const buffer = Buffer.from(base64Str, 'base64');
+    const tx = Transaction.from(buffer);
+
+    return tx;
+
+  } catch (err: any) {
+    console.error(`Parse Serialized Transaction: ${err}`);
+    return null;
+  }
+}
+
+export const getMultisigInstructionSummary = (instruction: TransactionInstruction): MultisigTransactionInstructionInfo | null => {
+
+  try {
+
+    const ixAccInfos: InstructionAccountInfo[] = [];
+    let accIndex = 0;
+
+    for (const acc of instruction.keys) {
+
+      ixAccInfos.push({
+        index: accIndex,
+        label: "",
+        value: acc.pubkey.toBase58()
+
+      } as InstructionAccountInfo);
+
+      accIndex ++;
+    }
+
+    const bufferStr = Buffer.from(instruction.data).toString('hex');
+    const bufferStrArray: string[] = [];
+
+    for (let i = 0; i < bufferStr.length; i += 2) {
+      bufferStrArray.push(bufferStr.substring(i, i + 2));
+    }
+
+    const ixInfo = {
+      programId: instruction.programId.toBase58(),
+      accounts: ixAccInfos,
+      data: [{
+        label: "",
+        value: bufferStrArray.join(' ')
+
+      } as InstructionDataInfo]
+
+    } as MultisigTransactionInstructionInfo;
+
+    return ixInfo;
+
+  } catch (err: any) {
+    console.error(`Multisig Instruction Summary: ${err}`);
     return null;
   }
 }
