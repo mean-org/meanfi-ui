@@ -925,11 +925,11 @@
 			"placeholder": "노트 추가"
 		},
 		"memo2": {
-			"label": "메모 / 제목",
+			"label": "Stream name",
 			"placeholder": "지불 목적"
 		},
 		"rate-and-frequency": {
-			"amount-label": "금액",
+			"amount-label": "Payment Rate",
 			"payment-rates": {
 				"per-day": "하루마다",
 				"per-hour": "1시간 마다",
@@ -950,7 +950,7 @@
 		"resume": "요약",
 		"send-amount": {
 			"label": "송금",
-			"label-amount": "자금 추가",
+			"label-amount": "Amount to stream",
 			"label-right": "잔액"
 		},
 		"send-date": {
@@ -1015,7 +1015,7 @@
 		},
 		"transaction-info": {
 			"add-funds-payroll-advice": "급여 지급을 시작하려면 자금을 추가해야 합니다.",
-			"add-funds-repeating-payment-advice": "반복 결제를 시작하려면 자금을 추가해야 합니다.",
+			"add-funds-repeating-payment-advice": "How many {{tokenSymbol}} tokens do you want to send at",
 			"beneficiary-receives": "수익자 수령",
 			"exchange-on": "교환",
 			"hla-transaction-fee": "애그리게이터 수수료",

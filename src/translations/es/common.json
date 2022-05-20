@@ -924,11 +924,11 @@
 			"placeholder": "Agregue una nota"
 		},
 		"memo2": {
-			"label": "Nota / Asunto",
+			"label": "Nombre de transferencia",
 			"placeholder": "¿Para qué es este pago?"
 		},
 		"rate-and-frequency": {
-			"amount-label": "Cantidad",
+			"amount-label": "Tasa de Pago",
 			"payment-rates": {
 				"per-day": "por día",
 				"per-hour": "por hora",
@@ -949,7 +949,7 @@
 		"resume": "Summary",
 		"send-amount": {
 			"label": "Enviar",
-			"label-amount": "Añadir fondos",
+			"label-amount": "Cantidad a transmitir",
 			"label-right": "Saldo"
 		},
 		"send-date": {
@@ -1014,7 +1014,7 @@
 		},
 		"transaction-info": {
 			"add-funds-payroll-advice": "Debes agregar fondos para iniciar una nómina",
-			"add-funds-repeating-payment-advice": "Debe agregar fondos para iniciar el pago periódico",
+			"add-funds-repeating-payment-advice": "Cuántos {{tokenSymbol}} tokens quiere enviar a",
 			"beneficiary-receives": "El beneficiario recibe",
 			"exchange-on": "Intercambio en",
 			"hla-transaction-fee": "",

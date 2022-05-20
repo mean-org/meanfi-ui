@@ -921,11 +921,11 @@
 			"placeholder": "Add a note"
 		},
 		"memo2": {
-			"label": "Memo / Subject",
+			"label": "Stream name",
 			"placeholder": "What is this payment for?"
 		},
 		"rate-and-frequency": {
-			"amount-label": "Amount",
+			"amount-label": "Payment Rate",
 			"payment-rates": {
 				"per-day": "per day",
 				"per-hour": "per hour",
@@ -946,7 +946,7 @@
 		"resume": "Summary",
 		"send-amount": {
 			"label": "Send",
-			"label-amount": "Add funds",
+			"label-amount": "Amount to stream",
 			"label-right": "Balance"
 		},
 		"send-date": {
@@ -1011,7 +1011,7 @@
 		},
 		"transaction-info": {
 			"add-funds-payroll-advice": "You must add funds to start a payroll",
-			"add-funds-repeating-payment-advice": "You must add funds to start the repeating payment",
+			"add-funds-repeating-payment-advice": "How many {{tokenSymbol}} tokens do you want to send at",
 			"beneficiary-receives": "Beneficiary receives",
 			"exchange-on": "Exchange on",
 			"hla-transaction-fee": "Aggregator fee",

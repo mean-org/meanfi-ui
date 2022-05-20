@@ -922,11 +922,11 @@
 			"placeholder": "Bir not ekle"
 		},
 		"memo2": {
-			"label": "Not / Konu",
+			"label": "Aktarım adı",
 			"placeholder": "Bu ödeme ne için?"
 		},
 		"rate-and-frequency": {
-			"amount-label": "Miktar",
+			"amount-label": "Ödeme oranı",
 			"payment-rates": {
 				"per-day": "her gün",
 				"per-hour": "her saat",
@@ -947,7 +947,7 @@
 		"resume": "Özet",
 		"send-amount": {
 			"label": "Gönder",
-			"label-amount": "Fon ekle",
+			"label-amount": "Amount to stream",
 			"label-right": "Bakiye"
 		},
 		"send-date": {
@@ -1012,7 +1012,7 @@
 		},
 		"transaction-info": {
 			"add-funds-payroll-advice": "Bir ödeme planı başlatmak için para eklemelisiniz",
-			"add-funds-repeating-payment-advice": "Tekrarlanan ödemeyi başlatmak için para eklemelisiniz",
+			"add-funds-repeating-payment-advice": "How many {{tokenSymbol}} tokens do you want to send at",
 			"beneficiary-receives": "....Yararlanıcı alır",
 			"exchange-on": "... 'da Alım-Satım",
 			"hla-transaction-fee": "Toplayıcı ücreti",

@@ -924,11 +924,11 @@
 			"placeholder": "Ajouter une note"
 		},
 		"memo2": {
-			"label": "Mémo / Sujet",
+			"label": "Nom du flux",
 			"placeholder": "A quoi sert ce paiement ?"
 		},
 		"rate-and-frequency": {
-			"amount-label": "Montant",
+			"amount-label": "Payment Rate",
 			"payment-rates": {
 				"per-day": "par jour",
 				"per-hour": "par heure",
@@ -949,7 +949,7 @@
 		"resume": "Sommaire",
 		"send-amount": {
 			"label": "Envoyer",
-			"label-amount": "Ajouter des fonds",
+			"label-amount": "Amount to stream",
 			"label-right": "Équilibre"
 		},
 		"send-date": {
@@ -1014,7 +1014,7 @@
 		},
 		"transaction-info": {
 			"add-funds-payroll-advice": "Vous devez ajouter des fonds pour démarrer une paie",
-			"add-funds-repeating-payment-advice": "Vous devez ajouter des fonds pour démarrer le paiement récurrent",
+			"add-funds-repeating-payment-advice": "How many {{tokenSymbol}} tokens do you want to send at",
 			"beneficiary-receives": "Le bénéficiaire reçoit",
 			"exchange-on": "Echange sur",
 			"hla-transaction-fee": "Frais d'agrégateur",

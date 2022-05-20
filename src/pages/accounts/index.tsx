@@ -299,12 +299,9 @@ export const AccountsNewView = () => {
 
   const onAddAccountAddress = useCallback(() => {
     navigate(`${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddressInput}/assets`);
-    // setAccountAddress(accountAddressInput);
-    // setShouldLoadTokens(true);
-    // setCanShowAccountDetails(true);
-    // setAccountAddressInput('');
-    // setAddAccountPanelOpen(false);
-  }, [navigate, accountAddressInput]);
+    setCanShowAccountDetails(true);
+    setAccountAddressInput('');
+  }, [navigate, accountAddressInput, setCanShowAccountDetails]);
 
   const handleScanAnotherAddressButtonClick = () => {
     setCanShowAccountDetails(false);
@@ -1273,14 +1270,6 @@ export const AccountsNewView = () => {
           setLastStreamsSummary(initialSummary);
           setStreamsSummary(initialSummary);
         });
-        // const treasurer = publicKey
-        //   ? publicKey
-        //   : urlQueryAddress
-        //     ? new PublicKey(urlQueryAddress)
-        //     : new PublicKey(accountAddress);
-        // refreshStreamList(true, treasurer);
-        // setSelectedAsset(undefined);
-        // setShouldLoadTokens(true);
         setAddAccountPanelOpen(false);
         setCanShowAccountDetails(true);
       } else if (previousWalletConnectState && !connected) {
@@ -1298,7 +1287,6 @@ export const AccountsNewView = () => {
           setStreamDetail(undefined);
         }
         setAddAccountPanelOpen(false);
-        setCanShowAccountDetails(true);
       }
     }
 
@@ -1306,16 +1294,11 @@ export const AccountsNewView = () => {
     publicKey,
     connected,
     streamDetail,
-    // accountAddress,
-    // urlQueryAddress,
     previousWalletConnectState,
     setCanShowAccountDetails,
     setAddAccountPanelOpen,
     setLastStreamsSummary,
-    // setShouldLoadTokens,
     setStreamsSummary,
-    // refreshStreamList,
-    // setSelectedAsset,
     setStreamDetail,
     onTxConfirmed,
     onTxTimedout,

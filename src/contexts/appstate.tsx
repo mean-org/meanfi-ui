@@ -256,7 +256,7 @@ const contextDefaultValues: AppStateConfig = {
   accountAddress: '',
   lastTxSignature: '',
   addAccountPanelOpen: true,
-  canShowAccountDetails: false,
+  canShowAccountDetails: true,
   streamsSummary: initialSummary,
   lastStreamsSummary: initialSummary,
   loadingStreamsSummary: false,
@@ -1295,7 +1295,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [selectedAsset, updateSelectedAsset] = useState<UserTokenAccount | undefined>(contextDefaultValues.selectedAsset);
   const [lastTxSignature, setLastTxSignature] = useState<string>(contextDefaultValues.lastTxSignature);
   const [addAccountPanelOpen, updateAddAccountPanelOpen] = useState(contextDefaultValues.addAccountPanelOpen);
-  const [canShowAccountDetails, updateCanShowAccountDetails] = useState(accountAddress ? true : false);
+  const [canShowAccountDetails, updateCanShowAccountDetails] = useState(contextDefaultValues.canShowAccountDetails);
   const [streamsSummary, setStreamsSummary] = useState<StreamsSummary>(contextDefaultValues.streamsSummary);
   const [lastStreamsSummary, setLastStreamsSummary] = useState<StreamsSummary>(contextDefaultValues.lastStreamsSummary);
   const [loadingStreamsSummary, setLoadingStreamsSummary] = useState(contextDefaultValues.loadingStreamsSummary);
