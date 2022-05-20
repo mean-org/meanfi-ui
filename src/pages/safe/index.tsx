@@ -79,7 +79,7 @@ import { ProgramDetailsView } from './components/ProgramDetails';
 import SerumIDL from '../../models/serum-multisig-idl';
 import { AppsProvider, NETWORK, App, UiInstruction, AppConfig, UiElement, Arg } from '@mean-dao/mean-multisig-apps';
 import { SafeSerumInfoView } from './components/SafeSerumInfo';
-import { MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigInfo } from '@mean-dao/mean-multisig-sdk';
+import { MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigInfo, parseMultisigTransaction } from '@mean-dao/mean-multisig-sdk';
 import { MethodsBuilder } from '@project-serum/anchor/dist/cjs/program/namespace/methods';
 import { AssetDetailsView } from './components/AssetDetails';
 import { ACCOUNT_LAYOUT } from '../../utils/layouts';
@@ -97,10 +97,8 @@ export const SafeView = () => {
     detailsPanelOpen,
     transactionStatus,
     highLightableMultisigId,
-    loadingMultisigDetails,
     previousWalletConnectState,
     setHighLightableMultisigId,
-    setLoadingMultisigDetails,
     setTransactionStatus,
     refreshTokenBalance,
     setDtailsPanelOpen,
@@ -148,7 +146,7 @@ export const SafeView = () => {
   const [serumMultisigTxs, setSerumMultisigTxs] = useState<MultisigTransaction[]>([]);
 
   const [isSafeDetails, setIsSafeDetails] = useState(false);
-  const [proposalSelected, setProposalSelected] = useState<any>();
+  const [proposalSelected, setProposalSelected] = useState<MultisigTransaction | undefined>();
   const [isProgramDetails, setIsProgramDetails] = useState(false);
   const [programSelected, setProgramSelected] = useState<any>();
   const [isAssetDetails, setIsAssetDetails] = useState(false);
@@ -2908,6 +2906,43 @@ export const SafeView = () => {
     publicKey
   ]);
 
+  //
+  useEffect(() => {
+
+    if (
+      !connection || 
+      !publicKey || 
+      !multisigClient || 
+      !selectedMultisig || 
+      !proposalSelected || 
+      !loadingMultisigAccounts
+    ) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      multisigClient.getMultisigTransaction(
+        selectedMultisig.id,
+        proposalSelected.id,
+        publicKey
+      )
+      .then((tx: any) => setProposalSelected(tx))
+      .catch(err => console.error(err));
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [
+    connection, 
+    multisigClient, 
+    proposalSelected, 
+    publicKey, 
+    selectedMultisig,
+    loadingMultisigAccounts
+  ]);
+
   // Refresh the multisig accounts list
   useEffect(() => {
 
@@ -2925,8 +2960,10 @@ export const SafeView = () => {
           const allAccounts = [...allInfo, ...serumAccounts];
           setMultisigAccounts(allAccounts);
           consoleOut('tralla:', allAccounts, 'blue');
-          let item: MultisigInfo | undefined = undefined;
+          let item: any = {};
+
           if (allInfo.length > 0) {
+
             if (highLightableMultisigId) {
               // Select a multisig that was instructed to highlight when entering this feature
               item = allInfo.find(m => m.id.toBase58() === highLightableMultisigId);
@@ -2938,7 +2975,6 @@ export const SafeView = () => {
             }
             // Now make item active
             setSelectedMultisig(item);
-            setLoadingMultisigDetails(true);
             setNeedRefreshTxs(true);
           } else {
             setSelectedMultisig(undefined);
@@ -2974,7 +3010,6 @@ export const SafeView = () => {
       if (!previousWalletConnectState && connected && publicKey) {
         consoleOut('User is connecting...', publicKey.toBase58(), 'green');
         setLoadingMultisigAccounts(true);
-        setLoadingMultisigDetails(true);
         // setLoadingPrograms(true);
         // setNeedRefreshTxs(true);
       } else if (previousWalletConnectState && !connected) {
@@ -2991,9 +3026,7 @@ export const SafeView = () => {
     connected, 
     publicKey, 
     previousWalletConnectState, 
-    setHighLightableMultisigId, 
-    loadingMultisigDetails, 
-    setLoadingMultisigDetails
+    setHighLightableMultisigId
   ]);
 
   // Detect when entering small screen mode
@@ -3056,6 +3089,8 @@ export const SafeView = () => {
     selectedMultisig,
     clearTxConfirmationContext
   ]);
+
+
 
   // END MULTISIG
 
@@ -3139,7 +3174,6 @@ export const SafeView = () => {
             setDtailsPanelOpen(true);
             setSelectedMultisig(item);
             setNeedRefreshTxs(true);
-            setLoadingMultisigDetails(true);
             setIsSafeDetails(false);
             setIsProgramDetails(false);
             setIsAssetDetails(false);
@@ -3215,8 +3249,50 @@ export const SafeView = () => {
     </>
   );
 
+  // useEffect(() => {
+
+  //   if (
+  //     !connection || 
+  //     !publicKey || 
+  //     !multisigClient || 
+  //     !selectedMultisig
+  //   ) { 
+  //     return;
+  //   }
+
+  //   const timeout = setTimeout(() => {
+
+  //     console.log("AQUIII");
+
+  //     multisigClient
+  //       .getMultisigTransactions(selectedMultisig.id, publicKey)
+  //       .then((txs: any[]) => {
+  //         if (proposalSelected) {
+  //           const selected = txs.filter(tx => tx.id.equals(proposalSelected.id))[0];
+  //           setProposalSelected(selected);
+  //         }
+  //       })
+  //       .catch((err: any) => {
+  //         console.error("Error fetching all transactions", err);
+  //       });
+  //   });
+
+  //   return () => {
+  //     clearTimeout(timeout);
+  //   }
+
+  // }, [
+  //   publicKey, 
+  //   connection, 
+  //   multisigClient, 
+  //   selectedMultisig, 
+  //   proposalSelected
+  // ]);
+
   const goToSafeDetailsHandler = (selectedProposal: any) => {    
     setIsSafeDetails(true);
+    setIsProgramDetails(false);
+    setIsAssetDetails(false);
     setProposalSelected(selectedProposal);
   }
 

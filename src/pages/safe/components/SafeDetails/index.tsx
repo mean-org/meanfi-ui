@@ -1,18 +1,18 @@
 import './style.scss';
 import { Button, Col, Collapse, Row } from "antd"
-import { IconArrowBack, IconUser, IconThumbsUp, IconThumbsDown, IconApprove, IconCross, IconCheckCircle, IconCreated, IconMinus, IconCaretDown, IconExternalLink } from "../../../../Icons"
+import { IconArrowBack, IconUser, IconThumbsUp, IconThumbsDown, IconExternalLink } from "../../../../Icons"
 
 import { shortenAddress } from '../../../../utils/utils';
 import { TabsMean } from '../../../../components/TabsMean';
-import { getOperationName } from '../../../../utils/multisig-helpers';
+// import { getOperationName } from '../../../../utils/multisig-helpers';
 import { useTranslation } from 'react-i18next';
 import { openNotification } from '../../../../components/Notifications';
-import { useCallback, useContext, useEffect } from 'react';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import { copyText, isDev, isLocal } from '../../../../utils/ui';
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../../../constants';
 import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
 import { ResumeItem } from '../UI/ResumeItem';
-import { PublicKey } from '@solana/web3.js';
+// import { PublicKey } from '@solana/web3.js';
 import { MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
 import { AppStateContext } from '../../../../contexts/appstate';
 
@@ -23,15 +23,27 @@ export const SafeDetailsView = (props: {
   selectedMultisig?: any;
   onProposalApprove?: any;
   onProposalExecute?: any;
+
 }) => {
-  const {
-    isWhitelisted,
-  } = useContext(AppStateContext);
+
+  const { isWhitelisted } = useContext(AppStateContext);
   const { t } = useTranslation('common');
-  const { Panel } = Collapse;
-  const { isSafeDetails, onDataToSafeView, selectedMultisig, onProposalApprove, onProposalExecute } = props;
-  const { id, signers, details, executedOn, status, proposer, operation, programId, accounts, data, didSigned } = props.proposalSelected;
-  const collapseHandler = (key: any) => {}
+  // const { Panel } = Collapse;
+  const { isSafeDetails, onDataToSafeView, proposalSelected, selectedMultisig, onProposalApprove, onProposalExecute } = props;
+  // const { id, signers, details, executedOn, status, proposer, operation, programId, accounts, data, didSigned } = props.proposalSelected;
+  // const collapseHandler = (key: any) => {}
+  const [selectedProposal, setSelectedProposal] = useState<any>(proposalSelected);
+
+  useEffect(() => {
+
+    if (!selectedMultisig || !proposalSelected) { return; }
+    const timeout = setTimeout(() => setSelectedProposal(proposalSelected));
+    return () => clearTimeout(timeout);
+
+  }, [
+    selectedMultisig,
+    proposalSelected
+  ]);
 
   const isUnderDevelopment = () => {
     return isLocal() || (isDev() && isWhitelisted) ? true : false;
@@ -135,13 +147,13 @@ export const SafeDetailsView = (props: {
                   <span className="info-label">{t('multisig.proposal-modal.instruction-program')}:</span>
                 </Col>
                 <Col xs={18} sm={18} md={20} lg={20} className="pl-1 text-truncate">
-                  <span onClick={() => copyAddressToClipboard(programId.toBase58())}  className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
-                    {programId.toBase58()}
+                  <span onClick={() => copyAddressToClipboard(selectedProposal.programId.toBase58())}  className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
+                    {selectedProposal.programId.toBase58()}
                   </span>
                   <a
                     target="_blank"
                     rel="noopener noreferrer"
-                    href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${programId.toBase58()}${getSolanaExplorerClusterParam()}`}>
+                    href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${selectedProposal.programId.toBase58()}${getSolanaExplorerClusterParam()}`}>
                     <IconExternalLink className="mean-svg-icons external-icon" />
                   </a>
                 </Col>
@@ -175,8 +187,8 @@ export const SafeDetailsView = (props: {
                     <span className="info-label">{t('multisig.proposal-modal.instruction-data')}:</span>
                   </Col>
                   <Col xs={18} sm={18} md={20} lg={20} className="pl-1 text-truncate">
-                    <span onClick={() => copyAddressToClipboard(data)}  className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
-                      {data}
+                    <span onClick={() => copyAddressToClipboard(selectedProposal.data)}  className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
+                      {selectedProposal.data}
                     </span>
                   </Col>
                 </Row>
@@ -189,7 +201,7 @@ export const SafeDetailsView = (props: {
   // Display the activities in the "Activity" tab, on safe details page
   const renderActivities = (
     <Row>
-      {/* {proposalSelected.activities.map((activity: any) => {
+      {/* {selectedProposal.activities.map((activity: any) => {
         let icon = null;
 
         switch (activity.description) {
@@ -245,11 +257,13 @@ export const SafeDetailsView = (props: {
     // }
   ];
 
+  if (!selectedProposal.proposer) { return (<></>); }
+
   // Number of participants who have already approved the Tx
-  const approvedSigners = signers.filter((s: any) => s === true).length;
+  const approvedSigners = selectedProposal.signers.filter((s: any) => s === true).length;
   const neededSigners = approvedSigners && (selectedMultisig.threshold - approvedSigners);
-  const expirationDate = details.expirationDate ? new Date(details.expirationDate).toDateString() : "";
-  const executedOnDate = executedOn ? new Date(executedOn).toDateString() : "";
+  const expirationDate = selectedProposal.details.expirationDate ? new Date(selectedProposal.details.expirationDate).toDateString() : "";
+  const executedOnDate = selectedProposal.executedOn ? new Date(selectedProposal.executedOn).toDateString() : "";
   
   return (
     <div className="safe-details-container">
@@ -260,20 +274,20 @@ export const SafeDetailsView = (props: {
         </div>
       </Row>
       <ResumeItem
-        id={id}
-        // src={proposalSelected.src}
-        title={details.title}
+        id={selectedProposal.id}
+        // src={selectedProposal.src}
+        title={selectedProposal.details.title}
         expires={expirationDate}
         executedOn={executedOnDate}
         approved={approvedSigners}
-        // rejected={proposalSelected.rejected}
-        status={status}
+        // rejected={selectedProposal.rejected}
+        status={selectedProposal.status}
         needs={neededSigners}
         isSafeDetails={isSafeDetails}
       />
-      {details.description && (
+      {selectedProposal.details.description && (
         <Row className="safe-details-description">
-          {details.description}
+          {selectedProposal.details.description}
         </Row>
       )}
       <Row gutter={[8, 8]} className="safe-details-proposal">
@@ -281,20 +295,20 @@ export const SafeDetailsView = (props: {
           <IconUser className="user-image mean-svg-icons" />
           <div className="proposal-resume-left-text">
             <div className="info-label">Proposed by</div>
-            <span>{shortenAddress(proposer.toBase58(), 4)}</span>
+            <span>{shortenAddress(selectedProposal.proposer?.toBase58(), 4)}</span>
           </div>
         </Col>
         <Col className="safe-details-right-container btn-group">
-          {(status === MultisigTransactionStatus.Approved || status === MultisigTransactionStatus.Executed) ? (
+          {(selectedProposal.status === MultisigTransactionStatus.Approved || selectedProposal.status === MultisigTransactionStatus.Executed) ? (
             <Button
               type="ghost"
               size="small"
               className="thin-stroke d-flex justify-content-center align-items-center"
-              disabled={status === MultisigTransactionStatus.Executed}
+              disabled={selectedProposal.status === MultisigTransactionStatus.Executed}
               onClick={() => onProposalExecute({ 
                 transaction: { 
-                  id: new PublicKey(id),
-                  operation: operation
+                  id: selectedProposal.id,
+                  operation: selectedProposal.operation
                 }
               })}>
               <div className="btn-content">
@@ -307,8 +321,8 @@ export const SafeDetailsView = (props: {
                 type="ghost"
                 size="small"
                 className="thin-stroke"
-                disabled={didSigned || status !== MultisigTransactionStatus.Pending}
-                onClick={() => onProposalApprove({ transaction: { id: new PublicKey(id) } })}>
+                disabled={selectedProposal.didSigned || selectedProposal.status !== MultisigTransactionStatus.Pending}
+                onClick={() => onProposalApprove({ transaction: { id: selectedProposal.id } })}>
                 <div className="btn-content">
                   <IconThumbsUp className="mean-svg-icons" />
                   Approve
