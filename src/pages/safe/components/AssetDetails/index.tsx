@@ -2320,9 +2320,22 @@ export const AssetDetailsView = (props: {
   // Asset balance
   const getTokenIconAndAmount = (tokenAddress: string, amount: any, decimals: number) => {
     const token = tokenList.find(t => t.address === tokenAddress);
+
+    const isSol = assetSelected.mint.toBase58() === NATIVE_SOL_MINT.toBase58() ? true : false;
+
     if (!token) {
       return (
-        <>
+        isSol ?  (
+          <>
+            <span className="info-icon token-icon mr-1">
+              <img alt="Sol" width={30} height={30} src="https://www.gate.io/images/coin_icon/64/sol.png" style={{backgroundColor: "#000", borderRadius: "1em"}} />
+            </span>
+            <span className="info-data">
+              {formatThousands(makeDecimal(amount, decimals), decimals)}
+            </span>
+          </>
+        ) : (
+          <>
           <span className="info-icon token-icon mr-1">
             <Identicon address={tokenAddress} style={{
               width: "35",
@@ -2335,8 +2348,10 @@ export const AssetDetailsView = (props: {
             {formatThousands(makeDecimal(amount, decimals), decimals)}
           </span>
         </>
-      );
+        )
+      )
     }
+
     return (
       <>
         <span className="info-icon token-icon mr-1">
