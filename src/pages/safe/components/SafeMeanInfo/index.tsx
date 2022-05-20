@@ -17,10 +17,11 @@ import { FALLBACK_COIN_IMAGE } from '../../../../constants';
 import { Identicon } from '../../../../components/Identicon';
 // import { BN } from 'bn.js';
 // import { u64 } from '@solana/spl-token';
-import { MEAN_MULTISIG } from '../../../../utils/ids';
+import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../../../utils/ids';
 import { ACCOUNT_LAYOUT } from '../../../../utils/layouts';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { AppStateContext } from '../../../../contexts/appstate';
+import { BN } from 'bn.js';
 
 export const SafeMeanInfo = (props: {
   connection: Connection;
@@ -219,35 +220,66 @@ export const SafeMeanInfo = (props: {
       return tokenAccount;
     });
 
-    consoleOut('multisig assets:', results, 'blue');
     return results;
 
   },[]);
 
+  const getSolToken = useCallback(async () => {
+    const solBalance = await connection.getBalance(multisig.id);
+  
+    console.log("solBalance", solBalance)
+     return {
+      mint: NATIVE_SOL_MINT,
+      owner: multisig.authority,
+      amount: new BN(solBalance),
+      delegateOption: 0,
+      delegate: undefined,
+      state: 1,
+      isNativeOption: 0,
+      isNative: true,
+      delegatedAmount: 0,
+      closeAuthorityOption: 0,
+      closeAuthority: undefined,
+      address: multisig.id
+    };
+  }, [connection, multisig])
+  
   // Get Multisig Vaults
   useEffect(() => {
     if (!multisigClient || !multisig || !multisig.id) {
       return;
     }
+  
+    consoleOut("multisig id", multisig.id.toBase58(), "blue");
 
     const program = multisigClient.getProgram();
     const timeout = setTimeout(() => {
-      getMultisigVaults(program.provider.connection, multisig.id)
-        .then(result => {
-          setMultisigVaults(result);
-        })
-        .catch(err => console.error(err))
-        .finally(() => setLoadingAssets(false));
+      getSolToken().then(mySol => {
+        getMultisigVaults(program.provider.connection, multisig.id)
+          .then(result => {
+            const modifiedResults = new Array<any>();
+            modifiedResults.push(mySol);
+  
+            result.forEach(item => {
+              modifiedResults.push(item);
+            })
+  
+            setMultisigVaults(modifiedResults);
+  
+            consoleOut("Multisig assets", modifiedResults, "blue");
+          })
+          .catch(err => {
+            console.error(err);
+            setMultisigVaults([mySol]);
+          })
+          .finally(() => setLoadingAssets(false));
+      });
     });
-
+  
     return () => {
       clearTimeout(timeout);
     }
-  },[
-    getMultisigVaults,
-    multisigClient, 
-    multisig
-  ]);
+  },[getMultisigVaults, multisigClient, multisig, connection, getSolToken]);
 
   useEffect(() => {
     const loading = multisig ? true : false;
