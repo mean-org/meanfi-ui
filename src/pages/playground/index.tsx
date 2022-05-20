@@ -692,7 +692,22 @@ export const PlaygroundView = () => {
     );
   }
 
-  const renderDemoNotifications = (
+  const renderRoutingDemo = (
+    <>
+      <div className="tabset-heading">Test routing</div>
+      <div className="text-left mb-3">
+        <div className="form-label">Go to my connected account</div>
+        {renderRouteLink('With no params', '/accounts')}
+        <div className="form-label">Go to a different account</div>
+        {renderRouteLink('With only the address', '/accounts/DG6nJknzbAq8xitEjMEqUbc77PTzPDpzLjknEXn3vdXZ')}
+        {renderRouteLink('With NO specific asset preset', '/accounts/DG6nJknzbAq8xitEjMEqUbc77PTzPDpzLjknEXn3vdXZ/assets')}
+        <div className="form-label">Preset a specific asset</div>
+        {renderRouteLink('With specific asset preset', '/accounts/DG6nJknzbAq8xitEjMEqUbc77PTzPDpzLjknEXn3vdXZ/assets/FQPAweWDZZbKjDQk3MCx285dUeZosLzF2FacqfyegrGC')}
+      </div>
+    </>
+  );
+
+  const renderDemo3Tab = (
     <>
       <div className="tabset-heading">Notify and navigate</div>
       <div className="text-left mb-3">
@@ -752,15 +767,7 @@ export const PlaygroundView = () => {
         </Space>
       </div>
 
-      <div className="tabset-heading">Test routing</div>
-      <div className="text-left mb-3">
-        <div className="form-label">Go to my connected account</div>
-        {renderRouteLink('With no params', '/accounts')}
-        {renderRouteLink('With only the address', '/accounts/DG6nJknzbAq8xitEjMEqUbc77PTzPDpzLjknEXn3vdXZ')}
-        {renderRouteLink('With NO specific asset preset', '/accounts/DG6nJknzbAq8xitEjMEqUbc77PTzPDpzLjknEXn3vdXZ/assets')}
-        {renderRouteLink('With specific asset preset', '/accounts/DG6nJknzbAq8xitEjMEqUbc77PTzPDpzLjknEXn3vdXZ/assets/FQPAweWDZZbKjDQk3MCx285dUeZosLzF2FacqfyegrGC')}
-      </div>
-
+      {renderRoutingDemo}
     </>
   );
 
@@ -923,7 +930,7 @@ export const PlaygroundView = () => {
       case "second-tab":
         return renderDemoTxWorkflow;
       case "demo-notifications":
-        return renderDemoNotifications;
+        return renderDemo3Tab;
       case "misc-tab":
         return renderMiscTab;
       default:

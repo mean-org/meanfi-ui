@@ -86,7 +86,7 @@ export function AppRoutes() {
                       <Route path="/multisig-programs" element={<MultisigProgramsView />} />
                       <Route path="/service-unavailable" element={<ServiceUnavailableView />} />
                       {/* Playgraund route for POC and testing purposes */}
-                      {isLocal() && (
+                      {!isProd() && (
                         <Route path="/playground" element={<PlaygroundView />} />
                       )}
                       <Route path='*' element={<NotFoundView />} />
