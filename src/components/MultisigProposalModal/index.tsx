@@ -468,7 +468,7 @@ export const MultisigProposalModal = (props: {
                                         />
                                       ) : (
                                         <InputTextAreaMean 
-                                          id={element.label}
+                                          id={element.name}
                                           className={props.isBusy ? 'disabled' : ''}
                                           maxLength={256}
                                           onChange={(e: any) => {
@@ -651,7 +651,7 @@ export const MultisigProposalModal = (props: {
                     </Row>
 
                     {/* Data from selected instruction */}
-                    {(selectedApp && (selectedApp.name === "Custom Transaction Proposal")) ? (
+                    {(selectedApp && (selectedApp.id === MEAN_MULTISIG_PROGRAM.toBase58())) ? (
                       <>
                         {isSerializedTxValid && (
                           Object.keys(inputState).map((key, index) => (

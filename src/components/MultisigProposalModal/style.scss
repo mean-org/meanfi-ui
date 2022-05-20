@@ -124,8 +124,9 @@
 .selected-app {
   @include select-app (grayscale(0%), 1, var(--color-white) !important);
 }
-
 .paste-input {
-  line-height: 1.25 !important;
   height: 200px !important;
+}
+textarea#serializedTx {
+  line-height: 1.25 !important;
 }

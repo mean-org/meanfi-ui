@@ -1,22 +1,22 @@
 import './style.scss';
-import { IconApprove, IconArrowForward, IconCheckCircle, IconCreated, IconCross, IconMinus } from "../../../../Icons"
+// import { IconApprove, IconArrowForward, IconCheckCircle, IconCreated, IconCross, IconMinus } from "../../../../Icons"
 import { formatThousands, getTokenByMintAddress, makeDecimal, shortenAddress } from "../../../../utils/utils";
-import { Button, Col, Row, Spin } from "antd"
+// import { Button, Col, Row, Spin } from "antd"
 import { SafeInfo } from "../UI/SafeInfo";
-import { MeanMultisig, Multisig, MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
+import { MeanMultisig, MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
 import { ProgramAccounts } from '../../../../utils/accounts';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import { Connection, MemcmpFilter, PublicKey } from '@solana/web3.js';
-import { useConnectionConfig } from '../../../../contexts/connection';
+// import { useConnectionConfig } from '../../../../contexts/connection';
 import { consoleOut } from '../../../../utils/ui';
 // import { useWallet } from '../../../../contexts/wallet';
 import { ResumeItem } from '../UI/ResumeItem';
-import { program } from '@project-serum/anchor/dist/cjs/spl/token';
+// import { program } from '@project-serum/anchor/dist/cjs/spl/token';
 import { FALLBACK_COIN_IMAGE } from '../../../../constants';
-import { MultisigVault } from '../../../../models/multisig';
+// import { MultisigVault } from '../../../../models/multisig';
 import { Identicon } from '../../../../components/Identicon';
-import { BN } from 'bn.js';
-import { u64 } from '@solana/spl-token';
+// import { BN } from 'bn.js';
+// import { u64 } from '@solana/spl-token';
 import { MEAN_MULTISIG } from '../../../../utils/ids';
 import { ACCOUNT_LAYOUT } from '../../../../utils/layouts';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
@@ -38,12 +38,10 @@ export const SafeMeanInfo = (props: {
   multisigClient: MeanMultisig | null;
   selectedTab?: any;
   proposalSelected?: any;
-}) => {
-  const {
-    tokenList,
-    setLoadingMultisigDetails
-  } = useContext(AppStateContext);
 
+}) => {
+
+  const { tokenList } = useContext(AppStateContext);
   const {
     connection,
     publicKey,
@@ -56,24 +54,47 @@ export const SafeMeanInfo = (props: {
     selectedTab,
     multisigClient,
     isAssetDetails,
-    proposalSelected
+    proposalSelected,
+    onDataToSafeView
+
   } = props;
 
+  const [multisig, setMultisig] = useState<any>(selectedMultisig);
   const [multisigTxs, setMultisigTxs] = useState<MultisigTransaction[]>([]);
   const [multisigVaults, setMultisigVaults] = useState<any[]>([]);
   const [programs, setPrograms] = useState<ProgramAccounts[]>([]);
   const [loadingProposals, setLoadingProposals] = useState(true);
   const [loadingAssets, setLoadingAssets] = useState(true);
   const [loadingPrograms, setLoadingPrograms] = useState(true);
-  const [selectedProposal, setSelectedProposal] = useState<any>(proposalSelected);
+  const [selectedProposal, setSelectedProposal] = useState<MultisigTransaction | undefined>();
+
+  useEffect(() => {
+
+    if (!selectedMultisig) { return; }
+    const timeout = setTimeout(() => setMultisig(selectedMultisig));
+    return () => clearTimeout(timeout);
+
+  }, [
+    selectedMultisig
+  ]);
+
+  useEffect(() => {
+
+    if (!proposalSelected) { return; }
+    const timeout = setTimeout(() => setSelectedProposal(proposalSelected));
+    return () => clearTimeout(timeout);
+
+  }, [
+    proposalSelected
+  ]);
 
   const getProgramsByUpgradeAuthority = useCallback(async (): Promise<ProgramAccounts[]> => {
 
-    if (!connection || !selectedMultisig || !selectedMultisig.authority) { return []; }
+    if (!connection || !multisig || !multisig.authority) { return []; }
 
     const BPFLoaderUpgradeab1e = new PublicKey("BPFLoaderUpgradeab1e11111111111111111111111");
     const execDataAccountsFilter: MemcmpFilter = { 
-      memcmp: { offset: 13, bytes: selectedMultisig.authority.toBase58() } 
+      memcmp: { offset: 13, bytes: multisig.authority.toBase58() } 
     };
 
     const execDataAccounts = await connection.getProgramAccounts(
@@ -119,7 +140,7 @@ export const SafeMeanInfo = (props: {
           pubkey: execAccounts[0].pubkey,
           owner: execAccounts[0].account.owner,
           executable: execDataAccount.pubkey,
-          upgradeAuthority: selectedMultisig.authority,
+          upgradeAuthority: multisig.authority,
           size: execDataAccount.account.data.byteLength
         } as ProgramAccounts
       );
@@ -142,12 +163,12 @@ export const SafeMeanInfo = (props: {
 
   },[
     connection, 
-    selectedMultisig
+    multisig
   ]);
 
   // Get Programs
   useEffect(() => {
-    if (!connection || !selectedMultisig || !selectedMultisig.authority || !loadingPrograms) {
+    if (!connection || !multisig || !multisig.authority || !loadingPrograms) {
       return;
     }
 
@@ -166,8 +187,8 @@ export const SafeMeanInfo = (props: {
     }
   }, [
     connection,
-    selectedMultisig,
-    selectedMultisig.authority,
+    multisig,
+    multisig.authority,
     loadingPrograms,
     getProgramsByUpgradeAuthority
   ]);
@@ -205,13 +226,13 @@ export const SafeMeanInfo = (props: {
 
   // Get Multisig Vaults
   useEffect(() => {
-    if (!multisigClient || !selectedMultisig || !selectedMultisig.id) {
+    if (!multisigClient || !multisig || !multisig.id) {
       return;
     }
 
     const program = multisigClient.getProgram();
     const timeout = setTimeout(() => {
-      getMultisigVaults(program.provider.connection, selectedMultisig.id)
+      getMultisigVaults(program.provider.connection, multisig.id)
         .then(result => {
           setMultisigVaults(result);
         })
@@ -225,11 +246,11 @@ export const SafeMeanInfo = (props: {
   },[
     getMultisigVaults,
     multisigClient, 
-    selectedMultisig
+    multisig
   ]);
 
   useEffect(() => {
-    const loading = selectedMultisig ? true : false;
+    const loading = multisig ? true : false;
     const timeout = setTimeout(() => {
       setLoadingProposals(loading);
       setLoadingAssets(loading);
@@ -241,31 +262,17 @@ export const SafeMeanInfo = (props: {
     }
 
   },[
-    selectedMultisig
+    multisig
   ]);
-
-  useEffect(() => {
-    const loading = loadingProposals || loadingAssets || loadingPrograms ? true : false;
-    const timeout = setTimeout(() => setLoadingMultisigDetails(loading));
-
-    return () => {
-      clearTimeout(timeout);
-    }
-
-  }, [
-    loadingAssets, 
-    loadingPrograms, 
-    loadingProposals, 
-    setLoadingMultisigDetails
-  ])
 
   // Get Txs for the selected multisig
   useEffect(() => {
+
     if (
       !connection || 
       !publicKey || 
       !multisigClient || 
-      !selectedMultisig ||
+      !multisig ||
       !loadingProposals
     ) { 
       return;
@@ -273,31 +280,11 @@ export const SafeMeanInfo = (props: {
 
     const timeout = setTimeout(() => {
 
-      consoleOut('Triggering loadMultisigPendingTxs using setNeedRefreshTxs...', '', 'blue');
+      consoleOut('Triggering loadMultisigPendingTxs ...', '', 'blue');
 
       multisigClient
-        .getMultisigTransactions(selectedMultisig.id, publicKey)
-        .then((txs: any[]) => {
-          setMultisigTxs(txs)
-          
-          // if (!selectedProposal) {
-          //   setSelectedProposal(txs[0]);
-          // } else {
-          //   const itemList = txs.find(tx => tx.id.equals(selectedProposal.id));
-
-          //   setSelectedProposal(itemList);
-          // }
-
-          // if (selectedProposal && txs.length > 0) {
-          //   const itemList = txs.find(tx => tx.id.equals(selectedProposal.id));
-
-          //   if (itemList) {
-          //     setSelectedProposal(itemList);
-          //   }
-
-          //   console.log("itemList", itemList);
-          // }
-        })
+        .getMultisigTransactions(multisig.id, publicKey)
+        .then((txs: MultisigTransaction[]) => setMultisigTxs(txs))
         .catch((err: any) => {
           console.error("Error fetching all transactions", err);
           setMultisigTxs([]);
@@ -311,12 +298,12 @@ export const SafeMeanInfo = (props: {
     }
 
   }, [
-    publicKey,
-    selectedMultisig,
-    connection,
-    multisigClient,
-    loadingProposals,
-    selectedProposal
+    publicKey, 
+    multisig, 
+    connection, 
+    multisigClient, 
+    loadingProposals, 
+    proposalSelected
   ]);
 
   // Proposals list
@@ -327,8 +314,7 @@ export const SafeMeanInfo = (props: {
           multisigTxs.map((proposal, index) => {
             const onSelectProposal = () => {
               // Sends isSafeDetails value to the parent component "SafeView"
-              setSelectedProposal(proposal);
-              props.onDataToSafeView(proposal);
+              onDataToSafeView(proposal);
             };
 
             // Number of participants who have already approved the Tx
@@ -630,7 +616,7 @@ export const SafeMeanInfo = (props: {
     <>
       <SafeInfo
         connection={connection}
-        selectedMultisig={selectedMultisig}
+        selectedMultisig={multisig}
         multisigVaults={multisigVaults}
         onNewProposalMultisigClick={onNewProposalMultisigClick}
         onEditMultisigClick={onEditMultisigClick}
