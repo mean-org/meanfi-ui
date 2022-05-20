@@ -575,7 +575,6 @@ export const AccountsNewView = () => {
     setDtailsPanelOpen,
   ])
 
-  // TODO: It is not selecting an asset anymore but redirect instead
   const toggleHideLowBalances = useCallback((setting: boolean) => {
     if (selectedAsset && (!selectedAsset.valueInUsd || selectedAsset.valueInUsd < ACCOUNTS_LOW_BALANCE_LIMIT) && setting) {
       selectAsset(accountTokens[0]);
@@ -798,23 +797,6 @@ export const AccountsNewView = () => {
   // Data management //
   /////////////////////
 
-  /**
-   * URL scheme to redirect to /accounts page
-   * 
-   * /accounts?address={address}&cat={catId}&asset={assetId}
-   * 
-   * Navigate to /accounts with Net Worth selected
-   * /accounts?address=GFefRR6EASXvnphnJApp2PRH1wF1B5pJijKBZGFzq1x1&cat=networth
-   * Navigate to /accounts with my USDC asset selected
-   * /accounts?address=GFefRR6EASXvnphnJApp2PRH1wF1B5pJijKBZGFzq1x1&cat=user-assets&asset=USDC
-   * Navigate to /accounts with Treasuries summary selected
-   * /accounts?address=GFefRR6EASXvnphnJApp2PRH1wF1B5pJijKBZGFzq1x1&cat=other-assets&asset=msp-treasuries
-   * 
-   * cat [networth | user-assets | other-assets]
-   * asset (when cat=user-assets)  = [any token symbol]
-   * asset (when cat=other-assets) = [msp-streams | msp-treasuries | orca | solend | friktion]
-   */
-
   // Enable deep-linking - Parse and save query params as needed
   useEffect(() => {
     if (!isFirstLoad || !publicKey) { return; }
@@ -882,6 +864,7 @@ export const AccountsNewView = () => {
     address,
     publicKey,
     isFirstLoad,
+    accountAddress,
     location.search,
     location.pathname,
     setAccountAddress,
@@ -1178,6 +1161,7 @@ export const AccountsNewView = () => {
     selectedAsset,
     accountAddress,
     shouldLoadTokens,
+    selectedCategory,
     getTokenByMintAddress,
     getTokenPriceBySymbol,
     setShouldLoadTokens,

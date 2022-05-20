@@ -17,7 +17,7 @@ import { MEAN_FINANCE_DISCORD_URL, MEAN_DAO_GITHUB_ORG_URL, MEAN_DAO_GITBOOKS_UR
 import { useTranslation } from "react-i18next";
 import { LanguageSelector } from "../LanguageSelector";
 import { ReferFriendModal } from '../ReferFriendModal';
-import { isLocal } from '../../utils/ui';
+import { isProd } from '../../utils/ui';
 import { Link } from 'react-router-dom';
 import { openNotification } from '../Notifications';
 
@@ -148,17 +148,19 @@ export const AppContextMenu = () => {
           <span className="menu-item-text">{t('ui-menus.app-context-menu.help-support')}</span>
         </a>
       </Menu.Item>
-      {(isLocal() || isWhitelisted) && (
+      {(isWhitelisted) && (
         <>
           <Menu.Divider />
-          <Menu.Item key="/playground">
-            <IconCodeBlock className="mean-svg-icons" />
-            <Link to="/playground">Playground</Link>
-          </Menu.Item>
           <Menu.Item key="/staking-rewards">
             <IconCodeBlock className="mean-svg-icons" />
             <Link to="/staking-rewards">Staking rewards</Link>
           </Menu.Item>
+          {!isProd() && (
+            <Menu.Item key="/playground">
+              <IconCodeBlock className="mean-svg-icons" />
+              <Link to="/playground">Playground</Link>
+            </Menu.Item>
+          )}
         </>
       )}
     </Menu>

@@ -41,13 +41,13 @@ import {
   shortenAddress,
 } from "../../utils/utils";
 import { IconCopy, IconExternalLink, IconTrash } from "../../Icons";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { openNotification } from "../../components/Notifications";
 import { IconType } from "antd/lib/notification";
 
 const { Panel } = Collapse;
 const { Option } = Select;
-type TabOption = "first-tab" | "second-tab" | "demo-notifications" | "misc-tab";
+type TabOption = "first-tab" | "second-tab" | "demo-notifications" | "misc-tab" | undefined;
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 const SAMPLE_SIGNATURE =
@@ -110,7 +110,9 @@ const TX_TEST_RUN_VALUES: TxStatusConfig[] = [
 
 export const PlaygroundView = () => {
   const { t } = useTranslation("common");
+  const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const {
     userTokens,
     transactionStatus,
@@ -119,30 +121,10 @@ export const PlaygroundView = () => {
   const [selectedMint, setSelectedMint] = useState<UserTokenAccount | undefined>(undefined);
   const [isBusy, setIsBusy] = useState(false);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
-  const [isTransactionModalVisible, setTransactionModalVisibility] =
-    useState(false);
-  const showTransactionModal = useCallback(
-    () => setTransactionModalVisibility(true),
-    []
-  );
-  const hideTransactionModal = useCallback(
-    () => setTransactionModalVisibility(false),
-    []
-  );
-  const [currentTab, setCurrentTab] = useState<TabOption>("first-tab");
-
-  const [currentPanel, setCurrentPanel] = useState<number | undefined>(
-    undefined
-  );
-  const [txTestRunConfig, setTxTestRunConfig] =
-    useState<TxStatusConfig[]>(TX_TEST_RUN_VALUES);
+  const [currentTab, setCurrentTab] = useState<TabOption>(undefined);
+  const [currentPanel, setCurrentPanel] = useState<number | undefined>(undefined);
+  const [txTestRunConfig, setTxTestRunConfig] = useState<TxStatusConfig[]>(TX_TEST_RUN_VALUES);
   const [currentPanelItem, setCurrentPanelItem] = useState<TxStatusConfig>();
-
-  useEffect(() => {
-    if (!selectedMint) {
-      setSelectedMint(userTokens.find((t) => t.symbol === "USDC"));
-    }
-  }, [selectedMint, userTokens]);
 
   // const getTopJupiterTokensByVolume = useCallback(() => {
   //   fetch('https://cache.jup.ag/stats/month')
@@ -456,6 +438,63 @@ export const PlaygroundView = () => {
       duration: 0
     });
   };
+
+  ///////////////
+  // Callbacks //
+  ///////////////
+
+  const [isTransactionModalVisible, setTransactionModalVisibility] = useState(false);
+  const showTransactionModal = useCallback(() => setTransactionModalVisibility(true), []);
+  const hideTransactionModal = useCallback(() => setTransactionModalVisibility(false), []);
+
+  const navigateToTab = useCallback((tab: TabOption) => {
+    setSearchParams({option: tab as string});
+  }, [setSearchParams]);
+
+  /////////////////////
+  // Data management //
+  /////////////////////
+
+  // Process routes
+  useEffect(() => {
+    let optionInQuery: string | null = null;
+    // Get the option if passed-in
+    if (searchParams) {
+      optionInQuery = searchParams.get('option');
+      consoleOut('searchParams:', searchParams.toString(), 'crimson');
+      consoleOut('option:', searchParams.get('option'), 'crimson');
+    }
+    // Pre-select an option
+    switch (optionInQuery as TabOption) {
+      case "first-tab":
+        setCurrentTab("first-tab");
+        break;
+      case "second-tab":
+        setCurrentTab("second-tab");
+        break;
+      case "demo-notifications":
+        setCurrentTab("demo-notifications");
+        break;
+      case "misc-tab":
+        setCurrentTab("misc-tab");
+        break;
+      default:
+        setCurrentTab("first-tab");
+        setSearchParams({option: "first-tab"});
+        break;
+    }
+  }, [location.search, searchParams, setSearchParams]);
+
+  // Select a default mint
+  useEffect(() => {
+    if (!selectedMint) {
+      setSelectedMint(userTokens.find((t) => t.symbol === "USDC"));
+    }
+  }, [selectedMint, userTokens]);
+
+  ///////////////
+  // Rendering //
+  ///////////////
 
   const renderDemoNumberFormatting = (
     <>
@@ -897,22 +936,22 @@ export const PlaygroundView = () => {
       <div className="button-tabset-container">
         <div
           className={`tab-button ${currentTab === "first-tab" ? "active" : ""}`}
-          onClick={() => setCurrentTab("first-tab")}>
+          onClick={() => navigateToTab("first-tab")}>
           Demo 1
         </div>
         <div
           className={`tab-button ${currentTab === "second-tab" ? "active" : ""}`}
-          onClick={() => setCurrentTab("second-tab")}>
+          onClick={() => navigateToTab("second-tab")}>
           Demo 2
         </div>
         <div
           className={`tab-button ${currentTab === "demo-notifications" ? "active" : ""}`}
-          onClick={() => setCurrentTab("demo-notifications")}>
+          onClick={() => navigateToTab("demo-notifications")}>
           Demo 3
         </div>
         <div
           className={`tab-button ${currentTab === "misc-tab" ? "active" : ""}`}
-          onClick={() => setCurrentTab("misc-tab")}>
+          onClick={() => navigateToTab("misc-tab")}>
           Misc
         </div>
       </div>
