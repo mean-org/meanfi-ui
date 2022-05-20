@@ -3,7 +3,7 @@ import { useState } from "react";
 export const TabsMean = (props: {
   headerClassName?: string;
   bodyClassName?: string;
-  tabs?: any;
+  tabs: any;
   selectedTab?: any;
 }) => {
   const { headerClassName, bodyClassName, tabs, selectedTab } = props;
