@@ -777,7 +777,7 @@
 			"treasury-money-stream-title": "Treasury Funded Money Stream"
 		},
 		"back-to-my-streams-cta": "Back to Money Streams",
-		"create-new-stream-cta": "New transfer",
+		"create-new-stream-cta": "创造资金流",
 		"edit-stream": {
 			"edit-stream-tooltip": "Edit money stream",
 			"frequency-input-hint": "How often will this amount be sent?",

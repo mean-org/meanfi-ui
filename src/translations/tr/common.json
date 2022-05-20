@@ -777,7 +777,7 @@
 			"treasury-money-stream-title": "Hazineden Fonlanan Para Aktarımı"
 		},
 		"back-to-my-streams-cta": "Para Akışlarına Geri Dön",
-		"create-new-stream-cta": "Yeni Transfer",
+		"create-new-stream-cta": "Para akışı oluştur",
 		"edit-stream": {
 			"edit-stream-tooltip": "Para-aktarımını düzenle",
 			"frequency-input-hint": "Bu miktar hangi sıklıkta gönderilsin?",

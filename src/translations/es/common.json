@@ -786,7 +786,7 @@
 			"modal-title": "Add funds"
 		},
 		"back-to-my-streams-cta": "Volver a las transferencia",
-		"create-new-stream-cta": "New transfer",
+		"create-new-stream-cta": "Crear flujo de dinero",
 		"lookup-stream-cta-tooltip": "Buscar transferencia",
 		"pause-stream-confirmation": "Pausing the stream will stop streaming money from the treasury ({{treasury}}) to the beneficiary ({{beneficiary}}).",
 		"pause-stream-cta": "Pause",

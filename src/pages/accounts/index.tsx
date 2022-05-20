@@ -169,6 +169,10 @@ export const AccountsNewView = () => {
   useEffect(() => {
     if (!publicKey) { return; }
 
+    if (location.pathname.endsWith('/streams')) {
+      return;
+    }
+
     if (!address && publicKey) {
       const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${publicKey.toBase58()}/assets`;
       consoleOut('No account address, redirecting to:', url, 'orange');
@@ -1644,10 +1648,12 @@ export const AccountsNewView = () => {
       <Tooltip title={publicKey ? "See your Money Streams" : "To see your Money Streams you need to connect your wallet"}>
         <div key="streams" onClick={() => {
           if (publicKey) {
-            // setSelectedCategory("other-assets");
-            // setSelectedOtherAssetsOption("msp-streams");
-            // setSelectedAsset(undefined);
-            navigate(`${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streams`);
+            setSelectedCategory("other-assets");
+            setSelectedOtherAssetsOption("msp-streams");
+            setSelectedAsset(undefined);
+            setTimeout(() => {
+              navigate(`${ACCOUNTS_ROUTE_BASE_PATH}/streams`);
+            }, 10);
           }
         }} className={`transaction-list-row ${selectedCategory === "other-assets" && selectedOtherAssetsOption === "msp-streams" ? 'selected' : ''}`}>
           <div className="icon-cell">
@@ -2201,7 +2207,7 @@ export const AccountsNewView = () => {
         {publicKey ? (
           <div className={(canShowAccountDetails && accountAddress) ? 'interaction-area' : 'interaction-area flex-center h-75'}>
 
-            {location.pathname === `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streams` ? (
+            {location.pathname === `${ACCOUNTS_ROUTE_BASE_PATH}/streams` ? (
               <Streams />
             ) : (
               <>

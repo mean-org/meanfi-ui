@@ -776,7 +776,7 @@
 			"treasury-money-stream-title": "Flux d'argent financé par le Trésor"
 		},
 		"back-to-my-streams-cta": "Retour aux flux d'argent",
-		"create-new-stream-cta": "Nouveau transfert",
+		"create-new-stream-cta": "Créer un flux d'argent",
 		"edit-stream": {
 			"edit-stream-tooltip": "Modifier le flux d'argent",
 			"frequency-input-hint": "À quelle fréquence ce montant sera-t-il envoyé ?",

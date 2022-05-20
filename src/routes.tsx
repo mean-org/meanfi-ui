@@ -57,7 +57,6 @@ export function AppRoutes() {
                       <Route path="/accounts/:address/msigs" element={<AccountsNewView />} />
                       <Route path="/accounts/:address/msigs/:asset" element={<AccountsNewView />} />
                       {/* Streams routes (under refactor) */}
-                      <Route path="/accounts/:address/streams" element={<AccountsNewView />} />
                       <Route path="/accounts/streams" element={<AccountsNewView />} />
                       {/* Exchange */}
                       <Route path="/exchange" element={<SwapView />} />

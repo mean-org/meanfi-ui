@@ -5561,7 +5561,7 @@ export const Streams = () => {
         {/* Left / top panel*/}
         <div className="meanfi-two-panel-left">
           <div className="meanfi-panel-heading">
-            {location.pathname === `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/streams` && (
+            {location.pathname === `${ACCOUNTS_ROUTE_BASE_PATH}/streams` && (
               <div className="back-button">
                 <span className="icon-button-container">
                   <Tooltip placement="bottom" title={t('assets.back-to-assets-cta')}>

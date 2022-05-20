@@ -780,7 +780,7 @@
 			"treasury-money-stream-title": "Kho bạc đã cấp tiền cho Money Stream"
 		},
 		"back-to-my-streams-cta": "Quay về danh sách Money Streams",
-		"create-new-stream-cta": "Chuyển khoản mới",
+		"create-new-stream-cta": "Tạo dòng tiền",
 		"lookup-stream-cta-tooltip": "Tra cứu một stream",
 		"pause-stream-confirmation": "Việc tạm dừng stream sẽ làm dừng dòng tiền chạy từ kho bạc ({{treasury}}) tới người thụ hưởng ({{beneficiary}}).",
 		"pause-stream-cta": "Tạm dừng",

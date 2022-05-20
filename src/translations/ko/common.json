@@ -780,7 +780,7 @@
 			"treasury-money-stream-title": "Treasury Funded Money Stream"
 		},
 		"back-to-my-streams-cta": "머니스트림으로 돌아가기",
-		"create-new-stream-cta": "새로운 거래",
+		"create-new-stream-cta": "자금 흐름 만들기",
 		"edit-stream": {
 			"edit-stream-tooltip": "Edit money stream",
 			"frequency-input-hint": "How often will this amount be sent?",
