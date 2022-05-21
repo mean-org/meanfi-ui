@@ -21,13 +21,11 @@ import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume }
 import { ProgramAccounts } from "../../../../utils/accounts";
 import { customLogger } from "../../../..";
 import { TabsMean } from '../../../../components/TabsMean';
-import { AnchorProvider, Program, Idl, SplToken } from '@project-serum/anchor';
+import { AnchorProvider, Program } from '@project-serum/anchor';
 import { NATIVE_SOL } from '../../../../utils/tokens';
 import { CopyOutlined } from '@ant-design/icons';
 import { CopyExtLinkGroup } from '../../../../components/CopyExtLinkGroup';
 import moment from 'moment';
-import { decodeIdlAccount, idlAddress } from '@project-serum/anchor/dist/cjs/idl';
-import { IDL } from '@project-serum/anchor/dist/cjs/spl/token';
 import ReactJson from 'react-json-view'
 
 export const ProgramDetailsView = (props: {

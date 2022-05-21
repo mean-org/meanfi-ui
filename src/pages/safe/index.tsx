@@ -91,11 +91,9 @@ import { MultisigCreateAssetModal } from '../../components/MultisigCreateAssetMo
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const SafeView = () => {
-  const navigate = useNavigate();
   const connectionConfig = useConnectionConfig();
   const { publicKey, connected, wallet } = useWallet();
   const {
-    theme,
     isWhitelisted,
     detailsPanelOpen,
     transactionStatus,

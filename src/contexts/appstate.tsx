@@ -47,6 +47,7 @@ import moment from "moment";
 import { openNotification } from "../components/Notifications";
 import { PerformanceCounter } from "../utils/perf-counter";
 import { TokenPrice } from "../models/token";
+import { ProgramAccounts } from "../utils/accounts";
 
 const pricesOldPerformanceCounter = new PerformanceCounter();
 const pricesNewPerformanceCounter = new PerformanceCounter();
@@ -92,6 +93,7 @@ interface AppStateConfig {
   streamListv1: StreamInfo[] | undefined;
   streamListv2: Stream[] | undefined;
   streamList: Array<Stream | StreamInfo> | undefined;
+  programs: ProgramAccounts[];
   selectedStream: Stream | StreamInfo | undefined;
   streamDetail: Stream | StreamInfo | undefined;
   activeStream: StreamInfo | Stream | undefined;
@@ -165,6 +167,7 @@ interface AppStateConfig {
   setPreviousWalletConnectState: (state: boolean) => void;
   setLoadingStreams: (state: boolean) => void;
   setStreamList: (list: Array<StreamInfo | Stream> | undefined) => void;
+  setPrograms: (list: Array<ProgramAccounts>) => void;
   setSelectedStream: (stream: Stream | StreamInfo | undefined) => void;
   setStreamDetail: (stream: Stream | StreamInfo | undefined) => void;
   setDeletedStream: (id: string) => void,
@@ -234,6 +237,7 @@ const contextDefaultValues: AppStateConfig = {
   streamListv1: undefined,
   streamListv2: undefined,
   streamList: undefined,
+  programs: [],
   selectedStream: undefined,
   streamDetail: undefined,
   activeStream: undefined,
@@ -307,6 +311,7 @@ const contextDefaultValues: AppStateConfig = {
   setPreviousWalletConnectState: () => {},
   setLoadingStreams: () => {},
   setStreamList: () => {},
+  setPrograms: () => {},
   setSelectedStream: () => {},
   setStreamDetail: () => {},
   setDeletedStream: () => {},
@@ -393,6 +398,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [streamListv1, setStreamListv1] = useState<StreamInfo[] | undefined>();
   const [streamListv2, setStreamListv2] = useState<Stream[] | undefined>();
   const [streamList, setStreamList] = useState<Array<StreamInfo | Stream> | undefined>();
+  const [programs, setPrograms] = useState<ProgramAccounts[]>([]);
   const [selectedStream, updateSelectedStream] = useState<Stream | StreamInfo | undefined>();
   const [streamDetail, updateStreamDetail] = useState<Stream | StreamInfo | undefined>();
   const [activeStream, setActiveStream] = useState<Stream | StreamInfo | undefined>();
@@ -1456,6 +1462,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         streamListv1,
         streamListv2,
         streamList,
+        programs,
         selectedStream,
         streamDetail,
         activeStream,
@@ -1525,6 +1532,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         setPreviousWalletConnectState,
         setLoadingStreams,
         setStreamList,
+        setPrograms,
         setSelectedStream,
         setStreamDetail,
         setDeletedStream,
