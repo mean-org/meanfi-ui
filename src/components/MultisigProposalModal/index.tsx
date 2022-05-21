@@ -26,8 +26,16 @@ import { openNotification } from '../Notifications';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
-const expires = [
-  "No expires", "24 hours", "48 hours", "72 hours", "7 days"
+// const expires = [
+//   "No expires", "24 hours", "48 hours", "72 hours", "7 days"
+// ];
+
+const expires: { label: string, value: number }[] = [
+  { label: "No expires", value: 0 },
+  { label: "24 hours", value: 84_600 },
+  { label: "48 hours", value: 172_800 },
+  { label: "72 hours", value: 257_400 },
+  { label: "7 days", value: 592_200 },
 ];
 
 export const MultisigProposalModal = (props: {
@@ -136,7 +144,7 @@ export const MultisigProposalModal = (props: {
       appId: selectedApp.id,
       title: proposalTitleValue,
       description: proposalDescriptionValue,
-      expires: proposalExpiresValue,
+      expires: proposalExpiresValue.value,
       config: selectedAppConfig,
       instruction: selectedUiIx
     });
@@ -414,9 +422,16 @@ export const MultisigProposalModal = (props: {
                           <SelectMean
                             className={`mb-0 ${props.isBusy ? 'disabled' : ''}`}
                             onChange={onProposalExpiresValueChange}
-                            defaultValue={expires[0]}
-                            values={expires}
-                            value={proposalExpiresValue}
+                            // placeholder={expires[0].label}
+                            values={expires.map((e: any) => {
+                              return { key: e.value, label: e.label, value: e.value }
+                            })}
+                            labelInValue={true}
+                            value={{
+                              key: proposalExpiresValue.value,
+                              value: proposalExpiresValue.value,
+                              label: proposalExpiresValue.label
+                            }}
                           />
                         </div>
                       </Col>
@@ -669,7 +684,7 @@ export const MultisigProposalModal = (props: {
                           ) : (
                             <span>{t('multisig.proposal-modal.does-not-expire')}</span>
                           )} */}
-                          <span>{proposalExpiresValue}</span>
+                          <span>{proposalExpiresValue.label}</span>
                         </Col>
                       </Row>
                     {/* )} */}
