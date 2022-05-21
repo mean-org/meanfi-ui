@@ -1662,11 +1662,7 @@ export const TreasuryStreamCreateModal = (props: {
                           </div>
                           <div className="right flex-column">
                             <div className="rate">
-                              {selectedToken
-                                ? getTokenAmountAndSymbolByTokenAddress(parseFloat(paymentRateAmount), selectedToken.address)
-                                : '-'
-                              }
-                              {getIntervalFromSeconds(getRateIntervalInSeconds(paymentRateFrequency), true, t)}
+                              {getPaymentRateAmount()}
                             </div>
                             <div className="inner-label mt-0">{paymentStartDate}</div>
                           </div>
@@ -1718,11 +1714,7 @@ export const TreasuryStreamCreateModal = (props: {
                             </div>
                             <div className="right flex-column">
                               <div className="rate">
-                                {selectedToken
-                                  ? getTokenAmountAndSymbolByTokenAddress(parseFloat(paymentRateAmount), selectedToken.address)
-                                  : '-'
-                                }
-                                {getIntervalFromSeconds(getRateIntervalInSeconds(paymentRateFrequency), true, t)}
+                                {getPaymentRateAmount()}
                               </div>
                               <div className="inner-label mt-0">{paymentStartDate}</div>
                             </div>
@@ -2150,7 +2142,8 @@ export const TreasuryStreamCreateModal = (props: {
             )
           )}
           {(treasuryOption && treasuryOption.type === TreasuryType.Open) && (isBusy
-            ? t('treasuries.treasury-streams.create-stream-main-cta-busy')
+            // ? t('treasuries.treasury-streams.create-stream-main-cta-busy')
+            ? t('streams.create-new-stream-cta-busy')
             : getTransactionStartButtonLabel()
           )}
 

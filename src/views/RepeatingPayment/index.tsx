@@ -540,6 +540,20 @@ export const RepeatingPayment = (props: {
     return parseFloat(fromCoinAmount) * effectiveRate;
   }, [effectiveRate, fromCoinAmount]);
 
+  const getPaymentRateAmount = useCallback(() => {
+
+    let outStr = selectedToken
+      ? getTokenAmountAndSymbolByTokenAddress(
+          parseFloat(paymentRateAmount),
+          selectedToken.address,
+          false
+        )
+      : '-'
+    outStr += getIntervalFromSeconds(getRateIntervalInSeconds(paymentRateFrequency), true, t)
+
+    return outStr;
+  }, [paymentRateAmount, paymentRateFrequency, selectedToken, t]);
+
   // Hook on wallet connect/disconnect
   useEffect(() => {
 
@@ -1070,7 +1084,7 @@ export const RepeatingPayment = (props: {
               loadingTitle: "Confirming transaction",
               loadingMessage: `Send ${getPaymentRateLabel(paymentRateFrequency, paymentRateAmount)}`,
               completedTitle: "Transaction confirmed",
-              completedMessage: `Successfuly sent ${getPaymentRateLabel(paymentRateFrequency, paymentRateAmount)}`
+              completedMessage: `Stream to send ${getPaymentRateLabel(paymentRateFrequency, paymentRateAmount)} has been created.`
             });
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransactionSuccess,
@@ -1135,6 +1149,12 @@ export const RepeatingPayment = (props: {
   ///////////////////
   //   Rendering   //
   ///////////////////
+
+  // const renderTextWithBreaks = (text: string) => {
+  //   return (
+  //       <div dangerouslySetInnerHTML={{ __html: text }}></div>
+  //   );
+  // }
 
   const paymentRateOptionsMenu = (
     <Menu>
@@ -1454,18 +1474,7 @@ export const RepeatingPayment = (props: {
                   <div className="vertical-bar"></div>
                 </div>
                 <div className="right flex-column">
-                  <div className="rate">
-                    {selectedToken
-                      ? getTokenAmountAndSymbolByTokenAddress(
-                          parseFloat(paymentRateAmount),
-                          selectedToken.address,
-                          false,
-                          selectedList
-                        )
-                      : '-'
-                    }
-                    {getIntervalFromSeconds(getRateIntervalInSeconds(paymentRateFrequency), true, t)}
-                  </div>
+                  <div className="rate">{getPaymentRateAmount()}</div>
                   <div className="inner-label mt-0">{paymentStartDate}</div>
                 </div>
               </div>
@@ -1474,20 +1483,14 @@ export const RepeatingPayment = (props: {
         )}
 
         <div className="mb-3 text-center">
-          <div>{t('transactions.transaction-info.add-funds-repeating-payment-advice', {
-            tokenSymbol: selectedToken?.symbol
-          })}</div>
           <div>
-            {selectedToken
-              ? getTokenAmountAndSymbolByTokenAddress(
-                  parseFloat(paymentRateAmount),
-                  selectedToken.address,
-                  false,
-                  selectedList
-                )
-              : '-'
+            {
+              t(
+                'transactions.transaction-info.add-funds-repeating-payment-advice', {
+                  tokenSymbol: selectedToken?.symbol,
+                  rateInterval: getPaymentRateAmount()
+              })
             }
-            {getIntervalFromSeconds(getRateIntervalInSeconds(paymentRateFrequency), true, t)}
           </div>
         </div>
 
@@ -1590,7 +1593,7 @@ export const RepeatingPayment = (props: {
             <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
           )}
           {isBusy
-            ? t('transactions.status.cta-start-transfer-busy')
+            ? t('streams.create-new-stream-cta-busy')
             : getTransactionStartButtonLabel()
           }
         </Button>
