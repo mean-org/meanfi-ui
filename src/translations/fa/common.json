@@ -777,6 +777,7 @@
 		},
 		"back-to-my-streams-cta": "بازگشت به Money Streams",
 		"create-new-stream-cta": "جریان پول ایجاد کنید",
+		"create-new-stream-cta-busy": "Creating stream",
 		"edit-stream": {
 			"edit-stream-tooltip": "money stream را ویرایش کنید",
 			"frequency-input-hint": "این مبلغ چند بار ارسال خواهد شد؟",
@@ -1010,7 +1011,7 @@
 		},
 		"transaction-info": {
 			"add-funds-payroll-advice": "برای شروع یک لیست حقوق و دستمزد باید بودجه اضافه کنید",
-			"add-funds-repeating-payment-advice": "How many {{tokenSymbol}} tokens do you want to send at",
+			"add-funds-repeating-payment-advice": "How many {{tokenSymbol}} tokens do you want to send at\n{{rateInterval}}?",
 			"beneficiary-receives": "ذینفع دریافت می کند",
 			"exchange-on": "مبادله بر",
 			"hla-transaction-fee": "هزینه جمع آوری",

@@ -781,6 +781,7 @@
 		},
 		"back-to-my-streams-cta": "Quay về danh sách Money Streams",
 		"create-new-stream-cta": "Tạo dòng tiền",
+		"create-new-stream-cta-busy": "Creating stream",
 		"lookup-stream-cta-tooltip": "Tra cứu một stream",
 		"pause-stream-confirmation": "Việc tạm dừng stream sẽ làm dừng dòng tiền chạy từ kho bạc ({{treasury}}) tới người thụ hưởng ({{beneficiary}}).",
 		"pause-stream-cta": "Tạm dừng",
@@ -1014,7 +1015,7 @@
 		},
 		"transaction-info": {
 			"add-funds-payroll-advice": "Bạn phải nạp tiền để bắt đầu tính lương",
-			"add-funds-repeating-payment-advice": "How many {{tokenSymbol}} tokens do you want to send at",
+			"add-funds-repeating-payment-advice": "How many {{tokenSymbol}} tokens do you want to send at\n{{rateInterval}}?",
 			"beneficiary-receives": "Người thụ hưởng nhận được",
 			"exchange-on": "Giao dịch trên",
 			"hla-transaction-fee": "Phí tổng hợp",
