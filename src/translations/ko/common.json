@@ -1224,7 +1224,7 @@
 			"fee-payed-by-treasurer": "수익자 대신 이 스트림에 대한 수수료를 지불하고 싶습니다.",
 			"loading-streams": "스트림 불러오기",
 			"message-warning": "The list of recipients you submitted included your own wallet address. This is not possible and this address has been removed from the imported list.",
-			"minimum-allocation-advice": "How many {{tokenSymbol}} tokens do you want to send at {{rateInterval}}? You are able to set an ammount up to the unallocated balance in this streaming account.",
+			"minimum-allocation-advice": "How many {{tokenSymbol}} tokens do you want to send at {{rateInterval}}? You are able to set an amount up to the unallocated balance in this streaming account.",
 			"multiple-address-list": "Multiple address list",
 			"multiple-address-question-mark-tooltip": "Please provide a csv text file with one address per line in the following format: \n MEMO or STREAM NAME, WALLET ADDRESS. \n\n Here is an example of how it should look: \n Epoch 1, FrdFf3EqcGuytTweLvoELBt29WrAGVYjrh4585A2bTAZ \n\n Before you submit the file, please make sure the recipient addresses are correct and do not belong to an exchange.",
 			"no-streams": "This streaming account has no active streams",

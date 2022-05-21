@@ -1234,7 +1234,7 @@
 			"fee-payed-by-treasurer": "Je veux payer des frais pour ce flux au lieu du bénéficiaire",
 			"loading-streams": "Chargement des flux",
 			"message-warning": "La liste des destinataires que vous avez soumise comprenait votre propre adresse de portefeuille. Ce n'est pas possible et cette adresse a été supprimée de la liste importée.",
-			"minimum-allocation-advice": "How many {{tokenSymbol}} tokens do you want to send at {{rateInterval}}? You are able to set an ammount up to the unallocated balance in this streaming account.",
+			"minimum-allocation-advice": "How many {{tokenSymbol}} tokens do you want to send at {{rateInterval}}? You are able to set an amount up to the unallocated balance in this streaming account.",
 			"multiple-address-list": "Liste d'adresses multiples",
 			"multiple-address-question-mark-tooltip": "Veuillez fournir un fichier texte CSV avec une adresse par ligne au format suivant :",
 			"no-streams": "This streaming account has no active streams",
