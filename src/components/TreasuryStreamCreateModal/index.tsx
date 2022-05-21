@@ -1485,9 +1485,9 @@ export const TreasuryStreamCreateModal = (props: {
             </>
           )}
 
-          <Row wrap={false}>
-            <Col flex="1 1 160px" style={{ paddingRight: 8 }}>
-              <div className="well">
+          <div className="two-column-form-layout col60x40 mb-3">
+            <div className="left">
+              <div className="well mb-1">
                 <div className="flex-fixed-left">
                   <div className="left">
                     <span className="add-on">
@@ -1558,9 +1558,9 @@ export const TreasuryStreamCreateModal = (props: {
                   </div>
                 </div>
               </div>
-            </Col>
-            <Col flex="0 1 160px" style={{ paddingLeft: 8 }}>
-              <div className="well">
+            </div>
+            <div className="right">
+              <div className="well mb-0">
                 <div className="flex-fixed-left">
                   <div className="left">
                     <Dropdown
@@ -1578,8 +1578,8 @@ export const TreasuryStreamCreateModal = (props: {
                   </div>
                 </div>
               </div>
-            </Col>
-          </Row>
+            </div>
+          </div>
 
           {/* Send date */}
           {(treasuryOption && treasuryOption.type === TreasuryType.Open) && (
