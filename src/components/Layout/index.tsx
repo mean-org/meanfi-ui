@@ -47,7 +47,6 @@ export const AppLayout = React.memo((props: any) => {
     setShouldLoadTokens,
     refreshTokenBalance,
     setDtailsPanelOpen,
-    setAccountAddress,
     setDiagnosisInfo,
     setSelectedAsset,
     setStreamList,
@@ -58,7 +57,7 @@ export const AppLayout = React.memo((props: any) => {
   const { t, i18n } = useTranslation("common");
   const { isOnline, responseTime } = useOnlineStatus();
   const connectionConfig = useConnectionConfig();
-  const { wallet, provider, connected, connecting, autoConnect, publicKey, select } = useWallet();
+  const { wallet, provider, connected, connecting, publicKey, select } = useWallet();
   const [previousChain, setChain] = useState("");
   const [gaInitialized, setGaInitialized] = useState(false);
   const [referralAddress, setReferralAddress] = useLocalStorage('pendingReferral', '');
@@ -307,9 +306,6 @@ export const AppLayout = React.memo((props: any) => {
               .then(result => consoleOut('reportConnectedAccount hit'))
               .catch(error => console.error(error));
           }
-          // Let the AppState know which wallet address is connected and save it
-          setAccountAddress(walletAddress);
-          setSelectedAsset(undefined);
         }
         refreshTokenBalance();
         setPreviousWalletConnectState(true);
@@ -349,7 +345,6 @@ export const AppLayout = React.memo((props: any) => {
     clearConfirmationHistory,
     refreshTokenBalance,
     setReferralAddress,
-    setAccountAddress,
     setSelectedAsset,
     setStreamList,
     t,
