@@ -9,7 +9,7 @@ import { formatThousands } from '../../utils/utils';
 
 export const JupiterExchangeInput = (props: {
   token: TokenInfo | undefined;
-  tokenBalance: number;
+  tokenBalance?: number;
   tokenAmount: string;
   onSelectToken: any;
   onInputChange?: any;
@@ -40,15 +40,13 @@ export const JupiterExchangeInput = (props: {
                     {publicKey ? (
                         <>
                             <span className="simplelink" onClick={props.onBalanceClick}>
-                            {`${
-                                props.token && props.tokenBalance
-                                ? formatThousands(
+                            {props.token && props.tokenBalance !== undefined &&
+                                formatThousands(
                                     props.tokenBalance,
                                     props.token.decimals,
                                     props.token.decimals
                                 )
-                                : "0"
-                            }`}
+                            }
                             </span>
                             {props.tokenBalance && (
                                 <span className={`balance-amount ${loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}`} onClick={() => refreshPrices()}>

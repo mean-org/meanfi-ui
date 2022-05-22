@@ -544,12 +544,20 @@ export const AccountsNewView = () => {
     setDtailsPanelOpen,
   ])
 
+  const shouldHideAsset = useCallback((asset: UserTokenAccount) => {
+    // “hide small balances” = “hide Tokens with an actual price quote and with USD-equivalent balance < $0.01”
+    const tokenPrice = getTokenPriceBySymbol(asset.symbol);
+    return tokenPrice > 0 && (!asset.valueInUsd || asset.valueInUsd < ACCOUNTS_LOW_BALANCE_LIMIT)
+      ? true
+      : false;
+  }, [getTokenPriceBySymbol]);
+
   const toggleHideLowBalances = useCallback((setting: boolean) => {
-    if (selectedAsset && (!selectedAsset.valueInUsd || selectedAsset.valueInUsd < ACCOUNTS_LOW_BALANCE_LIMIT) && setting) {
+    if (selectedAsset && shouldHideAsset(selectedAsset) && setting) {
       selectAsset(accountTokens[0]);
     }
     setHideLowBalances(setting);
-  }, [accountTokens, selectAsset, selectedAsset, setHideLowBalances]);
+  }, [accountTokens, selectAsset, selectedAsset, setHideLowBalances, shouldHideAsset]);
 
   const recordTxConfirmation = useCallback((item: TxConfirmationInfo, success = true) => {
     let event: any;
@@ -1076,8 +1084,10 @@ export const AccountsNewView = () => {
                     pubAddress: item.publicAddress ? shortenAddress(item.publicAddress, 6) : null,
                     mintAddress: shortenAddress(item.address, 6),
                     symbol: item.symbol,
-                    balance: item.balance,
-                    valueInUSD: item.valueInUsd
+                    decimals: item.decimals,
+                    balance: formatThousands(item.balance || 0, item.decimals, item.decimals),
+                    price: getTokenPriceBySymbol(item.symbol),
+                    valueInUSD: toUsCurrency(item.valueInUsd)
                   })
                 );
                 console.table(tokenTable);
@@ -1707,7 +1717,7 @@ export const AccountsNewView = () => {
       <div key={`${index}`} onClick={onTokenAccountClick}
           className={`transaction-list-row ${isSelectedToken() && selectedCategory === "user-account"
             ? 'selected'
-            : hideLowBalances && (asset.valueInUsd || 0) < ACCOUNTS_LOW_BALANCE_LIMIT
+            : hideLowBalances && shouldHideAsset(asset)
               ? 'hidden'
               : ''
           }`
