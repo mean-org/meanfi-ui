@@ -5,11 +5,11 @@ import { AppStateContext } from '../../contexts/appstate';
 import { TokenDisplay } from '../TokenDisplay';
 import { useWallet } from '../../contexts/wallet';
 import { toUsCurrency } from '../../utils/ui';
-import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
+import { formatThousands } from '../../utils/utils';
 
 export const JupiterExchangeInput = (props: {
   token: TokenInfo | undefined;
-  tokenBalance: string;
+  tokenBalance: number;
   tokenAmount: string;
   onSelectToken: any;
   onInputChange?: any;
@@ -42,10 +42,10 @@ export const JupiterExchangeInput = (props: {
                             <span className="simplelink" onClick={props.onBalanceClick}>
                             {`${
                                 props.token && props.tokenBalance
-                                ? getTokenAmountAndSymbolByTokenAddress(
-                                    parseFloat(props.tokenBalance),
-                                    props.token.address,
-                                    true
+                                ? formatThousands(
+                                    props.tokenBalance,
+                                    props.token.decimals,
+                                    props.token.decimals
                                 )
                                 : "0"
                             }`}
@@ -55,7 +55,7 @@ export const JupiterExchangeInput = (props: {
                                     {`(~${
                                     props.token && props.tokenBalance
                                         ? toUsCurrency(
-                                            parseFloat(props.tokenBalance) * getTokenPriceBySymbol(props.token.symbol)
+                                            props.tokenBalance * getTokenPriceBySymbol(props.token.symbol)
                                         )
                                         : "$0.00"
                                     })`}
@@ -71,7 +71,7 @@ export const JupiterExchangeInput = (props: {
                         <>
                             <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
                             ~{props.token && props.tokenBalance
-                                ? toUsCurrency(parseFloat(props.tokenBalance) * getTokenPriceBySymbol(props.token.symbol))
+                                ? toUsCurrency(props.tokenBalance * getTokenPriceBySymbol(props.token.symbol))
                                 : "$0.00"
                             }
                             </span>
