@@ -1087,10 +1087,11 @@ export const AccountsNewView = () => {
                 const tokenTable: any[] = [];
                 sortedList.forEach((item: UserTokenAccount, index: number) => tokenTable.push({
                     pubAddress: item.publicAddress ? shortenAddress(item.publicAddress, 6) : null,
-                    mintAddress: shortenAddress(item.address, 6),
+                    mintAddress: shortenAddress(item.address),
                     symbol: item.symbol,
+                    decimals: item.decimals,
                     balance: item.balance,
-                    valueInUSD: item.valueInUsd
+                    valueInUSD: toUsCurrency(item.valueInUsd)
                   })
                 );
                 console.table(tokenTable);
