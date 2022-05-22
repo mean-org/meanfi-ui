@@ -1,6 +1,6 @@
 {
   "name": "meanfi-ui",
-  "version": "1.14.7",
+  "version": "1.14.8",
   "private": true,
   "browserslist": [
     ">0.2%",
