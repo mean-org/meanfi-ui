@@ -1650,12 +1650,8 @@ export const JupiterExchange = (props: {
                             userBalances &&
                                 mintList[fromMint]
                                 ? (mintList[fromMint] as TokenInfo).address === WRAPPED_SOL_MINT_ADDRESS
-                                    ? nativeBalance > 0
-                                        ? nativeBalance.toFixed(mintList[fromMint].decimals)
-                                        : ''
-                                    : parseFloat(userBalances[fromMint]) > 0
-                                        ? parseFloat(userBalances[fromMint]).toFixed(mintList[fromMint].decimals)
-                                        : ''
+                                    ? nativeBalance
+                                    : userBalances[fromMint]
                                 : ''
                         }
                         tokenAmount={fromAmount}
@@ -1770,12 +1766,8 @@ export const JupiterExchange = (props: {
                                 userBalances &&
                                 mintList[toMint]
                                 ? (mintList[toMint] as TokenInfo).address === WRAPPED_SOL_MINT_ADDRESS
-                                    ? nativeBalance > 0
-                                        ? nativeBalance.toFixed(mintList[toMint].decimals)
-                                        : ''
-                                    : parseFloat(userBalances[toMint]) > 0
-                                        ? parseFloat(userBalances[toMint]).toFixed(mintList[toMint].decimals)
-                                        : ''
+                                    ? nativeBalance
+                                    : userBalances[toMint]
                                 : ''
                         }
                         toTokenAmount={isFromSol()
