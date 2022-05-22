@@ -546,11 +546,13 @@ export const AccountsNewView = () => {
 
   const shouldHideAsset = useCallback((asset: UserTokenAccount) => {
     // “hide small balances” = “hide Tokens with an actual price quote and with USD-equivalent balance < $0.01”
-    const tokenPrice = getTokenPriceBySymbol(asset.symbol);
+    // const tokenPrice = getTokenPriceBySymbol(asset.symbol);
+    const priceByAddress = getTokenPriceByAddress(asset.address);
+    const tokenPrice = priceByAddress || getTokenPriceBySymbol(asset.symbol);
     return tokenPrice > 0 && (!asset.valueInUsd || asset.valueInUsd < ACCOUNTS_LOW_BALANCE_LIMIT)
       ? true
       : false;
-  }, [getTokenPriceBySymbol]);
+  }, [getTokenPriceByAddress, getTokenPriceBySymbol]);
 
   const toggleHideLowBalances = useCallback((setting: boolean) => {
     if (selectedAsset && shouldHideAsset(selectedAsset) && setting) {
