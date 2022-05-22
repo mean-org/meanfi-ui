@@ -336,6 +336,12 @@ export const AccountsNewView = () => {
     }, 100);
   }
 
+  const isInspectedAccountTheConnectedWallet = useCallback(() => {
+    return accountAddress && publicKey && publicKey.toBase58() === accountAddress
+      ? true
+      : false
+  }, [accountAddress, publicKey]);
+
   const isSelectedAssetNativeAccount = useCallback((asset?: UserTokenAccount) => {
     if (asset) {
       return accountAddress && accountAddress === asset.publicAddress ? true : false;
@@ -1903,11 +1909,11 @@ export const AccountsNewView = () => {
         <span className="menu-item-text">Refresh asset</span>
       </Menu.Item>
       {isSelectedAssetNativeAccount() ? (
-        <Menu.Item key="2" onClick={showWrapSolModal}>
+        <Menu.Item key="2" onClick={showWrapSolModal} disabled={!isInspectedAccountTheConnectedWallet()}>
           <span className="menu-item-text">Wrap SOL</span>
         </Menu.Item>
       ) : (
-        <Menu.Item key="3" onClick={showCloseAssetModal}>
+        <Menu.Item key="3" onClick={showCloseAssetModal} disabled={!isInspectedAccountTheConnectedWallet()}>
           <span className="menu-item-text">Close account</span>
         </Menu.Item>
       )}
@@ -1935,7 +1941,7 @@ export const AccountsNewView = () => {
           )}
         </>
       )}
-      {canActivateMergeTokenAccounts() && (
+      {isInspectedAccountTheConnectedWallet() && canActivateMergeTokenAccounts() && (
         <Menu.Item key="13" onClick={() => {
           if (selectedAsset && tokenAccountGroups) {
             const acc = tokenAccountGroups.has(selectedAsset.address);
@@ -1964,13 +1970,19 @@ export const AccountsNewView = () => {
         <Space className="left" size="middle" wrap>
           {selectedAsset.name !== 'Custom account' ? (
             <>
-              <Tooltip placement="bottom" title={isSelectedAssetNativeAccount() ? "SOL is not available for money streams, please use wSOL instead." : ""}>
+              <Tooltip placement="bottom" title={
+                !isInspectedAccountTheConnectedWallet()
+                  ? "You can only send assets from your connected account"
+                  : isSelectedAssetNativeAccount()
+                    ? "SOL is not available for money streams, please use wSOL instead."
+                    : ""
+                }>
                 <Button
                   type="default"
                   shape="round"
                   size="small"
                   className="thin-stroke"
-                  disabled={isSelectedAssetNativeAccount()}
+                  disabled={!isInspectedAccountTheConnectedWallet() || (isInspectedAccountTheConnectedWallet() && isSelectedAssetNativeAccount())}
                   onClick={onSendAsset}>
                   <span>Send</span>
                 </Button>
@@ -1983,7 +1995,7 @@ export const AccountsNewView = () => {
                 onClick={showReceiveSplOrSolModal}>
                 <span>Receive</span>
               </Button>
-              {!isSelectedAssetWsol() && (
+              {(!isSelectedAssetWsol() && isInspectedAccountTheConnectedWallet()) && (
                 <Button
                   type="default"
                   shape="round"
@@ -2003,7 +2015,7 @@ export const AccountsNewView = () => {
                   <span>Invest</span>
                 </Button>
               )}
-              {isSelectedAssetWsol() && (
+              {isInspectedAccountTheConnectedWallet() && isSelectedAssetWsol() && (
                 <Button
                   type="default"
                   shape="round"
@@ -2275,15 +2287,22 @@ export const AccountsNewView = () => {
                         {/* Bottom CTAs */}
                         <div className="bottom-ctas">
                           <div className="primary-action">
-                            <Button
-                              block
-                              className="flex-center"
-                              type="primary"
-                              shape="round"
-                              onClick={showInitAtaModal}>
-                              <IconAdd className="mean-svg-icons" />
-                              <span className="ml-1">Add asset</span>
-                            </Button>
+                            <Tooltip placement="bottom" title={
+                              !isInspectedAccountTheConnectedWallet()
+                                ? "You can only add assets to your connected account"
+                                : ""
+                              }>
+                              <Button
+                                block
+                                className="flex-center"
+                                type="primary"
+                                shape="round"
+                                disabled={!isInspectedAccountTheConnectedWallet()}
+                                onClick={showInitAtaModal}>
+                                <IconAdd className="mean-svg-icons" />
+                                <span className="ml-1">Add asset</span>
+                              </Button>
+                            </Tooltip>
                           </div>
                           <Dropdown className="options-dropdown"
                             overlay={assetListOptions}
