@@ -203,7 +203,7 @@ export const MultisigTransferTokensModal = (props: {
 
         {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
           <>
-            {/* Amount to transfer */}
+            {/* Amount to send */}
             <div className="mb-3">
               <div className="form-label">{t('multisig.transfer-tokens.transfer-amount-label')}</div>
                 <div className={`well ${props.isBusy ? 'disabled' : ''}`}>

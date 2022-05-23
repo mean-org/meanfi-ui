@@ -322,11 +322,11 @@ export const SafeMeanInfo = (props: {
     selectedMultisig
   ]);
 
-  consoleOut("========================================")
-  consoleOut("multisig", multisig.label);
-  consoleOut("loading programs", loadingPrograms);
-  consoleOut("programs", programs);
-  consoleOut("========================================")
+  // consoleOut("========================================")
+  // consoleOut("multisig", multisig.label);
+  // consoleOut("loading programs", loadingPrograms);
+  // consoleOut("programs", programs);
+  // consoleOut("========================================")
 
   // Get Txs for the selected multisig
   useEffect(() => {

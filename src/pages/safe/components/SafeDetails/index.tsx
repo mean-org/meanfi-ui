@@ -1,10 +1,9 @@
 import './style.scss';
-import { Button, Col, Collapse, Row } from "antd"
+import { Button, Col, Row } from "antd"
 import { IconArrowBack, IconUser, IconThumbsUp, IconThumbsDown, IconExternalLink } from "../../../../Icons"
 
 import { shortenAddress } from '../../../../utils/utils';
 import { TabsMean } from '../../../../components/TabsMean';
-// import { getOperationName } from '../../../../utils/multisig-helpers';
 import { useTranslation } from 'react-i18next';
 import { openNotification } from '../../../../components/Notifications';
 import { useCallback, useContext, useEffect, useState } from 'react';
@@ -12,7 +11,6 @@ import { copyText, isDev, isLocal } from '../../../../utils/ui';
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../../../constants';
 import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
 import { ResumeItem } from '../UI/ResumeItem';
-// import { PublicKey } from '@solana/web3.js';
 import { MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
 import { AppStateContext } from '../../../../contexts/appstate';
 
@@ -28,10 +26,7 @@ export const SafeDetailsView = (props: {
 
   const { isWhitelisted } = useContext(AppStateContext);
   const { t } = useTranslation('common');
-  // const { Panel } = Collapse;
   const { isSafeDetails, onDataToSafeView, proposalSelected, selectedMultisig, onProposalApprove, onProposalExecute } = props;
-  // const { id, signers, details, executedOn, status, proposer, operation, programId, accounts, data, didSigned } = props.proposalSelected;
-  // const collapseHandler = (key: any) => {}
   const [selectedProposal, setSelectedProposal] = useState<any>(proposalSelected);
 
   useEffect(() => {
@@ -72,129 +67,59 @@ export const SafeDetailsView = (props: {
 
   },[t]);
 
-  console.log("selectedProposal", selectedProposal);
-
   // Display the instructions in the "Instructions" tab, on safe details page
   const renderInstructions = (
     <div className="safe-details-collapse w-100">
-      {/* <Collapse
-        accordion={true}
-        onChange={collapseHandler}> */}
-        {/* {instructions.map((instruction: any) => {
+      <Row gutter={[8, 8]} className="mb-2 mt-2">
+        <Col xs={6} sm={6} md={4} lg={4} className="pr-1">
+          <span className="info-label">{t('multisig.proposal-modal.instruction-program')}:</span>
+        </Col>
+        <Col xs={18} sm={18} md={20} lg={20} className="pl-1 text-truncate">
+          <span onClick={() => copyAddressToClipboard(selectedProposal.programId.toBase58())}  className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
+            {selectedProposal.programId.toBase58()}
+          </span>
+          <a
+            target="_blank"
+            rel="noopener noreferrer"
+            href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${selectedProposal.programId.toBase58()}${getSolanaExplorerClusterParam()}`}>
+            <IconExternalLink className="mean-svg-icons external-icon" />
+          </a>
+        </Col>
+      </Row>
 
-          const header =  <Col className="instruction-header">
-                            <div className="circle-background">{instruction.id}</div>
-                            <div className="instruction-header-text">
-                              <div className="">{instruction.title}</div>
-                              <span className="info-label">{instruction.description}</span>
-                            </div>
-                          </Col>;
+      {selectedProposal && (
+        selectedProposal.accounts.map((account: any) => (
+          <Row gutter={[8, 8]} className="mb-2" key={account.index}>
+            <Col xs={6} sm={6} md={4} lg={4} className="pr-1">
+              <span className="info-label">{t('multisig.proposal-modal.instruction-account')} {account.index}:</span>
+            </Col>
+              <Col xs={17} sm={17} md={19} lg={19} className="pl-1">
+                <span onClick={() => copyAddressToClipboard(account.pubkey.toBase58())} className="d-block info-data simplelink underline-on-hover text-truncate" style={{cursor: 'pointer'}}>
+                  {account.pubkey.toBase58()}
+              </span>
+            </Col>
+            <Col xs={1} sm={1} md={1} lg={1}>
+              <a
+                target="_blank"
+                rel="noopener noreferrer"
+                href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${account.pubkey}${getSolanaExplorerClusterParam()}`}>
+                <IconExternalLink className="mean-svg-icons external-icon" />
+              </a>
+            </Col>
+          </Row>
+        ))
+      )}
 
-          const instructionsContent = [
-            {
-              label: "Name",
-              content: instruction.name
-            },
-            {
-              label: "Sender",
-              content: instruction.sender
-            },
-            {
-              label: "Recipient",
-              content: instruction.recipient
-            },
-            {
-              label: "Amount",
-              content: instruction.amount
-            },
-          ];
-
-          return (
-            <Panel header={header} key={instruction.id} showArrow={false} extra={<span className="icon-button-container arrow-up-down">
-              <Button
-                type="default"
-                shape="circle"
-                size="middle"
-                icon={<IconCaretDown className="mean-svg-icons" />}
-              />
-            </span>}>
-              {instructionsContent.map((instContent, index) => (
-                <Row gutter={[8, 8]} className="mb-1" key={index}>
-                  {instContent.content && (
-                    <>
-                      <Col xs={6} sm={6} md={4} lg={4} className="pr-1">
-                        <span className="info-label">{instContent.label}:</span>
-                      </Col>
-                      <Col xs={18} sm={18} md={20} lg={20} className="pl-1">
-                        <span>{instContent.content}</span>
-                      </Col>
-                    </>
-                  )}
-                </Row>
-              ))}
-            </Panel>
-          )
-        })} */}
-
-            {/* <Panel header={getOperationName(operation)} key="1" showArrow={false} extra={<span className="icon-button-container arrow-up-down">
-              <Button
-                type="default"
-                shape="circle"
-                size="middle"
-                icon={<IconCaretDown className="mean-svg-icons" />}
-              />
-            </span>}> */}
-              <Row gutter={[8, 8]} className="mb-2 mt-2">
-                <Col xs={6} sm={6} md={4} lg={4} className="pr-1">
-                  <span className="info-label">{t('multisig.proposal-modal.instruction-program')}:</span>
-                </Col>
-                <Col xs={18} sm={18} md={20} lg={20} className="pl-1 text-truncate">
-                  <span onClick={() => copyAddressToClipboard(selectedProposal.programId.toBase58())}  className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
-                    {selectedProposal.programId.toBase58()}
-                  </span>
-                  <a
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${selectedProposal.programId.toBase58()}${getSolanaExplorerClusterParam()}`}>
-                    <IconExternalLink className="mean-svg-icons external-icon" />
-                  </a>
-                </Col>
-              </Row>
-
-              {selectedProposal && (
-                selectedProposal.accounts.map((account: any) => (
-                  <Row gutter={[8, 8]} className="mb-2" key={account.index}>
-                    <Col xs={6} sm={6} md={4} lg={4} className="pr-1">
-                      <span className="info-label">{t('multisig.proposal-modal.instruction-account')} {account.index}:</span>
-                    </Col>
-                      <Col xs={18} sm={18} md={20} lg={20} className="pl-1">
-                        <span onClick={() => copyAddressToClipboard(account.pubkey.toBase58())}  className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
-                          {account.pubkey.toBase58()}
-                      </span>
-                      <a
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${account.pubkey}${getSolanaExplorerClusterParam()}`}>
-                        <IconExternalLink className="mean-svg-icons external-icon" />
-                      </a>
-                    </Col>
-                  </Row>
-                ))
-              )}
-
-              <Row gutter={[8, 8]} className="mb-2">
-                <Col xs={6} sm={6} md={4} lg={4} className="pr-1">
-                  <span className="info-label">{t('multisig.proposal-modal.instruction-data')}:</span>
-                </Col>
-                <Col xs={18} sm={18} md={20} lg={20} className="pl-1 text-truncate">
-                  <span onClick={() => copyAddressToClipboard(selectedProposal.data)}  className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
-                    {selectedProposal.data}
-                  </span>
-                </Col>
-              </Row>
-
-            {/* </Panel>
-      </Collapse> */}
+      <Row gutter={[8, 8]} className="mb-2">
+        <Col xs={6} sm={6} md={4} lg={4} className="pr-1">
+          <span className="info-label">{t('multisig.proposal-modal.instruction-data')}:</span>
+        </Col>
+        <Col xs={18} sm={18} md={20} lg={20} className="pl-1 text-truncate">
+          <span onClick={() => copyAddressToClipboard(selectedProposal.data)}  className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
+            {selectedProposal.data}
+          </span>
+        </Col>
+      </Row>
     </div>
   );
 
