@@ -122,7 +122,7 @@ export const ResumeItem = (props: {
           )}
           <div className={`resume-left-text ${isSafeDetails ? "pb-1" : ""}`}>
             <div className={`resume-title ${isSafeDetails ? "big-title" : ""}`}>{title ? title : "Unknown proposal"}</div>
-            {expires && (
+            {expires ? (
               version !== 0 && (
                 <div className="info-label">
                   {!executedOn ? (
@@ -132,12 +132,15 @@ export const ResumeItem = (props: {
                   )}
                 </div>
               )
-            )}
-            {(!expires && subtitle) && (
+            ) : ((!expires && subtitle) ? (
               <div className="info-label">
                 <span className="subtitle">{subtitle}</span>
               </div>
-            )}
+            ) : (
+              <div className="info-label">
+                <span className="subtitle">No expires</span>
+              </div>
+            ))}
           </div>
         </Col>
         <Col className="resume-right-container">
