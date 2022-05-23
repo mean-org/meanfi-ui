@@ -7,7 +7,7 @@ import { TokenDisplay } from "../TokenDisplay";
 import { MarketInfo, RouteInfo } from "@jup-ag/core";
 import BN from "bn.js";
 import { useWallet } from "../../contexts/wallet";
-import { toUsCurrency } from "../../utils/ui";
+import { consoleOut, toUsCurrency } from "../../utils/ui";
 
 export const JupiterExchangeOutput = (props: {
   fromToken: TokenInfo | undefined;
@@ -71,15 +71,13 @@ export const JupiterExchangeOutput = (props: {
             {publicKey ? (
               <>
                 <span className="simplelink" onClick={props.onBalanceClick}>
-                  {`${
-                    props.toToken && props.toTokenBalance
-                      ? formatThousands(
-                          props.toTokenBalance,
-                          props.toToken.decimals,
-                          props.toToken.decimals
-                      )
-                      : "0"
-                  }`}
+                  {props.toToken && props.toTokenBalance !== undefined &&
+                    formatThousands(
+                      props.toTokenBalance,
+                      props.toToken.decimals,
+                      props.toToken.decimals
+                    )
+                  }
                 </span>
                 {props.toTokenBalance && (
                   <span className={`balance-amount ${loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}`} onClick={() => refreshPrices()}>

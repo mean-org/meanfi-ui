@@ -8,7 +8,7 @@ import {
   QrcodeOutlined,
   SyncOutlined
 } from '@ant-design/icons';
-import { Connection, Keypair, LAMPORTS_PER_SOL, ParsedConfirmedTransactionMeta, PublicKey, Transaction } from '@solana/web3.js';
+import { Connection, Keypair, LAMPORTS_PER_SOL, ParsedTransactionMeta, PublicKey, Transaction } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
 import { TransactionItemView } from '../../components/TransactionItemView';
@@ -544,12 +544,21 @@ export const AccountsNewView = () => {
     setDtailsPanelOpen,
   ])
 
+  const shouldHideAsset = useCallback((asset: UserTokenAccount) => {
+    // “hide small balances” = “hide Tokens with an actual price quote and with USD-equivalent balance < $0.01”
+    const priceByAddress = getTokenPriceByAddress(asset.address);
+    const tokenPrice = priceByAddress || getTokenPriceBySymbol(asset.symbol);
+    return tokenPrice > 0 && (!asset.valueInUsd || asset.valueInUsd < ACCOUNTS_LOW_BALANCE_LIMIT)
+      ? true
+      : false;
+  }, [getTokenPriceByAddress, getTokenPriceBySymbol]);
+
   const toggleHideLowBalances = useCallback((setting: boolean) => {
-    if (selectedAsset && (!selectedAsset.valueInUsd || selectedAsset.valueInUsd < ACCOUNTS_LOW_BALANCE_LIMIT) && setting) {
+    if (selectedAsset && shouldHideAsset(selectedAsset) && setting) {
       selectAsset(accountTokens[0]);
     }
     setHideLowBalances(setting);
-  }, [accountTokens, selectAsset, selectedAsset, setHideLowBalances]);
+  }, [accountTokens, selectAsset, selectedAsset, setHideLowBalances, shouldHideAsset]);
 
   const recordTxConfirmation = useCallback((item: TxConfirmationInfo, success = true) => {
     let event: any;
@@ -717,7 +726,7 @@ export const AccountsNewView = () => {
   // Filter only useful Txs for the SOL account and return count
   const getSolAccountItems = useCallback((txs: MappedTransaction[]): number => {
 
-    const getChange = (accountIndex: number, meta: ParsedConfirmedTransactionMeta | null): number => {
+    const getChange = (accountIndex: number, meta: ParsedTransactionMeta | null): number => {
       if (meta !== null && accountIndex !== -1) {
         const prevBalance = meta.preBalances[accountIndex] || 0;
         const postbalance = meta.postBalances[accountIndex] || 0;
@@ -1076,8 +1085,10 @@ export const AccountsNewView = () => {
                     pubAddress: item.publicAddress ? shortenAddress(item.publicAddress, 6) : null,
                     mintAddress: shortenAddress(item.address, 6),
                     symbol: item.symbol,
-                    balance: item.balance,
-                    valueInUSD: item.valueInUsd
+                    decimals: item.decimals,
+                    balance: formatThousands(item.balance || 0, item.decimals, item.decimals),
+                    price: getTokenPriceBySymbol(item.symbol),
+                    valueInUSD: toUsCurrency(item.valueInUsd)
                   })
                 );
                 console.table(tokenTable);
@@ -1707,7 +1718,7 @@ export const AccountsNewView = () => {
       <div key={`${index}`} onClick={onTokenAccountClick}
           className={`transaction-list-row ${isSelectedToken() && selectedCategory === "user-account"
             ? 'selected'
-            : hideLowBalances && (asset.valueInUsd || 0) < ACCOUNTS_LOW_BALANCE_LIMIT
+            : hideLowBalances && (shouldHideAsset(asset) || !asset.balance)
               ? 'hidden'
               : ''
           }`
@@ -1734,7 +1745,13 @@ export const AccountsNewView = () => {
         </div>
         <div className="rate-cell">
           <div className="rate-amount">
-            {toUsCurrency(asset.valueInUsd || 0)}
+            {
+              tokenPrice > 0
+                ? !asset.valueInUsd || asset.valueInUsd < ACCOUNTS_LOW_BALANCE_LIMIT
+                  ? '< $0.01'
+                  : toUsCurrency(asset.valueInUsd || 0)
+                : '—'
+            }
           </div>
           <div className="interval">
               {(asset.balance || 0) > 0 ? formatThousands(asset.balance || 0, asset.decimals, asset.decimals) : '0'}
@@ -1847,7 +1864,7 @@ export const AccountsNewView = () => {
     if (transactions) {
       if (isSelectedAssetNativeAccount()) {
         // Get amount change for each tx
-        const getChange = (accountIndex: number, meta: ParsedConfirmedTransactionMeta | null): number => {
+        const getChange = (accountIndex: number, meta: ParsedTransactionMeta | null): number => {
           if (meta !== null && accountIndex !== -1) {
             const prevBalance = meta.preBalances[accountIndex] || 0;
             const postbalance = meta.postBalances[accountIndex] || 0;
