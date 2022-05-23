@@ -1769,12 +1769,13 @@ export const SafeView = () => {
       // console.log('data buffer', dataBuffer);
       
       const expirationTimeInSeconds = Date.now() / 1_000 + data.expires;
+      const expirationDate = data.expires === 0 ? undefined : new Date(expirationTimeInSeconds * 1_000);
       const tx = await multisigClient.createTransaction(
         publicKey,
         data.title,
         data.description,
-        new Date(expirationTimeInSeconds * 1_000),
-        OperationType.TransferTokens,
+        expirationDate,
+        0,
         selectedMultisig.id,
         proposalIx.programId,
         proposalIx.keys,
