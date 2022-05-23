@@ -72,6 +72,8 @@ export const SafeDetailsView = (props: {
 
   },[t]);
 
+  console.log("selectedProposal", selectedProposal);
+
   // Display the instructions in the "Instructions" tab, on safe details page
   const renderInstructions = (
     <div className="safe-details-collapse w-100">
@@ -142,7 +144,7 @@ export const SafeDetailsView = (props: {
                 icon={<IconCaretDown className="mean-svg-icons" />}
               />
             </span>}> */}
-              <Row gutter={[8, 8]} className="mb-1 mt-2">
+              <Row gutter={[8, 8]} className="mb-2 mt-2">
                 <Col xs={6} sm={6} md={4} lg={4} className="pr-1">
                   <span className="info-label">{t('multisig.proposal-modal.instruction-program')}:</span>
                 </Col>
@@ -159,39 +161,37 @@ export const SafeDetailsView = (props: {
                 </Col>
               </Row>
 
-              {/* {accounts && (
-                accounts.map((account: any) => (
-                  account.map((acc: any) => (
-                    <Row gutter={[8, 8]} className="mb-1" key={acc.index}>
-                      <Col xs={6} sm={6} md={4} lg={4} className="pr-1">
-                        <span className="info-label">{t('multisig.proposal-modal.instruction-account')} {acc.index + 1}:</span>
-                      </Col>
+              {selectedProposal && (
+                selectedProposal.accounts.map((account: any) => (
+                  <Row gutter={[8, 8]} className="mb-2" key={account.index}>
+                    <Col xs={6} sm={6} md={4} lg={4} className="pr-1">
+                      <span className="info-label">{t('multisig.proposal-modal.instruction-account')} {account.index}:</span>
+                    </Col>
                       <Col xs={18} sm={18} md={20} lg={20} className="pl-1">
-                        <span onClick={() => copyAddressToClipboard(acc.address.toBase58())}  className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
-                          {acc.address.toBase58()}
-                        </span>
-                        <a
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${acc.address}${getSolanaExplorerClusterParam()}`}>
-                          <IconExternalLink className="mean-svg-icons external-icon" />
-                        </a>
-                      </Col>
-                    </Row>
-                  ))
+                        <span onClick={() => copyAddressToClipboard(account.pubkey.toBase58())}  className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
+                          {account.pubkey.toBase58()}
+                      </span>
+                      <a
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${account.pubkey}${getSolanaExplorerClusterParam()}`}>
+                        <IconExternalLink className="mean-svg-icons external-icon" />
+                      </a>
+                    </Col>
+                  </Row>
                 ))
-              )} */}
+              )}
 
-                <Row gutter={[8, 8]} className="mb-1">
-                  <Col xs={6} sm={6} md={4} lg={4} className="pr-1">
-                    <span className="info-label">{t('multisig.proposal-modal.instruction-data')}:</span>
-                  </Col>
-                  <Col xs={18} sm={18} md={20} lg={20} className="pl-1 text-truncate">
-                    <span onClick={() => copyAddressToClipboard(selectedProposal.data)}  className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
-                      {selectedProposal.data}
-                    </span>
-                  </Col>
-                </Row>
+              <Row gutter={[8, 8]} className="mb-2">
+                <Col xs={6} sm={6} md={4} lg={4} className="pr-1">
+                  <span className="info-label">{t('multisig.proposal-modal.instruction-data')}:</span>
+                </Col>
+                <Col xs={18} sm={18} md={20} lg={20} className="pl-1 text-truncate">
+                  <span onClick={() => copyAddressToClipboard(selectedProposal.data)}  className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
+                    {selectedProposal.data}
+                  </span>
+                </Col>
+              </Row>
 
             {/* </Panel>
       </Collapse> */}
@@ -248,7 +248,7 @@ export const SafeDetailsView = (props: {
   // Tabs
   const tabs = [
     {
-      name: "Instructions",
+      name: "Instruction",
       render: renderInstructions
     }, 
     // {

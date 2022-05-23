@@ -27,10 +27,6 @@ import { useNavigate } from 'react-router-dom';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
-// const expires = [
-//   "No expires", "24 hours", "48 hours", "72 hours", "7 days"
-// ];
-
 const expires: { label: string, value: number }[] = [
   { label: "No expires", value: 0 },
   { label: "24 hours", value: 84_600 },
@@ -63,8 +59,8 @@ export const MultisigProposalModal = (props: {
   const [currentStep, setCurrentStep] = useState(0);
   const [proposalTitleValue, setProposalTitleValue] = useState('');
   const [proposalExpiresValue, setProposalExpiresValue] = useState<any>(expires[0]);
+
   const [proposalDescriptionValue, setProposalDescriptionValue] = useState('');
-  // const [proposalInstructionValue, setProposalInstructionValue] = useState<any>();
   const [countWords, setCountWords] = useState(0);
   const [lettersLeft, setLettersLeft] = useState(256);
 
@@ -109,8 +105,6 @@ export const MultisigProposalModal = (props: {
       setCurrentStep(1);  // Go to step 2
     }
   }
-
-  console.log("selectedApp", selectedApp)
 
   const onContinueStepTwoButtonClick = () => {
     setCurrentStep(2);  // Go to step 3
