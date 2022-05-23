@@ -23,6 +23,7 @@ import { getMultisigInstructionSummary, parseSerializedTx } from '../../models/m
 import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
 import { openNotification } from '../Notifications';
+import { useNavigate } from 'react-router-dom';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -45,15 +46,19 @@ export const MultisigProposalModal = (props: {
   proposer: string;
   appsProvider: AppsProvider | undefined;
   solanaApps: App[],
-  handleOk: any
+  handleOk: any;
+  selectedMultisig?: any;
 }) => {
-  const { t } = useTranslation('common');
+  const navigate = useNavigate();
   const { publicKey } = useWallet();
+  const { t } = useTranslation('common');
   const connectionConfig = useConnectionConfig();
   const {
     transactionStatus,
     setTransactionStatus,
   } = useContext(AppStateContext);
+
+  const { handleClose, isVisible, isBusy, proposer, appsProvider, solanaApps, handleOk, selectedMultisig } = props;
 
   const [currentStep, setCurrentStep] = useState(0);
   const [proposalTitleValue, setProposalTitleValue] = useState('');
@@ -66,6 +71,7 @@ export const MultisigProposalModal = (props: {
   const [selectedApp, setSelectedApp] = useState<App>();
   const [selectedAppConfig, setSelectedAppConfig] = useState<AppConfig>();
   const [selectedUiIx, setSelectedUiIx] = useState<UiInstruction | undefined>();
+  const [isModalVisible, setIsModalVisible] = useState<boolean>(isVisible);
 
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
     commitment: "confirmed",
@@ -96,8 +102,15 @@ export const MultisigProposalModal = (props: {
   }
 
   const onContinueStepOneButtonClick = () => {
-    setCurrentStep(1);  // Go to step 2
+    if (selectedApp?.name === "Money Streaming") {
+      setIsModalVisible(false);
+      navigate(`/treasuries?multisig=${selectedMultisig.id.toBase58()}`);
+    } else {
+      setCurrentStep(1);  // Go to step 2
+    }
   }
+
+  console.log("selectedApp", selectedApp)
 
   const onContinueStepTwoButtonClick = () => {
     setCurrentStep(2);  // Go to step 3
@@ -140,7 +153,7 @@ export const MultisigProposalModal = (props: {
   const onAcceptModal = () => {
     if (!selectedApp || !selectedAppConfig || !selectedUiIx) { return; }
     updateSelectedIx(inputState);
-    props.handleOk({
+    handleOk({
       appId: selectedApp.id,
       title: proposalTitleValue,
       description: proposalDescriptionValue,
@@ -151,7 +164,7 @@ export const MultisigProposalModal = (props: {
   }
 
   const onCloseModal = () => {
-    props.handleClose();
+    handleClose();
     onAfterClose();
   }
 
@@ -250,9 +263,9 @@ export const MultisigProposalModal = (props: {
 
   useEffect(() => {
 
-    if (!props.appsProvider || !selectedApp) { return; }
+    if (!appsProvider || !selectedApp) { return; }
 
-    props.appsProvider.getAppConfig(
+    appsProvider.getAppConfig(
       selectedApp.id,
       selectedApp.uiUrl,
       selectedApp.defUrl
@@ -264,7 +277,7 @@ export const MultisigProposalModal = (props: {
       consoleOut('Error: ', err, 'red');
     });
   },[
-    props.appsProvider, 
+    appsProvider, 
     selectedApp
   ]);
 
@@ -287,8 +300,8 @@ export const MultisigProposalModal = (props: {
   // Display solana apps in proposal modal (Step 1)
   const renderSolanaApps = (
     <>
-      {props.solanaApps.length > 0 && (
-        props.solanaApps.map((app, index) => {
+      {solanaApps.length > 0 && (
+        solanaApps.map((app, index) => {
           const onSelectApp = () => {
             setSelectedApp(app);
           }
@@ -359,14 +372,14 @@ export const MultisigProposalModal = (props: {
       title={<div className="modal-title">New proposal</div>}
       maskClosable={false}
       footer={null}
-      visible={props.isVisible}
+      visible={isModalVisible}
       // onOk={onAcceptModal}
       onCancel={onCloseModal}
-      width={props.isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}>
+      width={isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}>
 
       <Divider plain />
 
-      <div className={!props.isBusy ? "panel1 show" : "panel1 hide"}>
+      <div className={!isBusy ? "panel1 show" : "panel1 hide"}>
         {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
           <>
             <div className="scrollable-content">
@@ -407,7 +420,7 @@ export const MultisigProposalModal = (props: {
                           <InputMean
                             id="proposal-title-field"
                             name="Title"
-                            className={`mb-0 ${props.isBusy ? 'disabled' : ''}`}
+                            className={`mb-0 ${isBusy ? 'disabled' : ''}`}
                             onChange={onProposalTitleValueChange}
                             placeholder="Add a title"
                             value={proposalTitleValue}
@@ -420,7 +433,7 @@ export const MultisigProposalModal = (props: {
                         <div className="mb-2">
                           <div className="form-label">Expires in</div>
                           <SelectMean
-                            className={`mb-0 ${props.isBusy ? 'disabled' : ''}`}
+                            className={`mb-0 ${isBusy ? 'disabled' : ''}`}
                             onChange={onProposalExpiresValueChange}
                             // placeholder={expires[0].label}
                             values={expires.map((e: any) => {
@@ -445,7 +458,7 @@ export const MultisigProposalModal = (props: {
                           <InputTextAreaMean 
                             id="proposal-description-field"
                             maxLength={256}
-                            className={`mb-0 ${props.isBusy ? 'disabled' : ''}`}
+                            className={`mb-0 ${isBusy ? 'disabled' : ''}`}
                             onChange={onProposalDescriptionValueChange}
                             placeholder={t('multisig.proposal-modal.description-placeholder')}
                             value={proposalDescriptionValue}
@@ -463,7 +476,7 @@ export const MultisigProposalModal = (props: {
                             <Col xs={24} sm={24} md={24} lg={24} className="text-left pr-1">
                               <div className="form-label">Instruction:</div>
                               <SelectMean
-                                className={props.isBusy ? 'disabled' : ''}
+                                className={isBusy ? 'disabled' : ''}
                                 onChange={onProposalInstructionValueChange}
                                 placeholder="Select an instruction"
                                 values={selectedAppConfig ? selectedAppConfig.ui.map((ix: any) => {
@@ -496,7 +509,7 @@ export const MultisigProposalModal = (props: {
                                       <InputMean
                                         id={element.name}
                                         maxLength={64}
-                                        className={props.isBusy ? 'disabled' : ''}
+                                        className={isBusy ? 'disabled' : ''}
                                         name={element.label}
                                         onChange={(e: any) => {
                                           console.log(e);
@@ -521,7 +534,7 @@ export const MultisigProposalModal = (props: {
                                         <InputTextAreaMean 
                                           id={element.name}
                                           rows={30}
-                                          className={`well mb-1 proposal-summary-container vertical-scroll paste-input ${props.isBusy ? 'disabled' : ''}`}
+                                          className={`well mb-1 proposal-summary-container vertical-scroll paste-input ${isBusy ? 'disabled' : ''}`}
                                           onChange={(e: any) => {
                                             console.log(e);
                                             handleChangeInput({
@@ -536,7 +549,7 @@ export const MultisigProposalModal = (props: {
                                       ) : (
                                         <InputTextAreaMean 
                                           id={element.name}
-                                          className={props.isBusy ? 'disabled' : ''}
+                                          className={isBusy ? 'disabled' : ''}
                                           maxLength={256}
                                           onChange={(e: any) => {
                                             console.log(e);
@@ -560,7 +573,7 @@ export const MultisigProposalModal = (props: {
                                       />
                                       <SelectMean
                                         key={element.name}
-                                        className={props.isBusy ? 'disabled' : ''}
+                                        className={isBusy ? 'disabled' : ''}
                                         onChange={(value: any) => {
                                           handleChangeOption({
                                             key: element.name,
@@ -630,7 +643,7 @@ export const MultisigProposalModal = (props: {
                                           label={element.label}
                                           tooltip_text={element.help}
                                         />
-                                        <code>{props.proposer}</code>
+                                        <code>{proposer}</code>
                                       </Col>
                                     </Row>
                                   </>
@@ -914,7 +927,7 @@ export const MultisigProposalModal = (props: {
                     type="text"
                     shape="round"
                     size="middle"
-                    className={props.isBusy ? 'inactive' : ''}
+                    className={isBusy ? 'inactive' : ''}
                     onClick={() => onCloseModal()}>
                     {t('general.cta-close')}
                   </Button>
@@ -944,7 +957,7 @@ export const MultisigProposalModal = (props: {
                   {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
                 </h4>
               )}
-              {!(props.isBusy && transactionStatus !== TransactionStatus.Iddle) && (
+              {!(isBusy && transactionStatus !== TransactionStatus.Iddle) && (
                 <div className="row two-col-ctas mt-3 transaction-progress p-2">
                   <div className="col-12">
                     <Button
@@ -952,7 +965,7 @@ export const MultisigProposalModal = (props: {
                       type="text"
                       shape="round"
                       size="middle"
-                      className={props.isBusy ? 'inactive' : ''}
+                      className={isBusy ? 'inactive' : ''}
                       onClick={() => (isError(transactionStatus.currentOperation) && transactionStatus.currentOperation !== TransactionStatus.TransactionStartFailure)
                         ? onAcceptModal()
                         : onCloseModal()}>
@@ -970,8 +983,8 @@ export const MultisigProposalModal = (props: {
       </div>
 
       <div 
-        className={props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? "panel2 show" : "panel2 hide"}>
-        {props.isBusy && transactionStatus !== TransactionStatus.Iddle && (
+        className={isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? "panel2 show" : "panel2 hide"}>
+        {isBusy && transactionStatus !== TransactionStatus.Iddle && (
         <div className="transaction-progress p-4">
           <Spin indicator={bigLoadingIcon} className="icon mb-1 mt-1" />
           <h4 className="font-bold">

@@ -1665,6 +1665,18 @@ export const SafeView = () => {
     publicKey
   ]);
 
+  const onTxProposalCreated = useCallback(() => {
+    setMultisigProposalModalVisible(false);
+    resetTransactionStatus();
+    openNotification({
+      description: t('notifications.tx-proposal-created'),
+      type: "success"
+    });
+  },[
+    t,
+    resetTransactionStatus
+  ])
+
   const onExecuteCreateTransactionProposal = useCallback(async (data: any) => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
@@ -1991,8 +2003,7 @@ export const SafeView = () => {
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.TransactionFinished
             });
-            onMultisigModified();
-            setIsEditMultisigModalVisible(false);
+            onTxProposalCreated();
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -2014,7 +2025,7 @@ export const SafeView = () => {
     connection, 
     transactionCancelled, 
     startFetchTxSignatureInfo, 
-    onMultisigModified
+    onTxProposalCreated
   ]);
 
   const [isMultisigProposalModalVisible, setMultisigProposalModalVisible] = useState(false);
@@ -3668,6 +3679,7 @@ export const SafeView = () => {
           appsProvider={appsProvider}
           solanaApps={solanaApps}
           handleOk={onAcceptCreateProposalModal}
+          selectedMultisig={selectedMultisig}
         />
       )}
 

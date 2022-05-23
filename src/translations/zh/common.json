@@ -703,7 +703,10 @@
 		"tx-not-confirmed": "The transaction could not be confirmed, please retry your transaction.",
 		"wallet-connect-message": "已连接到钱包{{address}",
 		"wallet-connection-event-title": "钱包更新",
-		"wallet-disconnect-message": "与钱包断开连接"
+		"wallet-disconnect-message": "与钱包断开连接",
+		"tx-not-executed": "Your transaction has not been executed",
+		"tx-not-approved": "Your transaction has not been approved",
+		"tx-proposal-created": "Your proposal has been created"
 	},
 	"open-stream": {
 		"label-streamid-input": "要打开的流id",

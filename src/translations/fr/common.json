@@ -704,8 +704,9 @@
 		"wallet-connection-event-title": "Mise à jour du portefeuille",
 		"wallet-disconnect-message": "Déconnecté du portefeuille",
 		"tx-not-confirmed": "The transaction could not be confirmed, please retry your transaction.",
-		"tx-not-executed": "Your transaction has not been executed.",
-		"tx-not-approved": "Your transaction has not been approved."
+		"tx-not-executed": "Your transaction has not been executed",
+		"tx-not-approved": "Your transaction has not been approved",
+		"tx-proposal-created": "Your proposal has been created"
 	},
 	"open-stream": {
 		"label-streamid-input": "ID de flux à ouvrir",
