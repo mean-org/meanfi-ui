@@ -386,15 +386,6 @@
 	"multisig": {
 		"add-participant-cta": "Add participant",
 		"back-to-multisig-accounts-cta": "Back to Multisig Safes",
-		"create-asset": {
-			"main-cta": "Create",
-			"main-cta-busy": "Creating vault",
-			"modal-title": "Create a Multisig Vault",
-			"no-token": "Select token",
-			"success-message": "Your multisig vault was created successfully",
-			"token-label": "Amount to transfer",
-			"token-placeholder": "Enter the address of the token mint"
-		},
 		"create-multisig": {
 			"fee-info-label": "The fee to create this multisig is",
 			"main-cta": "Create",
@@ -419,6 +410,9 @@
 		},
 		"create-new-multisig-account-cta": "Create safe",
 		"create-asset": {
+			"delete-multisig": "Borrar multisig",
+			"edit-multisig": "Editar multisig",
+			"update-multisig": "Migrar multisig",
 			"main-cta": "Create",
 			"main-cta-busy": "Creating vault",
 			"modal-title": "Create a multisig asset",
@@ -548,10 +542,6 @@
 			"column-operation": "Transaction",
 			"column-pending-signatures": "Status",
 			"column-program-id": "Program",
-			"loading-transactions": "Loading transactions ...",
-			"execution": "execution",
-			"explain-failure": "Explain failure condition if specific",
-			"initiator-transaction": "This transaction was submitted by",
 			"loading-transactions": "Loading transactions",
 			"missing-signature": "To execute this proposal, {{missingSignature}} more signature is needed.",
 			"missing-signatures": "To execute this proposal, {{missingSignature}} more signatures are needed.",

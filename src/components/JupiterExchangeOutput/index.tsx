@@ -2,18 +2,18 @@ import { TokenInfo } from "@solana/spl-token-registry";
 import { useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AppStateContext } from "../../contexts/appstate";
-import { formatAmount, getTokenAmountAndSymbolByTokenAddress } from "../../utils/utils";
+import { formatAmount, formatThousands } from "../../utils/utils";
 import { TokenDisplay } from "../TokenDisplay";
 import { MarketInfo, RouteInfo } from "@jup-ag/core";
 import BN from "bn.js";
 import { useWallet } from "../../contexts/wallet";
-import { toUsCurrency } from "../../utils/ui";
+import { consoleOut, toUsCurrency } from "../../utils/ui";
 
 export const JupiterExchangeOutput = (props: {
   fromToken: TokenInfo | undefined;
   fromTokenAmount: string;
   toToken: TokenInfo | undefined;
-  toTokenBalance?: string;
+  toTokenBalance?: number;
   toTokenAmount?: string;
   mintList?: any;
   onSelectToken: any;
@@ -71,22 +71,20 @@ export const JupiterExchangeOutput = (props: {
             {publicKey ? (
               <>
                 <span className="simplelink" onClick={props.onBalanceClick}>
-                  {`${
-                    props.toToken && props.toTokenBalance
-                      ? getTokenAmountAndSymbolByTokenAddress(
-                          parseFloat(props.toTokenBalance),
-                          props.toToken.address,
-                          true
-                      )
-                      : "0"
-                  }`}
+                  {props.toToken && props.toTokenBalance !== undefined &&
+                    formatThousands(
+                      props.toTokenBalance,
+                      props.toToken.decimals,
+                      props.toToken.decimals
+                    )
+                  }
                 </span>
                 {props.toTokenBalance && (
                   <span className={`balance-amount ${loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}`} onClick={() => refreshPrices()}>
                     {`(~${
                       props.toToken && props.toTokenBalance
                         ? toUsCurrency(
-                            parseFloat(props.toTokenBalance) * getTokenPriceBySymbol(props.toToken.symbol)
+                            props.toTokenBalance * getTokenPriceBySymbol(props.toToken.symbol)
                           )
                         : "$0.00"
                     })`}
@@ -102,7 +100,7 @@ export const JupiterExchangeOutput = (props: {
             <>
               <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
                 ~{props.toToken && props.toTokenBalance
-                  ? toUsCurrency(parseFloat(props.toTokenBalance) * getTokenPriceBySymbol(props.toToken.symbol))
+                  ? toUsCurrency(props.toTokenBalance * getTokenPriceBySymbol(props.toToken.symbol))
                   : "$0.00"
                 }
               </span>
