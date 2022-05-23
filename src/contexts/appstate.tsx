@@ -25,7 +25,7 @@ import { getNetworkIdByCluster, useConnection, useConnectionConfig } from "./con
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { useAccountsContext } from "./accounts";
 import { TokenInfo, TokenListProvider } from "@solana/spl-token-registry";
-import { getPrices } from "../utils/api";
+import { getPrices, getRaydiumLiquidityPools } from "../utils/api";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
 import { UserTokenAccount } from "../models/transactions";
@@ -72,6 +72,7 @@ interface AppStateConfig {
   effectiveRate: number;
   coinPrices: any | null;
   loadingPrices: boolean;
+  raydiumLps: any;
   contract: ContractDefinition | undefined;
   treasuryOption: TreasuryTypeOption | undefined;
   recipientAddress: string;
@@ -211,6 +212,7 @@ const contextDefaultValues: AppStateConfig = {
   effectiveRate: 0,
   coinPrices: null,
   loadingPrices: false,
+  raydiumLps: undefined,
   contract: undefined,
   treasuryOption: TREASURY_TYPE_OPTIONS[0],
   recipientAddress: '',
@@ -413,6 +415,9 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [unstakeStartDate, updateUnstakeStartDate] = useState<string | undefined>(today);
   const streamProgramAddressFromConfig = appConfig.getConfig().streamProgramAddress;
   const streamV2ProgramAddressFromConfig = appConfig.getConfig().streamV2ProgramAddress;
+  const [isDepositOptionsModalVisible, setIsDepositOptionsModalVisibility] = useState(false);
+  const [raydiumLps, setRaydiumLps] = useState<any>(contextDefaultValues.raydiumLps);
+  const [shouldLoadRaydiumLps, setShouldLoadRaydiumLps] = useState(true);
 
   const isDowngradedPerformance = useMemo(() => {
     return isProd() && (!tpsAvg || tpsAvg < PERFORMANCE_THRESHOLD)
@@ -824,9 +829,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     setDeletedStreams(oldArray => [...oldArray, id]);
   }
 
-  // Deposits modal
-  const [isDepositOptionsModalVisible, setIsDepositOptionsModalVisibility] = useState(false);
-
   const showDepositOptionsModal = useCallback(() => {
     setIsDepositOptionsModalVisibility(true);
     const depositMenuItem = document.getElementById("deposits-menu-item");
@@ -872,8 +874,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     setLoadingPrices(true);
     getCoinPrices();
   }
-
-
 
   const getTokenPriceByAddress = useCallback((address: string): number => {
     if (!address || !coinPricesFromApi || coinPricesFromApi.length === 0) { return 0; }
@@ -1016,6 +1016,19 @@ const AppStateProvider: React.FC = ({ children }) => {
     setSelectedContract,
     setContractName
   ]);
+
+  useEffect(() => {
+    if (!raydiumLps && shouldLoadRaydiumLps) {
+      getRaydiumLiquidityPools()
+      .then(result => {
+        consoleOut('Raydium official LPs:', result.official, 'blue');
+        // result.official
+        // result.unOfficial
+        setRaydiumLps(result.official);
+      })
+      .finally(() => setShouldLoadRaydiumLps(false));
+    }
+  }, [raydiumLps, shouldLoadRaydiumLps]);
 
   // Cache selected DDCA frequency option
   const ddcaOptFromCache = useMemo(
@@ -1435,6 +1448,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         effectiveRate,
         coinPrices,
         loadingPrices,
+        raydiumLps,
         contract,
         ddcaOption,
         treasuryOption,
