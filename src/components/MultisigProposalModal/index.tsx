@@ -55,6 +55,8 @@ export const MultisigProposalModal = (props: {
     setTransactionStatus,
   } = useContext(AppStateContext);
 
+  
+
   const [currentStep, setCurrentStep] = useState(0);
   const [proposalTitleValue, setProposalTitleValue] = useState('');
   const [proposalExpiresValue, setProposalExpiresValue] = useState<any>(expires[0]);

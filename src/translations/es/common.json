@@ -699,8 +699,9 @@
 		"wallet-connection-event-title": "Actualización de billetera",
 		"wallet-disconnect-message": "Desconectado de la billetera",
 		"tx-not-confirmed": "The transaction could not be confirmed, please retry your transaction.",
-		"tx-not-executed": "Your transaction has not been executed.",
-		"tx-not-approved": "Your transaction has not been approved."
+		"tx-not-executed": "Your transaction has not been executed",
+		"tx-not-approved": "Your transaction has not been approved",
+		"tx-proposal-created": "Your proposal has been created"
 	},
 	"open-stream": {
 		"label-streamid-input": "Introduzca id de transferencia ",
