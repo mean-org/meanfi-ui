@@ -36,7 +36,6 @@ export const AssetDetailsView = (props: {
   onDataToAssetView: any;
   assetSelected: any;
   selectedMultisig?: any;
-  multisigVaults?: any;
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -47,6 +46,7 @@ export const AssetDetailsView = (props: {
   const { publicKey, wallet, connected } = useWallet();
   const {
     tokenList,
+    multisigVaults,
     transactionStatus,
     refreshTokenBalance,
     setTransactionStatus,
@@ -60,7 +60,7 @@ export const AssetDetailsView = (props: {
     clearTxConfirmationContext,
   } = useContext(TxConfirmationContext);
 
-  const { isAssetDetails, onDataToAssetView, assetSelected, selectedMultisig, multisigVaults } = props;
+  const { isAssetDetails, onDataToAssetView, assetSelected, selectedMultisig } = props;
 
   const [transactionFees, setTransactionFees] = useState<TransactionFees>(NO_FEES);
   const [/*ongoingOperation*/, setOngoingOperation] = useState<OperationType | undefined>(undefined);
@@ -77,6 +77,13 @@ export const AssetDetailsView = (props: {
   const [loadingMultisigTxs, setLoadingMultisigTxs] = useState(true);
   const [multisigAddress, setMultisigAddress] = useState('');
   const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(true);
+  const [multisigAssetsForSendFunds, setMultisigAssetsForSendFunds] = useState<any>([]);
+
+  useEffect(() => {
+    if (multisigVaults) {
+      setMultisigAssetsForSendFunds(multisigVaults.shift());
+    }
+  }, [multisigVaults]);
 
   // When back button is clicked, goes to Safe Info
   const hideAssetDetailsHandler = () => {

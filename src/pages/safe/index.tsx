@@ -15,7 +15,6 @@ import {
   SYSVAR_RENT_PUBKEY,
   Transaction,
   TransactionInstruction,
-  TransactionInstructionCtorFields
 } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
@@ -49,7 +48,6 @@ import { IconEllipsisVertical, IconSafe, IconUserGroup, IconUsers } from '../../
 import { useNativeAccount } from '../../contexts/accounts';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { useNavigate } from 'react-router-dom';
 import {
   MultisigParticipant,
   MultisigTransaction,
@@ -61,9 +59,7 @@ import {
   getMultisigTransactionSummary,
   getFees,
   DEFAULT_EXPIRATION_TIME_SECONDS,
-  MultisigVault,
-  parseSerializedTx,
-  getMultisigInstructionSummary
+  parseSerializedTx
 } from '../../models/multisig';
 import { MultisigCreateModal } from '../../components/MultisigCreateModal';
 import './style.scss';
@@ -82,10 +78,8 @@ import { ProgramDetailsView } from './components/ProgramDetails';
 import SerumIDL from '../../models/serum-multisig-idl';
 import { AppsProvider, NETWORK, App, UiInstruction, AppConfig, UiElement, Arg } from '@mean-dao/mean-multisig-apps';
 import { SafeSerumInfoView } from './components/SafeSerumInfo';
-import { MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigInfo, parseMultisigTransaction } from '@mean-dao/mean-multisig-sdk';
-import { MethodsBuilder } from '@project-serum/anchor/dist/cjs/program/namespace/methods';
+import { MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { AssetDetailsView } from './components/AssetDetails';
-import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { MultisigCreateAssetModal } from '../../components/MultisigCreateAssetModal';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -95,6 +89,7 @@ export const SafeView = () => {
   const { publicKey, connected, wallet } = useWallet();
   const {
     isWhitelisted,
+    multisigVaults,
     detailsPanelOpen,
     transactionStatus,
     highLightableMultisigId,
@@ -131,7 +126,7 @@ export const SafeView = () => {
   const [highlightedMultisigTx, sethHighlightedMultisigTx] = useState<MultisigTransaction | undefined>();
   const [multisigTransactionSummary, setMultisigTransactionSummary] = useState<MultisigTransactionSummary | undefined>(undefined);
   // Vaults
-  const [multisigVaults, setMultisigVaults] = useState<MultisigVault[]>([]);
+  // const [multisigVaults, setMultisigVaults] = useState<MultisigVault[]>([]);
   // Tx control
   const [isBusy, setIsBusy] = useState(false);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
@@ -3590,21 +3585,20 @@ export const SafeView = () => {
                             onProposalExecute={onExecuteFinishTx}
                           />
                         )}
-                        {isProgramDetails && (
-                          <ProgramDetailsView
-                            isProgramDetails={isProgramDetails}
-                            onDataToProgramView={returnFromProgramDetailsHandler}
-                            programSelected={programSelected}
-                            selectedMultisig={selectedMultisig}
-                          />
-                        )}
                         {isAssetDetails && (
                           <AssetDetailsView
                             isAssetDetails={isAssetDetails}
                             onDataToAssetView={returnFromAssetDetailsHandler}
                             assetSelected={assetSelected}
                             selectedMultisig={selectedMultisig}
-                            multisigVaults={multisigVaults}
+                          />
+                        )}
+                        {isProgramDetails && (
+                          <ProgramDetailsView
+                            isProgramDetails={isProgramDetails}
+                            onDataToProgramView={returnFromProgramDetailsHandler}
+                            programSelected={programSelected}
+                            selectedMultisig={selectedMultisig}
                           />
                         )}
                       </Spin>

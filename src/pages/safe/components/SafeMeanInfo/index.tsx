@@ -39,13 +39,14 @@ export const SafeMeanInfo = (props: {
   multisigClient: MeanMultisig | null;
   selectedTab?: any;
   proposalSelected?: any;
-
 }) => {
 
   const { 
     tokenList,
     programs,
-    setPrograms
+    setPrograms,
+    multisigVaults,
+    setMultisigVaults
   } = useContext(AppStateContext);
   const {
     connection,
@@ -67,7 +68,6 @@ export const SafeMeanInfo = (props: {
   const [multisig, setMultisig] = useState<any>(selectedMultisig);
   const [solBalance, setSolBalance] = useState<number>(0);
   const [multisigTxs, setMultisigTxs] = useState<MultisigTransaction[]>([]);
-  const [multisigVaults, setMultisigVaults] = useState<any[]>([]);
   const [loadingProposals, setLoadingProposals] = useState(true);
   const [loadingAssets, setLoadingAssets] = useState(true);
   const [loadingPrograms, setLoadingPrograms] = useState(false);

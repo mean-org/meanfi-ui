@@ -48,6 +48,7 @@ import { openNotification } from "../components/Notifications";
 import { PerformanceCounter } from "../utils/perf-counter";
 import { TokenPrice } from "../models/token";
 import { ProgramAccounts } from "../utils/accounts";
+import { MultisigVault } from "../models/multisig";
 
 const pricesOldPerformanceCounter = new PerformanceCounter();
 const pricesNewPerformanceCounter = new PerformanceCounter();
@@ -93,6 +94,7 @@ interface AppStateConfig {
   streamListv1: StreamInfo[] | undefined;
   streamListv2: Stream[] | undefined;
   streamList: Array<Stream | StreamInfo> | undefined;
+  multisigVaults: MultisigVault[];
   programs: ProgramAccounts[];
   selectedStream: Stream | StreamInfo | undefined;
   streamDetail: Stream | StreamInfo | undefined;
@@ -167,6 +169,7 @@ interface AppStateConfig {
   setPreviousWalletConnectState: (state: boolean) => void;
   setLoadingStreams: (state: boolean) => void;
   setStreamList: (list: Array<StreamInfo | Stream> | undefined) => void;
+  setMultisigVaults: (list: Array<MultisigVault>) => void;
   setPrograms: (list: Array<ProgramAccounts>) => void;
   setSelectedStream: (stream: Stream | StreamInfo | undefined) => void;
   setStreamDetail: (stream: Stream | StreamInfo | undefined) => void;
@@ -237,6 +240,7 @@ const contextDefaultValues: AppStateConfig = {
   streamListv1: undefined,
   streamListv2: undefined,
   streamList: undefined,
+  multisigVaults: [],
   programs: [],
   selectedStream: undefined,
   streamDetail: undefined,
@@ -311,6 +315,7 @@ const contextDefaultValues: AppStateConfig = {
   setPreviousWalletConnectState: () => {},
   setLoadingStreams: () => {},
   setStreamList: () => {},
+  setMultisigVaults: () => {},
   setPrograms: () => {},
   setSelectedStream: () => {},
   setStreamDetail: () => {},
@@ -398,6 +403,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [streamListv1, setStreamListv1] = useState<StreamInfo[] | undefined>();
   const [streamListv2, setStreamListv2] = useState<Stream[] | undefined>();
   const [streamList, setStreamList] = useState<Array<StreamInfo | Stream> | undefined>();
+  const [multisigVaults, setMultisigVaults] = useState<MultisigVault[]>([]);
   const [programs, setPrograms] = useState<ProgramAccounts[]>([]);
   const [selectedStream, updateSelectedStream] = useState<Stream | StreamInfo | undefined>();
   const [streamDetail, updateStreamDetail] = useState<Stream | StreamInfo | undefined>();
@@ -1462,6 +1468,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         streamListv1,
         streamListv2,
         streamList,
+        multisigVaults,
         programs,
         selectedStream,
         streamDetail,
@@ -1532,6 +1539,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         setPreviousWalletConnectState,
         setLoadingStreams,
         setStreamList,
+        setMultisigVaults,
         setPrograms,
         setSelectedStream,
         setStreamDetail,

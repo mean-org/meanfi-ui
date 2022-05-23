@@ -30,7 +30,7 @@ export const MultisigTransferTokensModal = (props: {
   nativeBalance: number;
   transactionFees: TransactionFees;
   selectedVault: MultisigVault | undefined;
-  assets: MultisigVault[]
+  assets: MultisigVault[];
 }) => {
   const { t } = useTranslation('common');
   const connection = useConnection();
