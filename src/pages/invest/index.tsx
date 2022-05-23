@@ -22,12 +22,12 @@ import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { MEAN_TOKEN_LIST, SOCN_USD } from "../../constants/token-list";
 import { confirmationEvents } from "../../contexts/transaction-status";
-import { EventType } from "../../models/enums";
+import { EventType, InvestItemPaths } from "../../models/enums";
 import { InfoIcon } from "../../components/InfoIcon";
 import { ONE_MINUTE_REFRESH_TIMEOUT } from "../../constants";
 
-type StakeOption = "stake" | "unstake" | undefined;
 const { Step } = Steps;
+export type StakeOption = "stake" | "unstake" | undefined;
 export const INVEST_ROUTE_BASE_PATH = '/invest';
 
 type StakingPair = {
@@ -246,7 +246,7 @@ export const InvestView = () => {
     {
       id: 0,
       name: "Stake",
-      path: 'stake-mean',
+      path: InvestItemPaths.StakeMean,
       symbol1: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg",
       symbol2: "",
       title: t("invest.panel-left.invest-stake-tab-title"),
@@ -256,7 +256,7 @@ export const InvestView = () => {
     {
       id: 1,
       name: "Liquidity",
-      path: 'mean-liquidity',
+      path: InvestItemPaths.MeanLiquidityPools,
       symbol1: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R/logo.png",
       symbol2: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE/logo.png",
       title: t("invest.panel-left.invest-liquidity-tab-title"),
@@ -266,7 +266,7 @@ export const InvestView = () => {
     {
       id: 2,
       name: "Stake Sol",
-      path: 'stake-sol',
+      path: InvestItemPaths.StakeSol,
       symbol1: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
       symbol2: "",
       title: t("invest.panel-left.invest-stake-sol-tab-title"),
@@ -276,7 +276,7 @@ export const InvestView = () => {
     {
       id: 3,
       name: "Discounted sMEAN",
-      path: 'discounted-mean',
+      path: InvestItemPaths.DiscountedMean,
       symbol1: "/assets/smean-token.svg",
       symbol2: "",
       title: "Get discounted sMEAN",
@@ -603,7 +603,7 @@ export const InvestView = () => {
         break;
       default:
         setCurrentTab("stake");
-        if (investItem === 'stake-mean') {
+        if (investItem === InvestItemPaths.StakeMean) {
           setSearchParams({option: "stake"});
         }
         break;

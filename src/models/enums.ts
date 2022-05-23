@@ -112,6 +112,13 @@ export enum WhitelistClaimType
     IDO = 2
 }
 
+export enum InvestItemPaths {
+    StakeMean = "stake-mean",
+    MeanLiquidityPools = "mean-liquidity",
+    StakeSol = "stake-sol",
+    DiscountedMean = "discounted-mean"
+}
+
 export enum EventType {
     TxConfirmSuccess = 'txConfirmed',
     TxConfirmTimeout = 'txTimedout',

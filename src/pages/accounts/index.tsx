@@ -57,7 +57,7 @@ import { openNotification } from '../../components/Notifications';
 import { AddressDisplay } from '../../components/AddressDisplay';
 import { ReceiveSplOrSolModal } from '../../components/ReceiveSplOrSolModal';
 import { SendAssetModal } from '../../components/SendAssetModal';
-import { EventType, OperationType, TransactionStatus } from '../../models/enums';
+import { EventType, InvestItemPaths, OperationType, TransactionStatus } from '../../models/enums';
 import { consoleOut, copyText, getTransactionStatusForLogs, isValidAddress, kFormatter, toUsCurrency } from '../../utils/ui';
 import { WrapSolModal } from '../../components/WrapSolModal';
 import { UnwrapSolModal } from '../../components/UnwrapSolModal';
@@ -72,6 +72,7 @@ import { unwrapSol } from '@mean-dao/hybrid-liquidity-ag';
 import { customLogger } from '../..';
 import { AccountsInitAtaModal } from '../../components/AccountsInitAtaModal';
 import { AccountsCloseAssetModal } from '../../components/AccountsCloseAssetModal';
+import { INVEST_ROUTE_BASE_PATH } from '../invest';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export type CategoryOption = "networth" | "assets" | "msigs" | "other-assets";
@@ -376,10 +377,40 @@ export const AccountsNewView = () => {
     }
   }, [navigate, selectedAsset, setDtailsPanelOpen]);
 
+  const investButtonEnabled = useCallback(() => {
+    if (!selectedAsset || !isInspectedAccountTheConnectedWallet()) { return false; }
+
+    const investPageUsedAssets = ['SOL', 'MEAN', 'sMEAN', 'RAY', 'USDC'];
+    return investPageUsedAssets.includes(selectedAsset.symbol);
+  }, [isInspectedAccountTheConnectedWallet, selectedAsset]);
+
   const handleGoToInvestClick = useCallback(() => {
     setDtailsPanelOpen(false);
-    navigate('/invest');
-  }, [navigate, setDtailsPanelOpen]);
+    let url = INVEST_ROUTE_BASE_PATH;
+
+    if (selectedAsset) {
+      switch (selectedAsset.symbol) {
+        case "SOL":
+          url += `/${InvestItemPaths.StakeSol}`;
+          break;
+        case "MEAN":
+          url += `/${InvestItemPaths.StakeMean}?option=stake`;
+          break;
+        case "sMEAN":
+          url += `/${InvestItemPaths.StakeMean}?option=unstake`;
+          break;
+        case "RAY":
+        case "USDC":
+          url += `/${InvestItemPaths.MeanLiquidityPools}`;
+          break;
+        default:
+          break;
+      }
+    }
+
+    navigate(url);
+
+  }, [navigate, selectedAsset, setDtailsPanelOpen]);
 
   const onExchangeAsset = useCallback(() => {
     if (!selectedAsset) { return; }
@@ -2022,7 +2053,7 @@ export const AccountsNewView = () => {
                   <span>Exchange</span>
                 </Button>
               )}
-              {!isSelectedAssetWsol() && (
+              {(!isSelectedAssetWsol() && investButtonEnabled()) && (
                 <Button
                   type="default"
                   shape="round"
