@@ -886,7 +886,7 @@ export const AccountsNewView = () => {
 
   // Load streams on entering /accounts
   useEffect(() => {
-    if (!isFirstLoad || !publicKey) { return; }
+    if (!isFirstLoad || !publicKey || !accountAddress) { return; }
 
     setIsFirstLoad(false);
     setTransactions([]);
@@ -897,7 +897,7 @@ export const AccountsNewView = () => {
       }
     }, 1000);
 
-    if ((publicKey || accountAddress) && (!streamList || streamList.length === 0)) {
+    if (!streamList || streamList.length === 0) {
       consoleOut('Loading streams...', '', 'green');
 
       const treasurer = new PublicKey(accountAddress);

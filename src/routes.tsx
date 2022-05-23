@@ -75,6 +75,7 @@ export function AppRoutes() {
                       <Route path="/ido-lp" element={<IdoLpView />} />
                       {/* All others */}
                       <Route path="/invest" element={<InvestView />} />
+                      <Route path="/invest/:investItem" element={<InvestView />} />
                       <Route path="/staking-rewards" element={<StakingRewardsView />} />
                       <Route path="/stats" element={<StatsView />} />
                       <Route path="/custody" element={<CustodyView />} />

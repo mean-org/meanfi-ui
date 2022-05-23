@@ -1,4 +1,5 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import './style.scss';
 import { ReloadOutlined } from "@ant-design/icons";
 import { Button, Tooltip, Row, Col, Empty, Spin, Divider, Steps } from "antd";
@@ -25,8 +26,9 @@ import { EventType } from "../../models/enums";
 import { InfoIcon } from "../../components/InfoIcon";
 import { ONE_MINUTE_REFRESH_TIMEOUT } from "../../constants";
 
-type SwapOption = "stake" | "unstake";
+type StakeOption = "stake" | "unstake" | undefined;
 const { Step } = Steps;
+export const INVEST_ROUTE_BASE_PATH = '/invest';
 
 type StakingPair = {
   unstakedToken: TokenInfo | undefined;
@@ -47,6 +49,9 @@ export const InvestView = () => {
   const connectionConfig = useConnectionConfig();
   const { cluster, endpoint } = useConnectionConfig();
   const { connected, publicKey } = useWallet();
+  const navigate = useNavigate();
+  const { investItem } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { account } = useNativeAccount();
   const accounts = useAccountsContext();
   const { t } = useTranslation('common');
@@ -56,7 +61,7 @@ export const InvestView = () => {
   const [meanPrice, setMeanPrice] = useState<number>(0);
   const [socnUsdTokenPrice, setSocnUsdTokenPrice] = useState<number>(0);
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
-  const [currentTab, setCurrentTab] = useState<SwapOption>("stake");
+  const [currentTab, setCurrentTab] = useState<StakeOption>(undefined);
   const [stakingRewards, setStakingRewards] = useState<number>(0);
   const annualPercentageYield = 5;
   const [raydiumInfo, setRaydiumInfo] = useState<any>([]);
@@ -241,6 +246,7 @@ export const InvestView = () => {
     {
       id: 0,
       name: "Stake",
+      path: 'stake-mean',
       symbol1: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg",
       symbol2: "",
       title: t("invest.panel-left.invest-stake-tab-title"),
@@ -250,6 +256,7 @@ export const InvestView = () => {
     {
       id: 1,
       name: "Liquidity",
+      path: 'mean-liquidity',
       symbol1: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R/logo.png",
       symbol2: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE/logo.png",
       title: t("invest.panel-left.invest-liquidity-tab-title"),
@@ -259,6 +266,7 @@ export const InvestView = () => {
     {
       id: 2,
       name: "Stake Sol",
+      path: 'stake-sol',
       symbol1: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
       symbol2: "",
       title: t("invest.panel-left.invest-stake-sol-tab-title"),
@@ -268,6 +276,7 @@ export const InvestView = () => {
     {
       id: 3,
       name: "Discounted sMEAN",
+      path: 'discounted-mean',
       symbol1: "/assets/smean-token.svg",
       symbol2: "",
       title: "Get discounted sMEAN",
@@ -281,6 +290,8 @@ export const InvestView = () => {
     maxStakeSolApyValue,
     soceanTotalStakedValue,
   ]);
+
+  const [selectedInvest, setSelectedInvest] = useState<any>(undefined);
 
   /*
   const stakingData = useMemo(() => [
@@ -554,10 +565,55 @@ export const InvestView = () => {
   /////////////////
   //   Effects   //
   /////////////////
+  // Process routing here
+
+  useEffect(() => {
+    if (!publicKey) { return; }
+
+    if (!investItem) {
+      const url = `${INVEST_ROUTE_BASE_PATH}/${investItems[0].path}`;
+      consoleOut('No investItem, redirecting to:', url, 'orange');
+      navigate(url, { replace: true });
+      return;
+    }
+
+    consoleOut('investItem:', investItem, 'blue');
+
+    const item = investItems.find(i => i.path === investItem);
+    if (item) {
+      setDtailsPanelOpen(true);
+      setSelectedInvest(item);
+    }
+
+    // Get the option if passed-in
+    let optionInQuery: string | null = null;
+    if (searchParams) {
+      optionInQuery = searchParams.get('option');
+      consoleOut('searchParams:', searchParams.toString(), 'crimson');
+      consoleOut('option:', searchParams.get('option'), 'crimson');
+    }
+
+    // Pre-select an option
+    switch (optionInQuery as StakeOption) {
+      case "stake":
+        setCurrentTab("stake");
+        break;
+      case "unstake":
+        setCurrentTab("unstake");
+        break;
+      default:
+        setCurrentTab("stake");
+        if (investItem === 'stake-mean') {
+          setSearchParams({option: "stake"});
+        }
+        break;
+    }
+
+  }, [investItem, investItems, navigate, publicKey, searchParams, setDtailsPanelOpen, setSearchParams]);
 
   // Get token addresses from staking client and save tokens
   useEffect(() => {
-    if (!stakeClient) { return; }
+    if (!publicKey || !stakeClient) { return; }
 
     if (!pageInitialized) {
       const meanAddress = stakeClient.getMintAddresses();
@@ -578,6 +634,7 @@ export const InvestView = () => {
 
     }
   }, [
+    publicKey,
     stakeClient,
     pageInitialized,
     connectionConfig.cluster
@@ -742,17 +799,11 @@ export const InvestView = () => {
     soceanApyValue
   ]);
 
-  const [selectedInvest, setSelectedInvest] = useState<any>(investItems[0]);
-
-  const onTabChange = useCallback((option: SwapOption) => {
-    setCurrentTab(option);
+  const onTabChange = useCallback((option: StakeOption) => {
     setFromCoinAmount('');
     setIsVerifiedRecipient(false);
-
-  }, [
-    setFromCoinAmount,
-    setIsVerifiedRecipient,
-  ]);
+    setSearchParams({option: (option as string) || ''});
+  }, [setFromCoinAmount, setIsVerifiedRecipient, setSearchParams]);
 
   /*
   const handleBondsAmountChange = (e: any) => {
@@ -986,12 +1037,14 @@ export const InvestView = () => {
       {investItems && investItems.length ? (
         investItems.map((item, index) => {
           const onInvestClick = () => {
+            const url = `${INVEST_ROUTE_BASE_PATH}/${item.path}`;
+            consoleOut('Redirecting to:', url, 'orange');
+            navigate(url);
             setDtailsPanelOpen(true);
-            setSelectedInvest(item);
           };
 
           return(
-            <div key={index} onClick={onInvestClick} className={`transaction-list-row ${selectedInvest.id === item.id ? "selected" : ''}`}>
+            <div key={index} onClick={onInvestClick} className={`transaction-list-row ${selectedInvest && selectedInvest.id === item.id ? "selected" : ''}`}>
               <div className="icon-cell">
                 <div className="contain-icons">
                   <div className="token-icon">
@@ -1080,314 +1133,318 @@ export const InvestView = () => {
 
             <div className="meanfi-two-panel-right">
               <div className="inner-container">
-                {selectedInvest.id === 0 && (
+
+                {(!selectedInvest || selectedInvest.id === undefined) ? (
+                  <div className="h-100 flex-center">
+                    <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                  </div>
+                ) : (
                   <>
-                    {/* Staking paragraphs */}
-                    <h2>{t("invest.panel-right.title")}</h2>
-                    <p>{t("invest.panel-right.first-text")}</p>
-                    <p className="pb-1">{t("invest.panel-right.second-text")}</p>
-                    {/* <div className="pinned-token-separator"></div> */}
-                    <Divider />
+                    {selectedInvest.id === 0 && (
+                      <>
+                        {/* Staking paragraphs */}
+                        <h2>{t("invest.panel-right.title")}</h2>
+                        <p>{t("invest.panel-right.first-text")}</p>
+                        <p className="pb-1">{t("invest.panel-right.second-text")}</p>
+                        {/* <div className="pinned-token-separator"></div> */}
+                        <Divider />
 
-                    {/* Staking Stats */}
-                    <div className="invest-fields-container pt-2">
-                      <div className="mb-3">
-                        <Row>
-                          <Col span={8}>
-                            <div className="info-label icon-label justify-content-center align-items-center">
-                              <span>{t("invest.panel-right.stats.staking-apy")}</span>
-                              <InfoIcon content={t("invest.panel-right.stats.staking-apy-tooltip")} placement="top">
-                                <IconHelpCircle className="mean-svg-icons" />
-                              </InfoIcon>
-                            </div>
-                            <div className="transaction-detail-row">
-                              {refreshingStakePoolInfo || (!stakePoolInfo || stakePoolInfo.apr === 0) ? (
-                                <IconLoading className="mean-svg-icons"/>
-                              ) : (
-                                <span>{(stakePoolInfo.apr * 100).toFixed(2)}%</span>
-                              )}
-                            </div>
-                          </Col>
-                          <Col span={8}>
-                            <div className="info-label icon-label justify-content-center align-items-center">
-                              {t("invest.panel-right.stats.total-value-locked")}
-                            </div>
-                            <div className="transaction-detail-row">
-                              {refreshingStakePoolInfo || (!stakePoolInfo || stakePoolInfo.tvl === 0) ? (
-                                <IconLoading className="mean-svg-icons"/>
-                              ) : (
-                                <span>${formatThousands(stakePoolInfo.tvl, 2)}</span>
-                              )}
-                            </div>
-                          </Col>
-                          <Col span={8}>
-                            <div className="info-label icon-label justify-content-center align-items-center">
-                              {t("invest.panel-right.stats.total-mean-rewards")}
-                            </div>
-                            <div className="transaction-detail-row">
-                              {refreshingStakePoolInfo || (!stakePoolInfo || stakePoolInfo.totalMeanAmount.uiAmount === 0) ? (
-                                <IconLoading className="mean-svg-icons"/>
-                              ) : (
-                                <span>{formatThousands(stakePoolInfo.totalMeanAmount.uiAmount || 0, 0)}</span>
-                              )}
-                            </div>
-                          </Col>
-                        </Row>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-center">
-                      {meanAddresses && (
-                        <div className="place-transaction-box mb-3">
-                          <div className="button-tabset-container">
-                            <div className={`tab-button ${currentTab === "stake" ? 'active' : ''}`} onClick={() => onTabChange("stake")}>
-                              {t('invest.panel-right.tabset.stake.name')}
-                            </div>
-                            <div className={`tab-button ${currentTab === "unstake" ? 'active' : ''}`} onClick={() => onTabChange("unstake")}>
-                              {t('invest.panel-right.tabset.unstake.name')}
-                            </div>
-                          </div>
-
-                          {/* Tab Stake */}
-                          {currentTab === "stake" && (
-                            <StakeTabView
-                              stakeClient={stakeClient}
-                              selectedToken={stakingPair?.unstakedToken}
-                              meanBalance={meanBalance}
-                              smeanBalance={sMeanBalance}
-                            />
-                          )}
-
-                          {/* Tab unstake */}
-                          {currentTab === "unstake" && (
-                            <UnstakeTabView
-                              stakeClient={stakeClient}
-                              selectedToken={stakingPair?.stakedToken}
-                              unstakedToken={stakingPair?.unstakedToken}
-                              tokenBalance={sMeanBalance}
-                            />
-                          )}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* <Row gutter={[8, 8]} className="d-flex justify-content-center">
-                      <Col xs={24} sm={12} md={24} lg={12} className="column-width">
-                      </Col>
-                      <Col xs={24} sm={12} md={24} lg={12} className="column-width">
-                        <div className="staking-data">
-                          <h3>{t("invest.panel-right.staking-data.title")}</h3>
-                          {stakingData.map((data, index) => (
-                            <Row key={`${index}`}>
-                              <Col span={12}>
-                                <span>{data.label}</span>
+                        {/* Staking Stats */}
+                        <div className="invest-fields-container pt-2">
+                          <div className="mb-3">
+                            <Row>
+                              <Col span={8}>
+                                <div className="info-label icon-label justify-content-center align-items-center">
+                                  <span>{t("invest.panel-right.stats.staking-apy")}</span>
+                                  <InfoIcon content={t("invest.panel-right.stats.staking-apy-tooltip")} placement="top">
+                                    <IconHelpCircle className="mean-svg-icons" />
+                                  </InfoIcon>
+                                </div>
+                                <div className="transaction-detail-row">
+                                  {refreshingStakePoolInfo || (!stakePoolInfo || stakePoolInfo.apr === 0) ? (
+                                    <IconLoading className="mean-svg-icons"/>
+                                  ) : (
+                                    <span>{(stakePoolInfo.apr * 100).toFixed(2)}%</span>
+                                  )}
+                                </div>
                               </Col>
-                              <Col span={12}>
-                                <span className="staking-number">{data.value}</span>
+                              <Col span={8}>
+                                <div className="info-label icon-label justify-content-center align-items-center">
+                                  {t("invest.panel-right.stats.total-value-locked")}
+                                </div>
+                                <div className="transaction-detail-row">
+                                  {refreshingStakePoolInfo || (!stakePoolInfo || stakePoolInfo.tvl === 0) ? (
+                                    <IconLoading className="mean-svg-icons"/>
+                                  ) : (
+                                    <span>${formatThousands(stakePoolInfo.tvl, 2)}</span>
+                                  )}
+                                </div>
+                              </Col>
+                              <Col span={8}>
+                                <div className="info-label icon-label justify-content-center align-items-center">
+                                  {t("invest.panel-right.stats.total-mean-rewards")}
+                                </div>
+                                <div className="transaction-detail-row">
+                                  {refreshingStakePoolInfo || (!stakePoolInfo || stakePoolInfo.totalMeanAmount.uiAmount === 0) ? (
+                                    <IconLoading className="mean-svg-icons"/>
+                                  ) : (
+                                    <span>{formatThousands(stakePoolInfo.totalMeanAmount.uiAmount || 0, 0)}</span>
+                                  )}
+                                </div>
                               </Col>
                             </Row>
-                          ))}
-                          <Row>
-                            <span className="mt-1"><i>{t("invest.panel-right.staking-data.text-two")}</i></span>
-                          </Row>
+                          </div>
                         </div>
-                      </Col>
-                    </Row> */}
-                  </>
-                )}
 
-                {/* Mean Liquidity Pools & Farms */}
-                {selectedInvest.id === 1 && (
-                  <>
-                    <h2>{t("invest.panel-right.liquidity-pool.title")}</h2>
+                        <div className="flex flex-center">
+                          {meanAddresses && (
+                            <div className="place-transaction-box mb-3">
+                              <div className="button-tabset-container">
+                                <div className={`tab-button ${currentTab === "stake" ? 'active' : ''}`} onClick={() => onTabChange("stake")}>
+                                  {t('invest.panel-right.tabset.stake.name')}
+                                </div>
+                                <div className={`tab-button ${currentTab === "unstake" ? 'active' : ''}`} onClick={() => onTabChange("unstake")}>
+                                  {t('invest.panel-right.tabset.unstake.name')}
+                                </div>
+                              </div>
 
-                    <p>{t("invest.panel-right.liquidity-pool.text-one")}</p>
+                              {/* Tab Stake */}
+                              {currentTab === "stake" && (
+                                <StakeTabView
+                                  stakeClient={stakeClient}
+                                  selectedToken={stakingPair?.unstakedToken}
+                                  meanBalance={meanBalance}
+                                  smeanBalance={sMeanBalance}
+                                />
+                              )}
 
-                    <p>{t("invest.panel-right.liquidity-pool.text-two")} <a href="https://raydium.gitbook.io/raydium/exchange-trade-and-swap/liquidity-pools" target="_blank" rel="noreferrer" className="fg-orange-red">Raydium</a> {t("invest.panel-right.liquidity-pool.text-two-divider")} <a href="https://docs.orca.so/how-to-provide-liquidity-on-orca" target="_blank" rel="noreferrer" className="fg-orange-red">Orca</a></p>
-
-                    <p>{t("invest.panel-right.liquidity-pool.text-three")}</p>
-
-                    <div className="float-top-right">
-                      <span className="icon-button-container secondary-button">
-                        <Tooltip placement="bottom" title={t("invest.panel-right.liquidity-pool.refresh-tooltip")}>
-                          <Button
-                            type="default"
-                            shape="circle"
-                            size="middle"
-                            icon={<ReloadOutlined className="mean-svg-icons" />}
-                            onClick={() => setShouldRefreshLpData(true)}
-                          />
-                        </Tooltip>
-                      </span>
-                    </div>
-
-                    <div className="stats-row">
-                      <div className="item-list-header compact"><div className="header-row">
-                        <div className="std-table-cell responsive-cell text-left
-                        ">{t("invest.panel-right.table-data.column-platform")}</div>
-                        <div className="std-table-cell responsive-cell pr-1 text-left">{t("invest.panel-right.table-data.column-lppair")}</div>
-                        <div className="std-table-cell responsive-cell pr-2 text-right">{t("invest.panel-right.table-data.column-liquidity")}</div>
-                        <div className="std-table-cell responsive-cell pr-2 text-right">{t("invest.panel-right.table-data.column-volume")}</div>
-                        <div className="std-table-cell responsive-cell pr-2 text-right">{t("invest.panel-right.table-data.column-apr/apy")}</div>
-                        <div className="std-table-cell responsive-cell pl-1 text-center invest-col">{t("invest.panel-right.table-data.column-invest")}</div>
+                              {/* Tab unstake */}
+                              {currentTab === "unstake" && (
+                                <UnstakeTabView
+                                  stakeClient={stakeClient}
+                                  selectedToken={stakingPair?.stakedToken}
+                                  unstakedToken={stakingPair?.unstakedToken}
+                                  tokenBalance={sMeanBalance}
+                                />
+                              )}
+                            </div>
+                          )}
                         </div>
-                      </div>
 
-                      <div className="transaction-list-data-wrapper vertical-scroll">
-                        <Spin spinning={refreshingPoolInfo}>
-                          <div className="activity-list h-100">
-                            <div className="item-list-body compact">
-                              {raydiumInfo.map((raydium: any) => (
-                                <a key={raydium.ammId} className="item-list-row" target="_blank" rel="noopener noreferrer" 
-                                href={`https://raydium.io/liquidity/add/?coin0=MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD&coin1=${raydium.name.slice(5) === "SOL" ? "sol&fixed" : raydium.name.slice(5) === "RAY" ? "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R&fixed" : "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&fixed"}=coin0&ammId=${raydium.ammId}`}>
-                                <div className="std-table-cell responsive-cell pl-0">
-                                  <div className="icon-cell pr-1 d-inline-block">
-                                    <div className="token-icon">
-                                      <img alt="Raydium" width="20" height="20" src="https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R/logo.png" />
-                                    </div>
-                                  </div>
-                                  <span>Raydium</span>
-                                </div>
-                                <div className="std-table-cell responsive-cell pr-1">
-                                  <span>{raydium.name.replace(/-/g, "/")}</span>
-                                </div>
-                                <div className="std-table-cell responsive-cell pr-1 text-right">
-                                  <span>{raydium.liquidity > 0 ? `$${formatThousands(raydium.liquidity)}` : "--"}</span>
-                                </div>
-                                <div className="std-table-cell responsive-cell pr-1 text-right">
-                                  <span>{raydium.volume24h > 0 ? `$${formatThousands(raydium.volume24h)}` : "--"}</span>
-                                </div>
-                                <div className="std-table-cell responsive-cell pr-1 text-right">
-                                  <span>{raydium.apr7d > 0 ? `${raydium.apr7d.toFixed(2)}%` : "--"}</span>
-                                </div>
-                                <div className="std-table-cell responsive-cell pl-1 text-center invest-col">
-                                  <span role="img" aria-label="arrow-up" className="anticon anticon-arrow-up mean-svg-icons outgoing upright">
-                                    <svg viewBox="64 64 896 896" focusable="false" data-icon="arrow-up" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M868 545.5L536.1 163a31.96 31.96 0 00-48.3 0L156 545.5a7.97 7.97 0 006 13.2h81c4.6 0 9-2 12.1-5.5L474 300.9V864c0 4.4 3.6 8 8 8h60c4.4 0 8-3.6 8-8V300.9l218.9 252.3c3 3.5 7.4 5.5 12.1 5.5h81c6.8 0 10.5-8 6-13.2z"></path></svg>
-                                  </span>
-                                </div>
-                                </a>
+                        {/* <Row gutter={[8, 8]} className="d-flex justify-content-center">
+                          <Col xs={24} sm={12} md={24} lg={12} className="column-width">
+                          </Col>
+                          <Col xs={24} sm={12} md={24} lg={12} className="column-width">
+                            <div className="staking-data">
+                              <h3>{t("invest.panel-right.staking-data.title")}</h3>
+                              {stakingData.map((data, index) => (
+                                <Row key={`${index}`}>
+                                  <Col span={12}>
+                                    <span>{data.label}</span>
+                                  </Col>
+                                  <Col span={12}>
+                                    <span className="staking-number">{data.value}</span>
+                                  </Col>
+                                </Row>
                               ))}
-                              {orcaInfo.map((orca: any) => (
-                                <a key={orca.name2} className="item-list-row" target="_blank" rel="noopener noreferrer" href="https://www.orca.so/pools">
-                                <div className="std-table-cell responsive-cell pl-0">
-                                  <div className="icon-cell pr-1 d-inline-block">
-                                    <div className="token-icon">
-                                      <img alt="Orca" width="20" height="20" src="https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE/logo.png" />
-                                    </div>
-                                  </div>
-                                  <span>Orca</span>
-                                </div>
-                                <div className="std-table-cell responsive-cell pr-1">
-                                  <span>{orca.name2}</span>
-                                </div>
-                                <div className="std-table-cell responsive-cell pr-1 text-right">
-                                  <span>{orca.liquidity > 0 ? `$${formatThousands(orca.liquidity)}` : "--"}</span>
-                                </div>
-                                <div className="std-table-cell responsive-cell pr-1 text-right">
-                                  <span>{orca.volume_24h > 0 ? `$${formatThousands(orca.volume_24h)}` : "--"}</span>
-                                </div>
-                                <div className="std-table-cell responsive-cell pr-1 text-right">
-                                  <span>{orca.apy_7d > 0 ? `${(orca.apy_7d * 100).toFixed(2)}% APY` : "--"}</span>
-                                </div>
-                                <div className="std-table-cell responsive-cell pl-1 text-center invest-col">
-                                  <span role="img" aria-label="arrow-up" className="anticon anticon-arrow-up mean-svg-icons outgoing upright">
-                                    <svg viewBox="64 64 896 896" focusable="false" data-icon="arrow-up" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M868 545.5L536.1 163a31.96 31.96 0 00-48.3 0L156 545.5a7.97 7.97 0 006 13.2h81c4.6 0 9-2 12.1-5.5L474 300.9V864c0 4.4 3.6 8 8 8h60c4.4 0 8-3.6 8-8V300.9l218.9 252.3c3 3.5 7.4 5.5 12.1 5.5h81c6.8 0 10.5-8 6-13.2z"></path></svg>
-                                  </span>
-                                </div>
-                                </a>
-                              ))}
+                              <Row>
+                                <span className="mt-1"><i>{t("invest.panel-right.staking-data.text-two")}</i></span>
+                              </Row>
+                            </div>
+                          </Col>
+                        </Row> */}
+                      </>
+                    )}
+
+                    {/* Mean Liquidity Pools & Farms */}
+                    {selectedInvest.id === 1 && (
+                      <>
+                        <h2>{t("invest.panel-right.liquidity-pool.title")}</h2>
+
+                        <p>{t("invest.panel-right.liquidity-pool.text-one")}</p>
+
+                        <p>{t("invest.panel-right.liquidity-pool.text-two")} <a href="https://raydium.gitbook.io/raydium/exchange-trade-and-swap/liquidity-pools" target="_blank" rel="noreferrer" className="fg-orange-red">Raydium</a> {t("invest.panel-right.liquidity-pool.text-two-divider")} <a href="https://docs.orca.so/how-to-provide-liquidity-on-orca" target="_blank" rel="noreferrer" className="fg-orange-red">Orca</a></p>
+
+                        <p>{t("invest.panel-right.liquidity-pool.text-three")}</p>
+
+                        <div className="float-top-right">
+                          <span className="icon-button-container secondary-button">
+                            <Tooltip placement="bottom" title={t("invest.panel-right.liquidity-pool.refresh-tooltip")}>
+                              <Button
+                                type="default"
+                                shape="circle"
+                                size="middle"
+                                icon={<ReloadOutlined className="mean-svg-icons" />}
+                                onClick={() => setShouldRefreshLpData(true)}
+                              />
+                            </Tooltip>
+                          </span>
+                        </div>
+
+                        <div className="stats-row">
+                          <div className="item-list-header compact"><div className="header-row">
+                            <div className="std-table-cell responsive-cell text-left
+                            ">{t("invest.panel-right.table-data.column-platform")}</div>
+                            <div className="std-table-cell responsive-cell pr-1 text-left">{t("invest.panel-right.table-data.column-lppair")}</div>
+                            <div className="std-table-cell responsive-cell pr-2 text-right">{t("invest.panel-right.table-data.column-liquidity")}</div>
+                            <div className="std-table-cell responsive-cell pr-2 text-right">{t("invest.panel-right.table-data.column-volume")}</div>
+                            <div className="std-table-cell responsive-cell pr-2 text-right">{t("invest.panel-right.table-data.column-apr/apy")}</div>
+                            <div className="std-table-cell responsive-cell pl-1 text-center invest-col">{t("invest.panel-right.table-data.column-invest")}</div>
                             </div>
                           </div>
-                        </Spin>
-                      </div>
-                    </div>
-                  </>
-                )}
 
-                {/* Staking SOL */}
-                {selectedInvest.id === 2 && (
-                  <>
-                    <h2>{t("invest.panel-right.staking-sol.title")}</h2>
-
-                    <p>{t("invest.panel-right.staking-sol.text-one")}</p>
-
-                    <p>{t("invest.panel-right.staking-sol.text-two")}</p>
-
-                    <div className="float-top-right">
-                      <span className="icon-button-container secondary-button">
-                        <Tooltip placement="bottom" title={t("invest.panel-right.staking-sol.refresh-tooltip")}>
-                          <Button
-                            type="default"
-                            shape="circle"
-                            size="middle"
-                            icon={<ReloadOutlined className="mean-svg-icons" />}
-                            onClick={() => setShouldRefreshLpData(true)}
-                          />
-                        </Tooltip>
-                      </span>
-                    </div>
-
-                    <div className="stats-row">
-                      <div className="item-list-header compact"><div className="header-row">
-                        <div className="std-table-cell responsive-cell text-left
-                        ">{t("invest.panel-right.table-data.column-platform")}</div>
-                        <div className="std-table-cell responsive-cell pr-2 text-left">{t("invest.panel-right.table-data.column-token")}</div>
-                        <div className="std-table-cell responsive-cell pr-2 text-left">{t("invest.panel-right.table-data.column-total-staked")}</div>
-                        <div className="std-table-cell responsive-cell pr-2 text-center">{t("invest.panel-right.table-data.column-apr/apy")}</div>
-                        <div className="std-table-cell responsive-cell pl-1 text-center invest-col">{t("invest.panel-right.table-data.column-stake")}</div>
-                        </div>
-                      </div>
-
-                      <div className="transaction-list-data-wrapper vertical-scroll">
-                        <Spin spinning={refreshingPoolInfo}>
-                          <div className="activity-list h-100">
-                            <div className="item-list-body compact">
-                              {stakingSOLData.map((solData: any, index) => (
-                                <div key={index}>
-                                  <a className="item-list-row" target="_blank" rel="noopener noreferrer" href={solData.href}>
+                          <div className="transaction-list-data-wrapper vertical-scroll">
+                            <Spin spinning={refreshingPoolInfo}>
+                              <div className="activity-list h-100">
+                                <div className="item-list-body compact">
+                                  {raydiumInfo.map((raydium: any) => (
+                                    <a key={raydium.ammId} className="item-list-row" target="_blank" rel="noopener noreferrer" 
+                                    href={`https://raydium.io/liquidity/add/?coin0=MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD&coin1=${raydium.name.slice(5) === "SOL" ? "sol&fixed" : raydium.name.slice(5) === "RAY" ? "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R&fixed" : "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&fixed"}=coin0&ammId=${raydium.ammId}`}>
                                     <div className="std-table-cell responsive-cell pl-0">
                                       <div className="icon-cell pr-1 d-inline-block">
                                         <div className="token-icon">
-                                          <img alt={solData.name} width="20" height="20" src={solData.img} />
+                                          <img alt="Raydium" width="20" height="20" src="https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R/logo.png" />
                                         </div>
                                       </div>
-                                      <span>{solData.name}</span>
+                                      <span>Raydium</span>
                                     </div>
                                     <div className="std-table-cell responsive-cell pr-1">
-                                      <span>{solData.token}</span>
+                                      <span>{raydium.name.replace(/-/g, "/")}</span>
                                     </div>
-                                    <div className="std-table-cell responsive-cell pr-1 text-left">
-                                      <span>{solData.totalStaked}</span>
+                                    <div className="std-table-cell responsive-cell pr-1 text-right">
+                                      <span>{raydium.liquidity > 0 ? `$${formatThousands(raydium.liquidity)}` : "--"}</span>
                                     </div>
-                                    <div className="std-table-cell responsive-cell pr-1 text-center">
-                                      <span>{solData.apy}</span>
+                                    <div className="std-table-cell responsive-cell pr-1 text-right">
+                                      <span>{raydium.volume24h > 0 ? `$${formatThousands(raydium.volume24h)}` : "--"}</span>
+                                    </div>
+                                    <div className="std-table-cell responsive-cell pr-1 text-right">
+                                      <span>{raydium.apr7d > 0 ? `${raydium.apr7d.toFixed(2)}%` : "--"}</span>
                                     </div>
                                     <div className="std-table-cell responsive-cell pl-1 text-center invest-col">
                                       <span role="img" aria-label="arrow-up" className="anticon anticon-arrow-up mean-svg-icons outgoing upright">
                                         <svg viewBox="64 64 896 896" focusable="false" data-icon="arrow-up" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M868 545.5L536.1 163a31.96 31.96 0 00-48.3 0L156 545.5a7.97 7.97 0 006 13.2h81c4.6 0 9-2 12.1-5.5L474 300.9V864c0 4.4 3.6 8 8 8h60c4.4 0 8-3.6 8-8V300.9l218.9 252.3c3 3.5 7.4 5.5 12.1 5.5h81c6.8 0 10.5-8 6-13.2z"></path></svg>
                                       </span>
                                     </div>
-                                  </a>
+                                    </a>
+                                  ))}
+                                  {orcaInfo.map((orca: any) => (
+                                    <a key={orca.name2} className="item-list-row" target="_blank" rel="noopener noreferrer" href="https://www.orca.so/pools">
+                                    <div className="std-table-cell responsive-cell pl-0">
+                                      <div className="icon-cell pr-1 d-inline-block">
+                                        <div className="token-icon">
+                                          <img alt="Orca" width="20" height="20" src="https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE/logo.png" />
+                                        </div>
+                                      </div>
+                                      <span>Orca</span>
+                                    </div>
+                                    <div className="std-table-cell responsive-cell pr-1">
+                                      <span>{orca.name2}</span>
+                                    </div>
+                                    <div className="std-table-cell responsive-cell pr-1 text-right">
+                                      <span>{orca.liquidity > 0 ? `$${formatThousands(orca.liquidity)}` : "--"}</span>
+                                    </div>
+                                    <div className="std-table-cell responsive-cell pr-1 text-right">
+                                      <span>{orca.volume_24h > 0 ? `$${formatThousands(orca.volume_24h)}` : "--"}</span>
+                                    </div>
+                                    <div className="std-table-cell responsive-cell pr-1 text-right">
+                                      <span>{orca.apy_7d > 0 ? `${(orca.apy_7d * 100).toFixed(2)}% APY` : "--"}</span>
+                                    </div>
+                                    <div className="std-table-cell responsive-cell pl-1 text-center invest-col">
+                                      <span role="img" aria-label="arrow-up" className="anticon anticon-arrow-up mean-svg-icons outgoing upright">
+                                        <svg viewBox="64 64 896 896" focusable="false" data-icon="arrow-up" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M868 545.5L536.1 163a31.96 31.96 0 00-48.3 0L156 545.5a7.97 7.97 0 006 13.2h81c4.6 0 9-2 12.1-5.5L474 300.9V864c0 4.4 3.6 8 8 8h60c4.4 0 8-3.6 8-8V300.9l218.9 252.3c3 3.5 7.4 5.5 12.1 5.5h81c6.8 0 10.5-8 6-13.2z"></path></svg>
+                                      </span>
+                                    </div>
+                                    </a>
+                                  ))}
                                 </div>
-                              ))}
+                              </div>
+                            </Spin>
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    {/* Staking SOL */}
+                    {selectedInvest.id === 2 && (
+                      <>
+                        <h2>{t("invest.panel-right.staking-sol.title")}</h2>
+
+                        <p>{t("invest.panel-right.staking-sol.text-one")}</p>
+
+                        <p>{t("invest.panel-right.staking-sol.text-two")}</p>
+
+                        <div className="float-top-right">
+                          <span className="icon-button-container secondary-button">
+                            <Tooltip placement="bottom" title={t("invest.panel-right.staking-sol.refresh-tooltip")}>
+                              <Button
+                                type="default"
+                                shape="circle"
+                                size="middle"
+                                icon={<ReloadOutlined className="mean-svg-icons" />}
+                                onClick={() => setShouldRefreshLpData(true)}
+                              />
+                            </Tooltip>
+                          </span>
+                        </div>
+
+                        <div className="stats-row">
+                          <div className="item-list-header compact"><div className="header-row">
+                            <div className="std-table-cell responsive-cell text-left
+                            ">{t("invest.panel-right.table-data.column-platform")}</div>
+                            <div className="std-table-cell responsive-cell pr-2 text-left">{t("invest.panel-right.table-data.column-token")}</div>
+                            <div className="std-table-cell responsive-cell pr-2 text-left">{t("invest.panel-right.table-data.column-total-staked")}</div>
+                            <div className="std-table-cell responsive-cell pr-2 text-center">{t("invest.panel-right.table-data.column-apr/apy")}</div>
+                            <div className="std-table-cell responsive-cell pl-1 text-center invest-col">{t("invest.panel-right.table-data.column-stake")}</div>
                             </div>
                           </div>
-                        </Spin>
-                      </div>
-                    </div>
+
+                          <div className="transaction-list-data-wrapper vertical-scroll">
+                            <Spin spinning={refreshingPoolInfo}>
+                              <div className="activity-list h-100">
+                                <div className="item-list-body compact">
+                                  {stakingSOLData.map((solData: any, index) => (
+                                    <div key={index}>
+                                      <a className="item-list-row" target="_blank" rel="noopener noreferrer" href={solData.href}>
+                                        <div className="std-table-cell responsive-cell pl-0">
+                                          <div className="icon-cell pr-1 d-inline-block">
+                                            <div className="token-icon">
+                                              <img alt={solData.name} width="20" height="20" src={solData.img} />
+                                            </div>
+                                          </div>
+                                          <span>{solData.name}</span>
+                                        </div>
+                                        <div className="std-table-cell responsive-cell pr-1">
+                                          <span>{solData.token}</span>
+                                        </div>
+                                        <div className="std-table-cell responsive-cell pr-1 text-left">
+                                          <span>{solData.totalStaked}</span>
+                                        </div>
+                                        <div className="std-table-cell responsive-cell pr-1 text-center">
+                                          <span>{solData.apy}</span>
+                                        </div>
+                                        <div className="std-table-cell responsive-cell pl-1 text-center invest-col">
+                                          <span role="img" aria-label="arrow-up" className="anticon anticon-arrow-up mean-svg-icons outgoing upright">
+                                            <svg viewBox="64 64 896 896" focusable="false" data-icon="arrow-up" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M868 545.5L536.1 163a31.96 31.96 0 00-48.3 0L156 545.5a7.97 7.97 0 006 13.2h81c4.6 0 9-2 12.1-5.5L474 300.9V864c0 4.4 3.6 8 8 8h60c4.4 0 8-3.6 8-8V300.9l218.9 252.3c3 3.5 7.4 5.5 12.1 5.5h81c6.8 0 10.5-8 6-13.2z"></path></svg>
+                                          </span>
+                                        </div>
+                                      </a>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </Spin>
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    {/* MEAN Bonds */}
+                    {selectedInvest.id === 3 && (
+                      renderMeanBonds
+                    )}
                   </>
                 )}
 
-                {/* MEAN Bonds */}
-                {selectedInvest.id === 3 && (
-                  renderMeanBonds
-                )}
-
-                {selectedInvest.id === undefined && (
-                  <div className="h-100 flex-center">
-                    <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
-                  </div>
-                )}
               </div>
             </div>
           </div>
