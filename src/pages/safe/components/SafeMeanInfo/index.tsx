@@ -22,7 +22,6 @@ import { ACCOUNT_LAYOUT } from '../../../../utils/layouts';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { BN } from 'bn.js';
-import { NATIVE_SOL } from '../../../../utils/tokens';
 
 export const SafeMeanInfo = (props: {
   connection: Connection;
@@ -43,7 +42,11 @@ export const SafeMeanInfo = (props: {
 
 }) => {
 
-  const { tokenList } = useContext(AppStateContext);
+  const { 
+    tokenList,
+    programs,
+    setPrograms
+  } = useContext(AppStateContext);
   const {
     connection,
     publicKey,
@@ -65,10 +68,9 @@ export const SafeMeanInfo = (props: {
   const [solBalance, setSolBalance] = useState<number>(0);
   const [multisigTxs, setMultisigTxs] = useState<MultisigTransaction[]>([]);
   const [multisigVaults, setMultisigVaults] = useState<any[]>([]);
-  const [programs, setPrograms] = useState<ProgramAccounts[]>([]);
   const [loadingProposals, setLoadingProposals] = useState(true);
   const [loadingAssets, setLoadingAssets] = useState(true);
-  const [loadingPrograms, setLoadingPrograms] = useState(true);
+  const [loadingPrograms, setLoadingPrograms] = useState(false);
   const [selectedProposal, setSelectedProposal] = useState<MultisigTransaction | undefined>();
 
   useEffect(() => {
@@ -180,15 +182,18 @@ export const SafeMeanInfo = (props: {
 
   // Get Programs
   useEffect(() => {
-    if (!connection || !multisig || !multisig.authority || !loadingPrograms) {
+    if (!connection || !multisig || !loadingPrograms) {
       return;
     }
 
     const timeout = setTimeout(() => {
       getProgramsByUpgradeAuthority()
         .then(progs => {
-          console.log('programs:', progs);
+          if (multisig) {
+            setLoadingPrograms(true);
+          }
           setPrograms(progs);
+          consoleOut('programs:', progs);
         })
         .catch(error => console.error(error))
         .finally(() => setLoadingPrograms(false));
@@ -200,9 +205,9 @@ export const SafeMeanInfo = (props: {
   }, [
     connection,
     multisig,
-    multisig.authority,
     loadingPrograms,
-    getProgramsByUpgradeAuthority
+    getProgramsByUpgradeAuthority,
+    setPrograms
   ]);
 
   const getMultisigVaults = useCallback(async (
@@ -302,7 +307,7 @@ export const SafeMeanInfo = (props: {
   ]);
 
   useEffect(() => {
-    const loading = multisig ? true : false;
+    const loading = selectedMultisig ? true : false;
     const timeout = setTimeout(() => {
       setLoadingProposals(loading);
       setLoadingAssets(loading);
@@ -314,8 +319,14 @@ export const SafeMeanInfo = (props: {
     }
 
   },[
-    multisig
+    selectedMultisig
   ]);
+
+  consoleOut("========================================")
+  consoleOut("multisig", multisig.label);
+  consoleOut("loading programs", loadingPrograms);
+  consoleOut("programs", programs);
+  consoleOut("========================================")
 
   // Get Txs for the selected multisig
   useEffect(() => {
@@ -605,6 +616,22 @@ export const SafeMeanInfo = (props: {
   //     )} */}
   //   </>
   // );
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+
+      if (programs && programs.length >= 0) {
+        setLoadingPrograms(false);
+      } else {
+        setLoadingPrograms(true);
+      }
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+  }, [programs]);
+
 
   const renderListOfPrograms = (
     <>

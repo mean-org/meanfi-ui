@@ -29,7 +29,7 @@ export const SafeInfo = (props: {
   onEditMultisigClick?: any;
   tabs?: Array<any>;
   selectedTab?: any;
-  solBalance?: any
+  solBalance?: any;
 }) => {
   const {
     coinPrices,
