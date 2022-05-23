@@ -3678,6 +3678,7 @@ export const SafeView = () => {
           appsProvider={appsProvider}
           solanaApps={solanaApps}
           handleOk={onAcceptCreateProposalModal}
+          selectedMultisig={selectedMultisig}
         />
       )}
 
