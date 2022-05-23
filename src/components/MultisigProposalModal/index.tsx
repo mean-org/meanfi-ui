@@ -870,7 +870,8 @@ export const MultisigProposalModal = (props: {
                       !publicKey ||
                       !selectedApp ||
                       !proposalTitleValue ||
-                      !selectedUiIx
+                      !selectedUiIx ||
+                      ((selectedApp.name === "Custom Transaction Proposal") && !isSerializedTxValid)
                     }
                   >
                     {getStepTwoContinueButtonLabel()}
@@ -906,6 +907,7 @@ export const MultisigProposalModal = (props: {
                       !selectedApp ||
                       !proposalTitleValue ||
                       !selectedUiIx ||
+                      ((selectedApp.name === "Custom Transaction Proposal") && !isSerializedTxValid) ||
                       !selectedAppConfig
                     }
                   >
