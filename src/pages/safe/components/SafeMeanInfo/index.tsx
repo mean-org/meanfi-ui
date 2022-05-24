@@ -22,6 +22,7 @@ import { ACCOUNT_LAYOUT } from '../../../../utils/layouts';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { BN } from 'bn.js';
+import { TxConfirmationContext } from '../../../../contexts/transaction-status';
 
 export const SafeMeanInfo = (props: {
   connection: Connection;
@@ -49,6 +50,9 @@ export const SafeMeanInfo = (props: {
     setMultisigVaults
   } = useContext(AppStateContext);
   const {
+    fetchTxInfoStatus,
+  } = useContext(TxConfirmationContext);
+  const {
     connection,
     publicKey,
     isSafeDetails, 
@@ -62,7 +66,6 @@ export const SafeMeanInfo = (props: {
     isAssetDetails,
     proposalSelected,
     onDataToSafeView
-
   } = props;
 
   const [multisig, setMultisig] = useState<any>(selectedMultisig);
@@ -72,6 +75,7 @@ export const SafeMeanInfo = (props: {
   const [loadingAssets, setLoadingAssets] = useState(true);
   const [loadingPrograms, setLoadingPrograms] = useState(false);
   const [selectedProposal, setSelectedProposal] = useState<MultisigTransaction | undefined>();
+  const [isBusy, setIsBusy] = useState(false);
 
   useEffect(() => {
 
@@ -100,6 +104,13 @@ export const SafeMeanInfo = (props: {
 
   }, [
     proposalSelected
+  ]);
+
+  const isTxInProgress = useCallback((): boolean => {
+    return isBusy || fetchTxInfoStatus === "fetching" ? true : false;
+  }, [
+    isBusy,
+    fetchTxInfoStatus,
   ]);
 
   const getProgramsByUpgradeAuthority = useCallback(async (): Promise<ProgramAccounts[]> => {
@@ -298,12 +309,13 @@ export const SafeMeanInfo = (props: {
     }
 
   },[
-    getMultisigVaults, 
-    multisigClient, 
     multisig, 
     connection, 
+    loadingAssets,
+    multisigClient, 
+    getMultisigVaults, 
+    setMultisigVaults,
     getSolToken, 
-    loadingAssets
   ]);
 
   useEffect(() => {
@@ -700,7 +712,6 @@ export const SafeMeanInfo = (props: {
   return (
     <>
       <SafeInfo
-        // connection={connection}
         solBalance={solBalance}
         selectedMultisig={multisig}
         multisigVaults={multisigVaults}
@@ -709,6 +720,7 @@ export const SafeMeanInfo = (props: {
         onNewCreateAssetClick={onNewCreateAssetClick}
         tabs={tabs}
         selectedTab={selectedTab}
+        isTxInProgress={isTxInProgress}
       />
     </>
   )

@@ -416,7 +416,7 @@ export const MultisigProposalModal = (props: {
                             name="Title"
                             className={`mb-0 ${isBusy ? 'disabled' : ''}`}
                             onChange={onProposalTitleValueChange}
-                            placeholder="Add a title"
+                            placeholder="Add a title (required)"
                             value={proposalTitleValue}
                           />
                         </div>
@@ -454,7 +454,7 @@ export const MultisigProposalModal = (props: {
                             maxLength={256}
                             className={`mb-0 ${isBusy ? 'disabled' : ''}`}
                             onChange={onProposalDescriptionValueChange}
-                            placeholder={t('multisig.proposal-modal.description-placeholder')}
+                            placeholder="Add a description (optional)"
                             value={proposalDescriptionValue}
                           />
                           <div className="form-field-hint pr-3 text-right">{t('multisig.proposal-modal.hint-message', {lettersLeft: lettersLeft})}</div>
@@ -525,21 +525,23 @@ export const MultisigProposalModal = (props: {
                                         tooltip_text={element.help}
                                       />
                                       {element.name === "serializedTx" ? (
-                                        <InputTextAreaMean 
-                                          id={element.name}
-                                          rows={30}
-                                          className={`well mb-1 proposal-summary-container vertical-scroll paste-input ${isBusy ? 'disabled' : ''}`}
-                                          onChange={(e: any) => {
-                                            console.log(e);
-                                            handleChangeInput({
-                                              id: element.name,
-                                              value: serializedTx
-                                            });
-                                          }}
-                                          onPaste={pasteHandler}
-                                          placeholder={element.help}
-                                          value={inputState[element.name]}
-                                        />
+                                        <>
+                                          <InputTextAreaMean 
+                                            id={element.name}
+                                            rows={30}
+                                            className={`well mb-1 proposal-summary-container vertical-scroll paste-input ${isBusy ? 'disabled' : ''}`}
+                                            onChange={(e: any) => {
+                                              console.log(e);
+                                              handleChangeInput({
+                                                id: element.name,
+                                                value: serializedTx
+                                              });
+                                            }}
+                                            onPaste={pasteHandler}
+                                            placeholder="Serialized transaction in base64 string format (required)"
+                                            value={inputState[element.name]}
+                                          />
+                                        </>
                                       ) : (
                                         <InputTextAreaMean 
                                           id={element.name}

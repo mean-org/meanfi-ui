@@ -19,7 +19,6 @@ import { isDev, isLocal, toUsCurrency } from "../../../../../utils/ui";
 import { getTokenByMintAddress, shortenAddress } from "../../../../../utils/utils";
 
 export const SafeInfo = (props: {
-  // connection: Connection;
   selectedMultisig?: any;
   multisigVaults?: MultisigVault[];
   safeNameImg?: string;
@@ -30,6 +29,7 @@ export const SafeInfo = (props: {
   tabs?: Array<any>;
   selectedTab?: any;
   solBalance?: any;
+  isTxInProgress?: any;
 }) => {
   const {
     coinPrices,
@@ -37,7 +37,7 @@ export const SafeInfo = (props: {
     isWhitelisted
   } = useContext(AppStateContext);
 
-  const { solBalance, selectedMultisig, multisigVaults, safeNameImg, safeNameImgAlt, onNewProposalMultisigClick, onNewCreateAssetClick, onEditMultisigClick, tabs, selectedTab } = props;
+  const { solBalance, selectedMultisig, multisigVaults, safeNameImg, safeNameImgAlt, onNewProposalMultisigClick, onNewCreateAssetClick, onEditMultisigClick, tabs, selectedTab, isTxInProgress } = props;
 
   const { t } = useTranslation('common');
   const navigate = useNavigate();
@@ -226,6 +226,7 @@ export const SafeInfo = (props: {
             type="ghost"
             size="small"
             className="thin-stroke"
+            disabled={isTxInProgress()}
             onClick={onGoToAccounts}>
               <div className="btn-content">
                 <IconShowAll className="mean-svg-icons" />
@@ -236,6 +237,7 @@ export const SafeInfo = (props: {
             type="ghost"
             size="small"
             className="thin-stroke"
+            disabled={isTxInProgress()}
             onClick={onNewProposalMultisigClick}>
               <div className="btn-content">
                 <IconAdd className="mean-svg-icons" />
@@ -246,6 +248,7 @@ export const SafeInfo = (props: {
             type="ghost"
             size="small"
             className="thin-stroke"
+            disabled={isTxInProgress()}
             onClick={onNewCreateAssetClick}>
               <div className="btn-content">
                 <IconAdd className="mean-svg-icons" />
@@ -265,6 +268,7 @@ export const SafeInfo = (props: {
                 shape="circle"
                 size="middle"
                 icon={<IconEllipsisVertical className="mean-svg-icons"/>}
+                disabled={isTxInProgress()}
                 onClick={(e) => e.preventDefault()}
               />
             </span>

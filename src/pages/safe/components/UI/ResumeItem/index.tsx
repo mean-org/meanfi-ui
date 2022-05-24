@@ -132,15 +132,19 @@ export const ResumeItem = (props: {
                   )}
                 </div>
               )
-            ) : ((!expires && subtitle) ? (
+            ) : (!expires && subtitle) ? (
               <div className="info-label">
                 <span className="subtitle">{subtitle}</span>
               </div>
+            // ) : (!expires && status === 4) ? (
+            //   <div className="info-label">
+            //     <span className="subtitle">Voided</span>
+            //   </div>
             ) : (
               <div className="info-label">
                 <span className="subtitle">No expires</span>
               </div>
-            ))}
+            )}
           </div>
         </Col>
         <Col className="resume-right-container">
