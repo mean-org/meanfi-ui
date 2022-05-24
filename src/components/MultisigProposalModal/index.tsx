@@ -303,8 +303,9 @@ export const MultisigProposalModal = (props: {
             <Col xs={8} sm={6} md={6} lg={6} className="select-app" key={index}>
               <div className={`select-app-item simplelink ${selectedApp && selectedApp.id === app.id ? "selected-app" : "no-selected-app"}`} onClick={onSelectApp}>
                 {app.id === MEAN_MULTISIG_PROGRAM.toBase58() ? (
+                  <img src={app.logoUri} width={65} height={65} alt={app.name} />
                   // <Identicon address={PublicKey.default} style={{ width:"65", height:"65", display: "inline-flex" }} />
-                  <img style={{ borderRadius: "50%", padding: "0.2em" }} src={"https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"} width={65} height={65} alt={app.name} />
+                  // <img style={{ borderRadius: "50%", padding: "0.2em" }} src={"https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"} width={65} height={65} alt={app.name} />
                 ) : (
                   <img src={app.logoUri} width={65} height={65} alt={app.name} />
                 )}
