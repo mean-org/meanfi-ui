@@ -30,7 +30,7 @@ export const MultisigTransferTokensModal = (props: {
   nativeBalance: number;
   transactionFees: TransactionFees;
   selectedVault: MultisigVault | undefined;
-  assets: MultisigVault[]
+  assets: MultisigVault[];
 }) => {
   const { t } = useTranslation('common');
   const connection = useConnection();
@@ -182,9 +182,8 @@ export const MultisigTransferTokensModal = (props: {
     const replaceCommaToDot = getClipBoardData.replace(",", "")
     const onlyNumbersAndDot = replaceCommaToDot.replace(/[^.\d]/g, '');
 
-    console.log(onlyNumbersAndDot);
+    consoleOut("only numbers and dot", onlyNumbersAndDot);
     
-
     setAmount(onlyNumbersAndDot.trim());
   }
 
@@ -203,7 +202,7 @@ export const MultisigTransferTokensModal = (props: {
 
         {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
           <>
-            {/* Amount to transfer */}
+            {/* Amount to send */}
             <div className="mb-3">
               <div className="form-label">{t('multisig.transfer-tokens.transfer-amount-label')}</div>
                 <div className={`well ${props.isBusy ? 'disabled' : ''}`}>

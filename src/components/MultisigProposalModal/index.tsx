@@ -26,10 +26,6 @@ import { useNavigate } from 'react-router-dom';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
-// const expires = [
-//   "No expires", "24 hours", "48 hours", "72 hours", "7 days"
-// ];
-
 const expires: { label: string, value: number }[] = [
   { label: "No expires", value: 0 },
   { label: "24 hours", value: 84_600 },
@@ -62,8 +58,8 @@ export const MultisigProposalModal = (props: {
   const [currentStep, setCurrentStep] = useState(0);
   const [proposalTitleValue, setProposalTitleValue] = useState('');
   const [proposalExpiresValue, setProposalExpiresValue] = useState<any>(expires[0]);
+
   const [proposalDescriptionValue, setProposalDescriptionValue] = useState('');
-  // const [proposalInstructionValue, setProposalInstructionValue] = useState<any>();
   const [countWords, setCountWords] = useState(0);
   const [lettersLeft, setLettersLeft] = useState(256);
 
@@ -108,8 +104,6 @@ export const MultisigProposalModal = (props: {
       setCurrentStep(1);  // Go to step 2
     }
   }
-
-  console.log("selectedApp", selectedApp)
 
   const onContinueStepTwoButtonClick = () => {
     setCurrentStep(2);  // Go to step 3
@@ -417,7 +411,7 @@ export const MultisigProposalModal = (props: {
                             name="Title"
                             className={`mb-0 ${isBusy ? 'disabled' : ''}`}
                             onChange={onProposalTitleValueChange}
-                            placeholder="Add a title"
+                            placeholder="Add a title (required)"
                             value={proposalTitleValue}
                           />
                         </div>
@@ -455,7 +449,7 @@ export const MultisigProposalModal = (props: {
                             maxLength={256}
                             className={`mb-0 ${isBusy ? 'disabled' : ''}`}
                             onChange={onProposalDescriptionValueChange}
-                            placeholder={t('multisig.proposal-modal.description-placeholder')}
+                            placeholder="Add a description (optional)"
                             value={proposalDescriptionValue}
                           />
                           <div className="form-field-hint pr-3 text-right">{t('multisig.proposal-modal.hint-message', {lettersLeft: lettersLeft})}</div>
@@ -526,21 +520,23 @@ export const MultisigProposalModal = (props: {
                                         tooltip_text={element.help}
                                       />
                                       {element.name === "serializedTx" ? (
-                                        <InputTextAreaMean 
-                                          id={element.name}
-                                          rows={30}
-                                          className={`well mb-1 proposal-summary-container vertical-scroll paste-input ${isBusy ? 'disabled' : ''}`}
-                                          onChange={(e: any) => {
-                                            console.log(e);
-                                            handleChangeInput({
-                                              id: element.name,
-                                              value: serializedTx
-                                            });
-                                          }}
-                                          onPaste={pasteHandler}
-                                          placeholder={element.help}
-                                          value={inputState[element.name]}
-                                        />
+                                        <>
+                                          <InputTextAreaMean 
+                                            id={element.name}
+                                            rows={30}
+                                            className={`well mb-1 proposal-summary-container vertical-scroll paste-input ${isBusy ? 'disabled' : ''}`}
+                                            onChange={(e: any) => {
+                                              console.log(e);
+                                              handleChangeInput({
+                                                id: element.name,
+                                                value: serializedTx
+                                              });
+                                            }}
+                                            onPaste={pasteHandler}
+                                            placeholder="Serialized transaction in base64 string format (required)"
+                                            value={inputState[element.name]}
+                                          />
+                                        </>
                                       ) : (
                                         <InputTextAreaMean 
                                           id={element.name}
@@ -865,7 +861,8 @@ export const MultisigProposalModal = (props: {
                       !publicKey ||
                       !selectedApp ||
                       !proposalTitleValue ||
-                      !selectedUiIx
+                      !selectedUiIx ||
+                      ((selectedApp.name === "Custom Transaction Proposal") && !isSerializedTxValid)
                     }
                   >
                     {getStepTwoContinueButtonLabel()}
@@ -901,6 +898,7 @@ export const MultisigProposalModal = (props: {
                       !selectedApp ||
                       !proposalTitleValue ||
                       !selectedUiIx ||
+                      ((selectedApp.name === "Custom Transaction Proposal") && !isSerializedTxValid) ||
                       !selectedAppConfig
                     }
                   >

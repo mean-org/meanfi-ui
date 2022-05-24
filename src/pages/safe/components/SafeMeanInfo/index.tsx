@@ -22,6 +22,7 @@ import { ACCOUNT_LAYOUT } from '../../../../utils/layouts';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { BN } from 'bn.js';
+import { TxConfirmationContext } from '../../../../contexts/transaction-status';
 
 export const SafeMeanInfo = (props: {
   connection: Connection;
@@ -39,14 +40,18 @@ export const SafeMeanInfo = (props: {
   multisigClient: MeanMultisig | null;
   selectedTab?: any;
   proposalSelected?: any;
-
 }) => {
 
   const { 
     tokenList,
     programs,
-    setPrograms
+    setPrograms,
+    multisigVaults,
+    setMultisigVaults
   } = useContext(AppStateContext);
+  const {
+    fetchTxInfoStatus,
+  } = useContext(TxConfirmationContext);
   const {
     connection,
     publicKey,
@@ -61,17 +66,16 @@ export const SafeMeanInfo = (props: {
     isAssetDetails,
     proposalSelected,
     onDataToSafeView
-
   } = props;
 
   const [multisig, setMultisig] = useState<any>(selectedMultisig);
   const [solBalance, setSolBalance] = useState<number>(0);
   const [multisigTxs, setMultisigTxs] = useState<MultisigTransaction[]>([]);
-  const [multisigVaults, setMultisigVaults] = useState<any[]>([]);
   const [loadingProposals, setLoadingProposals] = useState(true);
   const [loadingAssets, setLoadingAssets] = useState(true);
   const [loadingPrograms, setLoadingPrograms] = useState(false);
   const [selectedProposal, setSelectedProposal] = useState<MultisigTransaction | undefined>();
+  const [isBusy, setIsBusy] = useState(false);
 
   useEffect(() => {
 
@@ -102,6 +106,13 @@ export const SafeMeanInfo = (props: {
     proposalSelected
   ]);
 
+  const isTxInProgress = useCallback((): boolean => {
+    return isBusy || fetchTxInfoStatus === "fetching" ? true : false;
+  }, [
+    isBusy,
+    fetchTxInfoStatus,
+  ]);
+
   const getProgramsByUpgradeAuthority = useCallback(async (): Promise<ProgramAccounts[]> => {
 
     if (!connection || !multisig || !multisig.authority) { return []; }
@@ -127,7 +138,7 @@ export const SafeMeanInfo = (props: {
     };
 
     const sleep = (ms: number, log = true) => {
-      if (log) { console.log("Sleeping for", ms / 1000, "seconds"); }
+      if (log) { consoleOut("Sleeping for", ms / 1000, "seconds"); }
       return new Promise((resolve) => setTimeout(resolve, ms));
     }
 
@@ -298,12 +309,13 @@ export const SafeMeanInfo = (props: {
     }
 
   },[
-    getMultisigVaults, 
-    multisigClient, 
     multisig, 
     connection, 
+    loadingAssets,
+    multisigClient, 
+    getMultisigVaults, 
+    setMultisigVaults,
     getSolToken, 
-    loadingAssets
   ]);
 
   useEffect(() => {
@@ -700,7 +712,6 @@ export const SafeMeanInfo = (props: {
   return (
     <>
       <SafeInfo
-        // connection={connection}
         solBalance={solBalance}
         selectedMultisig={multisig}
         multisigVaults={multisigVaults}
@@ -709,6 +720,7 @@ export const SafeMeanInfo = (props: {
         onNewCreateAssetClick={onNewCreateAssetClick}
         tabs={tabs}
         selectedTab={selectedTab}
+        isTxInProgress={isTxInProgress}
       />
     </>
   )
