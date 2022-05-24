@@ -1,12 +1,13 @@
 import { TokenInfo } from '@solana/spl-token-registry';
 
+const LOGO_BASE_URL = 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet';
 export const CUSTOM_USDC_TEST_IDO_DEVNET = {
     chainId: 103,
     address: 'FsWi13eBPngZ87JTyEcQsPjbQqefoPfLJyhtbNeGyLCX',
     symbol: 'USDC',
     name: 'USD Coin',
     decimals: 6,
-    logoURI: 'https://cdn.jsdelivr.net/gh/solana-labs/token-list@main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png',
+    logoURI: `${LOGO_BASE_URL}/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png`,
     tags: [
         'stablecoin',
     ],
@@ -22,7 +23,7 @@ export const SOCN_USD = {
     symbol: 'SOCN/USDC',
     name: 'Orca Aquafarm Token (SOCN/USDC)',
     decimals: 6,
-    logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/7YFfqZGTxkj3Zeq3Et23kMznCaEYZ1WBZDt6CVrxwfqd/logo.svg',
+    logoURI: `${LOGO_BASE_URL}/7YFfqZGTxkj3Zeq3Et23kMznCaEYZ1WBZDt6CVrxwfqd/logo.svg`,
     tags: [
         'lp-token',
     ],
@@ -42,7 +43,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: 'MEAN',
         name: 'MEAN',
         decimals: 6,
-        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg',
+        logoURI: `${LOGO_BASE_URL}/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg`,
         extensions: {
             discord: 'https://discord.meanfi.com/',
             medium: 'https://meandao.medium.com',
@@ -56,7 +57,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: 'sMEAN',
         name: 'Staked MEAN',
         decimals: 6,
-        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/sMEANebFMnd9uTYpyntGzBmTmzEukRFwCjEcnXT2E8z/logo.svg',
+        logoURI: `${LOGO_BASE_URL}/sMEANebFMnd9uTYpyntGzBmTmzEukRFwCjEcnXT2E8z/logo.svg`,
         extensions: {
             discord: 'https://discord.meanfi.com/',
             medium: 'https://meandao.medium.com',
@@ -73,7 +74,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: 'USDC',
         name: 'USD Coin',
         decimals: 6,
-        logoURI: 'https://cdn.jsdelivr.net/gh/solana-labs/token-list@main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png',
+        logoURI: `${LOGO_BASE_URL}/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png`,
         tags: [
             'stablecoin',
         ],
@@ -139,7 +140,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: 'SOL',
         name: 'Solana',
         decimals: 9,
-        logoURI: 'https://cdn.jsdelivr.net/gh/trustwallet/assets@master/blockchains/solana/info/logo.png',
+        logoURI: `${LOGO_BASE_URL}/So11111111111111111111111111111111111111112/logo.png`,
         tags: [],
         extensions: {
             website: 'https://solana.com/',
@@ -154,7 +155,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: 'wSOL',
         name: 'Solana',
         decimals: 9,
-        logoURI: 'https://cdn.jsdelivr.net/gh/trustwallet/assets@master/blockchains/solana/info/logo.png',
+        logoURI: `${LOGO_BASE_URL}/So11111111111111111111111111111111111111112/logo.png`,
         tags: [],
         extensions: {
             website: 'https://solana.com/',
@@ -170,7 +171,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: 'SLND',
         name: 'Solend',
         decimals: 6,
-        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/SLNDpmoWTVADgEdndyvWzroNL7zSi1dF9PC3xHGtPwp/logo.png',
+        logoURI: `${LOGO_BASE_URL}/SLNDpmoWTVADgEdndyvWzroNL7zSi1dF9PC3xHGtPwp/logo.png`,
         tags: [
             'solend',
             'lending',
@@ -188,7 +189,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: 'cSLND',
         name: 'Solend SLND',
         decimals: 6,
-        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/D3Cu5urZJhkKyNZQQq2ne6xSfzbXLU4RrywVErMA2vf8/logo.png',
+        logoURI: `${LOGO_BASE_URL}/D3Cu5urZJhkKyNZQQq2ne6xSfzbXLU4RrywVErMA2vf8/logo.png`,
         tags: [
             'solend',
             'lending',
@@ -204,7 +205,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: 'cSOL',
         name: 'Solend SOL',
         decimals: 9,
-        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/5h6ssFpeDeRbzsEHDbTQNH7nVGgsKrZydxdSTnLm6QdV/logo.png',
+        logoURI: `${LOGO_BASE_URL}/5h6ssFpeDeRbzsEHDbTQNH7nVGgsKrZydxdSTnLm6QdV/logo.png`,
         tags: [
             'solend',
             'lending',
@@ -220,7 +221,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: 'cUSDC',
         name: 'Solend USDC',
         decimals: 6,
-        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/993dVFL2uXWYeoXuEBFXR4BijeXdTv4s6BzsCjJZuwqk/logo.png',
+        logoURI: `${LOGO_BASE_URL}/993dVFL2uXWYeoXuEBFXR4BijeXdTv4s6BzsCjJZuwqk/logo.png`,
         tags: [
             'solend',
             'lending',
@@ -236,7 +237,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: 'cETH',
         name: 'Solend ETH',
         decimals: 6,
-        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/CPDiKagfozERtJ33p7HHhEfJERjvfk1VAjMXAFLrvrKP/logo.png',
+        logoURI: `${LOGO_BASE_URL}/CPDiKagfozERtJ33p7HHhEfJERjvfk1VAjMXAFLrvrKP/logo.png`,
         tags: [
             'solend',
             'lending',
@@ -252,7 +253,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: 'csoETH',
         name: 'Solend soETH',
         decimals: 6,
-        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/AppJPZka33cu4DyUenFe9Dc1ZmZ3oQju6mBn9k37bNAa/logo.png',
+        logoURI: `${LOGO_BASE_URL}/AppJPZka33cu4DyUenFe9Dc1ZmZ3oQju6mBn9k37bNAa/logo.png`,
         tags: [
             'solend',
             'lending',
@@ -268,7 +269,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: 'cBTC',
         name: 'Solend BTC',
         decimals: 6,
-        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/Gqu3TFmJXfnfSX84kqbZ5u9JjSBVoesaHjfTsaPjRSnZ/logo.png',
+        logoURI: `${LOGO_BASE_URL}/Gqu3TFmJXfnfSX84kqbZ5u9JjSBVoesaHjfTsaPjRSnZ/logo.png`,
         tags: [
             'solend',
             'lending',
@@ -284,7 +285,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: 'cSRM',
         name: 'Solend SRM',
         decimals: 6,
-        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4CxGuD2NMr6zM8f18gr6kRhgd748pnmkAhkY1YJtkup1/logo.png',
+        logoURI: `${LOGO_BASE_URL}/4CxGuD2NMr6zM8f18gr6kRhgd748pnmkAhkY1YJtkup1/logo.png`,
         tags: [
             'solend',
             'lending',
@@ -300,7 +301,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: 'cUSDT',
         name: 'Solend USDT',
         decimals: 6,
-        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/BTsbZDV7aCMRJ3VNy9ygV4Q2UeEo9GpR8D6VvmMZzNr8/logo.png',
+        logoURI: `${LOGO_BASE_URL}/BTsbZDV7aCMRJ3VNy9ygV4Q2UeEo9GpR8D6VvmMZzNr8/logo.png`,
         tags: [
             'solend',
             'lending',
@@ -316,7 +317,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: 'cFTT',
         name: 'Solend FTT',
         decimals: 6,
-        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/8bDyV3N7ctLKoaSVqUoEwUzw6msS2F65yyNPgAVUisKm/logo.png',
+        logoURI: `${LOGO_BASE_URL}/8bDyV3N7ctLKoaSVqUoEwUzw6msS2F65yyNPgAVUisKm/logo.png`,
         tags: [
             'solend',
             'lending',
@@ -332,7 +333,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: 'cRAY',
         name: 'Solend RAY',
         decimals: 6,
-        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/2d95ZC8L5XP6xCnaKx8D5U5eX6rKbboBBAwuBLxaFmmJ/logo.png',
+        logoURI: `${LOGO_BASE_URL}/2d95ZC8L5XP6xCnaKx8D5U5eX6rKbboBBAwuBLxaFmmJ/logo.png`,
         tags: [
             'solend',
             'lending',
@@ -348,7 +349,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: 'cSBR',
         name: 'Solend SBR',
         decimals: 6,
-        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/Bpm2aBL57uqVhgxutfRVrbtnjDpZLV8PZrRrytV1LgeT/logo.png',
+        logoURI: `${LOGO_BASE_URL}/Bpm2aBL57uqVhgxutfRVrbtnjDpZLV8PZrRrytV1LgeT/logo.png`,
         tags: [
             'solend',
             'lending',
@@ -364,7 +365,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: 'cMER',
         name: 'Solend MER',
         decimals: 6,
-        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/BsWLxf6hRJnyytKR52kKBiz7qU7BB3SH77mrBxNnYU1G/logo.png',
+        logoURI: `${LOGO_BASE_URL}/BsWLxf6hRJnyytKR52kKBiz7qU7BB3SH77mrBxNnYU1G/logo.png`,
         tags: [
             'solend',
             'lending',
@@ -380,7 +381,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: 'cUSDT-USDC',
         name: 'Solend USDT-USDC',
         decimals: 6,
-        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/6XrbsKScacEwpEW5DVNko9t5vW3cim9wktAeT9mmiYHS/logo.png',
+        logoURI: `${LOGO_BASE_URL}/6XrbsKScacEwpEW5DVNko9t5vW3cim9wktAeT9mmiYHS/logo.png`,
         tags: [
             'solend',
             'lending',
@@ -396,7 +397,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: 'cmSOL-SOL',
         name: 'Solend mSOL-SOL',
         decimals: 9,
-        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4icXEpFVMrcqob6fnd3jZ6KjKrc6cqre6do1f8kKAC1u/logo.png',
+        logoURI: `${LOGO_BASE_URL}/4icXEpFVMrcqob6fnd3jZ6KjKrc6cqre6do1f8kKAC1u/logo.png`,
         tags: [
             'solend',
             'lending',
@@ -412,7 +413,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: 'cstSOL',
         name: 'Solend stSOL',
         decimals: 9,
-        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/QQ6WK86aUCBvNPkGeYBKikk15sUg6aMUEi5PTL6eB4i/logo.png',
+        logoURI: `${LOGO_BASE_URL}/QQ6WK86aUCBvNPkGeYBKikk15sUg6aMUEi5PTL6eB4i/logo.png`,
         tags: [
             'solend',
             'lending',
@@ -428,7 +429,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: 'cscnSOL',
         name: 'Solend scnSOL',
         decimals: 9,
-        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/AFq1sSdevxfqWGcmcz7XpPbfjHevcJY7baZf9RkyrzoR/logo.png',
+        logoURI: `${LOGO_BASE_URL}/AFq1sSdevxfqWGcmcz7XpPbfjHevcJY7baZf9RkyrzoR/logo.png`,
         tags: [
             'solend',
             'lending',
@@ -444,7 +445,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: 'cmSOL',
         name: 'Solend mSOL',
         decimals: 9,
-        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/3JFC4cB56Er45nWVe29Bhnn5GnwQzSmHVf6eUq9ac91h/logo.png',
+        logoURI: `${LOGO_BASE_URL}/3JFC4cB56Er45nWVe29Bhnn5GnwQzSmHVf6eUq9ac91h/logo.png`,
         tags: [
             'solend',
             'lending',
@@ -460,7 +461,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: 'cORCA',
         name: 'Solend ORCA',
         decimals: 6,
-        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/E9LAZYxBVhJr9Cdfi9Tn4GSiJHDWSZDsew5tfgJja6Cu/logo.png',
+        logoURI: `${LOGO_BASE_URL}/E9LAZYxBVhJr9Cdfi9Tn4GSiJHDWSZDsew5tfgJja6Cu/logo.png`,
         tags: [
             'solend',
             'lending',
@@ -476,7 +477,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: "RAY",
         name: "Raydium",
         decimals: 6,
-        logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R/logo.png",
+        logoURI: `${LOGO_BASE_URL}/4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R/logo.png`,
         tags: [],
         extensions: {
             "coingeckoId": "raydium"
@@ -488,7 +489,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: "ORCA",
         name: "Orca",
         decimals: 6,
-        logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE/logo.png",
+        logoURI: `${LOGO_BASE_URL}/orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE/logo.png`,
         tags: [],
         extensions: {
             coingeckoId: "orca",
@@ -500,7 +501,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: "SRM",
         name: "Serum",
         decimals: 6,
-        logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/SRMuApVNdxXokk5GT7XD5cUUgXMBCoAz2LHeuAoKWRt/logo.png",
+        logoURI: `${LOGO_BASE_URL}/SRMuApVNdxXokk5GT7XD5cUUgXMBCoAz2LHeuAoKWRt/logo.png`,
         tags: [],
         extensions: {
             coingeckoId: "serum"
@@ -512,7 +513,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: "SBR",
         name: "Saber Protocol Token",
         decimals: 6,
-        logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/Saber2gLauYim4Mvftnrasomsv6NvAuncvMEZwcLpD1/logo.svg",
+        logoURI: `${LOGO_BASE_URL}/Saber2gLauYim4Mvftnrasomsv6NvAuncvMEZwcLpD1/logo.svg`,
         tags: [],
         extensions: {
             coingeckoId: "saber"
@@ -524,7 +525,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: "SLRS",
         name: "Solrise Finance",
         decimals: 6,
-        logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/SLRSSpSLUTP7okbCUBYStWCo1vUgyt775faPqz8HUMr/logo.png",
+        logoURI: `${LOGO_BASE_URL}/SLRSSpSLUTP7okbCUBYStWCo1vUgyt775faPqz8HUMr/logo.png`,
         tags: [],
         extensions: {
             coingeckoId: "solrise-finance"
@@ -548,7 +549,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: "SNY",
         name: "Synthetify",
         decimals: 6,
-        logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4dmKkXNHdgYsXqBHCuMikNQWwVomZURhYvkkX5c4pQ7y/logo.png",
+        logoURI: `${LOGO_BASE_URL}/4dmKkXNHdgYsXqBHCuMikNQWwVomZURhYvkkX5c4pQ7y/logo.png`,
         tags: [],
         extensions: {
             coingeckoId: "synthetify-token"
@@ -560,7 +561,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: "JET",
         name: "Jet Protocol",
         decimals: 9,
-        logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/JET6zMJWkCN9tpRT2v2jfAmm5VnQFDpUBCyaKojmGtz/logo.png",
+        logoURI: `${LOGO_BASE_URL}/JET6zMJWkCN9tpRT2v2jfAmm5VnQFDpUBCyaKojmGtz/logo.png`,
         tags: [],
         extensions: {
             coingeckoId: "jet"
@@ -572,7 +573,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: "PORT",
         name: "Port Finance Token",
         decimals: 6,
-        logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/PoRTjZMPXb9T7dyU7tpLEZRQj7e6ssfAE62j2oQuc6y/PORT.png",
+        logoURI: `${LOGO_BASE_URL}/PoRTjZMPXb9T7dyU7tpLEZRQj7e6ssfAE62j2oQuc6y/PORT.png`,
         tags: [],
         extensions: {
             serumV3Usdc: "8x8jf7ikJwgP9UthadtiGFgfFuyyyYPHL3obJAuxFWko"
@@ -584,7 +585,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: "SLIM",
         name: "Solanium",
         decimals: 6,
-        logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/xxxxa1sKNGwFtw2kFn8XauW9xq8hBZ5kVtcSesTT9fW/logo.png",
+        logoURI: `${LOGO_BASE_URL}/xxxxa1sKNGwFtw2kFn8XauW9xq8hBZ5kVtcSesTT9fW/logo.png`,
         extensions: {}
     },
     {
@@ -593,7 +594,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: "mSOL",
         name: "Marinade staked SOL (mSOL)",
         decimals: 9,
-        logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So/logo.png",
+        logoURI: `${LOGO_BASE_URL}/mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So/logo.png`,
         extensions: {
             serumV3Usdc: "6oGsL2puUgySccKzn9XA9afqF217LfxP5ocq4B3LWsjy"
         }
@@ -605,7 +606,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: 'USDC',
         name: 'USD Coin',
         decimals: 6,
-        logoURI: 'https://cdn.jsdelivr.net/gh/solana-labs/token-list@main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png',
+        logoURI: `${LOGO_BASE_URL}/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png`,
         tags: [
             'stablecoin',
         ],
@@ -620,7 +621,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: 'wSOL',
         name: 'Solana',
         decimals: 9,
-        logoURI: 'https://cdn.jsdelivr.net/gh/trustwallet/assets@master/blockchains/solana/info/logo.png',
+        logoURI: `${LOGO_BASE_URL}/So11111111111111111111111111111111111111112/logo.png`,
         tags: [],
         extensions: {
             website: 'https://www.solana.com/',
@@ -634,7 +635,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: 'USDC',
         name: 'USD Coin',
         decimals: 6,
-        logoURI: 'https://cdn.jsdelivr.net/gh/solana-labs/token-list@main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png',
+        logoURI: `${LOGO_BASE_URL}/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png`,
         tags: [
             'stablecoin',
         ],
@@ -664,7 +665,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: 'MEAN',
         name: 'MEAN',
         decimals: 6,
-        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg',
+        logoURI: `${LOGO_BASE_URL}/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg`,
         extensions: {
             discord: 'https://discord.meanfi.com/',
             medium: 'https://meandao.medium.com',
@@ -792,7 +793,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         symbol: 'wSOL',
         name: 'Solana',
         decimals: 9,
-        logoURI: 'https://cdn.jsdelivr.net/gh/trustwallet/assets@master/blockchains/solana/info/logo.png',
+        logoURI: `${LOGO_BASE_URL}/So11111111111111111111111111111111111111112/logo.png`,
         tags: [],
         extensions: {
             coingeckoId: 'solana',
