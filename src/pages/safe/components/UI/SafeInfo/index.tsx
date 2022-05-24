@@ -39,7 +39,7 @@ export const SafeInfo = (props: {
 
   const { solBalance, selectedMultisig, multisigVaults, safeNameImg, safeNameImgAlt, onNewProposalMultisigClick, onNewCreateAssetClick, onEditMultisigClick, tabs, selectedTab } = props;
 
-  const { t } = useTranslation('common');
+  // const { t } = useTranslation('common');
   const navigate = useNavigate();
 
   const [selectedLabelName, setSelectedLabelName] = useState("");

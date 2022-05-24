@@ -1303,7 +1303,7 @@ export const AssetDetailsView = (props: {
           consoleOut('selected multisig txs', txs, 'blue');
           const transactions: MultisigTransaction[] = [];
           for (const tx of txs) {
-            if (tx.accounts.some(a => a.pubkey.equals(assetSelected.address))) {
+            if (tx.accounts.some((a: any) => a.pubkey.equals(assetSelected.address))) {
               transactions.push(tx);
             }
           }
@@ -1952,7 +1952,7 @@ export const AssetDetailsView = (props: {
         !selectedMultisig.id || 
         selectedMultisig.id.toBase58() !== data.transaction.multisig.toBase58() || 
         data.transaction.proposer.toBase58() !== publicKey.toBase58() ||
-        data.transaction.ownerSeqNumber === selectedMultisig.ownerSeqNumber ||
+        data.transaction.ownerSetSeqno === selectedMultisig.ownerSetSeqno ||
         data.transaction.executedOn
       ) {
         return null;

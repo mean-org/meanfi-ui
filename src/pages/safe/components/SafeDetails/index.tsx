@@ -199,51 +199,51 @@ export const SafeDetailsView = (props: {
   );
 
   // Display the activities in the "Activity" tab, on safe details page
-  const renderActivities = (
-    <Row>
-      {/* {selectedProposal.activities.map((activity: any) => {
-        let icon = null;
+  // const renderActivities = (
+  //   <Row>
+  //     {/* {selectedProposal.activities.map((activity: any) => {
+  //       let icon = null;
 
-        switch (activity.description) {
-          case 'approved':
-            icon = <IconApprove className="mean-svg-icons fg-green" />;
-            break;
-          case 'rejected':
-            icon = <IconCross className="mean-svg-icons fg-red" />;
-            break;
-          case 'passed':
-            icon = <IconCheckCircle className="mean-svg-icons fg-green" />;
-            break;
-          case 'created':
-            icon = <IconCreated className="mean-svg-icons fg-purple" />;
-            break;
-          case 'deleted':
-            icon = <IconMinus className="mean-svg-icons fg-purple" />;
-            break;
-          default:
-            icon = "";
-            break;
-        }
+  //       switch (activity.description) {
+  //         case 'approved':
+  //           icon = <IconApprove className="mean-svg-icons fg-green" />;
+  //           break;
+  //         case 'rejected':
+  //           icon = <IconCross className="mean-svg-icons fg-red" />;
+  //           break;
+  //         case 'passed':
+  //           icon = <IconCheckCircle className="mean-svg-icons fg-green" />;
+  //           break;
+  //         case 'created':
+  //           icon = <IconCreated className="mean-svg-icons fg-purple" />;
+  //           break;
+  //         case 'deleted':
+  //           icon = <IconMinus className="mean-svg-icons fg-purple" />;
+  //           break;
+  //         default:
+  //           icon = "";
+  //           break;
+  //       }
 
-        return (
-          <div 
-            key={activity.id}
-            className={`d-flex w-100 align-items-center activities-list ${activity.id % 2 === 0 ? '' : 'background-gray'}`}
-            >
-              <div className="list-item">
-                <span className="mr-2">
-                    {activity.date}
-                </span>
-                {icon}
-                <span>
-                  {`Proposal ${activity.description} by ${activity.proposedBy} [${shortenAddress(activity.address, 4)}]`}
-                </span>
-              </div>
-          </div>
-        )
-      })} */}
-    </Row>
-  )
+  //       return (
+  //         <div 
+  //           key={activity.id}
+  //           className={`d-flex w-100 align-items-center activities-list ${activity.id % 2 === 0 ? '' : 'background-gray'}`}
+  //           >
+  //             <div className="list-item">
+  //               <span className="mr-2">
+  //                   {activity.date}
+  //               </span>
+  //               {icon}
+  //               <span>
+  //                 {`Proposal ${activity.description} by ${activity.proposedBy} [${shortenAddress(activity.address, 4)}]`}
+  //               </span>
+  //             </div>
+  //         </div>
+  //       )
+  //     })} */}
+  //   </Row>
+  // )
 
   // Tabs
   const tabs = [

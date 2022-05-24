@@ -1,8 +1,8 @@
 import './style.scss';
 import { useCallback, useEffect, useState } from 'react';
 import { Button, Col, Row } from "antd"
-import { IconApprove, IconArrowForward, IconCheckCircle, IconCreated, IconCross, IconMinus } from "../../../../Icons"
-import { shortenAddress } from "../../../../utils/utils";
+import { IconArrowForward } from "../../../../Icons"
+// import { shortenAddress } from "../../../../utils/utils";
 import { SafeInfo } from "../UI/SafeInfo";
 import { ResumeItem } from '../UI/ResumeItem';
 // import { MultisigVault } from '../../../../models/multisig';
@@ -34,8 +34,8 @@ export const SafeSerumInfoView = (props: {
     selectedMultisig, 
     onEditMultisigClick, 
     onNewProposalMultisigClick,
-    onDataToAssetView,
-    multisigClient,
+    // onDataToAssetView,
+    // multisigClient,
     multisigTxs
      
   } = props;

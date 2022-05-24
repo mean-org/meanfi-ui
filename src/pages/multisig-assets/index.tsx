@@ -2806,7 +2806,7 @@ export const MultisigAssetsView = () => {
         !selectedMultisig.id || 
         selectedMultisig.id.toBase58() !== data.transaction.multisig.toBase58() || 
         data.transaction.proposer.toBase58() !== publicKey.toBase58() ||
-        data.transaction.ownerSeqNumber === selectedMultisig.ownerSeqNumber ||
+        data.transaction.ownerSetSeqno === selectedMultisig.ownerSetSeqno ||
         data.transaction.executedOn
       ) {
         return null;

@@ -9,16 +9,15 @@ import { AppStateContext } from '../../contexts/appstate';
 import { useWallet } from '../../contexts/wallet';
 import { Modal, Button, Spin, Divider, Row, Col, Radio } from 'antd';
 import { StepSelector } from "../StepSelector";
-import { IconExternalLink, IconHelpCircle, IconUser } from "../../Icons";
+import { IconExternalLink } from "../../Icons";
 import { InputMean } from '../InputMean';
 import { SelectMean } from '../SelectMean';
-import { InfoIcon } from '../InfoIcon';
 import { FormLabelWithIconInfo } from '../FormLabelWithIconInfo';
 import { InputTextAreaMean } from '../InputTextAreaMean';
 import { App, AppConfig, AppsProvider, UiInstruction, MEAN_MULTISIG_PROGRAM } from '@mean-dao/mean-multisig-apps';
 import BN from 'bn.js';
 import { Connection, PublicKey, TransactionInstruction } from '@solana/web3.js';
-import { Identicon } from '../../components/Identicon';
+// import { Identicon } from '../../components/Identicon';
 import { getMultisigInstructionSummary, parseSerializedTx } from '../../models/multisig';
 import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
@@ -288,7 +287,7 @@ export const MultisigProposalModal = (props: {
   useEffect(() => {
     if (selectedApp) {
       if (selectedApp.name === "Custom Transaction Proposal") {
-          selectedAppConfig && selectedAppConfig?.ui.map((ix) => {
+          selectedAppConfig && selectedAppConfig.ui.map((ix: UiInstruction) => {
           return setSelectedUiIx(ix)
         })
       } else {
@@ -333,13 +332,9 @@ export const MultisigProposalModal = (props: {
   const pasteHandler = (e: any) => {
     const base64regex = /^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/;
     const getInputData = e.clipboardData.getData('Text');
-
     const isValid = base64regex.test(getInputData);
-
     const serializedValidation = isValid ? getInputData : "Invalid serialized transaction"; 
-
     setIsSerializedTxValid(isValid);
-
     setSerializedTx(serializedValidation);
   }
 

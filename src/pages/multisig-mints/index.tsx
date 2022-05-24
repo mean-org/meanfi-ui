@@ -148,170 +148,6 @@ export const MultisigMintsView = () => {
     return width < 576 || (width >= 768 && width < 960);
   }, [width]);
 
-  // const getTransactionStatus = useCallback((account: any) => {
-
-  //   if (account.executedOn > 0) {
-  //     return MultisigTransactionStatus.Executed;
-  //   } 
-
-  //   let status = MultisigTransactionStatus.Pending;
-  //   let approvals = account.signers.filter((s: boolean) => s === true).length;
-
-  //   if (selectedMultisig && selectedMultisig.threshold === approvals) {
-  //     status = MultisigTransactionStatus.Approved;
-  //   }
-
-  //   if (selectedMultisig && selectedMultisig.ownerSeqNumber !== account.ownerSetSeqno) {
-  //     status = MultisigTransactionStatus.Voided;
-  //   }
-
-  //   return status;
-
-  // },[
-  //   selectedMultisig
-  // ]);
-
-  // const getTxInitiator = useCallback((mtx: MultisigTransaction): MultisigParticipant | undefined => {
-  //   if (!selectedMultisig) { return undefined; }
-
-  //   const owners: MultisigParticipant[] = (selectedMultisig as MultisigInfo).owners;
-  //   const initiator = owners && owners.length > 0
-  //     ? owners.find(o => o.address === mtx.proposer?.toBase58())
-  //     : undefined;
-
-  //   return initiator;
-  // }, [selectedMultisig]);
-
-  // const isUserTxInitiator = useCallback(() => {
-  //   if (!highlightedMultisigTx || !publicKey) { return false; }
-  //   const initiator = getTxInitiator(highlightedMultisigTx);
-  //   return initiator && publicKey.toBase58() === initiator.address ? true : false;
-  // }, [
-  //   publicKey,
-  //   highlightedMultisigTx,
-  //   getTxInitiator,
-  // ]);
-
-  // const getTxSignedCount = useCallback((mtx: MultisigTransaction) => {
-  //   if (mtx && mtx.signers) {
-  //     return mtx.signers.filter((s: boolean) => s === true).length;
-  //   }
-  //   return 0;
-  // }, []);
-
-  // const isTxVoided = useCallback(() => {
-  //   if (highlightedMultisigTx) {
-  //     if (highlightedMultisigTx.status === MultisigTransactionStatus.Voided) {
-  //       return true;
-  //     }
-  //   }
-  //   return false;
-  // }, [highlightedMultisigTx]);
-
-  // const isTxPendingApproval = useCallback(() => {
-  //   if (highlightedMultisigTx) {
-  //     if (highlightedMultisigTx.status === MultisigTransactionStatus.Pending) {
-  //       return true;
-  //     }
-  //   }
-  //   return false;
-  // }, [highlightedMultisigTx]);
-
-  // const isTxPendingExecution = useCallback(() => {
-  //   if (highlightedMultisigTx) {
-  //     if (highlightedMultisigTx.status === MultisigTransactionStatus.Approved) {
-  //       return true;
-  //     }
-  //   }
-  //   return false;
-  // }, [highlightedMultisigTx]);
-
-  // const isTxRejected = useCallback(() => {
-  //   if (highlightedMultisigTx) {
-  //     if (highlightedMultisigTx.status === MultisigTransactionStatus.Rejected) {
-  //       return true;
-  //     }
-  //   }
-  //   return false;
-  // }, [highlightedMultisigTx]);
-
-  // const isTxPendingApprovalOrExecution = useCallback(() => {
-  //   if (highlightedMultisigTx) {
-  //     if (highlightedMultisigTx.status === MultisigTransactionStatus.Pending ||
-  //         highlightedMultisigTx.status === MultisigTransactionStatus.Approved) {
-  //       return true;
-  //     }
-  //   }
-  //   return false;
-  // }, [highlightedMultisigTx]);
-
-  // const isUserInputNeeded = useCallback(() => {
-  //   if (highlightedMultisigTx) {
-  //     if (highlightedMultisigTx.executedOn) { // Executed
-  //       return false;
-  //     } else if (highlightedMultisigTx.didSigned === undefined) { // Rejected
-  //       return false;
-  //     } else if (highlightedMultisigTx.didSigned === false) { // Not yet signed
-  //       return true;
-  //     } else {
-  //       return isTxPendingExecution() // Signed but
-  //         ? true    // Tx still needs signing or execution
-  //         : false;  // Tx completed, nothing to do
-  //     }
-  //   }
-
-  //   return false;
-
-  // }, [highlightedMultisigTx, isTxPendingExecution]);
-
-  // const getTxUserStatusClass = useCallback((mtx: MultisigTransaction) => {
-
-  //   if (mtx.executedOn) {
-  //     return "";
-  //   } else if (mtx.didSigned === undefined) {
-  //     return "fg-red";
-  //   } else if (mtx.didSigned === false) {
-  //     return theme === 'light' ? "fg-light-orange" : "fg-warning";
-  //   } else {
-  //     return theme === 'light' ? "fg-green" : "fg-success"
-  //   }
-
-  // },[theme]);
-
-  // const getTxApproveMainCtaLabel = useCallback(() => {
-
-  //   const busyLabel = isTxPendingExecution()
-  //     ? 'Executing transaction'
-  //     : isTxPendingApproval()
-  //       ? 'Approving transaction'
-  //       : isTxVoided() 
-  //         ? 'Canceling Transaction' 
-  //         : '';
-
-  //   const iddleLabel = isTxPendingExecution()
-  //     ? 'Execute transaction'
-  //     : isTxPendingApproval()
-  //       ? 'Approve transaction'
-  //       : isTxVoided() 
-  //         ? 'Cancel Transaction' 
-  //         : '';
-
-  //   return isBusy
-  //     ? busyLabel
-  //     : transactionStatus.currentOperation === TransactionStatus.Iddle
-  //       ? iddleLabel
-  //       : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
-  //         ? t('general.cta-finish')
-  //         : t('general.refresh');
-  // }, [
-  //   isBusy,
-  //   transactionStatus.currentOperation,
-  //   isTxPendingExecution,
-  //   isTxPendingApproval,
-  //   isTxVoided,
-  //   t,
-  // ]);
-
   const getTransactionStatusAction = useCallback((mtx: MultisigTransaction) => {
 
     if (mtx.status === MultisigTransactionStatus.Pending) {
@@ -626,7 +462,7 @@ export const MultisigMintsView = () => {
           label: new TextDecoder().decode(labelBuffer),
           authority: address,
           nounce: info.account.nonce,
-          ownerSeqNumber: info.account.ownerSetSeqno,
+          ownerSetSeqno: info.account.ownerSetSeqno,
           threshold: info.account.threshold.toNumber(),
           pendingTxsAmount: info.account.pendingTxs.toNumber(),
           createdOnUtc: new Date(info.account.createdOn.toNumber() * 1000),
@@ -673,7 +509,7 @@ export const MultisigMintsView = () => {
           label: new TextDecoder().decode(labelBuffer),
           authority: address,
           nounce: info.account.nonce,
-          ownerSeqNumber: info.account.ownerSetSeqno,
+          ownerSetSeqno: info.account.ownerSetSeqno,
           threshold: info.account.threshold.toNumber(),
           pendingTxsAmount: info.account.pendingTxs.toNumber(),
           createdOnUtc: new Date(info.account.createdOn.toNumber() * 1000),
@@ -2696,7 +2532,7 @@ useEffect(() => {
         !selectedMultisig.id || 
         !selectedMultisig.id.equals(data.transaction.multisig) || 
         data.transaction.proposer.equals(publicKey) ||
-        data.transaction.ownerSeqNumber === selectedMultisig.ownerSeqNumber ||
+        data.transaction.ownerSetSeqno === selectedMultisig.ownerSetSeqno ||
         data.transaction.executedOn
       ) {
         return null;

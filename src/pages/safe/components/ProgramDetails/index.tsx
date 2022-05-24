@@ -4,7 +4,7 @@ import { TransactionFees } from "@mean-dao/msp";
 import { ConfirmOptions, Connection, LAMPORTS_PER_SOL, ParsedTransactionWithMeta, PublicKey, SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY, Transaction } from "@solana/web3.js";
 import { Button, Col, Row } from "antd";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { useTranslation } from "react-i18next";
+// import { useTranslation } from "react-i18next";
 import { MultisigSetProgramAuthModal } from "../../../../components/MultisigSetProgramAuthModal";
 import { MultisigUpgradeProgramModal } from "../../../../components/MultisigUpgradeProgramModal";
 import { NO_FEES } from "../../../../constants";
@@ -23,7 +23,7 @@ import { customLogger } from "../../../..";
 import { TabsMean } from '../../../../components/TabsMean';
 import { AnchorProvider, Program } from '@project-serum/anchor';
 import { NATIVE_SOL } from '../../../../utils/tokens';
-import { CopyOutlined } from '@ant-design/icons';
+// import { CopyOutlined } from '@ant-design/icons';
 import { CopyExtLinkGroup } from '../../../../components/CopyExtLinkGroup';
 import moment from 'moment';
 import ReactJson from 'react-json-view'
@@ -34,7 +34,7 @@ export const ProgramDetailsView = (props: {
   programSelected: any;
   selectedMultisig?: any;
 }) => {
-  const { t } = useTranslation('common');
+  // const { t } = useTranslation('common');
   const { account } = useNativeAccount();
   const connectionConfig = useConnectionConfig();
   const { publicKey, wallet } = useWallet();

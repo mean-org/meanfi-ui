@@ -323,9 +323,9 @@ export const SafeMeanInfo = (props: {
   ]);
 
   consoleOut("========================================")
-  consoleOut("multisig", multisig.label);
-  consoleOut("loading programs", loadingPrograms);
-  consoleOut("programs", programs);
+  consoleOut("multisig", multisig.label, 'blue');
+  consoleOut("loading programs", loadingPrograms, 'blue');
+  consoleOut("programs", programs, 'blue');
   consoleOut("========================================")
 
   // Get Txs for the selected multisig

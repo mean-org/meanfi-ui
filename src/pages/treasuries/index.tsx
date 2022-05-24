@@ -769,7 +769,7 @@ export const TreasuriesView = () => {
               multisig !== undefined &&
               !tx.executedOn &&
               tx.accounts.findIndex((a: any) => a.pubkey.equals(new PublicKey(treasuryDetails.id))) !== -1 &&
-              multisig.ownerSeqNumber === tx.ownerSeqNumber
+              multisig.ownerSetSeqno === tx.ownerSetSeqno
             );
             if (isPending) {
               pendingTxs += 1;

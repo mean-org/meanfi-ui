@@ -34,7 +34,7 @@ export type Multisig = {
   owners: MultisigParticipant[];
   threshold: number;
   nounce: number;
-  ownerSeqNumber: number;
+  ownerSetSeqno: number;
   createdOnUtc: Date;
   pendingTxsAmount: number;
   version: number;
@@ -48,7 +48,7 @@ export type MultisigV2 = {
   owners: MultisigParticipant[];
   threshold: number;
   nounce: number;
-  ownerSeqNumber: number;
+  ownerSetSeqno: number;
   createdOnUtc: Date;
   pendingTxsAmount: number;
   version: number
@@ -62,7 +62,7 @@ export type MultisigTransaction = {
   signers: boolean[];
   createdOn: Date;
   executedOn: Date | undefined;
-  ownerSeqNumber: number;
+  ownerSetSeqno: number;
   status: MultisigTransactionStatus;
   accounts: any[];
   data: Buffer;
@@ -278,7 +278,7 @@ export const getTransactionStatus = (multisig: any, info: any, detail: any): Mul
       status = MultisigTransactionStatus.Approved;
     }
   
-    if (multisig && multisig.ownerSeqNumber !== info.account.ownerSetSeqno) {
+    if (multisig && multisig.ownerSetSeqno !== info.account.ownerSetSeqno) {
       status = MultisigTransactionStatus.Voided;
     }
   
@@ -304,7 +304,7 @@ export const parseMultisigTransaction = (
       multisig: txInfo.account.multisig,
       programId: txInfo.account.programId,
       signers: txInfo.account.signers,
-      ownerSeqNumber: txInfo.account.ownerSetSeqno,
+      ownerSetSeqno: txInfo.account.ownerSetSeqno,
       createdOn: new Date(txInfo.account.createdOn.toNumber() * 1000),
       executedOn: txInfo.account.executedOn && txInfo.account.executedOn > 0
         ? new Date(txInfo.account.executedOn.toNumber() * 1000) 

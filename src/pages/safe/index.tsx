@@ -14,8 +14,8 @@ import {
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
   Transaction,
-  TransactionInstruction,
-  TransactionInstructionCtorFields
+  TransactionInstruction
+
 } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
@@ -49,7 +49,7 @@ import { IconEllipsisVertical, IconSafe, IconUserGroup, IconUsers } from '../../
 import { useNativeAccount } from '../../contexts/accounts';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom';
 import {
   MultisigParticipant,
   MultisigTransaction,
@@ -58,12 +58,12 @@ import {
   MultisigTransactionFees,
   ZERO_FEES,
   MULTISIG_ACTIONS,
-  getMultisigTransactionSummary,
+  // getMultisigTransactionSummary,
   getFees,
   DEFAULT_EXPIRATION_TIME_SECONDS,
   MultisigVault,
-  parseSerializedTx,
-  getMultisigInstructionSummary
+  parseSerializedTx
+  
 } from '../../models/multisig';
 import { MultisigCreateModal } from '../../components/MultisigCreateModal';
 import './style.scss';
@@ -71,7 +71,7 @@ import './style.scss';
 // MULTISIG
 import { AnchorProvider, BN, Idl, Program } from "@project-serum/anchor";
 import { MultisigEditModal } from '../../components/MultisigEditModal';
-import { MSP, TransactionFees } from '@mean-dao/msp';
+import { TransactionFees } from '@mean-dao/msp';
 import { customLogger } from '../..';
 import { openNotification } from '../../components/Notifications';
 import { ProposalSummaryModal } from '../../components/ProposalSummaryModal';
@@ -82,10 +82,9 @@ import { ProgramDetailsView } from './components/ProgramDetails';
 import SerumIDL from '../../models/serum-multisig-idl';
 import { AppsProvider, NETWORK, App, UiInstruction, AppConfig, UiElement, Arg } from '@mean-dao/mean-multisig-apps';
 import { SafeSerumInfoView } from './components/SafeSerumInfo';
-import { MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigInfo, parseMultisigTransaction } from '@mean-dao/mean-multisig-sdk';
-import { MethodsBuilder } from '@project-serum/anchor/dist/cjs/program/namespace/methods';
+import { MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { AssetDetailsView } from './components/AssetDetails';
-import { ACCOUNT_LAYOUT } from '../../utils/layouts';
+// import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { MultisigCreateAssetModal } from '../../components/MultisigCreateAssetModal';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -2032,14 +2031,14 @@ export const SafeView = () => {
 
   // Transaction confirm and execution modal launched from each Tx row
   const [isMultisigActionTransactionModalVisible, setMultisigActionTransactionModalVisible] = useState(false);
-  const showMultisigActionTransactionModal = useCallback((tx: MultisigTransaction) => {
-    resetTransactionStatus();
-    sethHighlightedMultisigTx(tx);
-    setMultisigTransactionSummary(
-      getMultisigTransactionSummary(tx)
-    );
-    setMultisigActionTransactionModalVisible(true);
-  }, [resetTransactionStatus]);
+  // const showMultisigActionTransactionModal = useCallback((tx: MultisigTransaction) => {
+  //   resetTransactionStatus();
+  //   sethHighlightedMultisigTx(tx);
+  //   setMultisigTransactionSummary(
+  //     getMultisigTransactionSummary(tx)
+  //   );
+  //   setMultisigActionTransactionModalVisible(true);
+  // }, [resetTransactionStatus]);
 
   const onAcceptMultisigActionModal = (item: MultisigTransaction) => {
     consoleOut('onAcceptMultisigActionModal:', item, 'blue');
@@ -2648,7 +2647,7 @@ export const SafeView = () => {
         !selectedMultisig.id || 
         selectedMultisig.id.toBase58() !== data.transaction.multisig.toBase58() || 
         data.transaction.proposer.toBase58() !== publicKey.toBase58() ||
-        data.transaction.ownerSeqNumber === selectedMultisig.ownerSeqNumber ||
+        data.transaction.ownerSetSeqno === selectedMultisig.ownerSetSeqno ||
         data.transaction.executedOn
       ) {
         return null;
@@ -2935,7 +2934,7 @@ export const SafeView = () => {
           label: "",
           authority: address,
           nounce: info.account.nonce,
-          ownerSeqNumber: info.account.ownerSetSeqno,
+          ownerSetSeqno: info.account.ownerSetSeqno,
           threshold: info.account.threshold.toNumber(),
           pendingTxsAmount: 0,
           createdOnUtc: new Date(),
@@ -3233,9 +3232,9 @@ export const SafeView = () => {
   //   Getters   //
   /////////////////
 
-  const isCanvasTight = useCallback(() => {
-    return width < 576 || (width >= 768 && width < 960);
-  }, [width]);
+  // const isCanvasTight = useCallback(() => {
+  //   return width < 576 || (width >= 768 && width < 960);
+  // }, [width]);
 
   // Scroll to a given multisig is specified as highLightableMultisigId
   useEffect(() => {
