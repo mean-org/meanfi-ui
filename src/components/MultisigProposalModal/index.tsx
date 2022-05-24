@@ -280,7 +280,7 @@ export const MultisigProposalModal = (props: {
 
   useEffect(() => {
     if (selectedApp) {
-      if (selectedApp.name === "Custom Transaction Proposal") {
+      if (selectedApp.id === "FF7U7Vj1PpBkTPau7frwLLrUHrjkxTQLsH7U5K3T3B3j") {
           selectedAppConfig && selectedAppConfig.ui.map((ix: UiInstruction) => {
           return setSelectedUiIx(ix)
         })
@@ -355,6 +355,8 @@ export const MultisigProposalModal = (props: {
         })
     )
   }, [connection, serializedTx]);
+
+  console.log("selectedApp", selectedApp)
 
   return (
     <Modal
@@ -460,7 +462,7 @@ export const MultisigProposalModal = (props: {
 
                     <div className="step-two-select-instruction">
                       <Row gutter={[8, 8]} className="mb-1">
-                        {(selectedApp && selectedApp.name !== "Custom Transaction Proposal") && (
+                        {(selectedApp && selectedApp.id !== "FF7U7Vj1PpBkTPau7frwLLrUHrjkxTQLsH7U5K3T3B3j") && (
                           <>
                             {/* Instruction */}
                             <Col xs={24} sm={24} md={24} lg={24} className="text-left pr-1">
@@ -534,7 +536,7 @@ export const MultisigProposalModal = (props: {
                                               });
                                             }}
                                             onPaste={pasteHandler}
-                                            placeholder="Serialized transaction in base64 string format (required)"
+                                            placeholder="Paste a serialized transaction in base64 string format (required)"
                                             value={inputState[element.name]}
                                           />
                                         </>
@@ -863,7 +865,7 @@ export const MultisigProposalModal = (props: {
                       !selectedApp ||
                       !proposalTitleValue ||
                       !selectedUiIx ||
-                      ((selectedApp.name === "Custom Transaction Proposal") && !isSerializedTxValid)
+                      ((selectedApp.id === "FF7U7Vj1PpBkTPau7frwLLrUHrjkxTQLsH7U5K3T3B3j") && !isSerializedTxValid)
                     }
                   >
                     {getStepTwoContinueButtonLabel()}
@@ -899,7 +901,7 @@ export const MultisigProposalModal = (props: {
                       !selectedApp ||
                       !proposalTitleValue ||
                       !selectedUiIx ||
-                      ((selectedApp.name === "Custom Transaction Proposal") && !isSerializedTxValid) ||
+                      ((selectedApp.name === "FF7U7Vj1PpBkTPau7frwLLrUHrjkxTQLsH7U5K3T3B3j") && !isSerializedTxValid) ||
                       !selectedAppConfig
                     }
                   >

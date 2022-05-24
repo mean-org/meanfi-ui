@@ -43,7 +43,10 @@
 
 .step-one-select-app {
   margin: 3em 0 0 0 !important;
+  display: flex ;
+  justify-content: center;
   .select-app {
+    flex: 1 !important;
     .select-app-item {
       display: flex;
       flex-direction: column;
