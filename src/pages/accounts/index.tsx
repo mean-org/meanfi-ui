@@ -901,7 +901,7 @@ export const AccountsNewView = () => {
     ctaItems++;
 
     // UnwrapSol
-    if (isInspectedAccountTheConnectedWallet() && isSelectedAssetWsol() && (selectedAsset.balance || 0) > 0) {
+    if (isInspectedAccountTheConnectedWallet() && isSelectedAssetWsol() && wSolBalance > 0) {
       actions.push({
         action: AccountAssetAction.UnwrapSol,
         caption: 'Unwrap',
@@ -967,17 +967,17 @@ export const AccountsNewView = () => {
     });
     ctaItems++;
 
-    // Unwrap
-    if (isInspectedAccountTheConnectedWallet() && isSelectedAssetWsol() && wSolBalance > 0) {
+    // Wrap
+    if (isInspectedAccountTheConnectedWallet() && isSelectedAssetWsol() && (selectedAsset.balance || 0) > 0) {
       actions.push({
-        action: AccountAssetAction.UnwrapSol,
-        caption: 'Unwrap',
+        action: AccountAssetAction.WrapSol,
+        caption: 'Wrap',
         isVisible: isInspectedAccountTheConnectedWallet() && isSelectedAssetWsol(),
         uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
         disabled: false,
-        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${AccountAssetAction.UnwrapSol}`,
+        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${AccountAssetAction.WrapSol}`,
         tooltip: '',
-        callBack: showUnwrapSolModal
+        callBack: showWrapSolModal
       });
       ctaItems++;
     }
