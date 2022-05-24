@@ -1284,6 +1284,7 @@
 				"custody": "Velayet",
 				"faucet": "Musluk(Faucet)",
 				"multisig": "Çoklu-imza",
+				"safes": "Multisig V2",
 				"submenu-title": "Hizmetler",
 				"unwrap": "Unwrap",
 				"wallet-guide": "Cüzdan Rehberi",

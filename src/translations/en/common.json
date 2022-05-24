@@ -1297,7 +1297,7 @@
 				"custody": "Custody",
 				"faucet": "Faucet",
 				"multisig": "Multisig",
-				"new-safe": "Multisig Safes",
+				"safes": "Multisig V2",
 				"submenu-title": "Services",
 				"unwrap": "Unwrap",
 				"wallet-guide": "Wallet Guide",

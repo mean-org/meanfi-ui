@@ -1297,6 +1297,7 @@
 				"custody": "托管",
 				"faucet": "水龙头",
 				"multisig": "多重签名",
+				"safes": "Multisig V2",
 				"submenu-title": "服务",
 				"unwrap": "Unwrap",
 				"wallet-guide": "钱包指南",

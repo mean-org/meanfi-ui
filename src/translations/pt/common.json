@@ -1297,6 +1297,7 @@
 				"custody": "Custódio",
 				"faucet": "Torneiro",
 				"multisig": "Multisig",
+				"safes": "Multisig V2",
 				"submenu-title": "Serviços",
 				"unwrap": "Unwrap",
 				"wallet-guide": "Guia da carteira",

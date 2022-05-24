@@ -131,8 +131,8 @@ export const AppBar = (props: {
         <Link to="/multisig">{t('ui-menus.main-menu.services.multisig')}</Link>
       </Menu.Item>
       {(isLocal() || isWhitelisted) && (
-          <Menu.Item key="/safe">
-            <Link to="/safe">{t('ui-menus.main-menu.services.new-safe')}</Link>
+          <Menu.Item key="/safes">
+            <Link to="/safes">{t('ui-menus.main-menu.services.safes')}</Link>
           </Menu.Item>
         )}
       <SubMenu key="services" title={t('ui-menus.main-menu.services.submenu-title')}>
@@ -211,8 +211,8 @@ export const AppBar = (props: {
                   <Link to="/multisig">{t('ui-menus.main-menu.services.multisig')}</Link>
                 </li>
                 {(isLocal() || isWhitelisted) && (
-                  <li key="/safe" className={location.pathname === '/safe' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 9} as CustomCSSProps}>
-                    <Link to="/safe">{t('ui-menus.main-menu.services.new-safe')}</Link>
+                  <li key="/safes" className={location.pathname === '/safes' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 9} as CustomCSSProps}>
+                    <Link to="/safes">{t('ui-menus.main-menu.services.safes')}</Link>
                   </li>
                 )}
                 <li key="/custody" className={location.pathname === '/custody' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 5} as CustomCSSProps}>

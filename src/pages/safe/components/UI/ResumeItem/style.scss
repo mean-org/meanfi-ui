@@ -30,12 +30,15 @@
       }
     }
   }
-  @media (max-width: 575px) {
-    .resume-right-container {
-      justify-content: space-between;
-      width: 100%;
-    }
-  }
+  // @media (max-width: 575px) {
+  //   .resume-left-container {
+  //     width: 100%;
+  //   }
+  //   .resume-right-container {
+  //     justify-content: space-between;
+  //     width: 100%;
+  //   }
+  // }
   .resume-right-container {
     padding-right: 0 !important;
     display: flex;
@@ -44,7 +47,7 @@
       display: flex;
       align-items: flex-end;
       flex-direction: column;
-      margin-left: 2.2em;
+      // margin-left: 2.2em;
       line-height: 1.3;
       .resume-right-text-up {
         display: flex;
