@@ -28,7 +28,7 @@ import {
   openLinkInNewTab,
   shortenAddress
 } from '../../utils/utils';
-import { Button, Col, Divider, Dropdown, Empty, Menu, Row, Space, Spin, Tooltip } from 'antd';
+import { Button, Col, Dropdown, Empty, Menu, Row, Space, Spin, Tooltip } from 'antd';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import {
   SOLANA_WALLET_GUIDE,
@@ -73,6 +73,8 @@ import { customLogger } from '../..';
 import { AccountsInitAtaModal } from '../../components/AccountsInitAtaModal';
 import { AccountsCloseAssetModal } from '../../components/AccountsCloseAssetModal';
 import { INVEST_ROUTE_BASE_PATH } from '../invest';
+import { isMobile } from 'react-device-detect';
+import useWindowSize from '../../hooks/useWindowResize';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export type CategoryOption = "networth" | "assets" | "msigs" | "other-assets";
@@ -141,6 +143,7 @@ export const AccountsNewView = () => {
   } = useContext(AppStateContext);
   const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const { t } = useTranslation('common');
+  const { width } = useWindowSize();
   const [isFirstLoad, setIsFirstLoad] = useState(true);
   const [accountAddressInput, setAccountAddressInput] = useState<string>('');
   const [tokensLoaded, setTokensLoaded] = useState(false);
@@ -166,6 +169,7 @@ export const AccountsNewView = () => {
   const [shouldLoadTransactions, setShouldLoadTransactions] = useState(false);
   const [hideLowBalances, setHideLowBalances] = useLocalStorage('hideLowBalances', true);
   const [canSubscribe, setCanSubscribe] = useState(true);
+  const [isXsDevice, setIsXsDevice] = useState<boolean>(isMobile);
 
   // QR scan modal
   const [isQrScannerModalVisible, setIsQrScannerModalVisibility] = useState(false);
@@ -858,6 +862,19 @@ export const AccountsNewView = () => {
     return !selectedAsset.publicAddress ? true : false;
   }, [selectedAsset]);
 
+  /////////////////////
+  // Data management //
+  /////////////////////
+
+  // Detect XS screen
+  useEffect(() => {
+    if (width < 576) {
+      setIsXsDevice(true);
+    } else {
+      setIsXsDevice(false);
+    }
+  }, [width]);
+
   /**
    * - No CTAs if it is a custom token or we don't know the asset's token
    * - No Buy if the asset is wSOL
@@ -882,7 +899,7 @@ export const AccountsNewView = () => {
    useEffect(() => {
     if (!selectedAsset) { return; }
 
-    const numMaxCtas = 2;
+    const numMaxCtas = isXsDevice ? 2 : 5;
     const isCustomAsset = selectedAsset.name === 'Custom account' ? true : false;
     const actions: AssetCta[] = [];
     let ctaItems = 0;
@@ -968,11 +985,11 @@ export const AccountsNewView = () => {
     ctaItems++;
 
     // Wrap
-    if (isInspectedAccountTheConnectedWallet() && isSelectedAssetWsol() && (selectedAsset.balance || 0) > 0) {
+    if (isInspectedAccountTheConnectedWallet() && isSelectedAssetNativeAccount()) {
       actions.push({
         action: AccountAssetAction.WrapSol,
         caption: 'Wrap',
-        isVisible: isInspectedAccountTheConnectedWallet() && isSelectedAssetWsol(),
+        isVisible: true,
         uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
         disabled: false,
         uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${AccountAssetAction.WrapSol}`,
@@ -1011,6 +1028,7 @@ export const AccountsNewView = () => {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    isXsDevice,
     wSolBalance,
     selectedAsset,
     isInspectedAccountTheConnectedWallet,
@@ -1018,10 +1036,6 @@ export const AccountsNewView = () => {
     isSelectedAssetWsol,
     investButtonEnabled,
   ]);
-
-  /////////////////////
-  // Data management //
-  /////////////////////
 
   // Enable deep-linking - Parse and save query params as needed
   useEffect(() => {
