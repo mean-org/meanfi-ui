@@ -191,12 +191,10 @@ export const SafeInfo = (props: {
   const menu = (
     <Menu>
       <Menu.Item key="0" onClick={onEditMultisigClick}>
-        <IconEdit className="mean-svg-icons" />
         <span className="menu-item-text">Edit safe</span>
       </Menu.Item>
       {isUnderDevelopment() && (
         <Menu.Item key="1" onClick={() => {}}>
-          <IconTrash className="mean-svg-icons" />
           <span className="menu-item-text">Delete safe</span>
         </Menu.Item>
       )}

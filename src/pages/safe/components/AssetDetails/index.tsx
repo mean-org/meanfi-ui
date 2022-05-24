@@ -2413,7 +2413,6 @@ export const AssetDetailsView = (props: {
   const menu = (
     <Menu>
       <Menu.Item key="0" onClick={showDeleteVaultModal} disabled={isTxInProgress() || !canDeleteVault()}>
-        <IconTrash className="mean-svg-icons" />
         <span className="menu-item-text">Close asset</span>
       </Menu.Item>
     </Menu>
@@ -2443,7 +2442,6 @@ export const AssetDetailsView = (props: {
           ))}
         </Row>
         {(assetSelected.mint.toBase58() !== NATIVE_SOL_MINT.toBase58()) && (
-
           <Row gutter={[8, 8]} className="safe-btns-container mb-1">
             <Col xs={20} sm={18} md={20} lg={18} className="btn-group">
               <Button
