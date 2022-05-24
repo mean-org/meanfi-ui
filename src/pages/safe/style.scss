@@ -100,13 +100,11 @@
 
 .btn-group {
   button {
-    border-radius: 0.25em !important;
-    margin: 0.25em;
+    margin: 0.5em 0.75em 0.5em 0.25em;
     .btn-content {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      // min-width: 7.5em;
       svg {
         padding-right: 0.3em;
         width: 1.25em;

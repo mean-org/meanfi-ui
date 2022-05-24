@@ -223,35 +223,35 @@ export const SafeInfo = (props: {
       <Row gutter={[8, 8]} className="safe-btns-container mb-1">
         <Col xs={20} sm={18} md={20} lg={18} className="btn-group">
           <Button
-            type="ghost"
+            type="default"
+            shape="round"
             size="small"
             className="thin-stroke"
             disabled={isTxInProgress()}
             onClick={onGoToAccounts}>
               <div className="btn-content">
-                <IconShowAll className="mean-svg-icons" />
                 View assets
               </div>
           </Button>
           <Button
-            type="ghost"
+            type="default"
+            shape="round"
             size="small"
             className="thin-stroke"
             disabled={isTxInProgress()}
             onClick={onNewProposalMultisigClick}>
               <div className="btn-content">
-                <IconAdd className="mean-svg-icons" />
                 New proposal
               </div>
           </Button>
           <Button
-            type="ghost"
+            type="default"
+            shape="round"
             size="small"
             className="thin-stroke"
             disabled={isTxInProgress()}
             onClick={onNewCreateAssetClick}>
               <div className="btn-content">
-                <IconAdd className="mean-svg-icons" />
                 Create asset
               </div>
           </Button>

@@ -226,7 +226,8 @@ export const SafeDetailsView = (props: {
         <Col className="safe-details-right-container btn-group">
           {(selectedProposal.status === MultisigTransactionStatus.Approved || selectedProposal.status === MultisigTransactionStatus.Executed) ? (
             <Button
-              type="ghost"
+              type="default"
+              shape="round"
               size="small"
               className="thin-stroke d-flex justify-content-center align-items-center"
               disabled={selectedProposal.status === MultisigTransactionStatus.Executed}
@@ -236,32 +237,34 @@ export const SafeDetailsView = (props: {
                   operation: selectedProposal.operation
                 }
               })}>
-              <div className="btn-content">
-                Execute
-              </div>
+                <div className="btn-content">
+                  Execute
+                </div>
             </Button>
           ) : (
             <>
               <Button
-                type="ghost"
+                type="default"
+                shape="round"
                 size="small"
                 className="thin-stroke"
                 disabled={selectedProposal.didSigned || selectedProposal.status !== MultisigTransactionStatus.Pending}
                 onClick={() => onProposalApprove({ transaction: { id: selectedProposal.id } })}>
-                <div className="btn-content">
-                  <IconThumbsUp className="mean-svg-icons" />
-                  Approve
-                </div>
+                  <div className="btn-content">
+                    <IconThumbsUp className="mean-svg-icons" />
+                    Approve
+                  </div>
               </Button>
               {isUnderDevelopment() && (
                 <Button
-                  type="ghost"
+                  type="default"
+                  shape="round"
                   size="small"
                   className="thin-stroke"
                   onClick={() => { } }>
                     <div className="btn-content">
                       <IconThumbsDown className="mean-svg-icons" />
-                      Reject
+                        Reject
                     </div>
                 </Button>
               )}

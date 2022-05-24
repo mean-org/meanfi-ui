@@ -108,8 +108,6 @@ export const ResumeItem = (props: {
     }
   };
 
-  console.log("Expires", status);
-
   return (
     <>
       <Row gutter={[8, 8]} className={`resume-item-container list-item ${!isSafeDetails ? "hover-list" : ""} ${isSafeDetails ? "align-items-end" : ""}`}>

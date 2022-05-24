@@ -2447,7 +2447,8 @@ export const AssetDetailsView = (props: {
           <Row gutter={[8, 8]} className="safe-btns-container mb-1">
             <Col xs={20} sm={18} md={20} lg={18} className="btn-group">
               <Button
-                type="ghost"
+                type="default"
+                shape="round"
                 size="small"
                 className="thin-stroke"
                 disabled={isTxInProgress()}
@@ -2457,7 +2458,8 @@ export const AssetDetailsView = (props: {
                   </div>
               </Button>
               <Button
-                type="ghost"
+                type="default"
+                shape="round"
                 size="small"
                 className="thin-stroke"
                 disabled={isTxInProgress()}
