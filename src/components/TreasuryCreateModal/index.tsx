@@ -473,36 +473,22 @@ export const TreasuryCreateModal = (props: {
         )}
       </div>
 
-      {/**
-       * NOTE: CTAs block may be required or not when Tx status is Finished!
-       * I choose to set transactionStatus.currentOperation to TransactionStatus.TransactionFinished
-       * and auto-close the modal after 1s. If we chose to NOT auto-close the modal
-       * Uncommenting the commented lines below will do it!
-       */}
       {!(props.isBusy && transactionStatus !== TransactionStatus.Iddle) && (
         <div className="row two-col-ctas mt-3 transaction-progress p-0">
-          <div className={!isError(transactionStatus.currentOperation) ? "col-6" : "col-12"}>
-            <Button
-              block
-              type="text"
-              shape="round"
-              size="middle"
-              className={props.isBusy ? 'inactive' : ''}
-              onClick={() => isError(transactionStatus.currentOperation)
-                ? transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure
-                  ? onCloseModal()
-                  : onAcceptModal()
-                : onCloseModal()}>
-              {isError(transactionStatus.currentOperation)
-                ? transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure
-                  ? t('general.cta-close')
-                  : t('general.retry')
-                : t('general.cta-close')
-              }
-            </Button>
-          </div>
-          {!isError(transactionStatus.currentOperation) && (
-            <div className="col-6">
+          {isError(transactionStatus.currentOperation) ? (
+            <div className="col-12">
+              <Button
+                block
+                type="text"
+                shape="round"
+                size="middle"
+                className={props.isBusy ? 'inactive' : ''}
+                onClick={onAcceptModal}>
+                {t('general.retry')}
+              </Button>
+            </div>
+          ) : (
+            <div className="col-12">
               <Button
                 className={props.isBusy ? 'inactive' : ''}
                 block
