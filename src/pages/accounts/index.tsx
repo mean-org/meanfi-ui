@@ -28,7 +28,7 @@ import {
   openLinkInNewTab,
   shortenAddress
 } from '../../utils/utils';
-import { Button, Col, Dropdown, Empty, Menu, Row, Space, Spin, Tooltip } from 'antd';
+import { Button, Col, Divider, Dropdown, Empty, Menu, Row, Space, Spin, Tooltip } from 'antd';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import {
   SOLANA_WALLET_GUIDE,
@@ -57,7 +57,7 @@ import { openNotification } from '../../components/Notifications';
 import { AddressDisplay } from '../../components/AddressDisplay';
 import { ReceiveSplOrSolModal } from '../../components/ReceiveSplOrSolModal';
 import { SendAssetModal } from '../../components/SendAssetModal';
-import { EventType, InvestItemPaths, OperationType, TransactionStatus } from '../../models/enums';
+import { AccountAssetAction, EventType, InvestItemPaths, OperationType, TransactionStatus } from '../../models/enums';
 import { consoleOut, copyText, getTransactionStatusForLogs, isValidAddress, kFormatter, toUsCurrency } from '../../utils/ui';
 import { WrapSolModal } from '../../components/WrapSolModal';
 import { UnwrapSolModal } from '../../components/UnwrapSolModal';
@@ -78,6 +78,17 @@ const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export type CategoryOption = "networth" | "assets" | "msigs" | "other-assets";
 export type OtherAssetsOption = "msp-streams" | "msp-treasuries" | "orca" | "solend" | "friktion" | undefined;
 export const ACCOUNTS_ROUTE_BASE_PATH = '/accounts';
+
+interface AssetCta {
+  action: AccountAssetAction;
+  isVisible: boolean;
+  disabled: boolean;
+  caption: string;
+  uiComponentType: "button" | "menuitem";
+  uiComponentId: string;
+  tooltip: string;
+  callBack?: any;
+}
 
 export const AccountsNewView = () => {
   const location = useLocation();
@@ -147,6 +158,7 @@ export const AccountsNewView = () => {
   const [treasuriesTvl, setTreasuriesTvl] = useState(0);
   const [isUnwrapping, setIsUnwrapping] = useState(false);
   const [urlQueryAsset, setUrlQueryAsset] = useState('');
+  const [assetCtas, setAssetCtas] = useState<AssetCta[]>([]);
 
   // Flow control
   const [status, setStatus] = useState<FetchStatus>(FetchStatus.Iddle);
@@ -356,6 +368,14 @@ export const AccountsNewView = () => {
   const isSelectedAssetWsol = useCallback(() => {
     return selectedAsset && selectedAsset.address === WRAPPED_SOL_MINT_ADDRESS ? true : false;
   }, [selectedAsset]);
+
+  // const isAssetPurchasable = useCallback(() => {
+  //   if (!selectedAsset) { return false; }
+
+  //   const purchasableItems = ['SOL', 'USDT', 'USDC'];
+  //   return purchasableItems.includes(selectedAsset.symbol);
+
+  // }, [selectedAsset]);
 
   const goToExchangeWithPresetAsset = useCallback(() => {
     const queryParams = `${selectedAsset ? '?from=' + selectedAsset.symbol : ''}`;
@@ -837,6 +857,167 @@ export const AccountsNewView = () => {
     if (!selectedAsset) { return false; }
     return !selectedAsset.publicAddress ? true : false;
   }, [selectedAsset]);
+
+  /**
+   * - No CTAs if it is a custom token or we don't know the asset's token
+   * - No Buy if the asset is wSOL
+   * 
+   * isBuyCtaAvailable()      -> For the selected asset.
+   * isExchangeCtaAvailable() -> For the selected asset.
+   * isInvestCtaAvailable()   -> For the selected asset.
+   * isReceiveCtaAvailable()  -> For the selected asset.
+   * 
+   * 1. If the token is a custom token:
+   * - Only available actions Close and Refresh inside ellipsis
+   * 2. If wSOL token
+   * - Actions available: Send, Receive and Unwrap
+   * 3. If the token has no Activities
+   * - Actions available: Receive, Exchange, Buy
+   * 3. If the user has token balance:
+   * - Send and Buy are both enable
+   * 4. If the user has No token balance, but has token activity:
+   * Buy is always available unless is a custom token or wSOL
+   */
+
+   useEffect(() => {
+    if (!selectedAsset) { return; }
+
+    const numMaxCtas = 2;
+    const isCustomAsset = selectedAsset.name === 'Custom account' ? true : false;
+    const actions: AssetCta[] = [];
+    let ctaItems = 0;
+
+    // Send
+    actions.push({
+      action: AccountAssetAction.Send,
+      isVisible: isCustomAsset ? false : true,
+      caption: 'Send',
+      disabled: !isInspectedAccountTheConnectedWallet(),
+      uiComponentType: 'button',
+      uiComponentId: `button-${AccountAssetAction.Send}`,
+      tooltip: '',
+      callBack: onSendAsset
+    });
+    ctaItems++;
+
+    // UnwrapSol
+    if (isInspectedAccountTheConnectedWallet() && isSelectedAssetWsol() && (selectedAsset.balance || 0) > 0) {
+      actions.push({
+        action: AccountAssetAction.UnwrapSol,
+        caption: 'Unwrap',
+        isVisible: isInspectedAccountTheConnectedWallet() && isSelectedAssetWsol(),
+        uiComponentType: 'button',
+        disabled: false,
+        uiComponentId: `button-${AccountAssetAction.UnwrapSol}`,
+        tooltip: '',
+        callBack: showUnwrapSolModal
+      });
+      ctaItems++;
+    }
+
+    // Buy
+    actions.push({
+      action: AccountAssetAction.Buy,
+      caption: 'Buy',
+      isVisible: !isSelectedAssetWsol(),
+      uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
+      disabled: false,
+      uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${AccountAssetAction.Buy}`,
+      tooltip: '',
+      callBack: showDepositOptionsModal
+    });
+    ctaItems++;
+
+    // Receive
+    actions.push({
+      action: AccountAssetAction.Receive,
+      caption: 'Receive',
+      isVisible: isCustomAsset ? false : true,
+      uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
+      disabled: false,
+      uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${AccountAssetAction.Receive}`,
+      tooltip: '',
+      callBack: showReceiveSplOrSolModal
+    });
+    ctaItems++;
+
+    // Exchange
+    actions.push({
+      action: AccountAssetAction.Exchange,
+      caption: 'Exchange',
+      isVisible: isInspectedAccountTheConnectedWallet() && !isSelectedAssetWsol(),
+      uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
+      disabled: false,
+      uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${AccountAssetAction.Exchange}`,
+      tooltip: '',
+      callBack: onExchangeAsset
+    });
+    ctaItems++;
+
+    // Invest
+    actions.push({
+      action: AccountAssetAction.Invest,
+      caption: 'Invest',
+      isVisible: investButtonEnabled() && !isSelectedAssetWsol(),
+      uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
+      disabled: false,
+      uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${AccountAssetAction.Invest}`,
+      tooltip: '',
+      callBack: handleGoToInvestClick
+    });
+    ctaItems++;
+
+    // Unwrap
+    if (isInspectedAccountTheConnectedWallet() && isSelectedAssetWsol() && wSolBalance > 0) {
+      actions.push({
+        action: AccountAssetAction.UnwrapSol,
+        caption: 'Unwrap',
+        isVisible: isInspectedAccountTheConnectedWallet() && isSelectedAssetWsol(),
+        uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
+        disabled: false,
+        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${AccountAssetAction.UnwrapSol}`,
+        tooltip: '',
+        callBack: showUnwrapSolModal
+      });
+      ctaItems++;
+    }
+
+    // Refresh asset
+    actions.push({
+      action: AccountAssetAction.Refresh,
+      caption: 'Refresh asset',
+      isVisible: true,
+      uiComponentType: 'menuitem',
+      disabled: false,
+      uiComponentId: `menuitem-${AccountAssetAction.Refresh}`,
+      tooltip: '',
+      callBack: reloadSwitch
+    });
+
+    // Close account
+    actions.push({
+      action: AccountAssetAction.CloseAccount,
+      caption: 'Close account',
+      isVisible: isSelectedAssetNativeAccount() ? false : true,
+      uiComponentType: 'menuitem',
+      disabled: !isInspectedAccountTheConnectedWallet(),
+      uiComponentId: `menuitem-${AccountAssetAction.CloseAccount}`,
+      tooltip: '',
+      callBack: showCloseAssetModal
+    });
+
+    consoleOut('Asset actions:', actions, 'crimson');
+    setAssetCtas(actions);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    wSolBalance,
+    selectedAsset,
+    isInspectedAccountTheConnectedWallet,
+    isSelectedAssetNativeAccount,
+    isSelectedAssetWsol,
+    investButtonEnabled,
+  ]);
 
   /////////////////////
   // Data management //
@@ -2010,13 +2191,63 @@ export const AccountsNewView = () => {
     </Menu>
   );
 
+  const renderUserAccountAssetMenu = () => {
+    const items = assetCtas.filter(m => m.isVisible && m.uiComponentType === 'menuitem');
+    return (
+      <Menu>
+        {items.map(item => {
+          return (
+            <Menu.Item
+              key={item.uiComponentId}
+              disabled={item.disabled}
+              onClick={item.callBack}>
+              <span className="menu-item-text">{item.caption}</span>
+            </Menu.Item>
+          );
+        })}
+      </Menu>
+    );
+  }
+
   const renderUserAccountAssetCtaRow = () => {
     if (!selectedAsset) { return null; }
+    const items = assetCtas.filter(m => m.isVisible && m.uiComponentType === 'button');
 
     return (
       <div className="flex-fixed-right cta-row">
         <Space className="left" size="middle" wrap>
-          {selectedAsset.name !== 'Custom account' ? (
+          {
+            items.map(item => {
+              if (item.tooltip) {
+                return (
+                  <Tooltip placement="bottom" title={item.tooltip}>
+                    <Button
+                      type="default"
+                      shape="round"
+                      size="small"
+                      className="thin-stroke"
+                      disabled={item.disabled}
+                      onClick={item.callBack}>
+                      <span>{item.caption}</span>
+                    </Button>
+                  </Tooltip>
+                );
+              } else {
+                return (
+                  <Button
+                    type="default"
+                    shape="round"
+                    size="small"
+                    className="thin-stroke"
+                    disabled={item.disabled}
+                    onClick={item.callBack}>
+                    <span>{item.caption}</span>
+                  </Button>
+                );
+              }
+            })
+          }
+          {/* {selectedAsset.name !== 'Custom account' ? (
             <>
               <Tooltip placement="bottom" title={
                 !isInspectedAccountTheConnectedWallet()
@@ -2035,6 +2266,7 @@ export const AccountsNewView = () => {
                   <span>Send</span>
                 </Button>
               </Tooltip>
+
               <Button
                 type="default"
                 shape="round"
@@ -2043,6 +2275,7 @@ export const AccountsNewView = () => {
                 onClick={showReceiveSplOrSolModal}>
                 <span>Receive</span>
               </Button>
+
               {(!isSelectedAssetWsol() && isInspectedAccountTheConnectedWallet()) && (
                 <Button
                   type="default"
@@ -2086,9 +2319,12 @@ export const AccountsNewView = () => {
             </>
           ) : (
             <h4 className="mb-0">The token for this Custom account was not found in the Solana token list</h4>
-          )}
+          )} */}
         </Space>
-        <Dropdown overlay={userAssetOptions} placement="bottomRight" trigger={["click"]}>
+        <Dropdown
+          overlay={renderUserAccountAssetMenu()}
+          placement="bottomRight"
+          trigger={["click"]}>
           <span className="icon-button-container">
             <Button
               type="default"
@@ -2232,7 +2468,7 @@ export const AccountsNewView = () => {
         </div>
       )} */}
 
-      <div className="container main-container">
+      <div className="container main-container accounts">
 
         {/* SEO tags overrides */}
         <Helmet>
@@ -2380,6 +2616,8 @@ export const AccountsNewView = () => {
                             <div className="top">
                               {renderCategoryMeta()}
                               {selectedCategory === "assets" && renderUserAccountAssetCtaRow()}
+                            </div>
+                            <div className={`bottom ${!hasItemsToRender() ? 'h-100 flex-column' : ''}`}>
                               {/* Activity table heading */}
                               {hasItemsToRender() && (
                                 <div className="stats-row">
@@ -2394,8 +2632,7 @@ export const AccountsNewView = () => {
                                   </div>
                                 </div>
                               )}
-                            </div>
-                            <div className={`bottom ${!hasItemsToRender() ? 'h-100 flex-column' : ''}`}>
+                              {/* Activity table content */}
                               {selectedCategory === "assets" && renderActivityList()}
                             </div>
                           </div>

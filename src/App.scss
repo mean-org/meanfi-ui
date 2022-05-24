@@ -193,9 +193,6 @@
 body {
   color: var(--text-color);
   background-color: var(--bg-color);
-  @media (max-width: 575.98px) {
-    background-color: var(--color-panel-background);
-  }
 }
 .loading-screen-container {
   position: relative;
@@ -4012,9 +4009,11 @@ main section {
 }
 #back-button {
   position: absolute;
-  left: 1rem;
+  top: 0.8rem;
+  left: 0.8rem;
   background: none;
   color: var(--color-secondary-alpha-85);
+  z-index: 2000;
   @media (min-width: 576px) {
     display: none;
   }

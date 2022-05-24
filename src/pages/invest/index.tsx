@@ -1,7 +1,7 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import './style.scss';
-import { ReloadOutlined } from "@ant-design/icons";
+import { ArrowLeftOutlined, ReloadOutlined } from "@ant-design/icons";
 import { Button, Tooltip, Row, Col, Empty, Spin, Divider, Steps } from "antd";
 import { useTranslation } from 'react-i18next';
 import { isDesktop } from "react-device-detect";
@@ -85,6 +85,7 @@ export const InvestView = () => {
   const [shouldRefreshLpData, setShouldRefreshLpData] = useState(true);
   const [refreshingPoolInfo, setRefreshingPoolInfo] = useState(false);
   const [canSubscribe, setCanSubscribe] = useState(true);
+  const [autoOpenDetailsPanel, setAutoOpenDetailsPanel] = useState(true);
 
   // Tokens and balances
   const [meanAddresses, setMeanAddresses] = useState<Env>();
@@ -561,17 +562,21 @@ export const InvestView = () => {
 
   }, [marinadeApyValue, marinadeTotalStakedValue, maxOrcaAprValue, maxRadiumAprValue, orcaInfo, raydiumInfo, soceanApyValue, soceanTotalStakedValue]);
 
+  const onBackButtonClicked = () => {
+    setDtailsPanelOpen(false);
+    setAutoOpenDetailsPanel(false);
+  }
 
   /////////////////
   //   Effects   //
   /////////////////
-  // Process routing here
 
+  // Process routing here
   useEffect(() => {
     if (!publicKey) { return; }
 
     if (!investItem) {
-      const url = `${INVEST_ROUTE_BASE_PATH}/${investItems[0].path}`;
+      const url = `${INVEST_ROUTE_BASE_PATH}/${investItems[0].path}?option=stake`;
       consoleOut('No investItem, redirecting to:', url, 'orange');
       navigate(url, { replace: true });
       return;
@@ -581,7 +586,9 @@ export const InvestView = () => {
 
     const item = investItems.find(i => i.path === investItem);
     if (item) {
-      setDtailsPanelOpen(true);
+      if (autoOpenDetailsPanel) {
+        setDtailsPanelOpen(true);
+      }
       setSelectedInvest(item);
     }
 
@@ -609,7 +616,7 @@ export const InvestView = () => {
         break;
     }
 
-  }, [investItem, investItems, navigate, publicKey, searchParams, setDtailsPanelOpen, setSearchParams]);
+  }, [autoOpenDetailsPanel, investItem, investItems, isSmallUpScreen, navigate, publicKey, searchParams, setDtailsPanelOpen, setSearchParams]);
 
   // Get token addresses from staking client and save tokens
   useEffect(() => {
@@ -1040,7 +1047,7 @@ export const InvestView = () => {
             const url = `${INVEST_ROUTE_BASE_PATH}/${item.path}`;
             consoleOut('Redirecting to:', url, 'orange');
             navigate(url);
-            setDtailsPanelOpen(true);
+            setAutoOpenDetailsPanel(true);
           };
 
           return(
@@ -1089,6 +1096,14 @@ export const InvestView = () => {
 
   return (
     <>
+      {detailsPanelOpen && (
+        <Button
+          id="back-button"
+          type="default"
+          shape="circle"
+          icon={<ArrowLeftOutlined />}
+          onClick={onBackButtonClicked}/>
+      )}
       <div className="container main-container">
         <div className="interaction-area">
           <div className="title-and-subtitle">

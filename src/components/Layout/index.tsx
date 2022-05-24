@@ -473,7 +473,7 @@ export const AppLayout = React.memo((props: any) => {
               </div>
             )}
             <Header className="App-Bar">
-              {(detailsPanelOpen || (addAccountPanelOpen && !canShowAccountDetails)) && (
+              {!location.pathname.startsWith('/invest') && (detailsPanelOpen || (addAccountPanelOpen && !canShowAccountDetails)) && (
                 <BackButton handleClose={() => closeAllPanels()} />
               )}
               <div className="app-bar-inner">
