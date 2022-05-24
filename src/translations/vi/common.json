@@ -1086,7 +1086,7 @@
 	"treasuries": {
 		"add-funds": {
 			"allocation-amount-label": "Bạn muốn phân bổ bao nhiêu?",
-			"allocation-heading": "Để nạp tiền vào stream hiện có, số tiền được thêm vào sẽ được phân bổ từ số dư khả dụng của Kho bạc.",
+			"allocation-heading": "To top up an existing stream, the funds being added will be allocated from the streaming account's available balance.",
 			"allocation-label": "Bạn muốn phân bổ những khoản tiền này như thế nào?",
 			"allocation-option-evenly": "Phân bổ đồng đều trên tất cả các Money stream",
 			"allocation-option-none": "Không phân bổ (để lại trong Dự trữ)",

@@ -1100,7 +1100,7 @@
 	"treasuries": {
 		"add-funds": {
 			"allocation-amount-label": "Combien voulez-vous allouer ?",
-			"allocation-heading": "Pour compléter un flux existant, les fonds ajoutés seront alloués à partir du solde disponible du Trésor.",
+			"allocation-heading": "To top up an existing stream, the funds being added will be allocated from the streaming account's available balance.",
 			"allocation-label": "Comment souhaitez-vous allouer ces fonds ?",
 			"allocation-option-evenly": "Répartir uniformément sur tous les flux d'argent",
 			"allocation-option-none": "Ne pas allouer (laisser dans les réserves)",

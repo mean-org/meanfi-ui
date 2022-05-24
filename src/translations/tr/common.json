@@ -1087,7 +1087,7 @@
 	"treasuries": {
 		"add-funds": {
 			"allocation-amount-label": "Tahsis Etmek İstediğiniz Miktar Ne Kadar?",
-			"allocation-heading": "Bir aktarımı durdumak, fonlar tahsis edilen hazinenin mevcut bakiyesini eklenir.",
+			"allocation-heading": "To top up an existing stream, the funds being added will be allocated from the streaming account's available balance.",
 			"allocation-label": "Bu fonları nasıl tahsis etmek istiyorsunuz?",
 			"allocation-option-evenly": "Tüm Para Aktarımlarına eşit olarak tahsis edin",
 			"allocation-option-none": "Tahsis etmeyin (Yedeklerde bırakın)",

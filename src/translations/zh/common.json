@@ -1100,7 +1100,7 @@
 	"treasuries": {
 		"add-funds": {
 			"allocation-amount-label": "How Much Do You Want to Allocate?",
-			"allocation-heading": "To top up an existing stream, the funds being added will be allocated from the Treasury's available balance.",
+			"allocation-heading": "To top up an existing stream, the funds being added will be allocated from the streaming account's available balance.",
 			"allocation-label": "您想如何分配这些资金？",
 			"allocation-option-evenly": "在所有资金流中平均分配",
 			"allocation-option-none": "不分配（保留储备金）",

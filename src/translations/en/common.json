@@ -1100,7 +1100,7 @@
 	"treasuries": {
 		"add-funds": {
 			"allocation-amount-label": "How Much Do You Want to Allocate?",
-			"allocation-heading": "To top up an existing stream, the funds being added will be allocated from the Treasury's available balance.",
+			"allocation-heading": "To top up an existing stream, the funds being added will be allocated from the streaming account's available balance.",
 			"allocation-label": "How do you want to allocate these funds?",
 			"allocation-option-evenly": "Allocate evenly across all Money Streams",
 			"allocation-option-none": "Do not allocate (leave in Reserves)",

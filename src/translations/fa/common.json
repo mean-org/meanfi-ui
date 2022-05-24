@@ -1085,7 +1085,7 @@
 	"treasuries": {
 		"add-funds": {
 			"allocation-amount-label": "چقدر می خواهید اختصاص دهید؟",
-			"allocation-heading": "برای تکمیل یک stream موجود، وجوه اضافه شده از موجودی موجود Treasury تخصیص می یابد.",
+			"allocation-heading": "To top up an existing stream, the funds being added will be allocated from the streaming account's available balance.",
 			"allocation-label": "چگونه می خواهید این بودجه را تخصیص دهید؟",
 			"allocation-option-evenly": "به طور مساوی در تمام Money Stream ها تخصیص دهید",
 			"allocation-option-none": "تخصیص ندادن (ترک در رزرو)",

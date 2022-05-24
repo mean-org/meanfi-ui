@@ -1090,7 +1090,7 @@
 	"treasuries": {
 		"add-funds": {
 			"allocation-amount-label": "How Much Do You Want to Allocate?",
-			"allocation-heading": "To top up an existing stream, the funds being added will be allocated from the Treasury's available balance.",
+			"allocation-heading": "To top up an existing stream, the funds being added will be allocated from the streaming account's available balance.",
 			"allocation-label": "이 자금을 어떻게 할당하시겠습니까?",
 			"allocation-option-evenly": "모든 머니스트림에 균등하게 할당",
 			"allocation-option-none": "할당하지 않음(예비금에 남겨둠)",
