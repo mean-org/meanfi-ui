@@ -187,7 +187,7 @@ export const SafeDetailsView = (props: {
   // Number of participants who have already approved the Tx
   const approvedSigners = selectedProposal.signers.filter((s: any) => s === true).length;
   const neededSigners = approvedSigners && (selectedMultisig.threshold - approvedSigners);
-  const expirationDate = selectedProposal.details.expirationDate ? new Date(selectedProposal.details.expirationDate).toDateString() : "";
+  const expirationDate = selectedProposal.details.expirationDate ? new Date(selectedProposal.details.expirationDate) : "";
   const executedOnDate = selectedProposal.executedOn ? new Date(selectedProposal.executedOn).toDateString() : "";
   
   return (

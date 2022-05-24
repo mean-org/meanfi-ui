@@ -28,10 +28,10 @@ const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 const expires: { label: string, value: number }[] = [
   { label: "No expires", value: 0 },
-  { label: "24 hours", value: 84_600 },
+  { label: "24 hours", value: 86_400 },
   { label: "48 hours", value: 172_800 },
-  { label: "72 hours", value: 257_400 },
-  { label: "7 days", value: 592_200 },
+  { label: "72 hours", value: 259_200 },
+  { label: "7 days", value: 604_800 },
 ];
 
 export const MultisigProposalModal = (props: {
@@ -355,8 +355,6 @@ export const MultisigProposalModal = (props: {
         })
     )
   }, [connection, serializedTx]);
-
-  console.log("selectedApp", selectedApp)
 
   return (
     <Modal
