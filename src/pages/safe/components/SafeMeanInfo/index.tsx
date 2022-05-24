@@ -657,6 +657,7 @@ export const SafeMeanInfo = (props: {
               }
     
               const programTitle = shortenAddress(program.pubkey.toBase58(), 4);
+              const programSubtitle = shortenAddress(program.pubkey.toBase58(), 8);
     
               return (
                 <div 
@@ -667,6 +668,7 @@ export const SafeMeanInfo = (props: {
                     <ResumeItem
                       id={program.pubkey.toBase58()}
                       title={programTitle}
+                      subtitle={programSubtitle}
                       isSafeDetails={isSafeDetails}
                       isProgram={true}
                       programSize={program.size}

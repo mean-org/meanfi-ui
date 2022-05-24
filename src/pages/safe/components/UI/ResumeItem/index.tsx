@@ -108,6 +108,8 @@ export const ResumeItem = (props: {
     }
   };
 
+  console.log("Expires", status);
+
   return (
     <>
       <Row gutter={[8, 8]} className={`resume-item-container list-item ${!isSafeDetails ? "hover-list" : ""} ${isSafeDetails ? "align-items-end" : ""}`}>
@@ -122,28 +124,33 @@ export const ResumeItem = (props: {
           )}
           <div className={`resume-left-text ${isSafeDetails ? "pb-1" : ""}`}>
             <div className={`resume-title ${isSafeDetails ? "big-title" : ""}`}>{title ? title : "Unknown proposal"}</div>
-            {expires ? (
-              version !== 0 && (
+
+            {version !== 0 && (
+              subtitle ? (
                 <div className="info-label">
-                  {!executedOn ? (
-                    <Countdown className="align-middle" date={expires} renderer={renderer} />
-                  ) : (
-                    <span>Executed on {executedOn}</span>
-                  )}
+                  <span className="subtitle">{subtitle}</span>
                 </div>
+              ) : (
+                expires ? (
+                  <div className="info-label">
+                    {(executedOn || status === 2) ? (
+                      <span>Executed on {executedOn}</span>
+                    ) : (
+                      (status === 0 || status === 1) ? (
+                        <Countdown className="align-middle" date={expires} renderer={renderer} />
+                      ) : status === 4 ? (
+                        <span>Voided</span>
+                      ) : status === 5 ? (
+                        <span>Expired on {expires}</span>
+                      ) : null 
+                    )}
+                  </div>
+                ) : (
+                  <div className="info-label">
+                    <span className="subtitle">No expires</span>
+                  </div>
+                )
               )
-            ) : (!expires && subtitle) ? (
-              <div className="info-label">
-                <span className="subtitle">{subtitle}</span>
-              </div>
-            // ) : (!expires && status === 4) ? (
-            //   <div className="info-label">
-            //     <span className="subtitle">Voided</span>
-            //   </div>
-            ) : (
-              <div className="info-label">
-                <span className="subtitle">No expires</span>
-              </div>
             )}
           </div>
         </Col>
