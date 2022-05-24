@@ -182,9 +182,8 @@ export const MultisigTransferTokensModal = (props: {
     const replaceCommaToDot = getClipBoardData.replace(",", "")
     const onlyNumbersAndDot = replaceCommaToDot.replace(/[^.\d]/g, '');
 
-    console.log(onlyNumbersAndDot);
+    consoleOut("only numbers and dot", onlyNumbersAndDot);
     
-
     setAmount(onlyNumbersAndDot.trim());
   }
 

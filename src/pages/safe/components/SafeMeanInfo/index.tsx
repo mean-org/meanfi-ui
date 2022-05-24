@@ -127,7 +127,7 @@ export const SafeMeanInfo = (props: {
     };
 
     const sleep = (ms: number, log = true) => {
-      if (log) { console.log("Sleeping for", ms / 1000, "seconds"); }
+      if (log) { consoleOut("Sleeping for", ms / 1000, "seconds"); }
       return new Promise((resolve) => setTimeout(resolve, ms));
     }
 
