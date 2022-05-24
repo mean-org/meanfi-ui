@@ -776,14 +776,14 @@
 		"add-funds": {
 			"amount-label": "Số lượng",
 			"modal-title": "Thêm tiền",
-			"treasury-money-stream-description": "Vì dòng tiền này được tài trợ từ kho bạc, nên số tiền được bổ sung sẽ được phân bổ từ số dư khả dụng của Kho bạc.",
+			"treasury-money-stream-description": "As this stream was funded from a streaming account, the funds being added will be allocated from the streaming account's available balance.",
 			"treasury-money-stream-title": "Kho bạc đã cấp tiền cho Money Stream"
 		},
 		"back-to-my-streams-cta": "Quay về danh sách Money Streams",
 		"create-new-stream-cta": "Tạo dòng tiền",
 		"create-new-stream-cta-busy": "Creating stream",
 		"lookup-stream-cta-tooltip": "Tra cứu một stream",
-		"pause-stream-confirmation": "Việc tạm dừng stream sẽ làm dừng dòng tiền chạy từ kho bạc ({{treasury}}) tới người thụ hưởng ({{beneficiary}}).",
+		"pause-stream-confirmation": "Pausing the stream will stop streaming money from the streaming account ({{treasury}}) to the beneficiary ({{beneficiary}}).",
 		"pause-stream-cta": "Tạm dừng",
 		"edit-stream": {
 			"modal-title": "Edit Money Stream",
@@ -804,8 +804,8 @@
 		"resume-stream-modal-title": "Resume stream",
 		"resume-stream-tooltip": "Resume Stream",
 		"refresh-tooltip": "Nhấn để làm mới stream",
-		"locked-stream-message": "You cannot close or top up a stream from a locked treasury",
-		"resume-stream-confirmation": "Tiếp tục money streaming từ kho bạc ({{treasury}}) tới người thụ hưởng ({{beneficiary}}).",
+		"locked-stream-message": "You cannot close or top up a stream from a locked streaming account",
+		"resume-stream-confirmation": "Resume money streaming from the streaming account ({{treasury}}) to the beneficiary ({{beneficiary}}).",
 		"resume-stream-cta": "Tiếp tục",
 		"screen-title": "Money Streams",
 		"status": {
@@ -1128,8 +1128,8 @@
 			"main-cta-busy": "Creating account",
 			"modal-title": "Create Streaming Account",
 			"multisig-selector-label": "Tài khoản multisig",
-			"multisig-treasury-created-info": "Để hoàn thành thiết lập kho bạc, những người ký Multisig khác cần phải phê duyệt nó.",
-			"multisig-treasury-created-instructions": "Vui lòng yêu cầu người dùng khác ký vào giao dịch tạo kho bạc này",
+			"multisig-treasury-created-info": "To complete the Streaming Account setup, the other Multisig signers need to approve it.",
+			"multisig-treasury-created-instructions": "Streaming account {{treasuryName}} was created successfully. Please ask the other users to sign this account creation transaction.",
 			"multisig-treasury-switch-label": "Kho bạc dành cho tài khoản multisig?",
 			"success-message": "Your new streaming account was created successfully.",
 			"treasury-name-input-empty": "Enter Account name",

@@ -4825,12 +4825,12 @@ export const Streams = () => {
                     <div className="mb-3">
                       <h2 className="mb-0">{getStreamDescription(stream)}</h2>
                       <div className="flex-row align-items-center">
-                        <span className="font-bold">Treasury - {getTreasuryName()}</span>
+                        <span className="font-bold">{getTreasuryName()}</span>
                         <span className={`badge small ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
                           {getTreasuryType() === "locked" ? 'Locked' : 'Open'}
                         </span>
                         <span className="icon-button-container ml-1">
-                          <Tooltip placement="bottom" title="Go to treasury">
+                          <Tooltip placement="bottom" title="Go to streaming account">
                             <Button
                               type="default"
                               shape="circle"
@@ -5167,12 +5167,12 @@ export const Streams = () => {
                     <div className="mb-3">
                       <h2 className="mb-0">{getStreamDescription(stream)}</h2>
                       <div className="flex-row align-items-center">
-                        <span className="font-bold">Treasury - {getTreasuryName()}</span>
+                        <span className="font-bold">{getTreasuryName()}</span>
                         <span className={`badge small ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
                           {getTreasuryType() === "locked" ? 'Locked' : 'Open'}
                         </span>
                         <span className="icon-button-container ml-1">
-                          <Tooltip placement="bottom" title="Go to treasury">
+                          <Tooltip placement="bottom" title="Go to streaming account">
                             <Button
                               type="default"
                               shape="circle"
