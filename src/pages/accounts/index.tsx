@@ -1981,17 +1981,14 @@ export const AccountsNewView = () => {
         <Space className="left" size="middle" wrap>
           {selectedAsset.name !== 'Custom account' ? (
             <>
-              <Tooltip placement="bottom" title={isSelectedAssetNativeAccount() ? "SOL is not available for money streams, please use wSOL instead." : ""}>
-                <Button
-                  type="default"
-                  shape="round"
-                  size="small"
-                  className="thin-stroke"
-                  disabled={isSelectedAssetNativeAccount()}
-                  onClick={onSendAsset}>
-                  <span>Send</span>
-                </Button>
-              </Tooltip>
+              <Button
+                type="default"
+                shape="round"
+                size="small"
+                className="thin-stroke"
+                onClick={onSendAsset}>
+                <span>Send</span>
+              </Button>
               <Button
                 type="default"
                 shape="round"

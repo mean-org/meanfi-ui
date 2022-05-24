@@ -135,6 +135,21 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
     },
     {
         chainId: 101,
+        address: 'So11111111111111111111111111111111111111111',
+        symbol: 'SOL',
+        name: 'Solana',
+        decimals: 9,
+        logoURI: 'https://cdn.jsdelivr.net/gh/trustwallet/assets@master/blockchains/solana/info/logo.png',
+        tags: [],
+        extensions: {
+            website: 'https://solana.com/',
+            serumV3Usdc: '9wFFyRfZBsuAha4YcuxcXLKwMxJR43S7fPfQLusDBzvT',
+            serumV3Usdt: 'HWHvQhFmJB3NUcu1aihKmrKegfVxBEHzwVX6yZCKEsi1',
+            coingeckoId: 'solana',
+        },
+    },
+    {
+        chainId: 101,
         address: 'So11111111111111111111111111111111111111112',
         symbol: 'wSOL',
         name: 'Solana',

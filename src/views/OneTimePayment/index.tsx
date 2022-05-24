@@ -185,6 +185,8 @@ export const OneTimePayment = (props: {
             }
           });
 
+          intersectedList.unshift(userTokensCopy[0]);
+          balancesMap[userTokensCopy[0].address] = nativeBalance;
           intersectedList.sort((a, b) => {
             if ((balancesMap[a.address] || 0) < (balancesMap[b.address] || 0)) {
               return 1;
@@ -193,7 +195,7 @@ export const OneTimePayment = (props: {
             }
             return 0;
           });
-
+          
           setSelectedList(intersectedList);
           consoleOut('intersectedList:', intersectedList, 'orange');
 
@@ -227,6 +229,7 @@ export const OneTimePayment = (props: {
     userTokens,
     connection,
     splTokenList,
+    nativeBalance,
   ]);
 
   // Keep token balance updated
@@ -1016,13 +1019,7 @@ export const OneTimePayment = (props: {
     <>
       {(filteredTokenList && filteredTokenList.length > 0) && (
         filteredTokenList.map((t, index) => {
-
-          if (t.address === NATIVE_SOL.address) {
-            return null;
-          }
-
           const onClick = function () {
-
             tokenChanged(t);
             setSelectedToken(t);
 

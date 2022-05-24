@@ -197,6 +197,8 @@ export const RepeatingPayment = (props: {
             }
           });
 
+          intersectedList.unshift(userTokensCopy[0]);
+          balancesMap[userTokensCopy[0].address] = nativeBalance;          
           // Create a list containing tokens for the user owned token accounts
           accTks.forEach(item => {
             balancesMap[item.parsedInfo.mint] = item.parsedInfo.tokenAmount.uiAmount || 0;
@@ -249,6 +251,7 @@ export const RepeatingPayment = (props: {
     userTokens,
     connection,
     splTokenList,
+    nativeBalance,
   ]);
 
   // Keep token balance updated
@@ -1140,13 +1143,7 @@ export const RepeatingPayment = (props: {
     <>
       {(filteredTokenList && filteredTokenList.length > 0) && (
         filteredTokenList.map((t, index) => {
-
-          if (t.address === NATIVE_SOL.address) {
-            return null;
-          }
-
           const onClick = function () {
-
             tokenChanged(t);
             setSelectedToken(t);
 
