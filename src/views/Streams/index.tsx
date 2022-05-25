@@ -30,7 +30,6 @@ import {
   formatAmount,
   formatThousands,
   getAmountWithSymbol,
-  getTokenAmountAndSymbolByTokenAddress,
   getTokenSymbol,
   getTxIxResume,
   shortenAddress,
@@ -59,6 +58,7 @@ import {
   PERFORMANCE_THRESHOLD,
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
   SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
+  WRAPPED_SOL_MINT_ADDRESS,
 } from "../../constants";
 import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from "../../contexts/connection";
 import { ConfirmOptions, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
@@ -1051,9 +1051,9 @@ export const Streams = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
           customLogger.logWarning('Pause stream transaction failed', { transcript: transactionLog });
@@ -1209,9 +1209,9 @@ export const Streams = () => {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${
-            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58(), false , splTokenList)
+            getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58(), false , splTokenList)
           }) to pay for network fees (${
-            getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58(), false , splTokenList)
+            getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58(), false , splTokenList)
           })`
         });
         customLogger.logWarning('Pause stream transaction failed', { transcript: transactionLog });
@@ -1505,9 +1505,9 @@ export const Streams = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
           customLogger.logWarning('Resume stream transaction failed', { transcript: transactionLog });
@@ -1663,9 +1663,9 @@ export const Streams = () => {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${
-            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
           }) to pay for network fees (${
-            getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
           })`
         });
         customLogger.logWarning('Resume stream transaction failed', { transcript: transactionLog });
@@ -2038,9 +2038,9 @@ export const Streams = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
           customLogger.logWarning('Transfer stream transaction failed', { transcript: transactionLog });
@@ -2465,9 +2465,9 @@ export const Streams = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
           customLogger.logWarning('Add funds transaction failed', { transcript: transactionLog });
@@ -2592,9 +2592,9 @@ export const Streams = () => {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${
-            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
           }) to pay for network fees (${
-            getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
           })`
         });
         customLogger.logWarning('Add funds transaction failed', { transcript: transactionLog });
@@ -2863,16 +2863,20 @@ export const Streams = () => {
 
   const getRateAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
     let value = '';
-
     if (item) {
-      const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+      let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
+        token = Object.assign({}, token, {
+          symbol: 'SOL'
+        }) as TokenInfo;
+      }
       if (item.version < 2) {
         value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
       } else {
         value += getFormattedNumberToLocale(formatAmount(toUiAmount(new BN(item.rateAmount), token?.decimals || 6), 2));
       }
       value += ' ';
-      value += getTokenSymbol(item.associatedToken as string);
+      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
     }
     return value;
   }, [getTokenByMintAddress]);
@@ -2881,14 +2885,19 @@ export const Streams = () => {
     let value = '';
 
     if (item && item.rateAmount === 0 && item.allocationAssigned > 0) {
-      const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+      let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
+        token = Object.assign({}, token, {
+          symbol: 'SOL'
+        }) as TokenInfo;
+      }
       if (item.version < 2) {
         value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
       } else {
         value += getFormattedNumberToLocale(formatAmount(toUiAmount(new BN(item.rateAmount), token?.decimals || 6), 2));
       }
       value += ' ';
-      value += getTokenSymbol(item.associatedToken as string);
+      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
     }
     return value;
   }, [getTokenByMintAddress]);
@@ -3239,9 +3248,9 @@ export const Streams = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
           customLogger.logWarning('Withdraw transaction failed', { transcript: transactionLog });
@@ -3352,9 +3361,9 @@ export const Streams = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
           customLogger.logWarning('Withdraw transaction failed', { transcript: transactionLog });
@@ -3633,9 +3642,9 @@ export const Streams = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
           customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
@@ -3740,9 +3749,9 @@ export const Streams = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
           customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
@@ -4046,17 +4055,13 @@ export const Streams = () => {
     return actionText;
   }
 
-  const getActivityAmountDisplay = (item: StreamActivity, streamVersion: number): number => {
-    let value = '';
-
+  const getActivityAmount = (item: StreamActivity, streamVersion: number): number => {
     const token = getTokenByMintAddress(item.mint as string);
     if (streamVersion < 2) {
-      value += formatAmount(item.amount, token?.decimals || 6);
+      return item.amount;
     } else {
-      value += formatAmount(toUiAmount(new BN(item.amount), token?.decimals || 6), token?.decimals || 6);
+      return toUiAmount(new BN(item.amount), token?.decimals || 6);
     }
-
-    return parseFloat(value);
   }
 
   const isScheduledOtp = (): boolean => {
@@ -4201,7 +4206,10 @@ export const Streams = () => {
                           <div className="std-table-cell fixed-width-60">
                             <span className="align-middle">{
                               getAmountWithSymbol(
-                                getActivityAmountDisplay(item, streamVersion), item.mint, false, splTokenList
+                                getActivityAmount(item, streamVersion),
+                                item.mint,
+                                false,
+                                splTokenList
                               )}
                             </span>
                           </div>
@@ -4296,10 +4304,11 @@ export const Streams = () => {
                               </span>
                               <span className="info-data ml-1">
                                 {
-                                  getTokenAmountAndSymbolByTokenAddress(
+                                  getAmountWithSymbol(
                                     toUiAmount(new BN(stream.state === STREAM_STATE.Schedule ? stream.allocationAssigned : stream.escrowVestedAmount), token?.decimals || 6),
                                     stream.associatedToken as string,
-                                    false, splTokenList
+                                    false,
+                                    splTokenList
                                   )
                                 }
                               </span>
@@ -4605,10 +4614,11 @@ export const Streams = () => {
                               </span>
                               <span className="info-data ml-1">
                                 {
-                                  getTokenAmountAndSymbolByTokenAddress(
+                                  getAmountWithSymbol(
                                     toUiAmount(new BN(stream.status === STREAM_STATUS.Schedule ? stream.allocationAssigned : stream.withdrawableAmount), token?.decimals || 6),
                                     stream.associatedToken as string,
-                                    false, splTokenList
+                                    false,
+                                    splTokenList
                                   )
                                 }
                               </span>
@@ -4888,10 +4898,11 @@ export const Streams = () => {
                             </span>
                             <span className="info-data ml-1">
                               {
-                                getTokenAmountAndSymbolByTokenAddress(
+                                getAmountWithSymbol(
                                   toUiAmount(new BN(stream.state === STREAM_STATE.Schedule ? stream.allocationAssigned : stream.escrowVestedAmount), token?.decimals || 6),
                                   stream.associatedToken as string,
-                                  false, splTokenList
+                                  false,
+                                  splTokenList
                                 )
                               }
                             </span>
@@ -5230,10 +5241,11 @@ export const Streams = () => {
                             </span>
                             <span className="info-data ml-1">
                               {
-                                getTokenAmountAndSymbolByTokenAddress(
+                                getAmountWithSymbol(
                                   toUiAmount(new BN(stream.status === STREAM_STATUS.Schedule ? stream.allocationAssigned : stream.withdrawableAmount), token?.decimals || 6),
                                   stream.associatedToken as string,
-                                  false, splTokenList
+                                  false,
+                                  splTokenList
                                 )
                               }
                             </span>
@@ -5882,15 +5894,17 @@ export const Streams = () => {
                 {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                   <h4 className="mb-4">
                     {t('transactions.status.tx-start-failure', {
-                      accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                      accountBalance: getAmountWithSymbol(
                         nativeBalance,
                         NATIVE_SOL_MINT.toBase58(),
-                        false, splTokenList
+                        false,
+                        splTokenList
                       ),
-                      feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                      feeAmount: getAmountWithSymbol(
                         transactionFees.blockchainFee + transactionFees.mspFlatFee,
                         NATIVE_SOL_MINT.toBase58(),
-                        false, splTokenList
+                        false,
+                        splTokenList
                       )})
                     }
                   </h4>
@@ -5960,11 +5974,11 @@ export const Streams = () => {
                     <WarningOutlined style={{ fontSize: 48 }} className="icon" />
                     <h4 className="mb-4">
                       {t('transactions.status.tx-start-failure', {
-                        accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                        accountBalance: getAmountWithSymbol(
                           nativeBalance,
                           NATIVE_SOL_MINT.toBase58()
                         ),
-                        feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                        feeAmount: getAmountWithSymbol(
                           transactionFees.blockchainFee + transactionFees.mspFlatFee,
                           NATIVE_SOL_MINT.toBase58()
                         )})
@@ -6034,11 +6048,11 @@ export const Streams = () => {
                 {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                   <h4 className="mb-4">
                     {t('transactions.status.tx-start-failure', {
-                      accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                      accountBalance: getAmountWithSymbol(
                         nativeBalance,
                         NATIVE_SOL_MINT.toBase58()
                       ),
-                      feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                      feeAmount: getAmountWithSymbol(
                         transactionFees.blockchainFee + transactionFees.mspFlatFee,
                         NATIVE_SOL_MINT.toBase58()
                       )})
@@ -6104,11 +6118,11 @@ export const Streams = () => {
                 {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                   <h4 className="mb-4">
                     {t('transactions.status.tx-start-failure', {
-                      accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                      accountBalance: getAmountWithSymbol(
                         nativeBalance,
                         NATIVE_SOL_MINT.toBase58()
                       ),
-                      feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                      feeAmount: getAmountWithSymbol(
                         transactionFees.blockchainFee + transactionFees.mspFlatFee,
                         NATIVE_SOL_MINT.toBase58()
                       )})
@@ -6176,11 +6190,11 @@ export const Streams = () => {
                 {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                   <h4 className="mb-4">
                     {t('transactions.status.tx-start-failure', {
-                      accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                      accountBalance: getAmountWithSymbol(
                         nativeBalance,
                         NATIVE_SOL_MINT.toBase58()
                       ),
-                      feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                      feeAmount: getAmountWithSymbol(
                         transactionFees.blockchainFee + transactionFees.mspFlatFee,
                         NATIVE_SOL_MINT.toBase58()
                       )})

@@ -13,7 +13,7 @@ import {
   TransactionInstruction,
   TransactionSignature
 } from "@solana/web3.js";
-import { INPUT_AMOUNT_PATTERN } from "../constants";
+import { INPUT_AMOUNT_PATTERN, WRAPPED_SOL_MINT_ADDRESS } from "../constants";
 import { MEAN_TOKEN_LIST } from "../constants/token-list";
 import { getFormattedNumberToLocale, isProd, maxTrailingZeroes } from "./ui";
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
@@ -237,6 +237,11 @@ export const getAmountWithSymbol = (amount: number, address?: string, onlyValue 
       token = tokenList && isProd()
         ? tokenList.find(t => t.address === address)
         : MEAN_TOKEN_LIST.find(t => t.address === address);
+      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
+        token = Object.assign({}, token, {
+          symbol: 'SOL'
+        }) as TokenInfo;
+      }
     }
   }
 
