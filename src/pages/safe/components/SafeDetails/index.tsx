@@ -1,6 +1,6 @@
 import './style.scss';
 import { Button, Col, Row } from "antd"
-import { IconArrowBack, IconUser, IconThumbsUp, IconThumbsDown, IconExternalLink } from "../../../../Icons"
+import { IconArrowBack, IconUser, IconThumbsUp, IconThumbsDown, IconExternalLink, IconHelpCircle } from "../../../../Icons"
 
 import { shortenAddress } from '../../../../utils/utils';
 import { TabsMean } from '../../../../components/TabsMean';
@@ -13,6 +13,8 @@ import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
 import { ResumeItem } from '../UI/ResumeItem';
 import { MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
 import { AppStateContext } from '../../../../contexts/appstate';
+import { useWallet } from '../../../../contexts/wallet';
+import { InfoIcon } from '../../../../components/InfoIcon';
 
 export const SafeDetailsView = (props: {
   isSafeDetails: boolean;
@@ -26,6 +28,7 @@ export const SafeDetailsView = (props: {
 
   const { isWhitelisted } = useContext(AppStateContext);
   const { t } = useTranslation('common');
+  const { publicKey, wallet } = useWallet();
   const { isSafeDetails, onDataToSafeView, proposalSelected, selectedMultisig, onProposalApprove, onProposalExecute } = props;
   const [selectedProposal, setSelectedProposal] = useState<any>(proposalSelected);
 
@@ -225,22 +228,42 @@ export const SafeDetailsView = (props: {
         </Col>
         <Col className="safe-details-right-container btn-group">
           {(selectedProposal.status === MultisigTransactionStatus.Approved || selectedProposal.status === MultisigTransactionStatus.Executed) ? (
-            <Button
-              type="default"
-              shape="round"
-              size="small"
-              className="thin-stroke d-flex justify-content-center align-items-center"
-              disabled={selectedProposal.status === MultisigTransactionStatus.Executed}
-              onClick={() => onProposalExecute({ 
-                transaction: { 
-                  id: selectedProposal.id,
-                  operation: selectedProposal.operation
-                }
-              })}>
-                <div className="btn-content">
-                  Execute
-                </div>
-            </Button>
+            <div className="info-label icon-label align-items-start">
+              {((selectedProposal.operation !== 31 &&
+                selectedProposal.operation !== 42 &&
+                selectedProposal.operation !== 34 &&
+                selectedProposal.operation !== 39 &&
+                selectedProposal.operation !== 36 &&
+                selectedProposal.operation !== 13)  &&
+                  (selectedProposal.status !== MultisigTransactionStatus.Executed) && (selectedProposal.proposer.toBase58() !== publicKey?.toBase58())) && (
+                    <InfoIcon content={t("notifications.ask-others-to-sign")} placement="top" className="info-icon-btn">
+                      <IconHelpCircle className="mean-svg-icons" />
+                    </InfoIcon>
+                  )
+              }
+              <Button
+                type="default"
+                shape="round"
+                size="small"
+                className="thin-stroke d-flex justify-content-center align-items-center"
+                disabled={selectedProposal.status === MultisigTransactionStatus.Executed || ((selectedProposal.proposer.toBase58() !== publicKey?.toBase58() && (
+                  selectedProposal.operation !== 31 &&
+                  selectedProposal.operation !== 42 &&
+                  selectedProposal.operation !== 34 &&
+                  selectedProposal.operation !== 39 &&
+                  selectedProposal.operation !== 36 &&
+                  selectedProposal.operation !== 13)))}
+                onClick={() => onProposalExecute({ 
+                  transaction: { 
+                    id: selectedProposal.id,
+                    operation: selectedProposal.operation
+                  }
+                })}>
+                  <div className="btn-content">
+                    Execute
+                  </div>
+              </Button>
+            </div>
           ) : (
             <>
               <Button
