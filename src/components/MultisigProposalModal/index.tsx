@@ -14,7 +14,7 @@ import { InputMean } from '../InputMean';
 import { SelectMean } from '../SelectMean';
 import { FormLabelWithIconInfo } from '../FormLabelWithIconInfo';
 import { InputTextAreaMean } from '../InputTextAreaMean';
-import { App, AppConfig, AppsProvider, UiInstruction, MEAN_MULTISIG_PROGRAM } from '@mean-dao/mean-multisig-apps';
+import { App, AppConfig, AppsProvider, UiInstruction, MEAN_MULTISIG_PROGRAM, UiInstructionType } from '@mean-dao/mean-multisig-apps';
 import BN from 'bn.js';
 import { Connection, PublicKey, TransactionInstruction } from '@solana/web3.js';
 // import { Identicon } from '../../components/Identicon';
@@ -25,7 +25,7 @@ import { openNotification } from '../Notifications';
 import { useNavigate } from 'react-router-dom';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
-
+const CREDIX_PROGRAM = new PublicKey("gatem74V238djXdzWnJf94Wo1DcnuGkfijbf3AuBhfs");
 const expires: { label: string, value: number }[] = [
   { label: "No expires", value: 0 },
   { label: "24 hours", value: 84_600 },
@@ -110,11 +110,11 @@ export const MultisigProposalModal = (props: {
   }
 
   const updateSelectedIx = (state: any) => {
-    if (!selectedUiIx) { return; }
+    if (!selectedApp || !selectedUiIx) { return; }
 
     const currentUiIx = Object.assign({}, selectedUiIx);
-    // const stateElements = Object.entries(state);
-    for (const uiElem of currentUiIx.uiElements) {
+
+    for (const uiElem of currentUiIx.uiElements) {      
       if (!state[uiElem.name]) { continue; }
       if (uiElem.type !== "knownValue") {
         if (uiElem.visibility === "show") {
@@ -134,12 +134,12 @@ export const MultisigProposalModal = (props: {
               dataElement.dataValue = state[uiElem.name];
             }
           } else if (dataElement && !dataElement.dataType) {
-            // console.log('public key', state[uiElem.name]);
             dataElement.dataValue = new PublicKey(state[uiElem.name]);
           }
         }
       }
     }
+
     setSelectedUiIx(currentUiIx);
   };
 
@@ -643,6 +643,18 @@ export const MultisigProposalModal = (props: {
                                   </>
                                 ) : (element.type === "treasuryAccount") ? (
                                   <></>
+                                ) : (element.type === "multisig") ? (
+                                  <>
+                                    <Row gutter={[8, 8]} className="mb-1" key={element.id}>
+                                      <Col xs={24} sm={24} md={24} lg={24} className="text-right pr-1">
+                                        <FormLabelWithIconInfo
+                                          label={element.label}
+                                          tooltip_text={element.help}
+                                        />
+                                        <code>{selectedMultisig.authority.toBase58()}</code>
+                                      </Col>
+                                    </Row>
+                                  </>
                                 ) : null}
                               </Row>
                             )}
