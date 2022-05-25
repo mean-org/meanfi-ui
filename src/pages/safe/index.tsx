@@ -5,6 +5,7 @@ import {
 } from '@ant-design/icons';
 import {
   Account,
+  Commitment,
   ConfirmOptions,
   Connection,
   Keypair,
@@ -61,7 +62,7 @@ import {
   // getMultisigTransactionSummary,
   getFees,
   DEFAULT_EXPIRATION_TIME_SECONDS,
-  MultisigVault,
+  // MultisigVault,
   parseSerializedTx
   
 } from '../../models/multisig';
@@ -86,6 +87,10 @@ import { MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigInfo } from '@mean-dao/mea
 import { AssetDetailsView } from './components/AssetDetails';
 // import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { MultisigCreateAssetModal } from '../../components/MultisigCreateAssetModal';
+
+import { createProgram, getDepositIx } from '@mean-dao/mean-multisig-apps/lib/apps/credix/func';
+
+const CREDIX_PROGRAM = new PublicKey("CRDx2YkdtYtGZXGHZ59wNv1EwKHQndnRc1gT4p8i2vPX");
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -1677,6 +1682,21 @@ export const SafeView = () => {
     resetTransactionStatus
   ])
 
+  const createCredixDepositIx = useCallback(async (investor: PublicKey, amount: number) => {
+
+    if (!connection || !connectionConfig) { return null; }
+
+    const program = createProgram(connection, "confirmed");
+    const network = connectionConfig.cluster === "mainnet-beta" 
+      ? 101 : (connectionConfig.cluster === "testnet" ? 102 : 103);
+
+    return await getDepositIx(program, network, investor, amount);
+    
+  }, [
+    connection, 
+    connectionConfig
+  ]);
+
   const onExecuteCreateTransactionProposal = useCallback(async (data: any) => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
@@ -1735,6 +1755,13 @@ export const SafeView = () => {
         const tx = await parseSerializedTx(connection, data.instruction.uiElements[0].value);
         if (!tx) { return null; }
         proposalIx = tx?.instructions[0];
+      } else if (data.appId === CREDIX_PROGRAM.toBase58()) { //
+        if (data.instruction.name === "depositFunds") {
+          proposalIx = await createCredixDepositIx(
+            new PublicKey(data.instruction.uiElements[0].value),
+            parseFloat(data.instruction.uiElements[1].value)
+          );
+        }
       } else {
         proposalIx = await createProposalIx(
           new PublicKey(data.appId),
@@ -2009,6 +2036,7 @@ export const SafeView = () => {
       } else { setIsBusy(false); }
     }
   }, [
+    createCredixDepositIx,
     clearTxConfirmationContext, 
     resetTransactionStatus, 
     wallet, 

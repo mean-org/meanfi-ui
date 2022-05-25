@@ -14,7 +14,7 @@ import { InputMean } from '../InputMean';
 import { SelectMean } from '../SelectMean';
 import { FormLabelWithIconInfo } from '../FormLabelWithIconInfo';
 import { InputTextAreaMean } from '../InputTextAreaMean';
-import { App, AppConfig, AppsProvider, UiInstruction, MEAN_MULTISIG_PROGRAM, UiInstructionType } from '@mean-dao/mean-multisig-apps';
+import { App, AppConfig, AppsProvider, UiInstruction, MEAN_MULTISIG_PROGRAM } from '@mean-dao/mean-multisig-apps';
 import BN from 'bn.js';
 import { Connection, PublicKey, TransactionInstruction } from '@solana/web3.js';
 // import { Identicon } from '../../components/Identicon';
@@ -25,7 +25,7 @@ import { openNotification } from '../Notifications';
 import { useNavigate } from 'react-router-dom';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
-const CREDIX_PROGRAM = new PublicKey("gatem74V238djXdzWnJf94Wo1DcnuGkfijbf3AuBhfs");
+
 const expires: { label: string, value: number }[] = [
   { label: "No expires", value: 0 },
   { label: "24 hours", value: 86_400 },
@@ -110,14 +110,22 @@ export const MultisigProposalModal = (props: {
   }
 
   const updateSelectedIx = (state: any) => {
-    if (!selectedApp || !selectedUiIx) { return; }
+    if (!selectedMultisig || !selectedApp || !selectedUiIx) { return; }
 
     const currentUiIx = Object.assign({}, selectedUiIx);
 
     for (const uiElem of currentUiIx.uiElements) {      
-      if (!state[uiElem.name]) { continue; }
       if (uiElem.type !== "knownValue") {
-        if (uiElem.visibility === "show") {
+        if (uiElem.type === "multisig") {
+          uiElem.value = selectedMultisig.authority.toBase58();
+        } else if (
+          typeof(uiElem.type) === "object" && 
+          "from" in uiElem.type && 
+          state[uiElem.name]
+        ) {
+          uiElem.value = state[uiElem.name];
+        } else {
+          if (!state[uiElem.name]) { continue; }
           uiElem.value = state[uiElem.name];
           const dataElement = uiElem.dataElement as any;
           if (dataElement && dataElement.dataType) {
@@ -215,6 +223,7 @@ export const MultisigProposalModal = (props: {
       ? selectedAppConfig.ui.filter((ix: any) => ix.id === value.key)[0]
       : undefined;
 
+    console.log('uiIx', uiIx);
     setSelectedUiIx(uiIx);
   }
 
@@ -641,6 +650,30 @@ export const MultisigProposalModal = (props: {
                                   </>
                                 ) : (element.type === "treasuryAccount") ? (
                                   <></>
+                                ) : (typeof(element.type) === "object" && "from" in element.type) ? (
+                                  <>
+                                    <Col xs={24} sm={24} md={24} lg={24} className="text-left pl-1">
+                                      <FormLabelWithIconInfo
+                                        label={element.label}
+                                        tooltip_text={element.help}
+                                      />
+                                      <InputMean
+                                        id={element.name}
+                                        maxLength={64}
+                                        className={isBusy ? 'disabled' : ''}
+                                        name={element.label}
+                                        onChange={(e: any) => {
+                                          console.log(e);
+                                          handleChangeInput({
+                                            id: element.name,
+                                            value: e.target.value
+                                          });
+                                        }}
+                                        placeholder={element.help}
+                                        value={inputState[element.name]}
+                                      />
+                                    </Col>
+                                  </>
                                 ) : (element.type === "multisig") ? (
                                   <>
                                     <Row gutter={[8, 8]} className="mb-1" key={element.id}>

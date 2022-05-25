@@ -171,6 +171,8 @@ export const DAO_CORE_TEAM_WHITELIST = [
     'EjchiDcivSQnC282UF4d751JDd7vMb2VCFrQaNeUAjwz', // J
     'c8fLDB5oFSwGnwAV1LGQqaadHt2WbvWv7o79YnnUWxd',  // J
     '468Z5p52439dAqjLzBm2FCNxvDSnpbMsNx85b7Kmz3TQ', // Ayaz
+    //
+    'Ej5zJzej7rrUoDngsJ3jcpfuvfVyWpcDcK7uv9cE2LdL'  // Maxim Credix
 ];
 
 export const BETA_TESTING_PROGRAM_WHITELIST = [
