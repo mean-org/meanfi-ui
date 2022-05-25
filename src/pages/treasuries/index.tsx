@@ -2084,7 +2084,7 @@ export const TreasuriesView = () => {
 
     const createTx = async () => {
 
-      if (!connection || !wallet || !publicKey || !msp || !treasuryOption || !selectedToken) {
+      if (!connection || !wallet || !publicKey || !msp || !treasuryOption) {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
@@ -2102,6 +2102,7 @@ export const TreasuriesView = () => {
       });
 
       // Create a transaction
+      const associatedToken = createOptions.token;
       const payload = {
         treasurer: publicKey.toBase58(),                                                                  // treasurer
         label: createOptions.treasuryName,                                                                // label
@@ -2109,7 +2110,7 @@ export const TreasuriesView = () => {
           ? 'Open'
           : 'Lock',
         multisig: createOptions.multisigId,                                                               // multisig
-        associatedTokenAddress: selectedToken.address
+        associatedTokenAddress: associatedToken.address
       };
 
       consoleOut('payload:', payload);
@@ -5672,14 +5673,6 @@ export const TreasuriesView = () => {
           transactionFees={transactionFees}
           handleOk={onAcceptCreateTreasury}
           handleClose={closeCreateTreasuryModal}
-          userBalances={userBalances}
-          associatedToken={
-            treasuryDetails
-              ? (treasuryDetails as Treasury).version && (treasuryDetails as Treasury).version >= 2
-                ? (treasuryDetails as Treasury).associatedToken as string
-                : (treasuryDetails as TreasuryInfo).associatedTokenAddress as string
-              : ''
-          }
           isBusy={isBusy}
           selectedMultisig={selectedMultisig}
           multisigAccounts={multisigAccounts || []}

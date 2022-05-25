@@ -35,7 +35,6 @@ import { calculateActionFees, MSP, MSP_ACTIONS, TransactionFees } from '@mean-da
 import { segmentAnalytics } from '../../App';
 import { AppUsageEvent, SegmentStreamOTPTransferData } from '../../utils/segment-service';
 import dateFormat from 'dateformat';
-import { NATIVE_SOL } from '../../utils/tokens';
 
 const { Option } = Select;
 
@@ -1008,11 +1007,6 @@ export const OneTimePayment = (props: {
 
   const onFixedScheduleValueChange = (value: any) => {
     setFixedScheduleValue(value);
-  }
-
-  const onGoToWrap = () => {
-    onCloseTokenSelector();
-    navigate('/wrap');
   }
 
   const renderTokenList = (
