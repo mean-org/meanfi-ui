@@ -1299,7 +1299,9 @@ export const OneTimePayment = (props: {
             <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
           )}
           {isBusy
-            ? t('transactions.status.cta-start-transfer-busy')
+            ? isScheduledPayment()
+              ? t('streams.create-new-stream-cta-busy')
+              : t('transactions.status.cta-start-transfer-busy')
             : getTransactionStartButtonLabel()
           }
         </Button>

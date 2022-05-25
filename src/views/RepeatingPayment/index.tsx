@@ -1,6 +1,7 @@
 import React from 'react';
-import { Button, Modal, Menu, Dropdown, DatePicker, Checkbox, Drawer } from "antd";
+import { Button, Modal, Menu, Dropdown, DatePicker, Checkbox, Drawer, Col, Row } from "antd";
 import {
+  InfoCircleOutlined,
   LoadingOutlined,
   QrcodeOutlined,
 } from "@ant-design/icons";
@@ -56,6 +57,8 @@ import { segmentAnalytics } from '../../App';
 import dateFormat from 'dateformat';
 import { NATIVE_SOL } from '../../utils/tokens';
 import { TokenInfo } from '@solana/spl-token-registry';
+import useWindowSize from '../../hooks/useWindowResize';
+import { InfoIcon } from '../../components/InfoIcon';
 
 export const RepeatingPayment = (props: {
   inModal: boolean;
@@ -103,6 +106,8 @@ export const RepeatingPayment = (props: {
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
   const accounts = useAccountsContext();
+  const { width } = useWindowSize();
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [userBalances, setUserBalances] = useState<any>();
@@ -538,6 +543,20 @@ export const RepeatingPayment = (props: {
     return parseFloat(fromCoinAmount) * effectiveRate;
   }, [effectiveRate, fromCoinAmount]);
 
+  const getPaymentRateAmount = useCallback(() => {
+
+    let outStr = selectedToken
+      ? getTokenAmountAndSymbolByTokenAddress(
+          parseFloat(paymentRateAmount),
+          selectedToken.address,
+          false
+        )
+      : '-'
+    outStr += getIntervalFromSeconds(getRateIntervalInSeconds(paymentRateFrequency), true, t)
+
+    return outStr;
+  }, [paymentRateAmount, paymentRateFrequency, selectedToken, t]);
+
   // Hook on wallet connect/disconnect
   useEffect(() => {
 
@@ -608,6 +627,15 @@ export const RepeatingPayment = (props: {
       window.removeEventListener('resize', resizeListener);
     }
   }, []);
+
+  // Detect when entering small screen mode
+  useEffect(() => {
+    if (isSmallScreen && width < 576) {
+      setIsSmallScreen(true);
+    } else {
+      setIsSmallScreen(false);
+    }
+  }, [isSmallScreen, width]);
 
   // Setup event listeners
   useEffect(() => {
@@ -1059,7 +1087,7 @@ export const RepeatingPayment = (props: {
               loadingTitle: "Confirming transaction",
               loadingMessage: `Send ${getPaymentRateLabel(paymentRateFrequency, paymentRateAmount)}`,
               completedTitle: "Transaction confirmed",
-              completedMessage: `Successfuly sent ${getPaymentRateLabel(paymentRateFrequency, paymentRateAmount)}`
+              completedMessage: `Stream to send ${getPaymentRateLabel(paymentRateFrequency, paymentRateAmount)} has been created.`
             });
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransactionSuccess,
@@ -1124,6 +1152,12 @@ export const RepeatingPayment = (props: {
   ///////////////////
   //   Rendering   //
   ///////////////////
+
+  // const renderTextWithBreaks = (text: string) => {
+  //   return (
+  //       <div dangerouslySetInnerHTML={{ __html: text }}></div>
+  //   );
+  // }
 
   const paymentRateOptionsMenu = (
     <Menu>
@@ -1222,6 +1256,27 @@ export const RepeatingPayment = (props: {
 
       <div className={currentStep === 0 ? "contract-wrapper panel1 show" : "contract-wrapper panel1 hide"}>
 
+        {/* Memo */}
+        <div className="form-label">{t('transactions.memo2.label')}</div>
+        <div className="well">
+          <div className="flex-fixed-right">
+            <div className="left">
+              <input
+                id="payment-memo-field"
+                className="w-100 general-text-input"
+                autoComplete="on"
+                autoCorrect="off"
+                type="text"
+                maxLength={32}
+                onChange={handleRecipientNoteChange}
+                placeholder={t('transactions.memo2.placeholder')}
+                spellCheck="false"
+                value={recipientNote}
+              />
+            </div>
+          </div>
+        </div>
+
         {/* Recipient */}
         <div className="form-label">{t('transactions.recipient.label')}</div>
         <div className="well">
@@ -1269,69 +1324,65 @@ export const RepeatingPayment = (props: {
           }
         </div>
 
-        {/* Receive rate */}
+        {/* Payment rate */}
         <div className="form-label">{t('transactions.rate-and-frequency.amount-label')}</div>
-        <div className="well">
-          <div className="flex-fixed-left">
-            <div className="left">
-              <span className="add-on simplelink">
-                {selectedToken && (
-                  <TokenDisplay onClick={() => inModal ? showDrawer() : showTokenSelector()}
-                    mintAddress={selectedToken.address}
-                    name={selectedToken.name}
-                    showName={false}
-                    showCaretDown={true}
-                    fullTokenInfo={selectedToken}
-                  />
-                )}
-              </span>
-            </div>
-            <div className="right">
-              <input
-                className="general-text-input text-right"
-                inputMode="decimal"
-                autoComplete="off"
-                autoCorrect="off"
-                type="text"
-                onChange={handlePaymentRateAmountChange}
-                pattern="^[0-9]*[.,]?[0-9]*$"
-                placeholder="0.0"
-                minLength={1}
-                maxLength={79}
-                spellCheck="false"
-                value={paymentRateAmount}
-              />
-            </div>
-          </div>
-          <div className="flex-fixed-right">
-            <div className="left inner-label">
-              <span>{t('transactions.send-amount.label-right')}:</span>
-              <span>
-                {`${tokenBalance && selectedToken
-                    ? getAmountWithSymbol(tokenBalance, selectedToken?.address, true)
-                    : "0"
-                }`}
-              </span>
-            </div>
-            <div className="right inner-label">&nbsp;</div>
-          </div>
-        </div>
 
-        {/* Receive frequency */}
-        <div className="form-label">{t('transactions.rate-and-frequency.rate-label')}</div>
-        <div className="well">
-          <Dropdown
-            overlay={paymentRateOptionsMenu}
-            trigger={["click"]}>
-            <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
-              <div className="left">
-                <span className="capitalize-first-letter">{getPaymentRateOptionLabel(paymentRateFrequency, t)}{" "}</span>
+        <div className="two-column-form-layout col60x40 mb-3">
+          <div className="left">
+            <div className="well mb-1">
+              <div className="flex-fixed-left">
+                <div className="left">
+                  <span className="add-on simplelink">
+                    {selectedToken && (
+                      <TokenDisplay onClick={() => inModal ? showDrawer() : showTokenSelector()}
+                        mintAddress={selectedToken.address}
+                        name={selectedToken.name}
+                        showName={false}
+                        showCaretDown={true}
+                        fullTokenInfo={selectedToken}
+                      />
+                    )}
+                  </span>
+                </div>
+                <div className="right">
+                  <input
+                    className="general-text-input text-right"
+                    inputMode="decimal"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    type="text"
+                    onChange={handlePaymentRateAmountChange}
+                    pattern="^[0-9]*[.,]?[0-9]*$"
+                    placeholder="0.0"
+                    minLength={1}
+                    maxLength={79}
+                    spellCheck="false"
+                    value={paymentRateAmount}
+                  />
+                </div>
               </div>
-              <div className="right">
-                <IconCaretDown className="mean-svg-icons" />
+            </div>
+          </div>
+          <div className="right">
+            <div className="well mb-0">
+              <div className="flex-fixed-left">
+                <div className="left">
+                  <Dropdown
+                    overlay={paymentRateOptionsMenu}
+                    trigger={["click"]}>
+                    <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
+                      <div className="left">
+                        <span className="capitalize-first-letter">{getPaymentRateOptionLabel(paymentRateFrequency, t)}{" "}</span>
+                      </div>
+                      <div className="right">
+                        <IconCaretDown className="mean-svg-icons" />
+                      </div>
+                    </span>
+                  </Dropdown>
+                </div>
               </div>
-            </span>
-          </Dropdown>
+            </div>
+          </div>
         </div>
 
         {/* Send date */}
@@ -1361,27 +1412,6 @@ export const RepeatingPayment = (props: {
                   format={DATEPICKER_FORMAT}
                 />
               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Memo */}
-        <div className="form-label">{t('transactions.memo2.label')}</div>
-        <div className="well">
-          <div className="flex-fixed-right">
-            <div className="left">
-              <input
-                id="payment-memo-field"
-                className="w-100 general-text-input"
-                autoComplete="on"
-                autoCorrect="off"
-                type="text"
-                maxLength={32}
-                onChange={handleRecipientNoteChange}
-                placeholder={t('transactions.memo2.placeholder')}
-                spellCheck="false"
-                value={recipientNote}
-              />
             </div>
           </div>
         </div>
@@ -1441,18 +1471,7 @@ export const RepeatingPayment = (props: {
                   <div className="vertical-bar"></div>
                 </div>
                 <div className="right flex-column">
-                  <div className="rate">
-                    {selectedToken
-                      ? getTokenAmountAndSymbolByTokenAddress(
-                          parseFloat(paymentRateAmount),
-                          selectedToken.address,
-                          false,
-                          selectedList
-                        )
-                      : '-'
-                    }
-                    {getIntervalFromSeconds(getRateIntervalInSeconds(paymentRateFrequency), true, t)}
-                  </div>
+                  <div className="rate">{getPaymentRateAmount()}</div>
                   <div className="inner-label mt-0">{paymentStartDate}</div>
                 </div>
               </div>
@@ -1461,12 +1480,27 @@ export const RepeatingPayment = (props: {
         )}
 
         <div className="mb-3 text-center">
-          <div>{t('transactions.transaction-info.add-funds-repeating-payment-advice')}.</div>
-          <div>{t('transactions.transaction-info.min-recommended-amount')}: <span className="fg-orange-red">{getRecommendedFundingAmount()}</span></div>
+          <div>
+            {
+              t(
+                'transactions.transaction-info.add-funds-repeating-payment-advice', {
+                  tokenSymbol: selectedToken?.symbol,
+                  rateInterval: getPaymentRateAmount()
+              })
+            }
+          </div>
         </div>
 
-        {/* Add funds */}
-        <div className="form-label">{t('transactions.send-amount.label-amount')}</div>
+        {/* Amount to stream */}
+        <div className="form-label">
+          <span className="align-middle">{t('transactions.send-amount.label-amount')}</span>
+          <span className="align-middle">
+            <InfoIcon content={<span>This is the total amount of funds that will be streamed to the recipient at the payment rate selected. You can add more funds at any time by topping up the stream.</span>}
+                      placement="top">
+              <InfoCircleOutlined />
+            </InfoIcon>
+          </span>
+        </div>
         <div className="well">
           <div className="flex-fixed-left">
             <div className="left">
@@ -1556,7 +1590,7 @@ export const RepeatingPayment = (props: {
             <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
           )}
           {isBusy
-            ? t('transactions.status.cta-start-transfer-busy')
+            ? t('streams.create-new-stream-cta-busy')
             : getTransactionStartButtonLabel()
           }
         </Button>

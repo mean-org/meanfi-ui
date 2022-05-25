@@ -775,11 +775,12 @@
 		"add-funds": {
 			"amount-label": "Amount",
 			"modal-title": "Add funds",
-			"treasury-money-stream-description": "As this stream was funded from a treasury, the funds being added will be allocated from the Treasury's available balance.",
+			"treasury-money-stream-description": "As this stream was funded from a streaming account, the funds being added will be allocated from the streaming account's available balance.",
 			"treasury-money-stream-title": "Treasury Funded Money Stream"
 		},
 		"back-to-my-streams-cta": "Voltar para Fluxos de dinheiro",
-		"create-new-stream-cta": "Nova transferência",
+		"create-new-stream-cta": "Criar fluxo de dinheiro",
+		"create-new-stream-cta-busy": "Creating stream",
 		"edit-stream": {
 			"edit-stream-tooltip": "Edit money stream",
 			"frequency-input-hint": "How often will this amount be sent?",
@@ -792,16 +793,16 @@
 			"name-input-placeholder": "Type a name for your stream",
 			"send-amount-input-label": "Amount to Send"
 		},
-		"locked-stream-message": "You cannot close or top up a stream from a locked treasury",
+		"locked-stream-message": "You cannot close or top up a stream from a locked streaming account",
 		"locked-stream-modal-title": "Locked Money Stream",
 		"locked-stream-tooltip": "This Stream is Locked",
 		"lookup-stream-cta-tooltip": "Pesquisar um fluxo",
-		"pause-stream-confirmation": "Pausar o fluxo interromperá o fluxo de dinheiro do tesouro ({{treasury}}) para o beneficiário ({{beneficiary}}).",
+		"pause-stream-confirmation": "Pausing the stream will stop streaming money from the streaming account ({{treasury}}) to the beneficiary ({{beneficiary}}).",
 		"pause-stream-cta": "Pausa",
 		"pause-stream-modal-title": "Pausar transmissão",
 		"pause-stream-tooltip": "Pausar transmissão",
 		"refresh-tooltip": "Clique para atualizar os fluxos",
-		"resume-stream-confirmation": "Retome o fluxo de dinheiro do tesouro ({{treasury}}) para o beneficiário ({{beneficiary}}).",
+		"resume-stream-confirmation": "Resume money streaming from the streaming account ({{treasury}}) to the beneficiary ({{beneficiary}}).",
 		"resume-stream-cta": "Retomar",
 		"resume-stream-modal-title": "Resume stream",
 		"resume-stream-tooltip": "Resume Stream",
@@ -924,11 +925,11 @@
 			"placeholder": "Adicione uma anotação"
 		},
 		"memo2": {
-			"label": "Memorando / Assunto",
+			"label": "Stream name",
 			"placeholder": "Para que serve este pagamento?"
 		},
 		"rate-and-frequency": {
-			"amount-label": "Montante",
+			"amount-label": "Payment Rate",
 			"payment-rates": {
 				"per-day": "por dia",
 				"per-hour": "por hora",
@@ -949,7 +950,7 @@
 		"resume": "Resumo",
 		"send-amount": {
 			"label": "Mandar",
-			"label-amount": "Adicionar fundos",
+			"label-amount": "Amount to stream",
 			"label-right": "Equilíbrio"
 		},
 		"send-date": {
@@ -1014,7 +1015,7 @@
 		},
 		"transaction-info": {
 			"add-funds-payroll-advice": "Você deve adicionar fundos para iniciar uma folha de pagamento",
-			"add-funds-repeating-payment-advice": "Você deve adicionar fundos para iniciar o pagamento repetido",
+			"add-funds-repeating-payment-advice": "How many {{tokenSymbol}} tokens do you want to send at\n{{rateInterval}}?",
 			"beneficiary-receives": "Beneficiário recebe",
 			"exchange-on": "Troca em",
 			"hla-transaction-fee": "Taxa do agregador",
@@ -1092,12 +1093,15 @@
 	"transfers": {
 		"screen-subtitle": "Envie dinheiro para qualquer pessoa no mundo mais rapidamente",
 		"screen-title": "Transferências",
-		"verified-recipient-disclaimer": "Tenho certeza de que o endereço do destinatário não pertence a uma troca."
+		"verified-recipient-disclaimer": "Tenho certeza de que o endereço do destinatário não pertence a uma troca.",
+		"send-asset-modal-title": "Send Asset",
+		"create-money-stream-modal-title": "Create money stream"
+
 	},
 	"treasuries": {
 		"add-funds": {
 			"allocation-amount-label": "How Much Do You Want to Allocate?",
-			"allocation-heading": "To top up an existing stream, the funds being added will be allocated from the Treasury's available balance.",
+			"allocation-heading": "To top up an existing stream, the funds being added will be allocated from the streaming account's available balance.",
 			"allocation-label": "Como você deseja alocar esses fundos?",
 			"allocation-option-evenly": "Alocar uniformemente em todos os fluxos de dinheiro",
 			"allocation-option-none": "Não alocar (deixar em Reservas)",
@@ -1135,23 +1139,23 @@
 				"weeks": "weeks",
 				"years": "years"
 			},
-			"main-cta": "Create streaming treasury",
-			"main-cta-busy": "Creating treasury",
-			"modal-title": "Create streaming treasury",
+			"main-cta": "Create Streaming Account",
+			"main-cta-busy": "Creating account",
+			"modal-title": "Create Streaming Account",
 			"multisig-selector-label": "Conta multisig",
-			"multisig-treasury-created-info": "Para concluir a configuração da tesouraria, os outros signatários da Multisig precisam aprová-la.",
-			"multisig-treasury-created-instructions": "Peça aos outros usuários que assinem esta transação de criação de tesouraria.",
+			"multisig-treasury-created-info": "To complete the Streaming Account setup, the other Multisig signers need to approve it.",
+			"multisig-treasury-created-instructions": "Streaming account {{treasuryName}} was created successfully. Please ask the other users to sign this account creation transaction.",
 			"multisig-treasury-switch-label": "Essa tesouraria é para uma conta Multisig?",
-			"success-message": "Sua nova tesouraria foi criada com sucesso.",
-			"treasury-name-input-empty": "Digite o nome do Tesouro",
-			"treasury-name-input-label": "Nome do Tesouro",
-			"treasury-name-placeholder": "Type a name for your streaming treasury",
+			"success-message": "Your new streaming account was created successfully.",
+			"treasury-name-input-empty": "Enter Account name",
+			"treasury-name-input-label": "Account name",
+			"treasury-name-placeholder": "Type a name for your streaming account",
 			"treasury-token-label": "Token to be streamed",
 			"treasury-type-options": {
-				"treasury-type-locked-description": "Com uma tesouraria bloqueada, você pode criar fluxos que funcionam como um contrato de aquisição para alocações reservadas, como as necessárias para investidores.  Eles geralmente têm uma data de término fixa.",
-				"treasury-type-locked-name": "Tesouro de fluxo de dinheiro bloqueado",
-				"treasury-type-open-description": "Com uma tesouraria aberta, você pode criar fluxos de dinheiro que funcionam indefinidamente.  Quando o tesouro fica sem dinheiro, todos os fluxos param, até que seja reabastecido.",
-				"treasury-type-open-name": "Tesouro de streaming de dinheiro aberto"
+				"treasury-type-locked-description": "With a locked streaming account you can create streams that act like a vesting contract for reserved allocations, like the ones needed for investors. They usually have a fixed end date.",
+				"treasury-type-locked-name": "Locked money streaming account",
+				"treasury-type-open-description": "With an open streaming account, you can create money streams that run indefinitely. When the account runs out of money all streams stop, until it gets replenished.",
+				"treasury-type-open-name": "Open money streaming account"
 			}
 		},
 		"lookup-treasury-cta-tooltip": "Lookup a Streaming Account",
@@ -1213,8 +1217,8 @@
 				"panel3-to-address": "To Address:",
 				"panel3-warning-message": "IMPORTANT: This is a locked money stream. You cannot cancel, pause or change its details once it is started. Verify all information before proceeding."
 			},
-			"add-stream-modal-title": "Adicionar fluxo ao tesouro",
-			"allocate-funds-label": "Distribuir fundos",
+			"add-stream-modal-title": "Add stream to the account",
+			"allocate-funds-label": "Amount to stream",
 			"allocation-reserved-label": "Esta alocação é totalmente RESERVADA",
 			"available-unallocated-balance-label": "Unallocated Balance",
 			"busy-pausing": "Parando a transmissão",
@@ -1231,7 +1235,7 @@
 			"fee-payed-by-treasurer": "Quero pagar taxas por este fluxo em vez do beneficiário",
 			"loading-streams": "Carregando fluxos",
 			"message-warning": "The list of recipients you submitted included your own wallet address. This is not possible and this address has been removed from the imported list.",
-			"minimum-allocation-advice": "Você deve definir uma alocação mínima para este Fluxo de Dinheiro até o saldo não alocado disponível no Tesouro.",
+			"minimum-allocation-advice": "How many {{tokenSymbol}} tokens do you want to send at {{rateInterval}}? You are able to set an amount up to the unallocated balance in this streaming account.",
 			"multiple-address-list": "Multiple address list",
 			"multiple-address-question-mark-tooltip": "Please provide a csv text file with one address per line in the following format: \n MEMO or STREAM NAME, WALLET ADDRESS. \n\n Here is an example of how it should look: \n Epoch 1, FrdFf3EqcGuytTweLvoELBt29WrAGVYjrh4585A2bTAZ \n\n Before you submit the file, please make sure the recipient addresses are correct and do not belong to an exchange.",
 			"no-streams": "This streaming account has no active streams",

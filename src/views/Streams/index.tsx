@@ -112,6 +112,7 @@ import { openNotification } from "../../components/Notifications";
 import { CountdownCircleTimer } from "react-countdown-circle-timer";
 import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { SendAssetModal } from "../../components/SendAssetModal";
+import { ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/accounts";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 let ds: string[] = [];
@@ -624,9 +625,7 @@ export const Streams = () => {
       totalAmount: 0
     };
 
-    const treasurer = publicKey
-      ? publicKey
-      : new PublicKey(accountAddress);
+    const treasurer = new PublicKey(accountAddress);
 
       const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
       const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer);
@@ -4826,12 +4825,12 @@ export const Streams = () => {
                     <div className="mb-3">
                       <h2 className="mb-0">{getStreamDescription(stream)}</h2>
                       <div className="flex-row align-items-center">
-                        <span className="font-bold">Treasury - {getTreasuryName()}</span>
+                        <span className="font-bold">{getTreasuryName()}</span>
                         <span className={`badge small ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
                           {getTreasuryType() === "locked" ? 'Locked' : 'Open'}
                         </span>
                         <span className="icon-button-container ml-1">
-                          <Tooltip placement="bottom" title="Go to treasury">
+                          <Tooltip placement="bottom" title="Go to streaming account">
                             <Button
                               type="default"
                               shape="circle"
@@ -5168,12 +5167,12 @@ export const Streams = () => {
                     <div className="mb-3">
                       <h2 className="mb-0">{getStreamDescription(stream)}</h2>
                       <div className="flex-row align-items-center">
-                        <span className="font-bold">Treasury - {getTreasuryName()}</span>
+                        <span className="font-bold">{getTreasuryName()}</span>
                         <span className={`badge small ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
                           {getTreasuryType() === "locked" ? 'Locked' : 'Open'}
                         </span>
                         <span className="icon-button-container ml-1">
-                          <Tooltip placement="bottom" title="Go to treasury">
+                          <Tooltip placement="bottom" title="Go to streaming account">
                             <Button
                               type="default"
                               shape="circle"
@@ -5562,7 +5561,7 @@ export const Streams = () => {
         {/* Left / top panel*/}
         <div className="meanfi-two-panel-left">
           <div className="meanfi-panel-heading">
-            {location.pathname === '/accounts/streams' && (
+            {location.pathname === `${ACCOUNTS_ROUTE_BASE_PATH}/streams` && (
               <div className="back-button">
                 <span className="icon-button-container">
                   <Tooltip placement="bottom" title={t('assets.back-to-assets-cta')}>
@@ -5575,7 +5574,7 @@ export const Streams = () => {
                         setShouldLoadTokens(true);
                         refreshStreamList(true);
                         setTimeout(() => {
-                          navigate('/accounts');
+                          navigate(`${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}`);
                         }, 200);
                       }}
                     />
@@ -5834,7 +5833,7 @@ export const Streams = () => {
             selectedToken={selectedToken as UserTokenAccount}
             isVisible={isSendAssetModalOpen}
             handleClose={hideSendAssetModal}
-            selected={"one-time"}
+            selected={"recurring"}
           />
         )}
 

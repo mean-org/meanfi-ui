@@ -773,11 +773,12 @@
 		"add-funds": {
 			"amount-label": "Miktar",
 			"modal-title": "Fon ekler",
-			"treasury-money-stream-description": "Bu aktarım hazine tarafından fonlandığından eklenecek fonlar hazineden tahsis edilecek.",
+			"treasury-money-stream-description": "As this stream was funded from a streaming account, the funds being added will be allocated from the streaming account's available balance.",
 			"treasury-money-stream-title": "Hazineden Fonlanan Para Aktarımı"
 		},
 		"back-to-my-streams-cta": "Para Akışlarına Geri Dön",
-		"create-new-stream-cta": "Yeni Transfer",
+		"create-new-stream-cta": "Para akışı oluştur",
+		"create-new-stream-cta-busy": "Creating stream",
 		"edit-stream": {
 			"edit-stream-tooltip": "Para-aktarımını düzenle",
 			"frequency-input-hint": "Bu miktar hangi sıklıkta gönderilsin?",
@@ -790,16 +791,16 @@
 			"name-input-placeholder": "Aktarım için bir isim giriniz",
 			"send-amount-input-label": "Gönderilecek miktar"
 		},
-		"locked-stream-message": "Kilitli hazinedeki bir aktarımı kapatamaz ya da durduramazsınız",
+		"locked-stream-message": "You cannot close or top up a stream from a locked streaming account",
 		"locked-stream-modal-title": "Kilitli Para-Aktarımı",
 		"locked-stream-tooltip": "Bu Aktarım kilitli",
 		"lookup-stream-cta-tooltip": "Akış Arama",
-		"pause-stream-confirmation": "Akışın duraklatılması hazineden ({{treasury}}) yararlanıcıya ({{beneficiary}}) para aktarımını durduracaktır.",
+		"pause-stream-confirmation": "Pausing the stream will stop streaming money from the streaming account ({{treasury}}) to the beneficiary ({{beneficiary}}).",
 		"pause-stream-cta": "Duraklat",
 		"pause-stream-modal-title": "Aktarımı duraklat",
 		"pause-stream-tooltip": "Aktarımı duraklat",
 		"refresh-tooltip": "Aktarımları yenilemek için tıkla",
-		"resume-stream-confirmation": "Hazineden ({{treasury}}) yararlanıcıya ({{beneficiary}}) para aktarımını sürdürün.",
+		"resume-stream-confirmation": "Resume money streaming from the streaming account ({{treasury}}) to the beneficiary ({{beneficiary}}).",
 		"resume-stream-cta": "Devam et",
 		"resume-stream-modal-title": "Aktarımı devam ettir",
 		"resume-stream-tooltip": "Aktarımı devam ettir",
@@ -922,11 +923,11 @@
 			"placeholder": "Bir not ekle"
 		},
 		"memo2": {
-			"label": "Not / Konu",
+			"label": "Aktarım adı",
 			"placeholder": "Bu ödeme ne için?"
 		},
 		"rate-and-frequency": {
-			"amount-label": "Miktar",
+			"amount-label": "Ödeme oranı",
 			"payment-rates": {
 				"per-day": "her gün",
 				"per-hour": "her saat",
@@ -947,7 +948,7 @@
 		"resume": "Özet",
 		"send-amount": {
 			"label": "Gönder",
-			"label-amount": "Fon ekle",
+			"label-amount": "Amount to stream",
 			"label-right": "Bakiye"
 		},
 		"send-date": {
@@ -1012,7 +1013,7 @@
 		},
 		"transaction-info": {
 			"add-funds-payroll-advice": "Bir ödeme planı başlatmak için para eklemelisiniz",
-			"add-funds-repeating-payment-advice": "Tekrarlanan ödemeyi başlatmak için para eklemelisiniz",
+			"add-funds-repeating-payment-advice": "How many {{tokenSymbol}} tokens do you want to send at\n{{rateInterval}}?",
 			"beneficiary-receives": "....Yararlanıcı alır",
 			"exchange-on": "... 'da Alım-Satım",
 			"hla-transaction-fee": "Toplayıcı ücreti",
@@ -1079,12 +1080,14 @@
 	"transfers": {
 		"screen-subtitle": "Dünyadaki herkese daha hızlı para gönderin",
 		"screen-title": "Transferler",
-		"verified-recipient-disclaimer": "Alıcı adresinin bir borsaya ait olmadığından eminim."
+		"verified-recipient-disclaimer": "Alıcı adresinin bir borsaya ait olmadığından eminim.",
+		"send-asset-modal-title": "Send Asset",
+		"create-money-stream-modal-title": "Create money stream"
 	},
 	"treasuries": {
 		"add-funds": {
 			"allocation-amount-label": "Tahsis Etmek İstediğiniz Miktar Ne Kadar?",
-			"allocation-heading": "Bir aktarımı durdumak, fonlar tahsis edilen hazinenin mevcut bakiyesini eklenir.",
+			"allocation-heading": "To top up an existing stream, the funds being added will be allocated from the streaming account's available balance.",
 			"allocation-label": "Bu fonları nasıl tahsis etmek istiyorsunuz?",
 			"allocation-option-evenly": "Tüm Para Aktarımlarına eşit olarak tahsis edin",
 			"allocation-option-none": "Tahsis etmeyin (Yedeklerde bırakın)",
@@ -1122,23 +1125,23 @@
 				"weeks": "hafta",
 				"years": "yıl"
 			},
-			"main-cta": "Oluştur",
-			"main-cta-busy": "Hazine oluşturuluyor",
-			"modal-title": "Hazine oluştur",
+			"main-cta": "Create Streaming Account",
+			"main-cta-busy": "Creating account",
+			"modal-title": "Create Streaming Account",
 			"multisig-selector-label": "Çoklu-İmza hesabı",
-			"multisig-treasury-created-info": "Hazine kurulumunu tamamlamak için diğer Çoklu-İmza kullanıcılarının da onayı gerekiyor",
-			"multisig-treasury-created-instructions": "Bu hazine oluşturma işlemi için, lütfen, diğer kullanıcıların da imzalamasını isteyin.",
+			"multisig-treasury-created-info": "To complete the Streaming Account setup, the other Multisig signers need to approve it.",
+			"multisig-treasury-created-instructions": "Streaming account {{treasuryName}} was created successfully. Please ask the other users to sign this account creation transaction.",
 			"multisig-treasury-switch-label": "Bu hazine bir  çoklu-imza hesabı için mi?",
-			"success-message": "Yeni hazineniz başarıyla oluşturuldu.",
-			"treasury-name-input-empty": "Hazine ismini girin",
-			"treasury-name-input-label": "Hazine ismi",
-			"treasury-name-placeholder": "Hazineniz için bir isim yazın",
+			"success-message": "Your new streaming account was created successfully.",
+			"treasury-name-input-empty": "Enter Account name",
+			"treasury-name-input-label": "Account name",
+			"treasury-name-placeholder": "Type a name for your streaming account",
 			"treasury-token-label": "Token to be streamed",
 			"treasury-type-options": {
-				"treasury-type-locked-description": "Kilitli bir hazine ile, yatırımcılar için gerekli olanlar gibi, ayrılmış tahsisler için hakediş sözleşmesi gibi davranan aktarımları oluşturabilirsiniz. Genellikle sabit bir bitiş tarihleri â€‹â€‹vardır.",
-				"treasury-type-locked-name": "Kilitli para aktarımı hazinesi",
-				"treasury-type-open-description": "Açık bir hazine ile süresiz olarak çalışan para aktarımları oluşturabilirsiniz. Hazinenin parası bittiğinde, yenilenene kadar tüm aktarımlar durur.",
-				"treasury-type-open-name": "Para aktarım hazinesi aç"
+				"treasury-type-locked-description": "With a locked streaming account you can create streams that act like a vesting contract for reserved allocations, like the ones needed for investors. They usually have a fixed end date.",
+				"treasury-type-locked-name": "Locked money streaming account",
+				"treasury-type-open-description": "With an open streaming account, you can create money streams that run indefinitely. When the account runs out of money all streams stop, until it gets replenished.",
+				"treasury-type-open-name": "Open money streaming account"
 			}
 		},
 		"lookup-treasury-cta-tooltip": "Lookup a Streaming Account",
@@ -1200,8 +1203,8 @@
 				"panel3-to-address": "Adrese:",
 				"panel3-warning-message": "ÖNEMLİ:Bu bir kilitli para aktarımıdır, bir kez başlattığınızda durduramaz, iptal edemez ya da detaylarını değiştiremezsiniz. Lütfen onaylamadan önce tüm bilgileri gözden geçirin."
 			},
-			"add-stream-modal-title": "Hazineye aktarım ekle",
-			"allocate-funds-label": "Fon tahsis et",
+			"add-stream-modal-title": "Add stream to the account",
+			"allocate-funds-label": "Amount to stream",
 			"allocation-reserved-label": "Bu tahsis tamamen AYRILMIŞTIR",
 			"available-unallocated-balance-label": "Kullanılabilir Ayrılmamış Bakiye",
 			"busy-pausing": "Aktarım durduruluyor",
@@ -1218,7 +1221,7 @@
 			"fee-payed-by-treasurer": "Bu aktarım için yararlanıcı yerine ücretleri ben ödemek istiyorum",
 			"loading-streams": "Aktarımlar yükleniyor",
 			"message-warning": "Alıcıların adresini gönderdiğiniz liste sizin kendi adresinizide içeriyor bu mümkün olmadığından listeden kaldırıldı.",
-			"minimum-allocation-advice": "Bu Para Akışı için Hazine'de bulunan tahsis edilmemiş bakiyeye kadar bir minimum tahsisat belirlemelisiniz.",
+			"minimum-allocation-advice": "How many {{tokenSymbol}} tokens do you want to send at {{rateInterval}}? You are able to set an amount up to the unallocated balance in this streaming account.",
 			"multiple-address-list": "Adress listesini çoğalt",
 			"multiple-address-question-mark-tooltip": "Lütfen csc içeriğini her satırda bir adres olacak şekilde gönderin, bir örnek olarak:",
 			"no-streams": "This streaming account has no active streams",

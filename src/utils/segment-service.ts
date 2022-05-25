@@ -14,7 +14,6 @@ export enum AppUsageEvent {
 	UserIdentifiedAnon = "User identified as anonymous",
     // Stream Actions
     // Top Up Funds Action
-    // Page /accounts/streams
     StreamRefresh = "Stream list refresh button click",
 	// See OTP and RTP for the next actions in this flow
     NewTransferButton = "New transfer button click", 
@@ -25,21 +24,18 @@ export enum AppUsageEvent {
     StreamTopupCompleted = "Stream Top up Completed",
     StreamTopupFailed = "Stream Top up Failed",
     // Withdraw Funds Action
-    // Page /accounts/streams
     StreamWithdrawalButton = "Stream withdraw funds button click",
     StreamWithdrawalStartFormButton = "Stream withdraw start form button click",
     StreamWithdrawalSigned = "Stream withdraw funds Signed",
     StreamWithdrawalCompleted = "Stream withdraw funds Completed",
     StreamWithdrawalFailed = "Stream withdraw funds Failed",
     // Transfer Ownerships of Stream Action
-    // Page /accounts/streams
     StreamTransferOwnershipButton = "Stream Transfer Ownership button click",
     StreamTransferOwnershipFormButton = "Stream Transfer Ownership form button click",
     StreamTransferSigned = "Stream Transfer Ownership Signed",
     StreamTransferCompleted = "Stream Transfer Ownership Completed",
     StreamTransferFailed = "Stream Transfer Ownership Failed",
     // Close Stream Action
-    // Page /accounts/streams
     StreamCloseButton = "Stream Close button click",
     StreamCloseStreamFormButton = "Stream Close form button click",
     StreamCloseSigned = "Stream Close Signed",

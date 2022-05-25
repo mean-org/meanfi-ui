@@ -776,13 +776,14 @@
 		"add-funds": {
 			"amount-label": "Số lượng",
 			"modal-title": "Thêm tiền",
-			"treasury-money-stream-description": "Vì dòng tiền này được tài trợ từ kho bạc, nên số tiền được bổ sung sẽ được phân bổ từ số dư khả dụng của Kho bạc.",
+			"treasury-money-stream-description": "As this stream was funded from a streaming account, the funds being added will be allocated from the streaming account's available balance.",
 			"treasury-money-stream-title": "Kho bạc đã cấp tiền cho Money Stream"
 		},
 		"back-to-my-streams-cta": "Quay về danh sách Money Streams",
-		"create-new-stream-cta": "Chuyển khoản mới",
+		"create-new-stream-cta": "Tạo dòng tiền",
+		"create-new-stream-cta-busy": "Creating stream",
 		"lookup-stream-cta-tooltip": "Tra cứu một stream",
-		"pause-stream-confirmation": "Việc tạm dừng stream sẽ làm dừng dòng tiền chạy từ kho bạc ({{treasury}}) tới người thụ hưởng ({{beneficiary}}).",
+		"pause-stream-confirmation": "Pausing the stream will stop streaming money from the streaming account ({{treasury}}) to the beneficiary ({{beneficiary}}).",
 		"pause-stream-cta": "Tạm dừng",
 		"edit-stream": {
 			"modal-title": "Edit Money Stream",
@@ -803,8 +804,8 @@
 		"resume-stream-modal-title": "Resume stream",
 		"resume-stream-tooltip": "Resume Stream",
 		"refresh-tooltip": "Nhấn để làm mới stream",
-		"locked-stream-message": "You cannot close or top up a stream from a locked treasury",
-		"resume-stream-confirmation": "Tiếp tục money streaming từ kho bạc ({{treasury}}) tới người thụ hưởng ({{beneficiary}}).",
+		"locked-stream-message": "You cannot close or top up a stream from a locked streaming account",
+		"resume-stream-confirmation": "Resume money streaming from the streaming account ({{treasury}}) to the beneficiary ({{beneficiary}}).",
 		"resume-stream-cta": "Tiếp tục",
 		"screen-title": "Money Streams",
 		"status": {
@@ -924,11 +925,11 @@
 			"placeholder": "Thêm 1 ghi chú"
 		},
 		"memo2": {
-			"label": "Ghi chú / Chủ đề",
+			"label": "Stream name",
 			"placeholder": "Khoản thanh toán này để làm gì?"
 		},
 		"rate-and-frequency": {
-			"amount-label": "Số lượng",
+			"amount-label": "Payment Rate",
 			"payment-rates": {
 				"per-day": "mỗi ngày",
 				"per-hour": "mỗi giờ",
@@ -949,7 +950,7 @@
 		"resume": "Sơ lược lại",
 		"send-amount": {
 			"label": "Gửi",
-			"label-amount": "Nạp tiền",
+			"label-amount": "Gönderilecek miktar",
 			"label-right": "Số dư"
 		},
 		"send-date": {
@@ -1014,7 +1015,7 @@
 		},
 		"transaction-info": {
 			"add-funds-payroll-advice": "Bạn phải nạp tiền để bắt đầu tính lương",
-			"add-funds-repeating-payment-advice": "Bạn phải nạp tiền để bắt đầu thanh toán lặp lại",
+			"add-funds-repeating-payment-advice": "How many {{tokenSymbol}} tokens do you want to send at\n{{rateInterval}}?",
 			"beneficiary-receives": "Người thụ hưởng nhận được",
 			"exchange-on": "Giao dịch trên",
 			"hla-transaction-fee": "Phí tổng hợp",
@@ -1078,12 +1079,14 @@
 	"transfers": {
 		"screen-subtitle": "Gửi tiền cho bất kỳ ai trên thế giới nhanh hơn",
 		"screen-title": "Chuyển khoản",
-		"verified-recipient-disclaimer": "Tôi chắc chắn rằng địa chỉ người nhận không thuộc về một sàn giao dịch."
+		"verified-recipient-disclaimer": "Tôi chắc chắn rằng địa chỉ người nhận không thuộc về một sàn giao dịch.",
+		"send-asset-modal-title": "Send Asset",
+		"create-money-stream-modal-title": "Create money stream"
 	},
 	"treasuries": {
 		"add-funds": {
 			"allocation-amount-label": "Bạn muốn phân bổ bao nhiêu?",
-			"allocation-heading": "Để nạp tiền vào stream hiện có, số tiền được thêm vào sẽ được phân bổ từ số dư khả dụng của Kho bạc.",
+			"allocation-heading": "To top up an existing stream, the funds being added will be allocated from the streaming account's available balance.",
 			"allocation-label": "Bạn muốn phân bổ những khoản tiền này như thế nào?",
 			"allocation-option-evenly": "Phân bổ đồng đều trên tất cả các Money stream",
 			"allocation-option-none": "Không phân bổ (để lại trong Dự trữ)",
@@ -1121,23 +1124,23 @@
 				"months": "months",
 				"years": "years"
 			},
-			"main-cta": "Create streaming treasury",
-			"main-cta-busy": "Creating treasury",
-			"modal-title": "Create streaming treasury",
+			"main-cta": "Create Streaming Account",
+			"main-cta-busy": "Creating account",
+			"modal-title": "Create Streaming Account",
 			"multisig-selector-label": "Tài khoản multisig",
-			"multisig-treasury-created-info": "Để hoàn thành thiết lập kho bạc, những người ký Multisig khác cần phải phê duyệt nó.",
-			"multisig-treasury-created-instructions": "Vui lòng yêu cầu người dùng khác ký vào giao dịch tạo kho bạc này",
+			"multisig-treasury-created-info": "To complete the Streaming Account setup, the other Multisig signers need to approve it.",
+			"multisig-treasury-created-instructions": "Streaming account {{treasuryName}} was created successfully. Please ask the other users to sign this account creation transaction.",
 			"multisig-treasury-switch-label": "Kho bạc dành cho tài khoản multisig?",
-			"success-message": "Kho bạc mới của bạn đã được tạo thành công",
-			"treasury-name-input-empty": "Nhập tên kho bạc",
-			"treasury-name-input-label": "Tên kho bạc",
-			"treasury-name-placeholder": "Type a name for your streaming treasury",
+			"success-message": "Your new streaming account was created successfully.",
+			"treasury-name-input-empty": "Enter Account name",
+			"treasury-name-input-label": "Account name",
+			"treasury-name-placeholder": "Type a name for your streaming account",
 			"treasury-token-label": "Token to be streamed",
 			"treasury-type-options": {
-				"treasury-type-locked-description": "Với một kho bạc bị khóa, bạn có thể tạo các stream hoạt động giống như một hợp đồng vesting cho các khoản phân bổ dành riêng cho nhà đầu tư. Các hợp đồng này thường có ngày kết thúc cố định.",
-				"treasury-type-locked-name": "Kho bạc money streaming bị khoá",
-				"treasury-type-open-description": "Với một kho bạc không bị khóa, bạn có thể tạo các money stream chạy liên tục. Khi kho bạc hết tiền, tất cả các stream sẽ dừng lại, cho đến khi nó được bổ sung thêm.",
-				"treasury-type-open-name": "Kho bạc money streaming không bị khoá"
+				"treasury-type-locked-description": "With a locked streaming account you can create streams that act like a vesting contract for reserved allocations, like the ones needed for investors. They usually have a fixed end date.",
+				"treasury-type-locked-name": "Locked money streaming account",
+				"treasury-type-open-description": "With an open streaming account, you can create money streams that run indefinitely. When the account runs out of money all streams stop, until it gets replenished.",
+				"treasury-type-open-name": "Open money streaming account"
 			}
 		},
 		"lookup-treasury-cta-tooltip": "Lookup a Streaming Account",
@@ -1181,7 +1184,7 @@
 		},
 		"treasury-refresh-tooltip": "Refresh account data",
 		"treasury-streams": {
-			"add-stream-modal-title": "Thêm stream vào kho bạc",
+			"add-stream-modal-title": "Add stream to the account",
 			"add-stream-locked": {
 				"modal-title": "Add a locked money stream",
 				"panel1-name": "Recipient's info",
@@ -1200,7 +1203,7 @@
 				"panel3-release-rate": "Release rate:",
 				"panel3-warning-message": "IMPORTANT: This is a locked money stream. You cannot cancel, pause or change its details once it is started. Verify all information before proceeding."
 			},
-			"allocate-funds-label": "Phân bổ quỹ",
+			"allocate-funds-label": "Amount to stream",
 			"allocation-reserved-label": "Phân bổ này đã được ĐẶT CHỖ đầy đủ",
 			"available-unallocated-balance-label": "Unallocated Balance",
 			"busy-pausing": "Đang dừng stream",
@@ -1216,7 +1219,7 @@
 			"create-multi-recipient-checkbox-label": "Do you want to create multiple streams with the same settings?",
 			"fee-payed-by-treasurer": "Tôi muốn trả phí cho stream này thay vì người thụ hưởng",
 			"loading-streams": "Đang tải stream",
-			"minimum-allocation-advice": "Bạn phải đặt mức phân bổ tối thiểu cho Money stream này lên đến số dư chưa phân bổ hiện có trong Kho bạc.",
+			"minimum-allocation-advice": "How many {{tokenSymbol}} tokens do you want to send at {{rateInterval}}? You are able to set an amount up to the unallocated balance in this streaming account.",
 			"multiple-address-list": "Multiple address list",
 			"multiple-address-question-mark-tooltip": "Please provide a csv text file with one address per line in the following format: \n MEMO or STREAM NAME, WALLET ADDRESS. \n\n Here is an example of how it should look: \n Epoch 1, FrdFf3EqcGuytTweLvoELBt29WrAGVYjrh4585A2bTAZ \n\n Before you submit the file, please make sure the recipient addresses are correct and do not belong to an exchange.",
 			"message-warning": "The list of recipients you submitted included your own wallet address. This is not possible and this address has been removed from the imported list.",

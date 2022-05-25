@@ -30,7 +30,7 @@ import {
   PaymentRateTypeOption,
 } from '../../utils/ui';
 import { NATIVE_SOL } from '../../utils/tokens';
-import { LoadingOutlined } from '@ant-design/icons';
+import { InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { TokenDisplay } from '../TokenDisplay';
 import { IconCaretDown, IconEdit, IconHelpCircle, IconWarning } from '../../Icons';
 import { OperationType, PaymentRateType, TransactionStatus } from '../../models/enums';
@@ -49,6 +49,7 @@ import { useConnectionConfig } from '../../contexts/connection';
 import { BN } from 'bn.js';
 import { u64 } from '@solana/spl-token';
 import { MeanMultisig, MEAN_MULTISIG_PROGRAM, DEFAULT_EXPIRATION_TIME_SECONDS } from '@mean-dao/mean-multisig-sdk';
+import { InfoIcon } from '../InfoIcon';
 
 const { Option } = Select;
 
@@ -445,6 +446,20 @@ export const TreasuryStreamCreateModal = (props: {
     setSelectedToken,
     toggleOverflowEllipsisMiddle
   ]);
+
+  const getPaymentRateAmount = useCallback(() => {
+
+    let outStr = selectedToken
+      ? getTokenAmountAndSymbolByTokenAddress(
+          parseFloat(paymentRateAmount),
+          selectedToken.address,
+          false
+        )
+      : '-'
+    outStr += getIntervalFromSeconds(getRateIntervalInSeconds(paymentRateFrequency), true, t)
+
+    return outStr;
+  }, [paymentRateAmount, paymentRateFrequency, selectedToken, t]);
 
   /////////////////////
   // Data management //
@@ -1459,120 +1474,116 @@ export const TreasuryStreamCreateModal = (props: {
             </div>
           )}
 
-          <div className="form-label">{(treasuryOption && treasuryOption.type === TreasuryType.Open) ? t('transactions.rate-and-frequency.amount-label') : "TOTAL FUNDS TO COMMIT"}</div>
-          <div className="well">
-            <div className="flex-fixed-left">
-              <div className="left">
-                <span className="add-on">
-                  {(selectedToken && tokenList) && (
-                    <Select className={`token-selector-dropdown ${props.associatedToken ? 'click-disabled' : ''}`} value={selectedToken.address} onChange={onTokenChange} bordered={false} showArrow={false}>
-                      {tokenList.map((option) => {
-                        if (option.address === NATIVE_SOL.address) {
-                          return null;
-                        }
-                        return (
-                          <Option key={option.address} value={option.address}>
-                            <div className="option-container">
-                              <TokenDisplay onClick={() => {}}
-                                mintAddress={option.address}
-                                name={option.name}
-                                showCaretDown={props.associatedToken ? false : true}
-                              />
-                              <div className="balance">
-                                {props.userBalances && props.userBalances[option.address] > 0 && (
-                                  <span>{getTokenAmountAndSymbolByTokenAddress(props.userBalances[option.address], option.address, true)}</span>
-                                )}
-                              </div>
-                            </div>
-                          </Option>
-                        );
-                      })}
-                    </Select>
-                  )}
-                  {(treasuryOption && treasuryOption.type === TreasuryType.Lock) && (
-                    selectedToken && unallocatedBalance ? (
-                      <div
-                        className="token-max simplelink"
-                        onClick={() => {
-                          const decimals = selectedToken ? selectedToken.decimals : 6;
-                          if (isFeePaidByTreasurer) {
-                            const maxAmount = getMaxAmount(true);
-                            consoleOut('tokenAmount:', tokenAmount.toNumber(), 'blue');
-                            consoleOut('maxAmount:', maxAmount.toNumber(), 'blue');
-                            setFromCoinAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
-                            setTokenAmount(new BN(maxAmount));
-                          } else {
-                            const maxAmount = getMaxAmount();
-                            setFromCoinAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
-                            setTokenAmount(new BN(maxAmount));
-                          }
-                        }}>
-                        MAX
-                      </div>
-                    ) : null
-                  )}
-                </span>
-              </div>
-              <div className="right">
-                <input
-                  className="general-text-input text-right"
-                  inputMode="decimal"
-                  autoComplete="off"
-                  autoCorrect="off"
-                  type="text"
-                  onChange={(treasuryOption && treasuryOption.type === TreasuryType.Lock) ? handleFromCoinAmountChange : handlePaymentRateAmountChange}
-                  pattern="^[0-9]*[.,]?[0-9]*$"
-                  placeholder="0.0"
-                  minLength={1}
-                  maxLength={79}
-                  spellCheck="false"
-                  value={(treasuryOption && treasuryOption.type === TreasuryType.Lock) ? fromCoinAmount : paymentRateAmount}
-                />
+          {/* Payment rate */}
+          {(treasuryOption && treasuryOption.type === TreasuryType.Open) ? (
+            <>
+              <div className="form-label">{t('transactions.rate-and-frequency.amount-label')}</div>
+            </>
+          ) : (
+            <>
+              <div className="form-label">TOTAL FUNDS TO COMMIT</div>
+            </>
+          )}
+
+          <div className="two-column-form-layout col60x40 mb-3">
+            <div className="left">
+              <div className="well mb-1">
+                <div className="flex-fixed-left">
+                  <div className="left">
+                    <span className="add-on">
+                      {(selectedToken && tokenList) && (
+                        <Select className={`token-selector-dropdown ${props.associatedToken ? 'click-disabled' : ''}`} value={selectedToken.address} onChange={onTokenChange} bordered={false} showArrow={false}>
+                          {tokenList.map((option) => {
+                            if (option.address === NATIVE_SOL.address) {
+                              return null;
+                            }
+                            return (
+                              <Option key={option.address} value={option.address}>
+                                <div className="option-container">
+                                  <TokenDisplay onClick={() => {}}
+                                    mintAddress={option.address}
+                                    name={option.name}
+                                    showCaretDown={props.associatedToken ? false : true}
+                                  />
+                                  <div className="balance">
+                                    {props.userBalances && props.userBalances[option.address] > 0 && (
+                                      <span>{getTokenAmountAndSymbolByTokenAddress(props.userBalances[option.address], option.address, true)}</span>
+                                    )}
+                                  </div>
+                                </div>
+                              </Option>
+                            );
+                          })}
+                        </Select>
+                      )}
+                      {(treasuryOption && treasuryOption.type === TreasuryType.Lock) && (
+                        selectedToken && unallocatedBalance ? (
+                          <div
+                            className="token-max simplelink"
+                            onClick={() => {
+                              const decimals = selectedToken ? selectedToken.decimals : 6;
+                              if (isFeePaidByTreasurer) {
+                                const maxAmount = getMaxAmount(true);
+                                consoleOut('tokenAmount:', tokenAmount.toNumber(), 'blue');
+                                consoleOut('maxAmount:', maxAmount.toNumber(), 'blue');
+                                setFromCoinAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
+                                setTokenAmount(new BN(maxAmount));
+                              } else {
+                                const maxAmount = getMaxAmount();
+                                setFromCoinAmount(cutNumber(makeDecimal(new BN(maxAmount), decimals), decimals));
+                                setTokenAmount(new BN(maxAmount));
+                              }
+                            }}>
+                            MAX
+                          </div>
+                        ) : null
+                      )}
+                    </span>
+                  </div>
+                  <div className="right">
+                    <input
+                      className="general-text-input text-right"
+                      inputMode="decimal"
+                      autoComplete="off"
+                      autoCorrect="off"
+                      type="text"
+                      onChange={(treasuryOption && treasuryOption.type === TreasuryType.Lock) ? handleFromCoinAmountChange : handlePaymentRateAmountChange}
+                      pattern="^[0-9]*[.,]?[0-9]*$"
+                      placeholder="0.0"
+                      minLength={1}
+                      maxLength={79}
+                      spellCheck="false"
+                      value={(treasuryOption && treasuryOption.type === TreasuryType.Lock) ? fromCoinAmount : paymentRateAmount}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="flex-fixed-right">
-              <div className="left inner-label">
-                <span>{t('treasuries.treasury-streams.available-unallocated-balance-label')}:</span>
-                <span>
-                  {`${unallocatedBalance && selectedToken
-                      ? getAmountWithSymbol(
-                          makeDecimal(new BN(unallocatedBalance), selectedToken.decimals),
-                          selectedToken.address,
-                          true
-                        )
-                      : "0"
-                  }`}
-                </span>
-              </div>
-              <div className="right inner-label">
-                <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
-                  ~${((treasuryOption && treasuryOption.type === TreasuryType.Lock) ? (fromCoinAmount && effectiveRate) : (paymentRateAmount && effectiveRate))
-                    ? (formatAmount(parseFloat((treasuryOption && treasuryOption.type === TreasuryType.Lock) ? 
-                    fromCoinAmount : paymentRateAmount) * effectiveRate, 2))
-                    : "0.00"}
-                </span>
+            <div className="right">
+              <div className="well mb-0">
+                <div className="flex-fixed-left">
+                  <div className="left">
+                    <Dropdown
+                      overlay={paymentRateOptionsMenu}
+                      trigger={["click"]}>
+                      <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
+                        <div className="left">
+                          <span className="capitalize-first-letter">{getPaymentRateOptionLabel(paymentRateFrequency, t)}{" "}</span>
+                        </div>
+                        <div className="right">
+                          <IconCaretDown className="mean-svg-icons" />
+                        </div>
+                      </span>
+                    </Dropdown>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
+          {/* Send date */}
           {(treasuryOption && treasuryOption.type === TreasuryType.Open) && (
             <>
-              <div className="form-label">{t('transactions.rate-and-frequency.rate-label')}</div>
-              <div className="well">
-                <Dropdown
-                  overlay={paymentRateOptionsMenu}
-                  trigger={["click"]}>
-                  <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
-                    <div className="left">
-                      <span className="capitalize-first-letter">{getPaymentRateOptionLabel(paymentRateFrequency, t)}{" "}</span>
-                    </div>
-                    <div className="right">
-                      <IconCaretDown className="mean-svg-icons" />
-                    </div>
-                  </span>
-                </Dropdown>
-              </div>
-
               <div className="form-label">{t('transactions.send-date.label')}</div>
               <div className="well">
                 <div className="flex-fixed-right">
@@ -1651,11 +1662,7 @@ export const TreasuryStreamCreateModal = (props: {
                           </div>
                           <div className="right flex-column">
                             <div className="rate">
-                              {selectedToken
-                                ? getTokenAmountAndSymbolByTokenAddress(parseFloat(paymentRateAmount), selectedToken.address)
-                                : '-'
-                              }
-                              {getIntervalFromSeconds(getRateIntervalInSeconds(paymentRateFrequency), true, t)}
+                              {getPaymentRateAmount()}
                             </div>
                             <div className="inner-label mt-0">{paymentStartDate}</div>
                           </div>
@@ -1707,11 +1714,7 @@ export const TreasuryStreamCreateModal = (props: {
                             </div>
                             <div className="right flex-column">
                               <div className="rate">
-                                {selectedToken
-                                  ? getTokenAmountAndSymbolByTokenAddress(parseFloat(paymentRateAmount), selectedToken.address)
-                                  : '-'
-                                }
-                                {getIntervalFromSeconds(getRateIntervalInSeconds(paymentRateFrequency), true, t)}
+                                {getPaymentRateAmount()}
                               </div>
                               <div className="inner-label mt-0">{paymentStartDate}</div>
                             </div>
@@ -1724,10 +1727,23 @@ export const TreasuryStreamCreateModal = (props: {
               )}
 
               <div className="mb-3 text-center">
-                <div>{t('treasuries.treasury-streams.minimum-allocation-advice')}</div>
+                <div>{t('treasuries.treasury-streams.minimum-allocation-advice', {
+                  tokenSymbol: selectedToken?.symbol,
+                  rateInterval: getPaymentRateAmount()
+                })}</div>
               </div>
 
-              <div className="form-label">{t('treasuries.treasury-streams.allocate-funds-label')}</div>
+              {/* Amount to stream */}
+              <div className="form-label">
+                <span className="align-middle">{t('treasuries.treasury-streams.allocate-funds-label')}</span>
+                <span className="align-middle">
+                  <InfoIcon content={<span>This is the total amount of funds that will be streamed to the recipient at the payment rate selected. You can add more funds at any time by topping up the stream.</span>}
+                            placement="top">
+                    <InfoCircleOutlined />
+                  </InfoIcon>
+                </span>
+              </div>
+
               <div className="well">
                 <div className="flex-fixed-left">
                   <div className="left">
@@ -2126,7 +2142,8 @@ export const TreasuryStreamCreateModal = (props: {
             )
           )}
           {(treasuryOption && treasuryOption.type === TreasuryType.Open) && (isBusy
-            ? t('treasuries.treasury-streams.create-stream-main-cta-busy')
+            // ? t('treasuries.treasury-streams.create-stream-main-cta-busy')
+            ? t('streams.create-new-stream-cta-busy')
             : getTransactionStartButtonLabel()
           )}
 

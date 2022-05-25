@@ -772,11 +772,12 @@
 		"add-funds": {
 			"amount-label": "مقدار",
 			"modal-title": "وجوه اضافه کنید",
-			"treasury-money-stream-description": "از آنجایی که این جریان از treasury تامین می شود، وجوه اضافه شده از موجودی موجود treasury تخصیص می یابد.",
+			"treasury-money-stream-description": "As this stream was funded from a streaming account, the funds being added will be allocated from the streaming account's available balance.",
 			"treasury-money-stream-title": "Money Stream با بودجهTreasury"
 		},
 		"back-to-my-streams-cta": "بازگشت به Money Streams",
-		"create-new-stream-cta": "انتقال جدید",
+		"create-new-stream-cta": "جریان پول ایجاد کنید",
+		"create-new-stream-cta-busy": "Creating stream",
 		"edit-stream": {
 			"edit-stream-tooltip": "money stream را ویرایش کنید",
 			"frequency-input-hint": "این مبلغ چند بار ارسال خواهد شد؟",
@@ -789,16 +790,16 @@
 			"name-input-placeholder": "یک نام برای استریم خود تایپ کنید",
 			"send-amount-input-label": "مبلغ برای ارسال"
 		},
-		"locked-stream-message": "شما نمی توانید یک استریم از خزانه قفل شده را ببندید یا آن را شارژ کنید",
+		"locked-stream-message": "You cannot close or top up a stream from a locked streaming account",
 		"locked-stream-modal-title": "مانی استریم قفل شده",
 		"locked-stream-tooltip": "این استریم قفل شده است",
 		"lookup-stream-cta-tooltip": "یک stream را جستجو کنید",
-		"pause-stream-confirmation": "وقفه موقت stream ، جریان پول از treasury ({{treasury}}) به ذینفع ({{beneficiary}}) را متوقف می کند.",
+		"pause-stream-confirmation": "Pausing the stream will stop streaming money from the streaming account ({{treasury}}) to the beneficiary ({{beneficiary}}).",
 		"pause-stream-cta": "وقفه",
 		"pause-stream-modal-title": "وقفه در Stream",
 		"pause-stream-tooltip": "وقفه در Stream",
 		"refresh-tooltip": "برای بازخوانی stream ها کلیک کنید",
-		"resume-stream-confirmation": "از سرگیری  money streaming از treasury ({{treasury}}) به ذینفع ({{beneficiary}}).",
+		"resume-stream-confirmation": "Resume money streaming from the streaming account ({{treasury}}) to the beneficiary ({{beneficiary}}).",
 		"resume-stream-cta": "از سرگیری",
 		"resume-stream-modal-title": "از سرگیری استریم",
 		"resume-stream-tooltip": "از سرگیری استریم",
@@ -920,11 +921,11 @@
 			"placeholder": "یک یادداشت اضافه کنید"
 		},
 		"memo2": {
-			"label": "یادداشت / موضوع",
+			"label": "نام استریم",
 			"placeholder": "این پرداخت برای چیست؟"
 		},
 		"rate-and-frequency": {
-			"amount-label": "مقدار",
+			"amount-label": "Payment Rate",
 			"payment-rates": {
 				"per-day": "در روز",
 				"per-hour": "در ساعت",
@@ -945,7 +946,7 @@
 		"resume": "خلاصه",
 		"send-amount": {
 			"label": "ارسال",
-			"label-amount": "وجوه اضافه کنید",
+			"label-amount": "Amount to stream",
 			"label-right": "موجودی"
 		},
 		"send-date": {
@@ -1010,7 +1011,7 @@
 		},
 		"transaction-info": {
 			"add-funds-payroll-advice": "برای شروع یک لیست حقوق و دستمزد باید بودجه اضافه کنید",
-			"add-funds-repeating-payment-advice": "برای شروع پرداخت مکرر باید وجوه اضافه کنید",
+			"add-funds-repeating-payment-advice": "How many {{tokenSymbol}} tokens do you want to send at\n{{rateInterval}}?",
 			"beneficiary-receives": "ذینفع دریافت می کند",
 			"exchange-on": "مبادله بر",
 			"hla-transaction-fee": "هزینه جمع آوری",
@@ -1077,12 +1078,14 @@
 	"transfers": {
 		"screen-subtitle": "برای هر کسی در دنیا سریعتر پول بفرستید",
 		"screen-title": "منتقل کردن",
-		"verified-recipient-disclaimer": "مطمئنم آدرس گیرنده متعلق به صرافی نیست."
+		"verified-recipient-disclaimer": "مطمئنم آدرس گیرنده متعلق به صرافی نیست.",
+		"send-asset-modal-title": "Send Asset",
+		"create-money-stream-modal-title": "Create money stream"
 	},
 	"treasuries": {
 		"add-funds": {
 			"allocation-amount-label": "چقدر می خواهید اختصاص دهید؟",
-			"allocation-heading": "برای تکمیل یک stream موجود، وجوه اضافه شده از موجودی موجود Treasury تخصیص می یابد.",
+			"allocation-heading": "To top up an existing stream, the funds being added will be allocated from the streaming account's available balance.",
 			"allocation-label": "چگونه می خواهید این بودجه را تخصیص دهید؟",
 			"allocation-option-evenly": "به طور مساوی در تمام Money Stream ها تخصیص دهید",
 			"allocation-option-none": "تخصیص ندادن (ترک در رزرو)",
@@ -1120,23 +1123,23 @@
 				"weeks": "هفته ها",
 				"years": "سال ها"
 			},
-			"main-cta": "راه اندازی",
-			"main-cta-busy": "ایجاد treasury",
-			"modal-title": "treasury  ایجاد کنید",
+			"main-cta": "Create Streaming Account",
+			"main-cta-busy": "Creating account",
+			"modal-title": "Create Streaming Account",
 			"multisig-selector-label": "حساب Multisig",
-			"multisig-treasury-created-info": "برای تکمیل تنظیم treasury ، سایر امضاکنندگان Multisig باید آن را تأیید کنند.",
-			"multisig-treasury-created-instructions": "لطفاً از سایر کاربران بخواهید که این معامله ایجاد treasury  را امضا کنند.",
+			"multisig-treasury-created-info": "To complete the Streaming Account setup, the other Multisig signers need to approve it.",
+			"multisig-treasury-created-instructions": "Streaming account {{treasuryName}} was created successfully. Please ask the other users to sign this account creation transaction.",
 			"multisig-treasury-switch-label": "آیا این treasury  برای یک حساب Multisig است؟",
-			"success-message": "treasury  جدید شما با موفقیت ایجاد شد.",
-			"treasury-name-input-empty": "نام treasury  را وارد کنید",
-			"treasury-name-input-label": "نام treasury",
-			"treasury-name-placeholder": "یک نام برای treasury خود تایپ کنید",
+			"success-message": "Your new streaming account was created successfully.",
+			"treasury-name-input-empty": "Enter Account name",
+			"treasury-name-input-label": "Account name",
+			"treasury-name-placeholder": "Type a name for your streaming account",
 			"treasury-token-label": "Token to be streamed",
 			"treasury-type-options": {
-				"treasury-type-locked-description": "با یک treasury قفل شده می‌توانید استریم هایی ایجاد کنید که مانند قراردادهای سرمایه‌گذاری برای تخصیص‌های رزرو شده عمل می‌کنند، مانند مواردی که برای سرمایه‌گذاران لازم است. آنها معمولا تاریخ پایان ثابتی دارند.",
-				"treasury-type-locked-name": "treasury  مانی استریمینگ قفل شده",
-				"treasury-type-open-description": "با یک treasury  باز، می توانید مانی استریم هایی ایجاد کنید که به طور نامحدود اجرا می شوند. وقتی پول treasury  تمام می شود، همه استریم ها متوقف می شوند، تا زمانی که دوباره پر شود.",
-				"treasury-type-open-name": "باز کردن treasury  مانی استریمینگ"
+				"treasury-type-locked-description": "With a locked streaming account you can create streams that act like a vesting contract for reserved allocations, like the ones needed for investors. They usually have a fixed end date.",
+				"treasury-type-locked-name": "Locked money streaming account",
+				"treasury-type-open-description": "With an open streaming account, you can create money streams that run indefinitely. When the account runs out of money all streams stop, until it gets replenished.",
+				"treasury-type-open-name": "Open money streaming account"
 			}
 		},
 		"lookup-treasury-cta-tooltip": "Lookup a Streaming Account",
@@ -1198,8 +1201,8 @@
 				"panel3-to-address": "به آدرس:",
 				"panel3-warning-message": "مهم: این یک مانی استریم قفل شده است و پس از شروع، نمی توانید جزئیات آن را لغو، مکث یا تغییر دهید. قبل از ادامه تمام اطلاعات را بررسی کنید."
 			},
-			"add-stream-modal-title": "استریم را به treasury اضافه کنید",
-			"allocate-funds-label": "تخصیص بودجه",
+			"add-stream-modal-title": "Add stream to the account",
+			"allocate-funds-label": "Amount to stream",
 			"allocation-reserved-label": "این تخصیص کاملاً رزرو شده است",
 			"available-unallocated-balance-label": "موجودی تخصیص نیافته موجود",
 			"busy-pausing": "توقف استریم",
@@ -1216,7 +1219,7 @@
 			"fee-payed-by-treasurer": "من می خواهم برای این اسرتریم به جای ذینفع هزینه پرداخت کنم",
 			"loading-streams": "در حال بارگیری استریم ها",
 			"message-warning": "The list of recipients you submitted included your own wallet address. This is not possible and this address has been removed from the imported list.",
-			"minimum-allocation-advice": "شما باید حداقل تخصیص را برای این مانی استریم تا میزان موجودی تخصیص نیافته موجود در treasury تعیین کنید.",
+			"minimum-allocation-advice": "How many {{tokenSymbol}} tokens do you want to send at {{rateInterval}}? You are able to set an amount up to the unallocated balance in this streaming account.",
 			"multiple-address-list": "Multiple address list",
 			"multiple-address-question-mark-tooltip": "Please provide a csv text file with one address per line in the following format: \n MEMO or STREAM NAME, WALLET ADDRESS. \n\n Here is an example of how it should look: \n Epoch 1, FrdFf3EqcGuytTweLvoELBt29WrAGVYjrh4585A2bTAZ \n\n Before you submit the file, please make sure the recipient addresses are correct and do not belong to an exchange.",
 			"no-streams": "This streaming account has no active streams",
