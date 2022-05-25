@@ -419,6 +419,23 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [raydiumLps, setRaydiumLps] = useState<any>(contextDefaultValues.raydiumLps);
   const [shouldLoadRaydiumLps, setShouldLoadRaydiumLps] = useState(true);
 
+  /////////////////////////////////////
+  // Added to support /accounts page //
+  /////////////////////////////////////
+
+  const [accountAddress, updateAccountAddress] = useLocalStorage('lastUsedAccount', publicKey ? publicKey.toBase58() : '');
+  const [splTokenList, updateSplTokenList] = useState<UserTokenAccount[]>(contextDefaultValues.splTokenList);
+  const [userTokens, updateUserTokens] = useState<UserTokenAccount[]>(contextDefaultValues.userTokens);
+  const [pinnedTokens, updatePinnedTokens] = useState<UserTokenAccount[]>(contextDefaultValues.pinnedTokens);
+  const [transactions, updateTransactions] = useState<MappedTransaction[] | undefined>(contextDefaultValues.transactions);
+  const [selectedAsset, updateSelectedAsset] = useState<UserTokenAccount | undefined>(contextDefaultValues.selectedAsset);
+  const [lastTxSignature, setLastTxSignature] = useState<string>(contextDefaultValues.lastTxSignature);
+  const [addAccountPanelOpen, updateAddAccountPanelOpen] = useState(contextDefaultValues.addAccountPanelOpen);
+  const [canShowAccountDetails, updateCanShowAccountDetails] = useState(contextDefaultValues.canShowAccountDetails);
+  const [streamsSummary, setStreamsSummary] = useState<StreamsSummary>(contextDefaultValues.streamsSummary);
+  const [lastStreamsSummary, setLastStreamsSummary] = useState<StreamsSummary>(contextDefaultValues.lastStreamsSummary);
+  const [loadingStreamsSummary, setLoadingStreamsSummary] = useState(contextDefaultValues.loadingStreamsSummary);
+
   const isDowngradedPerformance = useMemo(() => {
     return isProd() && (!tpsAvg || tpsAvg < PERFORMANCE_THRESHOLD)
       ? true
@@ -661,14 +678,14 @@ const AppStateProvider: React.FC = ({ children }) => {
   }
 
   const getTokenByMintAddress = useCallback((address: string): TokenInfo | undefined => {
-    const tokenFromTokenList = tokenList && isProd()
-      ? tokenList.find(t => t.address === address)
+    const tokenFromTokenList = splTokenList && isProd()
+      ? splTokenList.find(t => t.address === address)
       : MEAN_TOKEN_LIST.find(t => t.address === address);
     if (tokenFromTokenList) {
       return tokenFromTokenList;
     }
     return undefined;
-  }, [tokenList]);
+  }, [splTokenList]);
 
   const openStreamById = async (streamId: string, dock = false) => {
     try {
@@ -1294,24 +1311,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     shouldUpdateToken,
     refreshTokenBalance
   ]);
-
-
-  /////////////////////////////////////
-  // Added to support /accounts page //
-  /////////////////////////////////////
-
-  const [accountAddress, updateAccountAddress] = useLocalStorage('lastUsedAccount', publicKey ? publicKey.toBase58() : '');
-  const [splTokenList, updateSplTokenList] = useState<UserTokenAccount[]>(contextDefaultValues.splTokenList);
-  const [userTokens, updateUserTokens] = useState<UserTokenAccount[]>(contextDefaultValues.userTokens);
-  const [pinnedTokens, updatePinnedTokens] = useState<UserTokenAccount[]>(contextDefaultValues.pinnedTokens);
-  const [transactions, updateTransactions] = useState<MappedTransaction[] | undefined>(contextDefaultValues.transactions);
-  const [selectedAsset, updateSelectedAsset] = useState<UserTokenAccount | undefined>(contextDefaultValues.selectedAsset);
-  const [lastTxSignature, setLastTxSignature] = useState<string>(contextDefaultValues.lastTxSignature);
-  const [addAccountPanelOpen, updateAddAccountPanelOpen] = useState(contextDefaultValues.addAccountPanelOpen);
-  const [canShowAccountDetails, updateCanShowAccountDetails] = useState(contextDefaultValues.canShowAccountDetails);
-  const [streamsSummary, setStreamsSummary] = useState<StreamsSummary>(contextDefaultValues.streamsSummary);
-  const [lastStreamsSummary, setLastStreamsSummary] = useState<StreamsSummary>(contextDefaultValues.lastStreamsSummary);
-  const [loadingStreamsSummary, setLoadingStreamsSummary] = useState(contextDefaultValues.loadingStreamsSummary);
 
   const setAddAccountPanelOpen = (state: boolean) => {
     updateAddAccountPanelOpen(state);
