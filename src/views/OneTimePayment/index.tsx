@@ -1060,10 +1060,6 @@ export const OneTimePayment = (props: {
           placeholder={t('token-selector.search-input-placeholder')}
           onInputChange={onTokenSearchInputChange} />
       </div>
-      <div className="flex-row align-items-center fg-secondary-60 mb-2 px-1">
-        <span>{t('token-selector.looking-for-sol')}</span>&nbsp;
-        <span className="simplelink underline" onClick={onGoToWrap}>{t('token-selector.wrap-sol-first')}</span>
-      </div>
       <div className="token-list">
         {filteredTokenList.length > 0 && renderTokenList}
         {(tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0) && (
