@@ -704,7 +704,8 @@
 		"tx-not-confirmed": "The transaction could not be confirmed, please retry your transaction.",
 		"tx-not-executed": "Your transaction has not been executed",
 		"tx-not-approved": "Your transaction has not been approved",
-		"tx-proposal-created": "Your proposal has been created"
+		"tx-proposal-created": "Your proposal has been created",
+		"ask-others-to-sign": "Please ask the proposer user to execute this proposed transaction."
 	},
 	"open-stream": {
 		"label-streamid-input": "Açmak için aktarım ID'si",
@@ -1284,6 +1285,7 @@
 				"custody": "Velayet",
 				"faucet": "Musluk(Faucet)",
 				"multisig": "Çoklu-imza",
+				"safes": "Multisig V2",
 				"submenu-title": "Hizmetler",
 				"unwrap": "Unwrap",
 				"wallet-guide": "Cüzdan Rehberi",

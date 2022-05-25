@@ -9,6 +9,7 @@ export const InfoIcon = (props: {
   style?: React.CSSProperties;
   trigger?: string;
   placement?: TooltipPlacement | undefined;
+  className?: string;
 }) => {
   return (
     <Popover
@@ -17,7 +18,7 @@ export const InfoIcon = (props: {
       placement={props.placement || "top"}
       content={<div style={{ width: 320 }}>{props.content}</div>}>
       <Button
-        className="info-icon-button"
+        className={`info-icon-button ${props.className}`}
         type="default"
         shape="circle">
         {props.children}

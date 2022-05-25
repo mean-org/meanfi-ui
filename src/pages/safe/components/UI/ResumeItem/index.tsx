@@ -90,7 +90,7 @@ export const ResumeItem = (props: {
   },[status, theme]);
 
   // Random component
-  const Completionist = () => <span>Expired on {expires}</span>;
+  const Completionist = () => <span>Expired on {expires.toDateString()}</span>;
 
   // Renderer callback with condition
   const renderer = ({ days, hours, minutes, seconds, completed }: any) => {
@@ -107,8 +107,6 @@ export const ResumeItem = (props: {
       return <span>{`Expires in ${`${daysSpace}${days}`}:${`${hoursSpace}${hours}`}:${`${minutesSpace}${minutes}`}:${`${secondsSpace}${seconds}`}`}</span>;
     }
   };
-
-  console.log("Expires", status);
 
   return (
     <>
@@ -137,11 +135,11 @@ export const ResumeItem = (props: {
                       <span>Executed on {executedOn}</span>
                     ) : (
                       (status === 0 || status === 1) ? (
-                        <Countdown className="align-middle" date={expires} renderer={renderer} />
+                        <Countdown className="align-middle" date={expires.toString()} renderer={renderer} />
                       ) : status === 4 ? (
                         <span>Voided</span>
                       ) : status === 5 ? (
-                        <span>Expired on {expires}</span>
+                        <span>Expired on {expires.toDateString()}</span>
                       ) : null 
                     )}
                   </div>

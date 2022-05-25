@@ -706,7 +706,8 @@
 		"wallet-disconnect-message": "与钱包断开连接",
 		"tx-not-executed": "Your transaction has not been executed",
 		"tx-not-approved": "Your transaction has not been approved",
-		"tx-proposal-created": "Your proposal has been created"
+		"tx-proposal-created": "Your proposal has been created",
+		"ask-others-to-sign": "Please ask the proposer user to execute this proposed transaction."
 	},
 	"open-stream": {
 		"label-streamid-input": "要打开的流id",
@@ -1297,6 +1298,7 @@
 				"custody": "托管",
 				"faucet": "水龙头",
 				"multisig": "多重签名",
+				"safes": "Multisig V2",
 				"submenu-title": "服务",
 				"unwrap": "Unwrap",
 				"wallet-guide": "钱包指南",
