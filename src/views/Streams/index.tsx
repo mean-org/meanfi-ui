@@ -2865,11 +2865,14 @@ export const Streams = () => {
     let value = '';
     if (item) {
       let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+
+      // TODO: If NO rename wSOL to SOL is needed, remove this block
       if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
         token = Object.assign({}, token, {
           symbol: 'SOL'
         }) as TokenInfo;
       }
+
       if (item.version < 2) {
         value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
       } else {
@@ -2886,11 +2889,14 @@ export const Streams = () => {
 
     if (item && item.rateAmount === 0 && item.allocationAssigned > 0) {
       let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+
+      // TODO: If NO rename wSOL to SOL is needed, remove this block
       if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
         token = Object.assign({}, token, {
           symbol: 'SOL'
         }) as TokenInfo;
       }
+
       if (item.version < 2) {
         value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
       } else {
@@ -4368,25 +4374,23 @@ export const Streams = () => {
 
                   {/* Amount / Funds left (Total Unvested) & Started date */}
                   <Row className="mb-3">
-                    {stream && stream.escrowUnvestedAmount > 0 && (
-                      <Col span={12}>
-                        <div className="info-label text-truncate">{t('streams.stream-detail.label-funds-left-in-account')}</div>
-                        <div className="transaction-detail-row">
-                          <span className="info-icon">
-                            <IconBank className="mean-svg-icons" />
+                    <Col span={12}>
+                      <div className="info-label text-truncate">{t('streams.stream-detail.label-funds-left-in-account')}</div>
+                      <div className="transaction-detail-row">
+                        <span className="info-icon">
+                          <IconBank className="mean-svg-icons" />
+                        </span>
+                        {stream ? (
+                          <span className="info-data">
+                          {stream
+                            ? getAmountWithSymbol(stream.escrowUnvestedAmount, stream.associatedToken as string, false, splTokenList)
+                            : '--'}
                           </span>
-                          {stream ? (
-                            <span className="info-data">
-                            {stream
-                              ? getAmountWithSymbol(stream.escrowUnvestedAmount, stream.associatedToken as string, false, splTokenList)
-                              : '--'}
-                            </span>
-                          ) : (
-                            <span className="info-data">&nbsp;</span>
-                          )}
-                        </div>
-                      </Col>
-                    )}
+                        ) : (
+                          <span className="info-data">&nbsp;</span>
+                        )}
+                      </div>
+                    </Col>
                     {/* Started date */}
                     <Col span={12}>
                       <div className="info-label">{getStartDateLabel()}</div>
@@ -4402,7 +4406,7 @@ export const Streams = () => {
                   </Row>
 
                   {/* Allocation info */}
-                  {stream && !isScheduledOtp() && hasAllocation() && (
+                  {!isScheduledOtp() && hasAllocation() && (
                     <Row className="mb-3">
                       <Col span={12}>
                         <div className="info-label">
@@ -4427,13 +4431,13 @@ export const Streams = () => {
                       <Col span={12}>
                         <div className="info-label">{t('streams.stream-detail.label-status')}</div>
                         <div className="transaction-detail-row">
-                          <span className="info-icon">
+                          {/* <span className="info-icon">
                             {getStreamStatus(stream) === "Running" ? (
                               <IconSwitchRunning className="mean-svg-icons" />
                             ) : (
                               <IconSwitchStopped className="mean-svg-icons" />
                             )}
-                          </span>
+                          </span> */}
                           <span className="info-data">
                             {getStreamStatus(stream)}
                           </span>
@@ -4474,13 +4478,13 @@ export const Streams = () => {
                         <Col span={12}>
                           <div className="info-label">{t('streams.stream-detail.label-status')}</div>
                           <div className="transaction-detail-row">
-                            <span className="info-icon">
+                            {/* <span className="info-icon">
                               {getStreamStatus(stream) === "Running" ? (
                                 <IconSwitchRunning className="mean-svg-icons" />
                               ) : (
                                 <IconSwitchStopped className="mean-svg-icons" />
                               )}
-                            </span>
+                            </span> */}
                             <span className="info-data">
                               {getStreamStatus(stream)}
                             </span>
@@ -4645,27 +4649,25 @@ export const Streams = () => {
 
                   {/* Amount / Funds left (Total Unvested) & Started date */}
                   <Row className="mb-3">
-                    {stream.fundsLeftInStream > 0 && (
-                      <Col span={12}>
-                        <div className="info-label text-truncate">{t('streams.stream-detail.label-funds-left-in-account')}</div>
-                        <div className="transaction-detail-row">
-                          <span className="info-icon">
-                            <IconBank className="mean-svg-icons" />
+                    <Col span={12}>
+                      <div className="info-label text-truncate">{t('streams.stream-detail.label-funds-left-in-account')}</div>
+                      <div className="transaction-detail-row">
+                        <span className="info-icon">
+                          <IconBank className="mean-svg-icons" />
+                        </span>
+                        {stream ? (
+                          <span className="info-data">
+                            {getAmountWithSymbol(
+                              toUiAmount(new BN(stream.fundsLeftInStream), selectedToken?.decimals || 6),
+                              stream.associatedToken as string,
+                              false, splTokenList
+                            )}
                           </span>
-                          {stream ? (
-                            <span className="info-data">
-                              {getAmountWithSymbol(
-                                toUiAmount(new BN(stream.fundsLeftInStream), selectedToken?.decimals || 6),
-                                stream.associatedToken as string,
-                                false, splTokenList
-                              )}
-                            </span>
-                          ) : (
-                            <span className="info-data">&nbsp;</span>
-                          )}
-                        </div>
-                      </Col>
-                    )}
+                        ) : (
+                          <span className="info-data">&nbsp;</span>
+                        )}
+                      </div>
+                    </Col>
                     {/* Started date */}
                     <Col span={12}>
                       <div className="info-label">{getStartDateLabel()}</div>
@@ -4706,13 +4708,13 @@ export const Streams = () => {
                       <Col span={12}>
                         <div className="info-label">{t('streams.stream-detail.label-status')}</div>
                         <div className="transaction-detail-row">
-                          <span className="info-icon">
+                          {/* <span className="info-icon">
                             {getStreamStatus(stream) === "Running" ? (
                               <IconSwitchRunning className="mean-svg-icons" />
                             ) : (
                               <IconSwitchStopped className="mean-svg-icons" />
                             )}
-                          </span>
+                          </span> */}
                           <span className="info-data">
                             {getStreamStatus(stream)}
                           </span>
@@ -5021,13 +5023,13 @@ export const Streams = () => {
                       <Col span={12}>
                         <div className="info-label">{t('streams.stream-detail.label-status')}</div>
                         <div className="transaction-detail-row">
-                          <span className="info-icon">
+                          {/* <span className="info-icon">
                             {getStreamStatus(stream) === "Running" ? (
                               <IconSwitchRunning className="mean-svg-icons" />
                             ) : (
                               <IconSwitchStopped className="mean-svg-icons" />
                             )}
-                          </span>
+                          </span> */}
                           <span className="info-data">
                             {getStreamStatus(stream)}
                           </span>
@@ -5050,15 +5052,11 @@ export const Streams = () => {
                             <ArrowUpOutlined className="mean-svg-icons outgoing" />
                           )}
                         </span>
-                        {stream ? (
-                          <span className="info-data large">
+                        <span className="info-data large">
                           {stream
                             ? getAmountWithSymbol(stream.escrowUnvestedAmount, stream.associatedToken as string, false, splTokenList)
                             : '--'}
-                          </span>
-                        ) : (
-                          <span className="info-data large">&nbsp;</span>
-                        )}
+                        </span>
                       </div>
                     </div>
                   )}
@@ -5334,13 +5332,13 @@ export const Streams = () => {
                       <Col span={12}>
                         <div className="info-label">{t('streams.stream-detail.label-status')}</div>
                         <div className="transaction-detail-row">
-                          <span className="info-icon">
+                          {/* <span className="info-icon">
                             {getStreamStatus(stream) === "Running" ? (
                               <IconSwitchRunning className="mean-svg-icons" />
                             ) : (
                               <IconSwitchStopped className="mean-svg-icons" />
                             )}
-                          </span>
+                          </span> */}
                           <span className="info-data">
                             {getStreamStatus(stream)}
                           </span>
@@ -5363,17 +5361,13 @@ export const Streams = () => {
                             <ArrowUpOutlined className="mean-svg-icons outgoing" />
                           )}
                         </span>
-                        {stream ? (
-                          <span className="info-data large">
-                            {getAmountWithSymbol(
-                              toUiAmount(new BN(stream.fundsLeftInStream), selectedToken?.decimals || 6),
-                              stream.associatedToken as string,
-                              false, splTokenList
-                            )}
-                          </span>
-                        ) : (
-                          <span className="info-data large">&nbsp;</span>
-                        )}
+                        <span className="info-data large">
+                          {getAmountWithSymbol(
+                            toUiAmount(new BN(stream.fundsLeftInStream), selectedToken?.decimals || 6),
+                            stream.associatedToken as string,
+                            false, splTokenList
+                          )}
+                        </span>
                       </div>
                     </div>
                   )}

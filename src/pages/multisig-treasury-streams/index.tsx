@@ -1382,38 +1382,31 @@ export const MultisigTreasuryStreams = () => {
                                     </Row>
 
                                     {/* Funds left (Total Unvested) */}
-                                    {isOtp()
-                                        ? null
-                                        : stream &&
-                                        stream.escrowUnvestedAmount > 0 && (
-                                            <div className="mb-3">
-                                                <div className="info-label text-truncate">
-                                                    {t(
-                                                        "streams.stream-detail.label-funds-left-in-account"
-                                                    )}
-                                                </div>
-                                                <div className="transaction-detail-row">
-                                                    <span className="info-icon">
-                                                        <IconBank className="mean-svg-icons" />
-                                                    </span>
-                                                    {stream ? (
-                                                        <span className="info-data">
-                                                            {stream
-                                                                ? getAmountWithSymbol(
-                                                                    stream.escrowUnvestedAmount,
-                                                                    stream.associatedToken as string
-                                                                )
-                                                                : "--"}
-                                                        </span>
-                                                    ) : (
-                                                        <span className="info-data">&nbsp;</span>
-                                                    )}
-                                                </div>
+                                    {isOtp() ? null : (
+                                        <div className="mb-3">
+                                            <div className="info-label text-truncate">
+                                                {t(
+                                                    "streams.stream-detail.label-funds-left-in-account"
+                                                )}
                                             </div>
-                                        )}
+                                            <div className="transaction-detail-row">
+                                                <span className="info-icon">
+                                                    <IconBank className="mean-svg-icons" />
+                                                </span>
+                                                <span className="info-data">
+                                                    {stream
+                                                        ? getAmountWithSymbol(
+                                                            stream.escrowUnvestedAmount,
+                                                            stream.associatedToken as string
+                                                        )
+                                                        : "--"}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {/* Allocation info */}
-                                    {stream && !isScheduledOtp() && hasAllocation() && (
+                                    {!isScheduledOtp() && hasAllocation() && (
                                         <Row className="mb-3">
                                             <Col span={24}>
                                                 <div className="info-label">
@@ -1634,35 +1627,29 @@ export const MultisigTreasuryStreams = () => {
                                     </Row>
 
                                     {/* Funds left (Total Unvested) */}
-                                    {isOtp()
-                                        ? null
-                                        : stream.fundsLeftInStream > 0 && (
-                                            <div className="mb-3">
-                                                <div className="info-label text-truncate">
-                                                    {t(
-                                                        "streams.stream-detail.label-funds-left-in-account"
-                                                    )}
-                                                </div>
-                                                <div className="transaction-detail-row">
-                                                    <span className="info-icon">
-                                                        <IconBank className="mean-svg-icons" />
-                                                    </span>
-                                                    {stream ? (
-                                                        <span className="info-data">
-                                                            {getAmountWithSymbol(
-                                                                toUiAmount(
-                                                                    new BN(stream.fundsLeftInStream),
-                                                                    selectedToken?.decimals || 6
-                                                                ),
-                                                                stream.associatedToken as string
-                                                            )}
-                                                        </span>
-                                                    ) : (
-                                                        <span className="info-data">&nbsp;</span>
-                                                    )}
-                                                </div>
+                                    {isOtp() ? null : (
+                                        <div className="mb-3">
+                                            <div className="info-label text-truncate">
+                                                {t(
+                                                    "streams.stream-detail.label-funds-left-in-account"
+                                                )}
                                             </div>
-                                        )}
+                                            <div className="transaction-detail-row">
+                                                <span className="info-icon">
+                                                    <IconBank className="mean-svg-icons" />
+                                                </span>
+                                                <span className="info-data">
+                                                    {getAmountWithSymbol(
+                                                        toUiAmount(
+                                                            new BN(stream.fundsLeftInStream),
+                                                            selectedToken?.decimals || 6
+                                                        ),
+                                                        stream.associatedToken as string
+                                                    )}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {/* Allocation info */}
                                     {stream && !isScheduledOtp() && hasAllocation() && (
@@ -2252,19 +2239,15 @@ export const MultisigTreasuryStreams = () => {
                                                 <span className="info-icon">
                                                     <IconUpload className="mean-svg-icons" />
                                                 </span>
-                                                {stream ? (
-                                                    <span className="info-data">
-                                                        {getAmountWithSymbol(
-                                                            toUiAmount(
-                                                                new BN(stream.fundsSentToBeneficiary),
-                                                                selectedToken?.decimals || 6
-                                                            ),
-                                                            stream.associatedToken as string
-                                                        )}
-                                                    </span>
-                                                ) : (
-                                                    <span className="info-data">&nbsp;</span>
-                                                )}
+                                                <span className="info-data">
+                                                    {getAmountWithSymbol(
+                                                        toUiAmount(
+                                                            new BN(stream.fundsSentToBeneficiary),
+                                                            selectedToken?.decimals || 6
+                                                        ),
+                                                        stream.associatedToken as string
+                                                    )}
+                                                </span>
                                             </div>
                                         </div>
                                     )}
@@ -2283,19 +2266,15 @@ export const MultisigTreasuryStreams = () => {
                                                         <ArrowUpOutlined className="mean-svg-icons outgoing" />
                                                     )}
                                                 </span>
-                                                {stream ? (
-                                                    <span className="info-data large">
-                                                        {getAmountWithSymbol(
-                                                            toUiAmount(
-                                                                new BN(stream.fundsLeftInStream),
-                                                                selectedToken?.decimals || 6
-                                                            ),
-                                                            stream.associatedToken as string
-                                                        )}
-                                                    </span>
-                                                ) : (
-                                                    <span className="info-data large">&nbsp;</span>
-                                                )}
+                                                <span className="info-data large">
+                                                    {getAmountWithSymbol(
+                                                        toUiAmount(
+                                                            new BN(stream.fundsLeftInStream),
+                                                            selectedToken?.decimals || 6
+                                                        ),
+                                                        stream.associatedToken as string
+                                                    )}
+                                                </span>
                                             </div>
                                         </div>
                                     )}

@@ -237,6 +237,8 @@ export const getAmountWithSymbol = (amount: number, address?: string, onlyValue 
       token = tokenList && isProd()
         ? tokenList.find(t => t.address === address)
         : MEAN_TOKEN_LIST.find(t => t.address === address);
+
+      // TODO: If NO rename wSOL to SOL is needed, remove this block
       if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
         token = Object.assign({}, token, {
           symbol: 'SOL'
