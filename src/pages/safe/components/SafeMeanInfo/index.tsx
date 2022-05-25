@@ -81,10 +81,11 @@ export const SafeMeanInfo = (props: {
 
     if (!connection || !selectedMultisig) { return; }
 
+    // TODO: Check with Yansel (change balance of the selectedMultisig.id for selectedMultisig.authority)
     const timeout = setTimeout(() => {
       setMultisig(selectedMultisig);
       connection
-        .getBalance(selectedMultisig.id)
+        .getBalance(selectedMultisig.authority)
         .then(balance => setSolBalance(balance))
         .catch(err => console.error(err));
     });

@@ -234,7 +234,7 @@ export const SafeDetailsView = (props: {
                 selectedProposal.operation !== 34 &&
                 selectedProposal.operation !== 39 &&
                 selectedProposal.operation !== 36 &&
-                selectedProposal.operation !== 13)  &&
+                selectedProposal.operation !== 3)  &&
                   (selectedProposal.status !== MultisigTransactionStatus.Executed) && (selectedProposal.proposer.toBase58() !== publicKey?.toBase58())) && (
                     <InfoIcon content={t("notifications.ask-others-to-sign")} placement="top" className="info-icon-btn">
                       <IconHelpCircle className="mean-svg-icons" />
@@ -252,7 +252,7 @@ export const SafeDetailsView = (props: {
                   selectedProposal.operation !== 34 &&
                   selectedProposal.operation !== 39 &&
                   selectedProposal.operation !== 36 &&
-                  selectedProposal.operation !== 13)))}
+                  selectedProposal.operation !== 3)))}
                 onClick={() => onProposalExecute({ 
                   transaction: { 
                     id: selectedProposal.id,
