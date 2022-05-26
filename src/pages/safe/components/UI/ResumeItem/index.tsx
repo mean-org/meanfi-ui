@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { MultisigTransaction, MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
 import Countdown from 'react-countdown';
 import { AppStateContext } from '../../../../../contexts/appstate';
-import { IconArrowForward, IconThumbsDown, IconThumbsUp } from '../../../../../Icons';
+import { IconThumbsDown, IconThumbsUp } from '../../../../../Icons';
 import { formatThousands } from '../../../../../utils/utils';
 
 export const ResumeItem = (props: {
@@ -21,7 +21,7 @@ export const ResumeItem = (props: {
   rejected?: any;
   status?: any;
   needs?: any;
-  isSafeDetails?: boolean;
+  isProposalDetails?: boolean;
   isProgramDetails?: boolean;
   isAssetDetails?: boolean;
   isProgram?: boolean;
@@ -36,7 +36,7 @@ export const ResumeItem = (props: {
     theme
   } = useContext(AppStateContext);
 
-  const { src, img, version, title, subtitle, expires, executedOn, approved, rejected, status, needs, isSafeDetails, isProgram, isAsset, programSize, rightContent, rightIcon, rightIconHasDropdown, dropdownMenu } = props;
+  const { src, img, version, title, subtitle, expires, executedOn, approved, rejected, status, needs, isProposalDetails, isProgram, isAsset, programSize, rightContent, rightIcon, rightIconHasDropdown, dropdownMenu } = props;
 
   const { t } = useTranslation('common');
 
@@ -113,7 +113,7 @@ export const ResumeItem = (props: {
 
   return (
     <>
-      <Row gutter={[8, 8]} className={`resume-item-container list-item ${!isSafeDetails ? "hover-list" : ""} ${isSafeDetails ? "align-items-end" : ""}`}>
+      <Row gutter={[8, 8]} className={`resume-item-container list-item ${!isProposalDetails ? "hover-list" : ""} ${isProposalDetails ? "align-items-end" : ""}`}>
         <Col className="resume-left-container">
           {(src || img) && (
             <div className="img-container">
@@ -123,8 +123,8 @@ export const ResumeItem = (props: {
               {img && img}
             </div>
           )}
-          <div className={`resume-left-text ${isSafeDetails ? "pb-1" : ""}`}>
-            <div className={`resume-title ${isSafeDetails ? "big-title" : ""}`}>{title ? title : "Unknown proposal"}</div>
+          <div className={`resume-left-text ${isProposalDetails ? "pb-1" : ""}`}>
+            <div className={`resume-title ${isProposalDetails ? "big-title" : ""}`}>{title ? title : "Unknown proposal"}</div>
 
             {version !== 0 && (
               subtitle ? (
@@ -155,7 +155,7 @@ export const ResumeItem = (props: {
             )}
           </div>
         </Col>
-        <Col className={`resume-right-container ${!isSafeDetails ? "mr-1" : "mr-2"}`}>
+        <Col className={`resume-right-container ${!isProposalDetails ? "mr-1" : "mr-2"}`}>
           <div className="resume-right-text">
             {(!isProgram && !isAsset) ? (
               <>
@@ -199,7 +199,7 @@ export const ResumeItem = (props: {
               </div>
             )}
           </div>
-          {!isSafeDetails && (
+          {!isProposalDetails && (
             rightIconHasDropdown ? (
               <Dropdown
                 overlay={dropdownMenu}

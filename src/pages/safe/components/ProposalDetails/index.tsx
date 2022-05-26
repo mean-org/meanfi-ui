@@ -16,8 +16,8 @@ import { AppStateContext } from '../../../../contexts/appstate';
 import { useWallet } from '../../../../contexts/wallet';
 import { InfoIcon } from '../../../../components/InfoIcon';
 
-export const SafeDetailsView = (props: {
-  isSafeDetails: boolean;
+export const ProposalDetailsView = (props: {
+  isProposalDetails: boolean;
   onDataToSafeView: any;
   proposalSelected?: any;
   selectedMultisig?: any;
@@ -29,7 +29,7 @@ export const SafeDetailsView = (props: {
   const { isWhitelisted } = useContext(AppStateContext);
   const { t } = useTranslation('common');
   const { publicKey, wallet } = useWallet();
-  const { isSafeDetails, onDataToSafeView, proposalSelected, selectedMultisig, onProposalApprove, onProposalExecute } = props;
+  const { isProposalDetails, onDataToSafeView, proposalSelected, selectedMultisig, onProposalApprove, onProposalExecute } = props;
   const [selectedProposal, setSelectedProposal] = useState<any>(proposalSelected);
 
   useEffect(() => {
@@ -48,7 +48,7 @@ export const SafeDetailsView = (props: {
   // }
 
   // When back button is clicked, goes to Safe Info
-  const hideSafeDetailsHandler = () => {
+  const hideProposalDetailsHandler = () => {
     // Sends the value to the parent component "SafeView"
     onDataToSafeView();
   };
@@ -92,9 +92,9 @@ export const SafeDetailsView = (props: {
 
       {selectedProposal && (
         selectedProposal.accounts.map((account: any) => (
-          <Row gutter={[8, 8]} className="mb-2" key={account.index}>
+          <Row gutter={[8, 8]} className="mb-2" key={account.pubkey.toBase58()}>
             <Col xs={6} sm={6} md={4} lg={4} className="pr-1">
-              <span className="info-label">{t('multisig.proposal-modal.instruction-account')} {account.index}:</span>
+              <span className="info-label">{t('multisig.proposal-modal.instruction-account')} :</span>
             </Col>
               <Col xs={17} sm={17} md={19} lg={19} className="pl-1 pr-3">
                 <span onClick={() => copyAddressToClipboard(account.pubkey.toBase58())} className="d-block info-data simplelink underline-on-hover text-truncate" style={{cursor: 'pointer'}}>
@@ -196,7 +196,7 @@ export const SafeDetailsView = (props: {
   return (
     <div className="safe-details-container">
       <Row gutter={[8, 8]} className="safe-details-resume">
-        <div onClick={hideSafeDetailsHandler} className="back-button icon-button-container">
+        <div onClick={hideProposalDetailsHandler} className="back-button icon-button-container">
           <IconArrowBack className="mean-svg-icons" />
           <span>Back</span>
         </div>
@@ -211,7 +211,7 @@ export const SafeDetailsView = (props: {
         // rejected={selectedProposal.rejected}
         status={selectedProposal.status}
         needs={neededSigners}
-        isSafeDetails={isSafeDetails}
+        isProposalDetails={isProposalDetails}
       />
       {selectedProposal.details.description && (
         <Row className="safe-details-description">
@@ -231,12 +231,15 @@ export const SafeDetailsView = (props: {
                 </div>
               </Col>
             ) : (
+              selectedProposal.operation !== 3 &&
               selectedProposal.operation !== 31 &&
               selectedProposal.operation !== 42 &&
               selectedProposal.operation !== 34 &&
               selectedProposal.operation !== 39 &&
               selectedProposal.operation !== 36 &&
-              selectedProposal.operation !== 3 ? (
+              selectedProposal.operation !== 38 &&
+              selectedProposal.operation !== 110 &&
+              selectedProposal.operation !== 111 ? (
                 <Col className="safe-details-left-container">
                   <IconUserClock className="user-image mean-svg-icons bg-yellow" />
                   <div className="proposal-resume-left-text">
@@ -310,12 +313,15 @@ export const SafeDetailsView = (props: {
                           </div>
                       </Button>
                     ) : (
+                      selectedProposal.operation !== 3 &&
                       selectedProposal.operation !== 31 &&
                       selectedProposal.operation !== 42 &&
                       selectedProposal.operation !== 34 &&
                       selectedProposal.operation !== 39 &&
                       selectedProposal.operation !== 36 &&
-                      selectedProposal.operation !== 3 ? (
+                      selectedProposal.operation !== 38 &&
+                      selectedProposal.operation !== 110 &&
+                      selectedProposal.operation !== 111 ? (
                         null
                       ) : (
                         <Button
