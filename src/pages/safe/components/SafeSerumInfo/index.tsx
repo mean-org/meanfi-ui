@@ -19,7 +19,7 @@ export const SafeSerumInfoView = (props: {
   isAssetDetails: boolean;
   onDataToSafeView: any;
   onDataToProgramView: any;
-  onDataToAssetView: any;
+  // onDataToAssetView: any;
   selectedMultisig?: any;
   onEditMultisigClick: any;
   onNewProposalMultisigClick: any;
@@ -75,6 +75,7 @@ export const SafeSerumInfoView = (props: {
                   approved={approvedSigners}
                   status={tx.status}
                   isSafeDetails={isSafeDetails}
+                  rightIcon={<IconArrowForward className="mean-svg-icons" />}
                 />
             </div>
           )

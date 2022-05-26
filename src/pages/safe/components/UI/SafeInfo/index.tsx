@@ -184,7 +184,7 @@ export const SafeInfo = (props: {
 
   // View assets
   const onGoToAccounts = () => {
-    navigate(`/accounts?address=${selectedMultisig.authority.toBase58()}&cat=user-assets`);
+    navigate(`/accounts?address=${selectedMultisig.authority.toBase58()}&cat=user-account`);
   }
 
   // Dropdown (three dots button)

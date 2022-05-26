@@ -5,7 +5,6 @@ import {
 } from '@ant-design/icons';
 import {
   Account,
-  Commitment,
   ConfirmOptions,
   Connection,
   Keypair,
@@ -50,7 +49,7 @@ import { IconEllipsisVertical, IconSafe, IconUserGroup, IconUsers } from '../../
 import { useNativeAccount } from '../../contexts/accounts';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-// import { useNavigate } from 'react-router-dom';
+
 import {
   MultisigParticipant,
   MultisigTransaction,
@@ -59,10 +58,8 @@ import {
   MultisigTransactionFees,
   ZERO_FEES,
   MULTISIG_ACTIONS,
-  // getMultisigTransactionSummary,
   getFees,
   DEFAULT_EXPIRATION_TIME_SECONDS,
-  // MultisigVault,
   parseSerializedTx
   
 } from '../../models/multisig';
@@ -84,8 +81,6 @@ import SerumIDL from '../../models/serum-multisig-idl';
 import { AppsProvider, NETWORK, App, UiInstruction, AppConfig, UiElement, Arg } from '@mean-dao/mean-multisig-apps';
 import { SafeSerumInfoView } from './components/SafeSerumInfo';
 import { MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigInfo } from '@mean-dao/mean-multisig-sdk';
-import { AssetDetailsView } from './components/AssetDetails';
-// import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { MultisigCreateAssetModal } from '../../components/MultisigCreateAssetModal';
 
 import { createProgram, getDepositIx, getGatewayToken } from '@mean-dao/mean-multisig-apps/lib/apps/credix/func';
@@ -2154,6 +2149,18 @@ export const SafeView = () => {
             })`
           });
           customLogger.logWarning('Multisig Approve transaction failed', { transcript: transactionLog });
+          openNotification({
+            description: t('transactions.status.tx-start-failure', {
+              accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                nativeBalance,
+                NATIVE_SOL_MINT.toBase58()
+              ),
+              feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                minRequired,
+                NATIVE_SOL_MINT.toBase58()
+              )}),
+            type: "info"
+          });
           return false;
         }
 
@@ -2333,6 +2340,7 @@ export const SafeView = () => {
     }
 
   }, [
+    t,
     clearTxConfirmationContext, 
     connection, 
     multisigClient, 
@@ -2436,6 +2444,18 @@ export const SafeView = () => {
             })`
           });
           customLogger.logWarning('Finish Approoved transaction failed', { transcript: transactionLog });
+          openNotification({
+            description: t('transactions.status.tx-start-failure', {
+              accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                nativeBalance,
+                NATIVE_SOL_MINT.toBase58()
+              ),
+              feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                minRequired,
+                NATIVE_SOL_MINT.toBase58()
+              )}),
+            type: "info"
+          });
           return false;
         }
 
@@ -2625,6 +2645,7 @@ export const SafeView = () => {
     }
 
   }, [
+    t,
     wallet,
     publicKey,
     connection,
@@ -3399,9 +3420,6 @@ export const SafeView = () => {
   }
 
   const goToAssetDetailsHandler = (selectedAsset: any) => {
-    setIsSafeDetails(false);
-    setIsProgramDetails(false);
-    setIsAssetDetails(true);
     setAssetSelected(selectedAsset);
   }
 
@@ -3417,10 +3435,10 @@ export const SafeView = () => {
     setSelectedTab(0);
   }
 
-  const returnFromAssetDetailsHandler = () => {
-    setIsAssetDetails(false);
-    setSelectedTab(1);
-  }
+  // const returnFromAssetDetailsHandler = () => {
+  //   setIsAssetDetails(false);
+  //   setSelectedTab(1);
+  // }
 
   const returnFromProgramDetailsHandler = () => {
     setIsProgramDetails(false);
@@ -3549,7 +3567,6 @@ export const SafeView = () => {
                               isAssetDetails={isAssetDetails}
                               onDataToSafeView={goToSafeDetailsHandler}
                               onDataToProgramView={goToProgramDetailsHandler}
-                              onDataToAssetView={goToAssetDetailsHandler}
                               selectedMultisig={selectedMultisig}
                               onEditMultisigClick={onEditMultisigClick}
                               onNewProposalMultisigClick={onNewProposalMultisigClick}
@@ -3573,6 +3590,7 @@ export const SafeView = () => {
                               multisigClient={multisigClient}
                               selectedTab={selectedTab}
                               proposalSelected={proposalSelected}
+                              assetSelected={assetSelected}
                             />
                           )
                         )}
@@ -3584,14 +3602,6 @@ export const SafeView = () => {
                             selectedMultisig={selectedMultisig}
                             onProposalApprove={onExecuteApproveTx}
                             onProposalExecute={onExecuteFinishTx}
-                          />
-                        )}
-                        {isAssetDetails && (
-                          <AssetDetailsView
-                            isAssetDetails={isAssetDetails}
-                            onDataToAssetView={returnFromAssetDetailsHandler}
-                            assetSelected={assetSelected}
-                            selectedMultisig={selectedMultisig}
                           />
                         )}
                         {isProgramDetails && (
