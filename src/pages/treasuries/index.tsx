@@ -48,7 +48,8 @@ import {
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
   SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
   HALF_MINUTE_REFRESH_TIMEOUT,
-  VERBOSE_DATE_TIME_FORMAT
+  VERBOSE_DATE_TIME_FORMAT,
+  WRAPPED_SOL_MINT_ADDRESS
 } from '../../constants';
 import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
@@ -2394,7 +2395,7 @@ export const TreasuriesView = () => {
     setIsBusy(true);
 
     const createTxV1 = async (): Promise<boolean> => {
-      if (publicKey && treasuryDetails && selectedToken) {
+      if (publicKey && treasuryDetails) {
         consoleOut("Start transaction for treasury addFunds", '', 'blue');
         consoleOut('Wallet address:', publicKey.toBase58());
 
@@ -2404,7 +2405,7 @@ export const TreasuriesView = () => {
         });
 
         const treasury = new PublicKey(treasuryDetails.id);
-        const associatedToken = new PublicKey(selectedToken.address);
+        const associatedToken = new PublicKey(params.associatedToken);
         const amount = parseFloat(params.amount);
         const stream = params.streamId ? new PublicKey(params.streamId) : undefined;
 
@@ -2567,7 +2568,7 @@ export const TreasuriesView = () => {
 
     const createTxV2 = async (): Promise<boolean> => {
 
-      if (!publicKey || !treasuryDetails || !selectedToken || !msp) {
+      if (!publicKey || !treasuryDetails || !params || !params.associatedToken || !msp) {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
@@ -2585,7 +2586,7 @@ export const TreasuriesView = () => {
       });
 
       const treasury = new PublicKey(treasuryDetails.id);
-      const associatedToken = new PublicKey(selectedToken.address);
+      const associatedToken = new PublicKey(params.associatedToken);
       const amount = params.tokenAmount.toNumber();
 
       console.log('params.streamId', params.streamId);
@@ -2783,7 +2784,7 @@ export const TreasuriesView = () => {
       }
     }
 
-    if (publicKey && treasuryDetails && selectedToken) {
+    if (publicKey && treasuryDetails) {
       let created: boolean;
       if ((treasuryDetails as Treasury).version && (treasuryDetails as Treasury).version >= 2) {
         created = await createTxV2();
@@ -5106,13 +5107,18 @@ export const TreasuriesView = () => {
     const v1 = treasuryDetails as TreasuryInfo;
     const v2 = treasuryDetails as Treasury;
     const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
-    const token = isNewTreasury
+    let token = isNewTreasury
       ? v2.associatedToken
         ? getTokenByMintAddress(v2.associatedToken as string)
         : undefined
       : v1.associatedTokenAddress
         ? getTokenByMintAddress(v1.associatedTokenAddress as string)
         : undefined;
+    if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
+      token = Object.assign({}, token, {
+        symbol: 'SOL'
+      }) as TokenInfo;
+    }
     const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
       event.currentTarget.src = FALLBACK_COIN_IMAGE;
       event.currentTarget.className = "error";
@@ -5176,7 +5182,7 @@ export const TreasuriesView = () => {
                       )}
                     </span>
                     <span className="info-data text-truncate">
-                      {token && token.symbol ? `${token.symbol} (${token.name})` : shortenAddress(isNewTreasury ? v2.associatedToken as string : v1.associatedTokenAddress as string)}
+                      {token && token.symbol ? token.symbol : shortenAddress(isNewTreasury ? v2.associatedToken as string : v1.associatedTokenAddress as string)}
                     </span>
                   </div>
                 </Col>

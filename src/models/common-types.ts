@@ -12,6 +12,7 @@ export interface TreasuryTopupParams {
     tokenAmount: any;
     allocationType: AllocationType;
     streamId: string;
+    associatedToken: string;
 }
 
 export interface PartnerImage {

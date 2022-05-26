@@ -33,8 +33,8 @@ export const SOCN_USD = {
     },
 };
 
-export const PINNED_TOKENS = ['USDC', 'ETH', 'BTC', 'USDT', 'wSOL', 'SLND', 'MEAN'];
-export const COMMON_EXCHANGE_TOKENS = ['USDC', 'USDT', 'MEAN', 'wSOL'];
+export const PINNED_TOKENS = ['USDC', 'ETH', 'BTC', 'USDT', 'SOL', 'SLND', 'MEAN'];
+export const COMMON_EXCHANGE_TOKENS = ['USDC', 'USDT', 'MEAN', 'SOL'];
 
 export const MEAN_TOKEN_LIST: TokenInfo[] = [
     {
@@ -152,7 +152,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
     {
         chainId: 101,
         address: 'So11111111111111111111111111111111111111112',
-        symbol: 'wSOL',
+        symbol: 'SOL',
         name: 'Solana',
         decimals: 9,
         logoURI: `${LOGO_BASE_URL}/So11111111111111111111111111111111111111112/logo.png`,
@@ -618,7 +618,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
     {
         chainId: 102,
         address: 'So11111111111111111111111111111111111111112',
-        symbol: 'wSOL',
+        symbol: 'SOL',
         name: 'Solana',
         decimals: 9,
         logoURI: `${LOGO_BASE_URL}/So11111111111111111111111111111111111111112/logo.png`,
@@ -790,7 +790,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
     {
         chainId: 103,
         address: 'So11111111111111111111111111111111111111112',
-        symbol: 'wSOL',
+        symbol: 'SOL',
         name: 'Solana',
         decimals: 9,
         logoURI: `${LOGO_BASE_URL}/So11111111111111111111111111111111111111112/logo.png`,
