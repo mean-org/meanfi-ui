@@ -1170,7 +1170,7 @@
 			"refreshing-account-balance": "Refreshing account balance",
 			"treasury-address-label": "Streaming account address",
 			"treasury-name-label": "Tên kho bạc",
-			"unallocated-treasury-balance": "Unallocated balance"
+			"unallocated-treasury-balance": "Available streaming balance"
 		},
 		"treasury-detail-heading": "Chi tiết kho bạc",
 		"treasury-list": {

@@ -1184,7 +1184,7 @@
 			"refreshing-account-balance": "Refreshing account balance",
 			"treasury-address-label": "Streaming account address",
 			"treasury-name-label": "Nom du Trésor",
-			"unallocated-treasury-balance": "Unallocated balance"
+			"unallocated-treasury-balance": "Available streaming balance"
 		},
 		"treasury-detail-heading": "Détails du Trésor",
 		"treasury-list": {

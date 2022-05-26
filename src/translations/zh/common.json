@@ -1184,7 +1184,7 @@
 			"refreshing-account-balance": "Refreshing account balance",
 			"treasury-address-label": "地址",
 			"treasury-name-label": "国库名称",
-			"unallocated-treasury-balance": "Unallocated balance"
+			"unallocated-treasury-balance": "Available streaming balance"
 		},
 		"treasury-detail-heading": "国库详细信息",
 		"treasury-list": {

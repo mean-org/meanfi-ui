@@ -172,6 +172,7 @@ export const TreasuriesView = () => {
   const [loadingTreasuryDetails, setLoadingTreasuryDetails] = useState(false);
   const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
   const [retryOperationPayload, setRetryOperationPayload] = useState<any>(undefined);
+  const [treasuryEffectiveBalance, setTreasuryEffectiveBalance] = useState(0);
 
   // Multisig related
   const [multisigAddress, setMultisigAddress] = useState('');
@@ -583,27 +584,6 @@ export const TreasuriesView = () => {
     return treasuryStreams ? treasuryStreams.length : 0;
   }, [treasuryStreams]);
 
-  // Keep account balance updated
-  useEffect(() => {
-
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
-    if (account?.lamports !== previousBalance || !nativeBalance) {
-      // Refresh token balance
-      refreshTokenBalance();
-      setNativeBalance(getAccountBalance());
-      // Update previous balance
-      setPreviousBalance(account?.lamports);
-    }
-  }, [
-    account,
-    nativeBalance,
-    previousBalance,
-    refreshTokenBalance
-  ]);
-
   const refreshUserBalances = useCallback(() => {
 
     if (!connection || !publicKey || !tokenList || !accounts || !accounts.tokenAccounts) {
@@ -641,48 +621,6 @@ export const TreasuriesView = () => {
     publicKey,
     tokenList,
     connection,
-  ]);
-
-  // Automatically update all token balances (in token list)
-  useEffect(() => {
-
-    if (!connection) {
-      console.error('No connection');
-      return;
-    }
-
-    if (!publicKey || !tokenList || !accounts || !accounts.tokenAccounts) {
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-      refreshUserBalances();
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }
-
-  }, [
-    accounts,
-    tokenList,
-    publicKey,
-    connection,
-    refreshUserBalances
-  ]);
-
-  // Auto select a token
-  useEffect(() => {
-
-    if (tokenList && !selectedToken) {
-      setSelectedToken(tokenList.find(t => t.symbol === 'MEAN'));
-    }
-
-    return () => { };
-  }, [
-    tokenList,
-    selectedToken,
-    setSelectedToken
   ]);
 
   const isMultisigTreasury = useCallback((treasury?: any) => {
@@ -727,378 +665,6 @@ export const TreasuriesView = () => {
     publicKey, 
     treasuryDetails
   ])
-
-  useEffect(() => {
-
-    if (!multisigClient || !multisigAddress) { return; }
-
-    getFees(multisigClient.getProgram(), MULTISIG_ACTIONS.createTransaction)
-    .then(value => {
-      setMultisigTxFees(value);
-      consoleOut('Multisig transaction fees:', value, 'orange');
-      if (multisigAddress) {
-        const minRequired = value.networkFee + value.multisigFee + value.rentExempt;  // Multisig proposal fees
-        setMinRequiredBalance(minRequired);
-        consoleOut('Min balance required:', minRequired, 'blue');
-      }
-    });
-  }, [multisigAddress, multisigClient]);
-
-  // Update treasury pending Txs
-  useEffect(() => {
-
-    if (!isMultisigTreasury() || !multisigClient || !treasuryDetails || !connected || !publicKey || !multisigAccounts) {
-      setTreasuryPendingTxs(0);
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-      const treasury = treasuryDetails as Treasury;
-      const multisig = multisigAccounts.find(m => m.authority.toBase58() === treasury.treasurer);
-      
-      if (!multisig) {
-        setTreasuryPendingTxs(0);
-        return;
-      }
-      
-      multisigClient
-        .getMultisigTransactions(multisig.id, publicKey)
-        .then((value: MultisigTransaction[]) => {
-          let pendingTxs = 0;
-          for (const tx of value) {
-            const isPending = (
-              multisig !== undefined &&
-              !tx.executedOn &&
-              tx.accounts.findIndex((a: any) => a.pubkey.equals(new PublicKey(treasuryDetails.id))) !== -1 &&
-              multisig.ownerSeqNumber === tx.ownerSeqNumber
-            );
-            if (isPending) {
-              pendingTxs += 1;
-            }
-          }
-          setTreasuryPendingTxs(pendingTxs);
-        });
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }
-
-  },[
-    connected, 
-    isMultisigTreasury, 
-    multisigAccounts, 
-    multisigClient, 
-    publicKey, 
-    treasuryDetails
-  ]);  
-
-  // Get the user multisig accounts' list
-  useEffect(() => {
-
-    if (!connection || !publicKey || !multisigClient || !needReloadMultisig) {
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-
-      setNeedReloadMultisig(false);
-
-      multisigClient
-        .getMultisigs(publicKey)
-        .then((allInfo: MultisigInfo[]) => {          
-          allInfo.sort((a: any, b: any) => b.createdOnUtc.getTime() - a.createdOnUtc.getTime());
-          setMultisigAccounts(allInfo);
-          consoleOut('multisigs:', allInfo, 'blue');
-          setLoadingMultisigAccounts(false);
-        })
-        .catch(err => {
-          console.error(err);
-          setLoadingMultisigAccounts(false);
-        });
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }
-
-  }, [
-    publicKey,
-    connection,
-    multisigClient,
-    needReloadMultisig
-  ]);
-
-  // Set selectedMultisig based on the passed-in multisigAddress in query params
-  useEffect(() => {
-
-    if (!publicKey || !multisigAddress || !multisigAccounts || multisigAccounts.length === 0) {
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-      if (location.search) {
-        consoleOut(`try to select multisig ${multisigAddress} from list`, multisigAccounts, 'blue');
-        const selected = multisigAccounts.find(m => m.id.toBase58() === multisigAddress);
-        if (selected) {
-          consoleOut('selectedMultisig:', selected, 'blue');
-          setSelectedMultisig(selected);
-        } else {
-          consoleOut('multisigAccounts does not contain the requested multisigAddress:', multisigAddress, 'orange');
-        }
-      }
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }
-
-  }, [
-    publicKey,
-    location.search,
-    multisigAddress,
-    multisigAccounts,
-  ]);
-
-  // Load treasuries once per page access
-  useEffect(() => {
-    
-    if (!publicKey || treasuriesLoaded) { return; }
-
-    /**
-     * Verify query params before calling refreshTreasuries
-     * 
-     * The reason for this is that when query params are passed and stored in the state
-     * they will be available in the next/further render(s).
-     * treasuryAddress is needed for highlighting a treasury in the list after the list is refreshed
-     * multisigAddress is needed to obtain the selectedMultisig
-     * selectedMultisig is needed because refreshTreasuries will obtain a list of treasuries for
-     * the multisig authority if available, if not it will obtain the user's treasuries
-     */
-    const params = new URLSearchParams(location.search);
-    if (params.has('treasury')) {
-      if (!treasuryAddress) { return; }
-    } else if (params.has('multisig')) {
-      if (!multisigAddress) {
-        return;
-      } else if (!selectedMultisig) {
-        return;
-      }
-    }
-
-    consoleOut('Calling refreshTreasuries...', '', 'blue');
-    setTreasuriesLoaded(true);
-    refreshTreasuries(true);
-  }, [
-    publicKey,
-    location.search,
-    treasuryAddress,
-    multisigAddress,
-    selectedMultisig,
-    treasuriesLoaded,
-    refreshTreasuries
-  ]);
-
-  // Load/Unload treasuries on wallet connect/disconnect
-  useEffect(() => {
-    if (previousWalletConnectState !== connected) {
-      if (!previousWalletConnectState && connected && publicKey) {
-        consoleOut('User is connecting...', publicKey.toBase58(), 'green');
-        setLoadingMultisigAccounts(true);
-        setTreasuriesLoaded(false);
-      } else if (previousWalletConnectState && !connected) {
-        consoleOut('User is disconnecting...', '', 'green');
-        setUserBalances(undefined);
-        setTreasuryList([]);
-        setTreasuryStreams([]);
-        setCustomStreamDocked(false);
-        setTreasuryDetails(undefined);
-      }
-    }
-  }, [
-    connected,
-    publicKey,
-    treasuriesLoaded,
-    loadingTreasuries,
-    previousWalletConnectState,
-  ]);
-
-  // Reload Treasury streams whenever the selected treasury changes
-  useEffect(() => {
-    if (!publicKey) { return; }
-
-    if (treasuryDetails && !loadingTreasuryStreams && signalRefreshTreasuryStreams) {
-      setSignalRefreshTreasuryStreams(false);
-      consoleOut('calling getTreasuryStreams...', '', 'blue');
-      const treasuryPk = new PublicKey(treasuryDetails.id as string);
-      const isNewTreasury = (treasuryDetails as Treasury).version && (treasuryDetails as Treasury).version >= 2
-        ? true
-        : false;
-      getTreasuryStreams(treasuryPk, isNewTreasury);
-    }
-  }, [
-    ms,
-    publicKey,
-    treasuryStreams,
-    treasuryDetails,
-    loadingTreasuryStreams,
-    signalRefreshTreasuryStreams,
-    getTreasuryStreams,
-  ]);
-
-  // Maintain stream stats
-  useEffect(() => {
-
-    const updateStats = () => {
-      if (treasuryStreams && treasuryStreams.length) {
-        const scheduled = treasuryStreams.filter(s => {
-          if (s.version < 2) {
-            return (s as StreamInfo).state === STREAM_STATE.Schedule
-          } else {
-            return (s as Stream).status === STREAM_STATUS.Schedule
-          }
-        });
-        const running = treasuryStreams.filter(s => {
-          if (s.version < 2) {
-            return (s as StreamInfo).state === STREAM_STATE.Running
-          } else {
-            return (s as Stream).status === STREAM_STATUS.Running
-          }
-        });
-        const stopped = treasuryStreams.filter(s => {
-          if (s.version < 2) {
-            return (s as StreamInfo).state === STREAM_STATE.Paused
-          } else {
-            return (s as Stream).status === STREAM_STATUS.Paused
-          }
-        });
-        const stats: TreasuryStreamsBreakdown = {
-          total: treasuryStreams.length,
-          scheduled: scheduled.length,
-          running: running.length,
-          stopped: stopped.length
-        }
-        setStreamStats(stats);
-      } else {
-        setStreamStats(undefined);
-      }
-    }
-
-    updateStats();
-  }, [
-    publicKey,
-    treasuryStreams,
-  ]);
-
-  // Detect when entering small screen mode
-  useEffect(() => {
-    if (isSmallUpScreen && width < 576) {
-      setIsSmallUpScreen(false);
-    }
-  }, [
-    width,
-    isSmallUpScreen,
-    detailsPanelOpen,
-  ]);
-
-  // Treasury list refresh timeout
-  useEffect(() => {
-    let timer: any;
-
-    if (publicKey && treasuriesLoaded && !customStreamDocked) {
-      timer = setInterval(() => {
-        consoleOut(`Refreshing treasuries past ${HALF_MINUTE_REFRESH_TIMEOUT / 60 / 1000}min...`);
-        refreshTreasuries(false);
-      }, HALF_MINUTE_REFRESH_TIMEOUT);
-    }
-
-    return () => clearInterval(timer);
-  }, [
-    publicKey,
-    treasuriesLoaded,
-    customStreamDocked,
-    refreshTreasuries
-  ]);
-
-  // Handle what to do when pending Tx confirmation reaches finality or on error
-  // For now just refresh treasuries keeping the selection or reseting to first item
-  useEffect(() => {
-    if (!publicKey || fetchTxInfoStatus === "fetching") { return; }
-
-    const stackedMessagesAndNavigate = async (options: TreasuryCreateOptions) => {
-      openNotification({
-        type: "info",
-        description: t('treasuries.create-treasury.multisig-treasury-created-info'),
-        duration: 10
-      });
-      await delay(1500);
-      openNotification({
-        type: "info",
-        description: t('treasuries.create-treasury.multisig-treasury-created-instructions', {treasuryName: options.treasuryName}),
-        duration: null,
-      });
-      setHighLightableMultisigId(options.multisigId);
-      navigate('/multisig');
-    }
-
-    if (lastSentTxOperationType) {
-      if (fetchTxInfoStatus === "fetched") {
-        const usedOptions = retryOperationPayload as TreasuryCreateOptions;
-        switch (lastSentTxOperationType) {
-          case OperationType.TreasuryCreate:
-            if (usedOptions.multisigId) {
-              clearTxConfirmationContext();
-              stackedMessagesAndNavigate(usedOptions);
-            } else {
-              refreshTreasuries(true);
-            }
-            setOngoingOperation(undefined);
-            break;
-          case OperationType.TreasuryClose:
-            refreshTreasuries(true);
-            break;
-          default:
-            refreshTreasuries(false);
-            break;
-        }
-      } else if (fetchTxInfoStatus === "error") {
-        clearTxConfirmationContext();
-        openNotification({
-          type: "info",
-          duration: 5,
-          description: (
-            <>
-              <span className="mr-1">
-                {t('notifications.tx-not-confirmed')}
-              </span>
-              <div>
-                <span className="mr-1">{t('notifications.check-transaction-in-explorer')}</span>
-                <a className="secondary-link"
-                    href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${lastSentTxSignature}${getSolanaExplorerClusterParam()}`}
-                    target="_blank"
-                    rel="noopener noreferrer">
-                    {shortenAddress(lastSentTxSignature, 8)}
-                </a>
-              </div>
-            </>
-          )
-        });
-      }
-    }
-  }, [
-    publicKey,
-    multisigAccounts,
-    selectedMultisig,
-    fetchTxInfoStatus,
-    lastSentTxSignature,
-    retryOperationPayload,
-    lastSentTxOperationType,
-    clearTxConfirmationContext,
-    setHighLightableMultisigId,
-    refreshTreasuries,
-    navigate,
-    t
-  ]);
 
   /////////////////
   //   Getters   //
@@ -1517,20 +1083,6 @@ export const TreasuriesView = () => {
 
   }, [treasuryDetails]);
 
-  const isSuccess = (): boolean => {
-    return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
-  }
-
-  const isError = (): boolean => {
-    return  transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ||
-            transactionStatus.currentOperation === TransactionStatus.InitTransactionFailure ||
-            transactionStatus.currentOperation === TransactionStatus.SignTransactionFailure ||
-            transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ||
-            transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure
-            ? true
-            : false;
-  }
-
   // Copy address to clipboard
   const copyAddressToClipboard = useCallback((address: any) => {
 
@@ -1547,6 +1099,482 @@ export const TreasuriesView = () => {
     }
 
   },[t])
+
+  const isSuccess = (): boolean => {
+    return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
+  }
+
+  const isError = (): boolean => {
+    return  transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ||
+            transactionStatus.currentOperation === TransactionStatus.InitTransactionFailure ||
+            transactionStatus.currentOperation === TransactionStatus.SignTransactionFailure ||
+            transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ||
+            transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure
+            ? true
+            : false;
+  }
+
+  /////////////////
+  //   Effects   //
+  /////////////////
+
+  // Keep account balance updated
+  useEffect(() => {
+
+    const getAccountBalance = (): number => {
+      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
+    }
+
+    if (account?.lamports !== previousBalance || !nativeBalance) {
+      // Refresh token balance
+      refreshTokenBalance();
+      setNativeBalance(getAccountBalance());
+      // Update previous balance
+      setPreviousBalance(account?.lamports);
+    }
+  }, [
+    account,
+    nativeBalance,
+    previousBalance,
+    refreshTokenBalance
+  ]);
+
+  // Automatically update all token balances (in token list)
+  useEffect(() => {
+
+    if (!connection) {
+      console.error('No connection');
+      return;
+    }
+
+    if (!publicKey || !tokenList || !accounts || !accounts.tokenAccounts) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      refreshUserBalances();
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [
+    accounts,
+    tokenList,
+    publicKey,
+    connection,
+    refreshUserBalances
+  ]);
+
+  // Auto select a token
+  useEffect(() => {
+
+    if (tokenList && !selectedToken) {
+      setSelectedToken(tokenList.find(t => t.symbol === 'MEAN'));
+    }
+
+    return () => { };
+  }, [
+    tokenList,
+    selectedToken,
+    setSelectedToken
+  ]);
+
+  useEffect(() => {
+
+    if (!multisigClient || !multisigAddress) { return; }
+
+    getFees(multisigClient.getProgram(), MULTISIG_ACTIONS.createTransaction)
+    .then(value => {
+      setMultisigTxFees(value);
+      consoleOut('Multisig transaction fees:', value, 'orange');
+      if (multisigAddress) {
+        const minRequired = value.networkFee + value.multisigFee + value.rentExempt;  // Multisig proposal fees
+        setMinRequiredBalance(minRequired);
+        consoleOut('Min balance required:', minRequired, 'blue');
+      }
+    });
+  }, [multisigAddress, multisigClient]);
+
+  // Update treasury pending Txs
+  useEffect(() => {
+
+    if (!isMultisigTreasury() || !multisigClient || !treasuryDetails || !connected || !publicKey || !multisigAccounts) {
+      setTreasuryPendingTxs(0);
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      const treasury = treasuryDetails as Treasury;
+      const multisig = multisigAccounts.find(m => m.authority.toBase58() === treasury.treasurer);
+      
+      if (!multisig) {
+        setTreasuryPendingTxs(0);
+        return;
+      }
+      
+      multisigClient
+        .getMultisigTransactions(multisig.id, publicKey)
+        .then((value: MultisigTransaction[]) => {
+          let pendingTxs = 0;
+          for (const tx of value) {
+            const isPending = (
+              multisig !== undefined &&
+              !tx.executedOn &&
+              tx.accounts.findIndex((a: any) => a.pubkey.equals(new PublicKey(treasuryDetails.id))) !== -1 &&
+              multisig.ownerSeqNumber === tx.ownerSeqNumber
+            );
+            if (isPending) {
+              pendingTxs += 1;
+            }
+          }
+          setTreasuryPendingTxs(pendingTxs);
+        });
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  },[
+    connected, 
+    isMultisigTreasury, 
+    multisigAccounts, 
+    multisigClient, 
+    publicKey, 
+    treasuryDetails
+  ]);  
+
+  // Get the user multisig accounts' list
+  useEffect(() => {
+
+    if (!connection || !publicKey || !multisigClient || !needReloadMultisig) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+
+      setNeedReloadMultisig(false);
+
+      multisigClient
+        .getMultisigs(publicKey)
+        .then((allInfo: MultisigInfo[]) => {          
+          allInfo.sort((a: any, b: any) => b.createdOnUtc.getTime() - a.createdOnUtc.getTime());
+          setMultisigAccounts(allInfo);
+          consoleOut('multisigs:', allInfo, 'blue');
+          setLoadingMultisigAccounts(false);
+        })
+        .catch(err => {
+          console.error(err);
+          setLoadingMultisigAccounts(false);
+        });
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [
+    publicKey,
+    connection,
+    multisigClient,
+    needReloadMultisig
+  ]);
+
+  // Set selectedMultisig based on the passed-in multisigAddress in query params
+  useEffect(() => {
+
+    if (!publicKey || !multisigAddress || !multisigAccounts || multisigAccounts.length === 0) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      if (location.search) {
+        consoleOut(`try to select multisig ${multisigAddress} from list`, multisigAccounts, 'blue');
+        const selected = multisigAccounts.find(m => m.id.toBase58() === multisigAddress);
+        if (selected) {
+          consoleOut('selectedMultisig:', selected, 'blue');
+          setSelectedMultisig(selected);
+        } else {
+          consoleOut('multisigAccounts does not contain the requested multisigAddress:', multisigAddress, 'orange');
+        }
+      }
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [
+    publicKey,
+    location.search,
+    multisigAddress,
+    multisigAccounts,
+  ]);
+
+  // Load treasuries once per page access
+  useEffect(() => {
+    
+    if (!publicKey || treasuriesLoaded) { return; }
+
+    /**
+     * Verify query params before calling refreshTreasuries
+     * 
+     * The reason for this is that when query params are passed and stored in the state
+     * they will be available in the next/further render(s).
+     * treasuryAddress is needed for highlighting a treasury in the list after the list is refreshed
+     * multisigAddress is needed to obtain the selectedMultisig
+     * selectedMultisig is needed because refreshTreasuries will obtain a list of treasuries for
+     * the multisig authority if available, if not it will obtain the user's treasuries
+     */
+    const params = new URLSearchParams(location.search);
+    if (params.has('treasury')) {
+      if (!treasuryAddress) { return; }
+    } else if (params.has('multisig')) {
+      if (!multisigAddress) {
+        return;
+      } else if (!selectedMultisig) {
+        return;
+      }
+    }
+
+    consoleOut('Calling refreshTreasuries...', '', 'blue');
+    setTreasuriesLoaded(true);
+    refreshTreasuries(true);
+  }, [
+    publicKey,
+    location.search,
+    treasuryAddress,
+    multisigAddress,
+    selectedMultisig,
+    treasuriesLoaded,
+    refreshTreasuries
+  ]);
+
+  // Load/Unload treasuries on wallet connect/disconnect
+  useEffect(() => {
+    if (previousWalletConnectState !== connected) {
+      if (!previousWalletConnectState && connected && publicKey) {
+        consoleOut('User is connecting...', publicKey.toBase58(), 'green');
+        setLoadingMultisigAccounts(true);
+        setTreasuriesLoaded(false);
+      } else if (previousWalletConnectState && !connected) {
+        consoleOut('User is disconnecting...', '', 'green');
+        setUserBalances(undefined);
+        setTreasuryList([]);
+        setTreasuryStreams([]);
+        setCustomStreamDocked(false);
+        setTreasuryDetails(undefined);
+      }
+    }
+  }, [
+    connected,
+    publicKey,
+    treasuriesLoaded,
+    loadingTreasuries,
+    previousWalletConnectState,
+  ]);
+
+  // Reload Treasury streams whenever the selected treasury changes
+  useEffect(() => {
+    if (!publicKey) { return; }
+
+    if (treasuryDetails && !loadingTreasuryStreams && signalRefreshTreasuryStreams) {
+      setSignalRefreshTreasuryStreams(false);
+      consoleOut('calling getTreasuryStreams...', '', 'blue');
+      const treasuryPk = new PublicKey(treasuryDetails.id as string);
+      const isNewTreasury = (treasuryDetails as Treasury).version && (treasuryDetails as Treasury).version >= 2
+        ? true
+        : false;
+      getTreasuryStreams(treasuryPk, isNewTreasury);
+    }
+  }, [
+    ms,
+    publicKey,
+    treasuryStreams,
+    treasuryDetails,
+    loadingTreasuryStreams,
+    signalRefreshTreasuryStreams,
+    getTreasuryStreams,
+  ]);
+
+  // Get the effective balance of the treasury
+  useEffect(() => {
+    if (!connection || !publicKey) { return; }
+
+    if (treasuryDetails) {
+      connection.getMinimumBalanceForRentExemption(300)
+      .then(value => {
+        const re = value / LAMPORTS_PER_SOL;
+        const ub = getTreasuryUnallocatedBalance();
+        const eb = ub - re;
+        consoleOut('treasuryRentExcemption:', re, 'blue');
+        consoleOut('Treasury Unallocated Balance:', ub, 'blue');
+        consoleOut('Effective balance:', eb, 'blue');
+        setTreasuryEffectiveBalance(eb);
+      });
+    }
+  }, [
+    publicKey,
+    connection,
+    treasuryDetails,
+    getTreasuryUnallocatedBalance,
+  ]);
+
+  // Maintain stream stats
+  useEffect(() => {
+
+    const updateStats = () => {
+      if (treasuryStreams && treasuryStreams.length) {
+        const scheduled = treasuryStreams.filter(s => {
+          if (s.version < 2) {
+            return (s as StreamInfo).state === STREAM_STATE.Schedule
+          } else {
+            return (s as Stream).status === STREAM_STATUS.Schedule
+          }
+        });
+        const running = treasuryStreams.filter(s => {
+          if (s.version < 2) {
+            return (s as StreamInfo).state === STREAM_STATE.Running
+          } else {
+            return (s as Stream).status === STREAM_STATUS.Running
+          }
+        });
+        const stopped = treasuryStreams.filter(s => {
+          if (s.version < 2) {
+            return (s as StreamInfo).state === STREAM_STATE.Paused
+          } else {
+            return (s as Stream).status === STREAM_STATUS.Paused
+          }
+        });
+        const stats: TreasuryStreamsBreakdown = {
+          total: treasuryStreams.length,
+          scheduled: scheduled.length,
+          running: running.length,
+          stopped: stopped.length
+        }
+        setStreamStats(stats);
+      } else {
+        setStreamStats(undefined);
+      }
+    }
+
+    updateStats();
+  }, [
+    publicKey,
+    treasuryStreams,
+  ]);
+
+  // Detect when entering small screen mode
+  useEffect(() => {
+    if (isSmallUpScreen && width < 576) {
+      setIsSmallUpScreen(false);
+    }
+  }, [
+    width,
+    isSmallUpScreen,
+    detailsPanelOpen,
+  ]);
+
+  // Treasury list refresh timeout
+  useEffect(() => {
+    let timer: any;
+
+    if (publicKey && treasuriesLoaded && !customStreamDocked) {
+      timer = setInterval(() => {
+        consoleOut(`Refreshing treasuries past ${HALF_MINUTE_REFRESH_TIMEOUT / 60 / 1000}min...`);
+        refreshTreasuries(false);
+      }, HALF_MINUTE_REFRESH_TIMEOUT);
+    }
+
+    return () => clearInterval(timer);
+  }, [
+    publicKey,
+    treasuriesLoaded,
+    customStreamDocked,
+    refreshTreasuries
+  ]);
+
+  // Handle what to do when pending Tx confirmation reaches finality or on error
+  // For now just refresh treasuries keeping the selection or reseting to first item
+  useEffect(() => {
+    if (!publicKey || fetchTxInfoStatus === "fetching") { return; }
+
+    const stackedMessagesAndNavigate = async (options: TreasuryCreateOptions) => {
+      openNotification({
+        type: "info",
+        description: t('treasuries.create-treasury.multisig-treasury-created-info'),
+        duration: 10
+      });
+      await delay(1500);
+      openNotification({
+        type: "info",
+        description: t('treasuries.create-treasury.multisig-treasury-created-instructions', {treasuryName: options.treasuryName}),
+        duration: null,
+      });
+      setHighLightableMultisigId(options.multisigId);
+      navigate('/multisig');
+    }
+
+    if (lastSentTxOperationType) {
+      if (fetchTxInfoStatus === "fetched") {
+        const usedOptions = retryOperationPayload as TreasuryCreateOptions;
+        switch (lastSentTxOperationType) {
+          case OperationType.TreasuryCreate:
+            if (usedOptions.multisigId) {
+              clearTxConfirmationContext();
+              stackedMessagesAndNavigate(usedOptions);
+            } else {
+              refreshTreasuries(true);
+            }
+            setOngoingOperation(undefined);
+            break;
+          case OperationType.TreasuryClose:
+            refreshTreasuries(true);
+            break;
+          default:
+            refreshTreasuries(false);
+            break;
+        }
+      } else if (fetchTxInfoStatus === "error") {
+        clearTxConfirmationContext();
+        openNotification({
+          type: "info",
+          duration: 5,
+          description: (
+            <>
+              <span className="mr-1">
+                {t('notifications.tx-not-confirmed')}
+              </span>
+              <div>
+                <span className="mr-1">{t('notifications.check-transaction-in-explorer')}</span>
+                <a className="secondary-link"
+                    href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${lastSentTxSignature}${getSolanaExplorerClusterParam()}`}
+                    target="_blank"
+                    rel="noopener noreferrer">
+                    {shortenAddress(lastSentTxSignature, 8)}
+                </a>
+              </div>
+            </>
+          )
+        });
+      }
+    }
+  }, [
+    publicKey,
+    multisigAccounts,
+    selectedMultisig,
+    fetchTxInfoStatus,
+    lastSentTxSignature,
+    retryOperationPayload,
+    lastSentTxOperationType,
+    clearTxConfirmationContext,
+    setHighLightableMultisigId,
+    refreshTreasuries,
+    navigate,
+    t
+  ]);
 
   ////////////////
   //   Events   //
@@ -5174,38 +5202,59 @@ export const TreasuriesView = () => {
           <div className="mb-3">
             <Row gutter={16}>
               {token && (
-                <Col span={treasuryDetails.createdOnUtc ? 12 : 24}>
-                  <div className="info-label">
-                    {t('treasuries.treasury-detail.associated-token')}
-                  </div>
-                  <div className="transaction-detail-row">
-                    <span className="info-icon token-icon">
-                      {token && token.logoURI ? (
-                        <img alt={`${token.name}`} width={24} height={24} src={token.logoURI} onError={imageOnErrorHandler} />
-                      ) : (
-                        <Identicon address={(isNewTreasury ? v2.associatedToken : v1.associatedTokenAddress)} style={{ width: "24", display: "inline-flex" }} />
-                      )}
-                    </span>
-                    <span className="info-data text-truncate">
-                      {token && token.symbol ? token.symbol : shortenAddress(isNewTreasury ? v2.associatedToken as string : v1.associatedTokenAddress as string)}
-                    </span>
-                  </div>
-                </Col>
-              )}
-              {treasuryDetails.createdOnUtc && (
-                <Col span={token ? 12 : 24}>
-                  <div className="info-label">
-                    {t('treasuries.treasury-detail.created-on')}
-                  </div>
-                  <div className="transaction-detail-row">
-                    <span className="info-icon">
-                      <IconClock className="mean-svg-icons" />
-                    </span>
-                    <span className="info-data">
-                      {dateFormat(treasuryDetails.createdOnUtc, VERBOSE_DATE_TIME_FORMAT)}
-                    </span>
-                  </div>
-                </Col>
+                <>
+                  <Col span={treasuryDetails.createdOnUtc ? 12 : 24}>
+                    <div className="info-label">
+                      {t('treasuries.treasury-detail.associated-token')}
+                    </div>
+                    <div className="transaction-detail-row">
+                      <span className="info-icon token-icon">
+                        {token && token.logoURI ? (
+                          <img alt={`${token.name}`} width={24} height={24} src={token.logoURI} onError={imageOnErrorHandler} />
+                        ) : (
+                          <Identicon address={(isNewTreasury ? v2.associatedToken : v1.associatedTokenAddress)} style={{ width: "24", display: "inline-flex" }} />
+                        )}
+                      </span>
+                      <span className="info-data text-truncate">
+                        {token && token.symbol ? token.symbol : shortenAddress(isNewTreasury ? v2.associatedToken as string : v1.associatedTokenAddress as string)}
+                      </span>
+                    </div>
+                  </Col>
+                  <Col span={token ? 12 : 24}>
+                    {isMultisigTreasury(treasuryDetails) ? (
+                      <>
+                        <div className="info-label">SOL balance (for fees)</div>
+                        <div className="transaction-detail-row">
+                          <span className="info-icon">
+                            <IconBank className="mean-svg-icons" />
+                          </span>
+                          <span className="info-data">
+                            {
+                              getAmountWithSymbol(
+                                treasuryEffectiveBalance,
+                                WRAPPED_SOL_MINT_ADDRESS,
+                              )
+                            }
+                          </span>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="info-label">
+                          {t('treasuries.treasury-detail.created-on')}
+                        </div>
+                        <div className="transaction-detail-row">
+                          <span className="info-icon">
+                            <IconClock className="mean-svg-icons" />
+                          </span>
+                          <span className="info-data">
+                            {dateFormat(treasuryDetails.createdOnUtc, VERBOSE_DATE_TIME_FORMAT)}
+                          </span>
+                        </div>
+                      </>
+                    )}
+                  </Col>
+                </>
               )}
             </Row>
           </div>
