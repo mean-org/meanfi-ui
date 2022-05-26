@@ -498,9 +498,13 @@ export const Streams = () => {
   useEffect(() => {
     if (!publicKey) { return; }
 
-    if (!streamList && !address && publicKey) {
-      const pk = new PublicKey(publicKey);
-      refreshStreamList(true, pk);
+    if (!streamList) {
+      if (!address) {
+        // const pk = new PublicKey(publicKey);
+        refreshStreamList(true, publicKey);
+      } else {
+        refreshStreamList();
+      }
     }
   }, [address, publicKey, refreshStreamList, streamList]);
 
@@ -5633,7 +5637,7 @@ export const Streams = () => {
             {/* item block */}
             <div className="item-block vertical-scroll">
               <Spin spinning={loadingStreams}>
-                {publicKey && renderMoneyStreamsSummary()}
+                {renderMoneyStreamsSummary()}
                 {renderStreamList}
               </Spin>
             </div>

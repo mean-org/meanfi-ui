@@ -777,7 +777,7 @@
 			"amount-label": "Số lượng",
 			"modal-title": "Thêm tiền",
 			"treasury-money-stream-description": "As this stream was funded from a streaming account, the funds being added will be allocated from the streaming account's available balance.",
-			"treasury-money-stream-title": "Kho bạc đã cấp tiền cho Money Stream"
+			"treasury-money-stream-title": "Streaming Account Money Stream"
 		},
 		"back-to-my-streams-cta": "Quay về danh sách Money Streams",
 		"create-new-stream-cta": "Tạo dòng tiền",

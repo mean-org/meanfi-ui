@@ -774,7 +774,7 @@
 			"amount-label": "Miktar",
 			"modal-title": "Fon ekler",
 			"treasury-money-stream-description": "As this stream was funded from a streaming account, the funds being added will be allocated from the streaming account's available balance.",
-			"treasury-money-stream-title": "Hazineden Fonlanan Para Aktarımı"
+			"treasury-money-stream-title": "Streaming Account Money Stream"
 		},
 		"back-to-my-streams-cta": "Para Akışlarına Geri Dön",
 		"create-new-stream-cta": "Para akışı oluştur",

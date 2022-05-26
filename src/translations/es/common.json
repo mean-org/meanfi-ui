@@ -776,7 +776,7 @@
 			"amount-label": "Amount",
 			"modal-title": "Add funds",
 			"treasury-money-stream-description": "As this stream was funded from a streaming account, the funds being added will be allocated from the streaming account's available balance.",
-			"treasury-money-stream-title": "Treasury Funded Money Stream"
+			"treasury-money-stream-title": "Streaming Account Money Stream"
 		},
 		"back-to-my-streams-cta": "Volver a las transferencia",
 		"create-new-stream-cta": "Crear flujo de dinero",
