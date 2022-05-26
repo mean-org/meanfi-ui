@@ -15,6 +15,7 @@ import { MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { useWallet } from '../../../../contexts/wallet';
 import { InfoIcon } from '../../../../components/InfoIcon';
+import { OperationType } from '../../../../models/enums';
 
 export const ProposalDetailsView = (props: {
   isProposalDetails: boolean;
@@ -185,6 +186,24 @@ export const ProposalDetailsView = (props: {
     // }
   ];
 
+  const anyoneCanExecuteTx = () => {
+    if (selectedProposal.operation !== OperationType.StreamWithdraw &&
+        selectedProposal.operation !== OperationType.EditMultisig &&
+        selectedProposal.operation !== OperationType.TransferTokens &&
+        selectedProposal.operation !== OperationType.UpgradeProgram &&
+        selectedProposal.operation !== OperationType.SetMultisigAuthority &&
+        selectedProposal.operation !== OperationType.SetAssetAuthority &&
+        selectedProposal.operation !== OperationType.DeleteAsset &&
+        selectedProposal.operation !== OperationType.DepositFunds &&
+        selectedProposal.operation !== OperationType.WithdrawFunds) {
+      return false;
+    } else {
+      return true;
+    }
+  };
+
+  const isProposer = selectedProposal.proposer.toBase58() === publicKey?.toBase58() ? true : false;
+
   if (!selectedProposal.proposer) { return (<></>); }
 
   // Number of participants who have already approved the Tx
@@ -222,7 +241,17 @@ export const ProposalDetailsView = (props: {
       <Row gutter={[8, 8]} className="safe-details-proposal">
         <>
           {selectedProposal.status === MultisigTransactionStatus.Approved ? (
-            (selectedProposal.proposer.toBase58() === publicKey?.toBase58()) ? ( 
+            anyoneCanExecuteTx() ? (
+              <Col className="safe-details-left-container">
+                <IconUserClock className="user-image mean-svg-icons bg-yellow" />
+                <div className="proposal-resume-left-text">
+                  <div className="info-label">Pending execution by</div>
+                  {publicKey && (
+                    <span>{shortenAddress(publicKey.toBase58(), 4)}</span>
+                  )}
+                </div>
+              </Col>
+            ) : (
               <Col className="safe-details-left-container">
                 <IconUserClock className="user-image mean-svg-icons bg-yellow" />
                 <div className="proposal-resume-left-text">
@@ -230,34 +259,6 @@ export const ProposalDetailsView = (props: {
                   <span>{shortenAddress(selectedProposal.proposer?.toBase58(), 4)}</span>
                 </div>
               </Col>
-            ) : (
-              selectedProposal.operation !== 3 &&
-              selectedProposal.operation !== 31 &&
-              selectedProposal.operation !== 42 &&
-              selectedProposal.operation !== 34 &&
-              selectedProposal.operation !== 39 &&
-              selectedProposal.operation !== 36 &&
-              selectedProposal.operation !== 38 &&
-              selectedProposal.operation !== 110 &&
-              selectedProposal.operation !== 111 ? (
-                <Col className="safe-details-left-container">
-                  <IconUserClock className="user-image mean-svg-icons bg-yellow" />
-                  <div className="proposal-resume-left-text">
-                    <div className="info-label">Pending execution by</div>
-                    <span>{shortenAddress(selectedProposal.proposer?.toBase58(), 4)}</span>
-                  </div>
-                </Col>
-              ) : (
-                <Col className="safe-details-left-container">
-                  <IconUserClock className="user-image mean-svg-icons bg-yellow" />
-                  <div className="proposal-resume-left-text">
-                    <div className="info-label">Pending execution by</div>
-                    {publicKey && (
-                      <span>{shortenAddress(publicKey.toBase58(), 4)}</span>
-                    )}
-                  </div>
-                </Col>
-              )
             )
           ) : selectedProposal.status === MultisigTransactionStatus.Executed ? (
             <Col className="safe-details-left-container">
@@ -279,71 +280,38 @@ export const ProposalDetailsView = (props: {
         </>
         <>
           <Col className="safe-details-right-container btn-group">
-            {(selectedProposal.status !== MultisigTransactionStatus.Approved && selectedProposal.status !== MultisigTransactionStatus.Executed) ? (
-              <>
+            {selectedProposal.status !== MultisigTransactionStatus.Approved && selectedProposal.status !== MultisigTransactionStatus.Executed ? (
+              <Button
+                type="default"
+                shape="round"
+                size="small"
+                className="thin-stroke"
+                disabled={selectedProposal.didSigned || selectedProposal.status !== MultisigTransactionStatus.Pending}
+                onClick={() => onProposalApprove({ transaction: { id: selectedProposal.id } })}>
+                  <div className="btn-content">
+                    <IconThumbsUp className="mean-svg-icons" />
+                    Approve
+                  </div>
+              </Button>
+            ) : selectedProposal.status === MultisigTransactionStatus.Approved || selectedProposal.status !== MultisigTransactionStatus.Executed ? (
+              anyoneCanExecuteTx() || (!anyoneCanExecuteTx() && isProposer) ? (
                 <Button
                   type="default"
                   shape="round"
                   size="small"
-                  className="thin-stroke"
-                  disabled={selectedProposal.didSigned || selectedProposal.status !== MultisigTransactionStatus.Pending}
-                  onClick={() => onProposalApprove({ transaction: { id: selectedProposal.id } })}>
+                  className="thin-stroke d-flex justify-content-center align-items-center"
+                  onClick={() => onProposalExecute({ 
+                    transaction: { 
+                      id: selectedProposal.id,
+                      operation: selectedProposal.operation
+                    }
+                  })}>
                     <div className="btn-content">
-                      <IconThumbsUp className="mean-svg-icons" />
-                      Approve
+                      Execute
                     </div>
                 </Button>
-              </>
-            ) : (selectedProposal.status === MultisigTransactionStatus.Approved || selectedProposal.status !== MultisigTransactionStatus.Executed ? (
-              <>
-                {(selectedProposal.proposer.toBase58() === publicKey?.toBase58()) ? (
-                      <Button
-                        type="default"
-                        shape="round"
-                        size="small"
-                        className="thin-stroke d-flex justify-content-center align-items-center"
-                        onClick={() => onProposalExecute({ 
-                          transaction: { 
-                            id: selectedProposal.id,
-                            operation: selectedProposal.operation
-                          }
-                        })}>
-                          <div className="btn-content">
-                            Execute
-                          </div>
-                      </Button>
-                    ) : (
-                      selectedProposal.operation !== 3 &&
-                      selectedProposal.operation !== 31 &&
-                      selectedProposal.operation !== 42 &&
-                      selectedProposal.operation !== 34 &&
-                      selectedProposal.operation !== 39 &&
-                      selectedProposal.operation !== 36 &&
-                      selectedProposal.operation !== 38 &&
-                      selectedProposal.operation !== 110 &&
-                      selectedProposal.operation !== 111 ? (
-                        null
-                      ) : (
-                        <Button
-                          type="default"
-                          shape="round"
-                          size="small"
-                          className="thin-stroke d-flex justify-content-center align-items-center"
-                          onClick={() => onProposalExecute({ 
-                            transaction: { 
-                              id: selectedProposal.id,
-                              operation: selectedProposal.operation
-                            }
-                          })}>
-                            <div className="btn-content">
-                              Execute
-                            </div>
-                        </Button>
-                      )
-                    )
-                  }
-              </>
-            ) : null)}
+              ) : null
+            ) : null}
           </Col>
         </>
       </Row>
