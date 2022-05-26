@@ -103,6 +103,9 @@ export enum OperationType {
     IdoClaim = 102,
     IdoLpClaim = 103,
     IdoCollectFunds = 104,
+    // Credix
+    DepositFunds = 110,
+    WithdrawFunds = 111,
 }
 
 export enum WhitelistClaimType

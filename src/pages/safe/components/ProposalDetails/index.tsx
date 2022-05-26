@@ -231,12 +231,15 @@ export const ProposalDetailsView = (props: {
                 </div>
               </Col>
             ) : (
+              selectedProposal.operation !== 3 &&
               selectedProposal.operation !== 31 &&
               selectedProposal.operation !== 42 &&
               selectedProposal.operation !== 34 &&
               selectedProposal.operation !== 39 &&
               selectedProposal.operation !== 36 &&
-              selectedProposal.operation !== 3 ? (
+              selectedProposal.operation !== 38 &&
+              selectedProposal.operation !== 110 &&
+              selectedProposal.operation !== 111 ? (
                 <Col className="safe-details-left-container">
                   <IconUserClock className="user-image mean-svg-icons bg-yellow" />
                   <div className="proposal-resume-left-text">
@@ -310,12 +313,15 @@ export const ProposalDetailsView = (props: {
                           </div>
                       </Button>
                     ) : (
+                      selectedProposal.operation !== 3 &&
                       selectedProposal.operation !== 31 &&
                       selectedProposal.operation !== 42 &&
                       selectedProposal.operation !== 34 &&
                       selectedProposal.operation !== 39 &&
                       selectedProposal.operation !== 36 &&
-                      selectedProposal.operation !== 3 ? (
+                      selectedProposal.operation !== 38 &&
+                      selectedProposal.operation !== 110 &&
+                      selectedProposal.operation !== 111 ? (
                         null
                       ) : (
                         <Button
