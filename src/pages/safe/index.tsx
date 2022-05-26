@@ -88,7 +88,7 @@ import { AssetDetailsView } from './components/AssetDetails';
 // import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { MultisigCreateAssetModal } from '../../components/MultisigCreateAssetModal';
 
-import { createProgram, getDepositIx } from '@mean-dao/mean-multisig-apps/lib/apps/credix/func';
+import { createProgram, getDepositIx, getGatewayToken } from '@mean-dao/mean-multisig-apps/lib/apps/credix/func';
 
 const CREDIX_PROGRAM = new PublicKey("CRDx2YkdtYtGZXGHZ59wNv1EwKHQndnRc1gT4p8i2vPX");
 
@@ -1687,11 +1687,17 @@ export const SafeView = () => {
     if (!connection || !connectionConfig) { return null; }
 
     const program = createProgram(connection, "confirmed");
-    const network = connectionConfig.cluster === "mainnet-beta" 
-      ? 101 : (connectionConfig.cluster === "testnet" ? 102 : 103);
+    console.log("data => ", investor.toBase58(), amount);
 
-    return await getDepositIx(program, network, investor, amount);
-    
+    const gatewayToken = await getGatewayToken(
+      investor,
+      new PublicKey("tniC2HX5yg2yDjMQEcUo1bHa44x9YdZVSqyKox21SDz")
+    ); 
+
+    console.log("gatewayToken => ", gatewayToken.toBase58());
+
+    return await getDepositIx(program, investor, amount);
+
   }, [
     connection, 
     connectionConfig
@@ -1759,6 +1765,7 @@ export const SafeView = () => {
         if (data.instruction.name === "depositFunds") {
           proposalIx = await createCredixDepositIx(
             new PublicKey(data.instruction.uiElements[0].value),
+            // new PublicKey(data.investor),
             parseFloat(data.instruction.uiElements[1].value)
           );
         }
@@ -1773,27 +1780,6 @@ export const SafeView = () => {
       if (!proposalIx) {
         throw new Error("Invalid proposal instruction.");
       }
-
-      // console.log('proposal program ID', proposalIx.programId.toBase58());
-      // console.log('proposal account metas', proposalIx.keys.map(k => k.pubkey.toBase58()));
-      // console.log('proposal data', proposalIx.data);
-      
-      // const coder = new BorshInstructionCoder(data.config.definition as Idl);
-      // const decodedIx = coder.decode(proposalIx.data, "base58");
-      // console.log('proposal data', decodedIx);
-      // if (!decodedIx) { return null; }
-      // const propData = {
-      //   tag: data.config.uiInstructions.indexOf((uiIx: any) => decodedIx && uiIx.name === decodedIx.name),
-      //   amount: (decodedIx.data as any).value
-      // }
-
-      // if (!decodedIx) { return null; }
-
-      // const ixTag = data.config.definition.instructions.indexOf((uiIx: any) => uiIx.name === decodedIx.name) as number;
-      // const tagBuffer = Buffer.from(Uint8Array.of(...[ixTag]));
-      // const bytesBufffer = Object.entries(decodedIx.data).map((o: any) => Buffer.from(o['key']))
-      // const dataBuffer = [...[tagBuffer], ...bytesBufffer];
-      // console.log('data buffer', dataBuffer);
       
       const expirationTimeInSeconds = Date.now() / 1_000 + data.expires;
       const expirationDate = data.expires === 0 ? undefined : new Date(expirationTimeInSeconds * 1_000);
