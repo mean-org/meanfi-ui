@@ -43,7 +43,7 @@ import { useNativeAccount } from '../../../../contexts/accounts';
 export const SafeMeanInfo = (props: {
   connection: Connection;
   publicKey: PublicKey | null | undefined;
-  isSafeDetails: boolean;
+  isProposalDetails: boolean;
   isProgramDetails: boolean;
   isAssetDetails: boolean;
   onDataToSafeView: any;
@@ -80,7 +80,7 @@ export const SafeMeanInfo = (props: {
   const {
     connection,
     publicKey,
-    isSafeDetails, 
+    isProposalDetails, 
     isProgramDetails, 
     selectedMultisig, 
     onEditMultisigClick, 
@@ -1611,7 +1611,7 @@ export const SafeMeanInfo = (props: {
         (multisigTxs && multisigTxs.length > 0) ? (
           multisigTxs.map((proposal, index) => {
             const onSelectProposal = () => {
-              // Sends isSafeDetails value to the parent component "SafeView"
+              // Sends isProposalDetails value to the parent component "SafeView"
               onDataToSafeView(proposal);
             };
 
@@ -1635,7 +1635,7 @@ export const SafeMeanInfo = (props: {
                     approved={approvedSigners}
                     // rejected={proposal.rejected}
                     status={proposal.status}
-                    isSafeDetails={isSafeDetails}
+                    isProposalDetails={isProposalDetails}
                     rightIcon={<IconArrowForward className="mean-svg-icons" />}
                   />
               </div>
@@ -1727,7 +1727,7 @@ export const SafeMeanInfo = (props: {
                     subtitle={assetAddress}
                     isAsset={true}
                     rightContent={assetAmount}
-                    isSafeDetails={isSafeDetails}
+                    isProposalDetails={isProposalDetails}
                     isAssetDetails={isAssetDetails}
                     rightIcon={!isSol ? <IconVerticalEllipsis className="mean-svg-icons" /> : ""}
                     rightIconHasDropdown={true}
@@ -1917,7 +1917,7 @@ export const SafeMeanInfo = (props: {
                       id={program.pubkey.toBase58()}
                       title={programTitle}
                       subtitle={programSubtitle}
-                      isSafeDetails={isSafeDetails}
+                      isProposalDetails={isProposalDetails}
                       isProgram={true}
                       programSize={program.size}
                       isProgramDetails={isProgramDetails}

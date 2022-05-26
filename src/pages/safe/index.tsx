@@ -74,7 +74,7 @@ import { customLogger } from '../..';
 import { openNotification } from '../../components/Notifications';
 import { ProposalSummaryModal } from '../../components/ProposalSummaryModal';
 import { SafeMeanInfo } from './components/SafeMeanInfo';
-import { SafeDetailsView } from './components/SafeDetails';
+import { ProposalDetailsView } from './components/ProposalDetails';
 import { MultisigProposalModal } from '../../components/MultisigProposalModal';
 import { ProgramDetailsView } from './components/ProgramDetails';
 import SerumIDL from '../../models/serum-multisig-idl';
@@ -146,7 +146,7 @@ export const SafeView = () => {
   const [serumAccounts, setSerumAccounts] = useState<MultisigInfo[]>([]);
   const [serumMultisigTxs, setSerumMultisigTxs] = useState<MultisigTransaction[]>([]);
 
-  const [isSafeDetails, setIsSafeDetails] = useState(false);
+  const [isProposalDetails, setIsProposalDetails] = useState(false);
   const [proposalSelected, setProposalSelected] = useState<MultisigTransaction | undefined>();
   const [isProgramDetails, setIsProgramDetails] = useState(false);
   const [programSelected, setProgramSelected] = useState<any>();
@@ -3309,7 +3309,7 @@ export const SafeView = () => {
             setDtailsPanelOpen(true);
             setSelectedMultisig(item);
             setNeedRefreshTxs(true);
-            setIsSafeDetails(false);
+            setIsProposalDetails(false);
             setIsProgramDetails(false);
             setIsAssetDetails(false);
           };
@@ -3424,8 +3424,8 @@ export const SafeView = () => {
   //   proposalSelected
   // ]);
 
-  const goToSafeDetailsHandler = (selectedProposal: any) => {    
-    setIsSafeDetails(true);
+  const goToProposalDetailsHandler = (selectedProposal: any) => {    
+    setIsProposalDetails(true);
     setIsProgramDetails(false);
     setIsAssetDetails(false);
     setProposalSelected(selectedProposal);
@@ -3436,14 +3436,14 @@ export const SafeView = () => {
   }
 
   const goToProgramDetailsHandler = (selectedProgram: any) => {
-    setIsSafeDetails(false);
+    setIsProposalDetails(false);
     setIsAssetDetails(false);
     setIsProgramDetails(true);
     setProgramSelected(selectedProgram);
   }
 
-  const returnFromSafeDetailsHandler = () => {
-    setIsSafeDetails(false);
+  const returnFromProposalDetailsHandler = () => {
+    setIsProposalDetails(false);
     setSelectedTab(0);
   }
 
@@ -3570,14 +3570,14 @@ export const SafeView = () => {
                   {connected && multisigClient && selectedMultisig ? (
                     <>
                       <Spin spinning={loadingMultisigAccounts}>
-                        {(!isSafeDetails && !isProgramDetails && !isAssetDetails) && (
+                        {(!isProposalDetails && !isProgramDetails && !isAssetDetails) && (
                           selectedMultisig.version === 0 ? (
                             <SafeSerumInfoView
                               connection={connection}
-                              isSafeDetails={isSafeDetails}
+                              isProposalDetails={isProposalDetails}
                               isProgramDetails={isProgramDetails}
                               isAssetDetails={isAssetDetails}
-                              onDataToSafeView={goToSafeDetailsHandler}
+                              onDataToSafeView={goToProposalDetailsHandler}
                               onDataToProgramView={goToProgramDetailsHandler}
                               selectedMultisig={selectedMultisig}
                               onEditMultisigClick={onEditMultisigClick}
@@ -3589,10 +3589,10 @@ export const SafeView = () => {
                             <SafeMeanInfo
                               connection={connection}
                               publicKey={publicKey}
-                              isSafeDetails={isSafeDetails}
+                              isProposalDetails={isProposalDetails}
                               isProgramDetails={isProgramDetails}
                               isAssetDetails={isAssetDetails}
-                              onDataToSafeView={goToSafeDetailsHandler}
+                              onDataToSafeView={goToProposalDetailsHandler}
                               onDataToProgramView={goToProgramDetailsHandler}
                               onDataToAssetView={goToAssetDetailsHandler}
                               selectedMultisig={selectedMultisig}
@@ -3606,10 +3606,10 @@ export const SafeView = () => {
                             />
                           )
                         )}
-                        {isSafeDetails && (
-                          <SafeDetailsView
-                            isSafeDetails={isSafeDetails}
-                            onDataToSafeView={returnFromSafeDetailsHandler}
+                        {isProposalDetails && (
+                          <ProposalDetailsView
+                            isProposalDetails={isProposalDetails}
+                            onDataToSafeView={returnFromProposalDetailsHandler}
                             proposalSelected={proposalSelected}
                             selectedMultisig={selectedMultisig}
                             onProposalApprove={onExecuteApproveTx}

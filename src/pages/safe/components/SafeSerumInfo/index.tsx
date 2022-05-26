@@ -14,7 +14,7 @@ import { Connection, MemcmpFilter, PublicKey } from '@solana/web3.js';
 
 export const SafeSerumInfoView = (props: {
   connection: Connection;
-  isSafeDetails: boolean;
+  isProposalDetails: boolean;
   isProgramDetails: boolean;
   isAssetDetails: boolean;
   onDataToSafeView: any;
@@ -30,7 +30,7 @@ export const SafeSerumInfoView = (props: {
 }) => {
   const { 
     connection,
-    isSafeDetails,
+    isProposalDetails,
     selectedMultisig, 
     onEditMultisigClick, 
     onNewProposalMultisigClick,
@@ -52,7 +52,7 @@ export const SafeSerumInfoView = (props: {
       {multisigTxs && multisigTxs.length && (
         multisigTxs.map((tx, index) => {
           const onSelectProposal = () => {
-            // Sends isSafeDetails value to the parent component "SafeView"
+            // Sends isProposalDetails value to the parent component "SafeView"
             props.onDataToSafeView(tx);
           };
 
@@ -74,7 +74,7 @@ export const SafeSerumInfoView = (props: {
                   executedOn={executedOnDate}
                   approved={approvedSigners}
                   status={tx.status}
-                  isSafeDetails={isSafeDetails}
+                  isProposalDetails={isProposalDetails}
                   rightIcon={<IconArrowForward className="mean-svg-icons" />}
                 />
             </div>
@@ -254,7 +254,7 @@ export const SafeSerumInfoView = (props: {
                   <Col>
                     {program.name}
                   </Col>
-                  {!isSafeDetails && (
+                  {!isProposalDetails && (
                     <span className="icon-button-container">
                       <Button
                         type="default"
