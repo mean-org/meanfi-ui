@@ -94,7 +94,7 @@ export const SafeView = () => {
   const { publicKey, connected, wallet } = useWallet();
   const {
     isWhitelisted,
-    multisigVaults,
+    // multisigVaults,
     detailsPanelOpen,
     transactionStatus,
     highLightableMultisigId,
@@ -1753,6 +1753,7 @@ export const SafeView = () => {
           );
         } else if (data.instruction.name === "withdrawFunds") {
           operation = 111;
+          console.log('WITHDRAW');
           proposalIx = await createCredixWithdrawIx(
             new PublicKey(data.instruction.uiElements[0].value),
             parseFloat(data.instruction.uiElements[1].value)
