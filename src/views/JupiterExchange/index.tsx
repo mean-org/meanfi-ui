@@ -212,15 +212,6 @@ export const JupiterExchange = (props: {
                     setToMint(to[0].address);
                 }
             }
-        } else if (!props.queryFromMint && !props.queryToMint) {
-            const from = MEAN_TOKEN_LIST.filter(t => t.chainId === 101 && t.symbol === 'USDC');
-            if (from && from.length) {
-                setFromMint(from[0].address);
-            }
-            const to = MEAN_TOKEN_LIST.filter(t => t.chainId === 101 && t.symbol === 'MEAN');
-            if (to && to.length) {
-                setToMint(to[0].address);
-            }
         }
     }, [
         props.queryToMint,

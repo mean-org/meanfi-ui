@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { IconExchange } from '../../Icons';
 import { JupiterExchange, RecurringExchange, } from '../../views';
 import { TokenInfo } from '@solana/spl-token-registry';
+import { WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
 
 type SwapOption = "one-time" | "recurring";
 
@@ -21,8 +22,10 @@ export const SwapView = () => {
   const { t } = useTranslation("common");
   const { publicKey, wallet } = useWallet();
   const {
+    splTokenList,
     recurringBuys,
     setRecurringBuys,
+    getTokenByMintAddress
   } = useContext(AppStateContext);
   const [loadingRecurringBuys, setLoadingRecurringBuys] = useState(false);
   const [queryFromMint, setQueryFromMint] = useState<string | null>(null);
@@ -117,8 +120,8 @@ export const SwapView = () => {
       const symbol = params.get('from');
       from = symbol
         ? symbol === 'SOL'
-          ? getTokenBySymbol('wSOL')
-          : getTokenBySymbol(symbol)
+          ? getTokenByMintAddress(WRAPPED_SOL_MINT_ADDRESS)
+          : getTokenBySymbol(symbol, splTokenList)
         : undefined;
       if (from) {
         setQueryFromMint(from.address);
@@ -137,7 +140,7 @@ export const SwapView = () => {
       consoleOut('queryFromMint:', from ? from.address : '-', 'blue');
       consoleOut('queryToMint:', to ? to.address : '-', 'blue');
     }
-  }, [location]);
+  }, [getTokenByMintAddress, location, splTokenList]);
 
   //////////////////////
   //  Event handling  //
