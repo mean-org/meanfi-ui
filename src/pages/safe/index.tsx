@@ -1682,10 +1682,8 @@ export const SafeView = () => {
     if (!connection || !connectionConfig) { return null; }
 
     const program = createProgram(connection, "confirmed");
-    const network = connectionConfig.cluster === "mainnet-beta" 
-      ? 101 : (connectionConfig.cluster === "testnet" ? 102 : 103);
 
-    return await getDepositIx(program, network, investor, amount);
+    return await getDepositIx(program, investor, amount);
     
   }, [
     connection, 
@@ -2163,6 +2161,18 @@ export const SafeView = () => {
             })`
           });
           customLogger.logWarning('Multisig Approve transaction failed', { transcript: transactionLog });
+          openNotification({
+            description: t('transactions.status.tx-start-failure', {
+              accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                nativeBalance,
+                NATIVE_SOL_MINT.toBase58()
+              ),
+              feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                minRequired,
+                NATIVE_SOL_MINT.toBase58()
+              )}),
+            type: "info"
+          });
           return false;
         }
 
@@ -2342,6 +2352,7 @@ export const SafeView = () => {
     }
 
   }, [
+    t,
     clearTxConfirmationContext, 
     connection, 
     multisigClient, 
@@ -2445,6 +2456,18 @@ export const SafeView = () => {
             })`
           });
           customLogger.logWarning('Finish Approoved transaction failed', { transcript: transactionLog });
+          openNotification({
+            description: t('transactions.status.tx-start-failure', {
+              accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                nativeBalance,
+                NATIVE_SOL_MINT.toBase58()
+              ),
+              feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                minRequired,
+                NATIVE_SOL_MINT.toBase58()
+              )}),
+            type: "info"
+          });
           return false;
         }
 
@@ -2634,6 +2657,7 @@ export const SafeView = () => {
     }
 
   }, [
+    t,
     wallet,
     publicKey,
     connection,
