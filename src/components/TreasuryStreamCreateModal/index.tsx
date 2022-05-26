@@ -28,6 +28,7 @@ import {
   isToday,
   isValidAddress,
   PaymentRateTypeOption,
+  toUsCurrency,
 } from '../../utils/ui';
 import { NATIVE_SOL } from '../../utils/tokens';
 import { InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
@@ -468,22 +469,26 @@ export const TreasuryStreamCreateModal = (props: {
   // When modal goes visible, use the treasury associated token or use the default from the appState
   useEffect(() => {
     if (props.isVisible && props.associatedToken) {
-      const token = tokenList.find(t => t.address === props.associatedToken);
+      const token = getTokenByMintAddress(props.associatedToken);
       if (token) {
+        const price = getTokenPriceBySymbol(token.symbol);
         if (!selectedToken || selectedToken.address !== token.address) {
           setSelectedToken(token);
+          setEffectiveRate(price);
         }
-      } else if (!token && (!selectedToken || selectedToken.address !== props.associatedToken)) {
+      } else if (!selectedToken || selectedToken.address !== props.associatedToken) {
         setCustomToken(props.associatedToken);
       }
     }
   }, [
-    tokenList,
     selectedToken,
     props.isVisible,
     props.associatedToken,
+    getTokenByMintAddress,
+    getTokenPriceBySymbol,
+    setSelectedToken,
+    setEffectiveRate,
     setCustomToken,
-    setSelectedToken
   ]);
 
   // Window resize listener
@@ -1557,6 +1562,26 @@ export const TreasuryStreamCreateModal = (props: {
                     />
                   </div>
                 </div>
+                {(treasuryOption && treasuryOption.type === TreasuryType.Lock) && (
+                  <>
+                    <div className="flex-fixed-right">
+                      <div className="left inner-label">
+                        <span>{t('transactions.send-amount.label-right')}:</span>
+                        <span>
+                          {unallocatedBalance && selectedToken
+                            ? getAmountWithSymbol(
+                                makeDecimal(new BN(unallocatedBalance), selectedToken.decimals),
+                                selectedToken.address,
+                                true
+                              )
+                            : "0"
+                          }
+                        </span>
+                      </div>
+                      <div className="right inner-label">&nbsp;</div>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
             <div className="right">
@@ -1577,6 +1602,11 @@ export const TreasuryStreamCreateModal = (props: {
                     </Dropdown>
                   </div>
                 </div>
+                {(treasuryOption && treasuryOption.type === TreasuryType.Lock) && (
+                  <div className="flex-fixed-left">
+                    <div className="left inner-label">&nbsp;</div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

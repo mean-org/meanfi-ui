@@ -2124,6 +2124,13 @@ em {
 
 .two-column-form-layout {
   display: flex;
+  > .right {
+    .well .dropdown-trigger.no-decoration {
+      font-size: 16px;
+      line-height: 10px;
+      height: 22px;
+    }
+  }
   @media (max-width: 575.98px) {
     flex-direction: column;
     > .left,
