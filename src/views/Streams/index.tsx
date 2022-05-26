@@ -2866,7 +2866,6 @@ export const Streams = () => {
     if (item) {
       let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
 
-      // TODO: If NO rename wSOL to SOL is needed, remove this block
       if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
         token = Object.assign({}, token, {
           symbol: 'SOL'
@@ -2890,7 +2889,6 @@ export const Streams = () => {
     if (item && item.rateAmount === 0 && item.allocationAssigned > 0) {
       let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
 
-      // TODO: If NO rename wSOL to SOL is needed, remove this block
       if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
         token = Object.assign({}, token, {
           symbol: 'SOL'
