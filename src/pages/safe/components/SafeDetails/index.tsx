@@ -96,7 +96,7 @@ export const SafeDetailsView = (props: {
             <Col xs={6} sm={6} md={4} lg={4} className="pr-1">
               <span className="info-label">{t('multisig.proposal-modal.instruction-account')} {account.index}:</span>
             </Col>
-              <Col xs={17} sm={17} md={19} lg={19} className="pl-1">
+              <Col xs={17} sm={17} md={19} lg={19} className="pl-1 pr-3">
                 <span onClick={() => copyAddressToClipboard(account.pubkey.toBase58())} className="d-block info-data simplelink underline-on-hover text-truncate" style={{cursor: 'pointer'}}>
                   {account.pubkey.toBase58()}
               </span>

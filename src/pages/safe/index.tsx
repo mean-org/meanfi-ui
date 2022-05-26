@@ -3413,9 +3413,6 @@ export const SafeView = () => {
   }
 
   const goToAssetDetailsHandler = (selectedAsset: any) => {
-    setIsSafeDetails(false);
-    setIsProgramDetails(false);
-    setIsAssetDetails(true);
     setAssetSelected(selectedAsset);
   }
 
@@ -3431,10 +3428,10 @@ export const SafeView = () => {
     setSelectedTab(0);
   }
 
-  const returnFromAssetDetailsHandler = () => {
-    setIsAssetDetails(false);
-    setSelectedTab(1);
-  }
+  // const returnFromAssetDetailsHandler = () => {
+  //   setIsAssetDetails(false);
+  //   setSelectedTab(1);
+  // }
 
   const returnFromProgramDetailsHandler = () => {
     setIsProgramDetails(false);
@@ -3563,7 +3560,7 @@ export const SafeView = () => {
                               isAssetDetails={isAssetDetails}
                               onDataToSafeView={goToSafeDetailsHandler}
                               onDataToProgramView={goToProgramDetailsHandler}
-                              onDataToAssetView={goToAssetDetailsHandler}
+                              // onDataToAssetView={goToAssetDetailsHandler}
                               selectedMultisig={selectedMultisig}
                               onEditMultisigClick={onEditMultisigClick}
                               onNewProposalMultisigClick={onNewProposalMultisigClick}
@@ -3587,6 +3584,7 @@ export const SafeView = () => {
                               multisigClient={multisigClient}
                               selectedTab={selectedTab}
                               proposalSelected={proposalSelected}
+                              assetSelected={assetSelected}
                             />
                           )
                         )}
@@ -3600,14 +3598,14 @@ export const SafeView = () => {
                             onProposalExecute={onExecuteFinishTx}
                           />
                         )}
-                        {isAssetDetails && (
+                        {/* {isAssetDetails && (
                           <AssetDetailsView
                             isAssetDetails={isAssetDetails}
                             onDataToAssetView={returnFromAssetDetailsHandler}
                             assetSelected={assetSelected}
                             selectedMultisig={selectedMultisig}
                           />
-                        )}
+                        )} */}
                         {isProgramDetails && (
                           <ProgramDetailsView
                             isProgramDetails={isProgramDetails}

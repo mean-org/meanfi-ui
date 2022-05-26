@@ -1,6 +1,6 @@
 import { useCallback, useContext } from 'react';
 import './style.scss';
-import { Button, Col, Row } from "antd"
+import { Button, Col, Dropdown, Row } from "antd"
 import { useTranslation } from 'react-i18next';
 import { MultisigTransaction, MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
 import Countdown from 'react-countdown';
@@ -14,7 +14,7 @@ export const ResumeItem = (props: {
   src?: any;
   img?: any;
   title?: string;
-  subtitle?: string;
+  subtitle?: any;
   expires?: any;
   executedOn?: any;
   approved?: any;
@@ -28,12 +28,15 @@ export const ResumeItem = (props: {
   isAsset?: boolean;
   programSize?: number;
   rightContent?: any;
+  rightIcon?: any;
+  rightIconHasDropdown?: boolean;
+  dropdownMenu?: any;
 }) => {
   const {
     theme
   } = useContext(AppStateContext);
 
-  const { src, img, version, title, subtitle, expires, executedOn, approved, rejected, status, needs, isSafeDetails, isProgram, isAsset, programSize, rightContent } = props;
+  const { src, img, version, title, subtitle, expires, executedOn, approved, rejected, status, needs, isSafeDetails, isProgram, isAsset, programSize, rightContent, rightIcon, rightIconHasDropdown, dropdownMenu } = props;
 
   const { t } = useTranslation('common');
 
@@ -152,7 +155,7 @@ export const ResumeItem = (props: {
             )}
           </div>
         </Col>
-        <Col className="resume-right-container">
+        <Col className={`resume-right-container ${!isSafeDetails ? "mr-1" : "mr-2"}`}>
           <div className="resume-right-text">
             {(!isProgram && !isAsset) ? (
               <>
@@ -197,14 +200,31 @@ export const ResumeItem = (props: {
             )}
           </div>
           {!isSafeDetails && (
-            <span className="icon-button-container">
-              <Button
-                type="default"
-                shape="circle"
-                size="middle"
-                icon={<IconArrowForward className="mean-svg-icons" />}
-              />
-            </span>
+            rightIconHasDropdown ? (
+              <Dropdown
+                overlay={dropdownMenu}
+                placement="bottomRight"
+                trigger={["click"]}>
+                <span className="ellipsis-icon icon-button-container">
+                  <Button
+                    type="default"
+                    shape="circle"
+                    size="middle"
+                    icon={rightIcon}
+                    onClick={(e) => e.preventDefault()}
+                  />
+                </span>
+              </Dropdown>
+            ) : (
+              <span className="icon-button-container">
+                <Button
+                  type="default"
+                  shape="circle"
+                  size="middle"
+                  icon={rightIcon}
+                />
+              </span>
+            )
           )}
         </Col>
       </Row>
