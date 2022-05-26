@@ -13,7 +13,7 @@ export const SendAssetModal = (props: {
   handleClose: any;
   isVisible: boolean;
   selected: TransfersTabOption;
-  selectedToken: UserTokenAccount;
+  selectedToken: UserTokenAccount | undefined;
 }) => {
   const { selected, isVisible, handleClose, selectedToken } = props;
   const location = useLocation();

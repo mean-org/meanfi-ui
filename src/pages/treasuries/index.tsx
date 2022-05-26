@@ -2514,11 +2514,11 @@ export const TreasuriesView = () => {
 
       if (data.stream === '') {
         return await msp.addFunds(
-          new PublicKey(data.payer),                   // payer
-          new PublicKey(data.contributor),             // contributor
-          new PublicKey(data.treasury),                // treasury
-          new PublicKey(data.associatedToken),         // associatedToken
-          data.amount,                                 // amount
+          new PublicKey(data.payer),                    // payer
+          new PublicKey(data.contributor),              // contributor
+          new PublicKey(data.treasury),                 // treasury
+          new PublicKey(data.associatedToken),          // associatedToken
+          data.amount,                                  // amount
         );
       }
 
@@ -2981,6 +2981,7 @@ export const TreasuriesView = () => {
           new PublicKey(data.treasurer),              // treasurer
           new PublicKey(data.treasurer),              // treasurer
           new PublicKey(data.treasury),               // treasury
+          true                                        // TODO: Define if the user can determine this
         );
       }
 
@@ -2992,9 +2993,10 @@ export const TreasuriesView = () => {
       if (!multisig) { return null; }
 
       const closeTreasury = await msp.closeTreasury(
-        publicKey,                                                // payer
+        publicKey,                                  // payer
         multisig.authority,                         // TODO: This should come from the UI        
-        new PublicKey(data.treasury),                             // treasury
+        new PublicKey(data.treasury),               // treasury
+        true                                        // TODO: Define if the user can determine this
       );
 
       const ixData = Buffer.from(closeTreasury.instructions[0].data);
@@ -3419,10 +3421,11 @@ export const TreasuriesView = () => {
 
       if (!isMultisigTreasury()) {        
         return await msp.closeStream(
-          new PublicKey(data.payer),             // payer
-          new PublicKey(data.payer),             // destination
-          new PublicKey(data.stream),            // stream,
-          data.closeTreasury                     // closeTreasury
+          new PublicKey(data.payer),              // payer
+          new PublicKey(data.payer),              // destination
+          new PublicKey(data.stream),             // stream,
+          data.closeTreasury,                     // closeTreasury
+          true                                    // TODO: Define if the user can determine this
         );
       }
 
@@ -3434,10 +3437,11 @@ export const TreasuriesView = () => {
       if (!multisig) { return null; }
 
       const closeStream = await msp.closeStream(
-        new PublicKey(data.payer),             // payer
-        new PublicKey(data.payer),             // TODO: This should come from the UI 
-        new PublicKey(data.stream),            // stream,
-        data.closeTreasury                     // closeTreasury
+        new PublicKey(data.payer),              // payer
+        new PublicKey(data.payer),              // TODO: This should come from the UI 
+        new PublicKey(data.stream),             // stream,
+        data.closeTreasury,                     // closeTreasury
+        true                                    // TODO: Define if the user can determine this
       );
 
       const ixData = Buffer.from(closeStream.instructions[0].data);
@@ -4619,7 +4623,8 @@ export const TreasuriesView = () => {
         new PublicKey(data.payer),              // payer
         new PublicKey(data.destination),        // treasurer
         new PublicKey(data.treasury),           // treasury
-        data.amount                             // amount
+        data.amount,                            // amount
+        true                                    // TODO: Define if the user can determine this
       );
 
       if (!isMultisigTreasury()) {
@@ -5129,7 +5134,7 @@ export const TreasuriesView = () => {
         <div className="stream-fields-container">
 
           <div className="mb-3">
-            <Row>
+            <Row gutter={16}>
               <Col span={12}>
                 <div className="info-label text-truncate">
                   {t('treasuries.treasury-detail.treasury-address-label')}
@@ -5167,7 +5172,7 @@ export const TreasuriesView = () => {
           </div>
 
           <div className="mb-3">
-            <Row>
+            <Row gutter={16}>
               {token && (
                 <Col span={treasuryDetails.createdOnUtc ? 12 : 24}>
                   <div className="info-label">

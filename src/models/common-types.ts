@@ -1,4 +1,5 @@
 import { AllocationType } from "@mean-dao/money-streaming";
+import { StreamTreasuryType } from "./treasuries";
 
 export interface SelectOption {
     key: number;
@@ -12,6 +13,14 @@ export interface TreasuryTopupParams {
     tokenAmount: any;
     allocationType: AllocationType;
     streamId: string;
+    associatedToken: string;
+}
+
+export interface StreamTopupParams {
+    amount: string;
+    tokenAmount: any;
+    treasuryType: StreamTreasuryType | undefined;
+    fundFromTreasury: boolean;
     associatedToken: string;
 }
 

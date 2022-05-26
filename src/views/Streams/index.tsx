@@ -20,8 +20,6 @@ import {
   IconClock,
   IconExternalLink,
   IconShare,
-  IconSwitchRunning,
-  IconSwitchStopped,
   IconUpload,
 } from "../../Icons";
 import { AppStateContext } from "../../contexts/appstate";
@@ -30,7 +28,6 @@ import {
   formatAmount,
   formatThousands,
   getAmountWithSymbol,
-  getTokenSymbol,
   getTxIxResume,
   shortenAddress,
   toTokenAmount,
@@ -113,6 +110,7 @@ import { CountdownCircleTimer } from "react-countdown-circle-timer";
 import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { SendAssetModal } from "../../components/SendAssetModal";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/accounts";
+import { StreamTopupParams } from "../../models/common-types";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 let ds: string[] = [];
@@ -176,7 +174,7 @@ export const Streams = () => {
     enqueueTransactionConfirmation
   } = useContext(TxConfirmationContext);
   const { t } = useTranslation('common');
-  const { address, asset } = useParams();
+  const { address } = useParams();
   const { account } = useNativeAccount();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
@@ -734,7 +732,7 @@ export const Streams = () => {
   // Live data calculation - Stream summary
   useEffect(() => {
 
-    if (!streamList || (!streamListv1 && !streamListv2)) { return; }
+    if (!publicKey || !streamList || (!streamListv1 && !streamListv2)) { return; }
 
     const timeout = setTimeout(() => {
       refreshStreamSummary();
@@ -745,12 +743,14 @@ export const Streams = () => {
     }
 
   }, [
+    publicKey,
     streamList,
     streamListv1,
     streamListv2,
     refreshStreamSummary,
   ]);
 
+  // Read treasury data
   useEffect(() => {
     if (!publicKey || !ms || !msp || !activeStream) { return; }
 
@@ -2307,8 +2307,8 @@ export const Streams = () => {
     setIsAddFundsModalVisibility(false);
   }, [oldSelectedToken, setSelectedToken]);
 
-  const [addFundsPayload, setAddFundsPayload] = useState<any>();
-  const onAcceptAddFunds = (data: any) => {
+  const [addFundsPayload, setAddFundsPayload] = useState<StreamTopupParams>();
+  const onAcceptAddFunds = (data: StreamTopupParams) => {
     closeAddFundsModal();
     consoleOut('AddFunds input:', data, 'blue');
     onExecuteAddFundsTransaction(data);
@@ -2320,7 +2320,7 @@ export const Streams = () => {
     refreshTokenBalance();
   };
 
-  const onExecuteAddFundsTransaction = async (addFundsData: any) => {
+  const onExecuteAddFundsTransaction = async (addFundsData: StreamTopupParams) => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
@@ -2339,12 +2339,14 @@ export const Streams = () => {
     }) => {
       if (!msp) { return false; }
       // Create a transaction
+      const autoWSol = addFundsData.associatedToken === NATIVE_SOL_MINT.toBase58() ? true : false;
       return await msp.fundStream(
         payload.payer,                                              // payer
         payload.contributor,                                        // contributor
         payload.treasury,                                           // treasury
         payload.stream,                                             // stream
         payload.amount,                                             // amount
+        autoWSol                                                    // autoWSol
       )
       .then(value => {
         consoleOut('fundStream returned transaction:', value);
@@ -3393,7 +3395,8 @@ export const Streams = () => {
         return await msp.withdraw(
           beneficiary,
           stream,
-          amount
+          amount,
+          true                          // TODO: Define if the user can determine this
         )
         .then(value => {
           consoleOut('withdraw returned transaction:', value);
@@ -3782,7 +3785,8 @@ export const Streams = () => {
           publicKey as PublicKey,                           // payer
           publicKey as PublicKey,                           // destination
           streamPublicKey,                                  // stream
-          closeTreasuryData.closeTreasuryOption             // closeTreasury
+          closeTreasuryData.closeTreasuryOption,            // closeTreasury
+          true                                              // TODO: Define if the user can determine this
         )
         .then(value => {
           consoleOut('closeStream returned transaction:', value);
@@ -5822,6 +5826,7 @@ export const Streams = () => {
             transactionFees={transactionFees}
             withdrawTransactionFees={withdrawTransactionFees}
             streamDetail={streamDetail}
+            nativeBalance={nativeBalance}
             mspClient={
               streamDetail
                 ? streamDetail.version < 2
@@ -5847,7 +5852,7 @@ export const Streams = () => {
 
         {isSendAssetModalOpen && (
           <SendAssetModal
-            selectedToken={selectedToken as UserTokenAccount}
+            selectedToken={undefined}
             isVisible={isSendAssetModalOpen}
             handleClose={hideSendAssetModal}
             selected={"recurring"}
@@ -5870,9 +5875,10 @@ export const Streams = () => {
                 <Spin indicator={bigLoadingIcon} className="icon" />
                 <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
                 <h5 className="operation">{t('transactions.status.tx-add-funds-operation')} {getAmountWithSymbol(
-                    parseFloat(addFundsPayload ? addFundsPayload.amount : 0),
+                    parseFloat(addFundsPayload ? addFundsPayload.amount : '0'),
                     streamDetail?.associatedToken as string,
-                    false, splTokenList
+                    false,
+                    splTokenList
                   )}
                 </h5>
                 {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (

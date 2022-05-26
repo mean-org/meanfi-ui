@@ -4329,7 +4329,6 @@ main section {
   display: flex;
   flex-direction: row;
   justify-content: flex-start;
-  align-items: center;
   font-size: 1.1rem;
   color: var(--color-secondary);
   .info-icon {
@@ -4338,7 +4337,7 @@ main section {
     height: 24px;
     display: flex;
     align-items: center;
-    margin-right: 4px;
+    margin: 2px 4px 0 0;
     &.token-icon {
       margin-right: 8px;
       border: 2px solid var(--color-secondary-alpha-20);
@@ -4349,6 +4348,8 @@ main section {
     }
   }
   .info-data {
+    flex: 1 1 auto;
+    word-break: break-word;
     &.large {
       font-size: 1.8rem;
       color: var(--color-secondary-alpha-85);
@@ -4620,10 +4621,10 @@ main section {
     overflow: auto;
     max-height: calc(100% - 1rem);
     min-height: 346px;
-    margin-right: -0.5rem;
+    // margin-right: -0.5rem;
     .meanfi-two-panel-left,
     .meanfi-two-panel-right {
-      padding-right: 1rem;
+      // padding-right: 1rem;
       transition: transform 0.5s ease-in-out;
       height: 100%;
     }

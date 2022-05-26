@@ -16,11 +16,15 @@ import { consoleOut } from '../../utils/ui';
 import { ExclamationCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { useLocation, useNavigate } from 'react-router-dom';
 import BN from 'bn.js';
+import { StreamTopupParams } from '../../models/common-types';
+import { WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
+import { NATIVE_SOL_MINT } from '@mean-dao/hybrid-liquidity-ag';
 
 export const StreamAddFundsModal = (props: {
   handleClose: any;
   handleOk: any;
   isVisible: boolean;
+  nativeBalance: number;
   mspClient: MoneyStreaming | MSP | undefined;
   streamDetail: Stream | StreamInfo | undefined;
   transactionFees: TransactionFees;
@@ -201,6 +205,13 @@ export const StreamAddFundsModal = (props: {
     return false;
   }, [localStreamDetail]);
 
+  const selectFromTokenBalance = useCallback(() => {
+    if (!selectedToken) { return props.nativeBalance; }
+    return selectedToken.address === WRAPPED_SOL_MINT_ADDRESS
+      ? props.nativeBalance
+      : tokenBalance
+  }, [props.nativeBalance, selectedToken, tokenBalance]);
+
   // Read and keep the input copy of the stream
   useEffect(() => {
     if (props.isVisible && !localStreamDetail && props.streamDetail) {
@@ -270,12 +281,19 @@ export const StreamAddFundsModal = (props: {
   ]);
 
   const onAcceptTopup = () => {
-    props.handleOk({
+    const params: StreamTopupParams = {
       amount: topupAmount,
       tokenAmount: tokenAmount,
       treasuryType: streamTreasuryType,
-      fundFromTreasury: shouldFundFromTreasury()
-    });
+      fundFromTreasury: shouldFundFromTreasury(),
+      associatedToken: selectedToken
+        ? selectedToken.address === WRAPPED_SOL_MINT_ADDRESS
+          ? NATIVE_SOL_MINT.toBase58()
+          : selectedToken.address
+        : '',
+
+    };
+    props.handleOk(params);
   }
 
   const handleAmountChange = (e: any) => {
@@ -310,7 +328,7 @@ export const StreamAddFundsModal = (props: {
   // Validation
 
   const isValidInput = (): boolean => {
-    const userBalance = makeInteger(tokenBalance, selectedToken?.decimals || 6);
+    const userBalance = makeInteger(selectFromTokenBalance(), selectedToken?.decimals || 6);
     return  publicKey &&
             selectedToken &&
             ((shouldFundFromTreasury() && unallocatedBalance.toNumber() > 0) ||
@@ -324,7 +342,7 @@ export const StreamAddFundsModal = (props: {
   }
 
   const getTransactionStartButtonLabel = (): string => {
-    const userBalance = makeInteger(tokenBalance, selectedToken?.decimals || 6);
+    const userBalance = makeInteger(selectFromTokenBalance(), selectedToken?.decimals || 6);
     return !selectedToken ||
            (shouldFundFromTreasury() && unallocatedBalance.isZero()) ||
            (!shouldFundFromTreasury() && userBalance.isZero())
@@ -410,12 +428,12 @@ export const StreamAddFundsModal = (props: {
                   )}
                   {treasuryDetails && treasuryDetails.autoClose ? (
                     <>
-                      {selectedToken && tokenBalance ? (
+                      {selectedToken && selectFromTokenBalance() ? (
                         <div
                           className="token-max simplelink"
                           onClick={() => {
-                            setTopupAmount(tokenBalance.toFixed(selectedToken.decimals));
-                            setTokenAmount(makeInteger(tokenBalance, selectedToken?.decimals || 6));
+                            setTopupAmount(selectFromTokenBalance().toFixed(selectedToken.decimals));
+                            setTokenAmount(makeInteger(selectFromTokenBalance(), selectedToken?.decimals || 6));
                           }}>
                           MAX
                         </div>
@@ -474,9 +492,9 @@ export const StreamAddFundsModal = (props: {
                 )}
                 {treasuryDetails && treasuryDetails.autoClose ? (
                   <span>
-                    {`${tokenBalance && selectedToken
+                    {`${selectedToken && selectFromTokenBalance()
                         ? getTokenAmountAndSymbolByTokenAddress(
-                            tokenBalance,
+                          selectFromTokenBalance(),
                             selectedToken?.address,
                             true
                           )
@@ -495,11 +513,11 @@ export const StreamAddFundsModal = (props: {
                           )
                         }
                       </span>
-                    ) : tokenBalance && selectedToken ? (
+                    ) : selectedToken && selectFromTokenBalance() ? (
                       <span>
                         {
                           getTokenAmountAndSymbolByTokenAddress(
-                            tokenBalance,
+                            selectFromTokenBalance(),
                             selectedToken.address,
                             true
                           )

@@ -1542,7 +1542,7 @@ export const AccountsNewView = () => {
     refreshStreamSummary,
   ]);
 
-  // Live data calculation - Totals
+  // Live data calculation - NetWorth
   useEffect(() => {
 
     if (streamsSummary && accountTokens) {
