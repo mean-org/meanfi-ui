@@ -5,7 +5,6 @@ import {
 } from '@ant-design/icons';
 import {
   Account,
-  Commitment,
   ConfirmOptions,
   Connection,
   Keypair,
@@ -50,7 +49,7 @@ import { IconEllipsisVertical, IconSafe, IconUserGroup, IconUsers } from '../../
 import { useNativeAccount } from '../../contexts/accounts';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-// import { useNavigate } from 'react-router-dom';
+
 import {
   MultisigParticipant,
   MultisigTransaction,
@@ -59,10 +58,8 @@ import {
   MultisigTransactionFees,
   ZERO_FEES,
   MULTISIG_ACTIONS,
-  // getMultisigTransactionSummary,
   getFees,
   DEFAULT_EXPIRATION_TIME_SECONDS,
-  // MultisigVault,
   parseSerializedTx
   
 } from '../../models/multisig';
@@ -84,8 +81,6 @@ import SerumIDL from '../../models/serum-multisig-idl';
 import { AppsProvider, NETWORK, App, UiInstruction, AppConfig, UiElement, Arg } from '@mean-dao/mean-multisig-apps';
 import { SafeSerumInfoView } from './components/SafeSerumInfo';
 import { MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigInfo } from '@mean-dao/mean-multisig-sdk';
-import { AssetDetailsView } from './components/AssetDetails';
-// import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { MultisigCreateAssetModal } from '../../components/MultisigCreateAssetModal';
 
 import { createProgram, getDepositIx } from '@mean-dao/mean-multisig-apps/lib/apps/credix/func';
@@ -3560,7 +3555,6 @@ export const SafeView = () => {
                               isAssetDetails={isAssetDetails}
                               onDataToSafeView={goToSafeDetailsHandler}
                               onDataToProgramView={goToProgramDetailsHandler}
-                              // onDataToAssetView={goToAssetDetailsHandler}
                               selectedMultisig={selectedMultisig}
                               onEditMultisigClick={onEditMultisigClick}
                               onNewProposalMultisigClick={onNewProposalMultisigClick}
@@ -3598,14 +3592,6 @@ export const SafeView = () => {
                             onProposalExecute={onExecuteFinishTx}
                           />
                         )}
-                        {/* {isAssetDetails && (
-                          <AssetDetailsView
-                            isAssetDetails={isAssetDetails}
-                            onDataToAssetView={returnFromAssetDetailsHandler}
-                            assetSelected={assetSelected}
-                            selectedMultisig={selectedMultisig}
-                          />
-                        )} */}
                         {isProgramDetails && (
                           <ProgramDetailsView
                             isProgramDetails={isProgramDetails}
