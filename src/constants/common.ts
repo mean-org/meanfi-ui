@@ -117,13 +117,13 @@ export const LANGUAGES: Language[] = [
         flag: '/assets/flags/tr.svg',
         locale: 'tr-TR'
     },
-    // {
-    //     code: 'zh',
-    //     isoName: 'Chinese',
-    //     name: '中國人',
-    //     flag: '/assets/flags/cn.svg',
-    //     locale: 'zh-CN'
-    // },
+    {
+        code: 'zh',
+        isoName: 'Chinese',
+        name: '中國人',
+        flag: '/assets/flags/cn.svg',
+        locale: 'zh-CN'
+    },
     {
         code: 'vi',
         isoName: 'Vietnamese',
