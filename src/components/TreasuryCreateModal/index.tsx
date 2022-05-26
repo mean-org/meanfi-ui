@@ -365,15 +365,16 @@ export const TreasuryCreateModal = (props: {
           };
 
           if (index < MAX_TOKEN_LIST_ITEMS) {
+            const balance = connected && userBalances && userBalances[t.address] > 0 ? userBalances[t.address] : 0;
             return (
               <TokenListItem
                 key={t.address}
                 name={t.name || 'Unknown'}
                 mintAddress={t.address}
                 token={t}
-                className={workingToken && workingToken.address === t.address ? "selected" : "simplelink"}
+                className={balance ? workingToken && workingToken.address === t.address ? "selected" : "simplelink" : "hidden"}
                 onClick={onClick}
-                balance={connected && userBalances && userBalances[t.address] > 0 ? userBalances[t.address] : 0}
+                balance={balance}
               />
             );
           } else {

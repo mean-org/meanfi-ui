@@ -1023,15 +1023,16 @@ export const OneTimePayment = (props: {
           };
 
           if (index < MAX_TOKEN_LIST_ITEMS) {
+            const balance = connected && userBalances && userBalances[t.address] > 0 ? userBalances[t.address] : 0;
             return (
               <TokenListItem
                 key={t.address}
                 name={t.name || 'Unknown'}
                 mintAddress={t.address}
                 token={t}
-                className={selectedToken && selectedToken.address === t.address ? "selected" : "simplelink"}
+                className={balance ? selectedToken && selectedToken.address === t.address ? "selected" : "simplelink" : "hidden"}
                 onClick={onClick}
-                balance={connected && userBalances && userBalances[t.address] > 0 ? userBalances[t.address] : 0}
+                balance={balance}
               />
             );
           } else {
