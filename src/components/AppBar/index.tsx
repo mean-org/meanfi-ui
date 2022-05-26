@@ -33,14 +33,10 @@ export const AppBar = (props: {
   const {
     isWhitelisted,
     detailsPanelOpen,
-    addAccountPanelOpen,
     isDepositOptionsModalVisible,
-    refreshStreamList,
     setDtailsPanelOpen,
     setShouldLoadTokens,
-    setAddAccountPanelOpen,
     hideDepositOptionsModal,
-    setCanShowAccountDetails,
   } = useContext(AppStateContext);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -51,9 +47,6 @@ export const AppBar = (props: {
   const closeAllPanels = () => {
     if (detailsPanelOpen) {
       setDtailsPanelOpen(false);
-    } else if (addAccountPanelOpen) {
-      setCanShowAccountDetails(true);
-      setAddAccountPanelOpen(false);
     }
   }
 
@@ -69,7 +62,6 @@ export const AppBar = (props: {
     e.preventDefault();
     e.stopPropagation();
     setShouldLoadTokens(true);
-    refreshStreamList(true);
     setTimeout(() => {
       navigate('/accounts');
     }, 200);

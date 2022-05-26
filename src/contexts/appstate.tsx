@@ -115,7 +115,6 @@ interface AppStateConfig {
   accountAddress: string;
   lastTxSignature: string;
   addAccountPanelOpen: boolean;
-  canShowAccountDetails: boolean;
   streamsSummary: StreamsSummary;
   lastStreamsSummary: StreamsSummary;
   loadingStreamsSummary: boolean;
@@ -180,7 +179,6 @@ interface AppStateConfig {
   setSelectedAsset: (asset: UserTokenAccount | undefined) => void;
   setAccountAddress: (address: string) => void;
   setAddAccountPanelOpen: (state: boolean) => void;
-  setCanShowAccountDetails: (state: boolean) => void;
   setStreamsSummary: (summary: StreamsSummary) => void;
   setLastStreamsSummary: (summary: StreamsSummary) => void;
   setLoadingStreamsSummary: (state: boolean) => void;
@@ -258,7 +256,6 @@ const contextDefaultValues: AppStateConfig = {
   accountAddress: '',
   lastTxSignature: '',
   addAccountPanelOpen: true,
-  canShowAccountDetails: true,
   streamsSummary: initialSummary,
   lastStreamsSummary: initialSummary,
   loadingStreamsSummary: false,
@@ -323,7 +320,6 @@ const contextDefaultValues: AppStateConfig = {
   setSelectedAsset: () => {},
   setAccountAddress: () => {},
   setAddAccountPanelOpen: () => {},
-  setCanShowAccountDetails: () => {},
   setStreamsSummary: () => {},
   setLastStreamsSummary: () => {},
   setLoadingStreamsSummary: () => {},
@@ -418,12 +414,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [isDepositOptionsModalVisible, setIsDepositOptionsModalVisibility] = useState(false);
   const [raydiumLps, setRaydiumLps] = useState<any>(contextDefaultValues.raydiumLps);
   const [shouldLoadRaydiumLps, setShouldLoadRaydiumLps] = useState(true);
-
-  /////////////////////////////////////
-  // Added to support /accounts page //
-  /////////////////////////////////////
-
-  const [accountAddress, updateAccountAddress] = useLocalStorage('lastUsedAccount', publicKey ? publicKey.toBase58() : '');
+  const [accountAddress, updateAccountAddress] = useState('');
   const [splTokenList, updateSplTokenList] = useState<UserTokenAccount[]>(contextDefaultValues.splTokenList);
   const [userTokens, updateUserTokens] = useState<UserTokenAccount[]>(contextDefaultValues.userTokens);
   const [pinnedTokens, updatePinnedTokens] = useState<UserTokenAccount[]>(contextDefaultValues.pinnedTokens);
@@ -431,7 +422,6 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [selectedAsset, updateSelectedAsset] = useState<UserTokenAccount | undefined>(contextDefaultValues.selectedAsset);
   const [lastTxSignature, setLastTxSignature] = useState<string>(contextDefaultValues.lastTxSignature);
   const [addAccountPanelOpen, updateAddAccountPanelOpen] = useState(contextDefaultValues.addAccountPanelOpen);
-  const [canShowAccountDetails, updateCanShowAccountDetails] = useState(contextDefaultValues.canShowAccountDetails);
   const [streamsSummary, setStreamsSummary] = useState<StreamsSummary>(contextDefaultValues.streamsSummary);
   const [lastStreamsSummary, setLastStreamsSummary] = useState<StreamsSummary>(contextDefaultValues.lastStreamsSummary);
   const [loadingStreamsSummary, setLoadingStreamsSummary] = useState(contextDefaultValues.loadingStreamsSummary);
@@ -1086,12 +1076,12 @@ const AppStateProvider: React.FC = ({ children }) => {
       return;
     }
 
-    if ((publicKey === null || publicKey === undefined) && !userAddress) {
+    if (!accountAddress && !userAddress) {
       return;
     }
 
-    const userPk = userAddress || publicKey as PublicKey;
-    consoleOut('Fetching streams for:', userPk?.toBase58(), 'blue');
+    const userPk = userAddress || new PublicKey(accountAddress);
+    consoleOut('Fetching streams for:', userPk?.toBase58(), 'orange');
 
     if (msp) {
       setLoadingStreams(true);
@@ -1217,7 +1207,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   }, [
     ms,
     msp,
-    publicKey,
+    accountAddress,
     loadingStreams,
     selectedStream,
     lastSentTxStatus,
@@ -1238,8 +1228,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   useEffect(() => {
     let timer: any;
 
-    if ((location.pathname === '/accounts' || location.pathname === '/accounts/streams') &&
-        !customStreamDocked && !isDowngradedPerformance) {
+    if (accountAddress && location.pathname.startsWith('/accounts') && !customStreamDocked && !isDowngradedPerformance) {
       timer = setInterval(() => {
         consoleOut(`Refreshing streams past ${msToTime(FIVE_MINUTES_REFRESH_TIMEOUT)}...`);
         refreshStreamList();
@@ -1249,6 +1238,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     return () => clearInterval(timer);
   }, [
     location,
+    accountAddress,
     customStreamDocked,
     isDowngradedPerformance,
     refreshStreamList,
@@ -1314,10 +1304,6 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   const setAddAccountPanelOpen = (state: boolean) => {
     updateAddAccountPanelOpen(state);
-  }
-
-  const setCanShowAccountDetails = (state: boolean) => {
-    updateCanShowAccountDetails(state);
   }
 
   const setTransactions = (map: MappedTransaction[] | undefined, addItems?: boolean) => {
@@ -1489,7 +1475,6 @@ const AppStateProvider: React.FC = ({ children }) => {
         accountAddress,
         lastTxSignature,
         addAccountPanelOpen,
-        canShowAccountDetails,
         streamsSummary,
         lastStreamsSummary,
         loadingStreamsSummary,
@@ -1550,7 +1535,6 @@ const AppStateProvider: React.FC = ({ children }) => {
         setSelectedAsset,
         setAccountAddress,
         setAddAccountPanelOpen,
-        setCanShowAccountDetails,
         setStreamsSummary,
         setLastStreamsSummary,
         setLoadingStreamsSummary,

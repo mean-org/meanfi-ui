@@ -10,7 +10,7 @@ import { BackButton } from "../BackButton";
 import { useTranslation } from "react-i18next";
 import { useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
-import { consoleOut, isLocal, isProd, isValidAddress } from "../../utils/ui";
+import { consoleOut, isProd, isValidAddress } from "../../utils/ui";
 import ReactGA from 'react-ga';
 // import { InfluxDB, Point } from '@influxdata/influxdb-client';
 import { isMobile, isDesktop, isTablet, browserName, osName, osVersion, fullBrowserVersion, deviceType } from "react-device-detect";
@@ -38,12 +38,8 @@ export const AppLayout = React.memo((props: any) => {
     theme,
     tpsAvg,
     detailsPanelOpen,
-    addAccountPanelOpen,
-    canShowAccountDetails,
     previousWalletConnectState,
     setPreviousWalletConnectState,
-    setCanShowAccountDetails,
-    setAddAccountPanelOpen,
     setShouldLoadTokens,
     refreshTokenBalance,
     setDtailsPanelOpen,
@@ -412,9 +408,6 @@ export const AppLayout = React.memo((props: any) => {
   const closeAllPanels = () => {
     if (detailsPanelOpen) {
       setDtailsPanelOpen(false);
-    } else if (addAccountPanelOpen) {
-      setCanShowAccountDetails(true);
-      setAddAccountPanelOpen(false);
     }
   }
 
@@ -473,7 +466,7 @@ export const AppLayout = React.memo((props: any) => {
               </div>
             )}
             <Header className="App-Bar">
-              {!location.pathname.startsWith('/invest') && (detailsPanelOpen || (addAccountPanelOpen && !canShowAccountDetails)) && (
+              {!location.pathname.startsWith('/invest') && (detailsPanelOpen) && (
                 <BackButton handleClose={() => closeAllPanels()} />
               )}
               <div className="app-bar-inner">

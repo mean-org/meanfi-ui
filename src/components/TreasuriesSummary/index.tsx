@@ -38,6 +38,7 @@ export const TreasuriesSummary = (props: {
     const [loadingTreasuries, setLoadingTreasuries] = useState(false);
     const [treasuriesLoaded, setTreasuriesLoaded] = useState(false);
     const [treasuriesSummary, setTreasuriesSummary] = useState<UserTreasuriesSummary>(INITIAL_TREASURIES_SUMMARY);
+    const [prevAddress, setPrevAddress] = useState('');
 
     ////////////////////////////
     //   Events and actions   //
@@ -195,10 +196,22 @@ export const TreasuriesSummary = (props: {
         if (!address || treasuriesLoaded) { return; }
 
         consoleOut('Calling refreshTreasuries...', '', 'blue');
+        setPrevAddress(address);
         setTreasuriesLoaded(true);
         refreshTreasuries();
 
     }, [address, refreshTreasuries, treasuriesLoaded]);
+
+    useEffect(() => {
+
+        if (!address) { return; }
+
+        if (address !== prevAddress) {
+            refreshTreasuries();
+        }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [address, prevAddress]);
 
     // Treasury list refresh timeout
     useEffect(() => {

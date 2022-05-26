@@ -118,12 +118,10 @@ export const AccountsNewView = () => {
     shouldLoadTokens,
     transactionStatus,
     streamProgramAddress,
-    canShowAccountDetails,
     loadingStreamsSummary,
     streamV2ProgramAddress,
     previousWalletConnectState,
     setLoadingStreamsSummary,
-    setCanShowAccountDetails,
     showDepositOptionsModal,
     setAddAccountPanelOpen,
     getTokenPriceByAddress,
@@ -186,6 +184,7 @@ export const AccountsNewView = () => {
   useEffect(() => {
     if (!publicKey) { return; }
 
+    consoleOut('pathname:', location.pathname, 'crimson');
     if (location.pathname.endsWith('/streams')) {
       return;
     } else if (!address && publicKey) {
@@ -193,14 +192,14 @@ export const AccountsNewView = () => {
       consoleOut('No account address, redirecting to:', url, 'orange');
       setTimeout(() => {
         setIsFirstLoad(true);
-      }, 10);
+      }, 5);
       navigate(url, { replace: true });
     } else if (address && location.pathname.indexOf('/assets') === -1) {
       const url = `${ACCOUNTS_ROUTE_BASE_PATH}/${address}/assets`;
       consoleOut('Address found, redirecting to:', url, 'orange');
       setTimeout(() => {
         setIsFirstLoad(true);
-      }, 10);
+      }, 5);
       navigate(url, { replace: true });
     }
   }, [address, location.pathname, navigate, publicKey]);
@@ -316,17 +315,14 @@ export const AccountsNewView = () => {
 
   const onAddAccountAddress = useCallback(() => {
     navigate(`${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddressInput}/assets`);
-    setCanShowAccountDetails(true);
     setAccountAddressInput('');
-  }, [navigate, accountAddressInput, setCanShowAccountDetails]);
+  }, [navigate, accountAddressInput]);
 
   const handleScanAnotherAddressButtonClick = () => {
-    setCanShowAccountDetails(false);
     setAddAccountPanelOpen(true);
   }
 
   const handleBackToAccountDetailsButtonClick = () => {
-    setCanShowAccountDetails(true);
     setAddAccountPanelOpen(false);
   }
 
@@ -1064,7 +1060,6 @@ export const AccountsNewView = () => {
     }
 
     // The category is inferred from the route path
-    consoleOut('pathname:', location.pathname, 'crimson');
     if (location.pathname.indexOf('/assets') !== -1) {
       setSelectedCategory("assets");
       if (!asset) {
@@ -1076,27 +1071,7 @@ export const AccountsNewView = () => {
       setSelectedCategory("other-assets");
     }
 
-    // if (assetInQuery && catInQuery && (catInQuery as CategoryOption) === "other-assets") {
-    //   switch (assetInQuery as OtherAssetsOption) {
-    //     case "msp-streams":
-    //       setSelectedOtherAssetsOption("msp-streams");
-    //       break;
-    //     case "msp-treasuries":
-    //       setSelectedOtherAssetsOption("msp-treasuries");
-    //       break;
-    //     case "orca":
-    //       setSelectedOtherAssetsOption("orca");
-    //       break;
-    //     case "solend":
-    //       setSelectedOtherAssetsOption("solend");
-    //       break;
-    //     case "friktion":
-    //       setSelectedOtherAssetsOption("friktion");
-    //       break;
-    //     default:
-    //       setSelectedOtherAssetsOption(undefined);
-    //       break;
-    //   }
+    // if (assetInQuery) {
     // }
 
   }, [
@@ -1105,12 +1080,23 @@ export const AccountsNewView = () => {
     publicKey,
     isFirstLoad,
     accountAddress,
-    location.search,
     location.pathname,
     setAccountAddress,
   ]);
 
   // Load streams on entering /accounts
+  useEffect(() => {
+    if (!publicKey || !accountAddress) { return; }
+
+    if (address && accountAddress === address) {
+      consoleOut('Loading streams...', '', 'orange');
+      refreshStreamList();
+    }
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accountAddress, address, publicKey]);
+
+  // Ensure lokens Load on entering /accounts
   useEffect(() => {
     if (!isFirstLoad || !publicKey || !accountAddress) { return; }
 
@@ -1122,22 +1108,12 @@ export const AccountsNewView = () => {
         setShouldLoadTokens(true);
       }
     }, 1000);
-
-    if (!streamList || streamList.length === 0) {
-      consoleOut('Loading streams...', '', 'green');
-
-      const treasurer = new PublicKey(accountAddress);
-
-      refreshStreamList(false, treasurer);
-    }
   }, [
     publicKey,
-    streamList,
     isFirstLoad,
     accountAddress,
     shouldLoadTokens,
     setShouldLoadTokens,
-    refreshStreamList,
     setTransactions,
   ]);
 
@@ -1514,7 +1490,6 @@ export const AccountsNewView = () => {
           setStreamsSummary(initialSummary);
         });
         setAddAccountPanelOpen(false);
-        setCanShowAccountDetails(true);
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'blue');
         confirmationEvents.off(EventType.TxConfirmSuccess, onTxConfirmed);
@@ -1538,7 +1513,6 @@ export const AccountsNewView = () => {
     connected,
     streamDetail,
     previousWalletConnectState,
-    setCanShowAccountDetails,
     setAddAccountPanelOpen,
     setLastStreamsSummary,
     setStreamsSummary,
@@ -1624,14 +1598,14 @@ export const AccountsNewView = () => {
 
   // Setup event listeners
   useEffect(() => {
-    if (publicKey && canSubscribe) {
+    if (canSubscribe) {
       setCanSubscribe(false);
       confirmationEvents.on(EventType.TxConfirmSuccess, onTxConfirmed);
       consoleOut('Subscribed to event txConfirmed with:', 'onTxConfirmed', 'blue');
       confirmationEvents.on(EventType.TxConfirmTimeout, onTxTimedout);
       consoleOut('Subscribed to event txTimedout with:', 'onTxTimedout', 'blue');
     }
-  }, [publicKey, canSubscribe, onTxConfirmed, onTxTimedout]);
+  }, [canSubscribe, onTxConfirmed, onTxTimedout]);
 
   //////////////////
   // Transactions //
@@ -1872,9 +1846,9 @@ export const AccountsNewView = () => {
       <Tooltip title={publicKey ? "See your Money Streams" : "To see your Money Streams you need to connect your wallet"}>
         <div key="streams" onClick={() => {
           if (publicKey) {
-            setSelectedCategory("other-assets");
-            setSelectedOtherAssetsOption("msp-streams");
-            setSelectedAsset(undefined);
+            // setSelectedCategory("other-assets");
+            // setSelectedOtherAssetsOption("msp-streams");
+            // setSelectedAsset(undefined);
             setTimeout(() => {
               navigate(`${ACCOUNTS_ROUTE_BASE_PATH}/streams`);
             }, 10);
@@ -1895,8 +1869,7 @@ export const AccountsNewView = () => {
                 <div className="streams-count simplelink" onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    const treasurer = new PublicKey(accountAddress);
-                    refreshStreamList(false, treasurer);
+                    refreshStreamList(false);
                   }}>
                   <span className="font-size-75 font-bold text-shadow">{kFormatter(streamsSummary.totalAmount) || 0}</span>
                 </div>
@@ -2381,6 +2354,95 @@ export const AccountsNewView = () => {
     );
   };
 
+  const renderAddAccountBox = (
+    <>
+      <div className="boxed-area container-max-width-600 add-account">
+        {accountAddress && (
+          <div className="back-button">
+            <span className="icon-button-container">
+              <Tooltip placement="bottom" title={t('assets.back-to-assets-cta')}>
+                <Button
+                  type="default"
+                  shape="circle"
+                  size="middle"
+                  className="hidden-xs"
+                  icon={<ArrowLeftOutlined />}
+                  onClick={handleBackToAccountDetailsButtonClick}
+                />
+              </Tooltip>
+            </span>
+          </div>
+        )}
+        <h2 className="text-center mb-3 px-5">{t('assets.account-add-heading')} {renderSolanaIcon} Solana</h2>
+        <div className="flexible-left mb-3">
+          <div className="transaction-field left">
+            <div className="transaction-field-row">
+              <span className="field-label-left">{t('assets.account-address-label')}</span>
+              <span className="field-label-right">&nbsp;</span>
+            </div>
+            <div className="transaction-field-row main-row">
+              <span className="input-left recipient-field-wrapper">
+                <input id="payment-recipient-field"
+                  className="w-100 general-text-input"
+                  autoComplete="on"
+                  autoCorrect="off"
+                  type="text"
+                  onFocus={handleAccountAddressInputFocusIn}
+                  onChange={handleAccountAddressInputChange}
+                  onBlur={handleAccountAddressInputFocusOut}
+                  placeholder={t('assets.account-address-placeholder')}
+                  required={true}
+                  spellCheck="false"
+                  value={accountAddressInput}/>
+                <span id="payment-recipient-static-field"
+                      className={`${accountAddressInput ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>
+                  {accountAddressInput || t('assets.account-address-placeholder')}
+                </span>
+              </span>
+              <div className="addon-right simplelink" onClick={showQrScannerModal}>
+                <QrcodeOutlined />
+              </div>
+            </div>
+            <div className="transaction-field-row">
+              <span className="field-label-left">
+                {accountAddressInput && !isValidAddress(accountAddressInput) ? (
+                  <span className="fg-red">
+                    {t('transactions.validation.address-validation')}
+                  </span>
+                ) : (
+                  <span>&nbsp;</span>
+                )}
+              </span>
+            </div>
+          </div>
+          {/* Go button */}
+          <Button
+            className="main-cta right"
+            type="primary"
+            shape="round"
+            size="large"
+            onClick={onAddAccountAddress}
+            disabled={!isValidAddress(accountAddressInput)}>
+            {t('assets.account-add-cta-label')}
+          </Button>
+        </div>
+        <div className="text-center">
+          <span className="mr-1">{t('assets.create-account-help-pre')}</span>
+          <a className="primary-link font-medium" href={SOLANA_WALLET_GUIDE} target="_blank" rel="noopener noreferrer">
+            {t('assets.create-account-help-link')}
+          </a>
+          <span className="ml-1">{t('assets.create-account-help-post')}</span>
+        </div>
+      </div>
+      {isQrScannerModalVisible && (
+        <QrScannerModal
+          isVisible={isQrScannerModalVisible}
+          handleOk={onAcceptQrScannerModal}
+          handleClose={closeQrScannerModal}/>
+      )}
+    </>
+  );
+
   return (
     <>
       {/* {isLocal() && (
@@ -2407,13 +2469,13 @@ export const AccountsNewView = () => {
         <h1 className="mandatory-h1">Keep track of your assets and transactions</h1>
 
         {publicKey ? (
-          <div className={(canShowAccountDetails && accountAddress) ? 'interaction-area' : 'interaction-area flex-center h-75'}>
+          <div className="interaction-area">
 
             {location.pathname === `${ACCOUNTS_ROUTE_BASE_PATH}/streams` ? (
               <Streams />
             ) : (
               <>
-                {canShowAccountDetails && accountAddress ? (
+                {accountAddress && (
                   <div className={`meanfi-two-panel-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
 
                     {/* Left / top panel */}
@@ -2566,94 +2628,6 @@ export const AccountsNewView = () => {
                     </div>
 
                   </div>
-                ) : (
-                  <>
-                    <div className="boxed-area container-max-width-600 add-account">
-                      {accountAddress && (
-                        <div className="back-button">
-                          <span className="icon-button-container">
-                            <Tooltip placement="bottom" title={t('assets.back-to-assets-cta')}>
-                              <Button
-                                type="default"
-                                shape="circle"
-                                size="middle"
-                                className="hidden-xs"
-                                icon={<ArrowLeftOutlined />}
-                                onClick={handleBackToAccountDetailsButtonClick}
-                              />
-                            </Tooltip>
-                          </span>
-                        </div>
-                      )}
-                      <h2 className="text-center mb-3 px-5">{t('assets.account-add-heading')} {renderSolanaIcon} Solana</h2>
-                      <div className="flexible-left mb-3">
-                        <div className="transaction-field left">
-                          <div className="transaction-field-row">
-                            <span className="field-label-left">{t('assets.account-address-label')}</span>
-                            <span className="field-label-right">&nbsp;</span>
-                          </div>
-                          <div className="transaction-field-row main-row">
-                            <span className="input-left recipient-field-wrapper">
-                              <input id="payment-recipient-field"
-                                className="w-100 general-text-input"
-                                autoComplete="on"
-                                autoCorrect="off"
-                                type="text"
-                                onFocus={handleAccountAddressInputFocusIn}
-                                onChange={handleAccountAddressInputChange}
-                                onBlur={handleAccountAddressInputFocusOut}
-                                placeholder={t('assets.account-address-placeholder')}
-                                required={true}
-                                spellCheck="false"
-                                value={accountAddressInput}/>
-                              <span id="payment-recipient-static-field"
-                                    className={`${accountAddressInput ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>
-                                {accountAddressInput || t('assets.account-address-placeholder')}
-                              </span>
-                            </span>
-                            <div className="addon-right simplelink" onClick={showQrScannerModal}>
-                              <QrcodeOutlined />
-                            </div>
-                          </div>
-                          <div className="transaction-field-row">
-                            <span className="field-label-left">
-                              {accountAddressInput && !isValidAddress(accountAddressInput) ? (
-                                <span className="fg-red">
-                                  {t('transactions.validation.address-validation')}
-                                </span>
-                              ) : (
-                                <span>&nbsp;</span>
-                              )}
-                            </span>
-                          </div>
-                        </div>
-                        {/* Go button */}
-                        <Button
-                          className="main-cta right"
-                          type="primary"
-                          shape="round"
-                          size="large"
-                          onClick={onAddAccountAddress}
-                          disabled={!isValidAddress(accountAddressInput)}>
-                          {t('assets.account-add-cta-label')}
-                        </Button>
-                      </div>
-                      <div className="text-center">
-                        <span className="mr-1">{t('assets.create-account-help-pre')}</span>
-                        <a className="primary-link font-medium" href={SOLANA_WALLET_GUIDE} target="_blank" rel="noopener noreferrer">
-                          {t('assets.create-account-help-link')}
-                        </a>
-                        <span className="ml-1">{t('assets.create-account-help-post')}</span>
-                      </div>
-                    </div>
-                    {/* QR scan modal */}
-                    {isQrScannerModalVisible && (
-                      <QrScannerModal
-                        isVisible={isQrScannerModalVisible}
-                        handleOk={onAcceptQrScannerModal}
-                        handleClose={closeQrScannerModal}/>
-                    )}
-                  </>
                 )}
               </>
             )}
