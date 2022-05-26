@@ -1404,17 +1404,28 @@ export const TreasuriesView = () => {
     if (!connection || !publicKey) { return; }
 
     if (treasuryDetails) {
-      connection.getMinimumBalanceForRentExemption(300)
-      .then(value => {
-        const re = value / LAMPORTS_PER_SOL;
-        const ub = getTreasuryUnallocatedBalance();
-        const eb = ub - re;
-        consoleOut('treasuryRentExcemption:', re, 'blue');
-        consoleOut('Treasury Unallocated Balance:', ub, 'blue');
-        consoleOut('Effective balance:', eb, 'blue');
-        setTreasuryEffectiveBalance(eb);
+      let balance = 0;
+      connection.getBalance(new PublicKey(treasuryDetails.id))
+      .then(solBalance => {
+        balance = solBalance / LAMPORTS_PER_SOL;
+        connection.getMinimumBalanceForRentExemption(300)
+        .then(value => {
+          const re = value / LAMPORTS_PER_SOL;
+          const eb = balance - re;
+          consoleOut('treasuryRentExcemption:', re, 'blue');
+          consoleOut('Treasury native balance:', balance, 'blue');
+          consoleOut('Effective account balance:', eb, 'blue');
+          setTreasuryEffectiveBalance(eb);
+        })
+        .catch(error => {
+          console.error('Failure fetching minimum balance for rent exemption', error);
+        });
+      })
+      .catch(error => {
+        console.error('Failure fetching native account balance for Streaming Account', error);
       });
     }
+
   }, [
     publicKey,
     connection,
@@ -3024,7 +3035,7 @@ export const TreasuriesView = () => {
         publicKey,                                  // payer
         multisig.authority,                         // TODO: This should come from the UI        
         new PublicKey(data.treasury),               // treasury
-        true                                        // TODO: Define if the user can determine this
+        false
       );
 
       const ixData = Buffer.from(closeTreasury.instructions[0].data);
@@ -3469,7 +3480,7 @@ export const TreasuriesView = () => {
         new PublicKey(data.payer),              // TODO: This should come from the UI 
         new PublicKey(data.stream),             // stream,
         data.closeTreasury,                     // closeTreasury
-        true                                    // TODO: Define if the user can determine this
+        false
       );
 
       const ixData = Buffer.from(closeStream.instructions[0].data);
@@ -4647,16 +4658,14 @@ export const TreasuriesView = () => {
 
       if (!msp) { return null; }
 
-      const treasuryWithdraw = await msp.treasuryWithdraw(
-        new PublicKey(data.payer),              // payer
-        new PublicKey(data.destination),        // treasurer
-        new PublicKey(data.treasury),           // treasury
-        data.amount,                            // amount
-        true                                    // TODO: Define if the user can determine this
-      );
-
       if (!isMultisigTreasury()) {
-        return treasuryWithdraw;
+        return await msp.treasuryWithdraw(
+          new PublicKey(data.payer),              // payer
+          new PublicKey(data.destination),        // treasurer
+          new PublicKey(data.treasury),           // treasury
+          data.amount,                            // amount
+          true                                    // TODO: Define if the user can determine this
+        );
       }
 
       if (!treasuryDetails || !multisigClient || !multisigAccounts || !publicKey) { return null; }
@@ -4666,8 +4675,16 @@ export const TreasuriesView = () => {
 
       if (!multisig) { return null; }
 
-      const ixData = Buffer.from(treasuryWithdraw.instructions[0].data);
-      const ixAccounts = treasuryWithdraw.instructions[0].keys;
+      const msTreasuryWithdraw = await msp.treasuryWithdraw(
+        new PublicKey(data.payer),              // payer
+        new PublicKey(data.destination),        // treasurer
+        new PublicKey(data.treasury),           // treasury
+        data.amount,                            // amount
+        false
+      );
+
+      const ixData = Buffer.from(msTreasuryWithdraw.instructions[0].data);
+      const ixAccounts = msTreasuryWithdraw.instructions[0].keys;
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
       const tx = await multisigClient.createTransaction(
