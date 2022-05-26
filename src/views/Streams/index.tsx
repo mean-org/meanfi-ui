@@ -68,7 +68,7 @@ import { TokenInfo } from "@solana/spl-token-registry";
 import { StreamCloseModal } from "../../components/StreamCloseModal";
 import { useNativeAccount } from "../../contexts/accounts";
 import { useTranslation } from "react-i18next";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from "../../utils/ids";
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from "../../contexts/transaction-status";
 import { Identicon } from "../../components/Identicon";
@@ -176,6 +176,7 @@ export const Streams = () => {
     enqueueTransactionConfirmation
   } = useContext(TxConfirmationContext);
   const { t } = useTranslation('common');
+  const { address, asset } = useParams();
   const { account } = useNativeAccount();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
@@ -188,11 +189,9 @@ export const Streams = () => {
   const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
   const [multisigAccounts] = useState<MultisigInfo[] | undefined>(undefined);
   const [canSubscribe, setCanSubscribe] = useState(true);
-
   // Countdown timer variables
   const [key, setKey] = useState(0);
   const [isCounting, setIsCounting] = useState(true);
-
   // Treasury related
   const [loadingTreasuryDetails, setLoadingTreasuryDetails] = useState(true);
   const [treasuryDetails, setTreasuryDetails] = useState<Treasury | TreasuryInfo | undefined>(undefined);
@@ -494,6 +493,16 @@ export const Streams = () => {
   /////////////////
   //   EFFECTS   //
   /////////////////
+
+  // Load streams if not loaded
+  useEffect(() => {
+    if (!publicKey) { return; }
+
+    if (!streamList && !address && publicKey) {
+      const pk = new PublicKey(publicKey);
+      refreshStreamList(true, pk);
+    }
+  }, [address, publicKey, refreshStreamList, streamList]);
 
   // Log the list of deleted streams
   useEffect(() => {

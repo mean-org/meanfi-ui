@@ -27,7 +27,6 @@ import {
 import {
   delay,
   consoleOut,
-  getAmountWithTokenSymbol,
   getTransactionModalTitle,
   getTransactionOperationDescription,
   getTransactionStatusForLogs,
@@ -37,6 +36,7 @@ import {
 import {
   formatAmount,
   formatThousands,
+  getAmountWithSymbol,
   getTokenAmountAndSymbolByTokenAddress,
   shortenAddress,
 } from "../../utils/utils";
@@ -259,10 +259,9 @@ export const PlaygroundView = () => {
         <div className="item-list-row" key={index}>
           <div className="std-table-cell responsive-cell text-monospace text-right pr-2">
             {selectedMint
-              ? getAmountWithTokenSymbol(
+              ? getAmountWithSymbol(
                 value,
-                selectedMint,
-                selectedMint.decimals
+                selectedMint.address
               )
               : ""}
           </div>

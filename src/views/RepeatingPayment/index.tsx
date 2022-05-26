@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Modal, Menu, Dropdown, DatePicker, Checkbox, Drawer, Col, Row } from "antd";
+import { Button, Modal, Menu, Dropdown, DatePicker, Checkbox, Drawer } from "antd";
 import {
   InfoCircleOutlined,
   LoadingOutlined,
@@ -27,7 +27,6 @@ import { EventType, OperationType, PaymentRateType, TransactionStatus } from "..
 import {
   consoleOut,
   disabledDate,
-  getAmountWithTokenSymbol,
   getFairPercentForInterval,
   getIntervalFromSeconds,
   getPaymentRateOptionLabel,
@@ -55,7 +54,6 @@ import { calculateActionFees, MSP, MSP_ACTIONS, TransactionFees } from "@mean-da
 import { AppUsageEvent, SegmentStreamRPTransferData } from '../../utils/segment-service';
 import { segmentAnalytics } from '../../App';
 import dateFormat from 'dateformat';
-import { NATIVE_SOL } from '../../utils/tokens';
 import { TokenInfo } from '@solana/spl-token-registry';
 import useWindowSize from '../../hooks/useWindowResize';
 import { InfoIcon } from '../../components/InfoIcon';
@@ -750,7 +748,7 @@ export const RepeatingPayment = (props: {
     amount: string | undefined
   ): string => {
     let label: string;
-    label = `${selectedToken ? getAmountWithTokenSymbol(amount, selectedToken) : '--'}`;
+    label = `${selectedToken ? getAmountWithSymbol(parseFloat(amount || '0'), selectedToken.address) : '--'}`;
     switch (rate) {
       case PaymentRateType.PerMinute:
         label += ` ${t('transactions.rate-and-frequency.payment-rates.per-minute')}`;
@@ -1142,12 +1140,6 @@ export const RepeatingPayment = (props: {
   const onIsVerifiedRecipientChange = (e: any) => {
     setIsVerifiedRecipient(e.target.checked);
   }
-
-  const onGoToWrap = () => {
-    onCloseTokenSelector();
-    navigate('/wrap');
-  }
-
 
   ///////////////////
   //   Rendering   //

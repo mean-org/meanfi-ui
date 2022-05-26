@@ -4,7 +4,7 @@ import { Modal, Button, Row, Col, Radio } from 'antd';
 import { ExclamationCircleOutlined, LoadingOutlined } from "@ant-design/icons";
 import { useWallet } from '../../contexts/wallet';
 import { consoleOut, percentage } from '../../utils/ui';
-import { getTokenAmountAndSymbolByTokenAddress, toUiAmount } from '../../utils/utils';
+import { getAmountWithSymbol, toUiAmount } from '../../utils/utils';
 import { useTranslation } from 'react-i18next';
 import { StreamInfo, STREAM_STATE, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { MSP, Stream, STREAM_STATUS, Treasury, TreasuryType } from '@mean-dao/msp';
@@ -337,16 +337,16 @@ export const StreamCloseModal = (props: {
               <div className="p-2 mb-2">
                 {infoRow(
                   t('close-stream.return-vested-amount') + ':',
-                  getTokenAmountAndSymbolByTokenAddress(getWithdrawableAmount(), localStreamDetail.associatedToken as string)
+                  getAmountWithSymbol(getWithdrawableAmount(), localStreamDetail.associatedToken as string)
                 )}
                 {amITreasurer() && infoRow(
                   t('close-stream.return-unvested-amount') + ':',
-                  getTokenAmountAndSymbolByTokenAddress(getUnvested(), localStreamDetail.associatedToken as string)
+                  getAmountWithSymbol(getUnvested(), localStreamDetail.associatedToken as string)
                 )}
                 {amIBeneficiary() && getWithdrawableAmount() > 0 && infoRow(
                   t('transactions.transaction-info.transaction-fee') + ':',
                   `${feeAmount
-                    ? '~' + getTokenAmountAndSymbolByTokenAddress((feeAmount as number), localStreamDetail.associatedToken as string)
+                    ? '~' + getAmountWithSymbol((feeAmount as number), localStreamDetail.associatedToken as string)
                     : '0'
                   }`
                 )}
