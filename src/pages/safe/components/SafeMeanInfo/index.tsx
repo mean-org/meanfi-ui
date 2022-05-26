@@ -1718,7 +1718,7 @@ export const SafeMeanInfo = (props: {
               <div 
                 key={`${asset.address.toBase58() + 60}`}
                 onClick={onSelectAsset}
-                className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+                className={`d-flex w-100 align-items-center ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
                 >
                   <ResumeItem
                     id={`${index + 61}`}
