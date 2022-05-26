@@ -2029,7 +2029,7 @@ export const TreasuryStreamCreateModal = (props: {
 
               <Row className="mb-2">
                 <Col span={24}>
-                  <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-sending')}  </strong> {(fromCoinAmount) ? `${cutNumber(parseFloat(fromCoinAmount), 6)} ${selectedToken && selectedToken.name}` : "--"}
+                  <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-sending')}  </strong> {(fromCoinAmount) ? `${cutNumber(parseFloat(fromCoinAmount), 6)} ${selectedToken && selectedToken.symbol}` : "--"}
                 </Col>
                 <Col span={24}>
                   <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-to-address')}  </strong> {recipientAddress ? recipientAddress : "--"}
@@ -2038,14 +2038,14 @@ export const TreasuryStreamCreateModal = (props: {
                   <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-starting-on')}  </strong> {paymentStartDate}
                 </Col>
                 <Col span={24}>
-                  <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-cliff-release')}  </strong> {cliffRelease ? (`${cutNumber(parseFloat(cliffRelease), 6)} ${selectedToken && selectedToken.name} (on commencement)`) : "--"}
+                  <strong>{t('treasuries.treasury-streams.add-stream-locked.panel3-cliff-release')}  </strong> {cliffRelease ? (`${cutNumber(parseFloat(cliffRelease), 6)} ${selectedToken && selectedToken.symbol} (on commencement)`) : "--"}
                 </Col>
                 <Col span={24}>
                   <strong>Amount to be streamed: </strong>
                   <span>
                   {
                     (cliffRelease && lockPeriodAmount && selectedToken)
-                      ? (`${parseFloat(fromCoinAmount) - parseFloat(cliffRelease)} ${selectedToken.name} over ${lockPeriodAmount} ${getLockPeriodOptionLabel(lockPeriodFrequency, t)}`)
+                      ? (`${parseFloat(fromCoinAmount) - parseFloat(cliffRelease)} ${selectedToken.symbol} over ${lockPeriodAmount} ${getLockPeriodOptionLabel(lockPeriodFrequency, t)}`)
                       : "--"
                   }
                   </span>
@@ -2055,7 +2055,7 @@ export const TreasuryStreamCreateModal = (props: {
                   <span>
                     {
                       (cliffRelease && lockPeriodAmount && selectedToken)
-                        ? (`${paymentRateAmount} ${selectedToken.name} / ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`)
+                        ? (`${paymentRateAmount} ${selectedToken.symbol} / ${getPaymentRateOptionLabel(lockPeriodFrequency, t)}`)
                         : "--"
                     }
                   </span>
