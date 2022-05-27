@@ -172,7 +172,8 @@ export const DAO_CORE_TEAM_WHITELIST = [
     'c8fLDB5oFSwGnwAV1LGQqaadHt2WbvWv7o79YnnUWxd',  // J
     '468Z5p52439dAqjLzBm2FCNxvDSnpbMsNx85b7Kmz3TQ', // Ayaz
     //
-    'Ej5zJzej7rrUoDngsJ3jcpfuvfVyWpcDcK7uv9cE2LdL'  // Maxim Credix
+    'Ej5zJzej7rrUoDngsJ3jcpfuvfVyWpcDcK7uv9cE2LdL', // Maxim Credix
+    '63cUbJ3yecyduEPPYbPERPSJzAy6ZnRWvjE6u4qkkAVd'  // Maxim Credix 2
 ];
 
 export const BETA_TESTING_PROGRAM_WHITELIST = [

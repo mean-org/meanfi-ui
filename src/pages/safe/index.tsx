@@ -83,7 +83,7 @@ import { SafeSerumInfoView } from './components/SafeSerumInfo';
 import { MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { MultisigCreateAssetModal } from '../../components/MultisigCreateAssetModal';
 
-import { createProgram, getDepositIx } from '@mean-dao/mean-multisig-apps/lib/apps/credix/func';
+import { createProgram, getDepositIx, getWithdrawIx, getGatewayToken } from '@mean-dao/mean-multisig-apps/lib/apps/credix/func';
 
 const CREDIX_PROGRAM = new PublicKey("CRDx2YkdtYtGZXGHZ59wNv1EwKHQndnRc1gT4p8i2vPX");
 
@@ -94,7 +94,7 @@ export const SafeView = () => {
   const { publicKey, connected, wallet } = useWallet();
   const {
     isWhitelisted,
-    multisigVaults,
+    // multisigVaults,
     detailsPanelOpen,
     transactionStatus,
     highLightableMultisigId,
@@ -1682,9 +1682,38 @@ export const SafeView = () => {
     if (!connection || !connectionConfig) { return null; }
 
     const program = createProgram(connection, "confirmed");
+    console.log("data => ", investor.toBase58(), amount);
+
+    const gatewayToken = await getGatewayToken(
+      investor,
+      new PublicKey("tniC2HX5yg2yDjMQEcUo1bHa44x9YdZVSqyKox21SDz")
+    ); 
+
+    console.log("gatewayToken => ", gatewayToken.toBase58());
 
     return await getDepositIx(program, investor, amount);
-    
+
+  }, [
+    connection, 
+    connectionConfig
+  ]);
+
+  const createCredixWithdrawIx = useCallback(async (investor: PublicKey, amount: number) => {
+
+    if (!connection || !connectionConfig) { return null; }
+
+    const program = createProgram(connection, "confirmed");
+    console.log("data => ", investor.toBase58(), amount);
+
+    const gatewayToken = await getGatewayToken(
+      investor,
+      new PublicKey("tniC2HX5yg2yDjMQEcUo1bHa44x9YdZVSqyKox21SDz")
+    ); 
+
+    console.log("gatewayToken => ", gatewayToken.toBase58());
+
+    return await getWithdrawIx(program, investor, amount);
+
   }, [
     connection, 
     connectionConfig
@@ -1708,41 +1737,8 @@ export const SafeView = () => {
         throw new Error("No selected multisig");
       }
 
+      let operation = 0;
       let proposalIx: TransactionInstruction | null = null;
-
-      // // TEST
-
-      // const testSysTransfer = new Transaction().add(
-      //   SystemProgram.transfer({
-      //     fromPubkey: publicKey,
-      //     toPubkey: publicKey,
-      //     lamports: 100_000_000
-      //   })
-      // );
-
-      // const testUiIx = {
-      //   id: await PublicKey.findProgramAddress([
-      //     SystemProgram.programId.toBuffer(), 
-      //     Buffer.from("custom_proposal")
-      //   ], MEAN_MULTISIG_PROGRAM),
-      //   name: "custom_proposal",
-      //   help: "",
-      //   label: "Custom Transaction Proposal",
-      //   uiElements: [
-      //     {
-      //       name: "custom_tx_proposal",
-      //       help: "",
-      //       label: "Custom Transaction Proposal",
-      //       value: txBase64,
-      //       type: "inputTextArea",
-      //       visibility: "show",
-      //       dataElement: undefined
-  
-      //     } as UiElement
-      //   ]
-      // };
-
-      // //
 
       if (data.appId === MEAN_MULTISIG_PROGRAM.toBase58()) {
         const tx = await parseSerializedTx(connection, data.instruction.uiElements[0].value);
@@ -1750,7 +1746,15 @@ export const SafeView = () => {
         proposalIx = tx?.instructions[0];
       } else if (data.appId === CREDIX_PROGRAM.toBase58()) { //
         if (data.instruction.name === "depositFunds") {
+          operation = 110;
           proposalIx = await createCredixDepositIx(
+            new PublicKey(data.instruction.uiElements[0].value),
+            parseFloat(data.instruction.uiElements[1].value)
+          );
+        } else if (data.instruction.name === "withdrawFunds") {
+          operation = 111;
+          console.log('WITHDRAW');
+          proposalIx = await createCredixWithdrawIx(
             new PublicKey(data.instruction.uiElements[0].value),
             parseFloat(data.instruction.uiElements[1].value)
           );
@@ -1766,27 +1770,6 @@ export const SafeView = () => {
       if (!proposalIx) {
         throw new Error("Invalid proposal instruction.");
       }
-
-      // console.log('proposal program ID', proposalIx.programId.toBase58());
-      // console.log('proposal account metas', proposalIx.keys.map(k => k.pubkey.toBase58()));
-      // console.log('proposal data', proposalIx.data);
-      
-      // const coder = new BorshInstructionCoder(data.config.definition as Idl);
-      // const decodedIx = coder.decode(proposalIx.data, "base58");
-      // console.log('proposal data', decodedIx);
-      // if (!decodedIx) { return null; }
-      // const propData = {
-      //   tag: data.config.uiInstructions.indexOf((uiIx: any) => decodedIx && uiIx.name === decodedIx.name),
-      //   amount: (decodedIx.data as any).value
-      // }
-
-      // if (!decodedIx) { return null; }
-
-      // const ixTag = data.config.definition.instructions.indexOf((uiIx: any) => uiIx.name === decodedIx.name) as number;
-      // const tagBuffer = Buffer.from(Uint8Array.of(...[ixTag]));
-      // const bytesBufffer = Object.entries(decodedIx.data).map((o: any) => Buffer.from(o['key']))
-      // const dataBuffer = [...[tagBuffer], ...bytesBufffer];
-      // console.log('data buffer', dataBuffer);
       
       const expirationTimeInSeconds = Date.now() / 1_000 + data.expires;
       const expirationDate = data.expires === 0 ? undefined : new Date(expirationTimeInSeconds * 1_000);
@@ -1795,7 +1778,7 @@ export const SafeView = () => {
         data.title,
         data.description,
         expirationDate,
-        0,
+        operation,
         selectedMultisig.id,
         proposalIx.programId,
         proposalIx.keys,
@@ -2030,6 +2013,7 @@ export const SafeView = () => {
     }
   }, [
     createCredixDepositIx,
+    createCredixWithdrawIx,
     clearTxConfirmationContext, 
     resetTransactionStatus, 
     wallet, 
