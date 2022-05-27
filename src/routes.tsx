@@ -16,7 +16,6 @@ import {
   SwapView,
   TransfersView,
   TreasuriesView,
-  WrapView,
   MultisigView,
   StatsView,
   MultisigAssetsView,
@@ -33,7 +32,6 @@ import { isLocal, isProd } from "./utils/ui";
 import { OnlineStatusProvider } from "./contexts/online-status";
 import { IdoLpView } from "./pages/ido-lp";
 import { InvestView } from "./pages/invest";
-import { UnwrapView } from "./pages/unwrap";
 
 export function AppRoutes() {
 
@@ -66,8 +64,6 @@ export function AppRoutes() {
                       {/* Deprecated routes (still active) */}
                       <Route path="/transfers" element={<TransfersView />} />
                       <Route path="/faucet" element={<FaucetView />} />
-                      <Route path="/wrap" element={<WrapView />} />
-                      <Route path="/unwrap" element={<UnwrapView />} />
                       {/* IDO */}
                       <Route path="/ido" element={<IdoView />} />
                       <Route path="/ido-live" element={<IdoLiveView />} />
