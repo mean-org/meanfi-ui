@@ -43,7 +43,7 @@ import { QrScannerModal } from '../../components/QrScannerModal';
 import { Helmet } from "react-helmet";
 import { IconAdd, IconExternalLink, IconEyeOff, IconEyeOn, IconLightBulb, IconVerticalEllipsis } from '../../Icons';
 import { fetchAccountHistory, MappedTransaction } from '../../utils/history';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import { AccountTokenParsedInfo } from '../../models/token';
 import { TokenInfo } from "@solana/spl-token-registry";
@@ -77,6 +77,7 @@ import { isMobile } from 'react-device-detect';
 import useWindowSize from '../../hooks/useWindowResize';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
+export type InspectedAccountType = "multisig" | "streaming-account" | undefined;
 export type CategoryOption = "networth" | "assets" | "msigs" | "other-assets";
 export type OtherAssetsOption = "msp-streams" | "msp-treasuries" | "orca" | "solend" | "friktion" | undefined;
 export const ACCOUNTS_ROUTE_BASE_PATH = '/accounts';
@@ -96,6 +97,7 @@ export const AccountsNewView = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { address, asset } = useParams();
+  const [searchParams] = useSearchParams();
   const { endpoint } = useConnectionConfig();
   const { publicKey, connected, wallet } = useWallet();
   const {
@@ -152,6 +154,7 @@ export const AccountsNewView = () => {
   const [refreshingBalance, setRefreshingBalance] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<CategoryOption>("assets");
   const [selectedOtherAssetsOption, setSelectedOtherAssetsOption] = useState<OtherAssetsOption>(undefined);
+  const [inspectedAccountType, setInspectedAccountType] = useState<InspectedAccountType>(undefined);
   const [totalTokenAccountsValue, setTotalTokenAccountsValue] = useState(0);
   const [netWorth, setNetWorth] = useState(0);
   const [treasuriesTvl, setTreasuriesTvl] = useState(0);
@@ -1032,9 +1035,6 @@ export const AccountsNewView = () => {
   useEffect(() => {
     if (!isFirstLoad || !publicKey) { return; }
 
-    // const params = new URLSearchParams(location.search);
-    // let catInQuery: string | null = null;
-
     if (address) {
       consoleOut('Route param address:', address, 'crimson');
       setAccountAddress(address);
@@ -1043,11 +1043,6 @@ export const AccountsNewView = () => {
         setAccountAddress(publicKey.toBase58());
       }
     }
-
-    // if (params.has('cat')) {
-    //   catInQuery = params.get('cat');
-    //   consoleOut('params.get("cat") =', catInQuery, 'crimson');
-    // }
 
     if (asset) {
       consoleOut('Route param asset:', asset, 'crimson');
@@ -1066,14 +1061,32 @@ export const AccountsNewView = () => {
       setSelectedCategory("other-assets");
     }
 
-    // if (assetInQuery) {
-    // }
+    let accountTypeInQuery: string | null = null;
+    // Get the account-type if passed-in
+    if (searchParams) {
+      accountTypeInQuery = searchParams.get('account-type');
+      consoleOut('searchParams:', searchParams.toString(), 'crimson');
+      consoleOut('account-type:', searchParams.get('account-type'), 'crimson');
+    }
+
+    switch (accountTypeInQuery as InspectedAccountType) {
+      case "multisig":
+        setInspectedAccountType("multisig");
+        break;
+      case "streaming-account":
+        setInspectedAccountType("streaming-account");
+        break;
+      default:
+        setInspectedAccountType(undefined);
+        break;
+    }
 
   }, [
     asset,
     address,
     publicKey,
     isFirstLoad,
+    searchParams,
     accountAddress,
     location.pathname,
     setAccountAddress,
@@ -2184,10 +2197,12 @@ export const AccountsNewView = () => {
         <Space className="left" size="middle" wrap>
           {selectedAsset.name === 'Custom account' ? (
             <h4 className="mb-0">The token for this Custom account was not found in the Solana token list</h4>
-          ) : items.map(item => {
+          ) : inspectedAccountType && inspectedAccountType === "multisig" ? (
+            <h4 className="mb-0">No actions available so for multisig accounts</h4>
+          ) : items.map(item => { // Draw the Asset CTAs here
               if (item.tooltip) {
                 return (
-                  <Tooltip placement="bottom" title={item.tooltip}>
+                  <Tooltip placement="bottom" title={item.tooltip} key={item.uiComponentId}>
                     <Button
                       type="default"
                       shape="round"
@@ -2205,6 +2220,7 @@ export const AccountsNewView = () => {
                     type="default"
                     shape="round"
                     size="small"
+                    key={item.uiComponentId}
                     className="thin-stroke"
                     disabled={item.disabled}
                     onClick={item.callBack}>
