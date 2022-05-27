@@ -413,7 +413,7 @@ export const MultisigProposalModal = (props: {
                       </Col>
 
                       {(selectedApp && selectedApp.id === "CRDx2YkdtYtGZXGHZ59wNv1EwKHQndnRc1gT4p8i2vPX") && (
-                        <Col span={24} className="mb-1">
+                        <Col span={24} className="credix-message mb-1">
                           <Alert message="This multsig authority needs to have credix and civic pass accounts activated. Also the multisig authority needs to have SOL to pay for rent exempt and fees." type="info" showIcon closable />
                         </Col>
                       )}

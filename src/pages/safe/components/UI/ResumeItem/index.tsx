@@ -159,7 +159,7 @@ export const ResumeItem = (props: {
           <div className="resume-right-text">
             {(!isProgram && !isAsset) ? (
               <>
-                <div className="resume-right-text-up">
+                <div className={`resume-right-text-up ${needs === 0 ? "mb-1" : ""}`}>
                   {approved && (
                     <div className="thumbs-up">
                       <span>{approved}</span>
@@ -178,8 +178,10 @@ export const ResumeItem = (props: {
                     <span className="badge darken small text-uppercase">{getTransactionStatusAction(status)}</span>
                   </div>
                 </div>
-                {needs >= 0 && (
-                  <span className="info-label">{`Needs ${needs} ${needs > 1 ?"approvals" : "approval"} to pass`}</span>
+                {(status === 0) && (
+                  needs > 0 && (
+                    <span className="info-label">{`Needs ${needs} ${needs > 1 ?"approvals" : "approval"} to pass`}</span>
+                  )
                 )}
               </>
             ) : isProgram ? (

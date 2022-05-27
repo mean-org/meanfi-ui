@@ -134,21 +134,23 @@ textarea#serializedTx {
   line-height: 1.25 !important;
 }
 
-.ant-alert-info {
-  background-color: #323645 !important;
-  border: 1px solid #171c2a !important;
-  display: flex;
-  align-items: flex-start;
-}
-.ant-alert-message {
-  color: #c6c7cb !important;
-}
-.ant-alert-info .ant-alert-icon {
-  margin-top: 0.4em !important;
-}
-button.ant-alert-close-icon {
-  margin-top: 0.4em !important;
-}
-.anticon svg {
-  color: #8e8f98 !important;
+.credix-message {
+  .ant-alert-info {
+    background-color: #323645 !important;
+    border: 1px solid #171c2a !important;
+    display: flex;
+    align-items: flex-start;
+  }
+  .ant-alert-message {
+    color: #c6c7cb !important;
+  }
+  .ant-alert-info .ant-alert-icon {
+    margin-top: 0.4em !important;
+  }
+  button.ant-alert-close-icon {
+    margin-top: 0.4em !important;
+  }
+  .anticon svg {
+    color: #8e8f98 !important;
+  }
 }
