@@ -622,22 +622,23 @@ export const OneTimePayment = (props: {
     return !connected
       ? t('transactions.validation.not-connected')
       : !recipientAddress || isAddressOwnAccount()
-      ? t('transactions.validation.select-recipient')
-      : !selectedToken || !tokenBalance
-      ? t('transactions.validation.no-balance')
-      : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !parseFloat(fromCoinAmount)
-      ? t('transactions.validation.no-amount')
-      : parseFloat(fromCoinAmount) > tokenBalance
-      ? t('transactions.validation.amount-high')
-      : !paymentStartDate
-      ? t('transactions.validation.no-valid-date')
-      : !recipientNote
-      ? t('transactions.validation.memo-empty')
-      : !isVerifiedRecipient
-      ? t('transactions.validation.verified-recipient-unchecked')
-      : nativeBalance < getMinSolBlanceRequired()
-      ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getFeeAmount(), 4) })
-      : t('transactions.validation.valid-approve');
+        ? t('transactions.validation.select-recipient')
+        : !selectedToken || !tokenBalance
+          ? t('transactions.validation.no-balance')
+          : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !parseFloat(fromCoinAmount)
+            ? t('transactions.validation.no-amount')
+            : ((selectedToken.address === NATIVE_SOL.address && parseFloat(fromCoinAmount) > getMaxAmount()) ||
+               (selectedToken.address !== NATIVE_SOL.address && parseFloat(fromCoinAmount) > tokenBalance))
+              ? t('transactions.validation.amount-high')
+              : !paymentStartDate
+                ? t('transactions.validation.no-valid-date')
+                : !recipientNote
+                  ? t('transactions.validation.memo-empty')
+                  : !isVerifiedRecipient
+                    ? t('transactions.validation.verified-recipient-unchecked')
+                    : nativeBalance < getMinSolBlanceRequired()
+                      ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getFeeAmount(), 4) })
+                      : t('transactions.validation.valid-approve');
   }
 
   // Main action
@@ -1299,10 +1300,11 @@ export const OneTimePayment = (props: {
           shape="round"
           size="large"
           onClick={onTransactionStart}
-          disabled={!isValidAddress(recipientAddress) ||
+          disabled={
+            !connected ||
             !isMemoValid() ||
+            !isValidAddress(recipientAddress) ||
             isAddressOwnAccount() ||
-            !paymentStartDate ||
             !areSendAmountSettingsValid() ||
             !isVerifiedRecipient
           }>
