@@ -148,6 +148,7 @@ export const SafeView = () => {
 
   const [isProposalDetails, setIsProposalDetails] = useState(false);
   const [proposalSelected, setProposalSelected] = useState<MultisigTransaction | undefined>();
+  const [proposalSelectedIdl, setProposalSelectedIdl] = useState<Idl | undefined>();
   const [isProgramDetails, setIsProgramDetails] = useState(false);
   const [programSelected, setProgramSelected] = useState<any>();
   const [isAssetDetails, setIsAssetDetails] = useState(false);
@@ -3033,7 +3034,7 @@ export const SafeView = () => {
       !publicKey || 
       !multisigClient || 
       !selectedMultisig || 
-      !proposalSelected || 
+      !proposalSelected ||
       !loadingMultisigAccounts
     ) {
       return;
@@ -3598,6 +3599,9 @@ export const SafeView = () => {
                             selectedMultisig={selectedMultisig}
                             onProposalApprove={onExecuteApproveTx}
                             onProposalExecute={onExecuteFinishTx}
+                            connection={connection}
+                            solanaApps={solanaApps}
+                            appsProvider={appsProvider}
                           />
                         )}
                         {isProgramDetails && (
