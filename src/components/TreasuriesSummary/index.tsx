@@ -21,11 +21,12 @@ export const TreasuriesSummary = (props: {
     ms: MoneyStreaming | undefined;
     msp: MSP | undefined;
     selected: boolean;
+    enabled: boolean;
     onSelect: any;
     onNewValue: any;
 }) => {
 
-    const { address, connection, ms, msp, selected, onSelect, onNewValue } = props;
+    const { address, connection, ms, msp, selected, onSelect, onNewValue, enabled } = props;
     const { connected, publicKey } = useWallet();
     const {
         previousWalletConnectState,
@@ -309,7 +310,7 @@ export const TreasuriesSummary = (props: {
 
     return (
         <>
-            {publicKey ? (
+            {publicKey && enabled ? (
                 <Link to="/treasuries" state={{ previousPath: pathname }}>
                     <Tooltip title="See your Streaming Accounts">
                         {renderContent}

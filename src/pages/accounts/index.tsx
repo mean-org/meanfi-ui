@@ -118,10 +118,8 @@ export const AccountsNewView = () => {
     shouldLoadTokens,
     transactionStatus,
     streamProgramAddress,
-    loadingStreamsSummary,
     streamV2ProgramAddress,
     previousWalletConnectState,
-    setLoadingStreamsSummary,
     showDepositOptionsModal,
     setAddAccountPanelOpen,
     getTokenPriceByAddress,
@@ -702,9 +700,7 @@ export const AccountsNewView = () => {
 
   const refreshStreamSummary = useCallback(async () => {
 
-    if (!ms || !msp || !(publicKey || accountAddress) || (!streamListv1 && !streamListv2) || loadingStreamsSummary) { return; }
-
-    setLoadingStreamsSummary(true);
+    if (!ms || !msp || !publicKey || (!streamListv1 && !streamListv2)) { return; }
 
     const resume: StreamsSummary = {
       totalNet: 0,
@@ -713,7 +709,9 @@ export const AccountsNewView = () => {
       totalAmount: 0
     };
 
-    const treasurer = new PublicKey(accountAddress);
+    const treasurer = accountAddress
+      ? new PublicKey(accountAddress)
+      : publicKey;
 
     const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
     const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer);
@@ -788,7 +786,6 @@ export const AccountsNewView = () => {
     // Update state
     setLastStreamsSummary(streamsSummary);
     setStreamsSummary(resume);
-    setLoadingStreamsSummary(false);
 
   }, [
     ms,
@@ -798,9 +795,7 @@ export const AccountsNewView = () => {
     streamListv2,
     streamsSummary,
     accountAddress,
-    loadingStreamsSummary,
     setLastStreamsSummary,
-    setLoadingStreamsSummary,
     getTokenPriceByAddress,
     getTokenByMintAddress,
     setStreamsSummary,
@@ -1460,7 +1455,6 @@ export const AccountsNewView = () => {
     lastTxSignature,
     solAccountItems,
     loadingTransactions,
-    loadingStreamsSummary,
     shouldLoadTransactions,
     getSolAccountItems,
     setTransactions,
@@ -1843,9 +1837,11 @@ export const AccountsNewView = () => {
 
   const renderMoneyStreamsSummary = (
     <>
-      <Tooltip title={publicKey ? "See your Money Streams" : "To see your Money Streams you need to connect your wallet"}>
+      <Tooltip title={isInspectedAccountTheConnectedWallet()
+          ? "See your Money Streams"
+          : "To see your Money Streams you need to connect your wallet"}>
         <div key="streams" onClick={() => {
-          if (publicKey) {
+          if (publicKey && accountAddress && accountAddress === publicKey.toBase58()) {
             // setSelectedCategory("other-assets");
             // setSelectedOtherAssetsOption("msp-streams");
             // setSelectedAsset(undefined);
@@ -2533,6 +2529,7 @@ export const AccountsNewView = () => {
                               connection={connection}
                               ms={ms}
                               msp={msp}
+                              enabled={isInspectedAccountTheConnectedWallet()}
                               selected={selectedCategory === "other-assets" && selectedOtherAssetsOption === "msp-treasuries"}
                               onNewValue={(value: number) => setTreasuriesTvl(value)}
                               onSelect={() => {

@@ -117,7 +117,6 @@ interface AppStateConfig {
   addAccountPanelOpen: boolean;
   streamsSummary: StreamsSummary;
   lastStreamsSummary: StreamsSummary;
-  loadingStreamsSummary: boolean;
   // DDCAs
   ddcaOption: DdcaFrequencyOption | undefined;
   recurringBuys: DdcaAccount[];
@@ -181,7 +180,6 @@ interface AppStateConfig {
   setAddAccountPanelOpen: (state: boolean) => void;
   setStreamsSummary: (summary: StreamsSummary) => void;
   setLastStreamsSummary: (summary: StreamsSummary) => void;
-  setLoadingStreamsSummary: (state: boolean) => void;
   // DDCAs
   setDdcaOption: (name: string) => void;
   setRecurringBuys: (recurringBuys: DdcaAccount[]) => void;
@@ -258,7 +256,6 @@ const contextDefaultValues: AppStateConfig = {
   addAccountPanelOpen: true,
   streamsSummary: initialSummary,
   lastStreamsSummary: initialSummary,
-  loadingStreamsSummary: false,
   // DDCAs
   ddcaOption: undefined,
   recurringBuys: [],
@@ -322,7 +319,6 @@ const contextDefaultValues: AppStateConfig = {
   setAddAccountPanelOpen: () => {},
   setStreamsSummary: () => {},
   setLastStreamsSummary: () => {},
-  setLoadingStreamsSummary: () => {},
   // DDCAs
   setDdcaOption: () => {},
   setRecurringBuys: () => {},
@@ -424,7 +420,6 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [addAccountPanelOpen, updateAddAccountPanelOpen] = useState(contextDefaultValues.addAccountPanelOpen);
   const [streamsSummary, setStreamsSummary] = useState<StreamsSummary>(contextDefaultValues.streamsSummary);
   const [lastStreamsSummary, setLastStreamsSummary] = useState<StreamsSummary>(contextDefaultValues.lastStreamsSummary);
-  const [loadingStreamsSummary, setLoadingStreamsSummary] = useState(contextDefaultValues.loadingStreamsSummary);
 
   const isDowngradedPerformance = useMemo(() => {
     return isProd() && (!tpsAvg || tpsAvg < PERFORMANCE_THRESHOLD)
@@ -1076,11 +1071,15 @@ const AppStateProvider: React.FC = ({ children }) => {
       return;
     }
 
-    if (!accountAddress && !userAddress) {
+    if (!accountAddress && !userAddress && !publicKey) {
       return;
     }
 
-    const userPk = userAddress || new PublicKey(accountAddress);
+    const userPk = userAddress
+      ? userAddress
+      : accountAddress
+        ? new PublicKey(accountAddress)
+        : publicKey as PublicKey;
     consoleOut('Fetching streams for:', userPk?.toBase58(), 'orange');
 
     if (msp) {
@@ -1207,6 +1206,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   }, [
     ms,
     msp,
+    publicKey,
     accountAddress,
     loadingStreams,
     selectedStream,
@@ -1477,7 +1477,6 @@ const AppStateProvider: React.FC = ({ children }) => {
         addAccountPanelOpen,
         streamsSummary,
         lastStreamsSummary,
-        loadingStreamsSummary,
         recurringBuys,
         loadingRecurringBuys,
         highLightableMultisigId,
@@ -1537,7 +1536,6 @@ const AppStateProvider: React.FC = ({ children }) => {
         setAddAccountPanelOpen,
         setStreamsSummary,
         setLastStreamsSummary,
-        setLoadingStreamsSummary,
         setRecurringBuys,
         setLoadingRecurringBuys,
         setHighLightableMultisigId,

@@ -103,11 +103,9 @@ export const MultisigTreasuryStreams = () => {
         detailsPanelOpen,
         streamProgramAddress,
         hasMoreStreamActivity,
-        loadingStreamsSummary,
         highLightableStreamId,
         streamV2ProgramAddress,
         highLightableMultisigId,
-        setLoadingStreamsSummary,
         setHighLightableStreamId,
         getTokenPriceBySymbol,
         setLastStreamsSummary,
@@ -477,13 +475,10 @@ export const MultisigTreasuryStreams = () => {
             if (
                 !msp ||
                 !publicKey ||
-                !streamList ||
-                loadingStreamsSummary
+                !streamList
             ) {
                 return;
             }
-
-            setLoadingStreamsSummary(true);
 
             const resume: StreamsSummary = {
                 totalNet: 0,
@@ -546,7 +541,6 @@ export const MultisigTreasuryStreams = () => {
             // Update state
             setLastStreamsSummary(streamsSummary);
             setStreamsSummary(resume);
-            setLoadingStreamsSummary(false);
         };
 
         const timeout = setTimeout(() => {
@@ -564,8 +558,6 @@ export const MultisigTreasuryStreams = () => {
         publicKey,
         streamList,
         streamsSummary,
-        loadingStreamsSummary,
-        setLoadingStreamsSummary,
         getTokenPriceBySymbol,
         getTokenByMintAddress,
         setLastStreamsSummary,

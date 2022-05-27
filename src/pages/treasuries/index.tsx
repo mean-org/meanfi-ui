@@ -1412,9 +1412,9 @@ export const TreasuriesView = () => {
         .then(value => {
           const re = value / LAMPORTS_PER_SOL;
           const eb = balance - re;
-          consoleOut('treasuryRentExcemption:', re, 'blue');
-          consoleOut('Treasury native balance:', balance, 'blue');
-          consoleOut('Effective account balance:', eb, 'blue');
+          // consoleOut('treasuryRentExcemption:', re, 'blue');
+          // consoleOut('Treasury native balance:', balance, 'blue');
+          // consoleOut('Effective account balance:', eb, 'blue');
           setTreasuryEffectiveBalance(eb);
         })
         .catch(error => {
