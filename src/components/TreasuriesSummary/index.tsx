@@ -14,6 +14,7 @@ import { SyncOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useWallet } from '../../contexts/wallet';
 import { Tooltip } from 'antd';
+import { IconLoading } from '../../Icons';
 
 export const TreasuriesSummary = (props: {
     address: string;
@@ -287,14 +288,23 @@ export const TreasuriesSummary = (props: {
             </div>
             <div className="description-cell">
                 <div className="title">{t('treasuries.summary-title')}</div>
-                {treasuriesSummary.totalAmount === 0 ? (
+                {loadingTreasuries ? (
+                    <div className="subtitle"><IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }}/></div>
+                ) : treasuriesSummary.totalAmount === 0 ? (
                     <div className="subtitle">No accounts</div>
                 ) : (
                     <div className="subtitle">{treasuriesSummary.totalAmount} {treasuriesSummary.totalAmount === 1 ? 'account' : 'accounts'}</div>
                 )}
             </div>
             <div className="rate-cell">
-                {treasuriesSummary.totalAmount === 0 ? (
+                {loadingTreasuries ? (
+                    <>
+                        <div className="rate-amount">
+                            <IconLoading className="mean-svg-icons" style={{ height: "15px", lineHeight: "15px" }}/>
+                        </div>
+                        <div className="interval">Balance TVL</div>
+                    </>
+                ) : treasuriesSummary.totalAmount === 0 ? (
                     <span className="rate-amount">--</span>
                 ) : (
                     <>

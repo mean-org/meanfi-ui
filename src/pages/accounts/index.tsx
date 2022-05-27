@@ -41,7 +41,7 @@ import {
 } from '../../constants';
 import { QrScannerModal } from '../../components/QrScannerModal';
 import { Helmet } from "react-helmet";
-import { IconAdd, IconExternalLink, IconEyeOff, IconEyeOn, IconLightBulb, IconVerticalEllipsis } from '../../Icons';
+import { IconAdd, IconExternalLink, IconEyeOff, IconEyeOn, IconLightBulb, IconLoading, IconVerticalEllipsis } from '../../Icons';
 import { fetchAccountHistory, MappedTransaction } from '../../utils/history';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import useLocalStorage from '../../hooks/useLocalStorage';
@@ -1887,14 +1887,23 @@ export const AccountsNewView = () => {
           </div>
           <div className="description-cell">
             <div className="title">{t('account-area.money-streams')}</div>
-            {streamsSummary.totalAmount === 0 ? (
+            {loadingStreams ? (
+              <div className="subtitle"><IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }}/></div>
+            ) : streamsSummary.totalAmount === 0 ? (
               <div className="subtitle">{t('account-area.no-money-streams')}</div>
             ) : (
               <div className="subtitle">{streamsSummary.incomingAmount} {t('streams.stream-stats-incoming')}, {streamsSummary.outgoingAmount} {t('streams.stream-stats-outgoing')}</div>
             )}
           </div>
           <div className="rate-cell">
-            {streamsSummary.totalAmount === 0 ? (
+            {loadingStreams ? (
+              <>
+                <div className="rate-amount">
+                  <IconLoading className="mean-svg-icons" style={{ height: "15px", lineHeight: "15px" }}/>
+                </div>
+                <div className="interval">{t('streams.streaming-balance')}</div>
+              </>
+            ) : streamsSummary.totalAmount === 0 ? (
               <span className="rate-amount">--</span>
             ) : (
               <>
