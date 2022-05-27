@@ -73,7 +73,7 @@ export const ProposalDetailsView = (props: {
 
   // Display the instructions in the "Instructions" tab, on safe details page
   const renderInstructions = (
-    <div className="safe-details-collapse w-100">
+    <div className="safe-details-collapse w-100 pl-1">
       <Row gutter={[8, 8]} className="mb-2 mt-2">
         <Col xs={6} sm={6} md={4} lg={4} className="pr-1">
           <span className="info-label">{t('multisig.proposal-modal.instruction-program')}:</span>
@@ -235,7 +235,7 @@ export const ProposalDetailsView = (props: {
         isProposalDetails={isProposalDetails}
       />
       {selectedProposal.details.description && (
-        <Row className="safe-details-description">
+        <Row className="safe-details-description pl-1">
           {selectedProposal.details.description}
         </Row>
       )}

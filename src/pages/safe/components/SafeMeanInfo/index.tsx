@@ -1653,10 +1653,10 @@ export const SafeMeanInfo = (props: {
             )
           })
         ) : (
-          <span>This multisig has no proposals</span>
+          <span className="pl-1">This multisig has no proposals</span>
         )
       ) : (
-        <span>Loading proposals ...</span>
+        <span className="pl-1">Loading proposals ...</span>
       )}
     </>
   );
@@ -1748,10 +1748,10 @@ export const SafeMeanInfo = (props: {
             );
           })
         ) : (
-          <span>This multisig has no assets</span>
+          <span className="pl-1">This multisig has no assets</span>
         )
       ) : (
-        <span>Loading assets ...</span>
+        <span className="pl-1">Loading assets ...</span>
       )}
     </>
   );
@@ -1938,11 +1938,11 @@ export const SafeMeanInfo = (props: {
               )
             })
           ) : (
-            <span>This multisig has no programs</span>
+            <span className="pl-1">This multisig has no programs</span>
           )
         )
       ) : (
-        <span>Loading programs ...</span>
+        <span className="pl-1">Loading programs ...</span>
       )}
     </>
   );
