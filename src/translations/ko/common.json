@@ -1121,6 +1121,7 @@
 			"create-multisig-cta": "트레저리 시작",
 			"create-multisig-cta-busy": "트레저리 시작",
 			"create-multisig-treasury-success": "다중서명 승인을 위해 제출된 트레저리 요청을 시작합니다.",
+			"create-multisig-streaming-account-success": "Initiate streaming account request submitted for Multisig approval.",
 			"lock-period": {
 				"days": "days",
 				"hours": "hours",
@@ -1137,6 +1138,7 @@
 			"multisig-treasury-created-instructions": "이 트레저리 생성 트랜잭션에 서명하도록 다른 사용자에게 요청하십시오.",
 			"multisig-treasury-switch-label": "다중서명 계정의 트레저리입니까?",
 			"success-message": "당신의 트레저리가 성공적으로 생성되었습니다.",
+			"success-multisig-streaming-account-message": "Your new streaming account was created successfully.",
 			"treasury-name-input-empty": "트레저리 이름 입력",
 			"treasury-name-input-label": "트레저리 이름",
 			"treasury-name-placeholder": "Type a name for your streaming treasury",

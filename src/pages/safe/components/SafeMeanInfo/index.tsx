@@ -80,11 +80,11 @@ export const SafeMeanInfo = (props: {
   const {
     connection,
     publicKey,
-    isProposalDetails, 
-    isProgramDetails, 
-    selectedMultisig, 
-    onEditMultisigClick, 
-    onNewProposalMultisigClick, 
+    isProposalDetails,
+    isProgramDetails,
+    selectedMultisig,
+    onEditMultisigClick,
+    onNewProposalMultisigClick,
     onNewCreateAssetClick,
     selectedTab,
     multisigClient,
@@ -125,6 +125,12 @@ export const SafeMeanInfo = (props: {
   const [amountOfProposals, setAmountOfProposals] = useState<string>("");
   const [amountOfAssets, setAmountOfAssets] = useState<string>("");
   const [amountOfPrograms, setAmountOfPrograms] = useState<string>("");
+
+  const onRefreshTabsInfo = () => {
+    setLoadingProposals(true);
+    setLoadingAssets(true);
+    setLoadingPrograms(true);
+  }
 
   const resetTransactionStatus = useCallback(() => {
 
@@ -2013,6 +2019,7 @@ export const SafeMeanInfo = (props: {
         multisigVaults={multisigVaults}
         onNewProposalMultisigClick={onNewProposalMultisigClick}
         onEditMultisigClick={onEditMultisigClick}
+        onRefreshTabsInfo={onRefreshTabsInfo}
         onNewCreateAssetClick={onNewCreateAssetClick}
         tabs={tabs}
         selectedTab={selectedTab}

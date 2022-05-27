@@ -1131,6 +1131,7 @@
 			"create-multisig-cta": "Iniciar tesouraria",
 			"create-multisig-cta-busy": "Iniciando tesouraria",
 			"create-multisig-treasury-success": "Iniciar solicitação de tesouraria submetida para aprovação da Multisig.",
+			"create-multisig-streaming-account-success": "Initiate streaming account request submitted for Multisig approval.",
 			"lock-period": {
 				"days": "days",
 				"hours": "hours",
@@ -1147,6 +1148,7 @@
 			"multisig-treasury-created-instructions": "Peça aos outros usuários que assinem esta transação de criação de tesouraria.",
 			"multisig-treasury-switch-label": "Essa tesouraria é para uma conta Multisig?",
 			"success-message": "Sua nova tesouraria foi criada com sucesso.",
+			"success-multisig-streaming-account-message": "Your new streaming account was created successfully.",
 			"treasury-name-input-empty": "Digite o nome do Tesouro",
 			"treasury-name-input-label": "Nome do Tesouro",
 			"treasury-name-placeholder": "Type a name for your streaming treasury",

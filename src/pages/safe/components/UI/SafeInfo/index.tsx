@@ -26,6 +26,7 @@ export const SafeInfo = (props: {
   onNewProposalMultisigClick?: any;
   onNewCreateAssetClick?: any;
   onEditMultisigClick?: any;
+  onRefreshTabsInfo?: any;
   tabs?: Array<any>;
   selectedTab?: any;
   solBalance?: any;
@@ -37,7 +38,7 @@ export const SafeInfo = (props: {
     isWhitelisted
   } = useContext(AppStateContext);
 
-  const { solBalance, selectedMultisig, multisigVaults, safeNameImg, safeNameImgAlt, onNewProposalMultisigClick, onNewCreateAssetClick, onEditMultisigClick, tabs, selectedTab, isTxInProgress } = props;
+  const { solBalance, selectedMultisig, multisigVaults, safeNameImg, safeNameImgAlt, onNewProposalMultisigClick, onNewCreateAssetClick, onEditMultisigClick, onRefreshTabsInfo, tabs, selectedTab, isTxInProgress } = props;
 
   // const { t } = useTranslation('common');
   const navigate = useNavigate();
@@ -198,6 +199,9 @@ export const SafeInfo = (props: {
           <span className="menu-item-text">Delete safe</span>
         </Menu.Item>
       )}
+      <Menu.Item key="0" onClick={onRefreshTabsInfo}>
+        <span className="menu-item-text">Refresh</span>
+      </Menu.Item>
     </Menu>
   );
 

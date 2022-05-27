@@ -1131,6 +1131,7 @@
 			"create-multisig-cta": "启动国库",
 			"create-multisig-cta-busy": "启动国库",
 			"create-multisig-treasury-success": "启动提交给多重签名批准的国库申请。",
+			"create-multisig-streaming-account-success": "Initiate streaming account request submitted for Multisig approval.",
 			"lock-period": {
 				"days": "days",
 				"hours": "hours",
@@ -1147,6 +1148,7 @@
 			"multisig-treasury-created-instructions": "Please ask the other users to sign this treasury creation transaction.",
 			"multisig-treasury-switch-label": "这是一个多重签名账户的国库吗？",
 			"success-message": "您的新国库已成功创建。",
+			"success-multisig-streaming-account-message": "Your new streaming account was created successfully.",
 			"treasury-name-input-empty": "输入国库名称",
 			"treasury-name-input-label": "国库名称",
 			"treasury-name-placeholder": "为您的国库键入名称",

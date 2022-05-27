@@ -16,7 +16,7 @@ import { useWallet } from "../../../../contexts/wallet";
 import { IconArrowBack } from "../../../../Icons";
 import { OperationType, TransactionStatus } from "../../../../models/enums";
 import { NATIVE_SOL_MINT } from "../../../../utils/ids";
-import { consoleOut, getTransactionStatusForLogs } from "../../../../utils/ui";
+import { consoleOut, getTransactionStatusForLogs, isDev, isLocal } from "../../../../utils/ui";
 import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume } from "../../../../utils/utils";
 import { ProgramAccounts } from "../../../../utils/accounts";
 import { customLogger } from "../../../..";
@@ -39,6 +39,7 @@ export const ProgramDetailsView = (props: {
   const connectionConfig = useConnectionConfig();
   const { publicKey, wallet } = useWallet();
   const {
+    isWhitelisted,
     transactionStatus,
     refreshTokenBalance,
     setTransactionStatus,
@@ -68,6 +69,10 @@ export const ProgramDetailsView = (props: {
     // Sends the value to the parent component "SafeView"
     onDataToProgramView();
   };
+
+  const isUnderDevelopment = () => {
+    return isLocal() || (isDev() && isWhitelisted) ? true : false;
+  }
 
     /////////////////
   //  Init code  //
@@ -795,15 +800,15 @@ export const ProgramDetailsView = (props: {
     />
   );
 
-  // Executable
-  const [isExecutable, setIsExecutable] = useState<boolean>();
-  useEffect(() => {
-    programSelected && programSelected.executable.toBase58() ? (
-      setIsExecutable(true)
-    ) : (
-      setIsExecutable(false)
-    )
-  }, [programSelected]);
+  // // Executable
+  // const [isExecutable, setIsExecutable] = useState<boolean>();
+  // useEffect(() => {
+  //   programSelected && programSelected.executable.toBase58() ? (
+  //     setIsExecutable(true)
+  //   ) : (
+  //     setIsExecutable(false)
+  //   )
+  // }, [programSelected]);
 
   // Balance SOL
   const [balanceSol, setBalanceSol] = useState<any>();
@@ -836,10 +841,10 @@ export const ProgramDetailsView = (props: {
       name: "Upgrade authority",
       value: renderUpgradeAuthority ? renderUpgradeAuthority : "--"
     },
-    {
-      name: "Executable",
-      value: isExecutable ? "Yes" : "no"
-    },
+    // {
+    //   name: "Executable",
+    //   value: isExecutable ? "Yes" : "no"
+    // },
     {
       name: "Balance (SOL)",
       value: balanceSol ? balanceSol : "--"
@@ -1025,10 +1030,11 @@ export const ProgramDetailsView = (props: {
             </Col>
           ))}
         </Row>
-        <Row gutter={[8, 8]} className="safe-btns-container mt-2 mb-1">
-          <Col xs={20} sm={18} md={20} lg={18} className="btn-group">
+        <Row gutter={[8, 8]} className="programs-btns safe-btns-container mt-2 mb-1">
+          <Col xs={24} sm={24} md={24} lg={24} className="btn-group">
             <Button
-              type="ghost"
+              type="default"
+              shape="round"
               size="small"
               className="thin-stroke"
               disabled={isTxInProgress()}
@@ -1038,15 +1044,29 @@ export const ProgramDetailsView = (props: {
                 </div>
             </Button>
             <Button
-              type="ghost"
+              type="default"
+              shape="round"
               size="small"
               className="thin-stroke"
               disabled={isTxInProgress()}
               onClick={showSetProgramAuthModal}>
                 <div className="btn-content">
-                  Set Authority
+                  Set authority
                 </div>
             </Button>
+            {isUnderDevelopment() && (
+              <Button
+                type="default"
+                shape="round"
+                size="small"
+                className="thin-stroke"
+                disabled={isTxInProgress()}
+                onClick={() => {}}>
+                  <div className="btn-content">
+                    Make immutable
+                  </div>
+              </Button>
+            )}
           </Col>
         </Row>
         <TabsMean

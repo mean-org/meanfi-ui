@@ -1335,7 +1335,7 @@ export const SafeView = () => {
 
       const tx = await multisigClient.createTransaction(
         publicKey,
-        "Edit Safe",
+        "Edit safe",
         "", // description
         new Date(expirationTime * 1_000),
         OperationType.EditMultisig,

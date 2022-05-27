@@ -1117,6 +1117,7 @@
 			"create-multisig-cta": "Khởi tạo kho bạc",
 			"create-multisig-cta-busy": "Đang khởi tạo kho bạc",
 			"create-multisig-treasury-success": "Yêu cầu khởi tạo kho bạc đã được gửi để Multisig phê duyệt",
+			"create-multisig-streaming-account-success": "Initiate streaming account request submitted for Multisig approval.",
 			"lock-period": {
 				"minutes": "minutes",
 				"hours": "hours",
@@ -1133,6 +1134,7 @@
 			"multisig-treasury-created-instructions": "Vui lòng yêu cầu người dùng khác ký vào giao dịch tạo kho bạc này",
 			"multisig-treasury-switch-label": "Kho bạc dành cho tài khoản multisig?",
 			"success-message": "Kho bạc mới của bạn đã được tạo thành công",
+			"success-multisig-streaming-account-message": "Your new streaming account was created successfully.",
 			"treasury-name-input-empty": "Nhập tên kho bạc",
 			"treasury-name-input-label": "Tên kho bạc",
 			"treasury-name-placeholder": "Type a name for your streaming treasury",
