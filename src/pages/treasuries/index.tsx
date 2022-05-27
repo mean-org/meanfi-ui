@@ -1632,12 +1632,12 @@ export const TreasuriesView = () => {
 
     if (createOptions && createOptions.multisigId) {
       openNotification({
-        description: t('treasuries.create-treasury.create-multisig-treasury-success'),
+        description: t('treasuries.create-treasury.create-multisig-streaming-account-success'),
         type: "success"
       });
     } else {
       openNotification({
-        description: t('treasuries.create-treasury.success-message'),
+        description: t('treasuries.create-treasury.success-multisig-streaming-account-message'),
         type: "success"
       });
     }
@@ -2053,7 +2053,7 @@ export const TreasuriesView = () => {
 
       if (!multisig) { return null; }
 
-      // Create Treasury
+      // Create Streaming account
       const createTreasuryTx = await msp.createTreasury(
         publicKey,                                        // payer
         multisig.authority,                               // treasurer
@@ -2069,7 +2069,7 @@ export const TreasuriesView = () => {
 
       const tx = await multisigClient.createTransaction(
         publicKey,
-        "Create Treasury",
+        "Streaming account",
         "", // description
         new Date(expirationTime * 1_000),
         OperationType.TreasuryCreate,
@@ -2089,11 +2089,11 @@ export const TreasuriesView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
         });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Create streaming account transaction failed', { transcript: transactionLog });
         return false;
       }
 
-      consoleOut("Start transaction for create treasury", '', 'blue');
+      consoleOut("Start transaction for create streaming account", '', 'blue');
       consoleOut('Wallet address:', publicKey.toBase58());
 
       setTransactionStatus({
@@ -2150,16 +2150,16 @@ export const TreasuriesView = () => {
             getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
           })`
         });
-        customLogger.logWarning('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logWarning('Create streaming account transaction failed', { transcript: transactionLog });
         return false;
       }
 
-      consoleOut('Starting Create Treasury using MSP V2...', '', 'blue');
+      consoleOut('Starting Create streaming account using MSP V2...', '', 'blue');
 
       const result = await createTreasury(payload)
         .then(value => {
           if (!value) { return false; }
-          consoleOut('createTreasury returned transaction:', value);
+          consoleOut('create streaming account returned transaction:', value);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
@@ -2172,7 +2172,7 @@ export const TreasuriesView = () => {
           return true;
         })
         .catch(error => {
-          console.error('createTreasury error:', error);
+          console.error('create streaming account error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.InitTransactionFailure
@@ -2181,7 +2181,7 @@ export const TreasuriesView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
             result: `${error}`
           });
-          customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+          customLogger.logError('Create streaming account transaction failed', { transcript: transactionLog });
           return false;
         });
 
@@ -2209,7 +2209,7 @@ export const TreasuriesView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+            customLogger.logError('Create streaming account transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -2232,7 +2232,7 @@ export const TreasuriesView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+          customLogger.logError('Create streaming account transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -2245,7 +2245,7 @@ export const TreasuriesView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot sign transaction! Wallet not found!'
         });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Create streaming account transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -2290,7 +2290,7 @@ export const TreasuriesView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot send transaction! Wallet not found!'
         });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Create streaming account transaction failed', { transcript: transactionLog });
         return false;
       }
     }

@@ -1116,6 +1116,7 @@
 			"create-multisig-cta": "treasury را آغاز کنید",
 			"create-multisig-cta-busy": "راه اندازی treasury",
 			"create-multisig-treasury-success": "شما درخواست treasury اولیه را با موفقیت امضا کردید.",
+			"create-multisig-streaming-account-success": "Initiate streaming account request submitted for Multisig approval.",
 			"lock-period": {
 				"days": "روزها",
 				"hours": "ساعت ها",
@@ -1132,6 +1133,7 @@
 			"multisig-treasury-created-instructions": "لطفاً از سایر کاربران بخواهید که این معامله ایجاد treasury  را امضا کنند.",
 			"multisig-treasury-switch-label": "آیا این treasury  برای یک حساب Multisig است؟",
 			"success-message": "treasury  جدید شما با موفقیت ایجاد شد.",
+			"success-multisig-streaming-account-message": "Your new streaming account was created successfully.",
 			"treasury-name-input-empty": "نام treasury  را وارد کنید",
 			"treasury-name-input-label": "نام treasury",
 			"treasury-name-placeholder": "یک نام برای treasury خود تایپ کنید",

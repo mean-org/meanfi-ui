@@ -1118,6 +1118,7 @@
 			"create-multisig-cta": "Hazineyi başlat",
 			"create-multisig-cta-busy": "Hazine başlatılıyor",
 			"create-multisig-treasury-success": "Çoklu-İmza onayı için gönderilen hazine talebini başlatın.",
+			"create-multisig-streaming-account-success": "Initiate streaming account request submitted for Multisig approval.",
 			"lock-period": {
 				"days": "gün",
 				"hours": "saat",
@@ -1134,6 +1135,7 @@
 			"multisig-treasury-created-instructions": "Bu hazine oluşturma işlemi için, lütfen, diğer kullanıcıların da imzalamasını isteyin.",
 			"multisig-treasury-switch-label": "Bu hazine bir  çoklu-imza hesabı için mi?",
 			"success-message": "Yeni hazineniz başarıyla oluşturuldu.",
+			"success-multisig-streaming-account-message": "Your new streaming account was created successfully.",
 			"treasury-name-input-empty": "Hazine ismini girin",
 			"treasury-name-input-label": "Hazine ismi",
 			"treasury-name-placeholder": "Hazineniz için bir isim yazın",
