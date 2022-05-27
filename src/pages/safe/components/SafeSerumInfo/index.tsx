@@ -275,14 +275,17 @@ export const SafeSerumInfoView = (props: {
   // Tabs
   const tabs = [
     {
+      id: "serum01",
       name: "Proposals",
       render: renderListOfProposals
     },
     {
+      id: "serum02",
       name: "Activity",
       render: '' //renderActivities
     },
     {
+      id: "serum03",
       name: "Programs",
       render: renderPrograms
     }

@@ -177,10 +177,12 @@ export const ProposalDetailsView = (props: {
   // Tabs
   const tabs = [
     {
+      id: "proposal01",
       name: "Instruction",
       render: renderInstructions
     }, 
     // {
+    //   id: "proposal02",
     //   name: "Activity",
     //   render: renderActivities
     // }

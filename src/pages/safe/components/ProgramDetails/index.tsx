@@ -991,10 +991,12 @@ export const ProgramDetailsView = (props: {
   // Tabs
   const tabs = [
     {
+      id: "programs01",
       name: "Transactions",
       render: renderTransactions
     }, 
     {
+      id: "programs02",
       name: "Anchor IDL",
       render: renderIdlTree()
     }
@@ -1047,13 +1049,9 @@ export const ProgramDetailsView = (props: {
             </Button>
           </Col>
         </Row>
-        <div className="safe-tabs-container">
-          <TabsMean
-            tabs={tabs}
-            headerClassName="safe-tabs-header-container"
-            bodyClassName="safe-tabs-content-container"
-          />
-        </div>
+        <TabsMean
+          tabs={tabs}
+        />
       </div>
 
       {isUpgradeProgramModalVisible && (

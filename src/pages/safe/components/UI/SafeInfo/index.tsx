@@ -274,14 +274,10 @@ export const SafeInfo = (props: {
         </Col>
       </Row>
 
-      <div className="safe-tabs-container">
-        <TabsMean
-          tabs={tabs}
-          headerClassName="safe-tabs-header-container"
-          bodyClassName="safe-tabs-content-container"
-          selectedTab={selectedTab}
-        />
-      </div>
+      <TabsMean
+        tabs={tabs}
+        selectedTab={selectedTab}
+      />
     </>
   )
 }

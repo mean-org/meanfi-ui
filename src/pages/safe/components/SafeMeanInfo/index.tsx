@@ -121,6 +121,11 @@ export const SafeMeanInfo = (props: {
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [assetsWithoutSol, setAssetsWithoutSol] = useState<MultisigVault[]>([]);
 
+  // Tabs
+  const [amountOfProposals, setAmountOfProposals] = useState<string>("");
+  const [amountOfAssets, setAmountOfAssets] = useState<string>("");
+  const [amountOfPrograms, setAmountOfPrograms] = useState<string>("");
+
   const resetTransactionStatus = useCallback(() => {
 
     setIsBusy(false);
@@ -1936,14 +1941,53 @@ export const SafeMeanInfo = (props: {
     </>
   );
 
+
+  useEffect(() => {
+    if (selectedMultisig) {
+      !loadingProposals ? (
+        multisigTxs && multisigTxs.length > 0 && (
+          setAmountOfProposals(`(${multisigTxs.length})`)
+        )
+      ) : (
+        setAmountOfProposals("")
+      )
+    }
+  }, [loadingProposals, multisigTxs, selectedMultisig]);
+
+  useEffect(() => {
+    if (selectedMultisig) {
+      !loadingAssets ? (
+        multisigVaults && multisigVaults.length > 0 && (
+          setAmountOfAssets(`(${multisigVaults.length})`)
+        )
+      ) : (
+        setAmountOfAssets("")
+      )
+    }
+  }, [loadingAssets, multisigVaults, selectedMultisig]);
+
+  useEffect(() => {
+    if (selectedMultisig) {
+      !loadingPrograms ? (
+        programs && programs.length > 0 && (
+          setAmountOfPrograms(`(${programs.length})`)
+        )
+      ) : (
+        setAmountOfPrograms("")
+      )
+    }
+  }, [loadingPrograms, programs, selectedMultisig]);
+
   // Tabs
   const tabs = [
     {
-      name: "Proposals",
+      id: "safe01",
+      name: `Proposals ${amountOfProposals}`,
       render: renderListOfProposals
     }, 
     {
-      name: "Assets",
+      id: "safe02",
+      name: `Assets ${amountOfAssets}`,
       render: renderListOfAssets
     }, 
     // {
@@ -1955,7 +1999,8 @@ export const SafeMeanInfo = (props: {
     //   render: renderActivities
     // }, 
     {
-      name: "Programs",
+      id: "safe03",
+      name: `Programs ${amountOfPrograms}`,
       render: renderListOfPrograms
     }
   ];

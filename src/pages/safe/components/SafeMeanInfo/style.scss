@@ -21,69 +21,6 @@
     min-height: 48px;
   }
 }
-.safe-tabs-container {
-  width: 100%;
-  .safe-tabs-header-container {
-    margin: 0 !important;
-    @media (min-width: 576px) {
-      ul.tabs {
-        width: fit-content !important;
-        margin: 0 !important;
-        li.ant-menu-item {
-          margin-right: 1.5em !important;
-        }
-      }
-      .ant-menu-horizontal:not(.ant-menu-dark) > .ant-menu-item:hover::after,
-      .ant-menu-horizontal:not(.ant-menu-dark) > .ant-menu-item:active::after,
-      .ant-menu-horizontal:not(.ant-menu-dark) > .ant-menu-item-selected::after {
-        left: 0 !important;
-        right: 0 !important;
-      }
-    }
-    .ant-menu-horizontal:not(.ant-menu-dark) > .ant-menu-item-selected::after {
-      border-bottom: 3px solid #6b6c77 !important;
-    }
-    .ant-menu-horizontal:not(.ant-menu-dark) > .ant-menu-item:active::after,
-    .ant-menu-horizontal:not(.ant-menu-dark) > .ant-menu-item:hover::after {
-      border-bottom: 3px solid #6b6c77 !important;
-      color: var(--bg-color) !important;
-    }
-  }
-  @media (min-width: 575px) {
-    .safe-tabs-content-container {
-      margin-top: 0.5em;
-    }
-  }
-  .safe-tabs-content-container {
-    row-gap: 0 !important;
-    // .ant-spin-container,
-    // .ant-spin-container::after {
-    //   background: red !important;
-    // }
-    @media (max-width: 575px) {
-      button {
-        min-width: 48px;
-        min-height: 48px;
-        svg {
-          min-width: 48px;
-          min-height: 48px;
-          padding: 0.5em;
-        }
-      }
-    }
-    .activities-list {
-      svg {
-        width: 1.2em;
-        margin-right: 0.25em;
-      }
-    }
-    @media (min-width: 576px) {
-      .icon-button-container {
-        margin: 0 0.25em 0 0.5em !important;
-      }
-    }
-  }
-}
 
 .background-gray {
   background-color: var(--color-secondary-alpha-02);
