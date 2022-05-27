@@ -7,7 +7,7 @@ import { isError } from '../../utils/transactions';
 import { TransactionStatus } from '../../models/enums';
 import { AppStateContext } from '../../contexts/appstate';
 import { useWallet } from '../../contexts/wallet';
-import { Modal, Button, Spin, Divider, Row, Col, Radio } from 'antd';
+import { Modal, Button, Spin, Divider, Row, Col, Radio, Alert } from 'antd';
 import { StepSelector } from "../StepSelector";
 import { IconExternalLink } from "../../Icons";
 import { InputMean } from '../InputMean';
@@ -411,6 +411,12 @@ export const MultisigProposalModal = (props: {
                           <span>{selectedApp && selectedApp.name}</span>
                         </div>
                       </Col>
+
+                      {(selectedApp && selectedApp.id === "CRDx2YkdtYtGZXGHZ59wNv1EwKHQndnRc1gT4p8i2vPX") && (
+                        <Col span={24} className="mb-1">
+                          <Alert message="This multsig authority needs to have credix and civic pass accounts activated. Also the multisig authority needs to have SOL to pay for rent exempt and fees." type="info" showIcon closable />
+                        </Col>
+                      )}
 
                       {/* Proposal title */}
                       <Col xs={24} sm={24} md={16} lg={16}>
