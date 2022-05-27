@@ -1041,6 +1041,7 @@
 			"cannot-use-own-account-as-treasury": "无法将您的帐户用作国库id",
 			"cliff-release-no-empty": "",
 			"exchange-unavailable": "兑换不可用",
+			"minimum-balance-required": "We recommend having at least 0.05 SOL for any transaction",
 			"insufficient-amount-needed": "至少需要{{amount}}{{symbol}}才能交换",
 			"insufficient-balance-needed": "至少需要{{余额}}SOL",
 			"invalid-account": "Cannot use a Multisig address as a destination account",

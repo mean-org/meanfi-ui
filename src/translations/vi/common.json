@@ -1039,6 +1039,7 @@
 			"amount-withdraw-high": "Số lượng lớn hơn số tiền khả dụng",
 			"cannot-use-own-account-as-treasury": "Tài khoản ví của bạn không phải là treasury id",
 			"exchange-unavailable": "Giao dịch không khả dụng",
+			"minimum-balance-required": "We recommend having at least 0.05 SOL for any transaction",
 			"insufficient-amount-needed": "Cần ít nhất {{amount}} {{symbol}} để giao dịch",
 			"insufficient-balance-needed": "Need at least {{balance}} SOL in your wallet",
 			"invalid-account": "Cannot use a Multisig address as a destination account",

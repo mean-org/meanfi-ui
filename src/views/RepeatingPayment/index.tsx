@@ -9,6 +9,7 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnection, useConnectionConfig } from "../../contexts/connection";
 import { IconCaretDown, IconEdit } from "../../Icons";
 import {
+  cutNumber,
   fetchAccountTokens,
   formatAmount,
   formatThousands,
@@ -21,7 +22,7 @@ import {
   toTokenAmount,
 } from "../../utils/utils";
 import { Identicon } from "../../components/Identicon";
-import { DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, SIMPLE_DATE_TIME_FORMAT } from "../../constants";
+import { DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED, SIMPLE_DATE_TIME_FORMAT } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
 import { EventType, OperationType, PaymentRateType, TransactionStatus } from "../../models/enums";
 import {
@@ -57,6 +58,7 @@ import dateFormat from 'dateformat';
 import { TokenInfo } from '@solana/spl-token-registry';
 import useWindowSize from '../../hooks/useWindowResize';
 import { InfoIcon } from '../../components/InfoIcon';
+import { NATIVE_SOL } from '../../utils/tokens';
 
 export const RepeatingPayment = (props: {
   inModal: boolean;
@@ -292,6 +294,22 @@ export const RepeatingPayment = (props: {
     repeatingPaymentFees.mspFlatFee,
     getTransactionFees,
   ]);
+
+  const getFeeAmount = useCallback(() => {
+    return repeatingPaymentFees.blockchainFee + repeatingPaymentFees.mspFlatFee;
+  }, [repeatingPaymentFees.blockchainFee, repeatingPaymentFees.mspFlatFee]);
+
+  const getMinSolBlanceRequired = useCallback(() => {
+    return getFeeAmount() > MIN_SOL_BALANCE_REQUIRED
+      ? getFeeAmount()
+      : MIN_SOL_BALANCE_REQUIRED;
+
+  }, [getFeeAmount]);
+
+  const getMaxAmount = useCallback(() => {
+    const amount = nativeBalance - getMinSolBlanceRequired();
+    return amount > 0 ? amount : 0;
+  }, [getMinSolBlanceRequired, nativeBalance]);
 
   const resetTransactionStatus = useCallback(() => {
 
@@ -529,10 +547,6 @@ export const RepeatingPayment = (props: {
     updateTokenListByFilter
   ]);
 
-  const getFeeAmount = useCallback(() => {
-    return repeatingPaymentFees.blockchainFee + repeatingPaymentFees.mspFlatFee;
-  }, [repeatingPaymentFees.blockchainFee, repeatingPaymentFees.mspFlatFee]);
-
   const getTokenPrice = useCallback(() => {
     if (!fromCoinAmount || ! effectiveRate) {
       return 0;
@@ -670,10 +684,12 @@ export const RepeatingPayment = (props: {
     return connected &&
            selectedToken &&
            tokenBalance &&
+           nativeBalance >= getMinSolBlanceRequired() &&
            fromCoinAmount && parseFloat(fromCoinAmount) > 0 &&
-           parseFloat(fromCoinAmount) <= tokenBalance
-            ? true
-            : false;
+           ((selectedToken.address === NATIVE_SOL.address && parseFloat(fromCoinAmount) <= getMaxAmount()) ||
+            (selectedToken.address !== NATIVE_SOL.address && parseFloat(fromCoinAmount) <= tokenBalance))
+    ? true
+    : false;
   }
 
   const areSendAmountSettingsValid = (): boolean => {
@@ -729,7 +745,7 @@ export const RepeatingPayment = (props: {
       ? getPaymentSettingsButtonLabel()
       : !isVerifiedRecipient
       ? t('transactions.validation.verified-recipient-unchecked')
-      : nativeBalance < getFeeAmount()
+      : nativeBalance < getMinSolBlanceRequired()
       ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getFeeAmount(), 4) })
       : t('transactions.validation.valid-approve');
   }
@@ -1503,14 +1519,16 @@ export const RepeatingPayment = (props: {
                     fullTokenInfo={selectedToken}
                   />
                 )}
-                {selectedToken && tokenBalance ? (
-                  <div
-                    className="token-max simplelink"
-                    onClick={() =>
-                      setFromCoinAmount(
-                        tokenBalance.toFixed(selectedToken.decimals)
-                      )
-                    }>
+                {selectedToken && tokenBalance && tokenBalance > getMinSolBlanceRequired() ? (
+                  <div className="token-max simplelink" onClick={() =>
+                    {
+                      if (selectedToken.address === NATIVE_SOL.address) {
+                        const amount = nativeBalance - getMinSolBlanceRequired();
+                        setFromCoinAmount(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
+                      } else {
+                        setFromCoinAmount(cutNumber(tokenBalance, selectedToken.decimals));
+                      }
+                    }}>
                     MAX
                   </div>
                 ) : null}
@@ -1551,6 +1569,9 @@ export const RepeatingPayment = (props: {
               </span>
             </div>
           </div>
+          {selectedToken && selectedToken.address === NATIVE_SOL.address && (!tokenBalance || tokenBalance < MIN_SOL_BALANCE_REQUIRED) && (
+            <div className="form-field-error">{t('transactions.validation.minimum-balance-required')}</div>
+          )}
         </div>
 
         {/* Confirm recipient address is correct Checkbox */}
@@ -1572,8 +1593,7 @@ export const RepeatingPayment = (props: {
             isAddressOwnAccount() ||
             !arePaymentSettingsValid() ||
             !areSendAmountSettingsValid() ||
-            !isVerifiedRecipient ||
-            nativeBalance < getFeeAmount()
+            !isVerifiedRecipient
           }>
           {isBusy && (
             <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>

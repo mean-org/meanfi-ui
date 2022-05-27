@@ -1041,6 +1041,7 @@
 			"cannot-use-own-account-as-treasury": "Impossible d'utiliser votre compte comme identifiant de trésorerie",
 			"cliff-release-no-empty": "",
 			"exchange-unavailable": "Échange indisponible",
+			"minimum-balance-required": "We recommend having at least 0.05 SOL for any transaction",
 			"insufficient-amount-needed": "Besoin d'au moins {{amount}} {{symbol}} pour échanger",
 			"insufficient-balance-needed": "Need at least {{balance}} SOL in your wallet",
 			"invalid-account": "Impossible d'utiliser une adresse Multisig comme compte de destination",

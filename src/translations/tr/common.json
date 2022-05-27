@@ -1037,6 +1037,7 @@
 			"amount-withdraw-high": "Tutar mevcut fonlardan daha fazla",
 			"cannot-use-own-account-as-treasury": "Hesabınızı hazine kimliği olarak kullanamazsınız",
 			"exchange-unavailable": "Alım-Satım mevcut değil",
+			"minimum-balance-required": "We recommend having at least 0.05 SOL for any transaction",
 			"insufficient-amount-needed": "Değiştirmek için en az {{amount}} {{symbol}} gerekir",
 			"insufficient-balance-needed": "Need at least {{balance}} SOL in your wallet",
 			"invalid-account": "Hedef hesap olarak bir Çoklu-İmza adresi kullanılamaz",

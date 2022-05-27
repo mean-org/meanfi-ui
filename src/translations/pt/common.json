@@ -1041,6 +1041,7 @@
 			"cannot-use-own-account-as-treasury": "Não é possível usar sua conta como ID de tesouraria",
 			"cliff-release-no-empty": "",
 			"exchange-unavailable": "Troca indisponível",
+			"minimum-balance-required": "We recommend having at least 0.05 SOL for any transaction",
 			"insufficient-amount-needed": "Precisa de pelo menos {{amount}} {{symbol}} para trocar",
 			"insufficient-balance-needed": "Need at least {{balance}} SOL in your wallet",
 			"invalid-account": "",

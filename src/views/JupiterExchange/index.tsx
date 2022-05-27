@@ -1664,7 +1664,7 @@ export const JupiterExchange = (props: {
                         }}
                         hint={
                             inputToken && inputToken.address === WRAPPED_SOL_MINT_ADDRESS
-                                ? 'We recommend having at least 0.05 SOL for any transaction'
+                                ? t('transactions.validation.minimum-balance-required')
                                 : ''
                         }
                         className="mb-0"

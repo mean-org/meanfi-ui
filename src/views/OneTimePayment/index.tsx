@@ -6,8 +6,8 @@ import {
 } from "@ant-design/icons";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnection, useConnectionConfig } from "../../contexts/connection";
-import { fetchAccountTokens, formatAmount, formatThousands, getAmountWithSymbol, getTokenBySymbol, getTxIxResume, isValidNumber, toTokenAmount } from "../../utils/utils";
-import { DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, SIMPLE_DATE_TIME_FORMAT } from "../../constants";
+import { cutNumber, fetchAccountTokens, formatAmount, formatThousands, getAmountWithSymbol, getTokenBySymbol, getTxIxResume, isValidNumber, toTokenAmount } from "../../utils/utils";
+import { DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED, SIMPLE_DATE_TIME_FORMAT } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
 import { EventType, OperationType, TransactionStatus } from "../../models/enums";
 import {
@@ -35,6 +35,7 @@ import { calculateActionFees, MSP, MSP_ACTIONS, TransactionFees } from '@mean-da
 import { segmentAnalytics } from '../../App';
 import { AppUsageEvent, SegmentStreamOTPTransferData } from '../../utils/segment-service';
 import dateFormat from 'dateformat';
+import { NATIVE_SOL } from '../../utils/tokens';
 
 const { Option } = Select;
 
@@ -275,6 +276,18 @@ export const OneTimePayment = (props: {
   const getFeeAmount = useCallback(() => {
     return isScheduledPayment() ? otpFees.blockchainFee + otpFees.mspFlatFee : otpFees.blockchainFee;
   }, [isScheduledPayment, otpFees.blockchainFee, otpFees.mspFlatFee]);
+
+  const getMinSolBlanceRequired = useCallback(() => {
+    return getFeeAmount() > MIN_SOL_BALANCE_REQUIRED
+      ? getFeeAmount()
+      : MIN_SOL_BALANCE_REQUIRED;
+
+  }, [getFeeAmount]);
+
+  const getMaxAmount = useCallback(() => {
+    const amount = nativeBalance - getMinSolBlanceRequired();
+    return amount > 0 ? amount : 0;
+  }, [getMinSolBlanceRequired, nativeBalance]);
 
   const resetTransactionStatus = useCallback(() => {
 
@@ -592,9 +605,10 @@ export const OneTimePayment = (props: {
     return  connected &&
             selectedToken &&
             tokenBalance &&
-            fromCoinAmount &&
-            parseFloat(fromCoinAmount) > 0 &&
-            parseFloat(fromCoinAmount) <= tokenBalance
+            nativeBalance >= getMinSolBlanceRequired() &&
+            fromCoinAmount && parseFloat(fromCoinAmount) > 0 &&
+            ((selectedToken.address === NATIVE_SOL.address && parseFloat(fromCoinAmount) <= getMaxAmount()) ||
+             (selectedToken.address !== NATIVE_SOL.address && parseFloat(fromCoinAmount) <= tokenBalance))
       ? true
       : false;
   }
@@ -621,7 +635,7 @@ export const OneTimePayment = (props: {
       ? t('transactions.validation.memo-empty')
       : !isVerifiedRecipient
       ? t('transactions.validation.verified-recipient-unchecked')
-      : nativeBalance < getFeeAmount()
+      : nativeBalance < getMinSolBlanceRequired()
       ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getFeeAmount(), 4) })
       : t('transactions.validation.valid-approve');
   }
@@ -1148,12 +1162,16 @@ export const OneTimePayment = (props: {
                     fullTokenInfo={selectedToken}
                   />
                 )}
-                {selectedToken && tokenBalance ? (
+                {selectedToken && tokenBalance && tokenBalance > getMinSolBlanceRequired() ? (
                   <div className="token-max simplelink" onClick={() =>
-                      setFromCoinAmount(
-                        tokenBalance.toFixed(selectedToken.decimals)
-                      )
-                    }>
+                    {
+                      if (selectedToken.address === NATIVE_SOL.address) {
+                        const amount = nativeBalance - getMinSolBlanceRequired();
+                        setFromCoinAmount(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
+                      } else {
+                        setFromCoinAmount(cutNumber(tokenBalance, selectedToken.decimals));
+                      }
+                    }}>
                     MAX
                   </div>
                 ) : null}
@@ -1194,6 +1212,9 @@ export const OneTimePayment = (props: {
               </span>
             </div>
           </div>
+          {selectedToken && selectedToken.address === NATIVE_SOL.address && (!tokenBalance || tokenBalance < MIN_SOL_BALANCE_REQUIRED) && (
+            <div className="form-field-error">{t('transactions.validation.minimum-balance-required')}</div>
+          )}
         </div>
 
         {/* Optional note */}
@@ -1283,8 +1304,7 @@ export const OneTimePayment = (props: {
             isAddressOwnAccount() ||
             !paymentStartDate ||
             !areSendAmountSettingsValid() ||
-            !isVerifiedRecipient ||
-            nativeBalance < getFeeAmount()
+            !isVerifiedRecipient
           }>
           {isBusy && (
             <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>

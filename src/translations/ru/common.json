@@ -1036,6 +1036,7 @@
 			"amount-withdraw-high": "Amount is greater than the available funds",
 			"cannot-use-own-account-as-treasury": "Cannot use your account as treasury id",
 			"exchange-unavailable": "Exchange unavailable",
+			"minimum-balance-required": "We recommend having at least 0.05 SOL for any transaction",
 			"insufficient-amount-needed": "Need at least {{amount}} {{symbol}} to exchange",
 			"insufficient-balance-needed": "Need at least {{balance}} SOL in your wallet",
 			"invalid-account": "Cannot use a Multisig address as a destination account",
