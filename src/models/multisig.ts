@@ -1,6 +1,8 @@
-import { Connection, GetProgramAccountsFilter, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js";
-import { Idl, Program } from "@project-serum/anchor";
+import { Commitment, Connection, GetProgramAccountsFilter, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js";
+import { AnchorProvider, BorshInstructionCoder, Idl, Program } from "@project-serum/anchor";
 import { OperationType } from "./enums";
+import { encodeInstruction, encodeInstructionV2 } from "@project-serum/serum/lib/instructions";
+import bs58 from "bs58";
 
 export const MEAN_MULTISIG_OPS = new PublicKey("3TD6SWY9M1mLY2kZWJNavPLhwXvcRsWdnZLRaMzERJBw");
 export const LAMPORTS_PER_SIG = 5000;
@@ -97,6 +99,7 @@ export type MultisigTransactionSummary = {
 
 export type MultisigTransactionInstructionInfo = {
   programId: string;
+  programName: string;
   accounts: InstructionAccountInfo[];
   data: InstructionDataInfo[];
 }
@@ -108,6 +111,7 @@ export type InstructionAccountInfo = {
 }
 
 export type InstructionDataInfo = {
+  index: number;
   label: string;
   value: string;
 }
@@ -443,6 +447,191 @@ export const parseMultisigTransactionInstruction = (
   }
 }
 
+export const getIxNameFromMultisigTransaction = (programIdl: Idl, transaction: MultisigTransaction) => {
+
+  let ix: any;
+
+  switch(transaction.operation) {
+    // MEan Multisig
+    case OperationType.EditMultisig:
+      ix = programIdl.instructions.filter(ix => ix.name === "editMultisig")[0];
+      break;
+    // SPL Token
+    case OperationType.Transfer:
+      ix = programIdl.instructions.filter(ix => ix.name === "transfer")[0];
+      break;
+    case OperationType.SetAssetAuthority:
+      ix = programIdl.instructions.filter(ix => ix.name === "setAuthority")[0];
+      break;
+    case OperationType.CloseTokenAccount:
+      ix = programIdl.instructions.filter(ix => ix.name === "closeAccount")[0];
+      break;
+    // MSP
+    case OperationType.TreasuryCreate:
+      ix = programIdl.instructions.filter(ix => ix.name === "createTreasury")[0];
+      break;
+    case OperationType.TreasuryStreamCreate:
+      ix = programIdl.instructions.filter(ix => ix.name === "createStream")[0];
+      break;
+    case OperationType.TreasuryRefreshBalance:
+      ix = programIdl.instructions.filter(ix => ix.name === "refreshTreasuryData")[0];
+      break;
+    case OperationType.TreasuryAddFunds:
+      ix = programIdl.instructions.filter(ix => ix.name === "addFunds")[0];
+      break;
+    case OperationType.TreasuryClose:
+      ix = programIdl.instructions.filter(ix => ix.name === "closeTreasury")[0];
+      break;
+    case OperationType.TreasuryWithdraw:
+      ix = programIdl.instructions.filter(ix => ix.name === "treasuryWithdraw")[0];
+      break;
+    case OperationType.StreamCreate:
+      ix = programIdl.instructions.filter(ix => ix.name === "createStream")[0];
+      break;
+    case OperationType.StreamAddFunds:
+      ix = programIdl.instructions.filter(ix => ix.name === "allocate")[0];
+      break;
+    case OperationType.StreamPause:
+      ix = programIdl.instructions.filter(ix => ix.name === "pauseStream")[0];
+      break;
+    case OperationType.StreamResume:
+      ix = programIdl.instructions.filter(ix => ix.name === "resumeStream")[0];
+      break;
+    case OperationType.StreamClose:
+      ix = programIdl.instructions.filter(ix => ix.name === "closeStream")[0];
+      break;
+    case OperationType.StreamWithdraw:
+      ix = programIdl.instructions.filter(ix => ix.name === "withdraw")[0];
+      break;
+    // CREDIX
+    case OperationType.CredixDepositFunds:
+      ix = programIdl.instructions.filter(ix => ix.name === "depositFunds")[0];
+      break;
+    case OperationType.CredixWithdrawFunds:
+      ix = programIdl.instructions.filter(ix => ix.name === "withdrawFunds")[0];
+      break;
+    default: ix = undefined;
+  }
+
+  return ix ? ix.name : "";
+}
+
+export const createAnchorProgram = (
+  connection: Connection,
+  programId: PublicKey,
+  programIdl: Idl,
+  commitment: Commitment = "confirmed"
+
+): Program<Idl> => {
+
+  const opts = {
+    skipPreflight: false,
+    commitment: commitment || "confirmed",
+    preflightCommitment: commitment || "confirmed",
+    maxRetries: 3
+  };
+
+  const readOnlyWallet = Keypair.generate();
+  const anchorWallet = {
+    publicKey: new PublicKey(readOnlyWallet.publicKey),
+    signAllTransactions: async (txs: any) => txs,
+    signTransaction: async (tx: any) => tx,
+  };
+
+  const provider = new AnchorProvider(connection, anchorWallet, opts);
+  
+  return new Program(programIdl, programId, provider);
+}
+
+export const parseMultisigProposalIx = (
+  transaction: MultisigTransaction,
+  program?: Program<Idl> | undefined
+
+): MultisigTransactionInstructionInfo | null => {
+
+  try {
+
+    console.log('transaction', transaction);
+
+    const ix = new TransactionInstruction({
+      programId: transaction.programId,
+      keys: transaction.accounts,
+      data: transaction.data
+    });
+
+    if (!program) {
+      return getMultisigInstructionSummary(ix);
+    }
+
+    const ixName = getIxNameFromMultisigTransaction(program.idl, transaction);
+
+    if (!ixName) {
+      return getMultisigInstructionSummary(ix);
+    }
+
+    const coder = new BorshInstructionCoder(program.idl);
+    const dataEncoded = bs58.encode(ix.data);
+    const dataDecoded = coder.decode(dataEncoded, "base58");
+
+    if (!dataDecoded) {
+      return getMultisigInstructionSummary(ix);
+    }
+
+    const formattedData = coder.format(
+      {
+        name: dataDecoded.name,
+        data: dataDecoded.data
+      },
+      ix.keys
+    );
+
+    if (!formattedData) {
+      return getMultisigInstructionSummary(ix);
+    }
+
+    const ixAccInfos: InstructionAccountInfo[] = [];
+    let accIndex = 0;
+
+    for (const acc of ix.keys) {
+
+      ixAccInfos.push({
+        index: accIndex,
+        label: formattedData.accounts[accIndex].name,
+        value: acc.pubkey.toBase58()
+
+      } as InstructionAccountInfo);
+
+      accIndex ++;
+    }
+
+    const dataInfos: InstructionDataInfo[] = [];
+    let dataIndex = 0;
+
+    for (const dataItem of formattedData.args) {
+      dataInfos.push({
+        label: `${dataItem.name[0].toUpperCase()}${dataItem.name.substring(1)}`,
+        value: dataItem.data,
+        index: dataIndex
+      } as InstructionDataInfo);
+      dataIndex ++;
+    }
+
+    const ixInfo = {
+      programId: ix.programId.toBase58(),
+      programName: `${program.idl.name[0].toUpperCase()}${program.idl.name.substring(1)}`,
+      accounts: ixAccInfos,
+      data: dataInfos
+
+    } as MultisigTransactionInstructionInfo;
+
+    return ixInfo;
+
+  } catch (err: any) {
+    console.error(`Parse Multisig Transaction: ${err}`);
+    return null;
+  }
+}
+
 export const parseSerializedTx = async (
   connection: Connection,
   base64Str: string
@@ -471,7 +660,10 @@ export const parseSerializedTx = async (
   }
 }
 
-export const getMultisigInstructionSummary = (instruction: TransactionInstruction): MultisigTransactionInstructionInfo | null => {
+export const getMultisigInstructionSummary = (
+  instruction: TransactionInstruction
+
+): MultisigTransactionInstructionInfo | null => {
 
   try {
 

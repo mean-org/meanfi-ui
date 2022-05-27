@@ -1,21 +1,25 @@
 import './style.scss';
 import { Button, Col, Row } from "antd"
-import { IconArrowBack, IconUser, IconThumbsUp, IconThumbsDown, IconExternalLink, IconHelpCircle, IconCheckCircle, IconLightning, IconUserClock } from "../../../../Icons"
+import { IconArrowBack, IconUser, IconThumbsUp, IconExternalLink, IconLightning, IconUserClock } from "../../../../Icons"
 
 import { shortenAddress } from '../../../../utils/utils';
 import { TabsMean } from '../../../../components/TabsMean';
 import { useTranslation } from 'react-i18next';
 import { openNotification } from '../../../../components/Notifications';
-import { useCallback, useContext, useEffect, useState } from 'react';
-import { copyText, isDev, isLocal } from '../../../../utils/ui';
+import { useCallback, useEffect, useState } from 'react';
+import { copyText } from '../../../../utils/ui';
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../../../constants';
 import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
 import { ResumeItem } from '../UI/ResumeItem';
-import { MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
-import { AppStateContext } from '../../../../contexts/appstate';
+import { MEAN_MULTISIG_PROGRAM, MultisigTransaction, MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
+// import { AppStateContext } from '../../../../contexts/appstate';
 import { useWallet } from '../../../../contexts/wallet';
-import { InfoIcon } from '../../../../components/InfoIcon';
+import { createAnchorProgram, InstructionAccountInfo, InstructionDataInfo, MultisigTransactionInstructionInfo, parseMultisigProposalIx } from '../../../../models/multisig';
+import { PublicKey } from '@solana/web3.js';
+import { Idl } from '@project-serum/anchor';
+import { App, AppConfig } from '@mean-dao/mean-multisig-apps';
 import { OperationType } from '../../../../models/enums';
+// import { InfoIcon } from '../../../../components/InfoIcon';
 
 export const ProposalDetailsView = (props: {
   isProposalDetails: boolean;
@@ -24,14 +28,31 @@ export const ProposalDetailsView = (props: {
   selectedMultisig?: any;
   onProposalApprove?: any;
   onProposalExecute?: any;
+  connection?: any;
+  solanaApps?: any;
+  appsProvider?: any;
 
 }) => {
 
-  const { isWhitelisted } = useContext(AppStateContext);
+  // const { isWhitelisted } = useContext(AppStateContext);
   const { t } = useTranslation('common');
-  const { publicKey, wallet } = useWallet();
-  const { isProposalDetails, onDataToSafeView, proposalSelected, selectedMultisig, onProposalApprove, onProposalExecute } = props;
-  const [selectedProposal, setSelectedProposal] = useState<any>(proposalSelected);
+  const { publicKey } = useWallet();
+  const { 
+    isProposalDetails, 
+    onDataToSafeView, 
+    proposalSelected, 
+    selectedMultisig, 
+    onProposalApprove, 
+    onProposalExecute,
+    connection,
+    solanaApps,
+    appsProvider
+
+  } = props;
+
+  const [selectedProposal, setSelectedProposal] = useState<MultisigTransaction>(proposalSelected);
+  const [selectedProposalIdl, setSelectedProposalIdl] = useState<Idl | undefined>();
+  const [proposalIxInfo, setProposalIxInfo] = useState<MultisigTransactionInstructionInfo | null>(null);
 
   useEffect(() => {
 
@@ -40,8 +61,39 @@ export const ProposalDetailsView = (props: {
     return () => clearTimeout(timeout);
 
   }, [
-    selectedMultisig,
+    selectedMultisig, 
     proposalSelected
+  ]);
+
+  useEffect(() => {
+
+    if (!selectedMultisig || !solanaApps || !appsProvider || !selectedProposal) { return; }
+    const timeout = setTimeout(() => {
+      const proposalApp = solanaApps.filter((app: App) => app.id === selectedProposal.programId.toBase58())[0];
+      console.log('proposalApp', proposalApp);
+      if (proposalApp && proposalApp.id !== MEAN_MULTISIG_PROGRAM.toBase58()) {
+        appsProvider
+          .getAppConfig(proposalApp.id, proposalApp.uiUrl, proposalApp.defUrl)
+          .then((config: AppConfig) => {
+            setSelectedProposalIdl(config ? config.definition : undefined);
+            const program = config ? createAnchorProgram(connection, new PublicKey(proposalApp.id), config.definition) : undefined;
+            const ixInfo = parseMultisigProposalIx(proposalSelected, program);
+            setProposalIxInfo(ixInfo);
+          });
+      } else {
+        const ixInfo = parseMultisigProposalIx(proposalSelected);
+        setProposalIxInfo(ixInfo);
+      }
+    });
+    return () => clearTimeout(timeout);
+
+  }, [
+    appsProvider, 
+    connection, 
+    proposalSelected, 
+    selectedMultisig, 
+    selectedProposal, 
+    solanaApps
   ]);
 
   // const isUnderDevelopment = () => {
@@ -72,59 +124,75 @@ export const ProposalDetailsView = (props: {
   },[t]);
 
   // Display the instructions in the "Instructions" tab, on safe details page
-  const renderInstructions = (
+  const renderInstructions = (    
+    proposalIxInfo && (
     <div className="safe-details-collapse w-100">
       <Row gutter={[8, 8]} className="mb-2 mt-2">
         <Col xs={6} sm={6} md={4} lg={4} className="pr-1">
           <span className="info-label">{t('multisig.proposal-modal.instruction-program')}:</span>
         </Col>
         <Col xs={18} sm={18} md={20} lg={20} className="pl-1 text-truncate">
-          <span onClick={() => copyAddressToClipboard(selectedProposal.programId.toBase58())}  className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
-            {selectedProposal.programId.toBase58()}
+          <span onClick={() => copyAddressToClipboard(proposalIxInfo.programId)}  className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
+            {(
+              proposalIxInfo.programName 
+                ? `${proposalIxInfo.programName} (${proposalIxInfo.programId})` 
+                : proposalIxInfo.programId
+            )}
           </span>
           <a
             target="_blank"
             rel="noopener noreferrer"
-            href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${selectedProposal.programId.toBase58()}${getSolanaExplorerClusterParam()}`}>
+            href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${proposalIxInfo.programId}${getSolanaExplorerClusterParam()}`}>
             <IconExternalLink className="mean-svg-icons external-icon" />
           </a>
         </Col>
       </Row>
-
-      {selectedProposal && (
-        selectedProposal.accounts.map((account: any) => (
-          <Row gutter={[8, 8]} className="mb-2" key={account.pubkey.toBase58()}>
-            <Col xs={6} sm={6} md={4} lg={4} className="pr-1">
-              <span className="info-label">{t('multisig.proposal-modal.instruction-account')} :</span>
-            </Col>
+      
+      {
+        proposalIxInfo.accounts.map((account: InstructionAccountInfo) => {
+          return (
+            <Row gutter={[8, 8]} className="mb-2" key={account.value}>
+              <Col xs={6} sm={6} md={4} lg={4} className="pr-1">
+                {/* <span className="info-label">{t('multisig.proposal-modal.instruction-account')} :</span> */}
+                <span className="info-label">{account.label || t('multisig.proposal-modal.instruction-account')} :</span>
+              </Col>
               <Col xs={17} sm={17} md={19} lg={19} className="pl-1 pr-3">
-                <span onClick={() => copyAddressToClipboard(account.pubkey.toBase58())} className="d-block info-data simplelink underline-on-hover text-truncate" style={{cursor: 'pointer'}}>
-                  {account.pubkey.toBase58()}
-              </span>
-            </Col>
-            <Col xs={1} sm={1} md={1} lg={1}>
-              <a
-                target="_blank"
-                rel="noopener noreferrer"
-                href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${account.pubkey}${getSolanaExplorerClusterParam()}`}>
-                <IconExternalLink className="mean-svg-icons external-icon" />
-              </a>
-            </Col>
-          </Row>
-        ))
-      )}
+                <span onClick={() => copyAddressToClipboard(account.value)} className="d-block info-data simplelink underline-on-hover text-truncate" style={{cursor: 'pointer'}}>
+                  {account.value}
+                </span>
+              </Col>
+              <Col xs={1} sm={1} md={1} lg={1}>
+                <a
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${account.value}${getSolanaExplorerClusterParam()}`}>
+                  <IconExternalLink className="mean-svg-icons external-icon" />
+                </a>
+              </Col>
+            </Row>
+          )
+        })
+      }
 
-      <Row gutter={[8, 8]} className="mb-2">
-        <Col xs={6} sm={6} md={4} lg={4} className="pr-1">
-          <span className="info-label">{t('multisig.proposal-modal.instruction-data')}:</span>
-        </Col>
-        <Col xs={18} sm={18} md={20} lg={20} className="pl-1 text-truncate">
-          <span onClick={() => copyAddressToClipboard(selectedProposal.data)}  className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
-            {selectedProposal.data}
-          </span>
-        </Col>
-      </Row>
+      {
+        proposalIxInfo.data.map((item: InstructionDataInfo) => {
+          return (
+            <Row gutter={[8, 8]} className="mb-2">
+              <Col xs={12} sm={12} md={6} lg={6} className="pr-1 text-truncate">
+                <span className="info-label">{item.label || t('multisig.proposal-modal.instruction-data')}:</span>
+              </Col>
+              <Col xs={12} sm={12} md={18} lg={18} className="pl-1 text-truncate">
+                <span className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
+                  {item.value}
+                </span>
+              </Col>
+            </Row>
+          )
+        })
+      }
+
     </div>
+    )
   );
 
   // Display the activities in the "Activity" tab, on safe details page
@@ -196,15 +264,20 @@ export const ProposalDetailsView = (props: {
         selectedProposal.operation !== OperationType.SetMultisigAuthority &&
         selectedProposal.operation !== OperationType.SetAssetAuthority &&
         selectedProposal.operation !== OperationType.DeleteAsset &&
-        selectedProposal.operation !== OperationType.DepositFunds &&
-        selectedProposal.operation !== OperationType.WithdrawFunds) {
+        selectedProposal.operation !== OperationType.CredixDepositFunds &&
+        selectedProposal.operation !== OperationType.CredixWithdrawFunds) {
       return false;
     } else {
       return true;
     }
   };
 
-  const isProposer = selectedProposal.proposer.toBase58() === publicKey?.toBase58() ? true : false;
+  const isProposer = (
+    selectedProposal &&
+    selectedProposal.proposer && 
+    selectedProposal.proposer.toBase58() === publicKey?.toBase58()
+
+  ) ? true : false;
 
   if (!selectedProposal.proposer) { return (<></>); }
 
