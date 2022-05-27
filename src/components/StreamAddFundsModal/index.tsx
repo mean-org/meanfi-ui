@@ -18,7 +18,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import BN from 'bn.js';
 import { StreamTopupParams } from '../../models/common-types';
 import { WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
-import { NATIVE_SOL_MINT } from '@mean-dao/hybrid-liquidity-ag';
+import { NATIVE_SOL_MINT } from '../../utils/ids';
 
 export const StreamAddFundsModal = (props: {
   handleClose: any;

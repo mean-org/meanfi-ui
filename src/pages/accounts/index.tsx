@@ -68,13 +68,13 @@ import { TreasuriesSummary } from '../../components/TreasuriesSummary';
 import { AccountsSuggestAssetModal } from '../../components/AccountsSuggestAssetModal';
 import { QRCodeSVG } from 'qrcode.react';
 import { NATIVE_SOL } from '../../utils/tokens';
-import { unwrapSol } from '@mean-dao/hybrid-liquidity-ag';
 import { customLogger } from '../..';
 import { AccountsInitAtaModal } from '../../components/AccountsInitAtaModal';
 import { AccountsCloseAssetModal } from '../../components/AccountsCloseAssetModal';
 import { INVEST_ROUTE_BASE_PATH } from '../invest';
 import { isMobile } from 'react-device-detect';
 import useWindowSize from '../../hooks/useWindowResize';
+import { closeTokenAccount } from '../../utils/accounts';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export type InspectedAccountType = "multisig" | "streaming-account" | undefined;
@@ -1627,18 +1627,19 @@ export const AccountsNewView = () => {
     const transactionLog: any[] = [];
 
     const createTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (wallet && publicKey) {
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
           currentOperation: TransactionStatus.InitTransaction,
         });
 
-        consoleOut('wrapAmount:', wSolBalance, 'blue')
+        const wSol = accountTokens.find(t => t.address === WRAPPED_SOL_MINT_ADDRESS);
+        consoleOut('unwrapAmount:', wSolBalance, 'blue')
 
         // Log input data
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
-          inputs: `wrapAmount: ${wSolBalance}`
+          inputs: `unwrapAmount: ${wSolBalance}`
         });
 
         transactionLog.push({
@@ -1646,28 +1647,60 @@ export const AccountsNewView = () => {
           result: ''
         });
 
-        return await unwrapSol(
-          connection,                 // connection
-          wallet,                     // wallet
-          Keypair.generate(),
-          wSolBalance                 // amount
+        if (!wSol || !wSol.publicAddress) {
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.TransactionStartFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+            result: `Wrapped SOL token account not found for the currently connected wallet account`
+          });
+          customLogger.logWarning('Unwrap transaction failed', { transcript: transactionLog });
+          openNotification({
+            title: 'Cannot unwrap SOL',
+            description: `Wrapped SOL token account not found for the currently connected wallet account`,
+            type: 'info'
+          });
+          return false;
+        }
+
+        const wSolPubKey = new PublicKey(wSol.publicAddress);
+
+        return await closeTokenAccount(
+          connection,                       // connection
+          wSolPubKey,                       // tokenPubkey
+          publicKey as PublicKey            // owner
         )
-          .then((value) => {
-            consoleOut("unwrapSol returned transaction:", value);
-            // Stage 1 completed - The transaction is created and returned
-            setTransactionStatus({
-              lastOperation: TransactionStatus.InitTransactionSuccess,
-              currentOperation: TransactionStatus.SignTransaction,
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-              result: getTxIxResume(value)
-            });
-            transaction = value;
-            return true;
+          .then((value: Transaction | null) => {
+            if (value !== null) {
+              consoleOut("closeTokenAccount returned transaction:", value);
+              // Stage 1 completed - The transaction is created and returned
+              setTransactionStatus({
+                lastOperation: TransactionStatus.InitTransactionSuccess,
+                currentOperation: TransactionStatus.SignTransaction,
+              });
+              transactionLog.push({
+                action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+                result: getTxIxResume(value)
+              });
+              transaction = value;
+              return true;
+            } else {
+              // Stage 1 failed - The transaction was not created
+              setTransactionStatus({
+                lastOperation: transactionStatus.currentOperation,
+                currentOperation: TransactionStatus.InitTransactionFailure,
+              });
+              transactionLog.push({
+                action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+                result: 'No transaction created'
+              });
+              return false;
+            }
           })
           .catch((error) => {
-            console.error("unwrapSol transaction init error:", error);
+            console.error("closeTokenAccount transaction init error:", error);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.InitTransactionFailure,

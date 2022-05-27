@@ -9,15 +9,15 @@ import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import { MSP_ACTIONS, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { useNativeAccount, useUserAccounts } from '../../contexts/accounts';
 import { NO_FEES, WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
-import { Keypair, LAMPORTS_PER_SOL, Transaction } from '@solana/web3.js';
+import { LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
 import { consoleOut, getTransactionStatusForLogs, percentage } from '../../utils/ui';
 import { EventType, OperationType, TransactionStatus } from '../../models/enums';
 import { customLogger } from '../..';
 import { cutNumber, formatThousands, getTxIxResume, isValidNumber, toUiAmount } from '../../utils/utils';
 import { LoadingOutlined } from '@ant-design/icons';
 import BN from 'bn.js';
+import { closeTokenAccount } from "../../utils/accounts";
 import { openNotification } from '../Notifications';
-import { unwrapSol } from '@mean-dao/hybrid-liquidity-ag';
 
 export const UnwrapSolModal = (props: {
   handleOk: any;
@@ -37,13 +37,12 @@ export const UnwrapSolModal = (props: {
   const { enqueueTransactionConfirmation } = useContext(TxConfirmationContext);
   const [isUnwrapping, setIsUnwrapping] = useState(false);
   const [unwrapAmount, setUnwrapAmount] = useState<string>("");
-
   const { account } = useNativeAccount();
   const { tokenAccounts } = useUserAccounts();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
   const [wSolBalance, setWsolBalance] = useState(0);
-
+  const [wSolPubKey, setWsolPubKey] = useState<PublicKey | undefined>(undefined);
   const [feeAmount, setFeeAmount] = useState<number | null>(null);
   const [transactionFees, setTransactionFees] = useState<TransactionFees>(NO_FEES);
   const [pageInitialized, setPageInitialized] = useState<boolean>(false);
@@ -160,6 +159,7 @@ export const UnwrapSolModal = (props: {
         const amount = wSolInfo.amount.toNumber();
         const token = tokenList.find((t) => t.address === mint);
         balance = token ? toUiAmount(new BN(amount), token.decimals) : 0;
+        setWsolPubKey(tokenAccounts[wSol].pubkey);
       }
     }
 
@@ -266,7 +266,7 @@ export const UnwrapSolModal = (props: {
     const transactionLog: any[] = [];
 
     const createTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (wallet && publicKey) {
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
           currentOperation: TransactionStatus.InitTransaction,
@@ -290,30 +290,58 @@ export const UnwrapSolModal = (props: {
           result: "",
         });
 
-        return await unwrapSol(
-          connection, // connection
-          wallet, // wallet
-          Keypair.generate(),
-          amount // amount
+        if (!wSolPubKey) {
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.TransactionStartFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+            result: `Wrapped SOL token account not found for the currently connected wallet account`
+          });
+          customLogger.logWarning('Unwrap transaction failed', { transcript: transactionLog });
+          openNotification({
+            title: 'Cannot unwrap SOL',
+            description: `Wrapped SOL token account not found for the currently connected wallet account`,
+            type: 'info'
+          });
+          return false;
+        }
+
+        return await closeTokenAccount(
+          connection,                         // connection
+          wSolPubKey,                         // tokenPubkey
+          publicKey as PublicKey              // owner
         )
-          .then((value) => {
-            consoleOut("unwrapSol returned transaction:", value);
-            // Stage 1 completed - The transaction is created and returned
-            setTransactionStatus({
-              lastOperation: TransactionStatus.InitTransactionSuccess,
-              currentOperation: TransactionStatus.SignTransaction,
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(
-                TransactionStatus.InitTransactionSuccess
-              ),
-              result: getTxIxResume(value),
-            });
-            transaction = value;
-            return true;
+          .then((value: Transaction | null) => {
+            if (value !== null) {
+              consoleOut("closeTokenAccount returned transaction:", value);
+              // Stage 1 completed - The transaction is created and returned
+              setTransactionStatus({
+                lastOperation: TransactionStatus.InitTransactionSuccess,
+                currentOperation: TransactionStatus.SignTransaction,
+              });
+              transactionLog.push({
+                action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+                result: getTxIxResume(value)
+              });
+              transaction = value;
+              return true;
+            } else {
+              // Stage 1 failed - The transaction was not created
+              setTransactionStatus({
+                lastOperation: transactionStatus.currentOperation,
+                currentOperation: TransactionStatus.InitTransactionFailure,
+              });
+              transactionLog.push({
+                action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+                result: 'No transaction created'
+              });
+              return false;
+            }
           })
           .catch((error) => {
-            console.error("unwrapSol transaction init error:", error);
+            console.error("closeTokenAccount transaction init error:", error);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.InitTransactionFailure,
