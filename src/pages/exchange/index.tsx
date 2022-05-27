@@ -13,6 +13,7 @@ import { IconExchange } from '../../Icons';
 import { JupiterExchange, RecurringExchange, } from '../../views';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
+import { MEAN_TOKEN_LIST } from '../../constants/token-list';
 
 type SwapOption = "one-time" | "recurring";
 
@@ -123,18 +124,26 @@ export const SwapView = () => {
           ? getTokenByMintAddress(WRAPPED_SOL_MINT_ADDRESS)
           : getTokenBySymbol(symbol, splTokenList)
         : undefined;
-      if (from) {
-        setQueryFromMint(from.address);
-      }
+    } else {
+        from = MEAN_TOKEN_LIST.find(t => t.chainId === 101 && t.symbol === 'USDC');
     }
+
+    if (from) {
+      setQueryFromMint(from.address);
+    }
+
     // Get to as well
     if (params.has('to')) {
       const symbol = params.get('to');
       to = symbol ? getTokenBySymbol(symbol) : undefined;
-      if (to) {
-        setQueryToMint(to.address);
-      }
+    } else {
+      to = MEAN_TOKEN_LIST.find(t => t.chainId === 101 && t.symbol === 'MEAN');
     }
+
+    if (to) {
+      setQueryToMint(to.address);
+    }
+
     if (location.search.length) {
       consoleOut('params:', params.toString());
       consoleOut('queryFromMint:', from ? from.address : '-', 'blue');

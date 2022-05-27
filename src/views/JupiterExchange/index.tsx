@@ -203,6 +203,11 @@ export const JupiterExchange = (props: {
             consoleOut('props.queryToMint:', props.queryToMint, 'orange');
             if (props.queryFromMint) {
                 setFromMint(props.queryFromMint);
+            } else {
+                const from = MEAN_TOKEN_LIST.filter(t => t.chainId === 101 && t.symbol === 'USDC');
+                if (from && from.length) {
+                    setToMint(from[0].address);
+                }
             }
             if (props.queryToMint) {
                 setToMint(props.queryToMint as string);
