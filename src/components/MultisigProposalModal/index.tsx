@@ -400,7 +400,8 @@ export const MultisigProposalModal = (props: {
                     <Row gutter={[8, 8]}>
                       <Col span={24} className="step-two-selected-app">
                         {selectedApp && (
-                          !selectedApp.logoUri || selectedApp.id === MEAN_MULTISIG_PROGRAM.toBase58() ? (
+                          !selectedApp.logoUri ? (
+                          // !selectedApp.logoUri || selectedApp.id === MEAN_MULTISIG_PROGRAM.toBase58() ? (
                             <img style={{ borderRadius: "50%", padding: "0.2em" }} src={"https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"} width={40} height={40} alt={selectedApp.name} />
                           ) : (
                             <img className="mr-1" src={selectedApp.logoUri} alt={selectedApp.name} width={40} height={40} />
