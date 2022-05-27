@@ -795,15 +795,15 @@ export const ProgramDetailsView = (props: {
     />
   );
 
-  // Executable
-  const [isExecutable, setIsExecutable] = useState<boolean>();
-  useEffect(() => {
-    programSelected && programSelected.executable.toBase58() ? (
-      setIsExecutable(true)
-    ) : (
-      setIsExecutable(false)
-    )
-  }, [programSelected]);
+  // // Executable
+  // const [isExecutable, setIsExecutable] = useState<boolean>();
+  // useEffect(() => {
+  //   programSelected && programSelected.executable.toBase58() ? (
+  //     setIsExecutable(true)
+  //   ) : (
+  //     setIsExecutable(false)
+  //   )
+  // }, [programSelected]);
 
   // Balance SOL
   const [balanceSol, setBalanceSol] = useState<any>();
@@ -836,10 +836,10 @@ export const ProgramDetailsView = (props: {
       name: "Upgrade authority",
       value: renderUpgradeAuthority ? renderUpgradeAuthority : "--"
     },
-    {
-      name: "Executable",
-      value: isExecutable ? "Yes" : "no"
-    },
+    // {
+    //   name: "Executable",
+    //   value: isExecutable ? "Yes" : "no"
+    // },
     {
       name: "Balance (SOL)",
       value: balanceSol ? balanceSol : "--"
