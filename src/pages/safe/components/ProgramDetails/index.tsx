@@ -1010,10 +1010,10 @@ export const ProgramDetailsView = (props: {
   return (
     <>
       <div className="program-details-container">
-        <Row gutter={[8, 8]} className="program-details-resume">
+        <Row gutter={[8, 8]} className="program-details-resume mb-1">
           <div onClick={hideProgramDetailsHandler} className="back-button icon-button-container">
             <IconArrowBack className="mean-svg-icons" />
-            <span>Back</span>
+            <span className="ml-1">Back</span>
           </div>
         </Row>
         <Row gutter={[8, 8]} className="safe-info-container">
