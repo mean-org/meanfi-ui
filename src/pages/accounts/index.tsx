@@ -111,6 +111,7 @@ export const AccountsNewView = () => {
     streamListv2,
     streamDetail,
     transactions,
+    isWhitelisted,
     selectedAsset,
     accountAddress,
     loadingStreams,
@@ -979,7 +980,7 @@ export const AccountsNewView = () => {
     ctaItems++;
 
     // Wrap
-    if (isInspectedAccountTheConnectedWallet() && isSelectedAssetNativeAccount()) {
+    if (isInspectedAccountTheConnectedWallet() && isSelectedAssetNativeAccount() && isWhitelisted) {
       actions.push({
         action: AccountAssetAction.WrapSol,
         caption: 'Wrap',
