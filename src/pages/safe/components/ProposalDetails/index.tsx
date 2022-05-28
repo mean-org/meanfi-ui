@@ -1,5 +1,5 @@
 import './style.scss';
-import { Button, Col, Row } from "antd"
+import { Button, Col, Row, Tooltip } from "antd"
 import { IconArrowBack, IconUser, IconThumbsUp, IconExternalLink, IconLightning, IconUserClock } from "../../../../Icons"
 
 import { shortenAddress } from '../../../../utils/utils';
@@ -129,16 +129,18 @@ export const ProposalDetailsView = (props: {
       <div className="safe-details-collapse w-100 pl-1">
         <Row gutter={[8, 8]} className="mb-2 mt-2">
           <Col xs={6} sm={6} md={4} lg={4} className="pr-1">
-            <span className="info-label">{t('multisig.proposal-modal.instruction-program')}:</span>
+            <span className="info-label">{t('multisig.proposal-modal.instruction-program')}</span>
           </Col>
-          <Col xs={18} sm={18} md={20} lg={20} className="pl-1 text-truncate">
-            <span onClick={() => copyAddressToClipboard(proposalIxInfo.programId)}  className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
+          <Col xs={17} sm={17} md={19} lg={19} className="pl-1 pr-3">
+            <span onClick={() => copyAddressToClipboard(proposalIxInfo.programId)}  className="d-block info-data simplelink underline-on-hover text-truncate" style={{cursor: 'pointer'}}>
               {(
                 proposalIxInfo.programName 
                   ? `${proposalIxInfo.programName} (${proposalIxInfo.programId})` 
                   : proposalIxInfo.programId
               )}
             </span>
+          </Col>
+          <Col xs={1} sm={1} md={1} lg={1}>
             <a
               target="_blank"
               rel="noopener noreferrer"
@@ -153,8 +155,8 @@ export const ProposalDetailsView = (props: {
             return (
               <Row gutter={[8, 8]} className="mb-2" key={account.value}>
                 <Col xs={6} sm={6} md={4} lg={4} className="pr-1">
-                  {/* <span className="info-label">{t('multisig.proposal-modal.instruction-account')} :</span> */}
-                  <span className="info-label">{account.label || t('multisig.proposal-modal.instruction-account')} :</span>
+                    {/* <span className="info-label">{t('multisig.proposal-modal.instruction-account')} :</span> */}
+                    <span className="info-label">{account.label || t('multisig.proposal-modal.instruction-account')}</span>
                 </Col>
                 <Col xs={17} sm={17} md={19} lg={19} className="pl-1 pr-3">
                   <span onClick={() => copyAddressToClipboard(account.value)} className="d-block info-data simplelink underline-on-hover text-truncate" style={{cursor: 'pointer'}}>
@@ -178,11 +180,13 @@ export const ProposalDetailsView = (props: {
           proposalIxInfo.data.map((item: InstructionDataInfo) => {
             return (
               <Row gutter={[8, 8]} className="mb-2">
-                <Col xs={12} sm={12} md={6} lg={6} className="pr-1 text-truncate">
-                  <span className="info-label">{item.label || t('multisig.proposal-modal.instruction-data')}:</span>
+                <Col xs={6} sm={6} md={4} lg={4} className="pr-1 text-truncate">
+                  <Tooltip placement="right" title={item.label || ""}>
+                    <span className="info-label">{item.label || t('multisig.proposal-modal.instruction-data')}</span>
+                  </Tooltip>
                 </Col>
-                <Col xs={12} sm={12} md={18} lg={18} className="pl-1 text-truncate">
-                  <span className="info-data simplelink underline-on-hover" style={{cursor: 'pointer'}}>
+                <Col xs={17} sm={17} md={19} lg={19} className="pl-1 pr-3">
+                  <span className="d-block info-data simplelink underline-on-hover text-truncate" style={{cursor: 'pointer'}}>
                     {item.value}
                   </span>
                 </Col>
