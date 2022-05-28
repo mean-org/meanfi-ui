@@ -63,13 +63,17 @@ export const ReferFriendModal = (props: {
                 )} */}
             </div>
             <h4 className="refer-friend-hint">{t('referrals.refer-friend-hint')}</h4>
-            <div className="transaction-field">
-              <div className="transaction-field-row main-row">
-                <span className="input-left recipient-field-wrapper">
-                  <span className="referral-link text-monospace">{referralLink}</span>
-                </span>
-                <div className="addon-right simplelink" onClick={onCopyReferralLink}>
-                  <IconCopy className="mean-svg-icons" />
+            <div className="well small mb-2">
+              <div className="flex-fixed-right">
+                <div className="left position-relative">
+                  <span className="recipient-field-wrapper">
+                    <span className="referral-link font-size-75 text-monospace">{referralLink}</span>
+                  </span>
+                </div>
+                <div className="right">
+                  <div className="add-on simplelink" onClick={onCopyReferralLink}>
+                    <IconCopy className="mean-svg-icons" />
+                  </div>
                 </div>
               </div>
             </div>

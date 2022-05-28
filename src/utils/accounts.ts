@@ -12,7 +12,8 @@ import {
 } from "@solana/web3.js"
 import { AccountTokenParsedInfo, TokenAccountInfo } from "../models/token";
 import { consoleOut } from "./ui";
-import { SOLANA_ACCOUNT_INCINERATOR } from "../constants";
+import { SOLANA_ACCOUNT_INCINERATOR, WRAPPED_SOL_MINT_ADDRESS } from "../constants";
+import { NATIVE_SOL } from "./tokens";
 
 export type ProgramAccounts = {
   pubkey: PublicKey;
@@ -209,7 +210,9 @@ export async function closeTokenAccount(
   consoleOut('balance:', info.tokenAmount.uiAmount || 0, 'orange');
 
   // If the account has balance, burn the tokens
-  if ((info.tokenAmount.uiAmount || 0) > 0) {
+  if (info.mint !== NATIVE_SOL.address &&
+      info.mint !== WRAPPED_SOL_MINT_ADDRESS &&
+     (info.tokenAmount.uiAmount || 0) > 0) {
     ixs.push(
       Token.createBurnInstruction(
         TOKEN_PROGRAM_ID,

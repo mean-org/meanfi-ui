@@ -14,6 +14,7 @@ import { MSP, Stream, STREAM_STATUS } from '@mean-dao/msp';
 import { AppStateContext } from '../../contexts/appstate';
 import { BN } from 'bn.js';
 import { openNotification } from '../Notifications';
+import { WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
 
 export const StreamWithdrawModal = (props: {
   startUpData: Stream | StreamInfo | undefined;
@@ -233,10 +234,14 @@ export const StreamWithdrawModal = (props: {
 
   const getDisplayAmount = (amount: number, addSymbol = false): string => {
     if (props && props.startUpData && props.selectedToken) {
-      const token = props.selectedToken;
+      const token = props.selectedToken.address === WRAPPED_SOL_MINT_ADDRESS
+        ? Object.assign({}, props.selectedToken, {
+            symbol: 'SOL'
+          }) as TokenInfo
+        : props.selectedToken;
       const bareAmount = amount.toFixed(token.decimals);
       if (addSymbol) {
-        return token.name === 'Unknown' ? `${bareAmount} [${props.selectedToken.symbol}]` : `${bareAmount} ${props.selectedToken.symbol}`;
+        return token.name === 'Unknown' ? `${bareAmount} [${props.selectedToken.symbol}]` : `${bareAmount} ${token ? token.symbol : props.selectedToken.symbol}`;
       }
       return bareAmount;
     }

@@ -10,7 +10,7 @@ import { BackButton } from "../BackButton";
 import { useTranslation } from "react-i18next";
 import { useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
-import { consoleOut, isLocal, isProd, isValidAddress } from "../../utils/ui";
+import { consoleOut, isProd, isValidAddress } from "../../utils/ui";
 import ReactGA from 'react-ga';
 // import { InfluxDB, Point } from '@influxdata/influxdb-client';
 import { isMobile, isDesktop, isTablet, browserName, osName, osVersion, fullBrowserVersion, deviceType } from "react-device-detect";
@@ -38,16 +38,11 @@ export const AppLayout = React.memo((props: any) => {
     theme,
     tpsAvg,
     detailsPanelOpen,
-    addAccountPanelOpen,
-    canShowAccountDetails,
     previousWalletConnectState,
     setPreviousWalletConnectState,
-    setCanShowAccountDetails,
-    setAddAccountPanelOpen,
     setShouldLoadTokens,
     refreshTokenBalance,
     setDtailsPanelOpen,
-    setAccountAddress,
     setDiagnosisInfo,
     setSelectedAsset,
     setStreamList,
@@ -58,7 +53,7 @@ export const AppLayout = React.memo((props: any) => {
   const { t, i18n } = useTranslation("common");
   const { isOnline, responseTime } = useOnlineStatus();
   const connectionConfig = useConnectionConfig();
-  const { wallet, provider, connected, connecting, autoConnect, publicKey, select } = useWallet();
+  const { wallet, provider, connected, connecting, publicKey, select } = useWallet();
   const [previousChain, setChain] = useState("");
   const [gaInitialized, setGaInitialized] = useState(false);
   const [referralAddress, setReferralAddress] = useLocalStorage('pendingReferral', '');
@@ -307,9 +302,6 @@ export const AppLayout = React.memo((props: any) => {
               .then(result => consoleOut('reportConnectedAccount hit'))
               .catch(error => console.error(error));
           }
-          // Let the AppState know which wallet address is connected and save it
-          setAccountAddress(walletAddress);
-          setSelectedAsset(undefined);
         }
         refreshTokenBalance();
         setPreviousWalletConnectState(true);
@@ -349,7 +341,6 @@ export const AppLayout = React.memo((props: any) => {
     clearConfirmationHistory,
     refreshTokenBalance,
     setReferralAddress,
-    setAccountAddress,
     setSelectedAsset,
     setStreamList,
     t,
@@ -417,9 +408,6 @@ export const AppLayout = React.memo((props: any) => {
   const closeAllPanels = () => {
     if (detailsPanelOpen) {
       setDtailsPanelOpen(false);
-    } else if (addAccountPanelOpen) {
-      setCanShowAccountDetails(true);
-      setAddAccountPanelOpen(false);
     }
   }
 
@@ -478,7 +466,7 @@ export const AppLayout = React.memo((props: any) => {
               </div>
             )}
             <Header className="App-Bar">
-              {(detailsPanelOpen || (addAccountPanelOpen && !canShowAccountDetails)) && (
+              {!location.pathname.startsWith('/invest') && (detailsPanelOpen) && (
                 <BackButton handleClose={() => closeAllPanels()} />
               )}
               <div className="app-bar-inner">

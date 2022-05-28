@@ -29,13 +29,14 @@ export interface CustomTokenInfo {
   tags: string[]
 }
 
+const LOGO_BASE_URL = "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet";
 export const NATIVE_SOL: TokenInfo = {
   chainId: isProd() ? 101 : 103,
   symbol: 'SOL',
   name: 'Native SOL',
   address: NATIVE_SOL_MINT.toString(),
   decimals: 9,
-  logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
+  logoURI: `${LOGO_BASE_URL}/So11111111111111111111111111111111111111112/logo.png`,
   tags: ['raydium']
 }
 
@@ -46,7 +47,7 @@ export const TOKENS: Tokens = {
     address: WRAPPED_SOL_MINT.toBase58(),
     decimals: 9,
     referrer: 'HTcarLHe7WRxBQCWvhVB8AP56pnEtJUV2jDGvcpY3xo5',
-    logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
+    logoURI: `${LOGO_BASE_URL}/So11111111111111111111111111111111111111112/logo.png`,
     tags: ['raydium']
   },
   BTC: {
@@ -55,7 +56,7 @@ export const TOKENS: Tokens = {
     address: '9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E',
     decimals: 6,
     referrer: 'GZpS8cY8Nt8HuqxzJh6PXTdSxc38vFUjBmi7eEUkkQtG',
-    logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E/logo.png",
+    logoURI: `${LOGO_BASE_URL}/9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E/logo.png`,
     tags: ['raydium']
   },
   ETH: {
@@ -64,7 +65,7 @@ export const TOKENS: Tokens = {
     address: '2FPyTwcZLUg1MDrwsyoP4D6s1tM7hAkHYRjkNb5w6Pxk',
     decimals: 6,
     referrer: 'CXPTcSxxh4AT38gtv3SPbLS7oZVgXzLbMb83o4ziXjjN',
-    logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/2FPyTwcZLUg1MDrwsyoP4D6s1tM7hAkHYRjkNb5w6Pxk/logo.png",
+    logoURI: `${LOGO_BASE_URL}/2FPyTwcZLUg1MDrwsyoP4D6s1tM7hAkHYRjkNb5w6Pxk/logo.png`,
     tags: ['raydium']
   },
   USDT: {
@@ -73,7 +74,7 @@ export const TOKENS: Tokens = {
     address: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
     decimals: 6,
     referrer: '8DwwDNagph8SdwMUdcXS5L9YAyutTyDJmK6cTKrmNFk3',
-    logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB/logo.svg",
+    logoURI: `${LOGO_BASE_URL}/Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB/logo.svg`,
     tags: ['raydium']
   },
   USDC: {
@@ -82,7 +83,7 @@ export const TOKENS: Tokens = {
     address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
     decimals: 6,
     referrer: '92vdtNjEg6Zth3UU1MgPgTVFjSEzTHx66aCdqWdcRkrg',
-    logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png",
+    logoURI: `${LOGO_BASE_URL}/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png`,
     tags: ['raydium']
   },
 }

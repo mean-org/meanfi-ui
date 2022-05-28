@@ -5,7 +5,7 @@ import { ExclamationCircleOutlined } from "@ant-design/icons";
 import { useWallet } from '../../contexts/wallet';
 import { percentage } from '../../utils/ui';
 import { TokenInfo } from '@solana/spl-token-registry';
-import { getTokenAmountAndSymbolByTokenAddress, toUiAmount } from '../../utils/utils';
+import { getAmountWithSymbol, toUiAmount } from '../../utils/utils';
 import { useTranslation } from 'react-i18next';
 import { StreamInfo, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { Stream } from '@mean-dao/msp';
@@ -158,11 +158,11 @@ export const StreamPauseModal = (props: {
           <div className="p-2 mb-2">
             {infoRow(
               t('close-stream.return-vested-amount') + ':',
-              getTokenAmountAndSymbolByTokenAddress(getWithdrawableAmount(), props.streamDetail.associatedToken as string)
+              getAmountWithSymbol(getWithdrawableAmount(), props.streamDetail.associatedToken as string)
             )}
             {amITreasurer() && infoRow(
               t('close-stream.return-unvested-amount') + ':',
-              getTokenAmountAndSymbolByTokenAddress(getUnvested(), props.streamDetail.associatedToken as string)
+              getAmountWithSymbol(getUnvested(), props.streamDetail.associatedToken as string)
             )}
           </div>
         )}

@@ -195,7 +195,7 @@ export const TransactionItemView = (props: {
         <div className="std-table-cell responsive-cell pr-2 text-right">
           {balanceChange === 0 ? (
             <Tooltip placement="bottom" title="No balance changes">
-              <span className="text-strike-through">{getDisplayAmount()}</span>
+              <span>{getDisplayAmount()}</span>
             </Tooltip>
           ) : (
             <span>{getDisplayAmount()}</span>
@@ -204,7 +204,7 @@ export const TransactionItemView = (props: {
         <div className="std-table-cell responsive-cell pr-2 text-right">
           {balanceChange === 0 ? (
             <Tooltip placement="bottom" title="No balance changes">
-              <span className="text-strike-through">{getDisplayPostBalance()}</span>
+              <span>{getDisplayPostBalance()}</span>
             </Tooltip>
           ) : (
             <span>{getDisplayPostBalance()}</span>
