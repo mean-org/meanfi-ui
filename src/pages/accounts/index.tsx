@@ -2537,7 +2537,11 @@ export const AccountsNewView = () => {
                     {/* Left / top panel */}
                     <div className="meanfi-two-panel-left">
                       <div className="meanfi-panel-heading">
-                        <span className="title">{t('assets.screen-title')}</span>
+                        {!isInspectedAccountTheConnectedWallet() ? (
+                          <span className="title">Safe balances</span>
+                        ) : (
+                          <span className="title">{t('assets.screen-title')}</span>
+                        )}
                         <div className="user-address">
                           <span className="fg-secondary">
                             (<span className="simplelink underline-on-hover" onClick={() => copyAddressToClipboard(accountAddress)}>
