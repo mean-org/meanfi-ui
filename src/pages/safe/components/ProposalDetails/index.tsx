@@ -123,8 +123,6 @@ export const ProposalDetailsView = (props: {
 
   },[t]);
 
-  console.log("proposalIxInfo", proposalIxInfo);
-
   // Display the instructions in the "Instructions" tab, on safe details page
   const renderInstructions = (
     proposalIxInfo && (

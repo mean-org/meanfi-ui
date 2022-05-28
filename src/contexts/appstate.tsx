@@ -70,6 +70,7 @@ interface AppStateConfig {
   tokenList: TokenInfo[];
   selectedToken: TokenInfo | undefined;
   tokenBalance: number;
+  totalSafeBalance: number;
   fromCoinAmount: string;
   effectiveRate: number;
   coinPrices: any | null;
@@ -140,6 +141,7 @@ interface AppStateConfig {
   hideDepositOptionsModal: () => void;
   setSelectedToken: (token: TokenInfo | undefined) => void;
   setSelectedTokenBalance: (balance: number) => void;
+  setTotalSafeBalance: (balance: number) => void;
   setFromCoinAmount: (data: string) => void;
   refreshPrices: () => void;
   setEffectiveRate: (rate: number) => void;
@@ -213,6 +215,7 @@ const contextDefaultValues: AppStateConfig = {
   tokenList: [],
   selectedToken: undefined,
   tokenBalance: 0,
+  totalSafeBalance: 0,
   fromCoinAmount: '',
   effectiveRate: 0,
   coinPrices: null,
@@ -288,6 +291,7 @@ const contextDefaultValues: AppStateConfig = {
   setTreasuryOption: () => {},
   setSelectedToken: () => {},
   setSelectedTokenBalance: () => {},
+  setTotalSafeBalance: () => {},
   setFromCoinAmount: () => {},
   refreshPrices: () => {},
   setEffectiveRate: () => {},
@@ -413,6 +417,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [highLightableMultisigId, setHighLightableMultisigId] = useState<string | undefined>(contextDefaultValues.highLightableMultisigId);
   const [selectedToken, updateSelectedToken] = useState<TokenInfo>();
   const [tokenBalance, updateTokenBalance] = useState<number>(contextDefaultValues.tokenBalance);
+  const [totalSafeBalance, updateTotalSafeBalance] = useState<number>(contextDefaultValues.totalSafeBalance);
   const [stakingMultiplier, updateStakingMultiplier] = useState<number>(contextDefaultValues.stakingMultiplier);
   const [coinPricesFromApi, setCoinPricesFromApi] = useState<TokenPrice[] | null>(null);
   const [coinPrices, setCoinPrices] = useState<any>(null);
@@ -870,6 +875,10 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   const setSelectedTokenBalance = (balance: number) => {
     updateTokenBalance(balance);
+  }
+
+  const setTotalSafeBalance = (balance: number) => {
+    updateTotalSafeBalance(balance);
   }
 
   const setStakingMultiplier = (rate: number) => {
@@ -1443,6 +1452,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         tokenList,
         selectedToken,
         tokenBalance,
+        totalSafeBalance,
         fromCoinAmount,
         effectiveRate,
         coinPrices,
@@ -1509,6 +1519,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         hideDepositOptionsModal,
         setSelectedToken,
         setSelectedTokenBalance,
+        setTotalSafeBalance,
         setFromCoinAmount,
         refreshPrices,
         setEffectiveRate,

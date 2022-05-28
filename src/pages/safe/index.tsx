@@ -36,7 +36,8 @@ import {
   consoleOut,
   getTransactionStatusForLogs,
   isLocal,
-  isDev
+  isDev,
+  toUsCurrency
 } from '../../utils/ui';
 
 import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../constants';
@@ -84,6 +85,7 @@ import { MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigInfo } from '@mean-dao/mea
 import { MultisigCreateAssetModal } from '../../components/MultisigCreateAssetModal';
 
 import { createProgram, getDepositIx, getWithdrawIx, getGatewayToken } from '@mean-dao/mean-multisig-apps/lib/apps/credix/func';
+import { NATIVE_SOL } from '../../utils/tokens';
 
 const CREDIX_PROGRAM = new PublicKey("CRDx2YkdtYtGZXGHZ59wNv1EwKHQndnRc1gT4p8i2vPX");
 
@@ -100,6 +102,8 @@ export const SafeView = () => {
     highLightableMultisigId,
     previousWalletConnectState,
     setHighLightableMultisigId,
+    getTokenPriceByAddress,
+    getTokenPriceBySymbol,
     setTransactionStatus,
     refreshTokenBalance,
     setDtailsPanelOpen,
@@ -3299,6 +3303,12 @@ export const SafeView = () => {
             setIsAssetDetails(false);
           };
 
+          const price = getTokenPriceBySymbol(NATIVE_SOL.symbol);
+
+          const balance = item.balance / LAMPORTS_PER_SOL;
+
+          const usdValue = balance * price;
+
           return (
             <div 
               key={`${index + 50}`}
@@ -3340,13 +3350,14 @@ export const SafeView = () => {
                 </div>
               </div>
               <div className="rate-cell">
-                <div className="rate-amount">
-                  {
-                    t('multisig.multisig-accounts.pending-transactions', {
-                      txs: item.pendingTxsAmount
-                    })
-                  }
-                </div>
+                {item.balance && (
+                  <>
+                    <div className="rate-amount">
+                      {toUsCurrency(usdValue)}
+                    </div>
+                    <div className="interval">safe balance</div>
+                  </>
+                )}
               </div>
             </div>
           );

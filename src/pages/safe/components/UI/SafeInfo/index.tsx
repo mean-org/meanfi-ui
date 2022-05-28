@@ -35,7 +35,9 @@ export const SafeInfo = (props: {
   const {
     coinPrices,
     splTokenList,
-    isWhitelisted
+    isWhitelisted,
+    totalSafeBalance,
+    setTotalSafeBalance
   } = useContext(AppStateContext);
 
   const { solBalance, selectedMultisig, multisigVaults, safeNameImg, safeNameImgAlt, onNewProposalMultisigClick, onNewCreateAssetClick, onEditMultisigClick, onRefreshTabsInfo, tabs, selectedTab, isTxInProgress } = props;
@@ -44,7 +46,6 @@ export const SafeInfo = (props: {
   const navigate = useNavigate();
 
   const [selectedLabelName, setSelectedLabelName] = useState("");
-  const [totalSafeBalance, setTotalSafeBalance] = useState(0);
 
   const isUnderDevelopment = () => {
     return isLocal() || (isDev() && isWhitelisted) ? true : false;
@@ -129,7 +130,6 @@ export const SafeInfo = (props: {
         const token = getTokenByMintAddress(item.mint.toBase58(), splTokenList);
 
         if (token) {
-
           const rate = getPricePerToken(token);
           const balance = item.amount.toNumber() / 10 ** token.decimals;
           usdValue += balance * rate;
@@ -148,12 +148,13 @@ export const SafeInfo = (props: {
     })();
 
   }, [
-    getPricePerToken, 
-    selectedMultisig, 
-    splTokenList, 
-    multisigVaults, 
-    solBalance
-  ]);  
+    getPricePerToken,
+    selectedMultisig,
+    splTokenList,
+    multisigVaults,
+    solBalance,
+    setTotalSafeBalance
+  ]);
     
   // Deposit Address
   const renderDepositAddress = (
