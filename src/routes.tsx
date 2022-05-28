@@ -16,7 +16,6 @@ import {
   SwapView,
   TransfersView,
   TreasuriesView,
-  WrapView,
   MultisigView,
   StatsView,
   MultisigAssetsView,
@@ -32,10 +31,7 @@ import TxConfirmationProvider from "./contexts/transaction-status";
 import { isLocal, isProd } from "./utils/ui";
 import { OnlineStatusProvider } from "./contexts/online-status";
 import { IdoLpView } from "./pages/ido-lp";
-// import { StakingView } from "./pages/staking";
-// import { PolBondsView } from "./pages/pol-bonds";
 import { InvestView } from "./pages/invest";
-import { UnwrapView } from "./pages/unwrap";
 
 export function AppRoutes() {
 
@@ -51,26 +47,31 @@ export function AppRoutes() {
                   <AppLayout>
                     <Routes>
                       <Route path='/' element={<Navigate replace to='/accounts' />} />
+                      {/* Accounts detailed deep-linking */}
                       <Route path="/accounts" element={<AccountsNewView />} />
+                      <Route path="/accounts/:address" element={<AccountsNewView />} />
+                      <Route path="/accounts/:address/assets" element={<AccountsNewView />} />
+                      <Route path="/accounts/:address/assets/:asset" element={<AccountsNewView />} />
+                      <Route path="/accounts/:address/msigs" element={<AccountsNewView />} />
+                      <Route path="/accounts/:address/msigs/:asset" element={<AccountsNewView />} />
+                      {/* Streams routes (under refactor) */}
                       <Route path="/accounts/streams" element={<AccountsNewView />} />
-                      <Route path="/faucet" element={<FaucetView />} />
-                      <Route path="/transfers" element={<TransfersView />} />
+                      {/* Exchange */}
                       <Route path="/exchange" element={<SwapView />} />
                       {(isProd() || isLocal()) && (
                         <Route path="/exchange-dcas" element={<ExchangeDcasView />} />
                       )}
-                      <Route path="/wrap" element={<WrapView />} />
-                      <Route path="/unwrap" element={<UnwrapView />} />
-                      {isLocal() && (
-                        <Route path="/playground" element={<PlaygroundView />} />
-                      )}
+                      {/* Deprecated routes (still active) */}
+                      <Route path="/transfers" element={<TransfersView />} />
+                      <Route path="/faucet" element={<FaucetView />} />
+                      {/* IDO */}
                       <Route path="/ido" element={<IdoView />} />
                       <Route path="/ido-live" element={<IdoLiveView />} />
                       <Route path="/ido-blocked" element={<IdoBlockedView />} />
                       <Route path="/ido-lp" element={<IdoLpView />} />
+                      {/* All others */}
                       <Route path="/invest" element={<InvestView />} />
-                      {/* <Route path="/pol-bonds" element={<PolBondsView />} /> */}
-                      {/* <Route path="/staking" element={<StakingView />} /> */}
+                      <Route path="/invest/:investItem" element={<InvestView />} />
                       <Route path="/staking-rewards" element={<StakingRewardsView />} />
                       <Route path="/stats" element={<StatsView />} />
                       <Route path="/custody" element={<CustodyView />} />
@@ -81,6 +82,10 @@ export function AppRoutes() {
                       <Route path="/multisig-assets" element={<MultisigAssetsView />} />
                       <Route path="/multisig-programs" element={<MultisigProgramsView />} />
                       <Route path="/service-unavailable" element={<ServiceUnavailableView />} />
+                      {/* Playgraund route for POC and testing purposes */}
+                      {!isProd() && (
+                        <Route path="/playground" element={<PlaygroundView />} />
+                      )}
                       <Route path='*' element={<NotFoundView />} />
                     </Routes>
                   </AppLayout>

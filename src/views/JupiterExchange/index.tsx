@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
+import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { Button, Divider, Drawer, Modal, Tooltip } from "antd";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { getPlatformFeeAccounts, Jupiter, RouteInfo, TOKEN_LIST_URL, TransactionFeeInfo } from "@jup-ag/core";
@@ -28,11 +28,11 @@ import { NATIVE_SOL } from "../../utils/tokens";
 import { MEAN_TOKEN_LIST, PINNED_TOKENS } from "../../constants/token-list";
 import { InfoIcon } from "../../components/InfoIcon";
 import { OperationType, TransactionStatus } from "../../models/enums";
-import { unwrapSol } from "@mean-dao/hybrid-liquidity-ag";
 import { SignerWalletAdapter } from "@solana/wallet-adapter-base";
 import { TokenDisplay } from "../../components/TokenDisplay";
 import { TxConfirmationContext } from "../../contexts/transaction-status";
 import { openNotification } from "../../components/Notifications";
+import { closeTokenAccount } from "../../utils/accounts";
 
 export const COMMON_EXCHANGE_TOKENS = ['USDC', 'USDT', 'MEAN', 'SOL'];
 const MINIMUM_REQUIRED_SOL_BALANCE = 0.05;
@@ -53,6 +53,7 @@ export const JupiterExchange = (props: {
     const [previousBalance, setPreviousBalance] = useState(account?.lamports);
     const [nativeBalance, setNativeBalance] = useState(0);
     const [wSolBalance, setWsolBalance] = useState(0);
+    const [wSolPubKey, setWsolPubKey] = useState<PublicKey | undefined>(undefined);
     const [userBalances, setUserBalances] = useState<any>();
     const {
         transactionStatus,
@@ -185,6 +186,7 @@ export const JupiterExchange = (props: {
                 const amount = wSolInfo.amount.toNumber();
                 const token = tokenList.find(t => t.address === mint);
                 balance = token ? toUiAmount(new BN(amount), token.decimals) : 0;
+                setWsolPubKey(tokenAccounts[wSol].pubkey);
             }
         }
 
@@ -203,6 +205,11 @@ export const JupiterExchange = (props: {
             consoleOut('props.queryToMint:', props.queryToMint, 'orange');
             if (props.queryFromMint) {
                 setFromMint(props.queryFromMint);
+            } else {
+                const from = MEAN_TOKEN_LIST.filter(t => t.chainId === 101 && t.symbol === 'USDC');
+                if (from && from.length) {
+                    setToMint(from[0].address);
+                }
             }
             if (props.queryToMint) {
                 setToMint(props.queryToMint as string);
@@ -211,15 +218,6 @@ export const JupiterExchange = (props: {
                 if (to && to.length) {
                     setToMint(to[0].address);
                 }
-            }
-        } else if (!props.queryFromMint && !props.queryToMint) {
-            const from = MEAN_TOKEN_LIST.filter(t => t.chainId === 101 && t.symbol === 'USDC');
-            if (from && from.length) {
-                setFromMint(from[0].address);
-            }
-            const to = MEAN_TOKEN_LIST.filter(t => t.chainId === 101 && t.symbol === 'MEAN');
-            if (to && to.length) {
-                setToMint(to[0].address);
             }
         }
     }, [
@@ -1059,18 +1057,18 @@ export const JupiterExchange = (props: {
         const transactionLog: any[] = [];
 
         const createTx = async (): Promise<boolean> => {
-            if (wallet) {
+            if (wallet && publicKey) {
                 setTransactionStatus({
                     lastOperation: TransactionStatus.TransactionStart,
                     currentOperation: TransactionStatus.InitTransaction,
                 });
 
-                consoleOut('wrapAmount:', wSolBalance, 'blue')
+                consoleOut('unwrapAmount:', wSolBalance, 'blue')
 
                 // Log input data
                 transactionLog.push({
                     action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
-                    inputs: `wrapAmount: ${wSolBalance}`
+                    inputs: `unwrapAmount: ${wSolBalance}`
                 });
 
                 transactionLog.push({
@@ -1078,28 +1076,58 @@ export const JupiterExchange = (props: {
                     result: ''
                 });
 
-                return await unwrapSol(
-                    connection,                 // connection
-                    wallet,                     // wallet
-                    Keypair.generate(),
-                    wSolBalance                 // amount
+                if (!wSolPubKey) {
+                    setTransactionStatus({
+                        lastOperation: transactionStatus.currentOperation,
+                        currentOperation: TransactionStatus.TransactionStartFailure
+                    });
+                    transactionLog.push({
+                        action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+                        result: `Wrapped SOL token account not found for the currently connected wallet account`
+                    });
+                    customLogger.logWarning('Unwrap transaction failed', { transcript: transactionLog });
+                    openNotification({
+                        title: 'Cannot unwrap SOL',
+                        description: `Wrapped SOL token account not found for the currently connected wallet account`,
+                        type: 'info'
+                    });
+                    return false;
+                }
+
+                return await closeTokenAccount(
+                    connection,                         // connection
+                    wSolPubKey,                         // tokenPubkey
+                    publicKey as PublicKey              // owner
                 )
-                    .then((value) => {
-                        consoleOut("unwrapSol returned transaction:", value);
-                        // Stage 1 completed - The transaction is created and returned
-                        setTransactionStatus({
-                            lastOperation: TransactionStatus.InitTransactionSuccess,
-                            currentOperation: TransactionStatus.SignTransaction,
-                        });
-                        transactionLog.push({
-                            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-                            result: getTxIxResume(value)
-                        });
-                        transaction = value;
-                        return true;
+                    .then((value: Transaction | null) => {
+                        if (value !== null) {
+                            consoleOut("closeTokenAccount returned transaction:", value);
+                            // Stage 1 completed - The transaction is created and returned
+                            setTransactionStatus({
+                                lastOperation: TransactionStatus.InitTransactionSuccess,
+                                currentOperation: TransactionStatus.SignTransaction,
+                            });
+                            transactionLog.push({
+                                action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+                                result: getTxIxResume(value)
+                            });
+                            transaction = value;
+                            return true;
+                        } else {
+                            // Stage 1 failed - The transaction was not created
+                            setTransactionStatus({
+                                lastOperation: transactionStatus.currentOperation,
+                                currentOperation: TransactionStatus.InitTransactionFailure,
+                            });
+                            transactionLog.push({
+                                action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+                                result: 'No transaction created'
+                            });
+                            return false;
+                        }
                     })
                     .catch((error) => {
-                        console.error("unwrapSol transaction init error:", error);
+                        console.error("closeTokenAccount transaction init error:", error);
                         setTransactionStatus({
                             lastOperation: transactionStatus.currentOperation,
                             currentOperation: TransactionStatus.InitTransactionFailure,
@@ -1673,7 +1701,7 @@ export const JupiterExchange = (props: {
                         }}
                         hint={
                             inputToken && inputToken.address === WRAPPED_SOL_MINT_ADDRESS
-                                ? 'We recommend having at least 0.05 SOL for any transaction'
+                                ? t('transactions.validation.minimum-balance-required')
                                 : ''
                         }
                         className="mb-0"

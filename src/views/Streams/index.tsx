@@ -20,8 +20,6 @@ import {
   IconClock,
   IconExternalLink,
   IconShare,
-  IconSwitchRunning,
-  IconSwitchStopped,
   IconUpload,
 } from "../../Icons";
 import { AppStateContext } from "../../contexts/appstate";
@@ -30,8 +28,6 @@ import {
   formatAmount,
   formatThousands,
   getAmountWithSymbol,
-  getTokenAmountAndSymbolByTokenAddress,
-  getTokenSymbol,
   getTxIxResume,
   shortenAddress,
   toTokenAmount,
@@ -40,7 +36,6 @@ import {
 import {
   consoleOut,
   copyText,
-  friendlyDisplayDecimalPlaces,
   getFormattedNumberToLocale,
   getIntervalFromSeconds,
   getReadableDate,
@@ -50,6 +45,8 @@ import {
   getTransactionStatusForLogs,
   isProd,
   isValidAddress,
+  kFormatter,
+  toUsCurrency,
 } from "../../utils/ui";
 import { StreamOpenModal } from '../../components/StreamOpenModal';
 import { StreamWithdrawModal } from '../../components/StreamWithdrawModal';
@@ -59,6 +56,7 @@ import {
   PERFORMANCE_THRESHOLD,
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
   SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
+  WRAPPED_SOL_MINT_ADDRESS,
 } from "../../constants";
 import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from "../../contexts/connection";
 import { ConfirmOptions, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
@@ -68,7 +66,7 @@ import { TokenInfo } from "@solana/spl-token-registry";
 import { StreamCloseModal } from "../../components/StreamCloseModal";
 import { useNativeAccount } from "../../contexts/accounts";
 import { useTranslation } from "react-i18next";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from "../../utils/ids";
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from "../../contexts/transaction-status";
 import { Identicon } from "../../components/Identicon";
@@ -91,7 +89,6 @@ import {
 } from "@mean-dao/msp";
 import { StreamTransferOpenModal } from "../../components/StreamTransferOpenModal";
 import { StreamsSummary } from "../../models/streams";
-import { UserTokenAccount } from "../../models/transactions";
 import { customLogger } from "../..";
 import { StreamTreasuryType } from "../../models/treasuries";
 import { segmentAnalytics } from "../../App";
@@ -112,6 +109,8 @@ import { openNotification } from "../../components/Notifications";
 import { CountdownCircleTimer } from "react-countdown-circle-timer";
 import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { SendAssetModal } from "../../components/SendAssetModal";
+import { ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/accounts";
+import { StreamTopupParams } from "../../models/common-types";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 let ds: string[] = [];
@@ -143,14 +142,13 @@ export const Streams = () => {
     transactionStatus,
     customStreamDocked,
     streamProgramAddress,
-    loadingStreamsSummary,
     loadingStreamActivity,
     hasMoreStreamActivity,
     highLightableStreamId,
     streamV2ProgramAddress,
     previousWalletConnectState,
-    setLoadingStreamsSummary,
     setHighLightableStreamId,
+    getTokenPriceByAddress,
     getTokenByMintAddress,
     getTokenPriceBySymbol,
     setLastStreamsSummary,
@@ -175,6 +173,7 @@ export const Streams = () => {
     enqueueTransactionConfirmation
   } = useContext(TxConfirmationContext);
   const { t } = useTranslation('common');
+  const { address } = useParams();
   const { account } = useNativeAccount();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
@@ -187,11 +186,9 @@ export const Streams = () => {
   const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
   const [multisigAccounts] = useState<MultisigInfo[] | undefined>(undefined);
   const [canSubscribe, setCanSubscribe] = useState(true);
-
   // Countdown timer variables
   const [key, setKey] = useState(0);
   const [isCounting, setIsCounting] = useState(true);
-
   // Treasury related
   const [loadingTreasuryDetails, setLoadingTreasuryDetails] = useState(true);
   const [treasuryDetails, setTreasuryDetails] = useState<Treasury | TreasuryInfo | undefined>(undefined);
@@ -490,9 +487,114 @@ export const Streams = () => {
 
   },[t])
 
+  const refreshStreamSummary = useCallback(async () => {
+
+    if (!ms || !msp || (!publicKey && !accountAddress) || (!streamListv1 && !streamListv2)) { return; }
+
+    const resume: StreamsSummary = {
+      totalNet: 0,
+      incomingAmount: 0,
+      outgoingAmount: 0,
+      totalAmount: 0
+    };
+
+    const treasurer = accountAddress
+      ? new PublicKey(accountAddress)
+      : publicKey as PublicKey;
+
+    const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
+    const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer);
+
+    // consoleOut('=========== Block start ===========', '', 'darkorange');
+
+    for (const stream of updatedStreamsv1) {
+
+      const isIncoming = stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58()
+        ? true
+        : false;
+
+      if (isIncoming) {
+        resume['incomingAmount'] = resume['incomingAmount'] + 1;
+      } else {
+        resume['outgoingAmount'] = resume['outgoingAmount'] + 1;
+      }
+
+      // Get refreshed data
+      const freshStream = await ms.refreshStream(stream) as StreamInfo;
+      if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
+
+      const asset = getTokenByMintAddress(freshStream.associatedToken as string);
+      const rate = asset ? getTokenPriceByAddress(asset.address) : 0;
+      if (isIncoming) {
+        resume['totalNet'] = resume['totalNet'] + ((freshStream.escrowVestedAmount || 0) * rate);
+      } else {
+        resume['totalNet'] = resume['totalNet'] + ((freshStream.escrowUnvestedAmount || 0) * rate);
+      }
+    }
+
+    resume['totalAmount'] = updatedStreamsv1.length;
+
+    // consoleOut('totalNet v1:', resume['totalNet'], 'blue');
+
+    for (const stream of updatedStreamsv2) {
+
+      const isIncoming = stream.beneficiary && stream.beneficiary === treasurer.toBase58()
+        ? true
+        : false;
+
+      if (isIncoming) {
+        resume['incomingAmount'] = resume['incomingAmount'] + 1;
+      } else {
+        resume['outgoingAmount'] = resume['outgoingAmount'] + 1;
+      }
+
+      // Get refreshed data
+      const freshStream = await msp.refreshStream(stream) as Stream;
+      if (!freshStream || freshStream.status !== STREAM_STATUS.Running) { continue; }
+
+      const asset = getTokenByMintAddress(freshStream.associatedToken as string);
+      const pricePerToken = asset ? getTokenPriceByAddress(asset.address) : 0;
+      const rate = asset ? (pricePerToken ? pricePerToken : 1) : 1;
+      const decimals = asset ? asset.decimals : 9;
+      // const amount = isIncoming ? freshStream.fundsSentToBeneficiary : freshStream.fundsLeftInStream;
+      const amount = freshStream.withdrawableAmount;
+      const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * rate;
+
+      if (isIncoming) {
+        resume['totalNet'] += amountChange;
+      } else {
+        resume['totalNet'] -= amountChange;
+      }
+    }
+
+    resume['totalAmount'] += updatedStreamsv2.length;
+
+    // consoleOut('totalNet:', resume['totalNet'], 'blue');
+    // consoleOut('=========== Block ends ===========', '', 'darkorange');
+
+    // Update state
+    setLastStreamsSummary(streamsSummary);
+    setStreamsSummary(resume);
+
+  }, [accountAddress, getTokenByMintAddress, getTokenPriceByAddress, ms, msp, publicKey, setLastStreamsSummary, setStreamsSummary, streamListv1, streamListv2, streamsSummary]);
+
   /////////////////
   //   EFFECTS   //
   /////////////////
+
+  // Load streams if not loaded
+  useEffect(() => {
+    if (!publicKey) { return; }
+
+    if (!streamList) {
+      if (!address) {
+        // const pk = new PublicKey(publicKey);
+        refreshStreamList(true, publicKey);
+      } else {
+        refreshStreamList();
+      }
+    }
+  }, [address, publicKey, refreshStreamList, streamList]);
 
   // Log the list of deleted streams
   useEffect(() => {
@@ -609,136 +711,28 @@ export const Streams = () => {
     }
   }, [isCounting, loadingStreams, streamList]);
 
-  const refreshStreamSummary = useCallback(async () => {
-
-    if (!ms || !msp || (!streamListv1 && !streamListv2) || loadingStreamsSummary) { return; }
-
-    if (!publicKey && !accountAddress) { return; }
-
-    setLoadingStreamsSummary(true);
-
-    const resume: StreamsSummary = {
-      totalNet: 0,
-      incomingAmount: 0,
-      outgoingAmount: 0,
-      totalAmount: 0
-    };
-
-    const treasurer = publicKey
-      ? publicKey
-      : new PublicKey(accountAddress);
-
-      const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], treasurer);
-      const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], treasurer);
-  
-    // consoleOut('=========== Block start ===========', '', 'orange');
-
-    for (const stream of updatedStreamsv1) {
-
-      const isIncoming = stream.beneficiaryAddress && stream.beneficiaryAddress === treasurer.toBase58()
-        ? true
-        : false;
-
-      if (isIncoming) {
-        resume['incomingAmount'] = resume['incomingAmount'] + 1;
-      } else {
-        resume['outgoingAmount'] = resume['outgoingAmount'] + 1;
-      }
-
-      // Get refreshed data
-      const freshStream = await ms.refreshStream(stream) as StreamInfo;
-      if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
-
-      const asset = getTokenByMintAddress(freshStream.associatedToken as string);
-      const rate = asset ? getTokenPriceBySymbol(asset.symbol) : 0;
-      if (isIncoming) {
-        resume['totalNet'] = resume['totalNet'] + ((freshStream.escrowVestedAmount || 0) * rate);
-      } else {
-        resume['totalNet'] = resume['totalNet'] + ((freshStream.escrowUnvestedAmount || 0) * rate);
-      }
-    }
-
-    resume['totalAmount'] = updatedStreamsv1.length;
-
-    // consoleOut('totalNet v1:', resume['totalNet'], 'blue');
-
-    for (const stream of updatedStreamsv2) {
-
-      const isIncoming = stream.beneficiary && stream.beneficiary === treasurer.toBase58()
-        ? true
-        : false;
-
-      if (isIncoming) {
-        resume['incomingAmount'] = resume['incomingAmount'] + 1;
-      } else {
-        resume['outgoingAmount'] = resume['outgoingAmount'] + 1;
-      }
-
-      // Get refreshed data
-      const freshStream = await msp.refreshStream(stream) as Stream;
-      if (!freshStream || freshStream.status !== STREAM_STATUS.Running) { continue; }
-
-      const asset = getTokenByMintAddress(freshStream.associatedToken as string);
-      const pricePerToken = asset ? getTokenPriceBySymbol(asset.symbol) : 0;
-      const rate = asset ? (pricePerToken ? pricePerToken : 1) : 1;
-      const decimals = asset ? asset.decimals : 9;
-      // const amount = isIncoming ? freshStream.fundsSentToBeneficiary : freshStream.fundsLeftInStream;
-      const amount = freshStream.withdrawableAmount;
-      const amountChange = parseFloat((amount / 10 ** decimals).toFixed(decimals)) * rate;
-
-      if (isIncoming) {
-        resume['totalNet'] += amountChange;
-      } else {
-        resume['totalNet'] -= amountChange;
-      }
-    }
-
-    resume['totalAmount'] += updatedStreamsv2.length;
-
-    // consoleOut('totalNet:', resume['totalNet'], 'blue');
-    // consoleOut('=========== Block ends ===========', '', 'orange');
-
-    // Update state
-    setLastStreamsSummary(streamsSummary);
-    setStreamsSummary(resume);
-    setLoadingStreamsSummary(false);
-
-  }, [
-    ms,
-    msp,
-    publicKey,
-    streamListv1,
-    streamListv2,
-    accountAddress,
-    streamsSummary,
-    loadingStreamsSummary,
-    setLoadingStreamsSummary,
-    getTokenPriceBySymbol,
-    getTokenByMintAddress,
-    setLastStreamsSummary,
-    setStreamsSummary,
-  ]);
-
-  // Live data calculation - Stream summary
+  // Live data calculation
   useEffect(() => {
 
-    if (!streamList || (!streamListv1 && !streamListv2)) { return; }
+    if (!publicKey || !streamList || (!streamListv1 && !streamListv2)) { return; }
 
     const timeout = setTimeout(() => {
       refreshStreamSummary();
-    }, 5000);
+    }, 3000);
 
     return () => {
       clearTimeout(timeout);
     }
 
   }, [
+    publicKey,
     streamList,
     streamListv1,
     streamListv2,
     refreshStreamSummary,
   ]);
 
+  // Read treasury data
   useEffect(() => {
     if (!publicKey || !ms || !msp || !activeStream) { return; }
 
@@ -1052,9 +1046,9 @@ export const Streams = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
           customLogger.logWarning('Pause stream transaction failed', { transcript: transactionLog });
@@ -1210,9 +1204,9 @@ export const Streams = () => {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${
-            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58(), false , splTokenList)
+            getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58(), false , splTokenList)
           }) to pay for network fees (${
-            getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58(), false , splTokenList)
+            getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58(), false , splTokenList)
           })`
         });
         customLogger.logWarning('Pause stream transaction failed', { transcript: transactionLog });
@@ -1506,9 +1500,9 @@ export const Streams = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
           customLogger.logWarning('Resume stream transaction failed', { transcript: transactionLog });
@@ -1664,9 +1658,9 @@ export const Streams = () => {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${
-            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
           }) to pay for network fees (${
-            getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
           })`
         });
         customLogger.logWarning('Resume stream transaction failed', { transcript: transactionLog });
@@ -2039,9 +2033,9 @@ export const Streams = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
           customLogger.logWarning('Transfer stream transaction failed', { transcript: transactionLog });
@@ -2295,8 +2289,8 @@ export const Streams = () => {
     setIsAddFundsModalVisibility(false);
   }, [oldSelectedToken, setSelectedToken]);
 
-  const [addFundsPayload, setAddFundsPayload] = useState<any>();
-  const onAcceptAddFunds = (data: any) => {
+  const [addFundsPayload, setAddFundsPayload] = useState<StreamTopupParams>();
+  const onAcceptAddFunds = (data: StreamTopupParams) => {
     closeAddFundsModal();
     consoleOut('AddFunds input:', data, 'blue');
     onExecuteAddFundsTransaction(data);
@@ -2308,7 +2302,7 @@ export const Streams = () => {
     refreshTokenBalance();
   };
 
-  const onExecuteAddFundsTransaction = async (addFundsData: any) => {
+  const onExecuteAddFundsTransaction = async (addFundsData: StreamTopupParams) => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
@@ -2327,12 +2321,14 @@ export const Streams = () => {
     }) => {
       if (!msp) { return false; }
       // Create a transaction
+      const autoWSol = addFundsData.associatedToken === NATIVE_SOL_MINT.toBase58() ? true : false;
       return await msp.fundStream(
         payload.payer,                                              // payer
         payload.contributor,                                        // contributor
         payload.treasury,                                           // treasury
         payload.stream,                                             // stream
         payload.amount,                                             // amount
+        autoWSol                                                    // autoWSol
       )
       .then(value => {
         consoleOut('fundStream returned transaction:', value);
@@ -2466,9 +2462,9 @@ export const Streams = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
           customLogger.logWarning('Add funds transaction failed', { transcript: transactionLog });
@@ -2593,9 +2589,9 @@ export const Streams = () => {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: `Not enough balance (${
-            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
           }) to pay for network fees (${
-            getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+            getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
           })`
         });
         customLogger.logWarning('Add funds transaction failed', { transcript: transactionLog });
@@ -2864,16 +2860,22 @@ export const Streams = () => {
 
   const getRateAmountDisplay = useCallback((item: Stream | StreamInfo): string => {
     let value = '';
-
     if (item) {
-      const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+      let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+
+      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
+        token = Object.assign({}, token, {
+          symbol: 'SOL'
+        }) as TokenInfo;
+      }
+
       if (item.version < 2) {
         value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
       } else {
         value += getFormattedNumberToLocale(formatAmount(toUiAmount(new BN(item.rateAmount), token?.decimals || 6), 2));
       }
       value += ' ';
-      value += getTokenSymbol(item.associatedToken as string);
+      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
     }
     return value;
   }, [getTokenByMintAddress]);
@@ -2882,14 +2884,21 @@ export const Streams = () => {
     let value = '';
 
     if (item && item.rateAmount === 0 && item.allocationAssigned > 0) {
-      const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+      let token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+
+      if (token && token.address === WRAPPED_SOL_MINT_ADDRESS) {
+        token = Object.assign({}, token, {
+          symbol: 'SOL'
+        }) as TokenInfo;
+      }
+
       if (item.version < 2) {
         value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
       } else {
         value += getFormattedNumberToLocale(formatAmount(toUiAmount(new BN(item.rateAmount), token?.decimals || 6), 2));
       }
       value += ' ';
-      value += getTokenSymbol(item.associatedToken as string);
+      value += token ? token.symbol : `[${shortenAddress(item.associatedToken as string)}]`;
     }
     return value;
   }, [getTokenByMintAddress]);
@@ -3240,9 +3249,9 @@ export const Streams = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
           customLogger.logWarning('Withdraw transaction failed', { transcript: transactionLog });
@@ -3353,9 +3362,9 @@ export const Streams = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
           customLogger.logWarning('Withdraw transaction failed', { transcript: transactionLog });
@@ -3368,7 +3377,8 @@ export const Streams = () => {
         return await msp.withdraw(
           beneficiary,
           stream,
-          amount
+          amount,
+          true                          // TODO: Define if the user can determine this
         )
         .then(value => {
           consoleOut('withdraw returned transaction:', value);
@@ -3634,9 +3644,9 @@ export const Streams = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
           customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
@@ -3741,9 +3751,9 @@ export const Streams = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+              getAmountWithSymbol(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
           customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
@@ -3757,7 +3767,8 @@ export const Streams = () => {
           publicKey as PublicKey,                           // payer
           publicKey as PublicKey,                           // destination
           streamPublicKey,                                  // stream
-          closeTreasuryData.closeTreasuryOption             // closeTreasury
+          closeTreasuryData.closeTreasuryOption,            // closeTreasury
+          true                                              // TODO: Define if the user can determine this
         )
         .then(value => {
           consoleOut('closeStream returned transaction:', value);
@@ -4047,17 +4058,13 @@ export const Streams = () => {
     return actionText;
   }
 
-  const getActivityAmountDisplay = (item: StreamActivity, streamVersion: number): number => {
-    let value = '';
-
+  const getActivityAmount = (item: StreamActivity, streamVersion: number): number => {
     const token = getTokenByMintAddress(item.mint as string);
     if (streamVersion < 2) {
-      value += formatAmount(item.amount, token?.decimals || 6);
+      return item.amount;
     } else {
-      value += formatAmount(toUiAmount(new BN(item.amount), token?.decimals || 6), token?.decimals || 6);
+      return toUiAmount(new BN(item.amount), token?.decimals || 6);
     }
-
-    return parseFloat(value);
   }
 
   const isScheduledOtp = (): boolean => {
@@ -4090,10 +4097,54 @@ export const Streams = () => {
   //   Rendering   //
   ///////////////////
 
-  const renderMoneyStreamsSummary = useCallback(() => {
-    return (
-      <>
+  const renderMoneyStreamsSummary = (
+    <>
         <div key="streams" className="transaction-list-row money-streams-summary no-pointer">
+          <div className="icon-cell">
+            {loadingStreams ? (
+              <div className="token-icon animate-border-loading">
+                <div className="streams-count simplelink" onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}>
+                  <span className="font-bold text-shadow"><SyncOutlined spin /></span>
+                </div>
+              </div>
+            ) : (
+              <div className={streamsSummary.totalNet !== 0 ? 'token-icon animate-border' : 'token-icon'}>
+                <div className="streams-count simplelink" onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    refreshStreamList(false);
+                  }}>
+                  <span className="font-size-75 font-bold text-shadow">{kFormatter(streamsSummary.totalAmount) || 0}</span>
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="description-cell">
+            <div className="title">{t('account-area.money-streams')}</div>
+            {streamsSummary.totalAmount === 0 ? (
+              <div className="subtitle">{t('account-area.no-money-streams')}</div>
+            ) : (
+              <div className="subtitle">{streamsSummary.incomingAmount} {t('streams.stream-stats-incoming')}, {streamsSummary.outgoingAmount} {t('streams.stream-stats-outgoing')}</div>
+            )}
+          </div>
+          <div className="rate-cell">
+            {streamsSummary.totalAmount === 0 ? (
+              <span className="rate-amount">--</span>
+            ) : (
+              <>
+                <div className="rate-amount">
+                  {toUsCurrency(Math.abs(streamsSummary.totalNet))}
+                </div>
+                <div className="interval">{t('streams.streaming-balance')}</div>
+              </>
+            )}
+          </div>
+        </div>
+        <div key="separator1" className="pinned-token-separator"></div>
+        {/* <div key="streams" className="transaction-list-row money-streams-summary no-pointer">
           <div className="icon-cell">
             {loadingStreams ? (
               <div className="token-icon animate-border-loading">
@@ -4148,10 +4199,9 @@ export const Streams = () => {
             )}
           </div>
         </div>
-        <div key="separator1" className="pinned-token-separator"></div>
+        <div key="separator1" className="pinned-token-separator"></div> */}
       </>
-    );
-  }, [loadingStreams, refreshStreamList, streamsSummary.incomingAmount, streamsSummary.outgoingAmount, streamsSummary.totalAmount, streamsSummary.totalNet, t]);
+  );
 
   const menu = (
     <Menu>
@@ -4202,7 +4252,10 @@ export const Streams = () => {
                           <div className="std-table-cell fixed-width-60">
                             <span className="align-middle">{
                               getAmountWithSymbol(
-                                getActivityAmountDisplay(item, streamVersion), item.mint, false, splTokenList
+                                getActivityAmount(item, streamVersion),
+                                item.mint,
+                                false,
+                                splTokenList
                               )}
                             </span>
                           </div>
@@ -4297,10 +4350,11 @@ export const Streams = () => {
                               </span>
                               <span className="info-data ml-1">
                                 {
-                                  getTokenAmountAndSymbolByTokenAddress(
+                                  getAmountWithSymbol(
                                     toUiAmount(new BN(stream.state === STREAM_STATE.Schedule ? stream.allocationAssigned : stream.escrowVestedAmount), token?.decimals || 6),
                                     stream.associatedToken as string,
-                                    false, splTokenList
+                                    false,
+                                    splTokenList
                                   )
                                 }
                               </span>
@@ -4360,25 +4414,23 @@ export const Streams = () => {
 
                   {/* Amount / Funds left (Total Unvested) & Started date */}
                   <Row className="mb-3">
-                    {stream && stream.escrowUnvestedAmount > 0 && (
-                      <Col span={12}>
-                        <div className="info-label text-truncate">{t('streams.stream-detail.label-funds-left-in-account')}</div>
-                        <div className="transaction-detail-row">
-                          <span className="info-icon">
-                            <IconBank className="mean-svg-icons" />
+                    <Col span={12}>
+                      <div className="info-label text-truncate">{t('streams.stream-detail.label-funds-left-in-account')}</div>
+                      <div className="transaction-detail-row">
+                        <span className="info-icon">
+                          <IconBank className="mean-svg-icons" />
+                        </span>
+                        {stream ? (
+                          <span className="info-data">
+                          {stream
+                            ? getAmountWithSymbol(stream.escrowUnvestedAmount, stream.associatedToken as string, false, splTokenList)
+                            : '--'}
                           </span>
-                          {stream ? (
-                            <span className="info-data">
-                            {stream
-                              ? getAmountWithSymbol(stream.escrowUnvestedAmount, stream.associatedToken as string, false, splTokenList)
-                              : '--'}
-                            </span>
-                          ) : (
-                            <span className="info-data">&nbsp;</span>
-                          )}
-                        </div>
-                      </Col>
-                    )}
+                        ) : (
+                          <span className="info-data">&nbsp;</span>
+                        )}
+                      </div>
+                    </Col>
                     {/* Started date */}
                     <Col span={12}>
                       <div className="info-label">{getStartDateLabel()}</div>
@@ -4394,7 +4446,7 @@ export const Streams = () => {
                   </Row>
 
                   {/* Allocation info */}
-                  {stream && !isScheduledOtp() && hasAllocation() && (
+                  {!isScheduledOtp() && hasAllocation() && (
                     <Row className="mb-3">
                       <Col span={12}>
                         <div className="info-label">
@@ -4419,13 +4471,13 @@ export const Streams = () => {
                       <Col span={12}>
                         <div className="info-label">{t('streams.stream-detail.label-status')}</div>
                         <div className="transaction-detail-row">
-                          <span className="info-icon">
+                          {/* <span className="info-icon">
                             {getStreamStatus(stream) === "Running" ? (
                               <IconSwitchRunning className="mean-svg-icons" />
                             ) : (
                               <IconSwitchStopped className="mean-svg-icons" />
                             )}
-                          </span>
+                          </span> */}
                           <span className="info-data">
                             {getStreamStatus(stream)}
                           </span>
@@ -4466,13 +4518,13 @@ export const Streams = () => {
                         <Col span={12}>
                           <div className="info-label">{t('streams.stream-detail.label-status')}</div>
                           <div className="transaction-detail-row">
-                            <span className="info-icon">
+                            {/* <span className="info-icon">
                               {getStreamStatus(stream) === "Running" ? (
                                 <IconSwitchRunning className="mean-svg-icons" />
                               ) : (
                                 <IconSwitchStopped className="mean-svg-icons" />
                               )}
-                            </span>
+                            </span> */}
                             <span className="info-data">
                               {getStreamStatus(stream)}
                             </span>
@@ -4606,10 +4658,11 @@ export const Streams = () => {
                               </span>
                               <span className="info-data ml-1">
                                 {
-                                  getTokenAmountAndSymbolByTokenAddress(
+                                  getAmountWithSymbol(
                                     toUiAmount(new BN(stream.status === STREAM_STATUS.Schedule ? stream.allocationAssigned : stream.withdrawableAmount), token?.decimals || 6),
                                     stream.associatedToken as string,
-                                    false, splTokenList
+                                    false,
+                                    splTokenList
                                   )
                                 }
                               </span>
@@ -4636,27 +4689,25 @@ export const Streams = () => {
 
                   {/* Amount / Funds left (Total Unvested) & Started date */}
                   <Row className="mb-3">
-                    {stream.fundsLeftInStream > 0 && (
-                      <Col span={12}>
-                        <div className="info-label text-truncate">{t('streams.stream-detail.label-funds-left-in-account')}</div>
-                        <div className="transaction-detail-row">
-                          <span className="info-icon">
-                            <IconBank className="mean-svg-icons" />
+                    <Col span={12}>
+                      <div className="info-label text-truncate">{t('streams.stream-detail.label-funds-left-in-account')}</div>
+                      <div className="transaction-detail-row">
+                        <span className="info-icon">
+                          <IconBank className="mean-svg-icons" />
+                        </span>
+                        {stream ? (
+                          <span className="info-data">
+                            {getAmountWithSymbol(
+                              toUiAmount(new BN(stream.fundsLeftInStream), selectedToken?.decimals || 6),
+                              stream.associatedToken as string,
+                              false, splTokenList
+                            )}
                           </span>
-                          {stream ? (
-                            <span className="info-data">
-                              {getAmountWithSymbol(
-                                toUiAmount(new BN(stream.fundsLeftInStream), selectedToken?.decimals || 6),
-                                stream.associatedToken as string,
-                                false, splTokenList
-                              )}
-                            </span>
-                          ) : (
-                            <span className="info-data">&nbsp;</span>
-                          )}
-                        </div>
-                      </Col>
-                    )}
+                        ) : (
+                          <span className="info-data">&nbsp;</span>
+                        )}
+                      </div>
+                    </Col>
                     {/* Started date */}
                     <Col span={12}>
                       <div className="info-label">{getStartDateLabel()}</div>
@@ -4697,13 +4748,13 @@ export const Streams = () => {
                       <Col span={12}>
                         <div className="info-label">{t('streams.stream-detail.label-status')}</div>
                         <div className="transaction-detail-row">
-                          <span className="info-icon">
+                          {/* <span className="info-icon">
                             {getStreamStatus(stream) === "Running" ? (
                               <IconSwitchRunning className="mean-svg-icons" />
                             ) : (
                               <IconSwitchStopped className="mean-svg-icons" />
                             )}
-                          </span>
+                          </span> */}
                           <span className="info-data">
                             {getStreamStatus(stream)}
                           </span>
@@ -4826,12 +4877,12 @@ export const Streams = () => {
                     <div className="mb-3">
                       <h2 className="mb-0">{getStreamDescription(stream)}</h2>
                       <div className="flex-row align-items-center">
-                        <span className="font-bold">Treasury - {getTreasuryName()}</span>
+                        <span className="font-bold">{getTreasuryName()}</span>
                         <span className={`badge small ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
                           {getTreasuryType() === "locked" ? 'Locked' : 'Open'}
                         </span>
                         <span className="icon-button-container ml-1">
-                          <Tooltip placement="bottom" title="Go to treasury">
+                          <Tooltip placement="bottom" title="Go to streaming account">
                             <Button
                               type="default"
                               shape="circle"
@@ -4889,10 +4940,11 @@ export const Streams = () => {
                             </span>
                             <span className="info-data ml-1">
                               {
-                                getTokenAmountAndSymbolByTokenAddress(
+                                getAmountWithSymbol(
                                   toUiAmount(new BN(stream.state === STREAM_STATE.Schedule ? stream.allocationAssigned : stream.escrowVestedAmount), token?.decimals || 6),
                                   stream.associatedToken as string,
-                                  false, splTokenList
+                                  false,
+                                  splTokenList
                                 )
                               }
                             </span>
@@ -5011,13 +5063,13 @@ export const Streams = () => {
                       <Col span={12}>
                         <div className="info-label">{t('streams.stream-detail.label-status')}</div>
                         <div className="transaction-detail-row">
-                          <span className="info-icon">
+                          {/* <span className="info-icon">
                             {getStreamStatus(stream) === "Running" ? (
                               <IconSwitchRunning className="mean-svg-icons" />
                             ) : (
                               <IconSwitchStopped className="mean-svg-icons" />
                             )}
-                          </span>
+                          </span> */}
                           <span className="info-data">
                             {getStreamStatus(stream)}
                           </span>
@@ -5040,15 +5092,11 @@ export const Streams = () => {
                             <ArrowUpOutlined className="mean-svg-icons outgoing" />
                           )}
                         </span>
-                        {stream ? (
-                          <span className="info-data large">
+                        <span className="info-data large">
                           {stream
                             ? getAmountWithSymbol(stream.escrowUnvestedAmount, stream.associatedToken as string, false, splTokenList)
                             : '--'}
-                          </span>
-                        ) : (
-                          <span className="info-data large">&nbsp;</span>
-                        )}
+                        </span>
                       </div>
                     </div>
                   )}
@@ -5168,12 +5216,12 @@ export const Streams = () => {
                     <div className="mb-3">
                       <h2 className="mb-0">{getStreamDescription(stream)}</h2>
                       <div className="flex-row align-items-center">
-                        <span className="font-bold">Treasury - {getTreasuryName()}</span>
+                        <span className="font-bold">{getTreasuryName()}</span>
                         <span className={`badge small ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
                           {getTreasuryType() === "locked" ? 'Locked' : 'Open'}
                         </span>
                         <span className="icon-button-container ml-1">
-                          <Tooltip placement="bottom" title="Go to treasury">
+                          <Tooltip placement="bottom" title="Go to streaming account">
                             <Button
                               type="default"
                               shape="circle"
@@ -5231,10 +5279,11 @@ export const Streams = () => {
                             </span>
                             <span className="info-data ml-1">
                               {
-                                getTokenAmountAndSymbolByTokenAddress(
+                                getAmountWithSymbol(
                                   toUiAmount(new BN(stream.status === STREAM_STATUS.Schedule ? stream.allocationAssigned : stream.withdrawableAmount), token?.decimals || 6),
                                   stream.associatedToken as string,
-                                  false, splTokenList
+                                  false,
+                                  splTokenList
                                 )
                               }
                             </span>
@@ -5323,13 +5372,13 @@ export const Streams = () => {
                       <Col span={12}>
                         <div className="info-label">{t('streams.stream-detail.label-status')}</div>
                         <div className="transaction-detail-row">
-                          <span className="info-icon">
+                          {/* <span className="info-icon">
                             {getStreamStatus(stream) === "Running" ? (
                               <IconSwitchRunning className="mean-svg-icons" />
                             ) : (
                               <IconSwitchStopped className="mean-svg-icons" />
                             )}
-                          </span>
+                          </span> */}
                           <span className="info-data">
                             {getStreamStatus(stream)}
                           </span>
@@ -5352,17 +5401,13 @@ export const Streams = () => {
                             <ArrowUpOutlined className="mean-svg-icons outgoing" />
                           )}
                         </span>
-                        {stream ? (
-                          <span className="info-data large">
-                            {getAmountWithSymbol(
-                              toUiAmount(new BN(stream.fundsLeftInStream), selectedToken?.decimals || 6),
-                              stream.associatedToken as string,
-                              false, splTokenList
-                            )}
-                          </span>
-                        ) : (
-                          <span className="info-data large">&nbsp;</span>
-                        )}
+                        <span className="info-data large">
+                          {getAmountWithSymbol(
+                            toUiAmount(new BN(stream.fundsLeftInStream), selectedToken?.decimals || 6),
+                            stream.associatedToken as string,
+                            false, splTokenList
+                          )}
+                        </span>
                       </div>
                     </div>
                   )}
@@ -5562,7 +5607,7 @@ export const Streams = () => {
         {/* Left / top panel*/}
         <div className="meanfi-two-panel-left">
           <div className="meanfi-panel-heading">
-            {location.pathname === '/accounts/streams' && (
+            {location.pathname === `${ACCOUNTS_ROUTE_BASE_PATH}/streams` && (
               <div className="back-button">
                 <span className="icon-button-container">
                   <Tooltip placement="bottom" title={t('assets.back-to-assets-cta')}>
@@ -5575,7 +5620,7 @@ export const Streams = () => {
                         setShouldLoadTokens(true);
                         refreshStreamList(true);
                         setTimeout(() => {
-                          navigate('/accounts');
+                          navigate(`${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress || publicKey?.toBase58()}`);
                         }, 200);
                       }}
                     />
@@ -5621,7 +5666,7 @@ export const Streams = () => {
             {/* item block */}
             <div className="item-block vertical-scroll">
               <Spin spinning={loadingStreams}>
-                {publicKey && renderMoneyStreamsSummary()}
+                {renderMoneyStreamsSummary}
                 {renderStreamList}
               </Spin>
             </div>
@@ -5806,6 +5851,7 @@ export const Streams = () => {
             transactionFees={transactionFees}
             withdrawTransactionFees={withdrawTransactionFees}
             streamDetail={streamDetail}
+            nativeBalance={nativeBalance}
             mspClient={
               streamDetail
                 ? streamDetail.version < 2
@@ -5831,10 +5877,10 @@ export const Streams = () => {
 
         {isSendAssetModalOpen && (
           <SendAssetModal
-            selectedToken={selectedToken as UserTokenAccount}
+            selectedToken={undefined}
             isVisible={isSendAssetModalOpen}
             handleClose={hideSendAssetModal}
-            selected={"one-time"}
+            selected={"recurring"}
           />
         )}
 
@@ -5854,9 +5900,10 @@ export const Streams = () => {
                 <Spin indicator={bigLoadingIcon} className="icon" />
                 <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
                 <h5 className="operation">{t('transactions.status.tx-add-funds-operation')} {getAmountWithSymbol(
-                    parseFloat(addFundsPayload ? addFundsPayload.amount : 0),
+                    parseFloat(addFundsPayload ? addFundsPayload.amount : '0'),
                     streamDetail?.associatedToken as string,
-                    false, splTokenList
+                    false,
+                    splTokenList
                   )}
                 </h5>
                 {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
@@ -5883,15 +5930,17 @@ export const Streams = () => {
                 {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                   <h4 className="mb-4">
                     {t('transactions.status.tx-start-failure', {
-                      accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                      accountBalance: getAmountWithSymbol(
                         nativeBalance,
                         NATIVE_SOL_MINT.toBase58(),
-                        false, splTokenList
+                        false,
+                        splTokenList
                       ),
-                      feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                      feeAmount: getAmountWithSymbol(
                         transactionFees.blockchainFee + transactionFees.mspFlatFee,
                         NATIVE_SOL_MINT.toBase58(),
-                        false, splTokenList
+                        false,
+                        splTokenList
                       )})
                     }
                   </h4>
@@ -5961,11 +6010,11 @@ export const Streams = () => {
                     <WarningOutlined style={{ fontSize: 48 }} className="icon" />
                     <h4 className="mb-4">
                       {t('transactions.status.tx-start-failure', {
-                        accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                        accountBalance: getAmountWithSymbol(
                           nativeBalance,
                           NATIVE_SOL_MINT.toBase58()
                         ),
-                        feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                        feeAmount: getAmountWithSymbol(
                           transactionFees.blockchainFee + transactionFees.mspFlatFee,
                           NATIVE_SOL_MINT.toBase58()
                         )})
@@ -6035,11 +6084,11 @@ export const Streams = () => {
                 {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                   <h4 className="mb-4">
                     {t('transactions.status.tx-start-failure', {
-                      accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                      accountBalance: getAmountWithSymbol(
                         nativeBalance,
                         NATIVE_SOL_MINT.toBase58()
                       ),
-                      feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                      feeAmount: getAmountWithSymbol(
                         transactionFees.blockchainFee + transactionFees.mspFlatFee,
                         NATIVE_SOL_MINT.toBase58()
                       )})
@@ -6105,11 +6154,11 @@ export const Streams = () => {
                 {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                   <h4 className="mb-4">
                     {t('transactions.status.tx-start-failure', {
-                      accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                      accountBalance: getAmountWithSymbol(
                         nativeBalance,
                         NATIVE_SOL_MINT.toBase58()
                       ),
-                      feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                      feeAmount: getAmountWithSymbol(
                         transactionFees.blockchainFee + transactionFees.mspFlatFee,
                         NATIVE_SOL_MINT.toBase58()
                       )})
@@ -6177,11 +6226,11 @@ export const Streams = () => {
                 {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                   <h4 className="mb-4">
                     {t('transactions.status.tx-start-failure', {
-                      accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                      accountBalance: getAmountWithSymbol(
                         nativeBalance,
                         NATIVE_SOL_MINT.toBase58()
                       ),
-                      feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                      feeAmount: getAmountWithSymbol(
                         transactionFees.blockchainFee + transactionFees.mspFlatFee,
                         NATIVE_SOL_MINT.toBase58()
                       )})

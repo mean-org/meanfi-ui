@@ -6,8 +6,8 @@ import {
 } from "@ant-design/icons";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnection, useConnectionConfig } from "../../contexts/connection";
-import { fetchAccountTokens, formatAmount, formatThousands, getAmountWithSymbol, getTokenBySymbol, getTxIxResume, isValidNumber, toTokenAmount } from "../../utils/utils";
-import { DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, SIMPLE_DATE_TIME_FORMAT } from "../../constants";
+import { cutNumber, fetchAccountTokens, formatAmount, formatThousands, getAmountWithSymbol, getTokenBySymbol, getTxIxResume, isValidNumber, toTokenAmount } from "../../utils/utils";
+import { DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED, SIMPLE_DATE_TIME_FORMAT } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
 import { EventType, OperationType, TransactionStatus } from "../../models/enums";
 import {
@@ -185,6 +185,8 @@ export const OneTimePayment = (props: {
             }
           });
 
+          intersectedList.unshift(userTokensCopy[0]);
+          balancesMap[userTokensCopy[0].address] = nativeBalance;
           intersectedList.sort((a, b) => {
             if ((balancesMap[a.address] || 0) < (balancesMap[b.address] || 0)) {
               return 1;
@@ -193,7 +195,7 @@ export const OneTimePayment = (props: {
             }
             return 0;
           });
-
+          
           setSelectedList(intersectedList);
           consoleOut('intersectedList:', intersectedList, 'orange');
 
@@ -227,6 +229,7 @@ export const OneTimePayment = (props: {
     userTokens,
     connection,
     splTokenList,
+    nativeBalance,
   ]);
 
   // Keep token balance updated
@@ -273,6 +276,18 @@ export const OneTimePayment = (props: {
   const getFeeAmount = useCallback(() => {
     return isScheduledPayment() ? otpFees.blockchainFee + otpFees.mspFlatFee : otpFees.blockchainFee;
   }, [isScheduledPayment, otpFees.blockchainFee, otpFees.mspFlatFee]);
+
+  const getMinSolBlanceRequired = useCallback(() => {
+    return getFeeAmount() > MIN_SOL_BALANCE_REQUIRED
+      ? getFeeAmount()
+      : MIN_SOL_BALANCE_REQUIRED;
+
+  }, [getFeeAmount]);
+
+  const getMaxAmount = useCallback(() => {
+    const amount = nativeBalance - getMinSolBlanceRequired();
+    return amount > 0 ? amount : 0;
+  }, [getMinSolBlanceRequired, nativeBalance]);
 
   const resetTransactionStatus = useCallback(() => {
 
@@ -590,9 +605,10 @@ export const OneTimePayment = (props: {
     return  connected &&
             selectedToken &&
             tokenBalance &&
-            fromCoinAmount &&
-            parseFloat(fromCoinAmount) > 0 &&
-            parseFloat(fromCoinAmount) <= tokenBalance
+            nativeBalance >= getMinSolBlanceRequired() &&
+            fromCoinAmount && parseFloat(fromCoinAmount) > 0 &&
+            ((selectedToken.address === NATIVE_SOL.address && parseFloat(fromCoinAmount) <= getMaxAmount()) ||
+             (selectedToken.address !== NATIVE_SOL.address && parseFloat(fromCoinAmount) <= tokenBalance))
       ? true
       : false;
   }
@@ -606,22 +622,23 @@ export const OneTimePayment = (props: {
     return !connected
       ? t('transactions.validation.not-connected')
       : !recipientAddress || isAddressOwnAccount()
-      ? t('transactions.validation.select-recipient')
-      : !selectedToken || !tokenBalance
-      ? t('transactions.validation.no-balance')
-      : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !parseFloat(fromCoinAmount)
-      ? t('transactions.validation.no-amount')
-      : parseFloat(fromCoinAmount) > tokenBalance
-      ? t('transactions.validation.amount-high')
-      : !paymentStartDate
-      ? t('transactions.validation.no-valid-date')
-      : !recipientNote
-      ? t('transactions.validation.memo-empty')
-      : !isVerifiedRecipient
-      ? t('transactions.validation.verified-recipient-unchecked')
-      : nativeBalance < getFeeAmount()
-      ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getFeeAmount(), 4) })
-      : t('transactions.validation.valid-approve');
+        ? t('transactions.validation.select-recipient')
+        : !selectedToken || !tokenBalance
+          ? t('transactions.validation.no-balance')
+          : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !parseFloat(fromCoinAmount)
+            ? t('transactions.validation.no-amount')
+            : ((selectedToken.address === NATIVE_SOL.address && parseFloat(fromCoinAmount) > getMaxAmount()) ||
+               (selectedToken.address !== NATIVE_SOL.address && parseFloat(fromCoinAmount) > tokenBalance))
+              ? t('transactions.validation.amount-high')
+              : !paymentStartDate
+                ? t('transactions.validation.no-valid-date')
+                : !recipientNote
+                  ? t('transactions.validation.memo-empty')
+                  : !isVerifiedRecipient
+                    ? t('transactions.validation.verified-recipient-unchecked')
+                    : nativeBalance < getMinSolBlanceRequired()
+                      ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getFeeAmount(), 4) })
+                      : t('transactions.validation.valid-approve');
   }
 
   // Main action
@@ -1007,22 +1024,11 @@ export const OneTimePayment = (props: {
     setFixedScheduleValue(value);
   }
 
-  const onGoToWrap = () => {
-    onCloseTokenSelector();
-    navigate('/wrap');
-  }
-
   const renderTokenList = (
     <>
       {(filteredTokenList && filteredTokenList.length > 0) && (
         filteredTokenList.map((t, index) => {
-
-          if (t.address === NATIVE_SOL.address) {
-            return null;
-          }
-
           const onClick = function () {
-
             tokenChanged(t);
             setSelectedToken(t);
 
@@ -1032,15 +1038,16 @@ export const OneTimePayment = (props: {
           };
 
           if (index < MAX_TOKEN_LIST_ITEMS) {
+            const balance = connected && userBalances && userBalances[t.address] > 0 ? userBalances[t.address] : 0;
             return (
               <TokenListItem
                 key={t.address}
                 name={t.name || 'Unknown'}
                 mintAddress={t.address}
                 token={t}
-                className={selectedToken && selectedToken.address === t.address ? "selected" : "simplelink"}
+                className={balance ? selectedToken && selectedToken.address === t.address ? "selected" : "simplelink" : "hidden"}
                 onClick={onClick}
-                balance={connected && userBalances && userBalances[t.address] > 0 ? userBalances[t.address] : 0}
+                balance={balance}
               />
             );
           } else {
@@ -1062,10 +1069,6 @@ export const OneTimePayment = (props: {
           onInputClear={onInputCleared}
           placeholder={t('token-selector.search-input-placeholder')}
           onInputChange={onTokenSearchInputChange} />
-      </div>
-      <div className="flex-row align-items-center fg-secondary-60 mb-2 px-1">
-        <span>{t('token-selector.looking-for-sol')}</span>&nbsp;
-        <span className="simplelink underline" onClick={onGoToWrap}>{t('token-selector.wrap-sol-first')}</span>
       </div>
       <div className="token-list">
         {filteredTokenList.length > 0 && renderTokenList}
@@ -1160,12 +1163,16 @@ export const OneTimePayment = (props: {
                     fullTokenInfo={selectedToken}
                   />
                 )}
-                {selectedToken && tokenBalance ? (
+                {selectedToken && tokenBalance && tokenBalance > getMinSolBlanceRequired() ? (
                   <div className="token-max simplelink" onClick={() =>
-                      setFromCoinAmount(
-                        tokenBalance.toFixed(selectedToken.decimals)
-                      )
-                    }>
+                    {
+                      if (selectedToken.address === NATIVE_SOL.address) {
+                        const amount = nativeBalance - getMinSolBlanceRequired();
+                        setFromCoinAmount(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
+                      } else {
+                        setFromCoinAmount(cutNumber(tokenBalance, selectedToken.decimals));
+                      }
+                    }}>
                     MAX
                   </div>
                 ) : null}
@@ -1206,6 +1213,9 @@ export const OneTimePayment = (props: {
               </span>
             </div>
           </div>
+          {selectedToken && selectedToken.address === NATIVE_SOL.address && (!tokenBalance || tokenBalance < MIN_SOL_BALANCE_REQUIRED) && (
+            <div className="form-field-error">{t('transactions.validation.minimum-balance-required')}</div>
+          )}
         </div>
 
         {/* Optional note */}
@@ -1290,19 +1300,21 @@ export const OneTimePayment = (props: {
           shape="round"
           size="large"
           onClick={onTransactionStart}
-          disabled={!isValidAddress(recipientAddress) ||
+          disabled={
+            !connected ||
             !isMemoValid() ||
+            !isValidAddress(recipientAddress) ||
             isAddressOwnAccount() ||
-            !paymentStartDate ||
             !areSendAmountSettingsValid() ||
-            !isVerifiedRecipient ||
-            nativeBalance < getFeeAmount()
+            !isVerifiedRecipient
           }>
           {isBusy && (
             <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
           )}
           {isBusy
-            ? t('transactions.status.cta-start-transfer-busy')
+            ? isScheduledPayment()
+              ? t('streams.create-new-stream-cta-busy')
+              : t('transactions.status.cta-start-transfer-busy')
             : getTransactionStartButtonLabel()
           }
         </Button>

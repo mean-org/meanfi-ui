@@ -14,6 +14,7 @@ import { SyncOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useWallet } from '../../contexts/wallet';
 import { Tooltip } from 'antd';
+import { IconLoading } from '../../Icons';
 
 export const TreasuriesSummary = (props: {
     address: string;
@@ -21,11 +22,12 @@ export const TreasuriesSummary = (props: {
     ms: MoneyStreaming | undefined;
     msp: MSP | undefined;
     selected: boolean;
+    enabled: boolean;
     onSelect: any;
     onNewValue: any;
 }) => {
 
-    const { address, connection, ms, msp, selected, onSelect, onNewValue } = props;
+    const { address, connection, ms, msp, selected, onSelect, onNewValue, enabled } = props;
     const { connected, publicKey } = useWallet();
     const {
         previousWalletConnectState,
@@ -38,6 +40,7 @@ export const TreasuriesSummary = (props: {
     const [loadingTreasuries, setLoadingTreasuries] = useState(false);
     const [treasuriesLoaded, setTreasuriesLoaded] = useState(false);
     const [treasuriesSummary, setTreasuriesSummary] = useState<UserTreasuriesSummary>(INITIAL_TREASURIES_SUMMARY);
+    const [prevAddress, setPrevAddress] = useState('');
 
     ////////////////////////////
     //   Events and actions   //
@@ -195,10 +198,22 @@ export const TreasuriesSummary = (props: {
         if (!address || treasuriesLoaded) { return; }
 
         consoleOut('Calling refreshTreasuries...', '', 'blue');
+        setPrevAddress(address);
         setTreasuriesLoaded(true);
         refreshTreasuries();
 
     }, [address, refreshTreasuries, treasuriesLoaded]);
+
+    useEffect(() => {
+
+        if (!address) { return; }
+
+        if (address !== prevAddress) {
+            refreshTreasuries();
+        }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [address, prevAddress]);
 
     // Treasury list refresh timeout
     useEffect(() => {
@@ -273,14 +288,23 @@ export const TreasuriesSummary = (props: {
             </div>
             <div className="description-cell">
                 <div className="title">{t('treasuries.summary-title')}</div>
-                {treasuriesSummary.totalAmount === 0 ? (
+                {loadingTreasuries ? (
+                    <div className="subtitle"><IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }}/></div>
+                ) : treasuriesSummary.totalAmount === 0 ? (
                     <div className="subtitle">No accounts</div>
                 ) : (
                     <div className="subtitle">{treasuriesSummary.totalAmount} {treasuriesSummary.totalAmount === 1 ? 'account' : 'accounts'}</div>
                 )}
             </div>
             <div className="rate-cell">
-                {treasuriesSummary.totalAmount === 0 ? (
+                {loadingTreasuries ? (
+                    <>
+                        <div className="rate-amount">
+                            <IconLoading className="mean-svg-icons" style={{ height: "15px", lineHeight: "15px" }}/>
+                        </div>
+                        <div className="interval">Balance TVL</div>
+                    </>
+                ) : treasuriesSummary.totalAmount === 0 ? (
                     <span className="rate-amount">--</span>
                 ) : (
                     <>
@@ -296,7 +320,7 @@ export const TreasuriesSummary = (props: {
 
     return (
         <>
-            {publicKey ? (
+            {publicKey && enabled ? (
                 <Link to="/treasuries" state={{ previousPath: pathname }}>
                     <Tooltip title="See your Streaming Accounts">
                         {renderContent}

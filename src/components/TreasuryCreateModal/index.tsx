@@ -1,27 +1,28 @@
 import React, { useCallback, useContext, useEffect } from 'react';
 import { useState } from 'react';
-import { Modal, Button, Spin, Select, Divider, Input } from 'antd';
+import { Modal, Button, Spin, Drawer } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { TREASURY_TYPE_OPTIONS } from '../../constants/treasury-type-options';
 import { AppStateContext } from '../../contexts/appstate';
 import { TreasuryCreateOptions, TreasuryTypeOption } from '../../models/treasuries';
 import { TransactionStatus } from '../../models/enums';
-import { consoleOut, getTransactionOperationDescription, isValidAddress } from '../../utils/ui';
+import { consoleOut, getTransactionOperationDescription, isValidAddress, toUsCurrency } from '../../utils/ui';
 import { isError } from '../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TransactionFees, TreasuryType } from '@mean-dao/money-streaming';
-import { formatAmount, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
+import { fetchAccountTokens, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
 import { Identicon } from '../Identicon';
-import { IconCheckedBox } from '../../Icons';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { TokenDisplay } from '../TokenDisplay';
-import { NATIVE_SOL } from '../../utils/tokens';
-import { openNotification } from '../Notifications';
-
 import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
+import { TextInput } from '../TextInput';
+import { useAccountsContext } from '../../contexts/accounts';
+import { useConnection } from '../../contexts/connection';
+import { useWallet } from '../../contexts/wallet';
+import { TokenListItem } from '../TokenListItem';
+import { MAX_TOKEN_LIST_ITEMS } from '../../constants';
 
-const { Option } = Select;
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const TreasuryCreateModal = (props: {
@@ -30,78 +31,113 @@ export const TreasuryCreateModal = (props: {
   isVisible: boolean;
   isBusy: boolean;
   nativeBalance: number;
-  userBalances: any;
   transactionFees: TransactionFees;
   selectedMultisig: MultisigInfo | undefined;
   multisigAccounts: MultisigInfo[];
-  associatedToken: string;
 }) => {
   const { t } = useTranslation('common');
   const {
     tokenList,
-    tokenBalance,
-    selectedToken,
-    effectiveRate,
+    userTokens,
+    splTokenList,
     loadingPrices,
     transactionStatus,
-    getTokenByMintAddress,
     getTokenPriceBySymbol,
     setTransactionStatus,
-    setSelectedToken,
-    setEffectiveRate,
     refreshPrices,
   } = useContext(AppStateContext);
+  const accounts = useAccountsContext();
+  const connection = useConnection();
+  const { connected, publicKey } = useWallet();
   const [treasuryName, setTreasuryName] = useState('');
   const { treasuryOption, setTreasuryOption } = useContext(AppStateContext);
   const [localSelectedMultisig, setLocalSelectedMultisig] = useState<MultisigInfo | undefined>(undefined);
   const [enableMultisigTreasuryOption, setEnableMultisigTreasuryOption] = useState(true);
-  const [customTokenInput, setCustomTokenInput] = useState("");
+  const [tokenFilter, setTokenFilter] = useState("");
+  const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
+  const [selectedList, setSelectedList] = useState<TokenInfo[]>([]);
+  const [userBalances, setUserBalances] = useState<any>();
+  const [workingToken, setWorkingToken] = useState<TokenInfo | undefined>(undefined);
+  const [workingTokenBalance, setWorkingTokenBalance] = useState<number>(0);
 
-  const toggleOverflowEllipsisMiddle = useCallback((state: boolean) => {
-    const ellipsisElements = document.querySelectorAll(".ant-select.token-selector-dropdown .ant-select-selector .ant-select-selection-item");
-    if (ellipsisElements && ellipsisElements.length) {
-      const element = ellipsisElements[0];
-      if (state) {
-        if (!element.classList.contains('overflow-ellipsis-middle')) {
-          element.classList.add('overflow-ellipsis-middle');
-        }
-      } else {
-        if (element.classList.contains('overflow-ellipsis-middle')) {
-          element.classList.remove('overflow-ellipsis-middle');
-        }
-      }
+  const getTokenPrice = useCallback((amount: number) => {
+    if (!workingToken) {
+      return 0;
+    }
+
+    return amount * getTokenPriceBySymbol(workingToken.symbol);
+  }, [workingToken, getTokenPriceBySymbol]);
+
+  const autoFocusInput = useCallback(() => {
+    const input = document.getElementById("token-search-streaming-account");
+    if (input) {
       setTimeout(() => {
-        triggerWindowResize();
-      }, 10);
+        input.focus();
+      }, 100);
     }
   }, []);
 
-  const setCustomToken = useCallback((address: string) => {
+  // Token selection
+  const [isTokenSelectorVisible, setIsTokenSelectorVisible] = useState(false);
 
-    if (address && isValidAddress(address)) {
-      const unkToken: TokenInfo = {
-        address: address,
-        name: 'Unknown',
-        chainId: 101,
-        decimals: 6,
-        symbol: shortenAddress(address),
-      };
-      setSelectedToken(unkToken);
-      consoleOut("token selected:", unkToken, 'blue');
-      setEffectiveRate(0);
-      toggleOverflowEllipsisMiddle(true);
-    } else {
-      openNotification({
-        title: t('notifications.error-title'),
-        description: t('transactions.validation.invalid-solana-address'),
-        type: "error"
-      });
+  const showTokenSelector = useCallback(() => {
+    setIsTokenSelectorVisible(true);
+    autoFocusInput();
+  }, [autoFocusInput]);
+
+  const onCloseTokenSelector = useCallback(() => {
+    setIsTokenSelectorVisible(false);
+    if (tokenFilter && !isValidAddress(tokenFilter)) {
+      setTokenFilter('');
     }
-  }, [
-    toggleOverflowEllipsisMiddle,
-    setEffectiveRate,
-    setSelectedToken,
-    t,
+  }, [tokenFilter]);
+
+  // Updates the token list everytime is filtered
+  const updateTokenListByFilter = useCallback((searchString: string) => {
+
+    if (!selectedList) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+
+      const filter = (t: any) => {
+        return (
+          t.symbol.toLowerCase().includes(searchString.toLowerCase()) ||
+          t.name.toLowerCase().includes(searchString.toLowerCase()) ||
+          t.address.toLowerCase().includes(searchString.toLowerCase())
+        );
+      };
+
+      const showFromList = !searchString 
+        ? selectedList
+        : selectedList.filter((t: any) => filter(t));
+
+      setFilteredTokenList(showFromList);
+
+    });
+
+    return () => { 
+      clearTimeout(timeout);
+    }
+
+  }, [selectedList]);
+
+  const onInputCleared = useCallback(() => {
+    setTokenFilter('');
+    updateTokenListByFilter('');
+  },[
+    updateTokenListByFilter
+  ]);
+
+  const onTokenSearchInputChange = useCallback((e: any) => {
+
+    const newValue = e.target.value;
+    setTokenFilter(newValue);
+    updateTokenListByFilter(newValue);
+
+  },[
+    updateTokenListByFilter
   ]);
 
   // When modal goes visible, preset the appropriate value for multisig treasury switch
@@ -119,27 +155,147 @@ export const TreasuryCreateModal = (props: {
     props.multisigAccounts,
   ]);
 
-  const triggerWindowResize = () => {
-    window.dispatchEvent(new Event('resize'));
-  }
+  // Automatically update all token balances and rebuild token list
+  useEffect(() => {
 
-  const onTokenChange = (e: any) => {
-    consoleOut("token selected:", e, 'blue');
-    const token = getTokenByMintAddress(e);
-    if (token) {
-      setSelectedToken(token as TokenInfo);
-      setEffectiveRate(getTokenPriceBySymbol(token.symbol));
-      toggleOverflowEllipsisMiddle(false);
+    if (!connection) {
+      console.error('No connection');
+      return;
     }
-  }
 
-  const onCustomTokenChange = (e: any) => {
-    setCustomTokenInput(e.target.value);
-  }
+    if (!publicKey || !userTokens || !tokenList || !accounts || !accounts.tokenAccounts) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+
+      const balancesMap: any = {};
+      const meanTokensCopy = new Array<TokenInfo>();
+      const intersectedList = new Array<TokenInfo>();
+      const userTokensCopy = JSON.parse(JSON.stringify(userTokens)) as TokenInfo[];
+
+      fetchAccountTokens(connection, publicKey)
+      .then(accTks => {
+        if (accTks) {
+
+          // Build meanTokensCopy including the MeanFi pinned tokens
+          userTokensCopy.forEach(item => {
+            meanTokensCopy.push(item);
+          });
+
+          // Now add all other items but excluding those in userTokens
+          splTokenList.forEach(item => {
+            if (!userTokens.includes(item)) {
+              meanTokensCopy.push(item);
+            }
+          });
+
+          // Create a list containing tokens for the user owned token accounts
+          accTks.forEach(item => {
+            balancesMap[item.parsedInfo.mint] = item.parsedInfo.tokenAmount.uiAmount || 0;
+            const isTokenAccountInTheList = intersectedList.some(t => t.address === item.parsedInfo.mint);
+            const tokenFromMeanTokensCopy = meanTokensCopy.find(t => t.address === item.parsedInfo.mint);
+            if (tokenFromMeanTokensCopy && !isTokenAccountInTheList) {
+              intersectedList.push(tokenFromMeanTokensCopy);
+            }
+          });
+
+          intersectedList.unshift(userTokensCopy[0]);
+          balancesMap[userTokensCopy[0].address] = props.nativeBalance;
+          intersectedList.sort((a, b) => {
+            if ((balancesMap[a.address] || 0) < (balancesMap[b.address] || 0)) {
+              return 1;
+            } else if ((balancesMap[a.address] || 0) > (balancesMap[b.address] || 0)) {
+              return -1;
+            }
+            return 0;
+          });
+          
+          setSelectedList(intersectedList);
+          consoleOut('intersectedList:', intersectedList, 'orange');
+
+        } else {
+          for (const t of tokenList) {
+            balancesMap[t.address] = 0;
+          }
+          // set the list to the userTokens list
+          setSelectedList(userTokensCopy);
+        }
+      })
+      .catch(error => {
+        console.error(error);
+        for (const t of userTokensCopy) {
+          balancesMap[t.address] = 0;
+        }
+        setSelectedList(userTokensCopy);
+      })
+      .finally(() => setUserBalances(balancesMap));
+
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [
+    accounts,
+    publicKey,
+    tokenList,
+    userTokens,
+    connection,
+    splTokenList,
+    props.nativeBalance
+  ]);
+
+  // Pick a token if none selected
+  useEffect(() => {
+
+    const timeout = setTimeout(() => {
+      if (userBalances && !workingToken) {
+        setWorkingToken(selectedList[0]);
+      }
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [selectedList, workingToken, userBalances]);
+
+  // Keep token balance updated
+  useEffect(() => {
+
+    if (!connection || !publicKey || !userBalances || !workingToken) {
+      setWorkingTokenBalance(0);
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      setWorkingTokenBalance(userBalances[workingToken.address]);
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [connection, publicKey, workingToken, userBalances]);
+
+  // Reset results when the filter is cleared
+  useEffect(() => {
+    if (tokenList && tokenList.length && filteredTokenList.length === 0 && !tokenFilter) {
+      updateTokenListByFilter(tokenFilter);
+    }
+  }, [
+    tokenList,
+    tokenFilter,
+    filteredTokenList,
+    updateTokenListByFilter
+  ]);
 
   const onAcceptModal = () => {
     const options: TreasuryCreateOptions = {
       treasuryName,
+      token: workingToken as TokenInfo,
       treasuryType: treasuryOption ? treasuryOption.type : TreasuryType.Open,
       multisigId: enableMultisigTreasuryOption && localSelectedMultisig ? localSelectedMultisig.id.toBase58() : ''
     };
@@ -173,65 +329,6 @@ export const TreasuryCreateModal = (props: {
     setTreasuryOption(option);
   }
 
-  // const onCloseTreasuryOptionChanged = (e: any) => {
-  //   setEnableMultisigTreasuryOption(e.target.value);
-  // }
-
-  const onMultisigChanged = useCallback((e: any) => {
-    
-    if (props.multisigAccounts && props.multisigAccounts.length > 0) {
-      consoleOut("multisig selected:", e, 'blue');
-      const ms = props.multisigAccounts.filter(v => v.id.toBase58() === e)[0];
-      setLocalSelectedMultisig(ms);
-    }
-
-  },[
-    props.multisigAccounts
-  ]);
-
-  const renderMultisigSelectItems = () => {
-    return (
-      <div className="flex-fixed-left">
-        <div className="left">
-          <span className="add-on">
-            {(props.multisigAccounts && props.multisigAccounts.length > 0) && (
-              <Select className={`token-selector-dropdown auto-height`} value={localSelectedMultisig ? localSelectedMultisig.id.toBase58() : undefined}
-                  style={{width:400, maxWidth:'none'}}
-                  onChange={onMultisigChanged} bordered={false} showArrow={false}>
-                {props.multisigAccounts.map((option: MultisigInfo) => {
-                  return (
-                    <Option key={option.id.toBase58()} value={option.id.toBase58()}>
-                      <div className="option-container">
-                        <div className={`transaction-list-row w-100`}>
-                          <div className="icon-cell">
-                            <Identicon address={option.id} style={{ width: "30", display: "inline-flex" }} />
-                          </div>
-                          <div className="description-cell">
-                            <div className="title text-truncate">{option.label}</div>
-                            <div className="subtitle text-truncate">{shortenAddress(option.id.toBase58(), 8)}</div>
-                          </div>
-                          <div className="rate-cell">
-                            <div className="rate-amount">
-                              {
-                                t('multisig.multisig-accounts.pending-transactions', {
-                                  txs: option.pendingTxsAmount
-                                })
-                              }
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </Option>
-                  );
-                })}
-              </Select>
-            )}
-          </span>
-        </div>
-      </div>
-    );
-  }
-
   const renderSelectedMultisig = () => {
     return (
       props.selectedMultisig && (
@@ -257,284 +354,323 @@ export const TreasuryCreateModal = (props: {
     )
   }
 
+  const renderTokenList = (
+    <>
+      {(filteredTokenList && filteredTokenList.length > 0) && (
+        filteredTokenList.map((t, index) => {
+          const onClick = function () {
+            setWorkingToken(t);
+            consoleOut("token selected:", t.symbol, 'blue');
+            onCloseTokenSelector();
+          };
+
+          if (index < MAX_TOKEN_LIST_ITEMS) {
+            const balance = connected && userBalances && userBalances[t.address] > 0 ? userBalances[t.address] : 0;
+            return (
+              <TokenListItem
+                key={t.address}
+                name={t.name || 'Unknown'}
+                mintAddress={t.address}
+                token={t}
+                className={balance ? workingToken && workingToken.address === t.address ? "selected" : "simplelink" : "hidden"}
+                onClick={onClick}
+                balance={balance}
+              />
+            );
+          } else {
+            return null;
+          }
+        })
+      )}
+    </>
+  );
+
+  const renderTokenSelectorInner = (
+    <div className="token-selector-wrapper">
+      <div className="token-search-wrapper">
+        <TextInput
+          id="token-search-streaming-account"
+          value={tokenFilter}
+          allowClear={true}
+          extraClass="mb-2"
+          onInputClear={onInputCleared}
+          placeholder={t('token-selector.search-input-placeholder')}
+          onInputChange={onTokenSearchInputChange} />
+      </div>
+      <div className="token-list">
+        {filteredTokenList.length > 0 && renderTokenList}
+        {(tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0) && (
+          <TokenListItem
+            key={tokenFilter}
+            name="Unknown"
+            mintAddress={tokenFilter}
+            className={workingToken && workingToken.address === tokenFilter ? "selected" : "simplelink"}
+            onClick={() => {
+              const uknwnToken: TokenInfo = {
+                address: tokenFilter,
+                name: 'Unknown',
+                chainId: 101,
+                decimals: 6,
+                symbol: '',
+              };
+              setWorkingToken(uknwnToken);
+              consoleOut("token selected:", uknwnToken, 'blue');
+              onCloseTokenSelector();
+            }}
+            balance={connected && userBalances && userBalances[tokenFilter] > 0 ? userBalances[tokenFilter] : 0}
+          />
+        )}
+      </div>
+    </div>
+  );
+
   return (
-    <Modal
-      className="mean-modal simple-modal"
-      title={<div className="modal-title">{t('treasuries.create-treasury.modal-title')}</div>}
-      maskClosable={false}
-      footer={null}
-      visible={props.isVisible}
-      onOk={onAcceptModal}
-      onCancel={onCloseModal}
-      afterClose={onAfterClose}
-      width={props.isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}>
+    <>
+      <Modal
+        className="mean-modal simple-modal"
+        title={<div className="modal-title">{t('treasuries.create-treasury.modal-title')}</div>}
+        maskClosable={false}
+        footer={null}
+        visible={props.isVisible}
+        onOk={onAcceptModal}
+        onCancel={onCloseModal}
+        afterClose={onAfterClose}
+        width={props.isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}>
 
-      <div className={!props.isBusy ? "panel1 show" : "panel1 hide"}>
+        <div className={!props.isBusy ? "panel1 show" : "panel1 hide"}>
 
-        {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
-          <>
-            {/* Treasury name */}
-            <div className="mb-3">
-              <div className="form-label">{t('treasuries.create-treasury.treasury-name-input-label')}</div>
-              <div className={`well ${props.isBusy ? 'disabled' : ''}`}>
-                <div className="flex-fixed-right">
-                  <div className="left">
-                    <input
-                      id="treasury-name-field"
-                      className="w-100 general-text-input"
-                      autoComplete="off"
-                      autoCorrect="off"
-                      type="text"
-                      maxLength={32}
-                      onChange={onInputValueChange}
-                      placeholder={t('treasuries.create-treasury.treasury-name-placeholder')}
-                      value={treasuryName}
-                    />
-                  </div>
-                </div>
-                <div className="form-field-hint">I.e. "My company payroll", "Seed round vesting", etc.</div>
-              </div>
-            </div>
-
-            <div className="form-label">{t('treasuries.create-treasury.treasury-token-label')}</div>
-            <div className={`well ${props.isBusy ? 'disabled' : ''}`}>
-              <div className="flex-fixed-left">
-                <div className="left">
-                  <span className="add-on">
-                    {(selectedToken && tokenList) && (
-                      <Select className="token-selector-dropdown" value={selectedToken.address}
-                          onChange={onTokenChange} bordered={false} showArrow={false}
-                          dropdownRender={menu => (
-                          <div>
-                            {menu}
-                            <Divider style={{ margin: '4px 0' }} />
-                            <div style={{ display: 'flex', flexWrap: 'nowrap', padding: 8 }}>
-                              <Input style={{ flex: 'auto' }} value={customTokenInput} onChange={onCustomTokenChange} />
-                              <div style={{ flex: '0 0 auto' }} className="flex-row align-items-center">
-                                <span className="flat-button icon-button ml-1" onClick={() => setCustomToken(customTokenInput)}><IconCheckedBox className="normal"/></span>
-                              </div>
-                            </div>
-                          </div>
-                        )}>
-                        {tokenList.map((option) => {
-                          if (option.address === NATIVE_SOL.address) {
-                            return null;
-                          }
-                          return (
-                            <Option key={option.address} value={option.address}>
-                              <div className="option-container">
-                                <TokenDisplay onClick={() => {}}
-                                  mintAddress={option.address}
-                                  name={option.name}
-                                  showCaretDown={true}
-                                />
-                                <div className="balance">
-                                  {props.userBalances && props.userBalances[option.address] > 0 && (
-                                    <span>{getTokenAmountAndSymbolByTokenAddress(props.userBalances[option.address], option.address, true)}</span>
-                                  )}
-                                </div>
-                              </div>
-                            </Option>
-                          );
-                        })}
-                      </Select>
-                    )}
-                  </span>
-                </div>
-              </div>
-              <div className="flex-fixed-right">
-                <div className="left inner-label">
-                  <span>{t('add-funds.label-right')}:</span>
-                  <span>
-                    {`${tokenBalance && selectedToken
-                        ? getTokenAmountAndSymbolByTokenAddress(
-                            tokenBalance,
-                            selectedToken.address,
-                            true
-                          )
-                        : "0"
-                    }`}
-                  </span>
-                </div>
-                <div className="right inner-label">
-                  <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
-                    ~${tokenBalance && effectiveRate
-                      ? formatAmount(tokenBalance * effectiveRate, 2)
-                      : "0.00"}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Treasury type selector */}
-            <div className="items-card-list vertical-scroll">
-              {TREASURY_TYPE_OPTIONS.map(option => {
-                return (
-                  <div key={`${option.translationId}`} className={`item-card ${option.type === treasuryOption?.type
-                    ? "selected"
-                    : option.disabled
-                      ? "disabled"
-                      : ""
-                  }`}
-                  onClick={() => {
-                    if (!option.disabled) {
-                      handleSelection(option);
-                    }
-                  }}>
-                    <div className="checkmark"><CheckOutlined /></div>
-                    <div className="item-meta">
-                      <div className="item-name">{t(`treasuries.create-treasury.treasury-type-options.${option.translationId}-name`)}</div>
-                      <div className="item-description">{t(`treasuries.create-treasury.treasury-type-options.${option.translationId}-description`)}</div>
+          {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
+            <>
+              {/* Treasury name */}
+              <div className="mb-3">
+                <div className="form-label">{t('treasuries.create-treasury.treasury-name-input-label')}</div>
+                <div className={`well ${props.isBusy ? 'disabled' : ''}`}>
+                  <div className="flex-fixed-right">
+                    <div className="left">
+                      <input
+                        id="treasury-name-field"
+                        className="w-100 general-text-input"
+                        autoComplete="off"
+                        autoCorrect="off"
+                        type="text"
+                        maxLength={32}
+                        onChange={onInputValueChange}
+                        placeholder={t('treasuries.create-treasury.treasury-name-placeholder')}
+                        value={treasuryName}
+                      />
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                  <div className="form-field-hint">I.e. "My company payroll", "Seed round vesting", etc.</div>
+                </div>
+              </div>
 
-            {/* Multisig Treasury checkbox */}
-            {
-              // (!props.selectedMultisig && props.multisigAccounts.length > 0) && (
-              //   <div className="mb-2 flex-row align-items-center">
-              //     <span className="form-label w-auto mb-0">{t('treasuries.create-treasury.multisig-treasury-switch-label')}</span>
-              //     {/* <a className="simplelink" href="https://docs.meanfi.com/" target="_blank" rel="noopener noreferrer">
-              //       <Button
-              //         className="info-icon-button"
-              //         type="default"
-              //         shape="circle">
-              //         <InfoCircleOutlined />
-              //       </Button>
-              //     </a> */}
-              //     <Radio.Group className="ml-2" onChange={onCloseTreasuryOptionChanged} value={enableMultisigTreasuryOption}>
-              //       <Radio value={true}>{t('general.yes')}</Radio>
-              //       <Radio value={false}>{t('general.no')}</Radio>
-              //     </Radio.Group>
-              //   </div>
-              // )
-            }
-
-            {(enableMultisigTreasuryOption && props.multisigAccounts.length > 0) && (
-              <>
-                <div className="mb-3">
-                  <div className="form-label">{t('treasuries.create-treasury.multisig-selector-label')}</div>
-                  <div className="well">
-                    {/* {renderMultisigSelectItems()} */}
-                    {renderSelectedMultisig()}
+              <div className="form-label">{t('treasuries.create-treasury.treasury-token-label')}</div>
+              <div className={`well ${props.isBusy ? 'disabled' : ''}`}>
+                <div className="flex-fixed-left">
+                  <div className="left">
+                    <span className="add-on simplelink">
+                      {workingToken && (
+                        <TokenDisplay onClick={showTokenSelector}
+                          mintAddress={workingToken.address}
+                          name={workingToken.name}
+                          showCaretDown={true}
+                          fullTokenInfo={workingToken}
+                        />
+                      )}
+                    </span>
                   </div>
                 </div>
-              </>
-            )}
+                <div className="flex-fixed-right">
+                  <div className="left inner-label">
+                    <span>{t('add-funds.label-right')}:</span>
+                    <span>
+                      {`${workingTokenBalance && workingToken
+                          ? getTokenAmountAndSymbolByTokenAddress(
+                              workingTokenBalance,
+                              workingToken.address,
+                              true
+                            )
+                          : "0"
+                      }`}
+                    </span>
+                  </div>
+                  <div className="right inner-label">
+                    <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
+                      ~{workingTokenBalance
+                        ? toUsCurrency(getTokenPrice(workingTokenBalance))
+                        : "$0.00"}
+                    </span>
+                  </div>
+                </div>
+              </div>
 
-          </>
-        ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
-          <>
-            <div className="transaction-progress">
-              <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-              <h4 className="font-bold">{t('treasuries.create-treasury.success-message')}</h4>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="transaction-progress p-0">
-              <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-              {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
-                <h4 className="mb-4">
-                  {t('transactions.status.tx-start-failure', {
-                    accountBalance: getTokenAmountAndSymbolByTokenAddress(
-                      props.nativeBalance,
-                      NATIVE_SOL_MINT.toBase58()
-                    ),
-                    feeAmount: getTokenAmountAndSymbolByTokenAddress(
-                      props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee,
-                      NATIVE_SOL_MINT.toBase58()
-                    )})
-                  }
-                </h4>
-              ) : (
-                <h4 className="font-bold mb-3">
-                  {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
-                </h4>
-              )}
-            </div>
-          </>
-        )}
-      </div>
+              {/* Treasury type selector */}
+              <div className="items-card-list vertical-scroll">
+                {TREASURY_TYPE_OPTIONS.map(option => {
+                  return (
+                    <div key={`${option.translationId}`} className={`item-card ${option.type === treasuryOption?.type
+                      ? "selected"
+                      : option.disabled
+                        ? "disabled"
+                        : ""
+                    }`}
+                    onClick={() => {
+                      if (!option.disabled) {
+                        handleSelection(option);
+                      }
+                    }}>
+                      <div className="checkmark"><CheckOutlined /></div>
+                      <div className="item-meta">
+                        <div className="item-name">{t(`treasuries.create-treasury.treasury-type-options.${option.translationId}-name`)}</div>
+                        <div className="item-description">{t(`treasuries.create-treasury.treasury-type-options.${option.translationId}-description`)}</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
 
-      <div className={props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? "panel2 show" : "panel2 hide"}>
-        {props.isBusy && transactionStatus !== TransactionStatus.Iddle && (
-        <div className="transaction-progress">
-          <Spin indicator={bigLoadingIcon} className="icon mt-0" />
-          <h4 className="font-bold mb-1">
-            {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
-          </h4>
-          {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
-            <div className="indication">{t('transactions.status.instructions')}</div>
-          )}
-        </div>
-        )}
-      </div>
-
-      {/**
-       * NOTE: CTAs block may be required or not when Tx status is Finished!
-       * I choose to set transactionStatus.currentOperation to TransactionStatus.TransactionFinished
-       * and auto-close the modal after 1s. If we chose to NOT auto-close the modal
-       * Uncommenting the commented lines below will do it!
-       */}
-      {!(props.isBusy && transactionStatus !== TransactionStatus.Iddle) && (
-        <div className="row two-col-ctas mt-3 transaction-progress p-0">
-          <div className={!isError(transactionStatus.currentOperation) ? "col-6" : "col-12"}>
-            <Button
-              block
-              type="text"
-              shape="round"
-              size="middle"
-              className={props.isBusy ? 'inactive' : ''}
-              onClick={() => isError(transactionStatus.currentOperation)
-                ? transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure
-                  ? onCloseModal()
-                  : onAcceptModal()
-                : onCloseModal()}>
-              {isError(transactionStatus.currentOperation)
-                ? transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure
-                  ? t('general.cta-close')
-                  : t('general.retry')
-                : t('general.cta-close')
+              {/* Multisig Treasury checkbox */}
+              {
+                // (!props.selectedMultisig && props.multisigAccounts.length > 0) && (
+                //   <div className="mb-2 flex-row align-items-center">
+                //     <span className="form-label w-auto mb-0">{t('treasuries.create-treasury.multisig-treasury-switch-label')}</span>
+                //     {/* <a className="simplelink" href="https://docs.meanfi.com/" target="_blank" rel="noopener noreferrer">
+                //       <Button
+                //         className="info-icon-button"
+                //         type="default"
+                //         shape="circle">
+                //         <InfoCircleOutlined />
+                //       </Button>
+                //     </a> */}
+                //     <Radio.Group className="ml-2" onChange={onCloseTreasuryOptionChanged} value={enableMultisigTreasuryOption}>
+                //       <Radio value={true}>{t('general.yes')}</Radio>
+                //       <Radio value={false}>{t('general.no')}</Radio>
+                //     </Radio.Group>
+                //   </div>
+                // )
               }
-            </Button>
-          </div>
-          {!isError(transactionStatus.currentOperation) && (
-            <div className="col-6">
-              <Button
-                className={props.isBusy ? 'inactive' : ''}
-                block
-                type="primary"
-                shape="round"
-                size="middle"
-                disabled={!treasuryName}
-                onClick={() => {
-                  if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
-                    onAcceptModal();
-                  // } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
-                  //   onCloseModal();
-                  } else {
-                    refreshPage();
-                  }
-                }}>
-                {/* {props.isBusy && (
-                  <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
-                )} */}
-                {props.isBusy
-                  ? t('treasuries.create-treasury.main-cta-busy')
-                  : transactionStatus.currentOperation === TransactionStatus.Iddle
-                    ? enableMultisigTreasuryOption && props.multisigAccounts.length > 0
-                      ? t('treasuries.create-treasury.create-multisig-cta')
-                      : t('treasuries.create-treasury.main-cta')
-                    : t('general.refresh')
-                }
-              </Button>
-            </div>
+
+              {(enableMultisigTreasuryOption && props.multisigAccounts.length > 0) && (
+                <>
+                  <div className="mb-3">
+                    <div className="form-label">{t('treasuries.create-treasury.multisig-selector-label')}</div>
+                    <div className="well">
+                      {/* {renderMultisigSelectItems()} */}
+                      {renderSelectedMultisig()}
+                    </div>
+                  </div>
+                </>
+              )}
+
+            </>
+          ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
+            <>
+              <div className="transaction-progress">
+                <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+                <h4 className="font-bold">{t('treasuries.create-treasury.success-message')}</h4>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="transaction-progress p-0">
+                <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+                {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
+                  <h4 className="mb-4">
+                    {t('transactions.status.tx-start-failure', {
+                      accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                        props.nativeBalance,
+                        NATIVE_SOL_MINT.toBase58()
+                      ),
+                      feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                        props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee,
+                        NATIVE_SOL_MINT.toBase58()
+                      )})
+                    }
+                  </h4>
+                ) : (
+                  <h4 className="font-bold mb-3">
+                    {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
+                  </h4>
+                )}
+              </div>
+            </>
           )}
         </div>
-      )}
-    </Modal>
+
+        <div className={props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? "panel2 show" : "panel2 hide"}>
+          {props.isBusy && transactionStatus !== TransactionStatus.Iddle && (
+          <div className="transaction-progress">
+            <Spin indicator={bigLoadingIcon} className="icon mt-0" />
+            <h4 className="font-bold mb-1">
+              {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
+            </h4>
+            {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
+              <div className="indication">{t('transactions.status.instructions')}</div>
+            )}
+          </div>
+          )}
+        </div>
+
+        {!(props.isBusy && transactionStatus !== TransactionStatus.Iddle) && (
+          <div className="row two-col-ctas mt-3 transaction-progress p-0">
+            {isError(transactionStatus.currentOperation) ? (
+              <div className="col-12">
+                <Button
+                  block
+                  type="text"
+                  shape="round"
+                  size="middle"
+                  className={props.isBusy ? 'inactive' : ''}
+                  onClick={onAcceptModal}>
+                  {t('general.retry')}
+                </Button>
+              </div>
+            ) : (
+              <div className="col-12">
+                <Button
+                  className={props.isBusy ? 'inactive' : ''}
+                  block
+                  type="primary"
+                  shape="round"
+                  size="middle"
+                  disabled={!treasuryName}
+                  onClick={() => {
+                    if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+                      onAcceptModal();
+                    // } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
+                    //   onCloseModal();
+                    } else {
+                      refreshPage();
+                    }
+                  }}>
+                  {/* {props.isBusy && (
+                    <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
+                  )} */}
+                  {props.isBusy
+                    ? t('treasuries.create-treasury.main-cta-busy')
+                    : transactionStatus.currentOperation === TransactionStatus.Iddle
+                      ? enableMultisigTreasuryOption && props.multisigAccounts.length > 0
+                        ? t('treasuries.create-treasury.create-multisig-cta')
+                        : t('treasuries.create-treasury.main-cta')
+                      : t('general.refresh')
+                  }
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+
+        <Drawer
+          title={t('token-selector.modal-title')}
+          placement="bottom"
+          closable={true}
+          onClose={onCloseTokenSelector}
+          visible={isTokenSelectorVisible}
+          getContainer={false}
+          style={{ position: 'absolute' }}>
+          {renderTokenSelectorInner}
+        </Drawer>
+      </Modal>
+    </>
   );
 };

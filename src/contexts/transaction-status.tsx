@@ -280,8 +280,6 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
     getTxStatus
   ]);
 
-  // New - Experimental queue/cache
-
   const rebuildHistoryFromCache = useCallback(() => {
     const history = Array.from(txStatusCache.values());
     setConfirmationHistory(history.reverse());
@@ -294,27 +292,13 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
   ) => {
     if (!connection) { return; }
 
-    // let lastResult: TransactionConfirmationStatus | undefined = undefined;
-
     const fetchStatus = async () => {
       try {
-        const result = await connection.confirmTransaction(signature, targetFinality)
+        const result = await connection.confirmTransaction(signature, targetFinality);
         if (result && result.value && !result.value.err) {
           setLastSentTxStatus(targetFinality);
           return targetFinality;
         }
-
-        // const result = await fetchTransactionStatus(connection, signature);
-
-        // Success with no data, retry
-        // if (!result || (result && !result.info)) {
-        //   return undefined;
-        // }
-
-        // if (result && result.info && !result.info.err) {
-        //   setLastSentTxStatus(result.info.confirmationStatus);
-        //   return result.info.confirmationStatus;
-        // }
         return undefined;
       } catch (error) {
         console.error(error);
@@ -323,15 +307,6 @@ const TxConfirmationProvider: React.FC = ({ children }) => {
     }
 
     return await fetchStatus();
-
-    // while (lastResult !== targetFinality && ((new Date().getTime()) - timestampAdded) < TRANSACTION_STATUS_RETRY_TIMEOUT) {
-    //   lastResult = await fetchStatus();
-    //   if (lastResult !== targetFinality) {
-    //     await delay(TRANSACTION_STATUS_RETRY);
-    //   }
-    // }
-
-    // return lastResult;
 
   }, [connection]);
 
