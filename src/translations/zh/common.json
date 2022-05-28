@@ -779,11 +779,12 @@
 		"add-funds": {
 			"amount-label": "Amount",
 			"modal-title": "Add funds",
-			"treasury-money-stream-description": "As this stream was funded from a treasury, the funds being added will be allocated from the Treasury's available balance.",
-			"treasury-money-stream-title": "Treasury Funded Money Stream"
+			"treasury-money-stream-description": "As this stream was funded from a streaming account, the funds being added will be allocated from the streaming account's available balance.",
+			"treasury-money-stream-title": "Streaming Account Money Stream"
 		},
 		"back-to-my-streams-cta": "返回资金流",
 		"create-new-stream-cta": "新建传输",
+		"create-new-stream-cta-busy": "Creating stream",
 		"edit-stream": {
 			"edit-stream-tooltip": "Edit money stream",
 			"frequency-input-hint": "How often will this amount be sent?",
@@ -796,16 +797,16 @@
 			"name-input-placeholder": "Type a name for your stream",
 			"send-amount-input-label": "Amount to Send"
 		},
-		"locked-stream-message": "You cannot close or top up a stream from a locked treasury",
+		"locked-stream-message": "You cannot close or top up a stream from a locked streaming account",
 		"locked-stream-modal-title": "Locked Money Stream",
 		"locked-stream-tooltip": "This Stream is Locked",
 		"lookup-stream-cta-tooltip": "查找流",
-		"pause-stream-confirmation": "暂停资金流将停止资金从国库（{{treasury}}）流向受益人（{{受益人}}）。",
+		"pause-stream-confirmation": "Pausing the stream will stop streaming money from the streaming account ({{treasury}}) to the beneficiary ({{beneficiary}}).",
 		"pause-stream-cta": "暂停",
 		"pause-stream-modal-title": "暂停流",
 		"pause-stream-tooltip": "Pause Stream",
 		"refresh-tooltip": "单击以刷新流",
-		"resume-stream-confirmation": "恢复资金从国库（{{treasury}}）流向受益人（{{受益人}}}）。",
+		"resume-stream-confirmation": "Resume money streaming from the streaming account ({{treasury}}) to the beneficiary ({{beneficiary}}).",
 		"resume-stream-cta": "恢复",
 		"resume-stream-modal-title": "Resume stream",
 		"resume-stream-tooltip": "Resume Stream",
@@ -928,11 +929,11 @@
 			"placeholder": "添加注释"
 		},
 		"memo2": {
-			"label": "备忘录/主题",
+			"label": "Stream name",
 			"placeholder": "这笔钱是干什么的？"
 		},
 		"rate-and-frequency": {
-			"amount-label": "数量",
+			"amount-label": "Payment Rate",
 			"payment-rates": {
 				"per-day": "每天",
 				"per-hour": "每小时",
@@ -953,7 +954,7 @@
 		"resume": "总结",
 		"send-amount": {
 			"label": "发送",
-			"label-amount": "添加资金",
+			"label-amount": "Amount to stream",
 			"label-right": "余额"
 		},
 		"send-date": {
@@ -1018,7 +1019,7 @@
 		},
 		"transaction-info": {
 			"add-funds-payroll-advice": "您必须添加资金才能启动工资单",
-			"add-funds-repeating-payment-advice": "您必须添加资金才能开始重复付款",
+			"add-funds-repeating-payment-advice": "How many {{tokenSymbol}} tokens do you want to send at\n{{rateInterval}}?",
 			"beneficiary-receives": "受益人收到",
 			"exchange-on": "在..上兑换",
 			"hla-transaction-fee": "聚合器费用",
@@ -1044,6 +1045,7 @@
 			"cannot-use-own-account-as-treasury": "无法将您的帐户用作国库id",
 			"cliff-release-no-empty": "",
 			"exchange-unavailable": "兑换不可用",
+			"minimum-balance-required": "We recommend having at least 0.05 SOL for any transaction",
 			"insufficient-amount-needed": "至少需要{{amount}}{{symbol}}才能交换",
 			"insufficient-balance-needed": "至少需要{{余额}}SOL",
 			"invalid-account": "Cannot use a Multisig address as a destination account",
@@ -1096,12 +1098,14 @@
 	"transfers": {
 		"screen-subtitle": "更快地向世界上任何人汇款",
 		"screen-title": "传送",
-		"verified-recipient-disclaimer": "I'm sure the recipient address doesn't belong to an exchange."
+		"verified-recipient-disclaimer": "I'm sure the recipient address doesn't belong to an exchange.",
+		"send-asset-modal-title": "Send Asset",
+		"create-money-stream-modal-title": "Create money stream"
 	},
 	"treasuries": {
 		"add-funds": {
 			"allocation-amount-label": "How Much Do You Want to Allocate?",
-			"allocation-heading": "To top up an existing stream, the funds being added will be allocated from the Treasury's available balance.",
+			"allocation-heading": "To top up an existing stream, the funds being added will be allocated from the streaming account's available balance.",
 			"allocation-label": "您想如何分配这些资金？",
 			"allocation-option-evenly": "在所有资金流中平均分配",
 			"allocation-option-none": "不分配（保留储备金）",
@@ -1140,24 +1144,24 @@
 				"weeks": "weeks",
 				"years": "years"
 			},
-			"main-cta": "创造",
-			"main-cta-busy": "正在创建国库",
-			"modal-title": "创建国库",
+			"main-cta": "Create Streaming Account",
+			"main-cta-busy": "Creating account",
+			"modal-title": "Create Streaming Account",
 			"multisig-selector-label": "福多重签名帐户",
-			"multisig-treasury-created-info": "To complete the treasury setup, the other Multisig signers need to approve it.",
-			"multisig-treasury-created-instructions": "Please ask the other users to sign this treasury creation transaction.",
+			"multisig-treasury-created-info": "To complete the Streaming Account setup, the other Multisig signers need to approve it.",
+			"multisig-treasury-created-instructions": "Streaming account {{treasuryName}} was created successfully. Please ask the other users to sign this account creation transaction.",
 			"multisig-treasury-switch-label": "这是一个多重签名账户的国库吗？",
-			"success-message": "您的新国库已成功创建。",
+			"success-message": "Your new streaming account was created successfully.",
 			"success-multisig-streaming-account-message": "Your new streaming account was created successfully.",
-			"treasury-name-input-empty": "输入国库名称",
-			"treasury-name-input-label": "国库名称",
-			"treasury-name-placeholder": "为您的国库键入名称",
+			"treasury-name-input-empty": "Enter Account name",
+			"treasury-name-input-label": "Account name",
+			"treasury-name-placeholder": "Type a name for your streaming account",
 			"treasury-token-label": "Token to be streamed",
 			"treasury-type-options": {
-				"treasury-type-locked-description": "“有了锁定的国库，您可以创建类似于保留分配的行权合同的流，就像投资者需要的流。它们通常有固定的结束日期。”",
-				"treasury-type-locked-name": "锁定资金流国库",
-				"treasury-type-open-description": "“有了开放的国库，您可以创建无限期运行的资金流。当国库耗尽资金时，所有资金流都会停止，直到资金得到补充。”",
-				"treasury-type-open-name": "打开资金流国库"
+				"treasury-type-locked-description": "With a locked streaming account you can create streams that act like a vesting contract for reserved allocations, like the ones needed for investors. They usually have a fixed end date.",
+				"treasury-type-locked-name": "Locked money streaming account",
+				"treasury-type-open-description": "With an open streaming account, you can create money streams that run indefinitely. When the account runs out of money all streams stop, until it gets replenished.",
+				"treasury-type-open-name": "Open money streaming account"
 			}
 		},
 		"lookup-treasury-cta-tooltip": "查找国库",
@@ -1187,7 +1191,7 @@
 			"refreshing-account-balance": "Refreshing account balance",
 			"treasury-address-label": "地址",
 			"treasury-name-label": "国库名称",
-			"unallocated-treasury-balance": "Unallocated balance"
+			"unallocated-treasury-balance": "Available streaming balance"
 		},
 		"treasury-detail-heading": "国库详细信息",
 		"treasury-list": {
@@ -1219,8 +1223,8 @@
 				"panel3-to-address": "To Address:",
 				"panel3-warning-message": "IMPORTANT: This is a locked money stream. You cannot cancel, pause or change its details once it is started. Verify all information before proceeding."
 			},
-			"add-stream-modal-title": "将流添加到国库中",
-			"allocate-funds-label": "分配资金",
+			"add-stream-modal-title": "Add stream to the account",
+			"allocate-funds-label": "Amount to stream",
 			"allocation-reserved-label": "此分配已完全保留",
 			"available-unallocated-balance-label": "可用未分配余额",
 			"busy-pausing": "正在停止流",
@@ -1237,7 +1241,7 @@
 			"fee-payed-by-treasurer": "我想为这个流而不是受益人支付费用",
 			"loading-streams": "正在加载流",
 			"message-warning": "The list of recipients you submitted included your own wallet address. This is not possible and this address has been removed from the imported list.",
-			"minimum-allocation-advice": "你必须为这个资金流设定一个最低分配，直到国库的未分配余额为止。",
+			"minimum-allocation-advice": "How many {{tokenSymbol}} tokens do you want to send at {{rateInterval}}? You are able to set an amount up to the unallocated balance in this streaming account.",
 			"multiple-address-list": "Multiple address list",
 			"multiple-address-question-mark-tooltip": "Please provide a csv text file with one address per line in the following format: \n MEMO or STREAM NAME, WALLET ADDRESS. \n\n Here is an example of how it should look: \n Epoch 1, FrdFf3EqcGuytTweLvoELBt29WrAGVYjrh4585A2bTAZ \n\n Before you submit the file, please make sure the recipient addresses are correct and do not belong to an exchange.",
 			"no-streams": "此国库没有活动流",

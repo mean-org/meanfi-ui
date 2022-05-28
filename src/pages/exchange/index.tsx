@@ -12,6 +12,8 @@ import { useTranslation } from 'react-i18next';
 import { IconExchange } from '../../Icons';
 import { JupiterExchange, RecurringExchange, } from '../../views';
 import { TokenInfo } from '@solana/spl-token-registry';
+import { WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
+import { MEAN_TOKEN_LIST } from '../../constants/token-list';
 
 type SwapOption = "one-time" | "recurring";
 
@@ -21,8 +23,10 @@ export const SwapView = () => {
   const { t } = useTranslation("common");
   const { publicKey, wallet } = useWallet();
   const {
+    splTokenList,
     recurringBuys,
     setRecurringBuys,
+    getTokenByMintAddress
   } = useContext(AppStateContext);
   const [loadingRecurringBuys, setLoadingRecurringBuys] = useState(false);
   const [queryFromMint, setQueryFromMint] = useState<string | null>(null);
@@ -117,27 +121,35 @@ export const SwapView = () => {
       const symbol = params.get('from');
       from = symbol
         ? symbol === 'SOL'
-          ? getTokenBySymbol('wSOL')
-          : getTokenBySymbol(symbol)
+          ? getTokenByMintAddress(WRAPPED_SOL_MINT_ADDRESS)
+          : getTokenBySymbol(symbol, splTokenList)
         : undefined;
-      if (from) {
-        setQueryFromMint(from.address);
-      }
+    } else {
+        from = MEAN_TOKEN_LIST.find(t => t.chainId === 101 && t.symbol === 'USDC');
     }
+
+    if (from) {
+      setQueryFromMint(from.address);
+    }
+
     // Get to as well
     if (params.has('to')) {
       const symbol = params.get('to');
       to = symbol ? getTokenBySymbol(symbol) : undefined;
-      if (to) {
-        setQueryToMint(to.address);
-      }
+    } else {
+      to = MEAN_TOKEN_LIST.find(t => t.chainId === 101 && t.symbol === 'MEAN');
     }
+
+    if (to) {
+      setQueryToMint(to.address);
+    }
+
     if (location.search.length) {
       consoleOut('params:', params.toString());
       consoleOut('queryFromMint:', from ? from.address : '-', 'blue');
       consoleOut('queryToMint:', to ? to.address : '-', 'blue');
     }
-  }, [location]);
+  }, [getTokenByMintAddress, location, splTokenList]);
 
   //////////////////////
   //  Event handling  //

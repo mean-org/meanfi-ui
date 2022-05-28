@@ -13,7 +13,7 @@ import common_fa from "./translations/fa/common.json";
 import common_fr from "./translations/fr/common.json";
 import common_pt from "./translations/pt/common.json";
 import common_tr from "./translations/tr/common.json";
-// import common_zh from "./translations/zh/common.json";
+import common_zh from "./translations/zh/common.json";
 import common_vi from "./translations/vi/common.json";
 import common_ko from "./translations/ko/common.json";
 // import common_ru from "./translations/ru/common.json";
@@ -49,9 +49,9 @@ i18next.use(LanguageDetector).init({
     tr: {
       common: common_tr
     },
-    // zh: {
-    //   common: common_zh
-    // },
+    zh: {
+      common: common_zh
+    },
     vi: {
       common: common_vi
     },

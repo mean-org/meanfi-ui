@@ -305,18 +305,6 @@ export const getLockPeriodOptionLabel = (val: PaymentRateType, trans?: any): str
     return result;
 }
 
-export const getAmountWithTokenSymbol = (
-    amount: any,
-    token: TokenInfo,
-    decimals = 2,
-    abbr = false
-): string => {
-    if (!token) { return '--'; }
-    const converted = amount ? amount.toString() : '0';
-    const parsed = parseFloat(converted);
-    return `${formatAmount(parsed, decimals, abbr)} ${token.symbol}`;
-}
-
 export const getTimesheetRequirementOptionLabel = (val: TimesheetRequirementOption, trans?: any): string => {
     let result = '';
     switch (val) {

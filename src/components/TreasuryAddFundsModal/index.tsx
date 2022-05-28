@@ -37,6 +37,7 @@ import { isError } from '../../utils/transactions';
 import { AllocationType, Stream, STREAM_STATUS, Treasury, TreasuryType } from '@mean-dao/msp';
 import BN from 'bn.js';
 import { openNotification } from '../Notifications';
+import { WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
 
 const { Option } = Select;
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -468,6 +469,13 @@ export const TreasuryAddFundsModal = (props: {
   //   return '';
   // }, []);
 
+  const selectFromTokenBalance = useCallback(() => {
+    if (!selectedToken) { return props.nativeBalance; }
+    return selectedToken.address === WRAPPED_SOL_MINT_ADDRESS
+      ? props.nativeBalance
+      : tokenBalance
+  }, [props.nativeBalance, selectedToken, tokenBalance]);
+
   /////////////////////
   // Data management //
   /////////////////////
@@ -482,13 +490,11 @@ export const TreasuryAddFundsModal = (props: {
         const ub = new BN(unallocated);
         consoleOut('Treasury unallocated balance:', ub.toNumber(), 'blue');
         setAvailableBalance(ub);
-        // setSelectedStreamForAllocation(highLightableStreamId);
       } else {
         // Take source balance from the user's wallet
-        const balance = makeInteger(tokenBalance, decimals);
+        const balance = makeInteger(selectFromTokenBalance(), decimals);
         consoleOut('User\'s balance:', balance.toNumber(), 'blue');
         setAvailableBalance(balance);
-        // setSelectedStreamForAllocation('');
       }
     } else {
       setAvailableBalance(new BN(0));
@@ -499,6 +505,7 @@ export const TreasuryAddFundsModal = (props: {
     props.isVisible,
     props.treasuryDetails,
     highLightableStreamId,
+    selectFromTokenBalance,
   ]);
 
   // When modal goes visible, use the treasury associated token or use the default from the appState
@@ -579,13 +586,19 @@ export const TreasuryAddFundsModal = (props: {
   }
 
   const onAcceptModal = () => {
-    props.handleOk({
+    const params: TreasuryTopupParams = {
       amount: topupAmount,
       tokenAmount: tokenAmount,
       allocationType: allocationOption,
-      streamId: allocationOption === AllocationType.Specific
+      associatedToken: selectedToken
+        ? selectedToken.address === WRAPPED_SOL_MINT_ADDRESS
+          ? NATIVE_SOL_MINT.toBase58()
+          : selectedToken.address
+        : '',
+      streamId: highLightableStreamId && allocationOption === AllocationType.Specific
                 ? highLightableStreamId : ''
-    } as TreasuryTopupParams);
+    };
+    props.handleOk(params);
   }
 
   const onCloseModal = () => {

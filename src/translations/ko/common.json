@@ -780,11 +780,12 @@
 		"add-funds": {
 			"amount-label": "Amount",
 			"modal-title": "Add funds",
-			"treasury-money-stream-description": "As this stream was funded from a treasury, the funds being added will be allocated from the Treasury's available balance.",
-			"treasury-money-stream-title": "Treasury Funded Money Stream"
+			"treasury-money-stream-description": "As this stream was funded from a streaming account, the funds being added will be allocated from the streaming account's available balance.",
+			"treasury-money-stream-title": "Streaming Account Money Stream"
 		},
 		"back-to-my-streams-cta": "머니스트림으로 돌아가기",
-		"create-new-stream-cta": "새로운 거래",
+		"create-new-stream-cta": "자금 흐름 만들기",
+		"create-new-stream-cta-busy": "Creating stream",
 		"edit-stream": {
 			"edit-stream-tooltip": "Edit money stream",
 			"frequency-input-hint": "How often will this amount be sent?",
@@ -797,16 +798,16 @@
 			"name-input-placeholder": "Type a name for your stream",
 			"send-amount-input-label": "Amount to Send"
 		},
-		"locked-stream-message": "You cannot close or top up a stream from a locked treasury",
+		"locked-stream-message": "You cannot close or top up a stream from a locked streaming account",
 		"locked-stream-modal-title": "Locked Money Stream",
 		"locked-stream-tooltip": "This Stream is Locked",
 		"lookup-stream-cta-tooltip": "스트림 조회",
-		"pause-stream-confirmation": "스트림을 일시 중지하면 트레저리({{treasury}})에서 수익자({{beneficiary}})로의 스트리밍이 중지됩니다.",
+		"pause-stream-confirmation": "Pausing the stream will stop streaming money from the streaming account ({{treasury}}) to the beneficiary ({{beneficiary}}).",
 		"pause-stream-cta": "중지",
 		"pause-stream-modal-title": "스트림을 중지하다",
 		"pause-stream-tooltip": "Pause Stream",
 		"refresh-tooltip": "스트림을 새로 고치려면 클릭하세요.",
-		"resume-stream-confirmation": "트레저리({{treasury}})에서 수익자({{beneficiary}})로의 머니 스트리밍을 재개합니다.",
+		"resume-stream-confirmation": "Resume money streaming from the streaming account ({{treasury}}) to the beneficiary ({{beneficiary}}).",
 		"resume-stream-cta": "재개하다",
 		"resume-stream-modal-title": "Resume stream",
 		"resume-stream-tooltip": "Resume Stream",
@@ -929,11 +930,11 @@
 			"placeholder": "노트 추가"
 		},
 		"memo2": {
-			"label": "메모 / 제목",
+			"label": "Stream name",
 			"placeholder": "지불 목적"
 		},
 		"rate-and-frequency": {
-			"amount-label": "금액",
+			"amount-label": "Payment Rate",
 			"payment-rates": {
 				"per-day": "하루마다",
 				"per-hour": "1시간 마다",
@@ -954,7 +955,7 @@
 		"resume": "요약",
 		"send-amount": {
 			"label": "송금",
-			"label-amount": "자금 추가",
+			"label-amount": "Amount to stream",
 			"label-right": "잔액"
 		},
 		"send-date": {
@@ -1019,7 +1020,7 @@
 		},
 		"transaction-info": {
 			"add-funds-payroll-advice": "급여 지급을 시작하려면 자금을 추가해야 합니다.",
-			"add-funds-repeating-payment-advice": "반복 결제를 시작하려면 자금을 추가해야 합니다.",
+			"add-funds-repeating-payment-advice": "How many {{tokenSymbol}} tokens do you want to send at\n{{rateInterval}}?",
 			"beneficiary-receives": "수익자 수령",
 			"exchange-on": "교환",
 			"hla-transaction-fee": "애그리게이터 수수료",
@@ -1043,6 +1044,7 @@
 			"amount-withdraw-high": "금액이 사용 가능한 자금보다 큽니다.",
 			"cannot-use-own-account-as-treasury": "귀하의 계정을 트레저리 ID로 사용할 수 없습니다.",
 			"exchange-unavailable": "교환 불가",
+			"minimum-balance-required": "We recommend having at least 0.05 SOL for any transaction",
 			"insufficient-amount-needed": "교환하려면 최소 {{amount}} {{symbol}} 필요",
 			"insufficient-balance-needed": "Need at least {{balance}} SOL in your wallet",
 			"invalid-account": "Cannot use a Multisig address as a destination account",
@@ -1086,12 +1088,14 @@
 	"transfers": {
 		"screen-subtitle": "전 세계 누구에게나 더 빠르게 송금",
 		"screen-title": "전송",
-		"verified-recipient-disclaimer": "I'm sure the recipient address doesn't belong to an exchange."
+		"verified-recipient-disclaimer": "I'm sure the recipient address doesn't belong to an exchange.",
+		"send-asset-modal-title": "Send Asset",
+		"create-money-stream-modal-title": "Create money stream"
 	},
 	"treasuries": {
 		"add-funds": {
 			"allocation-amount-label": "How Much Do You Want to Allocate?",
-			"allocation-heading": "To top up an existing stream, the funds being added will be allocated from the Treasury's available balance.",
+			"allocation-heading": "To top up an existing stream, the funds being added will be allocated from the streaming account's available balance.",
 			"allocation-label": "이 자금을 어떻게 할당하시겠습니까?",
 			"allocation-option-evenly": "모든 머니스트림에 균등하게 할당",
 			"allocation-option-none": "할당하지 않음(예비금에 남겨둠)",
@@ -1116,7 +1120,7 @@
 			"cta-close": "Close account",
 			"cta-close-busy": "Closing account"
 		},
-		"create-new-treasury-cta": "New Streaming Account",
+		"create-new-treasury-cta": "Create streaming account",
 		"create-treasury": {
 			"create-multisig-cta": "트레저리 시작",
 			"create-multisig-cta-busy": "트레저리 시작",
@@ -1130,24 +1134,24 @@
 				"weeks": "weeks",
 				"years": "years"
 			},
-			"main-cta": "Create streaming treasury",
-			"main-cta-busy": "Creating treasury",
-			"modal-title": "Create streaming treasury",
+			"main-cta": "Create Streaming Account",
+			"main-cta-busy": "Creating account",
+			"modal-title": "Create Streaming Account",
 			"multisig-selector-label": "다중 서명 계정",
-			"multisig-treasury-created-info": "트레저리 설정을 완료하려면 다른 다중서명 서명자가 승인해야 합니다.",
-			"multisig-treasury-created-instructions": "이 트레저리 생성 트랜잭션에 서명하도록 다른 사용자에게 요청하십시오.",
+			"multisig-treasury-created-info": "To complete the Streaming Account setup, the other Multisig signers need to approve it.",
+			"multisig-treasury-created-instructions": "Streaming account {{treasuryName}} was created successfully. Please ask the other users to sign this account creation transaction.",
 			"multisig-treasury-switch-label": "다중서명 계정의 트레저리입니까?",
-			"success-message": "당신의 트레저리가 성공적으로 생성되었습니다.",
+			"success-message": "Your new streaming account was created successfully.",
 			"success-multisig-streaming-account-message": "Your new streaming account was created successfully.",
-			"treasury-name-input-empty": "트레저리 이름 입력",
-			"treasury-name-input-label": "트레저리 이름",
-			"treasury-name-placeholder": "Type a name for your streaming treasury",
+			"treasury-name-input-empty": "Enter Account name",
+			"treasury-name-input-label": "Account name",
+			"treasury-name-placeholder": "Type a name for your streaming account",
 			"treasury-token-label": "Token to be streamed",
 			"treasury-type-options": {
-				"treasury-type-locked-description": "잠긴 트레저리를 사용하면 투자자에게 필요한 것과 같은 예약 할당에 대한 베스팅 계약처럼 작동하는 스트림을 생성할 수 있습니다. 일반적으로 종료 날짜가 정해져 있습니다.",
-				"treasury-type-locked-name": "잠긴 머니 스트리밍 트레저리",
-				"treasury-type-open-description": "열린 트레저리를 사용하면 무기한으로 실행되는 자금 흐름을 만들 수 있습니다. 트레저리에 돈이 떨어지면 채워질 때까지 모든 흐름이 멈춥니다.",
-				"treasury-type-open-name": "머니 스트리밍 트레저리 생성"
+				"treasury-type-locked-description": "With a locked streaming account you can create streams that act like a vesting contract for reserved allocations, like the ones needed for investors. They usually have a fixed end date.",
+				"treasury-type-locked-name": "Locked money streaming account",
+				"treasury-type-open-description": "With an open streaming account, you can create money streams that run indefinitely. When the account runs out of money all streams stop, until it gets replenished.",
+				"treasury-type-open-name": "Open money streaming account"
 			}
 		},
 		"lookup-treasury-cta-tooltip": "Lookup a Streaming Account",
@@ -1177,7 +1181,7 @@
 			"refreshing-account-balance": "Refreshing account balance",
 			"treasury-address-label": "Streaming account address",
 			"treasury-name-label": "트레저리 이름",
-			"unallocated-treasury-balance": "Unallocated balance"
+			"unallocated-treasury-balance": "Available streaming balance"
 		},
 		"treasury-detail-heading": "트레저리 세부정보",
 		"treasury-list": {
@@ -1209,8 +1213,8 @@
 				"panel3-to-address": "To Address:",
 				"panel3-warning-message": "IMPORTANT: This is a locked money stream. You cannot cancel, pause or change its details once it is started. Verify all information before proceeding."
 			},
-			"add-stream-modal-title": "트레저리에 스트림 추가",
-			"allocate-funds-label": "자금 할당",
+			"add-stream-modal-title": "Add stream to the account",
+			"allocate-funds-label": "Amount to stream",
 			"allocation-reserved-label": "이 할당은 완전히 예약되었습니다.",
 			"available-unallocated-balance-label": "Unallocated Balance",
 			"busy-pausing": "스트림 중지",
@@ -1227,7 +1231,7 @@
 			"fee-payed-by-treasurer": "수익자 대신 이 스트림에 대한 수수료를 지불하고 싶습니다.",
 			"loading-streams": "스트림 불러오기",
 			"message-warning": "The list of recipients you submitted included your own wallet address. This is not possible and this address has been removed from the imported list.",
-			"minimum-allocation-advice": "이 자금 흐름에 대한 최소 할당을 트레저리에서 사용 가능한 할당되지 않은 잔액까지 설정해야 합니다.",
+			"minimum-allocation-advice": "How many {{tokenSymbol}} tokens do you want to send at {{rateInterval}}? You are able to set an amount up to the unallocated balance in this streaming account.",
 			"multiple-address-list": "Multiple address list",
 			"multiple-address-question-mark-tooltip": "Please provide a csv text file with one address per line in the following format: \n MEMO or STREAM NAME, WALLET ADDRESS. \n\n Here is an example of how it should look: \n Epoch 1, FrdFf3EqcGuytTweLvoELBt29WrAGVYjrh4585A2bTAZ \n\n Before you submit the file, please make sure the recipient addresses are correct and do not belong to an exchange.",
 			"no-streams": "This streaming account has no active streams",

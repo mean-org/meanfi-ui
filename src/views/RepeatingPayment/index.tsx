@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button, Modal, Menu, Dropdown, DatePicker, Checkbox, Drawer } from "antd";
 import {
+  InfoCircleOutlined,
   LoadingOutlined,
   QrcodeOutlined,
 } from "@ant-design/icons";
@@ -8,6 +9,7 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnection, useConnectionConfig } from "../../contexts/connection";
 import { IconCaretDown, IconEdit } from "../../Icons";
 import {
+  cutNumber,
   fetchAccountTokens,
   formatAmount,
   formatThousands,
@@ -20,13 +22,12 @@ import {
   toTokenAmount,
 } from "../../utils/utils";
 import { Identicon } from "../../components/Identicon";
-import { DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, SIMPLE_DATE_TIME_FORMAT } from "../../constants";
+import { DATEPICKER_FORMAT, MAX_TOKEN_LIST_ITEMS, MIN_SOL_BALANCE_REQUIRED, SIMPLE_DATE_TIME_FORMAT } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
 import { EventType, OperationType, PaymentRateType, TransactionStatus } from "../../models/enums";
 import {
   consoleOut,
   disabledDate,
-  getAmountWithTokenSymbol,
   getFairPercentForInterval,
   getIntervalFromSeconds,
   getPaymentRateOptionLabel,
@@ -54,8 +55,10 @@ import { calculateActionFees, MSP, MSP_ACTIONS, TransactionFees } from "@mean-da
 import { AppUsageEvent, SegmentStreamRPTransferData } from '../../utils/segment-service';
 import { segmentAnalytics } from '../../App';
 import dateFormat from 'dateformat';
-import { NATIVE_SOL } from '../../utils/tokens';
 import { TokenInfo } from '@solana/spl-token-registry';
+import useWindowSize from '../../hooks/useWindowResize';
+import { InfoIcon } from '../../components/InfoIcon';
+import { NATIVE_SOL } from '../../utils/tokens';
 
 export const RepeatingPayment = (props: {
   inModal: boolean;
@@ -103,6 +106,8 @@ export const RepeatingPayment = (props: {
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
   const accounts = useAccountsContext();
+  const { width } = useWindowSize();
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [userBalances, setUserBalances] = useState<any>();
@@ -197,6 +202,8 @@ export const RepeatingPayment = (props: {
             }
           });
 
+          intersectedList.unshift(userTokensCopy[0]);
+          balancesMap[userTokensCopy[0].address] = nativeBalance;          
           // Create a list containing tokens for the user owned token accounts
           accTks.forEach(item => {
             balancesMap[item.parsedInfo.mint] = item.parsedInfo.tokenAmount.uiAmount || 0;
@@ -249,6 +256,7 @@ export const RepeatingPayment = (props: {
     userTokens,
     connection,
     splTokenList,
+    nativeBalance,
   ]);
 
   // Keep token balance updated
@@ -286,6 +294,22 @@ export const RepeatingPayment = (props: {
     repeatingPaymentFees.mspFlatFee,
     getTransactionFees,
   ]);
+
+  const getFeeAmount = useCallback(() => {
+    return repeatingPaymentFees.blockchainFee + repeatingPaymentFees.mspFlatFee;
+  }, [repeatingPaymentFees.blockchainFee, repeatingPaymentFees.mspFlatFee]);
+
+  const getMinSolBlanceRequired = useCallback(() => {
+    return getFeeAmount() > MIN_SOL_BALANCE_REQUIRED
+      ? getFeeAmount()
+      : MIN_SOL_BALANCE_REQUIRED;
+
+  }, [getFeeAmount]);
+
+  const getMaxAmount = useCallback(() => {
+    const amount = nativeBalance - getMinSolBlanceRequired();
+    return amount > 0 ? amount : 0;
+  }, [getMinSolBlanceRequired, nativeBalance]);
 
   const resetTransactionStatus = useCallback(() => {
 
@@ -523,10 +547,6 @@ export const RepeatingPayment = (props: {
     updateTokenListByFilter
   ]);
 
-  const getFeeAmount = useCallback(() => {
-    return repeatingPaymentFees.blockchainFee + repeatingPaymentFees.mspFlatFee;
-  }, [repeatingPaymentFees.blockchainFee, repeatingPaymentFees.mspFlatFee]);
-
   const getTokenPrice = useCallback(() => {
     if (!fromCoinAmount || ! effectiveRate) {
       return 0;
@@ -534,6 +554,20 @@ export const RepeatingPayment = (props: {
 
     return parseFloat(fromCoinAmount) * effectiveRate;
   }, [effectiveRate, fromCoinAmount]);
+
+  const getPaymentRateAmount = useCallback(() => {
+
+    let outStr = selectedToken
+      ? getTokenAmountAndSymbolByTokenAddress(
+          parseFloat(paymentRateAmount),
+          selectedToken.address,
+          false
+        )
+      : '-'
+    outStr += getIntervalFromSeconds(getRateIntervalInSeconds(paymentRateFrequency), true, t)
+
+    return outStr;
+  }, [paymentRateAmount, paymentRateFrequency, selectedToken, t]);
 
   // Hook on wallet connect/disconnect
   useEffect(() => {
@@ -606,6 +640,15 @@ export const RepeatingPayment = (props: {
     }
   }, []);
 
+  // Detect when entering small screen mode
+  useEffect(() => {
+    if (isSmallScreen && width < 576) {
+      setIsSmallScreen(true);
+    } else {
+      setIsSmallScreen(false);
+    }
+  }, [isSmallScreen, width]);
+
   // Setup event listeners
   useEffect(() => {
     if (publicKey && canSubscribe) {
@@ -641,10 +684,12 @@ export const RepeatingPayment = (props: {
     return connected &&
            selectedToken &&
            tokenBalance &&
+           nativeBalance >= getMinSolBlanceRequired() &&
            fromCoinAmount && parseFloat(fromCoinAmount) > 0 &&
-           parseFloat(fromCoinAmount) <= tokenBalance
-            ? true
-            : false;
+           ((selectedToken.address === NATIVE_SOL.address && parseFloat(fromCoinAmount) <= getMaxAmount()) ||
+            (selectedToken.address !== NATIVE_SOL.address && parseFloat(fromCoinAmount) <= tokenBalance))
+    ? true
+    : false;
   }
 
   const areSendAmountSettingsValid = (): boolean => {
@@ -679,30 +724,31 @@ export const RepeatingPayment = (props: {
               : !arePaymentSettingsValid()
                 ? getPaymentSettingsButtonLabel()
                 : t('transactions.validation.valid-continue');
-}
+  }
 
   const getTransactionStartButtonLabel = (): string => {
     return !connected
       ? t('transactions.validation.not-connected')
       : !recipientAddress || isAddressOwnAccount()
-      ? t('transactions.validation.select-recipient')
-      : !selectedToken || !tokenBalance
-      ? t('transactions.validation.no-balance')
-      : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !parseFloat(fromCoinAmount)
-      ? t('transactions.validation.no-amount')
-      : parseFloat(fromCoinAmount) > tokenBalance
-      ? t('transactions.validation.amount-high')
-      : !paymentStartDate
-      ? t('transactions.validation.no-valid-date')
-      : !recipientNote
-      ? t('transactions.validation.memo-empty')
-      : !arePaymentSettingsValid()
-      ? getPaymentSettingsButtonLabel()
-      : !isVerifiedRecipient
-      ? t('transactions.validation.verified-recipient-unchecked')
-      : nativeBalance < getFeeAmount()
-      ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getFeeAmount(), 4) })
-      : t('transactions.validation.valid-approve');
+        ? t('transactions.validation.select-recipient')
+        : !selectedToken || !tokenBalance
+          ? t('transactions.validation.no-balance')
+          : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !parseFloat(fromCoinAmount)
+            ? t('transactions.validation.no-amount')
+            : ((selectedToken.address === NATIVE_SOL.address && parseFloat(fromCoinAmount) > getMaxAmount()) ||
+               (selectedToken.address !== NATIVE_SOL.address && parseFloat(fromCoinAmount) > tokenBalance))
+              ? t('transactions.validation.amount-high')
+              : !paymentStartDate
+                ? t('transactions.validation.no-valid-date')
+                : !recipientNote
+                  ? t('transactions.validation.memo-empty')
+                  : !arePaymentSettingsValid()
+                    ? getPaymentSettingsButtonLabel()
+                    : !isVerifiedRecipient
+                      ? t('transactions.validation.verified-recipient-unchecked')
+                      : nativeBalance < getMinSolBlanceRequired()
+                        ? t('transactions.validation.insufficient-balance-needed', { balance: formatThousands(getFeeAmount(), 4) })
+                        : t('transactions.validation.valid-approve');
   }
 
   const getPaymentSettingsButtonLabel = (): string => {
@@ -719,7 +765,7 @@ export const RepeatingPayment = (props: {
     amount: string | undefined
   ): string => {
     let label: string;
-    label = `${selectedToken ? getAmountWithTokenSymbol(amount, selectedToken) : '--'}`;
+    label = `${selectedToken ? getAmountWithSymbol(parseFloat(amount || '0'), selectedToken.address) : '--'}`;
     switch (rate) {
       case PaymentRateType.PerMinute:
         label += ` ${t('transactions.rate-and-frequency.payment-rates.per-minute')}`;
@@ -1056,7 +1102,7 @@ export const RepeatingPayment = (props: {
               loadingTitle: "Confirming transaction",
               loadingMessage: `Send ${getPaymentRateLabel(paymentRateFrequency, paymentRateAmount)}`,
               completedTitle: "Transaction confirmed",
-              completedMessage: `Successfuly sent ${getPaymentRateLabel(paymentRateFrequency, paymentRateAmount)}`
+              completedMessage: `Stream to send ${getPaymentRateLabel(paymentRateFrequency, paymentRateAmount)} has been created.`
             });
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransactionSuccess,
@@ -1112,15 +1158,15 @@ export const RepeatingPayment = (props: {
     setIsVerifiedRecipient(e.target.checked);
   }
 
-  const onGoToWrap = () => {
-    onCloseTokenSelector();
-    navigate('/wrap');
-  }
-
-
   ///////////////////
   //   Rendering   //
   ///////////////////
+
+  // const renderTextWithBreaks = (text: string) => {
+  //   return (
+  //       <div dangerouslySetInnerHTML={{ __html: text }}></div>
+  //   );
+  // }
 
   const paymentRateOptionsMenu = (
     <Menu>
@@ -1140,13 +1186,7 @@ export const RepeatingPayment = (props: {
     <>
       {(filteredTokenList && filteredTokenList.length > 0) && (
         filteredTokenList.map((t, index) => {
-
-          if (t.address === NATIVE_SOL.address) {
-            return null;
-          }
-
           const onClick = function () {
-
             tokenChanged(t);
             setSelectedToken(t);
 
@@ -1156,15 +1196,16 @@ export const RepeatingPayment = (props: {
           };
 
           if (index < MAX_TOKEN_LIST_ITEMS) {
+            const balance = connected && userBalances && userBalances[t.address] > 0 ? userBalances[t.address] : 0;
             return (
               <TokenListItem
                 key={t.address}
                 name={t.name || 'Unknown'}
                 mintAddress={t.address}
                 token={t}
-                className={selectedToken && selectedToken.address === t.address ? "selected" : "simplelink"}
+                className={balance ? selectedToken && selectedToken.address === t.address ? "selected" : "simplelink" : "hidden"}
                 onClick={onClick}
-                balance={connected && userBalances && userBalances[t.address] > 0 ? userBalances[t.address] : 0}
+                balance={balance}
               />
             );
           } else {
@@ -1186,10 +1227,6 @@ export const RepeatingPayment = (props: {
           onInputClear={onInputCleared}
           placeholder={t('token-selector.search-input-placeholder')}
           onInputChange={onTokenSearchInputChange} />
-      </div>
-      <div className="flex-row align-items-center fg-secondary-60 mb-2 px-1">
-        <span>{t('token-selector.looking-for-sol')}</span>&nbsp;
-        <span className="simplelink underline" onClick={onGoToWrap}>{t('token-selector.wrap-sol-first')}</span>
       </div>
       <div className="token-list">
         {filteredTokenList.length > 0 && renderTokenList}
@@ -1224,6 +1261,27 @@ export const RepeatingPayment = (props: {
       <StepSelector step={currentStep} steps={2} onValueSelected={onStepperChange} />
 
       <div className={currentStep === 0 ? "contract-wrapper panel1 show" : "contract-wrapper panel1 hide"}>
+
+        {/* Memo */}
+        <div className="form-label">{t('transactions.memo2.label')}</div>
+        <div className="well">
+          <div className="flex-fixed-right">
+            <div className="left">
+              <input
+                id="payment-memo-field"
+                className="w-100 general-text-input"
+                autoComplete="on"
+                autoCorrect="off"
+                type="text"
+                maxLength={32}
+                onChange={handleRecipientNoteChange}
+                placeholder={t('transactions.memo2.placeholder')}
+                spellCheck="false"
+                value={recipientNote}
+              />
+            </div>
+          </div>
+        </div>
 
         {/* Recipient */}
         <div className="form-label">{t('transactions.recipient.label')}</div>
@@ -1272,69 +1330,65 @@ export const RepeatingPayment = (props: {
           }
         </div>
 
-        {/* Receive rate */}
+        {/* Payment rate */}
         <div className="form-label">{t('transactions.rate-and-frequency.amount-label')}</div>
-        <div className="well">
-          <div className="flex-fixed-left">
-            <div className="left">
-              <span className="add-on simplelink">
-                {selectedToken && (
-                  <TokenDisplay onClick={() => inModal ? showDrawer() : showTokenSelector()}
-                    mintAddress={selectedToken.address}
-                    name={selectedToken.name}
-                    showName={false}
-                    showCaretDown={true}
-                    fullTokenInfo={selectedToken}
-                  />
-                )}
-              </span>
-            </div>
-            <div className="right">
-              <input
-                className="general-text-input text-right"
-                inputMode="decimal"
-                autoComplete="off"
-                autoCorrect="off"
-                type="text"
-                onChange={handlePaymentRateAmountChange}
-                pattern="^[0-9]*[.,]?[0-9]*$"
-                placeholder="0.0"
-                minLength={1}
-                maxLength={79}
-                spellCheck="false"
-                value={paymentRateAmount}
-              />
-            </div>
-          </div>
-          <div className="flex-fixed-right">
-            <div className="left inner-label">
-              <span>{t('transactions.send-amount.label-right')}:</span>
-              <span>
-                {`${tokenBalance && selectedToken
-                    ? getAmountWithSymbol(tokenBalance, selectedToken?.address, true)
-                    : "0"
-                }`}
-              </span>
-            </div>
-            <div className="right inner-label">&nbsp;</div>
-          </div>
-        </div>
 
-        {/* Receive frequency */}
-        <div className="form-label">{t('transactions.rate-and-frequency.rate-label')}</div>
-        <div className="well">
-          <Dropdown
-            overlay={paymentRateOptionsMenu}
-            trigger={["click"]}>
-            <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
-              <div className="left">
-                <span className="capitalize-first-letter">{getPaymentRateOptionLabel(paymentRateFrequency, t)}{" "}</span>
+        <div className="two-column-form-layout col60x40 mb-3">
+          <div className="left">
+            <div className="well mb-1">
+              <div className="flex-fixed-left">
+                <div className="left">
+                  <span className="add-on simplelink">
+                    {selectedToken && (
+                      <TokenDisplay onClick={() => inModal ? showDrawer() : showTokenSelector()}
+                        mintAddress={selectedToken.address}
+                        name={selectedToken.name}
+                        showName={false}
+                        showCaretDown={true}
+                        fullTokenInfo={selectedToken}
+                      />
+                    )}
+                  </span>
+                </div>
+                <div className="right">
+                  <input
+                    className="general-text-input text-right"
+                    inputMode="decimal"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    type="text"
+                    onChange={handlePaymentRateAmountChange}
+                    pattern="^[0-9]*[.,]?[0-9]*$"
+                    placeholder="0.0"
+                    minLength={1}
+                    maxLength={79}
+                    spellCheck="false"
+                    value={paymentRateAmount}
+                  />
+                </div>
               </div>
-              <div className="right">
-                <IconCaretDown className="mean-svg-icons" />
+            </div>
+          </div>
+          <div className="right">
+            <div className="well mb-0">
+              <div className="flex-fixed-left">
+                <div className="left">
+                  <Dropdown
+                    overlay={paymentRateOptionsMenu}
+                    trigger={["click"]}>
+                    <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
+                      <div className="left">
+                        <span className="capitalize-first-letter">{getPaymentRateOptionLabel(paymentRateFrequency, t)}{" "}</span>
+                      </div>
+                      <div className="right">
+                        <IconCaretDown className="mean-svg-icons" />
+                      </div>
+                    </span>
+                  </Dropdown>
+                </div>
               </div>
-            </span>
-          </Dropdown>
+            </div>
+          </div>
         </div>
 
         {/* Send date */}
@@ -1364,27 +1418,6 @@ export const RepeatingPayment = (props: {
                   format={DATEPICKER_FORMAT}
                 />
               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Memo */}
-        <div className="form-label">{t('transactions.memo2.label')}</div>
-        <div className="well">
-          <div className="flex-fixed-right">
-            <div className="left">
-              <input
-                id="payment-memo-field"
-                className="w-100 general-text-input"
-                autoComplete="on"
-                autoCorrect="off"
-                type="text"
-                maxLength={32}
-                onChange={handleRecipientNoteChange}
-                placeholder={t('transactions.memo2.placeholder')}
-                spellCheck="false"
-                value={recipientNote}
-              />
             </div>
           </div>
         </div>
@@ -1444,18 +1477,7 @@ export const RepeatingPayment = (props: {
                   <div className="vertical-bar"></div>
                 </div>
                 <div className="right flex-column">
-                  <div className="rate">
-                    {selectedToken
-                      ? getTokenAmountAndSymbolByTokenAddress(
-                          parseFloat(paymentRateAmount),
-                          selectedToken.address,
-                          false,
-                          selectedList
-                        )
-                      : '-'
-                    }
-                    {getIntervalFromSeconds(getRateIntervalInSeconds(paymentRateFrequency), true, t)}
-                  </div>
+                  <div className="rate">{getPaymentRateAmount()}</div>
                   <div className="inner-label mt-0">{paymentStartDate}</div>
                 </div>
               </div>
@@ -1464,12 +1486,27 @@ export const RepeatingPayment = (props: {
         )}
 
         <div className="mb-3 text-center">
-          <div>{t('transactions.transaction-info.add-funds-repeating-payment-advice')}.</div>
-          <div>{t('transactions.transaction-info.min-recommended-amount')}: <span className="fg-orange-red">{getRecommendedFundingAmount()}</span></div>
+          <div>
+            {
+              t(
+                'transactions.transaction-info.add-funds-repeating-payment-advice', {
+                  tokenSymbol: selectedToken?.symbol,
+                  rateInterval: getPaymentRateAmount()
+              })
+            }
+          </div>
         </div>
 
-        {/* Add funds */}
-        <div className="form-label">{t('transactions.send-amount.label-amount')}</div>
+        {/* Amount to stream */}
+        <div className="form-label">
+          <span className="align-middle">{t('transactions.send-amount.label-amount')}</span>
+          <span className="align-middle">
+            <InfoIcon content={<span>This is the total amount of funds that will be streamed to the recipient at the payment rate selected. You can add more funds at any time by topping up the stream.</span>}
+                      placement="top">
+              <InfoCircleOutlined />
+            </InfoIcon>
+          </span>
+        </div>
         <div className="well">
           <div className="flex-fixed-left">
             <div className="left">
@@ -1483,14 +1520,16 @@ export const RepeatingPayment = (props: {
                     fullTokenInfo={selectedToken}
                   />
                 )}
-                {selectedToken && tokenBalance ? (
-                  <div
-                    className="token-max simplelink"
-                    onClick={() =>
-                      setFromCoinAmount(
-                        tokenBalance.toFixed(selectedToken.decimals)
-                      )
-                    }>
+                {selectedToken && tokenBalance && tokenBalance > getMinSolBlanceRequired() ? (
+                  <div className="token-max simplelink" onClick={() =>
+                    {
+                      if (selectedToken.address === NATIVE_SOL.address) {
+                        const amount = nativeBalance - getMinSolBlanceRequired();
+                        setFromCoinAmount(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
+                      } else {
+                        setFromCoinAmount(cutNumber(tokenBalance, selectedToken.decimals));
+                      }
+                    }}>
                     MAX
                   </div>
                 ) : null}
@@ -1531,6 +1570,9 @@ export const RepeatingPayment = (props: {
               </span>
             </div>
           </div>
+          {selectedToken && selectedToken.address === NATIVE_SOL.address && (!tokenBalance || tokenBalance < MIN_SOL_BALANCE_REQUIRED) && (
+            <div className="form-field-error">{t('transactions.validation.minimum-balance-required')}</div>
+          )}
         </div>
 
         {/* Confirm recipient address is correct Checkbox */}
@@ -1546,20 +1588,20 @@ export const RepeatingPayment = (props: {
           shape="round"
           size="large"
           onClick={onTransactionStart}
-          disabled={!connected ||
+          disabled={
+            !connected ||
             !isMemoValid() ||
             !isValidAddress(recipientAddress) ||
             isAddressOwnAccount() ||
             !arePaymentSettingsValid() ||
             !areSendAmountSettingsValid() ||
-            !isVerifiedRecipient ||
-            nativeBalance < getFeeAmount()
+            !isVerifiedRecipient
           }>
           {isBusy && (
             <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
           )}
           {isBusy
-            ? t('transactions.status.cta-start-transfer-busy')
+            ? t('streams.create-new-stream-cta-busy')
             : getTransactionStartButtonLabel()
           }
         </Button>

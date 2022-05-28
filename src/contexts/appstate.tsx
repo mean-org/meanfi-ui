@@ -25,7 +25,7 @@ import { getNetworkIdByCluster, useConnection, useConnectionConfig } from "./con
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { useAccountsContext } from "./accounts";
 import { TokenInfo, TokenListProvider } from "@solana/spl-token-registry";
-import { getPrices } from "../utils/api";
+import { getPrices, getRaydiumLiquidityPools } from "../utils/api";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
 import { UserTokenAccount } from "../models/transactions";
@@ -75,6 +75,7 @@ interface AppStateConfig {
   effectiveRate: number;
   coinPrices: any | null;
   loadingPrices: boolean;
+  raydiumLps: any;
   contract: ContractDefinition | undefined;
   treasuryOption: TreasuryTypeOption | undefined;
   recipientAddress: string;
@@ -119,10 +120,8 @@ interface AppStateConfig {
   accountAddress: string;
   lastTxSignature: string;
   addAccountPanelOpen: boolean;
-  canShowAccountDetails: boolean;
   streamsSummary: StreamsSummary;
   lastStreamsSummary: StreamsSummary;
-  loadingStreamsSummary: boolean;
   // DDCAs
   ddcaOption: DdcaFrequencyOption | undefined;
   recurringBuys: DdcaAccount[];
@@ -187,10 +186,8 @@ interface AppStateConfig {
   setSelectedAsset: (asset: UserTokenAccount | undefined) => void;
   setAccountAddress: (address: string) => void;
   setAddAccountPanelOpen: (state: boolean) => void;
-  setCanShowAccountDetails: (state: boolean) => void;
   setStreamsSummary: (summary: StreamsSummary) => void;
   setLastStreamsSummary: (summary: StreamsSummary) => void;
-  setLoadingStreamsSummary: (state: boolean) => void;
   // DDCAs
   setDdcaOption: (name: string) => void;
   setRecurringBuys: (recurringBuys: DdcaAccount[]) => void;
@@ -220,6 +217,7 @@ const contextDefaultValues: AppStateConfig = {
   effectiveRate: 0,
   coinPrices: null,
   loadingPrices: false,
+  raydiumLps: undefined,
   contract: undefined,
   treasuryOption: TREASURY_TYPE_OPTIONS[0],
   recipientAddress: '',
@@ -267,10 +265,8 @@ const contextDefaultValues: AppStateConfig = {
   accountAddress: '',
   lastTxSignature: '',
   addAccountPanelOpen: true,
-  canShowAccountDetails: false,
   streamsSummary: initialSummary,
   lastStreamsSummary: initialSummary,
-  loadingStreamsSummary: false,
   // DDCAs
   ddcaOption: undefined,
   recurringBuys: [],
@@ -335,10 +331,8 @@ const contextDefaultValues: AppStateConfig = {
   setSelectedAsset: () => {},
   setAccountAddress: () => {},
   setAddAccountPanelOpen: () => {},
-  setCanShowAccountDetails: () => {},
   setStreamsSummary: () => {},
   setLastStreamsSummary: () => {},
-  setLoadingStreamsSummary: () => {},
   // DDCAs
   setDdcaOption: () => {},
   setRecurringBuys: () => {},
@@ -430,6 +424,19 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [unstakeStartDate, updateUnstakeStartDate] = useState<string | undefined>(today);
   const streamProgramAddressFromConfig = appConfig.getConfig().streamProgramAddress;
   const streamV2ProgramAddressFromConfig = appConfig.getConfig().streamV2ProgramAddress;
+  const [isDepositOptionsModalVisible, setIsDepositOptionsModalVisibility] = useState(false);
+  const [raydiumLps, setRaydiumLps] = useState<any>(contextDefaultValues.raydiumLps);
+  const [shouldLoadRaydiumLps, setShouldLoadRaydiumLps] = useState(true);
+  const [accountAddress, updateAccountAddress] = useState('');
+  const [splTokenList, updateSplTokenList] = useState<UserTokenAccount[]>(contextDefaultValues.splTokenList);
+  const [userTokens, updateUserTokens] = useState<UserTokenAccount[]>(contextDefaultValues.userTokens);
+  const [pinnedTokens, updatePinnedTokens] = useState<UserTokenAccount[]>(contextDefaultValues.pinnedTokens);
+  const [transactions, updateTransactions] = useState<MappedTransaction[] | undefined>(contextDefaultValues.transactions);
+  const [selectedAsset, updateSelectedAsset] = useState<UserTokenAccount | undefined>(contextDefaultValues.selectedAsset);
+  const [lastTxSignature, setLastTxSignature] = useState<string>(contextDefaultValues.lastTxSignature);
+  const [addAccountPanelOpen, updateAddAccountPanelOpen] = useState(contextDefaultValues.addAccountPanelOpen);
+  const [streamsSummary, setStreamsSummary] = useState<StreamsSummary>(contextDefaultValues.streamsSummary);
+  const [lastStreamsSummary, setLastStreamsSummary] = useState<StreamsSummary>(contextDefaultValues.lastStreamsSummary);
 
   const isDowngradedPerformance = useMemo(() => {
     return isProd() && (!tpsAvg || tpsAvg < PERFORMANCE_THRESHOLD)
@@ -673,14 +680,14 @@ const AppStateProvider: React.FC = ({ children }) => {
   }
 
   const getTokenByMintAddress = useCallback((address: string): TokenInfo | undefined => {
-    const tokenFromTokenList = tokenList && isProd()
-      ? tokenList.find(t => t.address === address)
+    const tokenFromTokenList = splTokenList && isProd()
+      ? splTokenList.find(t => t.address === address)
       : MEAN_TOKEN_LIST.find(t => t.address === address);
     if (tokenFromTokenList) {
       return tokenFromTokenList;
     }
     return undefined;
-  }, [tokenList]);
+  }, [splTokenList]);
 
   const openStreamById = async (streamId: string, dock = false) => {
     try {
@@ -841,9 +848,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     setDeletedStreams(oldArray => [...oldArray, id]);
   }
 
-  // Deposits modal
-  const [isDepositOptionsModalVisible, setIsDepositOptionsModalVisibility] = useState(false);
-
   const showDepositOptionsModal = useCallback(() => {
     setIsDepositOptionsModalVisibility(true);
     const depositMenuItem = document.getElementById("deposits-menu-item");
@@ -893,8 +897,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     setLoadingPrices(true);
     getCoinPrices();
   }
-
-
 
   const getTokenPriceByAddress = useCallback((address: string): number => {
     if (!address || !coinPricesFromApi || coinPricesFromApi.length === 0) { return 0; }
@@ -1038,6 +1040,19 @@ const AppStateProvider: React.FC = ({ children }) => {
     setContractName
   ]);
 
+  useEffect(() => {
+    if (!raydiumLps && shouldLoadRaydiumLps) {
+      getRaydiumLiquidityPools()
+      .then(result => {
+        consoleOut('Raydium official LPs:', result.official, 'blue');
+        // result.official
+        // result.unOfficial
+        setRaydiumLps(result.official);
+      })
+      .finally(() => setShouldLoadRaydiumLps(false));
+    }
+  }, [raydiumLps, shouldLoadRaydiumLps]);
+
   // Cache selected DDCA frequency option
   const ddcaOptFromCache = useMemo(
     () => DDCA_FREQUENCY_OPTIONS.find(({ name }) => name === ddcaOptionName),
@@ -1077,12 +1092,16 @@ const AppStateProvider: React.FC = ({ children }) => {
       return;
     }
 
-    if ((publicKey === null || publicKey === undefined) && !userAddress) {
+    if (!accountAddress && !userAddress && !publicKey) {
       return;
     }
 
-    const userPk = userAddress || publicKey as PublicKey;
-    consoleOut('Fetching streams for:', userPk?.toBase58(), 'blue');
+    const userPk = userAddress
+      ? userAddress
+      : accountAddress
+        ? new PublicKey(accountAddress)
+        : publicKey as PublicKey;
+    consoleOut('Fetching streams for:', userPk?.toBase58(), 'orange');
 
     if (msp) {
       setLoadingStreams(true);
@@ -1209,6 +1228,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     ms,
     msp,
     publicKey,
+    accountAddress,
     loadingStreams,
     selectedStream,
     lastSentTxStatus,
@@ -1229,8 +1249,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   useEffect(() => {
     let timer: any;
 
-    if ((location.pathname === '/accounts' || location.pathname === '/accounts/streams') &&
-        !customStreamDocked && !isDowngradedPerformance) {
+    if (accountAddress && location.pathname.startsWith('/accounts') && !customStreamDocked && !isDowngradedPerformance) {
       timer = setInterval(() => {
         consoleOut(`Refreshing streams past ${msToTime(FIVE_MINUTES_REFRESH_TIMEOUT)}...`);
         refreshStreamList();
@@ -1240,6 +1259,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     return () => clearInterval(timer);
   }, [
     location,
+    accountAddress,
     customStreamDocked,
     isDowngradedPerformance,
     refreshStreamList,
@@ -1303,30 +1323,8 @@ const AppStateProvider: React.FC = ({ children }) => {
     refreshTokenBalance
   ]);
 
-
-  /////////////////////////////////////
-  // Added to support /accounts page //
-  /////////////////////////////////////
-
-  const [accountAddress, updateAccountAddress] = useLocalStorage('lastUsedAccount', publicKey ? publicKey.toBase58() : '');
-  const [splTokenList, updateSplTokenList] = useState<UserTokenAccount[]>(contextDefaultValues.splTokenList);
-  const [userTokens, updateUserTokens] = useState<UserTokenAccount[]>(contextDefaultValues.userTokens);
-  const [pinnedTokens, updatePinnedTokens] = useState<UserTokenAccount[]>(contextDefaultValues.pinnedTokens);
-  const [transactions, updateTransactions] = useState<MappedTransaction[] | undefined>(contextDefaultValues.transactions);
-  const [selectedAsset, updateSelectedAsset] = useState<UserTokenAccount | undefined>(contextDefaultValues.selectedAsset);
-  const [lastTxSignature, setLastTxSignature] = useState<string>(contextDefaultValues.lastTxSignature);
-  const [addAccountPanelOpen, updateAddAccountPanelOpen] = useState(contextDefaultValues.addAccountPanelOpen);
-  const [canShowAccountDetails, updateCanShowAccountDetails] = useState(accountAddress ? true : false);
-  const [streamsSummary, setStreamsSummary] = useState<StreamsSummary>(contextDefaultValues.streamsSummary);
-  const [lastStreamsSummary, setLastStreamsSummary] = useState<StreamsSummary>(contextDefaultValues.lastStreamsSummary);
-  const [loadingStreamsSummary, setLoadingStreamsSummary] = useState(contextDefaultValues.loadingStreamsSummary);
-
   const setAddAccountPanelOpen = (state: boolean) => {
     updateAddAccountPanelOpen(state);
-  }
-
-  const setCanShowAccountDetails = (state: boolean) => {
-    updateCanShowAccountDetails(state);
   }
 
   const setTransactions = (map: MappedTransaction[] | undefined, addItems?: boolean) => {
@@ -1457,6 +1455,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         effectiveRate,
         coinPrices,
         loadingPrices,
+        raydiumLps,
         contract,
         ddcaOption,
         treasuryOption,
@@ -1500,10 +1499,8 @@ const AppStateProvider: React.FC = ({ children }) => {
         accountAddress,
         lastTxSignature,
         addAccountPanelOpen,
-        canShowAccountDetails,
         streamsSummary,
         lastStreamsSummary,
-        loadingStreamsSummary,
         recurringBuys,
         loadingRecurringBuys,
         highLightableMultisigId,
@@ -1564,10 +1561,8 @@ const AppStateProvider: React.FC = ({ children }) => {
         setSelectedAsset,
         setAccountAddress,
         setAddAccountPanelOpen,
-        setCanShowAccountDetails,
         setStreamsSummary,
         setLastStreamsSummary,
-        setLoadingStreamsSummary,
         setRecurringBuys,
         setLoadingRecurringBuys,
         setHighLightableMultisigId,

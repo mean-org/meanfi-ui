@@ -201,9 +201,6 @@
 body {
   color: var(--text-color);
   background-color: var(--bg-color);
-  @media (max-width: 575.98px) {
-    background-color: var(--color-panel-background);
-  }
 }
 .loading-screen-container {
   position: relative;
@@ -2158,6 +2155,49 @@ em {
   height: 100%;
 }
 
+.two-column-form-layout {
+  display: flex;
+  > .right {
+    .well .dropdown-trigger.no-decoration {
+      font-size: 16px;
+      line-height: 10px;
+      height: 22px;
+    }
+  }
+  @media (max-width: 575.98px) {
+    flex-direction: column;
+    > .left,
+    > .right {
+      flex: 0 0 100%;
+    }
+  }
+  &.col60x40 {
+    @media (min-width: 576px) {
+      > .left {
+        flex: 1 1 60%;
+      }
+      > .right {
+        flex: 1 1 40%;
+      }
+    }
+  }
+  @media (min-width: 576px) {
+    flex-direction: row;
+    > .left {
+      padding-right: 8px;
+    }
+    > .right {
+      padding-left: 8px;
+    }
+    > .left {
+      flex: 1 1 50%;
+    }
+    > .right {
+      flex: 1 1 50%;
+    }
+  }
+}
+
 .card-row {
   box-sizing: border-box;
   margin: 5px 0px;
@@ -2205,12 +2245,6 @@ em {
   margin-left: auto;
   margin-right: 5px;
   color: var(--text-color-secondary);
-}
-
-@media only screen and (max-width: 600px) {
-  .exchange-card {
-    width: 360px;
-  }
 }
 
 // Content
@@ -4015,9 +4049,11 @@ main section {
 }
 #back-button {
   position: absolute;
-  left: 1rem;
+  top: 0.8rem;
+  left: 0.8rem;
   background: none;
   color: var(--color-secondary-alpha-85);
+  z-index: 2000;
   @media (min-width: 576px) {
     display: none;
   }
@@ -4333,7 +4369,6 @@ main section {
   display: flex;
   flex-direction: row;
   justify-content: flex-start;
-  align-items: center;
   font-size: 1.1rem;
   color: var(--color-secondary);
   .info-icon {
@@ -4342,7 +4377,7 @@ main section {
     height: 24px;
     display: flex;
     align-items: center;
-    margin-right: 4px;
+    margin: 2px 4px 0 0;
     &.token-icon {
       margin-right: 8px;
       border: 2px solid var(--color-secondary-alpha-20);
@@ -4353,6 +4388,8 @@ main section {
     }
   }
   .info-data {
+    flex: 1 1 auto;
+    word-break: break-word;
     &.large {
       font-size: 1.8rem;
       color: var(--color-secondary-alpha-85);
@@ -4624,10 +4661,10 @@ main section {
     overflow: auto;
     max-height: calc(100% - 1rem);
     min-height: 346px;
-    margin-right: -0.5rem;
+    // margin-right: -0.5rem;
     .meanfi-two-panel-left,
     .meanfi-two-panel-right {
-      padding-right: 1rem;
+      // padding-right: 1rem;
       transition: transform 0.5s ease-in-out;
       height: 100%;
     }
@@ -7243,6 +7280,9 @@ code {
     .ant-popover-arrow {
       .ant-popover-arrow-content {
         background-color: var(--color-component-background);
+        &::before {
+          background: inherit;
+        }
       }
     }
     .ant-popover-inner {

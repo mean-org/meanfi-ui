@@ -17,6 +17,7 @@ import { openNotification } from '../Notifications';
 import { closeTokenAccount } from '../../utils/accounts';
 import { customLogger } from '../..';
 import { UserTokenAccount } from '../../models/transactions';
+import { WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
 
 export const AccountsCloseAssetModal = (props: {
   connection: Connection;
@@ -390,10 +391,10 @@ export const AccountsCloseAssetModal = (props: {
       <div className="shift-up-1">
 
         <div className="mb-2 text-center">
-          {asset.balance ? (
-            <>
-              <p>Your token account has funds, therefore it will be sent to the trash and the funds will be lost unless you transfer the funds to another account.</p>
-            </>
+          {asset.address === WRAPPED_SOL_MINT_ADDRESS && asset.balance ? (
+            <p>Your Wrapped SOL token account has funds, therefore the balance will be unwrapped to Native SOL and the token account will be closed.</p>
+          ) : asset.address !== WRAPPED_SOL_MINT_ADDRESS && asset.balance ? (
+            <p>Your token account has funds, therefore it will be sent to the trash and the funds will be lost unless you transfer the funds to another account.</p>
           ) : (
             <p>Your token account is empty so it can be closed. Click Close account to remove the asset from your wallet.</p>
           )}
