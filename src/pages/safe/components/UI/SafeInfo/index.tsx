@@ -1,6 +1,6 @@
 // import { Connection, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
-import { Button, Col, Dropdown, Menu, Row, Tooltip } from "antd";
+import { Alert, Button, Col, Dropdown, Menu, Row, Tooltip } from "antd";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -278,6 +278,14 @@ export const SafeInfo = (props: {
           </Dropdown>
         </Col>
       </Row>
+
+      {(selectedMultisig.balance && (selectedMultisig.balance / LAMPORTS_PER_SOL < 0.005)) && (
+        <Row gutter={[8, 8]}>
+          <Col span={24} className="alert-info-message pr-6">
+            <Alert message="SOL balance is very low in this safe. You'll need some if you want to make proposals." type="info" showIcon closable />
+          </Col>
+        </Row>
+      )}
 
       <TabsMean
         tabs={tabs}
