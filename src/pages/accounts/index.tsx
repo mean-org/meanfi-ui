@@ -2538,7 +2538,24 @@ export const AccountsNewView = () => {
                     <div className="meanfi-two-panel-left">
                       <div className="meanfi-panel-heading">
                         {!isInspectedAccountTheConnectedWallet() ? (
-                          <span className="title">Safe balances</span>
+                          <>
+                            <div className="back-button mb-0">
+                              <span className="icon-button-container">
+                                <Tooltip placement="bottom" title="Back to safes">
+                                  <Button
+                                    type="default"
+                                    shape="circle"
+                                    size="middle"
+                                    icon={<ArrowLeftOutlined />}
+                                    onClick={() => {
+                                      navigate("/safes");
+                                    }}
+                                  />
+                                </Tooltip>
+                              </span>
+                            </div>
+                            <span className="title">Safe balances</span>
+                          </>
                         ) : (
                           <span className="title">{t('assets.screen-title')}</span>
                         )}
