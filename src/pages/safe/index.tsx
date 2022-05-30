@@ -476,7 +476,7 @@ export const SafeView = () => {
           });
           return true;
         })
-        .catch(error => {
+        .catch((error: any) => {
           console.error(error);
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransaction,
@@ -791,7 +791,7 @@ export const SafeView = () => {
           });
           return true;
         })
-        .catch(error => {
+        .catch((error: any) => {
           console.error(error);
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransaction,
@@ -1154,7 +1154,7 @@ export const SafeView = () => {
           });
           return true;
         })
-        .catch(error => {
+        .catch((error: any) => {
           console.error(error);
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransaction,
@@ -1500,7 +1500,7 @@ export const SafeView = () => {
           });
           return true;
         })
-        .catch(error => {
+        .catch((error: any) => {
           console.error(error);
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransaction,
@@ -1532,7 +1532,7 @@ export const SafeView = () => {
             });
             return true;
           })
-          .catch(error => {
+          .catch((error: any) => {
             console.error(error);
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransaction,
@@ -1933,7 +1933,7 @@ export const SafeView = () => {
           });
           return true;
         })
-        .catch(error => {
+        .catch((error: any) => {
           console.error(error);
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransaction,
@@ -2250,7 +2250,7 @@ export const SafeView = () => {
           });
           return true;
         })
-        .catch(error => {
+        .catch((error: any) => {
           console.error(error);
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransaction,
@@ -2545,7 +2545,7 @@ export const SafeView = () => {
           });
           return true;
         })
-        .catch(error => {
+        .catch((error: any) => {
           console.error(error);
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransaction,
@@ -2834,7 +2834,7 @@ export const SafeView = () => {
           });
           return true;
         })
-        .catch(error => {
+        .catch((error: any) => {
           console.error(error);
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransaction,

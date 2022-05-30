@@ -9,7 +9,7 @@ import {
   SyncOutlined,
   WarningFilled
 } from '@ant-design/icons';
-import { Connection, Keypair, LAMPORTS_PER_SOL, ParsedTransactionMeta, PublicKey, Transaction } from '@solana/web3.js';
+import { Connection, LAMPORTS_PER_SOL, ParsedTransactionMeta, PublicKey, Transaction } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
 import { TransactionItemView } from '../../components/TransactionItemView';
