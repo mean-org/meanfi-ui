@@ -15,7 +15,7 @@ import { MEAN_MULTISIG_PROGRAM, MultisigTransaction, MultisigTransactionStatus }
 // import { AppStateContext } from '../../../../contexts/appstate';
 import { useWallet } from '../../../../contexts/wallet';
 import { createAnchorProgram, InstructionAccountInfo, InstructionDataInfo, MultisigTransactionInstructionInfo, parseMultisigProposalIx } from '../../../../models/multisig';
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, SystemProgram } from '@solana/web3.js';
 import { Idl } from '@project-serum/anchor';
 import { App, AppConfig } from '@mean-dao/mean-multisig-apps';
 import { OperationType } from '../../../../models/enums';
@@ -69,15 +69,18 @@ export const ProposalDetailsView = (props: {
 
     if (!selectedMultisig || !solanaApps || !appsProvider || !selectedProposal) { return; }
     const timeout = setTimeout(() => {
+      // console.log('solanaApps',solanaApps);
       const proposalApp = solanaApps.filter((app: App) => app.id === selectedProposal.programId.toBase58())[0];
-      console.log('proposalApp', proposalApp);
-      if (proposalApp && proposalApp.id !== MEAN_MULTISIG_PROGRAM.toBase58()) {
+      // console.log('proposalApp', proposalApp);
+      if (proposalApp && proposalApp.id !== SystemProgram.programId.toBase58()) {
         appsProvider
           .getAppConfig(proposalApp.id, proposalApp.uiUrl, proposalApp.defUrl)
           .then((config: AppConfig) => {
+            // console.log('definition', config.definition);
             setSelectedProposalIdl(config ? config.definition : undefined);
             const program = config ? createAnchorProgram(connection, new PublicKey(proposalApp.id), config.definition) : undefined;
             const ixInfo = parseMultisigProposalIx(proposalSelected, program);
+            // console.log('ixInfo', ixInfo);
             setProposalIxInfo(ixInfo);
           });
       } else {
@@ -177,22 +180,66 @@ export const ProposalDetailsView = (props: {
         }
 
         {
-          proposalIxInfo.data.map((item: InstructionDataInfo) => {
-            return (
-              <Row gutter={[8, 8]} className="mb-2">
-                <Col xs={6} sm={6} md={4} lg={4} className="pr-1 text-truncate">
-                  <Tooltip placement="right" title={item.label || ""}>
-                    <span className="info-label">{item.label || t('multisig.proposal-modal.instruction-data')}</span>
-                  </Tooltip>
-                </Col>
-                <Col xs={17} sm={17} md={19} lg={19} className="pl-1 pr-3">
-                  <span className="d-block info-data simplelink underline-on-hover text-truncate" style={{cursor: 'pointer'}}>
-                    {item.value}
-                  </span>
-                </Col>
-              </Row>
-            )
-          })
+          proposalIxInfo.programId === MEAN_MULTISIG_PROGRAM.toBase58() ? (
+            proposalIxInfo.data.map((item: InstructionDataInfo) => {
+              return (
+                <Row gutter={[8, 8]} className="mb-2">
+                  <Col xs={6} sm={6} md={4} lg={4} className="pr-1 text-truncate">
+                    <Tooltip placement="right" title={item.label || ""}>
+                      <span className="info-label">{item.label || t('multisig.proposal-modal.instruction-data')}</span>
+                    </Tooltip>
+                  </Col>
+                  {
+                    item.label === "Owners" ? (
+                      <>
+                        {item.value.map((owner: any) => {
+                          return (
+                            <Row style={{marginLeft:20}}>
+                              <Col xs={6} sm={6} md={4} lg={4} className="pr-1 text-truncate">
+                                <Tooltip placement="right" title={owner.label || ""}>
+                                  <span className="info-label">{owner.label || t('multisig.proposal-modal.instruction-data')}</span>
+                                </Tooltip>
+                              </Col>
+                              <Col xs={17} sm={17} md={19} lg={19} className="pl-1 pr-3">
+                                <span className="d-block info-data simplelink underline-on-hover text-truncate" style={{cursor: 'pointer'}}>
+                                  {owner.data}
+                                </span>
+                              </Col>
+                            </Row>
+                          )
+                        })}
+                      </>
+                    ) : (
+                      <>
+                        <Col xs={17} sm={17} md={19} lg={19} className="pl-1 pr-3">
+                          <span className="d-block info-data simplelink underline-on-hover text-truncate" style={{cursor: 'pointer'}}>
+                            {item.value}
+                          </span>
+                        </Col>
+                      </>
+                    )
+                  }
+                </Row>
+              )
+            })
+          ) : (
+            proposalIxInfo.data.map((item: InstructionDataInfo) => {
+              return (
+                <Row gutter={[8, 8]} className="mb-2">
+                  <Col xs={6} sm={6} md={4} lg={4} className="pr-1 text-truncate">
+                    <Tooltip placement="right" title={item.label || ""}>
+                      <span className="info-label">{item.label || t('multisig.proposal-modal.instruction-data')}</span>
+                    </Tooltip>
+                  </Col>
+                  <Col xs={17} sm={17} md={19} lg={19} className="pl-1 pr-3">
+                    <span className="d-block info-data simplelink underline-on-hover text-truncate" style={{cursor: 'pointer'}}>
+                      {item.value}
+                    </span>
+                  </Col>
+                </Row>
+              )
+            })
+          )
         }
       </div>
     )

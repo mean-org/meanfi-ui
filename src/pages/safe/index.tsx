@@ -83,7 +83,6 @@ import { AppsProvider, NETWORK, App, UiInstruction, AppConfig, UiElement, Arg } 
 import { SafeSerumInfoView } from './components/SafeSerumInfo';
 import { MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 import { MultisigCreateAssetModal } from '../../components/MultisigCreateAssetModal';
-
 import { createProgram, getDepositIx, getWithdrawIx, getGatewayToken } from '@mean-dao/mean-multisig-apps/lib/apps/credix/func';
 import { NATIVE_SOL } from '../../utils/tokens';
 
@@ -102,7 +101,7 @@ export const SafeView = () => {
     highLightableMultisigId,
     previousWalletConnectState,
     setHighLightableMultisigId,
-    getTokenPriceByAddress,
+    // getTokenPriceByAddress,
     getTokenPriceBySymbol,
     setTransactionStatus,
     refreshTokenBalance,
@@ -152,7 +151,7 @@ export const SafeView = () => {
 
   const [isProposalDetails, setIsProposalDetails] = useState(false);
   const [proposalSelected, setProposalSelected] = useState<MultisigTransaction | undefined>();
-  const [proposalSelectedIdl, setProposalSelectedIdl] = useState<Idl | undefined>();
+  // const [proposalSelectedIdl, setProposalSelectedIdl] = useState<Idl | undefined>();
   const [isProgramDetails, setIsProgramDetails] = useState(false);
   const [programSelected, setProgramSelected] = useState<any>();
   const [isAssetDetails, setIsAssetDetails] = useState(false);
@@ -3124,7 +3123,7 @@ export const SafeView = () => {
     multisigClient, 
     selectedMultisig, 
     highLightableMultisigId, 
-    loadingMultisigAccounts
+    loadingMultisigAccounts,
     // serumAccounts
   ]);
 
@@ -3693,7 +3692,7 @@ export const SafeView = () => {
           isBusy={isBusy}
           proposer={publicKey ? publicKey.toBase58() : ""}
           appsProvider={appsProvider}
-          solanaApps={solanaApps}
+          solanaApps={solanaApps.filter(app => app.active)}
           handleOk={onAcceptCreateProposalModal}
           selectedMultisig={selectedMultisig}
         />

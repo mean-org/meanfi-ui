@@ -14,9 +14,9 @@ import { InputMean } from '../InputMean';
 import { SelectMean } from '../SelectMean';
 import { FormLabelWithIconInfo } from '../FormLabelWithIconInfo';
 import { InputTextAreaMean } from '../InputTextAreaMean';
-import { App, AppConfig, AppsProvider, UiInstruction, MEAN_MULTISIG_PROGRAM } from '@mean-dao/mean-multisig-apps';
+import { App, AppConfig, AppsProvider, UiInstruction } from '@mean-dao/mean-multisig-apps';
 import BN from 'bn.js';
-import { Connection, PublicKey, TransactionInstruction } from '@solana/web3.js';
+import { Connection, PublicKey, SystemProgram, TransactionInstruction } from '@solana/web3.js';
 // import { Identicon } from '../../components/Identicon';
 import { getMultisigInstructionSummary, parseSerializedTx } from '../../models/multisig';
 import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
@@ -311,7 +311,7 @@ export const MultisigProposalModal = (props: {
           return (
             <Col xs={8} sm={6} md={6} lg={6} className="select-app" key={index}>
               <div className={`select-app-item simplelink ${selectedApp && selectedApp.id === app.id ? "selected-app" : "no-selected-app"}`} onClick={onSelectApp}>
-                {app.id === MEAN_MULTISIG_PROGRAM.toBase58() ? (
+                {app.id === SystemProgram.programId.toBase58() ? (
                   <img src={app.logoUri} width={65} height={65} alt={app.name} />
                   // <Identicon address={PublicKey.default} style={{ width:"65", height:"65", display: "inline-flex" }} />
                   // <img style={{ borderRadius: "50%", padding: "0.2em" }} src={"https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"} width={65} height={65} alt={app.name} />
@@ -401,7 +401,7 @@ export const MultisigProposalModal = (props: {
                       <Col span={24} className="step-two-selected-app">
                         {selectedApp && (
                           !selectedApp.logoUri ? (
-                          // !selectedApp.logoUri || selectedApp.id === MEAN_MULTISIG_PROGRAM.toBase58() ? (
+                          // !selectedApp.logoUri || selectedApp.id === SystemProgram.programId.toBase58() ? (
                             <img style={{ borderRadius: "50%", padding: "0.2em" }} src={"https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"} width={40} height={40} alt={selectedApp.name} />
                           ) : (
                             <img className="mr-1" src={selectedApp.logoUri} alt={selectedApp.name} width={40} height={40} />
@@ -775,7 +775,7 @@ export const MultisigProposalModal = (props: {
                     </Row>
 
                     {/* Data from selected instruction */}
-                    {(selectedApp && (selectedApp.id === MEAN_MULTISIG_PROGRAM.toBase58())) ? (
+                    {(selectedApp && (selectedApp.id === SystemProgram.programId.toBase58())) ? (
                       <>
                         {isSerializedTxValid && (
                           Object.keys(inputState).map((key, index) => (

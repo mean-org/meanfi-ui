@@ -11,7 +11,7 @@ import { AppStateContext, TransactionStatusInfo } from "../../../../contexts/app
 import { getSolanaExplorerClusterParam, useConnectionConfig } from "../../../../contexts/connection";
 import { TxConfirmationContext } from "../../../../contexts/transaction-status";
 import { useWallet } from "../../../../contexts/wallet";
-import { IconArrowBack, IconEllipsisVertical, IconTrash } from "../../../../Icons";
+import { IconArrowBack, IconEllipsisVertical } from "../../../../Icons";
 import { OperationType, TransactionStatus } from "../../../../models/enums";
 import { NATIVE_SOL_MINT } from "../../../../utils/ids";
 import { consoleOut, getShortDate, getTransactionStatusForLogs } from "../../../../utils/ui";
@@ -60,8 +60,7 @@ export const AssetDetailsView = (props: {
     clearTxConfirmationContext,
   } = useContext(TxConfirmationContext);
 
-  const { isAssetDetails, onDataToAssetView, assetSelected, selectedMultisig } = props;
-
+  const { onDataToAssetView, assetSelected, selectedMultisig } = props;
   const [transactionFees, setTransactionFees] = useState<TransactionFees>(NO_FEES);
   const [/*ongoingOperation*/, setOngoingOperation] = useState<OperationType | undefined>(undefined);
   const [/*retryOperationPayload*/, setRetryOperationPayload] = useState<any>(undefined);
@@ -2326,8 +2325,8 @@ export const AssetDetailsView = (props: {
 
   // Asset balance
   const getTokenIconAndAmount = (tokenAddress: string, amount: any, decimals: number) => {
-    const token = tokenList.find(t => t.address === tokenAddress);
 
+    const token = tokenList.find(t => t.address === tokenAddress);
     const isSol = assetSelected.mint.toBase58() === NATIVE_SOL_MINT.toBase58() ? true : false;
 
     if (!token) {

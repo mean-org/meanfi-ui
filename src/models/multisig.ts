@@ -1,8 +1,9 @@
 import { Commitment, Connection, GetProgramAccountsFilter, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js";
-import { AnchorProvider, BorshInstructionCoder, Idl, Program } from "@project-serum/anchor";
+import { AnchorProvider, BorshInstructionCoder, Idl, Program, SplToken, SplTokenCoder } from "@project-serum/anchor";
 import { OperationType } from "./enums";
-import { encodeInstruction, encodeInstructionV2 } from "@project-serum/serum/lib/instructions";
 import bs58 from "bs58";
+import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { MEAN_MULTISIG_PROGRAM } from "@mean-dao/mean-multisig-sdk";
 
 export const MEAN_MULTISIG_OPS = new PublicKey("3TD6SWY9M1mLY2kZWJNavPLhwXvcRsWdnZLRaMzERJBw");
 export const LAMPORTS_PER_SIG = 5000;
@@ -113,7 +114,7 @@ export type InstructionAccountInfo = {
 export type InstructionDataInfo = {
   index: number;
   label: string;
-  value: string;
+  value: any;
 }
 
 export type MintTokensInfo = {
@@ -457,7 +458,7 @@ export const getIxNameFromMultisigTransaction = (programIdl: Idl, transaction: M
       ix = programIdl.instructions.filter(ix => ix.name === "editMultisig")[0];
       break;
     // SPL Token
-    case OperationType.Transfer:
+    case OperationType.TransferTokens:
       ix = programIdl.instructions.filter(ix => ix.name === "transfer")[0];
       break;
     case OperationType.SetAssetAuthority:
@@ -522,7 +523,7 @@ export const createAnchorProgram = (
   programIdl: Idl,
   commitment: Commitment = "confirmed"
 
-): Program<Idl> => {
+): Program<any> => {
 
   const opts = {
     skipPreflight: false,
@@ -539,19 +540,26 @@ export const createAnchorProgram = (
   };
 
   const provider = new AnchorProvider(connection, anchorWallet, opts);
+
+  if (programId.equals(TOKEN_PROGRAM_ID)) {
+
+    const coder = (): SplTokenCoder => {
+      return new SplTokenCoder(programIdl);
+    }
+
+    return new Program<SplToken>(programIdl as SplToken, programId, provider, coder());
+  }
   
   return new Program(programIdl, programId, provider);
 }
 
 export const parseMultisigProposalIx = (
   transaction: MultisigTransaction,
-  program?: Program<Idl> | undefined
+  program?: Program<any> | undefined
 
 ): MultisigTransactionInstructionInfo | null => {
 
   try {
-
-    console.log('transaction', transaction);
 
     const ix = new TransactionInstruction({
       programId: transaction.programId,
@@ -559,7 +567,7 @@ export const parseMultisigProposalIx = (
       data: transaction.data
     });
 
-    if (!program) {
+    if (!program || program.programId.equals(TOKEN_PROGRAM_ID)) {
       return getMultisigInstructionSummary(ix);
     }
 
@@ -577,10 +585,17 @@ export const parseMultisigProposalIx = (
       return getMultisigInstructionSummary(ix);
     }
 
+    const ixData = (dataDecoded.data as any);
+    // console.log('dataDecoded', ixData);
+
     const formattedData = coder.format(
       {
         name: dataDecoded.name,
-        data: dataDecoded.data
+        data: !program.programId.equals(MEAN_MULTISIG_PROGRAM) ? ixData : {
+          label: ixData["label"],
+          threshold: ixData["threshold"],
+          owners: []
+        }
       },
       ix.keys
     );
@@ -589,6 +604,21 @@ export const parseMultisigProposalIx = (
       return getMultisigInstructionSummary(ix);
     }
 
+    if (program.programId.equals(MEAN_MULTISIG_PROGRAM)) {
+      for (const arg of formattedData.args) {
+        if (arg.name === "owners") {
+          arg.data = ixData["owners"].map((o: any) => {
+            return {
+              label: o.name,
+              type: "string",
+              data: o.address.toBase58()
+            }
+          });
+        }
+      }
+    }
+
+    // console.log('formattedData', formattedData);
     const ixAccInfos: InstructionAccountInfo[] = [];
     let accIndex = 0;
 
@@ -616,9 +646,10 @@ export const parseMultisigProposalIx = (
       dataIndex ++;
     }
 
+    const nameArray = (program.idl.name as string).split("_");
     const ixInfo = {
       programId: ix.programId.toBase58(),
-      programName: `${program.idl.name[0].toUpperCase()}${program.idl.name.substring(1)}`,
+      programName: nameArray.map(i => `${i[0].toUpperCase()}${i.substring(1)}`).join(" "),
       accounts: ixAccInfos,
       data: dataInfos
 
