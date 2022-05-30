@@ -114,6 +114,7 @@ import {
 } from '@mean-dao/mean-multisig-sdk';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
+export const STREAMING_ACCOUNTS_ROUTE_BASE_PATH = '/treasuries';
 
 export const TreasuriesView = () => {
   const location = useLocation();

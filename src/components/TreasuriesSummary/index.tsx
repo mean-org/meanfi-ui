@@ -11,10 +11,10 @@ import { AppStateContext } from '../../contexts/appstate';
 import { TokenInfo } from '@solana/spl-token-registry';
 import BN from 'bn.js';
 import { SyncOutlined } from '@ant-design/icons';
-import { useTranslation } from 'react-i18next';
 import { useWallet } from '../../contexts/wallet';
 import { Tooltip } from 'antd';
 import { IconLoading } from '../../Icons';
+import { STREAMING_ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/treasuries';
 
 export const TreasuriesSummary = (props: {
     address: string;
@@ -23,18 +23,21 @@ export const TreasuriesSummary = (props: {
     msp: MSP | undefined;
     selected: boolean;
     enabled: boolean;
+    title: string;
+    tooltipEnabled: string;
+    tooltipDisabled: string;
+    targetPath?: string;
     onSelect: any;
     onNewValue: any;
 }) => {
 
-    const { address, connection, ms, msp, selected, onSelect, onNewValue, enabled } = props;
+    const { address, connection, ms, msp, selected, onSelect, onNewValue, enabled, title, tooltipEnabled, tooltipDisabled, targetPath } = props;
     const { connected, publicKey } = useWallet();
     const {
         previousWalletConnectState,
         getTokenPriceBySymbol,
         getTokenByMintAddress,
     } = useContext(AppStateContext);
-    const { t } = useTranslation('common');
     const { pathname } = useLocation();
     const [treasuryList, setTreasuryList] = useState<(Treasury | TreasuryInfo)[]>([]);
     const [loadingTreasuries, setLoadingTreasuries] = useState(false);
@@ -287,7 +290,7 @@ export const TreasuriesSummary = (props: {
                 )}
             </div>
             <div className="description-cell">
-                <div className="title">{t('treasuries.summary-title')}</div>
+                <div className="title">{title}</div>
                 {loadingTreasuries ? (
                     <div className="subtitle"><IconLoading className="mean-svg-icons" style={{ height: "12px", lineHeight: "12px" }}/></div>
                 ) : treasuriesSummary.totalAmount === 0 ? (
@@ -321,13 +324,13 @@ export const TreasuriesSummary = (props: {
     return (
         <>
             {publicKey && enabled ? (
-                <Link to="/treasuries" state={{ previousPath: pathname }}>
-                    <Tooltip title="See your Streaming Accounts">
+                <Link to={targetPath || STREAMING_ACCOUNTS_ROUTE_BASE_PATH} state={{ previousPath: pathname }}>
+                    <Tooltip title={tooltipEnabled}>
                         {renderContent}
                     </Tooltip>
                 </Link>
             ) : (
-                <Tooltip title="To see your Streaming Accounts you need to connect your wallet">
+                <Tooltip title={tooltipDisabled}>
                     {renderContent}
                 </Tooltip>
             )}
