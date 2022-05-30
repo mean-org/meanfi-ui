@@ -3,7 +3,7 @@ import { MoneyStreaming, TreasuryInfo } from '@mean-dao/money-streaming';
 import { MSP, Treasury, TreasuryType } from '@mean-dao/msp';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { consoleOut, kFormatter, toUsCurrency } from '../../utils/ui';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { THREE_MINUTES_REFRESH_TIMEOUT } from '../../constants';
 import { INITIAL_TREASURIES_SUMMARY, UserTreasuriesSummary } from '../../models/treasuries';
 import { makeDecimal } from '../../utils/utils';
@@ -39,6 +39,7 @@ export const TreasuriesSummary = (props: {
         getTokenByMintAddress,
     } = useContext(AppStateContext);
     const { pathname } = useLocation();
+    const [searchParams] = useSearchParams();
     const [treasuryList, setTreasuryList] = useState<(Treasury | TreasuryInfo)[]>([]);
     const [loadingTreasuries, setLoadingTreasuries] = useState(false);
     const [treasuriesLoaded, setTreasuriesLoaded] = useState(false);
@@ -324,7 +325,7 @@ export const TreasuriesSummary = (props: {
     return (
         <>
             {publicKey && enabled ? (
-                <Link to={targetPath || STREAMING_ACCOUNTS_ROUTE_BASE_PATH} state={{ previousPath: pathname }}>
+                <Link to={targetPath || STREAMING_ACCOUNTS_ROUTE_BASE_PATH} state={{ previousPath: searchParams ? `${pathname}?${searchParams.toString()}` : pathname }}>
                     <Tooltip title={tooltipEnabled}>
                         {renderContent}
                     </Tooltip>
