@@ -3400,7 +3400,7 @@ export const SafeView = () => {
 
   const renderMultisigList = (
     <>
-      {multisigAccounts.length ? (
+      {multisigAccounts.length > 0 ? (
         multisigAccounts.map((item, index) => {
           const onMultisigClick = (ev: any) => {
             consoleOut('=======================================', '', 'green');
@@ -3457,7 +3457,7 @@ export const SafeView = () => {
                 {multisigUsdValues.size > 0 ? (
                   <>
                     <div className="rate-amount">
-                      {toUsCurrency(multisigUsdValues.get(item.authority.toBase58()))}
+                      {toUsCurrency(multisigUsdValues.get(item.authority.toBase58())) || 0}
                     </div>
                     <div className="interval">safe balance</div>
                   </>
