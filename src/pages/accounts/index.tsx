@@ -75,6 +75,7 @@ import { INVEST_ROUTE_BASE_PATH } from '../invest';
 import { isMobile } from 'react-device-detect';
 import useWindowSize from '../../hooks/useWindowResize';
 import { closeTokenAccount } from '../../utils/accounts';
+import { STREAMING_ACCOUNTS_ROUTE_BASE_PATH } from '../treasuries';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export type InspectedAccountType = "multisig" | "streaming-account" | undefined;
@@ -857,6 +858,14 @@ export const AccountsNewView = () => {
     if (!selectedAsset) { return false; }
     return !selectedAsset.publicAddress ? true : false;
   }, [selectedAsset]);
+
+  const getMultisigTreasuriesPath = useCallback(() => {
+    if (!accountAddress || !inspectedAccountType) {
+      return '';
+    }
+    const path = `${STREAMING_ACCOUNTS_ROUTE_BASE_PATH}?multisig=${accountAddress}`;
+    return path;
+  }, [accountAddress, inspectedAccountType]);
 
   /////////////////////
   // Data management //
@@ -2604,23 +2613,47 @@ export const AccountsNewView = () => {
                             <div className="amount">{toUsCurrency(streamsSummary.totalNet + treasuriesTvl)}</div>
                           </div>
                           <div className="asset-category">
-                            {renderMoneyStreamsSummary}
-                            <TreasuriesSummary
-                              address={accountAddress}
-                              connection={connection}
-                              ms={ms}
-                              msp={msp}
-                              enabled={isInspectedAccountTheConnectedWallet()}
-                              selected={selectedCategory === "other-assets" && selectedOtherAssetsOption === "msp-treasuries"}
-                              onNewValue={(value: number) => setTreasuriesTvl(value)}
-                              onSelect={() => {
-                                if (publicKey) {
-                                  // setSelectedCategory("other-assets");
-                                  // setSelectedOtherAssetsOption("msp-streams");
-                                  // setSelectedAsset(undefined);
-                                }
-                              }}
-                            />
+                            {inspectedAccountType === undefined ? (
+                              <>
+                                {renderMoneyStreamsSummary}
+                                <TreasuriesSummary
+                                  address={accountAddress}
+                                  connection={connection}
+                                  ms={ms}
+                                  msp={msp}
+                                  title={t('treasuries.summary-title')}
+                                  enabled={isInspectedAccountTheConnectedWallet()}
+                                  selected={selectedCategory === "other-assets" && selectedOtherAssetsOption === "msp-treasuries"}
+                                  onNewValue={(value: number) => setTreasuriesTvl(value)}
+                                  tooltipEnabled="See your Streaming Accounts"
+                                  tooltipDisabled="To see your Streaming Accounts you need to connect your wallet"
+                                  onSelect={() => {
+                                    if (publicKey) {
+                                      // setSelectedCategory("other-assets");
+                                      // setSelectedOtherAssetsOption("msp-streams");
+                                      // setSelectedAsset(undefined);
+                                    }
+                                  }}
+                                />
+                              </>
+                            ) : inspectedAccountType === "multisig" ? (
+                              <TreasuriesSummary
+                                address={accountAddress}
+                                connection={connection}
+                                ms={ms}
+                                msp={msp}
+                                title="Money Streaming"
+                                enabled={true}
+                                selected={selectedCategory === "other-assets" && selectedOtherAssetsOption === "msp-treasuries"}
+                                onNewValue={(value: number) => setTreasuriesTvl(value)}
+                                tooltipEnabled="See Multisig Streaming Accounts"
+                                tooltipDisabled=""
+                                targetPath={getMultisigTreasuriesPath()}
+                                onSelect={() => {
+                                  // Do nothing
+                                }}
+                              />
+                            ) : null}
                           </div>
 
                           <div className="asset-category-title flex-fixed-right">
