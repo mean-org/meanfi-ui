@@ -111,6 +111,7 @@ import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
 import { SendAssetModal } from "../../components/SendAssetModal";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/accounts";
 import { StreamTopupParams } from "../../models/common-types";
+import { STREAMING_ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/treasuries";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 let ds: string[] = [];
@@ -4889,7 +4890,7 @@ export const Streams = () => {
                               size="middle"
                               icon={<ArrowRightOutlined />}
                               onClick={() => {
-                                const url = `/treasuries?treasury=${treasuryDetails.id}`;
+                                const url = `${STREAMING_ACCOUNTS_ROUTE_BASE_PATH}?treasury=${treasuryDetails.id}`;
                                 navigate(url);
                               }}
                             />
@@ -5228,7 +5229,7 @@ export const Streams = () => {
                               size="middle"
                               icon={<ArrowRightOutlined />}
                               onClick={() => {
-                                const url = `/treasuries?treasury=${treasuryDetails.id}`;
+                                const url = `${STREAMING_ACCOUNTS_ROUTE_BASE_PATH}?treasury=${treasuryDetails.id}`;
                                 navigate(url);
                               }}
                             />

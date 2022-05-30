@@ -646,6 +646,7 @@ export const TreasuriesView = () => {
     treasuryDetails
   ]);
 
+  // TODO: Here the multisig ID is returned
   const getSelectedTreasuryMultisig = useCallback((treasury?: any) => {
 
     const treasuryInfo: any = treasury ?? treasuryDetails;
@@ -807,7 +808,7 @@ export const TreasuriesView = () => {
   ]);
 
   const isMultisigAvailable = useCallback((): boolean => {
-    return multisigAddress && selectedMultisig && selectedMultisig.id.toBase58() === multisigAddress
+    return multisigAddress && selectedMultisig && selectedMultisig.authority.toBase58() === multisigAddress
             ? true
             : false;
   }, [
@@ -1321,7 +1322,7 @@ export const TreasuriesView = () => {
     const timeout = setTimeout(() => {
       if (location.search) {
         consoleOut(`try to select multisig ${multisigAddress} from list`, multisigAccounts, 'blue');
-        const selected = multisigAccounts.find(m => m.id.toBase58() === multisigAddress);
+        const selected = multisigAccounts.find(m => m.authority.toBase58() === multisigAddress);
         if (selected) {
           consoleOut('selectedMultisig:', selected, 'blue');
           setSelectedMultisig(selected);
@@ -5033,15 +5034,14 @@ export const TreasuriesView = () => {
         <Menu.Item key="6" onClick={() => {
             setHighLightableStreamId(item.id as string);
             if (isMultisigTreasury(treasuryDetails)) {
-              const urlBase = '/treasuries/';
-              const url = `${urlBase}${(treasuryDetails as Treasury).id}/streams`;
+              const url = `${STREAMING_ACCOUNTS_ROUTE_BASE_PATH}/${(treasuryDetails as Treasury).id}/streams`;
               consoleOut('With treasurer:', (treasuryDetails as Treasury).treasurer, 'blue');
               // Populate the list of streams in the state before going there.
               setStreamList(treasuryStreams || []);
               consoleOut('Heading to:', url, 'blue');
               // Set this so we can know how to return
               if (selectedMultisig) {
-                setHighLightableMultisigId(selectedMultisig.id.toBase58());
+                setHighLightableMultisigId(selectedMultisig.authority.toBase58());
               }
               navigate(url);
             } else {
@@ -5384,15 +5384,14 @@ export const TreasuriesView = () => {
                     loadingTreasuryStreams
                   }
                   onClick={() => {
-                    const urlBase = '/treasuries/';
-                    const url = `${urlBase}${(treasuryDetails as Treasury).id}/streams`;
+                    const url = `${STREAMING_ACCOUNTS_ROUTE_BASE_PATH}/${(treasuryDetails as Treasury).id}/streams`;
                     consoleOut('Heading to:', url, 'blue');
                     consoleOut('With treasurer:', (treasuryDetails as Treasury).treasurer, 'blue');
                     // Populate the list of streams in the state before going there.
                     setStreamList(treasuryStreams || []);
                     // Set this so we can know how to return
                     if (selectedMultisig) {
-                      setHighLightableMultisigId(selectedMultisig.id.toBase58());
+                      setHighLightableMultisigId(selectedMultisig.authority.toBase58());
                     }
                     navigate(url);
                   }}>
@@ -5567,7 +5566,23 @@ export const TreasuriesView = () => {
             <div className="meanfi-two-panel-left">
 
               <div className="meanfi-panel-heading">
-                {isMultisigAvailable() ? (
+                {state && (state as any).previousPath ? (
+                  <div className="back-button">
+                    <span className="icon-button-container">
+                      <Tooltip placement="bottom" title="Back to accounts">
+                        <Button
+                          type="default"
+                          shape="circle"
+                          size="middle"
+                          icon={<ArrowLeftOutlined />}
+                          onClick={() => {
+                            navigate((state as any).previousPath);
+                          }}
+                        />
+                      </Tooltip>
+                    </span>
+                  </div>
+                ) : isMultisigAvailable() ? (
                   <div className="back-button">
                     <span className="icon-button-container">
                       <Tooltip placement="bottom" title={t('multisig.multisig-assets.back-to-multisig-accounts-cta')}>
@@ -5582,22 +5597,6 @@ export const TreasuriesView = () => {
                               setHighLightableMultisigId(selectedMultisig.id.toBase58());
                               navigate('/safes');
                             }
-                          }}
-                        />
-                      </Tooltip>
-                    </span>
-                  </div>
-                ) : state && (state as any).previousPath ? (
-                  <div className="back-button">
-                    <span className="icon-button-container">
-                      <Tooltip placement="bottom" title="Back to accounts">
-                        <Button
-                          type="default"
-                          shape="circle"
-                          size="middle"
-                          icon={<ArrowLeftOutlined />}
-                          onClick={() => {
-                            navigate((state as any).previousPath);
                           }}
                         />
                       </Tooltip>
@@ -5863,6 +5862,7 @@ export const TreasuriesView = () => {
         />
       )}
 
+      {/* TODO: Here the multisig ID is used */}
       {multisigClient && isCreateStreamModalVisible && (
         <TreasuryStreamCreateModal
           associatedToken={

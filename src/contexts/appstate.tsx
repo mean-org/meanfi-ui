@@ -1040,6 +1040,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     setContractName
   ]);
 
+  /*
   useEffect(() => {
     if (!raydiumLps && shouldLoadRaydiumLps) {
       getRaydiumLiquidityPools()
@@ -1052,6 +1053,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       .finally(() => setShouldLoadRaydiumLps(false));
     }
   }, [raydiumLps, shouldLoadRaydiumLps]);
+  */
 
   // Cache selected DDCA frequency option
   const ddcaOptFromCache = useMemo(

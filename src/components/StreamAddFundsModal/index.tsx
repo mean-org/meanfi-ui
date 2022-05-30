@@ -19,6 +19,7 @@ import BN from 'bn.js';
 import { StreamTopupParams } from '../../models/common-types';
 import { WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
+import { STREAMING_ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/treasuries';
 
 export const StreamAddFundsModal = (props: {
   handleClose: any;
@@ -388,7 +389,7 @@ export const StreamAddFundsModal = (props: {
               <span className="mr-1 font-bold">{getTreasuryName()}</span>
               <span className="simplelink underline-on-hover" onClick={() => {
                 props.handleClose();
-                const url = `/treasuries?treasury=${treasuryDetails.id}`;
+                const url = `${STREAMING_ACCOUNTS_ROUTE_BASE_PATH}?treasury=${treasuryDetails.id}`;
                 navigate(url);
               }}>{t('close-stream.see-details-cta')}</span>
             </div>

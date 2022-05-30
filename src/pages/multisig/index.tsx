@@ -77,6 +77,7 @@ import { getOperationName } from '../../utils/multisig-helpers';
 import { openNotification } from '../../components/Notifications';
 import { ProposalSummaryModal } from '../../components/ProposalSummaryModal';
 import { TxConfirmationContext } from '../../contexts/transaction-status';
+import { STREAMING_ACCOUNTS_ROUTE_BASE_PATH } from '../treasuries';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -2652,7 +2653,7 @@ export const MultisigView = () => {
             disabled={isTxInProgress() || loadingMultisigAccounts}
             onClick={() => {
               if (selectedMultisig) {
-                const url = `/treasuries?multisig=${selectedMultisig.id.toBase58()}`;
+                const url = `${STREAMING_ACCOUNTS_ROUTE_BASE_PATH}?multisig=${selectedMultisig.id.toBase58()}`;
                 navigate(url);
               }
             }}>
