@@ -9,7 +9,7 @@ import { MultisigOwnersView } from "../../../../../components/MultisigOwnersView
 import { TabsMean } from "../../../../../components/TabsMean";
 import { AppStateContext } from "../../../../../contexts/appstate";
 // import { useConnectionConfig } from "../../../../../contexts/connection";
-import { IconAdd, IconEdit, IconEllipsisVertical, IconShowAll, IconTrash } from "../../../../../Icons";
+import { IconEllipsisVertical } from "../../../../../Icons";
 import { MultisigVault } from "../../../../../models/multisig";
 import { UserTokenAccount } from "../../../../../models/transactions";
 import { NATIVE_SOL } from "../../../../../utils/tokens";
@@ -280,13 +280,13 @@ export const SafeInfo = (props: {
         </Col>
       </Row>
 
-      {(selectedMultisig.balance && (selectedMultisig.balance / LAMPORTS_PER_SOL < 0.005)) && (
+      {(selectedMultisig.balance && ((selectedMultisig.balance / LAMPORTS_PER_SOL) < 0.005)) ? (
         <Row gutter={[8, 8]}>
           <Col span={24} className="alert-info-message pr-6">
             <Alert message="SOL balance is very low in this safe. You'll need some if you want to make proposals." type="info" showIcon closable />
           </Col>
         </Row>
-      )}
+      ) : null}
 
       <TabsMean
         tabs={tabs}

@@ -48,7 +48,7 @@ import { OperationType, TransactionStatus } from '../../models/enums';
 import { TxConfirmationContext } from '../../contexts/transaction-status';
 import { IconEllipsisVertical, IconSafe, IconUserGroup, IconUsers } from '../../Icons';
 import { useNativeAccount } from '../../contexts/accounts';
-import { NATIVE_SOL_MINT } from '../../utils/ids';
+import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
 import {
@@ -85,6 +85,8 @@ import { MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigInfo } from '@mean-dao/mea
 import { MultisigCreateAssetModal } from '../../components/MultisigCreateAssetModal';
 import { createProgram, getDepositIx, getWithdrawIx, getGatewayToken } from '@mean-dao/mean-multisig-apps/lib/apps/credix/func';
 import { NATIVE_SOL } from '../../utils/tokens';
+import { UserTokenAccount } from '../../models/transactions';
+import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 
 const CREDIX_PROGRAM = new PublicKey("CRDx2YkdtYtGZXGHZ59wNv1EwKHQndnRc1gT4p8i2vPX");
 
@@ -101,11 +103,15 @@ export const SafeView = () => {
     highLightableMultisigId,
     previousWalletConnectState,
     setHighLightableMultisigId,
-    // getTokenPriceByAddress,
+    getTokenByMintAddress,
+    getTokenPriceByAddress,
     getTokenPriceBySymbol,
     setTransactionStatus,
     refreshTokenBalance,
     setDtailsPanelOpen,
+    multisigVaults,
+    splTokenList,
+    coinPrices
   } = useContext(AppStateContext);
   const {
     fetchTxInfoStatus,
@@ -157,6 +163,10 @@ export const SafeView = () => {
   const [isAssetDetails, setIsAssetDetails] = useState(false);
   const [assetSelected, setAssetSelected] = useState<any>();
   const [selectedTab, setSelectedTab] = useState<number>();
+  const [solBalance, setSolBalance] = useState<number>(0);
+  const [usdValue, setUsdValue] = useState<number>(0);
+  const [itemBalance, setItemBalance] = useState<any>();
+  const [multisigUsdValues, setMultisigUsdValues] = useState<Map<string, number>>(new Map());
   
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
     commitment: "confirmed",
@@ -2605,7 +2615,36 @@ export const SafeView = () => {
               message: 'Your transaction failed to submit due to there not being enough SOL to cover the fees. Please fund the treasury with at least 0.00002 SOL and then retry this operation.\n\nTreasury ID: ',
               data: treasury
             };
+          } else if (error.toString().indexOf('0x1797') !== -1) {
+            const treasury = data.transaction.operation === OperationType.TreasuryStreamCreate
+              ? data.transaction.accounts[2].pubkey.toBase58()
+              : data.transaction.operation === OperationType.TreasuryWithdraw
+              ? data.transaction.accounts[5].pubkey.toBase58()
+              : data.transaction.accounts[3].pubkey.toBase58();
+            txStatus.customError = {
+              message: 'Your transaction failed to submit due to insufficient balance in the treasury. Please add funds to the treasury and then retry this operation.\n\nTreasury ID: ',
+              data: treasury
+            };
+          } else if (error.toString().indexOf('0x1786') !== -1) {
+            txStatus.customError = {
+              message: 'Your transaction failed to submit due to Invalid Gateway Token. Please activate the Gateway Token and retry this operation.',
+              data: undefined
+            };            
+          } else if (error.toString().indexOf('0xbc4') !== -1) {
+            txStatus.customError = {
+              message: 'Your transaction failed to submit due to Account Not Initialized. Please initialize and fund the Token Account of the Investor.',
+              data: undefined
+            }; 
+          } else if (error.toString().indexOf('0x1') !== -1) {
+            const asset = data.transaction.operation === OperationType.TransferTokens
+              ? data.transaction.accounts[0].pubkey.toBase58()
+              : data.transaction.accounts[3].pubkey.toBase58();
+            txStatus.customError = {
+              message: 'Your transaction failed to submit due to insufficient balance in the asset. Please add funds to the asset and then retry this operation.\n\nAsset ID: ',
+              data: asset
+            };
           }
+          //TODO: Yamel (AUI HAY QUE LEVANTAR EL MODAL)
           setTransactionStatus(txStatus);
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
@@ -2628,7 +2667,7 @@ export const SafeView = () => {
           const sent = await sendTx();
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
-            consoleOut('Send Tx to confirmation queue:', signature);
+            consoleOut('Send Tx to confirmation queue:', signature, 'blue');
             startFetchTxSignatureInfo(signature, "confirmed", OperationType.ExecuteTransaction);
             setIsBusy(false);
             setTransactionStatus({
@@ -3066,27 +3105,91 @@ export const SafeView = () => {
     loadingMultisigAccounts
   ]);
 
-  // Refresh the multisig accounts list
-  useEffect(() => {
+  const getMultisigVaults = useCallback(async (
+    connection: Connection,
+    multisig: PublicKey
 
+  ) => {
+
+    const [multisigSigner] = await PublicKey.findProgramAddress(
+      [multisig.toBuffer()],
+      MEAN_MULTISIG
+    );
+
+    const accountInfos = await connection.getProgramAccounts(TOKEN_PROGRAM_ID, {
+      filters: [
+        { memcmp: { offset: 32, bytes: multisigSigner.toBase58() } }, 
+        { dataSize: ACCOUNT_LAYOUT.span }
+      ],
+    });
+
+    if (!accountInfos || !accountInfos.length) { return []; }
+
+    const results = accountInfos.map((t: any) => {
+      const tokenAccount = ACCOUNT_LAYOUT.decode(t.account.data);
+      tokenAccount.address = t.pubkey;
+      return tokenAccount;
+    });
+
+    return results;
+
+  },[]);
+  
+  useEffect(() => {
+  
     if (!connection || !publicKey || !multisigClient || !loadingMultisigAccounts) {
       return;
     }
-
+  
     const timeout = setTimeout(() => {
-
+  
       consoleOut('=======================================', '', 'green');
       multisigClient
         .getMultisigs(publicKey)
         .then((allInfo: MultisigInfo[]) => {
           allInfo.sort((a: any, b: any) => b.createdOnUtc.getTime() - a.createdOnUtc.getTime());
           const allAccounts = [...allInfo, ...serumAccounts];
+  
+          const allUsdValueMap = new Map();
+  
+          allAccounts.forEach(async(account) => {
+            
+            const solPrice = getPricePerToken(NATIVE_SOL);
+            const solBalance = account.balance / LAMPORTS_PER_SOL;
+            const nativeSolUsdValue = solBalance * solPrice;
+  
+            const program = multisigClient.getProgram();
+  
+            let usdValue = 0
+  
+            const assets = await getMultisigVaults(program.provider.connection, account.id);
+            assets.forEach(asset => {
+              const token = getTokenByMintAddress(asset.mint.toBase58());
+
+              if (token) {
+                const tokenAddress = getTokenPriceByAddress(token.address);
+                const tokenSymbol = getTokenPriceBySymbol(token.symbol);
+
+                const tokenPrice = tokenAddress || tokenSymbol;
+                const tokenBalance = asset.amount.toNumber() / 10 ** token.decimals;
+                usdValue += (tokenBalance * tokenPrice);
+              }
+            });
+
+            usdValue += nativeSolUsdValue;
+  
+            allUsdValueMap.set(account.authority.toBase58(), usdValue);
+  
+          });
+          
+          setMultisigUsdValues(allUsdValueMap);
+  
           setMultisigAccounts(allAccounts);
           consoleOut('tralla:', allAccounts, 'blue');
           let item: any = {};
-
+  
           if (allInfo.length > 0) {
-
+  
             if (highLightableMultisigId) {
               // Select a multisig that was instructed to highlight when entering this feature
               item = allInfo.find(m => m.id.toBase58() === highLightableMultisigId);
@@ -3111,11 +3214,11 @@ export const SafeView = () => {
         })
         .finally(() => setLoadingMultisigAccounts(false));
     });
-
+  
     return () => {
       clearTimeout(timeout);
     }
-
+  
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     publicKey, 
@@ -3283,6 +3386,14 @@ export const SafeView = () => {
     setHighLightableMultisigId,
   ]);
 
+  const getPricePerToken = useCallback((token: UserTokenAccount): number => {
+    if (!token || !coinPrices) { return 0; }
+
+    return coinPrices && coinPrices[token.symbol]
+      ? coinPrices[token.symbol]
+      : 0;
+  }, [coinPrices]);
+
   ///////////////
   // Rendering //
   ///////////////
@@ -3302,19 +3413,13 @@ export const SafeView = () => {
             setIsAssetDetails(false);
           };
 
-          const price = getTokenPriceBySymbol(NATIVE_SOL.symbol);
-
-          const balance = item.balance / LAMPORTS_PER_SOL;
-
-          const usdValue = balance * price;
-
           return (
             <div 
               key={`${index + 50}`}
               id={item.id.toBase58()}
               onClick={onMultisigClick}
               className={
-                `transaction-list-row transparent-left-border ${
+                `transaction-list-row transparent-left-border simplelink ${
                   selectedMultisig && selectedMultisig.id && selectedMultisig.id.equals(item.id)
                     ? 'selected selected-left-border'
                     : ''
@@ -3349,13 +3454,20 @@ export const SafeView = () => {
                 </div>
               </div>
               <div className="rate-cell">
-                {item.balance && (
+                {multisigUsdValues.size > 0 ? (
                   <>
                     <div className="rate-amount">
-                      {toUsCurrency(usdValue)}
+                      {toUsCurrency(multisigUsdValues.get(item.authority.toBase58()))}
                     </div>
                     <div className="interval">safe balance</div>
                   </>
+                ) : (
+                  <>
+                  <div className="rate-amount">
+                    $0.00
+                  </div>
+                  <div className="interval">safe balance</div>
+                </>
                 )}
               </div>
             </div>
@@ -3712,3 +3824,4 @@ export const SafeView = () => {
   );
 
 };
+
