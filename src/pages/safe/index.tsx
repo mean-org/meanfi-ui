@@ -2615,7 +2615,36 @@ export const SafeView = () => {
               message: 'Your transaction failed to submit due to there not being enough SOL to cover the fees. Please fund the treasury with at least 0.00002 SOL and then retry this operation.\n\nTreasury ID: ',
               data: treasury
             };
+          } else if (error.toString().indexOf('0x1797') !== -1) {
+            const treasury = data.transaction.operation === OperationType.TreasuryStreamCreate
+              ? data.transaction.accounts[2].pubkey.toBase58()
+              : data.transaction.operation === OperationType.TreasuryWithdraw
+              ? data.transaction.accounts[5].pubkey.toBase58()
+              : data.transaction.accounts[3].pubkey.toBase58();
+            txStatus.customError = {
+              message: 'Your transaction failed to submit due to insufficient balance in the treasury. Please add funds to the treasury and then retry this operation.\n\nTreasury ID: ',
+              data: treasury
+            };
+          } else if (error.toString().indexOf('0x1786') !== -1) {
+            txStatus.customError = {
+              message: 'Your transaction failed to submit due to Invalid Gateway Token. Please activate the Gateway Token and retry this operation.',
+              data: undefined
+            };            
+          } else if (error.toString().indexOf('0xbc4') !== -1) {
+            txStatus.customError = {
+              message: 'Your transaction failed to submit due to Account Not Initialized. Please initialize and fund the Token Account of the Investor.',
+              data: undefined
+            }; 
+          } else if (error.toString().indexOf('0x1') !== -1) {
+            const asset = data.transaction.operation === OperationType.TransferTokens
+              ? data.transaction.accounts[0].pubkey.toBase58()
+              : data.transaction.accounts[3].pubkey.toBase58();
+            txStatus.customError = {
+              message: 'Your transaction failed to submit due to insufficient balance in the asset. Please add funds to the asset and then retry this operation.\n\nAsset ID: ',
+              data: asset
+            };
           }
+          //TODO: Yamel (AUI HAY QUE LEVANTAR EL MODAL)
           setTransactionStatus(txStatus);
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
@@ -2638,7 +2667,7 @@ export const SafeView = () => {
           const sent = await sendTx();
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
-            consoleOut('Send Tx to confirmation queue:', signature);
+            consoleOut('Send Tx to confirmation queue:', signature, 'blue');
             startFetchTxSignatureInfo(signature, "confirmed", OperationType.ExecuteTransaction);
             setIsBusy(false);
             setTransactionStatus({

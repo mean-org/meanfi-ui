@@ -1501,6 +1501,16 @@ export const MultisigView = () => {
               message: 'Your transaction failed to submit due to insufficient balance in the treasury. Please add funds to the treasury and then retry this operation.\n\nTreasury ID: ',
               data: treasury
             };
+          } else if (error.toString().indexOf('0x1786') !== -1) {
+            txStatus.customError = {
+              message: 'Your transaction failed to submit due to Invalid Gateway Token. Please activate the Gateway Token and retry this operation.',
+              data: undefined
+            };            
+          } else if (error.toString().indexOf('0xbc4') !== -1) {
+            txStatus.customError = {
+              message: 'Your transaction failed to submit due to Account Not Initialized. Please initialize and fund the Token Account of the Investor.',
+              data: undefined
+            }; 
           } else if (error.toString().indexOf('0x1') !== -1) {
             const asset = data.transaction.operation === OperationType.TransferTokens
               ? data.transaction.accounts[0].pubkey.toBase58()
