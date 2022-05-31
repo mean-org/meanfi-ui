@@ -996,7 +996,7 @@ useEffect(() => {
       );
   
       tx.feePayer = publicKey;
-      const { blockhash } = await connection.getRecentBlockhash("confirmed");
+      const { blockhash } = await connection.getLatestBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
 
       tx.partialSign(transaction);
@@ -1325,7 +1325,7 @@ useEffect(() => {
       ]);
   
       tx.feePayer = publicKey;
-      const { blockhash } = await connection.getRecentBlockhash("confirmed");
+      const { blockhash } = await connection.getLatestBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
       tx.partialSign(...[mintKeypair]);
   
@@ -1675,7 +1675,7 @@ useEffect(() => {
       );
   
       tx.feePayer = publicKey;
-      const { blockhash } = await connection.getRecentBlockhash("confirmed");
+      const { blockhash } = await connection.getLatestBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
       tx.partialSign(...[transaction]);
   
@@ -1964,7 +1964,7 @@ useEffect(() => {
       );
   
       tx.feePayer = publicKey;
-      const { blockhash } = await connection.getRecentBlockhash("confirmed");
+      const { blockhash } = await connection.getLatestBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
   
       return tx;
@@ -2260,7 +2260,7 @@ useEffect(() => {
       );
   
       tx.feePayer = publicKey;
-      const { blockhash } = await multisigClient.provider.connection.getRecentBlockhash("confirmed");
+      const { blockhash } = await multisigClient.provider.connection.getLatestBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
       
       if (txSigners.length) {
@@ -2549,7 +2549,7 @@ useEffect(() => {
       );
 
       tx.feePayer = publicKey;
-      const { blockhash } = await connection.getRecentBlockhash("confirmed");
+      const { blockhash } = await connection.getLatestBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
 
       return tx;

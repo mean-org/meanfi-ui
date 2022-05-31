@@ -192,9 +192,9 @@ export const ProposalDetailsView = (props: {
                   {
                     item.label === "Owners" ? (
                       <>
-                        {item.value.map((owner: any) => {
+                        {item.value.map((owner: any, idx: number) => {
                           return (
-                            <Row key={`owners-${index}`}>
+                            <Row key={`owners-${idx}`}>
                               <Col xs={6} sm={6} md={4} lg={4} className="pl-1 pr-1 text-truncate">
                                 <Tooltip placement="right" title={owner.label || ""}>
                                   <span className="info-label">{owner.label || t('multisig.proposal-modal.instruction-data')}</span>

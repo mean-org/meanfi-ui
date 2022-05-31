@@ -644,7 +644,7 @@ export const SafeView = () => {
       )
 
       tx.feePayer = publicKey;
-      const { blockhash } = await connection.getRecentBlockhash(connection.commitment);
+      const { blockhash } = await connection.getLatestBlockhash(connection.commitment);
       tx.recentBlockhash = blockhash;
       tx.partialSign(...[multisig]);
 
@@ -1016,7 +1016,7 @@ export const SafeView = () => {
 
       const tx = new Transaction().add(...ixs);
       tx.feePayer = publicKey;
-      const { blockhash } = await connection.getRecentBlockhash("confirmed");
+      const { blockhash } = await connection.getLatestBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
 
       if (signers.length) {

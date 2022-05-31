@@ -1128,6 +1128,11 @@ export const AccountsNewView = () => {
     setTransactionAssetFees(fees);
   },[resetTransactionStatus]);
 
+  const closeCreateAssetModal = useCallback(() => {
+    resetTransactionStatus();
+    setIsCreateAssetModalVisible(false);
+  }, [resetTransactionStatus]);
+
   const onAssetCreated = useCallback(() => {
     resetTransactionStatus();
     openNotification({
@@ -1211,7 +1216,7 @@ export const AccountsNewView = () => {
 
       const tx = new Transaction().add(...ixs);
       tx.feePayer = publicKey;
-      const { blockhash } = await connection.getRecentBlockhash("confirmed");
+      const { blockhash } = await connection.getLatestBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
 
       if (signers.length) {
@@ -1436,30 +1441,32 @@ export const AccountsNewView = () => {
               currentOperation: TransactionStatus.TransactionFinished
             });
             onAssetCreated();
-            setIsCreateAssetModalVisible(false);
+            closeCreateAssetModal();
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
 
   }, [
-    clearTxConfirmationContext, 
-    resetTransactionStatus, 
-    wallet, 
-    connection, 
-    selectedMultisig, 
-    publicKey, 
-    setTransactionStatus, 
-    transactionAssetFees.blockchainFee, 
-    transactionAssetFees.mspFlatFee, 
-    nativeBalance, 
-    transactionStatus.currentOperation, 
-    transactionCancelled, 
-    startFetchTxSignatureInfo, 
-    onAssetCreated
+    wallet,
+    publicKey,
+    connection,
+    nativeBalance,
+    selectedMultisig,
+    transactionCancelled,
+    transactionAssetFees.mspFlatFee,
+    transactionAssetFees.blockchainFee,
+    transactionStatus.currentOperation,
+    clearTxConfirmationContext,
+    startFetchTxSignatureInfo,
+    resetTransactionStatus,
+    closeCreateAssetModal,
+    setTransactionStatus,
+    onAssetCreated,
   ]);
 
   const onAcceptCreateVault = useCallback((params: any) => {
+    consoleOut('Create asset payload:', params);
     onExecuteCreateAssetTx(params);
   },[
     onExecuteCreateAssetTx
@@ -4675,7 +4682,7 @@ export const AccountsNewView = () => {
 
       <MultisigCreateAssetModal
         handleOk={onAcceptCreateVault}
-        handleClose={() => setIsCreateAssetModalVisible(false)}
+        handleClose={closeCreateAssetModal}
         isVisible={isCreateAssetModalVisible}
         nativeBalance={nativeBalance}
         transactionFees={transactionAssetFees}
