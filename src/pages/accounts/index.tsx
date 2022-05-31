@@ -56,7 +56,7 @@ import { AddressDisplay } from '../../components/AddressDisplay';
 import { ReceiveSplOrSolModal } from '../../components/ReceiveSplOrSolModal';
 import { SendAssetModal } from '../../components/SendAssetModal';
 import { AccountAssetAction, EventType, InvestItemPaths, OperationType, TransactionStatus } from '../../models/enums';
-import { consoleOut, copyText, getTransactionStatusForLogs, isValidAddress, kFormatter, toUsCurrency } from '../../utils/ui';
+import { consoleOut, copyText, getTransactionStatusForLogs, isLocal, isValidAddress, kFormatter, toUsCurrency } from '../../utils/ui';
 import { WrapSolModal } from '../../components/WrapSolModal';
 import { UnwrapSolModal } from '../../components/UnwrapSolModal';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
@@ -134,8 +134,10 @@ export const AccountsNewView = () => {
     multisigSolBalance,
     streamProgramAddress,
     streamV2ProgramAddress,
+    pendingMultisigTxCount,
     previousWalletConnectState,
     setHighLightableMultisigId,
+    setPendingMultisigTxCount,
     showDepositOptionsModal,
     setAddAccountPanelOpen,
     getTokenPriceByAddress,
@@ -1020,8 +1022,12 @@ export const AccountsNewView = () => {
         !multisigClient ||
         !multisigSerumClient ||
         !accountAddress ||
-        inspectedAccountType !== "multisig" ||
         !loadingMultisigAccounts) {
+      return;
+    }
+
+    if (inspectedAccountType !== "multisig") {
+      setPendingMultisigTxCount(undefined);
       return;
     }
 
@@ -1062,20 +1068,30 @@ export const AccountsNewView = () => {
           if (item) {
             consoleOut('selectedMultisig:', item, 'crimson');
             setSelectedMultisig(item);
+            setPendingMultisigTxCount(item.pendingTxsAmount);
+          } else {
+            setSelectedMultisig(undefined);
+            setPendingMultisigTxCount(undefined);
           }
         })
         .catch((err: any) => {
           console.error(err);
+          setPendingMultisigTxCount(undefined);
         })
         .finally(() => setLoadingMultisigAccounts(false));
-
       })
-      .catch((err: any) => console.error(err))
+      .catch((err: any) => {
+        console.error(err);
+        setPendingMultisigTxCount(undefined);
+      })
       .finally(() => setLoadingMultisigAccounts(false));
     });
 
     return () => {
       clearTimeout(timeout);
+      if (pendingMultisigTxCount) {
+        setPendingMultisigTxCount(undefined);
+      }
     }
 
   }, [
@@ -1084,7 +1100,9 @@ export const AccountsNewView = () => {
     multisigClient,
     multisigSerumClient,
     inspectedAccountType,
+    pendingMultisigTxCount,
     loadingMultisigAccounts,
+    setPendingMultisigTxCount,
   ]);
 
   //////////////////////
@@ -3505,6 +3523,19 @@ export const AccountsNewView = () => {
   // Rendering //
   ///////////////
 
+  const renderMultisigPendinTxNotification = () => {
+    if (pendingMultisigTxCount && pendingMultisigTxCount > 0) {
+      return (
+        <div key="pending-proposals" className="transaction-list-row no-pointer p-0 shift-up-1">
+          <div className="description-cell">
+            <div className="fg-warning font-bold">There are pending proposals on this account</div>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
   const renderNetworth = () => {
     return (
       <div className={`networth-list-item flex-fixed-right no-pointer ${selectedCategory === "networth" ? 'selected' : ''}`} onClick={() => {
@@ -4208,7 +4239,7 @@ export const AccountsNewView = () => {
     <>
       {/* {isLocal() && (
         <div className="debug-bar">
-          <span className="ml-1">incoming:</span><span className="ml-1 font-bold fg-dark-active">{streamsSummary ? streamsSummary.incomingAmount : '-'}</span>
+          <span className="ml-1">pendingMultisigTxCount:</span><span className="ml-1 font-bold fg-dark-active">{pendingMultisigTxCount !== undefined ? pendingMultisigTxCount : '-'}</span>
           <span className="ml-1">outgoing:</span><span className="ml-1 font-bold fg-dark-active">{streamsSummary ? streamsSummary.outgoingAmount : '-'}</span>
           <span className="ml-1">totalAmount:</span><span className="ml-1 font-bold fg-dark-active">{streamsSummary ? streamsSummary.totalAmount : '-'}</span>
           <span className="ml-1">totalNet:</span><span className="ml-1 font-bold fg-dark-active">{streamsSummary ? streamsSummary.totalNet : '-'}</span>
@@ -4300,6 +4331,9 @@ export const AccountsNewView = () => {
                         </div>
                       </div>
                       <div className="inner-container">
+
+                        {/* Pending Multisig proposals notification */}
+                        {inspectedAccountType === "multisig" && renderMultisigPendinTxNotification()}
 
                         {/* Net Worth header (sticky) */}
                         {renderNetworth()}

@@ -6136,6 +6136,64 @@ code {
   width: 5.8rem !important;
   white-space: normal !important;
 }
+.status {
+  position: absolute;
+  display: inline-block;
+  border-radius: 50%;
+  color: var(--color-secondary-alpha-75);
+  width: 10px;
+  height: 10px;
+  z-index: 1;
+  &.top-right {
+    right: 5px;
+    top: 5px;
+    }
+  &.bottom-right {
+    top: auto;
+    right: -2px;
+    bottom: 2px;
+  }
+  &.primary {
+    border: 2px solid var(--color-primary);
+    background-color: 2px solid var(--color-primary);
+  }
+  &.secondary {
+    border: 2px solid var(--color-secondary);
+    background-color: var(--color-secondary);
+  }
+  &.info {
+    border: 2px solid var(--color-notify-info);
+    background-color: var(--color-notify-info);
+  }
+  &.success {
+    border: 2px solid var(--color-notify-success);
+    background-color: var(--color-notify-success);
+  }
+  &.warning {
+    border: 2px solid var(--color-notify-warning);
+    background-color: var(--color-notify-warning);
+  }
+  &.orange {
+    border: 2px solid var(--color-orange);
+    background-color: var(--color-orange);
+  }
+  &.golden {
+    border: 2px solid var(--color-golden);
+    background-color: var(--color-golden);
+  }
+  &.orange-red {
+    border: 2px solid var(--color-orange-red);
+    background-color: var(--color-orange-red);
+  }
+  &.error {
+    border: 2px solid var(--color-notify-error);
+    background-color: var(--color-notify-error);
+  }
+  &.darken {
+    border: 2px solid var(--color-secondary-alpha-20);
+    background-color: var(--color-secondary-alpha-20);
+  }
+}
 
 .badge {
   min-width: 24px;
