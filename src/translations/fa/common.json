@@ -606,20 +606,20 @@
 			"new-authority-input-placeholder": "آدرس آپگرید اختیارات برنامه جدید"
 		},
 		"transfer-authority": {
-			"asset-auth-destination-address-disclaimer": "I confirm the above New Authority Address entered or selected is a Multisig Account address and NOT a regular wallet address. I acknowledge that if I provide a non Multisig address, it will cause a permanent loss of the asset and its funds.",
+			"asset-auth-destination-address-disclaimer": "I'm sure the new owner address doesn't belong to an exchange.",
 			"main-cta": "تنظیم اختیارات",
 			"main-cta-busy": "تنظیم کردن اختیارات",
-			"modal-title": "انتقال مالکیت",
+			"modal-title": "Change asset ownership",
 			"multisig-already-owns-the-asset": "Multisig انتخاب شده در حال حاضر برای این خزانه معتبر است",
-			"multisig-selector-label": "اختیارات جدید (multisig)",
-			"multisig-selector-placeholder": "یک آدرس Multisig را انتخاب یا وارد کنید",
+			"multisig-selector-label": "New owner account",
+			"multisig-selector-placeholder": "Select or enter the address of the new owner",
 			"selected-asset-label": "خزانه انتخاب شده",
 			"success-message": "اختیارات جدید خزانه با موفقیت تنظیم شد."
 		},
 		"transfer-tokens": {
 			"main-cta": "شروع درخواست",
 			"main-cta-busy": "شروع کردن درخواست",
-			"modal-title": "درخواست انتقال وجه ارسال کنید",
+			"modal-title": "Propose funds transfer",
 			"source-address-label": "انتقال از",
 			"source-address-placeholder": "آدرس اکانت منبع را وارد کنید",
 			"success-message": "توکن ها با موفقیت منتقل شدند.",

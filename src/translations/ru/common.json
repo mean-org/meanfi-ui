@@ -607,20 +607,20 @@
 			"new-authority-input-placeholder": "Address of new program upgrade authority"
 		},
 		"transfer-authority": {
-			"asset-auth-destination-address-disclaimer": "I confirm the above New Authority Address entered or selected is a Multisig Account address and NOT a regular wallet address. I acknowledge that if I provide a non Multisig address, it will cause a permanent loss of the asset and its funds.",
+			"asset-auth-destination-address-disclaimer": "I'm sure the new owner address doesn't belong to an exchange.",
 			"main-cta": "Set authority",
 			"main-cta-busy": "Setting authority",
-			"modal-title": "Transfer ownership",
+			"modal-title": "Change asset ownership",
 			"multisig-already-owns-the-asset": "Selected multisig is already authority for this asset",
-			"multisig-selector-label": "New authority (multisig)",
-			"multisig-selector-placeholder": "Select or enter a multisig address",
+			"multisig-selector-label": "New owner account",
+			"multisig-selector-placeholder": "Select or enter the address of the new owner",
 			"selected-asset-label": "Selected asset",
 			"success-message": "New vault authority set successfully."
 		},
 		"transfer-tokens": {
 			"main-cta": "Start Request",
 			"main-cta-busy": "Starting Request",
-			"modal-title": "Propose send funds",
+			"modal-title": "Propose funds transfer",
 			"source-address-label": "Transfer from",
 			"source-address-placeholder": "Enter the address of the source account",
 			"success-message": "Tokens transferred successfully.",
