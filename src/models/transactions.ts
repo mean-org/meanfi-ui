@@ -1,5 +1,5 @@
 import { TokenInfo } from "@solana/spl-token-registry";
-import { ConfirmedTransaction } from "@solana/web3.js";
+import { ConfirmedTransaction, PublicKey } from "@solana/web3.js";
 
 export type Confirmations = number | "max";
 export type Timestamp = number | "unavailable";
@@ -25,6 +25,7 @@ export interface UserTokenAccount extends TokenInfo {
     valueInUsd?: number;        // To pre.fill the value in USD from the balance
     displayIndex?: number;      // To keep consecutive indexing while merging lists
     isAta?: boolean;
+    owner?: string;
 }
 
 export const isNativeSolAccountUsed = (transaction: TransactionWithSignature): boolean => {

@@ -86,6 +86,7 @@ import { createProgram, getDepositIx, getWithdrawIx, getGatewayToken } from '@me
 import { NATIVE_SOL } from '../../utils/tokens';
 import { UserTokenAccount } from '../../models/transactions';
 import { ACCOUNT_LAYOUT } from '../../utils/layouts';
+import { MultisigTxResultModal } from '../../components/MultisigTxResultModal';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from "../../contexts/transaction-status";
 import { AppUsageEvent } from '../../utils/segment-service';
 import { segmentAnalytics } from "../../App";
@@ -155,6 +156,7 @@ export const SafeView = () => {
   const [solanaApps, setSolanaApps] = useState<App[]>([]);
   const [serumAccounts, setSerumAccounts] = useState<MultisigInfo[]>([]);
   const [serumMultisigTxs, setSerumMultisigTxs] = useState<MultisigTransaction[]>([]);
+  const [operationPayload, setOperationPayload] = useState<any>(undefined);
   const [isProposalDetails, setIsProposalDetails] = useState(false);
   const [proposalSelected, setProposalSelected] = useState<MultisigTransaction | undefined>();
   const [isProgramDetails, setIsProgramDetails] = useState(false);
@@ -2046,6 +2048,13 @@ export const SafeView = () => {
     enqueueTransactionConfirmation
   ]);
 
+  const [isMultisigTxResultModalVisible, setIsMultisigTxResultModalVisible] = useState(false);
+  const showMultisigTxResultModal = useCallback(() => setIsMultisigTxResultModalVisible(true), []);
+  const closeMultisigTxResultModal = useCallback(() => {
+    setIsMultisigTxResultModalVisible(false);
+    resetTransactionStatus();
+  }, [resetTransactionStatus]);
+
   const [isMultisigProposalModalVisible, setMultisigProposalModalVisible] = useState(false);
 
   // Transaction confirm and execution modal launched from each Tx row
@@ -2058,6 +2067,11 @@ export const SafeView = () => {
   //   );
   //   setMultisigActionTransactionModalVisible(true);
   // }, [resetTransactionStatus]);
+
+
+  const saveOperationPayloadOnStart = (payload: any) => {
+    setOperationPayload(payload);
+  };
 
   const onAcceptMultisigActionModal = (item: MultisigTransaction) => {
     consoleOut('onAcceptMultisigActionModal:', item, 'blue');
@@ -2462,18 +2476,27 @@ export const SafeView = () => {
             })`
           });
           customLogger.logWarning('Finish Approoved transaction failed', { transcript: transactionLog });
+          const notifContent = t('transactions.status.tx-start-failure', {
+            accountBalance: getTokenAmountAndSymbolByTokenAddress(
+              nativeBalance,
+              NATIVE_SOL_MINT.toBase58()
+            ),
+            feeAmount: getTokenAmountAndSymbolByTokenAddress(
+              minRequired,
+              NATIVE_SOL_MINT.toBase58()
+            )});
           openNotification({
-            description: t('transactions.status.tx-start-failure', {
-              accountBalance: getTokenAmountAndSymbolByTokenAddress(
-                nativeBalance,
-                NATIVE_SOL_MINT.toBase58()
-              ),
-              feeAmount: getTokenAmountAndSymbolByTokenAddress(
-                minRequired,
-                NATIVE_SOL_MINT.toBase58()
-              )}),
+            description: notifContent,
             type: "info"
           });
+
+          const txStatus = {
+            customError: notifContent,
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.TransactionStartFailure
+          } as TransactionStatusInfo;
+          setTransactionStatus(txStatus);
+
           return false;
         }
 
@@ -2641,7 +2664,7 @@ export const SafeView = () => {
           } else if (error.toString().indexOf('0xbc4') !== -1) {
             txStatus.customError = {
               message: 'Your transaction failed to submit due to Account Not Initialized. Please initialize and fund the Token Account of the Investor.',
-              data: undefined
+              data: selectedMultisig?.authority.toBase58()
             }; 
           } else if (error.toString().indexOf('0x1') !== -1) {
             const asset = data.transaction.operation === OperationType.TransferTokens
@@ -2695,28 +2718,36 @@ export const SafeView = () => {
                 transactionId: data.transaction.id
               }
             });
-          } else { setIsBusy(false); }
+          } else {
+            showMultisigTxResultModal();
+            setIsBusy(false);
+          }
         } else { 
           setIsBusy(false);
           onExecuteFinishTxCancelled();
         }
-      } else { setIsBusy(false); }
+      } else {
+        showMultisigTxResultModal();
+        setIsBusy(false);
+      }
     }
 
   }, [
-    clearTxConfirmationContext, 
-    resetTransactionStatus, 
+    t,
     wallet, 
     publicKey, 
-    multisigClient, 
-    setTransactionStatus, 
     nativeBalance, 
-    transactionStatus.currentOperation, 
-    t, 
     connection, 
+    multisigClient,
+    selectedMultisig,
     transactionCancelled,
     enqueueTransactionConfirmation, 
-    onExecuteFinishTxCancelled
+    transactionStatus.currentOperation,
+    clearTxConfirmationContext,
+    onExecuteFinishTxCancelled,
+    showMultisigTxResultModal,
+    resetTransactionStatus,
+    setTransactionStatus,
   ]);
 
   const onExecuteCancelTx = useCallback(async (data: any) => {
@@ -3088,16 +3119,10 @@ export const SafeView = () => {
     };
 
     const refreshSelectedProposal = (extras: any) => {
-      console.log('multisigClient', multisigClient);
-      console.log('extras', extras);
-      console.log('publicKey', publicKey);
       if (multisigClient && publicKey && extras && extras.multisigId && extras.transactionId) {
         multisigClient
           .getMultisigTransaction(extras.multisigId, extras.transactionId, publicKey)
-          .then((tx: any) => {
-            console.log('y entro again', tx);
-            setProposalSelected(tx);
-          })
+          .then((tx: any) => setProposalSelected(tx))
           .catch((err: any) => console.error(err));
       }
     };
@@ -3254,7 +3279,6 @@ export const SafeView = () => {
 
   },[]);
 
-  
   const getPricePerToken = useCallback((token: UserTokenAccount): number => {
     if (!token || !coinPrices) { return 0; }
 
@@ -3365,11 +3389,11 @@ export const SafeView = () => {
   
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    publicKey, 
-    connection, 
-    multisigClient, 
-    selectedMultisig, 
-    highLightableMultisigId, 
+    publicKey,
+    connection,
+    multisigClient,
+    selectedMultisig,
+    highLightableMultisigId,
     loadingMultisigAccounts,
     // serumAccounts
   ]);
@@ -3697,13 +3721,13 @@ export const SafeView = () => {
 
   return (
     <>
-      {isLocal() && (
+      {/* {isLocal() && (
         <div className="debug-bar">
           <span className="ml-1">isBusy:</span><span className="ml-1 font-bold fg-dark-active">{isBusy ? 'true' : 'false'}</span>
           <span className="ml-1">haveMultisig:</span><span className="ml-1 font-bold fg-dark-active">{selectedMultisig ? 'true' : 'false'}</span>
           <span className="ml-1">multisigId:</span><span className="ml-1 font-bold fg-dark-active">{selectedMultisig ? `${selectedMultisig.id}` : '-'}</span>
         </div>
-      )}
+      )} */}
 
       <div className="container main-container">
 
@@ -3844,6 +3868,7 @@ export const SafeView = () => {
                             selectedMultisig={selectedMultisig}
                             onProposalApprove={onExecuteApproveTx}
                             onProposalExecute={onExecuteFinishTx}
+                            onOperationStarted={saveOperationPayloadOnStart}
                             connection={connection}
                             solanaApps={solanaApps}
                             appsProvider={appsProvider}
@@ -3942,9 +3967,28 @@ export const SafeView = () => {
         isBusy={isBusy}
       />
 
+      {isMultisigTxResultModalVisible && (
+        <MultisigTxResultModal
+          handleOk={() => {
+            resetTransactionStatus();
+            closeMultisigTxResultModal();
+            if (operationPayload) {
+              if (operationPayload.operation) {
+                onExecuteFinishTx(operationPayload);
+              } else {
+                onExecuteApproveTx(operationPayload);
+              }
+            }
+          }}
+          handleClose={closeMultisigTxResultModal}
+          isBusy={isBusy}
+          highlightedMultisigTx={highlightedMultisigTx}
+          isVisible={isMultisigTxResultModalVisible}
+        />
+      )}
+
       <PreFooter />
     </>
   );
 
 };
-

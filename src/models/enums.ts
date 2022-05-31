@@ -136,8 +136,10 @@ export enum AccountAssetAction {
     Receive = 4,
     UnwrapSol = 5,
     WrapSol = 6,
+    MergeAccounts = 7,
     Divider = 10,
     Refresh = 11,
     CloseAccount = 12,
-    Share = 13
+    Share = 13,
+    Close = 14
 }

@@ -29,6 +29,7 @@ export const ResumeItem = (props: {
   programSize?: number;
   rightContent?: any;
   rightIcon?: any;
+  hasRightIcon?: boolean;
   rightIconHasDropdown?: boolean;
   dropdownMenu?: any;
 }) => {
@@ -36,7 +37,7 @@ export const ResumeItem = (props: {
     theme
   } = useContext(AppStateContext);
 
-  const { src, img, version, title, subtitle, expires, executedOn, approved, rejected, status, needs, isProposalDetails, isProgram, isAsset, programSize, rightContent, rightIcon, rightIconHasDropdown, dropdownMenu } = props;
+  const { src, img, version, title, subtitle, expires, executedOn, approved, rejected, status, needs, isProposalDetails, isProgram, isAsset, programSize, rightContent, rightIcon, hasRightIcon, rightIconHasDropdown, dropdownMenu } = props;
 
   const { t } = useTranslation('common');
 
@@ -113,7 +114,7 @@ export const ResumeItem = (props: {
 
   return (
     <>
-      <Row gutter={[8, 8]} className={`resume-item-container ${!isProposalDetails ? "hover-list list-item" : "justify-content-space-between pl-1"} ${isProposalDetails ? "align-items-end" : ""}`}>
+      <Row gutter={[8, 8]} key="resume-item" className={`resume-item-container ${!isProposalDetails ? "hover-list list-item" : "justify-content-space-between pl-1"} ${isProposalDetails ? "align-items-end" : ""}`}>
         <Col className="resume-left-container">
           {(src || img) && (
             <div className="img-container">
@@ -202,31 +203,34 @@ export const ResumeItem = (props: {
             )}
           </div>
           {!isProposalDetails && (
-            rightIconHasDropdown ? (
-              <Dropdown
-                overlay={dropdownMenu}
-                placement="bottomRight"
-                trigger={["click"]}>
-                <span className="ellipsis-icon icon-button-container">
+            hasRightIcon ? (
+
+              rightIconHasDropdown ? (
+                <Dropdown
+                  overlay={dropdownMenu}
+                  placement="bottomRight"
+                  trigger={["click"]}>
+                  <span className="ellipsis-icon icon-button-container">
+                    <Button
+                      type="default"
+                      shape="circle"
+                      size="middle"
+                      icon={rightIcon}
+                      onClick={(e) => e.preventDefault()}
+                    />
+                  </span>
+                </Dropdown>
+              ) : (
+                <span className="icon-button-container">
                   <Button
                     type="default"
                     shape="circle"
                     size="middle"
                     icon={rightIcon}
-                    onClick={(e) => e.preventDefault()}
                   />
                 </span>
-              </Dropdown>
-            ) : (
-              <span className="icon-button-container">
-                <Button
-                  type="default"
-                  shape="circle"
-                  size="middle"
-                  icon={rightIcon}
-                />
-              </span>
-            )
+              )
+            ) : null
           )}
         </Col>
       </Row>

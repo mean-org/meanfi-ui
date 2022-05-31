@@ -8,12 +8,12 @@ import { consoleOut, getTransactionOperationDescription, isValidAddress } from '
 import { isError } from '../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TransactionFees } from '@mean-dao/money-streaming';
-import { getTokenAmountAndSymbolByTokenAddress, makeDecimal, shortenAddress } from '../../utils/utils';
-import { MultisigVault } from '../../models/multisig';
+import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
 import { Identicon } from '../Identicon';
 import { FALLBACK_COIN_IMAGE } from '../../constants';
 
 import { MultisigInfo } from "@mean-dao/mean-multisig-sdk";
+import { UserTokenAccount } from '../../models/transactions';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -27,8 +27,8 @@ export const MultisigVaultTransferAuthorityModal = (props: {
   transactionFees: TransactionFees;
   selectedMultisig: MultisigInfo | undefined;
   multisigAccounts: MultisigInfo[];
-  selectedVault: MultisigVault | undefined;
-  assets: MultisigVault[]
+  selectedVault: UserTokenAccount | undefined;
+  assets: UserTokenAccount[];
 }) => {
   const { t } = useTranslation('common');
   const {
@@ -81,8 +81,8 @@ export const MultisigVaultTransferAuthorityModal = (props: {
     setSelectedAuthority(e);
   }
 
-  const renderVault = (item: MultisigVault) => {
-    const token = getTokenByMintAddress(item.mint.toBase58());
+  const renderVault = (item: UserTokenAccount) => {
+    const token = getTokenByMintAddress(item.address as string);
     const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
       event.currentTarget.src = FALLBACK_COIN_IMAGE;
       event.currentTarget.className = "error";
@@ -95,7 +95,7 @@ export const MultisigVaultTransferAuthorityModal = (props: {
             {token && token.logoURI ? (
               <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
             ) : (
-              <Identicon address={item.mint.toBase58()} style={{
+              <Identicon address={item.address as string} style={{
                 width: "28px",
                 display: "inline-flex",
                 height: "26px",
@@ -106,13 +106,13 @@ export const MultisigVaultTransferAuthorityModal = (props: {
           </div>
         </div>
         <div className="description-cell">
-          <div className="title text-truncate">{token ? token.symbol : `Unknown token [${shortenAddress(item.mint.toBase58(), 6)}]`}</div>
-          <div className="subtitle text-truncate">{shortenAddress(item.address.toBase58(), 8)}</div>
+          <div className="title text-truncate">{token ? token.symbol : `Unknown token [${shortenAddress(item.address as string, 6)}]`}</div>
+          <div className="subtitle text-truncate">{shortenAddress(item.publicAddress as string, 8)}</div>
         </div>
         <div className="rate-cell">
           <div className="rate-amount">
             {getTokenAmountAndSymbolByTokenAddress(
-              makeDecimal(item.amount, token?.decimals || 6),
+              item.balance || 0,
               token ? token.address as string : '',
               true
             )}

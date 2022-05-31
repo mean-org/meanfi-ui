@@ -1,26 +1,20 @@
-// import { Connection, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { Alert, Button, Col, Dropdown, Menu, Row, Tooltip } from "antd";
 import { useCallback, useContext, useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { CopyExtLinkGroup } from "../../../../../components/CopyExtLinkGroup";
 import { MultisigOwnersView } from "../../../../../components/MultisigOwnersView";
 import { TabsMean } from "../../../../../components/TabsMean";
 import { AppStateContext } from "../../../../../contexts/appstate";
-// import { useConnectionConfig } from "../../../../../contexts/connection";
 import { IconEllipsisVertical } from "../../../../../Icons";
-import { MultisigVault } from "../../../../../models/multisig";
 import { UserTokenAccount } from "../../../../../models/transactions";
 import { NATIVE_SOL } from "../../../../../utils/tokens";
-// import { NATIVE_SOL } from "../../../../../utils/tokens";
-
 import { isDev, isLocal, toUsCurrency } from "../../../../../utils/ui";
 import { getTokenByMintAddress, shortenAddress } from "../../../../../utils/utils";
 
 export const SafeInfo = (props: {
   selectedMultisig?: any;
-  multisigVaults?: MultisigVault[];
+  multisigVaults?: any;
   safeNameImg?: string;
   safeNameImgAlt?: string;
   onNewProposalMultisigClick?: any;
@@ -38,9 +32,10 @@ export const SafeInfo = (props: {
     isWhitelisted,
     totalSafeBalance,
     setTotalSafeBalance
+
   } = useContext(AppStateContext);
 
-  const { solBalance, selectedMultisig, multisigVaults, safeNameImg, safeNameImgAlt, onNewProposalMultisigClick, onNewCreateAssetClick, onEditMultisigClick, onRefreshTabsInfo, tabs, selectedTab, isTxInProgress } = props;
+  const { solBalance, selectedMultisig, multisigVaults, safeNameImg, safeNameImgAlt, onNewProposalMultisigClick, onEditMultisigClick, onRefreshTabsInfo, tabs, selectedTab, isTxInProgress } = props;
 
   // const { t } = useTranslation('common');
   const navigate = useNavigate();
@@ -113,19 +108,14 @@ export const SafeInfo = (props: {
   // Fetch safe balance.
   useEffect(() => {
 
-    if (!selectedMultisig) { return; }
+    if (!selectedMultisig || !multisigVaults || !multisigVaults.length) { return; }
     
-    let usdValue = 0;
+    const timeout = setTimeout(() => {
 
-    (async () => {
-
-      // const solBalance = await connection.getBalance(selectedMultisig.authority);  
-      usdValue = (solBalance / LAMPORTS_PER_SOL) * getPricePerToken(NATIVE_SOL);
+      let usdValue = (solBalance / LAMPORTS_PER_SOL) * getPricePerToken(NATIVE_SOL);
       const cumulative = new Array<any>();
 
-      if (!multisigVaults) { return; }
-  
-      multisigVaults.forEach(item => {
+      multisigVaults.forEach((item: any) => {
 
         const token = getTokenByMintAddress(item.mint.toBase58(), splTokenList);
 
@@ -142,10 +132,13 @@ export const SafeInfo = (props: {
           })
         }
       });
-
+      
       setTotalSafeBalance(usdValue);
+    });
 
-    })();
+    return () => {
+      clearTimeout(timeout);
+    }
 
   }, [
     getPricePerToken,
@@ -193,15 +186,15 @@ export const SafeInfo = (props: {
   // Dropdown (three dots button)
   const menu = (
     <Menu>
-      <Menu.Item key="0" onClick={onEditMultisigClick}>
+      <Menu.Item key="ms-00" onClick={onEditMultisigClick}>
         <span className="menu-item-text">Edit safe</span>
       </Menu.Item>
       {isUnderDevelopment() && (
-        <Menu.Item key="1" onClick={() => {}}>
+        <Menu.Item key="ms-01" onClick={() => {}}>
           <span className="menu-item-text">Delete safe</span>
         </Menu.Item>
       )}
-      <Menu.Item key="0" onClick={onRefreshTabsInfo}>
+      <Menu.Item key="ms-02" onClick={onRefreshTabsInfo}>
         <span className="menu-item-text">Refresh</span>
       </Menu.Item>
     </Menu>
@@ -226,7 +219,7 @@ export const SafeInfo = (props: {
 
       <Row gutter={[8, 8]} className="safe-btns-container mb-1">
         <Col xs={20} sm={18} md={20} lg={18} className="btn-group">
-        <Button
+          <Button
             type="default"
             shape="round"
             size="small"
@@ -248,7 +241,7 @@ export const SafeInfo = (props: {
                 View assets
               </div>
           </Button>
-          <Button
+          {/* <Button
             type="default"
             shape="round"
             size="small"
@@ -258,7 +251,7 @@ export const SafeInfo = (props: {
               <div className="btn-content">
                 Create asset
               </div>
-          </Button>
+          </Button> */}
         </Col>
         
         <Col xs={4} sm={6} md={4} lg={6}>
@@ -280,7 +273,7 @@ export const SafeInfo = (props: {
         </Col>
       </Row>
 
-      {(selectedMultisig.balance && ((selectedMultisig.balance / LAMPORTS_PER_SOL) < 0.005)) ? (
+      {(selectedMultisig.balance && ((selectedMultisig.balance / LAMPORTS_PER_SOL) <= 0)) ? (
         <Row gutter={[8, 8]}>
           <Col span={24} className="alert-info-message pr-6">
             <Alert message="SOL balance is very low in this safe. You'll need some if you want to make proposals." type="info" showIcon closable />
