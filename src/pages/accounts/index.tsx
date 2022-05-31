@@ -329,7 +329,7 @@ export const AccountsNewView = () => {
     resetTransactionStatus,
   ]);
 
-  // Receive SPL or SOL modal
+  // Deposit SPL or SOL modal
   const [isReceiveSplOrSolModalOpen, setIsReceiveSplOrSolModalOpen] = useState(false);
   const hideReceiveSplOrSolModal = useCallback(() => setIsReceiveSplOrSolModalOpen(false), []);
   const showReceiveSplOrSolModal = useCallback(() => setIsReceiveSplOrSolModalOpen(true), []);
@@ -3542,7 +3542,7 @@ export const AccountsNewView = () => {
         // setSelectedCategory("networth");
         // setSelectedAsset(undefined);
       }}>
-        <div className="font-bold font-size-110 left">Net Worth</div>
+        <div className="font-bold font-size-110 left">{!isInspectedAccountTheConnectedWallet() ? "Treasury Balance" : "Net Worth"}</div>
         <div className="font-bold font-size-110 right">
           {
             netWorth
@@ -3927,17 +3927,6 @@ export const AccountsNewView = () => {
           ) : inspectedAccountType && inspectedAccountType === "multisig" ? (
             <Row gutter={[8, 8]} className="safe-btns-container mb-1">
               <Col xs={24} sm={24} md={24} lg={24} className="asset-btn-group btn-group">
-              {/* actions.push({
-      action: AccountAssetAction.Deposit,
-      caption: 'Deposit',
-      isVisible: true,
-      uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
-      disabled: false,
-      uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${AccountAssetAction.Deposit}`,
-      tooltip: '',
-      callBack: showReceiveSplOrSolModal
-    });
-    ctaItems++; */}
                 <Button
                   type="default"
                   shape="round"
@@ -4293,7 +4282,7 @@ export const AccountsNewView = () => {
                                 </Tooltip>
                               </span>
                             </div>
-                            <span className="title">Safe balances</span>
+                            <span className="title">Multisig safe</span>
                           </>
                         ) : (
                           <span className="title">{t('assets.screen-title')}</span>
@@ -4390,7 +4379,7 @@ export const AccountsNewView = () => {
                           </div>
 
                           <div className="asset-category-title flex-fixed-right">
-                            <div className="title">Assets in wallet ({accountTokens.length})</div>
+                            <div className="title">Tokens ({accountTokens.length})</div>
                             <div className="amount">{toUsCurrency(totalTokenAccountsValue)}</div>
                           </div>
                           <div className="asset-category flex-column">
@@ -4523,6 +4512,7 @@ export const AccountsNewView = () => {
         <ReceiveSplOrSolModal
           address={selectedAsset.publicAddress || ''}
           accountAddress={accountAddress}
+          multisigAddress={address as string}
           isVisible={isReceiveSplOrSolModalOpen}
           handleClose={hideReceiveSplOrSolModal}
           tokenSymbol={selectedAsset.symbol}

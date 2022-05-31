@@ -14,6 +14,7 @@ export const ReceiveSplOrSolModal = (props: {
   address: string;
   accountAddress: string;
   tokenSymbol: string;
+  multisigAddress: string;
 }) => {
   const { t } = useTranslation("common");
   const { publicKey } = useWallet();
@@ -42,10 +43,19 @@ export const ReceiveSplOrSolModal = (props: {
 
           {(isWalletAddress() || overrideWithWallet) ? (
             <div className={theme === 'light' ? 'qr-container bg-white' : 'qr-container bg-black'}>
-              <QRCodeSVG
-                value={publicKey?.toBase58() as string}
-                size={200}
-              />
+              <>
+                {!props.multisigAddress ? (
+                  <QRCodeSVG
+                    value={publicKey?.toBase58() as string}
+                    size={200}
+                  />
+                ) : (
+                  <QRCodeSVG
+                    value={props.multisigAddress as string}
+                    size={200}
+                  />
+                )}
+              </>
             </div>
           ) : (
             <div className={theme === 'light' ? 'qr-container bg-white' : 'qr-container bg-black'}>
@@ -58,12 +68,23 @@ export const ReceiveSplOrSolModal = (props: {
 
           {(isWalletAddress() || overrideWithWallet) ? (
             <div className="flex-center font-size-70 mb-2">
-              <AddressDisplay
-                address={publicKey?.toBase58() as string}
-                showFullAddress={true}
-                iconStyles={{ width: "15", height: "15" }}
-                newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${publicKey?.toBase58()}${getSolanaExplorerClusterParam()}`}
-              />
+              <>
+                {!props.multisigAddress ? (
+                  <AddressDisplay
+                    address={publicKey?.toBase58() as string}
+                    showFullAddress={true}
+                    iconStyles={{ width: "15", height: "15" }}
+                    newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${publicKey?.toBase58()}${getSolanaExplorerClusterParam()}`}
+                  />
+                ) : (
+                  <AddressDisplay
+                    address={props.multisigAddress as string}
+                    showFullAddress={true}
+                    iconStyles={{ width: "15", height: "15" }}
+                    newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${props.multisigAddress}${getSolanaExplorerClusterParam()}`}
+                  />
+                )}
+              </>
             </div>
           ) : (
             <div className="flex-center font-size-70 mb-2">
