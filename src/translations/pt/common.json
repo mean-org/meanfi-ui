@@ -386,15 +386,6 @@
 	"multisig": {
 		"add-participant-cta": "Adicionar participante",
 		"back-to-multisig-accounts-cta": "Back to Multisig Safes",
-		"create-asset": {
-			"main-cta": "Crio",
-			"main-cta-busy": "Criando cofre",
-			"modal-title": "Criar um cofre multisig",
-			"no-token": "Selecionar token",
-			"success-message": "Seu cofre multisig foi criado com sucesso",
-			"token-label": "Amount to transfer",
-			"token-placeholder": "Digite o endereço da mint do token"
-		},
 		"create-multisig": {
 			"fee-info-label": "The fee to create this multisig is",
 			"main-cta": "Crio",
@@ -417,7 +408,16 @@
 			"multisig-threshold-question-mark-tooltip": "As best practice, always have more multisig signers than the minimum required signers. A 2-of-3 multisig is the most basic setup where 2 of the 3 participants are required to execute a transaction.",
 			"success-message": "Sua nova conta multisig foi criada com sucesso."
 		},
-		"create-new-multisig-account-cta": "Criar multisig",
+		"create-new-multisig-account-cta": "Create safe",
+		"create-asset": {
+			"main-cta": "Crio",
+			"main-cta-busy": "Criando cofre",
+			"modal-title": "Criar um cofre multisig",
+			"no-token": "Selecionar token",
+			"success-message": "Seu cofre multisig foi criado com sucesso",
+			"token-label": "Select an asset",
+			"token-placeholder": "Digite o endereço da mint do token"
+		},
 		"crud-multisig": {
 			"delete-multisig": "Excluir multisig",
 			"edit-multisig": "Editar multisig",
@@ -468,40 +468,12 @@
 			"not-connected": "Por favor, conecte sua carteira para ver suas contas multisig",
 			"pending-transactions": "{{txs}} transações pendentes"
 		},
-		"multisig-assets": {
-			"asset-detail-heading": "Detalhes do cofre",
-			"back-to-multisig-accounts-cta": "Back to Multisig Safes",
-			"cta-change-multisig-authority": "Transferir propriedade",
-			"cta-change-multisig-authority-busy": "Mudando o Multisig",
-			"cta-close": "Fechar cofre",
-			"cta-close-busy": "Fechando cofre",
-			"cta-create-asset-busy": "Criando cofre",
-			"cta-transfer": "Propose Funds Transfer",
-			"cta-transfer-busy": "Iniciando a Solicitação de Retirada",
-			"delete-asset": {
-				"explanatory-paragraph": "By submitting this proposal, you will sign the transaction and approve it as one of the Multisig signers. Before the asset is deleted, the other Multisig members need to approve it.",
-				"main-cta": "Submit delete proposal",
-				"modal-title": "Delete a Multisig Asset",
-				"selected-asset-label": "Asset selected",
-				"warning-message": "Only empty assets can be deleted. To delete an asset you need to first transfer all funds to another account."
-			},
-			"explanatory-paragraph": "By submitting this proposal, you will sign the transaction and approve it as one of the Multisig signers. Before the funds are sent, the other Multisig members need to approve it.",
-			"main-cta": "Sign transfer proposal",
-			"no-asset-loaded": "Nenhum cofre carregado",
-			"no-assets": "Não há cofres disponíveis",
-			"no-transactions": "Nenhuma transação para este cofre",
-			"not-connected": "Conecte sua carteira para ver os cofres",
-			"refresh-tooltip": "Clique para atualizar a lista de cofres",
-			"screen-title": "Cofres - {{multisigName}} ({{itemCount}})",
-			"screen-title-no-assets": "Cofres",
-			"validation-amount-high": "O valor excede o saldo do cofre"
-		},
 		"multisig-detail-heading": "Detalhes da conta multisig",
 		"multisig-mints": {
 			"back-to-multisig-accounts-cta": "Back to Multisig Safes",
 			"change-mint-authority-modal-title": "Set Mint Authority",
 			"create-mint-modal-title": "Create mint",
-			"cta-change-mint-authority": "Transfer Ownership",
+			"cta-change-mint-authority": "Transfer ownership",
 			"cta-change-mint-authority-busy": "Changing Multisig",
 			"cta-create-mint": "Create mint",
 			"cta-create-mint-busy": "Creating mint",
@@ -624,6 +596,34 @@
 			"title-label": "Title",
 			"title-placeholder": "Reason for submitting this proposal"
 		},
+		"multisig-assets": {
+			"back-to-multisig-accounts-cta": "Back to Multisig Safes",
+			"cta-change-multisig-authority": "Transferir propriedade",
+			"cta-change-multisig-authority-busy": "Mudando o Multisig",
+			"cta-close": "Fechar cofre",
+			"cta-close-busy": "Fechando cofre",
+			"cta-create-asset-busy": "Criando cofre",
+			"cta-transfer": "Propose Funds Transfer",
+			"cta-transfer-busy": "Iniciando a Solicitação de Retirada",
+			"delete-asset": {
+				"explanatory-paragraph": "By submitting this proposal, you will sign the transaction and approve it as one of the Multisig signers. Before the asset is deleted, the other Multisig members need to approve it.",
+				"main-cta": "Submit delete proposal",
+				"modal-title": "Delete a multisig asset",
+				"selected-asset-label": "Asset selected",
+				"warning-message": "Only empty assets can be deleted. To delete an asset you need to first transfer all funds to another account."
+			},
+			"no-transactions": "Nenhuma transação para este cofre",
+			"no-asset-loaded": "Nenhum cofre carregado",
+			"no-assets": "Não há cofres disponíveis",
+			"not-connected": "Conecte sua carteira para ver os cofres",
+			"refresh-tooltip": "Clique para atualizar a lista de cofres",
+			"screen-title": "Cofres - {{multisigName}} ({{itemCount}})",
+			"screen-title-no-assets": "Cofres",
+			"validation-amount-high": "O valor excede o saldo do cofre",
+			"asset-detail-heading": "Detalhes do cofre",
+			"explanatory-paragraph": "By submitting this proposal, you will sign the transaction and approve it as one of the Multisig signers. Before the funds are sent, the other Multisig members need to approve it.",
+			"main-cta": "Sign transfer proposal"
+		},
 		"refresh-tooltip": "Clique para atualizar a lista de contas multisig",
 		"screen-title": "Multisig Safes",
 		"set-program-authority": {
@@ -634,24 +634,24 @@
 			"new-authority-input-placeholder": "Endereço da nova autoridade de atualização do programa"
 		},
 		"transfer-authority": {
-			"asset-auth-destination-address-disclaimer": "I confirm the above New Authority Address entered or selected is a Multisig Account address and NOT a regular wallet address. I acknowledge that if I provide a non Multisig address, it will cause a permanent loss of the vault and its funds.",
+			"asset-auth-destination-address-disclaimer": "I'm sure the new owner address doesn't belong to an exchange.",
 			"main-cta": "Definir autoridade",
 			"main-cta-busy": "Configurando autoridade",
-			"modal-title": "Transferir propriedade",
+			"modal-title": "Change asset ownership",
 			"multisig-already-owns-the-asset": "O multisig selecionado já é autoridade para este cofre",
-			"multisig-selector-label": "Nova autoridade (multisig)",
-			"multisig-selector-placeholder": "Selecione ou insira um endereço multisig",
+			"multisig-selector-label": "New owner account",
+			"multisig-selector-placeholder": "Select or enter the address of the new owner",
 			"selected-asset-label": "Cofre selecionado",
 			"success-message": "Nova autoridade de cofre definida com sucesso."
 		},
 		"transfer-tokens": {
 			"main-cta": "Iniciar solicitação",
 			"main-cta-busy": "Solicitação inicial",
-			"modal-title": "Initiate Transfer Proposal",
+			"modal-title": "Propose funds transfer",
 			"source-address-label": "Transferir de",
 			"source-address-placeholder": "Digite o endereço da conta de origem",
 			"success-message": "Tokens transferidos com sucesso.",
-			"transfer-amount-label": "Montante",
+			"transfer-amount-label": "Amount to send",
 			"transfer-amount-placeholder": "Insira a quantidade de tokens a serem transferidos",
 			"transfer-to-label": "Transferir para (Conta de Destino)",
 			"transfer-to-placeholder": "Digite o endereço da conta de destino"
@@ -700,10 +700,14 @@
 		"success-account-funded-message": "Conta financiada",
 		"success-loading-stream-message": "O stream com ID {{streamId}} foi carregado",
 		"success-loading-treasury-message": "A tesouraria com ID {{treasuryId}} foi carregada",
-		"tx-not-confirmed": "The transaction could not be confirmed, please retry your transaction.",
 		"wallet-connect-message": "Conectado à carteira {{address}}",
 		"wallet-connection-event-title": "Atualização da carteira",
-		"wallet-disconnect-message": "Desconectado da carteira"
+		"wallet-disconnect-message": "Desconectado da carteira",
+		"tx-not-confirmed": "The transaction could not be confirmed, please retry your transaction.",
+		"tx-not-executed": "Your transaction has not been executed",
+		"tx-not-approved": "Your transaction has not been approved",
+		"tx-proposal-created": "Your proposal has been created",
+		"ask-others-to-sign": "Please ask the proposer user to execute this proposed transaction."
 	},
 	"open-stream": {
 		"label-streamid-input": "Código do stream para abrir",
@@ -1132,6 +1136,7 @@
 			"create-multisig-cta": "Iniciar tesouraria",
 			"create-multisig-cta-busy": "Iniciando tesouraria",
 			"create-multisig-treasury-success": "Iniciar solicitação de tesouraria submetida para aprovação da Multisig.",
+			"create-multisig-streaming-account-success": "Initiate streaming account request submitted for Multisig approval.",
 			"lock-period": {
 				"days": "days",
 				"hours": "hours",
@@ -1148,6 +1153,7 @@
 			"multisig-treasury-created-instructions": "Streaming account {{treasuryName}} was created successfully. Please ask the other users to sign this account creation transaction.",
 			"multisig-treasury-switch-label": "Essa tesouraria é para uma conta Multisig?",
 			"success-message": "Your new streaming account was created successfully.",
+			"success-multisig-streaming-account-message": "Your new streaming account was created successfully.",
 			"treasury-name-input-empty": "Enter Account name",
 			"treasury-name-input-label": "Account name",
 			"treasury-name-placeholder": "Type a name for your streaming account",
@@ -1299,6 +1305,7 @@
 				"custody": "Custódio",
 				"faucet": "Torneiro",
 				"multisig": "Multisig",
+				"safes": "Multisig V2",
 				"submenu-title": "Serviços",
 				"unwrap": "Unwrap",
 				"wallet-guide": "Guia da carteira",

@@ -73,7 +73,7 @@ export const MultisigEditModal = (props: {
 
   const hasOwnersChanges = useCallback(() => {
     if (inputOwners && multisigOwners) {
-      if (JSON.stringify(inputOwners) != JSON.stringify(multisigOwners)) {
+      if (JSON.stringify(inputOwners) !== JSON.stringify(multisigOwners)) {
         return true;
       }
     }

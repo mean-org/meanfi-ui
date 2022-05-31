@@ -32,7 +32,7 @@ export const IdoBlockedView = () => {
       <div className="content-area max-width-medium">
         <div className="text-center mb-4">
           <Link to="/">
-            <img className="ido-app-logo" src={theme === 'dark' ? '/assets/mean-pay-logo-color-light.svg' : '/assets/mean-pay-logo-color-dark.svg'} alt="Mean Finance" />
+            <img className="ido-app-logo" src={theme === 'dark' ? '/assets/mean-logo-color-light.svg' : '/assets/mean-logo-color-dark.svg'} alt="Mean Finance" />
           </Link>
         </div>
 

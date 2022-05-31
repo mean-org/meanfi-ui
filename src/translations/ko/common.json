@@ -392,10 +392,10 @@
 		"create-asset": {
 			"main-cta": "Create",
 			"main-cta-busy": "Creating vault",
-			"modal-title": "Create a Multisig Vault",
+			"modal-title": "Create a multisig asset",
 			"no-token": "Select token",
 			"success-message": "Your multisig vault was created successfully",
-			"token-label": "Amount to transfer",
+			"token-label": "Select an asset",
 			"token-placeholder": "Enter the address of the token mint"
 		},
 		"create-multisig": {
@@ -419,7 +419,7 @@
 			"multisig-threshold-question-mark-tooltip": "As best practice, always have more multisig signers than the minimum required signers. A 2-of-3 multisig is the most basic setup where 2 of the 3 participants are required to execute a transaction.",
 			"success-message": "당신의 다중서명 계좌가 성공적으로 생성되었습니다."
 		},
-		"create-new-multisig-account-cta": "다중서명 생성하기",
+		"create-new-multisig-account-cta": "Create safe",
 		"crud-multisig": {
 			"delete-multisig": "Multisig 삭제",
 			"edit-multisig": "다중서명 수정",
@@ -483,7 +483,7 @@
 			"delete-asset": {
 				"explanatory-paragraph": "By submitting this proposal, you will sign the transaction and approve it as one of the Multisig signers. Before the asset is deleted, the other Multisig members need to approve it.",
 				"main-cta": "Submit delete proposal",
-				"modal-title": "Delete a Multisig Asset",
+				"modal-title": "Delete a multisig asset",
 				"selected-asset-label": "Asset selected",
 				"warning-message": "Only empty assets can be deleted. To delete an asset you need to first transfer all funds to another account."
 			},
@@ -503,7 +503,7 @@
 			"back-to-multisig-accounts-cta": "Back to Multisig Safes",
 			"change-mint-authority-modal-title": "Set Mint Authority",
 			"create-mint-modal-title": "Create mint",
-			"cta-change-mint-authority": "Transfer Ownership",
+			"cta-change-mint-authority": "Transfer ownership",
 			"cta-change-mint-authority-busy": "Changing Multisig",
 			"cta-create-mint": "Create mint",
 			"cta-create-mint-busy": "Creating mint",
@@ -610,24 +610,24 @@
 			"new-authority-input-placeholder": "새 프로그램 업그레이드 권한 주소"
 		},
 		"transfer-authority": {
-			"asset-auth-destination-address-disclaimer": "I confirm the above New Authority Address entered or selected is a Multisig Account address and NOT a regular wallet address. I acknowledge that if I provide a non Multisig address, it will cause a permanent loss of the vault and its funds.",
+			"asset-auth-destination-address-disclaimer": "I'm sure the new owner address doesn't belong to an exchange.",
 			"main-cta": "권한 설정",
 			"main-cta-busy": "권한 설정",
-			"modal-title": "소유권 이전",
+			"modal-title": "Change asset ownership",
 			"multisig-already-owns-the-asset": "Selected multisig is already authority for this vault",
-			"multisig-selector-label": "새로운 권한(다중서명)",
-			"multisig-selector-placeholder": "다중서명 주소 선택 또는 입력",
+			"multisig-selector-label": "New owner account",
+			"multisig-selector-placeholder": "Select or enter the address of the new owner",
 			"selected-asset-label": "Selected vault",
 			"success-message": "새 금고권한이 성공적으로 설정되었습니다."
 		},
 		"transfer-tokens": {
 			"main-cta": "시작 요청",
 			"main-cta-busy": "시작 요청",
-			"modal-title": "Initiate Transfer Proposal",
+			"modal-title": "Propose funds transfer",
 			"source-address-label": "에서 전송",
 			"source-address-placeholder": "원 계정의 주소를 입력하십시오",
 			"success-message": "토큰이 성공적으로 전송되었습니다.",
-			"transfer-amount-label": "금액",
+			"transfer-amount-label": "Amount to send",
 			"transfer-amount-placeholder": "전송할 토큰의 양을 입력하십시오",
 			"transfer-to-label": "로 전송",
 			"transfer-to-placeholder": "대상 계정의 주소를 입력하십시오"
@@ -704,7 +704,11 @@
 		"wallet-connect-message": "지갑 {{address}}에 연결됨",
 		"wallet-connection-event-title": "지갑 업데이트",
 		"wallet-disconnect-message": "지갑에서 연결 해제됨",
-		"tx-not-confirmed": "The transaction could not be confirmed, please retry your transaction."
+		"tx-not-confirmed": "The transaction could not be confirmed, please retry your transaction.",
+		"tx-not-executed": "Your transaction has not been executed",
+		"tx-not-approved": "Your transaction has not been approved",
+		"tx-proposal-created": "Your proposal has been created",
+		"ask-others-to-sign": "Please ask the proposer user to execute this proposed transaction."
 	},
 	"open-stream": {
 		"label-streamid-input": "생성할 스트림 ID",
@@ -1121,6 +1125,7 @@
 			"create-multisig-cta": "트레저리 시작",
 			"create-multisig-cta-busy": "트레저리 시작",
 			"create-multisig-treasury-success": "다중서명 승인을 위해 제출된 트레저리 요청을 시작합니다.",
+			"create-multisig-streaming-account-success": "Initiate streaming account request submitted for Multisig approval.",
 			"lock-period": {
 				"days": "days",
 				"hours": "hours",
@@ -1137,6 +1142,7 @@
 			"multisig-treasury-created-instructions": "Streaming account {{treasuryName}} was created successfully. Please ask the other users to sign this account creation transaction.",
 			"multisig-treasury-switch-label": "다중서명 계정의 트레저리입니까?",
 			"success-message": "Your new streaming account was created successfully.",
+			"success-multisig-streaming-account-message": "Your new streaming account was created successfully.",
 			"treasury-name-input-empty": "Enter Account name",
 			"treasury-name-input-label": "Account name",
 			"treasury-name-placeholder": "Type a name for your streaming account",
@@ -1288,6 +1294,7 @@
 				"custody": "보관",
 				"faucet": "Faucet",
 				"multisig": "Multisig",
+				"safes": "Multisig V2",
 				"submenu-title": "서비스",
 				"wallet-guide": "지갑 가이드",
 				"wrap": "랩",

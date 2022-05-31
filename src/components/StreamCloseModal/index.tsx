@@ -15,6 +15,7 @@ import { MoneyStreaming } from '@mean-dao/money-streaming';
 import { PublicKey } from '@solana/web3.js';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { StreamTreasuryType } from '../../models/treasuries';
+import { STREAMING_ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/treasuries';
 
 export const StreamCloseModal = (props: {
   handleClose: any;
@@ -309,7 +310,7 @@ export const StreamCloseModal = (props: {
               <span className="mr-1 font-bold">{getTreasuryName()}</span>
               <span className="simplelink underline-on-hover" onClick={() => {
                 props.handleClose();
-                const url = `/treasuries?treasury=${treasuryDetails.id}`;
+                const url = `${STREAMING_ACCOUNTS_ROUTE_BASE_PATH}?treasury=${treasuryDetails.id}`;
                 navigate(url);
               }}>{t('close-stream.see-details-cta')}</span>
             </div>

@@ -87,6 +87,7 @@ export enum OperationType {
     ExecuteTransaction = 41,
     DeleteAsset = 42,
     CancelTransaction = 43,
+    CreateTransaction = 44,
     // Tools
     Wrap = 50,
     Unwrap = 51,
@@ -103,6 +104,9 @@ export enum OperationType {
     IdoClaim = 102,
     IdoLpClaim = 103,
     IdoCollectFunds = 104,
+    // Credix
+    CredixDepositFunds = 110,
+    CredixWithdrawFunds = 111,
 }
 
 export enum WhitelistClaimType
@@ -129,11 +133,13 @@ export enum AccountAssetAction {
     Buy = 1,
     Exchange = 2,
     Invest = 3,
-    Receive = 4,
+    Deposit = 4,
     UnwrapSol = 5,
     WrapSol = 6,
+    MergeAccounts = 7,
     Divider = 10,
     Refresh = 11,
     CloseAccount = 12,
-    Share = 13
+    Share = 13,
+    Close = 14
 }

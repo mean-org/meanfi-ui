@@ -114,6 +114,7 @@ import {
 } from '@mean-dao/mean-multisig-sdk';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
+export const STREAMING_ACCOUNTS_ROUTE_BASE_PATH = '/treasuries';
 
 export const TreasuriesView = () => {
   const location = useLocation();
@@ -178,7 +179,7 @@ export const TreasuriesView = () => {
   const [multisigAddress, setMultisigAddress] = useState('');
   const [selectedMultisig, setSelectedMultisig] = useState<MultisigInfo | undefined>(undefined);
   const [treasuryAddress, setTreasuryAddress] = useState('');
-  const [/*loadingMultisigAccounts*/, setLoadingMultisigAccounts] = useState(true);
+  const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(false);
   const [multisigAccounts, setMultisigAccounts] = useState<MultisigInfo[] | undefined>(undefined);
   const [treasuryPendingTxs, setTreasuryPendingTxs] = useState(0);
 
@@ -645,6 +646,7 @@ export const TreasuriesView = () => {
     treasuryDetails
   ]);
 
+  // TODO: Here the multisig ID is returned
   const getSelectedTreasuryMultisig = useCallback((treasury?: any) => {
 
     const treasuryInfo: any = treasury ?? treasuryDetails;
@@ -688,6 +690,34 @@ export const TreasuriesView = () => {
     fetchTxInfoStatus,
     lastSentTxOperationType,
   ]);
+
+  // const timeout = setTimeout(() => {
+  //   const treasury = treasuryDetails as Treasury;
+  //   const multisig = multisigAccounts.find(m => m.authority.toBase58() === treasury.treasurer);
+    
+  //   if (!multisig) {
+  //     setTreasuryPendingTxs(0);
+  //     return;
+  //   }
+    
+  //   multisigClient
+  //     .getMultisigTransactions(multisig.id, publicKey)
+  //     .then((value: MultisigTransaction[]) => {
+  //       let pendingTxs = 0;
+  //       for (const tx of value) {
+  //         const isPending = (
+  //           multisig !== undefined &&
+  //           !tx.executedOn &&
+  //           tx.accounts.findIndex((a: any) => a.pubkey.equals(new PublicKey(treasuryDetails.id))) !== -1 &&
+  //           multisig.ownerSetSeqno === tx.ownerSetSeqno
+  //         );
+  //         if (isPending) {
+  //           pendingTxs += 1;
+  //         }
+  //       }
+  //       setTreasuryPendingTxs(pendingTxs);
+  //     });
+  // });
 
   const isRefreshingTreasuryBalance = useCallback((): boolean => {
     return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.TreasuryRefreshBalance
@@ -778,7 +808,7 @@ export const TreasuriesView = () => {
   ]);
 
   const isMultisigAvailable = useCallback((): boolean => {
-    return multisigAddress && selectedMultisig && selectedMultisig.id.toBase58() === multisigAddress
+    return multisigAddress && selectedMultisig && selectedMultisig.authority.toBase58() === multisigAddress
             ? true
             : false;
   }, [
@@ -1181,6 +1211,7 @@ export const TreasuriesView = () => {
     setSelectedToken
   ]);
 
+  // Get fees and min baance required for multisig actions
   useEffect(() => {
 
     if (!multisigClient || !multisigAddress) { return; }
@@ -1213,7 +1244,7 @@ export const TreasuriesView = () => {
         setTreasuryPendingTxs(0);
         return;
       }
-      
+
       multisigClient
         .getMultisigTransactions(multisig.id, publicKey)
         .then((value: MultisigTransaction[]) => {
@@ -1223,7 +1254,7 @@ export const TreasuriesView = () => {
               multisig !== undefined &&
               !tx.executedOn &&
               tx.accounts.findIndex((a: any) => a.pubkey.equals(new PublicKey(treasuryDetails.id))) !== -1 &&
-              multisig.ownerSeqNumber === tx.ownerSeqNumber
+              multisig.ownerSetSeqno === tx.ownerSetSeqno
             );
             if (isPending) {
               pendingTxs += 1;
@@ -1246,27 +1277,31 @@ export const TreasuriesView = () => {
     treasuryDetails
   ]);  
 
-  // Get the user multisig accounts' list
+  // Get the Multisig accounts
+  // TODO: Signal when it is loading
   useEffect(() => {
 
-    if (!connection || !publicKey || !multisigClient || !needReloadMultisig) {
+    if (!connection || !publicKey || !multisigClient || !multisigAddress || !needReloadMultisig) {
       return;
     }
 
     const timeout = setTimeout(() => {
 
+      consoleOut('Loading multisigs...', '', 'blue');
       setNeedReloadMultisig(false);
+      setLoadingMultisigAccounts(true);
 
       multisigClient
         .getMultisigs(publicKey)
-        .then((allInfo: MultisigInfo[]) => {          
+        .then((allInfo: MultisigInfo[]) => {
           allInfo.sort((a: any, b: any) => b.createdOnUtc.getTime() - a.createdOnUtc.getTime());
           setMultisigAccounts(allInfo);
           consoleOut('multisigs:', allInfo, 'blue');
-          setLoadingMultisigAccounts(false);
         })
         .catch(err => {
           console.error(err);
+        })
+        .finally(() => {
           setLoadingMultisigAccounts(false);
         });
     });
@@ -1279,7 +1314,8 @@ export const TreasuriesView = () => {
     publicKey,
     connection,
     multisigClient,
-    needReloadMultisig
+    multisigAddress,
+    needReloadMultisig,
   ]);
 
   // Set selectedMultisig based on the passed-in multisigAddress in query params
@@ -1292,7 +1328,7 @@ export const TreasuriesView = () => {
     const timeout = setTimeout(() => {
       if (location.search) {
         consoleOut(`try to select multisig ${multisigAddress} from list`, multisigAccounts, 'blue');
-        const selected = multisigAccounts.find(m => m.id.toBase58() === multisigAddress);
+        const selected = multisigAccounts.find(m => m.authority.toBase58() === multisigAddress);
         if (selected) {
           consoleOut('selectedMultisig:', selected, 'blue');
           setSelectedMultisig(selected);
@@ -1339,6 +1375,10 @@ export const TreasuriesView = () => {
       }
     }
 
+    if (multisigAddress && !selectedMultisig) {
+      return;
+    }
+
     consoleOut('Calling refreshTreasuries...', '', 'blue');
     setTreasuriesLoaded(true);
     refreshTreasuries(true);
@@ -1372,7 +1412,6 @@ export const TreasuriesView = () => {
     connected,
     publicKey,
     treasuriesLoaded,
-    loadingTreasuries,
     previousWalletConnectState,
   ]);
 
@@ -1672,12 +1711,12 @@ export const TreasuriesView = () => {
 
     if (createOptions && createOptions.multisigId) {
       openNotification({
-        description: t('treasuries.create-treasury.create-multisig-treasury-success'),
+        description: t('treasuries.create-treasury.create-multisig-streaming-account-success'),
         type: "success"
       });
     } else {
       openNotification({
-        description: t('treasuries.create-treasury.success-message'),
+        description: t('treasuries.create-treasury.success-multisig-streaming-account-message'),
         type: "success"
       });
     }
@@ -2093,7 +2132,7 @@ export const TreasuriesView = () => {
 
       if (!multisig) { return null; }
 
-      // Create Treasury
+      // Create Streaming account
       const createTreasuryTx = await msp.createTreasury(
         publicKey,                                        // payer
         multisig.authority,                               // treasurer
@@ -2109,7 +2148,7 @@ export const TreasuriesView = () => {
 
       const tx = await multisigClient.createTransaction(
         publicKey,
-        "Create Treasury",
+        "Streaming account",
         "", // description
         new Date(expirationTime * 1_000),
         OperationType.TreasuryCreate,
@@ -2129,11 +2168,11 @@ export const TreasuriesView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
         });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Create streaming account transaction failed', { transcript: transactionLog });
         return false;
       }
 
-      consoleOut("Start transaction for create treasury", '', 'blue');
+      consoleOut("Start transaction for create streaming account", '', 'blue');
       consoleOut('Wallet address:', publicKey.toBase58());
 
       setTransactionStatus({
@@ -2191,16 +2230,16 @@ export const TreasuriesView = () => {
             getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
           })`
         });
-        customLogger.logWarning('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logWarning('Create streaming account transaction failed', { transcript: transactionLog });
         return false;
       }
 
-      consoleOut('Starting Create Treasury using MSP V2...', '', 'blue');
+      consoleOut('Starting Create streaming account using MSP V2...', '', 'blue');
 
       const result = await createTreasury(payload)
         .then(value => {
           if (!value) { return false; }
-          consoleOut('createTreasury returned transaction:', value);
+          consoleOut('create streaming account returned transaction:', value);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
@@ -2213,7 +2252,7 @@ export const TreasuriesView = () => {
           return true;
         })
         .catch(error => {
-          console.error('createTreasury error:', error);
+          console.error('create streaming account error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.InitTransactionFailure
@@ -2222,7 +2261,7 @@ export const TreasuriesView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
             result: `${error}`
           });
-          customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+          customLogger.logError('Create streaming account transaction failed', { transcript: transactionLog });
           return false;
         });
 
@@ -2250,7 +2289,7 @@ export const TreasuriesView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+            customLogger.logError('Create streaming account transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -2273,7 +2312,7 @@ export const TreasuriesView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+          customLogger.logError('Create streaming account transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -2286,7 +2325,7 @@ export const TreasuriesView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot sign transaction! Wallet not found!'
         });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Create streaming account transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -2331,7 +2370,7 @@ export const TreasuriesView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot send transaction! Wallet not found!'
         });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Create streaming account transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -5004,15 +5043,14 @@ export const TreasuriesView = () => {
         <Menu.Item key="6" onClick={() => {
             setHighLightableStreamId(item.id as string);
             if (isMultisigTreasury(treasuryDetails)) {
-              const urlBase = '/treasuries/';
-              const url = `${urlBase}${(treasuryDetails as Treasury).id}/streams`;
+              const url = `${STREAMING_ACCOUNTS_ROUTE_BASE_PATH}/${(treasuryDetails as Treasury).id}/streams`;
               consoleOut('With treasurer:', (treasuryDetails as Treasury).treasurer, 'blue');
               // Populate the list of streams in the state before going there.
               setStreamList(treasuryStreams || []);
               consoleOut('Heading to:', url, 'blue');
               // Set this so we can know how to return
               if (selectedMultisig) {
-                setHighLightableMultisigId(selectedMultisig.id.toBase58());
+                setHighLightableMultisigId(selectedMultisig.authority.toBase58());
               }
               navigate(url);
             } else {
@@ -5138,7 +5176,7 @@ export const TreasuriesView = () => {
               consoleOut('Navigating to multisig:', multisig.authority.toBase58(), 'blue');
               setHighLightableMultisigId(multisig.id.toBase58());
             }
-            navigate('/multisig');
+            navigate('/safes');
           }}>{t('treasuries.treasury-detail.multisig-tx-headsup')}</div>
         </div>
       </div>
@@ -5296,7 +5334,7 @@ export const TreasuriesView = () => {
                 shape="round"
                 size="small"
                 className="thin-stroke"
-                disabled={isTxInProgress() || loadingTreasuries}
+                disabled={isTxInProgress() || loadingTreasuries || loadingMultisigAccounts}
                 onClick={() => {
                   setHighLightableStreamId(undefined);
                   sethHighlightedStream(undefined);
@@ -5316,6 +5354,7 @@ export const TreasuriesView = () => {
                 disabled={
                   isTxInProgress() ||
                   loadingTreasuries ||
+                  loadingMultisigAccounts ||
                   loadingTreasuryDetails ||
                   (!treasuryDetails || !isNewTreasury || v2.balance - v2.allocationAssigned <= 0)
                 }
@@ -5335,6 +5374,7 @@ export const TreasuriesView = () => {
                   getTreasuryUnallocatedBalance() <= 0 ||
                   isTxInProgress() ||
                   loadingTreasuries ||
+                  loadingMultisigAccounts ||
                   loadingTreasuryDetails ||
                   loadingTreasuryStreams
                 }
@@ -5351,19 +5391,19 @@ export const TreasuriesView = () => {
                   disabled={
                     isTxInProgress() ||
                     loadingTreasuries ||
+                    loadingMultisigAccounts ||
                     loadingTreasuryDetails ||
                     loadingTreasuryStreams
                   }
                   onClick={() => {
-                    const urlBase = '/treasuries/';
-                    const url = `${urlBase}${(treasuryDetails as Treasury).id}/streams`;
+                    const url = `${STREAMING_ACCOUNTS_ROUTE_BASE_PATH}/${(treasuryDetails as Treasury).id}/streams`;
                     consoleOut('Heading to:', url, 'blue');
                     consoleOut('With treasurer:', (treasuryDetails as Treasury).treasurer, 'blue');
                     // Populate the list of streams in the state before going there.
                     setStreamList(treasuryStreams || []);
                     // Set this so we can know how to return
                     if (selectedMultisig) {
-                      setHighLightableMultisigId(selectedMultisig.id.toBase58());
+                      setHighLightableMultisigId(selectedMultisig.authority.toBase58());
                     }
                     navigate(url);
                   }}>
@@ -5538,27 +5578,7 @@ export const TreasuriesView = () => {
             <div className="meanfi-two-panel-left">
 
               <div className="meanfi-panel-heading">
-                {isMultisigAvailable() ? (
-                  <div className="back-button">
-                    <span className="icon-button-container">
-                      <Tooltip placement="bottom" title={t('multisig.multisig-assets.back-to-multisig-accounts-cta')}>
-                        <Button
-                          type="default"
-                          shape="circle"
-                          size="middle"
-                          icon={<ArrowLeftOutlined />}
-                          onClick={() => {
-                            if (selectedMultisig) {
-                              consoleOut('selectedMultisig.id', selectedMultisig.id.toBase58(), 'blue');
-                              setHighLightableMultisigId(selectedMultisig.id.toBase58());
-                              navigate('/multisig');
-                            }
-                          }}
-                        />
-                      </Tooltip>
-                    </span>
-                  </div>
-                ) : state && (state as any).previousPath ? (
+                {state && (state as any).previousPath ? (
                   <div className="back-button">
                     <span className="icon-button-container">
                       <Tooltip placement="bottom" title="Back to accounts">
@@ -5574,12 +5594,32 @@ export const TreasuriesView = () => {
                       </Tooltip>
                     </span>
                   </div>
+                ) : isMultisigAvailable() ? (
+                  <div className="back-button">
+                    <span className="icon-button-container">
+                      <Tooltip placement="bottom" title={t('multisig.multisig-assets.back-to-multisig-accounts-cta')}>
+                        <Button
+                          type="default"
+                          shape="circle"
+                          size="middle"
+                          icon={<ArrowLeftOutlined />}
+                          onClick={() => {
+                            if (selectedMultisig) {
+                              consoleOut('selectedMultisig.id', selectedMultisig.id.toBase58(), 'blue');
+                              setHighLightableMultisigId(selectedMultisig.id.toBase58());
+                              navigate('/safes');
+                            }
+                          }}
+                        />
+                      </Tooltip>
+                    </span>
+                  </div>
                 ) : null}
                 <span className="title">{t('treasuries.screen-title')}</span>
                 <Tooltip placement="bottom" title={t('treasuries.refresh-tooltip')}>
-                  <div className={`transaction-stats user-address ${loadingTreasuries ? 'click-disabled' : 'simplelink'}`} onClick={onRefreshTreasuriesClick}>
+                  <div className={`transaction-stats user-address ${loadingTreasuries || loadingMultisigAccounts ? 'click-disabled' : 'simplelink'}`} onClick={onRefreshTreasuriesClick}>
                     <Spin size="small" />
-                    {(!customStreamDocked && !loadingTreasuries) && (
+                    {(!customStreamDocked && !loadingTreasuries && !loadingMultisigAccounts) && (
                       <span className="incoming-transactions-amout">({formatThousands(treasuryList.length)})</span>
                     )}
                     <span className="transaction-legend">
@@ -5599,7 +5639,7 @@ export const TreasuriesView = () => {
 
               <div className="inner-container">
                 <div className="item-block vertical-scroll">
-                  <Spin spinning={loadingTreasuries}>
+                  <Spin spinning={loadingTreasuries || loadingMultisigAccounts}>
                     {renderTreasuryList}
                   </Spin>
                 </div>
@@ -5692,8 +5732,8 @@ export const TreasuriesView = () => {
                         </span>
                       </div>
                     )}
-                    <div className={`stream-details-data-wrapper vertical-scroll ${(loadingTreasuries || loadingTreasuryDetails || !treasuryDetails) ? 'h-100 flex-center' : ''}`}>
-                      <Spin spinning={loadingTreasuries || loadingTreasuryDetails}>
+                    <div className={`stream-details-data-wrapper vertical-scroll ${((loadingTreasuries || loadingMultisigAccounts) || loadingTreasuryDetails || !treasuryDetails) ? 'h-100 flex-center' : ''}`}>
+                      <Spin spinning={loadingTreasuries || loadingMultisigAccounts || loadingTreasuryDetails}>
                         {treasuryDetails && (
                           <>
                             {isMultisigTreasury() && (
@@ -5711,7 +5751,7 @@ export const TreasuriesView = () => {
                           </>
                         )}
                       </Spin>
-                      {(!loadingTreasuries && !loadingTreasuryDetails && !loadingTreasuryStreams) && (
+                      {(!loadingTreasuries && !loadingMultisigAccounts && !loadingTreasuryDetails && !loadingTreasuryStreams) && (
                         <>
                         {(!treasuryList || treasuryList.length === 0) && !treasuryDetails && (
                           <div className="h-100 flex-center">
@@ -5834,6 +5874,7 @@ export const TreasuriesView = () => {
         />
       )}
 
+      {/* TODO: Here the multisig ID is used */}
       {multisigClient && isCreateStreamModalVisible && (
         <TreasuryStreamCreateModal
           associatedToken={

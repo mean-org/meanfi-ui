@@ -1022,7 +1022,7 @@ export const MultisigAssetsView = () => {
 
       const tx = new Transaction().add(...ixs);
       tx.feePayer = publicKey;
-      const { blockhash } = await connection.getRecentBlockhash("confirmed");
+      const { blockhash } = await connection.getLatestBlockhash("confirmed");
       tx.recentBlockhash = blockhash;
 
       if (signers.length) {
@@ -2806,7 +2806,7 @@ export const MultisigAssetsView = () => {
         !selectedMultisig.id || 
         selectedMultisig.id.toBase58() !== data.transaction.multisig.toBase58() || 
         data.transaction.proposer.toBase58() !== publicKey.toBase58() ||
-        data.transaction.ownerSeqNumber === selectedMultisig.ownerSeqNumber ||
+        data.transaction.ownerSetSeqno === selectedMultisig.ownerSetSeqno ||
         data.transaction.executedOn
       ) {
         return null;
@@ -3615,7 +3615,7 @@ export const MultisigAssetsView = () => {
         isBusy={isBusy}
       />
 
-      {isTransferTokenModalVisible && (
+      {/* {isTransferTokenModalVisible && (
         <MultisigTransferTokensModal
           isVisible={isTransferTokenModalVisible}
           nativeBalance={nativeBalance}
@@ -3629,9 +3629,9 @@ export const MultisigAssetsView = () => {
           isBusy={isBusy}
           assets={multisigVaults}
         />
-      )}
+      )} */}
 
-      {isTransferVaultAuthorityModalVisible && (
+      {/* {isTransferVaultAuthorityModalVisible && (
         <MultisigVaultTransferAuthorityModal
           isVisible={isTransferVaultAuthorityModalVisible}
           nativeBalance={nativeBalance}
@@ -3648,9 +3648,9 @@ export const MultisigAssetsView = () => {
           selectedVault={selectedVault}
           assets={multisigVaults}
         />
-      )}
+      )} */}
 
-      {isDeleteVaultModalVisible && (
+      {/* {isDeleteVaultModalVisible && (
         <MultisigVaultDeleteModal
           isVisible={isDeleteVaultModalVisible}
           handleOk={onAcceptDeleteVault}
@@ -3662,7 +3662,7 @@ export const MultisigAssetsView = () => {
           isBusy={isBusy}
           selectedVault={selectedVault}
         />
-      )}
+      )} */}
 
       {/* Transaction confirm and execution modal launched from each Tx row */}
       {(isMultisigActionTransactionModalVisible && highlightedMultisigTx && selectedMultisig) && (

@@ -11,6 +11,7 @@ import { useWallet } from '../../contexts/wallet';
 import { consoleOut } from '../../utils/ui';
 import { MoneyStreaming } from '@mean-dao/money-streaming';
 import { PublicKey } from '@solana/web3.js';
+import { STREAMING_ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/treasuries';
 
 export const StreamLockedModal = (props: {
   handleClose: any;
@@ -132,7 +133,7 @@ export const StreamLockedModal = (props: {
               <span className="mr-1 font-bold">{getTreasuryName()}</span>
               <span className="simplelink underline-on-hover" onClick={() => {
                 props.handleClose();
-                const url = `/treasuries?treasury=${treasuryDetails.id}`;
+                const url = `${STREAMING_ACCOUNTS_ROUTE_BASE_PATH}?treasury=${treasuryDetails.id}`;
                 navigate(url);
               }}>{t('close-stream.see-details-cta')}</span>
             </div>

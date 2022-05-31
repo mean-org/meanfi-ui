@@ -389,10 +389,10 @@
 		"create-asset": {
 			"main-cta": "Create",
 			"main-cta-busy": "Creating asset",
-			"modal-title": "Create a Multisig Asset",
+			"modal-title": "Create a multisig asset",
 			"no-token": "Select token",
 			"success-message": "Your multisig asset was created successfully",
-			"token-label": "Amount to transfer",
+			"token-label": "Select an asset",
 			"token-placeholder": "Enter the address of the token mint"
 		},
 		"create-multisig": {
@@ -481,7 +481,7 @@
 			"delete-asset": {
 				"explanatory-paragraph": "By submitting this proposal, you will sign the transaction and approve it as one of the Multisig signers. Before the asset is deleted, the other Multisig members need to approve it.",
 				"main-cta": "Submit delete proposal",
-				"modal-title": "Delete a Multisig Asset",
+				"modal-title": "Delete a multisig asset",
 				"selected-asset-label": "Asset selected",
 				"warning-message": "Only empty assets can be deleted. To delete an asset you need to first transfer all funds to another account."
 			},
@@ -501,7 +501,7 @@
 			"back-to-multisig-accounts-cta": "Back to Multisig Safes",
 			"change-mint-authority-modal-title": "Set Mint Authority",
 			"create-mint-modal-title": "Create mint",
-			"cta-change-mint-authority": "Transfer Ownership",
+			"cta-change-mint-authority": "Transfer ownership",
 			"cta-change-mint-authority-busy": "Changing Multisig",
 			"cta-create-mint": "Create mint",
 			"cta-create-mint-busy": "Creating mint",
@@ -634,20 +634,20 @@
 			"new-authority-input-placeholder": "新程序升级权限的地址"
 		},
 		"transfer-authority": {
-			"asset-auth-destination-address-disclaimer": "I confirm the above New Authority Address entered or selected is a Multisig Account address and NOT a regular wallet address. I acknowledge that if I provide a non Multisig address, it will cause a permanent loss of the asset and its funds.",
+			"asset-auth-destination-address-disclaimer": "I'm sure the new owner address doesn't belong to an exchange.",
 			"main-cta": "设定权限",
 			"main-cta-busy": "正在设定权限",
-			"modal-title": "所有权转移",
+			"modal-title": "Change asset ownership",
 			"multisig-already-owns-the-asset": "Selected multisig is already authority for this asset",
-			"multisig-selector-label": "新权限（多重签名）",
-			"multisig-selector-placeholder": "选择或输入多重签名地址",
+			"multisig-selector-label": "New owner account",
+			"multisig-selector-placeholder": "Select or enter the address of the new owner",
 			"selected-asset-label": "Selected asset",
 			"success-message": "成功设置新的保险库权限"
 		},
 		"transfer-tokens": {
 			"main-cta": "启动请求",
 			"main-cta-busy": "启动请求",
-			"modal-title": "发起退款请求",
+			"modal-title": "Propose funds transfer",
 			"source-address-label": "转自",
 			"source-address-placeholder": "输入源帐户的地址",
 			"success-message": "代币传输成功",
@@ -703,7 +703,11 @@
 		"tx-not-confirmed": "The transaction could not be confirmed, please retry your transaction.",
 		"wallet-connect-message": "已连接到钱包{{address}",
 		"wallet-connection-event-title": "钱包更新",
-		"wallet-disconnect-message": "与钱包断开连接"
+		"wallet-disconnect-message": "与钱包断开连接",
+		"tx-not-executed": "Your transaction has not been executed",
+		"tx-not-approved": "Your transaction has not been approved",
+		"tx-proposal-created": "Your proposal has been created",
+		"ask-others-to-sign": "Please ask the proposer user to execute this proposed transaction."
 	},
 	"open-stream": {
 		"label-streamid-input": "要打开的流id",
@@ -1131,6 +1135,7 @@
 			"create-multisig-cta": "启动国库",
 			"create-multisig-cta-busy": "启动国库",
 			"create-multisig-treasury-success": "启动提交给多重签名批准的国库申请。",
+			"create-multisig-streaming-account-success": "Initiate streaming account request submitted for Multisig approval.",
 			"lock-period": {
 				"days": "days",
 				"hours": "hours",
@@ -1147,6 +1152,7 @@
 			"multisig-treasury-created-instructions": "Streaming account {{treasuryName}} was created successfully. Please ask the other users to sign this account creation transaction.",
 			"multisig-treasury-switch-label": "这是一个多重签名账户的国库吗？",
 			"success-message": "Your new streaming account was created successfully.",
+			"success-multisig-streaming-account-message": "Your new streaming account was created successfully.",
 			"treasury-name-input-empty": "Enter Account name",
 			"treasury-name-input-label": "Account name",
 			"treasury-name-placeholder": "Type a name for your streaming account",
@@ -1298,6 +1304,7 @@
 				"custody": "托管",
 				"faucet": "水龙头",
 				"multisig": "多重签名",
+				"safes": "Multisig V2",
 				"submenu-title": "服务",
 				"unwrap": "Unwrap",
 				"wallet-guide": "钱包指南",

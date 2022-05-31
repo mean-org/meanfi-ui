@@ -386,15 +386,6 @@
 	"multisig": {
 		"add-participant-cta": "Add participant",
 		"back-to-multisig-accounts-cta": "Back to Multisig Safes",
-		"create-asset": {
-			"main-cta": "Create",
-			"main-cta-busy": "Creating vault",
-			"modal-title": "Create a Multisig Vault",
-			"no-token": "Select token",
-			"success-message": "Your multisig vault was created successfully",
-			"token-label": "Amount to transfer",
-			"token-placeholder": "Enter the address of the token mint"
-		},
 		"create-multisig": {
 			"fee-info-label": "The fee to create this multisig is",
 			"main-cta": "Create",
@@ -417,11 +408,18 @@
 			"multisig-threshold-question-mark-tooltip": "As best practice, always have more multisig signers than the minimum required signers. A 2-of-3 multisig is the most basic setup where 2 of the 3 participants are required to execute a transaction.",
 			"success-message": "Your new multisig account was created successfully."
 		},
-		"create-new-multisig-account-cta": "Create multisig",
-		"crud-multisig": {
+		"create-new-multisig-account-cta": "Create safe",
+		"create-asset": {
 			"delete-multisig": "Borrar multisig",
 			"edit-multisig": "Editar multisig",
-			"update-multisig": "Migrar multisig"
+			"update-multisig": "Migrar multisig",
+			"main-cta": "Create",
+			"main-cta-busy": "Creating vault",
+			"modal-title": "Create a multisig asset",
+			"no-token": "Select token",
+			"success-message": "Your multisig vault was created successfully",
+			"token-label": "Select an asset",
+			"token-placeholder": "Enter the address of the token mint"
 		},
 		"lookup-multisig-account-cta-tooltip": "Lookup a multisig account",
 		"mint-tokens": {
@@ -481,7 +479,7 @@
 			"delete-asset": {
 				"explanatory-paragraph": "By submitting this proposal, you will sign the transaction and approve it as one of the Multisig signers. Before the asset is deleted, the other Multisig members need to approve it.",
 				"main-cta": "Submit delete proposal",
-				"modal-title": "Delete a Multisig Asset",
+				"modal-title": "Delete a multisig asset",
 				"selected-asset-label": "Asset selected",
 				"warning-message": "Only empty assets can be deleted. To delete an asset you need to first transfer all funds to another account."
 			},
@@ -501,7 +499,7 @@
 			"back-to-multisig-accounts-cta": "Back to Multisig Safes",
 			"change-mint-authority-modal-title": "Set Mint Authority",
 			"create-mint-modal-title": "Create mint",
-			"cta-change-mint-authority": "Transfer Ownership",
+			"cta-change-mint-authority": "Transfer ownership",
 			"cta-change-mint-authority-busy": "Changing Multisig",
 			"cta-create-mint": "Create mint",
 			"cta-create-mint-busy": "Creating mint",
@@ -544,9 +542,6 @@
 			"column-operation": "Transaction",
 			"column-pending-signatures": "Status",
 			"column-program-id": "Program",
-			"execution": "execution",
-			"explain-failure": "Explain failure condition if specific",
-			"initiator-transaction": "This transaction was submitted by",
 			"loading-transactions": "Loading transactions",
 			"missing-signature": "To execute this proposal, {{missingSignature}} more signature is needed.",
 			"missing-signatures": "To execute this proposal, {{missingSignature}} more signatures are needed.",
@@ -634,24 +629,24 @@
 			"new-authority-input-placeholder": "Address of new program upgrade authority"
 		},
 		"transfer-authority": {
-			"asset-auth-destination-address-disclaimer": "I confirm the above New Authority Address entered or selected is a Multisig Account address and NOT a regular wallet address. I acknowledge that if I provide a non Multisig address, it will cause a permanent loss of the vault and its funds.",
+			"asset-auth-destination-address-disclaimer": "I'm sure the new owner address doesn't belong to an exchange.",
 			"main-cta": "Set authority",
 			"main-cta-busy": "Setting authority",
-			"modal-title": "Transfer Ownership",
+			"modal-title": "Change asset ownership",
 			"multisig-already-owns-the-asset": "Selected multisig is already authority for this vault",
-			"multisig-selector-label": "New authority (multisig)",
-			"multisig-selector-placeholder": "Select or enter a multisig address",
+			"multisig-selector-label": "New owner account",
+			"multisig-selector-placeholder": "Select or enter the address of the new owner",
 			"selected-asset-label": "Selected vault",
 			"success-message": "New vault authority set successfully."
 		},
 		"transfer-tokens": {
 			"main-cta": "Start Request",
 			"main-cta-busy": "Starting Request",
-			"modal-title": "Initiate Transfer Proposal",
+			"modal-title": "Propose funds transfer",
 			"source-address-label": "Transfer from",
 			"source-address-placeholder": "Enter the address of the source account",
 			"success-message": "Tokens transferred successfully.",
-			"transfer-amount-label": "Amount",
+			"transfer-amount-label": "Amount to send",
 			"transfer-amount-placeholder": "Enter the amount of tokens to transfer",
 			"transfer-to-label": "Transfer to (Destination Account)",
 			"transfer-to-placeholder": "Enter the address of the destination account"
@@ -700,10 +695,14 @@
 		"success-account-funded-message": "Cuenta financiada",
 		"success-loading-stream-message": "Se cargó la transferencia con el ID {{streamId}}",
 		"success-loading-treasury-message": "The treasury with ID {{treasuryId}} has been loaded",
-		"tx-not-confirmed": "The transaction could not be confirmed, please retry your transaction.",
 		"wallet-connect-message": "Conectado a la billetera {{address}}",
 		"wallet-connection-event-title": "Actualización de billetera",
-		"wallet-disconnect-message": "Desconectado de la billetera"
+		"wallet-disconnect-message": "Desconectado de la billetera",
+		"tx-not-confirmed": "The transaction could not be confirmed, please retry your transaction.",
+		"tx-not-executed": "Your transaction has not been executed",
+		"tx-not-approved": "Your transaction has not been approved",
+		"tx-proposal-created": "Your proposal has been created",
+		"ask-others-to-sign": "Please ask the proposer user to execute this proposed transaction."
 	},
 	"open-stream": {
 		"label-streamid-input": "Introduzca id de transferencia ",
@@ -1131,6 +1130,7 @@
 			"create-multisig-cta": "Initiate treasury",
 			"create-multisig-cta-busy": "Initiating treasury",
 			"create-multisig-treasury-success": "You have successfully signed the Initiate treasury request.",
+			"create-multisig-streaming-account-success": "Initiate streaming account request submitted for Multisig approval.",
 			"lock-period": {
 				"days": "days",
 				"hours": "hours",
@@ -1147,6 +1147,7 @@
 			"multisig-treasury-created-instructions": "Streaming account {{treasuryName}} was created successfully. Please ask the other users to sign this account creation transaction.",
 			"multisig-treasury-switch-label": "Is this treasury for a Multisig account?",
 			"success-message": "Your new streaming account was created successfully.",
+			"success-multisig-streaming-account-message": "Your new streaming account was created successfully.",
 			"treasury-name-input-empty": "Enter Account name",
 			"treasury-name-input-label": "Account name",
 			"treasury-name-placeholder": "Type a name for your streaming account",
@@ -1298,6 +1299,7 @@
 				"custody": "Custody",
 				"faucet": "Faucet",
 				"multisig": "Multisig",
+				"safes": "Multisig V2",
 				"submenu-title": "Servicios",
 				"unwrap": "Unwrap",
 				"wallet-guide": "Guía de Billeteras",

@@ -170,7 +170,12 @@ export const DAO_CORE_TEAM_WHITELIST = [
     '4esXsAJjoExvhPZf1EMvDaajJeCTm72EYt3aurn3fFUG', // J
     'EjchiDcivSQnC282UF4d751JDd7vMb2VCFrQaNeUAjwz', // J
     'c8fLDB5oFSwGnwAV1LGQqaadHt2WbvWv7o79YnnUWxd',  // J
+    '5rtv52oecUAYAMXN9UzYBwoHGsRD1arLQN6WmRfcMDBP', // J
     '468Z5p52439dAqjLzBm2FCNxvDSnpbMsNx85b7Kmz3TQ', // Ayaz
+    //
+    'Ej5zJzej7rrUoDngsJ3jcpfuvfVyWpcDcK7uv9cE2LdL', // Maxim Credix
+    '63cUbJ3yecyduEPPYbPERPSJzAy6ZnRWvjE6u4qkkAVd', // Maxim Credix 2
+    'Cgn2mBir832Eyzx3j77DcdK8nCWndJvD6LewULNMfpbv'  // Ridwan
 ];
 
 export const BETA_TESTING_PROGRAM_WHITELIST = [
