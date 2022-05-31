@@ -938,7 +938,7 @@ export const AccountsNewView = () => {
     return path;
   }, [accountAddress, inspectedAccountType]);
 
-      /////////////////
+  /////////////////
   //  Init code  //
   /////////////////
 
@@ -2644,7 +2644,7 @@ export const AccountsNewView = () => {
       disabled: ((inspectedAccountType === "multisig") && (isTxInProgress() || !canDeleteVault() || !isDeleteAssetValid())),
       uiComponentId: (inspectedAccountType && inspectedAccountType === "multisig") ? `menuitem-${AccountAssetAction.Close}` : `menuitem-${AccountAssetAction.CloseAccount}`,
       tooltip: '',
-      callBack: !isInspectedAccountTheConnectedWallet() ? showDeleteVaultModal : showCloseAssetModal
+      callBack: (inspectedAccountType && inspectedAccountType === "multisig") ? showDeleteVaultModal : showCloseAssetModal
     });
 
     consoleOut('Asset actions:', actions, 'crimson');
