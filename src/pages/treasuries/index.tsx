@@ -5176,7 +5176,7 @@ export const TreasuriesView = () => {
               consoleOut('Navigating to multisig:', multisig.authority.toBase58(), 'blue');
               setHighLightableMultisigId(multisig.id.toBase58());
             }
-            navigate('/safes');
+            navigate('/multisig');
           }}>{t('treasuries.treasury-detail.multisig-tx-headsup')}</div>
         </div>
       </div>
@@ -5607,7 +5607,7 @@ export const TreasuriesView = () => {
                             if (selectedMultisig) {
                               consoleOut('selectedMultisig.id', selectedMultisig.id.toBase58(), 'blue');
                               setHighLightableMultisigId(selectedMultisig.id.toBase58());
-                              navigate('/safes');
+                              navigate('/multisig');
                             }
                           }}
                         />

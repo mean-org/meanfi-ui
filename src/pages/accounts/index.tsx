@@ -3568,7 +3568,7 @@ export const AccountsNewView = () => {
                       if (selectedMultisig) {
                         setHighLightableMultisigId(selectedMultisig.id.toBase58());
                       }
-                      navigate("/safes");
+                      navigate("/multisig");
                     }}
                   />
                 </Tooltip>
@@ -4316,7 +4316,7 @@ export const AccountsNewView = () => {
                                       if (selectedMultisig) {
                                         setHighLightableMultisigId(selectedMultisig.id.toBase58());
                                       }
-                                      navigate("/safes");
+                                      navigate("/multisig");
                                     }}
                                   />
                                 </Tooltip>
