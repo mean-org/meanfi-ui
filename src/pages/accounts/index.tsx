@@ -2032,7 +2032,7 @@ export const AccountsNewView = () => {
     <>
       {accountTokens && accountTokens.length > 0 ? (
         <>
-          {wSolBalance > 0 && (
+          {isInspectedAccountTheConnectedWallet() && wSolBalance > 0 && (
               <div className="utility-box">
                   <div className="well mb-1">
                       <div className="flex-fixed-right align-items-center">
