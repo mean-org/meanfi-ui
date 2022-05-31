@@ -415,7 +415,7 @@ export const ProposalDetailsView = (props: {
                 className="thin-stroke"
                 disabled={selectedProposal.didSigned || selectedProposal.status !== MultisigTransactionStatus.Pending}
                 onClick={() => {
-                  const operation = { transaction: { id: selectedProposal.id } };
+                  const operation = { transaction: selectedProposal };
                   onOperationStarted(operation)
                   onProposalApprove(operation);
                 }}>
@@ -432,12 +432,7 @@ export const ProposalDetailsView = (props: {
                   size="small"
                   className="thin-stroke d-flex justify-content-center align-items-center"
                   onClick={() => {
-                    const operation = {
-                      transaction: { 
-                        id: selectedProposal.id,
-                        operation: selectedProposal.operation
-                      }
-                    }
+                    const operation = { transaction: selectedProposal }
                     onOperationStarted(operation)
                     onProposalExecute(operation);
                   }}>

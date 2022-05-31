@@ -157,6 +157,7 @@ export const MultisigProposalModal = (props: {
     updateSelectedIx(inputState);
     handleOk({
       appId: selectedApp.id,
+      multisigId: selectedMultisig.id.toBase58(),
       title: proposalTitleValue,
       description: proposalDescriptionValue,
       expires: proposalExpiresValue.value,

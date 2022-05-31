@@ -57,6 +57,7 @@ export const SafeMeanInfo = (props: {
   selectedTab?: any;
   proposalSelected?: any;
   assetSelected?: any;
+  
 }) => {
 
   const { 
