@@ -3868,6 +3868,18 @@ export const AccountsNewView = () => {
     }
   }
 
+  const isTransferOwnershipValid = () => {
+    if (selectedAsset) {
+      const isSol = selectedAsset.address === NATIVE_SOL_MINT.toBase58() ? true : false;
+      
+      if (!isSol) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+  }
+
   const renderUserAccountAssetCtaRow = () => {
     if (!selectedAsset) { return null; }
     const items = assetCtas.filter(m => m.isVisible && m.uiComponentType === 'button');
@@ -3896,7 +3908,7 @@ export const AccountsNewView = () => {
                   shape="round"
                   size="small"
                   className="thin-stroke asset-btn"
-                  disabled={isTxInProgress()}
+                  disabled={isTxInProgress() || !isTransferOwnershipValid()}
                   onClick={showTransferVaultAuthorityModal}>
                     <div className="btn-content">
                       Change asset ownership
