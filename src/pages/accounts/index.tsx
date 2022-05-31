@@ -3878,7 +3878,7 @@ export const AccountsNewView = () => {
                   disabled={isTxInProgress() || !isSendFundsValid()}
                   onClick={showTransferTokenModal}>
                     <div className="btn-content">
-                      Propose send funds
+                      Propose funds transfer
                     </div>
                 </Button>
                 <Button
@@ -3889,7 +3889,7 @@ export const AccountsNewView = () => {
                   disabled={isTxInProgress()}
                   onClick={showTransferVaultAuthorityModal}>
                     <div className="btn-content">
-                      Transfer ownership
+                      Change asset ownership
                     </div>
                 </Button>
               </Col>
