@@ -3869,7 +3869,7 @@ export const AccountsNewView = () => {
             <h4 className="mb-0">The token for this Custom account was not found in the Solana token list</h4>
           ) : inspectedAccountType && inspectedAccountType === "multisig" ? (
             <Row gutter={[8, 8]} className="safe-btns-container mb-1">
-              <Col xs={20} sm={18} md={20} lg={18} className="btn-group">
+              <Col xs={24} sm={24} md={24} lg={24} className="asset-btn-group btn-group">
                 <Button
                   type="default"
                   shape="round"
