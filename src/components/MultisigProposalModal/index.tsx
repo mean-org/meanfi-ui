@@ -242,8 +242,6 @@ export const MultisigProposalModal = (props: {
     });
   }
 
-  consoleOut("inputState", inputState);
-
   const [selectOptionState, setSelectOptionState] = useState<any>({});
 
   const handleChangeOption = (e: any) => {    
@@ -416,7 +414,7 @@ export const MultisigProposalModal = (props: {
 
                       {(selectedApp && selectedApp.id === "CRDx2YkdtYtGZXGHZ59wNv1EwKHQndnRc1gT4p8i2vPX") && (
                         <Col span={24} className="alert-info-message mb-1">
-                          <Alert message="This multsig authority needs to have credix and civic pass accounts activated. Also the multisig authority needs to have SOL to pay for rent exempt and fees." type="info" showIcon closable />
+                          <Alert message="This multsig authority needs to have credix and civic pass accounts activated." type="info" showIcon closable />
                         </Col>
                       )}
 
