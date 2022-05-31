@@ -4,8 +4,6 @@ import {
   ArrowLeftOutlined,
   EditOutlined,
   LoadingOutlined,
-  MergeCellsOutlined,
-  QrcodeOutlined,
   SyncOutlined,
   WarningFilled
 } from '@ant-design/icons';
@@ -32,7 +30,6 @@ import {
 import { Button, Col, Dropdown, Empty, Menu, Row, Space, Spin, Tooltip } from 'antd';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import {
-  SOLANA_WALLET_GUIDE,
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
   EMOJIS,
   TRANSACTIONS_PER_PAGE,
@@ -41,7 +38,6 @@ import {
   ACCOUNTS_LOW_BALANCE_LIMIT,
   NO_FEES
 } from '../../constants';
-import { QrScannerModal } from '../../components/QrScannerModal';
 import { Helmet } from "react-helmet";
 import { IconAdd, IconExternalLink, IconEyeOff, IconEyeOn, IconLightBulb, IconLoading, IconVerticalEllipsis } from '../../Icons';
 import { fetchAccountHistory, MappedTransaction } from '../../utils/history';
@@ -127,7 +123,6 @@ export const AccountsNewView = () => {
     transactions,
     isWhitelisted,
     selectedAsset,
-    multisigVaults,
     accountAddress,
     loadingStreams,
     streamsSummary,
@@ -135,11 +130,10 @@ export const AccountsNewView = () => {
     detailsPanelOpen,
     shouldLoadTokens,
     transactionStatus,
-    refreshTokenBalance,
     streamProgramAddress,
     streamV2ProgramAddress,
     previousWalletConnectState,
-    highLightableMultisigId,
+    setHighLightableMultisigId,
     showDepositOptionsModal,
     setAddAccountPanelOpen,
     getTokenPriceByAddress,
@@ -147,6 +141,7 @@ export const AccountsNewView = () => {
     setLastStreamsSummary,
     getTokenByMintAddress,
     setTransactionStatus,
+    refreshTokenBalance,
     setShouldLoadTokens,
     setDtailsPanelOpen,
     refreshStreamList,
@@ -159,8 +154,6 @@ export const AccountsNewView = () => {
   } = useContext(AppStateContext);
   const {
     fetchTxInfoStatus,
-    lastSentTxSignature,
-    lastSentTxOperationType,
     startFetchTxSignatureInfo,
     clearTxConfirmationContext,
   } = useContext(TxConfirmationContext);
@@ -212,7 +205,6 @@ export const AccountsNewView = () => {
   const [isBusy, setIsBusy] = useState(false);
   const [multisigAccounts, setMultisigAccounts] = useState<MultisigInfo[]>([]);
   const [selectedMultisig, setSelectedMultisig] = useState<MultisigInfo | undefined>(undefined);
-  const [serumAccounts, setSerumAccounts] = useState<MultisigInfo[]>([]);
   const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(true);
   const [multisigPendingTxs, setMultisigPendingTxs] = useState<MultisigTransaction[]>([]);
 
@@ -533,6 +525,20 @@ export const AccountsNewView = () => {
 
   }, [getTokenByMintAddress, isSelectedAssetNativeAccount, selectedAsset, setSelectedToken, showSendAssetModal]);
 
+  const activateTokenMerge = useCallback(() => {
+    if (selectedAsset && tokenAccountGroups) {
+      const acc = tokenAccountGroups.has(selectedAsset.address);
+      if (acc) {
+        const item = tokenAccountGroups.get(selectedAsset.address);
+        if (item) {
+          setSelectedTokenMergeGroup(item);
+          resetTransactionStatus();
+          showTokenMergerModal();
+        }
+      }
+    }
+  }, [resetTransactionStatus, selectedAsset, showTokenMergerModal, tokenAccountGroups]);
+
   // Copy address to clipboard
   const copyAddressToClipboard = useCallback((address: any) => {
 
@@ -749,12 +755,11 @@ export const AccountsNewView = () => {
       if (isSelectedAssetNativeAccount()) {
         reloadSwitch();
       }
-    } //TODO: Compilation ERROR HERE (OperationType.CloseTokenAccount doesn't exist)
-    // else if (item && item.operationType === OperationType.CloseTokenAccount) {
-    //   recordTxConfirmation(item, true);
-    //   setShouldLoadTokens(true);
-    //   reloadSwitch();
-    // }
+    } else if (item && item.operationType === OperationType.CloseTokenAccount) {
+      recordTxConfirmation(item, true);
+      setShouldLoadTokens(true);
+      reloadSwitch();
+    }
     resetTransactionStatus();
   }, [isSelectedAssetNativeAccount, recordTxConfirmation, reloadSwitch, resetTransactionStatus, setShouldLoadTokens]);
 
@@ -1007,12 +1012,19 @@ export const AccountsNewView = () => {
       });
   };
 
-  // SERUM ACCOUNTS
   useEffect(() => {
 
-    if (!connection || !publicKey || !multisigSerumClient) { return; }
+    if (!publicKey ||
+        !multisigClient ||
+        !multisigSerumClient ||
+        !accountAddress ||
+        inspectedAccountType !== "multisig" ||
+        !loadingMultisigAccounts) {
+      return;
+    }
 
     const timeout = setTimeout(() => {
+
       multisigSerumClient
       .account
       .multisig
@@ -1037,96 +1049,27 @@ export const AccountsNewView = () => {
             .catch((err: any) => console.error(err));
         }
 
-        setSerumAccounts(parsedSerumAccs);
-      })
-      .catch((err: any) => console.error(err));
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }
-
-  }, [
-    connection,
-    multisigSerumClient, 
-    publicKey
-  ]);
-
-  useEffect(() => {
-  
-    if (!connection || !publicKey || !multisigClient || !loadingMultisigAccounts) {
-      return;
-    }
-  
-    const timeout = setTimeout(() => {
-  
-      consoleOut('=======================================', '', 'green');
-      multisigClient
+        multisigClient
         .getMultisigs(publicKey)
         .then((allInfo: MultisigInfo[]) => {
           allInfo.sort((a: any, b: any) => b.createdOnUtc.getTime() - a.createdOnUtc.getTime());
-          const allAccounts = [...allInfo, ...serumAccounts];
-  
+          const allAccounts = [...allInfo, ...parsedSerumAccs];
+          consoleOut('multisigAccounts:', allAccounts, 'crimson');
           setMultisigAccounts(allAccounts);
-          consoleOut('tralla:', allAccounts, 'blue');
-          let item: any = {};
-  
-          if (allInfo.length > 0) {
-  
-            if (accountAddress) {
-              // Or re-select the one active
-              item = allInfo.find(m => m.authority.equals(new PublicKey(accountAddress)));
-            } else {
-              item = allInfo[0];
-            }
-            // Now make item active
+          const item = allInfo.find(m => m.authority.equals(new PublicKey(accountAddress)));
+          if (item) {
+            consoleOut('selectedMultisig:', item, 'crimson');
             setSelectedMultisig(item);
-          } else {
-            setSelectedMultisig(undefined);
-            // setMultisigTxs([]);
-          }    
+          }
         })
         .catch((err: any) => {
           console.error(err);
-          // setMultisigTxs([]);
-          consoleOut('multisigPendingTxs:', [], 'blue');
         })
         .finally(() => setLoadingMultisigAccounts(false));
-    });
-  
-    return () => {
-      clearTimeout(timeout);
-    }
-  
-  }, [
-    publicKey,
-    connection,
-    multisigClient,
-    selectedMultisig,
-    highLightableMultisigId,
-    loadingMultisigAccounts,
-    serumAccounts,
-    getTokenPriceBySymbol
-  ]);
 
-  // Set selectedMultisig based on the passed-in multisigAddress in query params
-  useEffect(() => {
-
-    if (!publicKey || !accountAddress || !multisigAccounts || multisigAccounts.length === 0) {
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-      if (location.search) {
-        consoleOut(`try to select multisig ${accountAddress} from list`, multisigAccounts, 'blue');
-        const selected = multisigAccounts.find(m => m.id.toBase58() === accountAddress);
-        if (selected) {
-          consoleOut('selectedMultisig:', selected, 'blue');
-          setSelectedMultisig(selected);
-        } else {
-          consoleOut('multisigAccounts does not contain the requested multisigAddress:', accountAddress, 'orange');
-        }
-      }
+      })
+      .catch((err: any) => console.error(err))
+      .finally(() => setLoadingMultisigAccounts(false));
     });
 
     return () => {
@@ -1136,13 +1079,15 @@ export const AccountsNewView = () => {
   }, [
     publicKey,
     accountAddress,
-    location.search,
-    multisigAccounts,
+    multisigClient,
+    multisigSerumClient,
+    inspectedAccountType,
+    loadingMultisigAccounts,
   ]);
 
-  /////////////////////
+  //////////////////////
   //    Executions    //
-  /////////////////////
+  //////////////////////
 
   const onAfterEveryModalClose = useCallback(() => {
     consoleOut('onAfterEveryModalClose called!', '', 'crimson');
@@ -2310,6 +2255,20 @@ export const AccountsNewView = () => {
       callBack: reloadSwitch
     });
 
+    // Merge token accounts
+    if (isInspectedAccountTheConnectedWallet() && canActivateMergeTokenAccounts()) {
+      actions.push({
+        action: AccountAssetAction.MergeAccounts,
+        caption: t('assets.merge-accounts-cta'),
+        isVisible: true,
+        uiComponentType: 'menuitem',
+        disabled: false,
+        uiComponentId: `menuitem-${AccountAssetAction.MergeAccounts}`,
+        tooltip: '',
+        callBack: activateTokenMerge
+      });
+    }
+
     // Close account
     actions.push({
       action: AccountAssetAction.CloseAccount,
@@ -3421,9 +3380,9 @@ export const AccountsNewView = () => {
     );
   };
 
-  const renderSolanaIcon = (
-    <img className="token-icon" src="/solana-logo.png" alt="Solana logo" />
-  );
+  // const renderSolanaIcon = (
+  //   <img className="token-icon" src="/solana-logo.png" alt="Solana logo" />
+  // );
 
   const renderTransactions = () => {
     if (transactions) {
@@ -3434,10 +3393,6 @@ export const AccountsNewView = () => {
             const prevBalance = meta.preBalances[accountIndex] || 0;
             const postbalance = meta.postBalances[accountIndex] || 0;
             const change = getAmountFromLamports(postbalance) - getAmountFromLamports(prevBalance);
-            // consoleOut(
-            //   `prev: ${getAmountFromLamports(prevBalance)}, chge: ${change}, post: ${getAmountFromLamports(postbalance)}`, '',
-            //   change === 0 ? 'red' : 'dkgray'
-            // );
             return change;
           }
           return 0;
@@ -3499,24 +3454,6 @@ export const AccountsNewView = () => {
             </Menu.Item>
           )}
         </>
-      )}
-      {isInspectedAccountTheConnectedWallet() && canActivateMergeTokenAccounts() && (
-        <Menu.Item key="13" onClick={() => {
-          if (selectedAsset && tokenAccountGroups) {
-            const acc = tokenAccountGroups.has(selectedAsset.address);
-            if (acc) {
-              const item = tokenAccountGroups.get(selectedAsset.address);
-              if (item) {
-                setSelectedTokenMergeGroup(item);
-                resetTransactionStatus();
-                showTokenMergerModal();
-              }
-            }
-          }
-        }}>
-          <MergeCellsOutlined />
-          <span className="menu-item-text">{t('assets.merge-accounts-cta')}</span>
-        </Menu.Item>
       )}
     </Menu>
   );
@@ -3770,94 +3707,94 @@ export const AccountsNewView = () => {
     );
   };
 
-  const renderAddAccountBox = (
-    <>
-      <div className="boxed-area container-max-width-600 add-account">
-        {accountAddress && (
-          <div className="back-button">
-            <span className="icon-button-container">
-              <Tooltip placement="bottom" title={t('assets.back-to-assets-cta')}>
-                <Button
-                  type="default"
-                  shape="circle"
-                  size="middle"
-                  className="hidden-xs"
-                  icon={<ArrowLeftOutlined />}
-                  onClick={handleBackToAccountDetailsButtonClick}
-                />
-              </Tooltip>
-            </span>
-          </div>
-        )}
-        <h2 className="text-center mb-3 px-5">{t('assets.account-add-heading')} {renderSolanaIcon} Solana</h2>
-        <div className="flexible-left mb-3">
-          <div className="transaction-field left">
-            <div className="transaction-field-row">
-              <span className="field-label-left">{t('assets.account-address-label')}</span>
-              <span className="field-label-right">&nbsp;</span>
-            </div>
-            <div className="transaction-field-row main-row">
-              <span className="input-left recipient-field-wrapper">
-                <input id="payment-recipient-field"
-                  className="w-100 general-text-input"
-                  autoComplete="on"
-                  autoCorrect="off"
-                  type="text"
-                  onFocus={handleAccountAddressInputFocusIn}
-                  onChange={handleAccountAddressInputChange}
-                  onBlur={handleAccountAddressInputFocusOut}
-                  placeholder={t('assets.account-address-placeholder')}
-                  required={true}
-                  spellCheck="false"
-                  value={accountAddressInput}/>
-                <span id="payment-recipient-static-field"
-                      className={`${accountAddressInput ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>
-                  {accountAddressInput || t('assets.account-address-placeholder')}
-                </span>
-              </span>
-              <div className="addon-right simplelink" onClick={showQrScannerModal}>
-                <QrcodeOutlined />
-              </div>
-            </div>
-            <div className="transaction-field-row">
-              <span className="field-label-left">
-                {accountAddressInput && !isValidAddress(accountAddressInput) ? (
-                  <span className="fg-red">
-                    {t('transactions.validation.address-validation')}
-                  </span>
-                ) : (
-                  <span>&nbsp;</span>
-                )}
-              </span>
-            </div>
-          </div>
-          {/* Go button */}
-          <Button
-            className="main-cta right"
-            type="primary"
-            shape="round"
-            size="large"
-            onClick={onAddAccountAddress}
-            disabled={!isValidAddress(accountAddressInput)}>
-            {t('assets.account-add-cta-label')}
-          </Button>
-        </div>
-        <div className="text-center">
-          <span className="mr-1">{t('assets.create-account-help-pre')}</span>
-          <a className="primary-link font-medium" href={SOLANA_WALLET_GUIDE} target="_blank" rel="noopener noreferrer">
-            {t('assets.create-account-help-link')}
-          </a>
-          <span className="ml-1">{t('assets.create-account-help-post')}</span>
-        </div>
-      </div>
-      {isQrScannerModalVisible && (
-        <QrScannerModal
-          isVisible={isQrScannerModalVisible}
-          handleOk={onAcceptQrScannerModal}
-          handleClose={closeQrScannerModal}/>
-      )}
-    </>
-  );
+  // const renderAddAccountBox = (
+  //   <>
+  //     <div className="boxed-area container-max-width-600 add-account">
+  //       {accountAddress && (
+  //         <div className="back-button">
+  //           <span className="icon-button-container">
+  //             <Tooltip placement="bottom" title={t('assets.back-to-assets-cta')}>
+  //               <Button
+  //                 type="default"
+  //                 shape="circle"
+  //                 size="middle"
+  //                 className="hidden-xs"
+  //                 icon={<ArrowLeftOutlined />}
+  //                 onClick={handleBackToAccountDetailsButtonClick}
+  //               />
+  //             </Tooltip>
+  //           </span>
+  //         </div>
+  //       )}
+  //       <h2 className="text-center mb-3 px-5">{t('assets.account-add-heading')} {renderSolanaIcon} Solana</h2>
+  //       <div className="flexible-left mb-3">
+  //         <div className="transaction-field left">
+  //           <div className="transaction-field-row">
+  //             <span className="field-label-left">{t('assets.account-address-label')}</span>
+  //             <span className="field-label-right">&nbsp;</span>
+  //           </div>
+  //           <div className="transaction-field-row main-row">
+  //             <span className="input-left recipient-field-wrapper">
+  //               <input id="payment-recipient-field"
+  //                 className="w-100 general-text-input"
+  //                 autoComplete="on"
+  //                 autoCorrect="off"
+  //                 type="text"
+  //                 onFocus={handleAccountAddressInputFocusIn}
+  //                 onChange={handleAccountAddressInputChange}
+  //                 onBlur={handleAccountAddressInputFocusOut}
+  //                 placeholder={t('assets.account-address-placeholder')}
+  //                 required={true}
+  //                 spellCheck="false"
+  //                 value={accountAddressInput}/>
+  //               <span id="payment-recipient-static-field"
+  //                     className={`${accountAddressInput ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>
+  //                 {accountAddressInput || t('assets.account-address-placeholder')}
+  //               </span>
+  //             </span>
+  //             <div className="addon-right simplelink" onClick={showQrScannerModal}>
+  //               <QrcodeOutlined />
+  //             </div>
+  //           </div>
+  //           <div className="transaction-field-row">
+  //             <span className="field-label-left">
+  //               {accountAddressInput && !isValidAddress(accountAddressInput) ? (
+  //                 <span className="fg-red">
+  //                   {t('transactions.validation.address-validation')}
+  //                 </span>
+  //               ) : (
+  //                 <span>&nbsp;</span>
+  //               )}
+  //             </span>
+  //           </div>
+  //         </div>
+  //         {/* Go button */}
+  //         <Button
+  //           className="main-cta right"
+  //           type="primary"
+  //           shape="round"
+  //           size="large"
+  //           onClick={onAddAccountAddress}
+  //           disabled={!isValidAddress(accountAddressInput)}>
+  //           {t('assets.account-add-cta-label')}
+  //         </Button>
+  //       </div>
+  //       <div className="text-center">
+  //         <span className="mr-1">{t('assets.create-account-help-pre')}</span>
+  //         <a className="primary-link font-medium" href={SOLANA_WALLET_GUIDE} target="_blank" rel="noopener noreferrer">
+  //           {t('assets.create-account-help-link')}
+  //         </a>
+  //         <span className="ml-1">{t('assets.create-account-help-post')}</span>
+  //       </div>
+  //     </div>
+  //     {isQrScannerModalVisible && (
+  //       <QrScannerModal
+  //         isVisible={isQrScannerModalVisible}
+  //         handleOk={onAcceptQrScannerModal}
+  //         handleClose={closeQrScannerModal}/>
+  //     )}
+  //   </>
+  // );
 
   return (
     <>
@@ -3897,7 +3834,7 @@ export const AccountsNewView = () => {
                     {/* Left / top panel */}
                     <div className="meanfi-two-panel-left">
                       <div className="meanfi-panel-heading">
-                        {!isInspectedAccountTheConnectedWallet() ? (
+                        {!isInspectedAccountTheConnectedWallet() && inspectedAccountType === "multisig" ? (
                           <>
                             <div className="back-button mb-0">
                               <span className="icon-button-container">
@@ -3908,6 +3845,9 @@ export const AccountsNewView = () => {
                                     size="middle"
                                     icon={<ArrowLeftOutlined />}
                                     onClick={() => {
+                                      if (selectedMultisig) {
+                                        setHighLightableMultisigId(selectedMultisig.id.toBase58());
+                                      }
                                       navigate("/safes");
                                     }}
                                   />
