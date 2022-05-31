@@ -4391,22 +4391,34 @@ export const AccountsNewView = () => {
                         {/* Bottom CTAs */}
                         <div className="bottom-ctas">
                           <div className="primary-action">
-                            <Tooltip placement="bottom" title={
-                              !isInspectedAccountTheConnectedWallet()
-                                ? "You can only add assets to your connected account"
-                                : ""
-                              }>
+                            {isInspectedAccountTheConnectedWallet() ? (
                               <Button
                                 block
                                 className="flex-center"
                                 type="primary"
                                 shape="round"
-                                // disabled={!isInspectedAccountTheConnectedWallet()}
-                                onClick={!isInspectedAccountTheConnectedWallet() ? onShowCreateAssetModal : showInitAtaModal}>
+                                onClick={showInitAtaModal}>
                                 <IconAdd className="mean-svg-icons" />
                                 <span className="ml-1">Add asset</span>
                               </Button>
-                            </Tooltip>
+                            ) : (
+                              <Tooltip placement="bottom" title={
+                                !accountAddress || inspectedAccountType !== "multisig"
+                                  ? "You can only add assets to your connected account"
+                                  : "Add asset to your multisig safe account"
+                                }>
+                                <Button
+                                  block
+                                  className="flex-center"
+                                  type="primary"
+                                  shape="round"
+                                  disabled={!accountAddress || inspectedAccountType !== "multisig"}
+                                  onClick={onShowCreateAssetModal}>
+                                  <IconAdd className="mean-svg-icons" />
+                                  <span className="ml-1">Add asset</span>
+                                </Button>
+                              </Tooltip>
+                            )}
                           </div>
                           <Dropdown className="options-dropdown"
                             overlay={assetListOptions}
