@@ -2541,14 +2541,14 @@ export const AccountsNewView = () => {
     });
     ctaItems++;
 
-    // Receive
+    // Deposit
     actions.push({
-      action: AccountAssetAction.Receive,
-      caption: 'Receive',
-      isVisible: isCustomAsset ? false : true,
+      action: AccountAssetAction.Deposit,
+      caption: 'Deposit',
+      isVisible: true,
       uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
       disabled: false,
-      uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${AccountAssetAction.Receive}`,
+      uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${AccountAssetAction.Deposit}`,
       tooltip: '',
       callBack: showReceiveSplOrSolModal
     });
@@ -3892,6 +3892,27 @@ export const AccountsNewView = () => {
           ) : inspectedAccountType && inspectedAccountType === "multisig" ? (
             <Row gutter={[8, 8]} className="safe-btns-container mb-1">
               <Col xs={24} sm={24} md={24} lg={24} className="asset-btn-group btn-group">
+              {/* actions.push({
+      action: AccountAssetAction.Deposit,
+      caption: 'Deposit',
+      isVisible: true,
+      uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
+      disabled: false,
+      uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${AccountAssetAction.Deposit}`,
+      tooltip: '',
+      callBack: showReceiveSplOrSolModal
+    });
+    ctaItems++; */}
+                <Button
+                  type="default"
+                  shape="round"
+                  size="small"
+                  className="thin-stroke asset-btn"
+                  onClick={showReceiveSplOrSolModal}>
+                    <div className="btn-content">
+                      Deposit
+                    </div>
+                </Button>
                 <Button
                   type="default"
                   shape="round"

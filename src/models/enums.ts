@@ -133,7 +133,7 @@ export enum AccountAssetAction {
     Buy = 1,
     Exchange = 2,
     Invest = 3,
-    Receive = 4,
+    Deposit = 4,
     UnwrapSol = 5,
     WrapSol = 6,
     MergeAccounts = 7,
