@@ -735,7 +735,6 @@ export const SafeMeanInfo = (props: {
         onNewProposalMultisigClick={onNewProposalMultisigClick}
         onEditMultisigClick={onEditMultisigClick}
         onRefreshTabsInfo={onRefreshTabsInfo}
-        onNewCreateAssetClick={onNewCreateAssetClick}
         tabs={tabs}
         selectedTab={selectedTab}
         isTxInProgress={isTxInProgress}

@@ -18,7 +18,6 @@ export const SafeInfo = (props: {
   safeNameImg?: string;
   safeNameImgAlt?: string;
   onNewProposalMultisigClick?: any;
-  onNewCreateAssetClick?: any;
   onEditMultisigClick?: any;
   onRefreshTabsInfo?: any;
   tabs?: Array<any>;
@@ -41,6 +40,7 @@ export const SafeInfo = (props: {
   const navigate = useNavigate();
 
   const [selectedLabelName, setSelectedLabelName] = useState("");
+  // const [totalSafeBalance, setTotalSafeBalance] = useState<number>(0);
 
   const isUnderDevelopment = () => {
     return isLocal() || (isDev() && isWhitelisted) ? true : false;
@@ -169,7 +169,7 @@ export const SafeInfo = (props: {
     },
     {
       name: `Safe balance ${assetsAmout}`,
-      value: totalSafeBalance ? toUsCurrency(totalSafeBalance) : toUsCurrency(0)
+      value: totalSafeBalance ? toUsCurrency(totalSafeBalance) : "$0.00"
     },
     {
       name: "Deposit address",

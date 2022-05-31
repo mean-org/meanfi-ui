@@ -248,9 +248,13 @@
     }
 }
 
-.asset-btn {
-    min-width: 145px !important;
-    .btn-content {
-        justify-content: center !important;
+.asset-btn-group {
+    display: flex;
+    flex-wrap: wrap !important;
+    .asset-btn {
+        min-width: 166px !important;
+        .btn-content {
+            justify-content: center !important;
+        }
     }
 }
