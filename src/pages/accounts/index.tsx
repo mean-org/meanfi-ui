@@ -938,7 +938,7 @@ export const AccountsNewView = () => {
     return path;
   }, [accountAddress, inspectedAccountType]);
 
-      /////////////////
+  /////////////////
   //  Init code  //
   /////////////////
 
@@ -2639,9 +2639,9 @@ export const AccountsNewView = () => {
     actions.push({
       action: AccountAssetAction.CloseAccount,
       caption: 'Close account',
-      isVisible: isInspectedAccountTheConnectedWallet() && isSelectedAssetNativeAccount() ? false : true,
+      isVisible: isInspectedAccountTheConnectedWallet() && !isSelectedAssetNativeAccount(),
       uiComponentType: 'menuitem',
-      disabled: !isInspectedAccountTheConnectedWallet(),
+      disabled: false,
       uiComponentId: `menuitem-${AccountAssetAction.CloseAccount}`,
       tooltip: '',
       callBack: showCloseAssetModal
