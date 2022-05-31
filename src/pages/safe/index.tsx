@@ -100,7 +100,6 @@ export const SafeView = () => {
   const { publicKey, connected, wallet } = useWallet();
   const {
     isWhitelisted,
-    // multisigVaults,
     detailsPanelOpen,
     transactionStatus,
     highLightableMultisigId,
@@ -112,15 +111,12 @@ export const SafeView = () => {
     setTransactionStatus,
     refreshTokenBalance,
     setDtailsPanelOpen,
-    multisigVaults,
-    splTokenList,
     coinPrices
   } = useContext(AppStateContext);
   const {
     fetchTxInfoStatus,
     lastSentTxSignature,
     lastSentTxOperationType,
-    confirmationHistory,
     startFetchTxSignatureInfo,
     clearTxConfirmationContext,
     enqueueTransactionConfirmation
@@ -159,18 +155,13 @@ export const SafeView = () => {
   const [solanaApps, setSolanaApps] = useState<App[]>([]);
   const [serumAccounts, setSerumAccounts] = useState<MultisigInfo[]>([]);
   const [serumMultisigTxs, setSerumMultisigTxs] = useState<MultisigTransaction[]>([]);
-
   const [isProposalDetails, setIsProposalDetails] = useState(false);
   const [proposalSelected, setProposalSelected] = useState<MultisigTransaction | undefined>();
-  // const [proposalSelectedIdl, setProposalSelectedIdl] = useState<Idl | undefined>();
   const [isProgramDetails, setIsProgramDetails] = useState(false);
   const [programSelected, setProgramSelected] = useState<any>();
   const [isAssetDetails, setIsAssetDetails] = useState(false);
   const [assetSelected, setAssetSelected] = useState<any>();
   const [selectedTab, setSelectedTab] = useState<number>();
-  const [solBalance, setSolBalance] = useState<number>(0);
-  const [usdValue, setUsdValue] = useState<number>(0);
-  const [itemBalance, setItemBalance] = useState<any>();
   const [multisigUsdValues, setMultisigUsdValues] = useState<Map<string, number> | undefined>();
   const [canSubscribe, setCanSubscribe] = useState(true);
   

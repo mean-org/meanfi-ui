@@ -1,30 +1,22 @@
 import './style.scss';
-// import { IconApprove, IconArrowForward, IconCheckCircle, IconCreated, IconCross, IconMinus } from "../../../../Icons"
 import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, getTxIxResume, makeDecimal, shortenAddress } from "../../../../utils/utils";
-// import { Button, Col, Row, Spin } from "antd"
 import { SafeInfo } from "../UI/SafeInfo";
-import { DEFAULT_EXPIRATION_TIME_SECONDS, getMultisigTransactionSummary, MeanMultisig, MultisigInfo, MultisigTransaction, MultisigTransactionStatus, MultisigTransactionSummary } from '@mean-dao/mean-multisig-sdk';
+import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigTransaction, MultisigTransactionStatus, MultisigTransactionSummary } from '@mean-dao/mean-multisig-sdk';
 import { ProgramAccounts } from '../../../../utils/accounts';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { Connection, LAMPORTS_PER_SOL, MemcmpFilter, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
-// import { useConnectionConfig } from '../../../../contexts/connection';
 import { consoleOut, getTransactionStatusForLogs } from '../../../../utils/ui';
-// import { useWallet } from '../../../../contexts/wallet';
 import { ResumeItem } from '../UI/ResumeItem';
-// import { program } from '@project-serum/anchor/dist/cjs/spl/token';
 import { FALLBACK_COIN_IMAGE, NO_FEES, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../../../constants';
-// import { MultisigVault } from '../../../../models/multisig';
 import { Identicon } from '../../../../components/Identicon';
-// import { BN } from 'bn.js';
-// import { u64 } from '@solana/spl-token';
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../../../utils/ids';
 import { ACCOUNT_LAYOUT } from '../../../../utils/layouts';
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { AppStateContext, TransactionStatusInfo } from '../../../../contexts/appstate';
+import { AppStateContext } from '../../../../contexts/appstate';
 import { BN } from 'bn.js';
 import { TxConfirmationContext } from '../../../../contexts/transaction-status';
 import { CopyExtLinkGroup } from '../../../../components/CopyExtLinkGroup';
-import { IconArrowForward, IconEllipsisVertical, IconVerticalEllipsis } from '../../../../Icons';
+import { IconArrowForward, IconVerticalEllipsis } from '../../../../Icons';
 import { Menu } from 'antd';
 import { MultisigVaultDeleteModal } from '../../../../components/MultisigVaultDeleteModal';
 import { MultisigVaultTransferAuthorityModal } from '../../../../components/MultisigVaultTransferAuthorityModal';
@@ -117,8 +109,8 @@ export const SafeMeanInfo = (props: {
   const [multisigAddress, setMultisigAddress] = useState('');
   const [multisigTransactionSummary, setMultisigTransactionSummary] = useState<MultisigTransactionSummary | undefined>(undefined);
   const [highlightedMultisigTx, sethHighlightedMultisigTx] = useState<MultisigTransaction | undefined>();
-  const [/*retryOperationPayload*/, setRetryOperationPayload] = useState<any>(undefined);
-  const [/*ongoingOperation*/, setOngoingOperation] = useState<OperationType | undefined>(undefined);
+  // const [/*retryOperationPayload*/, setRetryOperationPayload] = useState<any>(undefined);
+  // const [/*ongoingOperation*/, setOngoingOperation] = useState<OperationType | undefined>(undefined);
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [assetsWithoutSol, setAssetsWithoutSol] = useState<MultisigVault[]>([]);
 
