@@ -707,7 +707,6 @@ export const AccountsNewView = () => {
   ])
 
   const shouldHideAsset = useCallback((asset: UserTokenAccount) => {
-    // “hide small balances” = “hide Tokens with an actual price quote and with USD-equivalent balance < $0.01”
     const priceByAddress = getTokenPriceByAddress(asset.address);
     const tokenPrice = priceByAddress || getTokenPriceBySymbol(asset.symbol);
     return tokenPrice > 0 && (!asset.valueInUsd || asset.valueInUsd < ACCOUNTS_LOW_BALANCE_LIMIT)
@@ -2639,7 +2638,7 @@ export const AccountsNewView = () => {
     actions.push({
       action: AccountAssetAction.CloseAccount,
       caption: 'Close account',
-      isVisible: isSelectedAssetNativeAccount() ? false : true,
+      isVisible: isInspectedAccountTheConnectedWallet() && isSelectedAssetNativeAccount() ? false : true,
       uiComponentType: 'menuitem',
       disabled: !isInspectedAccountTheConnectedWallet(),
       uiComponentId: `menuitem-${AccountAssetAction.CloseAccount}`,
@@ -3509,7 +3508,11 @@ export const AccountsNewView = () => {
       }}>
         <div className="font-bold font-size-110 left">Net Worth</div>
         <div className="font-bold font-size-110 right">
-          {toUsCurrency(netWorth)}
+          {
+            netWorth
+              ? toUsCurrency(netWorth)
+              : '$0.00'
+          }
         </div>
       </div>
     );
@@ -3637,9 +3640,11 @@ export const AccountsNewView = () => {
           <div className="rate-amount">
             {
               tokenPrice > 0
-                ? !asset.valueInUsd || asset.valueInUsd < ACCOUNTS_LOW_BALANCE_LIMIT
-                  ? '< $0.01'
-                  : toUsCurrency(asset.valueInUsd || 0)
+                ? !asset.valueInUsd
+                  ? '$0.00'
+                  : asset.valueInUsd > 0 && asset.valueInUsd < ACCOUNTS_LOW_BALANCE_LIMIT
+                    ? '< $0.01'
+                    : toUsCurrency(asset.valueInUsd || 0)
                 : '—'
             }
           </div>
@@ -3984,7 +3989,13 @@ export const AccountsNewView = () => {
                 </div>
                 <div className="transaction-detail-row">
                   <span className="info-data">
-                    {toUsCurrency((selectedAsset.balance || 0) * tokenPrice)}
+                    {
+                      tokenPrice > 0
+                        ? selectedAsset.balance
+                          ? toUsCurrency((selectedAsset.balance || 0) * tokenPrice)
+                          : '$0.00'
+                        : '$0.00'
+                    }
                   </span>
                 </div>
               </Col>
