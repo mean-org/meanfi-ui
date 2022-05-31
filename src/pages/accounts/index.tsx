@@ -56,7 +56,7 @@ import { AddressDisplay } from '../../components/AddressDisplay';
 import { ReceiveSplOrSolModal } from '../../components/ReceiveSplOrSolModal';
 import { SendAssetModal } from '../../components/SendAssetModal';
 import { AccountAssetAction, EventType, InvestItemPaths, OperationType, TransactionStatus } from '../../models/enums';
-import { consoleOut, copyText, getTransactionStatusForLogs, isValidAddress, kFormatter, toUsCurrency } from '../../utils/ui';
+import { consoleOut, copyText, getTransactionStatusForLogs, isLocal, isValidAddress, kFormatter, toUsCurrency } from '../../utils/ui';
 import { WrapSolModal } from '../../components/WrapSolModal';
 import { UnwrapSolModal } from '../../components/UnwrapSolModal';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
@@ -134,8 +134,10 @@ export const AccountsNewView = () => {
     multisigSolBalance,
     streamProgramAddress,
     streamV2ProgramAddress,
+    pendingMultisigTxCount,
     previousWalletConnectState,
     setHighLightableMultisigId,
+    setPendingMultisigTxCount,
     showDepositOptionsModal,
     setAddAccountPanelOpen,
     getTokenPriceByAddress,
@@ -327,7 +329,7 @@ export const AccountsNewView = () => {
     resetTransactionStatus,
   ]);
 
-  // Receive SPL or SOL modal
+  // Deposit SPL or SOL modal
   const [isReceiveSplOrSolModalOpen, setIsReceiveSplOrSolModalOpen] = useState(false);
   const hideReceiveSplOrSolModal = useCallback(() => setIsReceiveSplOrSolModalOpen(false), []);
   const showReceiveSplOrSolModal = useCallback(() => setIsReceiveSplOrSolModalOpen(true), []);
@@ -1020,8 +1022,12 @@ export const AccountsNewView = () => {
         !multisigClient ||
         !multisigSerumClient ||
         !accountAddress ||
-        inspectedAccountType !== "multisig" ||
         !loadingMultisigAccounts) {
+      return;
+    }
+
+    if (inspectedAccountType !== "multisig") {
+      setPendingMultisigTxCount(undefined);
       return;
     }
 
@@ -1062,20 +1068,30 @@ export const AccountsNewView = () => {
           if (item) {
             consoleOut('selectedMultisig:', item, 'crimson');
             setSelectedMultisig(item);
+            setPendingMultisigTxCount(item.pendingTxsAmount);
+          } else {
+            setSelectedMultisig(undefined);
+            setPendingMultisigTxCount(undefined);
           }
         })
         .catch((err: any) => {
           console.error(err);
+          setPendingMultisigTxCount(undefined);
         })
         .finally(() => setLoadingMultisigAccounts(false));
-
       })
-      .catch((err: any) => console.error(err))
+      .catch((err: any) => {
+        console.error(err);
+        setPendingMultisigTxCount(undefined);
+      })
       .finally(() => setLoadingMultisigAccounts(false));
     });
 
     return () => {
       clearTimeout(timeout);
+      if (pendingMultisigTxCount) {
+        setPendingMultisigTxCount(undefined);
+      }
     }
 
   }, [
@@ -1084,7 +1100,9 @@ export const AccountsNewView = () => {
     multisigClient,
     multisigSerumClient,
     inspectedAccountType,
+    pendingMultisigTxCount,
     loadingMultisigAccounts,
+    setPendingMultisigTxCount,
   ]);
 
   //////////////////////
@@ -3524,13 +3542,26 @@ export const AccountsNewView = () => {
   // Rendering //
   ///////////////
 
+  const renderMultisigPendinTxNotification = () => {
+    if (pendingMultisigTxCount && pendingMultisigTxCount > 0) {
+      return (
+        <div key="pending-proposals" className="transaction-list-row no-pointer p-0 shift-up-1">
+          <div className="description-cell">
+            <div className="fg-warning font-bold">There are pending proposals on this account</div>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
   const renderNetworth = () => {
     return (
       <div className={`networth-list-item flex-fixed-right no-pointer ${selectedCategory === "networth" ? 'selected' : ''}`} onClick={() => {
         // setSelectedCategory("networth");
         // setSelectedAsset(undefined);
       }}>
-        <div className="font-bold font-size-110 left">Net Worth</div>
+        <div className="font-bold font-size-110 left">{!isInspectedAccountTheConnectedWallet() ? "Treasury Balance" : "Net Worth"}</div>
         <div className="font-bold font-size-110 right">
           {
             netWorth
@@ -3911,17 +3942,6 @@ export const AccountsNewView = () => {
           ) : inspectedAccountType && inspectedAccountType === "multisig" ? (
             <Row gutter={[8, 8]} className="safe-btns-container mb-1">
               <Col xs={24} sm={24} md={24} lg={24} className="asset-btn-group btn-group">
-              {/* actions.push({
-      action: AccountAssetAction.Deposit,
-      caption: 'Deposit',
-      isVisible: true,
-      uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
-      disabled: false,
-      uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${AccountAssetAction.Deposit}`,
-      tooltip: '',
-      callBack: showReceiveSplOrSolModal
-    });
-    ctaItems++; */}
                 <Button
                   type="default"
                   shape="round"
@@ -4223,7 +4243,7 @@ export const AccountsNewView = () => {
     <>
       {/* {isLocal() && (
         <div className="debug-bar">
-          <span className="ml-1">incoming:</span><span className="ml-1 font-bold fg-dark-active">{streamsSummary ? streamsSummary.incomingAmount : '-'}</span>
+          <span className="ml-1">pendingMultisigTxCount:</span><span className="ml-1 font-bold fg-dark-active">{pendingMultisigTxCount !== undefined ? pendingMultisigTxCount : '-'}</span>
           <span className="ml-1">outgoing:</span><span className="ml-1 font-bold fg-dark-active">{streamsSummary ? streamsSummary.outgoingAmount : '-'}</span>
           <span className="ml-1">totalAmount:</span><span className="ml-1 font-bold fg-dark-active">{streamsSummary ? streamsSummary.totalAmount : '-'}</span>
           <span className="ml-1">totalNet:</span><span className="ml-1 font-bold fg-dark-active">{streamsSummary ? streamsSummary.totalNet : '-'}</span>
@@ -4277,7 +4297,7 @@ export const AccountsNewView = () => {
                                 </Tooltip>
                               </span>
                             </div>
-                            <span className="title">Safe balances</span>
+                            <span className="title">Multisig safe</span>
                           </>
                         ) : (
                           <span className="title">{t('assets.screen-title')}</span>
@@ -4315,6 +4335,9 @@ export const AccountsNewView = () => {
                         </div>
                       </div>
                       <div className="inner-container">
+
+                        {/* Pending Multisig proposals notification */}
+                        {inspectedAccountType === "multisig" && renderMultisigPendinTxNotification()}
 
                         {/* Net Worth header (sticky) */}
                         {renderNetworth()}
@@ -4371,7 +4394,7 @@ export const AccountsNewView = () => {
                           </div>
 
                           <div className="asset-category-title flex-fixed-right">
-                            <div className="title">Assets in wallet ({accountTokens.length})</div>
+                            <div className="title">Tokens ({accountTokens.length})</div>
                             <div className="amount">{toUsCurrency(totalTokenAccountsValue)}</div>
                           </div>
                           <div className="asset-category flex-column">
@@ -4383,22 +4406,34 @@ export const AccountsNewView = () => {
                         {/* Bottom CTAs */}
                         <div className="bottom-ctas">
                           <div className="primary-action">
-                            <Tooltip placement="bottom" title={
-                              !isInspectedAccountTheConnectedWallet()
-                                ? "You can only add assets to your connected account"
-                                : ""
-                              }>
+                            {isInspectedAccountTheConnectedWallet() ? (
                               <Button
                                 block
                                 className="flex-center"
                                 type="primary"
                                 shape="round"
-                                // disabled={!isInspectedAccountTheConnectedWallet()}
-                                onClick={!isInspectedAccountTheConnectedWallet() ? onShowCreateAssetModal : showInitAtaModal}>
+                                onClick={showInitAtaModal}>
                                 <IconAdd className="mean-svg-icons" />
                                 <span className="ml-1">Add asset</span>
                               </Button>
-                            </Tooltip>
+                            ) : (
+                              <Tooltip placement="bottom" title={
+                                !accountAddress || inspectedAccountType !== "multisig"
+                                  ? "You can only add assets to your connected account"
+                                  : "Add asset to your multisig safe account"
+                                }>
+                                <Button
+                                  block
+                                  className="flex-center"
+                                  type="primary"
+                                  shape="round"
+                                  disabled={!accountAddress || inspectedAccountType !== "multisig"}
+                                  onClick={onShowCreateAssetModal}>
+                                  <IconAdd className="mean-svg-icons" />
+                                  <span className="ml-1">Add asset</span>
+                                </Button>
+                              </Tooltip>
+                            )}
                           </div>
                           <Dropdown className="options-dropdown"
                             overlay={assetListOptions}
@@ -4504,6 +4539,7 @@ export const AccountsNewView = () => {
         <ReceiveSplOrSolModal
           address={selectedAsset.publicAddress || ''}
           accountAddress={accountAddress}
+          multisigAddress={address as string}
           isVisible={isReceiveSplOrSolModalOpen}
           handleClose={hideReceiveSplOrSolModal}
           tokenSymbol={selectedAsset.symbol}

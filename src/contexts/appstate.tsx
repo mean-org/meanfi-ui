@@ -25,13 +25,12 @@ import { getNetworkIdByCluster, useConnection, useConnectionConfig } from "./con
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { useAccountsContext } from "./accounts";
 import { TokenInfo, TokenListProvider } from "@solana/spl-token-registry";
-import { getPrices, getRaydiumLiquidityPools } from "../utils/api";
+import { getPrices } from "../utils/api";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
 import { UserTokenAccount } from "../models/transactions";
 import { MEAN_TOKEN_LIST, PINNED_TOKENS } from "../constants/token-list";
 import { NATIVE_SOL } from "../utils/tokens";
-import useLocalStorage from "../hooks/useLocalStorage";
 import { MappedTransaction } from "../utils/history";
 import { consoleOut, isProd, msToTime } from "../utils/ui";
 import { appConfig } from "..";
@@ -43,12 +42,12 @@ import { TREASURY_TYPE_OPTIONS } from "../constants/treasury-type-options";
 import { initialSummary, StreamsSummary } from "../models/streams";
 import { MSP, Stream } from "@mean-dao/msp";
 import { AccountDetails } from "../models";
-import moment from "moment";
 import { openNotification } from "../components/Notifications";
 import { PerformanceCounter } from "../utils/perf-counter";
 import { TokenPrice } from "../models/token";
 import { ProgramAccounts } from "../utils/accounts";
 import { MultisigVault } from "../models/multisig";
+import moment from "moment";
 
 const pricesOldPerformanceCounter = new PerformanceCounter();
 const pricesNewPerformanceCounter = new PerformanceCounter();
@@ -70,7 +69,6 @@ interface AppStateConfig {
   tokenList: TokenInfo[];
   selectedToken: TokenInfo | undefined;
   tokenBalance: number;
-  multisigSolBalance: number;
   totalSafeBalance: number;
   fromCoinAmount: string;
   effectiveRate: number;
@@ -97,7 +95,6 @@ interface AppStateConfig {
   streamListv1: StreamInfo[] | undefined;
   streamListv2: Stream[] | undefined;
   streamList: Array<Stream | StreamInfo> | undefined;
-  multisigVaults: MultisigVault[];
   programs: ProgramAccounts[];
   selectedStream: Stream | StreamInfo | undefined;
   streamDetail: Stream | StreamInfo | undefined;
@@ -128,7 +125,10 @@ interface AppStateConfig {
   recurringBuys: DdcaAccount[];
   loadingRecurringBuys: boolean;
   // Multisig
+  multisigSolBalance: number;
+  multisigVaults: MultisigVault[];
   highLightableMultisigId: string | undefined;
+  pendingMultisigTxCount: number | undefined;
   // Staking
   stakedAmount: string;
   unstakedAmount: string;
@@ -141,7 +141,6 @@ interface AppStateConfig {
   hideDepositOptionsModal: () => void;
   setSelectedToken: (token: TokenInfo | undefined) => void;
   setSelectedTokenBalance: (balance: number) => void;
-  setMultisigSolBalance: (balance: number) => void;
   setTotalSafeBalance: (balance: number) => void;
   setFromCoinAmount: (data: string) => void;
   refreshPrices: () => void;
@@ -172,7 +171,6 @@ interface AppStateConfig {
   setPreviousWalletConnectState: (state: boolean) => void;
   setLoadingStreams: (state: boolean) => void;
   setStreamList: (list: Array<StreamInfo | Stream> | undefined) => void;
-  setMultisigVaults: (list: Array<MultisigVault>) => void;
   setPrograms: (list: Array<ProgramAccounts>) => void;
   setSelectedStream: (stream: Stream | StreamInfo | undefined) => void;
   setStreamDetail: (stream: Stream | StreamInfo | undefined) => void;
@@ -195,7 +193,10 @@ interface AppStateConfig {
   setRecurringBuys: (recurringBuys: DdcaAccount[]) => void;
   setLoadingRecurringBuys: (state: boolean) => void;
   // Multisig
+  setMultisigSolBalance: (balance: number) => void;
+  setMultisigVaults: (list: Array<MultisigVault>) => void;
   setHighLightableMultisigId: (id: string | undefined) => void,
+  setPendingMultisigTxCount: (id: number | undefined) => void,
   // Staking
   setStakedAmount: (data: string) => void;
   setUnstakedAmount: (data: string) => void;
@@ -214,7 +215,6 @@ const contextDefaultValues: AppStateConfig = {
   tokenList: [],
   selectedToken: undefined,
   tokenBalance: 0,
-  multisigSolBalance: 0,
   totalSafeBalance: 0,
   fromCoinAmount: '',
   effectiveRate: 0,
@@ -244,7 +244,6 @@ const contextDefaultValues: AppStateConfig = {
   streamListv1: undefined,
   streamListv2: undefined,
   streamList: undefined,
-  multisigVaults: [],
   programs: [],
   selectedStream: undefined,
   streamDetail: undefined,
@@ -275,7 +274,10 @@ const contextDefaultValues: AppStateConfig = {
   recurringBuys: [],
   loadingRecurringBuys: false,
   // Multisig
+  multisigSolBalance: 0,
+  multisigVaults: [],
   highLightableMultisigId: undefined,
+  pendingMultisigTxCount: undefined,
   // Staking
   stakedAmount: '',
   unstakedAmount: '',
@@ -290,7 +292,6 @@ const contextDefaultValues: AppStateConfig = {
   setTreasuryOption: () => {},
   setSelectedToken: () => {},
   setSelectedTokenBalance: () => {},
-  setMultisigSolBalance: () => {},
   setTotalSafeBalance: () => {},
   setFromCoinAmount: () => {},
   refreshPrices: () => {},
@@ -319,7 +320,6 @@ const contextDefaultValues: AppStateConfig = {
   setPreviousWalletConnectState: () => {},
   setLoadingStreams: () => {},
   setStreamList: () => {},
-  setMultisigVaults: () => {},
   setPrograms: () => {},
   setSelectedStream: () => {},
   setStreamDetail: () => {},
@@ -342,7 +342,10 @@ const contextDefaultValues: AppStateConfig = {
   setRecurringBuys: () => {},
   setLoadingRecurringBuys: () => {},
   // Multisig
+  setMultisigSolBalance: () => {},
+  setMultisigVaults: () => {},
   setHighLightableMultisigId: () => {},
+  setPendingMultisigTxCount: () => {},
   // Staking
   setStakedAmount: () => {},
   setUnstakedAmount: () => {},
@@ -405,17 +408,19 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [streamListv1, setStreamListv1] = useState<StreamInfo[] | undefined>();
   const [streamListv2, setStreamListv2] = useState<Stream[] | undefined>();
   const [streamList, setStreamList] = useState<Array<StreamInfo | Stream> | undefined>();
-  const [multisigVaults, setMultisigVaults] = useState<MultisigVault[]>([]);
   const [programs, setPrograms] = useState<ProgramAccounts[]>([]);
   const [selectedStream, updateSelectedStream] = useState<Stream | StreamInfo | undefined>();
   const [streamDetail, updateStreamDetail] = useState<Stream | StreamInfo | undefined>();
   const [activeStream, setActiveStream] = useState<Stream | StreamInfo | undefined>();
   const [deletedStreams, setDeletedStreams] = useState<string[]>([]);
   const [highLightableStreamId, setHighLightableStreamId] = useState<string | undefined>(contextDefaultValues.highLightableStreamId);
+  const [multisigVaults, setMultisigVaults] = useState<MultisigVault[]>([]);
   const [highLightableMultisigId, setHighLightableMultisigId] = useState<string | undefined>(contextDefaultValues.highLightableMultisigId);
+  const [multisigSolBalance, updateMultisigSolBalance] = useState<number>(contextDefaultValues.multisigSolBalance);
+  const [pendingMultisigTxCount, setPendingMultisigTxCount] = useState<number | undefined>(contextDefaultValues.pendingMultisigTxCount);
+
   const [selectedToken, updateSelectedToken] = useState<TokenInfo>();
   const [tokenBalance, updateTokenBalance] = useState<number>(contextDefaultValues.tokenBalance);
-  const [multisigSolBalance, updateMultisigSolBalance] = useState<number>(contextDefaultValues.multisigSolBalance);
   const [totalSafeBalance, updateTotalSafeBalance] = useState<number>(contextDefaultValues.totalSafeBalance);
   const [stakingMultiplier, updateStakingMultiplier] = useState<number>(contextDefaultValues.stakingMultiplier);
   const [coinPricesFromApi, setCoinPricesFromApi] = useState<TokenPrice[] | null>(null);
@@ -1461,7 +1466,6 @@ const AppStateProvider: React.FC = ({ children }) => {
         tokenList,
         selectedToken,
         tokenBalance,
-        multisigSolBalance,
         totalSafeBalance,
         fromCoinAmount,
         effectiveRate,
@@ -1489,7 +1493,6 @@ const AppStateProvider: React.FC = ({ children }) => {
         streamListv1,
         streamListv2,
         streamList,
-        multisigVaults,
         programs,
         selectedStream,
         streamDetail,
@@ -1515,7 +1518,10 @@ const AppStateProvider: React.FC = ({ children }) => {
         lastStreamsSummary,
         recurringBuys,
         loadingRecurringBuys,
+        multisigSolBalance,
+        multisigVaults,
         highLightableMultisigId,
+        pendingMultisigTxCount,
         stakedAmount,
         unstakedAmount,
         unstakeStartDate,
@@ -1528,7 +1534,6 @@ const AppStateProvider: React.FC = ({ children }) => {
         hideDepositOptionsModal,
         setSelectedToken,
         setSelectedTokenBalance,
-        setMultisigSolBalance,
         setTotalSafeBalance,
         setFromCoinAmount,
         refreshPrices,
@@ -1560,7 +1565,6 @@ const AppStateProvider: React.FC = ({ children }) => {
         setPreviousWalletConnectState,
         setLoadingStreams,
         setStreamList,
-        setMultisigVaults,
         setPrograms,
         setSelectedStream,
         setStreamDetail,
@@ -1578,7 +1582,10 @@ const AppStateProvider: React.FC = ({ children }) => {
         setLastStreamsSummary,
         setRecurringBuys,
         setLoadingRecurringBuys,
+        setMultisigSolBalance,
+        setMultisigVaults,
         setHighLightableMultisigId,
+        setPendingMultisigTxCount,
         setStakedAmount,
         setUnstakedAmount,
         setUnstakeStartDate,
