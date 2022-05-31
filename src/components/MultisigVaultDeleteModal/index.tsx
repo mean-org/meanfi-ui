@@ -1,16 +1,16 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useContext } from 'react';
 import { Modal, Button, Spin } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
-import { getTokenAmountAndSymbolByTokenAddress, makeDecimal, shortenAddress } from '../../utils/utils';
+import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
 import { TransactionStatus } from '../../models/enums';
 import { isError } from '../../utils/transactions';
-import { MultisigVault } from '../../models/multisig';
 import { FALLBACK_COIN_IMAGE } from '../../constants';
 import { Identicon } from '../Identicon';
 import { consoleOut, getTransactionOperationDescription } from '../../utils/ui';
 import { InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
+import { UserTokenAccount } from '../../models/transactions';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -20,7 +20,7 @@ export const MultisigVaultDeleteModal = (props: {
   handleAfterClose: any;
   isVisible: boolean;
   isBusy: boolean;
-  selectedVault: MultisigVault | undefined;
+  selectedVault: UserTokenAccount | undefined;
 }) => {
   const { t } = useTranslation('common');
   const {
@@ -42,8 +42,8 @@ export const MultisigVaultDeleteModal = (props: {
     window.location.reload();
   }
 
-  const renderVault = (item: MultisigVault) => {
-    const token = getTokenByMintAddress(item.mint.toBase58());
+  const renderVault = (item: UserTokenAccount) => {
+    const token = getTokenByMintAddress(item.address as string);
     const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
       event.currentTarget.src = FALLBACK_COIN_IMAGE;
       event.currentTarget.className = "error";
@@ -56,7 +56,7 @@ export const MultisigVaultDeleteModal = (props: {
             {token && token.logoURI ? (
               <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
             ) : (
-              <Identicon address={item.mint.toBase58()} style={{
+              <Identicon address={item.address as string} style={{
                 width: "28px",
                 display: "inline-flex",
                 height: "26px",
@@ -67,13 +67,13 @@ export const MultisigVaultDeleteModal = (props: {
           </div>
         </div>
         <div className="description-cell">
-          <div className="title text-truncate">{token ? token.symbol : `Unknown token [${shortenAddress(item.mint.toBase58(), 6)}]`}</div>
-          <div className="subtitle text-truncate">{shortenAddress(item.address.toBase58(), 8)}</div>
+          <div className="title text-truncate">{token ? token.symbol : `Unknown token [${shortenAddress(item.address as string, 6)}]`}</div>
+          <div className="subtitle text-truncate">{shortenAddress(item.publicAddress as string, 8)}</div>
         </div>
         <div className="rate-cell">
           <div className="rate-amount">
             {getTokenAmountAndSymbolByTokenAddress(
-              makeDecimal(item.amount, token?.decimals || 6),
+              item.balance || 0,
               token ? token.address as string : '',
               true
             )}
@@ -97,7 +97,7 @@ export const MultisigVaultDeleteModal = (props: {
       <div className={!props.isBusy ? "panel1 show" : "panel1 hide"}>
         {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
           <>
-            {(props.selectedVault && props.selectedVault.amount.toNumber() > 0) && (
+            {(props.selectedVault && props.selectedVault.balance as number > 0) && (
               <h3>{t('multisig.multisig-assets.delete-asset.warning-message')}</h3>
             )}
             {props.selectedVault && (
@@ -169,7 +169,7 @@ export const MultisigVaultDeleteModal = (props: {
                 type="primary"
                 shape="round"
                 size="middle"
-                disabled={props.selectedVault && props.selectedVault.amount.toNumber() > 0 }
+                disabled={props.selectedVault && props.selectedVault.balance as number > 0 }
                 onClick={() => {
                   if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
                     onAcceptDeleteVault();

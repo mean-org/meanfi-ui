@@ -1647,6 +1647,7 @@ export const SafeMeanInfo = (props: {
                     // rejected={proposal.rejected}
                     status={proposal.status}
                     isProposalDetails={isProposalDetails}
+                    hasRightIcon={true}
                     rightIcon={<IconArrowForward className="mean-svg-icons" />}
                   />
               </div>
@@ -1660,6 +1661,8 @@ export const SafeMeanInfo = (props: {
       )}
     </>
   );
+
+  // console.log("assetSelected", assetSelected.mint.toBase58());
 
   // Assets list
   const renderListOfAssets = (
@@ -1711,19 +1714,19 @@ export const SafeMeanInfo = (props: {
               : formatThousands(makeDecimal(asset.amount, asset.decimals || 6), asset.decimals || 6);
 
             // Dropdown (three dots button)
-            const menu = (
-              <Menu>
-                <Menu.Item key="0" onClick={showTransferTokenModal} disabled={isTxInProgress()}>
-                  <span className="menu-item-text">Propose send funds</span>
-                </Menu.Item>
-                <Menu.Item key="1" onClick={showTransferVaultAuthorityModal} disabled={isTxInProgress()}>
-                  <span className="menu-item-text">Transfer ownership</span>
-                </Menu.Item>
-                <Menu.Item key="2" onClick={showDeleteVaultModal} disabled={isTxInProgress() || !canDeleteVault()}>
-                  <span className="menu-item-text">Close asset</span>
-                </Menu.Item>
-              </Menu>
-            );
+            // const menu = (
+            //   <Menu>
+            //     <Menu.Item key="0" onClick={showTransferTokenModal} disabled={isTxInProgress()}>
+            //       <span className="menu-item-text">Propose send funds</span>
+            //     </Menu.Item>
+            //     <Menu.Item key="1" onClick={showTransferVaultAuthorityModal} disabled={isTxInProgress()}>
+            //       <span className="menu-item-text">Transfer ownership</span>
+            //     </Menu.Item>
+            //     <Menu.Item key="2" onClick={showDeleteVaultModal} disabled={isTxInProgress() || !canDeleteVault()}>
+            //       <span className="menu-item-text">Close asset</span>
+            //     </Menu.Item>
+            //   </Menu>
+            // );
 
             return (
               <div 
@@ -1739,10 +1742,11 @@ export const SafeMeanInfo = (props: {
                     isAsset={true}
                     rightContent={assetAmount}
                     isProposalDetails={isProposalDetails}
-                    isAssetDetails={isAssetDetails}
-                    rightIcon={!isSol ? <IconVerticalEllipsis className="mean-svg-icons" /> : ""}
-                    rightIconHasDropdown={true}
-                    dropdownMenu={!isSol ? menu : ""}
+                    hasRightIcon={false}
+                    // isAssetDetails={isAssetDetails}
+                    // rightIcon={!isSol ? <IconVerticalEllipsis className="mean-svg-icons" /> : ""}
+                    // rightIconHasDropdown={true}
+                    // dropdownMenu={!isSol ? menu : ""}
                   />
               </div>
             );
@@ -1932,6 +1936,7 @@ export const SafeMeanInfo = (props: {
                       isProgram={true}
                       programSize={program.size}
                       isProgramDetails={isProgramDetails}
+                      hasRightIcon={true}
                       rightIcon={<IconArrowForward className="mean-svg-icons" />}
                     />
                 </div>
@@ -2026,7 +2031,7 @@ export const SafeMeanInfo = (props: {
         isTxInProgress={isTxInProgress}
       />
 
-      {isTransferTokenModalVisible && (
+      {/* {isTransferTokenModalVisible && (
         <MultisigTransferTokensModal
           isVisible={isTransferTokenModalVisible}
           nativeBalance={nativeBalance}
@@ -2040,9 +2045,9 @@ export const SafeMeanInfo = (props: {
           isBusy={isBusy}
           assets={assetsWithoutSol}
         />
-      )}
+      )} */}
 
-      {isTransferVaultAuthorityModalVisible && (
+      {/* {isTransferVaultAuthorityModalVisible && (
         <MultisigVaultTransferAuthorityModal
           isVisible={isTransferVaultAuthorityModalVisible}
           nativeBalance={nativeBalance}
@@ -2059,9 +2064,9 @@ export const SafeMeanInfo = (props: {
           selectedVault={assetSelected}
           assets={multisigVaults}
         />
-      )}
+      )} */}
 
-      {isDeleteVaultModalVisible && (
+      {/* {isDeleteVaultModalVisible && (
         <MultisigVaultDeleteModal
           isVisible={isDeleteVaultModalVisible}
           handleOk={onAcceptDeleteVault}
@@ -2073,7 +2078,7 @@ export const SafeMeanInfo = (props: {
           isBusy={isBusy}
           selectedVault={assetSelected}
         />
-      )}
+      )} */}
     </>
   )
 }

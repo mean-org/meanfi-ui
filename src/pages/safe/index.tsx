@@ -245,6 +245,14 @@ export const SafeView = () => {
     setTransactionStatus
   ]);
 
+  const getPricePerToken = useCallback((token: UserTokenAccount): number => {
+    if (!token || !coinPrices) { return 0; }
+
+    return coinPrices && coinPrices[token.symbol]
+      ? coinPrices[token.symbol]
+      : 0;
+  }, [coinPrices]);
+
   const onCreateMultisigClick = useCallback(() => {
 
     if (!multisigClient) { return; }
@@ -3248,15 +3256,19 @@ export const SafeView = () => {
       clearTimeout(timeout);
     }
   
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    publicKey, 
-    connection, 
-    multisigClient, 
-    selectedMultisig, 
-    highLightableMultisigId, 
+    publicKey,
+    connection,
+    multisigClient,
+    selectedMultisig,
+    highLightableMultisigId,
     loadingMultisigAccounts,
-    // serumAccounts
+    serumAccounts,
+    getPricePerToken,
+    getMultisigVaults,
+    getTokenByMintAddress,
+    getTokenPriceByAddress,
+    getTokenPriceBySymbol
   ]);
 
   // Load/Unload multisig on wallet connect/disconnect
@@ -3414,14 +3426,6 @@ export const SafeView = () => {
     highLightableMultisigId,
     setHighLightableMultisigId,
   ]);
-
-  const getPricePerToken = useCallback((token: UserTokenAccount): number => {
-    if (!token || !coinPrices) { return 0; }
-
-    return coinPrices && coinPrices[token.symbol]
-      ? coinPrices[token.symbol]
-      : 0;
-  }, [coinPrices]);
 
   ///////////////
   // Rendering //

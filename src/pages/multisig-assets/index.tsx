@@ -3615,7 +3615,7 @@ export const MultisigAssetsView = () => {
         isBusy={isBusy}
       />
 
-      {isTransferTokenModalVisible && (
+      {/* {isTransferTokenModalVisible && (
         <MultisigTransferTokensModal
           isVisible={isTransferTokenModalVisible}
           nativeBalance={nativeBalance}
@@ -3629,9 +3629,9 @@ export const MultisigAssetsView = () => {
           isBusy={isBusy}
           assets={multisigVaults}
         />
-      )}
+      )} */}
 
-      {isTransferVaultAuthorityModalVisible && (
+      {/* {isTransferVaultAuthorityModalVisible && (
         <MultisigVaultTransferAuthorityModal
           isVisible={isTransferVaultAuthorityModalVisible}
           nativeBalance={nativeBalance}
@@ -3648,9 +3648,9 @@ export const MultisigAssetsView = () => {
           selectedVault={selectedVault}
           assets={multisigVaults}
         />
-      )}
+      )} */}
 
-      {isDeleteVaultModalVisible && (
+      {/* {isDeleteVaultModalVisible && (
         <MultisigVaultDeleteModal
           isVisible={isDeleteVaultModalVisible}
           handleOk={onAcceptDeleteVault}
@@ -3662,7 +3662,7 @@ export const MultisigAssetsView = () => {
           isBusy={isBusy}
           selectedVault={selectedVault}
         />
-      )}
+      )} */}
 
       {/* Transaction confirm and execution modal launched from each Tx row */}
       {(isMultisigActionTransactionModalVisible && highlightedMultisigTx && selectedMultisig) && (
