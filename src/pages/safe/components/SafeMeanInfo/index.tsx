@@ -1996,11 +1996,11 @@ export const SafeMeanInfo = (props: {
       name: `Proposals ${amountOfProposals}`,
       render: renderListOfProposals
     }, 
-    {
-      id: "safe02",
-      name: `Assets ${amountOfAssets}`,
-      render: renderListOfAssets
-    }, 
+    // {
+    //   id: "safe02",
+    //   name: `Assets ${amountOfAssets}`,
+    //   render: renderListOfAssets
+    // }, 
     // {
     //   name: "Settings",
     //   render: renderSettings

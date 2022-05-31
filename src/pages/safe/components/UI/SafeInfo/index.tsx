@@ -248,7 +248,7 @@ export const SafeInfo = (props: {
                 View assets
               </div>
           </Button>
-          <Button
+          {/* <Button
             type="default"
             shape="round"
             size="small"
@@ -258,7 +258,7 @@ export const SafeInfo = (props: {
               <div className="btn-content">
                 Create asset
               </div>
-          </Button>
+          </Button> */}
         </Col>
         
         <Col xs={4} sm={6} md={4} lg={6}>
@@ -280,7 +280,7 @@ export const SafeInfo = (props: {
         </Col>
       </Row>
 
-      {(selectedMultisig.balance && ((selectedMultisig.balance / LAMPORTS_PER_SOL) < 0.005)) ? (
+      {(selectedMultisig.balance && ((selectedMultisig.balance / LAMPORTS_PER_SOL) <= 0)) ? (
         <Row gutter={[8, 8]}>
           <Col span={24} className="alert-info-message pr-6">
             <Alert message="SOL balance is very low in this safe. You'll need some if you want to make proposals." type="info" showIcon closable />
