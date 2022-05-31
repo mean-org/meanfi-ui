@@ -1128,10 +1128,11 @@ export const AccountsNewView = () => {
     setTransactionAssetFees(fees);
   },[resetTransactionStatus]);
 
-  const closeCreateAssetModal = useCallback(() => {
+  const closeCreateAssetModal = useCallback((refresh = false) => {
     resetTransactionStatus();
     setIsCreateAssetModalVisible(false);
-  }, [resetTransactionStatus]);
+    setShouldLoadTokens(true);
+  }, [resetTransactionStatus, setShouldLoadTokens]);
 
   const onAssetCreated = useCallback(() => {
     resetTransactionStatus();
@@ -1441,7 +1442,7 @@ export const AccountsNewView = () => {
               currentOperation: TransactionStatus.TransactionFinished
             });
             onAssetCreated();
-            closeCreateAssetModal();
+            closeCreateAssetModal(true);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
