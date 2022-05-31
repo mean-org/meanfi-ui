@@ -31,23 +31,23 @@ export const ProposalDetailsView = (props: {
   connection?: any;
   solanaApps?: any;
   appsProvider?: any;
-
+  onOperationStarted: any;
 }) => {
 
   // const { isWhitelisted } = useContext(AppStateContext);
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
   const { 
+    connection,
+    solanaApps,
+    appsProvider,
     isProposalDetails, 
     onDataToSafeView, 
     proposalSelected, 
     selectedMultisig, 
     onProposalApprove, 
     onProposalExecute,
-    connection,
-    solanaApps,
-    appsProvider
-
+    onOperationStarted,
   } = props;
 
   const [selectedProposal, setSelectedProposal] = useState<MultisigTransaction>(proposalSelected);
@@ -130,7 +130,7 @@ export const ProposalDetailsView = (props: {
   const renderInstructions = (
     proposalIxInfo && (
       <div className="safe-details-collapse w-100 pl-1">
-        <Row gutter={[8, 8]} className="mb-2 mt-2">
+        <Row gutter={[8, 8]} className="mb-2 mt-2" key="programs">
           <Col xs={6} sm={6} md={4} lg={4} className="pr-1">
             <span className="info-label">{t('multisig.proposal-modal.instruction-program')}</span>
           </Col>
@@ -154,9 +154,9 @@ export const ProposalDetailsView = (props: {
         </Row>
         
         {
-          proposalIxInfo.accounts.map((account: InstructionAccountInfo) => {
+          proposalIxInfo.accounts.map((account: InstructionAccountInfo, index: number) => {
             return (
-              <Row gutter={[8, 8]} className="mb-2" key={account.value}>
+              <Row gutter={[8, 8]} className="mb-2" key={`item-${index}`}>
                 <Col xs={6} sm={6} md={4} lg={4} className="pr-1">
                     {/* <span className="info-label">{t('multisig.proposal-modal.instruction-account')} :</span> */}
                     <span className="info-label">{account.label || t('multisig.proposal-modal.instruction-account')}</span>
@@ -181,9 +181,9 @@ export const ProposalDetailsView = (props: {
 
         {
           proposalIxInfo.programId === MEAN_MULTISIG_PROGRAM.toBase58() ? (
-            proposalIxInfo.data.map((item: InstructionDataInfo) => {
+            proposalIxInfo.data.map((item: InstructionDataInfo, index: number) => {
               return (
-                <Row gutter={[8, 8]} className="mb-2">
+                <Row gutter={[8, 8]} className="mb-2" key={`more-items-${index}`}>
                   <Col xs={6} sm={6} md={4} lg={4} className="pr-1 text-truncate">
                     <Tooltip placement="right" title={item.label || ""}>
                       <span className="info-label">{item.label || t('multisig.proposal-modal.instruction-data')}</span>
@@ -194,7 +194,7 @@ export const ProposalDetailsView = (props: {
                       <>
                         {item.value.map((owner: any) => {
                           return (
-                            <Row style={{marginLeft:20}}>
+                            <Row style={{marginLeft:20}} key={`owners-${index}`}>
                               <Col xs={6} sm={6} md={4} lg={4} className="pr-1 text-truncate">
                                 <Tooltip placement="right" title={owner.label || ""}>
                                   <span className="info-label">{owner.label || t('multisig.proposal-modal.instruction-data')}</span>
@@ -211,7 +211,7 @@ export const ProposalDetailsView = (props: {
                       </>
                     ) : (
                       <>
-                        <Col xs={17} sm={17} md={19} lg={19} className="pl-1 pr-3">
+                        <Col xs={17} sm={17} md={19} lg={19} className="pl-1 pr-3" key="loquejea">
                           <span className="d-block info-data simplelink underline-on-hover text-truncate" style={{cursor: 'pointer'}}>
                             {item.value}
                           </span>
@@ -412,7 +412,11 @@ export const ProposalDetailsView = (props: {
                 size="small"
                 className="thin-stroke"
                 disabled={selectedProposal.didSigned || selectedProposal.status !== MultisigTransactionStatus.Pending}
-                onClick={() => onProposalApprove({ transaction: { id: selectedProposal.id } })}>
+                onClick={() => {
+                  const operation = { transaction: { id: selectedProposal.id } };
+                  onOperationStarted(operation)
+                  onProposalApprove(operation);
+                }}>
                   <div className="btn-content">
                     <IconThumbsUp className="mean-svg-icons" />
                     Approve
@@ -425,12 +429,16 @@ export const ProposalDetailsView = (props: {
                   shape="round"
                   size="small"
                   className="thin-stroke d-flex justify-content-center align-items-center"
-                  onClick={() => onProposalExecute({ 
-                    transaction: { 
-                      id: selectedProposal.id,
-                      operation: selectedProposal.operation
+                  onClick={() => {
+                    const operation = {
+                      transaction: { 
+                        id: selectedProposal.id,
+                        operation: selectedProposal.operation
+                      }
                     }
-                  })}>
+                    onOperationStarted(operation)
+                    onProposalExecute(operation);
+                  }}>
                     <div className="btn-content">
                       Execute
                     </div>
