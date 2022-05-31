@@ -3197,7 +3197,7 @@ export const SafeView = () => {
   
             const program = multisigClient.getProgram();
   
-            let usdValue = 0
+            let usdValue = 0;
   
             const assets = await getMultisigVaults(program.provider.connection, account.id);
             assets.forEach(asset => {
@@ -3490,15 +3490,13 @@ export const SafeView = () => {
                 {multisigUsdValues.size > 0 ? (
                   <>
                     <div className="rate-amount">
-                      {toUsCurrency(multisigUsdValues.get(item.authority.toBase58())) || 0}
+                      {toUsCurrency(multisigUsdValues.get(item.authority.toBase58())) || "$0.00"}
                     </div>
                     <div className="interval">safe balance</div>
                   </>
                 ) : (
                   <>
-                  <div className="rate-amount">
-                    $0.00
-                  </div>
+                  <div className="rate-amount">--</div>
                   <div className="interval">safe balance</div>
                 </>
                 )}

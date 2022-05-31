@@ -47,7 +47,7 @@
     "@mean-dao/ddca": "1.2.35",
     "@mean-dao/hybrid-liquidity-ag": "1.2.2",
     "@mean-dao/mean-multisig-apps": "^0.2.1",
-    "@mean-dao/mean-multisig-sdk": "^0.4.1",
+    "@mean-dao/mean-multisig-sdk": "^0.5.0",
     "@mean-dao/money-streaming": "^1.7.10",
     "@mean-dao/msp": "2.5.2",
     "@mean-dao/staking": "0.1.24",
