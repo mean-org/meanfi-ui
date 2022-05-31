@@ -3857,10 +3857,14 @@ export const AccountsNewView = () => {
   }
 
   const isSendFundsValid = () => {
-    if (selectedAsset && selectedAsset.balance as number > 0) {
-      return true;
-    } else {
-      return false;
+    if (selectedAsset) {
+      const isSol = selectedAsset.address === NATIVE_SOL_MINT.toBase58() ? true : false;
+      
+      if (!isSol && selectedAsset.balance as number > 0) {
+        return true;
+      } else {
+        return false;
+      }
     }
   }
 
