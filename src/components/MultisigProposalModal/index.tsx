@@ -28,7 +28,7 @@ import { STREAMING_ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/treasuries';
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 const expires: { label: string, value: number }[] = [
-  { label: "No expires", value: 0 },
+  { label: "No expiry", value: 0 },
   { label: "24 hours", value: 86_400 },
   { label: "48 hours", value: 172_800 },
   { label: "72 hours", value: 259_200 },
@@ -529,6 +529,31 @@ export const MultisigProposalModal = (props: {
                                       />
                                     </Col>
                                   </>
+                                ) : (element.type === "inputNumber") ? (
+                                  <>
+                                    <Col xs={24} sm={24} md={24} lg={24} className="text-left pl-1">
+                                      <FormLabelWithIconInfo
+                                        label={element.label}
+                                        tooltip_text={element.help}
+                                      />
+                                      <InputMean
+                                        id={element.name}
+                                        type="number"
+                                        className={isBusy ? 'disabled' : ''}
+                                        name={element.label}
+                                        pattern="^[0-9]*[.,]?[0-9]*$"
+                                        onChange={(e: any) => {
+                                          console.log(e);
+                                          handleChangeInput({
+                                            id: element.name,
+                                            value: e.target.value
+                                          });
+                                        }}
+                                        placeholder={element.help}
+                                        value={inputState[element.name]}
+                                      />
+                                    </Col>
+                                  </>
                                 ) : (element.type === "inputTextArea") ? (
                                   <>
                                     <Col xs={24} sm={24} md={24} lg={24} className="text-left pl-1">
@@ -915,7 +940,7 @@ export const MultisigProposalModal = (props: {
                       !selectedApp ||
                       !proposalTitleValue ||
                       !selectedUiIx ||
-                      ((selectedApp.id === "FF7U7Vj1PpBkTPau7frwLLrUHrjkxTQLsH7U5K3T3B3j") && !isSerializedTxValid)
+                      ((selectedApp.folder === "custom") && !isSerializedTxValid)
                     }
                   >
                     {getStepTwoContinueButtonLabel()}
@@ -951,7 +976,7 @@ export const MultisigProposalModal = (props: {
                       !selectedApp ||
                       !proposalTitleValue ||
                       !selectedUiIx ||
-                      ((selectedApp.name === "FF7U7Vj1PpBkTPau7frwLLrUHrjkxTQLsH7U5K3T3B3j") && !isSerializedTxValid) ||
+                      ((selectedApp.folder === "custom") && !isSerializedTxValid) ||
                       !selectedAppConfig
                     }
                   >
