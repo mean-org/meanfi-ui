@@ -412,7 +412,7 @@ export const ProposalDetailsView = (props: {
                 size="small"
                 className="thin-stroke"
                 disabled={selectedProposal.didSigned || selectedProposal.status !== MultisigTransactionStatus.Pending}
-                onClick={() => onProposalApprove({ transaction: { id: selectedProposal.id } })}>
+                onClick={() => onProposalApprove({ transaction: selectedProposal })}>
                   <div className="btn-content">
                     <IconThumbsUp className="mean-svg-icons" />
                     Approve
@@ -425,12 +425,7 @@ export const ProposalDetailsView = (props: {
                   shape="round"
                   size="small"
                   className="thin-stroke d-flex justify-content-center align-items-center"
-                  onClick={() => onProposalExecute({ 
-                    transaction: { 
-                      id: selectedProposal.id,
-                      operation: selectedProposal.operation
-                    }
-                  })}>
+                  onClick={() => onProposalExecute({ transaction: selectedProposal })}>
                     <div className="btn-content">
                       Execute
                     </div>

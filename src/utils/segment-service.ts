@@ -72,6 +72,13 @@ export enum AppUsageEvent {
     UnwrapSolSigned = "Unwrap SOL Signed",
     UnwrapSolCompleted = "Unwrap SOL Completed",
     UnwrapSolFailed = "Unwrap SOL Failed",
+    // Multisig
+    CreateProposalCompleted = "Create Proposal Completed",
+    CreateProposalFailed = "Create Proposal Failed",
+    ApproveProposalCompleted = "Approve Proposal Completed",
+    ApproveProposalFailed = "Approve Proposal Failed",
+    ExecuteProposalCompleted = "Execute Proposal Completed",
+    ExecuteProposalFailed = "Execute Proposal Failed"
 }
 
 export enum StatsTriggertEvent {
