@@ -336,6 +336,8 @@ export const ProposalDetailsView = (props: {
   const neededSigners = approvedSigners && (selectedMultisig.threshold - approvedSigners);
   const expirationDate = selectedProposal.details.expirationDate ? new Date(selectedProposal.details.expirationDate) : "";
   const executedOnDate = selectedProposal.executedOn ? new Date(selectedProposal.executedOn).toDateString() : "";
+
+  const proposedBy = selectedMultisig.owners.find((owner: any) => owner.address === selectedProposal.proposer?.toBase58());
   
   return (
     <div className="safe-details-container">
@@ -372,7 +374,7 @@ export const ProposalDetailsView = (props: {
                 <div className="proposal-resume-left-text">
                   <div className="info-label">Pending execution by</div>
                   {publicKey && (
-                    <span>{shortenAddress(publicKey.toBase58(), 4)}</span>
+                    <span>{proposedBy.name ? proposedBy.name : shortenAddress(publicKey.toBase58(), 4)}</span>
                   )}
                 </div>
               </Col>
@@ -381,7 +383,7 @@ export const ProposalDetailsView = (props: {
                 <IconUserClock className="user-image mean-svg-icons bg-yellow" />
                 <div className="proposal-resume-left-text">
                   <div className="info-label">Pending execution by</div>
-                  <span>{shortenAddress(selectedProposal.proposer?.toBase58(), 4)}</span>
+                  <span>{proposedBy.name ? proposedBy.name : shortenAddress(selectedProposal.proposer?.toBase58(), 4)}</span>
                 </div>
               </Col>
             )
@@ -390,7 +392,7 @@ export const ProposalDetailsView = (props: {
               <IconLightning className="user-image mean-svg-icons bg-green" />
               <div className="proposal-resume-left-text">
                 <div className="info-label">Executed by</div>
-                <span>{shortenAddress(selectedProposal.proposer?.toBase58(), 4)}</span>
+                <span>{proposedBy.name ? proposedBy.name : shortenAddress(selectedProposal.proposer?.toBase58(), 4)}</span>
               </div>
             </Col>
           ) : (
@@ -398,7 +400,7 @@ export const ProposalDetailsView = (props: {
               <IconUser className="user-image mean-svg-icons" />
               <div className="proposal-resume-left-text">
                 <div className="info-label">Proposed by</div>
-                <span>{shortenAddress(selectedProposal.proposer?.toBase58(), 4)}</span>
+                <span>{proposedBy.name ? proposedBy.name : shortenAddress(selectedProposal.proposer?.toBase58(), 4)}</span>
               </div>
             </Col>
           )}
