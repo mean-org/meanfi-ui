@@ -1851,6 +1851,10 @@ export const AccountsNewView = () => {
         return null;
       }
 
+      console.log('selectedAsset', selectedAsset);
+      console.log('selectedMultisig', selectedMultisig);
+      console.log('selectedAuthority', selectedAuthority);
+
       const setAuthIx = Token.createSetAuthorityInstruction(
         TOKEN_PROGRAM_ID,
         new PublicKey(selectedAsset.publicAddress as string),
