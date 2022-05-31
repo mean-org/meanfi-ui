@@ -193,15 +193,15 @@ export const SafeInfo = (props: {
   // Dropdown (three dots button)
   const menu = (
     <Menu>
-      <Menu.Item key="0" onClick={onEditMultisigClick}>
+      <Menu.Item key="ms-00" onClick={onEditMultisigClick}>
         <span className="menu-item-text">Edit safe</span>
       </Menu.Item>
       {isUnderDevelopment() && (
-        <Menu.Item key="1" onClick={() => {}}>
+        <Menu.Item key="ms-01" onClick={() => {}}>
           <span className="menu-item-text">Delete safe</span>
         </Menu.Item>
       )}
-      <Menu.Item key="0" onClick={onRefreshTabsInfo}>
+      <Menu.Item key="ms-02" onClick={onRefreshTabsInfo}>
         <span className="menu-item-text">Refresh</span>
       </Menu.Item>
     </Menu>
