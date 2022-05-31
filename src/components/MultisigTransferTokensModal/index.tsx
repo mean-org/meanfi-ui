@@ -12,7 +12,7 @@ import { TransactionFees } from '@mean-dao/money-streaming';
 import { formatAmount, getTokenAmountAndSymbolByTokenAddress, isValidNumber, shortenAddress } from '../../utils/utils';
 import { useConnection } from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, SystemProgram } from '@solana/web3.js';
 import { MintLayout } from '@solana/spl-token';
 import { FALLBACK_COIN_IMAGE } from '../../constants';
 import { Identicon } from '../Identicon';
@@ -81,7 +81,9 @@ export const MultisigTransferTokensModal = (props: {
     const timeout = setTimeout(() => {
       connection.getAccountInfo(new PublicKey(fromVault?.address as string))
         .then(info => {
-          if (info) {
+          if (info && !info.owner.equals(new PublicKey("NativeLoader1111111111111111111111111111111"))) {
+            console.log('fromVault', fromVault);
+            console.log('owner', info.owner.toBase58());
             consoleOut('info:', info, 'blue');
             const mintInfo = MintLayout.decode(info.data);
             setFromMint(mintInfo);
@@ -160,7 +162,7 @@ export const MultisigTransferTokensModal = (props: {
 
   const isValidForm = (): boolean => {
     return (
-      fromVault && fromMint &&
+      fromVault &&
       to &&
       isValidAddress(fromVault.publicAddress) &&
       isValidAddress(to) &&
@@ -205,7 +207,7 @@ export const MultisigTransferTokensModal = (props: {
             <div className="mb-3">
               <div className="form-label">{t('multisig.transfer-tokens.transfer-amount-label')}</div>
                 <div className={`well ${props.isBusy ? 'disabled' : ''}`}>
-                  {props.assets && props.assets.length > 0 && fromVault && fromMint && (
+                  {props.assets && props.assets.length > 0 && fromVault && (
                     <>
                       <div className="info-label mb-0">
                         <div className="subtitle text-truncate">{shortenAddress(fromVault?.publicAddress as string, 8)}</div>
@@ -214,7 +216,7 @@ export const MultisigTransferTokensModal = (props: {
                       <div className="flex-fixed-left transfer-proposal-select mt-0">
                       <div className="left">
                         <span className="add-on">
-                          {props.assets && props.assets.length > 0 && fromVault && fromMint && (
+                          {props.assets && props.assets.length > 0 && fromVault && (
                             <Select className={`token-selector-dropdown auto-height`} value={fromVault.publicAddress}
                               style={{width:"100%", maxWidth:'none'}}
                               onChange={onVaultChanged}

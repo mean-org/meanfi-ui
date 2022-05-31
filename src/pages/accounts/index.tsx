@@ -7,7 +7,7 @@ import {
   SyncOutlined,
   WarningFilled
 } from '@ant-design/icons';
-import { ConfirmOptions, Connection, Keypair, LAMPORTS_PER_SOL, ParsedTransactionMeta, PublicKey, Signer, SystemProgram, Transaction, TransactionInstruction } from '@solana/web3.js';
+import { ConfirmOptions, Connection, Keypair, LAMPORTS_PER_SOL, ParsedTransactionMeta, PublicKey, Signer, SystemProgram, Transaction, TransactionInstruction, TransferWithSeedParams } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
 import { TransactionItemView } from '../../components/TransactionItemView';
@@ -1496,55 +1496,74 @@ export const AccountsNewView = () => {
         throw Error("Invalid from token account");
       }
 
-      const fromAccount = AccountLayout.decode(Buffer.from(fromAccountInfo.data));
-      const fromMintAddress = new PublicKey(fromAccount.mint);
-      const mintInfo = await connection.getAccountInfo(fromMintAddress);
+      const fromAccount = fromAccountInfo.owner.equals(SystemProgram.programId) 
+        ? fromAccountInfo
+        : AccountLayout.decode(Buffer.from(fromAccountInfo.data));
 
-      if (!mintInfo) { 
-        throw Error("Invalid token mint account");
-      }
+      const fromMintAddress = fromAccountInfo.owner.equals(SystemProgram.programId) 
+        ? NATIVE_SOL_MINT 
+        : new PublicKey(fromAccount.mint);
 
-      const mint = MintLayout.decode(Buffer.from(mintInfo.data));
       let toAddress = new PublicKey(data.to);
-      const toAccountInfo = await connection.getAccountInfo(toAddress);
+      let programId = MEAN_MULTISIG_PROGRAM;
+      //
+      let transferIx = SystemProgram.transfer({
+        fromPubkey: fromAddress,
+        toPubkey: toAddress,
+        lamports: new BN(data.amount * LAMPORTS_PER_SOL).toNumber()
+      });
+      
       const ixs: TransactionInstruction[] = [];
 
-      if (!toAccountInfo || !toAccountInfo.owner.equals(TOKEN_PROGRAM_ID)) {
+      if (!fromMintAddress.equals(NATIVE_SOL_MINT)) {
 
-        const toAccountATA = await Token.getAssociatedTokenAddress(
-          ASSOCIATED_TOKEN_PROGRAM_ID,
-          TOKEN_PROGRAM_ID,
-          fromMintAddress,
-          toAddress,
-          true
-        );
+        programId = TOKEN_PROGRAM_ID;
+        const mintInfo = await connection.getAccountInfo(fromMintAddress);
 
-        const toAccountATAInfo = await connection.getAccountInfo(toAccountATA);
-
-        if (!toAccountATAInfo) {
-          ixs.push(
-            Token.createAssociatedTokenAccountInstruction(
-              ASSOCIATED_TOKEN_PROGRAM_ID,
-              TOKEN_PROGRAM_ID,
-              fromMintAddress,
-              toAccountATA,
-              toAddress,
-              publicKey
-            )
-          );
+        if (!mintInfo) { 
+          throw Error("Invalid token mint account");
         }
 
-        toAddress = toAccountATA;
-      }
+        const mint = MintLayout.decode(Buffer.from(mintInfo.data));
+        const toAccountInfo = await connection.getAccountInfo(toAddress);
 
-      const transferIx = Token.createTransferInstruction(
-        TOKEN_PROGRAM_ID,
-        fromAddress,
-        toAddress,
-        selectedMultisig.authority,
-        [],
-        new BN(data.amount * 10 ** mint.decimals).toNumber()
-      );
+        if (!toAccountInfo || !toAccountInfo.owner.equals(TOKEN_PROGRAM_ID)) {
+
+          const toAccountATA = await Token.getAssociatedTokenAddress(
+            ASSOCIATED_TOKEN_PROGRAM_ID,
+            TOKEN_PROGRAM_ID,
+            fromMintAddress,
+            toAddress,
+            true
+          );
+
+          const toAccountATAInfo = await connection.getAccountInfo(toAccountATA);
+
+          if (!toAccountATAInfo) {
+            ixs.push(
+              Token.createAssociatedTokenAccountInstruction(
+                ASSOCIATED_TOKEN_PROGRAM_ID,
+                TOKEN_PROGRAM_ID,
+                fromMintAddress,
+                toAccountATA,
+                toAddress,
+                publicKey
+              )
+            );
+          }
+
+          toAddress = toAccountATA;
+        }
+
+        transferIx = Token.createTransferInstruction(
+          TOKEN_PROGRAM_ID,
+          fromAddress,
+          toAddress,
+          selectedMultisig.authority,
+          [],
+          new BN(data.amount * 10 ** mint.decimals).toNumber()
+        );
+      }
 
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
@@ -3861,14 +3880,10 @@ export const AccountsNewView = () => {
   }
 
   const isSendFundsValid = () => {
-    if (selectedAsset) {
-      const isSol = selectedAsset.address === NATIVE_SOL_MINT.toBase58() ? true : false;
-      
-      if (!isSol && selectedAsset.balance as number > 0) {
-        return true;
-      } else {
-        return false;
-      }
+    if (selectedAsset && selectedAsset.balance as number > 0) {
+      return true;
+    } else {
+      return false;
     }
   }
 
