@@ -35,7 +35,6 @@ export const AppBar = (props: {
   const {
     isWhitelisted,
     detailsPanelOpen,
-    pendingMultisigTxCount,
     isDepositOptionsModalVisible,
     setDtailsPanelOpen,
     setShouldLoadTokens,
@@ -128,9 +127,6 @@ export const AppBar = (props: {
       {(isLocal() || isWhitelisted) && (
           <Menu.Item key="/safes" style={{ position: 'relative' }}>
             <Link to="/safes">{t('ui-menus.main-menu.services.safes')}</Link>
-            {location.pathname.startsWith(ACCOUNTS_ROUTE_BASE_PATH) && pendingMultisigTxCount && (
-              <span className="status top-right warning"></span>
-            )}
           </Menu.Item>
         )}
       <SubMenu key="services" title={t('ui-menus.main-menu.services.submenu-title')}>
