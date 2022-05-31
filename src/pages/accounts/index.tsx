@@ -2595,20 +2595,6 @@ export const AccountsNewView = () => {
       ctaItems++;
     }
 
-    // Close asset
-    if (inspectedAccountType && inspectedAccountType === "multisig") {
-      actions.push({
-        action: AccountAssetAction.Close,
-        caption: 'Close asset',
-        isVisible: true,
-        uiComponentType: 'menuitem',
-        disabled: isTxInProgress() || !canDeleteVault() || !isDeleteAssetValid(),
-        uiComponentId: `menuitem-${AccountAssetAction.Close}`,
-        tooltip: '',
-        callBack: showDeleteVaultModal
-      });
-    }
-
     // Refresh asset
     actions.push({
       action: AccountAssetAction.Refresh,
@@ -2635,16 +2621,30 @@ export const AccountsNewView = () => {
       });
     }
 
+    // Close asset
+    // if (inspectedAccountType && inspectedAccountType === "multisig") {
+    //   actions.push({
+    //     action: AccountAssetAction.Close,
+    //     caption: 'Close asset',
+    //     isVisible: true,
+    //     uiComponentType: 'menuitem',
+    //     disabled: isTxInProgress() || !canDeleteVault() || !isDeleteAssetValid(),
+    //     uiComponentId: `menuitem-${AccountAssetAction.Close}`,
+    //     tooltip: '',
+    //     callBack: showDeleteVaultModal
+    //   });
+    // }
+
     // Close account
     actions.push({
-      action: AccountAssetAction.CloseAccount,
+      action: (inspectedAccountType && inspectedAccountType === "multisig") ? AccountAssetAction.Close : AccountAssetAction.CloseAccount,
       caption: 'Close account',
-      isVisible: isInspectedAccountTheConnectedWallet() && isSelectedAssetNativeAccount() ? false : true,
+      isVisible: true,
       uiComponentType: 'menuitem',
-      disabled: !isInspectedAccountTheConnectedWallet(),
-      uiComponentId: `menuitem-${AccountAssetAction.CloseAccount}`,
+      disabled: ((inspectedAccountType === "multisig") && (isTxInProgress() || !canDeleteVault() || !isDeleteAssetValid())),
+      uiComponentId: (inspectedAccountType && inspectedAccountType === "multisig") ? `menuitem-${AccountAssetAction.Close}` : `menuitem-${AccountAssetAction.CloseAccount}`,
       tooltip: '',
-      callBack: showCloseAssetModal
+      callBack: !isInspectedAccountTheConnectedWallet() ? showDeleteVaultModal : showCloseAssetModal
     });
 
     consoleOut('Asset actions:', actions, 'crimson');

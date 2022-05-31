@@ -3698,14 +3698,9 @@ export const SafeView = () => {
     setSelectedTab(0);
   }
 
-  // const returnFromAssetDetailsHandler = () => {
-  //   setIsAssetDetails(false);
-  //   setSelectedTab(1);
-  // }
-
   const returnFromProgramDetailsHandler = () => {
     setIsProgramDetails(false);
-    setSelectedTab(2);
+    setSelectedTab(1);
   }
 
   // Dropdown (three dots button)
