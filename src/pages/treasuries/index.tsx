@@ -179,7 +179,7 @@ export const TreasuriesView = () => {
   const [multisigAddress, setMultisigAddress] = useState('');
   const [selectedMultisig, setSelectedMultisig] = useState<MultisigInfo | undefined>(undefined);
   const [treasuryAddress, setTreasuryAddress] = useState('');
-  const [/*loadingMultisigAccounts*/, setLoadingMultisigAccounts] = useState(true);
+  const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(false);
   const [multisigAccounts, setMultisigAccounts] = useState<MultisigInfo[] | undefined>(undefined);
   const [treasuryPendingTxs, setTreasuryPendingTxs] = useState(0);
 
@@ -1211,6 +1211,7 @@ export const TreasuriesView = () => {
     setSelectedToken
   ]);
 
+  // Get fees and min baance required for multisig actions
   useEffect(() => {
 
     if (!multisigClient || !multisigAddress) { return; }
@@ -1243,7 +1244,7 @@ export const TreasuriesView = () => {
         setTreasuryPendingTxs(0);
         return;
       }
-      
+
       multisigClient
         .getMultisigTransactions(multisig.id, publicKey)
         .then((value: MultisigTransaction[]) => {
@@ -1276,27 +1277,31 @@ export const TreasuriesView = () => {
     treasuryDetails
   ]);  
 
-  // Get the user multisig accounts' list
+  // Get the Multisig accounts
+  // TODO: Signal when it is loading
   useEffect(() => {
 
-    if (!connection || !publicKey || !multisigClient || !needReloadMultisig) {
+    if (!connection || !publicKey || !multisigClient || !multisigAddress || !needReloadMultisig) {
       return;
     }
 
     const timeout = setTimeout(() => {
 
+      consoleOut('Loading multisigs...', '', 'blue');
       setNeedReloadMultisig(false);
+      setLoadingMultisigAccounts(true);
 
       multisigClient
         .getMultisigs(publicKey)
-        .then((allInfo: MultisigInfo[]) => {          
+        .then((allInfo: MultisigInfo[]) => {
           allInfo.sort((a: any, b: any) => b.createdOnUtc.getTime() - a.createdOnUtc.getTime());
           setMultisigAccounts(allInfo);
           consoleOut('multisigs:', allInfo, 'blue');
-          setLoadingMultisigAccounts(false);
         })
         .catch(err => {
           console.error(err);
+        })
+        .finally(() => {
           setLoadingMultisigAccounts(false);
         });
     });
@@ -1309,7 +1314,8 @@ export const TreasuriesView = () => {
     publicKey,
     connection,
     multisigClient,
-    needReloadMultisig
+    multisigAddress,
+    needReloadMultisig,
   ]);
 
   // Set selectedMultisig based on the passed-in multisigAddress in query params
@@ -1369,6 +1375,10 @@ export const TreasuriesView = () => {
       }
     }
 
+    if (multisigAddress && !selectedMultisig) {
+      return;
+    }
+
     consoleOut('Calling refreshTreasuries...', '', 'blue');
     setTreasuriesLoaded(true);
     refreshTreasuries(true);
@@ -1402,7 +1412,6 @@ export const TreasuriesView = () => {
     connected,
     publicKey,
     treasuriesLoaded,
-    loadingTreasuries,
     previousWalletConnectState,
   ]);
 
@@ -5325,7 +5334,7 @@ export const TreasuriesView = () => {
                 shape="round"
                 size="small"
                 className="thin-stroke"
-                disabled={isTxInProgress() || loadingTreasuries}
+                disabled={isTxInProgress() || loadingTreasuries || loadingMultisigAccounts}
                 onClick={() => {
                   setHighLightableStreamId(undefined);
                   sethHighlightedStream(undefined);
@@ -5345,6 +5354,7 @@ export const TreasuriesView = () => {
                 disabled={
                   isTxInProgress() ||
                   loadingTreasuries ||
+                  loadingMultisigAccounts ||
                   loadingTreasuryDetails ||
                   (!treasuryDetails || !isNewTreasury || v2.balance - v2.allocationAssigned <= 0)
                 }
@@ -5364,6 +5374,7 @@ export const TreasuriesView = () => {
                   getTreasuryUnallocatedBalance() <= 0 ||
                   isTxInProgress() ||
                   loadingTreasuries ||
+                  loadingMultisigAccounts ||
                   loadingTreasuryDetails ||
                   loadingTreasuryStreams
                 }
@@ -5380,6 +5391,7 @@ export const TreasuriesView = () => {
                   disabled={
                     isTxInProgress() ||
                     loadingTreasuries ||
+                    loadingMultisigAccounts ||
                     loadingTreasuryDetails ||
                     loadingTreasuryStreams
                   }
@@ -5605,9 +5617,9 @@ export const TreasuriesView = () => {
                 ) : null}
                 <span className="title">{t('treasuries.screen-title')}</span>
                 <Tooltip placement="bottom" title={t('treasuries.refresh-tooltip')}>
-                  <div className={`transaction-stats user-address ${loadingTreasuries ? 'click-disabled' : 'simplelink'}`} onClick={onRefreshTreasuriesClick}>
+                  <div className={`transaction-stats user-address ${loadingTreasuries || loadingMultisigAccounts ? 'click-disabled' : 'simplelink'}`} onClick={onRefreshTreasuriesClick}>
                     <Spin size="small" />
-                    {(!customStreamDocked && !loadingTreasuries) && (
+                    {(!customStreamDocked && !loadingTreasuries && !loadingMultisigAccounts) && (
                       <span className="incoming-transactions-amout">({formatThousands(treasuryList.length)})</span>
                     )}
                     <span className="transaction-legend">
@@ -5627,7 +5639,7 @@ export const TreasuriesView = () => {
 
               <div className="inner-container">
                 <div className="item-block vertical-scroll">
-                  <Spin spinning={loadingTreasuries}>
+                  <Spin spinning={loadingTreasuries || loadingMultisigAccounts}>
                     {renderTreasuryList}
                   </Spin>
                 </div>
@@ -5720,8 +5732,8 @@ export const TreasuriesView = () => {
                         </span>
                       </div>
                     )}
-                    <div className={`stream-details-data-wrapper vertical-scroll ${(loadingTreasuries || loadingTreasuryDetails || !treasuryDetails) ? 'h-100 flex-center' : ''}`}>
-                      <Spin spinning={loadingTreasuries || loadingTreasuryDetails}>
+                    <div className={`stream-details-data-wrapper vertical-scroll ${((loadingTreasuries || loadingMultisigAccounts) || loadingTreasuryDetails || !treasuryDetails) ? 'h-100 flex-center' : ''}`}>
+                      <Spin spinning={loadingTreasuries || loadingMultisigAccounts || loadingTreasuryDetails}>
                         {treasuryDetails && (
                           <>
                             {isMultisigTreasury() && (
@@ -5739,7 +5751,7 @@ export const TreasuriesView = () => {
                           </>
                         )}
                       </Spin>
-                      {(!loadingTreasuries && !loadingTreasuryDetails && !loadingTreasuryStreams) && (
+                      {(!loadingTreasuries && !loadingMultisigAccounts && !loadingTreasuryDetails && !loadingTreasuryStreams) && (
                         <>
                         {(!treasuryList || treasuryList.length === 0) && !treasuryDetails && (
                           <div className="h-100 flex-center">

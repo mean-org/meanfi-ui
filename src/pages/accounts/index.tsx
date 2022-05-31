@@ -938,7 +938,7 @@ export const AccountsNewView = () => {
     return path;
   }, [accountAddress, inspectedAccountType]);
 
-      /////////////////
+  /////////////////
   //  Init code  //
   /////////////////
 
@@ -2599,20 +2599,6 @@ export const AccountsNewView = () => {
       ctaItems++;
     }
 
-    // Close asset
-    if (inspectedAccountType && inspectedAccountType === "multisig") {
-      actions.push({
-        action: AccountAssetAction.Close,
-        caption: 'Close asset',
-        isVisible: true,
-        uiComponentType: 'menuitem',
-        disabled: isTxInProgress() || !canDeleteVault() || !isDeleteAssetValid(),
-        uiComponentId: `menuitem-${AccountAssetAction.Close}`,
-        tooltip: '',
-        callBack: showDeleteVaultModal
-      });
-    }
-
     // Refresh asset
     actions.push({
       action: AccountAssetAction.Refresh,
@@ -2639,16 +2625,30 @@ export const AccountsNewView = () => {
       });
     }
 
+    // Close asset
+    // if (inspectedAccountType && inspectedAccountType === "multisig") {
+    //   actions.push({
+    //     action: AccountAssetAction.Close,
+    //     caption: 'Close asset',
+    //     isVisible: true,
+    //     uiComponentType: 'menuitem',
+    //     disabled: isTxInProgress() || !canDeleteVault() || !isDeleteAssetValid(),
+    //     uiComponentId: `menuitem-${AccountAssetAction.Close}`,
+    //     tooltip: '',
+    //     callBack: showDeleteVaultModal
+    //   });
+    // }
+
     // Close account
     actions.push({
-      action: AccountAssetAction.CloseAccount,
+      action: (inspectedAccountType && inspectedAccountType === "multisig") ? AccountAssetAction.Close : AccountAssetAction.CloseAccount,
       caption: 'Close account',
-      isVisible: isInspectedAccountTheConnectedWallet() && isSelectedAssetNativeAccount() ? false : true,
+      isVisible: true,
       uiComponentType: 'menuitem',
-      disabled: !isInspectedAccountTheConnectedWallet(),
-      uiComponentId: `menuitem-${AccountAssetAction.CloseAccount}`,
+      disabled: ((inspectedAccountType === "multisig") && (isTxInProgress() || !canDeleteVault() || !isDeleteAssetValid())),
+      uiComponentId: (inspectedAccountType && inspectedAccountType === "multisig") ? `menuitem-${AccountAssetAction.Close}` : `menuitem-${AccountAssetAction.CloseAccount}`,
       tooltip: '',
-      callBack: showCloseAssetModal
+      callBack: (inspectedAccountType && inspectedAccountType === "multisig") ? showDeleteVaultModal : showCloseAssetModal
     });
 
     consoleOut('Asset actions:', actions, 'crimson');
@@ -3861,10 +3861,26 @@ export const AccountsNewView = () => {
   }
 
   const isSendFundsValid = () => {
-    if (selectedAsset && selectedAsset.balance as number > 0) {
-      return true;
-    } else {
-      return false;
+    if (selectedAsset) {
+      const isSol = selectedAsset.address === NATIVE_SOL_MINT.toBase58() ? true : false;
+      
+      if (!isSol && selectedAsset.balance as number > 0) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+  }
+
+  const isTransferOwnershipValid = () => {
+    if (selectedAsset) {
+      const isSol = selectedAsset.address === NATIVE_SOL_MINT.toBase58() ? true : false;
+      
+      if (!isSol) {
+        return true;
+      } else {
+        return false;
+      }
     }
   }
 
@@ -3896,7 +3912,7 @@ export const AccountsNewView = () => {
                   shape="round"
                   size="small"
                   className="thin-stroke asset-btn"
-                  disabled={isTxInProgress()}
+                  disabled={isTxInProgress() || !isTransferOwnershipValid()}
                   onClick={showTransferVaultAuthorityModal}>
                     <div className="btn-content">
                       Change asset ownership
