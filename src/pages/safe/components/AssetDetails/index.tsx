@@ -2491,7 +2491,7 @@ export const AssetDetailsView = (props: {
         </Row>
       </div>
 
-      {isTransferTokenModalVisible && (
+      {/* {isTransferTokenModalVisible && (
         <MultisigTransferTokensModal
           isVisible={isTransferTokenModalVisible}
           nativeBalance={nativeBalance}
@@ -2505,9 +2505,9 @@ export const AssetDetailsView = (props: {
           isBusy={isBusy}
           assets={multisigVaults}
         />
-      )}
+      )} */}
 
-      {isTransferVaultAuthorityModalVisible && (
+      {/* {isTransferVaultAuthorityModalVisible && (
         <MultisigVaultTransferAuthorityModal
           isVisible={isTransferVaultAuthorityModalVisible}
           nativeBalance={nativeBalance}
@@ -2524,9 +2524,9 @@ export const AssetDetailsView = (props: {
           selectedVault={assetSelected}
           assets={multisigVaults}
         />
-      )}
+      )} */}
 
-      {isDeleteVaultModalVisible && (
+      {/* {isDeleteVaultModalVisible && (
         <MultisigVaultDeleteModal
           isVisible={isDeleteVaultModalVisible}
           handleOk={onAcceptDeleteVault}
@@ -2538,7 +2538,7 @@ export const AssetDetailsView = (props: {
           isBusy={isBusy}
           selectedVault={assetSelected}
         />
-      )}
+      )} */}
 
       {/* Transaction confirm and execution modal launched from each Tx row */}
       {(isMultisigActionTransactionModalVisible && highlightedMultisigTx && selectedMultisig) && (
