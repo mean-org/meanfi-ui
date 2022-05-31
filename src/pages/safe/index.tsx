@@ -2713,10 +2713,7 @@ export const SafeView = () => {
               loadingMessage: `Execute proposal: ${data.transaction.details.title}`,
               completedTitle: "Transaction confirmed",
               completedMessage: `Successfully executed proposal: ${data.transaction.details.title}`,
-              extras: {
-                multisigId: data.transaction.multisig,
-                transactionId: data.transaction.id
-              }
+              extras: data.transaction.multisig.toBase58()
             });
           } else {
             showMultisigTxResultModal();
@@ -3109,7 +3106,14 @@ export const SafeView = () => {
   // Setup event handler for Tx confirmed
   const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
 
-    const softReloadMultisigs = (id: string) => {
+    const reloadMultisigs = () => {
+      const refreshCta = document.getElementById("multisig-refresh-cta");
+      if (refreshCta) {
+        refreshCta.click();
+      }
+    };
+
+    const reloadSelectedMultisig = (id: string) => {
       if (multisigClient && publicKey) {
         multisigClient
           .getMultisig(new PublicKey(id))
@@ -3131,12 +3135,14 @@ export const SafeView = () => {
     recordTxConfirmation(item.signature, item.operationType, true);
     switch (item.operationType) {
       case OperationType.CreateTransaction:
-        softReloadMultisigs(item.extras as string);
+        reloadSelectedMultisig(item.extras as string);
         break;
       case OperationType.ApproveTransaction:
-      case OperationType.ExecuteTransaction:
         refreshSelectedProposal(item.extras as any);
         break;
+      case OperationType.ExecuteTransaction:
+        reloadMultisigs();
+        break;  
       default:
         break;
     }
@@ -3164,7 +3170,7 @@ export const SafeView = () => {
       recordTxConfirmation(item.signature, item.operationType, false);
     }
   }, [
-    recordTxConfirmation,
+    recordTxConfirmation
   ]);
 
   // SERUM ACCOUNTS
