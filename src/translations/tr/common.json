@@ -607,20 +607,20 @@
 			"new-authority-input-placeholder": "Program güncelleme yetkisinin yeni adresi"
 		},
 		"transfer-authority": {
-			"asset-auth-destination-address-disclaimer": "Girilen veya seçilen yukarıdaki Yeni Yetkili Adresinin bir Çoklu-İmza Hesap adresi olduğunu ve normal bir cüzdan adresi OLMADIĞINI onaylıyorum. Çoklu-İmza olmayan bir adres vermemin, varlığın ve fonların kalıcı olarak kaybedilmesine neden olacağını kabul ediyorum.",
+			"asset-auth-destination-address-disclaimer": "I'm sure the new owner address doesn't belong to an exchange.",
 			"main-cta": "Yetkileri ayarla",
 			"main-cta-busy": "Yetkiler ayarlanıyor",
-			"modal-title": "Sahipliği transfer et",
+			"modal-title": "Change asset ownership",
 			"multisig-already-owns-the-asset": "Seçilmiş olan çoklu-imza bu kasa için zaten yetkilendirilmiş",
-			"multisig-selector-label": "Yeni yetki (çoklu-imza)",
-			"multisig-selector-placeholder": "Bir çoklu-imza hesabı gir ve ya seç",
+			"multisig-selector-label": "New owner account",
+			"multisig-selector-placeholder": "Select or enter the address of the new owner",
 			"selected-asset-label": "Seçilmiş kasa",
 			"success-message": "Yeni kasa yetkisi başarıyla düzenlendi"
 		},
 		"transfer-tokens": {
 			"main-cta": "Talep etmeye başla",
 			"main-cta-busy": "Talep etmeye başlanıyor",
-			"modal-title": "Çekme talebine başla",
+			"modal-title": "Propose funds transfer",
 			"source-address-label": "Hesaptan transfer ediliyor",
 			"source-address-placeholder": "Kaynak hesabın adresini girin",
 			"success-message": "Tokenlar başarıyla transfer edildi",

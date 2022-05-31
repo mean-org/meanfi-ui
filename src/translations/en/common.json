@@ -637,7 +637,7 @@
 			"asset-auth-destination-address-disclaimer": "I'm sure the new owner address doesn't belong to an exchange.",
 			"main-cta": "Set authority",
 			"main-cta-busy": "Setting authority",
-			"modal-title": "Transfer ownership",
+			"modal-title": "Change asset ownership",
 			"multisig-already-owns-the-asset": "Selected multisig is already authority for this asset",
 			"multisig-selector-label": "New owner account",
 			"multisig-selector-placeholder": "Select or enter the address of the new owner",
@@ -647,7 +647,7 @@
 		"transfer-tokens": {
 			"main-cta": "Start Request",
 			"main-cta-busy": "Starting Request",
-			"modal-title": "Propose send funds",
+			"modal-title": "Propose funds transfer",
 			"source-address-label": "Transfer from",
 			"source-address-placeholder": "Enter the address of the source account",
 			"success-message": "Tokens transferred successfully.",

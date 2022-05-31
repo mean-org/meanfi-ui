@@ -634,20 +634,20 @@
 			"new-authority-input-placeholder": "新程序升级权限的地址"
 		},
 		"transfer-authority": {
-			"asset-auth-destination-address-disclaimer": "I confirm the above New Authority Address entered or selected is a Multisig Account address and NOT a regular wallet address. I acknowledge that if I provide a non Multisig address, it will cause a permanent loss of the asset and its funds.",
+			"asset-auth-destination-address-disclaimer": "I'm sure the new owner address doesn't belong to an exchange.",
 			"main-cta": "设定权限",
 			"main-cta-busy": "正在设定权限",
-			"modal-title": "所有权转移",
+			"modal-title": "Change asset ownership",
 			"multisig-already-owns-the-asset": "Selected multisig is already authority for this asset",
-			"multisig-selector-label": "新权限（多重签名）",
-			"multisig-selector-placeholder": "选择或输入多重签名地址",
+			"multisig-selector-label": "New owner account",
+			"multisig-selector-placeholder": "Select or enter the address of the new owner",
 			"selected-asset-label": "Selected asset",
 			"success-message": "成功设置新的保险库权限"
 		},
 		"transfer-tokens": {
 			"main-cta": "启动请求",
 			"main-cta-busy": "启动请求",
-			"modal-title": "发起退款请求",
+			"modal-title": "Propose funds transfer",
 			"source-address-label": "转自",
 			"source-address-placeholder": "输入源帐户的地址",
 			"success-message": "代币传输成功",

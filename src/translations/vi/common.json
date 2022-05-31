@@ -612,18 +612,18 @@
 		"transfer-authority": {
 			"main-cta": "Thiết lập quyền hạn",
 			"main-cta-busy": "Đang thiết lập quyền hạn",
-			"modal-title": "Chuyển quyền sở hữu",
+			"modal-title": "Change asset ownership",
 			"multisig-already-owns-the-asset": "Multisig được chọn đã có thẩm quyền với vault này",
-			"multisig-selector-label": "Quyền hạn mới (multisig)",
-			"multisig-selector-placeholder": "Chọn hoặc nhập một địa chỉ multisig",
+			"multisig-selector-label": "New owner account",
+			"multisig-selector-placeholder": "Select or enter the address of the new owner",
 			"selected-asset-label": "Vault được chọn",
 			"success-message": "Quyền hạn của vault mới đã được thiết lập thành công",
-			"asset-auth-destination-address-disclaimer": "I confirm the above New Authority Address entered or selected is a Multisig Account address and NOT a regular wallet address. I acknowledge that if I provide a non Multisig address, it will cause a permanent loss of the vault and its funds."
+			"asset-auth-destination-address-disclaimer": "I'm sure the new owner address doesn't belong to an exchange."
 		},
 		"transfer-tokens": {
 			"main-cta": "Bắt đầu yêu cầu",
 			"main-cta-busy": "Đang bắt đầu yêu cầu",
-			"modal-title": "Propose send funds",
+			"modal-title": "Propose funds transfer",
 			"source-address-label": "Chuyển khoản từ",
 			"source-address-placeholder": "Nhập địa chỉ tài khoản nguồn",
 			"success-message": "Token đã được chuyển khoản thành công",

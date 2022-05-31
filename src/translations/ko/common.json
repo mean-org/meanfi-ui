@@ -610,20 +610,20 @@
 			"new-authority-input-placeholder": "새 프로그램 업그레이드 권한 주소"
 		},
 		"transfer-authority": {
-			"asset-auth-destination-address-disclaimer": "I confirm the above New Authority Address entered or selected is a Multisig Account address and NOT a regular wallet address. I acknowledge that if I provide a non Multisig address, it will cause a permanent loss of the vault and its funds.",
+			"asset-auth-destination-address-disclaimer": "I'm sure the new owner address doesn't belong to an exchange.",
 			"main-cta": "권한 설정",
 			"main-cta-busy": "권한 설정",
-			"modal-title": "소유권 이전",
+			"modal-title": "Change asset ownership",
 			"multisig-already-owns-the-asset": "Selected multisig is already authority for this vault",
-			"multisig-selector-label": "새로운 권한(다중서명)",
-			"multisig-selector-placeholder": "다중서명 주소 선택 또는 입력",
+			"multisig-selector-label": "New owner account",
+			"multisig-selector-placeholder": "Select or enter the address of the new owner",
 			"selected-asset-label": "Selected vault",
 			"success-message": "새 금고권한이 성공적으로 설정되었습니다."
 		},
 		"transfer-tokens": {
 			"main-cta": "시작 요청",
 			"main-cta-busy": "시작 요청",
-			"modal-title": "Propose send funds",
+			"modal-title": "Propose funds transfer",
 			"source-address-label": "에서 전송",
 			"source-address-placeholder": "원 계정의 주소를 입력하십시오",
 			"success-message": "토큰이 성공적으로 전송되었습니다.",
