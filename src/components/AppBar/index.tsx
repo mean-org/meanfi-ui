@@ -121,14 +121,14 @@ export const AppBar = (props: {
       <Menu.Item key="/invest">
         <Link to="/invest">{t('ui-menus.main-menu.invest.submenu-title')}</Link>
       </Menu.Item>
-      <Menu.Item key="/multisig">
-        <Link to="/multisig">{t('ui-menus.main-menu.services.multisig')}</Link>
+      {/* {(isLocal() || isWhitelisted) && (
+        <Menu.Item key="/multisig">
+          <Link to="/multisig">{t('ui-menus.main-menu.services.multisig')}</Link>
+        </Menu.Item>
+      )} */}
+      <Menu.Item key="/safes">
+        <Link to="/safes">{t('ui-menus.main-menu.services.multisig')}</Link>
       </Menu.Item>
-      {(isLocal() || isWhitelisted) && (
-          <Menu.Item key="/safes" style={{ position: 'relative' }}>
-            <Link to="/safes">{t('ui-menus.main-menu.services.safes')}</Link>
-          </Menu.Item>
-        )}
       <SubMenu key="services" title={t('ui-menus.main-menu.services.submenu-title')}>
         <Menu.Item key="/custody">
           <Link to="/custody">{t('ui-menus.main-menu.services.custody')}</Link>
@@ -201,14 +201,14 @@ export const AppBar = (props: {
                 <li key="invest" className={location.pathname === '/invest' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 3} as CustomCSSProps}>
                   <Link to="/invest">{t('ui-menus.main-menu.invest.submenu-title')}</Link>
                 </li>
-                <li key="/multisig" className={location.pathname === '/multisig' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 4} as CustomCSSProps}>
-                  <Link to="/multisig">{t('ui-menus.main-menu.services.multisig')}</Link>
-                </li>
-                {(isLocal() || isWhitelisted) && (
-                  <li key="/safes" className={location.pathname === '/safes' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 9} as CustomCSSProps}>
-                    <Link to="/safes">{t('ui-menus.main-menu.services.safes')}</Link>
+                {/* {(isLocal() || isWhitelisted) && (
+                  <li key="/multisig" className={location.pathname === '/multisig' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 4} as CustomCSSProps}>
+                    <Link to="/multisig">{t('ui-menus.main-menu.services.multisig')}</Link>
                   </li>
-                )}
+                )} */}
+                <li key="/safes" className={location.pathname === '/safes' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 9} as CustomCSSProps}>
+                  <Link to="/safes">{t('ui-menus.main-menu.services.multisig')}</Link>
+                </li>
                 <li key="/custody" className={location.pathname === '/custody' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 5} as CustomCSSProps}>
                   <Link to="/custody">{t('ui-menus.main-menu.services.custody')}</Link>
                 </li>
