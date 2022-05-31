@@ -3668,7 +3668,7 @@ export const SafeView = () => {
                   </>
                 ) : (
                   <>
-                  <div className="rate-amount">--</div>
+                  <div className="rate-amount">$0.00</div>
                   <div className="interval">safe balance</div>
                 </>
                 )}

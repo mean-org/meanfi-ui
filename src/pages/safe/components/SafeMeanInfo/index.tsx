@@ -67,8 +67,10 @@ export const SafeMeanInfo = (props: {
     multisigVaults,
     setMultisigVaults,
     transactionStatus,
+    multisigSolBalance,
     refreshTokenBalance,
     setTransactionStatus,
+    setMultisigSolBalance,
     previousWalletConnectState
   } = useContext(AppStateContext);
   const {
@@ -100,7 +102,7 @@ export const SafeMeanInfo = (props: {
   const { account } = useNativeAccount();
   const { wallet, connected } = useWallet();
   const [multisig, setMultisig] = useState<any>(selectedMultisig);
-  const [solBalance, setSolBalance] = useState<number>(0);
+  // const [multisigSolBalance, setMultisigSolBalance] = useState<number>(0);
   const [multisigTxs, setMultisigTxs] = useState<MultisigTransaction[]>([]);
   const [loadingProposals, setLoadingProposals] = useState(true);
   const [loadingAssets, setLoadingAssets] = useState(true);
@@ -1319,7 +1321,7 @@ export const SafeMeanInfo = (props: {
       setMultisig(selectedMultisig);
       connection
         .getBalance(selectedMultisig.authority)
-        .then(balance => setSolBalance(balance))
+        .then(balance => setMultisigSolBalance(balance))
         .catch(err => console.error(err));
     });
 
@@ -1327,7 +1329,8 @@ export const SafeMeanInfo = (props: {
 
   }, [
     connection,
-    selectedMultisig
+    selectedMultisig,
+    setMultisigSolBalance
   ]);
 
   useEffect(() => {
@@ -1492,7 +1495,7 @@ export const SafeMeanInfo = (props: {
     return {
       mint: NATIVE_SOL_MINT,
       owner: multisig.authority,
-      amount: new BN(solBalance),
+      amount: new BN(multisigSolBalance),
       delegateOption: 0,
       delegate: undefined,
       state: 1,
@@ -1508,7 +1511,7 @@ export const SafeMeanInfo = (props: {
 
   }, [
     multisig, 
-    solBalance
+    multisigSolBalance
   ]);
   
   // Get Multisig Vaults
@@ -2020,7 +2023,7 @@ export const SafeMeanInfo = (props: {
   return (
     <>
       <SafeInfo
-        solBalance={solBalance}
+        solBalance={multisigSolBalance}
         selectedMultisig={multisig}
         multisigVaults={multisigVaults}
         onNewProposalMultisigClick={onNewProposalMultisigClick}

@@ -27,7 +27,7 @@ import {
   openLinkInNewTab,
   shortenAddress
 } from '../../utils/utils';
-import { Button, Col, Dropdown, Empty, Menu, Row, Space, Spin, Tooltip } from 'antd';
+import { Alert, Button, Col, Dropdown, Empty, Menu, Row, Space, Spin, Tooltip } from 'antd';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import {
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
@@ -131,6 +131,7 @@ export const AccountsNewView = () => {
     detailsPanelOpen,
     shouldLoadTokens,
     transactionStatus,
+    multisigSolBalance,
     streamProgramAddress,
     streamV2ProgramAddress,
     previousWalletConnectState,
@@ -4372,6 +4373,23 @@ export const AccountsNewView = () => {
                               {renderCategoryMeta()}
                               {selectedCategory === "assets" && renderUserAccountAssetCtaRow()}
                             </div>
+                            {!isInspectedAccountTheConnectedWallet() ? (
+                              (multisigSolBalance / LAMPORTS_PER_SOL) <= 0 ? (
+                                <Row gutter={[8, 8]} className="mt-1">
+                                  <Col span={24} className="alert-info-message pr-4">
+                                    <Alert message="SOL balance is very low in this safe. You'll need some if you want to make proposals." type="info" showIcon closable />
+                                  </Col>
+                                </Row>
+                              ) : null
+                            ) : (
+                              (nativeBalance / LAMPORTS_PER_SOL) <= 0 ? (
+                                <Row gutter={[8, 8]} className="mt-1">
+                                  <Col span={24} className="alert-info-message pr-4">
+                                    <Alert message="SOL balance is very low in this wallet." type="info" showIcon closable />
+                                  </Col>
+                                </Row>
+                              ) : null
+                            )}
                             <div className={`bottom ${!hasItemsToRender() ? 'h-100 flex-column' : ''}`}>
                               {/* Activity table heading */}
                               {hasItemsToRender() && (
