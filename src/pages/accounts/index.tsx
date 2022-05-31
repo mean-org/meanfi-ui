@@ -2,12 +2,13 @@ import React, { useCallback, useContext, useMemo } from 'react';
 import "./style.scss";
 import {
   ArrowLeftOutlined,
+  ArrowRightOutlined,
   EditOutlined,
   LoadingOutlined,
   SyncOutlined,
   WarningFilled
 } from '@ant-design/icons';
-import { ConfirmOptions, Connection, Keypair, LAMPORTS_PER_SOL, ParsedTransactionMeta, PublicKey, Signer, SystemProgram, Transaction, TransactionInstruction } from '@solana/web3.js';
+import { ConfirmOptions, Connection, Keypair, LAMPORTS_PER_SOL, ParsedTransactionMeta, PublicKey, Signer, SystemProgram, Transaction, TransactionInstruction, TransferWithSeedParams } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
 import { TransactionItemView } from '../../components/TransactionItemView';
@@ -56,7 +57,7 @@ import { AddressDisplay } from '../../components/AddressDisplay';
 import { ReceiveSplOrSolModal } from '../../components/ReceiveSplOrSolModal';
 import { SendAssetModal } from '../../components/SendAssetModal';
 import { AccountAssetAction, EventType, InvestItemPaths, OperationType, TransactionStatus } from '../../models/enums';
-import { consoleOut, copyText, getTransactionStatusForLogs, isValidAddress, kFormatter, toUsCurrency } from '../../utils/ui';
+import { consoleOut, copyText, getTransactionStatusForLogs, isLocal, isValidAddress, kFormatter, toUsCurrency } from '../../utils/ui';
 import { WrapSolModal } from '../../components/WrapSolModal';
 import { UnwrapSolModal } from '../../components/UnwrapSolModal';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
@@ -134,8 +135,10 @@ export const AccountsNewView = () => {
     multisigSolBalance,
     streamProgramAddress,
     streamV2ProgramAddress,
+    pendingMultisigTxCount,
     previousWalletConnectState,
     setHighLightableMultisigId,
+    setPendingMultisigTxCount,
     showDepositOptionsModal,
     setAddAccountPanelOpen,
     getTokenPriceByAddress,
@@ -1020,8 +1023,12 @@ export const AccountsNewView = () => {
         !multisigClient ||
         !multisigSerumClient ||
         !accountAddress ||
-        inspectedAccountType !== "multisig" ||
         !loadingMultisigAccounts) {
+      return;
+    }
+
+    if (inspectedAccountType !== "multisig") {
+      setPendingMultisigTxCount(undefined);
       return;
     }
 
@@ -1062,20 +1069,30 @@ export const AccountsNewView = () => {
           if (item) {
             consoleOut('selectedMultisig:', item, 'crimson');
             setSelectedMultisig(item);
+            setPendingMultisigTxCount(item.pendingTxsAmount);
+          } else {
+            setSelectedMultisig(undefined);
+            setPendingMultisigTxCount(undefined);
           }
         })
         .catch((err: any) => {
           console.error(err);
+          setPendingMultisigTxCount(undefined);
         })
         .finally(() => setLoadingMultisigAccounts(false));
-
       })
-      .catch((err: any) => console.error(err))
+      .catch((err: any) => {
+        console.error(err);
+        setPendingMultisigTxCount(undefined);
+      })
       .finally(() => setLoadingMultisigAccounts(false));
     });
 
     return () => {
       clearTimeout(timeout);
+      if (pendingMultisigTxCount) {
+        setPendingMultisigTxCount(undefined);
+      }
     }
 
   }, [
@@ -1084,7 +1101,9 @@ export const AccountsNewView = () => {
     multisigClient,
     multisigSerumClient,
     inspectedAccountType,
+    pendingMultisigTxCount,
     loadingMultisigAccounts,
+    setPendingMultisigTxCount,
   ]);
 
   //////////////////////
@@ -1496,55 +1515,74 @@ export const AccountsNewView = () => {
         throw Error("Invalid from token account");
       }
 
-      const fromAccount = AccountLayout.decode(Buffer.from(fromAccountInfo.data));
-      const fromMintAddress = new PublicKey(fromAccount.mint);
-      const mintInfo = await connection.getAccountInfo(fromMintAddress);
+      const fromAccount = fromAccountInfo.owner.equals(SystemProgram.programId) 
+        ? fromAccountInfo
+        : AccountLayout.decode(Buffer.from(fromAccountInfo.data));
 
-      if (!mintInfo) { 
-        throw Error("Invalid token mint account");
-      }
+      const fromMintAddress = fromAccountInfo.owner.equals(SystemProgram.programId) 
+        ? NATIVE_SOL_MINT 
+        : new PublicKey(fromAccount.mint);
 
-      const mint = MintLayout.decode(Buffer.from(mintInfo.data));
       let toAddress = new PublicKey(data.to);
-      const toAccountInfo = await connection.getAccountInfo(toAddress);
+      let programId = MEAN_MULTISIG_PROGRAM;
+      //
+      let transferIx = SystemProgram.transfer({
+        fromPubkey: fromAddress,
+        toPubkey: toAddress,
+        lamports: new BN(data.amount * LAMPORTS_PER_SOL).toNumber()
+      });
+      
       const ixs: TransactionInstruction[] = [];
 
-      if (!toAccountInfo || !toAccountInfo.owner.equals(TOKEN_PROGRAM_ID)) {
+      if (!fromMintAddress.equals(NATIVE_SOL_MINT)) {
 
-        const toAccountATA = await Token.getAssociatedTokenAddress(
-          ASSOCIATED_TOKEN_PROGRAM_ID,
-          TOKEN_PROGRAM_ID,
-          fromMintAddress,
-          toAddress,
-          true
-        );
+        programId = TOKEN_PROGRAM_ID;
+        const mintInfo = await connection.getAccountInfo(fromMintAddress);
 
-        const toAccountATAInfo = await connection.getAccountInfo(toAccountATA);
-
-        if (!toAccountATAInfo) {
-          ixs.push(
-            Token.createAssociatedTokenAccountInstruction(
-              ASSOCIATED_TOKEN_PROGRAM_ID,
-              TOKEN_PROGRAM_ID,
-              fromMintAddress,
-              toAccountATA,
-              toAddress,
-              publicKey
-            )
-          );
+        if (!mintInfo) { 
+          throw Error("Invalid token mint account");
         }
 
-        toAddress = toAccountATA;
-      }
+        const mint = MintLayout.decode(Buffer.from(mintInfo.data));
+        const toAccountInfo = await connection.getAccountInfo(toAddress);
 
-      const transferIx = Token.createTransferInstruction(
-        TOKEN_PROGRAM_ID,
-        fromAddress,
-        toAddress,
-        selectedMultisig.authority,
-        [],
-        new BN(data.amount * 10 ** mint.decimals).toNumber()
-      );
+        if (!toAccountInfo || !toAccountInfo.owner.equals(TOKEN_PROGRAM_ID)) {
+
+          const toAccountATA = await Token.getAssociatedTokenAddress(
+            ASSOCIATED_TOKEN_PROGRAM_ID,
+            TOKEN_PROGRAM_ID,
+            fromMintAddress,
+            toAddress,
+            true
+          );
+
+          const toAccountATAInfo = await connection.getAccountInfo(toAccountATA);
+
+          if (!toAccountATAInfo) {
+            ixs.push(
+              Token.createAssociatedTokenAccountInstruction(
+                ASSOCIATED_TOKEN_PROGRAM_ID,
+                TOKEN_PROGRAM_ID,
+                fromMintAddress,
+                toAccountATA,
+                toAddress,
+                publicKey
+              )
+            );
+          }
+
+          toAddress = toAccountATA;
+        }
+
+        transferIx = Token.createTransferInstruction(
+          TOKEN_PROGRAM_ID,
+          fromAddress,
+          toAddress,
+          selectedMultisig.authority,
+          [],
+          new BN(data.amount * 10 ** mint.decimals).toNumber()
+        );
+      }
 
       const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
 
@@ -3505,6 +3543,35 @@ export const AccountsNewView = () => {
   // Rendering //
   ///////////////
 
+  const renderMultisigPendinTxNotification = () => {
+    if (pendingMultisigTxCount && pendingMultisigTxCount > 0) {
+      return (
+        <div key="pending-proposals" className="transaction-list-row no-pointer shift-up-1">
+          <div className="flex-row align-items-center">
+            <div className="fg-warning font-bold">There are pending proposals on this account</div>
+              <span className="icon-button-container ml-1">
+                <Tooltip placement="bottom" title="Go to safe account">
+                  <Button
+                    type="default"
+                    shape="circle"
+                    size="middle"
+                    icon={<ArrowRightOutlined />}
+                    onClick={() => {
+                      if (selectedMultisig) {
+                        setHighLightableMultisigId(selectedMultisig.id.toBase58());
+                      }
+                      navigate("/safes");
+                    }}
+                  />
+                </Tooltip>
+              </span>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
   const renderNetworth = () => {
     return (
       <div className={`networth-list-item flex-fixed-right no-pointer ${selectedCategory === "networth" ? 'selected' : ''}`} onClick={() => {
@@ -3861,14 +3928,10 @@ export const AccountsNewView = () => {
   }
 
   const isSendFundsValid = () => {
-    if (selectedAsset) {
-      const isSol = selectedAsset.address === NATIVE_SOL_MINT.toBase58() ? true : false;
-      
-      if (!isSol && selectedAsset.balance as number > 0) {
-        return true;
-      } else {
-        return false;
-      }
+    if (selectedAsset && selectedAsset.balance as number > 0) {
+      return true;
+    } else {
+      return false;
     }
   }
 
@@ -4197,7 +4260,7 @@ export const AccountsNewView = () => {
     <>
       {/* {isLocal() && (
         <div className="debug-bar">
-          <span className="ml-1">incoming:</span><span className="ml-1 font-bold fg-dark-active">{streamsSummary ? streamsSummary.incomingAmount : '-'}</span>
+          <span className="ml-1">pendingMultisigTxCount:</span><span className="ml-1 font-bold fg-dark-active">{pendingMultisigTxCount !== undefined ? pendingMultisigTxCount : '-'}</span>
           <span className="ml-1">outgoing:</span><span className="ml-1 font-bold fg-dark-active">{streamsSummary ? streamsSummary.outgoingAmount : '-'}</span>
           <span className="ml-1">totalAmount:</span><span className="ml-1 font-bold fg-dark-active">{streamsSummary ? streamsSummary.totalAmount : '-'}</span>
           <span className="ml-1">totalNet:</span><span className="ml-1 font-bold fg-dark-active">{streamsSummary ? streamsSummary.totalNet : '-'}</span>
@@ -4290,6 +4353,9 @@ export const AccountsNewView = () => {
                       </div>
                       <div className="inner-container">
 
+                        {/* Pending Multisig proposals notification */}
+                        {inspectedAccountType === "multisig" && renderMultisigPendinTxNotification()}
+
                         {/* Net Worth header (sticky) */}
                         {renderNetworth()}
 
@@ -4357,22 +4423,34 @@ export const AccountsNewView = () => {
                         {/* Bottom CTAs */}
                         <div className="bottom-ctas">
                           <div className="primary-action">
-                            <Tooltip placement="bottom" title={
-                              !isInspectedAccountTheConnectedWallet()
-                                ? "You can only add assets to your connected account"
-                                : ""
-                              }>
+                            {isInspectedAccountTheConnectedWallet() ? (
                               <Button
                                 block
                                 className="flex-center"
                                 type="primary"
                                 shape="round"
-                                // disabled={!isInspectedAccountTheConnectedWallet()}
-                                onClick={!isInspectedAccountTheConnectedWallet() ? onShowCreateAssetModal : showInitAtaModal}>
+                                onClick={showInitAtaModal}>
                                 <IconAdd className="mean-svg-icons" />
                                 <span className="ml-1">Add asset</span>
                               </Button>
-                            </Tooltip>
+                            ) : (
+                              <Tooltip placement="bottom" title={
+                                !accountAddress || inspectedAccountType !== "multisig"
+                                  ? "You can only add assets to your connected account"
+                                  : "Add asset to your multisig safe account"
+                                }>
+                                <Button
+                                  block
+                                  className="flex-center"
+                                  type="primary"
+                                  shape="round"
+                                  disabled={!accountAddress || inspectedAccountType !== "multisig"}
+                                  onClick={onShowCreateAssetModal}>
+                                  <IconAdd className="mean-svg-icons" />
+                                  <span className="ml-1">Add asset</span>
+                                </Button>
+                              </Tooltip>
+                            )}
                           </div>
                           <Dropdown className="options-dropdown"
                             overlay={assetListOptions}

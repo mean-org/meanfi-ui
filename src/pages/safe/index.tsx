@@ -3630,6 +3630,9 @@ export const SafeView = () => {
                 ) : (
                   <Identicon address={item.id} style={{ width: "30", height: "30", display: "inline-flex" }} />
                 )}
+                {item.pendingTxsAmount && item.pendingTxsAmount > 0 ? (
+                  <span className="status warning bottom-right"></span>
+                ) : null}
               </div>
               <div className="description-cell">
                 <div>

@@ -113,6 +113,7 @@ import { ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/accounts";
 import { StreamTopupParams } from "../../models/common-types";
 import { STREAMING_ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/treasuries";
 
+export const STREAMS_ROUTE_BASE_PATH = '/accounts/streams';
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 let ds: string[] = [];
 
