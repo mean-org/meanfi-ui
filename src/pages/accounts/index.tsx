@@ -4375,8 +4375,8 @@ export const AccountsNewView = () => {
                             </div>
                             {!isInspectedAccountTheConnectedWallet() ? (
                               (multisigSolBalance / LAMPORTS_PER_SOL) <= 0 ? (
-                                <Row gutter={[8, 8]} className="mt-1">
-                                  <Col span={24} className="alert-info-message pr-4">
+                                <Row gutter={[8, 8]}>
+                                  <Col span={24} className="alert-info-message pr-2">
                                     <Alert message="SOL balance is very low in this safe. You'll need some if you want to make proposals." type="info" showIcon closable />
                                   </Col>
                                 </Row>
@@ -4384,7 +4384,7 @@ export const AccountsNewView = () => {
                             ) : (
                               (nativeBalance / LAMPORTS_PER_SOL) <= 0 ? (
                                 <Row gutter={[8, 8]} className="mt-1">
-                                  <Col span={24} className="alert-info-message pr-4">
+                                  <Col span={24} className="alert-info-message pr-2">
                                     <Alert message="SOL balance is very low in this wallet." type="info" showIcon closable />
                                   </Col>
                                 </Row>

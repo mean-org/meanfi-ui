@@ -1,26 +1,20 @@
-// import { Connection, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { Alert, Button, Col, Dropdown, Menu, Row, Tooltip } from "antd";
 import { useCallback, useContext, useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { CopyExtLinkGroup } from "../../../../../components/CopyExtLinkGroup";
 import { MultisigOwnersView } from "../../../../../components/MultisigOwnersView";
 import { TabsMean } from "../../../../../components/TabsMean";
 import { AppStateContext } from "../../../../../contexts/appstate";
-// import { useConnectionConfig } from "../../../../../contexts/connection";
 import { IconEllipsisVertical } from "../../../../../Icons";
-import { MultisigVault } from "../../../../../models/multisig";
 import { UserTokenAccount } from "../../../../../models/transactions";
 import { NATIVE_SOL } from "../../../../../utils/tokens";
-// import { NATIVE_SOL } from "../../../../../utils/tokens";
-
 import { isDev, isLocal, toUsCurrency } from "../../../../../utils/ui";
 import { getTokenByMintAddress, shortenAddress } from "../../../../../utils/utils";
 
 export const SafeInfo = (props: {
   selectedMultisig?: any;
-  multisigVaults?: MultisigVault[];
+  multisigVaults?: any;
   safeNameImg?: string;
   safeNameImgAlt?: string;
   onNewProposalMultisigClick?: any;
@@ -37,6 +31,7 @@ export const SafeInfo = (props: {
     isWhitelisted,
     totalSafeBalance,
     setTotalSafeBalance
+
   } = useContext(AppStateContext);
 
   const { solBalance, selectedMultisig, multisigVaults, safeNameImg, safeNameImgAlt, onNewProposalMultisigClick, onEditMultisigClick, onRefreshTabsInfo, tabs, selectedTab, isTxInProgress } = props;
@@ -113,17 +108,14 @@ export const SafeInfo = (props: {
   // Fetch safe balance.
   useEffect(() => {
 
-    if (!selectedMultisig) { return; }
+    if (!selectedMultisig || !multisigVaults || !multisigVaults.length) { return; }
     
-    let usdValue = 0;
+    const timeout = setTimeout(() => {
 
-    (async () => {
-      usdValue = (solBalance / LAMPORTS_PER_SOL) * getPricePerToken(NATIVE_SOL);
+      let usdValue = (solBalance / LAMPORTS_PER_SOL) * getPricePerToken(NATIVE_SOL);
       const cumulative = new Array<any>();
 
-      if (!multisigVaults) { return; }
-  
-      multisigVaults.forEach(item => {
+      multisigVaults.forEach((item: any) => {
 
         const token = getTokenByMintAddress(item.mint.toBase58(), splTokenList);
 
@@ -140,10 +132,13 @@ export const SafeInfo = (props: {
           })
         }
       });
-
+      
       setTotalSafeBalance(usdValue);
+    });
 
-    })();
+    return () => {
+      clearTimeout(timeout);
+    }
 
   }, [
     getPricePerToken,
@@ -246,17 +241,6 @@ export const SafeInfo = (props: {
                 View assets
               </div>
           </Button>
-          {/* <Button
-            type="default"
-            shape="round"
-            size="small"
-            className="thin-stroke"
-            disabled={isTxInProgress()}
-            onClick={onNewCreateAssetClick}>
-              <div className="btn-content">
-                Create asset
-              </div>
-          </Button> */}
         </Col>
         
         <Col xs={4} sm={6} md={4} lg={6}>

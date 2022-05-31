@@ -101,7 +101,6 @@ export const SafeView = () => {
   const { publicKey, connected, wallet } = useWallet();
   const {
     isWhitelisted,
-    // multisigVaults,
     detailsPanelOpen,
     transactionStatus,
     highLightableMultisigId,
@@ -119,7 +118,6 @@ export const SafeView = () => {
     fetchTxInfoStatus,
     lastSentTxSignature,
     lastSentTxOperationType,
-    confirmationHistory,
     startFetchTxSignatureInfo,
     clearTxConfirmationContext,
     enqueueTransactionConfirmation
@@ -158,19 +156,14 @@ export const SafeView = () => {
   const [solanaApps, setSolanaApps] = useState<App[]>([]);
   const [serumAccounts, setSerumAccounts] = useState<MultisigInfo[]>([]);
   const [serumMultisigTxs, setSerumMultisigTxs] = useState<MultisigTransaction[]>([]);
-
   const [operationPayload, setOperationPayload] = useState<any>(undefined);
   const [isProposalDetails, setIsProposalDetails] = useState(false);
   const [proposalSelected, setProposalSelected] = useState<MultisigTransaction | undefined>();
-  // const [proposalSelectedIdl, setProposalSelectedIdl] = useState<Idl | undefined>();
   const [isProgramDetails, setIsProgramDetails] = useState(false);
   const [programSelected, setProgramSelected] = useState<any>();
   const [isAssetDetails, setIsAssetDetails] = useState(false);
   const [assetSelected, setAssetSelected] = useState<any>();
   const [selectedTab, setSelectedTab] = useState<number>();
-  const [solBalance, setSolBalance] = useState<number>(0);
-  const [usdValue, setUsdValue] = useState<number>(0);
-  const [itemBalance, setItemBalance] = useState<any>();
   const [multisigUsdValues, setMultisigUsdValues] = useState<Map<string, number> | undefined>();
   const [canSubscribe, setCanSubscribe] = useState(true);
   
@@ -2740,15 +2733,10 @@ export const SafeView = () => {
     }
 
   }, [
-    clearTxConfirmationContext, 
-    resetTransactionStatus, 
+    t,
     wallet, 
     publicKey, 
-    multisigClient, 
-    setTransactionStatus, 
     nativeBalance, 
-    transactionStatus.currentOperation, 
-    t, 
     connection, 
     multisigClient,
     selectedMultisig,
@@ -2758,10 +2746,8 @@ export const SafeView = () => {
     clearTxConfirmationContext,
     onExecuteFinishTxCancelled,
     showMultisigTxResultModal,
-    startFetchTxSignatureInfo,
     resetTransactionStatus,
     setTransactionStatus,
-    onTxExecuted,
   ]);
 
   const onExecuteCancelTx = useCallback(async (data: any) => {
@@ -3293,7 +3279,6 @@ export const SafeView = () => {
 
   },[]);
 
-  
   const getPricePerToken = useCallback((token: UserTokenAccount): number => {
     if (!token || !coinPrices) { return 0; }
 
@@ -3402,6 +3387,7 @@ export const SafeView = () => {
       clearTimeout(timeout);
     }
   
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     publicKey,
     connection,
@@ -3409,12 +3395,7 @@ export const SafeView = () => {
     selectedMultisig,
     highLightableMultisigId,
     loadingMultisigAccounts,
-    serumAccounts,
-    getPricePerToken,
-    getMultisigVaults,
-    getTokenByMintAddress,
-    getTokenPriceByAddress,
-    getTokenPriceBySymbol
+    // serumAccounts
   ]);
 
   // Load/Unload multisig on wallet connect/disconnect
