@@ -128,7 +128,7 @@ export const ProposalDetailsView = (props: {
 
   // Display the instructions in the "Instructions" tab, on safe details page
   const renderInstructions = (
-    proposalIxInfo && (
+    proposalIxInfo ? (
       <div className="safe-details-collapse w-100 pl-1">
         <Row gutter={[8, 8]} className="mb-2 mt-2" key="programs">
           <Col xs={6} sm={6} md={4} lg={4} className="pr-1">
@@ -194,8 +194,8 @@ export const ProposalDetailsView = (props: {
                       <>
                         {item.value.map((owner: any) => {
                           return (
-                            <Row style={{marginLeft:20}} key={`owners-${index}`}>
-                              <Col xs={6} sm={6} md={4} lg={4} className="pr-1 text-truncate">
+                            <Row key={`owners-${index}`}>
+                              <Col xs={6} sm={6} md={4} lg={4} className="pl-1 pr-1 text-truncate">
                                 <Tooltip placement="right" title={owner.label || ""}>
                                   <span className="info-label">{owner.label || t('multisig.proposal-modal.instruction-data')}</span>
                                 </Tooltip>
@@ -204,6 +204,14 @@ export const ProposalDetailsView = (props: {
                                 <span className="d-block info-data simplelink underline-on-hover text-truncate" style={{cursor: 'pointer'}}>
                                   {owner.data}
                                 </span>
+                              </Col>
+                              <Col xs={1} sm={1} md={1} lg={1}>
+                                <a
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${owner.data}${getSolanaExplorerClusterParam()}`}>
+                                  <IconExternalLink className="mean-svg-icons external-icon" />
+                                </a>
                               </Col>
                             </Row>
                           )
@@ -242,6 +250,8 @@ export const ProposalDetailsView = (props: {
           )
         }
       </div>
+    ) : (
+      <span>Loading instruction...</span>
     )
   );
 
