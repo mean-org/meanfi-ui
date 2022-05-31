@@ -138,5 +138,6 @@ export enum AccountAssetAction {
     Divider = 10,
     Refresh = 11,
     CloseAccount = 12,
-    Share = 13
+    Share = 13,
+    Close = 14
 }

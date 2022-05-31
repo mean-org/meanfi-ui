@@ -1106,6 +1106,7 @@ export const AccountsNewView = () => {
     highLightableMultisigId,
     loadingMultisigAccounts,
     serumAccounts,
+    accountAddress,
     getTokenPriceBySymbol
   ]);
 
@@ -2296,6 +2297,20 @@ export const AccountsNewView = () => {
         callBack: showWrapSolModal
       });
       ctaItems++;
+    }
+
+    // Close asset
+    if (inspectedAccountType && inspectedAccountType === "multisig") {
+      actions.push({
+        action: AccountAssetAction.Close,
+        caption: 'Close asset',
+        isVisible: true,
+        uiComponentType: 'menuitem',
+        disabled: isTxInProgress() || !canDeleteVault() || !isDeleteAssetValid(),
+        uiComponentId: `menuitem-${AccountAssetAction.Close}`,
+        tooltip: '',
+        callBack: showDeleteVaultModal
+      });
     }
 
     // Refresh asset
@@ -3587,17 +3602,6 @@ export const AccountsNewView = () => {
                   onClick={showTransferVaultAuthorityModal}>
                     <div className="btn-content">
                       Transfer ownership
-                    </div>
-                </Button>
-                <Button
-                  type="default"
-                  shape="round"
-                  size="small"
-                  className="thin-stroke asset-btn"
-                  disabled={isTxInProgress() || !canDeleteVault() || !isDeleteAssetValid()}
-                  onClick={showDeleteVaultModal}>
-                    <div className="btn-content">
-                      Close asset
                     </div>
                 </Button>
               </Col>
