@@ -262,7 +262,7 @@ export const SafeInfo = (props: {
         </Col>
       </Row>
 
-      {(solBalance / LAMPORTS_PER_SOL) <= 0 ? (
+      {(solBalance / LAMPORTS_PER_SOL) <= 0.005 ? (
         <Row gutter={[8, 8]}>
           <Col span={24} className="alert-info-message pr-6">
             <Alert message="SOL balance is very low in this safe. You'll need some if you want to make proposals." type="info" showIcon closable />

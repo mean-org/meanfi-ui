@@ -14,7 +14,7 @@ import { InputMean } from '../InputMean';
 import { SelectMean } from '../SelectMean';
 import { FormLabelWithIconInfo } from '../FormLabelWithIconInfo';
 import { InputTextAreaMean } from '../InputTextAreaMean';
-import { App, AppConfig, AppsProvider, UiInstruction } from '@mean-dao/mean-multisig-apps';
+import { App, AppConfig, AppsProvider, UiElement, UiInstruction } from '@mean-dao/mean-multisig-apps';
 import BN from 'bn.js';
 import { Connection, PublicKey, SystemProgram, TransactionInstruction } from '@solana/web3.js';
 // import { Identicon } from '../../components/Identicon';
@@ -263,6 +263,10 @@ export const MultisigProposalModal = (props: {
   //   props.transactionFees
   // ]);
 
+  const isNumberInput = useCallback((uiElement: UiElement) => {
+    return (uiElement.type === "inputNumber" || (typeof(uiElement.type) === "object" && "from" in uiElement.type)) ? true : false;
+  }, [])
+
   useEffect(() => {
 
     if (!appsProvider || !selectedApp) { return; }
@@ -289,7 +293,7 @@ export const MultisigProposalModal = (props: {
 
   useEffect(() => {
     if (selectedApp) {
-      if (selectedApp.id === "FF7U7Vj1PpBkTPau7frwLLrUHrjkxTQLsH7U5K3T3B3j") {
+      if (selectedApp.folder === "custom") {
           selectedAppConfig && selectedAppConfig.ui.map((ix: UiInstruction) => {
           return setSelectedUiIx(ix)
         })
@@ -306,6 +310,9 @@ export const MultisigProposalModal = (props: {
         solanaApps.map((app, index) => {
           const onSelectApp = () => {
             setSelectedApp(app);
+            setProposalTitleValue("");
+            setProposalExpiresValue(expires[0]);
+            setProposalDescriptionValue("");
           }
 
           return (
@@ -415,7 +422,7 @@ export const MultisigProposalModal = (props: {
 
                       {(selectedApp && selectedApp.id === "CRDx2YkdtYtGZXGHZ59wNv1EwKHQndnRc1gT4p8i2vPX") && (
                         <Col span={24} className="alert-info-message mb-1">
-                          <Alert message="This multsig authority needs to have credix and civic pass accounts activated." type="info" showIcon closable />
+                          <Alert message="This multisig authority needs to have credix and civic pass accounts activated." type="info" showIcon closable />
                         </Col>
                       )}
 
@@ -476,7 +483,7 @@ export const MultisigProposalModal = (props: {
 
                     <div className="step-two-select-instruction">
                       <Row gutter={[8, 8]} className="mb-1">
-                        {(selectedApp && selectedApp.id !== "FF7U7Vj1PpBkTPau7frwLLrUHrjkxTQLsH7U5K3T3B3j") && (
+                        {(selectedApp && selectedApp.folder !== "custom") && (
                           <>
                             {/* Instruction */}
                             <Col xs={24} sm={24} md={24} lg={24} className="text-left pr-1">
@@ -529,7 +536,7 @@ export const MultisigProposalModal = (props: {
                                       />
                                     </Col>
                                   </>
-                                ) : (element.type === "inputNumber") ? (
+                                ) : (isNumberInput) ? (
                                   <>
                                     <Col xs={24} sm={24} md={24} lg={24} className="text-left pl-1">
                                       <FormLabelWithIconInfo
