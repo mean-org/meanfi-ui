@@ -3930,10 +3930,14 @@ export const AccountsNewView = () => {
   }
 
   const isDeleteAssetValid = () => {
-    if (selectedAsset && selectedAsset.balance as number === 0) {
-      return true;
-    } else {
-      return false;
+    if (selectedAsset) {
+      const isSol = selectedAsset.address === NATIVE_SOL_MINT.toBase58() ? true : false;
+
+      if (!isSol && selectedAsset.balance as number === 0) {
+        return true;
+      } else {
+        return false;
+      }
     }
   }
 
@@ -4492,7 +4496,7 @@ export const AccountsNewView = () => {
                               {selectedCategory === "assets" && renderUserAccountAssetCtaRow()}
                             </div>
                             {!isInspectedAccountTheConnectedWallet() ? (
-                              (multisigSolBalance / LAMPORTS_PER_SOL) <= 0 ? (
+                              ((multisigSolBalance / LAMPORTS_PER_SOL) <= 0) ? (
                                 <Row gutter={[8, 8]}>
                                   <Col span={24} className="alert-info-message pr-2">
                                     <Alert message="SOL balance is very low in this safe. You'll need some if you want to make proposals." type="info" showIcon closable />
