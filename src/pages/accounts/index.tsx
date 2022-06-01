@@ -132,7 +132,6 @@ export const AccountsNewView = () => {
     detailsPanelOpen,
     shouldLoadTokens,
     transactionStatus,
-    multisigSolBalance,
     streamProgramAddress,
     streamV2ProgramAddress,
     pendingMultisigTxCount,
@@ -185,6 +184,7 @@ export const AccountsNewView = () => {
   const [isUnwrapping, setIsUnwrapping] = useState(false);
   const [urlQueryAsset, setUrlQueryAsset] = useState('');
   const [assetCtas, setAssetCtas] = useState<AssetCta[]>([]);
+  const [multisigSolBalance, setMultisigSolBalance] = useState<number | undefined>(undefined);
 
   // Flow control
   const [status, setStatus] = useState<FetchStatus>(FetchStatus.Iddle);
@@ -1899,10 +1899,6 @@ export const AccountsNewView = () => {
         return null;
       }
 
-      console.log('selectedAsset', selectedAsset);
-      console.log('selectedMultisig', selectedMultisig);
-      console.log('selectedAuthority', selectedAuthority);
-
       const setAuthIx = Token.createSetAuthorityInstruction(
         TOKEN_PROGRAM_ID,
         new PublicKey(selectedAsset.publicAddress as string),
@@ -2229,12 +2225,6 @@ export const AccountsNewView = () => {
     setIsBusy(true);
 
     const closeAssetTx = async (inputAsset: UserTokenAccount) => {
-      console.log("asset", inputAsset);
-      console.log("selectedMultisig", selectedMultisig);
-      console.log("selectedMultisig", selectedMultisig?.authority.toBase58());
-
-      console.log("multisigClient", multisigClient);
-      console.log("publicKey", publicKey);
 
       if (!publicKey || !inputAsset || !selectedMultisig || !multisigClient || !inputAsset.publicAddress) { 
         console.error("I do not have anything, review");
@@ -2853,6 +2843,8 @@ export const AccountsNewView = () => {
             valueInUsd: (solBalance / LAMPORTS_PER_SOL) * getTokenPriceBySymbol('SOL')
           };
 
+          setMultisigSolBalance(solBalance / LAMPORTS_PER_SOL);
+
           fetchAccountTokens(connection, pk)
             .then(accTks => {
               if (accTks) {
@@ -2999,8 +2991,6 @@ export const AccountsNewView = () => {
                   })
                 );
                 console.table(tokenTable);
-
-                console.log("sortedList", sortedList);
 
                 // Update the state
                 setAccountTokens(sortedList);
@@ -3930,10 +3920,14 @@ export const AccountsNewView = () => {
   }
 
   const isDeleteAssetValid = () => {
-    if (selectedAsset && selectedAsset.balance as number === 0) {
-      return true;
-    } else {
-      return false;
+    if (selectedAsset) {
+      const isSol = selectedAsset.address === NATIVE_SOL_MINT.toBase58() ? true : false;
+
+      if (!isSol && selectedAsset.balance as number === 0) {
+        return true;
+      } else {
+        return false;
+      }
     }
   }
 
@@ -4491,19 +4485,11 @@ export const AccountsNewView = () => {
                               {renderCategoryMeta()}
                               {selectedCategory === "assets" && renderUserAccountAssetCtaRow()}
                             </div>
-                            {!isInspectedAccountTheConnectedWallet() ? (
-                              ((multisigSolBalance || 0) / LAMPORTS_PER_SOL) <= 0 ? (
+                            {!isInspectedAccountTheConnectedWallet() && inspectedAccountType === "multisig" && (
+                              (multisigSolBalance !== undefined && multisigSolBalance <= 0.005) ? (
                                 <Row gutter={[8, 8]}>
                                   <Col span={24} className="alert-info-message pr-2">
                                     <Alert message="SOL balance is very low in this safe. You'll need some if you want to make proposals." type="info" showIcon closable />
-                                  </Col>
-                                </Row>
-                              ) : null
-                            ) : (
-                              (nativeBalance / LAMPORTS_PER_SOL) <= 0 ? (
-                                <Row gutter={[8, 8]} className="mt-1">
-                                  <Col span={24} className="alert-info-message pr-2">
-                                    <Alert message="SOL balance is very low in this wallet." type="info" showIcon closable />
                                   </Col>
                                 </Row>
                               ) : null

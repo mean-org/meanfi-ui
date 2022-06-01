@@ -54,7 +54,6 @@ export const SafeMeanInfo = (props: {
     // setTransactionStatus,
     setMultisigSolBalance,
     previousWalletConnectState
-
   } = useContext(AppStateContext);
   const {
     fetchTxInfoStatus,
