@@ -2436,7 +2436,7 @@ export const MultisigTreasuryStreams = () => {
                                         </Tooltip>
                                     </span>
                                 </div>
-                                <span className="title">{t("streams.screen-title-safe")}</span>
+                                <span className="title">{t("treasuries.treasury-streams.screen-title")}</span>
                                 <Tooltip
                                     placement="bottom"
                                     title={t("streams.refresh-tooltip")}>

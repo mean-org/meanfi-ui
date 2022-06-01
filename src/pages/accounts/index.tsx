@@ -3555,24 +3555,24 @@ export const AccountsNewView = () => {
     if (pendingMultisigTxCount && pendingMultisigTxCount > 0) {
       return (
         <div key="pending-proposals" className="transaction-list-row no-pointer shift-up-1">
-          <div className="flex-row align-items-center">
-            <div className="fg-warning font-bold">There are pending proposals on this account</div>
-              <span className="icon-button-container ml-1">
-                <Tooltip placement="bottom" title="Go to safe account">
-                  <Button
-                    type="default"
-                    shape="circle"
-                    size="middle"
-                    icon={<ArrowRightOutlined />}
-                    onClick={() => {
-                      if (selectedMultisig) {
-                        setHighLightableMultisigId(selectedMultisig.id.toBase58());
-                      }
-                      navigate("/multisig");
-                    }}
-                  />
-                </Tooltip>
-              </span>
+          <div className="flex-row align-items-center fg-warning simplelink underline-on-hover" onClick={() => {
+              if (selectedMultisig) {
+                setHighLightableMultisigId(selectedMultisig.id.toBase58());
+              }
+              navigate("/multisig");
+            }}>
+            <div className="font-bold">There are pending proposals on this account</div>
+            <span className="icon-button-container ml-1">
+              <Tooltip placement="bottom" title="Go to safe account">
+                <Button
+                  type="default"
+                  shape="circle"
+                  size="middle"
+                  icon={<ArrowRightOutlined />}
+                  className="fg-warning"
+                />
+              </Tooltip>
+            </span>
           </div>
         </div>
       );
