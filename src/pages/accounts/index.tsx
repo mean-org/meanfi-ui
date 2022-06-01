@@ -617,6 +617,7 @@ export const AccountsNewView = () => {
           tokensCopy[0].valueInUsd = (solBalance / LAMPORTS_PER_SOL) * getTokenPriceBySymbol(tokensCopy[0].symbol);
           consoleOut('solBalance:', solBalance / LAMPORTS_PER_SOL, 'blue');
           setAccountTokens(tokensCopy);
+          setSelectedAsset(tokensCopy[0]);
         })
         .catch(error => {
           console.error(error);
@@ -638,7 +639,7 @@ export const AccountsNewView = () => {
             tokensCopy[itemIndex].balance = (balance || 0);
             tokensCopy[itemIndex].valueInUsd = valueInUSD;
             setAccountTokens(tokensCopy);
-            return;
+            setSelectedAsset(tokensCopy[itemIndex]);
           }
         })
         .catch(error => {
@@ -655,6 +656,7 @@ export const AccountsNewView = () => {
     isSelectedAssetNativeAccount,
     getTokenPriceByAddress,
     getTokenPriceBySymbol,
+    setSelectedAsset,
   ]);
 
   const startSwitch = useCallback(() => {
