@@ -68,6 +68,7 @@ export const MultisigProposalModal = (props: {
   const [selectedAppConfig, setSelectedAppConfig] = useState<AppConfig>();
   const [selectedUiIx, setSelectedUiIx] = useState<UiInstruction | undefined>();
   const [isModalVisible, setIsModalVisible] = useState<boolean>(isVisible);
+  const [credixValue, setCredixValue] = useState<number | undefined>();
 
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
     commitment: "confirmed",
@@ -265,7 +266,11 @@ export const MultisigProposalModal = (props: {
 
   const isNumberInput = useCallback((uiElement: UiElement) => {
     return (uiElement.type === "inputNumber" || (typeof(uiElement.type) === "object" && "from" in uiElement.type)) ? true : false;
-  }, [])
+  }, []);
+
+  useEffect(() => {
+    console.log("isNumberInput", isNumberInput);
+  }, [isNumberInput])
 
   useEffect(() => {
 
@@ -551,6 +556,9 @@ export const MultisigProposalModal = (props: {
                                         pattern="^[0-9]*[.,]?[0-9]*$"
                                         onChange={(e: any) => {
                                           console.log(e);
+                                          if (selectedApp?.folder === "credix") {
+                                            setCredixValue(e.target.value);
+                                          }
                                           handleChangeInput({
                                             id: element.name,
                                             value: e.target.value
@@ -947,7 +955,8 @@ export const MultisigProposalModal = (props: {
                       !selectedApp ||
                       !proposalTitleValue ||
                       !selectedUiIx ||
-                      ((selectedApp.folder === "custom") && !isSerializedTxValid)
+                      ((selectedApp.folder === "custom") && !isSerializedTxValid) ||
+                      ((selectedApp.folder === "credix") && !credixValue)
                     }
                   >
                     {getStepTwoContinueButtonLabel()}
@@ -984,6 +993,7 @@ export const MultisigProposalModal = (props: {
                       !proposalTitleValue ||
                       !selectedUiIx ||
                       ((selectedApp.folder === "custom") && !isSerializedTxValid) ||
+                      ((selectedApp.folder === "credix") && !credixValue) ||
                       !selectedAppConfig
                     }
                   >
