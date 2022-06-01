@@ -4492,7 +4492,7 @@ export const AccountsNewView = () => {
                               {selectedCategory === "assets" && renderUserAccountAssetCtaRow()}
                             </div>
                             {!isInspectedAccountTheConnectedWallet() ? (
-                              (multisigSolBalance / LAMPORTS_PER_SOL) <= 0 ? (
+                              ((multisigSolBalance || 0) / LAMPORTS_PER_SOL) <= 0 ? (
                                 <Row gutter={[8, 8]}>
                                   <Col span={24} className="alert-info-message pr-2">
                                     <Alert message="SOL balance is very low in this safe. You'll need some if you want to make proposals." type="info" showIcon closable />
