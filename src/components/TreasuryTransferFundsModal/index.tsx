@@ -185,6 +185,7 @@ export const TreasuryTransferFundsModal = (props: {
     const userBalance = makeInteger(tokenBalance, selectedToken?.decimals || 6);
     return  publicKey &&
             to &&
+            isValidAddress(to) &&
             selectedToken && 
             isVerifiedRecipient &&
             ((shouldFundFromTreasury() && unallocatedBalance.toNumber() > 0) ||
