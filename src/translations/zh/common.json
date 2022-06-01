@@ -1251,7 +1251,8 @@
 			"option-resume-stream": "恢复",
 			"status-running": "运行中",
 			"status-scheduled": "计划的",
-			"status-stopped": "已停止"
+			"status-stopped": "已停止",
+			"screen-title": "Streaming Accounts - Streams"
 		},
 		"withdraw-funds": {
 			"button-title": "Withdraw funds",

@@ -1252,7 +1252,8 @@
 			"option-resume-stream": "Retomar",
 			"status-running": "Corrida",
 			"status-scheduled": "Agendado",
-			"status-stopped": "Parado"
+			"status-stopped": "Parado",
+			"screen-title": "Streaming Accounts - Streams"
 		},
 		"withdraw-funds": {
 			"button-title": "Withdraw funds",
