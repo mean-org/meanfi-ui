@@ -151,7 +151,7 @@ export const SafeMeanInfo = (props: {
     return {
       mint: NATIVE_SOL_MINT,
       owner: multisig.authority,
-      amount: new BN(multisigSolBalance),
+      amount: multisigSolBalance && new BN(multisigSolBalance),
       delegateOption: 0,
       delegate: undefined,
       state: 1,

@@ -125,7 +125,7 @@ interface AppStateConfig {
   recurringBuys: DdcaAccount[];
   loadingRecurringBuys: boolean;
   // Multisig
-  multisigSolBalance: number;
+  multisigSolBalance: number | undefined;
   multisigVaults: MultisigVault[];
   highLightableMultisigId: string | undefined;
   pendingMultisigTxCount: number | undefined;
@@ -274,7 +274,7 @@ const contextDefaultValues: AppStateConfig = {
   recurringBuys: [],
   loadingRecurringBuys: false,
   // Multisig
-  multisigSolBalance: 0,
+  multisigSolBalance: undefined,
   multisigVaults: [],
   highLightableMultisigId: undefined,
   pendingMultisigTxCount: undefined,
@@ -416,7 +416,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [highLightableStreamId, setHighLightableStreamId] = useState<string | undefined>(contextDefaultValues.highLightableStreamId);
   const [multisigVaults, setMultisigVaults] = useState<MultisigVault[]>([]);
   const [highLightableMultisigId, setHighLightableMultisigId] = useState<string | undefined>(contextDefaultValues.highLightableMultisigId);
-  const [multisigSolBalance, updateMultisigSolBalance] = useState<number>(contextDefaultValues.multisigSolBalance);
+  const [multisigSolBalance, updateMultisigSolBalance] = useState<number | undefined>(contextDefaultValues.multisigSolBalance);
   const [pendingMultisigTxCount, setPendingMultisigTxCount] = useState<number | undefined>(contextDefaultValues.pendingMultisigTxCount);
 
   const [selectedToken, updateSelectedToken] = useState<TokenInfo>();

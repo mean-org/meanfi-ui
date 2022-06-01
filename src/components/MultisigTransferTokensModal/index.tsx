@@ -234,9 +234,6 @@ export const MultisigTransferTokensModal = (props: {
                                   event.currentTarget.className = "error";
                                 };
 
-
-                                console.log("fromVault", fromVault );
-
                                 return (
                                   <Option key={option.publicAddress} value={option.publicAddress}>
                                     <div className="option-container">
