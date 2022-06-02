@@ -1237,7 +1237,8 @@
 			"option-resume-stream": "Tiếp tục",
 			"status-running": "Đang chạy",
 			"status-scheduled": "Đã lập lịch",
-			"status-stopped": "Đã dừng"
+			"status-stopped": "Đã dừng",
+			"screen-title": "Streaming Accounts - Streams"
 		},
 		"withdraw-funds": {
 			"button-title": "Withdraw funds",

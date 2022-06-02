@@ -22,6 +22,7 @@ import { useConnection } from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
 import { TokenListItem } from '../TokenListItem';
 import { MAX_TOKEN_LIST_ITEMS } from '../../constants';
+import { PublicKey } from '@solana/web3.js';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -34,6 +35,7 @@ export const TreasuryCreateModal = (props: {
   transactionFees: TransactionFees;
   selectedMultisig: MultisigInfo | undefined;
   multisigAccounts: MultisigInfo[];
+  multisigAddress?: string;
 }) => {
   const { t } = useTranslation('common');
   const {
@@ -174,7 +176,9 @@ export const TreasuryCreateModal = (props: {
       const intersectedList = new Array<TokenInfo>();
       const userTokensCopy = JSON.parse(JSON.stringify(userTokens)) as TokenInfo[];
 
-      fetchAccountTokens(connection, publicKey)
+      const pk = props.multisigAddress ? new PublicKey(props.multisigAddress) : publicKey;
+
+      fetchAccountTokens(connection, pk)
       .then(accTks => {
         if (accTks) {
 
@@ -244,7 +248,8 @@ export const TreasuryCreateModal = (props: {
     userTokens,
     connection,
     splTokenList,
-    props.nativeBalance
+    props.nativeBalance,
+    props.multisigAddress,
   ]);
 
   // Pick a token if none selected
@@ -372,9 +377,10 @@ export const TreasuryCreateModal = (props: {
                 name={t.name || 'Unknown'}
                 mintAddress={t.address}
                 token={t}
-                className={balance ? workingToken && workingToken.address === t.address ? "selected" : "simplelink" : "hidden"}
+                className={balance ? workingToken && workingToken.address === t.address ? "selected" : "simplelink" : "dimmed"}
                 onClick={onClick}
                 balance={balance}
+                showZeroBalances={true}
               />
             );
           } else {

@@ -48,6 +48,9 @@ import { TokenPrice } from "../models/token";
 import { ProgramAccounts } from "../utils/accounts";
 import { MultisigVault } from "../models/multisig";
 import moment from "moment";
+import { ACCOUNTS_ROUTE_BASE_PATH } from "../pages/accounts";
+import { STREAMS_ROUTE_BASE_PATH } from "../views/Streams";
+import { MultisigTransaction } from "@mean-dao/mean-multisig-sdk";
 
 const pricesOldPerformanceCounter = new PerformanceCounter();
 const pricesNewPerformanceCounter = new PerformanceCounter();
@@ -95,7 +98,8 @@ interface AppStateConfig {
   streamListv1: StreamInfo[] | undefined;
   streamListv2: Stream[] | undefined;
   streamList: Array<Stream | StreamInfo> | undefined;
-  programs: ProgramAccounts[];
+  programs: ProgramAccounts[] | undefined;
+  multisigTxs: MultisigTransaction[] | undefined;
   selectedStream: Stream | StreamInfo | undefined;
   streamDetail: Stream | StreamInfo | undefined;
   activeStream: StreamInfo | Stream | undefined;
@@ -125,7 +129,7 @@ interface AppStateConfig {
   recurringBuys: DdcaAccount[];
   loadingRecurringBuys: boolean;
   // Multisig
-  multisigSolBalance: number;
+  multisigSolBalance: number | undefined;
   multisigVaults: MultisigVault[];
   highLightableMultisigId: string | undefined;
   pendingMultisigTxCount: number | undefined;
@@ -171,7 +175,8 @@ interface AppStateConfig {
   setPreviousWalletConnectState: (state: boolean) => void;
   setLoadingStreams: (state: boolean) => void;
   setStreamList: (list: Array<StreamInfo | Stream> | undefined) => void;
-  setPrograms: (list: Array<ProgramAccounts>) => void;
+  setPrograms: (list: Array<ProgramAccounts> | undefined) => void;
+  setMultisigTxs: (list: Array<MultisigTransaction> | undefined) => void;
   setSelectedStream: (stream: Stream | StreamInfo | undefined) => void;
   setStreamDetail: (stream: Stream | StreamInfo | undefined) => void;
   setDeletedStream: (id: string) => void,
@@ -245,6 +250,7 @@ const contextDefaultValues: AppStateConfig = {
   streamListv2: undefined,
   streamList: undefined,
   programs: [],
+  multisigTxs: [],
   selectedStream: undefined,
   streamDetail: undefined,
   activeStream: undefined,
@@ -274,7 +280,7 @@ const contextDefaultValues: AppStateConfig = {
   recurringBuys: [],
   loadingRecurringBuys: false,
   // Multisig
-  multisigSolBalance: 0,
+  multisigSolBalance: undefined,
   multisigVaults: [],
   highLightableMultisigId: undefined,
   pendingMultisigTxCount: undefined,
@@ -321,6 +327,7 @@ const contextDefaultValues: AppStateConfig = {
   setLoadingStreams: () => {},
   setStreamList: () => {},
   setPrograms: () => {},
+  setMultisigTxs: () => {},
   setSelectedStream: () => {},
   setStreamDetail: () => {},
   setDeletedStream: () => {},
@@ -408,7 +415,8 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [streamListv1, setStreamListv1] = useState<StreamInfo[] | undefined>();
   const [streamListv2, setStreamListv2] = useState<Stream[] | undefined>();
   const [streamList, setStreamList] = useState<Array<StreamInfo | Stream> | undefined>();
-  const [programs, setPrograms] = useState<ProgramAccounts[]>([]);
+  const [programs, setPrograms] = useState<ProgramAccounts[] | undefined>();
+  const [multisigTxs, setMultisigTxs] = useState<MultisigTransaction[] | undefined>();
   const [selectedStream, updateSelectedStream] = useState<Stream | StreamInfo | undefined>();
   const [streamDetail, updateStreamDetail] = useState<Stream | StreamInfo | undefined>();
   const [activeStream, setActiveStream] = useState<Stream | StreamInfo | undefined>();
@@ -416,7 +424,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [highLightableStreamId, setHighLightableStreamId] = useState<string | undefined>(contextDefaultValues.highLightableStreamId);
   const [multisigVaults, setMultisigVaults] = useState<MultisigVault[]>([]);
   const [highLightableMultisigId, setHighLightableMultisigId] = useState<string | undefined>(contextDefaultValues.highLightableMultisigId);
-  const [multisigSolBalance, updateMultisigSolBalance] = useState<number>(contextDefaultValues.multisigSolBalance);
+  const [multisigSolBalance, updateMultisigSolBalance] = useState<number | undefined>(contextDefaultValues.multisigSolBalance);
   const [pendingMultisigTxCount, setPendingMultisigTxCount] = useState<number | undefined>(contextDefaultValues.pendingMultisigTxCount);
 
   const [selectedToken, updateSelectedToken] = useState<TokenInfo>();
@@ -835,7 +843,7 @@ const AppStateProvider: React.FC = ({ children }) => {
             getStreamActivity(detail.id as string, detail.version, true);
             updateStreamDetail(detail);
             setActiveStream(detail);
-            if (location.pathname.startsWith('/accounts/streams')) {
+            if (location.pathname.startsWith(STREAMS_ROUTE_BASE_PATH)) {
               const token = getTokenByMintAddress(detail.associatedToken as string);
               setSelectedToken(token);
             }
@@ -1194,7 +1202,7 @@ const AppStateProvider: React.FC = ({ children }) => {
                       if (detail) {
                         updateStreamDetail(detail);
                         setActiveStream(detail);
-                        if (location.pathname.startsWith('/accounts/streams')) {
+                        if (location.pathname.startsWith(STREAMS_ROUTE_BASE_PATH)) {
                           const token = getTokenByMintAddress(detail.associatedToken as string);
                           setSelectedToken(token);
                         }
@@ -1210,7 +1218,7 @@ const AppStateProvider: React.FC = ({ children }) => {
                   if (item) {
                     updateStreamDetail(item);
                     setActiveStream(item);
-                    if (location.pathname.startsWith('/accounts/streams')) {
+                    if (location.pathname.startsWith(STREAMS_ROUTE_BASE_PATH)) {
                       const token = getTokenByMintAddress(item.associatedToken as string);
                       setSelectedToken(token);
                     }
@@ -1265,7 +1273,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   useEffect(() => {
     let timer: any;
 
-    if (accountAddress && location.pathname.startsWith('/accounts') && !customStreamDocked && !isDowngradedPerformance) {
+    if (accountAddress && location.pathname.startsWith(ACCOUNTS_ROUTE_BASE_PATH) && !customStreamDocked && !isDowngradedPerformance) {
       timer = setInterval(() => {
         consoleOut(`Refreshing streams past ${msToTime(FIVE_MINUTES_REFRESH_TIMEOUT)}...`);
         refreshStreamList();
@@ -1494,6 +1502,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         streamListv2,
         streamList,
         programs,
+        multisigTxs,
         selectedStream,
         streamDetail,
         activeStream,
@@ -1566,6 +1575,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         setLoadingStreams,
         setStreamList,
         setPrograms,
+        setMultisigTxs,
         setSelectedStream,
         setStreamDetail,
         setDeletedStream,

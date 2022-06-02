@@ -112,6 +112,7 @@ import {
   // MEAN_MULTISIG_PROGRAM
 
 } from '@mean-dao/mean-multisig-sdk';
+import { STREAMS_ROUTE_BASE_PATH } from '../../views/Streams';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export const STREAMING_ACCOUNTS_ROUTE_BASE_PATH = '/treasuries';
@@ -5055,7 +5056,7 @@ export const TreasuriesView = () => {
               navigate(url);
             } else {
               refreshStreamList();
-              navigate('/accounts/streams');
+              navigate(STREAMS_ROUTE_BASE_PATH);
             }
           }}>
           <span className="menu-item-text">Show stream</span>
@@ -5176,7 +5177,7 @@ export const TreasuriesView = () => {
               consoleOut('Navigating to multisig:', multisig.authority.toBase58(), 'blue');
               setHighLightableMultisigId(multisig.id.toBase58());
             }
-            navigate('/safes');
+            navigate('/multisig');
           }}>{t('treasuries.treasury-detail.multisig-tx-headsup')}</div>
         </div>
       </div>
@@ -5607,7 +5608,7 @@ export const TreasuriesView = () => {
                             if (selectedMultisig) {
                               consoleOut('selectedMultisig.id', selectedMultisig.id.toBase58(), 'blue');
                               setHighLightableMultisigId(selectedMultisig.id.toBase58());
-                              navigate('/safes');
+                              navigate('/multisig');
                             }
                           }}
                         />
@@ -5793,6 +5794,7 @@ export const TreasuriesView = () => {
           isBusy={isBusy}
           selectedMultisig={selectedMultisig}
           multisigAccounts={multisigAccounts || []}
+          multisigAddress={multisigAddress || undefined}
         />
       )}
 

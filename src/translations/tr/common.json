@@ -1238,7 +1238,8 @@
 			"option-resume-stream": "Devam et",
 			"status-running": "Devam ediyor",
 			"status-scheduled": "Zamanlanmış",
-			"status-stopped": "Durduruldu"
+			"status-stopped": "Durduruldu",
+			"screen-title": "Streaming Accounts - Streams"
 		},
 		"withdraw-funds": {
 			"button-title": "Withdraw funds",

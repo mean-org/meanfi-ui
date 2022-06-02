@@ -86,6 +86,7 @@ import { MultisigVaultTransferAuthorityModal } from '../../components/MultisigVa
 import { MultisigVaultDeleteModal } from '../../components/MultisigVaultDeleteModal';
 import { useNativeAccount } from '../../contexts/accounts';
 import { MultisigCreateAssetModal } from '../../components/MultisigCreateAssetModal';
+import { STREAMS_ROUTE_BASE_PATH } from '../../views/Streams';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export type InspectedAccountType = "multisig" | "streaming-account" | undefined;
@@ -132,7 +133,6 @@ export const AccountsNewView = () => {
     detailsPanelOpen,
     shouldLoadTokens,
     transactionStatus,
-    multisigSolBalance,
     streamProgramAddress,
     streamV2ProgramAddress,
     pendingMultisigTxCount,
@@ -185,6 +185,7 @@ export const AccountsNewView = () => {
   const [isUnwrapping, setIsUnwrapping] = useState(false);
   const [urlQueryAsset, setUrlQueryAsset] = useState('');
   const [assetCtas, setAssetCtas] = useState<AssetCta[]>([]);
+  const [multisigSolBalance, setMultisigSolBalance] = useState<number | undefined>(undefined);
 
   // Flow control
   const [status, setStatus] = useState<FetchStatus>(FetchStatus.Iddle);
@@ -617,6 +618,7 @@ export const AccountsNewView = () => {
           tokensCopy[0].valueInUsd = (solBalance / LAMPORTS_PER_SOL) * getTokenPriceBySymbol(tokensCopy[0].symbol);
           consoleOut('solBalance:', solBalance / LAMPORTS_PER_SOL, 'blue');
           setAccountTokens(tokensCopy);
+          setSelectedAsset(tokensCopy[0]);
         })
         .catch(error => {
           console.error(error);
@@ -638,7 +640,7 @@ export const AccountsNewView = () => {
             tokensCopy[itemIndex].balance = (balance || 0);
             tokensCopy[itemIndex].valueInUsd = valueInUSD;
             setAccountTokens(tokensCopy);
-            return;
+            setSelectedAsset(tokensCopy[itemIndex]);
           }
         })
         .catch(error => {
@@ -655,6 +657,7 @@ export const AccountsNewView = () => {
     isSelectedAssetNativeAccount,
     getTokenPriceByAddress,
     getTokenPriceBySymbol,
+    setSelectedAsset,
   ]);
 
   const startSwitch = useCallback(() => {
@@ -1897,10 +1900,6 @@ export const AccountsNewView = () => {
         return null;
       }
 
-      console.log('selectedAsset', selectedAsset);
-      console.log('selectedMultisig', selectedMultisig);
-      console.log('selectedAuthority', selectedAuthority);
-
       const setAuthIx = Token.createSetAuthorityInstruction(
         TOKEN_PROGRAM_ID,
         new PublicKey(selectedAsset.publicAddress as string),
@@ -2227,12 +2226,6 @@ export const AccountsNewView = () => {
     setIsBusy(true);
 
     const closeAssetTx = async (inputAsset: UserTokenAccount) => {
-      console.log("asset", inputAsset);
-      console.log("selectedMultisig", selectedMultisig);
-      console.log("selectedMultisig", selectedMultisig?.authority.toBase58());
-
-      console.log("multisigClient", multisigClient);
-      console.log("publicKey", publicKey);
 
       if (!publicKey || !inputAsset || !selectedMultisig || !multisigClient || !inputAsset.publicAddress) { 
         console.error("I do not have anything, review");
@@ -2851,6 +2844,8 @@ export const AccountsNewView = () => {
             valueInUsd: (solBalance / LAMPORTS_PER_SOL) * getTokenPriceBySymbol('SOL')
           };
 
+          setMultisigSolBalance(solBalance / LAMPORTS_PER_SOL);
+
           fetchAccountTokens(connection, pk)
             .then(accTks => {
               if (accTks) {
@@ -2997,8 +2992,6 @@ export const AccountsNewView = () => {
                   })
                 );
                 console.table(tokenTable);
-
-                console.log("sortedList", sortedList);
 
                 // Update the state
                 setAccountTokens(sortedList);
@@ -3555,24 +3548,24 @@ export const AccountsNewView = () => {
     if (pendingMultisigTxCount && pendingMultisigTxCount > 0) {
       return (
         <div key="pending-proposals" className="transaction-list-row no-pointer shift-up-1">
-          <div className="flex-row align-items-center">
-            <div className="fg-warning font-bold">There are pending proposals on this account</div>
-              <span className="icon-button-container ml-1">
-                <Tooltip placement="bottom" title="Go to safe account">
-                  <Button
-                    type="default"
-                    shape="circle"
-                    size="middle"
-                    icon={<ArrowRightOutlined />}
-                    onClick={() => {
-                      if (selectedMultisig) {
-                        setHighLightableMultisigId(selectedMultisig.id.toBase58());
-                      }
-                      navigate("/safes");
-                    }}
-                  />
-                </Tooltip>
-              </span>
+          <div className="flex-row align-items-center fg-warning simplelink underline-on-hover" onClick={() => {
+              if (selectedMultisig) {
+                setHighLightableMultisigId(selectedMultisig.id.toBase58());
+              }
+              navigate("/multisig");
+            }}>
+            <div className="font-bold">There are pending proposals on this account</div>
+            <span className="icon-button-container ml-1">
+              <Tooltip placement="bottom" title="Go to safe account">
+                <Button
+                  type="default"
+                  shape="circle"
+                  size="middle"
+                  icon={<ArrowRightOutlined />}
+                  className="fg-warning"
+                />
+              </Tooltip>
+            </span>
           </div>
         </div>
       );
@@ -3609,7 +3602,7 @@ export const AccountsNewView = () => {
             // setSelectedOtherAssetsOption("msp-streams");
             // setSelectedAsset(undefined);
             setTimeout(() => {
-              navigate(`${ACCOUNTS_ROUTE_BASE_PATH}/streams`);
+              navigate(STREAMS_ROUTE_BASE_PATH);
             }, 10);
           }
         }} className={`transaction-list-row ${selectedCategory === "other-assets" && selectedOtherAssetsOption === "msp-streams" ? 'selected' : ''}`}>
@@ -3928,10 +3921,14 @@ export const AccountsNewView = () => {
   }
 
   const isDeleteAssetValid = () => {
-    if (selectedAsset && selectedAsset.balance as number === 0) {
-      return true;
-    } else {
-      return false;
+    if (selectedAsset) {
+      const isSol = selectedAsset.address === NATIVE_SOL_MINT.toBase58() ? true : false;
+
+      if (!isSol && selectedAsset.balance as number === 0) {
+        return true;
+      } else {
+        return false;
+      }
     }
   }
 
@@ -4292,7 +4289,7 @@ export const AccountsNewView = () => {
         {publicKey ? (
           <div className="interaction-area">
 
-            {location.pathname === `${ACCOUNTS_ROUTE_BASE_PATH}/streams` ? (
+            {location.pathname === STREAMS_ROUTE_BASE_PATH ? (
               <Streams />
             ) : (
               <>
@@ -4316,7 +4313,7 @@ export const AccountsNewView = () => {
                                       if (selectedMultisig) {
                                         setHighLightableMultisigId(selectedMultisig.id.toBase58());
                                       }
-                                      navigate("/safes");
+                                      navigate("/multisig");
                                     }}
                                   />
                                 </Tooltip>
@@ -4489,19 +4486,11 @@ export const AccountsNewView = () => {
                               {renderCategoryMeta()}
                               {selectedCategory === "assets" && renderUserAccountAssetCtaRow()}
                             </div>
-                            {!isInspectedAccountTheConnectedWallet() ? (
-                              (multisigSolBalance / LAMPORTS_PER_SOL) <= 0 ? (
+                            {!isInspectedAccountTheConnectedWallet() && inspectedAccountType === "multisig" && (
+                              (multisigSolBalance !== undefined && multisigSolBalance <= 0.005) ? (
                                 <Row gutter={[8, 8]}>
                                   <Col span={24} className="alert-info-message pr-2">
                                     <Alert message="SOL balance is very low in this safe. You'll need some if you want to make proposals." type="info" showIcon closable />
-                                  </Col>
-                                </Row>
-                              ) : null
-                            ) : (
-                              (nativeBalance / LAMPORTS_PER_SOL) <= 0 ? (
-                                <Row gutter={[8, 8]} className="mt-1">
-                                  <Col span={24} className="alert-info-message pr-2">
-                                    <Alert message="SOL balance is very low in this wallet." type="info" showIcon closable />
                                   </Col>
                                 </Row>
                               ) : null
