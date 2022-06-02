@@ -1,17 +1,17 @@
 import './style.scss';
 import { Button, Col, Row, Tooltip } from "antd"
-import { IconArrowBack, IconUser, IconThumbsUp, IconExternalLink, IconLightning, IconUserClock } from "../../../../Icons"
+import { IconArrowBack, IconUser, IconThumbsUp, IconExternalLink, IconLightning, IconUserClock, IconApprove, IconCross, IconCreated, IconMinus } from "../../../../Icons"
 
 import { shortenAddress } from '../../../../utils/utils';
 import { TabsMean } from '../../../../components/TabsMean';
 import { useTranslation } from 'react-i18next';
 import { openNotification } from '../../../../components/Notifications';
 import { useCallback, useEffect, useState } from 'react';
-import { copyText } from '../../../../utils/ui';
+import { consoleOut, copyText } from '../../../../utils/ui';
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../../../constants';
 import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
 import { ResumeItem } from '../UI/ResumeItem';
-import { MEAN_MULTISIG_PROGRAM, MultisigTransaction, MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
+import { MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigTransaction, MultisigTransactionActivityItem, MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
 // import { AppStateContext } from '../../../../contexts/appstate';
 import { useWallet } from '../../../../contexts/wallet';
 import { createAnchorProgram, InstructionAccountInfo, InstructionDataInfo, MultisigTransactionInstructionInfo, parseMultisigProposalIx } from '../../../../models/multisig';
@@ -32,6 +32,8 @@ export const ProposalDetailsView = (props: {
   solanaApps?: any;
   appsProvider?: any;
   onOperationStarted: any;
+  multisigClient?: MeanMultisig | undefined;
+
 }) => {
 
   // const { isWhitelisted } = useContext(AppStateContext);
@@ -41,18 +43,22 @@ export const ProposalDetailsView = (props: {
     connection,
     solanaApps,
     appsProvider,
+    multisigClient,
     isProposalDetails, 
     onDataToSafeView, 
     proposalSelected, 
     selectedMultisig, 
     onProposalApprove, 
     onProposalExecute,
-    onOperationStarted,
+    onOperationStarted
+
   } = props;
 
   const [selectedProposal, setSelectedProposal] = useState<MultisigTransaction>(proposalSelected);
   const [selectedProposalIdl, setSelectedProposalIdl] = useState<Idl | undefined>();
   const [proposalIxInfo, setProposalIxInfo] = useState<MultisigTransactionInstructionInfo | null>(null);
+  const [proposalActivity, setProposalActivity] = useState<MultisigTransactionActivityItem[]>([]);
+  const [loadingActivity, setLoadingActivity] = useState<boolean>(true);
 
   useEffect(() => {
 
@@ -98,6 +104,45 @@ export const ProposalDetailsView = (props: {
     selectedProposal, 
     solanaApps
   ]);
+
+  useEffect(() => {
+
+    const loading = selectedProposal ? true : false;
+    const timeout = setTimeout(() => setLoadingActivity(loading));
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  },[
+    selectedProposal
+  ]);
+
+  // Get transaction proposal activity
+  useEffect(() => {
+
+    if (!multisigClient || !selectedProposal || !loadingActivity) { return; }
+
+    const timeout = setTimeout(() => {
+      multisigClient
+        .getMultisigTransactionActivity(selectedProposal.id)
+        .then((activity: MultisigTransactionActivityItem[]) => {
+          consoleOut('activity', activity, 'blue');
+          setProposalActivity(activity);
+        })
+        .catch((err: any) => console.error(err))
+        .finally(() => setLoadingActivity(false));
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [
+    loadingActivity, 
+    multisigClient, 
+    selectedProposal
+  ])
 
   // const isUnderDevelopment = () => {
   //   return isLocal() || (isDev() && isWhitelisted) ? true : false;
@@ -256,51 +301,57 @@ export const ProposalDetailsView = (props: {
   );
 
   // Display the activities in the "Activity" tab, on safe details page
-  // const renderActivities = (
-  //   <Row>
-  //     {/* {selectedProposal.activities.map((activity: any) => {
-  //       let icon = null;
+  const renderActivities = (
+    !loadingActivity ? (
+      proposalActivity.length > 0 && (
+        <Row>
+          {proposalActivity.map((activity: any) => {
+            let icon = null;
 
-  //       switch (activity.description) {
-  //         case 'approved':
-  //           icon = <IconApprove className="mean-svg-icons fg-green" />;
-  //           break;
-  //         case 'rejected':
-  //           icon = <IconCross className="mean-svg-icons fg-red" />;
-  //           break;
-  //         case 'passed':
-  //           icon = <IconCheckCircle className="mean-svg-icons fg-green" />;
-  //           break;
-  //         case 'created':
-  //           icon = <IconCreated className="mean-svg-icons fg-purple" />;
-  //           break;
-  //         case 'deleted':
-  //           icon = <IconMinus className="mean-svg-icons fg-purple" />;
-  //           break;
-  //         default:
-  //           icon = "";
-  //           break;
-  //       }
+            switch (activity.action) {
+              case 'created':
+                icon = <IconCreated className="mean-svg-icons fg-purple" />;
+                break;
+              case 'approved':
+                icon = <IconApprove className="mean-svg-icons fg-green" />;
+                break;
+              case 'executed':
+                icon = <IconApprove className="mean-svg-icons fg-green" />;
+                break;
+              case 'rejected':
+                icon = <IconCross className="mean-svg-icons fg-red" />;
+                break;
+              case 'deleted':
+                icon = <IconMinus className="mean-svg-icons fg-yellow" />;
+                break;
+              default:
+                icon = "";
+                break;
+            }
 
-  //       return (
-  //         <div 
-  //           key={activity.id}
-  //           className={`d-flex w-100 align-items-center activities-list ${activity.id % 2 === 0 ? '' : 'background-gray'}`}
-  //           >
-  //             <div className="list-item">
-  //               <span className="mr-2">
-  //                   {activity.date}
-  //               </span>
-  //               {icon}
-  //               <span>
-  //                 {`Proposal ${activity.description} by ${activity.proposedBy} [${shortenAddress(activity.address, 4)}]`}
-  //               </span>
-  //             </div>
-  //         </div>
-  //       )
-  //     })} */}
-  //   </Row>
-  // )
+            return (
+              <div 
+                key={activity.address}
+                className={`d-flex w-100 align-items-center activities-list ${activity.index % 2 === 0 ? '' : 'background-gray'}`}
+                >
+                  <div className="list-item">
+                    <span className="mr-2">
+                        {activity.date}
+                    </span>
+                    {icon}
+                    <span>
+                      {`Proposal ${activity.action} by ${activity.owner.name} [${shortenAddress(activity.address, 4)}]`}
+                    </span>
+                  </div>
+              </div>
+            )
+          })}
+        </Row>
+      )
+    ) : (
+      <span>Loading acivity...</span>
+    )
+  )
 
   // Tabs
   const tabs = [
@@ -309,11 +360,11 @@ export const ProposalDetailsView = (props: {
       name: "Instruction",
       render: renderInstructions
     }, 
-    // {
-    //   id: "proposal02",
-    //   name: "Activity",
-    //   render: renderActivities
-    // }
+    {
+      id: "proposal02",
+      name: "Activity",
+      render: renderActivities
+    }
   ];
 
   const anyoneCanExecuteTx = () => {
