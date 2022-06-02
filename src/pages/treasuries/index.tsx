@@ -5793,6 +5793,7 @@ export const TreasuriesView = () => {
           isBusy={isBusy}
           selectedMultisig={selectedMultisig}
           multisigAccounts={multisigAccounts || []}
+          multisigAddress={multisigAddress || undefined}
         />
       )}
 

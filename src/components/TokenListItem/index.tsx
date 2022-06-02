@@ -12,8 +12,9 @@ export const TokenListItem = (props: {
   balance: number;
   onClick: any;
   token?: TokenInfo;
+  showZeroBalances?: boolean;
 }) => {
-  const { name, icon, className, mintAddress, balance, token } = props;
+  const { name, icon, className, mintAddress, balance, token, showZeroBalances } = props;
   const { getTokenByMintAddress } = useContext(AppStateContext);
 
   const displayToken = token || getTokenByMintAddress(mintAddress);
@@ -35,9 +36,9 @@ export const TokenListItem = (props: {
         <div className="token-symbol">{displayToken && displayToken.symbol ? displayToken.symbol : shortenAddress(mintAddress)}</div>
         <div className="token-name m-0">{name ? name : displayToken && displayToken.name ? displayToken.name : shortenAddress(mintAddress)}</div>
       </div>
-      {balance > 0 && (
+      {(balance > 0 || showZeroBalances)  && (
         <div className="token-balance">
-          {getTokenAmountAndSymbolByTokenAddress(balance, displayToken ? displayToken.address : mintAddress, true)}
+          {balance ? getTokenAmountAndSymbolByTokenAddress(balance, displayToken ? displayToken.address : mintAddress, true) : "0"}
         </div>
       )}
     </div>
