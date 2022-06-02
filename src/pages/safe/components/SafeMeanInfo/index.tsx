@@ -614,20 +614,20 @@ export const SafeMeanInfo = (props: {
     </>
   );
 
-  useEffect(() => {
-    const timeout = setTimeout(() => {
+  // useEffect(() => {
+  //   const timeout = setTimeout(() => {
 
-      if (programs && programs.length > 0) {
-        setLoadingPrograms(false);
-      } else {
-        setLoadingPrograms(true);
-      }
-    });
+  //     if (programs && programs.length > 0) {
+  //       setLoadingPrograms(false);
+  //     } else {
+  //       setLoadingPrograms(true);
+  //     }
+  //   });
 
-    return () => {
-      clearTimeout(timeout);
-    }
-  }, [programs]);
+  //   return () => {
+  //     clearTimeout(timeout);
+  //   }
+  // }, [programs]);
 
 
   const renderListOfPrograms = (
