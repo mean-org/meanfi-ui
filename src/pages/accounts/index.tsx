@@ -86,6 +86,7 @@ import { MultisigVaultTransferAuthorityModal } from '../../components/MultisigVa
 import { MultisigVaultDeleteModal } from '../../components/MultisigVaultDeleteModal';
 import { useNativeAccount } from '../../contexts/accounts';
 import { MultisigCreateAssetModal } from '../../components/MultisigCreateAssetModal';
+import { STREAMS_ROUTE_BASE_PATH } from '../../views/Streams';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export type InspectedAccountType = "multisig" | "streaming-account" | undefined;
@@ -3601,7 +3602,7 @@ export const AccountsNewView = () => {
             // setSelectedOtherAssetsOption("msp-streams");
             // setSelectedAsset(undefined);
             setTimeout(() => {
-              navigate(`${ACCOUNTS_ROUTE_BASE_PATH}/streams`);
+              navigate(STREAMS_ROUTE_BASE_PATH);
             }, 10);
           }
         }} className={`transaction-list-row ${selectedCategory === "other-assets" && selectedOtherAssetsOption === "msp-streams" ? 'selected' : ''}`}>
@@ -4288,7 +4289,7 @@ export const AccountsNewView = () => {
         {publicKey ? (
           <div className="interaction-area">
 
-            {location.pathname === `${ACCOUNTS_ROUTE_BASE_PATH}/streams` ? (
+            {location.pathname === STREAMS_ROUTE_BASE_PATH ? (
               <Streams />
             ) : (
               <>

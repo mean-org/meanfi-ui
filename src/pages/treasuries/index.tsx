@@ -112,6 +112,7 @@ import {
   // MEAN_MULTISIG_PROGRAM
 
 } from '@mean-dao/mean-multisig-sdk';
+import { STREAMS_ROUTE_BASE_PATH } from '../../views/Streams';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export const STREAMING_ACCOUNTS_ROUTE_BASE_PATH = '/treasuries';
@@ -5055,7 +5056,7 @@ export const TreasuriesView = () => {
               navigate(url);
             } else {
               refreshStreamList();
-              navigate('/accounts/streams');
+              navigate(STREAMS_ROUTE_BASE_PATH);
             }
           }}>
           <span className="menu-item-text">Show stream</span>

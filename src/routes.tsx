@@ -47,7 +47,7 @@ export function AppRoutes() {
                 <AppStateProvider>
                   <AppLayout>
                     <Routes>
-                      <Route path='/' element={<Navigate replace to='/accounts' />} />
+                      <Route path="/" element={<Navigate replace to='/accounts' />} />
                       {/* Accounts detailed deep-linking */}
                       <Route path="/accounts" element={<AccountsNewView />} />
                       <Route path="/accounts/:address" element={<AccountsNewView />} />

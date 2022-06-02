@@ -59,6 +59,7 @@ import { TokenInfo } from '@solana/spl-token-registry';
 import useWindowSize from '../../hooks/useWindowResize';
 import { InfoIcon } from '../../components/InfoIcon';
 import { NATIVE_SOL } from '../../utils/tokens';
+import { STREAMS_ROUTE_BASE_PATH } from '../Streams';
 
 export const RepeatingPayment = (props: {
   inModal: boolean;
@@ -370,7 +371,7 @@ export const RepeatingPayment = (props: {
   const handleGoToStreamsClick = useCallback(() => {
     resetContractValues();
     setCurrentStep(0);
-    navigate("/accounts/streams");
+    navigate(STREAMS_ROUTE_BASE_PATH);
   }, [navigate, resetContractValues]);
 
   const recordTxConfirmation = useCallback((signature: string, success = true) => {
@@ -1114,9 +1115,9 @@ export const RepeatingPayment = (props: {
               resetContractValues();
               setIsVerifiedRecipient(false);
               transferCompleted();
-              if (location.pathname !== "/accounts/streams") {
+              if (location.pathname !== STREAMS_ROUTE_BASE_PATH) {
                 setSelectedStream(undefined);
-                navigate("/accounts/streams");
+                navigate(STREAMS_ROUTE_BASE_PATH);
               }
             }
           } else { setIsBusy(false); }
