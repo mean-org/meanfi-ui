@@ -7,6 +7,9 @@ import { PreFooter } from "../../components/PreFooter";
 import { Button, Space, Tabs } from 'antd';
 import { consoleOut } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
+import { VestingLockCreateAccount } from './components/VestingLockCreateAccount';
+import { LockedStreamCreate } from './components/LockedStreamCreate';
+import { VestingLockSelectAccount } from './components/VestingLockSelectAccount';
 
 const { TabPane } = Tabs;
 export const VESTING_ROUTE_BASE_PATH = '/vesting';
@@ -102,6 +105,10 @@ export const VestingView = () => {
   const renderStreamCreation = (
     <>
       <p>Render the stream creation wizard screen.</p>
+      <LockedStreamCreate
+        param1="LockedStreamCreate -> Sample parameter 1 content"
+        param2="LockedStreamCreate -> Another value for parameter 2"
+      />
       <Space align="center" size="middle">
         <Button
           type="primary"
@@ -132,6 +139,10 @@ export const VestingView = () => {
           <TabPane tab={t('vesting.create-account.tab-label-create-account')} key={"create-new"}>
             <p>Render Create new tab content here</p>
             <p>Create Vesting account and go to create stream screen</p>
+            <VestingLockCreateAccount
+              param1="AccountCreateOrSelect -> Sample parameter 1 content"
+              param2="AccountCreateOrSelect -> Another value for parameter 2"
+            />
             <Button
               type="primary"
               shape="round"
@@ -145,6 +156,9 @@ export const VestingView = () => {
           </TabPane>
           <TabPane tab={t('vesting.create-account.tab-label-select-account')} key={"select-existing"}>
             <p>Render list of Existing accounts here</p>
+            <VestingLockSelectAccount
+              items={['First item', 'The second one', 'Last but not least']}
+            />
             <Button
               type="primary"
               shape="round"
@@ -175,7 +189,11 @@ export const VestingView = () => {
             </div>
           </div>
           <div className="container-max-width-640">
-            {workflowStep === "account-select" ? renderAccountSelection() : renderStreamCreation}
+            {
+              workflowStep === "account-select"
+                ? renderAccountSelection()
+                : renderStreamCreation
+            }
           </div>
         </div>
       </div>

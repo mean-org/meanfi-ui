@@ -1,6 +1,6 @@
 import React from 'react';
 
-export const AccountCreateOrSelect = (props: {
+export const VestingLockCreateAccount = (props: {
     param1: any;
     param2: any;
 }) => {
