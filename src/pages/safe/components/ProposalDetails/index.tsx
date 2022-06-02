@@ -303,7 +303,7 @@ export const ProposalDetailsView = (props: {
   // Display the activities in the "Activity" tab, on safe details page
   const renderActivities = (
     !loadingActivity ? (
-      proposalActivity.length > 0 && (
+      proposalActivity.length > 0 ? (
         <Row>
           {proposalActivity.map((activity: any) => {
             let icon = null;
@@ -358,9 +358,11 @@ export const ProposalDetailsView = (props: {
             )
           })}
         </Row>
+      ) : (
+        <span className="pl-1">This proposal has no activities</span>
       )
     ) : (
-      <span>Loading activity...</span>
+      <span>Loading activities...</span>
     )
   )
 

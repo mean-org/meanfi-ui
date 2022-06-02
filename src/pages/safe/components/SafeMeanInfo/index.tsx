@@ -564,12 +564,11 @@ export const SafeMeanInfo = (props: {
     connection, 
     multisigClient, 
     loadingProposals, 
-    proposalSelected
+    proposalSelected,
+    setMultisigTxs
   ]);
 
   useEffect(() => {
-    console.log("proposals", multisigTxs !== undefined);
-    console.log("proposals txs", multisigTxs);
     const timeout = setTimeout(() => {
 
       if (multisigTxs) {
