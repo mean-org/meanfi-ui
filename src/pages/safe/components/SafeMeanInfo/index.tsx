@@ -687,18 +687,6 @@ export const SafeMeanInfo = (props: {
 
   useEffect(() => {
     if (selectedMultisig) {
-      !loadingAssets ? (
-        multisigVaults && multisigVaults.length > 0 && (
-          setAmountOfAssets(`(${multisigVaults.length})`)
-        )
-      ) : (
-        setAmountOfAssets("")
-      )
-    }
-  }, [loadingAssets, multisigVaults, selectedMultisig]);
-
-  useEffect(() => {
-    if (selectedMultisig) {
       !loadingPrograms ? (
         programs && programs.length > 0 ? (
           setAmountOfPrograms(`(${programs.length})`)

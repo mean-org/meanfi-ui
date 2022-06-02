@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { openNotification } from '../../../../components/Notifications';
 import { useCallback, useEffect, useState } from 'react';
 import { consoleOut, copyText } from '../../../../utils/ui';
-import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../../../constants';
+import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../../../constants';
 import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
 import { ResumeItem } from '../UI/ResumeItem';
 import { MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigTransaction, MultisigTransactionActivityItem, MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
@@ -19,7 +19,7 @@ import { PublicKey, SystemProgram } from '@solana/web3.js';
 import { Idl } from '@project-serum/anchor';
 import { App, AppConfig } from '@mean-dao/mean-multisig-apps';
 import { OperationType } from '../../../../models/enums';
-// import { InfoIcon } from '../../../../components/InfoIcon';
+import moment from "moment";
 
 export const ProposalDetailsView = (props: {
   isProposalDetails: boolean;
@@ -310,19 +310,19 @@ export const ProposalDetailsView = (props: {
 
             switch (activity.action) {
               case 'created':
-                icon = <IconCreated className="mean-svg-icons fg-purple" />;
+                icon = <IconCreated className="mean-svg-icons fg-purple activity-icon" />;
                 break;
               case 'approved':
-                icon = <IconApprove className="mean-svg-icons fg-green" />;
+                icon = <IconApprove className="mean-svg-icons fg-green activity-icon" />;
                 break;
               case 'executed':
-                icon = <IconApprove className="mean-svg-icons fg-green" />;
+                icon = <IconApprove className="mean-svg-icons fg-green activity-icon" />;
                 break;
               case 'rejected':
-                icon = <IconCross className="mean-svg-icons fg-red" />;
+                icon = <IconCross className="mean-svg-icons fg-red activity-icon" />;
                 break;
               case 'deleted':
-                icon = <IconMinus className="mean-svg-icons fg-yellow" />;
+                icon = <IconMinus className="mean-svg-icons fg-yellow activity-icon" />;
                 break;
               default:
                 icon = "";
@@ -331,17 +331,28 @@ export const ProposalDetailsView = (props: {
 
             return (
               <div 
-                key={activity.address}
-                className={`d-flex w-100 align-items-center activities-list ${activity.index % 2 === 0 ? '' : 'background-gray'}`}
+                key={`${activity.index + 1}`}
+                className={`d-flex w-100 align-items-center activities-list ${(activity.index + 1) % 2 === 0 ? '' : 'background-gray'}`}
                 >
                   <div className="list-item">
                     <span className="mr-2">
-                        {activity.date}
+                      {moment(activity.createdOn).format("LLL")}
                     </span>
                     {icon}
-                    <span>
-                      {`Proposal ${activity.action} by ${activity.owner.name} [${shortenAddress(activity.address, 4)}]`}
-                    </span>
+                    <div className="d-flex">
+                      <span>{`Proposal ${activity.action} by ${activity.owner.name} `}</span>
+                      <div onClick={() => copyAddressToClipboard(activity.address)} className="simplelink underline-on-hover activity-address ml-1">
+                        ({shortenAddress(activity.address, 4)})
+                      </div>
+                      <span className="icon-button-container">
+                        <a
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${activity.address}${getSolanaExplorerClusterParam()}`}>
+                          <IconExternalLink className="mean-svg-icons external-icon ml-1" />
+                        </a>
+                      </span>
+                    </div>
                   </div>
               </div>
             )
@@ -349,7 +360,7 @@ export const ProposalDetailsView = (props: {
         </Row>
       )
     ) : (
-      <span>Loading acivity...</span>
+      <span>Loading activity...</span>
     )
   )
 
