@@ -490,8 +490,8 @@ export const SafeMeanInfo = (props: {
     const timeout = setTimeout(() => {
       getProgramsByUpgradeAuthority()
         .then(progs => {
-          setPrograms(progs);
-          setAmountOfPrograms(progs.length.toString());
+          setPrograms(progs.length > 0 ? progs : undefined);
+          setAmountOfPrograms(progs.length > 0 ? progs.length.toString() : "");
           consoleOut('programs:', progs);
         })
         .catch(error => console.error(error))
@@ -614,26 +614,26 @@ export const SafeMeanInfo = (props: {
     </>
   );
 
-  // useEffect(() => {
-  //   const timeout = setTimeout(() => {
+  useEffect(() => {
+    const timeout = setTimeout(() => {
 
-  //     if (programs && programs.length > 0) {
-  //       setLoadingPrograms(false);
-  //     } else {
-  //       setLoadingPrograms(true);
-  //     }
-  //   });
+      if (programs) {
+        setLoadingPrograms(false);
+      } else {
+        setLoadingPrograms(true);
+      }
+    });
 
-  //   return () => {
-  //     clearTimeout(timeout);
-  //   }
-  // }, [programs]);
+    return () => {
+      clearTimeout(timeout);
+    }
+  }, [programs]);
 
 
   const renderListOfPrograms = (
     <>
       {!loadingPrograms ? (
-        (programs && programs.length > 0) ? (
+        (programs !== undefined) ? (
           programs.map((program, index) => {
             const onSelectProgram = () => {
               // Sends isProgramDetails value to the parent component "SafeView"
@@ -700,8 +700,10 @@ export const SafeMeanInfo = (props: {
   useEffect(() => {
     if (selectedMultisig) {
       !loadingPrograms ? (
-        programs && programs.length > 0 && (
+        programs && programs.length > 0 ? (
           setAmountOfPrograms(`(${programs.length})`)
+        ) : (
+          setAmountOfPrograms("")
         )
       ) : (
         setAmountOfPrograms("")

@@ -95,7 +95,7 @@ interface AppStateConfig {
   streamListv1: StreamInfo[] | undefined;
   streamListv2: Stream[] | undefined;
   streamList: Array<Stream | StreamInfo> | undefined;
-  programs: ProgramAccounts[];
+  programs: ProgramAccounts[] | undefined;
   selectedStream: Stream | StreamInfo | undefined;
   streamDetail: Stream | StreamInfo | undefined;
   activeStream: StreamInfo | Stream | undefined;
@@ -171,7 +171,7 @@ interface AppStateConfig {
   setPreviousWalletConnectState: (state: boolean) => void;
   setLoadingStreams: (state: boolean) => void;
   setStreamList: (list: Array<StreamInfo | Stream> | undefined) => void;
-  setPrograms: (list: Array<ProgramAccounts>) => void;
+  setPrograms: (list: Array<ProgramAccounts> | undefined) => void;
   setSelectedStream: (stream: Stream | StreamInfo | undefined) => void;
   setStreamDetail: (stream: Stream | StreamInfo | undefined) => void;
   setDeletedStream: (id: string) => void,
@@ -408,7 +408,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [streamListv1, setStreamListv1] = useState<StreamInfo[] | undefined>();
   const [streamListv2, setStreamListv2] = useState<Stream[] | undefined>();
   const [streamList, setStreamList] = useState<Array<StreamInfo | Stream> | undefined>();
-  const [programs, setPrograms] = useState<ProgramAccounts[]>([]);
+  const [programs, setPrograms] = useState<ProgramAccounts[] | undefined>();
   const [selectedStream, updateSelectedStream] = useState<Stream | StreamInfo | undefined>();
   const [streamDetail, updateStreamDetail] = useState<Stream | StreamInfo | undefined>();
   const [activeStream, setActiveStream] = useState<Stream | StreamInfo | undefined>();

@@ -100,6 +100,7 @@ export const SafeView = () => {
   const connectionConfig = useConnectionConfig();
   const { publicKey, connected, wallet } = useWallet();
   const {
+    programs,
     isWhitelisted,
     detailsPanelOpen,
     transactionStatus,
