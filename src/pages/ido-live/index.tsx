@@ -836,7 +836,7 @@ export const IdoLiveView = () => {
 
   const renderVideo = (
     <>
-      <div className="boxed-area container-max-width-600 mb-4 mt-4">
+      <div className="boxed-area container-max-width-640 mb-4 mt-4">
         <YoutubeEmbed embedId="yBiaK0pdOHw" />
       </div>
     </>

@@ -25,6 +25,7 @@ import {
   StakingRewardsView,
   AccountsNewView,
   SafeView,
+  VestingView,
 } from "./pages";
 
 import { ServiceUnavailableView } from "./pages/service-unavailable";
@@ -57,6 +58,9 @@ export function AppRoutes() {
                       <Route path="/accounts/:address/msigs/:asset" element={<AccountsNewView />} />
                       {/* Streams routes (under refactor) */}
                       <Route path="/accounts/streams" element={<AccountsNewView />} />
+                      <Route path="/vesting" element={<VestingView />} />
+                      <Route path="/vesting/:workflow" element={<VestingView />} />
+                      <Route path="/vesting/:workflow/:step" element={<VestingView />} />
                       {/* Exchange */}
                       <Route path="/exchange" element={<SwapView />} />
                       {(isProd() || isLocal()) && (

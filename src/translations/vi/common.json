@@ -256,6 +256,15 @@
 		"current-wsol-balance": "Số dự wSOL hiện tại",
 		"label-input-amount": "Enter amount to unwrap"
 	},
+	"vesting": {
+		"screen-subtitle": "Welcome to the future of safe and secure token locks",
+		"screen-title": "Mean Vesting",
+		"user-instruction-headline": "Please create a new vesting account or select an existing account to create a vesting stream.",
+		"create-account": {
+			"tab-label-create-account": "Create new account",
+			"tab-label-select-account": "Select existing account"
+		}
+	},
 	"general": {
 		"cta-change": "Thay đổi",
 		"cta-close": "Đóng",
@@ -1294,7 +1303,8 @@
 				"submenu-title": "Dịch vụ",
 				"wallet-guide": "Hướng dẫn Ví",
 				"wrap": "Wrap",
-				"unwrap": "Unwrap"
+				"unwrap": "Unwrap",
+				"vesting": "Mean Vesting"
 			},
 			"stats": "Thống kê",
 			"swap": "Giao dịch",

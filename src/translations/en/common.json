@@ -1307,7 +1307,8 @@
 				"submenu-title": "Services",
 				"unwrap": "Unwrap",
 				"wallet-guide": "Wallet Guide",
-				"wrap": "Wrap"
+				"wrap": "Wrap",
+				"vesting": "Mean Vesting"
 			},
 			"stats": "Stats",
 			"swap": "Exchange",
@@ -1317,6 +1318,15 @@
 	"unwrap": {
 		"current-wsol-balance": "Current Wrapped SOL balance",
 		"label-input-amount": "Enter amount to unwrap"
+	},
+	"vesting": {
+		"screen-subtitle": "Welcome to the future of safe and secure token locks",
+		"screen-title": "Mean Vesting",
+		"user-instruction-headline": "Please create a new vesting account or select an existing account to create a vesting stream.",
+		"create-account": {
+			"tab-label-create-account": "Create new account",
+			"tab-label-select-account": "Select existing account"
+		}
 	},
 	"wallet-selector": {
 		"connect-to-begin": "In order to use MeanFi you need to connect to a Solana wallet.",

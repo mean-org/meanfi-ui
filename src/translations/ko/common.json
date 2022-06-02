@@ -256,6 +256,15 @@
 		"current-wsol-balance": "현재 WSOL 잔액",
 		"label-input-amount": "Enter amount to unwrap"
 	},
+	"vesting": {
+		"screen-subtitle": "Welcome to the future of safe and secure token locks",
+		"screen-title": "Mean Vesting",
+		"user-instruction-headline": "Please create a new vesting account or select an existing account to create a vesting stream.",
+		"create-account": {
+			"tab-label-create-account": "Create new account",
+			"tab-label-select-account": "Select existing account"
+		}
+	},
 	"general": {
 		"cta-change": "변경",
 		"cta-close": "종료",
@@ -1298,7 +1307,8 @@
 				"submenu-title": "서비스",
 				"wallet-guide": "지갑 가이드",
 				"wrap": "랩",
-				"unwrap": "Unwrap"
+				"unwrap": "Unwrap",
+				"vesting": "Mean Vesting"
 			},
 			"stats": "통계",
 			"swap": "교환",

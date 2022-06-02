@@ -4177,7 +4177,7 @@ export const AccountsNewView = () => {
 
   // const renderAddAccountBox = (
   //   <>
-  //     <div className="boxed-area container-max-width-600 add-account">
+  //     <div className="boxed-area container-max-width-640 add-account">
   //       {accountAddress && (
   //         <div className="back-button">
   //           <span className="icon-button-container">
