@@ -1256,17 +1256,7 @@ const AppStateProvider: React.FC = ({ children }) => {
           })
           .finally(() => {
             updateLoadingStreams(false);
-            refreshStreamsPerformanceCounter.stop();
-            if (!isProd()) {
-              consoleOut('listStreams performance counter:', 'Pending streamDetails...', 'crimson');
-              const results = [{
-                v2_Streams: `${listStreamsV2PerformanceCounter.elapsedTime.toLocaleString()}ms`,
-                v1_Streams: `${listStreamsV1PerformanceCounter.elapsedTime.toLocaleString()}ms`,
-                streamDetails: `${streamDetailPerformanceCounter.elapsedTime.toLocaleString()}ms`,
-                total: `${refreshStreamsPerformanceCounter.elapsedTime.toLocaleString()}ms`,
-              }];
-              console.table(results);
-            }
+            consoleOut('listStreams performance counter:', 'Pending streamDetails...', 'crimson');
           });
         }).catch(err => {
           console.error(err);
