@@ -54,7 +54,10 @@ import { MultisigTransaction } from "@mean-dao/mean-multisig-sdk";
 
 const pricesOldPerformanceCounter = new PerformanceCounter();
 const pricesNewPerformanceCounter = new PerformanceCounter();
-const listStreamsPerformanceCounter = new PerformanceCounter();
+const refreshStreamsPerformanceCounter = new PerformanceCounter();
+const listStreamsV1PerformanceCounter = new PerformanceCounter();
+const listStreamsV2PerformanceCounter = new PerformanceCounter();
+const streamDetailPerformanceCounter = new PerformanceCounter();
 
 export interface TransactionStatusInfo {
   customError?: any;
@@ -375,10 +378,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [isInBetaTestingProgram, setIsInBetaTestingProgram] = useState(contextDefaultValues.isInBetaTestingProgram);
   const [streamProgramAddress, setStreamProgramAddress] = useState('');
   const [streamV2ProgramAddress, setStreamV2ProgramAddress] = useState('');
-  const {
-    lastSentTxStatus,
-    clearTxConfirmationContext,
-  } = useContext(TxConfirmationContext);
+  const { clearTxConfirmationContext } = useContext(TxConfirmationContext);
   const today = new Date().toLocaleDateString("en-US");
   const tomorrow = moment().add(1, 'days').format('L');
   const timeDate = moment().format('hh:mm A');  
@@ -1129,8 +1129,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     consoleOut('Fetching streams for:', userPk?.toBase58(), 'orange');
 
     if (msp) {
-      setLoadingStreams(true);
-      const signature = lastSentTxStatus || '';
+      updateLoadingStreams(true);
       setTimeout(() => {
         clearTxConfirmationContext();
       });
@@ -1139,92 +1138,90 @@ const AppStateProvider: React.FC = ({ children }) => {
       let rawStreamsv1: StreamInfo[] = [];
       let rawStreamsv2: Stream[] = [];
 
-      listStreamsPerformanceCounter.start();
+      // Reset all counters
+      refreshStreamsPerformanceCounter.reset();
+      listStreamsV1PerformanceCounter.reset();
+      listStreamsV2PerformanceCounter.reset();
+      streamDetailPerformanceCounter.reset();
+
+      refreshStreamsPerformanceCounter.start();
+      listStreamsV2PerformanceCounter.start();
 
       msp.listStreams({treasurer: userPk, beneficiary: userPk})
         .then(streamsv2 => {
-          listStreamsPerformanceCounter.stop();
-          consoleOut(`msp.listStreams took ${listStreamsPerformanceCounter.elapsedTime.toLocaleString()}ms`, '', 'crimson');
+          listStreamsV2PerformanceCounter.stop();
           streamAccumulator.push(...streamsv2);
           rawStreamsv2 = streamsv2;
           rawStreamsv2.sort((a, b) => (a.createdBlockTime < b.createdBlockTime) ? 1 : -1);
+          listStreamsV1PerformanceCounter.start();
           ms.listStreams({treasurer: userPk, beneficiary: userPk})
-          .then(streamsv1 => {
-              streamAccumulator.push(...streamsv1);
-              rawStreamsv1 = streamsv1;
-              rawStreamsv1.sort((a, b) => (a.createdBlockTime < b.createdBlockTime) ? 1 : -1)
-              streamAccumulator.sort((a, b) => (a.createdBlockTime < b.createdBlockTime) ? 1 : -1)
-              // Sort debugging block
-              if (!isProd()) {
-                const debugTable: any[] = [];
-                streamAccumulator.forEach(item => debugTable.push({
-                  createdBlockTime: item.createdBlockTime,
-                  name: item.version < 2 ? item.streamName : item.name.trim(),
-                }));
-                console.table(debugTable);
+          .then(async streamsv1 => {
+            listStreamsV1PerformanceCounter.stop();
+            streamAccumulator.push(...streamsv1);
+            rawStreamsv1 = streamsv1;
+            rawStreamsv1.sort((a, b) => (a.createdBlockTime < b.createdBlockTime) ? 1 : -1)
+            streamAccumulator.sort((a, b) => (a.createdBlockTime < b.createdBlockTime) ? 1 : -1)
+            // Sort debugging block
+            if (!isProd()) {
+              const debugTable: any[] = [];
+              streamAccumulator.forEach(item => debugTable.push({
+                createdBlockTime: item.createdBlockTime,
+                name: item.version < 2 ? item.streamName : item.name.trim(),
+              }));
+              console.table(debugTable);
+            }
+            // End of debugging block
+            setStreamList(streamAccumulator);
+            setStreamListv2(rawStreamsv2);
+            setStreamListv1(rawStreamsv1);
+            consoleOut('Streams:', streamAccumulator, 'blue');
+            setDeletedStreams([]);
+            if (streamAccumulator.length) {
+              let item: Stream | StreamInfo | undefined;
+              if (reset) {
+                item = streamAccumulator[0];
+              } else {
+                if (highLightableStreamId) {
+                  const highLightableItem = streamAccumulator.find(i => i.id === highLightableStreamId);
+                  item = highLightableItem || streamAccumulator[0];
+                } else if (selectedStream) {
+                  const itemFromServer = streamAccumulator.find(i => i.id === selectedStream.id);
+                  item = itemFromServer || streamAccumulator[0];
+                } else {
+                  item = streamAccumulator[0];
+                }
               }
-              // End of debugging block
-              setStreamList(streamAccumulator);
-              setStreamListv2(rawStreamsv2);
-              setStreamListv1(rawStreamsv1);
-              consoleOut('Streams:', streamAccumulator, 'blue');
-              setDeletedStreams([]);
-              if (streamAccumulator.length) {
-                let item: Stream | StreamInfo | undefined;
-                if (reset) {
-                  if (signature) {
-                    item = streamAccumulator.find(d => d.transactionSignature === signature);
-                  } else {
-                    item = streamAccumulator[0];
-                  }
-                } else {
-                  // Try to get current item by its original Tx signature then its id
-                  if (signature) {
-                    item = streamAccumulator.find(d => d.transactionSignature === signature);
-                  } else if (highLightableStreamId) {
-                    const highLightableItem = streamAccumulator.find(i => i.id === highLightableStreamId);
-                    item = highLightableItem || streamAccumulator[0];
-                  } else if (selectedStream) {
-                    const itemFromServer = streamAccumulator.find(i => i.id === selectedStream.id);
-                    item = itemFromServer || streamAccumulator[0];
-                  } else {
-                    item = streamAccumulator[0];
-                  }
-                }
-                if (!item) {
-                  item = Object.assign({}, streamAccumulator[0]);
-                }
-                consoleOut('selectedStream:', item, 'blue');
+              if (!item) {
+                item = Object.assign({}, streamAccumulator[0]);
+              }
+              consoleOut('selectedStream:', item, 'blue');
 
-                setStreamActivity([]);
-                setHasMoreStreamActivity(true);
+              setStreamActivity([]);
+              setHasMoreStreamActivity(true);
 
-                if (item && selectedStream && item.id !== selectedStream.id) {
-                  updateSelectedStream(item);
-                  const mspInstance: any = item.version < 2 ? ms : msp;
-                  mspInstance.getStream(new PublicKey(item.id as string))
-                    .then((detail: Stream | StreamInfo) => {
-                      if (detail) {
-                        updateStreamDetail(detail);
-                        setActiveStream(detail);
-                        if (location.pathname.startsWith(STREAMS_ROUTE_BASE_PATH)) {
-                          const token = getTokenByMintAddress(detail.associatedToken as string);
-                          setSelectedToken(token);
-                        }
-                        setTimeout(() => {
-                          setStreamActivity([]);
-                          setHasMoreStreamActivity(true);
-                          setLoadingStreamActivity(true);
-                        });
-                        getStreamActivity(detail.id as string, detail.version, true);
-                      }
-                    })
-                } else {
-                  if (item) {
-                    updateStreamDetail(item);
-                    setActiveStream(item);
+              if (item && selectedStream && item.id !== selectedStream.id) {
+                // updateSelectedStream(item);
+                const mspInstance: any = item.version < 2 ? ms : msp;
+                streamDetailPerformanceCounter.start();
+                mspInstance.getStream(new PublicKey(item.id as string))
+                .then((detail: Stream | StreamInfo) => {
+                  streamDetailPerformanceCounter.stop();
+                  refreshStreamsPerformanceCounter.stop();
+                  if (!isProd()) {
+                    consoleOut('listStreams performance counter:', '', 'crimson');
+                    const results = [{
+                      v2_Streams: `${listStreamsV2PerformanceCounter.elapsedTime.toLocaleString()}ms`,
+                      v1_Streams: `${listStreamsV1PerformanceCounter.elapsedTime.toLocaleString()}ms`,
+                      streamDetails: `${streamDetailPerformanceCounter.elapsedTime.toLocaleString()}ms`,
+                      total: `${refreshStreamsPerformanceCounter.elapsedTime.toLocaleString()}ms`,
+                    }];
+                    console.table(results);
+                  }
+                  if (detail) {
+                    updateStreamDetail(detail);
+                    setActiveStream(detail);
                     if (location.pathname.startsWith(STREAMS_ROUTE_BASE_PATH)) {
-                      const token = getTokenByMintAddress(item.associatedToken as string);
+                      const token = getTokenByMintAddress(detail.associatedToken as string);
                       setSelectedToken(token);
                     }
                     setTimeout(() => {
@@ -1232,24 +1229,51 @@ const AppStateProvider: React.FC = ({ children }) => {
                       setHasMoreStreamActivity(true);
                       setLoadingStreamActivity(true);
                     });
-                    getStreamActivity(item.id as string, item.version, true);
+                    getStreamActivity(detail.id as string, detail.version, true);
                   }
-                }
+                })
               } else {
-                setStreamActivity([]);
-                setHasMoreStreamActivity(false);
-                updateSelectedStream(undefined);
-                updateStreamDetail(undefined);
-                setActiveStream(undefined);
+                if (item) {
+                  updateStreamDetail(item);
+                  setActiveStream(item);
+                  if (location.pathname.startsWith(STREAMS_ROUTE_BASE_PATH)) {
+                    const token = getTokenByMintAddress(item.associatedToken as string);
+                    setSelectedToken(token);
+                  }
+                  setTimeout(() => {
+                    setStreamActivity([]);
+                    setHasMoreStreamActivity(true);
+                    setLoadingStreamActivity(true);
+                  });
+                  getStreamActivity(item.id as string, item.version, true);
+                }
               }
-              updateLoadingStreams(false);
-            }).catch(err => {
-              console.error(err);
-              updateLoadingStreams(false);
-            });
+            } else {
+              setStreamActivity([]);
+              setHasMoreStreamActivity(false);
+              updateSelectedStream(undefined);
+              updateStreamDetail(undefined);
+              setActiveStream(undefined);
+            }
+          })
+          .catch(err => {
+            console.error(err);
+          })
+          .finally(() => {
+            updateLoadingStreams(false);
+            refreshStreamsPerformanceCounter.stop();
+            if (!isProd()) {
+              consoleOut('listStreams performance counter:', '', 'crimson');
+              const results = [{
+                v2_Streams: `${listStreamsV2PerformanceCounter.elapsedTime.toLocaleString()}ms`,
+                v1_Streams: `${listStreamsV1PerformanceCounter.elapsedTime.toLocaleString()}ms`,
+                total: `${refreshStreamsPerformanceCounter.elapsedTime.toLocaleString()}ms`,
+              }];
+              console.table(results);
+            }
+          });
         }).catch(err => {
           console.error(err);
-          updateLoadingStreams(false);
         });
     }
 
@@ -1260,7 +1284,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     accountAddress,
     loadingStreams,
     selectedStream,
-    lastSentTxStatus,
     location.pathname,
     customStreamDocked,
     highLightableStreamId,
