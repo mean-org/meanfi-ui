@@ -1199,41 +1199,36 @@ const AppStateProvider: React.FC = ({ children }) => {
               setStreamActivity([]);
               setHasMoreStreamActivity(true);
 
-              if (item && selectedStream && item.id !== selectedStream.id) {
-                // updateSelectedStream(item);
-                const mspInstance: any = item.version < 2 ? ms : msp;
-                streamDetailPerformanceCounter.start();
-                mspInstance.getStream(new PublicKey(item.id as string))
-                .then((detail: Stream | StreamInfo) => {
-                  streamDetailPerformanceCounter.stop();
-                  refreshStreamsPerformanceCounter.stop();
-                  if (!isProd()) {
-                    consoleOut('listStreams performance counter:', '', 'crimson');
-                    const results = [{
-                      v2_Streams: `${listStreamsV2PerformanceCounter.elapsedTime.toLocaleString()}ms`,
-                      v1_Streams: `${listStreamsV1PerformanceCounter.elapsedTime.toLocaleString()}ms`,
-                      streamDetails: `${streamDetailPerformanceCounter.elapsedTime.toLocaleString()}ms`,
-                      total: `${refreshStreamsPerformanceCounter.elapsedTime.toLocaleString()}ms`,
-                    }];
-                    console.table(results);
+              const mspInstance: any = item && item.version < 2 ? ms : msp;
+              streamDetailPerformanceCounter.start();
+              mspInstance.getStream(new PublicKey(item?.id as string))
+              .then((detail: Stream | StreamInfo) => {
+                streamDetailPerformanceCounter.stop();
+                refreshStreamsPerformanceCounter.stop();
+                if (!isProd()) {
+                  consoleOut('listStreams performance counter:', '', 'crimson');
+                  const results = [{
+                    v2_Streams: `${listStreamsV2PerformanceCounter.elapsedTime.toLocaleString()}ms`,
+                    v1_Streams: `${listStreamsV1PerformanceCounter.elapsedTime.toLocaleString()}ms`,
+                    streamDetails: `${streamDetailPerformanceCounter.elapsedTime.toLocaleString()}ms`,
+                    total: `${refreshStreamsPerformanceCounter.elapsedTime.toLocaleString()}ms`,
+                  }];
+                  console.table(results);
+                }
+                if (detail) {
+                  updateStreamDetail(detail);
+                  setActiveStream(detail);
+                  if (location.pathname.startsWith(STREAMS_ROUTE_BASE_PATH)) {
+                    const token = getTokenByMintAddress(detail.associatedToken as string);
+                    setSelectedToken(token);
                   }
-                  if (detail) {
-                    updateStreamDetail(detail);
-                    setActiveStream(detail);
-                    if (location.pathname.startsWith(STREAMS_ROUTE_BASE_PATH)) {
-                      const token = getTokenByMintAddress(detail.associatedToken as string);
-                      setSelectedToken(token);
-                    }
-                    setTimeout(() => {
-                      setStreamActivity([]);
-                      setHasMoreStreamActivity(true);
-                      setLoadingStreamActivity(true);
-                    });
-                    getStreamActivity(detail.id as string, detail.version, true);
-                  }
-                })
-              } else {
-                if (item) {
+                  setTimeout(() => {
+                    setStreamActivity([]);
+                    setHasMoreStreamActivity(true);
+                    setLoadingStreamActivity(true);
+                  });
+                  getStreamActivity(detail.id as string, detail.version, true);
+                } else if (item) {
                   updateStreamDetail(item);
                   setActiveStream(item);
                   if (location.pathname.startsWith(STREAMS_ROUTE_BASE_PATH)) {
@@ -1247,7 +1242,7 @@ const AppStateProvider: React.FC = ({ children }) => {
                   });
                   getStreamActivity(item.id as string, item.version, true);
                 }
-              }
+              })
             } else {
               setStreamActivity([]);
               setHasMoreStreamActivity(false);
@@ -1263,10 +1258,11 @@ const AppStateProvider: React.FC = ({ children }) => {
             updateLoadingStreams(false);
             refreshStreamsPerformanceCounter.stop();
             if (!isProd()) {
-              consoleOut('listStreams performance counter:', '', 'crimson');
+              consoleOut('listStreams performance counter:', 'Pending streamDetails...', 'crimson');
               const results = [{
                 v2_Streams: `${listStreamsV2PerformanceCounter.elapsedTime.toLocaleString()}ms`,
                 v1_Streams: `${listStreamsV1PerformanceCounter.elapsedTime.toLocaleString()}ms`,
+                streamDetails: `${streamDetailPerformanceCounter.elapsedTime.toLocaleString()}ms`,
                 total: `${refreshStreamsPerformanceCounter.elapsedTime.toLocaleString()}ms`,
               }];
               console.table(results);
