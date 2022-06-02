@@ -51,6 +51,7 @@ import moment from "moment";
 
 const pricesOldPerformanceCounter = new PerformanceCounter();
 const pricesNewPerformanceCounter = new PerformanceCounter();
+const listStreamsPerformanceCounter = new PerformanceCounter();
 
 export interface TransactionStatusInfo {
   customError?: any;
@@ -1130,8 +1131,12 @@ const AppStateProvider: React.FC = ({ children }) => {
       let rawStreamsv1: StreamInfo[] = [];
       let rawStreamsv2: Stream[] = [];
 
+      listStreamsPerformanceCounter.start();
+
       msp.listStreams({treasurer: userPk, beneficiary: userPk})
         .then(streamsv2 => {
+          listStreamsPerformanceCounter.stop();
+          consoleOut(`msp.listStreams took ${listStreamsPerformanceCounter.elapsedTime.toLocaleString()}ms`, '', 'crimson');
           streamAccumulator.push(...streamsv2);
           rawStreamsv2 = streamsv2;
           rawStreamsv2.sort((a, b) => (a.createdBlockTime < b.createdBlockTime) ? 1 : -1);
