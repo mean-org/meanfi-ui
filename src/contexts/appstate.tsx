@@ -50,6 +50,7 @@ import { MultisigVault } from "../models/multisig";
 import moment from "moment";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../pages/accounts";
 import { STREAMS_ROUTE_BASE_PATH } from "../views/Streams";
+import { MultisigTransaction } from "@mean-dao/mean-multisig-sdk";
 
 const pricesOldPerformanceCounter = new PerformanceCounter();
 const pricesNewPerformanceCounter = new PerformanceCounter();
@@ -98,6 +99,7 @@ interface AppStateConfig {
   streamListv2: Stream[] | undefined;
   streamList: Array<Stream | StreamInfo> | undefined;
   programs: ProgramAccounts[] | undefined;
+  multisigTxs: MultisigTransaction[] | undefined;
   selectedStream: Stream | StreamInfo | undefined;
   streamDetail: Stream | StreamInfo | undefined;
   activeStream: StreamInfo | Stream | undefined;
@@ -174,6 +176,7 @@ interface AppStateConfig {
   setLoadingStreams: (state: boolean) => void;
   setStreamList: (list: Array<StreamInfo | Stream> | undefined) => void;
   setPrograms: (list: Array<ProgramAccounts> | undefined) => void;
+  setMultisigTxs: (list: Array<MultisigTransaction> | undefined) => void;
   setSelectedStream: (stream: Stream | StreamInfo | undefined) => void;
   setStreamDetail: (stream: Stream | StreamInfo | undefined) => void;
   setDeletedStream: (id: string) => void,
@@ -247,6 +250,7 @@ const contextDefaultValues: AppStateConfig = {
   streamListv2: undefined,
   streamList: undefined,
   programs: [],
+  multisigTxs: [],
   selectedStream: undefined,
   streamDetail: undefined,
   activeStream: undefined,
@@ -323,6 +327,7 @@ const contextDefaultValues: AppStateConfig = {
   setLoadingStreams: () => {},
   setStreamList: () => {},
   setPrograms: () => {},
+  setMultisigTxs: () => {},
   setSelectedStream: () => {},
   setStreamDetail: () => {},
   setDeletedStream: () => {},
@@ -411,6 +416,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [streamListv2, setStreamListv2] = useState<Stream[] | undefined>();
   const [streamList, setStreamList] = useState<Array<StreamInfo | Stream> | undefined>();
   const [programs, setPrograms] = useState<ProgramAccounts[] | undefined>();
+  const [multisigTxs, setMultisigTxs] = useState<MultisigTransaction[] | undefined>();
   const [selectedStream, updateSelectedStream] = useState<Stream | StreamInfo | undefined>();
   const [streamDetail, updateStreamDetail] = useState<Stream | StreamInfo | undefined>();
   const [activeStream, setActiveStream] = useState<Stream | StreamInfo | undefined>();
@@ -1496,6 +1502,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         streamListv2,
         streamList,
         programs,
+        multisigTxs,
         selectedStream,
         streamDetail,
         activeStream,
@@ -1568,6 +1575,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         setLoadingStreams,
         setStreamList,
         setPrograms,
+        setMultisigTxs,
         setSelectedStream,
         setStreamDetail,
         setDeletedStream,

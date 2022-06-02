@@ -45,15 +45,15 @@ export const SafeMeanInfo = (props: {
 
   const { 
     programs,
-    setPrograms,
+    multisigTxs,
     multisigVaults,
-    setMultisigVaults,
-    // transactionStatus,
     multisigSolBalance,
     refreshTokenBalance,
-    // setTransactionStatus,
+    previousWalletConnectState,
     setMultisigSolBalance,
-    previousWalletConnectState
+    setMultisigVaults,
+    setMultisigTxs,
+    setPrograms,
   } = useContext(AppStateContext);
   const {
     fetchTxInfoStatus,
@@ -84,7 +84,7 @@ export const SafeMeanInfo = (props: {
   const { connected } = useWallet();
   // const [multisig, setMultisig] = useState<any>(selectedMultisig);
   // const [multisigSolBalance, setMultisigSolBalance] = useState<number>(0);
-  const [multisigTxs, setMultisigTxs] = useState<MultisigTransaction[]>([]);
+  // const [multisigTxs, setMultisigTxs] = useState<MultisigTransaction[] | undefined>();
   const [loadingProposals, setLoadingProposals] = useState(true);
   const [loadingAssets, setLoadingAssets] = useState(true);
   const [loadingPrograms, setLoadingPrograms] = useState(true);
@@ -545,11 +545,11 @@ export const SafeMeanInfo = (props: {
 
       multisigClient
         .getMultisigTransactions(selectedMultisig.id, publicKey)
-        .then((txs: MultisigTransaction[]) => setMultisigTxs(txs))
+        .then((txs: MultisigTransaction[]) => {
+          setMultisigTxs(txs.length > 0 ? txs : undefined)
+        })
         .catch((err: any) => {
           console.error("Error fetching all transactions", err);
-          setMultisigTxs([]);
-          consoleOut('multisig txs:', [], 'blue');
         })
         .finally(() => setLoadingProposals(false));
     });
@@ -567,11 +567,28 @@ export const SafeMeanInfo = (props: {
     proposalSelected
   ]);
 
+  useEffect(() => {
+    console.log("proposals", multisigTxs !== undefined);
+    console.log("proposals txs", multisigTxs);
+    const timeout = setTimeout(() => {
+
+      if (multisigTxs) {
+        setLoadingProposals(false);
+      } else {
+        setLoadingProposals(true);
+      }
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+  }, [multisigTxs]);
+
   // Proposals list
   const renderListOfProposals = (
     <>
       {!loadingProposals ? (
-        (multisigTxs && multisigTxs.length > 0) ? (
+        (multisigTxs !== undefined) ? (
           multisigTxs.map((proposal, index) => {
             const onSelectProposal = () => {
               // Sends isProposalDetails value to the parent component "SafeView"
@@ -628,7 +645,6 @@ export const SafeMeanInfo = (props: {
       clearTimeout(timeout);
     }
   }, [programs]);
-
 
   const renderListOfPrograms = (
     <>
