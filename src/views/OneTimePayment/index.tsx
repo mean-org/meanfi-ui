@@ -36,6 +36,7 @@ import { segmentAnalytics } from '../../App';
 import { AppUsageEvent, SegmentStreamOTPTransferData } from '../../utils/segment-service';
 import dateFormat from 'dateformat';
 import { NATIVE_SOL } from '../../utils/tokens';
+import { STREAMS_ROUTE_BASE_PATH } from '../Streams';
 
 const { Option } = Select;
 
@@ -360,7 +361,7 @@ export const OneTimePayment = (props: {
     if (item && item.operationType === OperationType.Transfer && item.extras === 'scheduled') {
       recordTxConfirmation(item.signature, true);
       if (!inModal) {
-        navigate("/accounts/streams");
+        navigate(STREAMS_ROUTE_BASE_PATH);
       }
     }
   }, [
@@ -975,9 +976,9 @@ export const OneTimePayment = (props: {
               resetContractValues();
               setIsVerifiedRecipient(false);
               transferCompleted();
-              if (isScheduledPayment() && location.pathname !== "/accounts/streams") {
+              if (isScheduledPayment() && location.pathname !== STREAMS_ROUTE_BASE_PATH) {
                 setSelectedStream(undefined);
-                navigate("/accounts/streams");
+                navigate(STREAMS_ROUTE_BASE_PATH);
               }
             }
           } else { setIsBusy(false); }

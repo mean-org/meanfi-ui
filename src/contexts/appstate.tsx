@@ -48,6 +48,8 @@ import { TokenPrice } from "../models/token";
 import { ProgramAccounts } from "../utils/accounts";
 import { MultisigVault } from "../models/multisig";
 import moment from "moment";
+import { ACCOUNTS_ROUTE_BASE_PATH } from "../pages/accounts";
+import { STREAMS_ROUTE_BASE_PATH } from "../views/Streams";
 
 const pricesOldPerformanceCounter = new PerformanceCounter();
 const pricesNewPerformanceCounter = new PerformanceCounter();
@@ -835,7 +837,7 @@ const AppStateProvider: React.FC = ({ children }) => {
             getStreamActivity(detail.id as string, detail.version, true);
             updateStreamDetail(detail);
             setActiveStream(detail);
-            if (location.pathname.startsWith('/accounts/streams')) {
+            if (location.pathname.startsWith(STREAMS_ROUTE_BASE_PATH)) {
               const token = getTokenByMintAddress(detail.associatedToken as string);
               setSelectedToken(token);
             }
@@ -1194,7 +1196,7 @@ const AppStateProvider: React.FC = ({ children }) => {
                       if (detail) {
                         updateStreamDetail(detail);
                         setActiveStream(detail);
-                        if (location.pathname.startsWith('/accounts/streams')) {
+                        if (location.pathname.startsWith(STREAMS_ROUTE_BASE_PATH)) {
                           const token = getTokenByMintAddress(detail.associatedToken as string);
                           setSelectedToken(token);
                         }
@@ -1210,7 +1212,7 @@ const AppStateProvider: React.FC = ({ children }) => {
                   if (item) {
                     updateStreamDetail(item);
                     setActiveStream(item);
-                    if (location.pathname.startsWith('/accounts/streams')) {
+                    if (location.pathname.startsWith(STREAMS_ROUTE_BASE_PATH)) {
                       const token = getTokenByMintAddress(item.associatedToken as string);
                       setSelectedToken(token);
                     }
@@ -1265,7 +1267,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   useEffect(() => {
     let timer: any;
 
-    if (accountAddress && location.pathname.startsWith('/accounts') && !customStreamDocked && !isDowngradedPerformance) {
+    if (accountAddress && location.pathname.startsWith(ACCOUNTS_ROUTE_BASE_PATH) && !customStreamDocked && !isDowngradedPerformance) {
       timer = setInterval(() => {
         consoleOut(`Refreshing streams past ${msToTime(FIVE_MINUTES_REFRESH_TIMEOUT)}...`);
         refreshStreamList();

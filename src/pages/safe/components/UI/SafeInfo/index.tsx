@@ -11,6 +11,7 @@ import { UserTokenAccount } from "../../../../../models/transactions";
 import { NATIVE_SOL } from "../../../../../utils/tokens";
 import { isDev, isLocal, toUsCurrency } from "../../../../../utils/ui";
 import { getTokenByMintAddress, shortenAddress } from "../../../../../utils/utils";
+import { ACCOUNTS_ROUTE_BASE_PATH } from "../../../../accounts";
 
 export const SafeInfo = (props: {
   selectedMultisig?: any;
@@ -179,7 +180,7 @@ export const SafeInfo = (props: {
 
   // View assets
   const onGoToAccounts = () => {
-    navigate(`/accounts/${selectedMultisig.authority.toBase58()}/assets?account-type=multisig
+    navigate(`${ACCOUNTS_ROUTE_BASE_PATH}/${selectedMultisig.authority.toBase58()}/assets?account-type=multisig
     `);
   }
 
