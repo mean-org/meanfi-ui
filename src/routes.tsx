@@ -48,7 +48,7 @@ export function AppRoutes() {
                 <AppStateProvider>
                   <AppLayout>
                     <Routes>
-                      <Route path='/' element={<Navigate replace to='/accounts' />} />
+                      <Route path="/" element={<Navigate replace to='/accounts' />} />
                       {/* Accounts detailed deep-linking */}
                       <Route path="/accounts" element={<AccountsNewView />} />
                       <Route path="/accounts/:address" element={<AccountsNewView />} />
@@ -82,8 +82,8 @@ export function AppRoutes() {
                       <Route path="/custody" element={<CustodyView />} />
                       <Route path="/treasuries" element={<TreasuriesView />} />
                       <Route path="/treasuries/:id/streams" element={<MultisigTreasuryStreams />} />
-                      <Route path="/multisig" element={<MultisigView />} />
-                      <Route path="/safes" element={<SafeView />} />
+                      <Route path="/multisig-old" element={<MultisigView />} />
+                      <Route path="/multisig" element={<SafeView />} />
                       <Route path="/multisig-mints" element={<MultisigMintsView />} />
                       <Route path="/multisig-assets" element={<MultisigAssetsView />} />
                       <Route path="/multisig-programs" element={<MultisigProgramsView />} />

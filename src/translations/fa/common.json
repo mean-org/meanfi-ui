@@ -1236,7 +1236,8 @@
 			"option-resume-stream": "از سرگیری",
 			"status-running": "در حال اجرا",
 			"status-scheduled": "برنامه ریزی شده است",
-			"status-stopped": "متوقف شد"
+			"status-stopped": "متوقف شد",
+			"screen-title": "Streaming Accounts - Streams"
 		},
 		"withdraw-funds": {
 			"button-title": "Withdraw funds",

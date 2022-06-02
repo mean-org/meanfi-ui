@@ -1251,7 +1251,8 @@
 			"option-resume-stream": "Continuer",
 			"status-running": "Fonctionnement",
 			"status-scheduled": "Programmé",
-			"status-stopped": "Arrêté"
+			"status-stopped": "Arrêté",
+			"screen-title": "Streaming Accounts - Streams"
 		},
 		"withdraw-funds": {
 			"button-title": "Withdraw funds",

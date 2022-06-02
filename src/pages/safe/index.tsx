@@ -100,6 +100,7 @@ export const SafeView = () => {
   const connectionConfig = useConnectionConfig();
   const { publicKey, connected, wallet } = useWallet();
   const {
+    programs,
     isWhitelisted,
     detailsPanelOpen,
     transactionStatus,
@@ -3239,7 +3240,7 @@ export const SafeView = () => {
         publicKey
       )
       .then((tx: any) => setProposalSelected(tx))
-      .catch(err => console.error(err));
+      .catch((err: any) => console.error(err));
     });
 
     return () => {
@@ -3874,6 +3875,7 @@ export const SafeView = () => {
                             connection={connection}
                             solanaApps={solanaApps}
                             appsProvider={appsProvider}
+                            multisigClient={multisigClient}
                           />
                         )}
                         {isProgramDetails && (

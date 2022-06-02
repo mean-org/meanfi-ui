@@ -1237,7 +1237,8 @@
 			"option-resume-stream": "Resume",
 			"status-running": "Running",
 			"status-scheduled": "Scheduled",
-			"status-stopped": "Stopped"
+			"status-stopped": "Stopped",
+			"screen-title": "Streaming Accounts - Streams"
 		},
 		"withdraw-funds": {
 			"button-title": "Withdraw funds",

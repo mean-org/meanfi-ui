@@ -20,6 +20,7 @@ import { StreamTopupParams } from '../../models/common-types';
 import { WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { STREAMING_ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/treasuries';
+import { STREAMS_ROUTE_BASE_PATH } from '../../views/Streams';
 
 export const StreamAddFundsModal = (props: {
   handleClose: any;
@@ -383,7 +384,7 @@ export const StreamAddFundsModal = (props: {
           <h4 className="operation">{t('close-stream.cant-topup-message')}</h4>
 
           {/* Only if the user is on streams offer navigating to the treasury */}
-          {location.pathname === '/accounts/streams' && treasuryDetails && (
+          {location.pathname === STREAMS_ROUTE_BASE_PATH && treasuryDetails && (
             <div className="mt-3">
               <span className="mr-1">{t('treasuries.treasury-detail.treasury-name-label')}:</span>
               <span className="mr-1 font-bold">{getTreasuryName()}</span>

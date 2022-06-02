@@ -21,6 +21,7 @@ import { useConnectionConfig } from '../../contexts/connection';
 import { useNavigate } from 'react-router-dom';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { openNotification } from '../../components/Notifications';
+import { ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/accounts';
 
 export const AirdropRedeem = (props: {
   connection: Connection;
@@ -456,7 +457,7 @@ export const AirdropRedeem = (props: {
               if (confirmed) {
                 await sendRecordClaimTxRequest(publicKey.toBase58(), signature);
                 setIsBusy(false);
-                navigate('/accounts');
+                navigate(ACCOUNTS_ROUTE_BASE_PATH);
               } else { setIsBusy(false); }
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }

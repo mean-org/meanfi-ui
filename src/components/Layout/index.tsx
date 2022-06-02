@@ -27,6 +27,7 @@ import { openNotification } from "../Notifications";
 import { TxConfirmationContext } from "../../contexts/transaction-status";
 import { TransactionConfirmationHistory } from "../TransactionConfirmationHistory";
 import { shortenAddress } from "../../utils/utils";
+import { ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/accounts";
 
 const { Header, Content, Footer } = Layout;
 
@@ -393,7 +394,7 @@ export const AppLayout = React.memo((props: any) => {
 
     addRouteNameClass();
 
-    if (location.pathname === '/' || location.pathname === '/accounts') {
+    if (location.pathname.startsWith(ACCOUNTS_ROUTE_BASE_PATH)) {
       setShouldLoadTokens(true);
     }
 

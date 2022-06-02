@@ -479,7 +479,7 @@ export const PlaygroundView = () => {
         break;
       default:
         setCurrentTab("first-tab");
-        setSearchParams({option: "first-tab"});
+        setSearchParams({option: "first-tab"}, { replace: true });
         break;
     }
   }, [location.search, searchParams, setSearchParams]);

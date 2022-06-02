@@ -1250,7 +1250,8 @@
 			"option-resume-stream": "재개하다",
 			"status-running": "운영",
 			"status-scheduled": "예정된",
-			"status-stopped": "중지된"
+			"status-stopped": "중지된",
+			"screen-title": "Streaming Accounts - Streams"
 		},
 		"withdraw-funds": {
 			"button-title": "Withdraw funds",

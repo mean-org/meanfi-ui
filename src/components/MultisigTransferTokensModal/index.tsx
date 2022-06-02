@@ -188,6 +188,8 @@ export const MultisigTransferTokensModal = (props: {
     setAmount(onlyNumbersAndDot.trim());
   }
 
+  const isSol = (fromVault && fromVault.name === "Native SOL") ? true : false;
+
   return (
     <Modal
       className="mean-modal simple-modal"
@@ -238,21 +240,31 @@ export const MultisigTransferTokensModal = (props: {
                                       <div className="transaction-list-row w-100">
                                         <div className="icon-cell">
                                           <div className="token-icon">
-                                            {token && token.logoURI ? (
-                                              <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
+                                            {!isSol ? (
+                                              token && token.logoURI ? (
+                                                <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
+                                              ) : (
+                                                <Identicon address={option.address} style={{
+                                                  width: "28px",
+                                                  display: "inline-flex",
+                                                  height: "26px",
+                                                  overflow: "hidden",
+                                                  borderRadius: "50%"
+                                                }} />
+                                              )
                                             ) : (
-                                              <Identicon address={option.address} style={{
-                                                width: "28px",
-                                                display: "inline-flex",
-                                                height: "26px",
-                                                overflow: "hidden",
-                                                borderRadius: "50%"
-                                              }} />
+                                              <img alt={fromVault.name} width={30} height={30} src={fromVault.logoURI} onError={imageOnErrorHandler} />
                                             )}
                                           </div>
                                         </div>
                                         <div className="description-cell">
-                                          <div className="title text-truncate">{token ? token.symbol : `${shortenAddress(option.address, 4)}`}</div>
+                                          <div className="title text-truncate">
+                                            {!isSol ? (
+                                              token ? token.symbol : `${shortenAddress(option.address, 4)}`
+                                            ) : (
+                                              fromVault.symbol
+                                            )}
+                                            </div>
                                         </div>
                                         <div className="rate-cell">
                                           <div className="rate-amount text-uppercase">
