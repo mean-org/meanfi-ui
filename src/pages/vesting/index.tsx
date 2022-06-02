@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext, useCallback } from 'react';
+import React, { useEffect, useState, useContext, useCallback, useMemo } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from "react-i18next";
 import { AppStateContext } from "../../contexts/appstate";
@@ -10,6 +10,10 @@ import { useWallet } from '../../contexts/wallet';
 import { VestingLockCreateAccount } from './components/VestingLockCreateAccount';
 import { LockedStreamCreate } from './components/LockedStreamCreate';
 import { VestingLockSelectAccount } from './components/VestingLockSelectAccount';
+import { useConnectionConfig } from '../../contexts/connection';
+import { Connection } from '@solana/web3.js';
+import { MSP, Treasury } from '@mean-dao/msp';
+import "./style.scss";
 
 const { TabPane } = Tabs;
 export const VESTING_ROUTE_BASE_PATH = '/vesting';
@@ -21,10 +25,12 @@ export const VestingView = () => {
   const {
     tokenList,
     selectedToken,
+    streamV2ProgramAddress,
     setSelectedToken,
   } = useContext(AppStateContext);
   const location = useLocation();
   const navigate = useNavigate();
+  const connectionConfig = useConnectionConfig();
   const { workflow, step } = useParams();
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
@@ -32,6 +38,10 @@ export const VestingView = () => {
   const [vestingAccountStep, setVestingAccountStep] = useState<VestingAccountStep>(undefined);
   const [streamCreateStep, setStreamCreateStep] = useState<StreamCreateStep>(undefined);
   const [isPageLoaded, setIsPageLoaded] = useState<boolean>(false);
+  const [loadingTreasuries, setLoadingTreasuries] = useState(false);
+  const [treasuriesLoaded, setTreasuriesLoaded] = useState(false);
+  const [treasuryList, setTreasuryList] = useState<Treasury[]>([]);
+  const [selectedAccount, setSelectedAccount] = useState<Treasury | undefined>(undefined);
 
   // Perform premature redirects if no workflow was provided in path
   useEffect(() => {
@@ -74,6 +84,30 @@ export const VestingView = () => {
     }
   }, [isPageLoaded, publicKey, step, workflow]);
 
+  // Create and cache the connection
+  const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
+    commitment: "confirmed",
+    disableRetryOnRateLimit: true
+  }), [
+    connectionConfig.endpoint
+  ]);
+
+  // Create and cache Money Streaming Program V2 instance
+  const msp = useMemo(() => {
+    if (publicKey) {
+      console.log('New MSP from treasuries');
+      return new MSP(
+        connectionConfig.endpoint,
+        streamV2ProgramAddress,
+        "confirmed"
+      );
+    }
+  }, [
+    connectionConfig.endpoint,
+    publicKey,
+    streamV2ProgramAddress
+  ]);
+
   // Auto select a token
   useEffect(() => {
 
@@ -88,6 +122,51 @@ export const VestingView = () => {
     setSelectedToken
   ]);
 
+  const getAllUserV2Treasuries = useCallback(async () => {
+
+    if (!connection || !publicKey || loadingTreasuries || !msp) { return []; }
+
+    setTimeout(() => {
+      setLoadingTreasuries(true);
+    });
+
+    const treasuries = await msp.listTreasuries(publicKey);
+    treasuries.filter((t: any) => !t.autoClose);
+
+    return treasuries;
+
+  }, [connection, loadingTreasuries, msp, publicKey]);
+
+  const refreshTreasuries = useCallback((reset = false) => {
+    
+    if (!connection || !publicKey || loadingTreasuries || !msp) { return; }
+
+    setTimeout(() => {
+      setLoadingTreasuries(true);
+    });
+
+    getAllUserV2Treasuries()
+      .then(treasuries => {
+        consoleOut('Streaming accounts:', treasuries, 'blue');
+        setTreasuryList(treasuries);
+      })
+      .catch(error => {
+        console.error(error);
+      })
+      .finally(() => setLoadingTreasuries(false));
+
+  }, [connection, getAllUserV2Treasuries, loadingTreasuries, msp, publicKey]);
+
+  // Load treasuries once per page access
+  useEffect(() => {
+
+    if (!publicKey || treasuriesLoaded) { return; }
+
+    consoleOut('Calling refreshTreasuries...', '', 'blue');
+    setTreasuriesLoaded(true);
+    refreshTreasuries(true);
+  }, [publicKey, refreshTreasuries, treasuriesLoaded]);
+
   ////////////////////////////
   //   Events and actions   //
   ////////////////////////////
@@ -97,6 +176,10 @@ export const VestingView = () => {
     const url = `${VESTING_ROUTE_BASE_PATH}/${workflow}/${activeKey}`;
     navigate(url);
   }, [navigate, workflow]);
+
+  const selectAccount = useCallback((account: Treasury | undefined) => {
+    setSelectedAccount(account);
+  }, []);
 
   ///////////////
   // Rendering //
@@ -157,7 +240,9 @@ export const VestingView = () => {
           <TabPane tab={t('vesting.create-account.tab-label-select-account')} key={"select-existing"}>
             <p>Render list of Existing accounts here</p>
             <VestingLockSelectAccount
-              items={['First item', 'The second one', 'Last but not least']}
+              streamingAccounts={treasuryList}
+              selectedAccount={selectedAccount}
+              onAccountSelected={(item: Treasury | undefined) => selectAccount(item)}
             />
             <Button
               type="primary"
@@ -173,7 +258,7 @@ export const VestingView = () => {
         </Tabs>
       </>
     );
-  }, [navigate, onTabChange, t, vestingAccountStep]);
+  }, [navigate, onTabChange, selectAccount, selectedAccount, t, treasuryList, vestingAccountStep]);
 
   return (
     <>

@@ -4329,11 +4329,6 @@ main section {
     flex-shrink: 0;
   }
 }
-.token-merger {
-  .transaction-list-row {
-    border-radius: var(--custom-border-radius);
-  }
-}
 .merged-token-list {
   .merged-token-item {
     &:not(:last-of-type) {
@@ -4412,15 +4407,9 @@ main section {
   &:not(.no-pointer) {
     cursor: pointer;
   }
-  border-radius: 18px;
+  border-radius: var(--custom-border-radius);
   height: 48px;
   padding: 6px 4px;
-  @media (min-width: 768px) {
-    border-top-left-radius: 18px;
-    border-top-right-radius: 0;
-    border-bottom-left-radius: 18px;
-    border-bottom-right-radius: 0;
-  }
   &.selected {
     background-color: var(--color-secondary-alpha-05);
   }
