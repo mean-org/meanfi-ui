@@ -247,3 +247,15 @@
         }
     }
 }
+
+.asset-btn-group {
+    display: flex;
+    flex-wrap: wrap !important;
+    .asset-btn {
+        width: fit-content !important;
+        min-width: 90px !important;
+        .btn-content {
+            justify-content: center !important;
+        }
+    }
+}

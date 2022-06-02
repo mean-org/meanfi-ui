@@ -17,6 +17,8 @@ import { environment } from '../../environments/environment';
 import { CustomCSSProps } from '../../utils/css-custom-props';
 import { isLocal } from '../../utils/ui';
 import { NotificationBell } from '../CurrentBalance';
+import { ACCOUNTS_ROUTE_BASE_PATH } from '../../pages/accounts';
+import { STREAMS_ROUTE_BASE_PATH } from '../../views/Streams';
 
 const { SubMenu } = Menu;
 
@@ -63,7 +65,7 @@ export const AppBar = (props: {
     e.stopPropagation();
     setShouldLoadTokens(true);
     setTimeout(() => {
-      navigate('/accounts');
+      navigate(ACCOUNTS_ROUTE_BASE_PATH);
     }, 200);
   }
 
@@ -104,13 +106,13 @@ export const AppBar = (props: {
 
   const mainNav = (
     <Menu selectedKeys={[location.pathname]} mode="horizontal">
-      {location.pathname === '/accounts/streams' ? (
-        <Menu.Item key="/accounts/streams">
-          <Link to='/accounts' onClick={goToAccounts}>{t('ui-menus.main-menu.accounts')}</Link>
+      {location.pathname === STREAMS_ROUTE_BASE_PATH ? (
+        <Menu.Item key={STREAMS_ROUTE_BASE_PATH}>
+          <Link to={ACCOUNTS_ROUTE_BASE_PATH} onClick={goToAccounts}>{t('ui-menus.main-menu.accounts')}</Link>
         </Menu.Item>
       ) : (
-        <Menu.Item key="/accounts">
-          <Link to='/accounts' onClick={goToAccounts}>{t('ui-menus.main-menu.accounts')}</Link>
+        <Menu.Item key={ACCOUNTS_ROUTE_BASE_PATH}>
+          <Link to={ACCOUNTS_ROUTE_BASE_PATH} onClick={goToAccounts}>{t('ui-menus.main-menu.accounts')}</Link>
         </Menu.Item>
       )}
       <Menu.Item key="/exchange">
@@ -119,6 +121,11 @@ export const AppBar = (props: {
       <Menu.Item key="/invest">
         <Link to="/invest">{t('ui-menus.main-menu.invest.submenu-title')}</Link>
       </Menu.Item>
+      {/* {(isLocal() || isWhitelisted) && (
+        <Menu.Item key="/multisig">
+          <Link to="/multisig">{t('ui-menus.main-menu.services.multisig')}</Link>
+        </Menu.Item>
+      )} */}
       <Menu.Item key="/multisig">
         <Link to="/multisig">{t('ui-menus.main-menu.services.multisig')}</Link>
       </Menu.Item>
@@ -185,8 +192,8 @@ export const AppBar = (props: {
           <div id="overlay">
             <div className="h-100 w-100 flex-column flex-center vertical-scroll">
               <ul onClick={dismissMenu}>
-                <li key="/accounts" className={location.pathname.startsWith('/accounts') ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 1} as CustomCSSProps}>
-                  <Link to="/accounts">{t('ui-menus.main-menu.accounts')}</Link>
+                <li key={ACCOUNTS_ROUTE_BASE_PATH} className={location.pathname.startsWith(ACCOUNTS_ROUTE_BASE_PATH) ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 1} as CustomCSSProps}>
+                  <Link to={ACCOUNTS_ROUTE_BASE_PATH}>{t('ui-menus.main-menu.accounts')}</Link>
                 </li>
                 <li key="/exchange" className={location.pathname === '/exchange' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 2} as CustomCSSProps}>
                   <Link to="/exchange">{t('ui-menus.main-menu.swap')}</Link>
@@ -194,7 +201,12 @@ export const AppBar = (props: {
                 <li key="invest" className={location.pathname === '/invest' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 3} as CustomCSSProps}>
                   <Link to="/invest">{t('ui-menus.main-menu.invest.submenu-title')}</Link>
                 </li>
-                <li key="/multisig" className={location.pathname === '/multisig' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 4} as CustomCSSProps}>
+                {/* {(isLocal() || isWhitelisted) && (
+                  <li key="/multisig-old" className={location.pathname === '/multisig-old' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 4} as CustomCSSProps}>
+                    <Link to="/multisig-old">{t('ui-menus.main-menu.services.multisig')}</Link>
+                  </li>
+                )} */}
+                <li key="/multisig" className={location.pathname === '/multisig' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 9} as CustomCSSProps}>
                   <Link to="/multisig">{t('ui-menus.main-menu.services.multisig')}</Link>
                 </li>
                 <li key="/custody" className={location.pathname === '/custody' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 5} as CustomCSSProps}>

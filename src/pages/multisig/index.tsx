@@ -77,6 +77,7 @@ import { getOperationName } from '../../utils/multisig-helpers';
 import { openNotification } from '../../components/Notifications';
 import { ProposalSummaryModal } from '../../components/ProposalSummaryModal';
 import { TxConfirmationContext } from '../../contexts/transaction-status';
+import { STREAMING_ACCOUNTS_ROUTE_BASE_PATH } from '../treasuries';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -1501,6 +1502,16 @@ export const MultisigView = () => {
               message: 'Your transaction failed to submit due to insufficient balance in the treasury. Please add funds to the treasury and then retry this operation.\n\nTreasury ID: ',
               data: treasury
             };
+          } else if (error.toString().indexOf('0x1786') !== -1) {
+            txStatus.customError = {
+              message: 'Your transaction failed to submit due to Invalid Gateway Token. Please activate the Gateway Token and retry this operation.',
+              data: undefined
+            };            
+          } else if (error.toString().indexOf('0xbc4') !== -1) {
+            txStatus.customError = {
+              message: 'Your transaction failed to submit due to Account Not Initialized. Please initialize and fund the Token Account of the Investor.',
+              data: undefined
+            }; 
           } else if (error.toString().indexOf('0x1') !== -1) {
             const asset = data.transaction.operation === OperationType.TransferTokens
               ? data.transaction.accounts[0].pubkey.toBase58()
@@ -1582,7 +1593,7 @@ export const MultisigView = () => {
         !selectedMultisig.id || 
         selectedMultisig.id.toBase58() !== data.transaction.multisig.toBase58() || 
         data.transaction.proposer.toBase58() !== publicKey.toBase58() ||
-        data.transaction.ownerSeqNumber === selectedMultisig.ownerSeqNumber ||
+        data.transaction.ownerSetSeqno === selectedMultisig.ownerSetSeqno ||
         data.transaction.executedOn
       ) {
         return null;
@@ -1969,93 +1980,6 @@ export const MultisigView = () => {
     }
 
   },[]);
-
-  // const isUserTheProposer = useCallback((): boolean => {
-  //   if (!highlightedMultisigTx || !publicKey) { return false; }
-
-  //   return  publicKey &&
-  //           highlightedMultisigTx.proposer &&
-  //           publicKey.equals(highlightedMultisigTx.proposer)
-  //       ? true
-  //       : false;
-
-  // }, [
-  //   publicKey,
-  //   highlightedMultisigTx
-  // ]);
-
-  // const isTreasuryOperation = useCallback(() => {
-
-  //   if (!highlightedMultisigTx) { return false; }
-
-  //   return  highlightedMultisigTx.operation === OperationType.TreasuryCreate ||
-  //           highlightedMultisigTx.operation === OperationType.TreasuryClose ||
-  //           highlightedMultisigTx.operation === OperationType.TreasuryAddFunds ||
-  //           highlightedMultisigTx.operation === OperationType.TreasuryStreamCreate ||
-  //           highlightedMultisigTx.operation === OperationType.TreasuryWithdraw ||
-  //           highlightedMultisigTx.operation === OperationType.StreamCreate ||
-  //           highlightedMultisigTx.operation === OperationType.StreamClose ||
-  //           highlightedMultisigTx.operation === OperationType.StreamAddFunds
-  //     ? true
-  //     : false;
-
-  // },[highlightedMultisigTx])
-
-  // const canShowApproveButton = useCallback(() => {
-
-  //   if (!highlightedMultisigTx) { return false; }
-
-  //   let result = (
-  //     highlightedMultisigTx.status === MultisigTransactionStatus.Pending &&
-  //     !highlightedMultisigTx.didSigned
-  //   );
-
-  //   return result;
-
-  // },[highlightedMultisigTx])
-
-  // const canShowExecuteButton = useCallback(() => {
-
-  //   if (!highlightedMultisigTx) { return false; }
-
-  //   const isPendingForExecution = () => {
-  //     return  highlightedMultisigTx.status === MultisigTransactionStatus.Approved &&
-  //             !highlightedMultisigTx.executedOn
-  //       ? true
-  //       : false;
-  //   }
-
-  //   if (isPendingForExecution()) {
-  //     if (!isTreasuryOperation() || (isUserTheProposer() && isTreasuryOperation)) {
-  //       return true;
-  //     } else {
-  //       return false;
-  //     }
-  //   } else {
-  //     return false;
-  //   }
-
-  // },[
-  //   highlightedMultisigTx,
-  //   isTreasuryOperation,
-  //   isUserTheProposer,
-  // ])
-
-  // const canShowCancelButton = useCallback(() => {
-
-  //   if (!highlightedMultisigTx || !highlightedMultisigTx.proposer || !publicKey) { return false; }
-
-  //   let result = (
-  //     highlightedMultisigTx.proposer.toBase58() === publicKey.toBase58() &&
-  //     highlightedMultisigTx.status === MultisigTransactionStatus.Voided
-  //   );
-
-  //   return result;
-
-  // },[
-  //   publicKey, 
-  //   highlightedMultisigTx
-  // ])
 
   const getMultisigTreasuries = useCallback(async () => {
 
@@ -2462,118 +2386,6 @@ export const MultisigView = () => {
     return width < 576 || (width >= 768 && width < 960);
   }, [width]);
 
-  // const getTxInitiator = useCallback((mtx: MultisigTransaction): MultisigParticipant | undefined => {
-  //   if (!selectedMultisig) { return undefined; }
-
-  //   const owners: MultisigParticipant[] = (selectedMultisig as MultisigInfo).owners;
-  //   const initiator = owners && owners.length > 0
-  //     ? owners.find(o => o.address === mtx.proposer?.toBase58())
-  //     : undefined;
-
-  //   return initiator;
-  // }, [selectedMultisig]);
-
-  // const isUserTxInitiator = useCallback(() => {
-  //   if (!highlightedMultisigTx || !publicKey) { return false; }
-  //   const initiator = getTxInitiator(highlightedMultisigTx);
-  //   return initiator && publicKey.toBase58() === initiator.address ? true : false;
-  // }, [
-  //   publicKey,
-  //   highlightedMultisigTx,
-  //   getTxInitiator,
-  // ]);
-
-  // const getTxSignedCount = useCallback((mtx: MultisigTransaction) => {
-  //   if (mtx && mtx.signers) {
-  //     return mtx.signers.filter((s: boolean) => s === true).length;
-  //   }
-  //   return 0;
-  // }, []);
-
-  // const isTxVoided = useCallback(() => {
-  //   if (highlightedMultisigTx) {
-  //     if (highlightedMultisigTx.status === MultisigTransactionStatus.Voided) {
-  //       return true;
-  //     }
-  //   }
-  //   return false;
-  // }, [highlightedMultisigTx]);
-
-  // const isTxPendingApproval = useCallback(() => {
-  //   if (highlightedMultisigTx) {
-  //     if (highlightedMultisigTx.status === MultisigTransactionStatus.Pending) {
-  //       return true;
-  //     }
-  //   }
-  //   return false;
-  // }, [highlightedMultisigTx]);
-
-  // const isTxPendingExecution = useCallback(() => {
-  //   if (highlightedMultisigTx) {
-  //     if (highlightedMultisigTx.status === MultisigTransactionStatus.Approved) {
-  //       return true;
-  //     }
-  //   }
-  //   return false;
-  // }, [highlightedMultisigTx]);
-
-  // const isTxRejected = useCallback(() => {
-  //   if (highlightedMultisigTx) {
-  //     if (highlightedMultisigTx.status === MultisigTransactionStatus.Rejected) {
-  //       return true;
-  //     }
-  //   }
-  //   return false;
-  // }, [highlightedMultisigTx]);
-
-  // const getTxUserStatusClass = useCallback((mtx: MultisigTransaction) => {
-
-  //   if (mtx.executedOn) {
-  //     return "";
-  //   } else if (mtx.didSigned === undefined) {
-  //     return "fg-red";
-  //   } else if (mtx.didSigned === false) {
-  //     return theme === 'light' ? "fg-light-orange" : "fg-warning";
-  //   } else {
-  //     return theme === 'light' ? "fg-green" : "fg-success"
-  //   }
-
-  // },[theme]);
-
-  // const getTxApproveMainCtaLabel = useCallback(() => {
-
-  //   const busyLabel = isTxPendingExecution()
-  //     ? 'Executing transaction'
-  //     : isTxPendingApproval()
-  //       ? 'Approving transaction'
-  //       : isTxVoided() 
-  //         ? 'Cancelling Transaction' 
-  //         : '';
-
-  //   const iddleLabel = isTxPendingExecution()
-  //     ? 'Execute transaction'
-  //     : isTxPendingApproval()
-  //       ? 'Approve transaction'
-  //       : isTxVoided() 
-  //         ? 'Cancel Transaction' 
-  //         : '';
-
-  //   return isBusy
-  //     ? busyLabel
-  //     : transactionStatus.currentOperation === TransactionStatus.Iddle
-  //       ? iddleLabel
-  //       : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
-  //         ? t('general.cta-finish')
-  //         : t('general.refresh');
-  // }, [
-  //   isBusy,
-  //   transactionStatus.currentOperation,
-  //   isTxPendingExecution,
-  //   isTxPendingApproval,
-  //   isTxVoided,
-  //   t,
-  // ]);
-
   const isTxInProgress = useCallback((): boolean => {
     return isBusy || fetchTxInfoStatus === "fetching" ? true : false;
   }, [
@@ -2630,52 +2442,6 @@ export const MultisigView = () => {
   ///////////////
   // Rendering //
   ///////////////
-
-  // const txPendingSigners = (mtx: MultisigTransaction) => {
-  //   if (!selectedMultisig || !selectedMultisig.owners || selectedMultisig.owners.length === 0) {
-  //     return null;
-  //   }
-
-  //   const participants = selectedMultisig.owners as MultisigParticipant[]
-  //   return (
-  //     <>
-  //       {participants.map((item, index) => {
-  //         if (mtx.signers[index]) { return null; }
-  //         return (
-  //           <div key={`${index}`} className="well-group mb-1">
-  //             <div className="flex-fixed-right align-items-center">
-  //               <div className="left text-truncate m-0">
-  //                 <div><span>{item.name || `Owner ${index + 1}`}</span></div>
-  //                 <div className="font-size-75 text-monospace">{item.address}</div>
-  //               </div>
-  //               <div className="right pl-2">
-  //                 <div><span className={theme === 'light' ? "fg-light-orange font-bold" : "fg-warning font-bold"}>{t("multisig.multisig-transactions.not-signed")}</span></div>
-  //               </div>
-  //             </div>
-  //           </div>
-  //         );
-  //       })}
-  //     </>
-  //   );
-  // };
-
-  // const getParticipantsThatApprovedTx = useCallback((mtx: MultisigTransaction) => {
-
-  //   if (!selectedMultisig || !selectedMultisig.owners || selectedMultisig.owners.length === 0) {
-  //     return [];
-  //   }
-  
-  //   let addressess: MultisigParticipant[] = [];
-  //   const participants = selectedMultisig.owners as MultisigParticipant[];
-  //   participants.forEach((participant: MultisigParticipant, index: number) => {
-  //     if (mtx.signers[index]) {
-  //       addressess.push(participant);
-  //     }
-  //   });
-  
-  //   return addressess;
-  
-  // }, [selectedMultisig]);
 
   const renderMultisigPendingTxs = () => {
 
@@ -2897,7 +2663,7 @@ export const MultisigView = () => {
             disabled={isTxInProgress() || loadingMultisigAccounts}
             onClick={() => {
               if (selectedMultisig) {
-                const url = `/treasuries?multisig=${selectedMultisig.id.toBase58()}`;
+                const url = `${STREAMING_ACCOUNTS_ROUTE_BASE_PATH}?multisig=${selectedMultisig.id.toBase58()}`;
                 navigate(url);
               }
             }}>

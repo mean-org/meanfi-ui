@@ -27,6 +27,7 @@ import { openNotification } from "../Notifications";
 import { TxConfirmationContext } from "../../contexts/transaction-status";
 import { TransactionConfirmationHistory } from "../TransactionConfirmationHistory";
 import { shortenAddress } from "../../utils/utils";
+import { ACCOUNTS_ROUTE_BASE_PATH } from "../../pages/accounts";
 
 const { Header, Content, Footer } = Layout;
 
@@ -393,7 +394,7 @@ export const AppLayout = React.memo((props: any) => {
 
     addRouteNameClass();
 
-    if (location.pathname === '/' || location.pathname === '/accounts') {
+    if (location.pathname.startsWith(ACCOUNTS_ROUTE_BASE_PATH)) {
       setShouldLoadTokens(true);
     }
 
@@ -472,7 +473,7 @@ export const AppLayout = React.memo((props: any) => {
               <div className="app-bar-inner">
                 <Link to="/" className="flex-center">
                   <div className="app-title simplelink">
-                    <img className="app-logo" src={theme === 'dark' ? '/assets/mean-pay-logo-color-light.svg' : '/assets/mean-pay-logo-color-dark.svg'} alt="Mean Finance" />
+                    <img className="app-logo" src={theme === 'dark' ? '/assets/mean-logo-color-light.svg' : '/assets/mean-logo-color-dark.svg'} alt="Mean Finance" />
                   </div>
                 </Link>
                 <AppBar menuType="desktop" onOpenDrawer={showDrawer} topNavVisible={(location.pathname === '/ido' || location.pathname === '/ido-live') ? false : true} />

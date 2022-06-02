@@ -41,7 +41,7 @@ export const MultisigCreateModal = (props: {
   // When modal goes visible, add current wallet address as first participant
   useEffect(() => {
     if (publicKey && props.isVisible) {
-      setMultisigThreshold(2);
+      setMultisigThreshold(1);
       const items: MultisigParticipant[] = [];
       items.push({
           name: `Owner 1`,
@@ -102,7 +102,7 @@ export const MultisigCreateModal = (props: {
 
   const isFormValid = () => {
     return  multisigThreshold &&
-            multisigThreshold >= 2 &&
+            multisigThreshold >= 1 &&
             multisigThreshold <= MAX_MULTISIG_PARTICIPANTS &&
             multisigLabel &&
             multisigOwners.length >= multisigThreshold &&
@@ -207,7 +207,7 @@ export const MultisigCreateModal = (props: {
                     />
                   </div>
                 </div>
-                {!multisigThreshold || +multisigThreshold < 2 ? (
+                {!multisigThreshold || +multisigThreshold < 1 ? (
                   <span className="form-field-error">
                     {t('multisig.create-multisig.multisig-threshold-input-empty')}
                   </span>
@@ -231,7 +231,7 @@ export const MultisigCreateModal = (props: {
               multisigAddresses={multisigAddresses}
               onParticipantsChanged={(e: MultisigParticipant[]) => setMultisigOwners(e)}
             />
-            {(multisigOwners.length >= 2 && multisigOwners.length === +multisigThreshold && multisigOwners[+multisigThreshold - 1].address !== '') && (
+            {(multisigOwners.length >= 1 && multisigOwners.length === +multisigThreshold && multisigOwners[+multisigThreshold - 1].address !== '') && (
               <span className="warning-message icon-label">
                 <IconWarning className="mean-svg-icons" />
                 {t('multisig.create-multisig.multisig-participants-warning-message')}

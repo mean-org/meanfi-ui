@@ -1,0 +1,37 @@
+.program-details-container {
+  button {
+    min-width: 11em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .signature svg {
+    width: 1em !important;
+    margin: -0.25em 1em -0.25em -0.25em !important;
+  }
+  .header-row {
+    border-top: 1px solid var(--color-secondary-alpha-05);
+    padding-top: 0.5em;
+  }
+}
+.programs-btns {
+  .btn-group {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    button {
+      min-width: 12em;
+      width: fit-content;
+      max-width: max-content;
+      flex: 1;
+    }
+  }
+}
+div.react-json-view {
+  margin: 10px 20px 10px 0px;
+  padding: 10px;
+}
+div.no-idl-info {
+  color: gray;
+  margin: 20px 20px 20px 0px;
+  width: fit-content;
+}

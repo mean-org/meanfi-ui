@@ -2,11 +2,12 @@ import { useState } from "react";
 import { Button, Popover, Tooltip } from "antd";
 import { useTranslation } from "react-i18next";
 import { CloseOutlined, CopyOutlined } from "@ant-design/icons";
-import { shortenAddress } from "../../utils/utils";
+// import { shortenAddress } from "../../utils/utils";
 import "./style.scss";
 import { MultisigParticipant } from "@mean-dao/mean-multisig-sdk";
-import { copyText } from "../../utils/ui";
-import { openNotification } from "../Notifications";
+// import { copyText } from "../../utils/ui";
+// import { openNotification } from "../Notifications";
+import { CopyExtLinkGroup } from "../CopyExtLinkGroup";
 
 export const MultisigOwnersView = (props: {
   participants: MultisigParticipant[];
@@ -20,19 +21,19 @@ export const MultisigOwnersView = (props: {
     setPopoverVisible(visibleChange);
   };
 
-  const onCopyAddress = (address: any) => {
-    if (address && copyText(address)) {
-      openNotification({
-        description: t('notifications.account-address-copied-message'),
-        type: "info"
-      });
-    } else {
-      openNotification({
-        description: t('notifications.account-address-not-copied-message'),
-        type: "error"
-      });
-    }
-  }
+  // const onCopyAddress = (address: any) => {
+  //   if (address && copyText(address)) {
+  //     openNotification({
+  //       description: t('notifications.account-address-copied-message'),
+  //       type: "info"
+  //     });
+  //   } else {
+  //     openNotification({
+  //       description: t('notifications.account-address-not-copied-message'),
+  //       type: "error"
+  //     });
+  //   }
+  // }
 
   const titleContent = (
     <div className="flexible-left">
@@ -56,7 +57,13 @@ export const MultisigOwnersView = (props: {
         return (
           <div key={`${index}`} className="cebra-list-item flex-fixed-right align-items-center">
             <div className="left">{item.name || `Owner ${index + 1}`}</div>
-            <div className="right text-monospace">{shortenAddress(item.address, 6)}</div>
+            <CopyExtLinkGroup
+              content={item.address}
+              number={6}
+              message={t('assets.account-address-copy-cta')}
+              externalLink={true}
+            />
+            {/* <div className="right text-monospace">{shortenAddress(item.address, 6)}</div>
             <span className="icon-button-container">
               <Tooltip placement="bottom" title={t('assets.account-address-copy-cta')}>
                 <Button
@@ -67,7 +74,7 @@ export const MultisigOwnersView = (props: {
                   onClick={() => onCopyAddress(item.address)}
                 />
               </Tooltip>
-            </span>
+            </span> */}
           </div>
         );
       })}

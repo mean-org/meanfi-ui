@@ -392,7 +392,7 @@
 			"modal-title": "Créer un actif multisig",
 			"no-token": "Sélectionnez le jeton",
 			"success-message": "Votre actif multisig a été créé avec succès",
-			"token-label": "Du compte",
+			"token-label": "Amount to send",
 			"token-placeholder": "Entrez l'adresse mint de jeton"
 		},
 		"create-multisig": {
@@ -417,7 +417,7 @@
 			"multisig-threshold-question-mark-tooltip": "Comme meilleure pratique, ayez toujours plus de signataires multisig que le minimum de signataires requis. Un multisig 2 sur 3 est la configuration la plus basique où 2 des 3 participants sont nécessaires pour exécuter une transaction.",
 			"success-message": "Votre nouveau compte multisig a été créé avec succès."
 		},
-		"create-new-multisig-account-cta": "Créer plusieurs signatures",
+		"create-new-multisig-account-cta": "Create safe",
 		"crud-multisig": {
 			"delete-multisig": "Supprimer plusieurs signatures",
 			"edit-multisig": "Modifier la signature multiple",
@@ -547,7 +547,7 @@
 			"execution": "execution",
 			"explain-failure": "Expliquer la condition de défaillance si spécifique",
 			"initiator-transaction": "Cette transaction a été soumise par",
-			"loading-transactions": "Chargement des transactions",
+			"loading-transactions": "Chargement des transactions ...",
 			"missing-signature": "To execute this proposal, {{missingSignature}} more signature is needed.",
 			"missing-signatures": "To execute this proposal, {{missingSignature}} more signatures are needed.",
 			"modal-title": "Récapitulatif des transactions",
@@ -634,20 +634,20 @@
 			"new-authority-input-placeholder": "Adresse de la nouvelle autorité de mise à niveau du programme"
 		},
 		"transfer-authority": {
-			"asset-auth-destination-address-disclaimer": "Je confirme que la nouvelle adresse d'autorité ci-dessus saisie ou sélectionnée est une adresse de compte multisig et NON une adresse de portefeuille ordinaire. Je reconnais que si je fournis une adresse non Multisig, cela entraînera une perte permanente de l'actif et de ses fonds.",
+			"asset-auth-destination-address-disclaimer": "I'm sure the new owner address doesn't belong to an exchange.",
 			"main-cta": "Définir l'autorité",
 			"main-cta-busy": "Autorité de réglage",
-			"modal-title": "Transfert de propriété",
+			"modal-title": "Change asset ownership",
 			"multisig-already-owns-the-asset": "Le multisig sélectionné est déjà autorisé pour cet actif",
-			"multisig-selector-label": "Nouvelle autorité (multisig)",
-			"multisig-selector-placeholder": "Sélectionnez ou entrez une adresse multisig",
+			"multisig-selector-label": "New owner account",
+			"multisig-selector-placeholder": "Select or enter the address of the new owner",
 			"selected-asset-label": "Actif sélectionné",
 			"success-message": "Nouvelle autorité d'actif définie avec succès."
 		},
 		"transfer-tokens": {
 			"main-cta": "Démarrer la demande",
 			"main-cta-busy": "Demande de démarrage",
-			"modal-title": "Initier une demande de retrait",
+			"modal-title": "Propose funds transfer",
 			"source-address-label": "Transfert à partir de",
 			"source-address-placeholder": "Entrez l'adresse du compte source",
 			"success-message": "Jetons transférés avec succès.",
@@ -700,10 +700,14 @@
 		"success-account-funded-message": "Compte financé",
 		"success-loading-stream-message": "Le flux avec l'ID {{streamId}} a été chargé",
 		"success-loading-treasury-message": "La trésorerie avec l'ID {{treasuryId}} a été chargée",
-		"tx-not-confirmed": "The transaction could not be confirmed, please retry your transaction.",
 		"wallet-connect-message": "Connecté au portefeuille {{address}}",
 		"wallet-connection-event-title": "Mise à jour du portefeuille",
-		"wallet-disconnect-message": "Déconnecté du portefeuille"
+		"wallet-disconnect-message": "Déconnecté du portefeuille",
+		"tx-not-confirmed": "The transaction could not be confirmed, please retry your transaction.",
+		"tx-not-executed": "Your transaction has not been executed",
+		"tx-not-approved": "Your transaction has not been approved",
+		"tx-proposal-created": "Your proposal has been created",
+		"ask-others-to-sign": "Please ask the proposer user to execute this proposed transaction."
 	},
 	"open-stream": {
 		"label-streamid-input": "ID de flux à ouvrir",
@@ -1131,6 +1135,7 @@
 			"create-multisig-cta": "Initier la trésorerie",
 			"create-multisig-cta-busy": "Trésorerie initiatique",
 			"create-multisig-treasury-success": "Vous avez signé avec succès la demande de trésorerie Initiate.",
+			"create-multisig-streaming-account-success": "Initiate streaming account request submitted for Multisig approval.",
 			"lock-period": {
 				"days": "journées",
 				"hours": "les heures",
@@ -1147,6 +1152,7 @@
 			"multisig-treasury-created-instructions": "Streaming account {{treasuryName}} was created successfully. Please ask the other users to sign this account creation transaction.",
 			"multisig-treasury-switch-label": "Cette trésorerie est-elle pour un compte Multisig ?",
 			"success-message": "Your new streaming account was created successfully.",
+			"success-multisig-streaming-account-message": "Your new streaming account was created successfully.",
 			"treasury-name-input-empty": "Enter Account name",
 			"treasury-name-input-label": "Account name",
 			"treasury-name-placeholder": "Type a name for your streaming account",
@@ -1245,7 +1251,8 @@
 			"option-resume-stream": "Continuer",
 			"status-running": "Fonctionnement",
 			"status-scheduled": "Programmé",
-			"status-stopped": "Arrêté"
+			"status-stopped": "Arrêté",
+			"screen-title": "Streaming Accounts - Streams"
 		},
 		"withdraw-funds": {
 			"button-title": "Withdraw funds",
@@ -1298,6 +1305,7 @@
 				"custody": "Garde",
 				"faucet": "Robinet",
 				"multisig": "Multisig",
+				"safes": "Multisig V2",
 				"submenu-title": "Prestations de service",
 				"unwrap": "Unwrap",
 				"wallet-guide": "Guide du portefeuille",

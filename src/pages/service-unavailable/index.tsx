@@ -37,7 +37,7 @@ export const ServiceUnavailableView = () => {
     <>
       <div className="loading-screen-container flex-center">
         <div className="flex-column flex-center">
-          <img className="app-logo" src={theme === 'dark' ? '/assets/mean-pay-logo-color-light.svg' : '/assets/mean-pay-logo-color-dark.svg'} alt="Mean Finance" />
+          <img className="app-logo" src={theme === 'dark' ? '/assets/mean-logo-color-light.svg' : '/assets/mean-logo-color-dark.svg'} alt="Mean Finance" />
           <h3 className="network-down-message">{t('error-screens.service-unavailable-message')}</h3>
           <div className="text-center">
             <Button

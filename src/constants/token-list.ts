@@ -799,4 +799,22 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
             coingeckoId: 'solana',
         },
     },
+    {
+        chainId: 103,
+        address: 'Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr',
+        symbol: 'USD Coin Dev',
+        name: 'USDC-Dev - USD Coin Dev',
+        decimals: 6,
+        logoURI: `${LOGO_BASE_URL}/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png`,
+        tags: [],
+    },
+    {
+        chainId: 103,
+        address: '23YKMZKvpj77D2LSF3PELPCPLwHidhfLtStCGYDE7rHQ',
+        symbol: 'CRDX-LP',
+        name: 'Credix Marketplace LP Token',
+        decimals: 6,
+        logoURI: '',
+        tags: [],
+    }
 ];

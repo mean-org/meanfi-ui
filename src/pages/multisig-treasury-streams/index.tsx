@@ -84,6 +84,7 @@ import { StreamsSummary } from "../../models/streams";
 import { StreamTreasuryType } from "../../models/treasuries";
 import { PreFooter } from "../../components/PreFooter";
 import { openNotification } from "../../components/Notifications";
+import { STREAMING_ACCOUNTS_ROUTE_BASE_PATH } from "../treasuries";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -2427,15 +2428,15 @@ export const MultisigTreasuryStreams = () => {
                                                 icon={<ArrowLeftOutlined />}
                                                 onClick={() => {
                                                     const url = highLightableMultisigId
-                                                        ? `/treasuries?multisig=${highLightableMultisigId}`
-                                                        : '/treasuries';
+                                                        ? `${STREAMING_ACCOUNTS_ROUTE_BASE_PATH}?multisig=${highLightableMultisigId}`
+                                                        : STREAMING_ACCOUNTS_ROUTE_BASE_PATH;
                                                     navigate(url);
                                                 }}
                                             />
                                         </Tooltip>
                                     </span>
                                 </div>
-                                <span className="title">{t("streams.screen-title-safe")}</span>
+                                <span className="title">{t("treasuries.treasury-streams.screen-title")}</span>
                                 <Tooltip
                                     placement="bottom"
                                     title={t("streams.refresh-tooltip")}>

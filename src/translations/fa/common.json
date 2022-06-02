@@ -388,10 +388,10 @@
 		"create-asset": {
 			"main-cta": "ساختن",
 			"main-cta-busy": "ایجاد خزانه",
-			"modal-title": "یک خزانه حساب Multisig ایجاد کنید",
+			"modal-title": "یک خزانه حساب multisig ایجاد کنید",
 			"no-token": "توکن را انتخاب کنید",
 			"success-message": "خزانه حساب Multisig شما با موفقیت ایجاد شد",
-			"token-label": "از حساب",
+			"token-label": "Select an asset",
 			"token-placeholder": "آدرس مینت کردن توکن را وارد کنید"
 		},
 		"create-multisig": {
@@ -415,7 +415,7 @@
 			"multisig-threshold-question-mark-tooltip": "به عنوان بهترین روش، همیشه امضاکنندگان Multisig بیشتر از حداقل امضاکنندگان مورد نیاز داشته باشید. مولتی سیگ 2 از 3 ابتدایی ترین راه اندازی است که در آن 2 نفر از 3 شرکت کننده برای اجرای تراکنش لازم هستند.",
 			"success-message": "حساب Multisig جدید شما با موفقیت ایجاد شد."
 		},
-		"create-new-multisig-account-cta": "ساخت حساب Multisig",
+		"create-new-multisig-account-cta": "Create safe",
 		"crud-multisig": {
 			"delete-multisig": "حساب Multisig را حذف کنید",
 			"edit-multisig": "ویرایش حساب Multisig",
@@ -479,7 +479,7 @@
 			"delete-asset": {
 				"explanatory-paragraph": "با ارسال این درخواست، معامله را امضا کرده و آن را به عنوان یکی از امضاکنندگان Multisig تایید می کنید. قبل از حذف دارایی، سایر اعضای Multisig باید آن را تأیید کنند.",
 				"main-cta": "ارسال درخواست حذف",
-				"modal-title": "یک دارایی Multisig را حذف کنید",
+				"modal-title": "یک دارایی multisig را حذف کنید",
 				"selected-asset-label": "دارایی انتخاب شد",
 				"warning-message": "فقط دارایی های خالی را می توان حذف کرد. برای حذف یک دارایی، ابتدا باید تمام وجوه را به حساب دیگری منتقل کنید."
 			},
@@ -606,24 +606,24 @@
 			"new-authority-input-placeholder": "آدرس آپگرید اختیارات برنامه جدید"
 		},
 		"transfer-authority": {
-			"asset-auth-destination-address-disclaimer": "I confirm the above New Authority Address entered or selected is a Multisig Account address and NOT a regular wallet address. I acknowledge that if I provide a non Multisig address, it will cause a permanent loss of the asset and its funds.",
+			"asset-auth-destination-address-disclaimer": "I'm sure the new owner address doesn't belong to an exchange.",
 			"main-cta": "تنظیم اختیارات",
 			"main-cta-busy": "تنظیم کردن اختیارات",
-			"modal-title": "انتقال مالکیت",
+			"modal-title": "Change asset ownership",
 			"multisig-already-owns-the-asset": "Multisig انتخاب شده در حال حاضر برای این خزانه معتبر است",
-			"multisig-selector-label": "اختیارات جدید (multisig)",
-			"multisig-selector-placeholder": "یک آدرس Multisig را انتخاب یا وارد کنید",
+			"multisig-selector-label": "New owner account",
+			"multisig-selector-placeholder": "Select or enter the address of the new owner",
 			"selected-asset-label": "خزانه انتخاب شده",
 			"success-message": "اختیارات جدید خزانه با موفقیت تنظیم شد."
 		},
 		"transfer-tokens": {
 			"main-cta": "شروع درخواست",
 			"main-cta-busy": "شروع کردن درخواست",
-			"modal-title": "درخواست انتقال وجه ارسال کنید",
+			"modal-title": "Propose funds transfer",
 			"source-address-label": "انتقال از",
 			"source-address-placeholder": "آدرس اکانت منبع را وارد کنید",
 			"success-message": "توکن ها با موفقیت منتقل شدند.",
-			"transfer-amount-label": "مقدار",
+			"transfer-amount-label": "Amount to send",
 			"transfer-amount-placeholder": "مقدار توکن های مورد نظر را برای انتقال وارد کنید",
 			"transfer-to-label": "انتقال به (حساب مقصد)",
 			"transfer-to-placeholder": "آدرس اکانت مقصد را وارد کنید"
@@ -700,7 +700,11 @@
 		"wallet-connect-message": "متصل به کیف پول {{address}}",
 		"wallet-connection-event-title": "به روز رسانی کیف پول",
 		"wallet-disconnect-message": "از کیف پول قطع شده است",
-		"tx-not-confirmed": "The transaction could not be confirmed, please retry your transaction."
+		"tx-not-confirmed": "The transaction could not be confirmed, please retry your transaction.",
+		"tx-not-executed": "Your transaction has not been executed",
+		"tx-not-approved": "Your transaction has not been approved",
+		"tx-proposal-created": "Your proposal has been created",
+		"ask-others-to-sign": "Please ask the proposer user to execute this proposed transaction."
 	},
 	"open-stream": {
 		"label-streamid-input": "شناسه Stream برای باز کردن",
@@ -1116,6 +1120,7 @@
 			"create-multisig-cta": "treasury را آغاز کنید",
 			"create-multisig-cta-busy": "راه اندازی treasury",
 			"create-multisig-treasury-success": "شما درخواست treasury اولیه را با موفقیت امضا کردید.",
+			"create-multisig-streaming-account-success": "Initiate streaming account request submitted for Multisig approval.",
 			"lock-period": {
 				"days": "روزها",
 				"hours": "ساعت ها",
@@ -1132,6 +1137,7 @@
 			"multisig-treasury-created-instructions": "Streaming account {{treasuryName}} was created successfully. Please ask the other users to sign this account creation transaction.",
 			"multisig-treasury-switch-label": "آیا این treasury  برای یک حساب Multisig است؟",
 			"success-message": "Your new streaming account was created successfully.",
+			"success-multisig-streaming-account-message": "Your new streaming account was created successfully.",
 			"treasury-name-input-empty": "Enter Account name",
 			"treasury-name-input-label": "Account name",
 			"treasury-name-placeholder": "Type a name for your streaming account",
@@ -1230,7 +1236,8 @@
 			"option-resume-stream": "از سرگیری",
 			"status-running": "در حال اجرا",
 			"status-scheduled": "برنامه ریزی شده است",
-			"status-stopped": "متوقف شد"
+			"status-stopped": "متوقف شد",
+			"screen-title": "Streaming Accounts - Streams"
 		},
 		"withdraw-funds": {
 			"button-title": "Withdraw funds",
@@ -1283,6 +1290,7 @@
 				"custody": "حضانت",
 				"faucet": "فاست",
 				"multisig": "Multisig",
+				"safes": "Multisig V2",
 				"submenu-title": "خدمات",
 				"unwrap": "Unwrap",
 				"wallet-guide": "راهنمای کیف پول",

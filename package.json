@@ -1,6 +1,6 @@
 {
   "name": "meanfi-ui",
-  "version": "1.15.0",
+  "version": "1.16.0",
   "private": true,
   "browserslist": [
     ">0.2%",
@@ -45,8 +45,9 @@
     "@ledgerhq/hw-transport": "^6.27",
     "@ledgerhq/hw-transport-webhid": "^6.27",
     "@mean-dao/ddca": "1.2.35",
-    "@mean-dao/hybrid-liquidity-ag": "1.2.0",
-    "@mean-dao/mean-multisig-sdk": "^0.1.0",
+    "@mean-dao/hybrid-liquidity-ag": "1.2.2",
+    "@mean-dao/mean-multisig-apps": "^0.2.1",
+    "@mean-dao/mean-multisig-sdk": "^1.13.0",
     "@mean-dao/money-streaming": "^1.7.10",
     "@mean-dao/msp": "2.5.2",
     "@mean-dao/staking": "0.1.24",
@@ -96,6 +97,7 @@
     "react-ga": "^3.3.0",
     "react-helmet": "^6.1",
     "react-i18next": "^11.15",
+    "react-json-view": "^1.21.3",
     "react-router-dom": "^6.0",
     "react-share": "^4.4.0",
     "recharts": "^2.1.8",
@@ -139,6 +141,9 @@
   },
   "resolutions": {
     "@solana/web3.js": "1.36.0",
-    "@types/react": "17.0.30"
+    "@types/react": "17.0.30",
+    "@saberhq/stableswap-sdk": "1.13.17",
+    "@saberhq/token-utils": "1.13.17",
+    "@saberhq/solana-contrib": "1.13.17"
   }
 }

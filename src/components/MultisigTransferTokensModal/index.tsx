@@ -9,15 +9,14 @@ import { consoleOut, getTransactionOperationDescription, isValidAddress } from '
 import { isError } from '../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TransactionFees } from '@mean-dao/money-streaming';
-import { formatAmount, getTokenAmountAndSymbolByTokenAddress, isValidNumber, shortenAddress, toUiAmount } from '../../utils/utils';
+import { formatAmount, getTokenAmountAndSymbolByTokenAddress, isValidNumber, shortenAddress } from '../../utils/utils';
 import { useConnection } from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, SystemProgram } from '@solana/web3.js';
 import { MintLayout } from '@solana/spl-token';
-import { MultisigVault } from '../../models/multisig';
 import { FALLBACK_COIN_IMAGE } from '../../constants';
 import { Identicon } from '../Identicon';
-import { BN } from 'bn.js';
+import { UserTokenAccount } from '../../models/transactions';
 
 const { Option } = Select;
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -29,8 +28,8 @@ export const MultisigTransferTokensModal = (props: {
   isBusy: boolean;
   nativeBalance: number;
   transactionFees: TransactionFees;
-  selectedVault: MultisigVault | undefined;
-  assets: MultisigVault[]
+  selectedVault: UserTokenAccount | undefined;
+  assets: UserTokenAccount[];
 }) => {
   const { t } = useTranslation('common');
   const connection = useConnection();
@@ -44,7 +43,7 @@ export const MultisigTransferTokensModal = (props: {
     refreshPrices,
   } = useContext(AppStateContext);
 
-  const [fromVault, setFromVault] = useState<MultisigVault>();
+  const [fromVault, setFromVault] = useState<UserTokenAccount>();
   const [fromMint, setFromMint] = useState<any>();
   const [to, setTo] = useState('');
   const [amount, setAmount] = useState('');
@@ -80,9 +79,11 @@ export const MultisigTransferTokensModal = (props: {
     }
 
     const timeout = setTimeout(() => {
-      connection.getAccountInfo(new PublicKey(fromVault.mint))
+      connection.getAccountInfo(new PublicKey(fromVault?.address as string))
         .then(info => {
-          if (info) {
+          if (info && !info.owner.equals(new PublicKey("NativeLoader1111111111111111111111111111111"))) {
+            console.log('fromVault', fromVault);
+            console.log('owner', info.owner.toBase58());
             consoleOut('info:', info, 'blue');
             const mintInfo = MintLayout.decode(info.data);
             setFromMint(mintInfo);
@@ -104,7 +105,7 @@ export const MultisigTransferTokensModal = (props: {
 
   const onAcceptModal = () => {
     props.handleOk({
-      from: fromVault ? fromVault.address.toBase58() : '',
+      from: fromVault ? fromVault.publicAddress as string : '',
       amount: +amount,
       to: to
     });
@@ -119,7 +120,7 @@ export const MultisigTransferTokensModal = (props: {
     
     if (props.assets && props.assets.length) {
       consoleOut("asset selected:", e, 'blue');
-      const selectedFromVault = props.assets.filter(v => v.address.toBase58() === e)[0];
+      const selectedFromVault = props.assets.filter(v => v.publicAddress === e)[0];
       setFromVault(selectedFromVault);
     }
 
@@ -161,13 +162,13 @@ export const MultisigTransferTokensModal = (props: {
 
   const isValidForm = (): boolean => {
     return (
-      fromVault && fromMint &&
+      fromVault &&
       to &&
-      isValidAddress(fromVault.address.toBase58()) &&
+      isValidAddress(fromVault.publicAddress) &&
       isValidAddress(to) &&
       amount &&
       +amount > 0 &&
-      +amount <= toUiAmount(fromVault.amount, fromMint.decimals || 6)
+      +amount <= (fromVault.balance || 0)
     ) ? true : false;
   }
 
@@ -182,11 +183,12 @@ export const MultisigTransferTokensModal = (props: {
     const replaceCommaToDot = getClipBoardData.replace(",", "")
     const onlyNumbersAndDot = replaceCommaToDot.replace(/[^.\d]/g, '');
 
-    console.log(onlyNumbersAndDot);
+    consoleOut("only numbers and dot", onlyNumbersAndDot);
     
-
     setAmount(onlyNumbersAndDot.trim());
   }
+
+  const isSol = (fromVault && fromVault.name === "Native SOL") ? true : false;
 
   return (
     <Modal
@@ -203,21 +205,21 @@ export const MultisigTransferTokensModal = (props: {
 
         {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
           <>
-            {/* Amount to transfer */}
+            {/* Amount to send */}
             <div className="mb-3">
-              <div className="form-label">{t('multisig.create-asset.token-label')}</div>
+              <div className="form-label">{t('multisig.transfer-tokens.transfer-amount-label')}</div>
                 <div className={`well ${props.isBusy ? 'disabled' : ''}`}>
-                  {props.assets && props.assets.length > 0 && fromVault && fromMint && (
+                  {props.assets && props.assets.length > 0 && fromVault && (
                     <>
                       <div className="info-label mb-0">
-                        <div className="subtitle text-truncate">{shortenAddress(fromVault.address.toBase58(), 8)}</div>
+                        <div className="subtitle text-truncate">{shortenAddress(fromVault?.publicAddress as string, 8)}</div>
                       </div>
 
                       <div className="flex-fixed-left transfer-proposal-select mt-0">
                       <div className="left">
                         <span className="add-on">
-                          {props.assets && props.assets.length > 0 && fromVault && fromMint && (
-                            <Select className={`token-selector-dropdown auto-height`} value={fromVault.address.toBase58()}
+                          {props.assets && props.assets.length > 0 && fromVault && (
+                            <Select className={`token-selector-dropdown auto-height`} value={fromVault.publicAddress}
                               style={{width:"100%", maxWidth:'none'}}
                               onChange={onVaultChanged}
                               bordered={false}
@@ -225,38 +227,49 @@ export const MultisigTransferTokensModal = (props: {
                               dropdownRender={menu => (
                               <div>{menu}</div>
                             )}>
-                              {props.assets.map((option: MultisigVault) => {
-                                const token = getTokenByMintAddress(option.mint.toBase58());
+                              {props.assets.map((option: UserTokenAccount) => {
+                                const token = getTokenByMintAddress(option.address as string);
                                 const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
                                   event.currentTarget.src = FALLBACK_COIN_IMAGE;
                                   event.currentTarget.className = "error";
                                 };
+
                                 return (
-                                  <Option key={option.address.toBase58()} value={option.address.toBase58()}>
+                                  <Option key={option.publicAddress} value={option.publicAddress}>
                                     <div className="option-container">
                                       <div className="transaction-list-row w-100">
                                         <div className="icon-cell">
                                           <div className="token-icon">
-                                            {token && token.logoURI ? (
-                                              <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
+                                            {!isSol ? (
+                                              token && token.logoURI ? (
+                                                <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
+                                              ) : (
+                                                <Identicon address={option.address} style={{
+                                                  width: "28px",
+                                                  display: "inline-flex",
+                                                  height: "26px",
+                                                  overflow: "hidden",
+                                                  borderRadius: "50%"
+                                                }} />
+                                              )
                                             ) : (
-                                              <Identicon address={option.mint.toBase58()} style={{
-                                                width: "28px",
-                                                display: "inline-flex",
-                                                height: "26px",
-                                                overflow: "hidden",
-                                                borderRadius: "50%"
-                                              }} />
+                                              <img alt={fromVault.name} width={30} height={30} src={fromVault.logoURI} onError={imageOnErrorHandler} />
                                             )}
                                           </div>
                                         </div>
                                         <div className="description-cell">
-                                          <div className="title text-truncate">{token ? token.symbol : `${shortenAddress(option.mint.toBase58(), 4)}`}</div>
+                                          <div className="title text-truncate">
+                                            {!isSol ? (
+                                              token ? token.symbol : `${shortenAddress(option.address, 4)}`
+                                            ) : (
+                                              fromVault.symbol
+                                            )}
+                                            </div>
                                         </div>
                                         <div className="rate-cell">
                                           <div className="rate-amount text-uppercase">
                                             {getTokenAmountAndSymbolByTokenAddress(
-                                              toUiAmount(new BN(option.amount), token?.decimals || 6),
+                                              option.balance || 0,
                                               token ? token.address as string : '',
                                               true
                                             )}
@@ -295,8 +308,8 @@ export const MultisigTransferTokensModal = (props: {
                         <span>{t('transactions.send-amount.label-right')}:</span>
                           <span>
                             {getTokenAmountAndSymbolByTokenAddress(
-                              toUiAmount(new BN(fromVault.amount), fromVault?.decimals || 6),
-                              fromVault ? fromVault.address.toBase58() as string : '',
+                              fromVault.balance || 0,
+                              fromVault ? fromVault.publicAddress as string : '',
                               true
                             )}
                         </span>
@@ -313,7 +326,7 @@ export const MultisigTransferTokensModal = (props: {
                     {(fromVault && fromMint) && (
                       <>
                       {
-                        +amount > toUiAmount(fromVault.amount, fromMint.decimals || 6) ? (
+                        +amount > (fromVault.balance || 0) ? (
                           <span className="form-field-error">
                             {t('multisig.multisig-assets.validation-amount-high')}
                           </span>

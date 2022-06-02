@@ -410,14 +410,14 @@
 			"multisig-threshold-question-mark-tooltip": "As best practice, always have more multisig signers than the minimum required signers. A 2-of-3 multisig is the most basic setup where 2 of the 3 participants are required to execute a transaction.",
 			"success-message": "Tài khoản multisig mới của bạn đã được tạo thành công"
 		},
-		"create-new-multisig-account-cta": "Tạo multisig",
+		"create-new-multisig-account-cta": "Create safe",
 		"create-asset": {
 			"main-cta": "Tạo",
 			"main-cta-busy": "Đang tạo vault",
-			"modal-title": "Tạo một Multisig Vault",
+			"modal-title": "Tạo một multisig asset",
 			"no-token": "Chọn mã thông báo",
 			"success-message": "Multisig vault của bạn đã được tạo thành công",
-			"token-label": "Amount to transfer",
+			"token-label": "Select an asset",
 			"token-placeholder": "Nhập địa chỉ mint của mã thông báo"
 		},
 		"crud-multisig": {
@@ -516,7 +516,7 @@
 			"column-operation": "Transaction",
 			"column-pending-signatures": "Status",
 			"column-program-id": "Chương trình",
-			"loading-transactions": "Đang tải giao dịch",
+			"loading-transactions": "Đang tải giao dịch ...",
 			"modal-title": "Proposal summary",
 			"no-transactions-multisig": "This multisig has no transactions",
 			"no-transactions-multisig-asset": "This multisig asset has no transactions",
@@ -583,7 +583,7 @@
 			"delete-asset": {
 				"explanatory-paragraph": "By submitting this proposal, you will sign the transaction and approve it as one of the Multisig signers. Before the asset is deleted, the other Multisig members need to approve it.",
 				"main-cta": "Submit delete proposal",
-				"modal-title": "Delete a Multisig Asset",
+				"modal-title": "Delete a multisig asset",
 				"selected-asset-label": "Asset selected",
 				"warning-message": "Only empty assets can be deleted. To delete an asset you need to first transfer all funds to another account."
 			},
@@ -612,22 +612,22 @@
 		"transfer-authority": {
 			"main-cta": "Thiết lập quyền hạn",
 			"main-cta-busy": "Đang thiết lập quyền hạn",
-			"modal-title": "Chuyển quyền sở hữu",
+			"modal-title": "Change asset ownership",
 			"multisig-already-owns-the-asset": "Multisig được chọn đã có thẩm quyền với vault này",
-			"multisig-selector-label": "Quyền hạn mới (multisig)",
-			"multisig-selector-placeholder": "Chọn hoặc nhập một địa chỉ multisig",
+			"multisig-selector-label": "New owner account",
+			"multisig-selector-placeholder": "Select or enter the address of the new owner",
 			"selected-asset-label": "Vault được chọn",
 			"success-message": "Quyền hạn của vault mới đã được thiết lập thành công",
-			"asset-auth-destination-address-disclaimer": "I confirm the above New Authority Address entered or selected is a Multisig Account address and NOT a regular wallet address. I acknowledge that if I provide a non Multisig address, it will cause a permanent loss of the vault and its funds."
+			"asset-auth-destination-address-disclaimer": "I'm sure the new owner address doesn't belong to an exchange."
 		},
 		"transfer-tokens": {
 			"main-cta": "Bắt đầu yêu cầu",
 			"main-cta-busy": "Đang bắt đầu yêu cầu",
-			"modal-title": "Initiate Transfer Proposal",
+			"modal-title": "Propose funds transfer",
 			"source-address-label": "Chuyển khoản từ",
 			"source-address-placeholder": "Nhập địa chỉ tài khoản nguồn",
 			"success-message": "Token đã được chuyển khoản thành công",
-			"transfer-amount-label": "Số lượng",
+			"transfer-amount-label": "Amount to send",
 			"transfer-amount-placeholder": "Nhập số lượng token sẽ chuyển khoản",
 			"transfer-to-label": "Chuyển tới (Tài khoản đích)",
 			"transfer-to-placeholder": "Nhập vào địa chỉ tài khoản đích"
@@ -704,7 +704,11 @@
 		"wallet-connect-message": "Đã kết nối ví {{address}}",
 		"wallet-connection-event-title": "Cập nhật tình trạng ví",
 		"wallet-disconnect-message": "Kết nối từ ví đã bị ngắt",
-		"tx-not-confirmed": "The transaction could not be confirmed, please retry your transaction."
+		"tx-not-confirmed": "The transaction could not be confirmed, please retry your transaction.",
+		"tx-not-executed": "Your transaction has not been executed",
+		"tx-not-approved": "Your transaction has not been approved",
+		"tx-proposal-created": "Your proposal has been created",
+		"ask-others-to-sign": "Please ask the proposer user to execute this proposed transaction."
 	},
 	"open-stream": {
 		"label-streamid-input": "Mở stream id",
@@ -1117,6 +1121,7 @@
 			"create-multisig-cta": "Khởi tạo kho bạc",
 			"create-multisig-cta-busy": "Đang khởi tạo kho bạc",
 			"create-multisig-treasury-success": "Yêu cầu khởi tạo kho bạc đã được gửi để Multisig phê duyệt",
+			"create-multisig-streaming-account-success": "Initiate streaming account request submitted for Multisig approval.",
 			"lock-period": {
 				"minutes": "minutes",
 				"hours": "hours",
@@ -1133,6 +1138,7 @@
 			"multisig-treasury-created-instructions": "Streaming account {{treasuryName}} was created successfully. Please ask the other users to sign this account creation transaction.",
 			"multisig-treasury-switch-label": "Kho bạc dành cho tài khoản multisig?",
 			"success-message": "Your new streaming account was created successfully.",
+			"success-multisig-streaming-account-message": "Your new streaming account was created successfully.",
 			"treasury-name-input-empty": "Enter Account name",
 			"treasury-name-input-label": "Account name",
 			"treasury-name-placeholder": "Type a name for your streaming account",
@@ -1231,7 +1237,8 @@
 			"option-resume-stream": "Tiếp tục",
 			"status-running": "Đang chạy",
 			"status-scheduled": "Đã lập lịch",
-			"status-stopped": "Đã dừng"
+			"status-stopped": "Đã dừng",
+			"screen-title": "Streaming Accounts - Streams"
 		},
 		"withdraw-funds": {
 			"button-title": "Withdraw funds",
@@ -1284,6 +1291,7 @@
 				"custody": "Lưu ký",
 				"faucet": "Faucet",
 				"multisig": "Multisig",
+				"safes": "Multisig V2",
 				"submenu-title": "Dịch vụ",
 				"wallet-guide": "Hướng dẫn Ví",
 				"wrap": "Wrap",
