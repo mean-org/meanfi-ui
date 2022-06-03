@@ -1083,6 +1083,7 @@ export const ProgramDetailsView = (props: {
           handleClose={() => setIsUpgradeProgramModalVisible(false)}
           programId={selectedProgram?.pubkey.toBase58()}
           isBusy={isBusy}
+          programAddress={programSelected.pubkey.toBase58()}
         />
       )}
 

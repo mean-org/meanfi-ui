@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Modal, Button, Spin } from 'antd';
+import { Modal, Button, Spin, AutoComplete } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { AppStateContext } from '../../contexts/appstate';
@@ -23,6 +23,7 @@ export const MultisigUpgradeProgramModal = (props: {
   nativeBalance: number;
   transactionFees: TransactionFees;
   programId?: string;
+  programAddress?: string;
 }) => {
   const { t } = useTranslation('common');
   const connection = useConnection();
@@ -36,7 +37,7 @@ export const MultisigUpgradeProgramModal = (props: {
   const [programDataAddress, setProgramDataAddress] = useState('');
   const [bufferAddress, setBufferAddress] = useState('');
 
-  // Get propgram ID from inpus
+  // Get propgram ID from inputs
   useEffect(() => {
     if (props.isVisible && props.programId) {
       if (isValidAddress(props.programId)) {
@@ -106,11 +107,11 @@ export const MultisigUpgradeProgramModal = (props: {
     });
   }
 
-  const onProgramIdChange = (e: any) => {
-    const inputValue = e.target.value as string;
-    const trimmedValue = inputValue.trim();
-    setProgramId(trimmedValue);
-  }
+  // const onProgramIdChange = (e: any) => {
+  //   const inputValue = e.target.value as string;
+  //   const trimmedValue = inputValue.trim();
+  //   setProgramId(trimmedValue);
+  // }
 
   const onBufferAccountChange = (e: any) => {
     const inputValue = e.target.value as string;
@@ -123,9 +124,9 @@ export const MultisigUpgradeProgramModal = (props: {
       programId &&
       bufferAddress &&
       programDataAddress &&
-      isValidAddress(programId) &&
-      isValidAddress(bufferAddress) &&
-      isValidAddress(programDataAddress)
+      // isValidAddress(programId) &&
+      // isValidAddress(programDataAddress) &&
+      isValidAddress(bufferAddress)
     )
       ? true
       : false;
@@ -151,24 +152,17 @@ export const MultisigUpgradeProgramModal = (props: {
 
         {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
           <>
-            {/* Program address */}
+            {/* Program id */}
             <div className="form-label">{t('multisig.upgrade-program.program-address-label')}</div>
             <div className={`well ${props.programId ? 'disabled' : ''}`}>
               <input id="token-address-field"
                 className="general-text-input"
-                autoComplete="on"
+                autoComplete="off"
                 autoCorrect="off"
                 type="text"
-                onChange={onProgramIdChange}
-                placeholder={t('multisig.upgrade-program.program-address-placeholder')}
-                required={true}
-                spellCheck="false"
-                value={programId}/>
-              {programId && !isValidAddress(programId) && (
-                <span className="form-field-error">
-                  {t('transactions.validation.address-validation')}
-                </span>
-              )}
+                readOnly
+                value={props.programAddress}
+              />
             </div>
             {/* Buffer address */}
             <div className="form-label">{t('multisig.upgrade-program.buffer-account-label')}</div>
