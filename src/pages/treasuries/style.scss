@@ -68,3 +68,24 @@
 .ant-select-dropdown .ant-select-item .ant-select-item-option-content .option-container {
   min-width: auto !important;
 }
+
+@media (max-width: 575px) {
+  .reminder-icon-circle {
+    width: 28px !important;
+  }
+}
+@media (min-width: 576px) {
+  .reminder-icon-circle {
+    width: 20px !important;
+  }
+}
+.reminder-container {
+  display: flex;
+  align-items: center;
+  height: 48px;
+}
+.reminder-icon-circle {
+  color: var(--color-secondary-alpha-50);
+  margin-right: 0.4em;
+}
+

@@ -55,7 +55,7 @@ import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { TxConfirmationContext } from '../../contexts/transaction-status';
-import { IconBank, IconClock, IconShieldOutline, IconTrash } from '../../Icons';
+import { IconBank, IconClock, IconInfoCircle, IconShieldOutline, IconTrash } from '../../Icons';
 import { TreasuryOpenModal } from '../../components/TreasuryOpenModal';
 import { MSP_ACTIONS, StreamInfo, STREAM_STATE, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { TreasuryCreateModal } from '../../components/TreasuryCreateModal';
@@ -5158,28 +5158,18 @@ export const TreasuriesView = () => {
       ? multisigAccounts.find(m => m.authority.toBase58() === v2.treasurer)
       : undefined;
     return treasuryPendingTxs > 0 && (
-      <div key="streams" className="transaction-list-row no-pointer mb-2">
-        <div className="icon-cell">
-          <div className="token-icon">
-            <div className="streams-count">
-              <span className="font-bold text-shadow">
-                {treasuryPendingTxs}
-              </span>
-            </div>
-          </div>
-        </div>
-        <div className="description-cell">
-          <div className="font-bold simplelink underline-on-hover" onClick={() => {
-            if (selectedMultisig) {
-              consoleOut('Navigating to multisig:', selectedMultisig.id.toBase58(), 'blue');
-              setHighLightableMultisigId(selectedMultisig.id.toBase58());
-            } else if (multisig) {
-              consoleOut('Navigating to multisig:', multisig.authority.toBase58(), 'blue');
-              setHighLightableMultisigId(multisig.id.toBase58());
-            }
-            navigate('/multisig');
-          }}>{t('treasuries.treasury-detail.multisig-tx-headsup')}</div>
-        </div>
+      <div key="streams" className="reminder-container no-pointer mb-2">
+        <IconInfoCircle className="mean-svg-icons reminder-icon-circle" />
+        <div className="font-bold simplelink underline-on-hover" onClick={() => {
+          if (selectedMultisig) {
+            consoleOut('Navigating to multisig:', selectedMultisig.id.toBase58(), 'blue');
+            setHighLightableMultisigId(selectedMultisig.id.toBase58());
+          } else if (multisig) {
+            consoleOut('Navigating to multisig:', multisig.authority.toBase58(), 'blue');
+            setHighLightableMultisigId(multisig.id.toBase58());
+          }
+          navigate('/multisig');
+        }}>{t('treasuries.treasury-detail.multisig-tx-headsup')}</div>
       </div>
     );
   }, [
