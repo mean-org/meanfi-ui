@@ -2557,12 +2557,15 @@ main section {
 }
 
 .container-max-width-450 {
+  width: 100%;
   max-width: var(--container-max-width-450);
 }
 .container-max-width-640 {
+  width: 100%;
   max-width: var(--container-max-width-640);
 }
 .container-max-width-720 {
+  width: 100%;
   max-width: var(--container-max-width-720);
 }
 

@@ -11,6 +11,9 @@
                 justify-content: center;
                 align-items: center;
                 margin: 2rem 0;
+                > .ant-btn.ant-btn-primary.ant-btn-round {
+                    min-width: 240px;
+                }
             }
         }
     }
