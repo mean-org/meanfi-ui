@@ -2661,10 +2661,10 @@ export const SafeView = () => {
             txStatus.customError = {
               message: 'Your transaction failed to submit due to Invalid Gateway Token. Please activate the Gateway Token and retry this operation.',
               data: undefined
-            };            
+            };
           } else if (error.toString().indexOf('0xbc4') !== -1) {
             txStatus.customError = {
-              message: 'Your transaction failed to submit due to Account Not Initialized. Please initialize and fund the Token Account of the Investor.',
+              message: 'Your transaction failed to submit due to Account Not Initialized. Please initialize and fund the Token and LP Token Accounts of the Investor.\n',
               data: selectedMultisig?.authority.toBase58()
             }; 
           } else if (error.toString().indexOf('0x1') !== -1) {

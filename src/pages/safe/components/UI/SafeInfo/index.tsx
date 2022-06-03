@@ -10,7 +10,7 @@ import { IconEllipsisVertical } from "../../../../../Icons";
 import { UserTokenAccount } from "../../../../../models/transactions";
 import { NATIVE_SOL } from "../../../../../utils/tokens";
 import { isDev, isLocal, toUsCurrency } from "../../../../../utils/ui";
-import { getTokenByMintAddress, shortenAddress } from "../../../../../utils/utils";
+import { shortenAddress } from "../../../../../utils/utils";
 import { ACCOUNTS_ROUTE_BASE_PATH } from "../../../../accounts";
 
 export const SafeInfo = (props: {
@@ -31,8 +31,8 @@ export const SafeInfo = (props: {
     splTokenList,
     isWhitelisted,
     totalSafeBalance,
-    setTotalSafeBalance
-
+    setTotalSafeBalance,
+    getTokenByMintAddress,
   } = useContext(AppStateContext);
 
   const { solBalance, selectedMultisig, multisigVaults, safeNameImg, safeNameImgAlt, onNewProposalMultisigClick, onEditMultisigClick, onRefreshTabsInfo, tabs, selectedTab, isTxInProgress } = props;
@@ -118,7 +118,7 @@ export const SafeInfo = (props: {
 
       multisigVaults.forEach((item: any) => {
 
-        const token = getTokenByMintAddress(item.mint.toBase58(), splTokenList);
+        const token = getTokenByMintAddress(item.mint.toBase58());
 
         if (token) {
           const rate = getPricePerToken(token);
