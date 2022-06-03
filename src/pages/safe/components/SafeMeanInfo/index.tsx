@@ -104,7 +104,7 @@ export const SafeMeanInfo = (props: {
 
   // Tabs
   const [amountOfProposals, setAmountOfProposals] = useState<string>("");
-  const [amountOfAssets, setAmountOfAssets] = useState<string>("");
+  // const [amountOfAssets, setAmountOfAssets] = useState<string>("");
   const [amountOfPrograms, setAmountOfPrograms] = useState<string>("");
 
   const onRefreshTabsInfo = () => {
@@ -514,14 +514,12 @@ export const SafeMeanInfo = (props: {
     const loading = selectedMultisig ? true : false;
     const timeout = setTimeout(() => {
       setLoadingProposals(loading);
-      setLoadingAssets(loading);
       setLoadingPrograms(loading);
     });
 
     return () => {
       clearTimeout(timeout);
     }
-
   },[
     selectedMultisig
   ]);
@@ -576,7 +574,7 @@ export const SafeMeanInfo = (props: {
       } else {
         setLoadingProposals(true);
       }
-    });
+    }, 2500);
 
     return () => {
       clearTimeout(timeout);
