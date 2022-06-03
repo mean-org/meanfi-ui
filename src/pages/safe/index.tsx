@@ -2661,7 +2661,7 @@ export const SafeView = () => {
             txStatus.customError = {
               message: 'Your transaction failed to submit due to Invalid Gateway Token. Please activate the Gateway Token and retry this operation.',
               data: undefined
-            };            
+            };
           } else if (error.toString().indexOf('0xbc4') !== -1) {
             txStatus.customError = {
               message: 'Your transaction failed to submit due to Account Not Initialized. Please initialize and fund the Token Account of the Investor.',
