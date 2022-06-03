@@ -2,21 +2,24 @@ import React, { useEffect, useState, useContext, useCallback, useMemo } from 're
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from "react-i18next";
 import { AppStateContext } from "../../contexts/appstate";
-import { IconMoneyTransfer } from "../../Icons";
+import { IconExternalLink, IconMoneyTransfer } from "../../Icons";
 import { PreFooter } from "../../components/PreFooter";
-import { Button, Space, Tabs } from 'antd';
-import { consoleOut } from '../../utils/ui';
+import { Button, Space, Tabs, Tooltip } from 'antd';
+import { consoleOut, copyText } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
 import { VestingLockCreateAccount } from './components/VestingLockCreateAccount';
 import { LockedStreamCreate } from './components/LockedStreamCreate';
 import { VestingLockSelectAccount } from './components/VestingLockSelectAccount';
-import { useConnectionConfig } from '../../contexts/connection';
+import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
 import { Connection } from '@solana/web3.js';
 import { MSP, Treasury } from '@mean-dao/msp';
 import "./style.scss";
 import { TokenInfo } from '@solana/spl-token-registry';
 import { InfoIcon } from '../../components/InfoIcon';
-import { InfoCircleOutlined } from '@ant-design/icons';
+import { InfoCircleOutlined, WarningFilled } from '@ant-design/icons';
+import { openLinkInNewTab, shortenAddress } from '../../utils/utils';
+import { openNotification } from '../../components/Notifications';
+import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
 
 const { TabPane } = Tabs;
 export const VESTING_ROUTE_BASE_PATH = '/vesting';
@@ -28,7 +31,9 @@ export const VestingView = () => {
   const {
     tokenList,
     selectedToken,
+    detailsPanelOpen,
     streamV2ProgramAddress,
+    setDtailsPanelOpen,
     setSelectedToken,
   } = useContext(AppStateContext);
   const location = useLocation();
@@ -184,6 +189,25 @@ export const VestingView = () => {
     setSelectedAccount(account);
   }, []);
 
+  // Copy address to clipboard
+  const copyAddressToClipboard = useCallback((address: any) => {
+
+    if (!address) { return; }
+
+    if (copyText(address.toString())) {
+      openNotification({
+        description: t('notifications.account-address-copied-message'),
+        type: "info"
+      });
+    } else {
+      openNotification({
+        description: t('notifications.account-address-not-copied-message'),
+        type: "error"
+      });
+    }
+
+  },[t])
+
   ///////////////
   // Rendering //
   ///////////////
@@ -250,24 +274,89 @@ export const VestingView = () => {
   return (
     <>
       <div className="container main-container">
-        <div className="interaction-area">
-          <div className="title-and-subtitle">
-            <div className="title">
-              <IconMoneyTransfer className="mean-svg-icons" />
-              <div>{t('vesting.screen-title')}</div>
+        {publicKey ? (
+          <div className="interaction-area">
+            <div className={`meanfi-two-panel-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
+              {/* Left / top panel */}
+              <div className="meanfi-two-panel-left">
+
+                <div className="meanfi-panel-heading">
+                  <span className="title">{t('vesting.screen-title')}</span>
+                  <div className="user-address">
+                    <span className="fg-secondary">
+                      (<Tooltip placement="bottom" title={t('assets.account-address-copy-cta')}>
+                        <span className="simplelink underline-on-hover" onClick={() => copyAddressToClipboard(publicKey.toBase58())}>
+                          {/* TODO: Use accountAddress from url */}
+                          {shortenAddress(publicKey.toBase58(), 5)}
+                        </span>
+                      </Tooltip>)
+                    </span>
+                    <span className="icon-button-container">
+                      <Button
+                        type="default"
+                        shape="circle"
+                        size="middle"
+                        icon={<IconExternalLink className="mean-svg-icons" style={{width: "18", height: "18"}} />}
+                        onClick={() => openLinkInNewTab(`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${publicKey.toBase58()}${getSolanaExplorerClusterParam()}`)}
+                      />
+                    </span>
+                  </div>
+                </div>
+
+                <div className="inner-container">
+                  <p>sdssdsds</p>
+                </div>
+
+                {/* Bottom CTA */}
+                <div className="bottom-ctas">
+                  <div className="primary-action">
+                    <Button
+                      block
+                      className="flex-center"
+                      type="primary"
+                      shape="round"
+                      onClick={() => {
+                        // sddfdf
+                      }}>
+                      <span className="ml-1">Create vesting contract</span>
+                    </Button>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Right / down panel */}
+              <div className="meanfi-two-panel-right">
+              </div>
             </div>
-            <div className="subtitle">
-              {t('vesting.screen-subtitle')}
+
+            {/* <div className="title-and-subtitle">
+              <div className="title">
+                <IconMoneyTransfer className="mean-svg-icons" />
+                <div>{t('vesting.screen-title')}</div>
+              </div>
+              <div className="subtitle">
+                {t('vesting.screen-subtitle')}
+              </div>
+            </div>
+            <div className="container-max-width-640">
+              {
+                workflowStep === "account-select"
+                  ? renderAccountSelection()
+                  : renderStreamCreation
+              }
+            </div> */}
+          </div>
+        ) : (
+          <div className="interaction-area">
+            <div className="w-75 h-100 p-5 text-center flex-column flex-center">
+              <div className="text-center mb-2">
+                <WarningFilled style={{ fontSize: 48 }} className="icon fg-warning" />
+              </div>
+              <h3>{t('wallet-selector.connect-to-begin')}</h3>
             </div>
           </div>
-          <div className="container-max-width-640">
-            {
-              workflowStep === "account-select"
-                ? renderAccountSelection()
-                : renderStreamCreation
-            }
-          </div>
-        </div>
+        )}
       </div>
       <PreFooter />
     </>

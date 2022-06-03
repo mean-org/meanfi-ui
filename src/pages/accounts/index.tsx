@@ -4328,33 +4328,20 @@ export const AccountsNewView = () => {
                         )}
                         <div className="user-address">
                           <span className="fg-secondary">
-                            (<span className="simplelink underline-on-hover" onClick={() => copyAddressToClipboard(accountAddress)}>
-                              {shortenAddress(accountAddress, 5)}
-                            </span>)
+                            (<Tooltip placement="bottom" title={t('assets.account-address-copy-cta')}>
+                              <span className="simplelink underline-on-hover" onClick={() => copyAddressToClipboard(accountAddress)}>
+                                {shortenAddress(accountAddress, 5)}
+                              </span>
+                            </Tooltip>)
                           </span>
-                          {!connected && (
-                            <span className="icon-button-container">
-                              <Tooltip placement="bottom" title={t('assets.account-address-change-cta')}>
-                                <Button
-                                  type="default"
-                                  shape="circle"
-                                  size="middle"
-                                  icon={<EditOutlined />}
-                                  onClick={handleScanAnotherAddressButtonClick}
-                                />
-                              </Tooltip>
-                            </span>
-                          )}
                           <span className="icon-button-container">
-                            <Tooltip placement="bottom" title={t('assets.account-address-copy-cta')}>
-                              <Button
-                                type="default"
-                                shape="circle"
-                                size="middle"
-                                icon={<IconExternalLink className="mean-svg-icons" style={{width: "18", height: "18"}} />}
-                                onClick={() => openLinkInNewTab(`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${accountAddress}${getSolanaExplorerClusterParam()}`)}
-                              />
-                            </Tooltip>
+                            <Button
+                              type="default"
+                              shape="circle"
+                              size="middle"
+                              icon={<IconExternalLink className="mean-svg-icons" style={{width: "18", height: "18"}} />}
+                              onClick={() => openLinkInNewTab(`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${accountAddress}${getSolanaExplorerClusterParam()}`)}
+                            />
                           </span>
                         </div>
                       </div>
