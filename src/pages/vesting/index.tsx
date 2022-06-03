@@ -238,7 +238,6 @@ export const VestingView = () => {
             </Button>
           </TabPane>
           <TabPane tab={t('vesting.create-account.tab-label-select-account')} key={"select-existing"}>
-            <p>Render list of Existing accounts here</p>
             <VestingLockSelectAccount
               streamingAccounts={treasuryList}
               selectedAccount={selectedAccount}

@@ -1,4 +1,35 @@
 .vesting {
+    .accounts-list-wrapper {
+        position: relative;
+        height: auto;
+        min-height: 350px;
+        max-height: 40vh;
+        margin-bottom: 1rem;
+    }
+    .accounts-heading {
+        text-transform: uppercase;
+        font-weight: 600;
+        color: var(--color-secondary-alpha-70);
+        background-color: var(--color-section);
+        top: 0;
+        position: sticky;
+        z-index: 1;
+
+        .title {
+            padding-left: 1rem;
+        }
+
+        @media (max-width: 767.98px) {
+            margin: 0.5rem -2.6%;
+            padding: 3px 2.6%;
+        }
+
+        @media (min-width: 768px) {
+            margin: 0 0 0.5rem -2.6%;
+            padding: 3px calc(2.6% + 4px) 3px 2.6%;
+        }
+    }
+
     .transaction-list-row {
         border-radius: unset;
         border-top: none;

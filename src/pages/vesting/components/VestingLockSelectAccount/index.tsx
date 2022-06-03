@@ -32,7 +32,11 @@ export const VestingLockSelectAccount = (props: {
     }, []);
 
     return (
-        <>
+        <div className="accounts-list-wrapper vertical-scroll">
+            <div className="accounts-heading">
+                <div className="title">Streaming Accounts ({streamingAccounts?.length || 0})</div>
+            </div>
+
             {streamingAccounts && streamingAccounts.length > 0 ? (
                 streamingAccounts.map((item, index) => {
                     const associatedToken = item.associatedToken;
@@ -102,6 +106,6 @@ export const VestingLockSelectAccount = (props: {
                     }/>
                 </div>
             )}
-        </>
+        </div>
     );
 };
