@@ -2632,7 +2632,6 @@ main section {
   }
 }
 
-.payroll .place-transaction-box,
 .exchange .place-transaction-box,
 .transfers .place-transaction-box {
   min-width: 320px;
@@ -3211,6 +3210,16 @@ main section {
   align-items: center;
 }
 // Labels go before the well
+.form-group-label {
+  width: 100%;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--color-secondary-alpha-80);
+  line-height: 1.3rem;
+  margin-bottom: 10px;
+  padding-left: 4px;
+}
 .form-label {
   width: 100%;
   font-size: 0.7rem;

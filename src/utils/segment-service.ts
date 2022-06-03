@@ -78,7 +78,12 @@ export enum AppUsageEvent {
     ApproveProposalCompleted = "Approve Proposal Completed",
     ApproveProposalFailed = "Approve Proposal Failed",
     ExecuteProposalCompleted = "Execute Proposal Completed",
-    ExecuteProposalFailed = "Execute Proposal Failed"
+    ExecuteProposalFailed = "Execute Proposal Failed",
+    // Streaming account
+    CreateStreamingAccountFormButton = "Create Streaming Account form button click",
+    CreateStreamingAccountSigned = "Create Streaming Account Signed",
+    CreateStreamingAccountCompleted = "Create Streaming Account Completed",
+    CreateStreamingAccountFailed = "Create Streaming Account Failed",
 }
 
 export enum StatsTriggertEvent {

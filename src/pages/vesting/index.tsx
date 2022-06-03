@@ -14,6 +14,9 @@ import { useConnectionConfig } from '../../contexts/connection';
 import { Connection } from '@solana/web3.js';
 import { MSP, Treasury } from '@mean-dao/msp';
 import "./style.scss";
+import { TokenInfo } from '@solana/spl-token-registry';
+import { InfoIcon } from '../../components/InfoIcon';
+import { InfoCircleOutlined } from '@ant-design/icons';
 
 const { TabPane } = Tabs;
 export const VESTING_ROUTE_BASE_PATH = '/vesting';
@@ -220,22 +223,11 @@ export const VestingView = () => {
         <h3 className="user-instruction-headline">{t('vesting.user-instruction-headline')}</h3>
         <Tabs centered activeKey={vestingAccountStep} onChange={onTabChange}>
           <TabPane tab={t('vesting.create-account.tab-label-create-account')} key={"create-new"}>
-            <p>Render Create new tab content here</p>
-            <p>Create Vesting account and go to create stream screen</p>
             <VestingLockCreateAccount
-              param1="AccountCreateOrSelect -> Sample parameter 1 content"
-              param2="AccountCreateOrSelect -> Another value for parameter 2"
+              inModal={false}
+              token={selectedToken}
+              tokenChanged={(token: TokenInfo | undefined) => setSelectedToken(token)}
             />
-            <Button
-              type="primary"
-              shape="round"
-              size="small"
-              className="thin-stroke" onClick={() => {
-                const url = `${VESTING_ROUTE_BASE_PATH}/stream-create/general`;
-                navigate(url);
-              }}>
-              Continue
-            </Button>
           </TabPane>
           <TabPane tab={t('vesting.create-account.tab-label-select-account')} key={"select-existing"}>
             <VestingLockSelectAccount
@@ -243,21 +235,17 @@ export const VestingView = () => {
               selectedAccount={selectedAccount}
               onAccountSelected={(item: Treasury | undefined) => selectAccount(item)}
             />
-            <Button
-              type="primary"
-              shape="round"
-              size="small"
-              className="thin-stroke" onClick={() => {
-                const url = `${VESTING_ROUTE_BASE_PATH}/stream-create/general`;
-                navigate(url);
-              }}>
-              Continue
-            </Button>
           </TabPane>
         </Tabs>
+        <div className="flex-row flex-center">
+            <span>What is a locked vesting stream?</span>
+            <InfoIcon content={<span>Lorem ipsum dolor sit amet consectetur adipisicing elit. Voluptatum dolores blanditiis pariatur eius ad est saepe amet.</span>} placement="top">
+                <InfoCircleOutlined style={{ lineHeight: 0 }} />
+            </InfoIcon>
+        </div>
       </>
     );
-  }, [navigate, onTabChange, selectAccount, selectedAccount, t, treasuryList, vestingAccountStep]);
+  }, [onTabChange, selectAccount, selectedAccount, selectedToken, setSelectedToken, t, treasuryList, vestingAccountStep]);
 
   return (
     <>

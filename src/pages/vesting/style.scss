@@ -1,11 +1,28 @@
 .vesting {
+
+    .interaction-area {
+        .elastic-form-container {
+            position: relative;
+            width: 100%;
+            margin-bottom: 1rem;
+            .cta-container {
+                display: flex;
+                flex-direction: row;
+                justify-content: center;
+                align-items: center;
+                margin: 2rem 0;
+            }
+        }
+    }
+
     .accounts-list-wrapper {
         position: relative;
         height: auto;
-        min-height: 350px;
+        min-height: 228px;
         max-height: 40vh;
         margin-bottom: 1rem;
     }
+
     .accounts-heading {
         text-transform: uppercase;
         font-weight: 600;
@@ -36,13 +53,16 @@
         border-bottom: none;
         border-right: none;
         border-left: 4px solid transparent;
+
         .description-cell {
             flex: auto;
             min-width: unset;
         }
+
         .rate-cell {
             flex: 0 0 146px;
         }
+
         &.selected {
             border-left-color: var(--color-primary-highlight);
             background-color: var(--color-secondary-alpha-02);
