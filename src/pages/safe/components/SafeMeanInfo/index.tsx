@@ -514,6 +514,7 @@ export const SafeMeanInfo = (props: {
     const loading = selectedMultisig ? true : false;
     const timeout = setTimeout(() => {
       setLoadingProposals(loading);
+      setLoadingAssets(loading);
       setLoadingPrograms(loading);
     });
 
