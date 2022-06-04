@@ -2,26 +2,23 @@ import React, { useEffect, useState, useContext, useCallback, useMemo } from 're
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from "react-i18next";
 import { AppStateContext } from "../../contexts/appstate";
-import { IconExternalLink, IconMoneyTransfer } from "../../Icons";
+import { IconExternalLink } from "../../Icons";
 import { PreFooter } from "../../components/PreFooter";
-import { Button, Space, Tabs, Tooltip } from 'antd';
+import { Button, Tooltip } from 'antd';
 import { consoleOut, copyText } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
-import { VestingLockCreateAccount } from './components/VestingLockCreateAccount';
-import { LockedStreamCreate } from './components/LockedStreamCreate';
-import { VestingLockSelectAccount } from './components/VestingLockSelectAccount';
 import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
 import { Connection } from '@solana/web3.js';
 import { MSP, Treasury } from '@mean-dao/msp';
 import "./style.scss";
 import { TokenInfo } from '@solana/spl-token-registry';
-import { InfoIcon } from '../../components/InfoIcon';
-import { InfoCircleOutlined, WarningFilled } from '@ant-design/icons';
+import { WarningFilled } from '@ant-design/icons';
 import { openLinkInNewTab, shortenAddress } from '../../utils/utils';
 import { openNotification } from '../../components/Notifications';
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
+import { VestingLockCreateAccount } from './components/VestingLockCreateAccount';
+import { VestingLockAccountList } from './components/VestingLockAccountList';
 
-const { TabPane } = Tabs;
 export const VESTING_ROUTE_BASE_PATH = '/vesting';
 export type VestingWorkflowStep = "account-select" | "stream-create" | undefined;
 export type VestingAccountStep = "create-new" | "select-existing" | undefined;
@@ -39,58 +36,55 @@ export const VestingView = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const connectionConfig = useConnectionConfig();
-  const { workflow, step } = useParams();
+  const { address, vestingContract } = useParams();
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
-  const [workflowStep, setWorkflowStep] = useState<VestingWorkflowStep>(undefined);
-  const [vestingAccountStep, setVestingAccountStep] = useState<VestingAccountStep>(undefined);
-  const [streamCreateStep, setStreamCreateStep] = useState<StreamCreateStep>(undefined);
   const [isPageLoaded, setIsPageLoaded] = useState<boolean>(false);
   const [loadingTreasuries, setLoadingTreasuries] = useState(false);
   const [treasuriesLoaded, setTreasuriesLoaded] = useState(false);
   const [treasuryList, setTreasuryList] = useState<Treasury[]>([]);
-  const [selectedAccount, setSelectedAccount] = useState<Treasury | undefined>(undefined);
+  // Path params values
+  const [accountAddress, setAccountAddress] = useState('');
+  const [vestingContractAddress, setVestingContractAddress] = useState<string>('');
+  // Selected vesting contract
+  const [selectedVestingContract, setSelectedVestingContract] = useState<Treasury | undefined>(undefined);
 
   // Perform premature redirects if no workflow was provided in path
   useEffect(() => {
     if (!publicKey) { return; }
 
+    // /vesting/:address/contracts
     consoleOut('pathname:', location.pathname, 'crimson');
-    if (!workflow) {
-      const url = `${VESTING_ROUTE_BASE_PATH}/account-select/create-new`;
-      consoleOut('No workflow, redirecting to:', url, 'orange');
-      navigate(url, { replace: true });
-    } else if (workflow && !step) {
-      const url = `${VESTING_ROUTE_BASE_PATH}/${workflow}/create-new`;
-      consoleOut('workflow found but no step, redirecting to:', url, 'orange');
+    if (!address) {
+      const url = `${VESTING_ROUTE_BASE_PATH}/${publicKey.toBase58()}/contracts`;
+      consoleOut('No address, redirecting to:', url, 'orange');
       navigate(url, { replace: true });
     }
     // In any case, set the flag isPageLoaded a bit later
     setTimeout(() => {
       setIsPageLoaded(true);
     }, 5);
-  }, [location.pathname, navigate, publicKey, step, workflow]);
+  }, [address, location.pathname, navigate, publicKey]);
 
   // Enable deep-linking when isPageLoaded
   useEffect(() => {
     if (!isPageLoaded || !publicKey) { return; }
 
-    if (workflow) {
-      consoleOut('Route param workflow:', workflow, 'crimson');
-      setWorkflowStep(workflow as VestingWorkflowStep);
-    }
-
-    if (step) {
-      consoleOut('Route param step:', step, 'crimson');
-      if (workflow as VestingWorkflowStep === "account-select") {
-        setVestingAccountStep(step as VestingAccountStep);
-        setStreamCreateStep(undefined);
-      } else {
-        setStreamCreateStep(step as StreamCreateStep);
-        setVestingAccountStep(undefined);
+    if (address) {
+      consoleOut('Route param address:', address, 'crimson');
+      setAccountAddress(address);
+    } else {
+      if (accountAddress) {
+        setAccountAddress(publicKey.toBase58());
       }
     }
-  }, [isPageLoaded, publicKey, step, workflow]);
+
+    if (vestingContract) {
+      consoleOut('Route param vestingContract:', vestingContract, 'crimson');
+      setVestingContractAddress(vestingContract);
+    }
+
+  }, [accountAddress, address, isPageLoaded, publicKey, vestingContract]);
 
   // Create and cache the connection
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
@@ -173,21 +167,40 @@ export const VestingView = () => {
     consoleOut('Calling refreshTreasuries...', '', 'blue');
     setTreasuriesLoaded(true);
     refreshTreasuries(true);
+
   }, [publicKey, refreshTreasuries, treasuriesLoaded]);
+
+  // Set a vesting contract if passed-in via url if found in list of vesting contracts
+  // If not found or not provided, will pick the first one available via redirect
+  useEffect(() => {
+    if (publicKey && accountAddress && treasuryList && treasuryList.length > 0) {
+      let item: Treasury | undefined = undefined;
+      if (vestingContractAddress) {
+        item = treasuryList.find(i => i.id === vestingContractAddress);
+      }
+      if (item) {
+        setSelectedVestingContract(item);
+      } else {
+        // /vesting/:address/contracts/:vestingContract
+        const contractId = treasuryList[0].id.toString();
+        const url = `${VESTING_ROUTE_BASE_PATH}/${accountAddress}/contracts/${contractId}`;
+        navigate(url);
+      }
+    }
+  }, [accountAddress, navigate, publicKey, treasuryList, vestingContractAddress]);
 
   ////////////////////////////
   //   Events and actions   //
   ////////////////////////////
 
-  const onTabChange = useCallback((activeKey: string) => {
-    consoleOut('Selected tab option:', activeKey, 'blue');
-    const url = `${VESTING_ROUTE_BASE_PATH}/${workflow}/${activeKey}`;
-    navigate(url);
-  }, [navigate, workflow]);
-
-  const selectAccount = useCallback((account: Treasury | undefined) => {
-    setSelectedAccount(account);
-  }, []);
+  const onSelectVestingContract = useCallback((item: Treasury | undefined) => {
+    if (accountAddress && item) {
+      // /vesting/:address/contracts/:vestingContract
+      const contractId = item.id.toString();
+      const url = `${VESTING_ROUTE_BASE_PATH}/${accountAddress}/contracts/${contractId}`;
+      navigate(url);
+    }
+  }, [accountAddress, navigate]);
 
   // Copy address to clipboard
   const copyAddressToClipboard = useCallback((address: any) => {
@@ -212,76 +225,32 @@ export const VestingView = () => {
   // Rendering //
   ///////////////
 
-  const renderStreamCreation = (
-    <>
-      <p>Render the stream creation wizard screen.</p>
-      <LockedStreamCreate
-        param1="LockedStreamCreate -> Sample parameter 1 content"
-        param2="LockedStreamCreate -> Another value for parameter 2"
-      />
-      <Space align="center" size="middle">
-        <Button
-          type="primary"
-          shape="round"
-          size="small"
-          className="thin-stroke" onClick={() => {
-            const url = `${VESTING_ROUTE_BASE_PATH}/account-select/select-existing`;
-            navigate(url);
-          }}>
-          Change account
-        </Button>
-        <Button
-          type="primary"
-          shape="round"
-          size="small"
-          className="thin-stroke">
-          Create stream
-        </Button>
-      </Space>
-    </>
-  );
-
-  const renderAccountSelection = useCallback(() => {
+  const renderCreateVestingAccount = useCallback(() => {
     return (
       <>
         <h3 className="user-instruction-headline">{t('vesting.user-instruction-headline')}</h3>
-        <Tabs centered activeKey={vestingAccountStep} onChange={onTabChange}>
-          <TabPane tab={t('vesting.create-account.tab-label-create-account')} key={"create-new"}>
-            <VestingLockCreateAccount
-              inModal={false}
-              token={selectedToken}
-              tokenChanged={(token: TokenInfo | undefined) => setSelectedToken(token)}
-            />
-          </TabPane>
-          <TabPane tab={t('vesting.create-account.tab-label-select-account')} key={"select-existing"}>
-            <VestingLockSelectAccount
-              streamingAccounts={treasuryList}
-              selectedAccount={selectedAccount}
-              onAccountSelected={(item: Treasury | undefined) => selectAccount(item)}
-            />
-          </TabPane>
-        </Tabs>
-        <div className="flex-row flex-center">
-            <span>What is a locked vesting stream?</span>
-            <InfoIcon content={<span>Lorem ipsum dolor sit amet consectetur adipisicing elit. Voluptatum dolores blanditiis pariatur eius ad est saepe amet.</span>} placement="top">
-                <InfoCircleOutlined style={{ lineHeight: 0 }} />
-            </InfoIcon>
-        </div>
+        <VestingLockCreateAccount
+          inModal={false}
+          token={selectedToken}
+          tokenChanged={(token: TokenInfo | undefined) => setSelectedToken(token)}
+        />
       </>
     );
-  }, [onTabChange, selectAccount, selectedAccount, selectedToken, setSelectedToken, t, treasuryList, vestingAccountStep]);
+  }, [selectedToken, setSelectedToken, t]);
 
   return (
     <>
       <div className="container main-container">
         {publicKey ? (
           <div className="interaction-area">
+
             <div className={`meanfi-two-panel-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
+
               {/* Left / top panel */}
               <div className="meanfi-two-panel-left">
 
                 <div className="meanfi-panel-heading">
-                  <span className="title">{t('vesting.screen-title')}</span>
+                  <span className="title">{t('vesting.screen-title')} ({treasuryList.length})</span>
                   <div className="user-address">
                     <span className="fg-secondary">
                       (<Tooltip placement="bottom" title={t('assets.account-address-copy-cta')}>
@@ -304,22 +273,32 @@ export const VestingView = () => {
                 </div>
 
                 <div className="inner-container">
-                  <p>sdssdsds</p>
-                </div>
+                  <div className="item-block vertical-scroll">
 
-                {/* Bottom CTA */}
-                <div className="bottom-ctas">
-                  <div className="primary-action">
-                    <Button
-                      block
-                      className="flex-center"
-                      type="primary"
-                      shape="round"
-                      onClick={() => {
-                        // sddfdf
-                      }}>
-                      <span className="ml-1">Create vesting contract</span>
-                    </Button>
+                    <div className="asset-category flex-column">
+                      <VestingLockAccountList
+                        streamingAccounts={treasuryList}
+                        selectedAccount={selectedVestingContract}
+                        onAccountSelected={(item: Treasury | undefined) => onSelectVestingContract(item)}
+                      />
+                    </div>
+
+                  </div>
+
+                  {/* Bottom CTA */}
+                  <div className="bottom-ctas">
+                    <div className="primary-action">
+                      <Button
+                        block
+                        className="flex-center"
+                        type="primary"
+                        shape="round"
+                        onClick={() => {
+                          // sddfdf
+                        }}>
+                        <span className="ml-1">Create vesting contract</span>
+                      </Button>
+                    </div>
                   </div>
                 </div>
 
@@ -327,25 +306,14 @@ export const VestingView = () => {
 
               {/* Right / down panel */}
               <div className="meanfi-two-panel-right">
+                <div className="meanfi-panel-heading"><span className="title">{t('vesting.vesting-account-details.panel-title')}</span></div>
+                <div className="inner-container">
+                  <p>Details here</p>
+                </div>
               </div>
+
             </div>
 
-            {/* <div className="title-and-subtitle">
-              <div className="title">
-                <IconMoneyTransfer className="mean-svg-icons" />
-                <div>{t('vesting.screen-title')}</div>
-              </div>
-              <div className="subtitle">
-                {t('vesting.screen-subtitle')}
-              </div>
-            </div>
-            <div className="container-max-width-640">
-              {
-                workflowStep === "account-select"
-                  ? renderAccountSelection()
-                  : renderStreamCreation
-              }
-            </div> */}
           </div>
         ) : (
           <div className="interaction-area">

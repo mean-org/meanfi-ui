@@ -1,5 +1,24 @@
 .vesting {
 
+    @media (max-width: 575.98px) {
+        .meanfi-two-panel-layout {
+            height: 100%;
+            max-height: 100%;
+            margin: 0;
+            .inner-container {
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                padding-bottom: 10px;
+                background: transparent;
+                max-height: calc(100% - 45px);
+            }
+            .meanfi-two-panel-left {
+                padding: 0;
+            }
+        }
+    }
+
     .interaction-area {
         .elastic-form-container {
             position: relative;
@@ -18,35 +37,38 @@
         }
     }
 
-    .accounts-list-wrapper {
-        position: relative;
-        height: auto;
-        min-height: 228px;
-        max-height: 40vh;
-        margin-bottom: 1rem;
+    .inner-container {
+
+        .item-block {
+            padding-bottom: 0 !important;
+            position: relative;
+        }
+
+        .bottom-ctas {
+            flex: 0 0 auto;
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            padding-right: 1.8rem;
+            margin: 0 -2.6%;
+            .primary-action {
+                flex: 0 0 60%;
+                width: 60%;
+            }
+
+            .options-dropdown {
+                flex: 0 0 auto;
+                margin-left: 10px;
+            }
+        }
     }
 
-    .accounts-heading {
-        text-transform: uppercase;
-        font-weight: 600;
-        color: var(--color-secondary-alpha-70);
-        background-color: var(--color-section);
-        top: 0;
-        position: sticky;
-        z-index: 1;
-
-        .title {
-            padding-left: 1rem;
-        }
-
-        @media (max-width: 767.98px) {
-            margin: 0.5rem -2.6%;
-            padding: 3px 2.6%;
-        }
-
+    .asset-category {
+        height: auto;
+        min-height: 50px;
         @media (min-width: 768px) {
-            margin: 0 0 0.5rem -2.6%;
-            padding: 3px calc(2.6% + 4px) 3px 2.6%;
+            padding-bottom: 0.5rem;
         }
     }
 
@@ -63,7 +85,8 @@
         }
 
         .rate-cell {
-            flex: 0 0 146px;
+            flex: 0 0 146px !important;
+            padding: 0 !important;
         }
 
         &.selected {

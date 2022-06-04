@@ -1278,6 +1278,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     getStreamActivity
   ]);
 
+
   /**
    * Streams refresh timeout
    * 

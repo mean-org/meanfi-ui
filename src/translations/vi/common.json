@@ -263,6 +263,9 @@
 		"create-account": {
 			"tab-label-create-account": "Create new account",
 			"tab-label-select-account": "Select existing account"
+		},
+		"vesting-account-details": {
+			"panel-title": "Vesting Account Details"
 		}
 	},
 	"general": {

@@ -59,8 +59,9 @@ export function AppRoutes() {
                       {/* Streams routes (under refactor) */}
                       <Route path="/accounts/streams" element={<AccountsNewView />} />
                       <Route path="/vesting" element={<VestingView />} />
-                      <Route path="/vesting/:workflow" element={<VestingView />} />
-                      <Route path="/vesting/:workflow/:step" element={<VestingView />} />
+                      <Route path="/vesting/:address" element={<VestingView />} />
+                      <Route path="/vesting/:address/contracts" element={<VestingView />} />
+                      <Route path="/vesting/:address/contracts/:vestingContract" element={<VestingView />} />
                       {/* Exchange */}
                       <Route path="/exchange" element={<SwapView />} />
                       {(isProd() || isLocal()) && (
