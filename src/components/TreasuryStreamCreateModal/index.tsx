@@ -1350,7 +1350,7 @@ export const TreasuryStreamCreateModal = (props: {
         );
       })}
     </Menu>
-  );  
+  );
 
   return (
     <Modal
@@ -1483,15 +1483,83 @@ export const TreasuryStreamCreateModal = (props: {
           {(treasuryOption && treasuryOption.type === TreasuryType.Open) ? (
             <>
               <div className="form-label">{t('transactions.rate-and-frequency.amount-label')}</div>
+              <div className="two-column-form-layout col60x40 mb-3">
+                <div className="left">
+                  <div className="well mb-1">
+                    <div className="flex-fixed-left">
+                      <div className="left">
+                        <span className="add-on">
+                          {(selectedToken && tokenList) && (
+                            <Select className={`token-selector-dropdown ${props.associatedToken ? 'click-disabled' : ''}`} value={selectedToken.address} onChange={onTokenChange} bordered={false} showArrow={false}>
+                              {tokenList.map((option) => {
+                                if (option.address === NATIVE_SOL.address) {
+                                  return null;
+                                }
+                                return (
+                                  <Option key={option.address} value={option.address}>
+                                    <div className="option-container">
+                                      <TokenDisplay onClick={() => {}}
+                                        mintAddress={option.address}
+                                        name={option.name}
+                                        showCaretDown={props.associatedToken ? false : true}
+                                      />
+                                      <div className="balance">
+                                        {props.userBalances && props.userBalances[option.address] > 0 && (
+                                          <span>{getTokenAmountAndSymbolByTokenAddress(props.userBalances[option.address], option.address, true)}</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </Option>
+                                );
+                              })}
+                            </Select>
+                          )}
+                        </span>
+                      </div>
+                      <div className="right">
+                        <input
+                          className="general-text-input text-right"
+                          inputMode="decimal"
+                          autoComplete="off"
+                          autoCorrect="off"
+                          type="text"
+                          onChange={handlePaymentRateAmountChange}
+                          pattern="^[0-9]*[.,]?[0-9]*$"
+                          placeholder="0.0"
+                          minLength={1}
+                          maxLength={79}
+                          spellCheck="false"
+                          value={paymentRateAmount}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="right">
+                  <div className="well mb-0">
+                    <div className="flex-fixed-left">
+                      <div className="left">
+                        <Dropdown
+                          overlay={paymentRateOptionsMenu}
+                          trigger={["click"]}>
+                          <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
+                            <div className="left">
+                              <span className="capitalize-first-letter">{getPaymentRateOptionLabel(paymentRateFrequency, t)}{" "}</span>
+                            </div>
+                            <div className="right">
+                              <IconCaretDown className="mean-svg-icons" />
+                            </div>
+                          </span>
+                        </Dropdown>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </>
           ) : (
             <>
               <div className="form-label">TOTAL FUNDS TO COMMIT</div>
-            </>
-          )}
-
-          <div className="two-column-form-layout col60x40 mb-3">
-            <div className="left">
               <div className="well mb-1">
                 <div className="flex-fixed-left">
                   <div className="left">
@@ -1521,7 +1589,7 @@ export const TreasuryStreamCreateModal = (props: {
                           })}
                         </Select>
                       )}
-                      {(treasuryOption && treasuryOption.type === TreasuryType.Lock) && (
+                      {
                         selectedToken && unallocatedBalance ? (
                           <div
                             className="token-max simplelink"
@@ -1542,7 +1610,7 @@ export const TreasuryStreamCreateModal = (props: {
                             MAX
                           </div>
                         ) : null
-                      )}
+                      }
                     </span>
                   </div>
                   <div className="right">
@@ -1552,64 +1620,35 @@ export const TreasuryStreamCreateModal = (props: {
                       autoComplete="off"
                       autoCorrect="off"
                       type="text"
-                      onChange={(treasuryOption && treasuryOption.type === TreasuryType.Lock) ? handleFromCoinAmountChange : handlePaymentRateAmountChange}
+                      onChange={handleFromCoinAmountChange}
                       pattern="^[0-9]*[.,]?[0-9]*$"
                       placeholder="0.0"
                       minLength={1}
                       maxLength={79}
                       spellCheck="false"
-                      value={(treasuryOption && treasuryOption.type === TreasuryType.Lock) ? fromCoinAmount : paymentRateAmount}
+                      value={fromCoinAmount}
                     />
                   </div>
                 </div>
-                {(treasuryOption && treasuryOption.type === TreasuryType.Lock) && (
-                  <>
-                    <div className="flex-fixed-right">
-                      <div className="left inner-label">
-                        <span>{t('transactions.send-amount.label-right')}:</span>
-                        <span>
-                          {unallocatedBalance && selectedToken
-                            ? getAmountWithSymbol(
-                                makeDecimal(new BN(unallocatedBalance), selectedToken.decimals),
-                                selectedToken.address,
-                                true
-                              )
-                            : "0"
-                          }
-                        </span>
-                      </div>
-                      <div className="right inner-label">&nbsp;</div>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-            <div className="right">
-              <div className="well mb-0">
-                <div className="flex-fixed-left">
-                  <div className="left">
-                    <Dropdown
-                      overlay={paymentRateOptionsMenu}
-                      trigger={["click"]}>
-                      <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
-                        <div className="left">
-                          <span className="capitalize-first-letter">{getPaymentRateOptionLabel(paymentRateFrequency, t)}{" "}</span>
-                        </div>
-                        <div className="right">
-                          <IconCaretDown className="mean-svg-icons" />
-                        </div>
-                      </span>
-                    </Dropdown>
+                <div className="flex-fixed-right">
+                  <div className="left inner-label">
+                    <span>{t('transactions.send-amount.label-right')}:</span>
+                    <span>
+                      {unallocatedBalance && selectedToken
+                        ? getAmountWithSymbol(
+                            makeDecimal(new BN(unallocatedBalance), selectedToken.decimals),
+                            selectedToken.address,
+                            true
+                          )
+                        : "0"
+                      }
+                    </span>
                   </div>
+                  <div className="right inner-label">&nbsp;</div>
                 </div>
-                {(treasuryOption && treasuryOption.type === TreasuryType.Lock) && (
-                  <div className="flex-fixed-left">
-                    <div className="left inner-label">&nbsp;</div>
-                  </div>
-                )}
               </div>
-            </div>
-          </div>
+            </>
+          )}
 
           {/* Send date */}
           {(treasuryOption && treasuryOption.type === TreasuryType.Open) && (

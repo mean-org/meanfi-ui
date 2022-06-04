@@ -9,6 +9,12 @@ export class PerformanceCounter {
         this._timeLapseStop = 0;
     }
 
+    public reset() {
+        this._elapsedTime = 0;
+        this._timeLapseStart = 0;
+        this._timeLapseStop = 0;
+    }
+
     public start() {
         this._timeLapseStart = performance.now();
     }
