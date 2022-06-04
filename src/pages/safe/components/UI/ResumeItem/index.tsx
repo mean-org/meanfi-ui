@@ -149,7 +149,7 @@ export const ResumeItem = (props: {
                   </div>
                 ) : (
                   <div className="info-label">
-                    <span className="subtitle">No expires</span>
+                    <span className="subtitle">Does not expire</span>
                   </div>
                 )
               )
