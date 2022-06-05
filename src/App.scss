@@ -506,8 +506,18 @@ h1, h2, h3, h4, h5, h6 {
   width: 100%;
   min-height: 42px;
 }
+.menu-open .app-title > .app-logo {
+  position: fixed;
+  z-index: 2001;
+  left: 50%;
+  top: 13px;
+  transform: translateX(calc(-50% + 1px));
+}
+.menu-open main.ant-layout-content {
+  visibility: hidden;
+}
 .menu-open footer.ant-layout-footer {
-  display: none;
+  visibility: hidden;
 }
 footer.ant-layout-footer {
   padding: 0;
@@ -1422,7 +1432,7 @@ footer.ant-layout-footer {
       position: absolute;
       right: 0;
       top: -1rem;
-      z-index: 3;
+      z-index: 2001;
       &:hover span,
       span {
         background: transparent;
@@ -1445,7 +1455,7 @@ footer.ant-layout-footer {
       width: 100vw;
       padding: var(--main-navigation-bar-height) 0.5rem;
       background: linear-gradient(to bottom, var(--gradEnd), var(--gradStart));
-      z-index: 2;
+      z-index: 2000;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -4070,7 +4080,7 @@ main section {
   left: 0.8rem;
   background: none;
   color: var(--color-secondary-alpha-85);
-  z-index: 2000;
+  z-index: 101;
   @media (min-width: 576px) {
     display: none;
   }
@@ -5109,6 +5119,56 @@ main section {
       .activity-list {
         min-height: 80px;
         padding-top: 0.4rem;
+      }
+      .details-panel-meta {
+        .info-label {
+          width: 100%;
+          font-size: 0.8rem;
+          font-weight: 400;
+          color: var(--color-secondary-alpha-50);
+          margin-bottom: 0;
+        }
+        .info-data {
+          font-weight: 600;
+          color: var(--color-white);
+        }
+        .info-extra {
+          font-weight: 400;
+          color: var(--color-secondary-alpha-50);
+          line-height: 1;
+          margin-top: 2px;
+        }
+        .mean-svg-icons {
+          font-size: inherit;
+          color: inherit;
+        }
+        .transaction-list-row {
+          margin: 0 !important;
+          padding: 0 !important;
+          border: 0 !important;
+          .description-cell {
+            padding-left: 4px;
+            .title {
+              line-height: 1;
+              .badge.small {
+                vertical-align: 2px;
+              }
+            }
+            .subtitle {
+              display: flex;
+              flex-direction: row;
+              justify-content: flex-start;
+              align-items: center;
+              margin-top: 4px;
+              flex-wrap: wrap;
+            }
+          }
+        }
+      }
+      .cta-row {
+        button.ant-btn.ant-btn-round.ant-btn-sm {
+          min-width: 90px;
+        }
       }
     }
     @media (min-width: 768px) {

@@ -417,7 +417,6 @@ export const TreasuriesView = () => {
           }
         } else {
           setTreasuryDetails(undefined);
-          setTreasuryDetails(undefined);
           if (dock) {
             openNotification({
               title: t('notifications.error-title'),

@@ -1,4 +1,4 @@
-import { Treasury } from '@mean-dao/msp';
+import { Treasury, TreasuryType } from '@mean-dao/msp';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { Empty } from 'antd';
 import BN from 'bn.js';
@@ -7,7 +7,6 @@ import { useTranslation } from 'react-i18next';
 import { Identicon } from '../../../../components/Identicon';
 import { FALLBACK_COIN_IMAGE } from '../../../../constants';
 import { AppStateContext } from '../../../../contexts/appstate';
-import { consoleOut } from '../../../../utils/ui';
 import { formatThousands, getAmountWithSymbol, makeDecimal, shortenAddress } from '../../../../utils/utils';
 
 export const VestingLockAccountList = (props: {
@@ -18,6 +17,7 @@ export const VestingLockAccountList = (props: {
     const { streamingAccounts, selectedAccount, onAccountSelected } = props;
     const { t } = useTranslation('common');
     const {
+        theme,
         getTokenByMintAddress,
     } = useContext(AppStateContext);
 
@@ -31,6 +31,11 @@ export const VestingLockAccountList = (props: {
         return 0;
     }, []);
 
+    const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+        event.currentTarget.src = FALLBACK_COIN_IMAGE;
+        event.currentTarget.className = "error";
+    };
+
     return (
         <>
             {streamingAccounts && streamingAccounts.length > 0 ? (
@@ -39,12 +44,9 @@ export const VestingLockAccountList = (props: {
                     const token = associatedToken
                         ? getTokenByMintAddress(associatedToken as string)
                         : undefined;
-                    const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
-                        event.currentTarget.src = FALLBACK_COIN_IMAGE;
-                        event.currentTarget.className = "error";
-                    };
+                    const vcType = item.treasuryType;
                     const onTreasuryClick = () => {
-                        consoleOut('Selected streaming account:', item, 'blue');
+                        // consoleOut('Selected streaming account:', item, 'blue');
                         onAccountSelected(item);
                     };
                     return (
@@ -62,7 +64,12 @@ export const VestingLockAccountList = (props: {
                                 </div>
                             </div>
                             <div className="description-cell">
-                                <div className="title text-truncate">{item.name}</div>
+                                <div className="title text-truncate">
+                                    {item.name}
+                                    <span className={`badge small ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
+                                        {vcType === TreasuryType.Open ? 'Open' : 'Locked'}
+                                    </span>
+                                </div>
                                 <div className="subtitle text-truncate">
                                     {
                                         !item.totalStreams

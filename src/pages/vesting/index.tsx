@@ -5,19 +5,21 @@ import { AppStateContext } from "../../contexts/appstate";
 import { IconExternalLink } from "../../Icons";
 import { PreFooter } from "../../components/PreFooter";
 import { Button, Tooltip } from 'antd';
-import { consoleOut, copyText } from '../../utils/ui';
+import { consoleOut, copyText, isValidAddress } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
 import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
-import { Connection } from '@solana/web3.js';
+import { Connection, PublicKey } from '@solana/web3.js';
 import { MSP, Treasury } from '@mean-dao/msp';
 import "./style.scss";
 import { TokenInfo } from '@solana/spl-token-registry';
-import { WarningFilled } from '@ant-design/icons';
-import { openLinkInNewTab, shortenAddress } from '../../utils/utils';
+import { ArrowLeftOutlined, WarningFilled } from '@ant-design/icons';
+import { makeDecimal, openLinkInNewTab, shortenAddress } from '../../utils/utils';
 import { openNotification } from '../../components/Notifications';
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
 import { VestingLockCreateAccount } from './components/VestingLockCreateAccount';
 import { VestingLockAccountList } from './components/VestingLockAccountList';
+import { VestingContractDetails } from './components/VestingContractDetails';
+import BN from 'bn.js';
 
 export const VESTING_ROUTE_BASE_PATH = '/vesting';
 export type VestingWorkflowStep = "account-select" | "stream-create" | undefined;
@@ -30,7 +32,9 @@ export const VestingView = () => {
     selectedToken,
     detailsPanelOpen,
     streamV2ProgramAddress,
+    getTokenByMintAddress,
     setDtailsPanelOpen,
+    setEffectiveRate,
     setSelectedToken,
   } = useContext(AppStateContext);
   const location = useLocation();
@@ -48,6 +52,12 @@ export const VestingView = () => {
   const [vestingContractAddress, setVestingContractAddress] = useState<string>('');
   // Selected vesting contract
   const [selectedVestingContract, setSelectedVestingContract] = useState<Treasury | undefined>(undefined);
+  const [loadingTreasuryDetails, setLoadingTreasuryDetails] = useState(false);
+  const [autoOpenDetailsPanel, setAutoOpenDetailsPanel] = useState(true);
+
+  /////////////////////////
+  //  Setup & Init code  //
+  /////////////////////////
 
   // Perform premature redirects if no workflow was provided in path
   useEffect(() => {
@@ -104,27 +114,78 @@ export const VestingView = () => {
         "confirmed"
       );
     }
+    return undefined;
   }, [
     connectionConfig.endpoint,
     publicKey,
     streamV2ProgramAddress
   ]);
 
-  // Auto select a token
-  useEffect(() => {
+  /////////////////
+  //  Callbacks  //
+  /////////////////
 
-    if (tokenList && !selectedToken) {
-      setSelectedToken(tokenList.find(t => t.symbol === 'MEAN'));
+  const setCustomToken = useCallback((address: string) => {
+
+    if (address && isValidAddress(address)) {
+      const unkToken: TokenInfo = {
+        address: address,
+        name: 'Unknown',
+        chainId: 101,
+        decimals: 6,
+        symbol: shortenAddress(address),
+      };
+      setSelectedToken(unkToken);
+      consoleOut("token selected:", unkToken, 'blue');
+      setEffectiveRate(0);
     }
-
-    return () => { };
   }, [
-    tokenList,
-    selectedToken,
-    setSelectedToken
+    setEffectiveRate,
+    setSelectedToken,
   ]);
 
-  const getAllUserV2Treasuries = useCallback(async () => {
+  const openVestingContractById = useCallback((treasuryId: string, msp: MSP) => {
+
+    setLoadingTreasuryDetails(true);
+    const treasuryPk = new PublicKey(treasuryId);
+
+    return msp.getTreasury(treasuryPk)
+      .then((details: Treasury | undefined) => {
+        if (details) {
+          consoleOut('VestingContract details:', details, 'blue');
+          // const ata = details.associatedToken as string;
+          // const type = details.treasuryType;
+          // const token = getTokenByMintAddress(ata);
+          // consoleOut("treasury token:", token ? token.symbol : 'Custom', 'blue');
+          // if (token) {
+          //   if (!selectedToken || selectedToken.address !== token.address) {
+          //     setSelectedToken(token);
+          //   }
+          // } else if (!token && (!selectedToken || selectedToken.address !== ata)) {
+          //   setCustomToken(ata);
+          // }
+          // const tOption = TREASURY_TYPE_OPTIONS.find(t => t.type === type);
+          // if (tOption) {
+          //   setTreasuryOption(tOption);
+          // }
+          return details;
+        } else {
+          // setTreasuryDetails(undefined);
+          return undefined;
+        }
+      })
+      .catch((error: any) => {
+        console.error(error);
+        // setTreasuryDetails(undefined);
+        return undefined;
+      })
+      .finally(() => {
+        setLoadingTreasuryDetails(false);
+      });
+
+  }, []);
+
+  const getAllUserV2Accounts = useCallback(async () => {
 
     if (!connection || !publicKey || loadingTreasuries || !msp) { return []; }
 
@@ -139,7 +200,7 @@ export const VestingView = () => {
 
   }, [connection, loadingTreasuries, msp, publicKey]);
 
-  const refreshTreasuries = useCallback((reset = false) => {
+  const refreshVestingContracts = useCallback((reset = false) => {
     
     if (!connection || !publicKey || loadingTreasuries || !msp) { return; }
 
@@ -147,7 +208,7 @@ export const VestingView = () => {
       setLoadingTreasuries(true);
     });
 
-    getAllUserV2Treasuries()
+    getAllUserV2Accounts()
       .then(treasuries => {
         consoleOut('Streaming accounts:', treasuries, 'blue');
         setTreasuryList(treasuries);
@@ -157,41 +218,7 @@ export const VestingView = () => {
       })
       .finally(() => setLoadingTreasuries(false));
 
-  }, [connection, getAllUserV2Treasuries, loadingTreasuries, msp, publicKey]);
-
-  // Load treasuries once per page access
-  useEffect(() => {
-
-    if (!publicKey || treasuriesLoaded) { return; }
-
-    consoleOut('Calling refreshTreasuries...', '', 'blue');
-    setTreasuriesLoaded(true);
-    refreshTreasuries(true);
-
-  }, [publicKey, refreshTreasuries, treasuriesLoaded]);
-
-  // Set a vesting contract if passed-in via url if found in list of vesting contracts
-  // If not found or not provided, will pick the first one available via redirect
-  useEffect(() => {
-    if (publicKey && accountAddress && treasuryList && treasuryList.length > 0) {
-      let item: Treasury | undefined = undefined;
-      if (vestingContractAddress) {
-        item = treasuryList.find(i => i.id === vestingContractAddress);
-      }
-      if (item) {
-        setSelectedVestingContract(item);
-      } else {
-        // /vesting/:address/contracts/:vestingContract
-        const contractId = treasuryList[0].id.toString();
-        const url = `${VESTING_ROUTE_BASE_PATH}/${accountAddress}/contracts/${contractId}`;
-        navigate(url);
-      }
-    }
-  }, [accountAddress, navigate, publicKey, treasuryList, vestingContractAddress]);
-
-  ////////////////////////////
-  //   Events and actions   //
-  ////////////////////////////
+  }, [connection, getAllUserV2Accounts, loadingTreasuries, msp, publicKey]);
 
   const onSelectVestingContract = useCallback((item: Treasury | undefined) => {
     if (accountAddress && item) {
@@ -199,10 +226,10 @@ export const VestingView = () => {
       const contractId = item.id.toString();
       const url = `${VESTING_ROUTE_BASE_PATH}/${accountAddress}/contracts/${contractId}`;
       navigate(url);
+      setAutoOpenDetailsPanel(true);
     }
   }, [accountAddress, navigate]);
 
-  // Copy address to clipboard
   const copyAddressToClipboard = useCallback((address: any) => {
 
     if (!address) { return; }
@@ -220,6 +247,74 @@ export const VestingView = () => {
     }
 
   },[t])
+
+  /////////////////////
+  // Data management //
+  /////////////////////
+
+  // Auto select a token
+  useEffect(() => {
+
+    if (tokenList && !selectedToken) {
+      setSelectedToken(tokenList.find(t => t.symbol === 'MEAN'));
+    }
+
+    return () => { };
+  }, [
+    tokenList,
+    selectedToken,
+    setSelectedToken
+  ]);
+
+  // Load treasuries once per page access
+  useEffect(() => {
+
+    if (!publicKey || treasuriesLoaded) { return; }
+
+    consoleOut('Calling refreshTreasuries...', '', 'blue');
+    setTreasuriesLoaded(true);
+    refreshVestingContracts(true);
+
+  }, [publicKey, refreshVestingContracts, treasuriesLoaded]);
+
+  // Set a vesting contract if passed-in via url if found in list of vesting contracts
+  // If not found or not provided, will pick the first one available via redirect
+  useEffect(() => {
+    if (publicKey && accountAddress && treasuryList && treasuryList.length > 0) {
+      let item: Treasury | undefined = undefined;
+      if (vestingContractAddress) {
+        item = treasuryList.find(i => i.id === vestingContractAddress);
+      }
+      if (item) {
+        setSelectedVestingContract(item);
+        consoleOut('selectedVestingContract:', item, 'blue');
+        if (autoOpenDetailsPanel) {
+          setDtailsPanelOpen(true);
+        }
+      } else {
+        // /vesting/:address/contracts/:vestingContract
+        const contractId = treasuryList[0].id.toString();
+        const url = `${VESTING_ROUTE_BASE_PATH}/${accountAddress}/contracts/${contractId}`;
+        navigate(url);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    publicKey,
+    treasuryList,
+    accountAddress,
+    autoOpenDetailsPanel,
+    vestingContractAddress,
+  ]);
+
+  ////////////////////////////
+  //   Events and actions   //
+  ////////////////////////////
+
+  const onBackButtonClicked = () => {
+    setDtailsPanelOpen(false);
+    setAutoOpenDetailsPanel(false);
+  }
 
   ///////////////
   // Rendering //
@@ -240,6 +335,14 @@ export const VestingView = () => {
 
   return (
     <>
+      {detailsPanelOpen && (
+        <Button
+          id="back-button"
+          type="default"
+          shape="circle"
+          icon={<ArrowLeftOutlined />}
+          onClick={onBackButtonClicked}/>
+      )}
       <div className="container main-container">
         {publicKey ? (
           <div className="interaction-area">
@@ -308,7 +411,17 @@ export const VestingView = () => {
               <div className="meanfi-two-panel-right">
                 <div className="meanfi-panel-heading"><span className="title">{t('vesting.vesting-account-details.panel-title')}</span></div>
                 <div className="inner-container">
-                  <p>Details here</p>
+                  <div className="flexible-column-bottom">
+                    <div className="top">
+                      <VestingContractDetails
+                        vestingContract={selectedVestingContract}
+                      />
+                      {/* TODO: Render CTAs row here */}
+                    </div>
+                    <div className="bottom">
+                      Tabs here
+                    </div>
+                  </div>
                 </div>
               </div>
 

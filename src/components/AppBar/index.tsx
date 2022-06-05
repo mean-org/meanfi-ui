@@ -6,7 +6,6 @@ import { useWallet } from "../../contexts/wallet";
 import { AccountDetails } from "../AccountDetails";
 import { ConnectButton } from "../ConnectButton";
 import { AppContextMenu } from "../AppContextMenu";
-// import { CurrentBalance } from "../CurrentBalance";
 import { useConnectionConfig } from '../../contexts/connection';
 import { useTranslation } from 'react-i18next';
 import { AppStateContext } from '../../contexts/appstate';
@@ -121,11 +120,6 @@ export const AppBar = (props: {
       <Menu.Item key="/invest">
         <Link to="/invest">{t('ui-menus.main-menu.invest.submenu-title')}</Link>
       </Menu.Item>
-      {/* {(isLocal() || isWhitelisted) && (
-        <Menu.Item key="/multisig">
-          <Link to="/multisig">{t('ui-menus.main-menu.services.multisig')}</Link>
-        </Menu.Item>
-      )} */}
       <Menu.Item key="/multisig">
         <Link to="/multisig">{t('ui-menus.main-menu.services.multisig')}</Link>
       </Menu.Item>
@@ -204,21 +198,21 @@ export const AppBar = (props: {
                 <li key="invest" className={location.pathname === '/invest' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 3} as CustomCSSProps}>
                   <Link to="/invest">{t('ui-menus.main-menu.invest.submenu-title')}</Link>
                 </li>
-                <li key="/multisig" className={location.pathname === '/multisig' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 9} as CustomCSSProps}>
+                <li key="/multisig" className={location.pathname === '/multisig' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 4} as CustomCSSProps}>
                   <Link to="/multisig">{t('ui-menus.main-menu.services.multisig')}</Link>
                 </li>
                 <li key="/vesting" className={location.pathname === '/vesting' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 5} as CustomCSSProps}>
                   <Link to="/vesting">{t('ui-menus.main-menu.services.vesting')}</Link>
                 </li>
-                <li key="/custody" className={location.pathname === '/custody' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 5} as CustomCSSProps}>
+                <li key="/custody" className={location.pathname === '/custody' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 6} as CustomCSSProps}>
                   <Link to="/custody">{t('ui-menus.main-menu.services.custody')}</Link>
                 </li>
                 {!isProd() && (
-                  <li key="/faucet" className={location.pathname === '/faucet' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 6} as CustomCSSProps}>
+                  <li key="/faucet" className={location.pathname === '/faucet' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 7} as CustomCSSProps}>
                     <Link to="/faucet">{t('ui-menus.main-menu.services.faucet')}</Link>
                   </li>
                 )}
-                <li key="wallet-guide" className="mobile-menu-item" style={{'--animation-order': isProd() ? 6 : 7} as CustomCSSProps}>
+                <li key="wallet-guide" className="mobile-menu-item" style={{'--animation-order': 7} as CustomCSSProps}>
                   <a href={SOLANA_WALLET_GUIDE} target="_blank" rel="noopener noreferrer">
                     <span className="menu-item-text">{t('ui-menus.main-menu.services.wallet-guide')}</span>
                     &nbsp;<IconExternalLink className="mean-svg-icons link" />

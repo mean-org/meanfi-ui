@@ -4058,7 +4058,7 @@ export const AccountsNewView = () => {
     const tokenPrice = priceByAddress || getTokenPriceBySymbol(selectedAsset.symbol);
     return (
       <>
-        <div className="accounts-category-meta">
+        <div className="details-panel-meta">
           <div className="mb-2">
             <Row>
               <Col span={14}>
