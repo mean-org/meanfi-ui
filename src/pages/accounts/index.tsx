@@ -8,7 +8,7 @@ import {
   SyncOutlined,
   WarningFilled
 } from '@ant-design/icons';
-import { ConfirmOptions, Connection, Keypair, LAMPORTS_PER_SOL, ParsedTransactionMeta, PublicKey, Signer, SystemProgram, Transaction, TransactionInstruction, TransferWithSeedParams } from '@solana/web3.js';
+import { ConfirmOptions, Connection, Keypair, LAMPORTS_PER_SOL, ParsedTransactionMeta, PublicKey, Signer, SystemProgram, Transaction, TransactionInstruction } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
 import { TransactionItemView } from '../../components/TransactionItemView';
@@ -57,7 +57,7 @@ import { AddressDisplay } from '../../components/AddressDisplay';
 import { ReceiveSplOrSolModal } from '../../components/ReceiveSplOrSolModal';
 import { SendAssetModal } from '../../components/SendAssetModal';
 import { AccountAssetAction, EventType, InvestItemPaths, OperationType, TransactionStatus } from '../../models/enums';
-import { consoleOut, copyText, getTransactionStatusForLogs, isLocal, isValidAddress, kFormatter, toUsCurrency } from '../../utils/ui';
+import { consoleOut, copyText, getTransactionStatusForLogs, isValidAddress, kFormatter, toUsCurrency } from '../../utils/ui';
 import { WrapSolModal } from '../../components/WrapSolModal';
 import { UnwrapSolModal } from '../../components/UnwrapSolModal';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from '../../contexts/transaction-status';
@@ -569,6 +569,11 @@ export const AccountsNewView = () => {
     return transactions && transactions.length > 0 ? true : false;
   }, [transactions]);
 
+  const getNativeAccountAsset = useCallback(() => {
+    if (!accountAddress || !accountTokens) { return undefined; }
+    return accountTokens.find(a => a.publicAddress === accountAddress);
+  }, [accountAddress, accountTokens]);
+
   const getScanAddress = useCallback((asset: UserTokenAccount): PublicKey | null => {
     /**
      * If asset.ataAddress
@@ -614,11 +619,15 @@ export const AccountsNewView = () => {
       // Fetch SOL balance.
       connection.getBalance(pk)
         .then(solBalance => {
-          tokensCopy[0].balance = solBalance / LAMPORTS_PER_SOL;
-          tokensCopy[0].valueInUsd = (solBalance / LAMPORTS_PER_SOL) * getTokenPriceBySymbol(tokensCopy[0].symbol);
-          consoleOut('solBalance:', solBalance / LAMPORTS_PER_SOL, 'blue');
-          setAccountTokens(tokensCopy);
-          setSelectedAsset(tokensCopy[0]);
+          let itemIndex = -1;
+          itemIndex = tokensCopy.findIndex(t => t.publicAddress === selectedAsset.publicAddress);
+          if (itemIndex !== -1) {
+            tokensCopy[itemIndex].balance = solBalance / LAMPORTS_PER_SOL;
+            tokensCopy[itemIndex].valueInUsd = (solBalance / LAMPORTS_PER_SOL) * getTokenPriceBySymbol(tokensCopy[itemIndex].symbol);
+            consoleOut('solBalance:', solBalance / LAMPORTS_PER_SOL, 'blue');
+            setAccountTokens(tokensCopy);
+            setSelectedAsset(tokensCopy[itemIndex]);
+          }
         })
         .catch(error => {
           console.error(error);
@@ -3025,6 +3034,7 @@ export const AccountsNewView = () => {
                   consoleOut('Neither urlQueryAsset nor selectedAsset', 'beware!!!', 'red');
                   selectAsset(sortedList[0]);
                 }
+
                 consoleOut('category', selectedCategory, 'blue');
 
               } else {
@@ -3664,7 +3674,7 @@ export const AccountsNewView = () => {
     </>
   );
 
-  const renderAsset = (asset: UserTokenAccount, index: number) => {
+  const renderAsset = useCallback((asset: UserTokenAccount, index: number) => {
     const onTokenAccountClick = () => {
       setSelectedCategory("assets");
       navigateToAsset(asset);
@@ -3729,7 +3739,14 @@ export const AccountsNewView = () => {
         </div>
       </div>
     );
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    theme,
+    selectedAsset,
+    hideLowBalances,
+    selectedCategory,
+    shouldHideAsset,
+  ]);
 
   const renderAssetsList = (
     <>
