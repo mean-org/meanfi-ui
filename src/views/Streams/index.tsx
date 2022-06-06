@@ -2417,6 +2417,7 @@ export const Streams = () => {
         const treasury = new PublicKey((streamDetail as StreamInfo).treasuryAddress as string);
         const contributorMint = new PublicKey(streamDetail.associatedToken as string);
         const amount = parseFloat(addFundsData.amount);
+        const price = selectedToken ? getTokenPriceBySymbol(selectedToken.symbol) : 0;
         setAddFundsPayload(addFundsData);
 
         const data = {
@@ -2435,8 +2436,9 @@ export const Streams = () => {
           contributor: data.contributor,
           treasury: data.treasury,
           asset: token ? `${token} [${data.contributorMint}]` : data.contributorMint,
-          assetPrice: selectedToken ? getTokenPriceBySymbol(selectedToken.symbol) : 0,
-          amount
+          assetPrice: price,
+          amount,
+          valueInUsd: price * amount
         };
         consoleOut('segment data:', segmentData, 'brown');
         segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupApproveFormButton, segmentData);
@@ -2542,6 +2544,7 @@ export const Streams = () => {
       const treasury = new PublicKey((streamDetail as Stream).treasury as string);
       const associatedToken = new PublicKey(streamDetail.associatedToken as string);
       const amount = addFundsData.tokenAmount;
+      const price = selectedToken ? getTokenPriceBySymbol(selectedToken.symbol) : 0;
       setAddFundsPayload(addFundsData);
 
       const data = {
@@ -2561,8 +2564,9 @@ export const Streams = () => {
         asset: selectedToken
           ? `${selectedToken.symbol} [${selectedToken.address}]`
           : associatedToken.toBase58(),
-        assetPrice: selectedToken ? getTokenPriceBySymbol(selectedToken.symbol) : 0,
-        amount: parseFloat(addFundsData.amount)
+        assetPrice: price,
+        amount: parseFloat(addFundsData.amount),
+        valueInUsd: price * parseFloat(addFundsData.amount)
       };
       consoleOut('segment data:', segmentData, 'brown');
       segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupApproveFormButton, segmentData);
@@ -3603,6 +3607,7 @@ export const Streams = () => {
           currentOperation: TransactionStatus.InitTransaction
         });
         const streamPublicKey = new PublicKey(streamDetail.id as string);
+        const price = selectedToken ? getTokenPriceBySymbol(selectedToken.symbol) : 0;
 
         const data = {
           stream: streamPublicKey.toBase58(),                         // stream
@@ -3614,13 +3619,14 @@ export const Streams = () => {
         // Report event to Segment analytics
         const segmentData: SegmentStreamCloseData = {
           asset: selectedToken ? selectedToken.symbol : '-',
-          assetPrice: selectedToken ? getTokenPriceBySymbol(selectedToken.symbol) : 0,
+          assetPrice: price,
           stream: data.stream,
           initializer: data.initializer,
           closeTreasury: data.autoCloseTreasury,
           vestedReturns: closeTreasuryData.vestedReturns,
           unvestedReturns: closeTreasuryData.unvestedReturns,
-          feeAmount: closeTreasuryData.feeAmount
+          feeAmount: closeTreasuryData.feeAmount,
+          valueInUsd: price * (closeTreasuryData.vestedReturns + closeTreasuryData.unvestedReturns) // TODO: Review and validate
         };
         consoleOut('segment data:', segmentData, 'brown');
         segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseStreamFormButton, segmentData);
@@ -3710,6 +3716,7 @@ export const Streams = () => {
           currentOperation: TransactionStatus.InitTransaction
         });
         const streamPublicKey = new PublicKey(streamDetail.id as string);
+        const price = selectedToken ? getTokenPriceBySymbol(selectedToken.symbol) : 0;
 
         const data = {
           stream: streamPublicKey.toBase58(),                         // stream
@@ -3727,7 +3734,8 @@ export const Streams = () => {
           closeTreasury: data.autoCloseTreasury,
           vestedReturns: closeTreasuryData.vestedReturns,
           unvestedReturns: closeTreasuryData.unvestedReturns,
-          feeAmount: closeTreasuryData.feeAmount
+          feeAmount: closeTreasuryData.feeAmount,
+          valueInUsd: price * (closeTreasuryData.vestedReturns + closeTreasuryData.unvestedReturns) // TODO: Review and validate
         };
         consoleOut('segment data:', segmentData, 'brown');
         segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseStreamFormButton, segmentData);
