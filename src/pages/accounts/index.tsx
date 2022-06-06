@@ -1599,7 +1599,7 @@ export const AccountsNewView = () => {
 
       const tx = await multisigClient.createTransaction(
         publicKey,
-        "Transfer Asset Funds",
+        "Propose funds transfer",
         "", // description
         new Date(expirationTime * 1_000),
         OperationType.TransferTokens,
@@ -1913,7 +1913,7 @@ export const AccountsNewView = () => {
 
       const tx = await multisigClient.createTransaction(
         publicKey,
-        "Change Asset Authority",
+        "Change asset ownership",
         "", // description
         new Date(expirationTime * 1_000),
         OperationType.SetAssetAuthority,
@@ -2249,7 +2249,7 @@ export const AccountsNewView = () => {
 
       const tx = await multisigClient.createTransaction(
         publicKey,
-        "Close Asset",
+        "Close asset",
         "", // description
         new Date(expirationTime * 1_000),
         OperationType.DeleteAsset,

@@ -2148,7 +2148,7 @@ export const TreasuriesView = () => {
 
       const tx = await multisigClient.createTransaction(
         publicKey,
-        "Streaming account",
+        "Create streaming account",
         "", // description
         new Date(expirationTime * 1_000),
         OperationType.TreasuryCreate,
