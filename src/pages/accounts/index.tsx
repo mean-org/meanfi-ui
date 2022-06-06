@@ -632,7 +632,8 @@ export const AccountsNewView = () => {
         .then(tokenAmount => {
           const balance = tokenAmount.value.uiAmount;
           consoleOut('balance:', balance, 'blue');
-          const valueInUSD = (balance || 0) * getTokenPriceByAddress(selectedAsset.address);
+          const price = getTokenPriceByAddress(selectedAsset.address) || getTokenPriceBySymbol(selectedAsset.symbol)
+          const valueInUSD = (balance || 0) * price;
           consoleOut('valueInUSD:', valueInUSD, 'blue');
           // Find the token and update it if found
           itemIndex = tokensCopy.findIndex(t => t.publicAddress === selectedAsset.publicAddress);
@@ -2736,10 +2737,12 @@ export const AccountsNewView = () => {
 
     let accountTypeInQuery: string | null = null;
     // Get the account-type if passed-in
-    if (searchParams && searchParams.toString()) {
+    if (searchParams) {
       accountTypeInQuery = searchParams.get('account-type');
+      if (accountTypeInQuery) {
+        consoleOut('account-type:', searchParams.get('account-type'), 'crimson');
+      }
       consoleOut('searchParams:', searchParams.toString(), 'crimson');
-      consoleOut('account-type:', searchParams.get('account-type'), 'crimson');
     }
 
     switch (accountTypeInQuery as InspectedAccountType) {
