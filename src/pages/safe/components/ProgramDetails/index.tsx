@@ -59,7 +59,7 @@ export const ProgramDetailsView = (props: {
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [/*ongoingOperation*/, setOngoingOperation] = useState<OperationType | undefined>(undefined);
   const [/*retryOperationPayload*/, setRetryOperationPayload] = useState<any>(undefined);
-  const [selectedProgram, setSelectedProgram] = useState<ProgramAccounts | undefined>(undefined);
+  // const [selectedProgram, setSelectedProgram] = useState<ProgramAccounts | undefined>(undefined);
   const [selectedProgramIdl, setSelectedProgramIdl] = useState<any>(null);
   const [loadingTxs, setLoadingTxs] = useState(true);
   const noIdlInfo = "The program IDL is not initialized. To load the IDL info please run `anchor idl init` with the required parameters from your program workspace.";
@@ -1081,7 +1081,7 @@ export const ProgramDetailsView = (props: {
           transactionFees={transactionFees}
           handleOk={onAcceptUpgradeProgram}
           handleClose={() => setIsUpgradeProgramModalVisible(false)}
-          programId={selectedProgram?.pubkey.toBase58()}
+          programId={programSelected?.pubkey.toBase58()}
           isBusy={isBusy}
           programAddress={programSelected.pubkey.toBase58()}
         />
@@ -1094,7 +1094,7 @@ export const ProgramDetailsView = (props: {
           transactionFees={transactionFees}
           handleOk={onAcceptSetProgramAuth}
           handleClose={() => setIsSetProgramAuthModalVisible(false)}
-          programId={selectedProgram?.pubkey.toBase58()}
+          programId={programSelected?.pubkey.toBase58()}
           isBusy={isBusy}
         />
       )}
