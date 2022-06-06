@@ -81,11 +81,11 @@
 
         .description-cell {
             flex: auto !important;
-            min-width: unset;
+            min-width: unset !important;
         }
 
         .rate-cell {
-            flex: 0 1 146px !important;
+            flex: 0 0 140px !important;
             padding: 0 !important;
         }
 

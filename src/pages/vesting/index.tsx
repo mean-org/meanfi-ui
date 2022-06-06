@@ -207,9 +207,8 @@ export const VestingView = () => {
     });
 
     const treasuries = await msp.listTreasuries(publicKey);
-    treasuries.filter((t: any) => !t.autoClose);
 
-    return treasuries;
+    return treasuries.filter((t: any) => !t.autoClose);
 
   }, [connection, loadingTreasuries, msp, publicKey]);
 
