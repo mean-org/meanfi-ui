@@ -1,4 +1,4 @@
-import { useCallback, useContext, useMemo } from 'react';
+import { useCallback, useContext, useMemo, useRef } from 'react';
 import {
   LoadingOutlined,
   ReloadOutlined,
@@ -117,6 +117,7 @@ export const SafeView = () => {
   } = useContext(AppStateContext);
   const {
     fetchTxInfoStatus,
+    confirmationHistory,
     lastSentTxSignature,
     lastSentTxOperationType,
     startFetchTxSignatureInfo,
@@ -234,6 +235,11 @@ export const SafeView = () => {
     wallet
   ]);
 
+  const selectedMultisigRef = useRef(selectedMultisig);
+  useEffect(() => {
+    selectedMultisigRef.current = selectedMultisig;
+  }, [selectedMultisig]);
+
   const resetTransactionStatus = useCallback(() => {
 
     setTransactionStatus({
@@ -244,6 +250,22 @@ export const SafeView = () => {
   }, [
     setTransactionStatus
   ]);
+
+  // Search for pending proposal in confirmation history
+  const hasMultisigPendingProposal = useCallback(() => {
+    if (!selectedMultisigRef || !selectedMultisigRef.current) { return false; }
+
+    if (confirmationHistory && confirmationHistory.length > 0) {
+
+      const item = confirmationHistory.find(h => h.extras && h.extras.multisigId && h.extras.multisigId.toBase58() === selectedMultisigRef.current?.id.toBase58() && h.txInfoFetchStatus === "fetching");
+
+      if (item) {
+        return true;
+      }
+    }
+
+    return false;
+  }, [confirmationHistory]);
 
   const onCreateMultisigClick = useCallback(() => {
 
@@ -2714,7 +2736,10 @@ export const SafeView = () => {
               loadingMessage: `Execute proposal: ${data.transaction.details.title}`,
               completedTitle: "Transaction confirmed",
               completedMessage: `Successfully executed proposal: ${data.transaction.details.title}`,
-              extras: data.transaction.multisig.toBase58()
+              extras: {
+                multisigId: data.transaction.multisig,
+                transactionId: data.transaction.id
+              }
             });
           } else {
             showMultisigTxResultModal();
@@ -3119,7 +3144,7 @@ export const SafeView = () => {
         multisigClient
           .getMultisig(new PublicKey(id))
           .then((multisig: MultisigInfo | null) => setSelectedMultisig(multisig || undefined))
-          .catch((err: any) => console.error(err));    
+          .catch((err: any) => console.error(err));
       }
     };
 
@@ -3876,6 +3901,7 @@ export const SafeView = () => {
                             solanaApps={solanaApps}
                             appsProvider={appsProvider}
                             multisigClient={multisigClient}
+                            hasMultisigPendingProposal={hasMultisigPendingProposal()}
                           />
                         )}
                         {isProgramDetails && (

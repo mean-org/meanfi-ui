@@ -33,7 +33,7 @@ export const ProposalDetailsView = (props: {
   appsProvider?: any;
   onOperationStarted: any;
   multisigClient?: MeanMultisig | undefined;
-
+  hasMultisigPendingProposal?: boolean;
 }) => {
 
   // const { isWhitelisted } = useContext(AppStateContext);
@@ -50,8 +50,8 @@ export const ProposalDetailsView = (props: {
     selectedMultisig, 
     onProposalApprove, 
     onProposalExecute,
-    onOperationStarted
-
+    onOperationStarted,
+    hasMultisigPendingProposal
   } = props;
 
   const [selectedProposal, setSelectedProposal] = useState<MultisigTransaction>(proposalSelected);
@@ -400,7 +400,6 @@ export const ProposalDetailsView = (props: {
     selectedProposal &&
     selectedProposal.proposer && 
     selectedProposal.proposer.toBase58() === publicKey?.toBase58()
-
   ) ? true : false;
 
   if (!selectedProposal.proposer) { return (<></>); }
@@ -487,7 +486,7 @@ export const ProposalDetailsView = (props: {
                 shape="round"
                 size="small"
                 className="thin-stroke"
-                disabled={selectedProposal.didSigned || selectedProposal.status !== MultisigTransactionStatus.Pending}
+                disabled={selectedProposal.didSigned || hasMultisigPendingProposal}
                 onClick={() => {
                   const operation = { transaction: selectedProposal };
                   onOperationStarted(operation)
@@ -498,13 +497,14 @@ export const ProposalDetailsView = (props: {
                     Approve
                   </div>
               </Button>
-            ) : selectedProposal.status === MultisigTransactionStatus.Approved || selectedProposal.status !== MultisigTransactionStatus.Executed ? (
+            ) : approvedSigners === selectedMultisig.threshold && selectedProposal.status !== MultisigTransactionStatus.Executed ? (
               anyoneCanExecuteTx() || (!anyoneCanExecuteTx() && isProposer) ? (
                 <Button
                   type="default"
                   shape="round"
                   size="small"
                   className="thin-stroke d-flex justify-content-center align-items-center"
+                  disabled={hasMultisigPendingProposal}
                   onClick={() => {
                     const operation = { transaction: selectedProposal }
                     onOperationStarted(operation)
