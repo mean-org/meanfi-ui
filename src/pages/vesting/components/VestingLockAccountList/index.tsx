@@ -1,13 +1,13 @@
 import { Treasury, TreasuryType } from '@mean-dao/msp';
-import { TokenInfo } from '@solana/spl-token-registry';
 import { Empty } from 'antd';
-import BN from 'bn.js';
-import React, { useCallback, useContext } from 'react';
+import React, { useContext } from 'react';
 import { useTranslation } from 'react-i18next';
+import { AddressDisplay } from '../../../../components/AddressDisplay';
 import { Identicon } from '../../../../components/Identicon';
-import { FALLBACK_COIN_IMAGE } from '../../../../constants';
+import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../../../constants';
 import { AppStateContext } from '../../../../contexts/appstate';
-import { formatThousands, getAmountWithSymbol, makeDecimal, shortenAddress } from '../../../../utils/utils';
+import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
+import { formatThousands } from '../../../../utils/utils';
 
 export const VestingLockAccountList = (props: {
     streamingAccounts: Treasury[] | undefined;
@@ -21,15 +21,15 @@ export const VestingLockAccountList = (props: {
         getTokenByMintAddress,
     } = useContext(AppStateContext);
 
-    const getAvailableStreamingBalance = useCallback((item: Treasury, token: TokenInfo | undefined) => {
-        if (item) {
-            const decimals = token ? token.decimals : 6;
-            const unallocated = item.balance - item.allocationAssigned;
-            const ub = makeDecimal(new BN(unallocated), decimals);
-            return ub;
-        }
-        return 0;
-    }, []);
+    // const getAvailableStreamingBalance = useCallback((item: Treasury, token: TokenInfo | undefined) => {
+    //     if (item) {
+    //         const decimals = token ? token.decimals : 6;
+    //         const unallocated = item.balance - item.allocationAssigned;
+    //         const ub = makeDecimal(new BN(unallocated), decimals);
+    //         return ub;
+    //     }
+    //     return 0;
+    // }, []);
 
     const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
         event.currentTarget.src = FALLBACK_COIN_IMAGE;
@@ -71,7 +71,16 @@ export const VestingLockAccountList = (props: {
                                     </span>
                                 </div>
                                 <div className="subtitle text-truncate">
-                                    {
+                                    <span className="mr-1">Sending #,###.00 {token?.symbol} per ###</span>
+                                    <AddressDisplay
+                                        address={item.id as string}
+                                        prefix="("
+                                        suffix=")"
+                                        maxChars={5}
+                                        iconStyles={{ width: "15", height: "15" }}
+                                        newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${item.id}${getSolanaExplorerClusterParam()}`}
+                                    />
+                                    {/* {
                                         !item.totalStreams
                                             ? 'No streams'
                                             : `${formatThousands(item.totalStreams)} ${
@@ -85,19 +94,14 @@ export const VestingLockAccountList = (props: {
                                                         ? 'streams'
                                                         : 'stream'
                                                 }`
-                                    }
+                                    } */}
                                 </div>
                             </div>
-                            <div className="rate-cell text-center">
+                            <div className="rate-cell">
                                 <div className="rate-amount">
-                                    {
-                                        getAmountWithSymbol(
-                                            getAvailableStreamingBalance(item, token),
-                                            token ? token.address : ''
-                                        )
-                                    }
+                                    {formatThousands(item.totalStreams)}
                                 </div>
-                                <div className="interval">Available streaming balance</div>
+                                <div className="interval">streams</div>
                             </div>
                         </div>
                     );

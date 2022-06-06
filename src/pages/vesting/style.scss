@@ -82,6 +82,11 @@
         .description-cell {
             flex: auto !important;
             min-width: unset !important;
+            .subtitle {
+                .flex-fixed-left {
+                    display: inline-flex;
+                }
+            }
         }
 
         .rate-cell {
