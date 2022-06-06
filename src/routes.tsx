@@ -62,6 +62,7 @@ export function AppRoutes() {
                       <Route path="/vesting/:address" element={<VestingView />} />
                       <Route path="/vesting/:address/contracts" element={<VestingView />} />
                       <Route path="/vesting/:address/contracts/:vestingContract" element={<VestingView />} />
+                      <Route path="/vesting/:address/contracts/:vestingContract/:activeTab" element={<VestingView />} />
                       {/* Exchange */}
                       <Route path="/exchange" element={<SwapView />} />
                       {(isProd() || isLocal()) && (

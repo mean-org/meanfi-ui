@@ -1,4 +1,5 @@
 import { AllocationType } from "@mean-dao/money-streaming";
+import { MetaInfoCtaAction } from "./enums";
 import { StreamTreasuryType } from "./treasuries";
 
 export interface SelectOption {
@@ -35,4 +36,15 @@ export class Allocation {
     cliffPercent!: number;
     monthlyRate!: number;
     isAirdropCompleted!: boolean;
+}
+
+export interface MetaInfoCta {
+    action: MetaInfoCtaAction;
+    isVisible: boolean;
+    disabled: boolean;
+    caption: string;
+    uiComponentType: "button" | "menuitem";
+    uiComponentId: string;
+    tooltip: string;
+    callBack?: any;
 }

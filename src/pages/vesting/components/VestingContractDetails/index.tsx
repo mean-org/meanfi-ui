@@ -1,21 +1,19 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { TokenInfo } from '@solana/spl-token-registry';
-import { Col, Row } from 'antd';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { Treasury, TreasuryType } from '@mean-dao/msp';
 import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, WRAPPED_SOL_MINT_ADDRESS } from '../../../../constants';
 import { getAmountWithSymbol, makeDecimal, shortenAddress } from '../../../../utils/utils';
-import BN from 'bn.js';
 import { Identicon } from '../../../../components/Identicon';
 import { AddressDisplay } from '../../../../components/AddressDisplay';
 import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
+import BN from 'bn.js';
+import { Col, Row } from 'antd';
 
 export const VestingContractDetails = (props: {
     vestingContract: Treasury | undefined;
 }) => {
     const { vestingContract } = props;
-    const { t } = useTranslation('common');
     const {
         theme,
         getTokenByMintAddress,
@@ -100,46 +98,44 @@ export const VestingContractDetails = (props: {
     return (
         <>
             {vestingContract && (
-                <div className="details-panel-meta">
+                <div className="details-panel-meta mb-2">
 
-                    <div className="mb-3">
-                        <Row gutter={8}>
-                            <Col xs={24} sm={17} md={16} lg={17}>
-                                {renderStreamingAccount(vestingContract)}
-                                {/* <div className="info-label text-truncate">
-                                    {t('treasuries.treasury-detail.treasury-address-label')}
+                    <Row gutter={8}>
+                        <Col xs={24} sm={17} md={16} lg={17}>
+                            {renderStreamingAccount(vestingContract)}
+                            {/* <div className="info-label text-truncate">
+                                {t('treasuries.treasury-detail.treasury-address-label')}
+                            </div>
+                            <div className="transaction-detail-row">
+                                <span className="info-icon">
+                                    <IconShieldOutline className="mean-svg-icons" />
+                                </span>
+                                <div onClick={() => copyAddressToClipboard(vestingContract.id)}
+                                    className="info-data flex-row wrap align-items-center simplelink underline-on-hover"
+                                    style={{ cursor: 'pointer', fontSize: '1.1rem' }}>
+                                    {shortenAddress(vestingContract.id as string, 8)}
                                 </div>
-                                <div className="transaction-detail-row">
-                                    <span className="info-icon">
-                                        <IconShieldOutline className="mean-svg-icons" />
-                                    </span>
-                                    <div onClick={() => copyAddressToClipboard(vestingContract.id)}
-                                        className="info-data flex-row wrap align-items-center simplelink underline-on-hover"
-                                        style={{ cursor: 'pointer', fontSize: '1.1rem' }}>
-                                        {shortenAddress(vestingContract.id as string, 8)}
-                                    </div>
-                                </div> */}
-                            </Col>
-                            <Col xs={24} sm={7} md={8} lg={7}>
-                                <div className="info-label text-truncate line-height-110">
-                                    Available for new streams
-                                </div>
-                                <div className="transaction-detail-row">
-                                    {/* <span className="info-icon">
-                                        <IconBank className="mean-svg-icons" />
-                                    </span> */}
-                                    <span className="info-data line-height-110">
-                                        {
-                                            getAmountWithSymbol(
-                                                getAvailableStreamingBalance(vestingContract, selectedToken),
-                                                selectedToken ? selectedToken.address : ''
-                                            )
-                                        }
-                                    </span>
-                                </div>
-                            </Col>
-                        </Row>
-                    </div>
+                            </div> */}
+                        </Col>
+                        <Col xs={24} sm={7} md={8} lg={7}>
+                            <div className="info-label text-truncate line-height-110">
+                                Available for new streams
+                            </div>
+                            <div className="transaction-detail-row">
+                                {/* <span className="info-icon">
+                                    <IconBank className="mean-svg-icons" />
+                                </span> */}
+                                <span className="info-data line-height-110">
+                                    {
+                                        getAmountWithSymbol(
+                                            getAvailableStreamingBalance(vestingContract, selectedToken),
+                                            selectedToken ? selectedToken.address : ''
+                                        )
+                                    }
+                                </span>
+                            </div>
+                        </Col>
+                    </Row>
 
                 </div>
             )}

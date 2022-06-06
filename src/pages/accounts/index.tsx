@@ -56,7 +56,7 @@ import { openNotification } from '../../components/Notifications';
 import { AddressDisplay } from '../../components/AddressDisplay';
 import { ReceiveSplOrSolModal } from '../../components/ReceiveSplOrSolModal';
 import { SendAssetModal } from '../../components/SendAssetModal';
-import { AccountAssetAction, EventType, InvestItemPaths, OperationType, TransactionStatus } from '../../models/enums';
+import { MetaInfoCtaAction, EventType, InvestItemPaths, OperationType, TransactionStatus } from '../../models/enums';
 import { consoleOut, copyText, getTransactionStatusForLogs, isValidAddress, kFormatter, toUsCurrency } from '../../utils/ui';
 import { WrapSolModal } from '../../components/WrapSolModal';
 import { UnwrapSolModal } from '../../components/UnwrapSolModal';
@@ -87,23 +87,13 @@ import { MultisigVaultDeleteModal } from '../../components/MultisigVaultDeleteMo
 import { useNativeAccount } from '../../contexts/accounts';
 import { MultisigCreateAssetModal } from '../../components/MultisigCreateAssetModal';
 import { STREAMS_ROUTE_BASE_PATH } from '../../views/Streams';
+import { MetaInfoCta } from '../../models/common-types';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export type InspectedAccountType = "multisig" | "streaming-account" | undefined;
 export type CategoryOption = "networth" | "assets" | "msigs" | "other-assets";
 export type OtherAssetsOption = "msp-streams" | "msp-treasuries" | "orca" | "solend" | "friktion" | undefined;
 export const ACCOUNTS_ROUTE_BASE_PATH = '/accounts';
-
-interface AssetCta {
-  action: AccountAssetAction;
-  isVisible: boolean;
-  disabled: boolean;
-  caption: string;
-  uiComponentType: "button" | "menuitem";
-  uiComponentId: string;
-  tooltip: string;
-  callBack?: any;
-}
 
 export const AccountsNewView = () => {
   const location = useLocation();
@@ -184,7 +174,7 @@ export const AccountsNewView = () => {
   const [treasuriesTvl, setTreasuriesTvl] = useState(0);
   const [isUnwrapping, setIsUnwrapping] = useState(false);
   const [urlQueryAsset, setUrlQueryAsset] = useState('');
-  const [assetCtas, setAssetCtas] = useState<AssetCta[]>([]);
+  const [assetCtas, setAssetCtas] = useState<MetaInfoCta[]>([]);
   const [multisigSolBalance, setMultisigSolBalance] = useState<number | undefined>(undefined);
 
   // Flow control
@@ -2514,43 +2504,23 @@ export const AccountsNewView = () => {
     }
   }, [width]);
 
-  /**
-   * - No CTAs if it is a custom token or we don't know the asset's token
-   * - No Buy if the asset is wSOL
-   * 
-   * isBuyCtaAvailable()      -> For the selected asset.
-   * isExchangeCtaAvailable() -> For the selected asset.
-   * isInvestCtaAvailable()   -> For the selected asset.
-   * isReceiveCtaAvailable()  -> For the selected asset.
-   * 
-   * 1. If the token is a custom token:
-   * - Only available actions Close and Refresh inside ellipsis
-   * 2. If wSOL token
-   * - Actions available: Send, Receive and Unwrap
-   * 3. If the token has no Activities
-   * - Actions available: Receive, Exchange, Buy
-   * 3. If the user has token balance:
-   * - Send and Buy are both enable
-   * 4. If the user has No token balance, but has token activity:
-   * Buy is always available unless is a custom token or wSOL
-   */
-
-   useEffect(() => {
+  // Build CTAs
+  useEffect(() => {
     if (!selectedAsset) { return; }
 
     const numMaxCtas = isXsDevice ? 2 : 5;
     const isCustomAsset = selectedAsset.name === 'Custom account' ? true : false;
-    const actions: AssetCta[] = [];
+    const actions: MetaInfoCta[] = [];
     let ctaItems = 0;
 
     // Send
     actions.push({
-      action: AccountAssetAction.Send,
+      action: MetaInfoCtaAction.Send,
       isVisible: isCustomAsset ? false : true,
       caption: 'Send',
       disabled: !isInspectedAccountTheConnectedWallet(),
       uiComponentType: 'button',
-      uiComponentId: `button-${AccountAssetAction.Send}`,
+      uiComponentId: `button-${MetaInfoCtaAction.Send}`,
       tooltip: '',
       callBack: onSendAsset
     });
@@ -2559,12 +2529,12 @@ export const AccountsNewView = () => {
     // UnwrapSol
     if (isInspectedAccountTheConnectedWallet() && isSelectedAssetWsol() && wSolBalance > 0) {
       actions.push({
-        action: AccountAssetAction.UnwrapSol,
+        action: MetaInfoCtaAction.UnwrapSol,
         caption: 'Unwrap',
         isVisible: isInspectedAccountTheConnectedWallet() && isSelectedAssetWsol(),
         uiComponentType: 'button',
         disabled: false,
-        uiComponentId: `button-${AccountAssetAction.UnwrapSol}`,
+        uiComponentId: `button-${MetaInfoCtaAction.UnwrapSol}`,
         tooltip: '',
         callBack: showUnwrapSolModal
       });
@@ -2573,12 +2543,12 @@ export const AccountsNewView = () => {
 
     // Buy
     actions.push({
-      action: AccountAssetAction.Buy,
+      action: MetaInfoCtaAction.Buy,
       caption: 'Buy',
       isVisible: !isSelectedAssetWsol(),
       uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
       disabled: false,
-      uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${AccountAssetAction.Buy}`,
+      uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Buy}`,
       tooltip: '',
       callBack: showDepositOptionsModal
     });
@@ -2586,12 +2556,12 @@ export const AccountsNewView = () => {
 
     // Deposit
     actions.push({
-      action: AccountAssetAction.Deposit,
+      action: MetaInfoCtaAction.Deposit,
       caption: 'Deposit',
       isVisible: true,
       uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
       disabled: false,
-      uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${AccountAssetAction.Deposit}`,
+      uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Deposit}`,
       tooltip: '',
       callBack: showReceiveSplOrSolModal
     });
@@ -2599,12 +2569,12 @@ export const AccountsNewView = () => {
 
     // Exchange
     actions.push({
-      action: AccountAssetAction.Exchange,
+      action: MetaInfoCtaAction.Exchange,
       caption: 'Exchange',
       isVisible: isInspectedAccountTheConnectedWallet() && !isSelectedAssetWsol(),
       uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
       disabled: false,
-      uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${AccountAssetAction.Exchange}`,
+      uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Exchange}`,
       tooltip: '',
       callBack: onExchangeAsset
     });
@@ -2612,12 +2582,12 @@ export const AccountsNewView = () => {
 
     // Invest
     actions.push({
-      action: AccountAssetAction.Invest,
+      action: MetaInfoCtaAction.Invest,
       caption: 'Invest',
       isVisible: investButtonEnabled() && !isSelectedAssetWsol(),
       uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
       disabled: false,
-      uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${AccountAssetAction.Invest}`,
+      uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.Invest}`,
       tooltip: '',
       callBack: handleGoToInvestClick
     });
@@ -2626,12 +2596,12 @@ export const AccountsNewView = () => {
     // Wrap
     if (isInspectedAccountTheConnectedWallet() && isSelectedAssetNativeAccount() && isWhitelisted) {
       actions.push({
-        action: AccountAssetAction.WrapSol,
+        action: MetaInfoCtaAction.WrapSol,
         caption: 'Wrap',
         isVisible: true,
         uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
         disabled: false,
-        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${AccountAssetAction.WrapSol}`,
+        uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.WrapSol}`,
         tooltip: '',
         callBack: showWrapSolModal
       });
@@ -2640,12 +2610,12 @@ export const AccountsNewView = () => {
 
     // Refresh asset
     actions.push({
-      action: AccountAssetAction.Refresh,
+      action: MetaInfoCtaAction.Refresh,
       caption: 'Refresh asset',
       isVisible: true,
       uiComponentType: 'menuitem',
       disabled: false,
-      uiComponentId: `menuitem-${AccountAssetAction.Refresh}`,
+      uiComponentId: `menuitem-${MetaInfoCtaAction.Refresh}`,
       tooltip: '',
       callBack: reloadSwitch
     });
@@ -2653,12 +2623,12 @@ export const AccountsNewView = () => {
     // Merge token accounts
     if (isInspectedAccountTheConnectedWallet() && canActivateMergeTokenAccounts()) {
       actions.push({
-        action: AccountAssetAction.MergeAccounts,
+        action: MetaInfoCtaAction.MergeAccounts,
         caption: t('assets.merge-accounts-cta'),
         isVisible: true,
         uiComponentType: 'menuitem',
         disabled: false,
-        uiComponentId: `menuitem-${AccountAssetAction.MergeAccounts}`,
+        uiComponentId: `menuitem-${MetaInfoCtaAction.MergeAccounts}`,
         tooltip: '',
         callBack: activateTokenMerge
       });
@@ -2680,12 +2650,12 @@ export const AccountsNewView = () => {
 
     // Close account
     actions.push({
-      action: (inspectedAccountType && inspectedAccountType === "multisig") ? AccountAssetAction.Close : AccountAssetAction.CloseAccount,
+      action: (inspectedAccountType && inspectedAccountType === "multisig") ? MetaInfoCtaAction.Close : MetaInfoCtaAction.CloseAccount,
       caption: 'Close account',
       isVisible: true,
       uiComponentType: 'menuitem',
       disabled: ((inspectedAccountType === "multisig") && (isTxInProgress() || !canDeleteVault() || !isDeleteAssetValid())),
-      uiComponentId: (inspectedAccountType && inspectedAccountType === "multisig") ? `menuitem-${AccountAssetAction.Close}` : `menuitem-${AccountAssetAction.CloseAccount}`,
+      uiComponentId: (inspectedAccountType && inspectedAccountType === "multisig") ? `menuitem-${MetaInfoCtaAction.Close}` : `menuitem-${MetaInfoCtaAction.CloseAccount}`,
       tooltip: '',
       callBack: (inspectedAccountType && inspectedAccountType === "multisig") ? showDeleteVaultModal : showCloseAssetModal
     });
@@ -2702,7 +2672,7 @@ export const AccountsNewView = () => {
     isSelectedAssetNativeAccount,
     isSelectedAssetWsol,
     investButtonEnabled,
-  ]);  
+  ]);
 
   // Enable deep-linking - Parse and save query params as needed
   useEffect(() => {

@@ -128,7 +128,7 @@ export enum EventType {
     TxConfirmTimeout = 'txTimedout',
 }
 
-export enum AccountAssetAction {
+export enum MetaInfoCtaAction {
     Send = 0,
     Buy = 1,
     Exchange = 2,
@@ -141,5 +141,10 @@ export enum AccountAssetAction {
     Refresh = 11,
     CloseAccount = 12,
     Share = 13,
-    Close = 14
+    Close = 14,
+    VestingContractAddFunds = 20,
+    VestingContractCreateStreamOnce = 21,
+    VestingContractCreateStreamBulk = 22,
+    VestingContractClose = 23,
+    VestingContractViewSolBalance = 24
 }

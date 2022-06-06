@@ -2,29 +2,29 @@ import React, { useEffect, useState, useContext, useCallback, useMemo } from 're
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from "react-i18next";
 import { AppStateContext } from "../../contexts/appstate";
-import { IconExternalLink } from "../../Icons";
+import { IconExternalLink, IconVerticalEllipsis } from "../../Icons";
 import { PreFooter } from "../../components/PreFooter";
-import { Button, Tooltip } from 'antd';
-import { consoleOut, copyText, isValidAddress } from '../../utils/ui';
+import { Button, Dropdown, Menu, Space, Tabs, Tooltip } from 'antd';
+import { consoleOut, copyText } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
 import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
-import { Connection, PublicKey } from '@solana/web3.js';
+import { Connection } from '@solana/web3.js';
 import { MSP, Treasury } from '@mean-dao/msp';
 import "./style.scss";
-import { TokenInfo } from '@solana/spl-token-registry';
 import { ArrowLeftOutlined, WarningFilled } from '@ant-design/icons';
-import { makeDecimal, openLinkInNewTab, shortenAddress } from '../../utils/utils';
+import { openLinkInNewTab, shortenAddress } from '../../utils/utils';
 import { openNotification } from '../../components/Notifications';
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
-import { VestingLockCreateAccount } from './components/VestingLockCreateAccount';
 import { VestingLockAccountList } from './components/VestingLockAccountList';
 import { VestingContractDetails } from './components/VestingContractDetails';
-import BN from 'bn.js';
+import useWindowSize from '../../hooks/useWindowResize';
+import { isMobile } from 'react-device-detect';
+import { MetaInfoCta } from '../../models/common-types';
+import { MetaInfoCtaAction } from '../../models/enums';
 
+const { TabPane } = Tabs;
 export const VESTING_ROUTE_BASE_PATH = '/vesting';
-export type VestingWorkflowStep = "account-select" | "stream-create" | undefined;
-export type VestingAccountStep = "create-new" | "select-existing" | undefined;
-export type StreamCreateStep = "general" | "locking-setting" | "vesting-summary" | undefined;
+export type VestingAccountDetailTab = "overview" | "streams" | "activity" | undefined;
 
 export const VestingView = () => {
   const {
@@ -32,16 +32,15 @@ export const VestingView = () => {
     selectedToken,
     detailsPanelOpen,
     streamV2ProgramAddress,
-    getTokenByMintAddress,
     setDtailsPanelOpen,
-    setEffectiveRate,
     setSelectedToken,
   } = useContext(AppStateContext);
   const location = useLocation();
   const navigate = useNavigate();
   const connectionConfig = useConnectionConfig();
-  const { address, vestingContract } = useParams();
+  const { address, vestingContract, activeTab } = useParams();
   const { t } = useTranslation('common');
+  const { width } = useWindowSize();
   const { publicKey } = useWallet();
   const [isPageLoaded, setIsPageLoaded] = useState<boolean>(false);
   const [loadingTreasuries, setLoadingTreasuries] = useState(false);
@@ -50,10 +49,13 @@ export const VestingView = () => {
   // Path params values
   const [accountAddress, setAccountAddress] = useState('');
   const [vestingContractAddress, setVestingContractAddress] = useState<string>('');
+  const [accountDetailTab, setAccountDetailTab] = useState<VestingAccountDetailTab>(undefined);
   // Selected vesting contract
   const [selectedVestingContract, setSelectedVestingContract] = useState<Treasury | undefined>(undefined);
-  const [loadingTreasuryDetails, setLoadingTreasuryDetails] = useState(false);
+  // const [loadingTreasuryDetails, setLoadingTreasuryDetails] = useState(false);
   const [autoOpenDetailsPanel, setAutoOpenDetailsPanel] = useState(true);
+  const [isXsDevice, setIsXsDevice] = useState<boolean>(isMobile);
+  const [assetCtas, setAssetCtas] = useState<MetaInfoCta[]>([]);
 
   /////////////////////////
   //  Setup & Init code  //
@@ -94,7 +96,12 @@ export const VestingView = () => {
       setVestingContractAddress(vestingContract);
     }
 
-  }, [accountAddress, address, isPageLoaded, publicKey, vestingContract]);
+    if (activeTab) {
+      consoleOut('Route param activeTab:', activeTab, 'crimson');
+      setAccountDetailTab(activeTab as VestingAccountDetailTab);
+    }
+
+  }, [accountAddress, activeTab, address, isPageLoaded, publicKey, vestingContract]);
 
   // Create and cache the connection
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
@@ -125,65 +132,71 @@ export const VestingView = () => {
   //  Callbacks  //
   /////////////////
 
-  const setCustomToken = useCallback((address: string) => {
+  const isInspectedAccountTheConnectedWallet = useCallback(() => {
+    return accountAddress && publicKey && publicKey.toBase58() === accountAddress
+      ? true
+      : false
+  }, [accountAddress, publicKey]);
 
-    if (address && isValidAddress(address)) {
-      const unkToken: TokenInfo = {
-        address: address,
-        name: 'Unknown',
-        chainId: 101,
-        decimals: 6,
-        symbol: shortenAddress(address),
-      };
-      setSelectedToken(unkToken);
-      consoleOut("token selected:", unkToken, 'blue');
-      setEffectiveRate(0);
-    }
-  }, [
-    setEffectiveRate,
-    setSelectedToken,
-  ]);
+  // const setCustomToken = useCallback((address: string) => {
 
-  const openVestingContractById = useCallback((treasuryId: string, msp: MSP) => {
+  //   if (address && isValidAddress(address)) {
+  //     const unkToken: TokenInfo = {
+  //       address: address,
+  //       name: 'Unknown',
+  //       chainId: 101,
+  //       decimals: 6,
+  //       symbol: shortenAddress(address),
+  //     };
+  //     setSelectedToken(unkToken);
+  //     consoleOut("token selected:", unkToken, 'blue');
+  //     setEffectiveRate(0);
+  //   }
+  // }, [
+  //   setEffectiveRate,
+  //   setSelectedToken,
+  // ]);
 
-    setLoadingTreasuryDetails(true);
-    const treasuryPk = new PublicKey(treasuryId);
+  // const openVestingContractById = useCallback((treasuryId: string, msp: MSP) => {
 
-    return msp.getTreasury(treasuryPk)
-      .then((details: Treasury | undefined) => {
-        if (details) {
-          consoleOut('VestingContract details:', details, 'blue');
-          // const ata = details.associatedToken as string;
-          // const type = details.treasuryType;
-          // const token = getTokenByMintAddress(ata);
-          // consoleOut("treasury token:", token ? token.symbol : 'Custom', 'blue');
-          // if (token) {
-          //   if (!selectedToken || selectedToken.address !== token.address) {
-          //     setSelectedToken(token);
-          //   }
-          // } else if (!token && (!selectedToken || selectedToken.address !== ata)) {
-          //   setCustomToken(ata);
-          // }
-          // const tOption = TREASURY_TYPE_OPTIONS.find(t => t.type === type);
-          // if (tOption) {
-          //   setTreasuryOption(tOption);
-          // }
-          return details;
-        } else {
-          // setTreasuryDetails(undefined);
-          return undefined;
-        }
-      })
-      .catch((error: any) => {
-        console.error(error);
-        // setTreasuryDetails(undefined);
-        return undefined;
-      })
-      .finally(() => {
-        setLoadingTreasuryDetails(false);
-      });
+  //   setLoadingTreasuryDetails(true);
+  //   const treasuryPk = new PublicKey(treasuryId);
 
-  }, []);
+  //   return msp.getTreasury(treasuryPk)
+  //     .then((details: Treasury | undefined) => {
+  //       if (details) {
+  //         consoleOut('VestingContract details:', details, 'blue');
+  //         // const ata = details.associatedToken as string;
+  //         // const type = details.treasuryType;
+  //         // const token = getTokenByMintAddress(ata);
+  //         // consoleOut("treasury token:", token ? token.symbol : 'Custom', 'blue');
+  //         // if (token) {
+  //         //   if (!selectedToken || selectedToken.address !== token.address) {
+  //         //     setSelectedToken(token);
+  //         //   }
+  //         // } else if (!token && (!selectedToken || selectedToken.address !== ata)) {
+  //         //   setCustomToken(ata);
+  //         // }
+  //         // const tOption = TREASURY_TYPE_OPTIONS.find(t => t.type === type);
+  //         // if (tOption) {
+  //         //   setTreasuryOption(tOption);
+  //         // }
+  //         return details;
+  //       } else {
+  //         // setTreasuryDetails(undefined);
+  //         return undefined;
+  //       }
+  //     })
+  //     .catch((error: any) => {
+  //       console.error(error);
+  //       // setTreasuryDetails(undefined);
+  //       return undefined;
+  //     })
+  //     .finally(() => {
+  //       setLoadingTreasuryDetails(false);
+  //     });
+
+  // }, []);
 
   const getAllUserV2Accounts = useCallback(async () => {
 
@@ -252,6 +265,16 @@ export const VestingView = () => {
   // Data management //
   /////////////////////
 
+
+  // Detect XS screen
+  useEffect(() => {
+    if (width < 576) {
+      setIsXsDevice(true);
+    } else {
+      setIsXsDevice(false);
+    }
+  }, [width]);
+
   // Auto select a token
   useEffect(() => {
 
@@ -264,6 +287,88 @@ export const VestingView = () => {
     tokenList,
     selectedToken,
     setSelectedToken
+  ]);
+
+  // Build CTAs
+  useEffect(() => {
+    if (!selectedToken) { return; }
+
+    const numMaxCtas = isXsDevice ? 2 : 5;
+    const actions: MetaInfoCta[] = [];
+    let ctaItems = 0;
+
+    // Create Stream
+    actions.push({
+      action: MetaInfoCtaAction.VestingContractCreateStreamOnce,
+      isVisible: true,
+      caption: 'Create stream',
+      disabled: !isInspectedAccountTheConnectedWallet(),
+      uiComponentType: 'button',
+      uiComponentId: `button-${MetaInfoCtaAction.VestingContractCreateStreamOnce}`,
+      tooltip: '',
+      callBack: () => { }
+    });
+    ctaItems++;
+
+    // Bulk create
+    actions.push({
+      action: MetaInfoCtaAction.VestingContractCreateStreamBulk,
+      isVisible: true,
+      caption: 'Bulk create',
+      disabled: !isInspectedAccountTheConnectedWallet(),
+      uiComponentType: 'button',
+      uiComponentId: `button-${MetaInfoCtaAction.VestingContractCreateStreamBulk}`,
+      tooltip: '',
+      callBack: () => { }
+    });
+    ctaItems++;
+
+    // Add funds
+    actions.push({
+      action: MetaInfoCtaAction.VestingContractAddFunds,
+      caption: 'Add funds',
+      isVisible: true,
+      uiComponentType: ctaItems < numMaxCtas ? 'button' : 'menuitem',
+      disabled: false,
+      uiComponentId: `${ctaItems < numMaxCtas ? 'button' : 'menuitem'}-${MetaInfoCtaAction.VestingContractAddFunds}`,
+      tooltip: '',
+      callBack: () => { }
+    });
+    ctaItems++;
+
+    // Close Contract
+    actions.push({
+      action: MetaInfoCtaAction.VestingContractClose,
+      caption: 'Close Contract',
+      isVisible: true,
+      uiComponentType: 'menuitem',
+      disabled: !isInspectedAccountTheConnectedWallet(),
+      uiComponentId: `menuitem-${MetaInfoCtaAction.VestingContractClose}`,
+      tooltip: '',
+      callBack: () => { }
+    });
+    ctaItems++;
+
+    // View SOL Balance
+    actions.push({
+      action: MetaInfoCtaAction.VestingContractViewSolBalance,
+      caption: 'View SOL Balance',
+      isVisible: true,
+      uiComponentType: 'menuitem',
+      disabled: !isInspectedAccountTheConnectedWallet(),
+      uiComponentId: `menuitem-${MetaInfoCtaAction.VestingContractViewSolBalance}`,
+      tooltip: '',
+      callBack: () => { }
+    });
+    ctaItems++;
+
+    consoleOut('Asset actions:', actions, 'crimson');
+    setAssetCtas(actions);
+
+  }, [
+    isXsDevice,
+    selectedToken,
+    isInspectedAccountTheConnectedWallet,
   ]);
 
   // Load treasuries once per page access
@@ -307,6 +412,15 @@ export const VestingView = () => {
     vestingContractAddress,
   ]);
 
+  // Set a tab if none already set
+  useEffect(() => {
+    if (publicKey && accountAddress && vestingContractAddress && !accountDetailTab) {
+      // /vesting/:address/contracts/:vestingContract/:activeTab
+      const url = `${VESTING_ROUTE_BASE_PATH}/${accountAddress}/contracts/${vestingContractAddress}/overview`;
+      navigate(url);
+    }
+  }, [accountAddress, accountDetailTab, navigate, publicKey, vestingContractAddress]);
+
   ////////////////////////////
   //   Events and actions   //
   ////////////////////////////
@@ -316,22 +430,121 @@ export const VestingView = () => {
     setAutoOpenDetailsPanel(false);
   }
 
+  const onTabChange = useCallback((activeKey: string) => {
+    consoleOut('Selected tab option:', activeKey, 'blue');
+    // /vesting/:address/contracts/:vestingContract/:activeTab
+    const url = `${VESTING_ROUTE_BASE_PATH}/${accountAddress}/contracts/${vestingContractAddress}/${activeKey}`;
+    navigate(url);
+  }, [accountAddress, navigate, vestingContractAddress]);
+
   ///////////////
   // Rendering //
   ///////////////
 
-  const renderCreateVestingAccount = useCallback(() => {
+  const renderMetaInfoMenuItems = () => {
+    const items = assetCtas.filter(m => m.isVisible && m.uiComponentType === 'menuitem');
     return (
-      <>
-        <h3 className="user-instruction-headline">{t('vesting.user-instruction-headline')}</h3>
-        <VestingLockCreateAccount
-          inModal={false}
-          token={selectedToken}
-          tokenChanged={(token: TokenInfo | undefined) => setSelectedToken(token)}
-        />
-      </>
+      <Menu>
+        {items.map(item => {
+          return (
+            <Menu.Item
+              key={item.uiComponentId}
+              disabled={item.disabled}
+              onClick={item.callBack}>
+              <span className="menu-item-text">{item.caption}</span>
+            </Menu.Item>
+          );
+        })}
+      </Menu>
     );
-  }, [selectedToken, setSelectedToken, t]);
+  }
+
+  const renderMetaInfoCtaRow = () => {
+    if (!selectedToken) { return null; }
+    const items = assetCtas.filter(m => m.isVisible && m.uiComponentType === 'button');
+
+    return (
+      <div className="flex-fixed-right cta-row mb-2">
+        <Space className="left" size="middle" wrap>
+          {items && items.length > 0 &&
+            items.map(item => {
+              if (item.tooltip) {
+                return (
+                  <Tooltip placement="bottom" title={item.tooltip} key={item.uiComponentId}>
+                    <Button
+                      type="default"
+                      shape="round"
+                      size="small"
+                      className="thin-stroke"
+                      disabled={item.disabled}
+                      onClick={item.callBack}>
+                      <span>{item.caption}</span>
+                    </Button>
+                  </Tooltip>
+                );
+              } else {
+                return (
+                  <Button
+                    type="default"
+                    shape="round"
+                    size="small"
+                    key={item.uiComponentId}
+                    className="thin-stroke"
+                    disabled={item.disabled}
+                    onClick={item.callBack}>
+                    <span>{item.caption}</span>
+                  </Button>
+                );
+              }
+            })
+          }
+        </Space>
+        <Dropdown
+          overlay={renderMetaInfoMenuItems()}
+          placement="bottomRight"
+          trigger={["click"]}>
+          <span className="icon-button-container">
+            <Button
+              type="default"
+              shape="circle"
+              size="middle"
+              icon={<IconVerticalEllipsis className="mean-svg-icons" />}
+              onClick={(e) => e.preventDefault()}
+            />
+          </span>
+        </Dropdown>
+      </div>
+    );
+  };
+
+  const renderTabset = () => {
+    return (
+      <Tabs activeKey={accountDetailTab} onChange={onTabChange} className="neutral">
+        <TabPane tab="Overview" key={"overview"}>
+          <p>Tab 1</p>
+        </TabPane>
+        <TabPane tab="Streams" key={"streams"}>
+          <p>Tab 2</p>
+        </TabPane>
+        <TabPane tab="Activity" key={"activity"}>
+          <p>Tab 3</p>
+        </TabPane>
+      </Tabs>
+    );
+  }
+
+  // const renderCreateVestingAccount = useCallback(() => {
+  //   return (
+  //     <>
+  //       <h3 className="user-instruction-headline">{t('vesting.user-instruction-headline')}</h3>
+  //       <VestingLockCreateAccount
+  //         inModal={false}
+  //         token={selectedToken}
+  //         tokenChanged={(token: TokenInfo | undefined) => setSelectedToken(token)}
+  //       />
+  //     </>
+  //   );
+  // }, [selectedToken, setSelectedToken, t]);
 
   return (
     <>
@@ -413,13 +626,12 @@ export const VestingView = () => {
                 <div className="inner-container">
                   <div className="flexible-column-bottom">
                     <div className="top">
-                      <VestingContractDetails
-                        vestingContract={selectedVestingContract}
-                      />
-                      {/* TODO: Render CTAs row here */}
+                      <VestingContractDetails vestingContract={selectedVestingContract} />
+                      {/* Render CTAs row here */}
+                      {renderMetaInfoCtaRow()}
                     </div>
                     <div className="bottom">
-                      Tabs here
+                      {renderTabset()}
                     </div>
                   </div>
                 </div>
