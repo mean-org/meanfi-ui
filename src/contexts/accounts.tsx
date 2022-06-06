@@ -334,7 +334,7 @@ const precacheUserTokenAccounts = async (
       cache.add(info.pubkey.toBase58(), info.account, TokenAccountParser);
     });
   } catch (error) {
-    console.log('getTokenAccountsByOwner failed.', error);
+    console.error('getTokenAccountsByOwner failed.', error);
     throw(error);
   }
 };

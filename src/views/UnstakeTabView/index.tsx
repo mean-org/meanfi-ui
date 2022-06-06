@@ -456,7 +456,6 @@ export const UnstakeTabView = (props: {
     if (coinPrices && props.unstakedToken) {
       const price = getTokenPriceBySymbol(props.unstakedToken.symbol);
       consoleOut('meanPrice:', price, 'crimson');
-      console.log('coinPrices:', coinPrices);
       setMeanPrice(price);
     }
 

@@ -112,6 +112,7 @@ export interface SegmentStreamWithdrawData {
     inputAmount: number;
     feeAmount: number;
     sentAmount: number;
+    valueInUsd: number;
 }
 
 export interface SegmentStreamAddFundsData {
