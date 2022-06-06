@@ -25,6 +25,7 @@ import {
 import { AppStateContext } from "../../contexts/appstate";
 import { useWallet } from "../../contexts/wallet";
 import {
+  cutNumber,
   formatAmount,
   formatThousands,
   getAmountWithSymbol,
@@ -88,7 +89,7 @@ import {
   Constants as MSPV2Constants
 } from "@mean-dao/msp";
 import { StreamTransferOpenModal } from "../../components/StreamTransferOpenModal";
-import { StreamsSummary } from "../../models/streams";
+import { StreamsSummary, StreamWithdrawData } from "../../models/streams";
 import { customLogger } from "../..";
 import { StreamTreasuryType } from "../../models/treasuries";
 import { segmentAnalytics } from "../../App";
@@ -206,7 +207,6 @@ export const Streams = () => {
   ]);
 
   const msp = useMemo(() => {
-    console.log('New MSP from streams');
     return new MSP(
       endpoint,
       streamV2ProgramAddress,
@@ -2417,6 +2417,7 @@ export const Streams = () => {
         const treasury = new PublicKey((streamDetail as StreamInfo).treasuryAddress as string);
         const contributorMint = new PublicKey(streamDetail.associatedToken as string);
         const amount = parseFloat(addFundsData.amount);
+        const price = selectedToken ? getTokenPriceBySymbol(selectedToken.symbol) : 0;
         setAddFundsPayload(addFundsData);
 
         const data = {
@@ -2435,8 +2436,9 @@ export const Streams = () => {
           contributor: data.contributor,
           treasury: data.treasury,
           asset: token ? `${token} [${data.contributorMint}]` : data.contributorMint,
-          assetPrice: selectedToken ? getTokenPriceBySymbol(selectedToken.symbol) : 0,
-          amount
+          assetPrice: price,
+          amount,
+          valueInUsd: price * amount
         };
         consoleOut('segment data:', segmentData, 'brown');
         segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupApproveFormButton, segmentData);
@@ -2542,6 +2544,7 @@ export const Streams = () => {
       const treasury = new PublicKey((streamDetail as Stream).treasury as string);
       const associatedToken = new PublicKey(streamDetail.associatedToken as string);
       const amount = addFundsData.tokenAmount;
+      const price = selectedToken ? getTokenPriceBySymbol(selectedToken.symbol) : 0;
       setAddFundsPayload(addFundsData);
 
       const data = {
@@ -2561,8 +2564,9 @@ export const Streams = () => {
         asset: selectedToken
           ? `${selectedToken.symbol} [${selectedToken.address}]`
           : associatedToken.toBase58(),
-        assetPrice: selectedToken ? getTokenPriceBySymbol(selectedToken.symbol) : 0,
-        amount: parseFloat(addFundsData.amount)
+        assetPrice: price,
+        amount: parseFloat(addFundsData.amount),
+        valueInUsd: price * parseFloat(addFundsData.amount)
       };
       consoleOut('segment data:', segmentData, 'brown');
       segmentAnalytics.recordEvent(AppUsageEvent.StreamTopupApproveFormButton, segmentData);
@@ -2783,7 +2787,7 @@ export const Streams = () => {
 
   // Withdraw funds modal
   const [lastStreamDetail, setLastStreamDetail] = useState<Stream | StreamInfo | undefined>(undefined);
-  const [withdrawFundsAmount, setWithdrawFundsAmount] = useState<any>();
+  const [withdrawFundsAmount, setWithdrawFundsAmount] = useState<StreamWithdrawData>();
   const [isWithdrawModalVisible, setIsWithdrawModalVisibility] = useState(false);
 
   const showWithdrawModal = useCallback(async () => {
@@ -2817,7 +2821,7 @@ export const Streams = () => {
     setIsWithdrawModalVisibility(false);
   }, []);
 
-  const onAcceptWithdraw = (data: any) => {
+  const onAcceptWithdraw = (data: StreamWithdrawData) => {
     closeWithdrawModal();
     consoleOut('Withdraw data from modal:', data, 'blue');
     onExecuteWithdrawFundsTransaction(data);
@@ -3186,13 +3190,14 @@ export const Streams = () => {
     resetTransactionStatus();
   }
 
-  const onExecuteWithdrawFundsTransaction = async (withdrawData: any) => {
+  const onExecuteWithdrawFundsTransaction = async (withdrawData: StreamWithdrawData) => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
     const transactionLog: any[] = [];
 
+    setWithdrawFundsAmount(withdrawData);
     setTransactionCancelled(false);
     setIsBusy(true);
 
@@ -3206,7 +3211,8 @@ export const Streams = () => {
         const stream = new PublicKey(streamDetail.id as string);
         const beneficiary = new PublicKey((streamDetail as StreamInfo).beneficiaryAddress as string);
         const amount = parseFloat(withdrawData.amount);
-        setWithdrawFundsAmount(withdrawData);
+        const price = selectedToken ? getTokenPriceBySymbol(selectedToken.symbol) : 0;
+        const valueInUsd = price * amount;
 
         const data = {
           stream: stream.toBase58(),
@@ -3218,12 +3224,13 @@ export const Streams = () => {
         // Report event to Segment analytics
         const segmentData: SegmentStreamWithdrawData = {
           asset: withdrawData.token,
-          assetPrice: selectedToken ? getTokenPriceBySymbol(selectedToken.symbol) : 0,
+          assetPrice: price,
           stream: data.stream,
           beneficiary: data.beneficiary,
           feeAmount: withdrawData.fee,
           inputAmount: withdrawData.inputAmount,
-          sentAmount: withdrawData.receiveAmount
+          sentAmount: withdrawData.receiveAmount,
+          valueInUsd: parseFloat(valueInUsd.toFixed(2))
         };
         consoleOut('segment data:', segmentData, 'brown');
         segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalStartFormButton, segmentData);
@@ -3316,10 +3323,8 @@ export const Streams = () => {
         const stream = new PublicKey(streamDetail.id as string);
         const beneficiary = new PublicKey((streamDetail as Stream).beneficiary as string);
         const amount = toTokenAmount(parseFloat(withdrawData.amount as string), selectedToken.decimals);
-        const receiveAmount = toTokenAmount(parseFloat(withdrawData.receiveAmount as string), selectedToken.decimals);
-        setWithdrawFundsAmount(Object.assign({}, withdrawData, {
-          amount: amount
-        }));
+        const price = selectedToken ? getTokenPriceBySymbol(selectedToken.symbol) : 0;
+        const valueInUsd = price * parseFloat(withdrawData.amount);
 
         const data = {
           stream: stream.toBase58(),
@@ -3331,12 +3336,13 @@ export const Streams = () => {
         // Report event to Segment analytics
         const segmentData: SegmentStreamWithdrawData = {
           asset: withdrawData.token,
-          assetPrice: selectedToken ? getTokenPriceBySymbol(selectedToken.symbol) : 0,
+          assetPrice: price,
           stream: data.stream,
           beneficiary: data.beneficiary,
           feeAmount: withdrawData.fee,
-          inputAmount: amount,
-          sentAmount: receiveAmount
+          inputAmount: withdrawData.inputAmount,
+          sentAmount: withdrawData.receiveAmount,
+          valueInUsd: parseFloat(valueInUsd.toFixed(2))
         };
         consoleOut('segment data:', segmentData, 'brown');
         segmentAnalytics.recordEvent(AppUsageEvent.StreamWithdrawalStartFormButton, segmentData);
@@ -3601,6 +3607,7 @@ export const Streams = () => {
           currentOperation: TransactionStatus.InitTransaction
         });
         const streamPublicKey = new PublicKey(streamDetail.id as string);
+        const price = selectedToken ? getTokenPriceBySymbol(selectedToken.symbol) : 0;
 
         const data = {
           stream: streamPublicKey.toBase58(),                         // stream
@@ -3612,13 +3619,14 @@ export const Streams = () => {
         // Report event to Segment analytics
         const segmentData: SegmentStreamCloseData = {
           asset: selectedToken ? selectedToken.symbol : '-',
-          assetPrice: selectedToken ? getTokenPriceBySymbol(selectedToken.symbol) : 0,
+          assetPrice: price,
           stream: data.stream,
           initializer: data.initializer,
           closeTreasury: data.autoCloseTreasury,
           vestedReturns: closeTreasuryData.vestedReturns,
           unvestedReturns: closeTreasuryData.unvestedReturns,
-          feeAmount: closeTreasuryData.feeAmount
+          feeAmount: closeTreasuryData.feeAmount,
+          valueInUsd: price * (closeTreasuryData.vestedReturns + closeTreasuryData.unvestedReturns) // TODO: Review and validate
         };
         consoleOut('segment data:', segmentData, 'brown');
         segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseStreamFormButton, segmentData);
@@ -3708,6 +3716,7 @@ export const Streams = () => {
           currentOperation: TransactionStatus.InitTransaction
         });
         const streamPublicKey = new PublicKey(streamDetail.id as string);
+        const price = selectedToken ? getTokenPriceBySymbol(selectedToken.symbol) : 0;
 
         const data = {
           stream: streamPublicKey.toBase58(),                         // stream
@@ -3725,7 +3734,8 @@ export const Streams = () => {
           closeTreasury: data.autoCloseTreasury,
           vestedReturns: closeTreasuryData.vestedReturns,
           unvestedReturns: closeTreasuryData.unvestedReturns,
-          feeAmount: closeTreasuryData.feeAmount
+          feeAmount: closeTreasuryData.feeAmount,
+          valueInUsd: price * (closeTreasuryData.vestedReturns + closeTreasuryData.unvestedReturns) // TODO: Review and validate
         };
         consoleOut('segment data:', segmentData, 'brown');
         segmentAnalytics.recordEvent(AppUsageEvent.StreamCloseStreamFormButton, segmentData);

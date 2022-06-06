@@ -2736,7 +2736,7 @@ export const AccountsNewView = () => {
 
     let accountTypeInQuery: string | null = null;
     // Get the account-type if passed-in
-    if (searchParams) {
+    if (searchParams && searchParams.toString()) {
       accountTypeInQuery = searchParams.get('account-type');
       consoleOut('searchParams:', searchParams.toString(), 'crimson');
       consoleOut('account-type:', searchParams.get('account-type'), 'crimson');

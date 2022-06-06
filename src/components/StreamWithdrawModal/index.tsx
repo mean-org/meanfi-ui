@@ -15,6 +15,7 @@ import { AppStateContext } from '../../contexts/appstate';
 import { BN } from 'bn.js';
 import { openNotification } from '../Notifications';
 import { WRAPPED_SOL_MINT_ADDRESS } from '../../constants';
+import { StreamWithdrawData } from '../../models/streams';
 
 export const StreamWithdrawModal = (props: {
   startUpData: Stream | StreamInfo | undefined;
@@ -158,13 +159,14 @@ export const StreamWithdrawModal = (props: {
     const isMaxAmount = getDisplayAmount(maxAmount) === getDisplayAmount(+withdrawAmountInput)
       ? true : false;
     setWithdrawAmountInput('');
-    props.handleOk({
-      token: props.selectedToken?.symbol,
+    const withdrawData: StreamWithdrawData = {
+      token: props.selectedToken ? props.selectedToken.symbol || '-' : '-',
       amount: isMaxAmount ? `${maxAmount}` : withdrawAmountInput,
       inputAmount: parseFloat(withdrawAmountInput),
       fee: feeAmount || 0,
       receiveAmount: parseFloat(withdrawAmountInput) - (feeAmount as number)
-    });
+    };
+    props.handleOk(withdrawData);
   };
 
   const onCloseModal = () => {

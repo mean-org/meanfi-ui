@@ -354,10 +354,8 @@ export const PlaygroundView = () => {
   };
 
   function handlePanelChange(value: any) {
-    console.log(`panel changed:${value}`);
     setCurrentPanel(value);
     const loadedItem = value ? txTestRunConfig[value - 1] : undefined;
-    console.log("loadedItem:", loadedItem);
     setCurrentPanelItem(loadedItem);
   }
 
@@ -586,7 +584,6 @@ export const PlaygroundView = () => {
             } else {
               newValue = value;
             }
-            console.log(`new value ${newValue}`);
             setCurrentPanelItem(
               Object.assign({}, config, {
                 initialStatus: currentPanelItem?.initialStatus,

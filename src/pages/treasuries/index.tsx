@@ -285,7 +285,6 @@ export const TreasuriesView = () => {
   // Create and cache Money Streaming Program V2 instance
   const msp = useMemo(() => {
     if (publicKey) {
-      console.log('New MSP from treasuries');
       return new MSP(
         connectionConfig.endpoint,
         streamV2ProgramAddress,
@@ -530,7 +529,6 @@ export const TreasuriesView = () => {
                 item = treasuryAccumulator[0];
               }
             } else {
-              console.log('treasuryAddress under no reset:', treasuryAddress);
               // Try to get current item by its id
               if (treasuryAddress) {
                 // treasuryAddress was passed in as query param?
@@ -2116,7 +2114,6 @@ export const TreasuriesView = () => {
       const treasuryType = data.type === 'Open' ? TreasuryType.Open : TreasuryType.Lock;
 
       if (!data.multisig) {
-        // console.log('data multisig', data.multisig);
         return await msp.createTreasury(
           new PublicKey(data.treasurer),                    // treasurer
           new PublicKey(data.treasurer),                    // treasurer
@@ -2486,9 +2483,6 @@ export const TreasuriesView = () => {
         const associatedToken = new PublicKey(params.associatedToken);
         const amount = parseFloat(params.amount);
         const stream = params.streamId ? new PublicKey(params.streamId) : undefined;
-
-        console.log('params.streamId', params.streamId);
-
         const data = {
           contributor: publicKey.toBase58(),                        // contributor
           treasury: treasury.toBase58(),                            // treasury
@@ -2666,9 +2660,6 @@ export const TreasuriesView = () => {
       const treasury = new PublicKey(treasuryDetails.id);
       const associatedToken = new PublicKey(params.associatedToken);
       const amount = params.tokenAmount.toNumber();
-
-      console.log('params.streamId', params.streamId);
-
       const data = {
         payer: publicKey.toBase58(),                              // payer
         contributor: publicKey.toBase58(),                        // contributor

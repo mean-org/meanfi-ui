@@ -190,7 +190,8 @@ export const UnstakeTabView = (props: {
           unstakedAsset: 'MEAN',
           unstakedAssetPrice: meanPrice,
           amount: uiAmount,
-          quote: parseFloat(unstakeMeanValue || '0')
+          quote: parseFloat(unstakeMeanValue || '0'),
+          valueInUsd: sMeanToMeanRate * parseFloat(unstakeMeanValue || '0')
         };
         consoleOut('segment data:', segmentData, 'brown');
         segmentAnalytics.recordEvent(AppUsageEvent.UnstakeMeanFormButton, segmentData);
@@ -456,7 +457,6 @@ export const UnstakeTabView = (props: {
     if (coinPrices && props.unstakedToken) {
       const price = getTokenPriceBySymbol(props.unstakedToken.symbol);
       consoleOut('meanPrice:', price, 'crimson');
-      console.log('coinPrices:', coinPrices);
       setMeanPrice(price);
     }
 

@@ -482,7 +482,6 @@ const AppStateProvider: React.FC = ({ children }) => {
   ]);
 
   const msp = useMemo(() => {
-    console.log('New MSP from appState');
     return new MSP(
       connectionConfig.endpoint,
       streamV2ProgramAddressFromConfig,
@@ -713,7 +712,6 @@ const AppStateProvider: React.FC = ({ children }) => {
       const streamPublicKey = new PublicKey(streamId);
       try {
         if (msp && publicKey) {
-          console.log('streamPublicKey', streamPublicKey.toBase58());
           const detail = await msp.getStream(streamPublicKey);
           consoleOut('customStream', detail);
           if (detail) {
@@ -863,7 +861,6 @@ const AppStateProvider: React.FC = ({ children }) => {
   }
 
   const setDeletedStream = (id: string) => {
-    console.log('setDeletedStream:', id);
     setDeletedStreams(oldArray => [...oldArray, id]);
   }
 

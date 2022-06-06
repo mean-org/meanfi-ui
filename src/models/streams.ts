@@ -18,3 +18,11 @@ export interface TreasuryStreamsBreakdown {
     running: number;
     stopped: number;
 }
+
+export interface StreamWithdrawData {
+    token: string;
+    amount: string;
+    inputAmount: number;
+    fee: number;
+    receiveAmount: number;
+}

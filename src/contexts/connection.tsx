@@ -110,7 +110,7 @@ export function ConnectionProvider({ children = undefined as any }) {
           })
         }
       } catch (error) {
-        console.log('Cache update failed.', error);
+        console.error('Cache update failed.', error);
         throw(error);
       }
 
