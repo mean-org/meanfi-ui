@@ -336,7 +336,7 @@ export const ProposalDetailsView = (props: {
                 >
                   <div className="list-item">
                     <span className="mr-2">
-                      {moment(activity.createdOn).format("LLL")}
+                      {moment(activity.createdOn).format("LLL").toLocaleString()}
                     </span>
                     {icon}
                     <div className="d-flex">
