@@ -1398,7 +1398,6 @@ export const TreasuriesView = () => {
     if (previousWalletConnectState !== connected) {
       if (!previousWalletConnectState && connected && publicKey) {
         consoleOut('User is connecting...', publicKey.toBase58(), 'green');
-        setLoadingMultisigAccounts(true);
         setTreasuriesLoaded(false);
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'green');
@@ -5513,7 +5512,7 @@ export const TreasuriesView = () => {
                 <div className="subtitle text-truncate">{t('treasuries.treasury-list.multisig-treasury-label')}</div>
               )}
             </div>
-            <div className="rate-cell text-center">
+            <div className="rate-cell">
               {!isNewTreasury && v1.upgradeRequired ? (
                 <span>&nbsp;</span>
               ) : (
