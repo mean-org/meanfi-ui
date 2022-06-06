@@ -80,12 +80,12 @@
         border-left: 4px solid transparent;
 
         .description-cell {
-            flex: auto;
+            flex: auto !important;
             min-width: unset;
         }
 
         .rate-cell {
-            flex: 0 0 146px !important;
+            flex: 0 1 146px !important;
             padding: 0 !important;
         }
 
