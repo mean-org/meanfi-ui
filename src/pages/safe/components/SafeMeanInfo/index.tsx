@@ -567,20 +567,20 @@ export const SafeMeanInfo = (props: {
     setMultisigTxs
   ]);
 
-  useEffect(() => {
-    const timeout = setTimeout(() => {
+  // useEffect(() => {
+  //   const timeout = setTimeout(() => {
 
-      if (multisigTxs) {
-        setLoadingProposals(false);
-      } else {
-        setLoadingProposals(true);
-      }
-    }, 2500);
+  //     if (multisigTxs) {
+  //       setLoadingProposals(false);
+  //     } else {
+  //       setLoadingProposals(true);
+  //     }
+  //   }, 2500);
 
-    return () => {
-      clearTimeout(timeout);
-    }
-  }, [multisigTxs]);
+  //   return () => {
+  //     clearTimeout(timeout);
+  //   }
+  // }, [multisigTxs]);
 
   // Proposals list
   const renderListOfProposals = (
