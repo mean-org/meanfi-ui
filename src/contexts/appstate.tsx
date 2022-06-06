@@ -76,7 +76,7 @@ interface AppStateConfig {
   tokenList: TokenInfo[];
   selectedToken: TokenInfo | undefined;
   tokenBalance: number;
-  totalSafeBalance: number;
+  totalSafeBalance: number | undefined;
   fromCoinAmount: string;
   effectiveRate: number;
   coinPrices: any | null;
@@ -149,7 +149,7 @@ interface AppStateConfig {
   hideDepositOptionsModal: () => void;
   setSelectedToken: (token: TokenInfo | undefined) => void;
   setSelectedTokenBalance: (balance: number) => void;
-  setTotalSafeBalance: (balance: number) => void;
+  setTotalSafeBalance: (balance: number | undefined) => void;
   setFromCoinAmount: (data: string) => void;
   refreshPrices: () => void;
   setEffectiveRate: (rate: number) => void;
@@ -202,7 +202,7 @@ interface AppStateConfig {
   setRecurringBuys: (recurringBuys: DdcaAccount[]) => void;
   setLoadingRecurringBuys: (state: boolean) => void;
   // Multisig
-  setMultisigSolBalance: (balance: number) => void;
+  setMultisigSolBalance: (balance: number | undefined) => void;
   setMultisigVaults: (list: Array<MultisigVault>) => void;
   setHighLightableMultisigId: (id: string | undefined) => void,
   setPendingMultisigTxCount: (id: number | undefined) => void,
@@ -224,7 +224,7 @@ const contextDefaultValues: AppStateConfig = {
   tokenList: [],
   selectedToken: undefined,
   tokenBalance: 0,
-  totalSafeBalance: 0,
+  totalSafeBalance: undefined,
   fromCoinAmount: '',
   effectiveRate: 0,
   coinPrices: null,
@@ -430,7 +430,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   const [selectedToken, updateSelectedToken] = useState<TokenInfo>();
   const [tokenBalance, updateTokenBalance] = useState<number>(contextDefaultValues.tokenBalance);
-  const [totalSafeBalance, updateTotalSafeBalance] = useState<number>(contextDefaultValues.totalSafeBalance);
+  const [totalSafeBalance, updateTotalSafeBalance] = useState<number | undefined>(contextDefaultValues.totalSafeBalance);
   const [stakingMultiplier, updateStakingMultiplier] = useState<number>(contextDefaultValues.stakingMultiplier);
   const [coinPricesFromApi, setCoinPricesFromApi] = useState<TokenPrice[] | null>(null);
   const [coinPrices, setCoinPrices] = useState<any>(null);
@@ -900,11 +900,11 @@ const AppStateProvider: React.FC = ({ children }) => {
     updateTokenBalance(balance);
   }
 
-  const setMultisigSolBalance = (balance: number) => {
+  const setMultisigSolBalance = (balance: number | undefined) => {
     updateMultisigSolBalance(balance);
   }
 
-  const setTotalSafeBalance = (balance: number) => {
+  const setTotalSafeBalance = (balance: number | undefined) => {
     updateTotalSafeBalance(balance);
   }
 

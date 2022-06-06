@@ -40,7 +40,6 @@ export const SafeMeanInfo = (props: {
   selectedTab?: any;
   proposalSelected?: any;
   assetSelected?: any;
-  
 }) => {
 
   const { 
@@ -184,7 +183,7 @@ export const SafeMeanInfo = (props: {
           modifiedResults.push(solToken);  
           result.forEach(item => {
             modifiedResults.push(item);
-          });  
+          });
           setAssetsWithoutSol(result);
           setMultisigVaults(modifiedResults);  
           consoleOut("Multisig assets", modifiedResults, "blue");
@@ -730,9 +729,7 @@ export const SafeMeanInfo = (props: {
   return (
     <>
       <SafeInfo
-        solBalance={multisigSolBalance}
         selectedMultisig={selectedMultisig}
-        multisigVaults={multisigVaults}
         onNewProposalMultisigClick={onNewProposalMultisigClick}
         onEditMultisigClick={onEditMultisigClick}
         onRefreshTabsInfo={onRefreshTabsInfo}

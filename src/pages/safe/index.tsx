@@ -45,7 +45,7 @@ import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../constant
 import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
 import { EventType, OperationType, TransactionStatus } from '../../models/enums';
-import { IconEllipsisVertical, IconSafe, IconUserGroup, IconUsers } from '../../Icons';
+import { IconEllipsisVertical, IconLoading, IconSafe, IconUserGroup, IconUsers } from '../../Icons';
 import { useNativeAccount } from '../../contexts/accounts';
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
@@ -107,10 +107,12 @@ export const SafeView = () => {
     highLightableMultisigId,
     previousWalletConnectState,
     setHighLightableMultisigId,
-    getTokenByMintAddress,
     getTokenPriceByAddress,
+    getTokenByMintAddress,
+    setMultisigSolBalance,
     getTokenPriceBySymbol,
     setTransactionStatus,
+    setTotalSafeBalance,
     refreshTokenBalance,
     setDtailsPanelOpen,
     coinPrices
@@ -3341,6 +3343,7 @@ export const SafeView = () => {
 
         assets.forEach(asset => {
           const token = getTokenByMintAddress(asset.mint.toBase58());
+          
           if (token) {
             const tokenAddress = getTokenPriceByAddress(token.address);
             const tokenSymbol = getTokenPriceBySymbol(token.symbol);
@@ -3628,7 +3631,8 @@ export const SafeView = () => {
             setSelectedMultisig(item);
             setIsProposalDetails(false);
             setIsProgramDetails(false);
-            setIsAssetDetails(false);
+            setMultisigSolBalance(undefined);
+            setTotalSafeBalance(undefined);
           };
 
           return (
@@ -3675,18 +3679,27 @@ export const SafeView = () => {
                 </div>
               </div>
               <div className="rate-cell">
-                {multisigUsdValues && multisigUsdValues.get(item.authority.toBase58()) ? (
-                  <>
-                    <div className="rate-amount">
-                      {toUsCurrency(multisigUsdValues.get(item.authority.toBase58()))}
-                    </div>
-                    <div className="interval">safe balance</div>
-                  </>
-                ) : (
-                  <>
-                  <div className="rate-amount">$0.00</div>
-                  <div className="interval">safe balance</div>
-                </>
+                {(multisigUsdValues && multisigUsdValues !== undefined) && (
+                  multisigUsdValues.get(item.authority.toBase58()) === 0 ? (
+                    <>
+                      <div className="rate-amount">$0.00</div>
+                      <div className="interval">safe balance</div>
+                    </>
+                  ) : (multisigUsdValues.get(item.authority.toBase58()) as number > 0) ? (
+                    <>
+                      <div className="rate-amount">
+                        {toUsCurrency(multisigUsdValues.get(item.authority.toBase58()))}
+                      </div>
+                      <div className="interval">safe balance</div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="rate-amount">
+                        <IconLoading className="mean-svg-icons" style={{ height: "15px", lineHeight: "15px" }}/>
+                      </div>
+                      <div className="interval">safe balance</div>
+                    </>
+                  )
                 )}
               </div>
             </div>
