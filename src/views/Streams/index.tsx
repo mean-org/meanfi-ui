@@ -635,6 +635,7 @@ export const Streams = () => {
       const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], publicKey);
 
       const newList: Array<Stream | StreamInfo> = [];
+
       // Get an updated version for each v2 stream in the list
       if (updatedStreamsv2 && updatedStreamsv2.length) {
         let freshStream: Stream;
@@ -665,7 +666,7 @@ export const Streams = () => {
 
       // Finally update the combined list
       if (newList.length) {
-        setStreamList(newList.sort((a, b) => (a.createdBlockTime < b.createdBlockTime) ? 1 : -1));
+        setStreamList(newList);
       }
     }
 
