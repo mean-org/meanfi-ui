@@ -2982,21 +2982,53 @@ export const AccountsNewView = () => {
                   // Locate the token in intersectedList
                   const tokenIndex = intersectedList.findIndex(i => i.address === item.parsedInfo.mint);
                   if (tokenIndex !== -1) {
-                    const rate = getTokenPriceBySymbol(intersectedList[tokenIndex].symbol);
+                    const price = getTokenPriceByAddress(intersectedList[tokenIndex].address) || getTokenPriceBySymbol(intersectedList[tokenIndex].symbol);
+                    const balance = item.parsedInfo.tokenAmount.uiAmount || 0;
+                    const valueInUSD = balance * price;
                     // If we didn't already filled info for this associated token address
                     if (!intersectedList[tokenIndex].publicAddress) {
                       // Add it
                       intersectedList[tokenIndex].publicAddress = item.pubkey.toBase58();
                       intersectedList[tokenIndex].balance = item.parsedInfo.tokenAmount.uiAmount || 0;
-                      intersectedList[tokenIndex].valueInUsd = (item.parsedInfo.tokenAmount.uiAmount || 0) * rate;
+                      intersectedList[tokenIndex].valueInUsd = valueInUSD;
                     } else if (intersectedList[tokenIndex].publicAddress !== item.pubkey.toBase58()) {
                       // If we did and the publicAddress is different/new then duplicate this item with the new info
-                      const newItem = JSON.parse(JSON.stringify(intersectedList[tokenIndex])) as UserTokenAccount;
+                      const newItem = Object.assign({}, intersectedList[tokenIndex]) as UserTokenAccount;
                       newItem.publicAddress = item.pubkey.toBase58();
                       newItem.balance = item.parsedInfo.tokenAmount.uiAmount || 0;
-                      newItem.valueInUsd = (item.parsedInfo.tokenAmount.uiAmount || 0) * rate;
+                      newItem.valueInUsd = valueInUSD;
                       intersectedList.splice(tokenIndex + 1, 0, newItem);
                     }
+                  }
+                });
+
+                // Update displayIndex and isAta flag
+                intersectedList.forEach(async (item: UserTokenAccount, index: number) => {
+                  item.displayIndex = index;
+                  item.isAta = await updateAtaFlag(item);
+                });
+
+                // Finally add all owned token accounts as custom tokens
+                accTks.forEach((item: AccountTokenParsedInfo, index: number) => {
+                  if (!intersectedList.some(t => t.address === item.parsedInfo.mint)) {
+                    const balance = item.parsedInfo.tokenAmount.uiAmount || 0;
+                    const price = getTokenPriceByAddress(item.parsedInfo.mint);
+                    const valueInUsd = balance * price;
+                    // TODO: It would be good to fill-in name and symbol from another data source
+                    const customToken: UserTokenAccount = {
+                      address: item.parsedInfo.mint,
+                      balance,
+                      chainId: 0,
+                      displayIndex: intersectedList.length + 1 + index,
+                      decimals: item.parsedInfo.tokenAmount.decimals,
+                      name: 'Custom account',
+                      symbol: shortenAddress(item.parsedInfo.mint),
+                      publicAddress: item.pubkey.toBase58(),
+                      tags: undefined,
+                      logoURI: undefined,
+                      valueInUsd
+                    };
+                    intersectedList.push(customToken);
                   }
                 });
 
@@ -3007,32 +3039,6 @@ export const AccountsNewView = () => {
                     return -1;
                   }
                   return 0;
-                });
-
-                // Update displayIndex and isAta flag
-                sortedList.forEach(async (item: UserTokenAccount, index: number) => {
-                  item.displayIndex = index;
-                  item.isAta = await updateAtaFlag(item);
-                });
-
-                // Finally add all owned token accounts as custom tokens
-                accTks.forEach((item: AccountTokenParsedInfo, index: number) => {
-                  if (!sortedList.some(t => t.address === item.parsedInfo.mint)) {
-                    const customToken: UserTokenAccount = {
-                      address: item.parsedInfo.mint,
-                      balance: item.parsedInfo.tokenAmount.uiAmount || 0,
-                      chainId: 0,
-                      displayIndex: sortedList.length + 1 + index,
-                      decimals: item.parsedInfo.tokenAmount.decimals,
-                      name: 'Custom account',
-                      symbol: shortenAddress(item.parsedInfo.mint),
-                      publicAddress: item.pubkey.toBase58(),
-                      tags: undefined,
-                      logoURI: undefined,
-                      valueInUsd: 0
-                    };
-                    sortedList.push(customToken);
-                  }
                 });
 
                 // Report in the console for debugging

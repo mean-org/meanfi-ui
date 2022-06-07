@@ -52,6 +52,20 @@ export const getRaydiumLiquidityPools = async (): Promise<any> => {
     });
 };
 
+export const getRaydiumLpPairs = async (): Promise<any> => {
+  const path = 'https://api.raydium.io/v2/main/pairs';
+  return fetch(path, {
+    method: "GET",
+  })
+    .then((response) => response.json())
+    .then((response) => {
+      return response;
+    })
+    .catch((err) => {
+      console.error(err);
+    });
+};
+
 export const getRpcApiEndpoint = async (url: string, options?: RequestInit): Promise<any> => {
   try {
     const response = await fetch(url, options)

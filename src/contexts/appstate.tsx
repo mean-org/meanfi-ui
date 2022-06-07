@@ -25,7 +25,7 @@ import { getNetworkIdByCluster, useConnection, useConnectionConfig } from "./con
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { useAccountsContext } from "./accounts";
 import { TokenInfo, TokenListProvider } from "@solana/spl-token-registry";
-import { getPrices } from "../utils/api";
+import { getPrices, getRaydiumLiquidityPools, getRaydiumLpPairs } from "../utils/api";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
 import { UserTokenAccount } from "../models/transactions";
@@ -1092,14 +1092,17 @@ const AppStateProvider: React.FC = ({ children }) => {
   ]);
 
   /*
+  // Get Raydium LP token list
   useEffect(() => {
     if (!raydiumLps && shouldLoadRaydiumLps) {
-      getRaydiumLiquidityPools()
+      // getRaydiumLiquidityPools()
+      getRaydiumLpPairs()
       .then(result => {
-        consoleOut('Raydium official LPs:', result.official, 'blue');
+        // consoleOut('Raydium official LPs:', result.official, 'blue');
         // result.official
         // result.unOfficial
-        setRaydiumLps(result.official);
+        consoleOut('Raydium pairs:', result, 'blue');
+        setRaydiumLps(result);
       })
       .finally(() => setShouldLoadRaydiumLps(false));
     }
