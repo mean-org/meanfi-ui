@@ -386,6 +386,18 @@
 	"multisig": {
 		"add-participant-cta": "Adicionar participante",
 		"back-to-multisig-accounts-cta": "Back to Multisig Safes",
+		"create-asset": {
+			"delete-multisig": "",
+			"edit-multisig": "",
+			"main-cta": "Crio",
+			"main-cta-busy": "Criando cofre",
+			"modal-title": "Criar um cofre multisig",
+			"no-token": "Selecionar token",
+			"success-message": "Seu cofre multisig foi criado com sucesso",
+			"token-label": "Select an asset",
+			"token-placeholder": "Digite o endereço da mint do token",
+			"update-multisig": ""
+		},
 		"create-multisig": {
 			"fee-info-label": "The fee to create this multisig is",
 			"main-cta": "Crio",
@@ -409,15 +421,6 @@
 			"success-message": "Sua nova conta multisig foi criada com sucesso."
 		},
 		"create-new-multisig-account-cta": "Create safe",
-		"create-asset": {
-			"main-cta": "Crio",
-			"main-cta-busy": "Criando cofre",
-			"modal-title": "Criar um cofre multisig",
-			"no-token": "Selecionar token",
-			"success-message": "Seu cofre multisig foi criado com sucesso",
-			"token-label": "Select an asset",
-			"token-placeholder": "Digite o endereço da mint do token"
-		},
 		"crud-multisig": {
 			"delete-multisig": "Excluir multisig",
 			"edit-multisig": "Editar multisig",
@@ -467,6 +470,34 @@
 			"no-accounts": "Nenhuma conta multisig disponível",
 			"not-connected": "Por favor, conecte sua carteira para ver suas contas multisig",
 			"pending-transactions": "{{txs}} transações pendentes"
+		},
+		"multisig-assets": {
+			"asset-detail-heading": "Detalhes do cofre",
+			"back-to-multisig-accounts-cta": "Back to Multisig Safes",
+			"cta-change-multisig-authority": "Transferir propriedade",
+			"cta-change-multisig-authority-busy": "Mudando o Multisig",
+			"cta-close": "Fechar cofre",
+			"cta-close-busy": "Fechando cofre",
+			"cta-create-asset-busy": "Criando cofre",
+			"cta-transfer": "Propose Funds Transfer",
+			"cta-transfer-busy": "Iniciando a Solicitação de Retirada",
+			"delete-asset": {
+				"explanatory-paragraph": "By submitting this proposal, you will sign the transaction and approve it as one of the Multisig signers. Before the asset is deleted, the other Multisig members need to approve it.",
+				"main-cta": "Submit delete proposal",
+				"modal-title": "Delete a multisig asset",
+				"selected-asset-label": "Asset selected",
+				"warning-message": "Only empty assets can be deleted. To delete an asset you need to first transfer all funds to another account."
+			},
+			"explanatory-paragraph": "By submitting this proposal, you will sign the transaction and approve it as one of the Multisig signers. Before the funds are sent, the other Multisig members need to approve it.",
+			"main-cta": "Sign transfer proposal",
+			"no-asset-loaded": "Nenhum cofre carregado",
+			"no-assets": "Não há cofres disponíveis",
+			"no-transactions": "Nenhuma transação para este cofre",
+			"not-connected": "Conecte sua carteira para ver os cofres",
+			"refresh-tooltip": "Clique para atualizar a lista de cofres",
+			"screen-title": "Cofres - {{multisigName}} ({{itemCount}})",
+			"screen-title-no-assets": "Cofres",
+			"validation-amount-high": "O valor excede o saldo do cofre"
 		},
 		"multisig-detail-heading": "Detalhes da conta multisig",
 		"multisig-mints": {
@@ -596,34 +627,6 @@
 			"title-label": "Title",
 			"title-placeholder": "Reason for submitting this proposal"
 		},
-		"multisig-assets": {
-			"back-to-multisig-accounts-cta": "Back to Multisig Safes",
-			"cta-change-multisig-authority": "Transferir propriedade",
-			"cta-change-multisig-authority-busy": "Mudando o Multisig",
-			"cta-close": "Fechar cofre",
-			"cta-close-busy": "Fechando cofre",
-			"cta-create-asset-busy": "Criando cofre",
-			"cta-transfer": "Propose Funds Transfer",
-			"cta-transfer-busy": "Iniciando a Solicitação de Retirada",
-			"delete-asset": {
-				"explanatory-paragraph": "By submitting this proposal, you will sign the transaction and approve it as one of the Multisig signers. Before the asset is deleted, the other Multisig members need to approve it.",
-				"main-cta": "Submit delete proposal",
-				"modal-title": "Delete a multisig asset",
-				"selected-asset-label": "Asset selected",
-				"warning-message": "Only empty assets can be deleted. To delete an asset you need to first transfer all funds to another account."
-			},
-			"no-transactions": "Nenhuma transação para este cofre",
-			"no-asset-loaded": "Nenhum cofre carregado",
-			"no-assets": "Não há cofres disponíveis",
-			"not-connected": "Conecte sua carteira para ver os cofres",
-			"refresh-tooltip": "Clique para atualizar a lista de cofres",
-			"screen-title": "Cofres - {{multisigName}} ({{itemCount}})",
-			"screen-title-no-assets": "Cofres",
-			"validation-amount-high": "O valor excede o saldo do cofre",
-			"asset-detail-heading": "Detalhes do cofre",
-			"explanatory-paragraph": "By submitting this proposal, you will sign the transaction and approve it as one of the Multisig signers. Before the funds are sent, the other Multisig members need to approve it.",
-			"main-cta": "Sign transfer proposal"
-		},
 		"refresh-tooltip": "Clique para atualizar a lista de contas multisig",
 		"screen-title": "Multisig Safes",
 		"set-program-authority": {
@@ -677,6 +680,7 @@
 	"notifications": {
 		"account-address-copied-message": "Endereço da conta copiado com sucesso",
 		"account-address-not-copied-message": "Não foi possível copiar o endereço da conta",
+		"ask-others-to-sign": "Please ask the proposer user to execute this proposed transaction.",
 		"check-transaction-in-explorer": "Check your transaction here",
 		"create-money-stream-completed": "Seu fluxo de dinheiro foi criado",
 		"create-money-stream-completed-wait-for-confirm": "Depois que a transação for confirmada, ela deverá aparecer na lista.",
@@ -700,14 +704,13 @@
 		"success-account-funded-message": "Conta financiada",
 		"success-loading-stream-message": "O stream com ID {{streamId}} foi carregado",
 		"success-loading-treasury-message": "A tesouraria com ID {{treasuryId}} foi carregada",
-		"wallet-connect-message": "Conectado à carteira {{address}}",
-		"wallet-connection-event-title": "Atualização da carteira",
-		"wallet-disconnect-message": "Desconectado da carteira",
+		"tx-not-approved": "Your transaction has not been approved",
 		"tx-not-confirmed": "The transaction could not be confirmed, please retry your transaction.",
 		"tx-not-executed": "Your transaction has not been executed",
-		"tx-not-approved": "Your transaction has not been approved",
 		"tx-proposal-created": "Your proposal has been created",
-		"ask-others-to-sign": "Please ask the proposer user to execute this proposed transaction."
+		"wallet-connect-message": "Conectado à carteira {{address}}",
+		"wallet-connection-event-title": "Atualização da carteira",
+		"wallet-disconnect-message": "Desconectado da carteira"
 	},
 	"open-stream": {
 		"label-streamid-input": "Código do stream para abrir",
@@ -1045,7 +1048,6 @@
 			"cannot-use-own-account-as-treasury": "Não é possível usar sua conta como ID de tesouraria",
 			"cliff-release-no-empty": "",
 			"exchange-unavailable": "Troca indisponível",
-			"minimum-balance-required": "We recommend having at least 0.05 SOL for any transaction",
 			"insufficient-amount-needed": "Precisa de pelo menos {{amount}} {{symbol}} para trocar",
 			"insufficient-balance-needed": "Need at least {{balance}} SOL in your wallet",
 			"invalid-account": "",
@@ -1054,6 +1056,7 @@
 			"invalid-solana-address": "Endereço de solana inválido",
 			"lock-period-no-empty": "",
 			"memo-empty": "Memo cannot be empty",
+			"minimum-balance-required": "We recommend having at least 0.05 SOL for any transaction",
 			"minimum-repeating-buy-amount": "Você precisa de um mínimo de {{fromTokenAmount}} para iniciar esta compra repetida",
 			"minimum-swap-amount": "Valor mínimo necessário para trocar {{mintAmount}} {{fromMint}}",
 			"multi-recipient-invalid-addresses": "",
@@ -1096,12 +1099,11 @@
 		"streamid-placeholder": "Novo endereço da carteira do beneficiário"
 	},
 	"transfers": {
+		"create-money-stream-modal-title": "Create money stream",
 		"screen-subtitle": "Envie dinheiro para qualquer pessoa no mundo mais rapidamente",
 		"screen-title": "Transferências",
-		"verified-recipient-disclaimer": "Tenho certeza de que o endereço do destinatário não pertence a uma troca.",
 		"send-asset-modal-title": "Send Asset",
-		"create-money-stream-modal-title": "Create money stream"
-
+		"verified-recipient-disclaimer": "Tenho certeza de que o endereço do destinatário não pertence a uma troca."
 	},
 	"treasuries": {
 		"add-funds": {
@@ -1135,8 +1137,8 @@
 		"create-treasury": {
 			"create-multisig-cta": "Iniciar tesouraria",
 			"create-multisig-cta-busy": "Iniciando tesouraria",
-			"create-multisig-treasury-success": "Iniciar solicitação de tesouraria submetida para aprovação da Multisig.",
 			"create-multisig-streaming-account-success": "Initiate streaming account request submitted for Multisig approval.",
+			"create-multisig-treasury-success": "Iniciar solicitação de tesouraria submetida para aprovação da Multisig.",
 			"lock-period": {
 				"days": "days",
 				"hours": "hours",
@@ -1250,10 +1252,10 @@
 			"option-explorer-link": "Ver no Solana Explorer",
 			"option-pause-stream": "Pausa",
 			"option-resume-stream": "Retomar",
+			"screen-title": "Streaming Accounts - Streams",
 			"status-running": "Corrida",
 			"status-scheduled": "Agendado",
-			"status-stopped": "Parado",
-			"screen-title": "Streaming Accounts - Streams"
+			"status-stopped": "Parado"
 		},
 		"withdraw-funds": {
 			"button-title": "Withdraw funds",
