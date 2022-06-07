@@ -410,7 +410,6 @@ export const TreasuryStreamCreateModal = (props: {
   const toggleOverflowEllipsisMiddle = useCallback((state: boolean) => {
     const ellipsisElements = document.querySelectorAll(".ant-select.token-selector-dropdown .ant-select-selector .ant-select-selection-item");
     if (ellipsisElements && ellipsisElements.length) {
-      console.log('ellipsisElements:', ellipsisElements);
 
       ellipsisElements.forEach(element => {
         if (state) {

@@ -628,3 +628,7 @@ export const addDays = (date: Date, days: number) => {
 export const openLinkInNewTab = (address: string) => {
   window.open(address, '_blank','noreferrer');
 }
+
+export const tabNameFormat = (str: string) => {
+  return str.toLowerCase().split(' ').join('_');
+}

@@ -1,5 +1,5 @@
 import './style.scss';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import { Button, Col, Row } from "antd"
 import { IconArrowForward } from "../../../../Icons"
 // import { shortenAddress } from "../../../../utils/utils";
@@ -11,6 +11,7 @@ import { MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
 import { ProgramAccounts } from '../../../../utils/accounts';
 import { consoleOut } from '../../../../utils/ui';
 import { Connection, MemcmpFilter, PublicKey } from '@solana/web3.js';
+import { AppStateContext } from '../../../../contexts/appstate';
 
 export const SafeSerumInfoView = (props: {
   connection: Connection;
@@ -37,8 +38,11 @@ export const SafeSerumInfoView = (props: {
     // onDataToAssetView,
     // multisigClient,
     multisigTxs
-     
   } = props;
+
+  const {
+    multisigSolBalance
+  } = useContext(AppStateContext);
 
   const [programs, setPrograms] = useState<ProgramAccounts[]>([]);
   const [loadingPrograms, setLoadingPrograms] = useState(true);
@@ -295,6 +299,7 @@ export const SafeSerumInfoView = (props: {
     <>
       <SafeInfo
         // connection={connection}
+        // solBalance={multisigSolBalance}
         selectedMultisig={selectedMultisig}
         safeNameImg={safeSerumNameImg}
         safeNameImgAlt={safeSerumNameImgAlt}

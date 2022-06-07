@@ -895,7 +895,8 @@ export const RepeatingPayment = (props: {
           startUtc: dateFormat(data.startUtc, SIMPLE_DATE_TIME_FORMAT),
           rateAmount: parseFloat(paymentRateAmount as string),
           interval: getPaymentRateOptionLabel(paymentRateFrequency),
-          feePayedByTreasurer: data.feePayedByTreasurer
+          feePayedByTreasurer: data.feePayedByTreasurer,
+          valueInUsd: effectiveRate * parseFloat(fromCoinAmount as string)
         };
         consoleOut('segment data:', segmentData, 'brown');
         segmentAnalytics.recordEvent(AppUsageEvent.TransferRecurringFormButton, segmentData);

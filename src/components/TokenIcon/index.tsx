@@ -16,7 +16,6 @@ export const TokenIcon = (props: {
   const size = props.size || 20;
 
   if (icon) {
-    console.log('icon:', icon);
     return (
       <img
         alt="Token icon"

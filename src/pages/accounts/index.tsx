@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useMemo } from 'react';
+import React, { useCallback, useContext, useMemo, useRef } from 'react';
 import "./style.scss";
 import {
   ArrowLeftOutlined,
@@ -26,7 +26,8 @@ import {
   getTokenAmountAndSymbolByTokenAddress,
   getTxIxResume,
   openLinkInNewTab,
-  shortenAddress
+  shortenAddress,
+  tabNameFormat
 } from '../../utils/utils';
 import { Alert, Button, Col, Dropdown, Empty, Menu, Row, Space, Spin, Tooltip } from 'antd';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
@@ -105,6 +106,7 @@ export const AccountsNewView = () => {
   const connectionConfig = useConnectionConfig();
   const {
     theme,
+    activeTab,
     coinPrices,
     userTokens,
     streamList,
@@ -204,8 +206,12 @@ export const AccountsNewView = () => {
   const [selectedMultisig, setSelectedMultisig] = useState<MultisigInfo | undefined>(undefined);
   const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(true);
   const [multisigPendingTxs, setMultisigPendingTxs] = useState<MultisigTransaction[]>([]);
-
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
+
+  const selectedMultisigRef = useRef(selectedMultisig);
+  useEffect(() => {
+    selectedMultisigRef.current = selectedMultisig;
+  }, [selectedMultisig]);
 
   // Keep account balance updated
   useEffect(() => {
@@ -559,6 +565,22 @@ export const AccountsNewView = () => {
     return transactions && transactions.length > 0 ? true : false;
   }, [transactions]);
 
+  const getQueryAccountType = useCallback(() => {
+    let accountTypeInQuery: string | null = null;
+    if (searchParams) {
+      accountTypeInQuery = searchParams.get('account-type');
+      if (accountTypeInQuery) {
+        return accountTypeInQuery;
+      }
+    }
+    return undefined;
+  }, [searchParams]);
+
+  const getNativeAccountAsset = useCallback(() => {
+    if (!accountAddress || !accountTokens) { return undefined; }
+    return accountTokens.find(a => a.publicAddress === accountAddress);
+  }, [accountAddress, accountTokens]);
+
   const getScanAddress = useCallback((asset: UserTokenAccount): PublicKey | null => {
     /**
      * If asset.ataAddress
@@ -604,11 +626,15 @@ export const AccountsNewView = () => {
       // Fetch SOL balance.
       connection.getBalance(pk)
         .then(solBalance => {
-          tokensCopy[0].balance = solBalance / LAMPORTS_PER_SOL;
-          tokensCopy[0].valueInUsd = (solBalance / LAMPORTS_PER_SOL) * getTokenPriceBySymbol(tokensCopy[0].symbol);
-          consoleOut('solBalance:', solBalance / LAMPORTS_PER_SOL, 'blue');
-          setAccountTokens(tokensCopy);
-          setSelectedAsset(tokensCopy[0]);
+          let itemIndex = -1;
+          itemIndex = tokensCopy.findIndex(t => t.publicAddress === selectedAsset.publicAddress);
+          if (itemIndex !== -1) {
+            tokensCopy[itemIndex].balance = solBalance / LAMPORTS_PER_SOL;
+            tokensCopy[itemIndex].valueInUsd = (solBalance / LAMPORTS_PER_SOL) * getTokenPriceBySymbol(tokensCopy[itemIndex].symbol);
+            consoleOut('solBalance:', solBalance / LAMPORTS_PER_SOL, 'blue');
+            setAccountTokens(tokensCopy);
+            setSelectedAsset(tokensCopy[itemIndex]);
+          }
         })
         .catch(error => {
           console.error(error);
@@ -622,7 +648,8 @@ export const AccountsNewView = () => {
         .then(tokenAmount => {
           const balance = tokenAmount.value.uiAmount;
           consoleOut('balance:', balance, 'blue');
-          const valueInUSD = (balance || 0) * getTokenPriceByAddress(selectedAsset.address);
+          const price = getTokenPriceByAddress(selectedAsset.address) || getTokenPriceBySymbol(selectedAsset.symbol)
+          const valueInUSD = (balance || 0) * price;
           consoleOut('valueInUSD:', valueInUSD, 'blue');
           // Find the token and update it if found
           itemIndex = tokensCopy.findIndex(t => t.publicAddress === selectedAsset.publicAddress);
@@ -668,16 +695,22 @@ export const AccountsNewView = () => {
   ]);
 
   const navigateToAsset = useCallback((asset: UserTokenAccount) => {
+    const isMyWallet = isInspectedAccountTheConnectedWallet();
     const isAccountNative = isSelectedAssetNativeAccount(asset);
     let url = '';
-    if (isAccountNative) {
+    if (isMyWallet && isAccountNative) {
       url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/assets`;
     } else {
       url = `${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddress}/assets/${asset.publicAddress}`;
+      const param = getQueryAccountType();
+      if (param) {
+        url += `?account-type=${param}`;
+      }
     }
     consoleOut('Asset selected, redirecting to:', url, 'orange');
-    navigate(url, { replace: true });
-  }, [accountAddress, isSelectedAssetNativeAccount, navigate])
+    navigate(url);
+    // navigate(url, { replace: true });
+  }, [accountAddress, getQueryAccountType, isInspectedAccountTheConnectedWallet, isSelectedAssetNativeAccount, navigate])
 
   const selectAsset = useCallback((
     asset: UserTokenAccount,
@@ -733,39 +766,51 @@ export const AccountsNewView = () => {
 
   // Setup event handler for Tx confirmed
   const onTxConfirmed = useCallback((item: TxConfirmationInfo) => {
-    consoleOut("onTxConfirmed event executed:", item, 'crimson');
-    if (item && item.operationType === OperationType.Wrap) {
-      recordTxConfirmation(item, true);
-      setShouldLoadTokens(true);
-      reloadSwitch();
-    } else if (item && item.operationType === OperationType.Unwrap) {
-      setIsUnwrapping(false);
-      recordTxConfirmation(item, true);
-      setShouldLoadTokens(true);
-      reloadSwitch();
-    } else if (item && item.operationType === OperationType.Transfer && item.extras !== 'scheduled') {
-      recordTxConfirmation(item, true);
-      setShouldLoadTokens(true);
-      reloadSwitch();
-    } else if (item && item.operationType === OperationType.CreateAsset) {
-      recordTxConfirmation(item, true);
-      setShouldLoadTokens(true);
-      if (isSelectedAssetNativeAccount()) {
+    if (item) {
+      if (item.operationType === OperationType.Wrap) {
+        recordTxConfirmation(item, true);
+        setShouldLoadTokens(true);
         reloadSwitch();
+      } else if (item.operationType === OperationType.Unwrap) {
+        setIsUnwrapping(false);
+        recordTxConfirmation(item, true);
+        setShouldLoadTokens(true);
+        reloadSwitch();
+      } else if (item.operationType === OperationType.Transfer && item.extras !== 'scheduled') {
+        recordTxConfirmation(item, true);
+        setShouldLoadTokens(true);
+        reloadSwitch();
+      } else if (item.operationType === OperationType.CreateAsset) {
+        recordTxConfirmation(item, true);
+        setShouldLoadTokens(true);
+        if (isSelectedAssetNativeAccount()) {
+          reloadSwitch();
+        }
+      } else if (item.operationType === OperationType.CloseTokenAccount) {
+        recordTxConfirmation(item, true);
+        setShouldLoadTokens(true);
+        reloadSwitch();
+      } else if (item.operationType === OperationType.TransferTokens) {
+        recordTxConfirmation(item, true);
+        const multisigAuthority = selectedMultisigRef && selectedMultisigRef.current ? selectedMultisigRef.current.authority.toBase58() : '';
+        if (multisigAuthority) {
+          setHighLightableMultisigId(multisigAuthority);
+        }
+        navigate(`/multisig/${multisigAuthority}?v=proposals`);
       }
-    } else if (item && item.operationType === OperationType.CloseTokenAccount) {
-      recordTxConfirmation(item, true);
-      setShouldLoadTokens(true);
-      reloadSwitch();
     }
     resetTransactionStatus();
-  }, [isSelectedAssetNativeAccount, recordTxConfirmation, reloadSwitch, resetTransactionStatus, setShouldLoadTokens]);
+  }, [isSelectedAssetNativeAccount, navigate, recordTxConfirmation, reloadSwitch, resetTransactionStatus, setHighLightableMultisigId, setShouldLoadTokens]);
 
   // Setup event handler for Tx confirmation error
   const onTxTimedout = useCallback((item: TxConfirmationInfo) => {
     consoleOut("onTxTimedout event executed:", item, 'crimson');
-    if (item && item.operationType === OperationType.Unwrap) {
-      setIsUnwrapping(false);
+    if (item) {
+      if (item.operationType === OperationType.Unwrap) {
+        setIsUnwrapping(false);
+      } else if (item.operationType === OperationType.TransferTokens) {
+        setIsBusy(false);
+      }
     }
     recordTxConfirmation(item, false);
     resetTransactionStatus();
@@ -1484,12 +1529,6 @@ export const AccountsNewView = () => {
     onExecuteTransferTokensTx(params);
   };
 
-  const onTokensTransfered = useCallback(() => {
-    resetTransactionStatus();
-  },[
-    resetTransactionStatus
-  ]);
-
   const onExecuteTransferTokensTx = useCallback(async (data: any) => {
 
     let transaction: Transaction;
@@ -1511,7 +1550,7 @@ export const AccountsNewView = () => {
 
       const fromAddress = new PublicKey(data.from);
       const fromAccountInfo = await connection.getAccountInfo(fromAddress);
-      
+
       if (!fromAccountInfo) { 
         throw Error("Invalid from token account");
       }
@@ -1589,7 +1628,7 @@ export const AccountsNewView = () => {
 
       const tx = await multisigClient.createTransaction(
         publicKey,
-        "Transfer Asset Funds",
+        "Propose funds transfer",
         "", // description
         new Date(expirationTime * 1_000),
         OperationType.TransferTokens,
@@ -1605,9 +1644,7 @@ export const AccountsNewView = () => {
 
     const createTx = async (): Promise<boolean> => {
 
-      if (publicKey && data) {
-        consoleOut("Start transaction for create multisig", '', 'blue');
-        consoleOut('Wallet address:', publicKey.toBase58());
+      if (publicKey && selectedAsset && data) {
 
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
@@ -1621,6 +1658,7 @@ export const AccountsNewView = () => {
           amount: data.amount
         };
         
+        consoleOut('selectedAsset:', selectedAsset, 'blue');
         consoleOut('data:', payload);
 
         // Log input data
@@ -1805,7 +1843,7 @@ export const AccountsNewView = () => {
       }
     }
 
-    if (wallet) {
+    if (wallet && selectedAsset) {
       const create = await createTx();
       consoleOut('created:', create);
       if (create && !transactionCancelled) {
@@ -1814,16 +1852,32 @@ export const AccountsNewView = () => {
         if (sign && !transactionCancelled) {
           const sent = await sendTx();
           consoleOut('sent:', sent);
-          if (sent && !transactionCancelled) {
+          if (sent) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.TransferTokens);
-            setIsBusy(false);
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.TransactionFinished
-            });
-            onTokensTransfered();
-            setIsTransferTokenModalVisible(false);
+            if (sent) {
+              enqueueTransactionConfirmation({
+                signature: signature,
+                operationType: OperationType.TransferTokens,
+                finality: "confirmed",
+                txInfoFetchStatus: "fetching",
+                loadingTitle: 'Confirming transaction',
+                loadingMessage: `Transferring ${formatThousands(data.amount, selectedAsset.decimals)} ${selectedAsset.symbol} to ${shortenAddress(data.to)}`,
+                completedTitle: 'Transaction confirmed',
+                completedMessage: `Asset funds (${formatThousands(data.amount, selectedAsset.decimals)} ${selectedAsset.symbol}) successfully transferred to ${shortenAddress(data.to)}`
+              });
+              setTransactionStatus({
+                lastOperation: transactionStatus.currentOperation,
+                currentOperation: TransactionStatus.TransactionFinished
+              });
+              setIsTransferTokenModalVisible(false);
+            } else {
+              openNotification({
+                title: t('notifications.error-title'),
+                description: t('notifications.error-sending-transaction'),
+                type: "error"
+              });
+              setIsBusy(false);
+            }
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -1833,18 +1887,19 @@ export const AccountsNewView = () => {
     wallet,
     publicKey,
     connection,
+    selectedAsset,
     nativeBalance,
+    multisigClient,
     selectedMultisig,
     transactionCancelled,
-    multisigClient,
     transactionFees.mspFlatFee,
     transactionFees.blockchainFee,
     transactionStatus.currentOperation,
-    onTokensTransfered,
-    setTransactionStatus,
-    startFetchTxSignatureInfo,
-    resetTransactionStatus,
+    enqueueTransactionConfirmation,
     clearTxConfirmationContext,
+    resetTransactionStatus,
+    setTransactionStatus,
+    t
   ]);
 
   // Transfer asset authority modal
@@ -1903,7 +1958,7 @@ export const AccountsNewView = () => {
 
       const tx = await multisigClient.createTransaction(
         publicKey,
-        "Change Asset Authority",
+        "Change asset ownership",
         "", // description
         new Date(expirationTime * 1_000),
         OperationType.SetAssetAuthority,
@@ -2239,7 +2294,7 @@ export const AccountsNewView = () => {
 
       const tx = await multisigClient.createTransaction(
         publicKey,
-        "Close Asset",
+        "Close asset",
         "", // description
         new Date(expirationTime * 1_000),
         OperationType.DeleteAsset,
@@ -2709,7 +2764,6 @@ export const AccountsNewView = () => {
     if (searchParams) {
       accountTypeInQuery = searchParams.get('account-type');
       if (accountTypeInQuery) {
-        consoleOut('searchParams:', searchParams.toString(), 'crimson');
         consoleOut('account-type:', searchParams.get('account-type'), 'crimson');
       }
     }
@@ -2995,6 +3049,7 @@ export const AccountsNewView = () => {
                   consoleOut('Neither urlQueryAsset nor selectedAsset', 'beware!!!', 'red');
                   selectAsset(sortedList[0]);
                 }
+
                 consoleOut('category', selectedCategory, 'blue');
 
               } else {
@@ -3521,10 +3576,16 @@ export const AccountsNewView = () => {
       return (
         <div key="pending-proposals" className="transaction-list-row no-pointer shift-up-1">
           <div className="flex-row align-items-center fg-warning simplelink underline-on-hover" onClick={() => {
-              if (selectedMultisig) {
-                setHighLightableMultisigId(selectedMultisig.id.toBase58());
+              let url = '/multisig';
+              if (accountAddress) {
+                setHighLightableMultisigId(accountAddress);
+                if (activeTab) {
+                  url += `/${accountAddress}?v=${tabNameFormat(activeTab)}`;
+                } else {
+                  url += `/${accountAddress}?v=proposals`;
+                }
               }
-              navigate("/multisig");
+              navigate(url);
             }}>
             <div className="font-bold">There are pending proposals on this account</div>
             <span className="icon-button-container ml-1">
@@ -3634,7 +3695,7 @@ export const AccountsNewView = () => {
     </>
   );
 
-  const renderAsset = (asset: UserTokenAccount, index: number) => {
+  const renderAsset = useCallback((asset: UserTokenAccount, index: number) => {
     const onTokenAccountClick = () => {
       setSelectedCategory("assets");
       navigateToAsset(asset);
@@ -3699,7 +3760,14 @@ export const AccountsNewView = () => {
         </div>
       </div>
     );
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    theme,
+    selectedAsset,
+    hideLowBalances,
+    selectedCategory,
+    shouldHideAsset,
+  ]);
 
   const renderAssetsList = (
     <>
@@ -3931,9 +3999,7 @@ export const AccountsNewView = () => {
     return (
       <div className="flex-fixed-right cta-row">
         <Space className="left" size="middle" wrap>
-          {selectedAsset.name === 'Custom account' ? (
-            <h4 className="mb-0">The token for this Custom account was not found in the Solana token list</h4>
-          ) : inspectedAccountType && inspectedAccountType === "multisig" ? (
+          {inspectedAccountType && inspectedAccountType === "multisig" ? (
             <Row gutter={[8, 8]} className="safe-btns-container mb-1">
               <Col xs={24} sm={24} md={24} lg={24} className="asset-btn-group btn-group">
                 <Button
@@ -3971,6 +4037,8 @@ export const AccountsNewView = () => {
               </Col>
             </Row>
 
+          ) : selectedAsset.name === 'Custom account' ? (
+            <h4 className="mb-0">The token for this Custom account was not found in the Solana token list</h4>
           ) : items.map(item => { // Draw the Asset CTAs here
               if (item.tooltip) {
                 return (
@@ -4285,7 +4353,7 @@ export const AccountsNewView = () => {
                                       if (selectedMultisig) {
                                         setHighLightableMultisigId(selectedMultisig.id.toBase58());
                                       }
-                                      navigate("/multisig");
+                                      navigate(`/multisig/${address}?v=${tabNameFormat(activeTab)}`)
                                     }}
                                   />
                                 </Tooltip>

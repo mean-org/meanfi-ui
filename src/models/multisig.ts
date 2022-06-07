@@ -586,7 +586,6 @@ export const parseMultisigProposalIx = (
     }
 
     const ixData = (dataDecoded.data as any);
-    // console.log('dataDecoded', ixData);
 
     const formattedData = coder.format(
       {
@@ -618,7 +617,6 @@ export const parseMultisigProposalIx = (
       }
     }
 
-    // console.log('formattedData', formattedData);
     const ixAccInfos: InstructionAccountInfo[] = [];
     let accIndex = 0;
 

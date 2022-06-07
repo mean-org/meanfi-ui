@@ -96,6 +96,7 @@ export interface SegmentStreamOTPTransferData {
     amount: number;
     beneficiary: string;
     startUtc: string;
+    valueInUsd: number;
 }
 
 export interface SegmentStreamRPTransferData {
@@ -107,6 +108,7 @@ export interface SegmentStreamRPTransferData {
     interval: string;
     feePayedByTreasurer: boolean;
     startUtc: string;
+    valueInUsd: number;
 }
 
 export interface SegmentStreamWithdrawData {
@@ -117,6 +119,7 @@ export interface SegmentStreamWithdrawData {
     inputAmount: number;
     feeAmount: number;
     sentAmount: number;
+    valueInUsd: number;
 }
 
 export interface SegmentStreamAddFundsData {
@@ -126,6 +129,7 @@ export interface SegmentStreamAddFundsData {
     treasury: string;
     stream: string;
     amount: number;
+    valueInUsd: number;
 }
 
 export interface SegmentStreamCloseData {
@@ -137,12 +141,7 @@ export interface SegmentStreamCloseData {
     vestedReturns: number;
     unvestedReturns: number;
     feeAmount: number;
-}
-
-export interface SegmentStreamTransferOwnershipData {
-    stream: string;
-    beneficiary: string;
-    newBeneficiary: string;
+    valueInUsd: number;
 }
 
 export interface SegmentStakeMeanData {
@@ -152,6 +151,7 @@ export interface SegmentStakeMeanData {
     stakedAssetPrice: number;
     amount: number;
     quote: number;
+    valueInUsd: number;
 }
 
 export interface SegmentUnstakeMeanData {
@@ -161,6 +161,7 @@ export interface SegmentUnstakeMeanData {
     unstakedAssetPrice: number;
     amount: number;
     quote: number;
+    valueInUsd: number;
 }
 
 export interface SegmentStakingRewardsDepositData {
@@ -169,6 +170,13 @@ export interface SegmentStakingRewardsDepositData {
     depositPercentage: number;
     amount: number;
     stakingVaultBalance: number;
+    valueInUsd: number;
+}
+
+export interface SegmentStreamTransferOwnershipData {
+    stream: string;
+    beneficiary: string;
+    newBeneficiary: string;
 }
 
 ///////////////////

@@ -76,7 +76,7 @@ interface AppStateConfig {
   tokenList: TokenInfo[];
   selectedToken: TokenInfo | undefined;
   tokenBalance: number;
-  totalSafeBalance: number;
+  totalSafeBalance: number | undefined;
   fromCoinAmount: string;
   effectiveRate: number;
   coinPrices: any | null;
@@ -91,6 +91,8 @@ interface AppStateConfig {
   proposalEndTime: string | undefined;
   paymentRateAmount: string;
   lockPeriodAmount: string;
+  activeTab: string;
+  selectedTab: string;
   paymentRateFrequency: PaymentRateType;
   lockPeriodFrequency: PaymentRateType;
   timeSheetRequirement: TimesheetRequirementOption;
@@ -149,7 +151,7 @@ interface AppStateConfig {
   hideDepositOptionsModal: () => void;
   setSelectedToken: (token: TokenInfo | undefined) => void;
   setSelectedTokenBalance: (balance: number) => void;
-  setTotalSafeBalance: (balance: number) => void;
+  setTotalSafeBalance: (balance: number | undefined) => void;
   setFromCoinAmount: (data: string) => void;
   refreshPrices: () => void;
   setEffectiveRate: (rate: number) => void;
@@ -170,6 +172,8 @@ interface AppStateConfig {
   setProposalEndTime: (time: string) => void;
   setPaymentRateAmount: (data: string) => void;
   setLockPeriodAmount: (data: string) => void;
+  setActiveTab: (data: string) => void;
+  setSelectedTab: (data: string) => void;
   setPaymentRateFrequency: (freq: PaymentRateType) => void;
   setLockPeriodFrequency: (freq: PaymentRateType) => void;
   setTimeSheetRequirement: (req: TimesheetRequirementOption) => void;
@@ -202,7 +206,7 @@ interface AppStateConfig {
   setRecurringBuys: (recurringBuys: DdcaAccount[]) => void;
   setLoadingRecurringBuys: (state: boolean) => void;
   // Multisig
-  setMultisigSolBalance: (balance: number) => void;
+  setMultisigSolBalance: (balance: number | undefined) => void;
   setMultisigVaults: (list: Array<MultisigVault>) => void;
   setHighLightableMultisigId: (id: string | undefined) => void,
   setPendingMultisigTxCount: (id: number | undefined) => void,
@@ -224,7 +228,7 @@ const contextDefaultValues: AppStateConfig = {
   tokenList: [],
   selectedToken: undefined,
   tokenBalance: 0,
-  totalSafeBalance: 0,
+  totalSafeBalance: undefined,
   fromCoinAmount: '',
   effectiveRate: 0,
   coinPrices: null,
@@ -239,6 +243,8 @@ const contextDefaultValues: AppStateConfig = {
   proposalEndTime: undefined,
   paymentRateAmount: '',
   lockPeriodAmount: '',
+  activeTab: '',
+  selectedTab: '',
   paymentRateFrequency: PaymentRateType.PerMonth,
   lockPeriodFrequency: PaymentRateType.PerMonth,
   timeSheetRequirement: TimesheetRequirementOption.NotRequired,
@@ -321,6 +327,8 @@ const contextDefaultValues: AppStateConfig = {
   setProposalEndTime: () => {},
   setPaymentRateAmount: () => {},
   setLockPeriodAmount: () => {},
+  setActiveTab: () => {},
+  setSelectedTab: () => {},
   setPaymentRateFrequency: () => {},
   setLockPeriodFrequency: () => {},
   setTimeSheetRequirement: () => {},
@@ -399,6 +407,8 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [fromCoinAmount, updateFromCoinAmount] = useState<string>(contextDefaultValues.fromCoinAmount);
   const [paymentRateAmount, updatePaymentRateAmount] = useState<string>(contextDefaultValues.paymentRateAmount);
   const [lockPeriodAmount, updateLockPeriodAmount] = useState<string>(contextDefaultValues.lockPeriodAmount);
+  const [activeTab, updateActiveTab] = useState<string>(contextDefaultValues.activeTab);
+  const [selectedTab, updateSelectedTab] = useState<string>(contextDefaultValues.selectedTab);
   const [paymentRateFrequency, updatePaymentRateFrequency] = useState<PaymentRateType>(PaymentRateType.PerMonth);
   const [lockPeriodFrequency, updateLockPeriodFrequency] = useState<PaymentRateType>(PaymentRateType.PerMonth);
   const [timeSheetRequirement, updateTimeSheetRequirement] = useState<TimesheetRequirementOption>(TimesheetRequirementOption.NotRequired);
@@ -430,7 +440,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   const [selectedToken, updateSelectedToken] = useState<TokenInfo>();
   const [tokenBalance, updateTokenBalance] = useState<number>(contextDefaultValues.tokenBalance);
-  const [totalSafeBalance, updateTotalSafeBalance] = useState<number>(contextDefaultValues.totalSafeBalance);
+  const [totalSafeBalance, updateTotalSafeBalance] = useState<number | undefined>(contextDefaultValues.totalSafeBalance);
   const [stakingMultiplier, updateStakingMultiplier] = useState<number>(contextDefaultValues.stakingMultiplier);
   const [coinPricesFromApi, setCoinPricesFromApi] = useState<TokenPrice[] | null>(null);
   const [coinPrices, setCoinPrices] = useState<any>(null);
@@ -482,7 +492,6 @@ const AppStateProvider: React.FC = ({ children }) => {
   ]);
 
   const msp = useMemo(() => {
-    console.log('New MSP from appState');
     return new MSP(
       connectionConfig.endpoint,
       streamV2ProgramAddressFromConfig,
@@ -637,6 +646,14 @@ const AppStateProvider: React.FC = ({ children }) => {
     updateLockPeriodAmount(data);
   }
 
+  const setActiveTab = (data: string) => {
+    updateActiveTab(data);
+  }
+
+  const setSelectedTab = (data: string) => {
+    updateSelectedTab(data);
+  }
+
   const setPaymentRateFrequency = (freq: PaymentRateType) => {
     updatePaymentRateFrequency(freq);
   }
@@ -673,7 +690,8 @@ const AppStateProvider: React.FC = ({ children }) => {
     setProposalEndDate(tomorrow);
     setProposalEndTime(timeDate);
     setPaymentRateAmount('');
-    setLockPeriodAmount('');
+    setActiveTab('');
+    setSelectedTab('');
     setPaymentRateFrequency(PaymentRateType.PerMonth);
     setPaymentRateFrequency(PaymentRateType.PerMonth);
     setIsVerifiedRecipient(false);
@@ -713,7 +731,6 @@ const AppStateProvider: React.FC = ({ children }) => {
       const streamPublicKey = new PublicKey(streamId);
       try {
         if (msp && publicKey) {
-          console.log('streamPublicKey', streamPublicKey.toBase58());
           const detail = await msp.getStream(streamPublicKey);
           consoleOut('customStream', detail);
           if (detail) {
@@ -863,7 +880,6 @@ const AppStateProvider: React.FC = ({ children }) => {
   }
 
   const setDeletedStream = (id: string) => {
-    console.log('setDeletedStream:', id);
     setDeletedStreams(oldArray => [...oldArray, id]);
   }
 
@@ -900,11 +916,11 @@ const AppStateProvider: React.FC = ({ children }) => {
     updateTokenBalance(balance);
   }
 
-  const setMultisigSolBalance = (balance: number) => {
+  const setMultisigSolBalance = (balance: number | undefined) => {
     updateMultisigSolBalance(balance);
   }
 
-  const setTotalSafeBalance = (balance: number) => {
+  const setTotalSafeBalance = (balance: number | undefined) => {
     updateTotalSafeBalance(balance);
   }
 
@@ -1505,6 +1521,8 @@ const AppStateProvider: React.FC = ({ children }) => {
         proposalEndTime,
         paymentRateAmount,
         lockPeriodAmount,
+        activeTab,
+        selectedTab,
         paymentRateFrequency,
         lockPeriodFrequency,
         timeSheetRequirement,
@@ -1580,6 +1598,8 @@ const AppStateProvider: React.FC = ({ children }) => {
         setProposalEndTime,
         setPaymentRateAmount,
         setLockPeriodAmount,
+        setActiveTab,
+        setSelectedTab,
         setPaymentRateFrequency,
         setLockPeriodFrequency,
         setTimeSheetRequirement,

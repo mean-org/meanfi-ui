@@ -1,5 +1,5 @@
 import './style.scss';
-import { shortenAddress } from "../../../../utils/utils";
+import { shortenAddress, tabNameFormat } from "../../../../utils/utils";
 import { SafeInfo } from "../UI/SafeInfo";
 import { MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigInfo, MultisigTransaction, MultisigTransactionSummary } from '@mean-dao/mean-multisig-sdk';
 import { ProgramAccounts } from '../../../../utils/accounts';
@@ -11,7 +11,7 @@ import { AppStateContext } from '../../../../contexts/appstate';
 import { TxConfirmationContext } from '../../../../contexts/transaction-status';
 import { IconArrowForward } from '../../../../Icons';
 import { useWallet } from '../../../../contexts/wallet';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { openNotification } from '../../../../components/Notifications';
 import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
 import { useTranslation } from 'react-i18next';
@@ -40,15 +40,15 @@ export const SafeMeanInfo = (props: {
   selectedTab?: any;
   proposalSelected?: any;
   assetSelected?: any;
-  
 }) => {
-
   const { 
     programs,
+    activeTab,
     multisigTxs,
     multisigVaults,
     multisigSolBalance,
     refreshTokenBalance,
+    setHighLightableMultisigId,
     previousWalletConnectState,
     setMultisigSolBalance,
     setMultisigVaults,
@@ -79,6 +79,7 @@ export const SafeMeanInfo = (props: {
   } = props;
   const navigate = useNavigate();
   const location = useLocation();
+  const { address } = useParams();
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
   const { connected } = useWallet();
@@ -184,7 +185,7 @@ export const SafeMeanInfo = (props: {
           modifiedResults.push(solToken);  
           result.forEach(item => {
             modifiedResults.push(item);
-          });  
+          });
           setAssetsWithoutSol(result);
           setMultisigVaults(modifiedResults);  
           consoleOut("Multisig assets", modifiedResults, "blue");
@@ -370,7 +371,6 @@ export const SafeMeanInfo = (props: {
 
     if (!connection || !selectedMultisig) { return; }
 
-    // TODO: Check with Yansel (change balance of the selectedMultisig.id for selectedMultisig.authority)
     const timeout = setTimeout(() => {
       connection
         .getBalance(selectedMultisig.authority)
@@ -567,20 +567,20 @@ export const SafeMeanInfo = (props: {
     setMultisigTxs
   ]);
 
-  useEffect(() => {
-    const timeout = setTimeout(() => {
+  // useEffect(() => {
+  //   const timeout = setTimeout(() => {
 
-      if (multisigTxs) {
-        setLoadingProposals(false);
-      } else {
-        setLoadingProposals(true);
-      }
-    }, 2500);
+  //     if (multisigTxs) {
+  //       setLoadingProposals(false);
+  //     } else {
+  //       setLoadingProposals(true);
+  //     }
+  //   }, 2500);
 
-    return () => {
-      clearTimeout(timeout);
-    }
-  }, [multisigTxs]);
+  //   return () => {
+  //     clearTimeout(timeout);
+  //   }
+  // }, [multisigTxs]);
 
   // Proposals list
   const renderListOfProposals = (
@@ -591,6 +591,12 @@ export const SafeMeanInfo = (props: {
             const onSelectProposal = () => {
               // Sends isProposalDetails value to the parent component "SafeView"
               onDataToSafeView(proposal);
+
+                // if (selectedMultisig) {
+                //   setHighLightableMultisigId(selectedMultisig.id.toBase58());
+                // }
+                // const url = `/multisig/${address}/proposals/${index}`;
+                // navigate(url, { replace: true });
             };
 
             // Number of participants who have already approved the Tx
@@ -716,12 +722,12 @@ export const SafeMeanInfo = (props: {
   // Tabs
   const tabs = [
     {
-      id: "safe01",
+      id: "proposals",
       name: `Proposals ${amountOfProposals}`,
       render: renderListOfProposals
     },
     {
-      id: "safe03",
+      id: "programs",
       name: `Programs ${amountOfPrograms}`,
       render: renderListOfPrograms
     }
@@ -730,9 +736,7 @@ export const SafeMeanInfo = (props: {
   return (
     <>
       <SafeInfo
-        solBalance={multisigSolBalance}
         selectedMultisig={selectedMultisig}
-        multisigVaults={multisigVaults}
         onNewProposalMultisigClick={onNewProposalMultisigClick}
         onEditMultisigClick={onEditMultisigClick}
         onRefreshTabsInfo={onRefreshTabsInfo}
