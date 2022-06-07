@@ -45,7 +45,7 @@ export const VestingView = () => {
   const { width } = useWindowSize();
   const { publicKey } = useWallet();
   const [isPageLoaded, setIsPageLoaded] = useState<boolean>(false);
-  const [loadingTreasuries, setLoadingTreasuries] = useState(false);
+  const [loadingTreasuries, setLoadingTreasuries] = useState(true);
   const [treasuriesLoaded, setTreasuriesLoaded] = useState(false);
   const [treasuryList, setTreasuryList] = useState<Treasury[]>([]);
   // Path params values
@@ -204,7 +204,7 @@ export const VestingView = () => {
 
   const getAllUserV2Accounts = useCallback(async () => {
 
-    if (!connection || !publicKey || loadingTreasuries || !msp) { return []; }
+    if (!connection || !publicKey || !msp) { return []; }
 
     setTimeout(() => {
       setLoadingTreasuries(true);
@@ -214,11 +214,11 @@ export const VestingView = () => {
 
     return treasuries.filter((t: any) => !t.autoClose);
 
-  }, [connection, loadingTreasuries, msp, publicKey]);
+  }, [connection, msp, publicKey]);
 
   const refreshVestingContracts = useCallback((reset = false) => {
-    
-    if (!connection || !publicKey || loadingTreasuries || !msp) { return; }
+
+    if (!connection || !publicKey || !msp) { return; }
 
     setTimeout(() => {
       setLoadingTreasuries(true);
@@ -234,7 +234,7 @@ export const VestingView = () => {
       })
       .finally(() => setLoadingTreasuries(false));
 
-  }, [connection, getAllUserV2Accounts, loadingTreasuries, msp, publicKey]);
+  }, [connection, getAllUserV2Accounts, msp, publicKey]);
 
   const onSelectVestingContract = useCallback((item: Treasury | undefined) => {
     if (accountAddress && item) {
@@ -538,6 +538,35 @@ export const VestingView = () => {
     );
   }
 
+  const loader = (
+    <>
+      <div className="container main-container">
+        <div className="loading-screen-container flex-center">
+          <div className="flex-column flex-center">
+            <div className="loader-container">
+              <div className="app-loading">
+                <div className="logo" style={{display: 'none'}}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 245 238" fillRule="evenodd" clipRule="evenodd" strokeLinejoin="round" strokeMiterlimit="2">
+                    <path d="M238.324 75l-115.818 30.654L6.689 75 0 128.402l47.946 122.08L122.515 313l74.55-62.518L245 128.402 238.324 75zm-21.414 29.042l3.168 25.313-42.121 107.268-26.849 22.511 37.922-120.286-48.471 12.465-8.881 107.524-9.176 24.128-9.174-24.128-8.885-107.524-48.468-12.465 37.922 120.286-26.85-22.511-42.118-107.268 3.167-25.313 94.406 24.998 94.408-24.998z" fill="url(#_Linear1)" transform="translate(0 -64)"/>
+                    <defs>
+                      <linearGradient id="_Linear1" x1="0" y1="0" x2="1" y2="0" gradientUnits="userSpaceOnUse" gradientTransform="matrix(0 238 -238 0 122.5 75)">
+                        <stop offset="0" stopColor="#ff0017"/><stop offset="1" stopColor="#b7001c"/>
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                </div>
+                <svg className="spinner" viewBox="25 25 50 50">
+                  <circle className="path" cx="50" cy="50" r="20" fill="none" strokeWidth="2" strokeMiterlimit="10"/>
+                </svg>
+              </div>
+            </div>
+            <p className="loader-message">{t('general.loading')}</p>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+
   const renderCreateFirstVestingAccount = useCallback(() => {
     return (
       <>
@@ -572,118 +601,120 @@ export const VestingView = () => {
 
   // Render the On-boarding to Mean Vesting by helping the user on creating
   // the first Vesting Contract if the user has none
-  if (treasuriesLoaded && treasuryList.length === 0) {
-    return renderCreateFirstVestingAccount();
-  }
-
-  // Render normal UI
-  return (
-    <>
-      {detailsPanelOpen && (
-        <Button
-          id="back-button"
-          type="default"
-          shape="circle"
-          icon={<ArrowLeftOutlined />}
-          onClick={onBackButtonClicked}/>
-      )}
-      <div className="container main-container">
-        {publicKey ? (
-          <div className="interaction-area">
-
-            <div className={`meanfi-two-panel-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
-
-              {/* Left / top panel */}
-              <div className="meanfi-two-panel-left">
-
-                <div className="meanfi-panel-heading">
-                  <span className="title">{t('vesting.screen-title')} ({treasuryList.length})</span>
-                  <div className="user-address">
-                    <span className="fg-secondary">
-                      (<Tooltip placement="bottom" title={t('assets.account-address-copy-cta')}>
-                        <span className="simplelink underline-on-hover" onClick={() => copyAddressToClipboard(publicKey.toBase58())}>
-                          {/* TODO: Use accountAddress from url */}
-                          {shortenAddress(publicKey.toBase58(), 5)}
-                        </span>
-                      </Tooltip>)
-                    </span>
-                    <span className="icon-button-container">
-                      <Button
-                        type="default"
-                        shape="circle"
-                        size="middle"
-                        icon={<IconExternalLink className="mean-svg-icons" style={{width: "18", height: "18"}} />}
-                        onClick={() => openLinkInNewTab(`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${publicKey.toBase58()}${getSolanaExplorerClusterParam()}`)}
-                      />
-                    </span>
-                  </div>
-                </div>
-
-                <div className="inner-container">
-                  <div className="item-block vertical-scroll">
-
-                    <div className="asset-category flex-column">
-                      <VestingLockAccountList
-                        streamingAccounts={treasuryList}
-                        selectedAccount={selectedVestingContract}
-                        onAccountSelected={(item: Treasury | undefined) => onSelectVestingContract(item)}
-                      />
-                    </div>
-
-                  </div>
-
-                  {/* Bottom CTA */}
-                  <div className="bottom-ctas">
-                    <div className="primary-action">
-                      <Button
-                        block
-                        className="flex-center"
-                        type="primary"
-                        shape="round"
-                        onClick={() => {
-                          // sddfdf
-                        }}>
-                        <span className="ml-1">Create vesting contract</span>
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-
-              {/* Right / down panel */}
-              <div className="meanfi-two-panel-right">
-                <div className="meanfi-panel-heading"><span className="title">{t('vesting.vesting-account-details.panel-title')}</span></div>
-                <div className="inner-container">
-                  <div className="flexible-column-bottom">
-                    <div className="top">
-                      <VestingContractDetails vestingContract={selectedVestingContract} />
-                      {/* Render CTAs row here */}
-                      {renderMetaInfoCtaRow()}
-                    </div>
-                    <div className="bottom">
-                      {renderTabset()}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-
-          </div>
-        ) : (
-          <div className="interaction-area">
-            <div className="w-75 h-100 p-5 text-center flex-column flex-center">
-              <div className="text-center mb-2">
-                <WarningFilled style={{ fontSize: 48 }} className="icon fg-warning" />
-              </div>
-              <h3>{t('wallet-selector.connect-to-begin')}</h3>
-            </div>
-          </div>
+  if (treasuriesLoaded && treasuryList && treasuryList.length > 0 && !loadingTreasuries ) {
+    // Render normal UI
+    return (
+      <>
+        {detailsPanelOpen && (
+          <Button
+            id="back-button"
+            type="default"
+            shape="circle"
+            icon={<ArrowLeftOutlined />}
+            onClick={onBackButtonClicked}/>
         )}
-      </div>
-      <PreFooter />
-    </>
-  );
+        <div className="container main-container">
+          {publicKey ? (
+            <div className="interaction-area">
+  
+              <div className={`meanfi-two-panel-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
+  
+                {/* Left / top panel */}
+                <div className="meanfi-two-panel-left">
+  
+                  <div className="meanfi-panel-heading">
+                    <span className="title">{t('vesting.screen-title')} ({treasuryList.length})</span>
+                    <div className="user-address">
+                      <span className="fg-secondary">
+                        (<Tooltip placement="bottom" title={t('assets.account-address-copy-cta')}>
+                          <span className="simplelink underline-on-hover" onClick={() => copyAddressToClipboard(publicKey.toBase58())}>
+                            {/* TODO: Use accountAddress from url */}
+                            {shortenAddress(publicKey.toBase58(), 5)}
+                          </span>
+                        </Tooltip>)
+                      </span>
+                      <span className="icon-button-container">
+                        <Button
+                          type="default"
+                          shape="circle"
+                          size="middle"
+                          icon={<IconExternalLink className="mean-svg-icons" style={{width: "18", height: "18"}} />}
+                          onClick={() => openLinkInNewTab(`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${publicKey.toBase58()}${getSolanaExplorerClusterParam()}`)}
+                        />
+                      </span>
+                    </div>
+                  </div>
+  
+                  <div className="inner-container">
+                    <div className="item-block vertical-scroll">
+  
+                      <div className="asset-category flex-column">
+                        <VestingLockAccountList
+                          streamingAccounts={treasuryList}
+                          selectedAccount={selectedVestingContract}
+                          onAccountSelected={(item: Treasury | undefined) => onSelectVestingContract(item)}
+                        />
+                      </div>
+  
+                    </div>
+  
+                    {/* Bottom CTA */}
+                    <div className="bottom-ctas">
+                      <div className="primary-action">
+                        <Button
+                          block
+                          className="flex-center"
+                          type="primary"
+                          shape="round"
+                          onClick={() => {
+                            // sddfdf
+                          }}>
+                          <span className="ml-1">Create vesting contract</span>
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+  
+                </div>
+  
+                {/* Right / down panel */}
+                <div className="meanfi-two-panel-right">
+                  <div className="meanfi-panel-heading"><span className="title">{t('vesting.vesting-account-details.panel-title')}</span></div>
+                  <div className="inner-container">
+                    <div className="flexible-column-bottom">
+                      <div className="top">
+                        <VestingContractDetails vestingContract={selectedVestingContract} />
+                        {/* Render CTAs row here */}
+                        {renderMetaInfoCtaRow()}
+                      </div>
+                      <div className="bottom">
+                        {renderTabset()}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+  
+              </div>
+  
+            </div>
+          ) : (
+            <div className="interaction-area">
+              <div className="w-75 h-100 p-5 text-center flex-column flex-center">
+                <div className="text-center mb-2">
+                  <WarningFilled style={{ fontSize: 48 }} className="icon fg-warning" />
+                </div>
+                <h3>{t('wallet-selector.connect-to-begin')}</h3>
+              </div>
+            </div>
+          )}
+        </div>
+        <PreFooter />
+      </>
+    );
+  } else if (treasuriesLoaded && treasuryList.length === 0 && !loadingTreasuries) {
+    return renderCreateFirstVestingAccount();
+  } else {
+    return loader;
+  }
 
 };
