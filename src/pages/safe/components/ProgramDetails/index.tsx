@@ -62,6 +62,7 @@ export const ProgramDetailsView = (props: {
   // const [selectedProgram, setSelectedProgram] = useState<ProgramAccounts | undefined>(undefined);
   const [selectedProgramIdl, setSelectedProgramIdl] = useState<any>(null);
   const [loadingTxs, setLoadingTxs] = useState(true);
+  const [programTransactions, setProgramTransactions] = useState<any>();
   const noIdlInfo = "The program IDL is not initialized. To load the IDL info please run `anchor idl init` with the required parameters from your program workspace.";
 
   // When back button is clicked, goes to Safe Info
@@ -852,33 +853,49 @@ export const ProgramDetailsView = (props: {
   ];
 
   // Get transactions
-  const [programSignatures, setProgramSignatures] = useState<any>();
-  const [programTransactions, setProgramTransactions] = useState<any>();
+  const getProgramTxs = useCallback(async() => {
+
+    if (!connection || !programSelected) { return null; }
+
+    const signaturesInfo = await connection.getConfirmedSignaturesForAddress2(
+      programSelected.pubkey, { limit: 50 } // TODO: Implement pagination
+    );
+
+    if (signaturesInfo.length === 0) { return null; }
+
+    const signatures = signaturesInfo.map((data) => data.signature);
+    const txs = await connection.getParsedTransactions(signatures);
+
+    if (txs.length === 0) { return null; }
+
+    return txs.filter(tx => tx !== null);
+
+  }, [
+    connection, 
+    programSelected
+  ]);
 
   useEffect(() => {
-    if (!connection) { return; }
 
-    connection.getConfirmedSignaturesForAddress2(programSelected.pubkey)
-        .then(signaturesData => {
-          const signatures = signaturesData.map((data) => data.signature)
-          setProgramSignatures(signatures);
-        })
-        .catch(error => {
-          console.error(error);
-        })
-  }, [connection, programSelected.pubkey]);
+    if (!connection || !programSelected || !loadingTxs) { return; }
 
-  useEffect(() => {
-    if (!connection || !programSignatures) { return; }
-
-    connection.getParsedTransactions(programSignatures)
-        .then(transactions => {
-          setProgramTransactions(transactions);
-          consoleOut("program transactions", transactions, 'blue');
-        })
-        .catch(error => console.error(error))
+    const timeout = setTimeout(() => {
+      getProgramTxs()
+        .then(txs => setProgramTransactions(txs))
+        .catch((err: any) => console.error(err))
         .finally(() => setLoadingTxs(false));
-  }, [connection, programSignatures]);
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [
+    connection, 
+    programSelected,
+    loadingTxs,
+    getProgramTxs
+  ]);
 
   const renderTransactions = (
     <>

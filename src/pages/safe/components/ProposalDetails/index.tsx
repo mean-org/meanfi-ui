@@ -402,7 +402,7 @@ export const ProposalDetailsView = (props: {
     selectedProposal.proposer.toBase58() === publicKey?.toBase58()
   ) ? true : false;
 
-  if (!selectedProposal.proposer) { return (<></>); }
+  if (!selectedProposal || !selectedProposal.proposer) { return (<></>); }
 
   // Number of participants who have already approved the Tx
   const approvedSigners = selectedProposal.signers.filter((s: any) => s === true).length;
