@@ -44,7 +44,7 @@
   --color-section-contrast: #f1f1f1;
   --color-white: #ffffff;
   --color-black: #000000;
-  --color-wells: #f8f8f8;
+  --color-wells: #f1f1f1;
   --color-main-navigation: #FFFFFF;
   --color-panel-background: #FCFCFC;
   --color-component-background: #FFFFFF;
@@ -147,7 +147,7 @@
   --color-section-contrast: #0a0a13;
   --color-white: #ffffff;
   --color-black: #000000;
-  --color-wells: #181c2a;
+  --color-wells: #11141d;
   --color-main-navigation: #0f121d;
   --color-panel-background: #1C1F30;
   --color-component-background: #141523;
@@ -2487,14 +2487,22 @@ main section {
     position: relative;
     max-width: 480px;
     width: 100%;
-    background: var(--color-panel-background);
-    border-radius: var(--custom-border-radius);
     padding: 1rem;
-    box-shadow: 0 3px 3px -1px rgba(0,0,0,0.08), 0 3px 7px 0 rgba(0,0,0,0.08), 0 1px 18px 0 rgba(0,0,0, 0.08);
+    &:not(.flat) {
+      background: var(--color-panel-background);
+      border-radius: var(--custom-border-radius);
+      box-shadow: 0 3px 3px -1px rgba(0,0,0,0.08), 0 3px 7px 0 rgba(0,0,0,0.08), 0 1px 18px 0 rgba(0,0,0, 0.08);
+    }
+    &.flat {
+      border: none !important;
+      box-shadow: none !important;
+      background-color: transparent !important;
+    }
     @media (max-width: 575.98px) {
       padding: 0;
       border: none !important;
       box-shadow: none !important;
+      background-color: transparent !important;
       margin-bottom: calc(2rem + var(--footer-bar-height));
       .button-tabset-container {
         margin: 0 0 1rem 0;
@@ -3044,9 +3052,6 @@ main section {
     opacity: 0.6;
     background-color: var(--color-secondary-alpha-02);
   }
-  &:not(.disabled):hover {
-    background-color: var(--darken);
-  }
   .add-on {
     display: flex;
     justify-content: flex-start;
@@ -3215,6 +3220,22 @@ main section {
   }
   textarea {
     white-space: normal !important;
+  }
+}
+[data-theme="light"] {
+  .well {
+    &:not(.disabled):focus,
+    &:not(.disabled):hover {
+      background-color: var(--darken-10);
+    }
+  }
+}
+[data-theme="dark"] {
+  .well {
+    &:not(.disabled):focus,
+    &:not(.disabled):hover {
+      background-color: var(--darken-40);
+    }
   }
 }
 .inner-label {

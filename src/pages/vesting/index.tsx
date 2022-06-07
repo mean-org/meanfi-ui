@@ -2,7 +2,7 @@ import React, { useEffect, useState, useContext, useCallback, useMemo } from 're
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from "react-i18next";
 import { AppStateContext } from "../../contexts/appstate";
-import { IconExternalLink, IconVerticalEllipsis } from "../../Icons";
+import { IconExternalLink, IconMoneyTransfer, IconVerticalEllipsis } from "../../Icons";
 import { PreFooter } from "../../components/PreFooter";
 import { Button, Dropdown, Menu, Space, Tabs, Tooltip } from 'antd';
 import { consoleOut, copyText } from '../../utils/ui';
@@ -21,6 +21,8 @@ import useWindowSize from '../../hooks/useWindowResize';
 import { isMobile } from 'react-device-detect';
 import { MetaInfoCta } from '../../models/common-types';
 import { MetaInfoCtaAction } from '../../models/enums';
+import { VestingLockCreateAccount } from './components/VestingLockCreateAccount';
+import { TokenInfo } from '@solana/spl-token-registry';
 
 const { TabPane } = Tabs;
 export const VESTING_ROUTE_BASE_PATH = '/vesting';
@@ -56,6 +58,7 @@ export const VestingView = () => {
   const [autoOpenDetailsPanel, setAutoOpenDetailsPanel] = useState(true);
   const [isXsDevice, setIsXsDevice] = useState<boolean>(isMobile);
   const [assetCtas, setAssetCtas] = useState<MetaInfoCta[]>([]);
+
 
   /////////////////////////
   //  Setup & Init code  //
@@ -127,6 +130,7 @@ export const VestingView = () => {
     publicKey,
     streamV2ProgramAddress
   ]);
+
 
   /////////////////
   //  Callbacks  //
@@ -260,10 +264,10 @@ export const VestingView = () => {
 
   },[t])
 
+
   /////////////////////
   // Data management //
   /////////////////////
-
 
   // Detect XS screen
   useEffect(() => {
@@ -420,6 +424,7 @@ export const VestingView = () => {
     }
   }, [accountAddress, accountDetailTab, navigate, publicKey, vestingContractAddress]);
 
+
   ////////////////////////////
   //   Events and actions   //
   ////////////////////////////
@@ -435,6 +440,7 @@ export const VestingView = () => {
     const url = `${VESTING_ROUTE_BASE_PATH}/${accountAddress}/contracts/${vestingContractAddress}/${activeKey}`;
     navigate(url);
   }, [accountAddress, navigate, vestingContractAddress]);
+
 
   ///////////////
   // Rendering //
@@ -532,19 +538,45 @@ export const VestingView = () => {
     );
   }
 
-  // const renderCreateVestingAccount = useCallback(() => {
-  //   return (
-  //     <>
-  //       <h3 className="user-instruction-headline">{t('vesting.user-instruction-headline')}</h3>
-  //       <VestingLockCreateAccount
-  //         inModal={false}
-  //         token={selectedToken}
-  //         tokenChanged={(token: TokenInfo | undefined) => setSelectedToken(token)}
-  //       />
-  //     </>
-  //   );
-  // }, [selectedToken, setSelectedToken, t]);
+  const renderCreateFirstVestingAccount = useCallback(() => {
+    return (
+      <>
+      <div className="container main-container">
+        <div className="interaction-area">
+          <div className="title-and-subtitle">
+            <div className="title">
+              <IconMoneyTransfer className="mean-svg-icons" />
+              <div>{t('vesting.screen-title')}</div>
+            </div>
+            <div className="subtitle mb-3">
+              {t('vesting.screen-subtitle')}
+            </div>
+            <div className="subtitle">
+              {t('vesting.screen-subtitle2')}
+            </div>
+            <h3 className="user-instruction-headline">{t('vesting.user-instruction-headline')}</h3>
+          </div>
+          <div className="place-transaction-box flat mb-3">
+            <VestingLockCreateAccount
+              inModal={false}
+              token={selectedToken}
+              tokenChanged={(token: TokenInfo | undefined) => setSelectedToken(token)}
+            />
+          </div>
+        </div>
+      </div>
+      <PreFooter />
+      </>
+    );
+  }, [selectedToken, setSelectedToken, t]);
 
+  // Render the On-boarding to Mean Vesting by helping the user on creating
+  // the first Vesting Contract if the user has none
+  if (treasuriesLoaded && treasuryList.length === 0) {
+    return renderCreateFirstVestingAccount();
+  }
+
+  // Render normal UI
   return (
     <>
       {detailsPanelOpen && (

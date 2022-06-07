@@ -2,11 +2,9 @@ import { Treasury, TreasuryType } from '@mean-dao/msp';
 import { Empty } from 'antd';
 import React, { useContext } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AddressDisplay } from '../../../../components/AddressDisplay';
 import { Identicon } from '../../../../components/Identicon';
-import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../../../constants';
+import { FALLBACK_COIN_IMAGE } from '../../../../constants';
 import { AppStateContext } from '../../../../contexts/appstate';
-import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
 import { formatThousands } from '../../../../utils/utils';
 
 export const VestingLockAccountList = (props: {
@@ -20,16 +18,6 @@ export const VestingLockAccountList = (props: {
         theme,
         getTokenByMintAddress,
     } = useContext(AppStateContext);
-
-    // const getAvailableStreamingBalance = useCallback((item: Treasury, token: TokenInfo | undefined) => {
-    //     if (item) {
-    //         const decimals = token ? token.decimals : 6;
-    //         const unallocated = item.balance - item.allocationAssigned;
-    //         const ub = makeDecimal(new BN(unallocated), decimals);
-    //         return ub;
-    //     }
-    //     return 0;
-    // }, []);
 
     const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
         event.currentTarget.src = FALLBACK_COIN_IMAGE;
@@ -72,29 +60,6 @@ export const VestingLockAccountList = (props: {
                                 </div>
                                 <div className="subtitle text-truncate">
                                     <span className="mr-1">Sending #,###.00 {token?.symbol} per ###</span>
-                                    <AddressDisplay
-                                        address={item.id as string}
-                                        prefix="("
-                                        suffix=")"
-                                        maxChars={5}
-                                        iconStyles={{ width: "15", height: "15" }}
-                                        newTabLink={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${item.id}${getSolanaExplorerClusterParam()}`}
-                                    />
-                                    {/* {
-                                        !item.totalStreams
-                                            ? 'No streams'
-                                            : `${formatThousands(item.totalStreams)} ${
-                                                    token
-                                                        ? token.symbol
-                                                        : associatedToken
-                                                            ? '[' + shortenAddress(associatedToken as string) + ']'
-                                                            : ''
-                                                } ${
-                                                    item.totalStreams > 1
-                                                        ? 'streams'
-                                                        : 'stream'
-                                                }`
-                                    } */}
                                 </div>
                             </div>
                             <div className="rate-cell">

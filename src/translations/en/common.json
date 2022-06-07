@@ -1323,7 +1323,8 @@
 	"vesting": {
 		"screen-subtitle": "Welcome to the future of safe and secure token locks",
 		"screen-title": "Mean Vesting",
-		"user-instruction-headline": "Please create a new vesting account or select an existing account to create a vesting stream.",
+		"screen-subtitle2": "Realize the power of no-code token locks on Solana.",
+		"user-instruction-headline": "Get started by creating a vesting contract below",
 		"create-account": {
 			"tab-label-create-account": "Create new account",
 			"tab-label-select-account": "Select existing account"
