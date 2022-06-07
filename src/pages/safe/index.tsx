@@ -3670,15 +3670,15 @@ export const SafeView = () => {
   // Rendering //
   ///////////////
 
-  const getQueryParamV = useCallback(() => {
-    let optionInQuery: string | null = null;
-    // Get the option if passed-in
-    if (searchParams) {
-      optionInQuery = searchParams.get('v');
-    }
+  // const getQueryParamV = useCallback(() => {
+  //   let optionInQuery: string | null = null;
+  //   // Get the option if passed-in
+  //   if (searchParams) {
+  //     optionInQuery = searchParams.get('v');
+  //   }
 
-    return optionInQuery || "not-found";
-  }, [searchParams]);
+  //   return optionInQuery || "not-found";
+  // }, [searchParams]);
 
   const renderMultisigList = (
     <>
@@ -3696,7 +3696,7 @@ export const SafeView = () => {
             setTotalSafeBalance(undefined);
 
             // Need refresh Txs happens inmediately after selecting a multisig
-            const url = `/multisig/${item.authority.toBase58()}?v=${getQueryParamV()}`;
+            const url = `/multisig/${item.authority.toBase58()}?v=proposals`;
             navigate(url);
           };
 
@@ -3807,7 +3807,7 @@ export const SafeView = () => {
     if (selectedMultisig) {
       setHighLightableMultisigId(selectedMultisig.id.toBase58());
     }
-    const url = `/multisig/${address}/?v=proposals`;
+    const url = `/multisig/${address}?v=proposals`;
     navigate(url);
   }
 
@@ -3816,7 +3816,7 @@ export const SafeView = () => {
     if (selectedMultisig) {
       setHighLightableMultisigId(selectedMultisig.id.toBase58());
     }
-    const url = `/multisig/${address}/?v=programs`;
+    const url = `/multisig/${address}?v=programs`;
     navigate(url);
   }
 

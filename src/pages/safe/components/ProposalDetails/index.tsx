@@ -276,9 +276,9 @@ export const ProposalDetailsView = (props: {
               )
             })
           ) : (
-            proposalIxInfo.data.map((item: InstructionDataInfo) => {
+            proposalIxInfo.data.map((item: InstructionDataInfo, index: number) => {
               return (
-                <Row gutter={[8, 8]} className="mb-2">
+                <Row gutter={[8, 8]} className="mb-2" key={`data-${index}`}>
                   <Col xs={6} sm={6} md={4} lg={4} className="pr-1 text-truncate">
                     <Tooltip placement="right" title={item.label || ""}>
                       <span className="info-label">{item.label || t('multisig.proposal-modal.instruction-data')}</span>
