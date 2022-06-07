@@ -39,7 +39,7 @@ export const MultisigTransferTokensModal = (props: {
     loadingPrices,
     effectiveRate,
     transactionStatus,
-    getTokenByMintAddress,
+    getUserTokenByMintAddress,
     refreshPrices,
   } = useContext(AppStateContext);
 
@@ -188,8 +188,6 @@ export const MultisigTransferTokensModal = (props: {
     setAmount(onlyNumbersAndDot.trim());
   }
 
-  const isSol = (fromVault && fromVault.name === "Native SOL") ? true : false;
-
   return (
     <Modal
       className="mean-modal simple-modal"
@@ -228,7 +226,7 @@ export const MultisigTransferTokensModal = (props: {
                               <div>{menu}</div>
                             )}>
                               {props.assets.map((option: UserTokenAccount) => {
-                                const token = getTokenByMintAddress(option.address as string);
+                                const token = getUserTokenByMintAddress(option.address as string);
                                 const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
                                   event.currentTarget.src = FALLBACK_COIN_IMAGE;
                                   event.currentTarget.className = "error";
@@ -240,29 +238,25 @@ export const MultisigTransferTokensModal = (props: {
                                       <div className="transaction-list-row w-100">
                                         <div className="icon-cell">
                                           <div className="token-icon">
-                                            {!isSol ? (
-                                              token && token.logoURI ? (
-                                                <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
-                                              ) : (
-                                                <Identicon address={option.address} style={{
-                                                  width: "28px",
-                                                  display: "inline-flex",
-                                                  height: "26px",
-                                                  overflow: "hidden",
-                                                  borderRadius: "50%"
-                                                }} />
-                                              )
+                                            {(token && token.logoURI) ? (
+                                              <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
                                             ) : (
-                                              <img alt={fromVault.name} width={30} height={30} src={fromVault.logoURI} onError={imageOnErrorHandler} />
+                                              <Identicon address={option.address} style={{
+                                                width: "26px",
+                                                display: "inline-flex",
+                                                height: "26px",
+                                                overflow: "hidden",
+                                                borderRadius: "50%"
+                                              }} />
                                             )}
                                           </div>
                                         </div>
                                         <div className="description-cell">
                                           <div className="title text-truncate">
-                                            {!isSol ? (
-                                              token ? token.symbol : `${shortenAddress(option.address, 4)}`
+                                            {(token && token.symbol) ? (
+                                              token.symbol 
                                             ) : (
-                                              fromVault.symbol
+                                              `${shortenAddress(option.address, 4)}`
                                             )}
                                             </div>
                                         </div>

@@ -159,6 +159,7 @@ interface AppStateConfig {
   getTokenPriceByAddress: (address: string) => number;
   getTokenPriceBySymbol: (symbol: string) => number;
   getTokenByMintAddress: (address: string) => TokenInfo | undefined;
+  getUserTokenByMintAddress: (address: string) => TokenInfo | undefined;
   refreshTokenBalance: () => void;
   resetContractValues: () => void;
   resetStreamsState: () => void;
@@ -316,6 +317,7 @@ const contextDefaultValues: AppStateConfig = {
   getTokenPriceByAddress: () => 0,
   getTokenPriceBySymbol: () => 0,
   getTokenByMintAddress: () => undefined,
+  getUserTokenByMintAddress: () => undefined,
   refreshTokenBalance: () => {},
   resetContractValues: () => {},
   resetStreamsState: () => {},
@@ -725,6 +727,16 @@ const AppStateProvider: React.FC = ({ children }) => {
     }
     return undefined;
   }, [splTokenList]);
+
+  const getUserTokenByMintAddress = useCallback((address: string): TokenInfo | undefined => {
+    const tokenFromTokenList = splTokenList && isProd()
+      ? splTokenList.find(t => t.address === address)
+      : userTokens.find(t => t.address === address);
+    if (tokenFromTokenList) {
+      return tokenFromTokenList;
+    }
+    return undefined;
+  }, [splTokenList, userTokens]);
 
   const openStreamById = async (streamId: string, dock = false) => {
     try {
@@ -1584,6 +1596,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         getTokenPriceByAddress,
         getTokenPriceBySymbol,
         getTokenByMintAddress,
+        getUserTokenByMintAddress,
         refreshTokenBalance,
         resetContractValues,
         resetStreamsState,
