@@ -996,12 +996,12 @@ export const ProgramDetailsView = (props: {
   // Tabs
   const tabs = [
     {
-      id: "programs01",
+      id: "transactions",
       name: "Transactions",
       render: renderTransactions
     }, 
     {
-      id: "programs02",
+      id: "anchor-idl",
       name: "Anchor IDL",
       render: renderIdlTree()
     }
@@ -1071,6 +1071,7 @@ export const ProgramDetailsView = (props: {
         </Row>
         <TabsMean
           tabs={tabs}
+          defaultTab="transactions"
         />
       </div>
 

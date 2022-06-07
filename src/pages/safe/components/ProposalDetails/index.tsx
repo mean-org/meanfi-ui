@@ -369,12 +369,12 @@ export const ProposalDetailsView = (props: {
   // Tabs
   const tabs = [
     {
-      id: "proposal01",
+      id: "instruction",
       name: "Instruction",
       render: renderInstructions
     }, 
     {
-      id: "proposal02",
+      id: "activity",
       name: "Activity",
       render: renderActivities
     }
@@ -520,13 +520,15 @@ export const ProposalDetailsView = (props: {
         </>
       </Row>
 
-      <div className="safe-tabs-container">
-        <TabsMean
-          tabs={tabs}
-          headerClassName="safe-tabs-header-container"
-          bodyClassName="safe-tabs-content-container"
-        />
-      </div>
+      {/* <Row>
+        <h3 className="mt-1 proposal-instruction">Instruction</h3>
+        {renderInstructions}
+      </Row> */}
+
+      <TabsMean
+        tabs={tabs}
+        defaultTab="instruction"
+      />
     </div>
   )
 };

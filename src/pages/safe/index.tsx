@@ -28,7 +28,8 @@ import {
   formatThousands,
   getTokenAmountAndSymbolByTokenAddress,
   getTxIxResume,
-  shortenAddress
+  shortenAddress,
+  tabNameFormat
 } from '../../utils/utils';
 
 import { Button, Dropdown, Empty, Menu, Spin, Tooltip } from 'antd';
@@ -90,6 +91,7 @@ import { MultisigTxResultModal } from '../../components/MultisigTxResultModal';
 import { confirmationEvents, TxConfirmationContext, TxConfirmationInfo } from "../../contexts/transaction-status";
 import { AppUsageEvent } from '../../utils/segment-service';
 import { segmentAnalytics } from "../../App";
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 const CREDIX_PROGRAM = new PublicKey("CRDx2YkdtYtGZXGHZ59wNv1EwKHQndnRc1gT4p8i2vPX");
 
@@ -99,8 +101,13 @@ const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export const SafeView = () => {
   const connectionConfig = useConnectionConfig();
   const { publicKey, connected, wallet } = useWallet();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { address, id } = useParams();
   const {
     programs,
+    activeTab,
+    multisigTxs,
+    setActiveTab,
     isWhitelisted,
     detailsPanelOpen,
     transactionStatus,
@@ -129,6 +136,8 @@ export const SafeView = () => {
 
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
+  const navigate = useNavigate();
+  const location = useLocation();
   // Misc hooks
   const { width } = useWindowSize();
   const [isSmallUpScreen, setIsSmallUpScreen] = useState(isDesktop);
@@ -3593,11 +3602,11 @@ export const SafeView = () => {
       return;
     }
 
-    consoleOut('Try to scroll multisig into view...', '', 'green');
+    // consoleOut('Try to scroll multisig into view...', '', 'green');
     const timeout = setTimeout(() => {
       const highlightTarget = document.getElementById(highLightableMultisigId);
       if (highlightTarget) {
-        consoleOut('Scrolling multisig into view...', '', 'green');
+        // consoleOut('Scrolling multisig into view...', '', 'green');
         highlightTarget.scrollIntoView({ behavior: 'smooth' });
       }
       setHighLightableMultisigId(undefined);
@@ -3615,9 +3624,61 @@ export const SafeView = () => {
     setHighLightableMultisigId,
   ]);
 
+  // Redirect to first selected multisig if none provided
+  useEffect(() => {
+    if (!publicKey) { return; }
+
+    if (!address && multisigAccounts && multisigAccounts.length > 0) {
+      const firstMultisig = multisigAccounts[0].authority.toBase58();
+      const url = `/multisig/${firstMultisig}?v=proposals`;
+      navigate(url);
+    }
+  }, [address, multisigAccounts, navigate, publicKey]);
+
+  // Actually selects a multisig base on url
+  useEffect(() => {
+    if (address && multisigAccounts) {
+      setSelectedMultisig(multisigAccounts.find((multisig) => multisig.authority.toBase58() === address));
+      setHighLightableMultisigId(address);
+      setNeedRefreshTxs(true);
+    } 
+  }, [address, multisigAccounts, setHighLightableMultisigId]);
+
+  useEffect(() => {
+    if (id && multisigTxs) {
+      const filteredMultisigTxs = multisigTxs.find(tx => tx.id.toBase58() === id);
+
+      setProposalSelected(filteredMultisigTxs as any);
+      setIsProposalDetails(true);
+      setIsProgramDetails(false);
+      setIsAssetDetails(false);
+    }
+  }, [id, multisigTxs]);
+
+  useEffect(() => {
+    if (id && programs) {
+      const filteredPrograms = programs.find(program => program.pubkey.toBase58() === id);
+
+      setProgramSelected(filteredPrograms);
+      setIsProposalDetails(false);
+      setIsAssetDetails(false);
+      setIsProgramDetails(true);
+    }
+  }, [id, programs]);
+
   ///////////////
   // Rendering //
   ///////////////
+
+  const getQueryParamV = useCallback(() => {
+    let optionInQuery: string | null = null;
+    // Get the option if passed-in
+    if (searchParams) {
+      optionInQuery = searchParams.get('v');
+    }
+
+    return optionInQuery || "not-found";
+  }, [searchParams]);
 
   const renderMultisigList = (
     <>
@@ -3627,12 +3688,16 @@ export const SafeView = () => {
             consoleOut('=======================================', '', 'green');
             consoleOut('selected multisig:', item, 'blue');
             setDtailsPanelOpen(true);
-            setNeedRefreshTxs(true);
-            setSelectedMultisig(item);
+            // setNeedRefreshTxs(true);
+            // setSelectedMultisig(item);
             setIsProposalDetails(false);
             setIsProgramDetails(false);
             setMultisigSolBalance(undefined);
             setTotalSafeBalance(undefined);
+
+            // Need refresh Txs happens inmediately after selecting a multisig
+            const url = `/multisig/${item.authority.toBase58()}?v=${getQueryParamV()}`;
+            navigate(url);
           };
 
           return (
@@ -3723,11 +3788,9 @@ export const SafeView = () => {
     </>
   );
 
-  const goToProposalDetailsHandler = (selectedProposal: any) => {    
-    setIsProposalDetails(true);
-    setIsProgramDetails(false);
-    setIsAssetDetails(false);
-    setProposalSelected(selectedProposal);
+  const goToProposalDetailsHandler = (selectedProposal: any) => {
+    const url = `/multisig/${address}/proposals/${selectedProposal.id.toBase58()}?v=instruction`;
+    navigate(url);
   }
 
   const goToAssetDetailsHandler = (selectedAsset: any) => {
@@ -3735,20 +3798,26 @@ export const SafeView = () => {
   }
 
   const goToProgramDetailsHandler = (selectedProgram: any) => {
-    setIsProposalDetails(false);
-    setIsAssetDetails(false);
-    setIsProgramDetails(true);
-    setProgramSelected(selectedProgram);
+    const url = `/multisig/${address}/programs/${selectedProgram.pubkey.toBase58()}?v=transactions`;
+    navigate(url);
   }
 
   const returnFromProposalDetailsHandler = () => {
     setIsProposalDetails(false);
-    setSelectedTab(0);
+    if (selectedMultisig) {
+      setHighLightableMultisigId(selectedMultisig.id.toBase58());
+    }
+    const url = `/multisig/${address}/?v=proposals`;
+    navigate(url);
   }
 
   const returnFromProgramDetailsHandler = () => {
     setIsProgramDetails(false);
-    setSelectedTab(1);
+    if (selectedMultisig) {
+      setHighLightableMultisigId(selectedMultisig.id.toBase58());
+    }
+    const url = `/multisig/${address}/?v=programs`;
+    navigate(url);
   }
 
   // Dropdown (three dots button)

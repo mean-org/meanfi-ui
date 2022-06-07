@@ -292,6 +292,7 @@ export const SafeInfo = (props: {
       <TabsMean
         tabs={tabs}
         selectedTab={selectedTab}
+        defaultTab="proposals"
       />
     </>
   )

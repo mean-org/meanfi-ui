@@ -26,7 +26,8 @@ import {
   getTokenAmountAndSymbolByTokenAddress,
   getTxIxResume,
   openLinkInNewTab,
-  shortenAddress
+  shortenAddress,
+  tabNameFormat
 } from '../../utils/utils';
 import { Alert, Button, Col, Dropdown, Empty, Menu, Row, Space, Spin, Tooltip } from 'antd';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
@@ -115,6 +116,7 @@ export const AccountsNewView = () => {
   const connectionConfig = useConnectionConfig();
   const {
     theme,
+    activeTab,
     coinPrices,
     userTokens,
     streamList,
@@ -4315,7 +4317,7 @@ export const AccountsNewView = () => {
                                       if (selectedMultisig) {
                                         setHighLightableMultisigId(selectedMultisig.id.toBase58());
                                       }
-                                      navigate("/multisig");
+                                      navigate(`/multisig/${address}?v=${tabNameFormat(activeTab)}`)
                                     }}
                                   />
                                 </Tooltip>

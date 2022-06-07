@@ -80,6 +80,9 @@ export function AppRoutes() {
                       <Route path="/treasuries/:id/streams" element={<MultisigTreasuryStreams />} />
                       <Route path="/multisig-old" element={<MultisigView />} />
                       <Route path="/multisig" element={<SafeView />} />
+                      <Route path="/multisig/:address" element={<SafeView />} />
+                      <Route path="/multisig/:address/proposals/:id" element={<SafeView />} />
+                      <Route path="/multisig/:address/programs/:id" element={<SafeView />} />
                       <Route path="/multisig-mints" element={<MultisigMintsView />} />
                       <Route path="/multisig-assets" element={<MultisigAssetsView />} />
                       <Route path="/multisig-programs" element={<MultisigProgramsView />} />
