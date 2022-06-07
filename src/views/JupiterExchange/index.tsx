@@ -609,7 +609,6 @@ export const JupiterExchange = (props: {
 
             if (!inputToken || !outputToken) { return null; }
 
-            console.log("Getting routes");
             const inputAmountLamports = inputToken
                 ? Math.round(inputAmount * 10 ** inputToken.decimals)
                 : 0; // Lamports based on token decimals
@@ -1312,11 +1311,8 @@ export const JupiterExchange = (props: {
         });
 
         if (swapResult.error) {
-            console.log(swapResult.error);
+            console.error(swapResult.error);
         } else {
-            console.log(`https://explorer.solana.com/tx/${swapResult.txid}`);
-            console.log(`inputAddress=${swapResult.inputAddress.toString()} outputAddress=${swapResult.outputAddress.toString()}`);
-            console.log(`inputAmount=${swapResult.inputAmount} outputAmount=${swapResult.outputAmount}`);
             setInputAmount(0);
             setFromAmount('');
             refreshUserBalances();
@@ -1687,7 +1683,6 @@ export const JupiterExchange = (props: {
                         onMaxAmount={
                             () => {
                                 const maxFromAmount = getMaxAllowedSwapAmount();
-                                console.log('maxFromAmount', maxFromAmount);
                                 if (toMint && mintList[fromMint] && maxFromAmount > 0) {
                                     setInputAmount(maxFromAmount);
                                     const formattedAmount = cutNumber(maxFromAmount, mintList[fromMint].decimals);

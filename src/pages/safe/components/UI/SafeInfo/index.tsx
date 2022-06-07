@@ -6,7 +6,7 @@ import { CopyExtLinkGroup } from "../../../../../components/CopyExtLinkGroup";
 import { MultisigOwnersView } from "../../../../../components/MultisigOwnersView";
 import { TabsMean } from "../../../../../components/TabsMean";
 import { AppStateContext } from "../../../../../contexts/appstate";
-import { IconEllipsisVertical } from "../../../../../Icons";
+import { IconEllipsisVertical, IconLoading } from "../../../../../Icons";
 import { UserTokenAccount } from "../../../../../models/transactions";
 import { NATIVE_SOL } from "../../../../../utils/tokens";
 import { isDev, isLocal, toUsCurrency } from "../../../../../utils/ui";
@@ -15,7 +15,6 @@ import { ACCOUNTS_ROUTE_BASE_PATH } from "../../../../accounts";
 
 export const SafeInfo = (props: {
   selectedMultisig?: any;
-  multisigVaults?: any;
   safeNameImg?: string;
   safeNameImgAlt?: string;
   onNewProposalMultisigClick?: any;
@@ -23,19 +22,20 @@ export const SafeInfo = (props: {
   onRefreshTabsInfo?: any;
   tabs?: Array<any>;
   selectedTab?: any;
-  solBalance?: any;
   isTxInProgress?: any;
 }) => {
   const {
     coinPrices,
     splTokenList,
     isWhitelisted,
+    multisigVaults,
     totalSafeBalance,
+    multisigSolBalance,
     setTotalSafeBalance,
     getTokenByMintAddress,
   } = useContext(AppStateContext);
 
-  const { solBalance, selectedMultisig, multisigVaults, safeNameImg, safeNameImgAlt, onNewProposalMultisigClick, onEditMultisigClick, onRefreshTabsInfo, tabs, selectedTab, isTxInProgress } = props;
+  const { selectedMultisig, safeNameImg, safeNameImgAlt, onNewProposalMultisigClick, onEditMultisigClick, onRefreshTabsInfo, tabs, selectedTab, isTxInProgress } = props;
 
   // const { t } = useTranslation('common');
   const navigate = useNavigate();
@@ -89,7 +89,6 @@ export const SafeInfo = (props: {
 
   // Show amount of assets
   useEffect(() => {
-
     (selectedMultisig) && (
       multisigVaults && multisigVaults.length > 0 ? (
         multisigVaults.length > 1 ? (
@@ -109,15 +108,15 @@ export const SafeInfo = (props: {
   // Fetch safe balance.
   useEffect(() => {
 
-    if (!selectedMultisig || !multisigVaults || !multisigVaults.length) { return; }
+    if (!selectedMultisig || !multisigVaults || !multisigVaults.length || multisigSolBalance === undefined) { return; }
     
     const timeout = setTimeout(() => {
+      let usdValue = 0;
 
-      let usdValue = (solBalance / LAMPORTS_PER_SOL) * getPricePerToken(NATIVE_SOL);
+      usdValue = (multisigSolBalance / LAMPORTS_PER_SOL) * getPricePerToken(NATIVE_SOL);
       const cumulative = new Array<any>();
 
       multisigVaults.forEach((item: any) => {
-
         const token = getTokenByMintAddress(item.mint.toBase58());
 
         if (token) {
@@ -146,9 +145,26 @@ export const SafeInfo = (props: {
     selectedMultisig,
     splTokenList,
     multisigVaults,
-    solBalance,
-    setTotalSafeBalance
+    multisigSolBalance,
+    setTotalSafeBalance,
+    getTokenByMintAddress
   ]);
+
+  const renderSafeBalance = (
+    totalSafeBalance === undefined ? (
+      <>
+        <IconLoading className="mean-svg-icons" style={{ height: "15px", lineHeight: "15px" }}/>
+      </>
+    ) : totalSafeBalance === 0 ? (
+      <>
+        $0.00
+      </>
+    ) : (
+      <>
+        {toUsCurrency(totalSafeBalance)}
+      </>
+    )
+  );
     
   // Deposit Address
   const renderDepositAddress = (
@@ -170,7 +186,7 @@ export const SafeInfo = (props: {
     },
     {
       name: `Safe balance ${assetsAmout}`,
-      value: totalSafeBalance ? toUsCurrency(totalSafeBalance) : "$0.00"
+      value: renderSafeBalance ? renderSafeBalance : "--"
     },
     {
       name: "Deposit address",
@@ -263,17 +279,20 @@ export const SafeInfo = (props: {
         </Col>
       </Row>
 
-      {(solBalance / LAMPORTS_PER_SOL) <= 0.005 ? (
-        <Row gutter={[8, 8]}>
-          <Col span={24} className="alert-info-message pr-6">
-            <Alert message="SOL balance is very low in this safe. You'll need some if you want to make proposals." type="info" showIcon closable />
-          </Col>
-        </Row>
-      ) : null}
+      {multisigSolBalance !== undefined && (
+        (multisigSolBalance / LAMPORTS_PER_SOL) <= 0.005 ? (
+          <Row gutter={[8, 8]}>
+            <Col span={24} className="alert-info-message pr-6">
+              <Alert message="SOL balance is very low in this safe. You'll need some if you want to make proposals." type="info" showIcon closable />
+            </Col>
+          </Row>
+        ) : null
+      )}
 
       <TabsMean
         tabs={tabs}
         selectedTab={selectedTab}
+        defaultTab="proposals"
       />
     </>
   )

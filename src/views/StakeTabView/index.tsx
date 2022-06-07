@@ -215,14 +215,17 @@ export const StakeTabView = (props: {
           result: "",
         });
 
+        const price = getTokenPriceBySymbol(props.selectedToken.symbol);
+
         // Report event to Segment analytics
         const segmentData: SegmentStakeMeanData = {
           asset: props.selectedToken.symbol,
-          assetPrice: getTokenPriceBySymbol(props.selectedToken.symbol),
+          assetPrice: price,
           stakedAsset: 'sMEAN',
           stakedAssetPrice: stakedMeanPrice,
           amount: uiAmount,
-          quote: stakeQuote
+          quote: stakeQuote,
+          valueInUsd: price * uiAmount
         };
         consoleOut('segment data:', segmentData, 'brown');
         segmentAnalytics.recordEvent(AppUsageEvent.StakeMeanFormButton, segmentData);

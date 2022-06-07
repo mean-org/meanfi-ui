@@ -10,8 +10,9 @@ export const InputMean = (props: {
   onChange?: any;
   value?: any;
   pattern?: string;
+  min?: number;
 }) => {
-  const { id, name, className, autoComplete, autoCorrect, type, maxLength, placeholder, onChange, value, pattern } = props;
+  const { id, name, className, autoComplete, autoCorrect, type, maxLength, placeholder, onChange, value, pattern, min } = props;
 
   return (
     <>
@@ -30,6 +31,7 @@ export const InputMean = (props: {
               placeholder={placeholder}
               value={value}
               pattern={pattern}
+              min={min}
             />
           </div>
         </div>

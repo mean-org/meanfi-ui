@@ -704,6 +704,7 @@ export const OneTimePayment = (props: {
       consoleOut('associatedToken:', selectedToken.address);
       const associatedToken = new PublicKey(selectedToken.address as string);
       const amount = toTokenAmount(parseFloat(fromCoinAmount as string), selectedToken.decimals);
+      const price = getTokenPriceBySymbol(selectedToken.symbol);
       const now = new Date();
       const parsedDate = Date.parse(paymentStartDate as string);
       let startUtc = new Date(parsedDate);
@@ -743,7 +744,8 @@ export const OneTimePayment = (props: {
         assetPrice: getTokenPriceBySymbol(selectedToken.symbol),
         amount: parseFloat(fromCoinAmount as string),
         beneficiary: data.beneficiary,
-        startUtc: dateFormat(startUtc, SIMPLE_DATE_TIME_FORMAT)
+        startUtc: dateFormat(startUtc, SIMPLE_DATE_TIME_FORMAT),
+        valueInUsd: price * parseFloat(fromCoinAmount as string)
       };
       consoleOut('segment data:', segmentData, 'brown');
       segmentAnalytics.recordEvent(AppUsageEvent.TransferOTPFormButton, segmentData);

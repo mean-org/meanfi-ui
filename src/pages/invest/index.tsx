@@ -127,7 +127,6 @@ export const InvestView = () => {
     if (coinPrices && stakingPair && stakingPair.unstakedToken) {
       const price = getTokenPriceBySymbol(stakingPair.unstakedToken.symbol);
       consoleOut('meanPrice:', price, 'crimson');
-      console.log('coinPrices:', coinPrices);
       setMeanPrice(price);
     }
 
