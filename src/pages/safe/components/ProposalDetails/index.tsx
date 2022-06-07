@@ -33,7 +33,7 @@ export const ProposalDetailsView = (props: {
   appsProvider?: any;
   onOperationStarted: any;
   multisigClient?: MeanMultisig | undefined;
-
+  hasMultisigPendingProposal?: boolean;
 }) => {
 
   // const { isWhitelisted } = useContext(AppStateContext);
@@ -50,8 +50,8 @@ export const ProposalDetailsView = (props: {
     selectedMultisig, 
     onProposalApprove, 
     onProposalExecute,
-    onOperationStarted
-
+    onOperationStarted,
+    hasMultisigPendingProposal
   } = props;
 
   const [selectedProposal, setSelectedProposal] = useState<MultisigTransaction>(proposalSelected);
@@ -276,9 +276,9 @@ export const ProposalDetailsView = (props: {
               )
             })
           ) : (
-            proposalIxInfo.data.map((item: InstructionDataInfo) => {
+            proposalIxInfo.data.map((item: InstructionDataInfo, index: number) => {
               return (
-                <Row gutter={[8, 8]} className="mb-2">
+                <Row gutter={[8, 8]} className="mb-2" key={`data-${index}`}>
                   <Col xs={6} sm={6} md={4} lg={4} className="pr-1 text-truncate">
                     <Tooltip placement="right" title={item.label || ""}>
                       <span className="info-label">{item.label || t('multisig.proposal-modal.instruction-data')}</span>
@@ -336,7 +336,7 @@ export const ProposalDetailsView = (props: {
                 >
                   <div className="list-item">
                     <span className="mr-2">
-                      {moment(activity.createdOn).format("LLL")}
+                      {moment(activity.createdOn).format("LLL").toLocaleString()}
                     </span>
                     {icon}
                     <div className="d-flex">
@@ -369,12 +369,12 @@ export const ProposalDetailsView = (props: {
   // Tabs
   const tabs = [
     {
-      id: "proposal01",
+      id: "instruction",
       name: "Instruction",
       render: renderInstructions
     }, 
     {
-      id: "proposal02",
+      id: "activity",
       name: "Activity",
       render: renderActivities
     }
@@ -400,10 +400,9 @@ export const ProposalDetailsView = (props: {
     selectedProposal &&
     selectedProposal.proposer && 
     selectedProposal.proposer.toBase58() === publicKey?.toBase58()
-
   ) ? true : false;
 
-  if (!selectedProposal.proposer) { return (<></>); }
+  if (!selectedProposal || !selectedProposal.proposer) { return (<></>); }
 
   // Number of participants who have already approved the Tx
   const approvedSigners = selectedProposal.signers.filter((s: any) => s === true).length;
@@ -487,7 +486,7 @@ export const ProposalDetailsView = (props: {
                 shape="round"
                 size="small"
                 className="thin-stroke"
-                disabled={selectedProposal.didSigned || selectedProposal.status !== MultisigTransactionStatus.Pending}
+                disabled={selectedProposal.didSigned || hasMultisigPendingProposal}
                 onClick={() => {
                   const operation = { transaction: selectedProposal };
                   onOperationStarted(operation)
@@ -498,13 +497,14 @@ export const ProposalDetailsView = (props: {
                     Approve
                   </div>
               </Button>
-            ) : selectedProposal.status === MultisigTransactionStatus.Approved || selectedProposal.status !== MultisigTransactionStatus.Executed ? (
+            ) : approvedSigners === selectedMultisig.threshold && selectedProposal.status !== MultisigTransactionStatus.Executed ? (
               anyoneCanExecuteTx() || (!anyoneCanExecuteTx() && isProposer) ? (
                 <Button
                   type="default"
                   shape="round"
                   size="small"
                   className="thin-stroke d-flex justify-content-center align-items-center"
+                  disabled={hasMultisigPendingProposal}
                   onClick={() => {
                     const operation = { transaction: selectedProposal }
                     onOperationStarted(operation)
@@ -520,13 +520,15 @@ export const ProposalDetailsView = (props: {
         </>
       </Row>
 
-      <div className="safe-tabs-container">
-        <TabsMean
-          tabs={tabs}
-          headerClassName="safe-tabs-header-container"
-          bodyClassName="safe-tabs-content-container"
-        />
-      </div>
+      {/* <Row>
+        <h3 className="mt-1 proposal-instruction">Instruction</h3>
+        {renderInstructions}
+      </Row> */}
+
+      <TabsMean
+        tabs={tabs}
+        defaultTab="instruction"
+      />
     </div>
   )
 };

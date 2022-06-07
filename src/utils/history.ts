@@ -67,7 +67,7 @@ export async function fetchAccountHistory(
     } as HistoryUpdate;
 
   } catch (error) {
-    console.log(error);
+    console.error(error);
     throw error;
   }
 }
@@ -101,7 +101,7 @@ export const fetchParsedTransactionsAsync = async (
     }
 
   } catch (_error) {
-    console.log(_error);
+    console.error(_error);
   }
 
   return txMap;

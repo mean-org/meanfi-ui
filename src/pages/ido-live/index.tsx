@@ -390,7 +390,6 @@ export const IdoLiveView = () => {
   //   const forceRefreshData = () => {
   //     const refreshCtaElement = document.getElementById("refresh-data-cta");
   //     if (refreshCtaElement) {
-  //       console.log('Got refreshCtaElement!');
   //       refreshCtaElement.click();
   //     }
   //   }
