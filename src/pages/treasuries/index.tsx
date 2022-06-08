@@ -213,10 +213,8 @@ export const TreasuriesView = () => {
   const [minRequiredBalance, setMinRequiredBalance] = useState(0);
   const [needReloadMultisig, setNeedReloadMultisig] = useState(true);
 
-  // const V1_TREASURER_ID = useMemo(() => { return new PublicKey("DcE1QfuxsV9eoMydXXF7hBadHBRA1vPFqCWvAUeP9ZGB") }, []);
-  // const V1_TREASURY_ID = useMemo(() => { return new PublicKey("DVhWHsWSybDD8n5P6ep7rP4bg7yj55MoeZGQrbLGpQtQ"); }, []);
-  const V1_TREASURER_ID = useMemo(() => { return new PublicKey("2CcSTZ3pNDAykutL2j3yTLXMPoUdyx91f6GfmwSVECCb") }, []);
-  const V1_TREASURY_ID = useMemo(() => { return new PublicKey("91VdekEemPWpSNc8S8bveeRZrjK2nrURSN4XRKW44xWQ"); }, []);
+  const V1_TREASURER_ID = useMemo(() => { return new PublicKey("DcE1QfuxsV9eoMydXXF7hBadHBRA1vPFqCWvAUeP9ZGB") }, []);
+  const V1_TREASURY_ID = useMemo(() => { return new PublicKey("DVhWHsWSybDD8n5P6ep7rP4bg7yj55MoeZGQrbLGpQtQ"); }, []);
 
   // Enable deep-linking - Parse and save query params as needed
   useEffect(() => {
