@@ -4,6 +4,7 @@ import { OperationType } from "./enums";
 import bs58 from "bs58";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { MEAN_MULTISIG_PROGRAM } from "@mean-dao/mean-multisig-sdk";
+import { MeanSplTokenInstructionCoder } from "./spl-token-coder/instruction";
 
 export const MEAN_MULTISIG_OPS = new PublicKey("3TD6SWY9M1mLY2kZWJNavPLhwXvcRsWdnZLRaMzERJBw");
 export const LAMPORTS_PER_SIG = 5000;
@@ -567,19 +568,30 @@ export const parseMultisigProposalIx = (
       data: transaction.data
     });
 
-    if (!program || program.programId.equals(TOKEN_PROGRAM_ID)) {
+    // if (!program || program.programId.equals(TOKEN_PROGRAM_ID)) { // HERE TOKEN IX
+    //   return getMultisigInstructionSummary(ix);
+    // }
+
+    if (!program) {
       return getMultisigInstructionSummary(ix);
     }
 
     const ixName = getIxNameFromMultisigTransaction(program.idl, transaction);
+    // console.log('ixName', ixName);
 
     if (!ixName) {
       return getMultisigInstructionSummary(ix);
     }
 
-    const coder = new BorshInstructionCoder(program.idl);
+    const coder = program.programId.equals(TOKEN_PROGRAM_ID) 
+      ? new MeanSplTokenInstructionCoder(program.idl)
+      : new BorshInstructionCoder(program.idl);
+
+    // console.log('coder', coder);
+
     const dataEncoded = bs58.encode(ix.data);
     const dataDecoded = coder.decode(dataEncoded, "base58");
+    // console.log('dataDecoded', dataDecoded);
 
     if (!dataDecoded) {
       return getMultisigInstructionSummary(ix);
@@ -598,6 +610,8 @@ export const parseMultisigProposalIx = (
       },
       ix.keys
     );
+
+    // console.log('formattedData', formattedData);
 
     if (!formattedData) {
       return getMultisigInstructionSummary(ix);

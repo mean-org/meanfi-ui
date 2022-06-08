@@ -92,6 +92,7 @@ export const ProposalDetailsView = (props: {
       } else {
         const ixInfo = parseMultisigProposalIx(proposalSelected);
         setProposalIxInfo(ixInfo);
+        // console.log('ixInfo', ixInfo);
       }
     });
     return () => clearTimeout(timeout);
