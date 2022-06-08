@@ -217,10 +217,7 @@ export const OneTimePayment = (props: {
         }
         setSelectedList(tokenList);
       })
-      .finally(() => {
-        consoleOut('balancesMap:', balancesMap, 'pink');
-        setUserBalances(balancesMap);
-      });
+      .finally(() => setUserBalances(balancesMap));
 
     });
 
@@ -335,10 +332,15 @@ export const OneTimePayment = (props: {
   const onCloseTokenSelector = useCallback(() => {
     hideDrawer();
     setTokenSelectorModalVisibility(false);
+    // Reset token on errors (decimals: -1 or -2)
+    if (selectedToken && selectedToken.decimals < 0) {
+      tokenChanged(undefined);
+      setSelectedToken(undefined);
+    }
     if (tokenFilter && !isValidAddress(tokenFilter)) {
       setTokenFilter('');
     }
-  }, [tokenFilter]);
+  }, [selectedToken, tokenChanged, tokenFilter]);
 
   // Recipient Selector modal
   const [isQrScannerModalVisible, setIsQrScannerModalVisibility] = useState(false);
