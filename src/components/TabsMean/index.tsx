@@ -56,6 +56,12 @@ export const TabsMean = (props: {
       case "anchor-idl":
         setActiveTab("anchor-idl");
         break;
+      // case "summary":
+      //   setActiveTab("summary");
+      //   break;
+      // case "accounts":
+      //   setActiveTab("accounts");
+      //   break;
       default:
         setActiveTab(defaultTab);
         setSearchParams({v: defaultTab}, { replace: true });

@@ -88,6 +88,7 @@ import { MultisigVaultDeleteModal } from '../../components/MultisigVaultDeleteMo
 import { useNativeAccount } from '../../contexts/accounts';
 import { MultisigCreateAssetModal } from '../../components/MultisigCreateAssetModal';
 import { STREAMS_ROUTE_BASE_PATH } from '../../views/Streams';
+import { MoneyStreamsInfoView } from '../../views/MoneyStreamsInfoView';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export type InspectedAccountType = "multisig" | "streaming-account" | undefined;
@@ -217,6 +218,7 @@ export const AccountsNewView = () => {
   const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(true);
   const [multisigPendingTxs, setMultisigPendingTxs] = useState<MultisigTransaction[]>([]);
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
+  const [isStreamingAccount, setIsStreamingAccount] = useState(false);
 
   const selectedMultisigRef = useRef(selectedMultisig);
   useEffect(() => {
@@ -4331,6 +4333,20 @@ export const AccountsNewView = () => {
   //   </>
   // );
 
+  // Tabs
+  const tabs = [
+    {
+      id: "summary",
+      name: "Summary",
+      // render: renderListOfSummary
+    },
+    {
+      id: "accounts",
+      name: "Accounts",
+      // render: renderListOfAccounts
+    }
+  ];
+
   return (
     <>
       {/* {isLocal() && (
@@ -4466,22 +4482,25 @@ export const AccountsNewView = () => {
                                 />
                               </>
                             ) : inspectedAccountType === "multisig" ? (
-                              <TreasuriesSummary
-                                address={accountAddress}
-                                connection={connection}
-                                ms={ms}
-                                msp={msp}
-                                title="Money Streaming"
-                                enabled={true}
-                                selected={selectedCategory === "other-assets" && selectedOtherAssetsOption === "msp-treasuries"}
-                                onNewValue={(value: number) => setTreasuriesTvl(value)}
-                                tooltipEnabled="See Multisig Streaming Accounts"
-                                tooltipDisabled=""
-                                targetPath={getMultisigTreasuriesPath()}
-                                onSelect={() => {
-                                  // Do nothing
-                                }}
-                              />
+                              <div onClick={() => setIsStreamingAccount(true)}>
+                                {/* Money Streaming */}
+                                <TreasuriesSummary
+                                  address={accountAddress}
+                                  connection={connection}
+                                  ms={ms}
+                                  msp={msp}
+                                  title="Money Streaming"
+                                  enabled={false}
+                                  selected={selectedCategory === "other-assets" && selectedOtherAssetsOption === "msp-treasuries"}
+                                  onNewValue={(value: number) => setTreasuriesTvl(value)}
+                                  tooltipEnabled="See Multisig Streaming Accounts"
+                                  tooltipDisabled=""
+                                  targetPath={getMultisigTreasuriesPath()}
+                                  onSelect={() => {
+                                    // Do nothing
+                                  }}
+                                />
+                              </div>
                             ) : null}
                           </div>
 
@@ -4550,44 +4569,51 @@ export const AccountsNewView = () => {
                     <div className="meanfi-two-panel-right">
                       <div className="meanfi-panel-heading"><span className="title">{t('assets.history-panel-title')}</span></div>
                       <div className="inner-container">
-                        {canShowBuyOptions() ? renderTokenBuyOptions() : (
-                          <div className="flexible-column-bottom">
-                            <div className="top">
-                              {renderCategoryMeta()}
-                              {selectedCategory === "assets" && renderUserAccountAssetCtaRow()}
-                            </div>
-                            {!isInspectedAccountTheConnectedWallet() && inspectedAccountType === "multisig" && (
-                              (multisigSolBalance !== undefined && multisigSolBalance <= 0.005) ? (
-                                <Row gutter={[8, 8]}>
-                                  <Col span={24} className="alert-info-message pr-2">
-                                    <Alert message="SOL balance is very low in this safe. You'll need some if you want to make proposals." type="info" showIcon closable />
-                                  </Col>
-                                </Row>
-                              ) : null
-                            )}
-                            <div className={`bottom ${!hasItemsToRender() ? 'h-100 flex-column' : ''}`}>
-                              {/* Activity table heading */}
-                              {hasItemsToRender() && (
-                                <div className="stats-row">
-                                  <div className="item-list-header compact">
-                                    <div className="header-row">
-                                      <div className="std-table-cell first-cell">&nbsp;</div>
-                                      <div className="std-table-cell responsive-cell">{t('assets.history-table-activity')}</div>
-                                      <div className="std-table-cell responsive-cell pr-2 text-right">{t('assets.history-table-amount')}</div>
-                                      <div className="std-table-cell responsive-cell pr-2 text-right">{t('assets.history-table-postbalance')}</div>
-                                      <div className="std-table-cell responsive-cell pl-2">{t('assets.history-table-date')}</div>
-                                    </div>
-                                  </div>
+                        {!isStreamingAccount ? (
+                          <>
+                            {canShowBuyOptions() ? renderTokenBuyOptions() : (
+                              <div className="flexible-column-bottom">
+                                <div className="top">
+                                  {renderCategoryMeta()}
+                                  {selectedCategory === "assets" && renderUserAccountAssetCtaRow()}
                                 </div>
-                              )}
-                              {/* Activity table content */}
-                              {selectedCategory === "assets" && renderActivityList()}
-                            </div>
-                          </div>
+                                {!isInspectedAccountTheConnectedWallet() && inspectedAccountType === "multisig" && (
+                                  (multisigSolBalance !== undefined && multisigSolBalance <= 0.005) ? (
+                                    <Row gutter={[8, 8]}>
+                                      <Col span={24} className="alert-info-message pr-2">
+                                        <Alert message="SOL balance is very low in this safe. You'll need some if you want to make proposals." type="info" showIcon closable />
+                                      </Col>
+                                    </Row>
+                                  ) : null
+                                )}
+                                <div className={`bottom ${!hasItemsToRender() ? 'h-100 flex-column' : ''}`}>
+                                  {/* Activity table heading */}
+                                  {hasItemsToRender() && (
+                                    <div className="stats-row">
+                                      <div className="item-list-header compact">
+                                        <div className="header-row">
+                                          <div className="std-table-cell first-cell">&nbsp;</div>
+                                          <div className="std-table-cell responsive-cell">{t('assets.history-table-activity')}</div>
+                                          <div className="std-table-cell responsive-cell pr-2 text-right">{t('assets.history-table-amount')}</div>
+                                          <div className="std-table-cell responsive-cell pr-2 text-right">{t('assets.history-table-postbalance')}</div>
+                                          <div className="std-table-cell responsive-cell pl-2">{t('assets.history-table-date')}</div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+                                  {/* Activity table content */}
+                                  {selectedCategory === "assets" && renderActivityList()}
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <MoneyStreamsInfoView
+                            // tabs={tabs}
+                          />
                         )}
                       </div>
                     </div>
-
                   </div>
                 )}
               </>
