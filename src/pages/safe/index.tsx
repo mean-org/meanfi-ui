@@ -3247,42 +3247,41 @@ export const SafeView = () => {
     publicKey
   ]);
 
-  //
-  useEffect(() => {
+  // useEffect(() => {
 
-    if (
-      !connection || 
-      !publicKey || 
-      !multisigClient || 
-      !selectedMultisig || 
-      !proposalSelected ||
-      !loadingMultisigAccounts
-    ) {
-      return;
-    }
+  //   if (
+  //     !connection || 
+  //     !publicKey || 
+  //     !multisigClient || 
+  //     !selectedMultisig || 
+  //     !proposalSelected ||
+  //     !loadingMultisigAccounts
+  //   ) {
+  //     return;
+  //   }
 
-    const timeout = setTimeout(() => {
-      multisigClient.getMultisigTransaction(
-        selectedMultisig.id,
-        proposalSelected.id,
-        publicKey
-      )
-      .then((tx: any) => setProposalSelected(tx))
-      .catch((err: any) => console.error(err));
-    });
+  //   const timeout = setTimeout(() => {
+  //     multisigClient.getMultisigTransaction(
+  //       selectedMultisig.id,
+  //       proposalSelected.id,
+  //       publicKey
+  //     )
+  //     .then((tx: any) => setProposalSelected(tx))
+  //     .catch((err: any) => console.error(err));
+  //   });
 
-    return () => {
-      clearTimeout(timeout);
-    }
+  //   return () => {
+  //     clearTimeout(timeout);
+  //   }
 
-  }, [
-    connection, 
-    multisigClient, 
-    proposalSelected, 
-    publicKey, 
-    selectedMultisig,
-    loadingMultisigAccounts
-  ]);
+  // }, [
+  //   connection, 
+  //   multisigClient, 
+  //   proposalSelected, 
+  //   publicKey, 
+  //   selectedMultisig,
+  //   loadingMultisigAccounts
+  // ]);
 
   const getMultisigVaults = useCallback(async (
     connection: Connection,
@@ -3856,11 +3855,12 @@ export const SafeView = () => {
 
       if (isValidParam && multisigTxs !== undefined && programs !== undefined) {
         if (isProposalsFork) {
-          // Set proposal
           const filteredMultisigTxs = multisigTxs.find(tx => tx.id.toBase58() === id);
-          getProposal(filteredMultisigTxs);
+          if (filteredMultisigTxs) {
+            consoleOut('filteredMultisigTxs:', filteredMultisigTxs, 'orange');
+            getProposal(filteredMultisigTxs);
+          }
         } else {
-          // Set program
           const filteredPrograms = programs.find(program => program.pubkey.toBase58() === id);
           setProgramSelected(filteredPrograms);
           setIsProposalDetails(false);
@@ -3869,7 +3869,7 @@ export const SafeView = () => {
       }
     }
 
-  }, [id, address, multisigTxs, programs, getQueryParamV, getProposal]);
+  }, [id, address, multisigTxs, programs, getQueryParamV, getProposal, selectedMultisig]);
 
   ///////////////
   // Rendering //
