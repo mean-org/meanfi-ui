@@ -50,6 +50,7 @@ export const MultisigProposalModal = (props: {
   const { t } = useTranslation('common');
   const connectionConfig = useConnectionConfig();
   const {
+    theme,
     transactionStatus,
     setTransactionStatus,
   } = useContext(AppStateContext);
@@ -327,6 +328,8 @@ export const MultisigProposalModal = (props: {
                   <img src={app.logoUri} width={65} height={65} alt={app.name} />
                   // <Identicon address={PublicKey.default} style={{ width:"65", height:"65", display: "inline-flex" }} />
                   // <img style={{ borderRadius: "50%", padding: "0.2em" }} src={"https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"} width={65} height={65} alt={app.name} />
+                ) : (app.folder === "credix" && theme === "light") ? (
+                  <img src={app.logoUri} width={62} height={62} alt={app.name} style={{background: "grey", borderRadius: "0.75em"}} />
                 ) : (
                   <img src={app.logoUri} width={65} height={65} alt={app.name} />
                 )}
