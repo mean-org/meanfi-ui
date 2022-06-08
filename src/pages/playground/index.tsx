@@ -32,6 +32,7 @@ import {
   getTransactionStatusForLogs,
   kFormatter,
   intToString,
+  isValidAddress,
 } from "../../utils/ui";
 import {
   formatAmount,
@@ -44,6 +45,8 @@ import { IconCopy, IconExternalLink, IconTrash } from "../../Icons";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { openNotification } from "../../components/Notifications";
 import { IconType } from "antd/lib/notification";
+import { AccountInfo, ParsedAccountData, PublicKey } from "@solana/web3.js";
+import { useConnection } from "../../contexts/connection";
 
 const { Panel } = Collapse;
 const { Option } = Select;
@@ -112,11 +115,14 @@ export const PlaygroundView = () => {
   const { t } = useTranslation("common");
   const location = useLocation();
   const navigate = useNavigate();
+  const connection = useConnection();
   const [searchParams, setSearchParams] = useSearchParams();
   const {
     userTokens,
+    recipientAddress,
     transactionStatus,
-    setTransactionStatus
+    setTransactionStatus,
+    setRecipientAddress,
   } = useContext(AppStateContext);
   const [selectedMint, setSelectedMint] = useState<UserTokenAccount | undefined>(undefined);
   const [isBusy, setIsBusy] = useState(false);
@@ -448,6 +454,54 @@ export const PlaygroundView = () => {
     setSearchParams({option: tab as string});
   }, [setSearchParams]);
 
+  const readAccountInfo = useCallback(async () => {
+    if (!recipientAddress || !isValidAddress(recipientAddress)) {
+      return;
+    }
+
+    const address = recipientAddress;
+    let decimals = -1;
+    let accountInfo: AccountInfo<Buffer | ParsedAccountData> | null = null;
+    try {
+      accountInfo = (await connection.getParsedAccountInfo(new PublicKey(address))).value;
+      consoleOut('accountInfo:', accountInfo, 'blue');
+    } catch (error) {
+      console.error(error);
+    }
+    if (accountInfo) {
+      if ((accountInfo as any).data["program"] &&
+          (accountInfo as any).data["program"] === "spl-token" &&
+          (accountInfo as any).data["parsed"] &&
+          (accountInfo as any).data["parsed"]["type"] &&
+          (accountInfo as any).data["parsed"]["type"] === "mint") {
+        decimals = (accountInfo as any).data["parsed"]["info"]["decimals"];
+      }
+    }
+  }, [connection, recipientAddress]);
+
+  const triggerWindowResize = () => {
+    window.dispatchEvent(new Event('resize'));
+  }
+
+  const handleRecipientAddressChange = (e: any) => {
+    const inputValue = e.target.value as string;
+    // Set the input value
+    const trimmedValue = inputValue.trim();
+    setRecipientAddress(trimmedValue);
+  }
+
+  const handleRecipientAddressFocusIn = () => {
+    setTimeout(() => {
+      triggerWindowResize();
+    }, 10);
+  }
+
+  const handleRecipientAddressFocusOut = () => {
+    setTimeout(() => {
+      triggerWindowResize();
+    }, 10);
+  }
+
   /////////////////////
   // Data management //
   /////////////////////
@@ -542,16 +596,68 @@ export const PlaygroundView = () => {
     </>
   );
 
-  const renderDemoTxWorkflow = (
+  const renderDemo2Tab = (
     <>
+      <div className="tabset-heading">Get account info</div>
+      <div className="form-label">Inspect account</div>
+      <div className="two-column-form-layout col70x30 mb-3">
+        <div className="left">
+          <div className="well">
+            <div className="flex-fixed-right">
+              <div className="left position-relative">
+                <span className="recipient-field-wrapper">
+                  <input id="payment-recipient-field"
+                    className="general-text-input"
+                    autoComplete="on"
+                    autoCorrect="off"
+                    type="text"
+                    onFocus={handleRecipientAddressFocusIn}
+                    onChange={handleRecipientAddressChange}
+                    onBlur={handleRecipientAddressFocusOut}
+                    placeholder={t('transactions.recipient.placeholder')}
+                    required={true}
+                    spellCheck="false"
+                    value={recipientAddress}/>
+                  <span id="payment-recipient-static-field"
+                        className={`${recipientAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>
+                    {recipientAddress || t('transactions.recipient.placeholder')}
+                  </span>
+                </span>
+              </div>
+              <div className="right">
+                <span>&nbsp;</span>
+              </div>
+            </div>
+            {
+              recipientAddress && !isValidAddress(recipientAddress) && (
+                <span className="form-field-error">
+                  {t('transactions.validation.address-validation')}
+                </span>
+              )
+            }
+          </div>
+        </div>
+        <div className="right">
+          <Button
+            block
+            type="primary"
+            shape="round"
+            size="large"
+            onClick={readAccountInfo}>
+            Get info
+          </Button>
+        </div>
+      </div>
+
+      <Divider />
+
       <div className="tabset-heading">Transaction workflow</div>
       <div className="text-left mb-3">
         <Button
           type="primary"
           shape="round"
           size="middle"
-          onClick={onTransactionStart}
-        >
+          onClick={onTransactionStart}>
           Test Tx - Dry run
         </Button>
       </div>
@@ -926,7 +1032,7 @@ export const PlaygroundView = () => {
       case "first-tab":
         return renderDemoNumberFormatting;
       case "second-tab":
-        return renderDemoTxWorkflow;
+        return renderDemo2Tab;
       case "demo-notifications":
         return renderDemo3Tab;
       case "misc-tab":

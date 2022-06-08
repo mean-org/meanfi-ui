@@ -788,7 +788,6 @@ footer.ant-layout-footer {
 .ant-btn.ant-btn-primary.ant-btn-round {
   color: var(--color-white);
   min-height: var(--custom-control-height);
-  height: var(--custom-control-height);
   border-radius: var(--custom-border-radius);
   border: none;
   font-weight: 500;
@@ -801,7 +800,10 @@ footer.ant-layout-footer {
     pointer-events: none;
   }
   &.ant-btn-sm {
-    height: 32px;
+    height: var(--custom-control-height);
+  }
+  &.ant-btn-lg {
+    height: 48px;
   }
   &.extra-height {
     white-space: normal;
@@ -2201,6 +2203,16 @@ em {
       }
       > .right {
         flex: 1 1 40%;
+      }
+    }
+  }
+  &.col70x30 {
+    @media (min-width: 576px) {
+      > .left {
+        flex: 1 1 70%;
+      }
+      > .right {
+        flex: 1 1 30%;
       }
     }
   }
