@@ -4608,9 +4608,11 @@ export const AccountsNewView = () => {
                             )}
                           </>
                         ) : (
-                          <MoneyStreamsInfoView
-                            // tabs={tabs}
-                          />
+                          <div className="scroll-wrapper vertical-scroll">
+                            <MoneyStreamsInfoView
+                              // tabs={tabs}
+                            />
+                          </div>
                         )}
                       </div>
                     </div>

@@ -1,5 +1,10 @@
 import { Button, Col, Row } from "antd";
+import { ResumeHeader } from "../../components/ResumeHeader";
+import { ResumeItem } from "../../components/ResumeItem";
 import { RightInfoDetails } from "../../components/RightInfoDetails";
+import { TabsMean } from "../../components/TabsMean";
+import { IconArrowForward } from "../../Icons";
+import "./style.scss";
 
 export const MoneyStreamsInfoView = (props: {
   // tabs?: Array<any>;
@@ -22,6 +27,180 @@ export const MoneyStreamsInfoView = (props: {
       value: "$3,391.01",
       content: "Tracking 2 smart contracts"
     }
+  ];
+
+  const renderSummary = (
+    <>
+      <Row gutter={[8, 8]}>
+        <Col xs={24} sm={12} md={24} lg={12} className="background-card">
+          <h3>Incoming Streams</h3>
+          <div className="card-row">
+            <div className="card-column">
+              <div className="info-label">
+                Balance
+              </div>
+              <div className="info-value">
+                $1,653.65
+              </div>
+            </div>
+            <div className="card-column">
+              <div className="info-label">
+                Total streams
+              </div>
+              <div className="info-value">
+                3 streams
+              </div>
+            </div>
+          </div>
+        </Col>
+      </Row>
+    </>
+  );
+
+  const incomingStreams = [
+    {
+      title: "Monthly Remittance from Jesse",
+      amount: "3.29805 USDC/hour",
+      resume: "out of funds on 01/02/2022"
+    },
+    {
+      title: "Mean Salary for Pavelsan",
+      amount: "100 USDC/hour",
+      resume: "starts in 06:35:11"
+    },
+    {
+      title: "Grape’s Research Distribution",
+      amount: "25,158 GRAPE/hour",
+      resume: "streaming since 01/05/2022"
+    },
+  ];
+
+  const outgoingStreams = [
+    {
+      title: "Monthly remittance for Mom",
+      amount: "150 USDC/month",
+      resume: "streaming since 01/05/2022"
+    }
+  ];
+
+  const teamSalary = [
+    {
+      title: "Yamel Amador’s Salary",
+      amount: "5.11 USDC/hour",
+      resume: "streaming since 03/01/2022"
+    },
+    {
+      title: "Tania’s Salary",
+      amount: "1,000.00 USDC/min",
+      resume: "streaming since 04/15/2022"
+    },
+    {
+      title: "Michel Comp",
+      amount: "2,150.11 USDC/month",
+      resume: "out of funds on 01/02/2022"
+    }
+  ];
+
+  // Incoming streams list
+  const renderListOfIncomingStreams = (
+    <>
+      {incomingStreams.map((stream, index) => {
+        const onSelectStream = () => {};
+
+        const title = stream.title ? stream.title : "Unknown incoming stream";
+
+        return (
+          <div 
+            key={index}
+            onClick={onSelectStream}
+            className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+          >
+            <ResumeItem
+              id={index}
+              title={title}
+              subtitle={stream.amount}
+              resume={stream.resume}
+              hasRightIcon={true}
+              rightIcon={<IconArrowForward className="mean-svg-icons" />}
+            />
+          </div>
+        )
+      })}
+    </>
+  );
+
+  // Outgoing streams list
+  const renderListOfOutgoingStreams = (
+    <>
+      <ResumeHeader />
+      {outgoingStreams.map((stream, index) => {
+        const onSelectStream = () => {};
+
+        const title = stream.title ? stream.title : "Unknown outgoing stream";
+
+        return (
+          <div 
+            key={index}
+            onClick={onSelectStream}
+            className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+          >
+            <ResumeItem
+              id={index}
+              title={title}
+              subtitle={stream.amount}
+              resume={stream.resume}
+              hasRightIcon={true}
+              rightIcon={<IconArrowForward className="mean-svg-icons" />}
+            />
+          </div>
+        )
+      })}
+      <div className="asset-category-title flex-fixed-right">
+        <div className="title">Coinbase team salary</div>
+        <div className="amount">3</div>
+      </div>
+      {teamSalary.map((salary, index) => {
+        const onSelectSalary = () => {};
+
+        const title = salary.title ? salary.title : "Unknown salary";
+
+        return (
+          <div 
+            key={index}
+            onClick={onSelectSalary}
+            className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+            >
+              <ResumeItem
+                id={index}
+                title={title}
+                subtitle={salary.amount}
+                resume={salary.resume}
+                hasRightIcon={true}
+                rightIcon={<IconArrowForward className="mean-svg-icons" />}
+              />
+          </div>
+        )
+      })}
+    </>
+  );
+
+  // Tabs
+  const tabs = [
+    {
+      id: "summary",
+      name: "Summary",
+      render: renderSummary
+    },
+    {
+      id: "incoming",
+      name: "Incoming (3)",
+      render: renderListOfIncomingStreams
+    },
+    {
+      id: "outgoing",
+      name: "Outgoing (4)",
+      render: renderListOfOutgoingStreams
+    },
   ];
 
   return (
@@ -55,10 +234,10 @@ export const MoneyStreamsInfoView = (props: {
         </Col>
       </Row>
 
-      {/* <TabsMean
+      <TabsMean
         tabs={tabs}
         defaultTab="summary"
-      /> */}
+      />
     </>
   )
 }

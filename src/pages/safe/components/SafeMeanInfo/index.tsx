@@ -6,7 +6,7 @@ import { ProgramAccounts } from '../../../../utils/accounts';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { Connection, LAMPORTS_PER_SOL, MemcmpFilter, PublicKey } from '@solana/web3.js';
 import { consoleOut } from '../../../../utils/ui';
-import { ResumeItem } from '../UI/ResumeItem';
+// import { ResumeItem } from '../UI/ResumeItem';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { TxConfirmationContext } from '../../../../contexts/transaction-status';
 import { IconArrowForward } from '../../../../Icons';
@@ -22,6 +22,7 @@ import { NATIVE_SOL_MINT } from '../../../../utils/ids';
 import BN from 'bn.js';
 import { MultisigVault } from '../../../../models/multisig';
 import { ACCOUNT_LAYOUT } from '../../../../utils/layouts';
+import { ResumeItem } from '../../../../components/ResumeItem';
 
 export const SafeMeanInfo = (props: {
   connection: Connection;
@@ -591,13 +592,9 @@ export const SafeMeanInfo = (props: {
             const onSelectProposal = () => {
               // Sends isProposalDetails value to the parent component "SafeView"
               onDataToSafeView(proposal);
-
-                // if (selectedMultisig) {
-                //   setHighLightableMultisigId(selectedMultisig.id.toBase58());
-                // }
-                // const url = `/multisig/${address}/proposals/${index}`;
-                // navigate(url, { replace: true });
             };
+
+            const title = proposal.details.title ? proposal.details.title : "Unknown proposal";
 
             // Number of participants who have already approved the Tx
             const approvedSigners = proposal.signers.filter((s: any) => s === true).length;
@@ -613,7 +610,7 @@ export const SafeMeanInfo = (props: {
                   <ResumeItem
                     id={proposal.id.toBase58()}
                     // logo={proposal.logo}
-                    title={proposal.details.title}
+                    title={title}
                     expires={expirationDate}
                     executedOn={executedOnDate}
                     approved={approvedSigners}
@@ -659,8 +656,8 @@ export const SafeMeanInfo = (props: {
               // Sends isProgramDetails value to the parent component "SafeView"
               props.onDataToProgramView(program);
             }
-  
-            const programTitle = shortenAddress(program.pubkey.toBase58(), 4);
+
+            const programTitle = program.pubkey ? shortenAddress(program.pubkey.toBase58(), 4) : "Unknown program";
             const programSubtitle = shortenAddress(program.pubkey.toBase58(), 8);
   
             return (

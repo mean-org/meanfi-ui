@@ -4,7 +4,7 @@ import { Button, Col, Row } from "antd"
 import { IconArrowForward } from "../../../../Icons"
 // import { shortenAddress } from "../../../../utils/utils";
 import { SafeInfo } from "../UI/SafeInfo";
-import { ResumeItem } from '../UI/ResumeItem';
+// import { ResumeItem } from '../UI/ResumeItem';
 // import { MultisigVault } from '../../../../models/multisig';
 import { Idl, Program } from '@project-serum/anchor';
 import { MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
@@ -12,6 +12,7 @@ import { ProgramAccounts } from '../../../../utils/accounts';
 import { consoleOut } from '../../../../utils/ui';
 import { Connection, MemcmpFilter, PublicKey } from '@solana/web3.js';
 import { AppStateContext } from '../../../../contexts/appstate';
+import { ResumeItem } from '../../../../components/ResumeItem';
 
 export const SafeSerumInfoView = (props: {
   connection: Connection;
@@ -60,6 +61,8 @@ export const SafeSerumInfoView = (props: {
             props.onDataToSafeView(tx);
           };
 
+          const title = tx.details.title ? tx.details.title : "Unknown proposal";
+
           const approvedSigners = tx.signers.filter((s: any) => s === true).length;
           const expirationDate = tx.details.expirationDate ? tx.details.expirationDate.toDateString() : "";
           const executedOnDate = tx.executedOn ? tx.executedOn.toDateString() : "";
@@ -73,7 +76,7 @@ export const SafeSerumInfoView = (props: {
                 <ResumeItem
                   id={tx.id.toBase58()}
                   // src={proposal.src}
-                  title={tx.details.title}
+                  title={title}
                   expires={expirationDate}
                   executedOn={executedOnDate}
                   approved={approvedSigners}

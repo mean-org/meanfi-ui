@@ -4,11 +4,11 @@ import { Button, Col, Dropdown, Row } from "antd"
 import { useTranslation } from 'react-i18next';
 import { MultisigTransaction, MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
 import Countdown from 'react-countdown';
-import { AppStateContext } from '../../../../../contexts/appstate';
-import { IconThumbsDown, IconThumbsUp } from '../../../../../Icons';
-import { formatThousands } from '../../../../../utils/utils';
+import { IconThumbsUp, IconThumbsDown } from '../../Icons';
+import { AppStateContext } from '../../contexts/appstate';
+import { formatThousands } from '../../utils/utils';
 
-export const ResumeItemSafe = (props: {
+export const ResumeItem = (props: {
   id?: any;
   version?: number;
   src?: any;
@@ -20,24 +20,24 @@ export const ResumeItemSafe = (props: {
   approved?: any;
   rejected?: any;
   status?: any;
-  needs?: any;
+  resume?: any;
   isProposalDetails?: boolean;
   isProgramDetails?: boolean;
   isAssetDetails?: boolean;
   isProgram?: boolean;
-  isAsset?: boolean;
   programSize?: number;
   rightContent?: any;
   rightIcon?: any;
   hasRightIcon?: boolean;
   rightIconHasDropdown?: boolean;
   dropdownMenu?: any;
+  className?: string;
 }) => {
   const {
     theme
   } = useContext(AppStateContext);
 
-  const { src, img, version, title, subtitle, expires, executedOn, approved, rejected, status, needs, isProposalDetails, isProgram, isAsset, programSize, rightContent, rightIcon, hasRightIcon, rightIconHasDropdown, dropdownMenu } = props;
+  const { src, img, version, title, subtitle, expires, executedOn, approved, rejected, status, resume, isProposalDetails, isProgram, programSize, rightContent, rightIcon, hasRightIcon, rightIconHasDropdown, dropdownMenu, className } = props;
 
   const { t } = useTranslation('common');
 
@@ -114,7 +114,7 @@ export const ResumeItemSafe = (props: {
 
   return (
     <>
-      <Row gutter={[8, 8]} key="resume-item" className={`resume-item-container ${!isProposalDetails ? "hover-list list-item" : "justify-content-space-between pl-1"} ${isProposalDetails ? "align-items-end" : ""}`}>
+      <Row gutter={[8, 8]} key="resume-item" className={`resume-item-container ${className} ${!isProposalDetails ? "hover-list list-item" : "justify-content-space-between pl-1"} ${isProposalDetails ? "align-items-end" : ""}`}>
         <Col className="resume-left-container">
           {(src || img) && (
             <div className="img-container">
@@ -125,7 +125,7 @@ export const ResumeItemSafe = (props: {
             </div>
           )}
           <div className={`resume-left-text ${isProposalDetails ? "pb-1" : ""}`}>
-            <div className={`resume-title ${isProposalDetails ? "big-title" : ""}`}>{title ? title : "Unknown proposal"}</div>
+            <div className={`resume-title ${isProposalDetails ? "big-title" : ""}`}>{title}</div>
 
             {version !== 0 && (
               subtitle ? (
@@ -158,9 +158,9 @@ export const ResumeItemSafe = (props: {
         </Col>
         <Col className={`resume-right-container ${!isProposalDetails ? "mr-1" : "mr-2"}`}>
           <div className="resume-right-text">
-            {(!isProgram && !isAsset) ? (
+            {(!isProgram) ? (
               <>
-                <div className={`resume-right-text-up ${needs === 0 ? "mb-1" : ""}`}>
+                <div className={`resume-right-text-up`}>
                   {approved && (
                     <div className="thumbs-up">
                       <span>{approved}</span>
@@ -179,10 +179,8 @@ export const ResumeItemSafe = (props: {
                     <span className="badge darken small text-uppercase">{getTransactionStatusAction(status)}</span>
                   </div>
                 </div>
-                {(status === 0) && (
-                  needs > 0 && (
-                    <span className="info-label">{`Needs ${needs} ${needs > 1 ?"approvals" : "approval"} to pass`}</span>
-                  )
+                {resume && (
+                  <div className="info-label mb-0">{resume}</div>
                 )}
               </>
             ) : isProgram ? (
@@ -204,7 +202,6 @@ export const ResumeItemSafe = (props: {
           </div>
           {!isProposalDetails && (
             hasRightIcon ? (
-
               rightIconHasDropdown ? (
                 <Dropdown
                   overlay={dropdownMenu}

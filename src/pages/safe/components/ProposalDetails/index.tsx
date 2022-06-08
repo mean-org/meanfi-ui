@@ -10,7 +10,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { consoleOut, copyText } from '../../../../utils/ui';
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../../../constants';
 import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
-import { ResumeItem } from '../UI/ResumeItem';
+// import { ResumeItem } from '../UI/ResumeItem';
 import { MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigTransaction, MultisigTransactionActivityItem, MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
 // import { AppStateContext } from '../../../../contexts/appstate';
 import { useWallet } from '../../../../contexts/wallet';
@@ -20,6 +20,7 @@ import { Idl } from '@project-serum/anchor';
 import { App, AppConfig } from '@mean-dao/mean-multisig-apps';
 import { OperationType } from '../../../../models/enums';
 import moment from "moment";
+import { ResumeItem } from '../../../../components/ResumeItem';
 
 export const ProposalDetailsView = (props: {
   isProposalDetails: boolean;
@@ -404,6 +405,8 @@ export const ProposalDetailsView = (props: {
 
   if (!selectedProposal || !selectedProposal.proposer) { return (<></>); }
 
+  const title = selectedProposal.details.title ? selectedProposal.details.title : "Unknown proposal";
+
   // Number of participants who have already approved the Tx
   const approvedSigners = selectedProposal.signers.filter((s: any) => s === true).length;
   const neededSigners = approvedSigners && (selectedMultisig.threshold - approvedSigners);
@@ -411,6 +414,8 @@ export const ProposalDetailsView = (props: {
   const executedOnDate = selectedProposal.executedOn ? new Date(selectedProposal.executedOn).toDateString() : "";
 
   const proposedBy = selectedMultisig.owners.find((owner: any) => owner.address === selectedProposal.proposer?.toBase58());
+
+  const resume = (selectedProposal.status === 0 && neededSigners > 0) && `Needs ${neededSigners} ${neededSigners > 1 ? "approvals" : "approval"} to pass`;
   
   return (
     <div className="safe-details-container">
@@ -423,13 +428,13 @@ export const ProposalDetailsView = (props: {
       <ResumeItem
         id={selectedProposal.id}
         // src={selectedProposal.src}
-        title={selectedProposal.details.title}
+        title={title}
         expires={expirationDate}
         executedOn={executedOnDate}
         approved={approvedSigners}
         // rejected={selectedProposal.rejected}
         status={selectedProposal.status}
-        needs={neededSigners}
+        resume={resume}
         isProposalDetails={isProposalDetails}
       />
       {selectedProposal.details.description && (

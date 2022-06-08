@@ -24,50 +24,57 @@ export const TabsMean = (props: {
     setSearchParams({v: tab as string});
   }, [setSearchParams]);
 
+
+  useEffect(() => {
+    if (activeTab === '') {
+      setActiveTab(defaultTab || tabNameFormat(tabs[0].id));
+    }
+  }, [activeTab, defaultTab, setActiveTab, tabs]);
+
   // useEffect(() => {
   //   if (activeTab === '') {
   //     setActiveTab((selectedTab && tabNameFormat(tabs[selectedTab].id)) || tabNameFormat(tabs[0].id));
   //   }
   // }, [activeTab, selectedTab, setActiveTab, tabs]);
 
-  useEffect(() => {
-    let optionInQuery: string | null = null;
-    // Get the option if passed-in
-    if (searchParams) {
-      optionInQuery = searchParams.get('v');
-    }
-    // Pre-select an option
-    switch (optionInQuery) {
-      case "proposals":
-        setActiveTab("proposals");
-        break;
-      case "programs":
-        setActiveTab("programs");
-        break;
-      case "instruction":
-        setActiveTab("instruction");
-        break;
-      case "activity":
-        setActiveTab("activity");
-        break;
-      case "transactions":
-        setActiveTab("transactions");
-        break;
-      case "anchor-idl":
-        setActiveTab("anchor-idl");
-        break;
-      // case "summary":
-      //   setActiveTab("summary");
-      //   break;
-      // case "accounts":
-      //   setActiveTab("accounts");
-      //   break;
-      default:
-        setActiveTab(defaultTab);
-        setSearchParams({v: defaultTab}, { replace: true });
-        break;
-    }
-  }, [defaultTab, searchParams, setActiveTab, setSearchParams]);
+  // useEffect(() => {
+  //   let optionInQuery: string | null = null;
+  //   // Get the option if passed-in
+  //   if (searchParams) {
+  //     optionInQuery = searchParams.get('v');
+  //   }
+  //   // Pre-select an option
+  //   switch (optionInQuery) {
+  //     case "proposals":
+  //       setActiveTab("proposals");
+  //       break;
+  //     case "programs":
+  //       setActiveTab("programs");
+  //       break;
+  //     case "instruction":
+  //       setActiveTab("instruction");
+  //       break;
+  //     case "activity":
+  //       setActiveTab("activity");
+  //       break;
+  //     case "transactions":
+  //       setActiveTab("transactions");
+  //       break;
+  //     case "anchor-idl":
+  //       setActiveTab("anchor-idl");
+  //       break;
+  //     // case "summary":
+  //     //   setActiveTab("summary");
+  //     //   break;
+  //     // case "accounts":
+  //     //   setActiveTab("accounts");
+  //     //   break;
+  //     default:
+  //       setActiveTab(defaultTab);
+  //       setSearchParams({v: defaultTab}, { replace: true });
+  //       break;
+  //   }
+  // }, [defaultTab, searchParams, setActiveTab, setSearchParams]);
 
   return (
     <div className={`tabs-container ${containerClassName}`}>
