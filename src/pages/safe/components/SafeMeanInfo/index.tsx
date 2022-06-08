@@ -242,58 +242,58 @@ export const SafeMeanInfo = (props: {
     }
   }, [location]);
 
-  // Update list of txs
-  useEffect(() => {
+  // // Update list of txs
+  // useEffect(() => {
 
-    if (
-      !connection || 
-      !publicKey || 
-      !multisigClient || 
-      !selectedMultisig || 
-      !selectedMultisig.id ||
-      !assetSelected ||
-      !loadingMultisigTxs
-    ) { 
-      return;
-    }
+  //   if (
+  //     !connection || 
+  //     !publicKey || 
+  //     !multisigClient || 
+  //     !selectedMultisig || 
+  //     !selectedMultisig.id ||
+  //     !assetSelected ||
+  //     !loadingMultisigTxs
+  //   ) { 
+  //     return;
+  //   }
 
-    const timeout = setTimeout(() => {
+  //   const timeout = setTimeout(() => {
 
-      consoleOut('Triggering loadMultisigPendingTxs using setNeedRefreshTxs...', '', 'blue');
+  //     consoleOut('Triggering loadMultisigPendingTxs using setNeedRefreshTxs...', '', 'blue');
 
-      multisigClient
-        .getMultisigTransactions(selectedMultisig.id, publicKey)
-        .then((txs: MultisigTransaction[]) => {
-          consoleOut('selected multisig txs', txs, 'blue');
-          const transactions: MultisigTransaction[] = [];
-          for (const tx of txs) {
-            if (tx.accounts.some((a: any) => a.pubkey.equals(assetSelected.address))) {
-              transactions.push(tx);
-            }
-          }
-          setMultisigPendingTxs(transactions);
-        })
-        .catch((err: any) => {
-          console.error("Error fetching all transactions", err);
-          setMultisigPendingTxs([]);
-          consoleOut('multisig txs:', [], 'blue');
-        })
-        .finally(() => setLoadingMultisigTxs(false));
+  //     multisigClient
+  //       .getMultisigTransactions(selectedMultisig.id, publicKey)
+  //       .then((txs: MultisigTransaction[]) => {
+  //         consoleOut('selected multisig txs', txs, 'blue');
+  //         const transactions: MultisigTransaction[] = [];
+  //         for (const tx of txs) {
+  //           if (tx.accounts.some((a: any) => a.pubkey.equals(assetSelected.address))) {
+  //             transactions.push(tx);
+  //           }
+  //         }
+  //         setMultisigPendingTxs(transactions);
+  //       })
+  //       .catch((err: any) => {
+  //         console.error("Error fetching all transactions", err);
+  //         setMultisigPendingTxs([]);
+  //         consoleOut('multisig txs:', [], 'blue');
+  //       })
+  //       .finally(() => setLoadingMultisigTxs(false));
           
-    });
+  //   });
 
-    return () => {
-      clearTimeout(timeout);
-    }   
+  //   return () => {
+  //     clearTimeout(timeout);
+  //   }   
 
-  }, [
-    publicKey, 
-    selectedMultisig, 
-    connection, 
-    multisigClient, 
-    loadingMultisigTxs, 
-    assetSelected
-  ]);
+  // }, [
+  //   publicKey, 
+  //   selectedMultisig, 
+  //   connection, 
+  //   multisigClient, 
+  //   loadingMultisigTxs, 
+  //   assetSelected
+  // ]);
 
   // Load/Unload multisig on wallet connect/disconnect
   useEffect(() => {
@@ -525,6 +525,29 @@ export const SafeMeanInfo = (props: {
     selectedMultisig
   ]);
 
+  const getMultisigProposals = useCallback(async () => {
+
+    if (
+      !connection || 
+      !publicKey || 
+      !multisigClient || 
+      !selectedMultisig
+    ) { 
+      return [];
+    }
+
+    return await multisigClient.getMultisigTransactions(
+      selectedMultisig.id, 
+      publicKey
+    );
+
+  }, [
+    connection, 
+    multisigClient, 
+    publicKey, 
+    selectedMultisig
+  ]);
+
   // Get Txs for the selected multisig
   useEffect(() => {
 
@@ -539,17 +562,17 @@ export const SafeMeanInfo = (props: {
     }
 
     const timeout = setTimeout(() => {
-
+      setMultisigTxs(undefined);
+      setAmountOfProposals("");
       consoleOut('Triggering loadMultisigPendingTxs ...', '', 'blue');
-
-      multisigClient
-        .getMultisigTransactions(selectedMultisig.id, publicKey)
+      getMultisigProposals()
         .then((txs: MultisigTransaction[]) => {
-          setMultisigTxs(txs.length > 0 ? txs : undefined)
+          if (loadingProposals) {
+            setMultisigTxs(txs.length > 0 ? txs : undefined);
+            setAmountOfProposals(txs.length > 0 ? txs.length.toString() : "");
+          }
         })
-        .catch((err: any) => {
-          console.error("Error fetching all transactions", err);
-        })
+        .catch((err: any) => console.error("Error fetching all transactions", err))
         .finally(() => setLoadingProposals(false));
     });
 
@@ -563,8 +586,9 @@ export const SafeMeanInfo = (props: {
     connection, 
     multisigClient, 
     loadingProposals, 
-    proposalSelected,
-    setMultisigTxs
+    proposalSelected, 
+    setMultisigTxs, 
+    getMultisigProposals
   ]);
 
   // useEffect(() => {
