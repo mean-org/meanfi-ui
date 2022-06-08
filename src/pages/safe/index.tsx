@@ -97,7 +97,6 @@ const CREDIX_PROGRAM = new PublicKey("CRDx2YkdtYtGZXGHZ59wNv1EwKHQndnRc1gT4p8i2v
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
-
 export const SafeView = () => {
   const connectionConfig = useConnectionConfig();
   const { publicKey, connected, wallet } = useWallet();
@@ -3331,6 +3330,16 @@ export const SafeView = () => {
 
   }, [coinPrices]);
 
+  const getQueryParamV = useCallback(() => {
+    let optionInQuery: string | null = null;
+    // Get the option if passed-in
+    if (searchParams) {
+      optionInQuery = searchParams.get('v');
+    }
+
+    return optionInQuery;
+  }, [searchParams]);
+
   // Calculates the USD value of the Multisig accounts assets
   useEffect(() => {
 
@@ -3632,8 +3641,17 @@ export const SafeView = () => {
       const firstMultisig = multisigAccounts[0].authority.toBase58();
       const url = `/multisig/${firstMultisig}?v=proposals`;
       navigate(url);
+    } else if (address && multisigAccounts && multisigAccounts.length > 0 && id) {
+      const param = getQueryParamV();
+      const isProposalsFork = param === "proposals" || param === "instruction" || param === "activity" ? true : false;
+      const isProgramsFork = param === "programs" || param === "transactions" || param === "anchor-idl" ? true : false;
+      const isValidParam = isProposalsFork || isProgramsFork ? true : false;
+      if (!isValidParam) {
+        const url = `/multisig`;
+        navigate(url, { replace: true });
+      }
     }
-  }, [address, multisigAccounts, navigate, publicKey]);
+  }, [id, address, multisigAccounts, navigate, publicKey, getQueryParamV]);
 
   // Actually selects a multisig base on url
   useEffect(() => {
@@ -3645,40 +3663,34 @@ export const SafeView = () => {
   }, [address, multisigAccounts, setHighLightableMultisigId]);
 
   useEffect(() => {
-    if (id && multisigTxs) {
-      const filteredMultisigTxs = multisigTxs.find(tx => tx.id.toBase58() === id);
+    if (id) {
+      const param = getQueryParamV();
+      const isProposalsFork = param === "proposals" || param === "instruction" || param === "activity" ? true : false;
+      const isProgramsFork = param === "programs" || param === "transactions" || param === "anchor-idl" ? true : false;
+      const isValidParam = isProposalsFork || isProgramsFork ? true : false;
 
-      setProposalSelected(filteredMultisigTxs as any);
-      setIsProposalDetails(true);
-      setIsProgramDetails(false);
-      setIsAssetDetails(false);
+      if (isValidParam && multisigTxs && programs) {
+        if (isProposalsFork) {
+          // Set proposal
+          const filteredMultisigTxs = multisigTxs.find(tx => tx.id.toBase58() === id);
+          setProposalSelected(filteredMultisigTxs as any);
+          setIsProposalDetails(true);
+          setIsProgramDetails(false);
+        } else {
+          // Set program
+          const filteredPrograms = programs.find(program => program.pubkey.toBase58() === id);
+          setProgramSelected(filteredPrograms);
+          setIsProposalDetails(false);
+          setIsProgramDetails(true);
+        }
+      }
     }
-  }, [id, multisigTxs]);
 
-  useEffect(() => {
-    if (id && programs) {
-      const filteredPrograms = programs.find(program => program.pubkey.toBase58() === id);
-
-      setProgramSelected(filteredPrograms);
-      setIsProposalDetails(false);
-      setIsAssetDetails(false);
-      setIsProgramDetails(true);
-    }
-  }, [id, programs]);
+  }, [id, multisigTxs, programs, getQueryParamV]);
 
   ///////////////
   // Rendering //
   ///////////////
-
-  // const getQueryParamV = useCallback(() => {
-  //   let optionInQuery: string | null = null;
-  //   // Get the option if passed-in
-  //   if (searchParams) {
-  //     optionInQuery = searchParams.get('v');
-  //   }
-
-  //   return optionInQuery || "not-found";
-  // }, [searchParams]);
 
   const renderMultisigList = (
     <>
@@ -3688,8 +3700,6 @@ export const SafeView = () => {
             consoleOut('=======================================', '', 'green');
             consoleOut('selected multisig:', item, 'blue');
             setDtailsPanelOpen(true);
-            // setNeedRefreshTxs(true);
-            // setSelectedMultisig(item);
             setIsProposalDetails(false);
             setIsProgramDetails(false);
             setMultisigSolBalance(undefined);
@@ -3831,13 +3841,14 @@ export const SafeView = () => {
 
   return (
     <>
-      {/* {isLocal() && (
+      {isLocal() && (
         <div className="debug-bar">
-          <span className="ml-1">isBusy:</span><span className="ml-1 font-bold fg-dark-active">{isBusy ? 'true' : 'false'}</span>
-          <span className="ml-1">haveMultisig:</span><span className="ml-1 font-bold fg-dark-active">{selectedMultisig ? 'true' : 'false'}</span>
-          <span className="ml-1">multisigId:</span><span className="ml-1 font-bold fg-dark-active">{selectedMultisig ? `${selectedMultisig.id}` : '-'}</span>
+          <span className="ml-1">hasMultisig:</span><span className="ml-1 font-bold fg-dark-active">{selectedMultisig ? 'true' : 'false'}</span>
+          <span className="ml-1">isProposalDetails:</span><span className="ml-1 font-bold fg-dark-active">{isProposalDetails ? 'true' : 'false'}</span>
+          <span className="ml-1">isProgramDetails:</span><span className="ml-1 font-bold fg-dark-active">{isProgramDetails ? 'true' : 'false'}</span>
+          <span className="ml-1">isAssetDetails:</span><span className="ml-1 font-bold fg-dark-active">{isAssetDetails ? 'true' : 'false'}</span>
         </div>
-      )} */}
+      )}
 
       <div className="container main-container">
 
@@ -3934,7 +3945,7 @@ export const SafeView = () => {
                   {connected && multisigClient && selectedMultisig ? (
                     <>
                       <Spin spinning={loadingMultisigAccounts}>
-                        {(!isProposalDetails && !isProgramDetails && !isAssetDetails) && (
+                        {(!isProposalDetails && !isProgramDetails) ? (
                           selectedMultisig.version === 0 ? (
                             <SafeSerumInfoView
                               connection={connection}
@@ -3969,8 +3980,7 @@ export const SafeView = () => {
                               assetSelected={assetSelected}
                             />
                           )
-                        )}
-                        {isProposalDetails && (
+                        ) : isProposalDetails ? (
                           <ProposalDetailsView
                             isProposalDetails={isProposalDetails}
                             onDataToSafeView={returnFromProposalDetailsHandler}
@@ -3985,15 +3995,14 @@ export const SafeView = () => {
                             multisigClient={multisigClient}
                             hasMultisigPendingProposal={hasMultisigPendingProposal()}
                           />
-                        )}
-                        {isProgramDetails && (
+                        ) : isProgramDetails ? (
                           <ProgramDetailsView
                             isProgramDetails={isProgramDetails}
                             onDataToProgramView={returnFromProgramDetailsHandler}
                             programSelected={programSelected}
                             selectedMultisig={selectedMultisig}
                           />
-                        )}
+                        ) : null}
                       </Spin>
                     </>
                   ) : (
