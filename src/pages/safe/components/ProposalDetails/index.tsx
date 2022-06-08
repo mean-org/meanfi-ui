@@ -62,14 +62,22 @@ export const ProposalDetailsView = (props: {
 
   useEffect(() => {
 
-    if (!selectedMultisig || !proposalSelected) { return; }
-    const timeout = setTimeout(() => setSelectedProposal(proposalSelected));
-    return () => clearTimeout(timeout);
+    setSelectedProposal(proposalSelected);
 
   }, [
-    selectedMultisig, 
     proposalSelected
   ]);
+
+  // useEffect(() => {
+
+  //   if (!selectedMultisig || !proposalSelected) { return; }
+  //   const timeout = setTimeout(() => setSelectedProposal(proposalSelected));
+  //   return () => clearTimeout(timeout);
+
+  // }, [
+  //   selectedMultisig, 
+  //   proposalSelected
+  // ]);
 
   useEffect(() => {
 
