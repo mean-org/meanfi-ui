@@ -4379,7 +4379,7 @@ export const Streams = () => {
                             <div className="transaction-detail-row">
                               <span className="info-data">
                                 {getAmountWithSymbol(stream.rateAmount, stream.associatedToken as string, false, splTokenList)}
-                                {getIntervalFromSeconds(stream?.rateIntervalInSeconds as number, true, t)}
+                                {getIntervalFromSeconds(stream.rateIntervalInSeconds as number, true, t)}
                               </span>
                             </div>
                           </>
@@ -4392,7 +4392,7 @@ export const Streams = () => {
                       <Row className="mb-3">
                         <Col span={12}>
                           <div className="info-label">
-                            {t('streams.stream-detail.label-amount')}&nbsp;({t('streams.stream-detail.amount-funded-date')} {getReadableDate(stream?.fundedOnUtc as string)})
+                            {t('streams.stream-detail.label-amount')}&nbsp;({t('streams.stream-detail.amount-funded-date')} {getReadableDate(stream.fundedOnUtc as string)})
                           </div>
                           <div className="transaction-detail-row">
                             <span className="info-icon">
@@ -4417,7 +4417,7 @@ export const Streams = () => {
                               <IconClock className="mean-svg-icons" />
                             </span>
                             <span className="info-data">
-                              {getReadableDate(stream?.startUtc as string)}
+                              {getReadableDate(stream.startUtc as string)}
                             </span>
                           </div>
                         </Col>
@@ -4445,17 +4445,19 @@ export const Streams = () => {
                       </div>
                     </Col>
                     {/* Started date */}
-                    <Col span={12}>
-                      <div className="info-label">{getStartDateLabel()}</div>
-                      <div className="transaction-detail-row">
-                        <span className="info-icon">
-                          <IconClock className="mean-svg-icons" />
-                        </span>
-                        <span className="info-data">
-                          {getReadableDate(stream?.startUtc as string)}
-                        </span>
-                      </div>
-                    </Col>
+                    {stream.createdBlockTime && (
+                      <Col span={12}>
+                        <div className="info-label">{getStartDateLabel()}</div>
+                        <div className="transaction-detail-row">
+                          <span className="info-icon">
+                            <IconClock className="mean-svg-icons" />
+                          </span>
+                          <span className="info-data">
+                            {getReadableDate(stream.startUtc as string)}
+                          </span>
+                        </div>
+                      </Col>
+                    )}
                   </Row>
 
                   {/* Allocation info */}

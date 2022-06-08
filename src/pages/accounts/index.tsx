@@ -3128,6 +3128,7 @@ export const AccountsNewView = () => {
     accountAddress,
     shouldLoadTokens,
     selectedCategory,
+    getTokenPriceByAddress,
     getTokenByMintAddress,
     getTokenPriceBySymbol,
     setShouldLoadTokens,
