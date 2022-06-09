@@ -153,8 +153,8 @@ export const SafeView = () => {
 
   // Programs
   const [programSelected, setProgramSelected] = useState<any>();
-  const [needReloadPrograms, setNeedReloadPrograms] = useState(true);
-  const [loadingPrograms, setLoadingPrograms] = useState(true);
+  const [needReloadPrograms, setNeedReloadPrograms] = useState(false);
+  const [loadingPrograms, setLoadingPrograms] = useState(false);
   const [isProgramDetails, setIsProgramDetails] = useState(false);
 
   // Other
@@ -3417,6 +3417,7 @@ export const SafeView = () => {
             // Now make item active
             setSelectedMultisig(item);
             setNeedRefreshTxs(true);
+            setNeedReloadPrograms(true);
           } else {
             setSelectedMultisig(undefined);
           }    
@@ -3492,7 +3493,8 @@ export const SafeView = () => {
         if (lastSentTxOperationType === OperationType.CreateMultisig) {
           setSelectedMultisig(undefined);   // Deselects the current multisig if creating a new one
         }
-        setNeedRefreshTxs(true);          // Trigger reload multisigs
+        setNeedRefreshTxs(true);
+        setNeedReloadPrograms(true);
         clearTxConfirmationContext();
         setLoadingMultisigAccounts(true);
         sethHighlightedMultisigTx(undefined);
@@ -3692,19 +3694,18 @@ export const SafeView = () => {
     }
 
     setTimeout(() => {
+      setNeedReloadPrograms(false);
       setLoadingPrograms(true);
     },);
 
+    setPrograms([]);
     getProgramsByUpgradeAuthority()
       .then(progs => {
-        setPrograms(progs.length > 0 ? progs : []);  // TODO: Revisar por sospechoso
+        setPrograms(progs);
         consoleOut('programs:', progs);
       })
       .catch(error => console.error(error))
-      .finally(() => {
-        setNeedReloadPrograms(false);
-        setLoadingPrograms(false);
-      });
+      .finally(() => setLoadingPrograms(false));
   }, [
     connection,
     needReloadPrograms,
@@ -3818,6 +3819,7 @@ export const SafeView = () => {
       setSelectedMultisig(multisigAccounts.find((multisig) => multisig.authority.toBase58() === address));
       setHighLightableMultisigId(address);
       setNeedRefreshTxs(true);
+      setNeedReloadPrograms(true);
     } 
   }, [address, multisigAccounts, setHighLightableMultisigId]);
 

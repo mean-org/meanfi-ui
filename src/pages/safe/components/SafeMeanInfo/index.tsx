@@ -70,6 +70,7 @@ export const SafeMeanInfo = (props: {
     multisigClient,
     proposalSelected,
     onDataToSafeView,
+    onDataToProgramView,
     onRefreshRequested,
     loadingProposals,
     loadingPrograms,
@@ -605,14 +606,8 @@ export const SafeMeanInfo = (props: {
         (multisigTxs !== undefined && multisigTxs.length > 0) ? (
           multisigTxs.map((proposal, index) => {
             const onSelectProposal = () => {
-              // Sends isProposalDetails value to the parent component "SafeView"
+              // Sends proposal value to the parent component "SafeView"
               onDataToSafeView(proposal);
-
-                // if (selectedMultisig) {
-                //   setHighLightableMultisigId(selectedMultisig.id.toBase58());
-                // }
-                // const url = `/multisig/${address}/proposals/${index}`;
-                // navigate(url, { replace: true });
             };
 
             // Number of participants who have already approved the Tx
@@ -657,8 +652,8 @@ export const SafeMeanInfo = (props: {
         (programs !== undefined && programs.length > 0) ? (
           programs.map((program, index) => {
             const onSelectProgram = () => {
-              // Sends isProgramDetails value to the parent component "SafeView"
-              props.onDataToProgramView(program);
+              // Sends program value to the parent component "SafeView"
+              onDataToProgramView(program);
             }
   
             const programTitle = shortenAddress(program.pubkey.toBase58(), 4);
