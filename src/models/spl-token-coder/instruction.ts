@@ -4,6 +4,7 @@ import { Idl, Instruction } from "@project-serum/anchor";
 import { InstructionDisplay } from "@project-serum/anchor/dist/cjs/coder/borsh/instruction";
 import { SplTokenInstructionCoder } from "@project-serum/anchor/dist/cjs/coder/spl-token/instruction";
 import { bs58 } from "@project-serum/anchor/dist/cjs/utils/bytes";
+import { sentenceCase } from "../multisig";
 
 export class MeanSplTokenInstructionCoder extends SplTokenInstructionCoder {
 
@@ -77,11 +78,6 @@ export class MeanSplTokenInstructionCoder extends SplTokenInstructionCoder {
 
     return { args, accounts } as InstructionDisplay;
   }
-}
-
-function sentenceCase(field: string): string {
-  const result = field.replace(/([A-Z])/g, " $1");
-  return result.charAt(0).toUpperCase() + result.slice(1);
 }
 
 const LAYOUT = BufferLayout.union(BufferLayout.u8("instruction"));

@@ -14,7 +14,7 @@ import { ResumeItem } from '../UI/ResumeItem';
 import { MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigTransaction, MultisigTransactionActivityItem, MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
 // import { AppStateContext } from '../../../../contexts/appstate';
 import { useWallet } from '../../../../contexts/wallet';
-import { createAnchorProgram, InstructionAccountInfo, InstructionDataInfo, MultisigTransactionInstructionInfo, parseMultisigProposalIx } from '../../../../models/multisig';
+import { createAnchorProgram, InstructionAccountInfo, InstructionDataInfo, MultisigTransactionInstructionInfo, parseMultisigProposalIx, parseMultisigSystemProposalIx } from '../../../../models/multisig';
 import { PublicKey, SystemProgram } from '@solana/web3.js';
 import { Idl } from '@project-serum/anchor';
 import { App, AppConfig } from '@mean-dao/mean-multisig-apps';
@@ -98,9 +98,9 @@ export const ProposalDetailsView = (props: {
             setProposalIxInfo(ixInfo);
           });
       } else {
-        const ixInfo = parseMultisigProposalIx(proposalSelected);
+        const ixInfo = parseMultisigSystemProposalIx(proposalSelected);
         setProposalIxInfo(ixInfo);
-        // console.log('ixInfo', ixInfo);
+        console.log('ixInfo', ixInfo);
       }
     });
     return () => clearTimeout(timeout);
