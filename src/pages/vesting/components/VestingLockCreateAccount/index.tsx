@@ -21,6 +21,10 @@ import { calculateActionFees, MSP_ACTIONS, TransactionFees } from '@mean-dao/msp
 import { NATIVE_SOL } from '../../../../utils/tokens';
 import { VESTING_ROUTE_BASE_PATH } from '../..';
 import { useNavigate } from 'react-router-dom';
+import { VESTING_ACCOUNT_TYPE_OPTIONS } from '../../../../constants/treasury-type-options';
+import { CheckOutlined } from '@ant-design/icons';
+import { TreasuryTypeOption } from '../../../../models/treasuries';
+import { FormLabelWithIconInfo } from '../../../../components/FormLabelWithIconInfo';
 
 export const VestingLockCreateAccount = (props: {
     inModal: boolean;
@@ -61,6 +65,7 @@ export const VestingLockCreateAccount = (props: {
     const [otpFees, setOtpFees] = useState<TransactionFees>({
         blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
     });
+    const { treasuryOption, setTreasuryOption } = useContext(AppStateContext);
 
     const resetTransactionStatus = useCallback(() => {
 
@@ -409,6 +414,10 @@ export const VestingLockCreateAccount = (props: {
         updateTokenListByFilter
     ]);
 
+    const handleSelection = (option: TreasuryTypeOption) => {
+        setTreasuryOption(option);
+    }
+
     // Hook on wallet connect/disconnect
     useEffect(() => {
 
@@ -575,10 +584,10 @@ export const VestingLockCreateAccount = (props: {
         <>
             <div className="elastic-form-container">
 
-                <h2 className="form-group-label">Account info</h2>
+                <h2 className="form-group-label">{t('vesting.create-account.step-one-label')}</h2>
 
                 {/* Vesting Lock name */}
-                <div className="form-label">Vesting Lock name</div>
+                <div className="form-label">{t('vesting.create-account.vesting-contract-name-label')}</div>
                 <div className="well">
                     <div className="flex-fixed-right">
                         <div className="left">
@@ -599,7 +608,7 @@ export const VestingLockCreateAccount = (props: {
                 </div>
 
                 {/* Token to vest */}
-                <div className="form-label">Token to vest</div>
+                <div className="form-label">{t('vesting.create-account.vesting-contract-token-label')}</div>
                 <div className="well">
                     <div className="flex-fixed-left">
                         <div className="left">
@@ -673,6 +682,33 @@ export const VestingLockCreateAccount = (props: {
                     )}
                 </div>
 
+                {/* Treasury type selector */}
+                <FormLabelWithIconInfo
+                    label={t('vesting.create-account.vesting-contract-type-label')}
+                    tooltip_text={t('vesting.create-account.vesting-contract-type-tooltip')}
+                />
+                <div className="items-card-list vertical-scroll">
+                    {VESTING_ACCOUNT_TYPE_OPTIONS.map((option: TreasuryTypeOption, index) => {
+                        return (
+                            <div key={`${option.translationId}`} className={
+                                `item-card ${index === VESTING_ACCOUNT_TYPE_OPTIONS.length - 1 ? 'mb-0' : 'mb-1'}${option.type === treasuryOption?.type ? ' selected' : ''}${option.disabled ? ' disabled': ''}`
+                                }
+                                onClick={() => {
+                                    if (!option.disabled) {
+                                        handleSelection(option);
+                                    }
+                                }}>
+                                <div className="checkmark"><CheckOutlined /></div>
+                                <div className="item-meta">
+                                    <div className="item-name">{t(`vesting.create-account.vesting-account-type-options.${option.translationId}-name`)}</div>
+                                    <div className="item-description">{t(`vesting.create-account.vesting-account-type-options.${option.translationId}-description`)}</div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+
+                {/* CTA */}
                 <div className="cta-container">
                     <Button
                         type="primary"

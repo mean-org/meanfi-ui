@@ -1327,8 +1327,20 @@
 		"screen-subtitle2": "Realize the power of no-code token locks on Solana.",
 		"user-instruction-headline": "Get started by creating a vesting contract below",
 		"create-account": {
+			"step-one-label": "Account info",
+			"step-two-label": "Contract settings",
 			"tab-label-create-account": "Create new account",
-			"tab-label-select-account": "Select existing account"
+			"tab-label-select-account": "Select existing account",
+			"vesting-contract-name-label": "Vesting contract name",
+			"vesting-contract-type-label": "Vesting contract type",
+			"vesting-contract-type-tooltip": "This vesting contract can either be open or locked in nature. Open contracts allow you to have more flexibility in case you need to pause or cancel a stream. Locked streams are not able to be paused or canceled and are perfect for token locks, and fixed investor token distributions.",
+			"vesting-contract-token-label": "Token to vest and initial funding",
+			"vesting-account-type-options": {
+				"vesting-account-type-locked-description": "Locked vesting contracts are perfect for investors and token locks as they can not be paused or canceled.",
+				"vesting-account-type-locked-name": "Locked vesting contract",
+				"vesting-account-type-open-description": "A open vesting contract allows you to create flexible vesting streams that can be paused and cancelled.",
+				"vesting-account-type-open-name": "Open vesting contract"
+			}
 		},
 		"vesting-account-details": {
 			"panel-title": "Vesting Account Details"

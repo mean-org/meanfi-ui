@@ -725,7 +725,7 @@ export const PlaygroundView = () => {
             </Button>
           </div>
         </div>
-  
+
         <div className="mb-3">
           {(accountInfo || parsedAccountInfo) && (
             <div className="well-group text-monospace">
