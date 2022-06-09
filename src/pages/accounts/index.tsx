@@ -1573,7 +1573,7 @@ export const AccountsNewView = () => {
         : new PublicKey(fromAccount.mint);
 
       let toAddress = new PublicKey(data.to);
-      let programId = MEAN_MULTISIG_PROGRAM;
+      // const programId = MEAN_MULTISIG_PROGRAM;
       //
       let transferIx = SystemProgram.transfer({
         fromPubkey: fromAddress,
@@ -1585,7 +1585,7 @@ export const AccountsNewView = () => {
 
       if (!fromMintAddress.equals(NATIVE_SOL_MINT)) {
 
-        programId = TOKEN_PROGRAM_ID;
+        // programId = TOKEN_PROGRAM_ID;
         const mintInfo = await connection.getAccountInfo(fromMintAddress);
 
         if (!mintInfo) { 
@@ -1640,7 +1640,7 @@ export const AccountsNewView = () => {
         "Propose funds transfer",
         "", // description
         new Date(expirationTime * 1_000),
-        OperationType.TransferTokens,
+        (fromMintAddress.equals(NATIVE_SOL_MINT) ? OperationType.Transfer : OperationType.TransferTokens),
         selectedMultisig.id,
         transferIx.programId,
         transferIx.keys,

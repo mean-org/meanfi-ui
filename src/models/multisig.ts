@@ -5,6 +5,7 @@ import bs58 from "bs58";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { MEAN_MULTISIG_PROGRAM } from "@mean-dao/mean-multisig-sdk";
 import { MeanSplTokenInstructionCoder } from "./spl-token-coder/instruction";
+import { MeanSystemInstructionCoder } from "./system-program-coder/instruction";
 
 export const MEAN_MULTISIG_OPS = new PublicKey("3TD6SWY9M1mLY2kZWJNavPLhwXvcRsWdnZLRaMzERJBw");
 export const LAMPORTS_PER_SIG = 5000;
@@ -449,9 +450,20 @@ export const parseMultisigTransactionInstruction = (
   }
 }
 
-export const getIxNameFromMultisigTransaction = (programIdl: Idl, transaction: MultisigTransaction) => {
+export const getIxNameFromMultisigTransaction = (transaction: MultisigTransaction, programIdl?: Idl) => {
 
   let ix: any;
+
+  if (!programIdl) {
+    switch(transaction.operation) {
+      case OperationType.Transfer:
+      case OperationType.TransferTokens: 
+        ix = "transfer";
+        break;
+      default: ix = undefined;
+    }
+    return ix;
+  }
 
   switch(transaction.operation) {
     // MEan Multisig
@@ -576,7 +588,7 @@ export const parseMultisigProposalIx = (
       return getMultisigInstructionSummary(ix);
     }
 
-    const ixName = getIxNameFromMultisigTransaction(program.idl, transaction);
+    const ixName = getIxNameFromMultisigTransaction(transaction, program.idl);
     // console.log('ixName', ixName);
 
     if (!ixName) {
@@ -673,6 +685,98 @@ export const parseMultisigProposalIx = (
     console.error(`Parse Multisig Transaction: ${err}`);
     return null;
   }
+}
+
+export const parseMultisigSystemProposalIx = (transaction: MultisigTransaction): MultisigTransactionInstructionInfo | null => {
+
+  try {
+
+    const ix = new TransactionInstruction({
+      programId: transaction.programId,
+      keys: transaction.accounts,
+      data: transaction.data
+    });
+
+    const ixName = getIxNameFromMultisigTransaction(transaction);
+    // console.log('ixName', ixName);
+
+    if (!ixName) {
+      return getMultisigInstructionSummary(ix);
+    }
+
+    const coder = new MeanSystemInstructionCoder();
+    // console.log('coder', coder);
+
+    // const dataEncoded = bs58.encode(ix.data);
+    const dataDecoded = coder.decode(ix.data);
+    // console.log('dataDecoded', dataDecoded);
+
+    if (!dataDecoded) {
+      return getMultisigInstructionSummary(ix);
+    }
+
+    const ixData = (dataDecoded.data as any);
+
+    const formattedData = coder.format(
+      {
+        name: dataDecoded.name,
+        data: ixData
+      },
+      ix.keys
+    );
+
+    // console.log('formattedData', formattedData);
+
+    if (!formattedData) {
+      return getMultisigInstructionSummary(ix);
+    }
+
+    const ixAccInfos: InstructionAccountInfo[] = [];
+    let accIndex = 0;
+
+    for (const acc of ix.keys) {
+
+      ixAccInfos.push({
+        index: accIndex,
+        label: formattedData.accounts[accIndex].name,
+        value: acc.pubkey.toBase58()
+
+      } as InstructionAccountInfo);
+
+      accIndex ++;
+    }
+
+    const dataInfos: InstructionDataInfo[] = [];
+    let dataIndex = 0;
+
+    for (const dataItem of formattedData.args) {
+      dataInfos.push({
+        label: `${dataItem.name[0].toUpperCase()}${dataItem.name.substring(1)}`,
+        value: dataItem.data,
+        index: dataIndex
+      } as InstructionDataInfo);
+      dataIndex ++;
+    }
+
+    const ixInfo = {
+      programId: ix.programId.toBase58(),
+      programName: "System Program",
+      accounts: ixAccInfos,
+      data: dataInfos
+
+    } as MultisigTransactionInstructionInfo;
+
+    return ixInfo;
+
+  } catch (err: any) {
+    console.error(`Parse Multisig Transaction: ${err}`);
+    return null;
+  }
+}
+
+export const sentenceCase = (field: string): string => {
+  const result = field.replace(/([A-Z])/g, " $1");
+  return result.charAt(0).toUpperCase() + result.slice(1);
 }
 
 export const parseSerializedTx = async (
