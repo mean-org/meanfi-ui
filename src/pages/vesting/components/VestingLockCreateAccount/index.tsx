@@ -6,7 +6,7 @@ import { AppStateContext } from '../../../../contexts/appstate';
 import { cutNumber, fetchAccountTokens, getAmountWithSymbol, getTokenBySymbol, isValidNumber } from '../../../../utils/utils';
 import { useAccountsContext, useNativeAccount } from '../../../../contexts/accounts';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { consoleOut, isValidAddress, toUsCurrency } from '../../../../utils/ui';
+import { consoleOut, isLocal, isValidAddress, toUsCurrency } from '../../../../utils/ui';
 import { confirmationEvents, TxConfirmationInfo } from '../../../../contexts/transaction-status';
 import { EventType, OperationType, TransactionStatus } from '../../../../models/enums';
 import { AppUsageEvent } from '../../../../utils/segment-service';
@@ -19,13 +19,13 @@ import { Button, Drawer, Modal } from 'antd';
 import { TokenDisplay } from '../../../../components/TokenDisplay';
 import { calculateActionFees, MSP_ACTIONS, TransactionFees } from '@mean-dao/msp';
 import { NATIVE_SOL } from '../../../../utils/tokens';
-import { VESTING_ROUTE_BASE_PATH } from '../..';
-import { useNavigate } from 'react-router-dom';
 import { VESTING_ACCOUNT_TYPE_OPTIONS } from '../../../../constants/treasury-type-options';
 import { CheckOutlined } from '@ant-design/icons';
 import { TreasuryTypeOption } from '../../../../models/treasuries';
 import { FormLabelWithIconInfo } from '../../../../components/FormLabelWithIconInfo';
-import { StepSelector } from '../../../../components/StepSelector';
+import { WizardStepSelector } from '../../../../components/WizardStepSelector';
+import { isMobile } from 'react-device-detect';
+import useWindowSize from '../../../../hooks/useWindowResize';
 
 export const VestingLockCreateAccount = (props: {
     inModal: boolean;
@@ -34,7 +34,6 @@ export const VestingLockCreateAccount = (props: {
 }) => {
     const { inModal, token, tokenChanged } = props;
     const { t } = useTranslation('common');
-    const navigate = useNavigate();
     const connection = useConnection();
     const { connected, publicKey } = useWallet();
     const {
@@ -50,7 +49,8 @@ export const VestingLockCreateAccount = (props: {
     } = useContext(AppStateContext);
     const { account } = useNativeAccount();
     const accounts = useAccountsContext();
-    // const [isBusy, setIsBusy] = useState(false);
+    const { width } = useWindowSize();
+    const [isXsDevice, setIsXsDevice] = useState<boolean>(isMobile);
     const [userBalances, setUserBalances] = useState<any>();
     const [previousBalance, setPreviousBalance] = useState(account?.lamports);
     const [nativeBalance, setNativeBalance] = useState(0);
@@ -277,6 +277,15 @@ export const VestingLockCreateAccount = (props: {
         }
 
     }, [connection, publicKey, selectedToken, userBalances]);
+
+    // Detect XS screen
+    useEffect(() => {
+        if (width < 576) {
+            setIsXsDevice(true);
+        } else {
+            setIsXsDevice(false);
+        }
+    }, [width]);
 
     const getFeeAmount = useCallback(() => {
         return otpFees.blockchainFee + otpFees.mspFlatFee;
@@ -596,9 +605,20 @@ export const VestingLockCreateAccount = (props: {
 
     return (
         <>
+            {/* {isLocal() && (
+                <div className="debug-bar">
+                    <span className="ml-1">currentStep:</span><span className="ml-1 font-bold fg-dark-active">{currentStep}</span>
+                </div>
+            )} */}
+
             <div className={`${inModal ? 'scrollable-content' : 'elastic-form-container'}`}>
 
-                <StepSelector step={currentStep} steps={2} onValueSelected={onStepperChange} />
+                <WizardStepSelector
+                    step={currentStep}
+                    steps={2}
+                    extraClass="px-1 mb-2"
+                    onValueSelected={onStepperChange}
+                />
 
                 <div className={`panel1${inModal ? ' p-3' : ''} ${currentStep === 0 ? 'show' : 'hide'}`}>
 
@@ -747,7 +767,7 @@ export const VestingLockCreateAccount = (props: {
                     <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Eum quisquam, similique minus id nisi vitae! Nostrum modi fuga vitae ad laborum impedit! Maiores magnam, molestiae eos, quasi quo saepe quam corporis possimus rerum dolor corrupti cumque in blanditiis! Ab ullam vel aspernatur delectus rerum eaque non tenetur ipsam, alias, soluta consequuntur quidem porro et.</p>
 
                     <div className="two-column-form-layout">
-                        <div className="left">
+                        <div className={`left ${inModal || isXsDevice ? 'mb-2' : 'mb-0'}`}>
                             <Button
                                 block
                                 type="primary"
