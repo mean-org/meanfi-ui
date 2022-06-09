@@ -30,10 +30,8 @@ export const SafeMeanInfo = (props: {
   isAssetDetails: boolean;
   onDataToSafeView: any;
   onDataToProgramView: any;
-  onDataToAssetView: any;
   selectedMultisig?: any;
   onEditMultisigClick: any;
-  onNewCreateAssetClick: any;
   onNewProposalMultisigClick: any;
   multisigClient: MeanMultisig | null;
   selectedTab?: any;

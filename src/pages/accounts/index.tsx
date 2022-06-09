@@ -85,8 +85,8 @@ import { MultisigParticipant } from '../../models/multisig';
 import { MultisigVaultTransferAuthorityModal } from '../../components/MultisigVaultTransferAuthorityModal';
 import { MultisigVaultDeleteModal } from '../../components/MultisigVaultDeleteModal';
 import { useNativeAccount } from '../../contexts/accounts';
-import { MultisigCreateAssetModal } from '../../components/MultisigCreateAssetModal';
 import { STREAMS_ROUTE_BASE_PATH } from '../../views/Streams';
+import { MultisigAddAssetModal } from '../../components/MultisigAddAssetModal';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export type InspectedAccountType = "multisig" | "streaming-account" | undefined;
@@ -4528,7 +4528,7 @@ export const AccountsNewView = () => {
                                   disabled={!accountAddress || inspectedAccountType !== "multisig"}
                                   onClick={onShowCreateAssetModal}>
                                   <IconAdd className="mean-svg-icons" />
-                                  <span className="ml-1">Add asset</span>
+                                  <span className="ml-1">Create an asset</span>
                                 </Button>
                               </Tooltip>
                             )}
@@ -4746,14 +4746,15 @@ export const AccountsNewView = () => {
         />
       )}
 
-      <MultisigCreateAssetModal
-        handleOk={onAcceptCreateVault}
-        handleClose={closeCreateAssetModal}
-        isVisible={isCreateAssetModalVisible}
-        nativeBalance={nativeBalance}
-        transactionFees={transactionAssetFees}
-        isBusy={isBusy}
-      />
+      {isCreateAssetModalVisible && (
+        <MultisigAddAssetModal
+          connection={connection}
+          handleOk={(item: TokenInfo) => onAcceptCreateVault(item)}
+          handleClose={closeCreateAssetModal}
+          isVisible={isCreateAssetModalVisible}
+          ownedTokenAccounts={userOwnedTokenAccounts}
+        />
+      )}
 
       <PreFooter />
     </>
