@@ -336,47 +336,6 @@ export const VestingLockCreateAccount = (props: {
         }
     }, [tokenFilter]);
 
-    const showDrawer = () => {
-        setIsTokenSelectorVisible(true);
-        autoFocusInput();
-    };
-
-    const hideDrawer = () => {
-        setIsTokenSelectorVisible(false);
-    };
-
-    const handleVestingLockNameChange = (e: any) => {
-        setVestingLockName(e.target.value);
-    }
-
-    const onVestingLockFundingAmountChange = (e: any) => {
-
-        let newValue = e.target.value;
-
-        const decimals = selectedToken ? selectedToken.decimals : 0;
-        const splitted = newValue.toString().split('.');
-        const left = splitted[0];
-
-        if (decimals && splitted[1]) {
-            if (splitted[1].length > decimals) {
-                splitted[1] = splitted[1].slice(0, -1);
-                newValue = splitted.join('.');
-            }
-        } else if (left.length > 1) {
-            const number = splitted[0] - 0;
-            splitted[0] = `${number}`;
-            newValue = splitted.join('.');
-        }
-
-        if (newValue === null || newValue === undefined || newValue === "") {
-            setVestingLockFundingAmount("");
-        } else if (newValue === '.') {
-            setVestingLockFundingAmount(".");
-        } else if (isValidNumber(newValue)) {
-            setVestingLockFundingAmount(newValue);
-        }
-    };
-
     // Updates the token list everytime is filtered
     const updateTokenListByFilter = useCallback((searchString: string) => {
 
@@ -424,22 +383,6 @@ export const VestingLockCreateAccount = (props: {
     }, [
         updateTokenListByFilter
     ]);
-
-    const handleSelection = (option: TreasuryTypeOption) => {
-        setTreasuryOption(option);
-    }
-
-    const onStepperChange = (value: number) => {
-        setCurrentStep(value);
-    }
-
-    const onContinueStepOneButtonClick = () => {
-        setCurrentStep(1);  // Go to step 2
-    }
-
-    const onBackClick = () => {
-        setCurrentStep(0);
-    }
 
     // Hook on wallet connect/disconnect
     useEffect(() => {
@@ -527,6 +470,94 @@ export const VestingLockCreateAccount = (props: {
         onTxConfirmed,
         onTxTimedout,
     ]);
+
+
+    ////////////////////////////////////
+    // Events, actions and Validation //
+    ////////////////////////////////////
+
+    const showDrawer = () => {
+        setIsTokenSelectorVisible(true);
+        autoFocusInput();
+    };
+
+    const hideDrawer = () => {
+        setIsTokenSelectorVisible(false);
+    };
+
+    const handleVestingLockNameChange = (e: any) => {
+        setVestingLockName(e.target.value);
+    }
+
+    const onVestingLockFundingAmountChange = (e: any) => {
+
+        let newValue = e.target.value;
+
+        const decimals = selectedToken ? selectedToken.decimals : 0;
+        const splitted = newValue.toString().split('.');
+        const left = splitted[0];
+
+        if (decimals && splitted[1]) {
+            if (splitted[1].length > decimals) {
+                splitted[1] = splitted[1].slice(0, -1);
+                newValue = splitted.join('.');
+            }
+        } else if (left.length > 1) {
+            const number = splitted[0] - 0;
+            splitted[0] = `${number}`;
+            newValue = splitted.join('.');
+        }
+
+        if (newValue === null || newValue === undefined || newValue === "") {
+            setVestingLockFundingAmount("");
+        } else if (newValue === '.') {
+            setVestingLockFundingAmount(".");
+        } else if (isValidNumber(newValue)) {
+            setVestingLockFundingAmount(newValue);
+        }
+    };
+
+    const onStepperChange = (value: number) => {
+        setCurrentStep(value);
+    }
+
+    const onContinueStepOneButtonClick = () => {
+        setCurrentStep(1);
+    }
+
+    const onBackClick = () => {
+        setCurrentStep(0);
+    }
+
+    const handleVestingAccountTypeSelection = (option: TreasuryTypeOption) => {
+        setTreasuryOption(option);
+    }
+
+    const isStepOneValid = (): boolean => {
+        let maxAmount = 0;
+        if (selectedToken) {
+            if (selectedToken.address === NATIVE_SOL.address) {
+                const amount = getMaxAmount();
+                maxAmount = parseFloat(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
+            } else {
+                maxAmount = parseFloat(cutNumber(tokenBalance, selectedToken.decimals));
+            }
+        }
+        return  publicKey &&
+                vestingLockName &&
+                selectedToken &&
+                nativeBalance > 0 &&
+                tokenBalance > 0 &&
+                vestingLockFundingAmount && parseFloat(vestingLockFundingAmount) > 0 &&
+                parseFloat(vestingLockFundingAmount) <= maxAmount
+            ? true
+            : false;
+    }
+
+
+    ///////////////
+    // Rendering //
+    ///////////////
 
     const renderTokenList = (
         <>
@@ -733,7 +764,7 @@ export const VestingLockCreateAccount = (props: {
                                     }
                                     onClick={() => {
                                         if (!option.disabled) {
-                                            handleSelection(option);
+                                            handleVestingAccountTypeSelection(option);
                                         }
                                     }}>
                                     <div className="checkmark"><CheckOutlined /></div>
@@ -751,8 +782,9 @@ export const VestingLockCreateAccount = (props: {
                         <Button
                             type="primary"
                             shape="round"
-                            size="small"
+                            size="large"
                             className="thin-stroke"
+                            disabled={!isStepOneValid()}
                             onClick={onContinueStepOneButtonClick}>
                             Continue
                         </Button>
@@ -766,24 +798,24 @@ export const VestingLockCreateAccount = (props: {
 
                     <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Eum quisquam, similique minus id nisi vitae! Nostrum modi fuga vitae ad laborum impedit! Maiores magnam, molestiae eos, quasi quo saepe quam corporis possimus rerum dolor corrupti cumque in blanditiis! Ab ullam vel aspernatur delectus rerum eaque non tenetur ipsam, alias, soluta consequuntur quidem porro et.</p>
 
-                    <div className="two-column-form-layout">
-                        <div className={`left ${inModal || isXsDevice ? 'mb-2' : 'mb-0'}`}>
+                    <div className={`two-column-form-layout${inModal || isXsDevice ? ' reverse' : ''}`}>
+                        <div className={`left ${inModal || isXsDevice ? 'mb-3' : 'mb-0'}`}>
                             <Button
                                 block
-                                type="primary"
+                                type="default"
                                 shape="round"
-                                size="small"
+                                size="large"
                                 className="thin-stroke"
                                 onClick={onBackClick}>
                                 Back
                             </Button>
                         </div>
-                        <div className="right">
+                        <div className={`right ${inModal || isXsDevice ? 'mb-3' : 'mb-0'}`}>
                             <Button
                                 block
                                 type="primary"
                                 shape="round"
-                                size="small"
+                                size="large"
                                 className="thin-stroke"
                                 onClick={() => {}}>
                                 Create vesting contract
