@@ -35,7 +35,6 @@ import {
   isValidAddress,
 } from "../../utils/ui";
 import {
-  flattenObject,
   formatAmount,
   formatThousands,
   getAmountWithSymbol,
@@ -139,6 +138,7 @@ export const PlaygroundView = () => {
   const [currentPanelItem, setCurrentPanelItem] = useState<TxStatusConfig>();
   const [parsedAccountInfo, setParsedAccountInfo] = useState<AccountInfo<ParsedAccountData> | null>(null);
   const [accountInfo, setAccountInfo] = useState<AccountInfo<Buffer> | null>(null);
+  const [accountNotFound, setAccountNotFound] = useState<string>('');
 
   // const getTopJupiterTokensByVolume = useCallback(() => {
   //   fetch('https://cache.jup.ag/stats/month')
@@ -503,6 +503,9 @@ export const PlaygroundView = () => {
         setAccountInfo(null);
         setParsedAccountInfo(accInfo as AccountInfo<ParsedAccountData>);
       }
+      setAccountNotFound('');
+    } else {
+      setAccountNotFound('Account info not available for this address');
     }
   }, [connection, recipientAddress]);
 
@@ -641,6 +644,12 @@ export const PlaygroundView = () => {
   }
 
   const renderDemo2Tab = () => {
+    const isProgram = parsedAccountInfo &&
+                      parsedAccountInfo.data.program === 'bpf-upgradeable-loader' &&
+                      parsedAccountInfo.data.parsed.type === 'program'
+      ? true
+      : false
+
     const isTokenMint = parsedAccountInfo &&
                         parsedAccountInfo.data.program === 'spl-token' &&
                         parsedAccountInfo.data.parsed.type === 'mint'
@@ -693,11 +702,15 @@ export const PlaygroundView = () => {
                 </div>
               </div>
               {
-                recipientAddress && !isValidAddress(recipientAddress) && (
+                recipientAddress && !isValidAddress(recipientAddress) ? (
                   <span className="form-field-error">
                     {t('transactions.validation.address-validation')}
                   </span>
-                )
+                ) : recipientAddress && accountNotFound ? (
+                  <span className="form-field-error">
+                    {accountNotFound}
+                  </span>
+                ) : null
               }
             </div>
           </div>
@@ -728,6 +741,8 @@ export const PlaygroundView = () => {
               {parsedAccountInfo && (
                 <>
                   {infoRow('Entity:', getParsedAccountType(parsedAccountInfo))}
+                  {isProgram && infoRow('Balance (SOL):', `◎${formatThousands(parsedAccountInfo.lamports / LAMPORTS_PER_SOL, 9, 9)}`)}
+                  {infoRow('Executable:', parsedAccountInfo.executable ? 'Yes' : 'No')}
                   {
                     isTokenAccount
                       ? infoRow('Token Balance', formatThousands(parsedAccountInfo.data.parsed.info.tokenAmount.uiAmount, decimals, decimals))
@@ -737,15 +752,11 @@ export const PlaygroundView = () => {
                   }
                   {isTokenMint && infoRow('Mint Authority:', parsedAccountInfo.data.parsed.info.mintAuthority)}
                   {isTokenAccount && infoRow('Mint:', parsedAccountInfo.data.parsed.info.mint)}
-                  {infoRow('Decimals:', decimals)}
+                  {(isTokenMint || isTokenAccount) && infoRow('Decimals:', decimals)}
                   {infoRow('Allocated Data Size:', `${parsedAccountInfo.data.space} byte(s)`)}
-                  {
-                    isTokenMint
-                      ? infoRow('Owner:', parsedAccountInfo.owner.toBase58())
-                      : isTokenAccount
-                        ? infoRow('Owner:', parsedAccountInfo.data.parsed.info.owner)
-                        : ''
-                  }
+                  {isProgram && infoRow('Owner:', parsedAccountInfo.owner.toBase58())}
+                  {isTokenMint && infoRow('Owner:', parsedAccountInfo.owner.toBase58())}
+                  {isTokenAccount && infoRow('Owner:', parsedAccountInfo.data.parsed.info.owner)}
                   {recipientAddress && (isTokenAccount || isTokenMint) && (
                     <>
                       <Divider orientation="left" className="mt-1 mb-1">Preview</Divider>
@@ -757,6 +768,7 @@ export const PlaygroundView = () => {
                       />
                     </>
                   )}
+                  {isProgram && infoRow('Program Data:', parsedAccountInfo.data.parsed.info.programData)}
                 </>
               )}
             </div>
