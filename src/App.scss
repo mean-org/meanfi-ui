@@ -5575,6 +5575,9 @@ main section {
     color: var(--color-secondary-alpha-25);
   }
 }
+.address-display {
+  display: inline-flex;
+}
 .referral-link {
   word-break: break-all;
 }
@@ -5711,13 +5714,13 @@ main section {
   margin-bottom: 0;
 }
 .mt-1 {
-  margin-top: 0.5rem;
+  margin-top: 0.5rem !important;
 }
 .mt-0 {
   margin-top: 0 !important;
 }
 .mt-2 {
-  margin-top: 1rem;
+  margin-top: 1rem !important;
 }
 .mt-3 {
   margin-top: 1.5rem;
@@ -7363,7 +7366,12 @@ code {
 
 .ant-divider.ant-divider-horizontal {
   color: var(--color-secondary-alpha-40);
-  border-top: 1px solid var(--color-secondary-alpha-05);
+  &.ant-divider-with-text {
+    border-color: var(--color-secondary-alpha-05);
+  }
+  &:not(.ant-divider-with-text) {
+    border-top: 1px solid var(--color-secondary-alpha-05);
+  }
 }
 
 /* bottom: var(--main-navigation-bar-height); */

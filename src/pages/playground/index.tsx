@@ -35,18 +35,24 @@ import {
   isValidAddress,
 } from "../../utils/ui";
 import {
+  flattenObject,
   formatAmount,
   formatThousands,
   getAmountWithSymbol,
   getTokenAmountAndSymbolByTokenAddress,
+  makeDecimal,
   shortenAddress,
 } from "../../utils/utils";
 import { IconCopy, IconExternalLink, IconTrash } from "../../Icons";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { openNotification } from "../../components/Notifications";
 import { IconType } from "antd/lib/notification";
-import { AccountInfo, ParsedAccountData, PublicKey } from "@solana/web3.js";
+import { AccountInfo, LAMPORTS_PER_SOL, ParsedAccountData, PublicKey } from "@solana/web3.js";
 import { useConnection } from "../../contexts/connection";
+import { SYSTEM_PROGRAM_ID } from "../../utils/ids";
+import { AddressDisplay } from "../../components/AddressDisplay";
+import { BN } from "bn.js";
+import { TokenDisplay } from "../../components/TokenDisplay";
 
 const { Panel } = Collapse;
 const { Option } = Select;
@@ -131,6 +137,8 @@ export const PlaygroundView = () => {
   const [currentPanel, setCurrentPanel] = useState<number | undefined>(undefined);
   const [txTestRunConfig, setTxTestRunConfig] = useState<TxStatusConfig[]>(TX_TEST_RUN_VALUES);
   const [currentPanelItem, setCurrentPanelItem] = useState<TxStatusConfig>();
+  const [parsedAccountInfo, setParsedAccountInfo] = useState<AccountInfo<ParsedAccountData> | null>(null);
+  const [accountInfo, setAccountInfo] = useState<AccountInfo<Buffer> | null>(null);
 
   // const getTopJupiterTokensByVolume = useCallback(() => {
   //   fetch('https://cache.jup.ag/stats/month')
@@ -454,27 +462,46 @@ export const PlaygroundView = () => {
     setSearchParams({option: tab as string});
   }, [setSearchParams]);
 
+  const getParsedAccountType = (acc: AccountInfo<ParsedAccountData>) => {
+    if (acc.owner.equals(SYSTEM_PROGRAM_ID)) {
+      return 'System Owned Account';
+    } else if (acc.executable) {
+      return 'Program';
+    } else {
+      if (acc.data.program === 'spl-token') {
+        return acc.data.parsed.type === 'mint' ? 'Token Mint' : 'Token Account';
+      } else {
+        return 'PDA (Program Derived Address) account';
+      }
+    }
+  }
+
   const readAccountInfo = useCallback(async () => {
     if (!recipientAddress || !isValidAddress(recipientAddress)) {
       return;
     }
 
-    const address = recipientAddress;
-    let decimals = -1;
-    let accountInfo: AccountInfo<Buffer | ParsedAccountData> | null = null;
+    let accInfo: AccountInfo<Buffer | ParsedAccountData> | null = null;
     try {
-      accountInfo = (await connection.getParsedAccountInfo(new PublicKey(address))).value;
-      consoleOut('accountInfo:', accountInfo, 'blue');
+      accInfo = (await connection.getParsedAccountInfo(new PublicKey(recipientAddress))).value;
     } catch (error) {
       console.error(error);
     }
-    if (accountInfo) {
-      if ((accountInfo as any).data["program"] &&
-          (accountInfo as any).data["program"] === "spl-token" &&
-          (accountInfo as any).data["parsed"] &&
-          (accountInfo as any).data["parsed"]["type"] &&
-          (accountInfo as any).data["parsed"]["type"] === "mint") {
-        decimals = (accountInfo as any).data["parsed"]["info"]["decimals"];
+    if (accInfo) {
+      if (!(accInfo as any).data["parsed"]) {
+        const info = Object.assign({}, accInfo, {
+          owner: accInfo.owner.toString()
+        }) as AccountInfo<Buffer>;
+        consoleOut('Normal accountInfo', info, 'blue');
+        setAccountInfo(accInfo as AccountInfo<Buffer>);
+        setParsedAccountInfo(null);
+      } else {
+        const info = Object.assign({}, accInfo, {
+          owner: accInfo.owner.toString()
+        }) as AccountInfo<ParsedAccountData>;
+        consoleOut('Parsed accountInfo:', info, 'blue');
+        setAccountInfo(null);
+        setParsedAccountInfo(accInfo as AccountInfo<ParsedAccountData>);
       }
     }
   }, [connection, recipientAddress]);
@@ -596,179 +623,264 @@ export const PlaygroundView = () => {
     </>
   );
 
-  const renderDemo2Tab = (
-    <>
-      <div className="tabset-heading">Get account info</div>
-      <div className="form-label">Inspect account</div>
-      <div className="two-column-form-layout col70x30 mb-3">
+  const infoRow = (caption: string, value: string) => {
+    return (
+      <div className="flex-fixed-right">
         <div className="left">
-          <div className="well">
-            <div className="flex-fixed-right">
-              <div className="left position-relative">
-                <span className="recipient-field-wrapper">
-                  <input id="payment-recipient-field"
-                    className="general-text-input"
-                    autoComplete="on"
-                    autoCorrect="off"
-                    type="text"
-                    onFocus={handleRecipientAddressFocusIn}
-                    onChange={handleRecipientAddressChange}
-                    onBlur={handleRecipientAddressFocusOut}
-                    placeholder={t('transactions.recipient.placeholder')}
-                    required={true}
-                    spellCheck="false"
-                    value={recipientAddress}/>
-                  <span id="payment-recipient-static-field"
-                        className={`${recipientAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>
-                    {recipientAddress || t('transactions.recipient.placeholder')}
-                  </span>
-                </span>
-              </div>
-              <div className="right">
-                <span>&nbsp;</span>
-              </div>
-            </div>
-            {
-              recipientAddress && !isValidAddress(recipientAddress) && (
-                <span className="form-field-error">
-                  {t('transactions.validation.address-validation')}
-                </span>
-              )
-            }
-          </div>
+          <span className="font-size-75">{caption}</span>
         </div>
         <div className="right">
-          <Button
-            block
-            type="primary"
-            shape="round"
-            size="large"
-            onClick={readAccountInfo}>
-            Get info
-          </Button>
+          {isValidAddress(value) ? (
+            <code><AddressDisplay address={value} showFullAddress={true} /></code>
+          ) : (
+            <code>{value}</code>
+          )}
         </div>
       </div>
+    );
+  }
 
-      <Divider />
+  const renderDemo2Tab = () => {
+    const isTokenMint = parsedAccountInfo &&
+                        parsedAccountInfo.data.program === 'spl-token' &&
+                        parsedAccountInfo.data.parsed.type === 'mint'
+      ? true
+      : false;
 
-      <div className="tabset-heading">Transaction workflow</div>
-      <div className="text-left mb-3">
-        <Button
-          type="primary"
-          shape="round"
-          size="middle"
-          onClick={onTransactionStart}>
-          Test Tx - Dry run
-        </Button>
-      </div>
-      <Collapse accordion onChange={handlePanelChange}>
-        {txTestRunConfig.map((config) => {
-          const onInitialStatusChange = (value: any) => {
-            setCurrentPanelItem(
-              Object.assign({}, config, {
-                initialStatus: value,
-                timeDelay: currentPanelItem?.timeDelay,
-                finalStatus: currentPanelItem?.finalStatus,
-              })
-            );
-          };
-          const onFinalStatusChange = (value: any) => {
-            setCurrentPanelItem(
-              Object.assign({}, config, {
-                initialStatus: currentPanelItem?.initialStatus,
-                timeDelay: currentPanelItem?.timeDelay,
-                finalStatus: value,
-              })
-            );
-          };
-          const onTimeDelayChange = (value: number) => {
-            let newValue: number;
-            if (!value || value < 1) {
-              newValue = 1;
-            } else if (value > 5) {
-              newValue = 5;
-            } else {
-              newValue = value;
-            }
-            setCurrentPanelItem(
-              Object.assign({}, config, {
-                initialStatus: currentPanelItem?.initialStatus,
-                timeDelay: value,
-                finalStatus: currentPanelItem?.finalStatus,
-              })
-            );
-          };
-          return (
-            <Panel header={config.header} key={`${config.step}`}>
-              {currentPanelItem && (
-                <Form
-                  labelCol={{ span: 5 }}
-                  wrapperCol={{ span: 18 }}
-                  layout="horizontal"
-                >
-                  <Form.Item label="Initial status">
-                    <Select
-                      value={currentPanelItem.initialStatus}
-                      onChange={onInitialStatusChange}
-                    >
-                      {getOptionsFromEnum(
-                        TransactionStatus,
-                        getTransactionStatusForLogs
-                      ).map((option) => {
-                        return (
-                          <Option
-                            key={option.key}
-                            value={option.value}
-                          >{`${option.value} - ${option.label}`}</Option>
-                        );
-                      })}
-                    </Select>
-                  </Form.Item>
-                  <Form.Item label="Delay">
-                    <InputNumber
-                      style={{ width: 100 }}
-                      min={1}
-                      max={5}
-                      step={1}
-                      value={currentPanelItem.timeDelay}
-                      formatter={(value) => `${value}s`}
-                      parser={(value) =>
-                        parseFloat(value ? value.replace("s", "") : "0.1")
-                      }
-                      onChange={onTimeDelayChange}
-                    />
-                  </Form.Item>
-                  <Form.Item label="Final status">
-                    <Select
-                      value={currentPanelItem.finalStatus}
-                      onChange={onFinalStatusChange}
-                    >
-                      {getOptionsFromEnum(
-                        TransactionStatus,
-                        getTransactionStatusForLogs
-                      ).map((option) => {
-                        return (
-                          <Option
-                            key={option.key}
-                            value={option.value}
-                          >{`${option.value} - ${option.label}`}</Option>
-                        );
-                      })}
-                    </Select>
-                  </Form.Item>
-                  <Form.Item wrapperCol={{ span: 18, offset: 5 }}>
-                    <Button type="primary" onClick={saveItem}>
-                      Submit
-                    </Button>
-                  </Form.Item>
-                </Form>
+    const isTokenAccount = parsedAccountInfo &&
+                           parsedAccountInfo.data.program === 'spl-token' &&
+                           parsedAccountInfo.data.parsed.type === 'account'
+      ? true
+      : false;
+
+    const decimals = parsedAccountInfo
+      ? isTokenMint
+        ? parsedAccountInfo.data.parsed.info.decimals
+        : isTokenAccount
+          ? parsedAccountInfo.data.parsed.info.tokenAmount.decimals
+          : 0
+      : 0
+    return (
+      <>
+        <div className="tabset-heading">Get account info</div>
+        <div className="form-label">Inspect account</div>
+        <div className="two-column-form-layout col70x30 mb-2">
+          <div className="left">
+            <div className="well">
+              <div className="flex-fixed-right">
+                <div className="left position-relative">
+                  <span className="recipient-field-wrapper">
+                    <input id="payment-recipient-field"
+                      className="general-text-input"
+                      autoComplete="on"
+                      autoCorrect="off"
+                      type="text"
+                      onFocus={handleRecipientAddressFocusIn}
+                      onChange={handleRecipientAddressChange}
+                      onBlur={handleRecipientAddressFocusOut}
+                      placeholder={t('transactions.recipient.placeholder')}
+                      required={true}
+                      spellCheck="false"
+                      value={recipientAddress}/>
+                    <span id="payment-recipient-static-field"
+                          className={`${recipientAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>
+                      {recipientAddress || t('transactions.recipient.placeholder')}
+                    </span>
+                  </span>
+                </div>
+                <div className="right">
+                  <span>&nbsp;</span>
+                </div>
+              </div>
+              {
+                recipientAddress && !isValidAddress(recipientAddress) && (
+                  <span className="form-field-error">
+                    {t('transactions.validation.address-validation')}
+                  </span>
+                )
+              }
+            </div>
+          </div>
+          <div className="right">
+            <Button
+              block
+              type="primary"
+              shape="round"
+              size="large"
+              onClick={readAccountInfo}>
+              Get info
+            </Button>
+          </div>
+        </div>
+  
+        <div className="mb-3">
+          {(accountInfo || parsedAccountInfo) && (
+            <div className="well-group text-monospace">
+              {accountInfo && (
+                <>
+                  {infoRow('Entity:', 'Account')}
+                  {infoRow('Balance (SOL):', `◎${formatThousands(accountInfo.lamports / LAMPORTS_PER_SOL, 9, 9)}`)}
+                  {infoRow('Executable:', accountInfo.executable ? 'Yes' : 'No')}
+                  {infoRow('Allocated Data Size:', `${accountInfo.data.byteLength} byte(s)`)}
+                  {infoRow('Owner:', accountInfo.owner.toBase58())}
+                </>
               )}
-            </Panel>
-          );
-        })}
-      </Collapse>
-    </>
-  );
+              {parsedAccountInfo && (
+                <>
+                  {infoRow('Entity:', getParsedAccountType(parsedAccountInfo))}
+                  {
+                    isTokenAccount
+                      ? infoRow('Token Balance', formatThousands(parsedAccountInfo.data.parsed.info.tokenAmount.uiAmount, decimals, decimals))
+                      : isTokenMint
+                        ? infoRow('Current Supply:', formatThousands(makeDecimal(new BN(parsedAccountInfo.data.parsed.info.supply), decimals), decimals, decimals))
+                        : ''
+                  }
+                  {isTokenMint && infoRow('Mint Authority:', parsedAccountInfo.data.parsed.info.mintAuthority)}
+                  {isTokenAccount && infoRow('Mint:', parsedAccountInfo.data.parsed.info.mint)}
+                  {infoRow('Decimals:', decimals)}
+                  {infoRow('Allocated Data Size:', `${parsedAccountInfo.data.space} byte(s)`)}
+                  {
+                    isTokenMint
+                      ? infoRow('Owner:', parsedAccountInfo.owner.toBase58())
+                      : isTokenAccount
+                        ? infoRow('Owner:', parsedAccountInfo.data.parsed.info.owner)
+                        : ''
+                  }
+                  {recipientAddress && (isTokenAccount || isTokenMint) && (
+                    <>
+                      <Divider orientation="left" className="mt-1 mb-1">Preview</Divider>
+                      <TokenDisplay
+                        className="px-2 pb-2"
+                        mintAddress={isTokenMint ? recipientAddress : parsedAccountInfo.data.parsed.info.mint}
+                        onClick={undefined}
+                        showName={true}
+                      />
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+        </div>
+  
+        <Divider />
+  
+        <div className="tabset-heading">Transaction workflow</div>
+        <div className="text-left mb-3">
+          <Button
+            type="primary"
+            shape="round"
+            size="middle"
+            onClick={onTransactionStart}>
+            Test Tx - Dry run
+          </Button>
+        </div>
+        <Collapse accordion onChange={handlePanelChange}>
+          {txTestRunConfig.map((config) => {
+            const onInitialStatusChange = (value: any) => {
+              setCurrentPanelItem(
+                Object.assign({}, config, {
+                  initialStatus: value,
+                  timeDelay: currentPanelItem?.timeDelay,
+                  finalStatus: currentPanelItem?.finalStatus,
+                })
+              );
+            };
+            const onFinalStatusChange = (value: any) => {
+              setCurrentPanelItem(
+                Object.assign({}, config, {
+                  initialStatus: currentPanelItem?.initialStatus,
+                  timeDelay: currentPanelItem?.timeDelay,
+                  finalStatus: value,
+                })
+              );
+            };
+            const onTimeDelayChange = (value: number) => {
+              let newValue: number;
+              if (!value || value < 1) {
+                newValue = 1;
+              } else if (value > 5) {
+                newValue = 5;
+              } else {
+                newValue = value;
+              }
+              setCurrentPanelItem(
+                Object.assign({}, config, {
+                  initialStatus: currentPanelItem?.initialStatus,
+                  timeDelay: value,
+                  finalStatus: currentPanelItem?.finalStatus,
+                })
+              );
+            };
+            return (
+              <Panel header={config.header} key={`${config.step}`}>
+                {currentPanelItem && (
+                  <Form
+                    labelCol={{ span: 5 }}
+                    wrapperCol={{ span: 18 }}
+                    layout="horizontal">
+                    <Form.Item label="Initial status">
+                      <Select
+                        value={currentPanelItem.initialStatus}
+                        onChange={onInitialStatusChange}>
+                        {getOptionsFromEnum(
+                          TransactionStatus,
+                          getTransactionStatusForLogs
+                        ).map((option) => {
+                          return (
+                            <Option
+                              key={option.key}
+                              value={option.value}
+                            >{`${option.value} - ${option.label}`}</Option>
+                          );
+                        })}
+                      </Select>
+                    </Form.Item>
+                    <Form.Item label="Delay">
+                      <InputNumber
+                        style={{ width: 100 }}
+                        min={1}
+                        max={5}
+                        step={1}
+                        value={currentPanelItem.timeDelay}
+                        formatter={(value) => `${value}s`}
+                        parser={(value) =>
+                          parseFloat(value ? value.replace("s", "") : "0.1")
+                        }
+                        onChange={onTimeDelayChange}
+                      />
+                    </Form.Item>
+                    <Form.Item label="Final status">
+                      <Select
+                        value={currentPanelItem.finalStatus}
+                        onChange={onFinalStatusChange}>
+                        {getOptionsFromEnum(
+                          TransactionStatus,
+                          getTransactionStatusForLogs
+                        ).map((option) => {
+                          return (
+                            <Option
+                              key={option.key}
+                              value={option.value}
+                            >{`${option.value} - ${option.label}`}</Option>
+                          );
+                        })}
+                      </Select>
+                    </Form.Item>
+                    <Form.Item wrapperCol={{ span: 18, offset: 5 }}>
+                      <Button type="primary" onClick={saveItem}>
+                        Submit
+                      </Button>
+                    </Form.Item>
+                  </Form>
+                )}
+              </Panel>
+            );
+          })}
+        </Collapse>
+      </>
+    );
+  }
 
   const renderRouteLink = (title: string, linkAddress: string) => {
     return (
@@ -1032,7 +1144,7 @@ export const PlaygroundView = () => {
       case "first-tab":
         return renderDemoNumberFormatting;
       case "second-tab":
-        return renderDemo2Tab;
+        return renderDemo2Tab();
       case "demo-notifications":
         return renderDemo3Tab;
       case "misc-tab":
