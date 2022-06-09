@@ -1341,6 +1341,10 @@ const AppStateProvider: React.FC = ({ children }) => {
       return;
     }
 
+    if (!selectedToken || !(selectedToken as TokenInfo).address ) {
+      return;
+    }
+
     const getTokenAccountBalanceByAddress = async (address: string): Promise<number> => {
       if (!address) return 0;
       try {
@@ -1357,10 +1361,9 @@ const AppStateProvider: React.FC = ({ children }) => {
       }
     }
 
-    if (!selectedToken) return;
-
     let balance = 0;
-    const selectedTokenAddress = await findATokenAddress(publicKey as PublicKey, selectedToken.address.toPublicKey());
+    consoleOut('selectedToken:', selectedToken, 'brown');
+    const selectedTokenAddress = await findATokenAddress(publicKey as PublicKey, new PublicKey(selectedToken.address));
     balance = await getTokenAccountBalanceByAddress(selectedTokenAddress.toBase58());
     updateTokenBalance(balance);
 

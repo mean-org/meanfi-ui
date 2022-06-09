@@ -1,5 +1,5 @@
 import * as BufferLayout from "buffer-layout";
-import { AccountMeta } from "@solana/web3.js";
+import { AccountMeta, PublicKey, PublicKeyInitData } from "@solana/web3.js";
 import { Idl, Instruction } from "@project-serum/anchor";
 import { InstructionDisplay } from "@project-serum/anchor/dist/cjs/coder/borsh/instruction";
 import { SplTokenInstructionCoder } from "@project-serum/anchor/dist/cjs/coder/spl-token/instruction";
@@ -42,24 +42,32 @@ export class MeanSplTokenInstructionCoder extends SplTokenInstructionCoder {
 
     const variant: any = Object.values(LAYOUT.registry).filter((v: any) => v.property === ix.name)[0];
     const idlIx = this.idl.instructions.filter(i => i.name === ix.name)[0];
+    // console.log('idlIx', idlIx);
 
     if (!variant || !idlIx) { return null; }
     
     const args: any[] = [];
 
     for (const arg of Object.keys(ix.data)) {
-      const field = idlIx.args.filter(a => a.name === arg)[0];
+      const field = idlIx.args.filter(a => a.name === arg)[0] as any;
+      // console.log('field', field);
       const value = (ix.data as any)[arg];
-      args.push({
-        name: field.name,
-        type: field.type,
-        data: value.toString() 
-      });
+      // console.log('value', value);
+      if (field && value) {
+        args.push({
+          name: field.name,
+          type: field.type,
+          data: field.type === "publicKey" || (typeof(field.type) === "object" && field.type.coption && field.type.coption === "publicKey")
+            ? new PublicKey(value as PublicKeyInitData).toString() 
+            : value.toString()
+        });
+      }
     }
 
     const accounts: any = [];
 
     for (let i = 0; i < accountMetas.length; i ++) {
+      // console.log('idlIx.accounts[i]', idlIx.accounts[i]);
       const accName = sentenceCase(idlIx.accounts[i].name);
       accounts.push({
         name: accName,
