@@ -7,10 +7,11 @@ import { IconArrowForward, IconVerticalEllipsis } from "../../Icons";
 import "./style.scss";
 
 export const MoneyStreamsInfoView = (props: {
+  onSendFromStreamInfo?: any;
   // tabs?: Array<any>;
 }) => {
 
-  // const { tabs } = props;
+  const { onSendFromStreamInfo } = props;
 
   // Protocol
 
@@ -61,17 +62,20 @@ export const MoneyStreamsInfoView = (props: {
     {
       title: "Monthly Remittance from Jesse",
       amount: "3.29805 USDC/hour",
-      resume: "out of funds on 01/02/2022"
+      resume: "out of funds on 01/02/2022",
+      status: 1
     },
     {
       title: "Mean Salary for Pavelsan",
       amount: "100 USDC/hour",
-      resume: "starts in 06:35:11"
+      resume: "starts in 06:35:11",
+      status: 2
     },
     {
       title: "Grape’s Research Distribution",
       amount: "25,158 GRAPE/hour",
-      resume: "streaming since 01/05/2022"
+      resume: "streaming since 01/05/2022",
+      status: 0
     },
   ];
 
@@ -79,7 +83,8 @@ export const MoneyStreamsInfoView = (props: {
     {
       title: "Monthly remittance for Mom",
       amount: "150 USDC/month",
-      resume: "streaming since 01/05/2022"
+      resume: "streaming since 01/05/2022",
+      status: 1
     }
   ];
 
@@ -87,17 +92,20 @@ export const MoneyStreamsInfoView = (props: {
     {
       title: "Yamel Amador’s Salary",
       amount: "5.11 USDC/hour",
-      resume: "streaming since 03/01/2022"
+      resume: "streaming since 03/01/2022",
+      status: 1
     },
     {
       title: "Tania’s Salary",
       amount: "1,000.00 USDC/min",
-      resume: "streaming since 04/15/2022"
+      resume: "streaming since 04/15/2022",
+      status: 2
     },
     {
       title: "Michel Comp",
       amount: "2,150.11 USDC/month",
-      resume: "out of funds on 01/02/2022"
+      resume: "out of funds on 01/02/2022",
+      status: 0
     }
   ];
 
@@ -105,7 +113,10 @@ export const MoneyStreamsInfoView = (props: {
   const renderListOfIncomingStreams = (
     <>
       {incomingStreams.map((stream, index) => {
-        const onSelectStream = () => {};
+        const onSelectStream = () => {
+          // Sends outgoing stream value to the parent component "Accounts"
+          onSendFromStreamInfo(stream);
+        };
 
         const title = stream.title ? stream.title : "Unknown incoming stream";
 
@@ -120,7 +131,7 @@ export const MoneyStreamsInfoView = (props: {
               title={title}
               subtitle={stream.amount}
               resume={stream.resume}
-              status={1}
+              status={stream.status}
               hasRightIcon={true}
               rightIcon={<IconArrowForward className="mean-svg-icons" />}
               isLink={true}
@@ -167,7 +178,10 @@ export const MoneyStreamsInfoView = (props: {
         isLink={false}
       />
       {outgoingStreams.map((stream, index) => {
-        const onSelectStream = () => {};
+        const onSelectStream = () => {
+          // Sends outgoing stream value to the parent component "Accounts"
+          onSendFromStreamInfo(stream);
+        };
 
         const title = stream.title ? stream.title : "Unknown outgoing stream";
 
@@ -180,7 +194,7 @@ export const MoneyStreamsInfoView = (props: {
             <ResumeItem
               id={index}
               title={title}
-              status={1}
+              status={stream.status}
               subtitle={stream.amount}
               resume={stream.resume}
               hasRightIcon={true}
@@ -201,23 +215,26 @@ export const MoneyStreamsInfoView = (props: {
         rightIcon={<IconArrowForward className="mean-svg-icons" />}
         isLink={true}
       />
-      {teamSalary.map((salary, index) => {
-        const onSelectSalary = () => {};
+      {teamSalary.map((stream, index) => {
+        const onSelectStream = () => {
+          // Sends outgoing stream value to the parent component "Accounts"
+          onSendFromStreamInfo(stream);
+        };
 
-        const title = salary.title ? salary.title : "Unknown salary";
+        const title = stream.title ? stream.title : "Unknown salary";
 
         return (
           <div 
             key={index}
-            onClick={onSelectSalary}
+            onClick={onSelectStream}
             className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
             >
               <ResumeItem
                 id={index}
                 title={title}
-                status={1}
-                subtitle={salary.amount}
-                resume={salary.resume}
+                status={stream.status}
+                subtitle={stream.amount}
+                resume={stream.resume}
                 hasRightIcon={true}
                 rightIcon={<IconArrowForward className="mean-svg-icons" />}
                 isLink={true}

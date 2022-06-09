@@ -58,14 +58,14 @@ export const SafeInfo = (props: {
   }, [selectedMultisig.id, selectedMultisig.label]);
 
   const renderSafeName = (
-      <Row className="d-flex align-items-center">
-        {(safeNameImg && safeNameImgAlt) && (
-          <Tooltip placement="rightTop" title="Serum Multisig">
-            <img src={safeNameImg} alt={safeNameImgAlt} width={16} height={16} className="simplelink mr-1" />
-          </Tooltip>
-        )}
-        <div>{selectedLabelName}</div>
-      </Row>
+    <Row className="d-flex align-items-center">
+      {(safeNameImg && safeNameImgAlt) && (
+        <Tooltip placement="rightTop" title="Serum Multisig">
+          <img src={safeNameImg} alt={safeNameImgAlt} width={16} height={16} className="simplelink mr-1" />
+        </Tooltip>
+      )}
+      <div>{selectedLabelName}</div>
+    </Row>
   );
 
   // Security
@@ -77,7 +77,6 @@ export const SafeInfo = (props: {
   );
   
   // Safe Balance
-  // const [safeAssetsAmount, setSafeAssetsAmount] = useState<any>();
   const [assetsAmout, setAssetsAmount] = useState<string>();
 
   const getPricePerToken = useCallback((token: UserTokenAccount): number => {

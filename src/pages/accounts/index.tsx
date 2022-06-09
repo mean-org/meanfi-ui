@@ -88,7 +88,8 @@ import { MultisigVaultDeleteModal } from '../../components/MultisigVaultDeleteMo
 import { useNativeAccount } from '../../contexts/accounts';
 import { MultisigCreateAssetModal } from '../../components/MultisigCreateAssetModal';
 import { STREAMS_ROUTE_BASE_PATH } from '../../views/Streams';
-import { MoneyStreamsInfoView } from '../../views/MoneyStreamsInfoView';
+import { MoneyStreamDetailsView } from '../../views/MoneyStreamDetails';
+import { MoneyStreamsInfoView } from '../../views/MoneyStreamsInfo';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export type InspectedAccountType = "multisig" | "streaming-account" | undefined;
@@ -4347,6 +4348,18 @@ export const AccountsNewView = () => {
     }
   ];
 
+  const [isStreamDetails, setIsStreamDetails] = useState(false);
+  const [selectedStream, setSelectedStream] = useState<any>();
+
+  const goToStreamDetailsHandler = (stream: any) => {
+    setSelectedStream(stream);
+    setIsStreamDetails(true);
+  }
+
+  const returnFromStreamDetailsHandler = () => {
+    setIsStreamDetails(false);
+  }
+
   return (
     <>
       {/* {isLocal() && (
@@ -4609,9 +4622,17 @@ export const AccountsNewView = () => {
                           </>
                         ) : (
                           <div className="scroll-wrapper vertical-scroll">
-                            <MoneyStreamsInfoView
-                              // tabs={tabs}
-                            />
+                            {!isStreamDetails ? (
+                              <MoneyStreamsInfoView
+                                onSendFromStreamInfo={goToStreamDetailsHandler}
+                                // tabs={tabs}
+                              />
+                            ) : (
+                              <MoneyStreamDetailsView
+                                stream={selectedStream}
+                                onSendFromStreamDetails={returnFromStreamDetailsHandler}
+                              />
+                            )}
                           </div>
                         )}
                       </div>
