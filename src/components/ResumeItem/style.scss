@@ -10,6 +10,12 @@
   }
 }
 .resume-item-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+  padding-left: 0.5em !important;
   .resume-left-container {
     display: flex;
     align-items: center;
@@ -85,4 +91,9 @@
 }
 .big-title {
   font-size: 1.4em !important;
+}
+.hover-list {
+  &:hover {
+    background-color: var(--color-secondary-alpha-05);
+  }
 }

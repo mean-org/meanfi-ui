@@ -6,7 +6,6 @@ import { MultisigTransaction, MultisigTransactionStatus } from '@mean-dao/mean-m
 import Countdown from 'react-countdown';
 import { IconThumbsUp, IconThumbsDown } from '../../Icons';
 import { AppStateContext } from '../../contexts/appstate';
-import { formatThousands } from '../../utils/utils';
 
 export const ResumeItem = (props: {
   id?: any;
@@ -14,30 +13,49 @@ export const ResumeItem = (props: {
   src?: any;
   img?: any;
   title?: string;
+  classNameTitle?: string;
   subtitle?: any;
+  amount?: number | string;
   expires?: any;
   executedOn?: any;
   approved?: any;
   rejected?: any;
   status?: any;
   resume?: any;
-  isProposalDetails?: boolean;
-  isProgramDetails?: boolean;
-  isAssetDetails?: boolean;
-  isProgram?: boolean;
-  programSize?: number;
-  rightContent?: any;
+  isDetailsPanel?: boolean;
   rightIcon?: any;
   hasRightIcon?: boolean;
   rightIconHasDropdown?: boolean;
   dropdownMenu?: any;
   className?: string;
+  isLink?: boolean;
 }) => {
   const {
     theme
   } = useContext(AppStateContext);
 
-  const { src, img, version, title, subtitle, expires, executedOn, approved, rejected, status, resume, isProposalDetails, isProgram, programSize, rightContent, rightIcon, hasRightIcon, rightIconHasDropdown, dropdownMenu, className } = props;
+  const { 
+    src,
+    img,
+    version,
+    title,
+    classNameTitle,
+    subtitle,
+    amount,
+    expires,
+    executedOn,
+    approved,
+    rejected,
+    status,
+    resume,
+    isDetailsPanel,
+    rightIcon,
+    hasRightIcon,
+    rightIconHasDropdown,
+    dropdownMenu,
+    className,
+    isLink 
+  } = props;
 
   const { t } = useTranslation('common');
 
@@ -114,7 +132,7 @@ export const ResumeItem = (props: {
 
   return (
     <>
-      <Row gutter={[8, 8]} key="resume-item" className={`resume-item-container ${className} ${!isProposalDetails ? "hover-list list-item" : "justify-content-space-between pl-1"} ${isProposalDetails ? "align-items-end" : ""}`}>
+      <Row gutter={[8, 8]} key="resume-item" className={`resume-item-container ${className} ${isLink ? "hover-list" : "align-items-end"} ${isDetailsPanel ? "pl-1" : ""}`}>
         <Col className="resume-left-container">
           {(src || img) && (
             <div className="img-container">
@@ -124,8 +142,8 @@ export const ResumeItem = (props: {
               {img && img}
             </div>
           )}
-          <div className={`resume-left-text ${isProposalDetails ? "pb-1" : ""}`}>
-            <div className={`resume-title ${isProposalDetails ? "big-title" : ""}`}>{title}</div>
+          <div className={`resume-left-text ${isDetailsPanel ? "pb-1" : ""}`}>
+            <div className={`resume-title ${isDetailsPanel ? "big-title" : ""} ${classNameTitle}`}>{title}</div>
 
             {version !== 0 && (
               subtitle ? (
@@ -156,9 +174,9 @@ export const ResumeItem = (props: {
             )}
           </div>
         </Col>
-        <Col className={`resume-right-container ${!isProposalDetails ? "mr-1" : "mr-2"}`}>
+        <Col className={`resume-right-container ${!isDetailsPanel ? "mr-1" : "mr-2"}`}>
           <div className="resume-right-text">
-            {(!isProgram) ? (
+            {/* {(!isProgram) ? ( */}
               <>
                 <div className={`resume-right-text-up`}>
                   {approved && (
@@ -175,60 +193,49 @@ export const ResumeItem = (props: {
                     </div>
                     )
                   )}
-                  <div className={`badge-container ${getTransactionStatusBackgroundColor(status)}`}>
-                    <span className="badge darken small text-uppercase">{getTransactionStatusAction(status)}</span>
-                  </div>
+                  {status >= 0 && (
+                    <div className={`badge-container ${getTransactionStatusBackgroundColor(status)}`}>
+                      <span className="badge darken small text-uppercase">{getTransactionStatusAction(status)}</span>
+                    </div>
+                  )}
+                  {amount && (
+                    <div className="rate-amount">
+                      {amount}
+                    </div>
+                  )}
                 </div>
                 {resume && (
                   <div className="info-label mb-0">{resume}</div>
                 )}
               </>
-            ) : isProgram ? (
-              <>
-                {programSize && (
-                  <div className="">
-                    <div className="rate-amount">
-                      {formatThousands(programSize)}
-                    </div>
-                    <div className="info-label mb-0">bytes</div>
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="rate-amount mr-1">
-                {rightContent}
-              </div>
-            )}
           </div>
-          {!isProposalDetails && (
-            hasRightIcon ? (
-              rightIconHasDropdown ? (
-                <Dropdown
-                  overlay={dropdownMenu}
-                  placement="bottomRight"
-                  trigger={["click"]}>
-                  <span className="ellipsis-icon icon-button-container">
-                    <Button
-                      type="default"
-                      shape="circle"
-                      size="middle"
-                      icon={rightIcon}
-                      onClick={(e) => e.preventDefault()}
-                    />
-                  </span>
-                </Dropdown>
-              ) : (
-                <span className="icon-button-container">
+          {hasRightIcon ? (
+            rightIconHasDropdown ? (
+              <Dropdown
+                overlay={dropdownMenu}
+                placement="bottomRight"
+                trigger={["click"]}>
+                <span className="ellipsis-icon icon-button-container">
                   <Button
                     type="default"
                     shape="circle"
                     size="middle"
                     icon={rightIcon}
+                    onClick={(e) => e.preventDefault()}
                   />
                 </span>
-              )
-            ) : null
-          )}
+              </Dropdown>
+            ) : (
+              <span className="icon-button-container">
+                <Button
+                  type="default"
+                  shape="circle"
+                  size="middle"
+                  icon={rightIcon}
+                />
+              </span>
+            )
+          ) : null}
         </Col>
       </Row>
     </>

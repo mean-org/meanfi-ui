@@ -1,9 +1,9 @@
-import { Button, Col, Row } from "antd";
-import { ResumeHeader } from "../../components/ResumeHeader";
+import { Button, Col, Menu, Row } from "antd";
+import { CopyExtLinkGroup } from "../../components/CopyExtLinkGroup";
 import { ResumeItem } from "../../components/ResumeItem";
 import { RightInfoDetails } from "../../components/RightInfoDetails";
 import { TabsMean } from "../../components/TabsMean";
-import { IconArrowForward } from "../../Icons";
+import { IconArrowForward, IconVerticalEllipsis } from "../../Icons";
 import "./style.scss";
 
 export const MoneyStreamsInfoView = (props: {
@@ -120,8 +120,10 @@ export const MoneyStreamsInfoView = (props: {
               title={title}
               subtitle={stream.amount}
               resume={stream.resume}
+              status={1}
               hasRightIcon={true}
               rightIcon={<IconArrowForward className="mean-svg-icons" />}
+              isLink={true}
             />
           </div>
         )
@@ -129,10 +131,41 @@ export const MoneyStreamsInfoView = (props: {
     </>
   );
 
+  // Dropdown (three dots button)
+  const menu = (
+    <Menu>
+      <Menu.Item key="0" onClick={() => {}}>
+        <span className="menu-item-text">Add outgoing stream</span>
+      </Menu.Item>
+      <Menu.Item key="0" onClick={() => {}}>
+        <span className="menu-item-text">Add streaming account</span>
+      </Menu.Item>
+    </Menu>
+  );
+
+  const selectedMultisig = "C4Eb4AJh5ribXGnzvbFuRLWUBdp1AogpD8q1RssTB7H9";
+  const subtitle = <CopyExtLinkGroup
+    content={selectedMultisig}
+    number={8}
+    externalLink={true}
+  />
+
   // Outgoing streams list
   const renderListOfOutgoingStreams = (
     <>
-      <ResumeHeader />
+      <ResumeItem
+        title="Outflows"
+        classNameTitle="text-uppercase"
+        subtitle={subtitle}
+        amount={1}
+        resume="outflow"
+        className="account-category-title"
+        hasRightIcon={true}
+        rightIconHasDropdown={true}
+        rightIcon={<IconVerticalEllipsis className="mean-svg-icons"/>}
+        dropdownMenu={menu}
+        isLink={false}
+      />
       {outgoingStreams.map((stream, index) => {
         const onSelectStream = () => {};
 
@@ -147,18 +180,27 @@ export const MoneyStreamsInfoView = (props: {
             <ResumeItem
               id={index}
               title={title}
+              status={1}
               subtitle={stream.amount}
               resume={stream.resume}
               hasRightIcon={true}
               rightIcon={<IconArrowForward className="mean-svg-icons" />}
+              isLink={true}
             />
           </div>
         )
       })}
-      <div className="asset-category-title flex-fixed-right">
-        <div className="title">Coinbase team salary</div>
-        <div className="amount">3</div>
-      </div>
+      <ResumeItem
+        title="Coinbase team salary"
+        classNameTitle="text-uppercase"
+        subtitle={subtitle}
+        amount={3}
+        resume="streams"
+        className="account-category-title"
+        hasRightIcon={true}
+        rightIcon={<IconArrowForward className="mean-svg-icons" />}
+        isLink={true}
+      />
       {teamSalary.map((salary, index) => {
         const onSelectSalary = () => {};
 
@@ -173,10 +215,12 @@ export const MoneyStreamsInfoView = (props: {
               <ResumeItem
                 id={index}
                 title={title}
+                status={1}
                 subtitle={salary.amount}
                 resume={salary.resume}
                 hasRightIcon={true}
                 rightIcon={<IconArrowForward className="mean-svg-icons" />}
+                isLink={true}
               />
           </div>
         )

@@ -1,12 +1,11 @@
 import './style.scss';
-import { shortenAddress, tabNameFormat } from "../../../../utils/utils";
+import { formatThousands, shortenAddress, tabNameFormat } from "../../../../utils/utils";
 import { SafeInfo } from "../UI/SafeInfo";
 import { MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigInfo, MultisigTransaction, MultisigTransactionSummary } from '@mean-dao/mean-multisig-sdk';
 import { ProgramAccounts } from '../../../../utils/accounts';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { Connection, LAMPORTS_PER_SOL, MemcmpFilter, PublicKey } from '@solana/web3.js';
 import { consoleOut } from '../../../../utils/ui';
-// import { ResumeItem } from '../UI/ResumeItem';
 import { AppStateContext } from '../../../../contexts/appstate';
 import { TxConfirmationContext } from '../../../../contexts/transaction-status';
 import { IconArrowForward } from '../../../../Icons';
@@ -75,6 +74,7 @@ export const SafeMeanInfo = (props: {
     multisigClient,
     proposalSelected,
     onDataToSafeView,
+    onDataToProgramView,
     assetSelected
 
   } = props;
@@ -616,9 +616,9 @@ export const SafeMeanInfo = (props: {
                     approved={approvedSigners}
                     // rejected={proposal.rejected}
                     status={proposal.status}
-                    isProposalDetails={isProposalDetails}
                     hasRightIcon={true}
                     rightIcon={<IconArrowForward className="mean-svg-icons" />}
+                    isLink={true}
                   />
               </div>
             )
@@ -653,8 +653,8 @@ export const SafeMeanInfo = (props: {
         (programs !== undefined) ? (
           programs.map((program, index) => {
             const onSelectProgram = () => {
-              // Sends isProgramDetails value to the parent component "SafeView"
-              props.onDataToProgramView(program);
+              // Sends program value to the parent component "SafeView"
+              onDataToProgramView(program);
             }
 
             const programTitle = program.pubkey ? shortenAddress(program.pubkey.toBase58(), 4) : "Unknown program";
@@ -670,12 +670,11 @@ export const SafeMeanInfo = (props: {
                     id={program.pubkey.toBase58()}
                     title={programTitle}
                     subtitle={programSubtitle}
-                    isProposalDetails={isProposalDetails}
-                    isProgram={true}
-                    programSize={program.size}
-                    isProgramDetails={isProgramDetails}
+                    amount={formatThousands(program.size)}
+                    resume="bytes"
                     hasRightIcon={true}
                     rightIcon={<IconArrowForward className="mean-svg-icons" />}
+                    isLink={true}
                   />
               </div>
             )

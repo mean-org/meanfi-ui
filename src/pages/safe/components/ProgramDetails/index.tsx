@@ -776,7 +776,7 @@ export const ProgramDetailsView = (props: {
   // Program Address
   const renderProgramAddress = (
     <CopyExtLinkGroup
-      content={programSelected.pubkey.toBase58()}
+      content={programSelected && programSelected.pubkey.toBase58()}
       number={4}
       externalLink={true}
     />
@@ -795,7 +795,7 @@ export const ProgramDetailsView = (props: {
   // Upgrade Authority
   const renderUpgradeAuthority = (
     <CopyExtLinkGroup
-      content={programSelected.upgradeAuthority.toBase58()}
+      content={programSelected && programSelected.upgradeAuthority.toBase58()}
       number={4}
       externalLink={true}
     />
@@ -814,7 +814,7 @@ export const ProgramDetailsView = (props: {
   // Balance SOL
   const [balanceSol, setBalanceSol] = useState<any>();
   useEffect(() => {
-    if (!connection) { return; }
+    if (!connection && !programSelected.pubkey) { return; }
 
     connection.getBalance(programSelected.pubkey)
         .then(balance => {

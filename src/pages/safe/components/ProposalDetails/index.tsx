@@ -10,7 +10,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { consoleOut, copyText } from '../../../../utils/ui';
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../../../constants';
 import { getSolanaExplorerClusterParam } from '../../../../contexts/connection';
-// import { ResumeItem } from '../UI/ResumeItem';
 import { MeanMultisig, MEAN_MULTISIG_PROGRAM, MultisigTransaction, MultisigTransactionActivityItem, MultisigTransactionStatus } from '@mean-dao/mean-multisig-sdk';
 // import { AppStateContext } from '../../../../contexts/appstate';
 import { useWallet } from '../../../../contexts/wallet';
@@ -23,7 +22,6 @@ import moment from "moment";
 import { ResumeItem } from '../../../../components/ResumeItem';
 
 export const ProposalDetailsView = (props: {
-  isProposalDetails: boolean;
   onDataToSafeView: any;
   proposalSelected?: any;
   selectedMultisig?: any;
@@ -44,8 +42,7 @@ export const ProposalDetailsView = (props: {
     connection,
     solanaApps,
     appsProvider,
-    multisigClient,
-    isProposalDetails, 
+    multisigClient, 
     onDataToSafeView, 
     proposalSelected, 
     selectedMultisig, 
@@ -297,7 +294,7 @@ export const ProposalDetailsView = (props: {
         }
       </div>
     ) : (
-      <span>Loading instruction...</span>
+      <span className="pl-1">Loading instruction...</span>
     )
   );
 
@@ -335,7 +332,7 @@ export const ProposalDetailsView = (props: {
                 key={`${activity.index + 1}`}
                 className={`d-flex w-100 align-items-center activities-list ${(activity.index + 1) % 2 === 0 ? '' : 'background-gray'}`}
                 >
-                  <div className="list-item">
+                  <div className="resume-item-container">
                     <span className="mr-2">
                       {moment(activity.createdOn).format("LLL").toLocaleString()}
                     </span>
@@ -363,7 +360,7 @@ export const ProposalDetailsView = (props: {
         <span className="pl-1">This proposal has no activities</span>
       )
     ) : (
-      <span>Loading activities...</span>
+      <span className="pl-1">Loading activities...</span>
     )
   )
 
@@ -435,7 +432,8 @@ export const ProposalDetailsView = (props: {
         // rejected={selectedProposal.rejected}
         status={selectedProposal.status}
         resume={resume}
-        isProposalDetails={isProposalDetails}
+        isDetailsPanel={true}
+        isLink={false}
       />
       {selectedProposal.details.description && (
         <Row className="safe-details-description pl-1">

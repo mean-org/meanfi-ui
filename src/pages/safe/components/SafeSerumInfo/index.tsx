@@ -4,7 +4,6 @@ import { Button, Col, Row } from "antd"
 import { IconArrowForward } from "../../../../Icons"
 // import { shortenAddress } from "../../../../utils/utils";
 import { SafeInfo } from "../UI/SafeInfo";
-// import { ResumeItem } from '../UI/ResumeItem';
 // import { MultisigVault } from '../../../../models/multisig';
 import { Idl, Program } from '@project-serum/anchor';
 import { MultisigTransaction } from '@mean-dao/mean-multisig-sdk';
@@ -81,8 +80,8 @@ export const SafeSerumInfoView = (props: {
                   executedOn={executedOnDate}
                   approved={approvedSigners}
                   status={tx.status}
-                  isProposalDetails={isProposalDetails}
                   rightIcon={<IconArrowForward className="mean-svg-icons" />}
+                  isLink={true}
                 />
             </div>
           )

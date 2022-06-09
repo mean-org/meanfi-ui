@@ -3972,7 +3972,6 @@ export const SafeView = () => {
                         )}
                         {isProposalDetails && (
                           <ProposalDetailsView
-                            isProposalDetails={isProposalDetails}
                             onDataToSafeView={returnFromProposalDetailsHandler}
                             proposalSelected={proposalSelected}
                             selectedMultisig={selectedMultisig}
