@@ -25,7 +25,6 @@ import {
 import { AppStateContext } from "../../contexts/appstate";
 import { useWallet } from "../../contexts/wallet";
 import {
-  cutNumber,
   formatAmount,
   formatThousands,
   getAmountWithSymbol,
@@ -5118,67 +5117,25 @@ export const Streams = () => {
 
                   {/* Top up (add funds) button */}
                   <div className="mt-3 mb-1 withdraw-container">
-                    {isOtp() ? (
-                      <>
-                        <Button
-                          block
-                          className="withdraw-cta"
-                          type="text"
-                          shape="round"
-                          size="small"
-                          disabled={
-                            isBusy ||
-                            isDeletedStream(stream.id as string) ||
-                            hasStreamPendingTx()
-                          }
-                          onClick={showCloseStreamModal}>
-                          {(isBusy || hasStreamPendingTx()) && (<LoadingOutlined />)}
-                          {t('streams.stream-detail.cancel-scheduled-transfer')}
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        <Button
-                          block
-                          className="withdraw-cta"
-                          type="text"
-                          shape="round"
-                          size="small"
-                          disabled={
-                            isBusy ||
-                            hasStreamPendingTx() ||
-                            isOtp() ||
-                            isDeletedStream(stream.id as string) ||
-                            (getTreasuryType() === "locked" && (stream && stream.state === STREAM_STATE.Running))
-                          }
-                          onClick={(getTreasuryType() === "open") ? showAddFundsModal : showCloseStreamModal}>
-                          {isBusy && (<LoadingOutlined />)}
-                          {getTreasuryType() === "open"
-                            ? t('streams.stream-detail.add-funds-cta') 
-                            : t('streams.stream-detail.close-stream-cta')
-                          }
-                        </Button>
-                        {(getTreasuryType() === "open") && (
-                          (!isBusy || !hasStreamPendingTx()) && (
-                            <Dropdown overlay={menu} trigger={["click"]}>
-                              <Button
-                                shape="round"
-                                type="text"
-                                size="small"
-                                className="ant-btn-shaded"
-                                disabled={isDeletedStream(stream.id as string)}
-                                onClick={(e) => e.preventDefault()}
-                                icon={<EllipsisOutlined />}>
-                              </Button>
-                            </Dropdown>
-                          )
-                        )}
-                      </>
-                    )}
+                    <Button
+                      block
+                      className="withdraw-cta"
+                      type="text"
+                      shape="round"
+                      size="small"
+                      disabled={
+                        isBusy ||
+                        hasStreamPendingTx() ||
+                        isDeletedStream(stream.id as string)
+                      }
+                      onClick={showCloseStreamModal}>
+                      {(isBusy || hasStreamPendingTx()) && (<LoadingOutlined />)}
+                      {isOtp() ? t('streams.stream-detail.cancel-scheduled-transfer') : t('streams.stream-detail.close-stream-cta')}
+                    </Button>
                   </div>
                   <div className="mt-1 mb-2 flex-row flex-center">
                     <span className="simplelink underline-on-hover">V1</span>
-                    <InfoIcon content={<p>There is a new and improved version of the streams feature.<br/>You'll be able to upgrade soon to enjoy new features.</p>} placement="leftBottom">
+                    <InfoIcon content={<p>There is a new and improved version of money streams.<br/>To take advantage of the new features, please close this stream and create a new one.</p>} placement="leftBottom">
                       <InfoCircleOutlined />
                     </InfoIcon>
                   </div>
