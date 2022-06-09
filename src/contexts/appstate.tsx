@@ -1362,7 +1362,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     }
 
     let balance = 0;
-    consoleOut('selectedToken:', selectedToken, 'brown');
     const selectedTokenAddress = await findATokenAddress(publicKey as PublicKey, new PublicKey(selectedToken.address));
     balance = await getTokenAccountBalanceByAddress(selectedTokenAddress.toBase58());
     updateTokenBalance(balance);
