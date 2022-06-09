@@ -28,7 +28,6 @@ import {
   isToday,
   isValidAddress,
   PaymentRateTypeOption,
-  toUsCurrency,
 } from '../../utils/ui';
 import { NATIVE_SOL } from '../../utils/tokens';
 import { InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';

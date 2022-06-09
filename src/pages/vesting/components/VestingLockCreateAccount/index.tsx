@@ -25,6 +25,7 @@ import { VESTING_ACCOUNT_TYPE_OPTIONS } from '../../../../constants/treasury-typ
 import { CheckOutlined } from '@ant-design/icons';
 import { TreasuryTypeOption } from '../../../../models/treasuries';
 import { FormLabelWithIconInfo } from '../../../../components/FormLabelWithIconInfo';
+import { StepSelector } from '../../../../components/StepSelector';
 
 export const VestingLockCreateAccount = (props: {
     inModal: boolean;
@@ -66,6 +67,7 @@ export const VestingLockCreateAccount = (props: {
         blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
     });
     const { treasuryOption, setTreasuryOption } = useContext(AppStateContext);
+    const [currentStep, setCurrentStep] = useState(0);
 
     const resetTransactionStatus = useCallback(() => {
 
@@ -418,6 +420,18 @@ export const VestingLockCreateAccount = (props: {
         setTreasuryOption(option);
     }
 
+    const onStepperChange = (value: number) => {
+        setCurrentStep(value);
+    }
+
+    const onContinueStepOneButtonClick = () => {
+        setCurrentStep(1);  // Go to step 2
+    }
+
+    const onBackClick = () => {
+        setCurrentStep(0);
+    }
+
     // Hook on wallet connect/disconnect
     useEffect(() => {
 
@@ -582,144 +596,180 @@ export const VestingLockCreateAccount = (props: {
 
     return (
         <>
-            <div className="elastic-form-container">
+            <div className={`${inModal ? 'scrollable-content' : 'elastic-form-container'}`}>
 
-                <h2 className="form-group-label">{t('vesting.create-account.step-one-label')}</h2>
+                <StepSelector step={currentStep} steps={2} onValueSelected={onStepperChange} />
 
-                {/* Vesting Lock name */}
-                <div className="form-label">{t('vesting.create-account.vesting-contract-name-label')}</div>
-                <div className="well">
-                    <div className="flex-fixed-right">
-                        <div className="left">
-                            <input
-                                id="vesting-lock-name-input"
-                                className="w-100 general-text-input"
-                                autoComplete="on"
-                                autoCorrect="off"
-                                type="text"
-                                maxLength={32}
-                                onChange={handleVestingLockNameChange}
-                                placeholder="Name for this no-code vesting lock account"
-                                spellCheck="false"
-                                value={vestingLockName}
-                            />
+                <div className={`panel1${inModal ? ' p-3' : ''} ${currentStep === 0 ? 'show' : 'hide'}`}>
+
+                    <h2 className="form-group-label">{t('vesting.create-account.step-one-label')}</h2>
+
+                    {/* Vesting Lock name */}
+                    <div className="form-label">{t('vesting.create-account.vesting-contract-name-label')}</div>
+                    <div className="well">
+                        <div className="flex-fixed-right">
+                            <div className="left">
+                                <input
+                                    id="vesting-lock-name-input"
+                                    className="w-100 general-text-input"
+                                    autoComplete="on"
+                                    autoCorrect="off"
+                                    type="text"
+                                    maxLength={32}
+                                    onChange={handleVestingLockNameChange}
+                                    placeholder="Name for this no-code vesting lock account"
+                                    spellCheck="false"
+                                    value={vestingLockName}
+                                />
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                {/* Token to vest */}
-                <div className="form-label">{t('vesting.create-account.vesting-contract-token-label')}</div>
-                <div className="well">
-                    <div className="flex-fixed-left">
-                        <div className="left">
-                            <span className="add-on simplelink">
-                                {selectedToken && (
-                                    <TokenDisplay onClick={() => inModal ? showDrawer() : showTokenSelector()}
-                                        mintAddress={selectedToken.address}
-                                        name={selectedToken.name}
-                                        showCaretDown={true}
-                                        fullTokenInfo={selectedToken}
-                                    />
+                    {/* Token to vest */}
+                    <div className="form-label">{t('vesting.create-account.vesting-contract-token-label')}</div>
+                    <div className="well">
+                        <div className="flex-fixed-left">
+                            <div className="left">
+                                <span className="add-on simplelink">
+                                    {selectedToken && (
+                                        <TokenDisplay onClick={() => inModal ? showDrawer() : showTokenSelector()}
+                                            mintAddress={selectedToken.address}
+                                            name={selectedToken.name}
+                                            showCaretDown={true}
+                                            fullTokenInfo={selectedToken}
+                                        />
+                                    )}
+                                    {selectedToken && tokenBalance && tokenBalance > getMinSolBlanceRequired() ? (
+                                        <div className="token-max simplelink" onClick={() => {
+                                            if (selectedToken.address === NATIVE_SOL.address) {
+                                                const amount = getMaxAmount();
+                                                setVestingLockFundingAmount(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
+                                            } else {
+                                                setVestingLockFundingAmount(cutNumber(tokenBalance, selectedToken.decimals));
+                                            }
+                                        }}>
+                                            MAX
+                                        </div>
+                                    ) : null}
+                                </span>
+                            </div>
+                            <div className="right">
+                                <input
+                                    className="general-text-input text-right"
+                                    inputMode="decimal"
+                                    autoComplete="off"
+                                    autoCorrect="off"
+                                    type="text"
+                                    onChange={onVestingLockFundingAmountChange}
+                                    pattern="^[0-9]*[.,]?[0-9]*$"
+                                    placeholder="0.0"
+                                    minLength={1}
+                                    maxLength={79}
+                                    spellCheck="false"
+                                    value={vestingLockFundingAmount}
+                                />
+                            </div>
+                        </div>
+                        <div className="flex-fixed-right">
+                            <div className="left inner-label">
+                                <span>{t('transactions.send-amount.label-right')}:</span>
+                                <span>
+                                    {`${tokenBalance && selectedToken
+                                        ? getAmountWithSymbol(tokenBalance, selectedToken.address, true)
+                                        : "0"
+                                        }`}
+                                </span>
+                            </div>
+                            <div className="right inner-label">
+                                {publicKey ? (
+                                    <>
+                                        <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
+                                        ~{vestingLockFundingAmount
+                                            ? toUsCurrency(getTokenPrice())
+                                            : "$0.00"
+                                        }
+                                        </span>
+                                    </>
+                                ) : (
+                                    <span>~$0.00</span>
                                 )}
-                                {selectedToken && tokenBalance && tokenBalance > getMinSolBlanceRequired() ? (
-                                    <div className="token-max simplelink" onClick={() => {
-                                        if (selectedToken.address === NATIVE_SOL.address) {
-                                            const amount = getMaxAmount();
-                                            setVestingLockFundingAmount(cutNumber(amount > 0 ? amount : 0, selectedToken.decimals));
-                                        } else {
-                                            setVestingLockFundingAmount(cutNumber(tokenBalance, selectedToken.decimals));
+                            </div>
+                        </div>
+                        {selectedToken && selectedToken.address === NATIVE_SOL.address && (!tokenBalance || tokenBalance < MIN_SOL_BALANCE_REQUIRED) && (
+                            <div className="form-field-error">{t('transactions.validation.minimum-balance-required')}</div>
+                        )}
+                    </div>
+
+                    {/* Treasury type selector */}
+                    <FormLabelWithIconInfo
+                        label={t('vesting.create-account.vesting-contract-type-label')}
+                        tooltip_text={t('vesting.create-account.vesting-contract-type-tooltip')}
+                    />
+                    <div className="items-card-list vertical-scroll">
+                        {VESTING_ACCOUNT_TYPE_OPTIONS.map((option: TreasuryTypeOption, index) => {
+                            return (
+                                <div key={`${option.translationId}`} className={
+                                    `item-card ${index === VESTING_ACCOUNT_TYPE_OPTIONS.length - 1 ? 'mb-0' : 'mb-1'}${option.type === treasuryOption?.type ? ' selected' : ''}${option.disabled ? ' disabled': ''}`
+                                    }
+                                    onClick={() => {
+                                        if (!option.disabled) {
+                                            handleSelection(option);
                                         }
                                     }}>
-                                        MAX
+                                    <div className="checkmark"><CheckOutlined /></div>
+                                    <div className="item-meta">
+                                        <div className="item-name">{t(`vesting.create-account.vesting-account-type-options.${option.translationId}-name`)}</div>
+                                        <div className="item-description">{t(`vesting.create-account.vesting-account-type-options.${option.translationId}-description`)}</div>
                                     </div>
-                                ) : null}
-                            </span>
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    {/* CTA */}
+                    <div className="cta-container">
+                        <Button
+                            type="primary"
+                            shape="round"
+                            size="small"
+                            className="thin-stroke"
+                            onClick={onContinueStepOneButtonClick}>
+                            Continue
+                        </Button>
+                    </div>
+
+                </div>
+
+                <div className={`panel1${inModal ? ' p-3' : ''} ${currentStep === 1 ? 'show' : 'hide'}`}>
+
+                    <h2 className="form-group-label">{t('vesting.create-account.step-two-label')}</h2>
+
+                    <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Eum quisquam, similique minus id nisi vitae! Nostrum modi fuga vitae ad laborum impedit! Maiores magnam, molestiae eos, quasi quo saepe quam corporis possimus rerum dolor corrupti cumque in blanditiis! Ab ullam vel aspernatur delectus rerum eaque non tenetur ipsam, alias, soluta consequuntur quidem porro et.</p>
+
+                    <div className="two-column-form-layout">
+                        <div className="left">
+                            <Button
+                                block
+                                type="primary"
+                                shape="round"
+                                size="small"
+                                className="thin-stroke"
+                                onClick={onBackClick}>
+                                Back
+                            </Button>
                         </div>
                         <div className="right">
-                            <input
-                                className="general-text-input text-right"
-                                inputMode="decimal"
-                                autoComplete="off"
-                                autoCorrect="off"
-                                type="text"
-                                onChange={onVestingLockFundingAmountChange}
-                                pattern="^[0-9]*[.,]?[0-9]*$"
-                                placeholder="0.0"
-                                minLength={1}
-                                maxLength={79}
-                                spellCheck="false"
-                                value={vestingLockFundingAmount}
-                            />
+                            <Button
+                                block
+                                type="primary"
+                                shape="round"
+                                size="small"
+                                className="thin-stroke"
+                                onClick={() => {}}>
+                                Create vesting contract
+                            </Button>
                         </div>
                     </div>
-                    <div className="flex-fixed-right">
-                        <div className="left inner-label">
-                            <span>{t('transactions.send-amount.label-right')}:</span>
-                            <span>
-                                {`${tokenBalance && selectedToken
-                                    ? getAmountWithSymbol(tokenBalance, selectedToken.address, true)
-                                    : "0"
-                                    }`}
-                            </span>
-                        </div>
-                        <div className="right inner-label">
-                            {publicKey ? (
-                                <>
-                                    <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
-                                    ~{vestingLockFundingAmount
-                                        ? toUsCurrency(getTokenPrice())
-                                        : "$0.00"
-                                    }
-                                    </span>
-                                </>
-                            ) : (
-                                <span>~$0.00</span>
-                            )}
-                        </div>
-                    </div>
-                    {selectedToken && selectedToken.address === NATIVE_SOL.address && (!tokenBalance || tokenBalance < MIN_SOL_BALANCE_REQUIRED) && (
-                        <div className="form-field-error">{t('transactions.validation.minimum-balance-required')}</div>
-                    )}
-                </div>
-
-                {/* Treasury type selector */}
-                <FormLabelWithIconInfo
-                    label={t('vesting.create-account.vesting-contract-type-label')}
-                    tooltip_text={t('vesting.create-account.vesting-contract-type-tooltip')}
-                />
-                <div className="items-card-list vertical-scroll">
-                    {VESTING_ACCOUNT_TYPE_OPTIONS.map((option: TreasuryTypeOption, index) => {
-                        return (
-                            <div key={`${option.translationId}`} className={
-                                `item-card ${index === VESTING_ACCOUNT_TYPE_OPTIONS.length - 1 ? 'mb-0' : 'mb-1'}${option.type === treasuryOption?.type ? ' selected' : ''}${option.disabled ? ' disabled': ''}`
-                                }
-                                onClick={() => {
-                                    if (!option.disabled) {
-                                        handleSelection(option);
-                                    }
-                                }}>
-                                <div className="checkmark"><CheckOutlined /></div>
-                                <div className="item-meta">
-                                    <div className="item-name">{t(`vesting.create-account.vesting-account-type-options.${option.translationId}-name`)}</div>
-                                    <div className="item-description">{t(`vesting.create-account.vesting-account-type-options.${option.translationId}-description`)}</div>
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-
-                {/* CTA */}
-                <div className="cta-container">
-                    <Button
-                        type="primary"
-                        shape="round"
-                        size="small"
-                        className="thin-stroke" onClick={() => {
-                            const url = `${VESTING_ROUTE_BASE_PATH}/stream-create/general`;
-                            navigate(url);
-                        }}>
-                        Create vesting account
-                    </Button>
                 </div>
 
             </div>
