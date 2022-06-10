@@ -101,6 +101,7 @@
   --container-max-width-450: 450px;
   --container-max-width-640: 640px;
   --container-max-width-720: 720px;
+  --container-max-width-960: 959.98px;
 }
 
 // Inverted / Dark theme
@@ -2616,6 +2617,10 @@ main section {
 .container-max-width-720 {
   width: 100%;
   max-width: var(--container-max-width-720);
+}
+.container-max-width-960 {
+  width: 100%;
+  max-width: var(--container-max-width-960);
 }
 
 .card {

@@ -388,21 +388,28 @@ export const VestingView = () => {
   // Set a vesting contract if passed-in via url if found in list of vesting contracts
   // If not found or not provided, will pick the first one available via redirect
   useEffect(() => {
-    if (publicKey && accountAddress && treasuryList && treasuryList.length > 0) {
-      let item: Treasury | undefined = undefined;
-      if (vestingContractAddress) {
-        item = treasuryList.find(i => i.id === vestingContractAddress);
-      }
-      if (item) {
-        setSelectedVestingContract(item);
-        consoleOut('selectedVestingContract:', item, 'blue');
-        if (autoOpenDetailsPanel) {
-          setDtailsPanelOpen(true);
+    const hasNoVestingAccounts = () => treasuriesLoaded && treasuryList && treasuryList.length === 0 ? true : false;
+
+    if (publicKey && accountAddress) {
+      if (treasuryList && treasuryList.length > 0) {
+        let item: Treasury | undefined = undefined;
+        if (vestingContractAddress) {
+          item = treasuryList.find(i => i.id === vestingContractAddress);
         }
-      } else {
-        // /vesting/:address/contracts/:vestingContract
-        const contractId = treasuryList[0].id.toString();
-        const url = `${VESTING_ROUTE_BASE_PATH}/${accountAddress}/contracts/${contractId}`;
+        if (item) {
+          setSelectedVestingContract(item);
+          consoleOut('selectedVestingContract:', item, 'blue');
+          if (autoOpenDetailsPanel) {
+            setDtailsPanelOpen(true);
+          }
+        } else {
+          // /vesting/:address/contracts/:vestingContract
+          const contractId = treasuryList[0].id.toString();
+          const url = `${VESTING_ROUTE_BASE_PATH}/${accountAddress}/contracts/${contractId}`;
+          navigate(url);
+        }
+      } else if (vestingContractAddress && hasNoVestingAccounts()) {
+        const url = `${VESTING_ROUTE_BASE_PATH}/${accountAddress}/contracts`;
         navigate(url);
       }
     }
@@ -572,7 +579,7 @@ export const VestingView = () => {
       <>
       <div className="container main-container">
         <div className="interaction-area">
-          <div className="title-and-subtitle">
+          <div className="title-and-subtitle mb-2">
             <div className="title">
               <IconMoneyTransfer className="mean-svg-icons" />
               <div>{t('vesting.screen-title')}</div>
@@ -585,7 +592,7 @@ export const VestingView = () => {
             </div>
             <h3 className="user-instruction-headline">{t('vesting.user-instruction-headline')}</h3>
           </div>
-          <div className="place-transaction-box flat mb-3">
+          <div className="place-transaction-box flat mb-0">
             <VestingLockCreateAccount
               inModal={false}
               token={selectedToken}

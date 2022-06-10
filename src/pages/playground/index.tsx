@@ -1,35 +1,21 @@
 import React, { useCallback, useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { PreFooter } from "../../components/PreFooter";
-import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from "../../constants";
 import { AppStateContext } from "../../contexts/appstate";
-import { SelectOption } from "../../models/common-types";
-import { TransactionStatus } from "../../models/enums";
 import { UserTokenAccount } from "../../models/transactions";
 import "./style.scss";
 import {
   ArrowRightOutlined,
-  CheckOutlined,
-  LoadingOutlined,
-  WarningOutlined,
 } from "@ant-design/icons";
 import {
   Button,
-  Collapse,
   Divider,
-  Form,
-  InputNumber,
-  Modal,
-  Select,
   Space,
-  Spin,
+  Tooltip,
 } from "antd";
 import {
   delay,
   consoleOut,
-  getTransactionModalTitle,
-  getTransactionOperationDescription,
-  getTransactionStatusForLogs,
   kFormatter,
   intToString,
   isValidAddress,
@@ -40,9 +26,8 @@ import {
   getAmountWithSymbol,
   getTokenAmountAndSymbolByTokenAddress,
   makeDecimal,
-  shortenAddress,
 } from "../../utils/utils";
-import { IconCopy, IconExternalLink, IconTrash } from "../../Icons";
+import { IconCopy, IconExternalLink, IconTrash, IconWallet } from "../../Icons";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { openNotification } from "../../components/Notifications";
 import { IconType } from "antd/lib/notification";
@@ -52,14 +37,9 @@ import { SYSTEM_PROGRAM_ID } from "../../utils/ids";
 import { AddressDisplay } from "../../components/AddressDisplay";
 import { BN } from "bn.js";
 import { TokenDisplay } from "../../components/TokenDisplay";
+import { useWallet } from "../../contexts/wallet";
 
-const { Panel } = Collapse;
-const { Option } = Select;
 type TabOption = "first-tab" | "second-tab" | "demo-notifications" | "misc-tab" | undefined;
-const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
-
-const SAMPLE_SIGNATURE =
-  "43n6nSvWLULwu3Gdpkc3P2NtxzKdncvBMdmQxaf2wkWkSLtq2j7QD31TRd499UqijXfeyLWRxJ6t9Z1epWXcixPq";
 
 const CRYPTO_VALUES: number[] = [
   0.0004, 0.000003, 0.00000012345678, 1200.5, 1500.000009, 100500.000009226,
@@ -70,72 +50,21 @@ const NUMBER_OF_ITEMS: number[] = [
   0, 1, 99, 157, 679, 1000, 1300, 1550, 99600, 154350, 600000, 1200000
 ];
 
-interface TxStatusConfig {
-  step: number;
-  header: string;
-  timeDelay: number;
-  initialStatus: TransactionStatus;
-  finalStatus: TransactionStatus;
-}
-
-const TX_TEST_RUN_VALUES: TxStatusConfig[] = [
-  {
-    step: 1,
-    header: "Init transaction",
-    timeDelay: 1,
-    initialStatus: TransactionStatus.TransactionStart,
-    finalStatus: TransactionStatus.TransactionStarted,
-  },
-  {
-    step: 2,
-    header: "Create transaction",
-    timeDelay: 1,
-    initialStatus: TransactionStatus.InitTransaction,
-    finalStatus: TransactionStatus.InitTransactionSuccess,
-  },
-  {
-    step: 3,
-    header: "Sign transaction",
-    timeDelay: 1,
-    initialStatus: TransactionStatus.SignTransaction,
-    finalStatus: TransactionStatus.SignTransactionSuccess,
-  },
-  {
-    step: 4,
-    header: "Send transaction",
-    timeDelay: 2,
-    initialStatus: TransactionStatus.SendTransaction,
-    finalStatus: TransactionStatus.SendTransactionSuccess,
-  },
-  {
-    step: 5,
-    header: "Confirm transaction",
-    timeDelay: 2,
-    initialStatus: TransactionStatus.ConfirmTransaction,
-    finalStatus: TransactionStatus.TransactionFinished,
-  },
-];
-
 export const PlaygroundView = () => {
   const { t } = useTranslation("common");
   const location = useLocation();
   const navigate = useNavigate();
   const connection = useConnection();
+  const { publicKey } = useWallet();
   const [searchParams, setSearchParams] = useSearchParams();
   const {
     userTokens,
+    splTokenList,
     recipientAddress,
-    transactionStatus,
-    setTransactionStatus,
     setRecipientAddress,
   } = useContext(AppStateContext);
   const [selectedMint, setSelectedMint] = useState<UserTokenAccount | undefined>(undefined);
-  const [isBusy, setIsBusy] = useState(false);
-  const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [currentTab, setCurrentTab] = useState<TabOption>(undefined);
-  const [currentPanel, setCurrentPanel] = useState<number | undefined>(undefined);
-  const [txTestRunConfig, setTxTestRunConfig] = useState<TxStatusConfig[]>(TX_TEST_RUN_VALUES);
-  const [currentPanelItem, setCurrentPanelItem] = useState<TxStatusConfig>();
   const [parsedAccountInfo, setParsedAccountInfo] = useState<AccountInfo<ParsedAccountData> | null>(null);
   const [accountInfo, setAccountInfo] = useState<AccountInfo<Buffer> | null>(null);
   const [accountNotFound, setAccountNotFound] = useState<string>('');
@@ -173,99 +102,6 @@ export const PlaygroundView = () => {
   //       console.error(err);
   //     });
   // }, [splTokenList]);
-
-  const resetTransactionStatus = () => {
-    setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle,
-    });
-  };
-
-  const isSuccess = (): boolean => {
-    return transactionStatus.currentOperation ===
-      TransactionStatus.TransactionFinished
-      ? true
-      : false;
-  };
-
-  const isError = (): boolean => {
-    return transactionStatus.currentOperation ===
-      TransactionStatus.TransactionStartFailure ||
-      transactionStatus.currentOperation ===
-      TransactionStatus.InitTransactionFailure ||
-      transactionStatus.currentOperation ===
-      TransactionStatus.SignTransactionFailure ||
-      transactionStatus.currentOperation ===
-      TransactionStatus.SendTransactionFailure ||
-      transactionStatus.currentOperation ===
-      TransactionStatus.ConfirmTransactionFailure
-      ? true
-      : false;
-  };
-
-  const onAfterTransactionModalClosed = () => {
-    if (isBusy) {
-      setTransactionCancelled(true);
-    }
-    if (isSuccess()) {
-      hideTransactionModal();
-    }
-    resetTransactionStatus();
-  };
-
-  const onTransactionStart = async () => {
-    setTransactionCancelled(false);
-    setIsBusy(true);
-
-    showTransactionModal();
-
-    setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle,
-    });
-
-    for await (const txStep of txTestRunConfig) {
-      if (transactionCancelled || isError()) {
-        break;
-      }
-      setTransactionStatus({
-        lastOperation: transactionStatus.currentOperation,
-        currentOperation: txStep.initialStatus,
-      });
-      consoleOut(
-        `initialStatus = ${txStep.initialStatus} ->`,
-        getTransactionStatusForLogs(txStep.initialStatus),
-        "blue"
-      );
-      consoleOut(`await for ${txStep.timeDelay} seconds`, "", "blue");
-      await delay(txStep.timeDelay * 1000);
-      setTransactionStatus({
-        lastOperation: transactionStatus.currentOperation,
-        currentOperation: txStep.finalStatus,
-      });
-      consoleOut(
-        `finalStatus = ${txStep.finalStatus} ->`,
-        getTransactionStatusForLogs(txStep.finalStatus),
-        "blue"
-      );
-    }
-
-    setIsBusy(false);
-  };
-
-  const saveItem = () => {
-    if (currentPanel === undefined || currentPanelItem === undefined) {
-      return;
-    }
-
-    const newList = JSON.parse(
-      JSON.stringify(txTestRunConfig)
-    ) as TxStatusConfig[];
-    newList[currentPanel - 1].timeDelay = currentPanelItem.timeDelay;
-    newList[currentPanel - 1].initialStatus = currentPanelItem.initialStatus;
-    newList[currentPanel - 1].finalStatus = currentPanelItem.finalStatus;
-    setTxTestRunConfig(newList);
-  };
 
   const renderTable = () => {
     return CRYPTO_VALUES.map((value: number, index: number) => {
@@ -342,36 +178,6 @@ export const PlaygroundView = () => {
       );
     });
   };
-
-  const getOptionsFromEnum = (
-    value: any,
-    labelCallback: any
-  ): SelectOption[] => {
-    let index = 0;
-    const options: SelectOption[] = [];
-    for (const enumMember in value) {
-      const mappedValue = parseInt(enumMember, 10);
-      if (!isNaN(mappedValue)) {
-        const label = labelCallback(mappedValue);
-        if (label) {
-          const item: SelectOption = {
-            key: index,
-            value: mappedValue,
-            label: label,
-          };
-          options.push(item);
-        }
-      }
-      index++;
-    }
-    return options;
-  };
-
-  function handlePanelChange(value: any) {
-    setCurrentPanel(value);
-    const loadedItem = value ? txTestRunConfig[value - 1] : undefined;
-    setCurrentPanelItem(loadedItem);
-  }
 
   const notificationTwo = () => {
     consoleOut("Notification is closing...");
@@ -454,10 +260,6 @@ export const PlaygroundView = () => {
   // Callbacks //
   ///////////////
 
-  const [isTransactionModalVisible, setTransactionModalVisibility] = useState(false);
-  const showTransactionModal = useCallback(() => setTransactionModalVisibility(true), []);
-  const hideTransactionModal = useCallback(() => setTransactionModalVisibility(false), []);
-
   const navigateToTab = useCallback((tab: TabOption) => {
     setSearchParams({option: tab as string});
   }, [setSearchParams]);
@@ -476,14 +278,19 @@ export const PlaygroundView = () => {
     }
   }
 
-  const readAccountInfo = useCallback(async () => {
-    if (!recipientAddress || !isValidAddress(recipientAddress)) {
+  const readAccountInfo = useCallback(async (address?: string) => {
+    if (!recipientAddress && !address) {
+      return;
+    }
+
+    const scanAddress = address || recipientAddress;
+    if (!isValidAddress(scanAddress)) {
       return;
     }
 
     let accInfo: AccountInfo<Buffer | ParsedAccountData> | null = null;
     try {
-      accInfo = (await connection.getParsedAccountInfo(new PublicKey(recipientAddress))).value;
+      accInfo = (await connection.getParsedAccountInfo(new PublicKey(scanAddress))).value;
     } catch (error) {
       console.error(error);
     }
@@ -530,6 +337,19 @@ export const PlaygroundView = () => {
     setTimeout(() => {
       triggerWindowResize();
     }, 10);
+  }
+
+  const onClearResults = () => {
+    setAccountInfo(null);
+    setParsedAccountInfo(null);
+    setRecipientAddress('');
+  }
+
+  const onScanMyAddress = () => {
+    if (publicKey) {
+      setRecipientAddress(publicKey.toBase58());
+      readAccountInfo(publicKey.toBase58());
+    }
   }
 
   /////////////////////
@@ -672,7 +492,23 @@ export const PlaygroundView = () => {
     return (
       <>
         <div className="tabset-heading">Get account info</div>
-        <div className="form-label">Inspect account</div>
+        <div className="flex-fixed-right">
+          <div className="left">
+            <div className="form-label">Inspect account</div>
+          </div>
+          <div className="right">
+            {publicKey ? (
+              <Tooltip title="Inspect my wallet address" trigger="hover">
+                <span className="flat-button change-button" onClick={onScanMyAddress}>
+                  <IconWallet className="mean-svg-icons" />
+                </span>
+              </Tooltip>
+            ) : (
+              <span>&nbsp;</span>
+            )}
+          </div>
+        </div>
+
         <div className="two-column-form-layout col70x30 mb-2">
           <div className="left">
             <div className="well">
@@ -715,19 +551,32 @@ export const PlaygroundView = () => {
             </div>
           </div>
           <div className="right">
-            <Button
-              block
-              type="primary"
-              shape="round"
-              size="large"
-              onClick={readAccountInfo}>
-              Get info
-            </Button>
+            <div className="flex-fixed-right">
+              <div className="left">
+                <Button
+                  block
+                  type="primary"
+                  shape="round"
+                  size="large"
+                  onClick={() => readAccountInfo()}>
+                  Get info
+                </Button>
+              </div>
+              <div className="right">
+                <Button
+                  type="default"
+                  shape="round"
+                  size="large"
+                  onClick={onClearResults}>
+                  Clear
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
 
         <div className="mb-3">
-          {(accountInfo || parsedAccountInfo) && (
+          {recipientAddress && (accountInfo || parsedAccountInfo) && (
             <div className="well-group text-monospace">
               {accountInfo && (
                 <>
@@ -774,122 +623,6 @@ export const PlaygroundView = () => {
             </div>
           )}
         </div>
-  
-        <Divider />
-  
-        <div className="tabset-heading">Transaction workflow</div>
-        <div className="text-left mb-3">
-          <Button
-            type="primary"
-            shape="round"
-            size="middle"
-            onClick={onTransactionStart}>
-            Test Tx - Dry run
-          </Button>
-        </div>
-        <Collapse accordion onChange={handlePanelChange}>
-          {txTestRunConfig.map((config) => {
-            const onInitialStatusChange = (value: any) => {
-              setCurrentPanelItem(
-                Object.assign({}, config, {
-                  initialStatus: value,
-                  timeDelay: currentPanelItem?.timeDelay,
-                  finalStatus: currentPanelItem?.finalStatus,
-                })
-              );
-            };
-            const onFinalStatusChange = (value: any) => {
-              setCurrentPanelItem(
-                Object.assign({}, config, {
-                  initialStatus: currentPanelItem?.initialStatus,
-                  timeDelay: currentPanelItem?.timeDelay,
-                  finalStatus: value,
-                })
-              );
-            };
-            const onTimeDelayChange = (value: number) => {
-              let newValue: number;
-              if (!value || value < 1) {
-                newValue = 1;
-              } else if (value > 5) {
-                newValue = 5;
-              } else {
-                newValue = value;
-              }
-              setCurrentPanelItem(
-                Object.assign({}, config, {
-                  initialStatus: currentPanelItem?.initialStatus,
-                  timeDelay: value,
-                  finalStatus: currentPanelItem?.finalStatus,
-                })
-              );
-            };
-            return (
-              <Panel header={config.header} key={`${config.step}`}>
-                {currentPanelItem && (
-                  <Form
-                    labelCol={{ span: 5 }}
-                    wrapperCol={{ span: 18 }}
-                    layout="horizontal">
-                    <Form.Item label="Initial status">
-                      <Select
-                        value={currentPanelItem.initialStatus}
-                        onChange={onInitialStatusChange}>
-                        {getOptionsFromEnum(
-                          TransactionStatus,
-                          getTransactionStatusForLogs
-                        ).map((option) => {
-                          return (
-                            <Option
-                              key={option.key}
-                              value={option.value}
-                            >{`${option.value} - ${option.label}`}</Option>
-                          );
-                        })}
-                      </Select>
-                    </Form.Item>
-                    <Form.Item label="Delay">
-                      <InputNumber
-                        style={{ width: 100 }}
-                        min={1}
-                        max={5}
-                        step={1}
-                        value={currentPanelItem.timeDelay}
-                        formatter={(value) => `${value}s`}
-                        parser={(value) =>
-                          parseFloat(value ? value.replace("s", "") : "0.1")
-                        }
-                        onChange={onTimeDelayChange}
-                      />
-                    </Form.Item>
-                    <Form.Item label="Final status">
-                      <Select
-                        value={currentPanelItem.finalStatus}
-                        onChange={onFinalStatusChange}>
-                        {getOptionsFromEnum(
-                          TransactionStatus,
-                          getTransactionStatusForLogs
-                        ).map((option) => {
-                          return (
-                            <Option
-                              key={option.key}
-                              value={option.value}
-                            >{`${option.value} - ${option.label}`}</Option>
-                          );
-                        })}
-                      </Select>
-                    </Form.Item>
-                    <Form.Item wrapperCol={{ span: 18, offset: 5 }}>
-                      <Button type="primary" onClick={saveItem}>
-                        Submit
-                      </Button>
-                    </Form.Item>
-                  </Form>
-                )}
-              </Panel>
-            );
-          })}
-        </Collapse>
       </>
     );
   }
@@ -1196,119 +929,15 @@ export const PlaygroundView = () => {
 
   return (
     <>
+
       <section>
         <div className="container mt-4 flex-column flex-center">
-          <div className="boxed-area container-max-width-720">
+          <div className="boxed-area container-max-width-960">
             {renderTabset}
             {/* <span className="secondary-link" onClick={getTopJupiterTokensByVolume}>Read list of top Jupiter tokens in volume over 1,000 USD</span> */}
           </div>
         </div>
       </section>
-
-      <Modal
-        className="mean-modal"
-        maskClosable={false}
-        visible={isTransactionModalVisible}
-        title={getTransactionModalTitle(transactionStatus, isBusy, t)}
-        onCancel={hideTransactionModal}
-        afterClose={onAfterTransactionModalClosed}
-        width={330}
-        footer={null}
-      >
-        <div className="transaction-progress">
-          {isBusy ? (
-            <>
-              <Spin indicator={bigLoadingIcon} className="icon" />
-              <h4 className="font-bold mb-1 text-uppercase">
-                {getTransactionOperationDescription(
-                  transactionStatus.currentOperation,
-                  t
-                )}
-              </h4>
-              <p className="operation">Whatever is about to happen...</p>
-              {transactionStatus.currentOperation ===
-                TransactionStatus.SignTransaction && (
-                  <div className="indication">
-                    {t("transactions.status.instructions")}
-                  </div>
-                )}
-            </>
-          ) : isSuccess() ? (
-            <>
-              <CheckOutlined style={{ fontSize: 48 }} className="icon" />
-              <h4 className="font-bold mb-1 text-uppercase">
-                {getTransactionOperationDescription(
-                  transactionStatus.currentOperation,
-                  t
-                )}
-              </h4>
-              <p className="operation">
-                {t("transactions.status.tx-generic-operation-success")}.
-              </p>
-              <Button
-                block
-                type="primary"
-                shape="round"
-                size="middle"
-                onClick={hideTransactionModal}
-              >
-                {t("general.cta-close")}
-              </Button>
-            </>
-          ) : isError() ? (
-            <>
-              <WarningOutlined style={{ fontSize: 48 }} className="icon" />
-              {transactionStatus.currentOperation ===
-                TransactionStatus.TransactionStartFailure ? (
-                <h4 className="mb-4">Whatever special reason it failed for</h4>
-              ) : (
-                <>
-                  <h4 className="font-bold mb-1 text-uppercase">
-                    {getTransactionOperationDescription(
-                      transactionStatus.currentOperation,
-                      t
-                    )}
-                  </h4>
-                  {transactionStatus.currentOperation ===
-                    TransactionStatus.ConfirmTransactionFailure && (
-                      <>
-                        <p className="operation">
-                          {t("transactions.status.tx-confirm-failure-check")}
-                        </p>
-                        <p className="operation">
-                          <a
-                            className="secondary-link"
-                            href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${SAMPLE_SIGNATURE}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            {shortenAddress(SAMPLE_SIGNATURE, 8)}
-                          </a>
-                        </p>
-                      </>
-                    )}
-                </>
-              )}
-              <Button
-                block
-                type="primary"
-                shape="round"
-                size="middle"
-                onClick={hideTransactionModal}
-              >
-                {t("general.cta-close")}
-              </Button>
-            </>
-          ) : (
-            <>
-              <Spin indicator={bigLoadingIcon} className="icon" />
-              <h4 className="font-bold mb-4 text-uppercase">
-                {t("transactions.status.tx-wait")}...
-              </h4>
-            </>
-          )}
-        </div>
-      </Modal>
 
       <PreFooter />
     </>
