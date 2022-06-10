@@ -84,6 +84,7 @@ import { MultisigTransactionWithId, parseSerializedTx, ZERO_FEES } from '../../m
 const CREDIX_PROGRAM = new PublicKey("CRDx2YkdtYtGZXGHZ59wNv1EwKHQndnRc1gT4p8i2vPX");
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
+const proposalLoadStatusRegister = new Map<string, boolean>();
 
 export const SafeView = () => {
   const connectionConfig = useConnectionConfig();
@@ -139,7 +140,6 @@ export const SafeView = () => {
   const [selectedMultisig, setSelectedMultisig] = useState<MultisigInfo | undefined>(undefined);
   // Pending Txs
   const [needRefreshTxs, setNeedRefreshTxs] = useState(false);
-  const [loadingProposals, setLoadingProposals] = useState(false);
   const [highlightedMultisigTx, sethHighlightedMultisigTx] = useState<MultisigTransaction | undefined>();
   const [multisigTransactionSummary, setMultisigTransactionSummary] = useState<MultisigTransactionSummary | undefined>(undefined);
   // Vaults
@@ -242,6 +242,7 @@ export const SafeView = () => {
     wallet
   ]);
 
+  // Live reference to the selected multisig
   const selectedMultisigRef = useRef(selectedMultisig);
   useEffect(() => {
     selectedMultisigRef.current = selectedMultisig;
@@ -257,6 +258,27 @@ export const SafeView = () => {
   }, [
     setTransactionStatus
   ]);
+
+  const setProposalsLoading = useCallback((loading: boolean) => {
+    const multisigId = selectedMultisigRef && selectedMultisigRef.current ? selectedMultisigRef.current.id.toBase58() : '';
+    if (multisigId) {
+      if (loading) {
+        proposalLoadStatusRegister.set(multisigId, loading);
+      } else {
+        if (proposalLoadStatusRegister.has(multisigId)) {
+          proposalLoadStatusRegister.delete(multisigId);
+        }
+      }
+    }
+  }, []);
+
+  const getProposalsLoadingStatus = useCallback(() => {
+    const multisigId = selectedMultisigRef && selectedMultisigRef.current ? selectedMultisigRef.current.id.toBase58() : '';
+    if (multisigId && proposalLoadStatusRegister.has(multisigId)) {
+      return proposalLoadStatusRegister.get(multisigId) || true;
+    }
+    return false;
+  }, []);
 
   // Search for pending proposal in confirmation history
   const hasMultisigPendingProposal = useCallback(() => {
@@ -3395,12 +3417,10 @@ export const SafeView = () => {
       return;
     }
 
-    setTimeout(() => {
-      setNeedRefreshTxs(false);
-      setLoadingProposals(true);
-    });
-
+    setNeedRefreshTxs(false);
+    setProposalsLoading(true);
     setMultisigTxs([]);
+
     consoleOut('Triggering loadMultisigPendingTxs ...', '', 'blue');
     const msigId = selectedMultisig.id;
     getMultisigProposals(msigId)
@@ -3414,7 +3434,7 @@ export const SafeView = () => {
         }
       })
       .catch((err: any) => console.error("Error fetching all transactions", err))
-      .finally(() => setLoadingProposals(false));
+      .finally(() => setProposalsLoading(false));
 
   }, [
     publicKey,
@@ -3424,6 +3444,7 @@ export const SafeView = () => {
     selectedMultisig,
     getActiveMultisigIdByReference,
     getMultisigProposals,
+    setProposalsLoading,
     setMultisigTxs,
   ]);
 
@@ -3543,6 +3564,10 @@ export const SafeView = () => {
         }
       }
     }
+
+    // return () => {
+    //   proposalLoadStatusRegister.clear();
+    // }
 
   }, [id, address, multisigTxs, programs, getQueryParamV, selectedMultisig, publicKey, multisigClient]);
 
@@ -3708,7 +3733,7 @@ export const SafeView = () => {
       {isLocal() && (
         <div className="debug-bar">
           <span className="ml-1">multisigTxs:</span><span className="ml-1 font-bold fg-dark-active">{multisigTxs ? multisigTxs.length : '-'}</span>
-          <span className="ml-1">needRefreshTxs:</span><span className="ml-1 font-bold fg-dark-active">{needRefreshTxs ? 'true' : 'false'}</span>
+          <span className="ml-1">proposalLoadStatusRegister:</span><span className="ml-1 font-bold fg-dark-active">{proposalLoadStatusRegister.size}</span>
           {/* <span className="ml-1">isProposalDetails:</span><span className="ml-1 font-bold fg-dark-active">{isProposalDetails ? 'true' : 'false'}</span>
           <span className="ml-1">isProgramDetails:</span><span className="ml-1 font-bold fg-dark-active">{isProgramDetails ? 'true' : 'false'}</span> */}
         </div>
@@ -3831,7 +3856,7 @@ export const SafeView = () => {
                               isProposalDetails={isProposalDetails}
                               isProgramDetails={isProgramDetails}
                               isAssetDetails={isAssetDetails}
-                              loadingProposals={loadingProposals}
+                              loadingProposals={getProposalsLoadingStatus()}
                               loadingPrograms={loadingPrograms}
                               onDataToSafeView={goToProposalDetailsHandler}
                               onDataToProgramView={goToProgramDetailsHandler}
