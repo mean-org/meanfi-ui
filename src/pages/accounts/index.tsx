@@ -168,6 +168,7 @@ export const AccountsNewView = () => {
   const { width } = useWindowSize();
   const { account } = useNativeAccount();
   const [isFirstLoad, setIsFirstLoad] = useState(true);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [accountAddressInput, setAccountAddressInput] = useState<string>('');
   const [tokensLoaded, setTokensLoaded] = useState(false);
   const [accountTokens, setAccountTokens] = useState<UserTokenAccount[]>([]);
@@ -178,6 +179,7 @@ export const AccountsNewView = () => {
   const [wSolBalance, setWsolBalance] = useState(0);
   const [refreshingBalance, setRefreshingBalance] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<CategoryOption>("assets");
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [selectedOtherAssetsOption, setSelectedOtherAssetsOption] = useState<OtherAssetsOption>(undefined);
   const [inspectedAccountType, setInspectedAccountType] = useState<InspectedAccountType>(undefined);
   const [totalTokenAccountsValue, setTotalTokenAccountsValue] = useState(0);
@@ -197,14 +199,14 @@ export const AccountsNewView = () => {
   const [isXsDevice, setIsXsDevice] = useState<boolean>(isMobile);
 
   // QR scan modal
-  const [isQrScannerModalVisible, setIsQrScannerModalVisibility] = useState(false);
-  const showQrScannerModal = useCallback(() => setIsQrScannerModalVisibility(true), []);
-  const closeQrScannerModal = useCallback(() => setIsQrScannerModalVisibility(false), []);
-  const onAcceptQrScannerModal = (value: string) => {
-    setAccountAddressInput(value);
-    triggerWindowResize();
-    closeQrScannerModal();
-  };
+  // const [isQrScannerModalVisible, setIsQrScannerModalVisibility] = useState(false);
+  // const showQrScannerModal = useCallback(() => setIsQrScannerModalVisibility(true), []);
+  // const closeQrScannerModal = useCallback(() => setIsQrScannerModalVisibility(false), []);
+  // const onAcceptQrScannerModal = (value: string) => {
+  //   setAccountAddressInput(value);
+  //   triggerWindowResize();
+  //   closeQrScannerModal();
+  // };
 
   const [nativeBalance, setNativeBalance] = useState(0);
   const [transactionFees, setTransactionFees] = useState<TransactionFees>(NO_FEES);
@@ -214,6 +216,7 @@ export const AccountsNewView = () => {
   const [multisigAccounts, setMultisigAccounts] = useState<MultisigInfo[]>([]);
   const [selectedMultisig, setSelectedMultisig] = useState<MultisigInfo | undefined>(undefined);
   const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(true);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [multisigPendingTxs, setMultisigPendingTxs] = useState<MultisigTransaction[]>([]);
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
 
@@ -384,41 +387,41 @@ export const AccountsNewView = () => {
     hideUnwrapSolModal();
   }
 
-  const onAddAccountAddress = useCallback(() => {
-    navigate(`${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddressInput}/assets`);
-    setAccountAddressInput('');
-  }, [navigate, accountAddressInput]);
+  // const onAddAccountAddress = useCallback(() => {
+  //   navigate(`${ACCOUNTS_ROUTE_BASE_PATH}/${accountAddressInput}/assets`);
+  //   setAccountAddressInput('');
+  // }, [navigate, accountAddressInput]);
 
   const handleScanAnotherAddressButtonClick = () => {
     setAddAccountPanelOpen(true);
   }
 
-  const handleBackToAccountDetailsButtonClick = () => {
-    setAddAccountPanelOpen(false);
-  }
+  // const handleBackToAccountDetailsButtonClick = () => {
+  //   setAddAccountPanelOpen(false);
+  // }
 
-  const triggerWindowResize = () => {
-    window.dispatchEvent(new Event('resize'));
-  }
+  // const triggerWindowResize = () => {
+  //   window.dispatchEvent(new Event('resize'));
+  // }
 
-  const handleAccountAddressInputChange = (e: any) => {
-    const inputValue = e.target.value as string;
-    // Set the input value
-    const trimmedValue = inputValue.trim();
-    setAccountAddressInput(trimmedValue);
-  }
+  // const handleAccountAddressInputChange = (e: any) => {
+  //   const inputValue = e.target.value as string;
+  //   // Set the input value
+  //   const trimmedValue = inputValue.trim();
+  //   setAccountAddressInput(trimmedValue);
+  // }
 
-  const handleAccountAddressInputFocusIn = () => {
-    setTimeout(() => {
-      triggerWindowResize();
-    }, 100);
-  }
+  // const handleAccountAddressInputFocusIn = () => {
+  //   setTimeout(() => {
+  //     triggerWindowResize();
+  //   }, 100);
+  // }
 
-  const handleAccountAddressInputFocusOut = () => {
-    setTimeout(() => {
-      triggerWindowResize();
-    }, 100);
-  }
+  // const handleAccountAddressInputFocusOut = () => {
+  //   setTimeout(() => {
+  //     triggerWindowResize();
+  //   }, 100);
+  // }
 
   const isInspectedAccountTheConnectedWallet = useCallback(() => {
     return accountAddress && publicKey && publicKey.toBase58() === accountAddress
@@ -585,10 +588,10 @@ export const AccountsNewView = () => {
     return undefined;
   }, [searchParams]);
 
-  const getNativeAccountAsset = useCallback(() => {
-    if (!accountAddress || !accountTokens) { return undefined; }
-    return accountTokens.find(a => a.publicAddress === accountAddress);
-  }, [accountAddress, accountTokens]);
+  // const getNativeAccountAsset = useCallback(() => {
+  //   if (!accountAddress || !accountTokens) { return undefined; }
+  //   return accountTokens.find(a => a.publicAddress === accountAddress);
+  // }, [accountAddress, accountTokens]);
 
   const getScanAddress = useCallback((asset: UserTokenAccount): PublicKey | null => {
     /**
@@ -2245,6 +2248,7 @@ export const AccountsNewView = () => {
     if (selectedAsset && (!multisigPendingTxs || multisigPendingTxs.length === 0)) {
       return true;
     }
+    
     const found = multisigPendingTxs.find(tx => tx.operation === OperationType.DeleteAsset && (isTxPendingApproval(tx) || isTxPendingExecution(tx)));
 
     return found ? false : true;

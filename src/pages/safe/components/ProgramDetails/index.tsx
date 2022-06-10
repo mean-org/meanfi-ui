@@ -18,7 +18,7 @@ import { OperationType, TransactionStatus } from "../../../../models/enums";
 import { NATIVE_SOL_MINT } from "../../../../utils/ids";
 import { consoleOut, getTransactionStatusForLogs, isDev, isLocal } from "../../../../utils/ui";
 import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume } from "../../../../utils/utils";
-import { ProgramAccounts } from "../../../../utils/accounts";
+// import { ProgramAccounts } from "../../../../utils/accounts";
 import { customLogger } from "../../../..";
 import { TabsMean } from '../../../../components/TabsMean';
 import { AnchorProvider, Program } from '@project-serum/anchor';
@@ -50,15 +50,23 @@ export const ProgramDetailsView = (props: {
     clearTxConfirmationContext,
   } = useContext(TxConfirmationContext);
 
-  const { isProgramDetails, onDataToProgramView, programSelected, selectedMultisig } = props;
+  const { 
+    // isProgramDetails, 
+    onDataToProgramView, 
+    programSelected, 
+    selectedMultisig
+
+  } = props;
 
   const [transactionFees, setTransactionFees] = useState<TransactionFees>(NO_FEES);
   const [nativeBalance, setNativeBalance] = useState(0);
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [isBusy, setIsBusy] = useState(false);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
-  const [/*ongoingOperation*/, setOngoingOperation] = useState<OperationType | undefined>(undefined);
-  const [/*retryOperationPayload*/, setRetryOperationPayload] = useState<any>(undefined);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [retryOperationPayload, setRetryOperationPayload] = useState<any>(undefined);
   // const [selectedProgram, setSelectedProgram] = useState<ProgramAccounts | undefined>(undefined);
   const [selectedProgramIdl, setSelectedProgramIdl] = useState<any>(null);
   const [loadingTxs, setLoadingTxs] = useState(true);

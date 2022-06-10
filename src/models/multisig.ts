@@ -478,6 +478,7 @@ export const getIxNameFromMultisigTransaction = (transaction: MultisigTransactio
       ix = programIdl.instructions.filter(ix => ix.name === "setAuthority")[0];
       break;
     case OperationType.CloseTokenAccount:
+    case OperationType.DeleteAsset:
       ix = programIdl.instructions.filter(ix => ix.name === "closeAccount")[0];
       break;
     // MSP
@@ -579,6 +580,8 @@ export const parseMultisigProposalIx = (
       keys: transaction.accounts,
       data: transaction.data
     });
+
+    // console.log('ix', ix);
 
     // if (!program || program.programId.equals(TOKEN_PROGRAM_ID)) { // HERE TOKEN IX
     //   return getMultisigInstructionSummary(ix);

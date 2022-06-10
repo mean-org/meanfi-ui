@@ -85,8 +85,8 @@ export enum OperationType {
     SetAssetAuthority = 39,
     ApproveTransaction = 40,
     ExecuteTransaction = 41,
-    DeleteAsset = 42,
-    CancelTransaction = 43,
+    CancelTransaction = 42,
+    DeleteAsset = 43,
     CreateTransaction = 44,
     // Tools
     Wrap = 50,
