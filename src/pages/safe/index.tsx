@@ -7,12 +7,12 @@ import {
   Account,
   ConfirmOptions,
   Connection,
-  Keypair,
+  // Keypair,
   LAMPORTS_PER_SOL,
   MemcmpFilter,
   PublicKey,
-  Signer,
-  SystemProgram,
+  // Signer,
+  // SystemProgram,
   SYSVAR_RENT_PUBKEY,
   Transaction,
   TransactionInstruction
@@ -42,21 +42,21 @@ import {
   toUsCurrency
 } from '../../utils/ui';
 
-import { NO_FEES, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../constants';
+import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from '../../constants';
 import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
 import { EventType, OperationType, TransactionStatus } from '../../models/enums';
 import { IconEllipsisVertical, IconLoading, IconSafe, IconUserGroup, IconUsers } from '../../Icons';
 import { useNativeAccount } from '../../contexts/accounts';
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
-import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { MultisigCreateModal } from '../../components/MultisigCreateModal';
 import './style.scss';
 
 // MULTISIG
 import { AnchorProvider, BN, Idl, Program } from "@project-serum/anchor";
 import { MultisigEditModal } from '../../components/MultisigEditModal';
-import { TransactionFees } from '@mean-dao/msp';
+// import { TransactionFees } from '@mean-dao/msp';
 import { customLogger } from '../..';
 import { openNotification } from '../../components/Notifications';
 import { ProposalSummaryModal } from '../../components/ProposalSummaryModal';
@@ -88,6 +88,7 @@ const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export const SafeView = () => {
   const connectionConfig = useConnectionConfig();
   const { publicKey, connected, wallet } = useWallet();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [searchParams, setSearchParams] = useSearchParams();
   const { address, id } = useParams();
   const {
@@ -131,7 +132,7 @@ export const SafeView = () => {
   const [nativeBalance, setNativeBalance] = useState(0);
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [transactionFees, setTransactionFees] = useState<MultisigTransactionFees>(ZERO_FEES);
-  const [transactionAssetFees, setTransactionAssetFees] = useState<TransactionFees>(NO_FEES);
+  // const [transactionAssetFees, setTransactionAssetFees] = useState<TransactionFees>(NO_FEES);
   // Multisig accounts
   const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(true);
   const [multisigAccounts, setMultisigAccounts] = useState<MultisigInfo[]>([]);
@@ -162,12 +163,15 @@ export const SafeView = () => {
   const [appsProvider, setAppsProvider] = useState<AppsProvider>();
   const [solanaApps, setSolanaApps] = useState<App[]>([]);
   const [serumAccounts, setSerumAccounts] = useState<MultisigInfo[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [serumMultisigTxs, setSerumMultisigTxs] = useState<MultisigTransaction[]>([]);
   const [operationPayload, setOperationPayload] = useState<any>(undefined);
   const [isProposalDetails, setIsProposalDetails] = useState(false);
   const [proposalSelected, setProposalSelected] = useState<MultisigTransaction | undefined>();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isAssetDetails, setIsAssetDetails] = useState(false);
   const [assetSelected, setAssetSelected] = useState<any>();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [selectedTab, setSelectedTab] = useState<number>();
   const [multisigUsdValues, setMultisigUsdValues] = useState<Map<string, number> | undefined>();
   const [canSubscribe, setCanSubscribe] = useState(true);
@@ -3643,9 +3647,9 @@ export const SafeView = () => {
     navigate(url);
   }
 
-  const goToAssetDetailsHandler = (selectedAsset: any) => {
-    setAssetSelected(selectedAsset);
-  }
+  // const goToAssetDetailsHandler = (selectedAsset: any) => {
+  //   setAssetSelected(selectedAsset);
+  // }
 
   const goToProgramDetailsHandler = (selectedProgram: any) => {
     const url = `/multisig/${address}/programs/${selectedProgram.pubkey.toBase58()}?v=transactions`;
