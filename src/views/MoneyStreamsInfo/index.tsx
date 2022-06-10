@@ -84,6 +84,13 @@ export const MoneyStreamsInfoView = (props: {
     </>
   );
 
+  const selectedMultisig = "C4Eb4AJh5ribXGnzvbFuRLWUBdp1AogpD8q1RssTB7H9";
+  const subtitle = <CopyExtLinkGroup
+    content={selectedMultisig}
+    number={8}
+    externalLink={true}
+  />
+
   const incomingStreams = [
     {
       title: "Monthly Remittance from Jesse",
@@ -111,6 +118,15 @@ export const MoneyStreamsInfoView = (props: {
       amount: "150 USDC/month",
       resume: "streaming since 01/05/2022",
       status: 1
+    }
+  ];
+
+  const streamingAccounts = [
+    {
+      title: "Coinbase team salary",
+      subtitle: subtitle,
+      amount: "3",
+      resume: "streams"
     }
   ];
 
@@ -180,18 +196,6 @@ export const MoneyStreamsInfoView = (props: {
     </Menu>
   );
 
-  const selectedMultisig = "C4Eb4AJh5ribXGnzvbFuRLWUBdp1AogpD8q1RssTB7H9";
-  const subtitle = <CopyExtLinkGroup
-    content={selectedMultisig}
-    number={8}
-    externalLink={true}
-  />
-
-  const onClickToStreamingAccount = () => {
-    // Sends onClick value to the parent component "Accounts"
-    onSendFromStreamingAccountDetails();
-  }
-
   // Outgoing streams list
   const renderListOfOutgoingStreams = (
     <>
@@ -235,18 +239,33 @@ export const MoneyStreamsInfoView = (props: {
           </div>
         )
       })}
-      <ResumeItem
-        title="Coinbase team salary"
-        classNameTitle="text-uppercase"
-        subtitle={subtitle}
-        amount={3}
-        resume="streams"
-        className="account-category-title"
-        hasRightIcon={true}
-        rightIcon={<IconArrowForward className="mean-svg-icons" />}
-        isLink={true}
-        onClick={onClickToStreamingAccount}
-      />
+      {streamingAccounts.map((stream, index) => {
+        const onSelectedStreamingAccount = () => {
+          // Sends outgoing stream value to the parent component "Accounts"
+          onSendFromStreamingAccountDetails(stream);
+        }
+
+        const title = stream.title ? stream.title : "Unknown streaming account";
+
+        return (
+          <div 
+            key={index}
+          >
+            <ResumeItem
+              title={title}
+              classNameTitle="text-uppercase"
+              subtitle={stream.subtitle}
+              amount={stream.amount}
+              resume={stream.resume}
+              className="account-category-title"
+              hasRightIcon={true}
+              rightIcon={<IconArrowForward className="mean-svg-icons" />}
+              isLink={true}
+              onClick={onSelectedStreamingAccount}
+            />
+          </div>
+        )
+      })}
       {teamSalary.map((stream, index) => {
         const onSelectStream = () => {
           // Sends outgoing stream value to the parent component "Accounts"

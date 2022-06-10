@@ -1,14 +1,15 @@
 import { Button, Col, Dropdown, Menu, Row } from "antd";
+import { useEffect } from "react";
 import { ResumeItem } from "../../components/ResumeItem";
 import { TabsMean } from "../../components/TabsMean";
 import { IconArrowBack, IconEllipsisVertical } from "../../Icons";
 
 export const StreamingAccountView = (props: {
-  // stream?: any;
+  stream?: any;
   onSendFromStreamingAccountDetails?: any;
 }) => {
 
-  const { onSendFromStreamingAccountDetails  } = props;
+  const { stream, onSendFromStreamingAccountDetails  } = props;
 
   const hideDetailsHandler = () => {
     onSendFromStreamingAccountDetails();
@@ -53,14 +54,14 @@ export const StreamingAccountView = (props: {
           </div>
         </Row>
 
-        {/* <ResumeItem
+        <ResumeItem
           title={stream.title}
-          status={stream.status}
-          subtitle={stream.amount}
+          subtitle={stream.subtitle}
+          amount={stream.amount}
           resume={stream.resume}
           isDetailsPanel={true}
           isLink={false}
-        /> */}
+        />
 
         <Row gutter={[8, 8]} className="safe-btns-container mb-1">
           <Col xs={20} sm={18} md={20} lg={18} className="btn-group">
