@@ -201,8 +201,7 @@ export const ProposalDetailsView = (props: {
             return (
               <Row gutter={[8, 8]} className="mb-2" key={`item-${index}`}>
                 <Col xs={6} sm={6} md={4} lg={4} className="pr-1">
-                    {/* <span className="info-label">{t('multisig.proposal-modal.instruction-account')} :</span> */}
-                    <span className="info-label">{account.label || t('multisig.proposal-modal.instruction-account')}</span>
+                  <span className="info-label">{account.label || t('multisig.proposal-modal.instruction-account')}</span>
                 </Col>
                 <Col xs={17} sm={17} md={19} lg={19} className="pl-1 pr-3">
                   <span onClick={() => copyAddressToClipboard(account.value)} className="d-block info-data simplelink underline-on-hover text-truncate" style={{cursor: 'pointer'}}>
@@ -237,14 +236,14 @@ export const ProposalDetailsView = (props: {
                       <>
                         {item.value.map((owner: any, idx: number) => {
                           return (
-                            <Row key={`owners-${idx}`}>
+                            <Row key={`owners-${idx}`} className="pr-1">
                               <Col xs={6} sm={6} md={4} lg={4} className="pl-1 pr-1 text-truncate">
                                 <Tooltip placement="right" title={owner.label || ""}>
                                   <span className="info-label">{owner.label || t('multisig.proposal-modal.instruction-data')}</span>
                                 </Tooltip>
                               </Col>
                               <Col xs={17} sm={17} md={19} lg={19} className="pl-1 pr-3">
-                                <span className="d-block info-data simplelink underline-on-hover text-truncate" style={{cursor: 'pointer'}}>
+                                <span onClick={() => copyAddressToClipboard(owner.data)} className="d-block info-data simplelink underline-on-hover text-truncate" style={{cursor: 'pointer'}}>
                                   {owner.data}
                                 </span>
                               </Col>
@@ -263,7 +262,7 @@ export const ProposalDetailsView = (props: {
                     ) : (
                       <>
                         <Col xs={17} sm={17} md={19} lg={19} className="pl-1 pr-3" key="loquejea">
-                          <span className="d-block info-data simplelink underline-on-hover text-truncate" style={{cursor: 'pointer'}}>
+                          <span className="d-block info-data text-truncate" style={{cursor: 'pointer'}}>
                             {item.value}
                           </span>
                         </Col>
@@ -283,7 +282,7 @@ export const ProposalDetailsView = (props: {
                     </Tooltip>
                   </Col>
                   <Col xs={17} sm={17} md={19} lg={19} className="pl-1 pr-3">
-                    <span className="d-block info-data simplelink underline-on-hover text-truncate" style={{cursor: 'pointer'}}>
+                    <span className="d-block info-data text-truncate" style={{cursor: 'pointer'}}>
                       {item.value}
                     </span>
                   </Col>

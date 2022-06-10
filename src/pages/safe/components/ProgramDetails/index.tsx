@@ -814,7 +814,7 @@ export const ProgramDetailsView = (props: {
   // Balance SOL
   const [balanceSol, setBalanceSol] = useState<any>();
   useEffect(() => {
-    if (!connection && !programSelected.pubkey) { return; }
+    if (!connection && programSelected && !programSelected.pubkey) { return; }
 
     connection.getBalance(programSelected.pubkey)
         .then(balance => {
@@ -823,7 +823,7 @@ export const ProgramDetailsView = (props: {
         .catch(error => {
           console.error(error);
         })
-  }, [connection, programSelected.pubkey]);
+  }, [connection, programSelected]);
 
   const infoProgramData = [
     {
