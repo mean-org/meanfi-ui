@@ -23,6 +23,7 @@ import { MetaInfoCta } from '../../models/common-types';
 import { MetaInfoCtaAction } from '../../models/enums';
 import { VestingLockCreateAccount } from './components/VestingLockCreateAccount';
 import { TokenInfo } from '@solana/spl-token-registry';
+import { VestingContractCreateModal } from '../../components/VestingContractCreateModal';
 
 const { TabPane } = Tabs;
 export const VESTING_ROUTE_BASE_PATH = '/vesting';
@@ -264,6 +265,9 @@ export const VestingView = () => {
 
   },[t])
 
+  const [isVestingContractCreateModalVisible, setIsVestingContractCreateModalVisibility] = useState(false);
+  const showVestingContractCreateModal = useCallback(() => setIsVestingContractCreateModalVisibility(true), []);
+  const closeVestingContractCreateModal = useCallback(() => setIsVestingContractCreateModalVisibility(false), []);
 
   /////////////////////
   // Data management //
@@ -594,6 +598,7 @@ export const VestingView = () => {
             <VestingLockCreateAccount
               inModal={false}
               token={selectedToken}
+              vestingAccountCreated={() => {}}
               tokenChanged={(token: TokenInfo | undefined) => setSelectedToken(token)}
             />
           </div>
@@ -671,9 +676,7 @@ export const VestingView = () => {
                           className="flex-center"
                           type="primary"
                           shape="round"
-                          onClick={() => {
-                            // sddfdf
-                          }}>
+                          onClick={showVestingContractCreateModal}>
                           <span className="ml-1">Create vesting contract</span>
                         </Button>
                       </div>
@@ -714,6 +717,14 @@ export const VestingView = () => {
           )}
         </div>
         <PreFooter />
+
+        {isVestingContractCreateModalVisible && (
+          <VestingContractCreateModal
+            isVisible={isVestingContractCreateModalVisible}
+            handleClose={closeVestingContractCreateModal}
+            selectedToken={selectedToken}
+          />
+        )}
       </>
     );
   } else if (treasuriesLoaded && treasuryList.length === 0 && !loadingTreasuries) {

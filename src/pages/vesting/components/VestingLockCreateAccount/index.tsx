@@ -33,8 +33,9 @@ export const VestingLockCreateAccount = (props: {
     inModal: boolean;
     token?: TokenInfo;
     tokenChanged: any;
+    vestingAccountCreated: any;
 }) => {
-    const { inModal, token, tokenChanged } = props;
+    const { inModal, token, tokenChanged, vestingAccountCreated } = props;
     const { t } = useTranslation('common');
     const connection = useConnection();
     const { connected, publicKey } = useWallet();
@@ -745,7 +746,7 @@ export const VestingLockCreateAccount = (props: {
                 </div>
             )} */}
 
-            <div className={`${inModal ? 'scrollable-content' : 'elastic-form-container'}`}>
+            <div className={`${inModal ? 'scrollable-content px-4 py-2' : 'elastic-form-container'}`}>
 
                 <WizardStepSelector
                     step={currentStep}
@@ -754,7 +755,7 @@ export const VestingLockCreateAccount = (props: {
                     onValueSelected={onStepperChange}
                 />
 
-                <div className={`panel1${inModal ? ' p-3' : ''} ${currentStep === 0 ? 'show' : 'hide'}`}>
+                <div className={`panel1 ${currentStep === 0 ? 'show' : 'hide'}`}>
 
                     <h2 className="form-group-label">{t('vesting.create-account.step-one-label')}</h2>
 
@@ -895,7 +896,7 @@ export const VestingLockCreateAccount = (props: {
 
                 </div>
 
-                <div className={`panel1${inModal ? ' p-3' : ''} ${currentStep === 1 ? 'show' : 'hide'}`}>
+                <div className={`panel1 ${currentStep === 1 ? 'show' : 'hide'}`}>
 
                     <h2 className="form-group-label">{t('vesting.create-account.step-two-label')}</h2>
 
