@@ -31,7 +31,6 @@ export type VestingAccountDetailTab = "overview" | "streams" | "activity" | unde
 
 export const VestingView = () => {
   const {
-    tokenList,
     selectedToken,
     detailsPanelOpen,
     streamV2ProgramAddress,
@@ -609,6 +608,41 @@ export const VestingView = () => {
     );
   }, [selectedToken, setSelectedToken, t]);
 
+  // TODO: Add multisig to the condition when the moment comes
+  if (!publicKey || (publicKey && accountAddress && publicKey.toBase58() !== accountAddress)) {
+    return (
+      <>
+        <div className="container main-container">
+          <div className="interaction-area">
+            <div className="title-and-subtitle w-75 h-75">
+              <div className="title">
+                <IconMoneyTransfer className="mean-svg-icons" />
+                <div>{t('vesting.screen-title')}</div>
+              </div>
+              <div className="subtitle mb-3">
+                {t('vesting.screen-subtitle')}
+              </div>
+              <div className="subtitle">
+                {t('vesting.screen-subtitle2')}
+              </div>
+              <div className="w-50 h-100 p-5 text-center flex-column flex-center">
+                <div className="text-center mb-2">
+                  <WarningFilled style={{ fontSize: 48 }} className="icon fg-warning" />
+                </div>
+                {!publicKey ? (
+                  <h3>Please connect your wallet to see your vesting contracts</h3>
+                ) : (
+                  <h3>The content you are accessing is not available at this time or you don't have access permission</h3>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+        <PreFooter />
+      </>
+    );
+  }
+
   // Render the On-boarding to Mean Vesting by helping the user on creating
   // the first Vesting Contract if the user has none
   if (treasuriesLoaded && treasuryList && treasuryList.length > 0 && !loadingTreasuries ) {
@@ -637,9 +671,8 @@ export const VestingView = () => {
                     <div className="user-address">
                       <span className="fg-secondary">
                         (<Tooltip placement="bottom" title={t('assets.account-address-copy-cta')}>
-                          <span className="simplelink underline-on-hover" onClick={() => copyAddressToClipboard(publicKey.toBase58())}>
-                            {/* TODO: Use accountAddress from url */}
-                            {shortenAddress(publicKey.toBase58(), 5)}
+                          <span className="simplelink underline-on-hover" onClick={() => copyAddressToClipboard(accountAddress)}>
+                            {shortenAddress(accountAddress, 5)}
                           </span>
                         </Tooltip>)
                       </span>
@@ -649,7 +682,7 @@ export const VestingView = () => {
                           shape="circle"
                           size="middle"
                           icon={<IconExternalLink className="mean-svg-icons" style={{width: "18", height: "18"}} />}
-                          onClick={() => openLinkInNewTab(`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${publicKey.toBase58()}${getSolanaExplorerClusterParam()}`)}
+                          onClick={() => openLinkInNewTab(`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${accountAddress}${getSolanaExplorerClusterParam()}`)}
                         />
                       </span>
                     </div>
