@@ -18,6 +18,7 @@ import { TextInput } from '../TextInput';
 import { TokenDisplay } from '../TokenDisplay';
 import { TransactionFees } from '@mean-dao/msp';
 import { shortenAddress } from '../../utils/utils';
+import { MultisigInfo } from '@mean-dao/mean-multisig-sdk';
 
 export const MultisigAddAssetModal = (props: {
   connection: Connection;
@@ -26,8 +27,9 @@ export const MultisigAddAssetModal = (props: {
   isVisible: boolean;
   ownedTokenAccounts: AccountTokenParsedInfo[] | undefined;
   isBusy: boolean;
+  selectedMultisig: MultisigInfo | undefined;
 }) => {
-  const { isVisible, handleClose, handleOk, ownedTokenAccounts, isBusy } = props;
+  const { isVisible, handleClose, handleOk, ownedTokenAccounts, isBusy, selectedMultisig } = props;
   const { t } = useTranslation("common");
   const connection = useConnection();
   const { publicKey } = useWallet();
@@ -197,7 +199,7 @@ export const MultisigAddAssetModal = (props: {
   ]);
 
   const onAcceptModal = () => {
-    props.handleOk({ token: selectedToken });
+    handleOk({ token: selectedToken });
   }
 
   const isTokenAlreadyOwned = useCallback(() => {
@@ -212,6 +214,7 @@ export const MultisigAddAssetModal = (props: {
 
   const isOperationValid = (): boolean => {
     return publicKey &&
+           selectedMultisig &&
            nativeBalance &&
            nativeBalance > feeAmount &&
            selectedToken &&
@@ -354,7 +357,7 @@ export const MultisigAddAssetModal = (props: {
       <div className="px-4 pb-3">
         {/* Asset picker */}
         <div className="form-label">Select token</div>
-        <div className="well">
+        <div className={`well ${(!selectedMultisig || isBusy) ? "disabled" : ""}`}>
           <div className="flex-fixed-left">
             <div className="left">
               <span className="add-on simplelink">
@@ -393,14 +396,16 @@ export const MultisigAddAssetModal = (props: {
           type="primary"
           shape="round"
           size="large"
-          disabled={!isOperationValid() || isBusy}
+          disabled={!isOperationValid() || isBusy || !selectedMultisig}
           onClick={onAcceptModal}>
-          {isBusy && (
+          {(isBusy || !selectedMultisig) && (
               <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
           )}
-          {isBusy
-            ? "Creating asset"
-            : getCtaLabel()
+          {!selectedMultisig 
+            ? "Initializing..."
+            : isBusy
+              ? "Creating asset..."
+              : getCtaLabel()
           }
         </Button>
 

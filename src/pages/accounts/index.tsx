@@ -1181,18 +1181,18 @@ export const AccountsNewView = () => {
   const closeCreateAssetModal = useCallback((refresh = false) => {
     resetTransactionStatus();
     setIsCreateAssetModalVisible(false);
-    setShouldLoadTokens(true);
+    if (refresh) {
+      setShouldLoadTokens(true); 
+    }
   }, [resetTransactionStatus, setShouldLoadTokens]);
 
   const onAssetCreated = useCallback(() => {
-    resetTransactionStatus();
     openNotification({
       description: t('multisig.create-asset.success-message'),
       type: "success"
     });
   },[
-    t,
-    resetTransactionStatus
+    t
   ]);
 
   const onExecuteCreateAssetTx = useCallback(async (data: any) => {
@@ -1487,10 +1487,6 @@ export const AccountsNewView = () => {
             consoleOut('Send Tx to confirmation queue:', signature);
             startFetchTxSignatureInfo(signature, "confirmed", OperationType.CreateAsset);
             setIsBusy(false);
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.TransactionFinished
-            });
             onAssetCreated();
             closeCreateAssetModal(true);
           } else { setIsBusy(false); }
@@ -4758,6 +4754,7 @@ export const AccountsNewView = () => {
           isVisible={isCreateAssetModalVisible}
           ownedTokenAccounts={userOwnedTokenAccounts}
           isBusy={isBusy}
+          selectedMultisig={selectedMultisig}
         />
       )}
 
