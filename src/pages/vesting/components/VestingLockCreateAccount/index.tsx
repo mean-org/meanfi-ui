@@ -3,7 +3,7 @@ import { TokenInfo } from '@solana/spl-token-registry';
 import { useConnection } from '../../../../contexts/connection';
 import { useWallet } from '../../../../contexts/wallet';
 import { AppStateContext } from '../../../../contexts/appstate';
-import { cutNumber, fetchAccountTokens, getAmountWithSymbol, getTokenBySymbol, isValidNumber } from '../../../../utils/utils';
+import { cutNumber, fetchAccountTokens, getAmountWithSymbol, getTokenBySymbol, isValidNumber, slugify } from '../../../../utils/utils';
 import { useAccountsContext, useNativeAccount } from '../../../../contexts/accounts';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { consoleOut, disabledDate, getLockPeriodOptionLabel, isToday, isValidAddress, PaymentRateTypeOption, toUsCurrency } from '../../../../utils/ui';
@@ -28,6 +28,17 @@ import { WizardStepSelector } from '../../../../components/WizardStepSelector';
 import { isMobile } from 'react-device-detect';
 import useWindowSize from '../../../../hooks/useWindowResize';
 import { IconCaretDown } from '../../../../Icons';
+
+const VESTING_CATEGORIES: string[] = [
+    'Advisor',
+    'Development',
+    'Foundation',
+    'Investor',
+    'Marketing',
+    'Partnership',
+    'Seed round',
+    'Team',
+];
 
 export const VestingLockCreateAccount = (props: {
     inModal: boolean;
@@ -373,6 +384,13 @@ export const VestingLockCreateAccount = (props: {
         nativeBalance,
     ]);
 
+    // Select one vesting category initially
+    useEffect(() => {
+        if (!vestingCategory) {
+            setVestingCategory(VESTING_CATEGORIES[0]);
+        }
+    }, [vestingCategory]);
+
     // Keep token balance updated
     useEffect(() => {
 
@@ -503,10 +521,6 @@ export const VestingLockCreateAccount = (props: {
 
     const handleVestingLockNameChange = (e: any) => {
         setVestingLockName(e.target.value);
-    }
-
-    const handleVestingCategoryChange = (e: any) => {
-        setVestingCategory(e.target.value);
     }
 
     const getLockPeriodOptionsFromEnum = (value: any): PaymentRateTypeOption[] => {
@@ -663,6 +677,20 @@ export const VestingLockCreateAccount = (props: {
         </Menu>
     );
 
+    const vestingCategoriesMenu = (
+        <Menu>
+            {VESTING_CATEGORIES.map((item: string, index: number) => {
+                return (
+                    <Menu.Item
+                        key={`${slugify(item)}-${index}`}
+                        onClick={() => setVestingCategory(item)}>
+                        {item}
+                    </Menu.Item>
+                );
+            })}
+        </Menu>
+    );
+
     const renderTokenList = (
         <>
             {(filteredTokenList && filteredTokenList.length > 0) && (
@@ -746,7 +774,7 @@ export const VestingLockCreateAccount = (props: {
                 </div>
             )} */}
 
-            <div className={`${inModal ? 'scrollable-content px-4 py-2' : 'elastic-form-container'}`}>
+            <div className={`${inModal ? 'scrollable-content pl-5 pr-4 py-2' : 'elastic-form-container'}`}>
 
                 <WizardStepSelector
                     step={currentStep}
@@ -906,22 +934,18 @@ export const VestingLockCreateAccount = (props: {
                         tooltip_text="This vesting category helps identify the type of streams in this ctract. Some examples are seed round, investor, marketing, token lock."
                     />
                     <div className="well">
-                        <div className="flex-fixed-right">
-                            <div className="left">
-                                <input
-                                    id="payment-memo-field"
-                                    className="w-100 general-text-input"
-                                    autoComplete="on"
-                                    autoCorrect="off"
-                                    type="text"
-                                    maxLength={32}
-                                    onChange={handleVestingCategoryChange}
-                                    placeholder="Identify the type of streams in this contract"
-                                    spellCheck="false"
-                                    value={vestingCategory}
-                                />
-                            </div>
-                        </div>
+                        <Dropdown
+                            overlay={vestingCategoriesMenu}
+                            trigger={["click"]}>
+                            <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
+                                <div className="left">
+                                    <span>{vestingCategory}</span>
+                                </div>
+                                <div className="right">
+                                    <IconCaretDown className="mean-svg-icons" />
+                                </div>
+                            </span>
+                        </Dropdown>
                     </div>
 
                     {/* Vesting period */}
@@ -998,7 +1022,7 @@ export const VestingLockCreateAccount = (props: {
                         </div>
                     </div>
 
-                    {/* Vesting category */}
+                    {/* Cliff release */}
                     <FormLabelWithIconInfo
                         label="Cliff release (On commencement date)"
                         tooltip_text="This is the amount (percentage) of the funds release at the end of the cliff period of the vesting contract."

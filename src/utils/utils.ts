@@ -633,6 +633,14 @@ export const tabNameFormat = (str: string) => {
   return str.toLowerCase().split(' ').join('_');
 }
 
+export function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    // eslint-disable-next-line no-useless-escape
+    .replace(/[\~\!\@\#\$\%\^\&\*\(\)\-\_\=\+\]\[\}\{\'\"\;\\\:\?\/\>\<\.\,]+/g, '-')
+    .replace(/ +/g, '-');
+}
+
 /**
  * Flatten a multidimensional object
  *

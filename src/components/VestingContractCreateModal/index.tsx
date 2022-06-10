@@ -20,7 +20,7 @@ export const VestingContractCreateModal = (props: {
 
   return (
     <Modal
-      className="mean-modal simple-modal"
+      className="mean-modal simple-modal unpadded-content"
       title={<div className="modal-title">Create Vesting Contract</div>}
       footer={null}
       visible={isVisible}
