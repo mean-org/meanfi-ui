@@ -4584,7 +4584,7 @@ export const Streams = () => {
                   </div>
                   <div className="mt-1 mb-2 flex-row flex-center">
                     <span className="simplelink underline-on-hover">V1</span>
-                    <InfoIcon content={<p>There is a new and improved version of the streams feature.<br/>You'll be able to upgrade soon to enjoy new features.</p>} placement="leftBottom">
+                    <InfoIcon content={<p>There is a new and improved version of money streams.  To take advantage of the new features, please close this stream and create a new one.</p>} placement="leftBottom">
                       <InfoCircleOutlined />
                     </InfoIcon>
                   </div>
@@ -5135,7 +5135,7 @@ export const Streams = () => {
                   </div>
                   <div className="mt-1 mb-2 flex-row flex-center">
                     <span className="simplelink underline-on-hover">V1</span>
-                    <InfoIcon content={<p>There is a new and improved version of money streams.<br/>To take advantage of the new features, please close this stream and create a new one.</p>} placement="leftBottom">
+                    <InfoIcon content={<p>There is a new and improved version of money streams.  To take advantage of the new features, please close this stream and create a new one.</p>} placement="leftBottom">
                       <InfoCircleOutlined />
                     </InfoIcon>
                   </div>
