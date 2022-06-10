@@ -134,8 +134,8 @@ export const ResumeItem = (props: {
 
   return (
     <>
-      <Row gutter={[8, 8]} key="resume-item" className={`resume-item-container ${className} ${isLink ? "hover-list" : "align-items-end"} ${isDetailsPanel ? "pl-1" : ""}`}>
-        <Col className="resume-left-container">
+      <Row gutter={[8, 8]} key="resume-item" className={`resume-item-container ${className} ${isLink ? "hover-list" : "align-items-end"} ${isDetailsPanel ? "pl-1 pr-2" : ""}`}>
+        <Col xs={12} sm={12} md={12} lg={12} className="resume-left-container">
           {(src || img) && (
             <div className="img-container">
               {src && (
@@ -176,40 +176,39 @@ export const ResumeItem = (props: {
             )}
           </div>
         </Col>
-        <Col className={`resume-right-container ${!isDetailsPanel ? "mr-1" : "mr-2"}`}>
+        <Col className={`resume-right-container ${isDetailsPanel ? "mr-3" : "mr-1"}`}>
           <div className="resume-right-text">
-            {/* {(!isProgram) ? ( */}
-              <>
-                <div className={`resume-right-text-up`}>
-                  {approved && (
-                    <div className="thumbs-up">
-                      <span>{approved}</span>
-                      <IconThumbsUp className="mean-svg-icons" />
-                    </div>
-                  )}
-                  {rejected && (
-                    version !== 0 && (
-                    <div className="thumbs-down">
-                      <IconThumbsDown className="mean-svg-icons" />
-                      <span>{rejected}</span>
-                    </div>
-                    )
-                  )}
-                  {status >= 0 && (
-                    <div className={`badge-container ${getTransactionStatusBackgroundColor(status)}`}>
-                      <span className="badge darken small text-uppercase">{getTransactionStatusAction(status)}</span>
-                    </div>
-                  )}
-                  {amount && (
-                    <div className="rate-amount">
-                      {amount}
-                    </div>
-                  )}
-                </div>
-                {resume && (
-                  <div className="info-label mb-0">{resume}</div>
+            <>
+              <div className={`resume-right-text-up`}>
+                {approved && (
+                  <div className="thumbs-up">
+                    <span>{approved}</span>
+                    <IconThumbsUp className="mean-svg-icons" />
+                  </div>
                 )}
-              </>
+                {rejected && (
+                  version !== 0 && (
+                  <div className="thumbs-down">
+                    <IconThumbsDown className="mean-svg-icons" />
+                    <span>{rejected}</span>
+                  </div>
+                  )
+                )}
+                {status >= 0 && (
+                  <div className={`badge-container ${getTransactionStatusBackgroundColor(status)}`}>
+                    <span className="badge darken small text-uppercase">{getTransactionStatusAction(status)}</span>
+                  </div>
+                )}
+                {amount && (
+                  <div className="rate-amount">
+                    {amount}
+                  </div>
+                )}
+              </div>
+              {resume && (
+                <div className="info-label mb-0">{resume}</div>
+              )}
+            </>
           </div>
           {hasRightIcon ? (
             rightIconHasDropdown ? (

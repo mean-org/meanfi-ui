@@ -19,7 +19,7 @@ export const MoneyStreamDetails = (props: {
   const renderDetails = (
     <>
       {detailsData.map((detail: any, index: number) => (
-        <Row gutter={[8, 8]} key={index} className="mb-1">
+        <Row gutter={[8, 8]} key={index} className="mb-1 pl-1">
           <Col span={8} className="pr-1">
             <span className="info-label">{detail.label}</span>
           </Col>
@@ -47,7 +47,7 @@ export const MoneyStreamDetails = (props: {
 
   return (
     <>
-      <div className="safe-details-container">
+      <div className="">
         <Row gutter={[8, 8]} className="safe-details-resume">
           <div onClick={hideDetailsHandler} className="back-button icon-button-container">
             <IconArrowBack className="mean-svg-icons" />

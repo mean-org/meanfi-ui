@@ -2,7 +2,7 @@ import { Button, Col, Dropdown, Menu, Row } from "antd";
 import { useEffect } from "react";
 import { ResumeItem } from "../../components/ResumeItem";
 import { TabsMean } from "../../components/TabsMean";
-import { IconArrowBack, IconEllipsisVertical } from "../../Icons";
+import { IconArrowBack, IconArrowForward, IconEllipsisVertical } from "../../Icons";
 
 export const StreamingAccountView = (props: {
   stream?: any;
@@ -30,12 +30,71 @@ export const StreamingAccountView = (props: {
     </Menu>
   );
 
+  const streamingAccountstreams = [
+    {
+      title: "Hourly Payment for Yamel",
+      amount: "500.00 USDC/hour",
+      resume: "out of funds on 01/02/2022",
+      status: 1
+    },
+    {
+      title: "Monthly Payment for Yansel",
+      amount: "500.00 USDC/month",
+      resume: "streaming since 04/15/2022",
+      status: 2
+    },
+    {
+      title: "Weekly payment for Pavelsan",
+      amount: "500.00 USDC/week",
+      resume: "paused on 01/02/2022",
+      status: 0
+    },
+    {
+      title: "Hourly payment for Eydel",
+      amount: "500.00 USDC/hour",
+      resume: "starts on 6/9/2022",
+      status: 4
+    },
+  ];
+
+  const renderStreamingAccountStreams = (
+    <>
+      {streamingAccountstreams.map((stream, index) => {
+        // const onSelectStream = () => {
+        //   // Sends outgoing stream value to the parent component "Accounts"
+        //   onSendFromIncomingStreamInfo(stream);
+        // };
+
+        const title = stream.title ? stream.title : "Unknown outgoing stream";
+
+        return (
+          <div 
+            key={index}
+            // onClick={onSelectStream}
+            className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
+          >
+            <ResumeItem
+              id={index}
+              title={title}
+              subtitle={stream.amount}
+              resume={stream.resume}
+              status={stream.status}
+              hasRightIcon={true}
+              rightIcon={<IconArrowForward className="mean-svg-icons" />}
+              isLink={true}
+            />
+          </div>
+        )
+      })}
+    </>
+  );
+
   // Tabs
   const tabs = [
     {
       id: "streams",
       name: "Streams",
-      render: ""
+      render: renderStreamingAccountStreams
     },
     {
       id: "activity",
@@ -46,7 +105,7 @@ export const StreamingAccountView = (props: {
 
   return (
     <>
-      <div className="safe-details-container">
+      <div className="">
         <Row gutter={[8, 8]} className="safe-details-resume">
           <div onClick={hideDetailsHandler} className="back-button icon-button-container">
             <IconArrowBack className="mean-svg-icons" />
@@ -117,7 +176,7 @@ export const StreamingAccountView = (props: {
 
         <TabsMean
           tabs={tabs}
-          defaultTab="details"
+          defaultTab="streams"
         />
       </div>
     </>

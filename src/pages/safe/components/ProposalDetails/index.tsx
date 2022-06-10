@@ -172,7 +172,7 @@ export const ProposalDetailsView = (props: {
   // Display the instructions in the "Instructions" tab, on safe details page
   const renderInstructions = (
     proposalIxInfo ? (
-      <div className="safe-details-collapse w-100 pl-1">
+      <div className="safe-details-collapse w-100 pl-1 pr-4">
         <Row gutter={[8, 8]} className="mb-2 mt-2" key="programs">
           <Col xs={6} sm={6} md={4} lg={4} className="pr-1">
             <span className="info-label">{t('multisig.proposal-modal.instruction-program')}</span>
@@ -482,7 +482,7 @@ export const ProposalDetailsView = (props: {
           )}
         </>
         <>
-          <Col className="safe-details-right-container btn-group">
+          <Col className="safe-details-right-container btn-group mr-1">
             {selectedProposal.status !== MultisigTransactionStatus.Approved && selectedProposal.status !== MultisigTransactionStatus.Executed ? (
               <Button
                 type="default"
