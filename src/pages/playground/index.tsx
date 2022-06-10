@@ -2,7 +2,6 @@ import React, { useCallback, useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { PreFooter } from "../../components/PreFooter";
 import { AppStateContext } from "../../contexts/appstate";
-import { UserTokenAccount } from "../../models/transactions";
 import "./style.scss";
 import {
   ArrowRightOutlined,
@@ -10,6 +9,7 @@ import {
 import {
   Button,
   Divider,
+  Modal,
   Space,
   Tooltip,
 } from "antd";
@@ -21,13 +21,15 @@ import {
   isValidAddress,
 } from "../../utils/ui";
 import {
+  fetchAccountTokens,
   formatAmount,
   formatThousands,
   getAmountWithSymbol,
   getTokenAmountAndSymbolByTokenAddress,
   makeDecimal,
+  shortenAddress,
 } from "../../utils/utils";
-import { IconCopy, IconExternalLink, IconTrash, IconWallet } from "../../Icons";
+import { IconCoin, IconCopy, IconExternalLink, IconTrash, IconWallet } from "../../Icons";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { openNotification } from "../../components/Notifications";
 import { IconType } from "antd/lib/notification";
@@ -38,6 +40,12 @@ import { AddressDisplay } from "../../components/AddressDisplay";
 import { BN } from "bn.js";
 import { TokenDisplay } from "../../components/TokenDisplay";
 import { useWallet } from "../../contexts/wallet";
+import { TokenInfo } from "@solana/spl-token-registry";
+import { MAX_TOKEN_LIST_ITEMS } from "../../constants";
+import { TokenListItem } from "../../components/TokenListItem";
+import { TextInput } from "../../components/TextInput";
+import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
+import { NATIVE_SOL } from "../../utils/tokens";
 
 type TabOption = "first-tab" | "second-tab" | "demo-notifications" | "misc-tab" | undefined;
 
@@ -55,209 +63,35 @@ export const PlaygroundView = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const connection = useConnection();
-  const { publicKey } = useWallet();
+  const { publicKey, connected } = useWallet();
   const [searchParams, setSearchParams] = useSearchParams();
   const {
+    tokenList,
     userTokens,
     splTokenList,
     recipientAddress,
+    getTokenPriceBySymbol,
     setRecipientAddress,
+    setEffectiveRate,
   } = useContext(AppStateContext);
-  const [selectedMint, setSelectedMint] = useState<UserTokenAccount | undefined>(undefined);
+  const { account } = useNativeAccount();
+  const accounts = useAccountsContext();
+  const [userBalances, setUserBalances] = useState<any>();
+  const [previousBalance, setPreviousBalance] = useState(account?.lamports);
+  const [nativeBalance, setNativeBalance] = useState(0);
   const [currentTab, setCurrentTab] = useState<TabOption>(undefined);
   const [parsedAccountInfo, setParsedAccountInfo] = useState<AccountInfo<ParsedAccountData> | null>(null);
   const [accountInfo, setAccountInfo] = useState<AccountInfo<Buffer> | null>(null);
   const [accountNotFound, setAccountNotFound] = useState<string>('');
+  const [tokenFilter, setTokenFilter] = useState("");
+  const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
+  const [selectedList, setSelectedList] = useState<TokenInfo[]>([]);
+  const [selectedToken, setSelectedToken] = useState<TokenInfo | undefined>(undefined);
+  const [canFetchTokenAccounts, setCanFetchTokenAccounts] = useState<boolean>(splTokenList ? true : false);
 
-  // const getTopJupiterTokensByVolume = useCallback(() => {
-  //   fetch('https://cache.jup.ag/stats/month')
-  //     .then(res => {
-  //       if (res.status >= 400) {
-  //         throw new Error("Bad response from server");
-  //       }
-  //       return res.json();
-  //     })
-  //     .then(data => {
-  //       // Only get tokens with volume for more than 1000 USD a month
-  //       const tokens = data.lastXTopTokens.filter((s: any) => s.amount >= 1000);
-  //       const topTokens = Array<any>();
-  //       if (tokens && tokens.length > 0) {
-  //         tokens.forEach((element: any) => {
-  //           const token = splTokenList.find(t => t.symbol === element.symbol);
-  //           if (token) {
-  //             topTokens.push({
-  //               name: token.name,
-  //               symbol: token.symbol,
-  //               address: token.address,
-  //               decimals: token.decimals
-  //             });
-  //           }
-  //         });
-  //         consoleOut('Tokens with volume over 1000 USD:', tokens.length, 'crimson');
-  //         consoleOut('Added to list of top tokens:', topTokens.length, 'crimson');
-  //         consoleOut('topTokens:', topTokens, 'crimson');
-  //       }
-  //     })
-  //     .catch(err => {
-  //       console.error(err);
-  //     });
-  // }, [splTokenList]);
-
-  const renderTable = () => {
-    return CRYPTO_VALUES.map((value: number, index: number) => {
-      return (
-        <div className="item-list-row" key={index}>
-          <div className="std-table-cell responsive-cell text-monospace text-right pr-2">
-            {selectedMint
-              ? getAmountWithSymbol(
-                value,
-                selectedMint.address
-              )
-              : ""}
-          </div>
-          <div className="std-table-cell responsive-cell text-monospace text-right pr-2">
-            {selectedMint
-              ? getTokenAmountAndSymbolByTokenAddress(
-                value,
-                selectedMint.address
-              )
-              : ""}
-          </div>
-          <div className="std-table-cell responsive-cell text-monospace text-right">
-            {selectedMint
-              ? `${formatThousands(value, selectedMint.decimals)} ${selectedMint.symbol
-              }`
-              : ""}
-          </div>
-        </div>
-      );
-    });
-  };
-
-  const renderKformatters = () => {
-    return NUMBER_OF_ITEMS.map((value: number, index: number) => {
-      return (
-        <div className="item-list-row" key={`${index}`}>
-          <div className="std-table-cell responsive-cell text-monospace">
-            <span className="font-size-75 font-bold text-shadow">{formatThousands(value) || 0}</span>
-          </div>
-          <div className="std-table-cell responsive-cell text-monospace">
-            <div className="table-cell-flex-content">
-              <div className="icon-cell">
-                <div className="token-icon">
-                    <div className="streams-count">
-                      <span className="font-size-75 font-bold text-shadow">{formatAmount(value, 0, true) || 0}</span>
-                    </div>
-                  </div>
-              </div>
-            </div>
-          </div>
-          <div className="std-table-cell responsive-cell text-monospace">
-            <div className="table-cell-flex-content">
-              <div className="icon-cell">
-                <div className="token-icon">
-                    <div className="streams-count">
-                      <span className="font-size-75 font-bold text-shadow">{kFormatter(value) || 0}</span>
-                    </div>
-                  </div>
-              </div>
-            </div>
-          </div>
-          <div className="std-table-cell responsive-cell text-monospace">
-            <div className="table-cell-flex-content">
-              <div className="icon-cell">
-                <div className="token-icon">
-                    <div className="streams-count">
-                      <span className="font-size-75 font-bold text-shadow">{intToString(value, 1) || 0}</span>
-                    </div>
-                  </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      );
-    });
-  };
-
-  const notificationTwo = () => {
-    consoleOut("Notification is closing...");
-    openNotification({
-      type: "info",
-      description: t(
-        "treasuries.create-treasury.multisig-treasury-created-instructions"
-      ),
-      duration: null,
-    });
-    navigate("/custody");
-  };
-
-  const sequentialMessagesAndNavigate = () => {
-    openNotification({
-      type: "info",
-      description: t(
-        "treasuries.create-treasury.multisig-treasury-created-info"
-      ),
-      handleClose: notificationTwo,
-    });
-  };
-
-  const stackedMessagesAndNavigate = async () => {
-    openNotification({
-      type: "info",
-      description: t(
-        "treasuries.create-treasury.multisig-treasury-created-info"
-      ),
-      duration: 10,
-    });
-    await delay(1500);
-    openNotification({
-      type: "info",
-      description: t(
-        "treasuries.create-treasury.multisig-treasury-created-instructions"
-      ),
-      duration: null,
-    });
-    navigate("/custody");
-  };
-
-  const reuseNotification = (key?: string) => {
-    openNotification({
-      key,
-      type: "info",
-      title: 'Mission assigned',
-      duration: 0,
-      description: <span>Your objective is to wait for 5 seconds</span>
-    });
-    setTimeout(() => {
-      openNotification({
-        key,
-        type: "success",
-        title: 'Mission updated',
-        duration: 3,
-        description: <span>Objective completed!</span>,
-      });
-    }, 5000);
-  };
-
-  const showNotificationByType = (type: IconType) => {
-    openNotification({
-      type,
-      title: 'Notification Title',
-      duration: 0,
-      description: <span>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Natus, ullam perspiciatis accusamus, sunt ipsum asperiores similique cupiditate autem veniam explicabo earum voluptates!</span>
-    });
-  };
-
-  const interestingCase = () => {
-    openNotification({
-      type: "info",
-      description: t("treasuries.create-treasury.multisig-treasury-created-info"),
-      duration: 0
-    });
-  };
 
   ///////////////
-  // Callbacks //
+  //  Actions  //
   ///////////////
 
   const navigateToTab = useCallback((tab: TabOption) => {
@@ -352,6 +186,196 @@ export const PlaygroundView = () => {
     }
   }
 
+  const onScanAssetAddress = (asset: TokenInfo) => {
+    if (asset) {
+      setRecipientAddress(asset.address);
+      readAccountInfo(asset.address);
+    }
+  }
+
+  const autoFocusInput = useCallback(() => {
+    const input = document.getElementById("token-search-otp");
+    if (input) {
+      setTimeout(() => {
+        input.focus();
+      }, 100);
+    }
+  }, []);
+
+  // Token selection modal
+  const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
+
+  const showTokenSelector = useCallback(() => {
+    setTokenSelectorModalVisibility(true);
+    autoFocusInput();
+  }, [autoFocusInput]);
+
+  const onCloseTokenSelector = useCallback(() => {
+    setTokenSelectorModalVisibility(false);
+    if (tokenFilter && !isValidAddress(tokenFilter)) {
+      setTokenFilter('');
+    }
+  }, [tokenFilter]);
+
+  // Updates the token list everytime is filtered
+  const updateTokenListByFilter = useCallback((searchString: string) => {
+
+    if (!selectedList) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+
+      const filter = (t: any) => {
+        return (
+          t.symbol.toLowerCase().includes(searchString.toLowerCase()) ||
+          t.name.toLowerCase().includes(searchString.toLowerCase()) ||
+          t.address.toLowerCase().includes(searchString.toLowerCase())
+        );
+      };
+
+      const showFromList = !searchString
+        ? selectedList
+        : selectedList.filter((t: any) => filter(t));
+
+      setFilteredTokenList(showFromList);
+
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [selectedList]);
+
+  const onInputCleared = useCallback(() => {
+    setTokenFilter('');
+    updateTokenListByFilter('');
+  }, [
+    updateTokenListByFilter
+  ]);
+
+  const onTokenSearchInputChange = useCallback((e: any) => {
+
+    const newValue = e.target.value;
+    setTokenFilter(newValue);
+    updateTokenListByFilter(newValue);
+
+  }, [
+    updateTokenListByFilter
+  ]);
+
+  // const getTopJupiterTokensByVolume = useCallback(() => {
+  //   fetch('https://cache.jup.ag/stats/month')
+  //     .then(res => {
+  //       if (res.status >= 400) {
+  //         throw new Error("Bad response from server");
+  //       }
+  //       return res.json();
+  //     })
+  //     .then(data => {
+  //       // Only get tokens with volume for more than 1000 USD a month
+  //       const tokens = data.lastXTopTokens.filter((s: any) => s.amount >= 1000);
+  //       const topTokens = Array<any>();
+  //       if (tokens && tokens.length > 0) {
+  //         tokens.forEach((element: any) => {
+  //           const token = splTokenList.find(t => t.symbol === element.symbol);
+  //           if (token) {
+  //             topTokens.push({
+  //               name: token.name,
+  //               symbol: token.symbol,
+  //               address: token.address,
+  //               decimals: token.decimals
+  //             });
+  //           }
+  //         });
+  //         consoleOut('Tokens with volume over 1000 USD:', tokens.length, 'crimson');
+  //         consoleOut('Added to list of top tokens:', topTokens.length, 'crimson');
+  //         consoleOut('topTokens:', topTokens, 'crimson');
+  //       }
+  //     })
+  //     .catch(err => {
+  //       console.error(err);
+  //     });
+  // }, [splTokenList]);
+
+  const notificationTwo = () => {
+    consoleOut("Notification is closing...");
+    openNotification({
+      type: "info",
+      description: t(
+        "treasuries.create-treasury.multisig-treasury-created-instructions"
+      ),
+      duration: null,
+    });
+    navigate("/custody");
+  };
+
+  const sequentialMessagesAndNavigate = () => {
+    openNotification({
+      type: "info",
+      description: t(
+        "treasuries.create-treasury.multisig-treasury-created-info"
+      ),
+      handleClose: notificationTwo,
+    });
+  };
+
+  const stackedMessagesAndNavigate = async () => {
+    openNotification({
+      type: "info",
+      description: t(
+        "treasuries.create-treasury.multisig-treasury-created-info"
+      ),
+      duration: 10,
+    });
+    await delay(1500);
+    openNotification({
+      type: "info",
+      description: t(
+        "treasuries.create-treasury.multisig-treasury-created-instructions"
+      ),
+      duration: null,
+    });
+    navigate("/custody");
+  };
+
+  const reuseNotification = (key?: string) => {
+    openNotification({
+      key,
+      type: "info",
+      title: 'Mission assigned',
+      duration: 0,
+      description: <span>Your objective is to wait for 5 seconds</span>
+    });
+    setTimeout(() => {
+      openNotification({
+        key,
+        type: "success",
+        title: 'Mission updated',
+        duration: 3,
+        description: <span>Objective completed!</span>,
+      });
+    }, 5000);
+  };
+
+  const showNotificationByType = (type: IconType) => {
+    openNotification({
+      type,
+      title: 'Notification Title',
+      duration: 0,
+      description: <span>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Natus, ullam perspiciatis accusamus, sunt ipsum asperiores similique cupiditate autem veniam explicabo earum voluptates!</span>
+    });
+  };
+
+  const interestingCase = () => {
+    openNotification({
+      type: "info",
+      description: t("treasuries.create-treasury.multisig-treasury-created-info"),
+      duration: 0
+    });
+  };
+
   /////////////////////
   // Data management //
   /////////////////////
@@ -386,16 +410,224 @@ export const PlaygroundView = () => {
     }
   }, [location.search, searchParams, setSearchParams]);
 
-  // Select a default mint
+  // Keep account balance updated
   useEffect(() => {
-    if (!selectedMint) {
-      setSelectedMint(userTokens.find((t) => t.symbol === "USDC"));
+
+    const getAccountBalance = (): number => {
+      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
     }
-  }, [selectedMint, userTokens]);
+
+    if (account?.lamports !== previousBalance || !nativeBalance) {
+      setNativeBalance(getAccountBalance());
+      // Update previous balance
+      setPreviousBalance(account?.lamports);
+    }
+  }, [
+    account,
+    nativeBalance,
+    previousBalance,
+  ]);
+
+  // Automatically update all token balances and rebuild token list
+  useEffect(() => {
+
+    if (!connection) {
+      console.error('No connection');
+      return;
+    }
+
+    if (!publicKey || !userTokens || !tokenList || !canFetchTokenAccounts) {
+      return;
+    }
+
+    setTimeout(() => {
+      setCanFetchTokenAccounts(false);
+    });
+
+    const balancesMap: any = {};
+
+    fetchAccountTokens(connection, publicKey)
+      .then(accTks => {
+        if (accTks) {
+
+          const meanTokensCopy = new Array<TokenInfo>();
+          const intersectedList = new Array<TokenInfo>();
+          const userTokensCopy = JSON.parse(JSON.stringify(userTokens)) as TokenInfo[];
+
+          // Build meanTokensCopy including the MeanFi pinned tokens
+          userTokensCopy.forEach(item => {
+            meanTokensCopy.push(item);
+          });
+
+          // Now add all other items but excluding those in userTokens
+          splTokenList.forEach(item => {
+            if (!userTokens.includes(item)) {
+              meanTokensCopy.push(item);
+            }
+          });
+
+          // Create a list containing tokens for the user owned token accounts
+          accTks.forEach(item => {
+            balancesMap[item.parsedInfo.mint] = item.parsedInfo.tokenAmount.uiAmount || 0;
+            const isTokenAccountInTheList = intersectedList.some(t => t.address === item.parsedInfo.mint);
+            const tokenFromMeanTokensCopy = meanTokensCopy.find(t => t.address === item.parsedInfo.mint);
+            if (tokenFromMeanTokensCopy && !isTokenAccountInTheList) {
+              intersectedList.push(tokenFromMeanTokensCopy);
+            }
+          });
+
+          // Finally add all owned token accounts as custom tokens
+          accTks.forEach(item => {
+            if (!intersectedList.some(t => t.address === item.parsedInfo.mint)) {
+              const customToken: TokenInfo = {
+                address: item.parsedInfo.mint,
+                chainId: 0,
+                decimals: item.parsedInfo.tokenAmount.decimals,
+                name: 'Custom account',
+                symbol: shortenAddress(item.parsedInfo.mint),
+                tags: undefined,
+                logoURI: undefined,
+              };
+              intersectedList.push(customToken);
+            }
+          });
+
+          intersectedList.unshift(userTokensCopy[0]);
+          balancesMap[userTokensCopy[0].address] = nativeBalance;
+          intersectedList.sort((a, b) => {
+            if ((balancesMap[a.address] || 0) < (balancesMap[b.address] || 0)) {
+              return 1;
+            } else if ((balancesMap[a.address] || 0) > (balancesMap[b.address] || 0)) {
+              return -1;
+            }
+            return 0;
+          });
+
+          setSelectedList(intersectedList);
+          consoleOut('intersectedList:', intersectedList, 'orange');
+          if (!selectedToken) { setSelectedToken(intersectedList[0]); }
+
+        } else {
+          for (const t of tokenList) {
+            balancesMap[t.address] = 0;
+          }
+          // set the list to the userTokens list
+          setSelectedList(tokenList);
+          if (!selectedToken) { setSelectedToken(tokenList[0]); }
+        }
+      })
+      .catch(error => {
+        console.error(error);
+        for (const t of tokenList) {
+          balancesMap[t.address] = 0;
+        }
+        setSelectedList(tokenList);
+        if (!selectedToken) { setSelectedToken(tokenList[0]); }
+      })
+      .finally(() => setUserBalances(balancesMap));
+
+  }, [
+    publicKey,
+    tokenList,
+    userTokens,
+    connection,
+    splTokenList,
+    nativeBalance,
+    selectedToken,
+    canFetchTokenAccounts,
+  ]);
+
+  // Reset results when the filter is cleared
+  useEffect(() => {
+    if (tokenList && tokenList.length && filteredTokenList.length === 0 && !tokenFilter) {
+      updateTokenListByFilter(tokenFilter);
+    }
+  }, [
+    tokenList,
+    tokenFilter,
+    filteredTokenList,
+    updateTokenListByFilter
+  ]);
 
   ///////////////
   // Rendering //
   ///////////////
+
+  const renderTable = () => {
+    return CRYPTO_VALUES.map((value: number, index: number) => {
+      return (
+        <div className="item-list-row" key={index}>
+          <div className="std-table-cell responsive-cell text-monospace text-right pr-2">
+            {selectedToken
+              ? getAmountWithSymbol(
+                value,
+                selectedToken.address
+              )
+              : ""}
+          </div>
+          <div className="std-table-cell responsive-cell text-monospace text-right pr-2">
+            {selectedToken
+              ? getTokenAmountAndSymbolByTokenAddress(
+                value,
+                selectedToken.address
+              )
+              : ""}
+          </div>
+          <div className="std-table-cell responsive-cell text-monospace text-right">
+            {selectedToken
+              ? `${formatThousands(value, selectedToken.decimals)} ${selectedToken.symbol
+              }`
+              : ""}
+          </div>
+        </div>
+      );
+    });
+  };
+
+  const renderKformatters = () => {
+    return NUMBER_OF_ITEMS.map((value: number, index: number) => {
+      return (
+        <div className="item-list-row" key={`${index}`}>
+          <div className="std-table-cell responsive-cell text-monospace">
+            <span className="font-size-75 font-bold text-shadow">{formatThousands(value) || 0}</span>
+          </div>
+          <div className="std-table-cell responsive-cell text-monospace">
+            <div className="table-cell-flex-content">
+              <div className="icon-cell">
+                <div className="token-icon">
+                    <div className="streams-count">
+                      <span className="font-size-75 font-bold text-shadow">{formatAmount(value, 0, true) || 0}</span>
+                    </div>
+                  </div>
+              </div>
+            </div>
+          </div>
+          <div className="std-table-cell responsive-cell text-monospace">
+            <div className="table-cell-flex-content">
+              <div className="icon-cell">
+                <div className="token-icon">
+                    <div className="streams-count">
+                      <span className="font-size-75 font-bold text-shadow">{kFormatter(value) || 0}</span>
+                    </div>
+                  </div>
+              </div>
+            </div>
+          </div>
+          <div className="std-table-cell responsive-cell text-monospace">
+            <div className="table-cell-flex-content">
+              <div className="icon-cell">
+                <div className="token-icon">
+                    <div className="streams-count">
+                      <span className="font-size-75 font-bold text-shadow">{intToString(value, 1) || 0}</span>
+                    </div>
+                  </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    });
+  };
 
   const renderDemoNumberFormatting = (
     <>
@@ -498,11 +730,18 @@ export const PlaygroundView = () => {
           </div>
           <div className="right">
             {publicKey ? (
-              <Tooltip title="Inspect my wallet address" trigger="hover">
-                <span className="flat-button change-button" onClick={onScanMyAddress}>
-                  <IconWallet className="mean-svg-icons" />
-                </span>
-              </Tooltip>
+              <>
+                <Tooltip title="Inspect my wallet address" trigger="hover">
+                  <span className="flat-button change-button" onClick={onScanMyAddress}>
+                    <IconWallet className="mean-svg-icons" />
+                  </span>
+                </Tooltip>
+                <Tooltip title="Pick one of my assets" trigger="hover">
+                  <span className="flat-button change-button" onClick={showTokenSelector}>
+                    <IconCoin className="mean-svg-icons" />
+                  </span>
+                </Tooltip>
+              </>
             ) : (
               <span>&nbsp;</span>
             )}
@@ -672,7 +911,7 @@ export const PlaygroundView = () => {
     <>
       <div className="tabset-heading">Notify and navigate</div>
       <div className="text-left mb-3">
-        <Space>
+        <Space wrap={true}>
           <span
             className="flat-button stroked"
             onClick={() => sequentialMessagesAndNavigate()}>
@@ -704,7 +943,7 @@ export const PlaygroundView = () => {
 
       <div className="tabset-heading">Test Standalone Notifications</div>
       <div className="text-left mb-3">
-        <Space>
+        <Space wrap={true}>
           <span
             className="flat-button stroked"
             onClick={() => showNotificationByType("info")}>
@@ -737,78 +976,64 @@ export const PlaygroundView = () => {
       <div className="tabset-heading">Miscelaneous features</div>
 
       <h3>Primary, Secondary and Terciary buttons</h3>
-      <div className="row mb-2">
-        <div className="col">
+      <div className="mb-2">
+        <Space wrap={true} size="middle">
           <Button
             type="primary"
             shape="round"
             size="small"
-            className="thin-stroke"
-          >
+            className="thin-stroke">
             Primary
           </Button>
-        </div>
-        <div className="col">
           <Button
             type="default"
             shape="round"
             size="small"
-            className="thin-stroke"
-          >
+            className="thin-stroke">
             Default
           </Button>
-        </div>
-        <div className="col">
           <Button
             type="ghost"
             shape="round"
             size="small"
-            className="thin-stroke"
-          >
+            className="thin-stroke">
             Ghost
           </Button>
-        </div>
+        </Space>
       </div>
       <h3>Primary, Secondary and Terciary buttons disabled</h3>
-      <div className="row mb-2">
-        <div className="col">
+      <div className="mb-2">
+        <Space wrap={true} size="middle">
           <Button
             type="primary"
             shape="round"
             size="small"
             className="thin-stroke"
-            disabled={true}
-          >
+            disabled={true}>
             Primary disabled
           </Button>
-        </div>
-        <div className="col">
           <Button
             type="default"
             shape="round"
             size="small"
             className="thin-stroke"
-            disabled={true}
-          >
+            disabled={true}>
             Default disabled
           </Button>
-        </div>
-        <div className="col">
           <Button
             type="ghost"
             shape="round"
             size="small"
             className="thin-stroke"
-            disabled={true}
-          >
+            disabled={true}>
             Ghost disabled
           </Button>
-        </div>
+        </Space>
       </div>
 
       <h3>Animated buttons</h3>
-      <div className="row mb-2">
-        <div className="col">
+      <div className="mb-2">
+        <Space wrap={true} size="middle">
           <button className="animated-button-red">
             <span></span>
             <span></span>
@@ -816,8 +1041,6 @@ export const PlaygroundView = () => {
             <span></span>
             Red
           </button>
-        </div>
-        <div className="col">
           <button className="animated-button-green">
             <span></span>
             <span></span>
@@ -825,8 +1048,6 @@ export const PlaygroundView = () => {
             <span></span>
             Green
           </button>
-        </div>
-        <div className="col">
           <button className="animated-button-blue">
             <span></span>
             <span></span>
@@ -834,8 +1055,6 @@ export const PlaygroundView = () => {
             <span></span>
             Blue
           </button>
-        </div>
-        <div className="col">
           <button className="animated-button-gold">
             <span></span>
             <span></span>
@@ -843,12 +1062,12 @@ export const PlaygroundView = () => {
             <span></span>
             Gold
           </button>
-        </div>
+        </Space>
       </div>
 
       <h3>Flat buttons</h3>
       <div className="mb-2">
-        <Space>
+        <Space wrap={true} size="middle">
           <span className="flat-button tiny">
             <IconCopy className="mean-svg-icons" />
             <span className="ml-1">copy item</span>
@@ -866,7 +1085,7 @@ export const PlaygroundView = () => {
 
       <h3>Flat stroked buttons</h3>
       <div className="mb-2">
-        <Space>
+        <Space wrap={true} size="middle">
           <span className="flat-button tiny stroked">
             <IconCopy className="mean-svg-icons" />
             <span className="mx-1">copy item</span>
@@ -927,6 +1146,87 @@ export const PlaygroundView = () => {
     </>
   );
 
+  const renderTokenList = (
+    <>
+      {(filteredTokenList && filteredTokenList.length > 0) && (
+        filteredTokenList.map((t, index) => {
+          const onClick = function () {
+            setSelectedToken(t);
+
+            setTimeout(() => {
+              onScanAssetAddress(t);
+            }, 100);
+
+            consoleOut("token selected:", t.symbol, 'blue');
+            setEffectiveRate(getTokenPriceBySymbol(t.symbol));
+            onCloseTokenSelector();
+          };
+
+          if (index < MAX_TOKEN_LIST_ITEMS) {
+            if (t.address === NATIVE_SOL.address) {
+              return null;
+            }
+            const balance = connected && userBalances && userBalances[t.address] > 0 ? userBalances[t.address] : 0;
+            return (
+              <TokenListItem
+                key={t.address}
+                name={t.name || 'Unknown'}
+                mintAddress={t.address}
+                token={t}
+                className={balance ? selectedToken && selectedToken.address === t.address ? "selected" : "simplelink" : "hidden"}
+                onClick={onClick}
+                balance={balance}
+                showZeroBalances={true}
+              />
+            );
+          } else {
+            return null;
+          }
+        })
+      )}
+    </>
+  );
+
+  const renderTokenSelectorInner = (
+    <div className="token-selector-wrapper">
+      <div className="token-search-wrapper">
+        <TextInput
+          id="token-search-otp"
+          value={tokenFilter}
+          allowClear={true}
+          extraClass="mb-2"
+          onInputClear={onInputCleared}
+          placeholder={t('token-selector.search-input-placeholder')}
+          onInputChange={onTokenSearchInputChange} />
+      </div>
+      <div className="token-list">
+        {filteredTokenList.length > 0 && renderTokenList}
+        {(tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0) && (
+          <TokenListItem
+            key={tokenFilter}
+            name="Unknown"
+            mintAddress={tokenFilter}
+            className={selectedToken && selectedToken.address === tokenFilter ? "selected" : "simplelink"}
+            onClick={() => {
+              const uknwnToken: TokenInfo = {
+                address: tokenFilter,
+                name: 'Unknown',
+                chainId: 101,
+                decimals: 6,
+                symbol: '',
+              };
+              setSelectedToken(uknwnToken);
+              consoleOut("token selected:", uknwnToken, 'blue');
+              setEffectiveRate(0);
+              onCloseTokenSelector();
+            }}
+            balance={connected && userBalances && userBalances[tokenFilter] > 0 ? userBalances[tokenFilter] : 0}
+          />
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <>
 
@@ -940,6 +1240,19 @@ export const PlaygroundView = () => {
       </section>
 
       <PreFooter />
+
+      {/* Token selection modal */}
+      {isTokenSelectorModalVisible && (
+        <Modal
+          className="mean-modal unpadded-content"
+          visible={isTokenSelectorModalVisible}
+          title={<div className="modal-title">{t('token-selector.modal-title')}</div>}
+          onCancel={onCloseTokenSelector}
+          width={450}
+          footer={null}>
+          {renderTokenSelectorInner}
+        </Modal>
+      )}
     </>
   );
 };

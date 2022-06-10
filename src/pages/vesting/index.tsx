@@ -278,23 +278,22 @@ export const VestingView = () => {
     }
   }, [width]);
 
-  // Auto select a token
-  useEffect(() => {
+  // // Auto select a token
+  // useEffect(() => {
 
-    if (tokenList && !selectedToken) {
-      setSelectedToken(tokenList.find(t => t.symbol === 'MEAN'));
-    }
+  //   if (tokenList && !selectedToken) {
+  //     setSelectedToken(tokenList.find(t => t.symbol === 'MEAN'));
+  //   }
 
-    return () => { };
-  }, [
-    tokenList,
-    selectedToken,
-    setSelectedToken
-  ]);
+  //   return () => { };
+  // }, [
+  //   tokenList,
+  //   selectedToken,
+  //   setSelectedToken
+  // ]);
 
   // Build CTAs
   useEffect(() => {
-    if (!selectedToken) { return; }
 
     const numMaxCtas = isXsDevice ? 2 : 5;
     const actions: MetaInfoCta[] = [];
@@ -370,7 +369,6 @@ export const VestingView = () => {
 
   }, [
     isXsDevice,
-    selectedToken,
     isInspectedAccountTheConnectedWallet,
   ]);
 
