@@ -142,9 +142,11 @@ export enum MetaInfoCtaAction {
     CloseAccount = 12,
     Share = 13,
     Close = 14,
-    VestingContractAddFunds = 20,
-    VestingContractCreateStreamOnce = 21,
-    VestingContractCreateStreamBulk = 22,
-    VestingContractClose = 23,
-    VestingContractViewSolBalance = 24
+    VestingContractCreateStreamOnce = 20,
+    VestingContractCreateStreamBulk = 21,
+    VestingContractAddFunds = 21,
+    VestingContractViewSolBalance = 22,
+    VestingContractWithdrawFunds = 23,
+    VestingContractRefreshAccount = 24,
+    VestingContractClose = 25,
 }

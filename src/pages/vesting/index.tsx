@@ -281,20 +281,6 @@ export const VestingView = () => {
     }
   }, [width]);
 
-  // // Auto select a token
-  // useEffect(() => {
-
-  //   if (tokenList && !selectedToken) {
-  //     setSelectedToken(tokenList.find(t => t.symbol === 'MEAN'));
-  //   }
-
-  //   return () => { };
-  // }, [
-  //   tokenList,
-  //   selectedToken,
-  //   setSelectedToken
-  // ]);
-
   // Build CTAs
   useEffect(() => {
 
@@ -339,20 +325,7 @@ export const VestingView = () => {
       tooltip: '',
       callBack: () => { }
     });
-    ctaItems++;
-
-    // Close Contract
-    actions.push({
-      action: MetaInfoCtaAction.VestingContractClose,
-      caption: 'Close Contract',
-      isVisible: true,
-      uiComponentType: 'menuitem',
-      disabled: !isInspectedAccountTheConnectedWallet(),
-      uiComponentId: `menuitem-${MetaInfoCtaAction.VestingContractClose}`,
-      tooltip: '',
-      callBack: () => { }
-    });
-    ctaItems++;
+    ctaItems++;   // Last increment. It seems all other items will go inside the vellipsis menu anyways
 
     // View SOL Balance
     actions.push({
@@ -362,6 +335,42 @@ export const VestingView = () => {
       uiComponentType: 'menuitem',
       disabled: !isInspectedAccountTheConnectedWallet(),
       uiComponentId: `menuitem-${MetaInfoCtaAction.VestingContractViewSolBalance}`,
+      tooltip: '',
+      callBack: () => { }
+    });
+
+    // View SOL Balance
+    actions.push({
+      action: MetaInfoCtaAction.VestingContractViewSolBalance,
+      caption: 'View SOL Balance',
+      isVisible: true,
+      uiComponentType: 'menuitem',
+      disabled: !isInspectedAccountTheConnectedWallet(),
+      uiComponentId: `menuitem-${MetaInfoCtaAction.VestingContractViewSolBalance}`,
+      tooltip: '',
+      callBack: () => { }
+    });
+
+    // Withdraw funds
+    actions.push({
+      action: MetaInfoCtaAction.VestingContractWithdrawFunds,
+      caption: 'Withdraw funds',
+      isVisible: true,
+      uiComponentType: 'menuitem',
+      disabled: !isInspectedAccountTheConnectedWallet(),
+      uiComponentId: `menuitem-${MetaInfoCtaAction.VestingContractWithdrawFunds}`,
+      tooltip: '',
+      callBack: () => { }
+    });
+
+    // Close Contract
+    actions.push({
+      action: MetaInfoCtaAction.VestingContractClose,
+      caption: 'Close Contract',
+      isVisible: true,
+      uiComponentType: 'menuitem',
+      disabled: !isInspectedAccountTheConnectedWallet(),
+      uiComponentId: `menuitem-${MetaInfoCtaAction.VestingContractClose}`,
       tooltip: '',
       callBack: () => { }
     });
