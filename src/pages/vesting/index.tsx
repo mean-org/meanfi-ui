@@ -24,6 +24,7 @@ import { MetaInfoCtaAction } from '../../models/enums';
 import { VestingLockCreateAccount } from './components/VestingLockCreateAccount';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { VestingContractCreateModal } from '../../components/VestingContractCreateModal';
+import { VestingContractOverview } from './components/VestingContractOverview';
 
 const { TabPane } = Tabs;
 export const VESTING_ROUTE_BASE_PATH = '/vesting';
@@ -543,7 +544,9 @@ export const VestingView = () => {
     return (
       <Tabs activeKey={accountDetailTab} onChange={onTabChange} className="neutral">
         <TabPane tab="Overview" key={"overview"}>
-          <p>Tab 1</p>
+          <VestingContractOverview
+            vestingContract={selectedVestingContract}
+          />
         </TabPane>
         <TabPane tab="Streams" key={"streams"}>
           <p>Tab 2</p>
