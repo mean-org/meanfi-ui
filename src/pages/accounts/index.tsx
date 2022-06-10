@@ -88,8 +88,10 @@ import { MultisigVaultDeleteModal } from '../../components/MultisigVaultDeleteMo
 import { useNativeAccount } from '../../contexts/accounts';
 import { MultisigCreateAssetModal } from '../../components/MultisigCreateAssetModal';
 import { STREAMS_ROUTE_BASE_PATH } from '../../views/Streams';
-import { MoneyStreamDetailsView } from '../../views/MoneyStreamDetails';
 import { MoneyStreamsInfoView } from '../../views/MoneyStreamsInfo';
+import { MoneyStreamsIncomingView } from '../../views/MoneyStreamsIncoming';
+import { MoneyStreamsOutgoingView } from '../../views/MoneyStreamsOutgoing';
+import { StreamingAccountView } from '../../views/StreamingAccount';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export type InspectedAccountType = "multisig" | "streaming-account" | undefined;
@@ -4348,16 +4350,35 @@ export const AccountsNewView = () => {
     }
   ];
 
-  const [isStreamDetails, setIsStreamDetails] = useState(false);
+  const [isStreamIncomingDetails, setIsStreamIncomingDetails] = useState(false);
+  const [isStreamOutgoingDetails, setIsStreamOutgoingDetails] = useState(false);
+  const [isStreamingAccountDetails, setIsStreamingAccountDetails] = useState(false);
   const [selectedStream, setSelectedStream] = useState<any>();
 
-  const goToStreamDetailsHandler = (stream: any) => {
+  const goToStreamIncomingDetailsHandler = (stream: any) => {
     setSelectedStream(stream);
-    setIsStreamDetails(true);
+    setIsStreamIncomingDetails(true);
   }
 
-  const returnFromStreamDetailsHandler = () => {
-    setIsStreamDetails(false);
+  const goToStreamOutgoingDetailsHandler = (stream: any) => {
+    setSelectedStream(stream);
+    setIsStreamOutgoingDetails(true);
+  }
+
+  const goToStreamingAccountDetailsHandler = () => {
+    setIsStreamingAccountDetails(true);
+  }
+
+  const returnFromIncomingStreamDetailsHandler = () => {
+    setIsStreamIncomingDetails(false);
+  }
+
+  const returnFromOutgoingStreamDetailsHandler = () => {
+    setIsStreamOutgoingDetails(false);
+  }
+
+  const returnFromStreamingAccountDetailsHandler = () => {
+    setIsStreamingAccountDetails(false);
   }
 
   return (
@@ -4622,17 +4643,28 @@ export const AccountsNewView = () => {
                           </>
                         ) : (
                           <div className="scroll-wrapper vertical-scroll">
-                            {!isStreamDetails ? (
+                            {(!isStreamIncomingDetails && !isStreamOutgoingDetails && !isStreamingAccountDetails) ? (
                               <MoneyStreamsInfoView
-                                onSendFromStreamInfo={goToStreamDetailsHandler}
+                                onSendFromIncomingStreamInfo={goToStreamIncomingDetailsHandler}
+                                onSendFromOutgoingStreamInfo={goToStreamOutgoingDetailsHandler}
+                                onSendFromStreamingAccountDetails={goToStreamingAccountDetailsHandler}
                                 // tabs={tabs}
                               />
-                            ) : (
-                              <MoneyStreamDetailsView
+                            ) : isStreamIncomingDetails ? (
+                              <MoneyStreamsIncomingView
                                 stream={selectedStream}
-                                onSendFromStreamDetails={returnFromStreamDetailsHandler}
+                                onSendFromIncomingStreamDetails={returnFromIncomingStreamDetailsHandler}
                               />
-                            )}
+                            ) : isStreamOutgoingDetails ? (
+                              <MoneyStreamsOutgoingView
+                                stream={selectedStream}
+                                onSendFromOutgoingStreamDetails={returnFromOutgoingStreamDetailsHandler}
+                              />
+                            ) : isStreamingAccountDetails ? (
+                              <StreamingAccountView
+                                onSendFromStreamingAccountDetails={returnFromStreamingAccountDetailsHandler}
+                              />
+                            ) : null}
                           </div>
                         )}
                       </div>

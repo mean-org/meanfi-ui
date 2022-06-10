@@ -29,6 +29,7 @@ export const ResumeItem = (props: {
   dropdownMenu?: any;
   className?: string;
   isLink?: boolean;
+  onClick?: any;
 }) => {
   const {
     theme
@@ -54,7 +55,8 @@ export const ResumeItem = (props: {
     rightIconHasDropdown,
     dropdownMenu,
     className,
-    isLink 
+    isLink,
+    onClick 
   } = props;
 
   const { t } = useTranslation('common');
@@ -232,6 +234,7 @@ export const ResumeItem = (props: {
                   shape="circle"
                   size="middle"
                   icon={rightIcon}
+                  onClick={onClick}
                 />
               </span>
             )

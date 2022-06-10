@@ -7,11 +7,16 @@ import { IconArrowForward, IconVerticalEllipsis } from "../../Icons";
 import "./style.scss";
 
 export const MoneyStreamsInfoView = (props: {
-  onSendFromStreamInfo?: any;
-  // tabs?: Array<any>;
+  onSendFromIncomingStreamInfo?: any;
+  onSendFromOutgoingStreamInfo?: any;
+  onSendFromStreamingAccountDetails?: any;
 }) => {
 
-  const { onSendFromStreamInfo } = props;
+  const { 
+    onSendFromIncomingStreamInfo,
+    onSendFromOutgoingStreamInfo,
+    onSendFromStreamingAccountDetails
+  } = props;
 
   // Protocol
 
@@ -33,7 +38,7 @@ export const MoneyStreamsInfoView = (props: {
   const renderSummary = (
     <>
       <Row gutter={[8, 8]}>
-        <Col xs={24} sm={12} md={24} lg={12} className="background-card">
+        <Col xs={22} sm={10} md={22} lg={10} className="background-card">
           <h3>Incoming Streams</h3>
           <div className="card-row">
             <div className="card-column">
@@ -41,7 +46,7 @@ export const MoneyStreamsInfoView = (props: {
                 Balance
               </div>
               <div className="info-value">
-                $1,653.65
+                $49,853.58
               </div>
             </div>
             <div className="card-column">
@@ -50,6 +55,27 @@ export const MoneyStreamsInfoView = (props: {
               </div>
               <div className="info-value">
                 3 streams
+              </div>
+            </div>
+          </div>
+        </Col>
+        <Col xs={22} sm={10} md={22} lg={10} className="background-card">
+          <h3>Outgoing Streams</h3>
+          <div className="card-row">
+            <div className="card-column">
+              <div className="info-label">
+                Balance
+              </div>
+              <div className="info-value">
+                $12,291.01
+              </div>
+            </div>
+            <div className="card-column">
+              <div className="info-label">
+                Total streams
+              </div>
+              <div className="info-value">
+                4 streams
               </div>
             </div>
           </div>
@@ -115,7 +141,7 @@ export const MoneyStreamsInfoView = (props: {
       {incomingStreams.map((stream, index) => {
         const onSelectStream = () => {
           // Sends outgoing stream value to the parent component "Accounts"
-          onSendFromStreamInfo(stream);
+          onSendFromIncomingStreamInfo(stream);
         };
 
         const title = stream.title ? stream.title : "Unknown incoming stream";
@@ -161,6 +187,11 @@ export const MoneyStreamsInfoView = (props: {
     externalLink={true}
   />
 
+  const onClickToStreamingAccount = () => {
+    // Sends onClick value to the parent component "Accounts"
+    onSendFromStreamingAccountDetails();
+  }
+
   // Outgoing streams list
   const renderListOfOutgoingStreams = (
     <>
@@ -180,7 +211,7 @@ export const MoneyStreamsInfoView = (props: {
       {outgoingStreams.map((stream, index) => {
         const onSelectStream = () => {
           // Sends outgoing stream value to the parent component "Accounts"
-          onSendFromStreamInfo(stream);
+          onSendFromOutgoingStreamInfo(stream);
         };
 
         const title = stream.title ? stream.title : "Unknown outgoing stream";
@@ -214,11 +245,12 @@ export const MoneyStreamsInfoView = (props: {
         hasRightIcon={true}
         rightIcon={<IconArrowForward className="mean-svg-icons" />}
         isLink={true}
+        onClick={onClickToStreamingAccount}
       />
       {teamSalary.map((stream, index) => {
         const onSelectStream = () => {
           // Sends outgoing stream value to the parent component "Accounts"
-          onSendFromStreamInfo(stream);
+          onSendFromOutgoingStreamInfo(stream);
         };
 
         const title = stream.title ? stream.title : "Unknown salary";
