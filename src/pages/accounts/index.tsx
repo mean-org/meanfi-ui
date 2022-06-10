@@ -4753,6 +4753,7 @@ export const AccountsNewView = () => {
           handleClose={closeCreateAssetModal}
           isVisible={isCreateAssetModalVisible}
           ownedTokenAccounts={userOwnedTokenAccounts}
+          isBusy={isBusy}
         />
       )}
 

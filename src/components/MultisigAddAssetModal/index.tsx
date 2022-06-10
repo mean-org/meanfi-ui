@@ -25,8 +25,9 @@ export const MultisigAddAssetModal = (props: {
   handleClose: any;
   isVisible: boolean;
   ownedTokenAccounts: AccountTokenParsedInfo[] | undefined;
+  isBusy: boolean;
 }) => {
-  const { isVisible, handleClose, handleOk, ownedTokenAccounts } = props;
+  const { isVisible, handleClose, handleOk, ownedTokenAccounts, isBusy } = props;
   const { t } = useTranslation("common");
   const connection = useConnection();
   const { publicKey } = useWallet();
@@ -34,7 +35,6 @@ export const MultisigAddAssetModal = (props: {
     tokenList,
     splTokenList,
   } = useContext(AppStateContext);
-  const [isBusy, setIsBusy] = useState(false);
 
   const { account } = useNativeAccount();
   const { tokenAccounts } = useUserAccounts();
@@ -221,27 +221,19 @@ export const MultisigAddAssetModal = (props: {
       : false;
   };
 
-  // const getCtaLabel = () => {
-  //   return !publicKey
-  //     ? t('transactions.validation.not-connected')
-  //     : nativeBalance === 0
-  //       ? t('transactions.validation.amount-sol-low')
-  //       : nativeBalance < feeAmount
-  //         ? t('transactions.validation.amount-sol-low')
-  //         : !selectedToken
-  //           ? 'No asset selected'
-  //           : isTokenAlreadyOwned() || selectedToken.decimals < 0
-  //             ? 'Invalid selection'
-  //             : t('multisig.create-asset.main-cta');
-  // }
-
-  const getCtaLabel = (): string => {
-    return !selectedToken
-      ? "No asset selected"
-      : t('multisig.create-asset.main-cta');
+  const getCtaLabel = () => {
+    return !publicKey
+      ? t('transactions.validation.not-connected')
+      : nativeBalance === 0
+        ? t('transactions.validation.amount-sol-low')
+        : nativeBalance < feeAmount
+          ? t('transactions.validation.amount-sol-low')
+          : !selectedToken
+            ? 'No asset selected'
+            : isTokenAlreadyOwned() || selectedToken.decimals < 0
+              ? 'Invalid selection'
+              : t('multisig.create-asset.main-cta');
   }
-
-  // Rendering
 
   const renderTokenList = (
     <>
