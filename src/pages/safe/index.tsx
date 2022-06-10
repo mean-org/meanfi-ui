@@ -79,7 +79,7 @@ import { AppUsageEvent } from '../../utils/segment-service';
 import { segmentAnalytics } from "../../App";
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ProgramAccounts } from '../../utils/accounts';
-import { parseSerializedTx, ZERO_FEES } from '../../models/multisig';
+import { MultisigTransactionWithId, parseSerializedTx, ZERO_FEES } from '../../models/multisig';
 
 const CREDIX_PROGRAM = new PublicKey("CRDx2YkdtYtGZXGHZ59wNv1EwKHQndnRc1gT4p8i2vPX");
 
@@ -167,7 +167,7 @@ export const SafeView = () => {
   const [serumMultisigTxs, setSerumMultisigTxs] = useState<MultisigTransaction[]>([]);
   const [operationPayload, setOperationPayload] = useState<any>(undefined);
   const [isProposalDetails, setIsProposalDetails] = useState(false);
-  const [proposalSelected, setProposalSelected] = useState<MultisigTransaction | undefined>();
+  const [proposalSelected, setProposalSelected] = useState<MultisigTransaction | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isAssetDetails, setIsAssetDetails] = useState(false);
   const [assetSelected, setAssetSelected] = useState<any>();
@@ -3318,27 +3318,41 @@ export const SafeView = () => {
     selectedMultisig
   ]);
 
-  const getMultisigProposals = useCallback(async () => {
+  const getActiveMultisigIdByReference = useCallback(() => {
+    if (!selectedMultisigRef || !selectedMultisigRef.current) { return ''; }
+    return selectedMultisigRef.current.id.toBase58();
+  }, []);
+
+  const getMultisigProposals = useCallback(async (msigId: PublicKey) => {
 
     if (
       !connection || 
       !publicKey || 
       !multisigClient || 
-      !selectedMultisig
+      !msigId
     ) { 
-      return [];
+      return {
+        multisigId: msigId.toBase58(),
+        transactions: []
+      } as MultisigTransactionWithId;
     }
 
-    return await multisigClient.getMultisigTransactions(
-      selectedMultisig.id, 
+    const txs = await multisigClient.getMultisigTransactions(
+      msigId,
       publicKey
     );
+
+    const response = {
+      multisigId: msigId.toBase58(),
+      transactions: txs
+    } as MultisigTransactionWithId;
+
+    return response;
 
   }, [
     connection, 
     multisigClient, 
     publicKey, 
-    selectedMultisig
   ]);
 
   // Get Programs
@@ -3388,35 +3402,34 @@ export const SafeView = () => {
 
     setMultisigTxs([]);
     consoleOut('Triggering loadMultisigPendingTxs ...', '', 'blue');
-    getMultisigProposals()
-      .then((txs: MultisigTransaction[]) => {
-        consoleOut('getMultisigProposals ->', txs, 'blue');
-        setMultisigTxs(txs);
-        // if (needReloadProposals) {
-        //   setMultisigTxs(txs.length > 0 ? txs : []);
-        // }
+    const msigId = selectedMultisig.id;
+    getMultisigProposals(msigId)
+      .then((response: MultisigTransactionWithId) => {
+        consoleOut('response:', response, 'orange');
+        const currentlyActiveMultisigId = getActiveMultisigIdByReference();
+        consoleOut('currentlyActiveMultisigId:', currentlyActiveMultisigId, 'orange');
+        if (response.multisigId === currentlyActiveMultisigId) {
+          consoleOut('setMultisigTxs value assigned!:', '', 'green');
+          setMultisigTxs(response.transactions);
+        }
       })
       .catch((err: any) => console.error("Error fetching all transactions", err))
       .finally(() => setLoadingProposals(false));
 
   }, [
     publicKey,
-    selectedMultisig,
     connection,
     multisigClient,
     needRefreshTxs,
-    proposalSelected,
+    selectedMultisig,
+    getActiveMultisigIdByReference,
+    getMultisigProposals,
     setMultisigTxs,
-    getMultisigProposals
   ]);
 
   /////////////////
   //   Getters   //
   /////////////////
-
-  // const isCanvasTight = useCallback(() => {
-  //   return width < 576 || (width >= 768 && width < 960);
-  // }, [width]);
 
   // Scroll to a given multisig is specified as highLightableMultisigId
   useEffect(() => {
@@ -3429,7 +3442,6 @@ export const SafeView = () => {
     const timeout = setTimeout(() => {
       const highlightTarget = document.getElementById(highLightableMultisigId);
       if (highlightTarget) {
-        // consoleOut('Scrolling multisig into view...', '', 'green');
         highlightTarget.scrollIntoView({ behavior: 'smooth' });
       }
       setHighLightableMultisigId(undefined);
@@ -3477,31 +3489,31 @@ export const SafeView = () => {
     } 
   }, [address, multisigAccounts, setHighLightableMultisigId]);
 
-  // Get proposal details
-  const getProposal = useCallback((proposal: any) => {
+  // Process route params and select values in consequence
+  useEffect(() => {
 
-    if (!publicKey || !multisigClient || !selectedMultisig) {
+    if (!publicKey || !multisigClient || !selectedMultisig || multisigTxs === undefined || programs === undefined) {
       return;
     }
 
-    consoleOut('getProposal -> Starting...');
-    multisigClient.getMultisigTransaction(
-      selectedMultisig.id,
-      proposal.id,
-      publicKey
-    )
-    .then((tx: any) => {
-      consoleOut('getProposal -> finished...');
-      consoleOut('getProposal -> tx:', tx, 'orange');
-      setProposalSelected(tx);
-      setIsProposalDetails(true);
-      setIsProgramDetails(false);
-    })
-    .catch((err: any) => console.error(err));
-  }, [multisigClient, publicKey, selectedMultisig]);
+    const getProposal = async (proposal: any) => {
 
-  // Process route params and select values in consequence
-  useEffect(() => {
+      if (!publicKey || !multisigClient || !selectedMultisig) {
+        return null;
+      }
+
+      try {
+        consoleOut('getProposal -> Starting...');
+        return await multisigClient.getMultisigTransaction(
+          selectedMultisig.id,
+          proposal.id,
+          publicKey
+        );
+      } catch (error) {
+        console.error(error);
+        return null;
+      }
+    }
 
     if (address && id) {
       const param = getQueryParamV();
@@ -3509,12 +3521,19 @@ export const SafeView = () => {
       const isProgramsFork = param === "programs" || param === "transactions" || param === "anchor-idl" ? true : false;
       const isValidParam = isProposalsFork || isProgramsFork ? true : false;
 
-      if (isValidParam && multisigTxs !== undefined && programs !== undefined) {
+      if (isValidParam) {
         if (isProposalsFork) {
           const filteredMultisigTxs = multisigTxs.find(tx => tx.id.toBase58() === id);
           if (filteredMultisigTxs) {
             consoleOut('filteredMultisigTxs:', filteredMultisigTxs, 'orange');
-            getProposal(filteredMultisigTxs);
+            getProposal(filteredMultisigTxs)
+            .then(tx => {
+              consoleOut('getProposal -> finished...');
+              consoleOut('getProposal -> tx:', tx, 'orange');
+              setProposalSelected(tx);
+              setIsProposalDetails(true);
+              setIsProgramDetails(false);
+            })
           }
         } else {
           const filteredPrograms = programs.find(program => program.pubkey.toBase58() === id);
@@ -3525,7 +3544,7 @@ export const SafeView = () => {
       }
     }
 
-  }, [id, address, multisigTxs, programs, getQueryParamV, getProposal, selectedMultisig]);
+  }, [id, address, multisigTxs, programs, getQueryParamV, selectedMultisig, publicKey, multisigClient]);
 
   ///////////////
   // Rendering //

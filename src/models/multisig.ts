@@ -84,6 +84,11 @@ export type MultisigTransactionDetail = {
   expirationDate: Date | undefined
 }
 
+export interface MultisigTransactionWithId {
+  multisigId: string;
+  transactions: MultisigTransaction[];
+}
+
 export type MultisigTransactionSummary = {
   address: string;
   operation: string;
