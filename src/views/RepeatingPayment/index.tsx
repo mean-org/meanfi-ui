@@ -1454,10 +1454,10 @@ export const RepeatingPayment = (props: {
                   disabledDate={disabledDate}
                   placeholder={t('transactions.send-date.placeholder')}
                   onChange={(value, date) => handleDateChange(date)}
-                  value={moment(
+                  defaultValue={moment(
                     paymentStartDate,
                     DATEPICKER_FORMAT
-                  ) as any}
+                  )}
                   format={DATEPICKER_FORMAT}
                 />
               </div>
