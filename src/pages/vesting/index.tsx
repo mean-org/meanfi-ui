@@ -8,8 +8,8 @@ import { Button, Dropdown, Menu, Space, Tabs, Tooltip } from 'antd';
 import { consoleOut, copyText } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
 import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
-import { Connection } from '@solana/web3.js';
-import { MSP, Treasury } from '@mean-dao/msp';
+import { Connection, PublicKey } from '@solana/web3.js';
+import { MSP, Stream, Treasury } from '@mean-dao/msp';
 import "./style.scss";
 import { ArrowLeftOutlined, WarningFilled } from '@ant-design/icons';
 import { openLinkInNewTab, shortenAddress } from '../../utils/utils';
@@ -26,6 +26,7 @@ import { TokenInfo } from '@solana/spl-token-registry';
 import { VestingContractCreateModal } from '../../components/VestingContractCreateModal';
 import { VestingContractOverview } from './components/VestingContractOverview';
 import { VESTING_CATEGORIES } from '../../models/vesting';
+import { VestingContractStreamList } from './components/VestingContractStreamList';
 
 const { TabPane } = Tabs;
 export const VESTING_ROUTE_BASE_PATH = '/vesting';
@@ -50,6 +51,9 @@ export const VestingView = () => {
   const [loadingTreasuries, setLoadingTreasuries] = useState(true);
   const [treasuriesLoaded, setTreasuriesLoaded] = useState(false);
   const [treasuryList, setTreasuryList] = useState<Treasury[]>([]);
+  const [loadingTreasuryStreams, setLoadingTreasuryStreams] = useState(false);
+  const [signalRefreshTreasuryStreams, setSignalRefreshTreasuryStreams] = useState(false);
+  const [treasuryStreams, setTreasuryStreams] = useState<(Stream)[]>([]);
   // Path params values
   const [accountAddress, setAccountAddress] = useState('');
   const [vestingContractAddress, setVestingContractAddress] = useState<string>('');
@@ -248,6 +252,34 @@ export const VestingView = () => {
     }
   }, [accountAddress, navigate]);
 
+  const getTreasuryStreams = useCallback((treasuryPk: PublicKey) => {
+    if (!publicKey || !msp || loadingTreasuryStreams) { return; }
+
+    setTimeout(() => {
+      setLoadingTreasuryStreams(true);
+    });
+
+    consoleOut('Executing getTreasuryStreams...', '', 'blue');
+
+    msp.listStreams({treasury: treasuryPk })
+      .then((streams: any) => {
+        consoleOut('treasuryStreams:', streams, 'blue');
+        setTreasuryStreams(streams);
+      })
+      .catch((err: any) => {
+        console.error(err);
+        setTreasuryStreams([]);
+      })
+      .finally(() => {
+        setLoadingTreasuryStreams(false);
+      });
+
+  }, [
+    msp,
+    publicKey,
+    loadingTreasuryStreams,
+  ]);
+
   const copyAddressToClipboard = useCallback((address: any) => {
 
     if (!address) { return; }
@@ -410,6 +442,7 @@ export const VestingView = () => {
         }
         if (item) {
           setSelectedVestingContract(item);
+          setSignalRefreshTreasuryStreams(true);
           consoleOut('selectedVestingContract:', item, 'blue');
           if (autoOpenDetailsPanel) {
             setDtailsPanelOpen(true);
@@ -443,6 +476,17 @@ export const VestingView = () => {
     }
   }, [accountAddress, accountDetailTab, navigate, publicKey, vestingContractAddress]);
 
+  // Reload Treasury streams whenever the selected treasury changes
+  useEffect(() => {
+    if (!publicKey) { return; }
+
+    if (selectedVestingContract && !loadingTreasuryStreams && signalRefreshTreasuryStreams && accountDetailTab === "streams") {
+      setSignalRefreshTreasuryStreams(false);
+      consoleOut('calling getTreasuryStreams...', '', 'blue');
+      const treasuryPk = new PublicKey(selectedVestingContract.id as string);
+      getTreasuryStreams(treasuryPk);
+    }
+  }, [accountDetailTab, getTreasuryStreams, loadingTreasuryStreams, publicKey, selectedVestingContract, signalRefreshTreasuryStreams]);
 
   ////////////////////////////
   //   Events and actions   //
@@ -555,7 +599,10 @@ export const VestingView = () => {
           />
         </TabPane>
         <TabPane tab="Streams" key={"streams"}>
-          <p>Tab 2</p>
+          <VestingContractStreamList
+            loadingTreasuryStreams={loadingTreasuryStreams}
+            treasuryStreams={treasuryStreams}
+          />
         </TabPane>
         <TabPane tab="Activity" key={"activity"}>
           <p>Tab 3</p>
