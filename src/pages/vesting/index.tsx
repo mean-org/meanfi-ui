@@ -20,11 +20,12 @@ import { VestingContractDetails } from './components/VestingContractDetails';
 import useWindowSize from '../../hooks/useWindowResize';
 import { isMobile } from 'react-device-detect';
 import { MetaInfoCta } from '../../models/common-types';
-import { MetaInfoCtaAction } from '../../models/enums';
+import { MetaInfoCtaAction, PaymentRateType } from '../../models/enums';
 import { VestingLockCreateAccount } from './components/VestingLockCreateAccount';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { VestingContractCreateModal } from '../../components/VestingContractCreateModal';
 import { VestingContractOverview } from './components/VestingContractOverview';
+import { VESTING_CATEGORIES } from '../../models/vesting';
 
 const { TabPane } = Tabs;
 export const VESTING_ROUTE_BASE_PATH = '/vesting';
@@ -546,6 +547,11 @@ export const VestingView = () => {
         <TabPane tab="Overview" key={"overview"}>
           <VestingContractOverview
             vestingContract={selectedVestingContract}
+            cliffRelease={10}
+            lockPeriodAmount={4}
+            lockPeriodFrequency={PaymentRateType.PerMonth}
+            vestingCategory={VESTING_CATEGORIES[6]}
+            streamsStartDate={'29 Dec 2022 13:00:00 GMT'}
           />
         </TabPane>
         <TabPane tab="Streams" key={"streams"}>

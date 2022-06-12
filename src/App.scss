@@ -5635,6 +5635,9 @@ main section {
 .text-shadow {
   text-shadow: 0px 1px 0px rgba(0,0,0,0.3);
 }
+.text-italic {
+  font-style: italic;
+}
 // Text alignment
 .text-left {
   text-align: left;
@@ -6373,11 +6376,12 @@ code {
     font-weight: 400;
   }
   &.medium {
-    font-size: 11px;
-    padding: 4px 5px;
-    border-radius: 8px;
-    line-height: 11px;
+    font-size: 12px;
+    padding: 4px 6px;
+    border-radius: 6px;
+    line-height: 12px;
     height: auto;
+    font-weight: 600;
   }
 }
 

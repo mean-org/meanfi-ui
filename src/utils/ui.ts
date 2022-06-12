@@ -1,10 +1,8 @@
-import { TokenInfo } from "@solana/spl-token-registry";
 import bs58 from "bs58";
 import moment from "moment";
 import { TransactionFees } from "@mean-dao/money-streaming/lib/types";
 import { TransactionStatusInfo } from "../contexts/appstate";
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
-import { formatAmount } from "./utils";
 import { environment } from "../environments/environment";
 import { SIMPLE_DATE_FORMAT, SIMPLE_DATE_TIME_FORMAT, VERBOSE_DATE_FORMAT, VERBOSE_DATE_TIME_FORMAT } from "../constants";
 import dateFormat from "dateformat";
@@ -213,31 +211,6 @@ export function getRemainingDays(targetDate?: string): number {
     }
     time.setDate(0);
     return time.getDate() > date.getDate() ? time.getDate() - date.getDate() : 0;
-}
-
-export function timeConvert(n: number, decimals = 0, abbr = false): string {
-    const num = n;
-    const hours = (num / 60);
-    const rhours = Math.floor(hours);
-    const minutes = (hours - rhours) * 60;
-    const rminutes = Math.round(minutes);
-    const rdays = Math.round(rhours / 24);
-    let returnString = '';
-    if (num === 1) {
-        returnString = `${num} minute.`;
-    } else if (num === 60) {
-        returnString = '1 hour.';
-    } else if (num > 60) {
-        returnString = `${formatAmount(num, decimals, abbr)} minutes`;
-        if (rdays > 1) {
-            returnString += `. ~${rdays} days.`;
-        } else {
-            returnString = ` = ${formatAmount(rhours, decimals, abbr)} hour(s) and ${rminutes} minutes.`;
-        }
-    } else {
-        returnString = `${rminutes} minutes.`;
-    }
-    return returnString;
 }
 
 export function msToTime(ms: number) {

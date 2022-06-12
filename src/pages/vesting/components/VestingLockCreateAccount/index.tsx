@@ -28,17 +28,7 @@ import { WizardStepSelector } from '../../../../components/WizardStepSelector';
 import { isMobile } from 'react-device-detect';
 import useWindowSize from '../../../../hooks/useWindowResize';
 import { IconCaretDown } from '../../../../Icons';
-
-const VESTING_CATEGORIES: string[] = [
-    'Advisor',
-    'Development',
-    'Foundation',
-    'Investor',
-    'Marketing',
-    'Partnership',
-    'Seed round',
-    'Team',
-];
+import { VESTING_CATEGORIES } from '../../../../models/vesting';
 
 export const VestingLockCreateAccount = (props: {
     inModal: boolean;
