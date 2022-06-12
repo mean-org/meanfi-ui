@@ -28,6 +28,49 @@
                 margin: 2rem 0;
             }
         }
+        .meanfi-two-panel-layout {
+            .meanfi-two-panel-left {
+                .transaction-list-row {
+                    border-radius: unset;
+                    border-top: none;
+                    border-bottom: none;
+                    border-right: none;
+                    border-left: 4px solid transparent;
+                    &.selected {
+                        border-left-color: var(--color-primary-highlight);
+                        background-color: var(--color-secondary-alpha-02);
+                    }
+                }
+            }
+            .meanfi-two-panel-right {
+                .transaction-list-row {
+                    border-radius: unset;
+                    border: none;
+                    height: 50px;
+                    padding: 6px;
+                    &:not(.no-pointer) {
+                        cursor: auto;
+                    }
+                    .description-cell {
+                        .title {
+                            display: inline-block;
+                            font-size: 0.85rem;
+                            line-height: 1;
+                            color: var(--color-secondary-alpha-85);
+                            width: 100%;
+                        }
+                        .subtitle {
+                            font-size: 0.75rem;
+                            line-height: 1.2;
+                        }
+                    }
+                    .actions-cell {
+                        flex: 0 0 24px !important;
+                        padding-left: 4px;
+                    }
+                }
+            }
+        }
     }
 
     .interaction-area .elastic-form-container,
@@ -83,12 +126,6 @@
     }
 
     .transaction-list-row {
-        border-radius: unset;
-        border-top: none;
-        border-bottom: none;
-        border-right: none;
-        border-left: 4px solid transparent;
-
         .description-cell {
             flex: auto !important;
             min-width: unset !important;
@@ -98,15 +135,9 @@
                 }
             }
         }
-
         .rate-cell {
             flex: 0 0 140px !important;
             padding: 0 !important;
-        }
-
-        &.selected {
-            border-left-color: var(--color-primary-highlight);
-            background-color: var(--color-secondary-alpha-02);
         }
     }
 }

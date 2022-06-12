@@ -31,10 +31,12 @@ import { VestingContractStreamList } from './components/VestingContractStreamLis
 const { TabPane } = Tabs;
 export const VESTING_ROUTE_BASE_PATH = '/vesting';
 export type VestingAccountDetailTab = "overview" | "streams" | "activity" | undefined;
+let ds: string[] = [];
 
 export const VestingView = () => {
   const {
     selectedToken,
+    deletedStreams,
     detailsPanelOpen,
     streamV2ProgramAddress,
     setDtailsPanelOpen,
@@ -368,22 +370,24 @@ export const VestingView = () => {
       isVisible: true,
       uiComponentType: 'menuitem',
       disabled: !isInspectedAccountTheConnectedWallet(),
-      uiComponentId: `menuitem-${MetaInfoCtaAction.VestingContractViewSolBalance}`,
+      uiComponentId: `menuitem-${ctaItems}-${MetaInfoCtaAction.VestingContractViewSolBalance}`,
       tooltip: '',
       callBack: () => { }
     });
+    ctaItems++;
 
-    // View SOL Balance
+    // Refresh Account Data
     actions.push({
-      action: MetaInfoCtaAction.VestingContractViewSolBalance,
-      caption: 'View SOL Balance',
+      action: MetaInfoCtaAction.VestingContractRefreshAccount,
+      caption: 'Refresh account data',
       isVisible: true,
       uiComponentType: 'menuitem',
       disabled: !isInspectedAccountTheConnectedWallet(),
-      uiComponentId: `menuitem-${MetaInfoCtaAction.VestingContractViewSolBalance}`,
+      uiComponentId: `menuitem-${ctaItems}-${MetaInfoCtaAction.VestingContractRefreshAccount}`,
       tooltip: '',
       callBack: () => { }
     });
+    ctaItems++;
 
     // Withdraw funds
     actions.push({
@@ -392,10 +396,11 @@ export const VestingView = () => {
       isVisible: true,
       uiComponentType: 'menuitem',
       disabled: !isInspectedAccountTheConnectedWallet(),
-      uiComponentId: `menuitem-${MetaInfoCtaAction.VestingContractWithdrawFunds}`,
+      uiComponentId: `menuitem-${ctaItems}-${MetaInfoCtaAction.VestingContractWithdrawFunds}`,
       tooltip: '',
       callBack: () => { }
     });
+    ctaItems++;
 
     // Close Contract
     actions.push({
@@ -404,7 +409,7 @@ export const VestingView = () => {
       isVisible: true,
       uiComponentType: 'menuitem',
       disabled: !isInspectedAccountTheConnectedWallet(),
-      uiComponentId: `menuitem-${MetaInfoCtaAction.VestingContractClose}`,
+      uiComponentId: `menuitem-${ctaItems}-${MetaInfoCtaAction.VestingContractClose}`,
       tooltip: '',
       callBack: () => { }
     });
@@ -488,6 +493,12 @@ export const VestingView = () => {
     }
   }, [accountDetailTab, getTreasuryStreams, loadingTreasuryStreams, publicKey, selectedVestingContract, signalRefreshTreasuryStreams]);
 
+  // Log the list of deleted streams
+  useEffect(() => {
+    ds = deletedStreams;
+    consoleOut('ds:', ds, 'blue');
+  }, [deletedStreams]);
+
   ////////////////////////////
   //   Events and actions   //
   ////////////////////////////
@@ -513,10 +524,10 @@ export const VestingView = () => {
     const items = assetCtas.filter(m => m.isVisible && m.uiComponentType === 'menuitem');
     return (
       <Menu>
-        {items.map(item => {
+        {items.map((item: MetaInfoCta, index: number) => {
           return (
             <Menu.Item
-              key={item.uiComponentId}
+              key={`${index + 44}-${item.uiComponentId}`}
               disabled={item.disabled}
               onClick={item.callBack}>
               <span className="menu-item-text">{item.caption}</span>
@@ -528,17 +539,16 @@ export const VestingView = () => {
   }
 
   const renderMetaInfoCtaRow = () => {
-    if (!selectedToken) { return null; }
     const items = assetCtas.filter(m => m.isVisible && m.uiComponentType === 'button');
 
     return (
       <div className="flex-fixed-right cta-row mb-2">
         <Space className="left" size="middle" wrap>
           {items && items.length > 0 &&
-            items.map(item => {
+            items.map((item: MetaInfoCta, index: number) => {
               if (item.tooltip) {
                 return (
-                  <Tooltip placement="bottom" title={item.tooltip} key={item.uiComponentId}>
+                  <Tooltip placement="bottom" title={item.tooltip} key={`${index + 11}-${item.uiComponentId}`}>
                     <Button
                       type="default"
                       shape="round"
@@ -556,7 +566,7 @@ export const VestingView = () => {
                     type="default"
                     shape="round"
                     size="small"
-                    key={item.uiComponentId}
+                    key={`${index + 22}-${item.uiComponentId}`}
                     className="thin-stroke"
                     disabled={item.disabled}
                     onClick={item.callBack}>
@@ -600,6 +610,8 @@ export const VestingView = () => {
         </TabPane>
         <TabPane tab="Streams" key={"streams"}>
           <VestingContractStreamList
+            vestingContract={selectedVestingContract}
+            accountAddress={accountAddress}
             loadingTreasuryStreams={loadingTreasuryStreams}
             treasuryStreams={treasuryStreams}
           />

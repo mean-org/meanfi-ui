@@ -4493,16 +4493,21 @@ main section {
   height: 48px;
   padding: 6px 4px;
   &.selected {
-    background-color: var(--color-secondary-alpha-05);
+    background-color: var(--color-secondary-alpha-10);
   }
   &.disabled {
     pointer-events: none;
     opacity: 0.5;
     background-color: var(--color-secondary-alpha-02);
   }
+  &.stripped-rows {
+    &:not(.disabled):not(.selected):not(:hover):nth-of-type(odd) {
+      background-color: var(--color-secondary-alpha-02);
+    }
+  }
   &:not(.no-pointer):not(.selected):hover,
   &:not(.no-pointer):not(.selected):focus {
-    background-color: var(--color-secondary-alpha-02);
+    background-color: var(--color-secondary-alpha-05);
   }
   .icon-cell {
     position: relative;
