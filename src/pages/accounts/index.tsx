@@ -4530,7 +4530,9 @@ export const AccountsNewView = () => {
                                 />
                               </>
                             ) : inspectedAccountType === "multisig" ? (
-                              <div onClick={() => setIsStreamingAccount(true)}>
+                              <div onClick={() => {
+                                setIsStreamingAccount(true);
+                               }}>
                                 {/* Money Streaming */}
                                 <TreasuriesSummary
                                   address={accountAddress}
