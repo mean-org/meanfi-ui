@@ -1,4 +1,4 @@
-import { Connection, PublicKey } from "@solana/web3.js";
+import { Connection, PublicKey, Transaction } from "@solana/web3.js";
 import { Button, Col, Menu, Row } from "antd";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { CopyExtLinkGroup } from "../../components/CopyExtLinkGroup";
@@ -12,7 +12,7 @@ import { useWallet } from "../../contexts/wallet";
 import { IconArrowForward, IconVerticalEllipsis } from "../../Icons";
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
 import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
-import { TransactionStatus } from "../../models/enums";
+import { OperationType, TransactionStatus } from "../../models/enums";
 import PieChartComponent from "./PieChart";
 import "./style.scss";
 import { TxConfirmationContext } from "../../contexts/transaction-status";
@@ -23,13 +23,14 @@ import {
   Treasury,
   Stream,
   MSP,
-  Constants as MSPV2Constants
+  Constants as MSPV2Constants,
+  TreasuryType
 } from '@mean-dao/msp';
 import { MSP_ACTIONS, StreamInfo, TreasuryInfo } from "@mean-dao/money-streaming/lib/types";
-import { MeanMultisig, MultisigInfo } from "@mean-dao/mean-multisig-sdk";
-import { consoleOut, isValidAddress } from "../../utils/ui";
+import { DEFAULT_EXPIRATION_TIME_SECONDS, MeanMultisig, MultisigInfo, MultisigTransactionFees } from "@mean-dao/mean-multisig-sdk";
+import { consoleOut, getTransactionStatusForLogs, isValidAddress } from "../../utils/ui";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { shortenAddress } from "../../utils/utils";
+import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress } from "../../utils/utils";
 import { TREASURY_TYPE_OPTIONS } from "../../constants/treasury-type-options";
 import { openNotification } from "../../components/Notifications";
 import { useTranslation } from "react-i18next";
@@ -39,6 +40,10 @@ import { ACCOUNT_LAYOUT } from "../../utils/layouts";
 import { NO_FEES } from "../../constants";
 import { useLocation, useParams } from "react-router-dom";
 import { TreasuryOpenModal } from "../../components/TreasuryOpenModal";
+import { TreasuryCreateModal } from "../../components/TreasuryCreateModal";
+import { TreasuryCreateOptions } from "../../models/treasuries";
+import { customLogger } from "../..";
+import { NATIVE_SOL_MINT } from "../../utils/ids";
 
 export const MoneyStreamsInfoView = (props: {
   onSendFromIncomingStreamInfo?: any;
@@ -48,6 +53,8 @@ export const MoneyStreamsInfoView = (props: {
   const {
     tokenList,
     selectedToken,
+    treasuryOption,
+    transactionStatus,
     refreshTokenBalance,
     resetContractValues,
     streamProgramAddress,
@@ -60,6 +67,7 @@ export const MoneyStreamsInfoView = (props: {
   } = useContext(AppStateContext);
   const {
     fetchTxInfoStatus,
+    startFetchTxSignatureInfo,
     clearTxConfirmationContext,
   } = useContext(TxConfirmationContext);
   const {
@@ -71,7 +79,7 @@ export const MoneyStreamsInfoView = (props: {
   const accounts = useAccountsContext();
   const { t } = useTranslation('common');
   const connectionConfig = useConnectionConfig();
-  const { publicKey } = useWallet();
+  const { publicKey, connected, wallet } = useWallet();
   const location = useLocation();
   const { address } = useParams();
 
@@ -82,6 +90,8 @@ export const MoneyStreamsInfoView = (props: {
   const [signalRefreshTreasuryStreams, setSignalRefreshTreasuryStreams] = useState(false);
   const [customStreamDocked, setCustomStreamDocked] = useState(false);
   const [treasuryStreams, setTreasuryStreams] = useState<(Stream | StreamInfo)[]>([]);
+  const [retryOperationPayload, setRetryOperationPayload] = useState<any>(undefined);
+  const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
 
   // Multisig related
   const [multisigAddress, setMultisigAddress] = useState('');
@@ -96,6 +106,13 @@ export const MoneyStreamsInfoView = (props: {
   const [userBalances, setUserBalances] = useState<any>();
   const [transactionFees, setTransactionFees] = useState<TransactionFees>(NO_FEES);
   const [minRequiredBalance, setMinRequiredBalance] = useState(0);
+  const [transactionCancelled, setTransactionCancelled] = useState(false);
+  const [isBusy, setIsBusy] = useState(false);
+  const [multisigTxFees, setMultisigTxFees] = useState<MultisigTransactionFees>({
+    multisigFee: 0,
+    networkFee: 0,
+    rentExempt: 0
+  } as MultisigTransactionFees);
 
   const [withdrawTransactionFees, setWithdrawTransactionFees] = useState<TransactionFees>({
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
@@ -498,6 +515,372 @@ export const MoneyStreamsInfoView = (props: {
     openTreasuryById(e, true, true);
   };
 
+  // Create treasury modal
+  const [isCreateTreasuryModalVisible, setIsCreateTreasuryModalVisibility] = useState(false);
+  const showCreateTreasuryModal = useCallback(() => {
+    resetTransactionStatus();
+    setIsCreateTreasuryModalVisibility(true);
+    getTransactionFeesV2(MSP_ACTIONS_V2.createTreasury).then(value => {
+      setTransactionFees(value);
+      consoleOut('transactionFees:', value, 'orange');
+    });
+  }, [
+    getTransactionFeesV2,
+    resetTransactionStatus
+  ]);
+
+  const closeCreateTreasuryModal = useCallback(() => {
+    setIsCreateTreasuryModalVisibility(false);
+    resetTransactionStatus();
+  }, [resetTransactionStatus]);
+
+  const onAcceptCreateTreasury = (data: TreasuryCreateOptions) => {
+    consoleOut('treasury create options:', data, 'blue');
+    onExecuteCreateTreasuryTx(data);
+    setRetryOperationPayload(data);
+  };
+
+  const onTreasuryCreated = useCallback((createOptions: TreasuryCreateOptions) => {
+    closeCreateTreasuryModal();
+    refreshTokenBalance();
+
+    // const usedOptions = retryOperationPayload as TreasuryCreateOptions;
+    consoleOut('retryOperationPayload:', retryOperationPayload, 'blue');
+
+    if (createOptions && createOptions.multisigId) {
+      openNotification({
+        description: t('treasuries.create-treasury.create-multisig-streaming-account-success'),
+        type: "success"
+      });
+    } else {
+      openNotification({
+        description: t('treasuries.create-treasury.success-multisig-streaming-account-message'),
+        type: "success"
+      });
+    }
+
+  }, [
+    retryOperationPayload,
+    closeCreateTreasuryModal,
+    refreshTokenBalance,
+    t,
+  ]);
+
+  const onRefreshTreasuryBalanceTransactionFinished = useCallback(() => {
+    refreshTokenBalance();
+    setTransactionStatus({
+      lastOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
+    });
+  },[
+    refreshTokenBalance, 
+    setTransactionStatus
+  ]);
+
+  const onExecuteCreateTreasuryTx = async (createOptions: TreasuryCreateOptions) => {
+    let transaction: Transaction;
+    let signedTransaction: Transaction;
+    let signature: any;
+    let encodedTx: string;
+    const transactionLog: any[] = [];
+
+    clearTxConfirmationContext();
+    resetTransactionStatus();
+    setTransactionCancelled(false);
+    setOngoingOperation(OperationType.TreasuryCreate);
+    setRetryOperationPayload(createOptions);
+    setIsBusy(true);
+
+    const createTreasury = async (data: any) => {
+
+      if (!connection || !msp || !publicKey) { return null; }
+
+      const treasuryType = data.type === 'Open' ? TreasuryType.Open : TreasuryType.Lock;
+
+      if (!data.multisig) {
+        return await msp.createTreasury(
+          new PublicKey(data.treasurer),                    // treasurer
+          new PublicKey(data.treasurer),                    // treasurer
+          new PublicKey(data.associatedTokenAddress),       // associatedToken
+          data.label,                                       // label
+          treasuryType                                      // type
+        );
+      }
+
+      if (!multisigClient || !multisigAccounts) { return null; }
+
+      const multisig = multisigAccounts.filter(m => m.id.toBase58() === data.multisig)[0];
+
+      if (!multisig) { return null; }
+
+      // Create Streaming account
+      const createTreasuryTx = await msp.createTreasury(
+        publicKey,                                        // payer
+        multisig.authority,                               // treasurer
+        new PublicKey(data.associatedTokenAddress),       // associatedToken
+        data.label,                                       // label
+        treasuryType,                                     // type
+        true,                                             // solFeePayedByTreasury = true
+      );
+
+      const ixData = Buffer.from(createTreasuryTx.instructions[0].data);
+      const ixAccounts = createTreasuryTx.instructions[0].keys;
+      const expirationTime = parseInt((Date.now() / 1_000 + DEFAULT_EXPIRATION_TIME_SECONDS).toString());
+
+      const tx = await multisigClient.createTransaction(
+        publicKey,
+        "Create streaming account",
+        "", // description
+        new Date(expirationTime * 1_000),
+        OperationType.TreasuryCreate,
+        multisig.id,
+        MSPV2Constants.MSP,
+        ixAccounts,
+        ixData
+      );
+
+      return tx;
+    }
+
+    const createTx = async () => {
+
+      if (!connection || !wallet || !publicKey || !msp || !treasuryOption) {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot start transaction! Wallet not found!'
+        });
+        customLogger.logError('Create streaming account transaction failed', { transcript: transactionLog });
+        return false;
+      }
+
+      consoleOut("Start transaction for create streaming account", '', 'blue');
+      consoleOut('Wallet address:', publicKey.toBase58());
+
+      setTransactionStatus({
+        lastOperation: TransactionStatus.TransactionStart,
+        currentOperation: TransactionStatus.InitTransaction
+      });
+
+      // Create a transaction
+      const associatedToken = createOptions.token;
+      const payload = {
+        treasurer: publicKey.toBase58(),                                                                  // treasurer
+        label: createOptions.treasuryName,                                                                // label
+        type: createOptions.treasuryType === TreasuryType.Open                                            // type
+          ? 'Open'
+          : 'Lock',
+        multisig: createOptions.multisigId,                                                               // multisig
+        associatedTokenAddress: associatedToken.address
+      };
+
+      consoleOut('payload:', payload);
+      // Log input data
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+        inputs: payload
+      });
+
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+        result: ''
+      });
+
+      // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
+      // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+
+      const bf = transactionFees.blockchainFee;       // Blockchain fee
+      const ff = transactionFees.mspFlatFee;          // Flat fee (protocol)
+      const mp = multisigTxFees.networkFee + multisigTxFees.multisigFee + multisigTxFees.rentExempt;  // Multisig proposal
+      const minRequired = createOptions.multisigId ? mp : bf + ff;
+
+      setMinRequiredBalance(minRequired);
+
+      consoleOut('Min balance required:', minRequired, 'blue');
+      consoleOut('nativeBalance:', nativeBalance, 'blue');
+
+      if (nativeBalance < minRequired) {
+        setTransactionStatus({
+          lastOperation: transactionStatus.currentOperation,
+          currentOperation: TransactionStatus.TransactionStartFailure
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+          result: `Not enough balance (${
+            getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+          }) to pay for network fees (${
+            getTokenAmountAndSymbolByTokenAddress(minRequired, NATIVE_SOL_MINT.toBase58())
+          })`
+        });
+        customLogger.logWarning('Create streaming account transaction failed', { transcript: transactionLog });
+        return false;
+      }
+
+      consoleOut('Starting Create streaming account using MSP V2...', '', 'blue');
+
+      const result = await createTreasury(payload)
+        .then(value => {
+          if (!value) { return false; }
+          consoleOut('create streaming account returned transaction:', value);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.InitTransactionSuccess,
+            currentOperation: TransactionStatus.SignTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+            result: getTxIxResume(value)
+          });
+          transaction = value;
+          return true;
+        })
+        .catch(error => {
+          console.error('create streaming account error:', error);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.InitTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+            result: `${error}`
+          });
+          customLogger.logError('Create streaming account transaction failed', { transcript: transactionLog });
+          return false;
+        });
+
+      return result;
+    }
+
+    const signTx = async (): Promise<boolean> => {
+      if (wallet && publicKey) {
+        consoleOut('Signing transaction...');
+        return await wallet.signTransaction(transaction)
+        .then((signed: Transaction) => {
+          consoleOut('signTransaction returned a signed transaction:', signed);
+          signedTransaction = signed;
+          // Try signature verification by serializing the transaction
+          try {
+            encodedTx = signedTransaction.serialize().toString('base64');
+            consoleOut('encodedTx:', encodedTx, 'orange');
+          } catch (error) {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransaction,
+              currentOperation: TransactionStatus.SignTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+              result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
+            });
+            customLogger.logError('Create streaming account transaction failed', { transcript: transactionLog });
+            return false;
+          }
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransactionSuccess,
+            currentOperation: TransactionStatus.SendTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
+            result: {signer: publicKey.toBase58()}
+          });
+          return true;
+        })
+        .catch(error => {
+          console.error(error);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransaction,
+            currentOperation: TransactionStatus.SignTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+            result: {signer: `${publicKey.toBase58()}`, error: `${error}`}
+          });
+          customLogger.logError('Create streaming account transaction failed', { transcript: transactionLog });
+          return false;
+        });
+      } else {
+        console.error('Cannot sign transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot sign transaction! Wallet not found!'
+        });
+        customLogger.logError('Create streaming account transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const sendTx = async (): Promise<boolean> => {
+      if (wallet) {
+        return await connection
+          .sendEncodedTransaction(encodedTx)
+          .then(sig => {
+            consoleOut('sendEncodedTransaction returned a signature:', sig);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.ConfirmTransaction
+            });
+            signature = sig;
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
+              result: `signature: ${signature}`
+            });
+            return true;
+          })
+          .catch(error => {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransaction,
+              currentOperation: TransactionStatus.SendTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+              result: { error, encodedTx }
+            });
+            customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+            return false;
+          });
+      } else {
+        console.error('Cannot send transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SendTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot send transaction! Wallet not found!'
+        });
+        customLogger.logError('Create streaming account transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    if (wallet) {
+      const create = await createTx();
+      consoleOut('created:', create);
+      if (create && !transactionCancelled) {
+        const sign = await signTx();
+        consoleOut('signed:', sign);
+        if (sign && !transactionCancelled) {
+          const sent = await sendTx();
+          consoleOut('sent:', sent);
+          if (sent && !transactionCancelled) {
+            consoleOut('Send Tx to confirmation queue:', signature);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.TreasuryCreate);
+            setIsBusy(false);
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.TransactionFinished
+            });
+            onTreasuryCreated(createOptions);
+            setNeedReloadMultisig(true);
+          } else { setIsBusy(false); }
+        } else { setIsBusy(false); }
+      } else { setIsBusy(false); }
+    }
+  };
+
   // TODO: Here the multisig ID is returned
   const getSelectedTreasuryMultisig = useCallback((treasury?: any) => {
 
@@ -779,7 +1162,7 @@ export const MoneyStreamsInfoView = (props: {
       <Menu.Item key="0" onClick={() => {}}>
         <span className="menu-item-text">Add outgoing stream</span>
       </Menu.Item>
-      <Menu.Item key="0" onClick={() => {}}>
+      <Menu.Item key="0" onClick={showCreateTreasuryModal}>
         <span className="menu-item-text">Add streaming account</span>
       </Menu.Item>
     </Menu>
@@ -971,6 +1354,20 @@ export const MoneyStreamsInfoView = (props: {
           isVisible={isOpenTreasuryModalVisible}
           handleOk={onAcceptOpenTreasury}
           handleClose={closeOpenTreasuryModal}
+        />
+      )}
+
+      {isCreateTreasuryModalVisible && (
+        <TreasuryCreateModal
+          isVisible={isCreateTreasuryModalVisible}
+          nativeBalance={nativeBalance}
+          transactionFees={transactionFees}
+          handleOk={onAcceptCreateTreasury}
+          handleClose={closeCreateTreasuryModal}
+          isBusy={isBusy}
+          selectedMultisig={selectedMultisig}
+          multisigAccounts={multisigAccounts || []}
+          multisigAddress={multisigAddress || undefined}
         />
       )}
     </>
