@@ -1,5 +1,4 @@
 import { Button, Col, Dropdown, Menu, Row } from "antd";
-import { useEffect } from "react";
 import { ResumeItem } from "../../components/ResumeItem";
 import { TabsMean } from "../../components/TabsMean";
 import { IconArrowBack, IconArrowForward, IconEllipsisVertical } from "../../Icons";
@@ -7,9 +6,10 @@ import { IconArrowBack, IconArrowForward, IconEllipsisVertical } from "../../Ico
 export const StreamingAccountView = (props: {
   stream?: any;
   onSendFromStreamingAccountDetails?: any;
+  onSendFromOutgoingStreamInfo?: any;
 }) => {
 
-  const { stream, onSendFromStreamingAccountDetails  } = props;
+  const { stream, onSendFromStreamingAccountDetails, onSendFromOutgoingStreamInfo  } = props;
 
   const hideDetailsHandler = () => {
     onSendFromStreamingAccountDetails();
@@ -60,17 +60,17 @@ export const StreamingAccountView = (props: {
   const renderStreamingAccountStreams = (
     <>
       {streamingAccountstreams.map((stream, index) => {
-        // const onSelectStream = () => {
-        //   // Sends outgoing stream value to the parent component "Accounts"
-        //   onSendFromIncomingStreamInfo(stream);
-        // };
+        const onSelectStream = () => {
+          // Sends outgoing stream value to the parent component "Accounts"
+          onSendFromOutgoingStreamInfo(stream);
+        };
 
         const title = stream.title ? stream.title : "Unknown outgoing stream";
 
         return (
           <div 
             key={index}
-            // onClick={onSelectStream}
+            onClick={onSelectStream}
             className={`d-flex w-100 align-items-center simplelink ${(index + 1) % 2 === 0 ? '' : 'background-gray'}`}
           >
             <ResumeItem

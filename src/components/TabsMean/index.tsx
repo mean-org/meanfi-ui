@@ -37,44 +37,53 @@ export const TabsMean = (props: {
   //   }
   // }, [activeTab, selectedTab, setActiveTab, tabs]);
 
-  // useEffect(() => {
-  //   let optionInQuery: string | null = null;
-  //   // Get the option if passed-in
-  //   if (searchParams) {
-  //     optionInQuery = searchParams.get('v');
-  //   }
-  //   // Pre-select an option
-  //   switch (optionInQuery) {
-  //     case "proposals":
-  //       setActiveTab("proposals");
-  //       break;
-  //     case "programs":
-  //       setActiveTab("programs");
-  //       break;
-  //     case "instruction":
-  //       setActiveTab("instruction");
-  //       break;
-  //     case "activity":
-  //       setActiveTab("activity");
-  //       break;
-  //     case "transactions":
-  //       setActiveTab("transactions");
-  //       break;
-  //     case "anchor-idl":
-  //       setActiveTab("anchor-idl");
-  //       break;
-  //     // case "summary":
-  //     //   setActiveTab("summary");
-  //     //   break;
-  //     // case "accounts":
-  //     //   setActiveTab("accounts");
-  //     //   break;
-  //     default:
-  //       setActiveTab(defaultTab);
-  //       setSearchParams({v: defaultTab}, { replace: true });
-  //       break;
-  //   }
-  // }, [defaultTab, searchParams, setActiveTab, setSearchParams]);
+  useEffect(() => {
+    let optionInQuery: string | null = null;
+    // Get the option if passed-in
+    if (searchParams) {
+      optionInQuery = searchParams.get('v');
+    }
+    // Pre-select an option
+    switch (optionInQuery) {
+      case "proposals":
+        setActiveTab("proposals");
+        break;
+      case "programs":
+        setActiveTab("programs");
+        break;
+      case "instruction":
+        setActiveTab("instruction");
+        break;
+      case "activity":
+        setActiveTab("activity");
+        break;
+      case "transactions":
+        setActiveTab("transactions");
+        break;
+      case "anchor-idl":
+        setActiveTab("anchor-idl");
+        break;
+      case "summary":
+        setActiveTab("summary");
+        break;
+      case "incoming":
+        setActiveTab("incoming");
+        break;
+      case "outgoing":
+        setActiveTab("outgoing");
+        break;
+      case "details":
+        setActiveTab("details");
+        break;
+      case "streams":
+        setActiveTab("streams");
+        break;
+      default:
+        setActiveTab(defaultTab);
+        setSearchParams({v: defaultTab}, { replace: true });
+        break;
+    }
+  }, [defaultTab, searchParams, setActiveTab, setSearchParams]);
 
   return (
     <div className={`tabs-container ${containerClassName}`}>

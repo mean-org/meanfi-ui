@@ -19,26 +19,38 @@ export const MoneyStreamsInfoView = (props: {
   } = props;
 
   // Protocol
+  const listOfBadges = ["MSP", "DEFI", "Money Streams"];
+
+  const renderBadges = (
+    <div className="badge-container">
+      {listOfBadges.map((badge) => (
+        <span className="badge darken small text-uppercase mr-1">{badge}</span>
+      ))}
+      </div>
+  );
 
   // Balance
+  const renderBalance = (
+    <a href="#" className="simplelink underline-on-hover">Tracking 2 smart contracts</a>
+  );
 
   const infoData = [
     {
       name: "Protocol",
       value: "Money Streams",
-      content: "Badges"
+      content: renderBadges
     },
     {
       name: "Balance (My TVL)",
       value: "$3,391.01",
-      content: "Tracking 2 smart contracts"
+      content: renderBalance
     }
   ];
 
   const renderSummary = (
     <>
       <Row gutter={[8, 8]}>
-        <Col xs={22} sm={10} md={22} lg={10} className="background-card">
+        <Col xs={23} sm={11} md={23} lg={11} className="background-card">
           <h3>Incoming Streams</h3>
           <div className="card-row">
             <div className="card-column">
@@ -59,7 +71,7 @@ export const MoneyStreamsInfoView = (props: {
             </div>
           </div>
         </Col>
-        <Col xs={22} sm={10} md={22} lg={10} className="background-card">
+        <Col xs={23} sm={11} md={23} lg={11} className="background-card">
           <h3>Outgoing Streams</h3>
           <div className="card-row">
             <div className="card-column">

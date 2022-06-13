@@ -4664,6 +4664,7 @@ export const AccountsNewView = () => {
                               <StreamingAccountView
                                 stream={selectedStream}
                                 onSendFromStreamingAccountDetails={returnFromStreamingAccountDetailsHandler}
+                                onSendFromOutgoingStreamInfo={goToStreamOutgoingDetailsHandler}
                               />
                             ) : null}
                           </div>
