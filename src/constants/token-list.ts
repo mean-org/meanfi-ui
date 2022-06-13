@@ -836,6 +836,15 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         tags: [],
     },
     {
+        chainId: 101,
+        address: '8C3t7mmndSSZUukZHrVuU2mJ3bPtpVRo6tKNbLovGQEJ',
+        symbol: 'CRDX-LP',
+        name: 'Credix Marketplace LP Token',
+        decimals: 6,
+        logoURI: '',
+        tags: [],
+    },
+    {
         chainId: 103,
         address: '23YKMZKvpj77D2LSF3PELPCPLwHidhfLtStCGYDE7rHQ',
         symbol: 'CRDX-LP',
