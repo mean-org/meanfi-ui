@@ -3031,13 +3031,20 @@ export const AccountsNewView = () => {
                   }
                 });
 
+                // Sort by valueInUsd and then by token balance and then by token name
                 const sortedList = intersectedList.sort((a, b) => {
-                  if ((a.valueInUsd || 0) < (b.valueInUsd || 0)) {
-                    return 1;
-                  } else if ((a.valueInUsd || 0) > (b.valueInUsd || 0)) {
-                    return -1;
+                  if((a.valueInUsd || 0) > (b.valueInUsd || 0)){
+                     return -1;
+                  } else if((a.valueInUsd || 0) < (b.valueInUsd || 0)){
+                     return 1;
+                  } else {
+                    if ((b.balance || 0) < (a.balance || 0)) {
+                      return 1;
+                    } else if ((b.balance || 0) > (a.balance || 0)) {
+                      return -1;
+                    }
+                    return ('' + a.name).localeCompare(b.name);
                   }
-                  return 0;
                 });
 
                 // Report in the console for debugging
